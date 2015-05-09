@@ -35,7 +35,6 @@ type Monitor struct {
 	Id            int64
 	OrgId         int64
 	EndpointId    int64
-	Namespace     string
 	MonitorTypeId int64
 	Offset        int64
 	Frequency     int64
@@ -80,7 +79,7 @@ type MonitorDTO struct {
 	Id            int64                `json:"id"`
 	OrgId         int64                `json:"org_id"`
 	EndpointId    int64                `json:"endpoint_id"`
-	Namespace     string               `json:"namespace"`
+	EndpointSlug  string               `json:"endpoint_slug"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	CollectorIds  []int64              `json:"collector_ids"`
 	CollectorTags []string             `json:"collector_tags"`
@@ -116,7 +115,6 @@ type AddMonitorCommand struct {
 	OrgId         int64                `json:"-"`
 	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	Namespace     string               `json:"namespace"`
 	CollectorIds  []int64              `json:"collector_ids"`
 	CollectorTags []string             `json:"collector_tags"`
 	Settings      []*MonitorSettingDTO `json:"settings"`
@@ -130,7 +128,6 @@ type UpdateMonitorCommand struct {
 	Id            int64                `json:"id" binding:"required"`
 	EndpointId    int64                `json:"endpoint_id" binding:"required"`
 	OrgId         int64                `json:"-"`
-	Namespace     string               `json:"namespace"`
 	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
 	CollectorIds  []int64              `json:"collector_ids"`
 	CollectorTags []string             `json:"collector_tags"`

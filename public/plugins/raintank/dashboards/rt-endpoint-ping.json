@@ -85,13 +85,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.ping.ok_state), 'ok')"
+              "target": "alias(sumSeries($endpoint.$collector.network.ping.ok_state), 'ok')"
             },
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.ping.warn_state), 'warn')"
+              "target": "alias(sumSeries($endpoint.$collector.network.ping.warn_state), 'warn')"
             },
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.ping.error_state), 'error')"
+              "target": "alias(sumSeries($endpoint.$collector.network.ping.error_state), 'error')"
             }
           ],
           "timeFrom": null,
@@ -258,8 +258,8 @@
             "alignAsTable": true,
             "avg": true,
             "current": true,
-            "max": true,
-            "min": true,
+            "max": false,
+            "min": false,
             "rightSide": false,
             "show": true,
             "sort": "current",

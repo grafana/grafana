@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -15,6 +17,7 @@ type Endpoint struct {
 	Id      int64
 	OrgId   int64
 	Name    string
+	Slug    string
 	Created time.Time
 	Updated time.Time
 }
@@ -32,6 +35,7 @@ type EndpointDTO struct {
 	Id    int64    `json:"id"`
 	OrgId int64    `json:"org_id"`
 	Name  string   `json:"name"`
+	Slug  string   `json:"slug"`
 	Tags  []string `json:"tags"`
 }
 
@@ -87,4 +91,11 @@ type GetEndpointHealthByIdQuery struct {
 	Id     int64
 	OrgId  int64
 	Result []*MonitorCollectorState
+}
+
+func (endpoint *Endpoint) UpdateEndpointSlug() {
+	name := strings.ToLower(endpoint.Name)
+	re := regexp.MustCompile("[^\\w ]+")
+	re2 := regexp.MustCompile("\\s")
+	endpoint.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, "_"), "-")
 }

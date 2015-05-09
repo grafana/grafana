@@ -291,14 +291,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.dns.error_state), 'error')"
+              "target": "alias(sumSeries($endpoint.$collector.network.dns.error_state), 'error')"
             },
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.dns.warn_state), 'warn')"
+              "target": "alias(sumSeries($endpoint.$collector.network.dns.warn_state), 'warn')"
             },
             {
               "hide": false,
-              "target": "alias(maxSeries($endpoint.$collector.network.dns.ok_state), 'ok')"
+              "target": "alias(sumSeries($endpoint.$collector.network.dns.ok_state), 'ok')"
             }
           ],
           "timeFrom": null,

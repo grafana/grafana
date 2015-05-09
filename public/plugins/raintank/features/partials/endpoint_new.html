@@ -1,8 +1,8 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
-	<ul class="nav">
+	<!-- <ul class="nav">
 		<li class="top-nav-title ng-binding">
 			<div>
-				<form style="margin-bottom:0px;">
+				<form ng-if="endpoint.id" style="margin-bottom:0px;">
 					<li class="dropdown">
 						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
 							<span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
@@ -16,13 +16,13 @@
 				</form>
 			</div>
 		</li>
-	</ul>
+	</ul> -->
 </topnav>
 
 <div ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
 	<div class="rt-page">
 		<div class="rt-page-header">
-			<h1 class="rt-h1 rt-page-header-icon" style="background-image: url('img/rt-endpoint.svg');">New Endpoint</h1>
+			<i ng-class="icon" class="icon-rt-endpoint" style="font-size:24px;"></i> <h1 class="rt-h1">New Endpoint</h1>
 		</div>
 		<div class="rt-page-body">
 			<form name="endpointForm">
@@ -85,6 +85,7 @@
 					</div>
 				</div>
 
+
 				<!-- Ping Tab  -->
 				<div class="rt-box rt-page-box">
 					<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
@@ -94,7 +95,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['ping'].enabled">
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['ping'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['ping'].enabled" > Every {{monitors['ping'].frequency}}s from {{collectorCount(monitors['ping'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['ping'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -105,7 +106,7 @@
 					<div class="rt-box-body rt-page-box-body" ng-show="showPing">
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
@@ -121,6 +122,7 @@
 								<div>
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
+
 									</div>
 									<div class="editor-option" style="margin-top: 20px;">
 										<label class="small">&nbsp;</label>
@@ -131,7 +133,7 @@
 						</div>
 <!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+								<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Health</div>
 							<div class="rt-box-interior-content">
@@ -139,6 +141,7 @@
 									<span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
 									<div class="editor-option rt-input-styles">
 										<label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+
 									</div>
 									<span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
 									<div class="editor-option rt-input-styles">
@@ -150,7 +153,7 @@
 						</div>	
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Alerting</div>
 							<div class="rt-box-interior-content">
@@ -161,7 +164,6 @@
 				</div>
 				<!-- End Ping Tab -->
 
-
 				<!-- DNS Tab  -->
 				<div class="rt-box rt-page-box">
 					<div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
@@ -171,7 +173,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['dns'].enabled">
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['dns'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['dns'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -182,7 +184,7 @@
 					<div class="rt-box-body rt-page-box-body" ng-show="showDNS">
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>							
 							<div class="rt-box-interior-content">
@@ -208,7 +210,7 @@
 						</div>
 <!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+								<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Health</div>
 							<div class="rt-box-interior-content">
@@ -227,7 +229,7 @@
 						</div>	
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Alerting</div>
 							<div class="rt-box-interior-content">
@@ -237,7 +239,6 @@
  -->					</div>
 				</div>
 				<!-- End DNS Tab -->
-
 				<!-- HTTP Tab  -->
 				<div class="rt-box rt-page-box">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
@@ -247,7 +248,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['http'].enabled">
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['http'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['http'].enabled" > Every {{monitors['http'].frequency}}s from {{collectorCount(monitors['http'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['http'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -258,7 +259,7 @@
 					<div class="rt-box-body rt-page-box-body" ng-show="showHTTP">
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>								
 							<div class="rt-box-interior-content">
@@ -284,7 +285,7 @@
 						</div>
 <!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+								<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Health</div>
 							<div class="rt-box-interior-content">
@@ -303,8 +304,9 @@
 						</div>	
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 							</div>
+
 							<div class="rt-box-interior-header rt-h3">Alerting</div>
 							<div class="rt-box-interior-content">
 								<span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
@@ -323,7 +325,7 @@
 						</div>
 						<div style="float: right; display: inline;">
 							<a href="#">
-								<img src="/img/rt-check.png" style="width: 16px; height: 16px; vertical-align: baseline;" ng-show="monitors['https'].enabled">
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['https'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['https'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -334,7 +336,7 @@
 					<div class="rt-box-body rt-page-box-body" ng-show="showHTTPS">
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-check.png" style="width: 32px; vertical-align: top;">
+								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
@@ -360,7 +362,7 @@
 						</div>
 <!-- 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<i class="fa-fw icon-rt-online" style="font-size: 23px; vertical-align: text-bottom;"></i>
+								<i class="icon icon-rt-online" style="font-size: 30px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Health</div>
 							<div class="rt-box-interior-content">
@@ -379,7 +381,7 @@
 						</div>	
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
-								<img src="/img/rt-alerts.png" style="width: 32px; vertical-align: bottom; opacity: 0.8;">
+								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
 							</div>
 							<div class="rt-box-interior-header rt-h3">Alerting</div>
 							<div class="rt-box-interior-content">
