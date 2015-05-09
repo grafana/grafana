@@ -17,6 +17,7 @@ system. These are not maintained by any core Grafana team member and might be ou
 
 * [github.com/bobrik/ansible-grafana](https://github.com/bobrik/ansible-grafana)
 * [github.com/bitmazk/ansible-digitalocean-influxdb-grafana](https://github.com/bitmazk/ansible-digitalocean-influxdb-grafana)
+* [github.com/picotrading/ansible-grafana](https://github.com/picotrading/ansible-grafana)
 
 ## Docker
 
