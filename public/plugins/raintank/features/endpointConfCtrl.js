@@ -281,7 +281,7 @@ function (angular) {
       });
       backendSrv.put('/api/endpoints', payload).then(function(resp) {
         $scope.endpoint = resp;
-        $scope.dismiss();
+        $location.path("endpoints/summary/"+resp.id);
       });
     }
 
