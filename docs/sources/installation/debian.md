@@ -29,7 +29,8 @@ candidates.
 
     deb https://packagecloud.io/grafana/testing/debian/ wheezy main
 
-Then add the [Package Cloud](https://packagecloud.io/grafana) key (signs repo metadata).
+Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
+allows you to install signed packages.
 
     $ curl https://packagecloud.io/gpg.key | sudo apt-key add -
 
@@ -47,10 +48,10 @@ HTTPS.
 ## Package details
 
 - Installs binary to `/usr/sbin/grafana-server`
-- Init.d script to `/etc/init.d/grafana-server`
-- Default file (environment vars) to `/etc/default/grafana-server`
-- Configuration file to `/etc/grafana/grafana.ini`
-- Systemd service (if systemd is available) name `grafana-server.service`
+- Installs Init.d script to `/etc/init.d/grafana-server`
+- Creates default file (environment vars) to `/etc/default/grafana-server`
+- Installs configuration file to `/etc/grafana/grafana.ini`
+- Installs systemd service (if systemd is available) name `grafana-server.service`
 - The default configuration sets the log file at `/var/log/grafana/grafana.log`
 - The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
 
@@ -93,13 +94,15 @@ By default Grafana will log to `/var/log/grafana`
 
 ### Database
 
-The default configuration specifies a sqlite3 database located at `/var/lib/grafana/grafana.db`. Please backup
-this database before upgrades. You can also use MySQL or Postgres as the Grafana database.
+The default configuration specifies a sqlite3 database located at
+`/var/lib/grafana/grafana.db`. Please backup this database before
+upgrades. You can also use MySQL or Postgres as the Grafana database.
 
 ## Configuration
 
-The configuration file is located at `/etc/grafana/grafana.ini`.  Go the [Configuration](/installation/configuration) page for details
-on all those options.
+The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
+[Configuration](/installation/configuration) page for details on all
+those options.
 
 ### Adding data sources
 
@@ -115,8 +118,9 @@ after the version you downloaded. This folder contains all files
 required to run Grafana.  There are no init scripts or install scripts
 in this package.
 
-To configure Grafana add a configuration file named `custom.ini` to the `conf`
-folder and override any of the settings defined in `conf/defaults.ini`.
+To configure Grafana add a configuration file named `custom.ini` to the
+`conf` folder and override any of the settings defined in
+`conf/defaults.ini`.
 
 Start Grafana by executing `./grafana web`. The `grafana` binary needs
 the working directory to be the root install directory (where the binary

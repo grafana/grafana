@@ -31,8 +31,10 @@ can be configured to communicate with your data source using a back-end
 mode which can eliminate many CORS-related issues, as well as provide
 more secure authentication to your data sources.
 
-> *Note* When you add your data sources please name them exactly as you named them in `config.js` in Grafana 1.x. That name is referenced by panels
-> , annotation and template queries. That way when you import your old dashboard they will work without any changes.
+> *Note* When you add your data sources please name them exactly as you
+> named them in `config.js` in Grafana 1.x. That name is referenced by
+> panels, annotation and template queries. That way when you import
+> your old dashboard they will work without any changes.
 
 ## Importing your existing dashboards
 
