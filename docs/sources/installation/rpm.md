@@ -91,7 +91,7 @@ this database before upgrades. You can also use mysql or postgres as the Grafana
 
 ## Configuration
 
-The configuration file is located at `/etc/grafana/grafana.ini`.  Go the [Configuration](configuration) page for details
+The configuration file is located at `/etc/grafana/grafana.ini`.  Go the [Configuration](/installation/configuration) page for details
 on all those options.
 
 ### Adding data sources
