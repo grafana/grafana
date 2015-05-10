@@ -29,6 +29,6 @@ In the above example I map the data folder and set a config option via an `ENV` 
 
 ## Configuration
 
-The backend web server has a number of configuration options. Go the [Configuration](configuration) page for details
+The backend web server has a number of configuration options. Go the [Configuration](/installation/configuration) page for details
 on all those options.
 
