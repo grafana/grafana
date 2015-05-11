@@ -4,27 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 )
-
-// TODO: this needs to be cached or improved somehow
-func setIsStarredFlagOnSearchResults(c *middleware.Context, hits []*m.DashboardSearchHit) error {
-	if !c.IsSignedIn {
-		return nil
-	}
-
-	query := m.GetUserStarsQuery{UserId: c.UserId}
-	if err := bus.Dispatch(&query); err != nil {
-		return err
-	}
-
-	for _, dash := range hits {
-		if _, exists := query.Result[dash.Id]; exists {
-			dash.IsStarred = true
-		}
-	}
-
-	return nil
-}
 
 func Search(c *middleware.Context) {
 	query := c.Query("query")
@@ -54,7 +35,7 @@ func Search(c *middleware.Context) {
 		result.TagsOnly = true
 
 	} else {
-		query := m.SearchDashboardsQuery{
+		query := search.Query{
 			Title:     query,
 			Tag:       tag,
 			UserId:    c.UserId,
@@ -66,11 +47,6 @@ func Search(c *middleware.Context) {
 		err := bus.Dispatch(&query)
 		if err != nil {
 			c.JsonApiErr(500, "Search failed", err)
-			return
-		}
-
-		if err := setIsStarredFlagOnSearchResults(c, query.Result); err != nil {
-			c.JsonApiErr(500, "Failed to get user stars", err)
 			return
 		}
 
