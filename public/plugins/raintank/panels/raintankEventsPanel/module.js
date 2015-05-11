@@ -19,7 +19,7 @@ function (angular, app, _, kbn, PanelMeta) {
     };
   });
 
-  module.controller('raintankEventsPanel', function($scope, panelSrv, timeSrv, backendSrv) {
+  module.controller('raintankEventsPanel', function($scope, panelSrv, timeSrv, backendSrv, templateSrv) {
     console.log('raintankEventsPanel');
     $scope.panelMeta = new PanelMeta({
       panelName: 'Raintank Events',
@@ -56,7 +56,7 @@ function (angular, app, _, kbn, PanelMeta) {
         return;
       }
       var params = {
-        query: $scope.panel.filter,
+        query: templateSrv.replace($scope.panel.filter),
         start: $scope.range.from.getTime(),
         end:  $scope.range.to.getTime(),
         size: $scope.panel.size,
