@@ -181,7 +181,7 @@ Default is `false`.
 
 <hr>
 
-## [user]
+## [users]
 
 ### allow_sign_up
 
