@@ -404,6 +404,11 @@ function($, _, moment) {
   kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
   kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
 
+  kbn.roundValue = function (num, decimals) {
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
+
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
       return kbn.toFixed(value, decimals) + ext;
