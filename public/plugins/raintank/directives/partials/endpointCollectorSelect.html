@@ -1,7 +1,11 @@
-<a ng-click="show()" class="variable-value-link">
-	Collector Select
-	<i class="fa fa-caret-down"></i>
-</a>
+<div class="rt-collector-select pointer" ng-click="show()">
+ 	<a class="variable-value-link">
+		<span class="variable-option pointer">
+			3 Individual Collectors, 2 Tags
+		</span>
+		<i class="fa fa-caret-down" style="float: right;"></i>
+	</a> 
+</div>
 
 <div ng-if="selectorOpen" class="variable-value-dropdown" style="overflow: scroll">
 	<div class="search-field-wrapper">
@@ -36,4 +40,3 @@
 		</div>
 	</div>
 </div>
-
