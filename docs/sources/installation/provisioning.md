@@ -6,8 +6,9 @@ page_keywords: grafana, provisioning, documentation
 
 # Provisioning
 
-Here are links for how to install Grafana (and some include graphite or influxdb as well) via a provisioning
-system. These are not maintained by any core Grafana team member and might be out of date.
+Here are links for how to install Grafana (and some include Graphite or
+InfluxDB as well) via a provisioning system. These are not maintained by
+any core Grafana team member and might be out of date.
 
 ## Puppet
 
