@@ -2,20 +2,8 @@ package alerting
 
 import (
 	"fmt"
-	"net/http"
 	"time"
-
-	"bosun.org/graphite"
 )
-
-type Schedule struct {
-	//Id           int64
-	//OrgId        int64
-	//DataSourceId int64
-	Freq       uint32
-	Offset     uint8 // offset on top of "even" minute/10s/.. intervals
-	Definition CheckDef
-}
 
 // getAlignedTicker returns a ticker that ticks at the next second or very shortly after
 func getAlignedTicker() *time.Ticker {
@@ -60,20 +48,10 @@ func dispatchJobs() {
 	for t := range dispatch {
 		normalizedTime := t.Unix()
 		fmt.Println(t, "querying for jobs that should run in second", normalizedTime)
-		// TODO query for real jobs
-
-		schedules := []Schedule{
-			Schedule{
-				Freq:   10,
-				Offset: 1,
-				Definition: CheckDef{
-					// TODO make sure graphite always returns 2 points for this kind of request
-					//`median(graphite("apps.fakesite.web_server_01.counters.requests.count","2m","","")) < 0`,
-					//`median(graphite("avg(apps.fakesite.web_server_*.counters.requests.count)","2m","","")) > 1`,
-					`sum(graphite("sum(dieter_plaetinck_be.*.network.http.ok_state)", "2m", "", "") > 0) > 1`,
-					`sum(graphite("sum(dieter_plaetinck_be.*.network.http.ok_state)", "2m", "", "") > 0) > 1`,
-				},
-			},
+		schedules, err := getSchedules()
+		if err != nil {
+			fmt.Println("CRITICAL", err) // TODO better way to log errors
+			continue
 		}
 		for _, sched := range schedules {
 			job := Job{
@@ -87,7 +65,7 @@ func dispatchJobs() {
 				panic(fmt.Sprintf("job queue() can't keep up with dispatched jobs. workers not processing fast enough"))
 			}
 		}
-		// TODO add in proper datasource like so
+		// TODO probably the queries run by getschedule should get datasource, but if not, add in proper datasource like so
 		// func (check *Check) getDataSource() {
 		//  dsQuery := m.GetDataSourceByIdQuery{Id: check.Id}
 		//
@@ -98,30 +76,5 @@ func dispatchJobs() {
 		//  return dsQuery.Result
 		// }
 
-	}
-}
-
-func Executor() {
-	// TODO: once i have my own linux dev machine i can easily run docker and will nice authenticated requests to configured source
-	gr := graphite.HostHeader{
-		//"play.grafana.org/api/datasources/proxy/1",
-		"graphiteApi_1:8888",
-		http.Header{
-			"X-Org-Id": []string{"1"},
-		}}
-
-	for job := range queue {
-		// note: if timestamp is very old, we still process. better to be backlogged then not do jobs, up to operator to make system keep up
-		// if timestamp is in future, we still process and assume that whoever created the job knows what they are doing.
-		// TODO: ignore jobs already processed
-		evaluator, err := NewGraphiteCheckEvaluator(gr, job.Definition)
-		if err != nil {
-			// expressions should be validated before they are stored in the db
-			// if they fail now it's a critical error
-			panic(fmt.Sprintf("received invalid check definition '%s': %s", err))
-		}
-
-		res, err := evaluator.Eval(job.ts)
-		fmt.Println(job, err, res)
 	}
 }
