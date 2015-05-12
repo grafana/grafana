@@ -139,7 +139,6 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
-    'specs/soloPanelCtrl-specs',
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',

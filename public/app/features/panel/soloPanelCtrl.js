@@ -7,16 +7,7 @@ function (angular, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('SoloPanelCtrl', function(
-    $scope,
-    backendSrv,
-    $routeParams,
-    dashboardSrv,
-    timeSrv,
-    $location,
-    templateValuesSrv,
-    dashboardLoaderSrv,
-    contextSrv) {
+  module.controller('SoloPanelCtrl', function($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
 
     var panelId;
 
@@ -28,7 +19,6 @@ function (angular, $) {
 
       dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
         $scope.initDashboard(result, $scope);
-
       });
 
       $scope.onAppEvent("dashboard-loaded", $scope.initPanelScope);
@@ -49,10 +39,7 @@ function (angular, $) {
       }
 
       $scope.panel.span = 12;
-      $scope.dashboardViewState = { registerPanel: function() { }, state: {}};
-
-      timeSrv.init($scope.dashboard);
-      templateValuesSrv.init($scope.dashboard, $scope.dashboardViewState);
+      $scope.dashboardViewState = {registerPanel: function() { }, state: {}};
     };
 
     if (!$scope.skipAutoInit) {
