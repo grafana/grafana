@@ -492,7 +492,7 @@ raintank BUTTONS
 .miniCTA:active {color:lighten(@gray, 10%); text-decoration:none;}
 
 .icon {
-vertical-align:middle; 
+  vertical-align:middle; 
 }
 
 .collector_icon {
@@ -738,7 +738,7 @@ MATT STYLES
 }
 
 .rt-tabs { 
-  border-bottom:1px solid @tabBorder;
+  box-shadow: inset 0px -1px 0px 0px @tabBorder;
   font-size: 16px; 
   padding:10px 20px;
  
@@ -757,8 +757,9 @@ MATT STYLES
     border-top:1px solid @tabBorder; 
     border-right:1px solid @tabBorder;
     border-left:1px solid @tabBorder;
-    margin:0 5px;
-    padding:5px 15px 10px 15px;
+    border-bottom: none;
+    margin: 0 5px;
+    padding: 5px 15px 9px 15px;
   }
 
   a:hover,
