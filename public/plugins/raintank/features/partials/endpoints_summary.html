@@ -55,25 +55,31 @@
 					</div>
 				</div> -->
 
-
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
-						<div class="pull-right">
+						<div class="pull-right" ng-show=" monitors['ping'].enabled == true">
 							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
 						</div>
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
-						<div class="health">
+<!-- 						<div class="health">
 							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
 						</div> 
+ -->
+						<div class="health">
+							<img src="img/disabled.svg" width="40px" height="40px">
+						</div> 
+
 
 						<div class="check">
 							<span class="checkType">Ping:</span> 
-							<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> 
-							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
+							<!-- <span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> 
+							<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span> -->
+
+							<a href="#" class="freqMsg disabled">Not enabled, configure now.</a> 
 						</div>
 
-						<div class="status">
+						<div class="status" ng-show=" monitors['ping'].enabled == true">
 							<div class="frequency">
 								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('Ping').id].length}}<span class="freqMsg">  collectors:</span>
 							</div>

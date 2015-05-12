@@ -39,20 +39,23 @@
 
 	<form name="endpointForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
 
-
-					<div class="rt-box-body rt-page-box-body">
-						<div class="rt-box-interior-content">
-							<div class="editor-option rt-input-styles">
-								<label class="rt-form-label-medium">Domain Name</label>
-								<input type="text" class="rt-form-input" ng-model="endpoint.name" required="">
-							</div>
+				<div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+					<div class="rt-mini-form new-endpoint-domain-form">
+						<div class="rt-mini-form-col">
+							<label class="rt-form-label-medium">Endpoint Name</label>
+							<input type="text" class="rt-form-input" ng-model="endpoint.name" required="">
 						</div>
-						<div class="rt-box-interior-content rt-interior-update">
-							<div class="editor-row" ng-show="endpoint.id">
-							<button type="submit" class="secondaryCTA" ng-click="updateEndpoint(endpoint)">Update Settings</button>
-							</div>
+						<div class="rt-mini-form-col" style="margin-top: 15px;">
+							<div>
+								<div class="editor-row" ng-show="endpoint.id">
+									<button type="submit" class="secondaryCTA" ng-click="updateEndpoint(endpoint)">Update Endpoint Name</button>
+								</div>
+							</div>															
 						</div>
 					</div>
+				</div>
+
+
 
 			<!-- General Settings Tab  -->
 <!-- 				<div class="rt-box rt-page-box">
@@ -90,7 +93,6 @@
  -->
 				<!-- General Settings -->
 
-
 				<!-- Ping Tab  -->
 				<div class="rt-box rt-page-box">
 					<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
@@ -117,14 +119,14 @@
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
 								<p class="rt-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p>
-									<div class="editor-option rt-input-styles rt-form-extra-margin">
-										<label class="small">Frequency</label>
-										<select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: 34px;"></select> 
-									</div>
-									<div class="editor-option rt-form-extra-margin rt-input-styles">
-										<label class="small">Collectors</label>
-										<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
+								<div class="editor-option rt-input-styles">
+									<label class="small">Frequency</label>
+									<select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: 34px;"></select> 
+								</div>
+								<div class="editor-option">
+									<label class="small rt-label-override">Collectors</label>
+									<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+								</div>								
 								<div>
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
@@ -135,7 +137,7 @@
 
 	 						<div class="rt-box-interior-content rt-interior-update">
 								<div class="editor-row" ng-show="endpoint.id">
-								<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update Settings</button>
+								<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update Ping Settings</button>
 								</div>
 							</div>
 	
@@ -202,22 +204,22 @@
 								<p class="rt-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: auto;"></select> 
+									<select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select> 
+								</div>
+								<div class="editor-option">
+									<label class="small rt-label-override">Collectors</label>
+									<endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
 								</div>
 								<div style="display: inline-block;">
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['dns'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['dns'], setting.variable)">
 									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+								</div>
+		 						<div class="rt-box-interior-content rt-interior-update">
+									<div class="editor-row" ng-show="endpoint.id">
+									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update DNS Settings</button>
 									</div>
 								</div>
-							</div>
-	 						<div class="rt-box-interior-content rt-interior-update">
-									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update Settings</button>
-									</div>
 							</div>
 						</div>
 <!-- 						<div class="rt-box-interior-section">
@@ -251,6 +253,7 @@
  -->					</div>
 				</div>
 				<!-- End DNS Tab -->
+
 				<!-- HTTP Tab  -->
 				<div class="rt-box rt-page-box">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
@@ -278,21 +281,21 @@
 								<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['http'].frequency}}" style="width: auto; height: auto;"></select> 
+									<select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['http'].frequency}}" style="width: auto; height: 34px;"></select> 
+								</div>
+								<div class="editor-option">
+									<label class="small rt-label-override">Collectors</label>
+									<endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
 								</div>
 								<div style="display: inline-block;">
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['http'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['http'], setting.variable)">
 									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
 								</div>
 							</div>
 	 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update Settings</button>
+									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update HTTP Settings</button>
 									</div>
 							</div>
 						</div>
@@ -353,24 +356,24 @@
 							</div>
 							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
-							<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
+							<p class="rt-body-copy">We do an HTTPS request to your Endpoint every at the frequency selected, from every Collector. We will download content from your web server up to the limit you specify.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['https'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['https'].frequency}}" style="width: auto; height: auto;"></select> 
+									<select class="small" ng-model="monitors['https'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['https'].frequency}}" style="width: auto; height: 34px;"></select> 
+								</div>
+								<div class="editor-option">
+									<label class="small rt-label-override">Collectors</label>
+									<endpoint-collector-select model="monitors['https']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
 								</div>
 								<div style="display: inline-block;">
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['https'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['https'], setting.variable)">
 									</div>
-									<div class="editor-option" style="margin-top: 20px;">
-										<label class="small">&nbsp;</label>
-										<endpoint-collector-select model="monitors['https']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-									</div>
 								</div>
 							</div>
 	 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update Settings</button>
+									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitor)">Update HTTPS Settings</button>
 									</div>
 							</div>
 						</div>

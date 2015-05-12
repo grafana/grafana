@@ -5,6 +5,7 @@
 @import "base/icon-font.less";
 
 @import "layout/columns.less";
+@import "components/mini-form.less";
 @import "layout/forms.less";
 @import "layout/page.less";
 
@@ -12,7 +13,6 @@
 @import "components/buttons.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
-@import "components/mini-form.less";
 
 
 
@@ -27,6 +27,10 @@ html {
 
 body {
   font-size: 1em;
+}
+
+a {
+  transition: color 100ms ease;
 }
 
 a:focus {
@@ -345,8 +349,10 @@ raintank TYPE
 
 .disabled, .none {
   color: @disabled;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-weight: 400;
+  &:hover {
+     color: @linkColorHover;
+  }    
 }
 
 .critical {
