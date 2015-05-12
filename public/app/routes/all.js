@@ -15,30 +15,26 @@ define([
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/import/:file', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromImportCtrl',
-        reloadOnSearch: false,
-      })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/solo/db/:slug', {
+      .when('/dashboard-solo/:type/:slug', {
         templateUrl: 'app/features/panel/partials/soloPanel.html',
         controller : 'SoloPanelCtrl',
       })
-      .when('/dashboard/solo/snapshot/:key', {
-        templateUrl: 'app/features/panel/partials/soloPanel.html',
-        controller : 'SoloPanelCtrl',
+      .when('/dashboard-import/:file', {
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'DashFromImportCtrl',
+        reloadOnSearch: false,
       })
       .when('/dashboard/new', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/import', {
+      .when('/import/dashboard', {
         templateUrl: 'app/features/dashboard/partials/import.html',
         controller : 'DashboardImportCtrl',
       })

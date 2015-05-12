@@ -49,7 +49,12 @@ func GetDashboard(c *middleware.Context) {
 	dash := query.Result
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
-		Meta:      dtos.DashboardMeta{IsStarred: isStarred, Slug: slug, Type: m.DashTypeDB},
+		Meta: dtos.DashboardMeta{
+			IsStarred: isStarred,
+			Slug:      slug,
+			Type:      m.DashTypeDB,
+			CanSave:   c.OrgRole != m.ROLE_VIEWER,
+		},
 	}
 
 	c.JSON(200, dto)
