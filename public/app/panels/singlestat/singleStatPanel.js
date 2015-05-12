@@ -41,7 +41,7 @@ function (angular, app, _, $) {
         }
 
         function applyColoringThresholds(value, valueString) {
-          if (!panel.colorValue) {
+          if (!coloring.colorValue) {
             return valueString;
           }
 
