@@ -86,7 +86,7 @@ func (s *Schedule) NewRunHistory(start time.Time, cache *cache.Cache) *RunHistor
 	}
 }
 
-// RunHistory processes an event history and trisggers notifications if needed.
+// RunHistory processes an event history and triggers notifications if needed.
 func (s *Schedule) RunHistory(r *RunHistory) {
 	checkNotify := false
 	silenced := s.Silenced()

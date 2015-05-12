@@ -35,7 +35,7 @@ func (r *Request) CacheKey() string {
 	return fmt.Sprintf("graphite-%d-%d-%s", r.Start.Unix(), r.End.Unix(), targets)
 }
 
-func (r *Request) Query(host string) (Response, error) {
+func (r *Request) Query(host string, header http.Header) (Response, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": r.Targets,
@@ -52,7 +52,14 @@ func (r *Request) Query(host string) (Response, error) {
 		Path:     "/render/",
 		RawQuery: v.Encode(),
 	}
-	resp, err := DefaultClient.Get(r.URL.String())
+	req, err := http.NewRequest("GET", r.URL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf(requestErrFmt, r.URL, "NewRequest failed: "+err.Error())
+	}
+	if header != nil {
+		req.Header = header
+	}
+	resp, err := DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf(requestErrFmt, r.URL, "Get failed: "+err.Error())
 	}
@@ -112,5 +119,14 @@ type Host string
 
 // Query performs a request to a Graphite server.
 func (h Host) Query(r *Request) (Response, error) {
-	return r.Query(string(h))
+	return r.Query(string(h), nil)
+}
+
+type HostHeader struct {
+	Host   string
+	Header http.Header
+}
+
+func (h HostHeader) Query(r *Request) (Response, error) {
+	return r.Query(h.Host, h.Header)
 }

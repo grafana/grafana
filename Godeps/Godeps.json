@@ -7,148 +7,148 @@
 	"Deps": [
 		{
 			"ImportPath": "bosun.org/_third_party/code.google.com/p/draw2d/draw2d",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/code.google.com/p/freetype-go/freetype",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/code.google.com/p/graphics-go/graphics",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/GaryBoone/GoStats/stats",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/MiniProfiler/go/miniprofiler",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/ajstarks/svgo",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/boltdb/bolt",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/bradfitz/slice",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/golang/groupcache/lru",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/golang/groupcache/singleflight",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/jordan-wright/email",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/olivere/elastic",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/tatsushid/go-fastping",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/vdobler/chart",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/golang.org/x/net/icmp",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/golang.org/x/net/internal/iana",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/golang.org/x/net/ipv4",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/golang.org/x/net/ipv6",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/cache",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/conf",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/expr",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/sched",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/search",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/collect",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/graphite",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/metadata",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/opentsdb",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/slog",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "bosun.org/util",
-			"Comment": "20150428222252-13-gfab31df",
-			"Rev": "fab31df2f087bfba0ee6d2a0784d5ebbe8b80401"
+			"Comment": "20150506172827",
+			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/com",

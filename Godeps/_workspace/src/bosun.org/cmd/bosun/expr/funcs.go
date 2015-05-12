@@ -407,15 +407,19 @@ func parseGraphiteResponse(req *graphite.Request, s *graphite.Response, formatTa
 	results := make([]*Result, 0)
 	for _, res := range *s {
 		// build tag set
-		nodes := strings.Split(res.Target, ".")
-		if len(nodes) < len(formatTags) {
-			msg := fmt.Sprintf("returned target '%s' does not match format '%s'", res.Target, strings.Join(formatTags, ","))
-			return nil, fmt.Errorf(parseErrFmt, req.URL, msg)
-		}
 		tags := make(opentsdb.TagSet)
-		for i, key := range formatTags {
-			if len(key) > 0 {
-				tags[key] = nodes[i]
+		if len(formatTags) == 1 && formatTags[0] == "" {
+			tags["key"] = res.Target
+		} else {
+			nodes := strings.Split(res.Target, ".")
+			if len(nodes) < len(formatTags) {
+				msg := fmt.Sprintf("returned target '%s' does not match format '%s'", res.Target, strings.Join(formatTags, ","))
+				return nil, fmt.Errorf(parseErrFmt, req.URL, msg)
+			}
+			for i, key := range formatTags {
+				if len(key) > 0 {
+					tags[key] = nodes[i]
+				}
 			}
 		}
 		if ts := tags.String(); !seen[ts] {
