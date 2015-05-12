@@ -82,6 +82,9 @@ function (angular) {
     };
 
     $scope.collectorCount = function(monitor) {
+      if (!monitor) {
+        return 0;
+      }
       var ids = {};
       var tags = monitor.collector_tags;
       _.forEach(monitor.collector_ids, function(id) {
@@ -254,7 +257,6 @@ function (angular) {
         }
         $scope.monitors[type.name.toLowerCase()] = suggestion;
       });
-      console.log($scope.monitors);
     }
 
     $scope.discover = function(endpoint) {

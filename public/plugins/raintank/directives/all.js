@@ -17,8 +17,7 @@ define([
       replace: true,
       link: function(scope,element, attrs) {
         var tmpl;
-
-        if (scope.target.value == null) {
+        if (!scope.target.value && scope.target.value !== 0 && scope.target.value !== false) {
           scope.target.value = scope.definition.default_value;
         }
 
