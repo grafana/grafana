@@ -87,3 +87,10 @@ func setIsStarredFlagOnSearchResults(userId int64, hits []*m.DashboardSearchHit)
 
 	return nil
 }
+
+func GetDashboardFromJsonIndex(filename string) *m.Dashboard {
+	if jsonDashIndex == nil {
+		return nil
+	}
+	return jsonDashIndex.GetDashboard(filename)
+}

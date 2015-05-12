@@ -10,12 +10,14 @@ function (angular, _, kbn, moment, $) {
 
   var module = angular.module('grafana.routes');
 
-  module.controller('DashFromDBCtrl', function($scope, $routeParams, backendSrv) {
+  module.controller('LoadDashboardCtrl', function(
+    $scope, $routeParams, backendSrv, dashboardSrv, datasourceSrv, $http, $q, $timeout, contextSrv) {
 
     function dashboardLoadFailed(title) {
       $scope.initDashboard({meta: {}, dashboard: {title: title}}, $scope);
     }
 
+    // Home dashboard
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
         var meta = result.meta;
@@ -24,90 +26,10 @@ function (angular, _, kbn, moment, $) {
       },function() {
         dashboardLoadFailed('Not found');
       });
-
       return;
     }
 
-    return backendSrv.getDashboard($routeParams.slug).then(function(result) {
-      $scope.initDashboard(result, $scope);
-    }, function() {
-      dashboardLoadFailed('Not found');
-    });
-
-  });
-
-  module.controller('DashFromSnapshotCtrl', function($scope, $routeParams, backendSrv, contextSrv) {
-    //don't show the sidemenu in snapshots.
-    contextSrv.sidemenu = false;
-    backendSrv.get('/api/snapshots/' + $routeParams.key).then(function(result) {
-      $scope.initDashboard(result, $scope);
-    }, function() {
-      $scope.initDashboard({
-        meta: {
-          isSnapshot: true,
-          canSave: false,
-          canEdit: false,
-        },
-        dashboard: {
-          title: 'Snapshot not found'
-        }
-      }, $scope);
-    });
-  });
-
-  module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
-    if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
-      $location.path('');
-      return;
-    }
-    $scope.initDashboard({
-      meta: { canShare: false, canStar: false },
-      dashboard: window.grafanaImportDashboard
-    }, $scope);
-  });
-
-  module.controller('NewDashboardCtrl', function($scope) {
-    $scope.initDashboard({
-      meta: { canStar: false, canShare: false },
-      dashboard: {
-        title: "New dashboard",
-        rows: [{ height: '250px', panels:[] }]
-      },
-    }, $scope);
-  });
-
-  module.controller('DashFromFileCtrl', function($scope, $rootScope, $http, $routeParams) {
-
-    var file_load = function(file) {
-      return $http({
-        url: "public/dashboards/"+file.replace(/\.(?!json)/,"/")+'?' + new Date().getTime(),
-        method: "GET",
-        transformResponse: function(response) {
-          return angular.fromJson(response);
-        }
-      }).then(function(result) {
-        if(!result) {
-          return false;
-        }
-        return result.data;
-      },function() {
-        $scope.appEvent('alert-error', ["Dashboard load failed", "Could not load "+file+". Please make sure it exists"]);
-        return false;
-      });
-    };
-
-    file_load($routeParams.jsonFile).then(function(result) {
-      $scope.initDashboard({
-        meta: { canSave: false, canDelete: false },
-        dashboard: result
-      }, $scope);
-    });
-
-  });
-
-  module.controller('DashFromScriptCtrl', function($scope, $rootScope, $http, $routeParams, $q, dashboardSrv, datasourceSrv, $timeout) {
-
+    // Scripted dashboards
     var execute_script = function(result) {
       var services = {
         dashboardSrv: dashboardSrv,
@@ -145,13 +67,58 @@ function (angular, _, kbn, moment, $) {
       });
     };
 
-    script_load($routeParams.jsFile).then(function(result) {
-      $scope.initDashboard({
-        meta: {fromScript: true, canDelete: false, canSave: false},
-        dashboard: result.data
-      }, $scope);
+    function loadScriptedDashboard() {
+      script_load($routeParams.slug).then(function(result) {
+        $scope.initDashboard({
+          meta: {fromScript: true, canDelete: false, canSave: false},
+          dashboard: result.data
+        }, $scope);
+      });
+    }
+
+    if ($routeParams.type === 'script') {
+      loadScriptedDashboard();
+      return;
+    }
+
+    if ($routeParams.type === 'snapshot') {
+      contextSrv.sidemenu = false;
+      backendSrv.get('/api/snapshots/' + $routeParams.slug).then(function(result) {
+        $scope.initDashboard(result, $scope);
+      }, function() {
+        $scope.initDashboard({meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}}, $scope);
+      });
+      return;
+    }
+
+    return backendSrv.getDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+      $scope.initDashboard(result, $scope);
+    }, function() {
+      dashboardLoadFailed('Not found');
     });
 
+  });
+
+  module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
+    if (!window.grafanaImportDashboard) {
+      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
+      $location.path('');
+      return;
+    }
+    $scope.initDashboard({
+      meta: { canShare: false, canStar: false },
+      dashboard: window.grafanaImportDashboard
+    }, $scope);
+  });
+
+  module.controller('NewDashboardCtrl', function($scope) {
+    $scope.initDashboard({
+      meta: { canStar: false, canShare: false },
+      dashboard: {
+        title: "New dashboard",
+        rows: [{ height: '250px', panels:[] }]
+      },
+    }, $scope);
   });
 
 });

@@ -17,11 +17,10 @@ type JsonDashIndex struct {
 }
 
 type JsonDashIndexItem struct {
-	Title      string
 	TitleLower string
-	Tags       []string
 	TagsCsv    string
-	FilePath   string
+	Path       string
+	Dashboard  *m.Dashboard
 }
 
 func NewJsonDashIndex(path string, orgIds string) *JsonDashIndex {
@@ -40,14 +39,24 @@ func (index *JsonDashIndex) Search(query *Query) ([]*m.DashboardSearchHit, error
 	for _, item := range index.items {
 		if strings.Contains(item.TitleLower, query.Title) {
 			results = append(results, &m.DashboardSearchHit{
-				Title: item.Title,
-				Tags:  item.Tags,
-				Slug:  item.FilePath,
+				Title: item.Dashboard.Title,
+				Tags:  item.Dashboard.GetTags(),
+				Uri:   "file/" + item.Path,
 			})
 		}
 	}
 
 	return results, nil
+}
+
+func (index *JsonDashIndex) GetDashboard(path string) *m.Dashboard {
+	for _, item := range index.items {
+		if item.Path == path {
+			return item.Dashboard
+		}
+	}
+
+	return nil
 }
 
 func (index *JsonDashIndex) updateIndex() error {
@@ -102,13 +111,13 @@ func loadDashboardFromFile(filename string) (*JsonDashIndexItem, error) {
 		return nil, err
 	}
 
-	dash := m.NewDashboardFromJson(data)
+	stat, _ := os.Stat(filename)
 
 	item := &JsonDashIndexItem{}
-	item.Title = dash.Title
-	item.TitleLower = strings.ToLower(item.Title)
-	item.Tags = dash.GetTags()
-	item.TagsCsv = strings.Join(item.Tags, ",")
+	item.Dashboard = m.NewDashboardFromJson(data)
+	item.TitleLower = strings.ToLower(item.Dashboard.Title)
+	item.TagsCsv = strings.Join(item.Dashboard.GetTags(), ",")
+	item.Path = stat.Name()
 
 	return item, nil
 }

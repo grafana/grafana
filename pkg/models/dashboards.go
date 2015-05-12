@@ -15,6 +15,12 @@ var (
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
 )
 
+var (
+	DashTypeJson   = "file"
+	DashTypeDB     = "db"
+	DashTypeScript = "script"
+)
+
 // Dashboard model
 type Dashboard struct {
 	Id      int64

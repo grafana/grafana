@@ -12,22 +12,7 @@ define([
     $routeProvider
       .when('/', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBCtrl',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/db/:slug', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBCtrl',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/file/:jsonFile', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromFileCtrl',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/script/:jsFile', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromScriptCtrl',
+        controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
       .when('/dashboard/import/:file', {
@@ -35,9 +20,10 @@ define([
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/snapshot/:key', {
+      .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromSnapshotCtrl',
+        controller : 'LoadDashboardCtrl',
+        reloadOnSearch: false,
       })
       .when('/dashboard/solo/db/:slug', {
         templateUrl: 'app/features/panel/partials/soloPanel.html',

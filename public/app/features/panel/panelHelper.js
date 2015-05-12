@@ -22,6 +22,7 @@ function (angular, _, kbn, $) {
     };
 
     this.setTimeRenderStart = function(scope) {
+      scope.timing = scope.timing || {};
       scope.timing.renderStart = new Date().getTime();
     };
 

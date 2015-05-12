@@ -70,7 +70,7 @@ function (angular, _, config) {
         $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
         $scope.results.tags = results.tags;
         $scope.results.dashboards = _.map(results.dashboards, function(dash) {
-          dash.url = 'dashboard/db/' + dash.slug;
+          dash.url = 'dashboard/' + dash.uri;
           return dash;
         });
 
