@@ -31,6 +31,7 @@ function (angular, app, _, kbn, PanelMeta) {
     // Set and populate defaults
     var _d = {
       filter: null,
+      title: "Events",
       size: 10
     };
 
@@ -43,27 +44,26 @@ function (angular, app, _, kbn, PanelMeta) {
     };
 
     $scope.render = function() {
-      console.log("rendering events panel");
       $scope.range = timeSrv.timeRange();
       if ($scope.panel.filter) {
-        $scope.getEvents();
+        $scope.refreshData();
       }
     };
 
-    $scope.getEvents = function() {
+    $scope.refreshData = function() {
       if ($scope.panel.filter.indexOf(":", $scope.panel.filter.length - 1) !== -1) {
         //filter ends with a colon. elasticsearch will send a 500error for this.
         return;
       }
       var params = {
-        query: templateSrv.replace($scope.panel.filter),
+        query: templateSrv.replace($scope.panel.filter, $scope.panel.scopedVars),
         start: $scope.range.from.getTime(),
         end:  $scope.range.to.getTime(),
         size: $scope.panel.size,
       }
       backendSrv.get('/api/events', params).then(function(events) {
         $scope.events = events;
-        $scope.panel.title = "Events (" + $scope.events.length + ")";
+	$scope.panel.scopedVars['eventCount'] = {selected: true, text: events.length, value: events.length};
       });
     }
 
