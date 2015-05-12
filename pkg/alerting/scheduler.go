@@ -8,16 +8,6 @@ import (
 	"bosun.org/graphite"
 )
 
-// func (check *Check) getDataSource() {
-//  dsQuery := m.GetDataSourceByIdQuery{Id: check.Id}
-//
-//  if err := bus.Dispatch(&dsQuery); err != nil {
-//      return nil, err
-//  }
-//
-//  return dsQuery.Result
-// }
-
 type Schedule struct {
 	//Id           int64
 	//OrgId        int64
@@ -44,7 +34,7 @@ func (job Job) String() string {
 	return fmt.Sprintf("<Job> key=%s time=%s definition: %s", job.key, job.ts, job.Definition)
 }
 
-var queue = make(chan Job) // TODO: use rabbitmq or something so we can have multiple grafana dispatchers and executors
+var queue = make(chan Job) // TODO: use rabbitmq or something so we can have multiple grafana dispatchers and executors. also make buffer configurable and expose number as metric
 var dispatch = make(chan time.Time, 5)
 
 // Dispatcher dispatches, every second, all jobs that should run for that second
@@ -56,10 +46,11 @@ func Dispatcher() {
 		ticker := getAlignedTicker()
 		select {
 		case t := <-ticker.C:
+			fmt.Println("attempting dispatch", t)
 			select {
 			case dispatch <- t:
 			default:
-				panic(fmt.Sprintf("dispatchJobs() can't keep up. database too slow?"))
+				panic(fmt.Sprintf("dispatchJobs() can't keep up with clock. database too slow?"))
 			}
 		}
 	}
@@ -85,12 +76,28 @@ func dispatchJobs() {
 			},
 		}
 		for _, sched := range schedules {
-			queue <- Job{
+			job := Job{
 				fmt.Sprintf("alert-id_%d", normalizedTime),
 				sched.Definition,
 				t,
 			}
+			select {
+			case queue <- job:
+			default:
+				panic(fmt.Sprintf("job queue() can't keep up with dispatched jobs. workers not processing fast enough"))
+			}
 		}
+		// TODO add in proper datasource like so
+		// func (check *Check) getDataSource() {
+		//  dsQuery := m.GetDataSourceByIdQuery{Id: check.Id}
+		//
+		//  if err := bus.Dispatch(&dsQuery); err != nil {
+		//      return nil, err
+		//  }
+		//
+		//  return dsQuery.Result
+		// }
+
 	}
 }
 
@@ -98,7 +105,7 @@ func Executor() {
 	// TODO: once i have my own linux dev machine i can easily run docker and will nice authenticated requests to configured source
 	gr := graphite.HostHeader{
 		//"play.grafana.org/api/datasources/proxy/1",
-		"localhost:32778",
+		"graphiteApi_1:8888",
 		http.Header{
 			"X-Org-Id": []string{"1"},
 		}}
