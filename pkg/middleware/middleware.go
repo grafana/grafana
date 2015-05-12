@@ -40,6 +40,7 @@ func GetContextHandler() macaron.Handler {
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		if initContextWithApiKey(ctx) ||
+			initContextWithAuthProxy(ctx) ||
 			initContextWithUserSessionCookie(ctx) ||
 			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
@@ -83,6 +84,7 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 	query := m.GetSignedInUserQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
+		log.Error(3, "Failed to get user with id %v", userId)
 		return false
 	} else {
 		ctx.SignedInUser = query.Result

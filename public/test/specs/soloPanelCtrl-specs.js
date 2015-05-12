@@ -34,7 +34,7 @@ define([
 
       beforeEach(function() {
         var dashboard = {
-          model: {
+          dashboard: {
             rows: [
               {
                 panels: [

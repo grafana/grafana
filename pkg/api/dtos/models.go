@@ -37,9 +37,9 @@ type DashboardMeta struct {
 	Created    time.Time `json:"created"`
 }
 
-type Dashboard struct {
-	Meta  DashboardMeta          `json:"meta"`
-	Model map[string]interface{} `json:"model"`
+type DashboardFullWithMeta struct {
+	Meta      DashboardMeta          `json:"meta"`
+	Dashboard map[string]interface{} `json:"dashboard"`
 }
 
 type DataSource struct {

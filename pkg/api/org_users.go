@@ -48,6 +48,23 @@ func GetOrgUsers(c *middleware.Context) {
 	c.JSON(200, query.Result)
 }
 
+func UpdateOrgUser(c *middleware.Context, cmd m.UpdateOrgUserCommand) {
+	if !cmd.Role.IsValid() {
+		c.JsonApiErr(400, "Invalid role specified", nil)
+		return
+	}
+
+	cmd.UserId = c.ParamsInt64(":id")
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "Failed update org user", err)
+		return
+	}
+
+	c.JsonOK("Organization user updated")
+}
+
 func RemoveOrgUser(c *middleware.Context) {
 	userId := c.ParamsInt64(":id")
 

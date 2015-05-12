@@ -41,7 +41,7 @@ function (angular, $) {
     };
 
     $scope.initPanelScope = function(dashData) {
-      $scope.dashboard = dashboardSrv.create(dashData.model, dashData.meta);
+      $scope.dashboard = dashboardSrv.create(dashData.dashboard, dashData.meta);
 
       $scope.row = {
         height: ($(window).height() - 10) + 'px',

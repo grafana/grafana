@@ -41,7 +41,7 @@ function (angular, app, _, $) {
         }
 
         function applyColoringThresholds(value, valueString) {
-          if (!coloring.colorValue) {
+          if (!panel.colorValue) {
             return valueString;
           }
 
@@ -73,7 +73,7 @@ function (angular, app, _, $) {
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
-          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          var value = applyColoringThresholds(data.valueRounded, data.valueFormated);
           body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
           if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -150,8 +150,8 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (coloring.colorBackground && !isNaN(data.mainValue)) {
-            var color = getColorForValue(data.mainValue);
+          if (coloring.colorBackground && !isNaN(data.valueRounded)) {
+            var color = getColorForValue(data.valueRounded);
             if (color) {
               $panelContainer.css('background-color', color);
               if (scope.fullscreen) {

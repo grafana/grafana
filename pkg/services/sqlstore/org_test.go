@@ -10,7 +10,6 @@ import (
 )
 
 func TestAccountDataAccess(t *testing.T) {
-
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 
@@ -78,6 +77,19 @@ func TestAccountDataAccess(t *testing.T) {
 				err := AddOrgUser(&cmd)
 				Convey("Should have been saved without error", func() {
 					So(err, ShouldBeNil)
+				})
+
+				Convey("Can update org user role", func() {
+					updateCmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, Role: m.ROLE_ADMIN}
+					err = UpdateOrgUser(&updateCmd)
+					So(err, ShouldBeNil)
+
+					orgUsersQuery := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					err = GetOrgUsers(&orgUsersQuery)
+					So(err, ShouldBeNil)
+
+					So(orgUsersQuery.Result[1].Role, ShouldEqual, m.ROLE_ADMIN)
+
 				})
 
 				Convey("Can get logged in user projection", func() {

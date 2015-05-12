@@ -71,6 +71,7 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
 			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
 			r.Get("/users", GetOrgUsers)
+			r.Patch("/users/:id", bind(m.UpdateOrgUserCommand{}), UpdateOrgUser)
 			r.Delete("/users/:id", RemoveOrgUser)
 		}, reqAccountAdmin)
 

@@ -9,7 +9,39 @@ function (angular, _, kbn, $) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelHelper', function(timeSrv) {
+  module.service('panelHelper', function(timeSrv, $rootScope) {
+    var self = this;
+
+    this.setTimeQueryStart = function(scope) {
+      scope.timing = {};
+      scope.timing.queryStart = new Date().getTime();
+    };
+
+    this.setTimeQueryEnd = function(scope) {
+      scope.timing.queryEnd = new Date().getTime();
+    };
+
+    this.setTimeRenderStart = function(scope) {
+      scope.timing.renderStart = new Date().getTime();
+    };
+
+    this.setTimeRenderEnd = function(scope) {
+      scope.timing.renderEnd = new Date().getTime();
+    };
+
+    this.broadcastRender = function(scope, data) {
+      this.setTimeRenderStart(scope);
+      scope.$broadcast('render', data);
+      this.setTimeRenderEnd(scope);
+
+      if ($rootScope.profilingEnabled) {
+        $rootScope.performance.panels.push({
+          panelId: scope.panel.id,
+          query: scope.timing.queryEnd - scope.timing.queryStart,
+          render: scope.timing.renderEnd - scope.timing.renderStart,
+        });
+      }
+    };
 
     this.updateTimeRange = function(scope) {
       scope.range = timeSrv.timeRange();
@@ -72,7 +104,10 @@ function (angular, _, kbn, $) {
         cacheTimeout: scope.panel.cacheTimeout
       };
 
+      this.setTimeQueryStart(scope);
       return datasource.query(metricsQuery).then(function(results) {
+        self.setTimeQueryEnd(scope);
+
         if (scope.dashboard.snapshot) {
           scope.panel.snapshotData = results;
         }

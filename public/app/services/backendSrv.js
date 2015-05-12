@@ -23,6 +23,10 @@ function (angular, _, config) {
       return this.request({ method: 'POST', url: url, data: data });
     };
 
+    this.patch = function(url, data) {
+      return this.request({ method: 'PATCH', url: url, data: data });
+    };
+
     this.put = function(url, data) {
       return this.request({ method: 'PUT', url: url, data: data });
     };

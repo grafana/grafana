@@ -125,6 +125,8 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
+      this.$scope.appEvent('hide-dash-editor');
+
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.3);
       var fullscreenHeight = Math.floor(docHeight * 0.7);

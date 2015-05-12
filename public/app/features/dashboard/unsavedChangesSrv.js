@@ -51,7 +51,7 @@ function(angular, _) {
     // for some dashboards and users
     // changes should be ignored
     p.ignoreChanges = function() {
-      if (!this.original) { return false; }
+      if (!this.original) { return true; }
       if (!contextSrv.isEditor) { return true; }
       if (!this.current || !this.current.meta) { return true; }
 

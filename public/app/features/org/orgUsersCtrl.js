@@ -23,6 +23,10 @@ function (angular) {
       });
     };
 
+    $scope.updateOrgUser = function(user) {
+      backendSrv.patch('/api/org/users/' + user.userId, user);
+    };
+
     $scope.removeUser = function(user) {
       backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
     };

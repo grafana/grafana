@@ -23,21 +23,17 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
-		existing := m.Dashboard{Slug: dash.Slug, OrgId: dash.OrgId}
-		hasExisting, err := sess.Get(&existing)
-		if err != nil {
-			return err
-		}
+		var existing, sameTitle m.Dashboard
 
-		if hasExisting {
-			// another dashboard with same name
-			if dash.Id != existing.Id {
-				if cmd.Overwrite {
-					dash.Id = existing.Id
-				} else {
-					return m.ErrDashboardWithSameNameExists
-				}
+		if dash.Id > 0 {
+			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+			if err != nil {
+				return err
 			}
+			if !dashWithIdExists {
+				return m.ErrDashboardNotFound
+			}
+
 			// check for is someone else has written in between
 			if dash.Version != existing.Version {
 				if cmd.Overwrite {
@@ -48,13 +44,35 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
+		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
+		if err != nil {
+			return err
+		}
+
+		if sameTitleExists {
+			// another dashboard with same name
+			if dash.Id != sameTitle.Id {
+				if cmd.Overwrite {
+					dash.Id = sameTitle.Id
+				} else {
+					return m.ErrDashboardWithSameNameExists
+				}
+			}
+		}
+
+		affectedRows := int64(0)
+
 		if dash.Id == 0 {
 			metrics.M_Models_Dashboard_Insert.Inc(1)
-			_, err = sess.Insert(dash)
+			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
 			dash.Data["version"] = dash.Version
-			_, err = sess.Id(dash.Id).Update(dash)
+			affectedRows, err = sess.Id(dash.Id).Update(dash)
+		}
+
+		if affectedRows == 0 {
+			return m.ErrDashboardNotFound
 		}
 
 		// delete existing tabs

@@ -46,9 +46,9 @@ func GetDashboard(c *middleware.Context) {
 	}
 
 	dash := query.Result
-	dto := dtos.Dashboard{
-		Model: dash.Data,
-		Meta:  dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta:      dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
 	}
 
 	c.JSON(200, dto)
@@ -87,6 +87,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 			c.JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 			return
 		}
+		if err == m.ErrDashboardNotFound {
+			c.JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
+			return
+		}
 		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
@@ -104,10 +108,10 @@ func GetHomeDashboard(c *middleware.Context) {
 		return
 	}
 
-	dash := dtos.Dashboard{}
+	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
 	jsonParser := json.NewDecoder(file)
-	if err := jsonParser.Decode(&dash.Model); err != nil {
+	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
 		c.JsonApiErr(500, "Failed to load home dashboard", err)
 		return
 	}
