@@ -81,6 +81,9 @@
 									<b>Discovery Successful.</b> We've suggested some default checks below based on what we were able to detect. <a class="rt-modal-body-link" ng-click="endpointForm.$valid && discover(endpoint)">Check again</a>
 								</p>
 							</div>
+                                                        <div ng-show="discoveryError">
+                                                             <p>{{discoveryError}}</p>
+                                                        </div>
 						</div>
 					</div>
 				</div>

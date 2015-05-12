@@ -20,6 +20,7 @@ function (angular) {
     $scope.init = function() {
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
+      $scope.discoveryError = false;
       $scope.endpoints = [];
       $scope.monitors = {};
       $scope.monitor_types_by_name = {};
@@ -261,9 +262,12 @@ function (angular) {
 
     $scope.discover = function(endpoint) {
       $scope.discoveryInProgress = true;
+      $scope.discoveryError = false;
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
         $scope.discovered = true;
         $scope.parseSuggestions(resp);
+      }, function(err) {
+        $scope.discoveryError = "Failed to discover endpoint.";
       }).finally(function() {
         $scope.discoveryInProgress = false;
       });
