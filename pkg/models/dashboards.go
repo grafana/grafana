@@ -54,12 +54,10 @@ func (dash *Dashboard) GetTags() []string {
 	return b
 }
 
-// GetDashboardModel turns the command into the savable model
-func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
+func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 	dash := &Dashboard{}
-	dash.Data = cmd.Dashboard
+	dash.Data = data
 	dash.Title = dash.Data["title"].(string)
-	dash.OrgId = cmd.OrgId
 	dash.UpdateSlug()
 
 	if dash.Data["id"] != nil {
@@ -72,6 +70,14 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 		dash.Data["version"] = 0
 	}
 
+	return dash
+}
+
+// GetDashboardModel turns the command into the savable model
+func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
+	dash := NewDashboardFromJson(cmd.Dashboard)
+	dash.OrgId = cmd.OrgId
+	dash.UpdateSlug()
 	return dash
 }
 

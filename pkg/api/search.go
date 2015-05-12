@@ -35,6 +35,7 @@ func Search(c *middleware.Context) {
 		result.TagsOnly = true
 
 	} else {
+
 		query := search.Query{
 			Title:     query,
 			Tag:       tag,

@@ -1,8 +1,11 @@
 package search
 
 import (
+	"path/filepath"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Query struct {
@@ -16,12 +19,28 @@ type Query struct {
 	Result []*m.DashboardSearchHit
 }
 
+var jsonDashIndex *JsonDashIndex
+
 func Init() {
 	bus.AddHandler("search", searchHandler)
-	initJsonFileIndex()
+
+	jsonIndexCfg, _ := setting.Cfg.GetSection("dashboards.json")
+	jsonIndexEnabled := jsonIndexCfg.Key("enabled").MustBool(false)
+
+	if jsonIndexEnabled {
+		jsonFilesPath := jsonIndexCfg.Key("path").String()
+		if !filepath.IsAbs(jsonFilesPath) {
+			jsonFilesPath = filepath.Join(setting.HomePath, jsonFilesPath)
+		}
+
+		orgIds := jsonIndexCfg.Key("org_ids").String()
+		jsonDashIndex = NewJsonDashIndex(jsonFilesPath, orgIds)
+	}
 }
 
 func searchHandler(query *Query) error {
+	hits := make([]*m.DashboardSearchHit, 0)
+
 	dashQuery := m.SearchDashboardsQuery{
 		Title:     query.Title,
 		Tag:       query.Tag,
@@ -35,11 +54,22 @@ func searchHandler(query *Query) error {
 		return err
 	}
 
-	if err := setIsStarredFlagOnSearchResults(query.UserId, query.Result); err != nil {
+	hits = append(hits, dashQuery.Result...)
+
+	if jsonDashIndex != nil {
+		jsonHits, err := jsonDashIndex.Search(query)
+		if err != nil {
+			return err
+		}
+
+		hits = append(hits, jsonHits...)
+	}
+
+	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
 		return err
 	}
 
-	query.Result = dashQuery.Result
+	query.Result = hits
 	return nil
 }
 
