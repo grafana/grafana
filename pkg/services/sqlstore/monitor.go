@@ -469,17 +469,18 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 	}
 
 	mon := &m.Monitor{
-		EndpointId:    cmd.EndpointId,
-		OrgId:         cmd.OrgId,
-		MonitorTypeId: cmd.MonitorTypeId,
-		Offset:        rand.Int63n(cmd.Frequency - 1),
-		Settings:      cmd.Settings,
-		Created:       time.Now(),
-		Updated:       time.Now(),
-		Frequency:     cmd.Frequency,
-		Enabled:       cmd.Enabled,
-		State:         -1,
-		StateChange:   time.Now(),
+		EndpointId:     cmd.EndpointId,
+		OrgId:          cmd.OrgId,
+		MonitorTypeId:  cmd.MonitorTypeId,
+		Offset:         rand.Int63n(cmd.Frequency - 1),
+		Settings:       cmd.Settings,
+		HealthSettings: cmd.HealthSettings,
+		Created:        time.Now(),
+		Updated:        time.Now(),
+		Frequency:      cmd.Frequency,
+		Enabled:        cmd.Enabled,
+		State:          -1,
+		StateChange:    time.Now(),
 	}
 
 	if _, err := sess.Insert(mon); err != nil {

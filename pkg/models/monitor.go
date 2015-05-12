@@ -32,18 +32,19 @@ type MonitorTypeSetting struct {
 }
 
 type Monitor struct {
-	Id            int64
-	OrgId         int64
-	EndpointId    int64
-	MonitorTypeId int64
-	Offset        int64
-	Frequency     int64
-	Enabled       bool
-	State         int64
-	StateChange   time.Time
-	Settings      []*MonitorSettingDTO
-	Created       time.Time
-	Updated       time.Time
+	Id             int64
+	OrgId          int64
+	EndpointId     int64
+	MonitorTypeId  int64
+	Offset         int64
+	Frequency      int64
+	Enabled        bool
+	State          int64
+	StateChange    time.Time
+	Settings       []*MonitorSettingDTO
+	HealthSettings []*MonitorHealthSettingDTO
+	Created        time.Time
+	Updated        time.Time
 }
 
 type MonitorCollector struct {
@@ -75,22 +76,28 @@ type MonitorSettingDTO struct {
 	Value    string `json:"value"`
 }
 
+type MonitorHealthSettingDTO struct {
+	NumCollectors int `json:"numCollectors"`
+	Steps         int `json:"steps"`
+}
+
 type MonitorDTO struct {
-	Id            int64                `json:"id"`
-	OrgId         int64                `json:"org_id"`
-	EndpointId    int64                `json:"endpoint_id"`
-	EndpointSlug  string               `json:"endpoint_slug"`
-	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	CollectorIds  []int64              `json:"collector_ids"`
-	CollectorTags []string             `json:"collector_tags"`
-	Collectors    []int64              `json:"collectors"`
-	State         int64                `json:"state"`
-	StateChange   time.Time            `json:"state_change"`
-	Settings      []*MonitorSettingDTO `json:"settings"`
-	Frequency     int64                `json:"frequency"`
-	Enabled       bool                 `json:"enabled"`
-	Offset        int64                `json:"offset"`
-	Updated       time.Time            `json:"updated"`
+	Id             int64                   `json:"id"`
+	OrgId          int64                   `json:"org_id"`
+	EndpointId     int64                   `json:"endpoint_id"`
+	EndpointSlug   string                  `json:"endpoint_slug"`
+	MonitorTypeId  int64                   `json:"monitor_type_id" binding:"required"`
+	CollectorIds   []int64                 `json:"collector_ids"`
+	CollectorTags  []string                `json:"collector_tags"`
+	Collectors     []int64                 `json:"collectors"`
+	State          int64                   `json:"state"`
+	StateChange    time.Time               `json:"state_change"`
+	Settings       []*MonitorSettingDTO    `json:"settings"`
+	HealthSettings MonitorHealthSettingDTO `json:"health_settings"`
+	Frequency      int64                   `json:"frequency"`
+	Enabled        bool                    `json:"enabled"`
+	Offset         int64                   `json:"offset"`
+	Updated        time.Time               `json:"updated"`
 }
 
 type MonitorTypeSettingDTO struct {
@@ -112,16 +119,17 @@ type MonitorTypeDTO struct {
 // COMMANDS
 
 type AddMonitorCommand struct {
-	OrgId         int64                `json:"-"`
-	EndpointId    int64                `json:"endpoint_id" binding:"required"`
-	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	CollectorIds  []int64              `json:"collector_ids"`
-	CollectorTags []string             `json:"collector_tags"`
-	Settings      []*MonitorSettingDTO `json:"settings"`
-	Frequency     int64                `json:"frequency"`
-	Enabled       bool                 `json:"enabled"`
-	Offset        int64                `json:"-"`
-	Result        *MonitorDTO
+	OrgId          int64                      `json:"-"`
+	EndpointId     int64                      `json:"endpoint_id" binding:"required"`
+	MonitorTypeId  int64                      `json:"monitor_type_id" binding:"required"`
+	CollectorIds   []int64                    `json:"collector_ids"`
+	CollectorTags  []string                   `json:"collector_tags"`
+	Settings       []*MonitorSettingDTO       `json:"settings"`
+	HealthSettings []*MonitorHealthSettingDTO `json:"health_settings"`
+	Frequency      int64                      `json:"frequency"`
+	Enabled        bool                       `json:"enabled"`
+	Offset         int64                      `json:"-"`
+	Result         *MonitorDTO
 }
 
 type UpdateMonitorCommand struct {

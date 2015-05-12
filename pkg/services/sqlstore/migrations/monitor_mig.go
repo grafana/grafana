@@ -246,4 +246,9 @@ func addMonitorMigration(mg *Migrator) {
 	mg.AddMigration("create monitor_collector_state table", NewAddTableMigration(monitorCollectorStateV1))
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorStateV1)
+
+	// add health settings
+	mg.AddMigration("monitor add alerts v1", NewAddColumnMigration("monitor", &Column{
+		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: false, Default: "",
+	}))
 }
