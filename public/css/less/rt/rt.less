@@ -5,6 +5,7 @@
 @import "base/icon-font.less";
 
 @import "layout/columns.less";
+@import "components/mini-form.less";
 @import "layout/forms.less";
 @import "layout/page.less";
 
@@ -12,7 +13,6 @@
 @import "components/buttons.less";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
-@import "components/mini-form.less";
 
 
 
@@ -27,6 +27,10 @@ html {
 
 body {
   font-size: 1em;
+}
+
+a {
+  transition: color 100ms ease;
 }
 
 a:focus {
@@ -327,6 +331,9 @@ raintank TYPE
 .frequency {color:@rt-light-gray}
 .statusMsg, .freqMsg {font-size:14px; font-weight:400;}
 
+.supplemental-copy {
+    color:@rt-light-gray;
+  }
 
 .online {
   color: @online;
@@ -342,8 +349,10 @@ raintank TYPE
 
 .disabled, .none {
   color: @disabled;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-weight: 400;
+  &:hover {
+     color: @linkColorHover;
+  }    
 }
 
 .critical {
@@ -827,6 +836,26 @@ input[type="checkbox"]:checked+label {
 
 .checkbox-check-enabled {
   margin-bottom: 10px;
+}
+
+.rt-form-extra-margin {
+  margin-right: 30px;
+}
+
+.rt-collector-select {
+  max-width: 600px;
+  display: inline-block;
+  height: auto;
+  padding: 6px 10px;
+  margin-bottom: @baseLineHeight / 4;
+  font-size: @rt-fontSizeMed-1;
+  line-height: @baseLineHeight;
+  color: @textColor;
+  border: solid 1px @inputBorder;
+  .border-radius(2px);
+  vertical-align: middle;
+  background-color: rgb(51,51,51);
+  overflow: auto;
 }
 
 // Collector List Status

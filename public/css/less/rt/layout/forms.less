@@ -37,6 +37,11 @@ input[type="color"] {
   }
 }
 
+
+.rt-label-override {
+  color: lighten(@textColor, 10%);
+}
+
 .rt-input-styles {
   label {
     color: @rt-light-gray;
@@ -79,7 +84,20 @@ input[type="color"] {
   }
 }
 
+.rt-text-box-success {
+  margin-bottom: 0;
+  background-image: url(/img/rt-check-2c.svg);
+  background-repeat: no-repeat;
+  background-position: 95% center;
+  background-size: 20px 20px;
+}
 
+.new-endpoint-domain-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
 
 // Labels
 // ==========================================================================

@@ -79,7 +79,10 @@ function (angular, _) {
 
     $scope.monitorStateTxt = function(mon) {
       if (typeof(mon) != "object") {
-        return "nodata";
+        return "disabled";
+      }
+      if (!mon.enabled) {
+        return "disabled";
       }
       if (mon.state < 0 || mon.state > 2) {
         return 'nodata';
