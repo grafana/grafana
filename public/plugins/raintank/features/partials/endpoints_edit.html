@@ -137,7 +137,9 @@
 
 	 						<div class="rt-box-interior-content rt-interior-update">
 								<div class="editor-row" ng-show="endpoint.id">
-								<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
+								<button type="submit" ng-show="monitors['ping'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
+								<button type="submit" ng-show="monitors['ping'].enabled == false" class="secondaryCTA" ng-click="monitors['ping'].enabled=true ; updateMonitor(monitors['ping'])">Enable Ping</button>
+								<!-- Im sure this can be refactored to be handled more cleanly -->
 								</div>
 							</div>
 	
@@ -217,7 +219,9 @@
 								</div>
 		 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
+										<button type="submit" ng-show="monitors['dns'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
+										<button type="submit" ng-show="monitors['dns'].enabled == false" class="secondaryCTA" ng-click="monitors['dns'].enabled=true ; updateMonitor(monitors['dns'])">Enable DNS</button>
+										<!-- Im sure this can be refactored to be handled more cleanly -->
 									</div>
 								</div>
 							</div>
@@ -295,7 +299,9 @@
 							</div>
 	 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitors['http'])">Update HTTP Settings</button>
+										<button type="submit" ng-show="monitors['http'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['http'])">Update HTTP Settings</button>
+										<button type="submit" ng-show="monitors['http'].enabled == false" class="secondaryCTA" ng-click="monitors['http'].enabled=true ; updateMonitor(monitors['http'])">Enable HTTP</button>
+										<!-- Im sure this can be refactored to be handled more cleanly -->
 									</div>
 							</div>
 						</div>
@@ -373,7 +379,9 @@
 							</div>
 	 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-									<button type="submit" class="secondaryCTA" ng-click="updateMonitor(monitors['https'])">Update HTTPS Settings</button>
+										<button type="submit" ng-show="monitors['https'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['https'])">Update HTTPS Settings</button>
+										<button type="submit" ng-show="monitors['https'].enabled == false" class="secondaryCTA" ng-click="monitors['https'].enabled=true ; updateMonitor(monitors['https'])">Enable HTTPS</button>
+										<!-- Im sure this can be refactored to be handled more cleanly -->
 									</div>
 							</div>
 						</div>
