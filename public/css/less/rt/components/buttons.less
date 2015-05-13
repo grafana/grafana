@@ -4,6 +4,37 @@
 
 
 
+// Mixins 
+// ==========================================================================
+
+.ButtonCTA(@bg: transparent, @border: transparent, @color: transparent, @highlight: transparent) {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  border: 1px solid @border;
+  background: @bg;
+  color: @color;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  border-radius: 2px;
+  transition: 0.15s;
+
+  // For dark backgrounds. 
+  &:hover,
+  &:active {
+    border: 1px solid @highlight;
+    color: @highlight;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+
+
+// Buttons 
+// ==========================================================================
+
 // Super CTA
 // ====================================
 
@@ -12,10 +43,10 @@
   display: block;
   padding: 1.0em 0;
   color:#fff;
-  background-color: @rt-blue;
-  border: 1px solid @rt-blue;
+  background-color: @primaryCTA;
+  border: 1px solid @primaryCTA;
   border-radius: 2px;
-  text-align:center;
+  text-align: center;
   font-weight: 400;
   font-size: 16px;
   transition: 0.15s;
@@ -25,10 +56,11 @@
 
 .superCTA:hover,
 .superCTA:active{
+  border: 1px solid darken(@primaryCTAHighlight, 10%);
+  background: darken(@primaryCTAHighlight, 10%);
+  color: @white;
+  text-decoration: none;
   cursor: pointer;
-  background: darken(@rt-blue, 10%);
-  border: 1px solid darken(@rt-blue, 10%);
-  text-decoration:none;
 }
 
 
@@ -38,25 +70,7 @@
 
 .primaryCTA ,
 .primaryCTA:visited{
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 0.1em 1.2em;
-  color:#fff;
-  background-color: @rt-blue;
-  border: 1px solid @rt-blue;
-  border-radius: 2px;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 12px;
-  transition: 0.15s;
-}
-
-.primaryCTA:hover, 
-.primaryCTA:active{
-  cursor: pointer;
-  background: darken(@rt-blue, 10%);
-  border: 1px solid darken(@rt-blue, 10%);
-  text-decoration:none;
+  .ButtonCTA(@primaryCTA, @primaryCTA, @white, @primaryCTAHighlight);
 }
 
 
@@ -66,74 +80,23 @@
 
 .secondaryCTA,
 .secondaryCTA:visited {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 0.1em 1.2em;
-  border: 1px solid @rt-blue;
-  color: @rt-blue;
-  border-radius: 2px;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 12px;
-  transition: 0.15s;
-  background-color: transparent;
+  .ButtonCTA(transparent, @secondaryCTA, @secondaryCTA, @secondaryCTAHighlight);
 }
 
-// For dark backgrounds. 
-.secondaryCTA:hover, 
-.secondaryCTA:active{
-  cursor: pointer;
-  border: 1px solid #fff;
-  color: #fff;
-  text-decoration:none;
-}
 
-// For light backgrounds. 
-.modal-body .secondaryCTA:hover {
-  cursor: pointer;
-  border: 1px solid #161616;
-  color: #161616;
-}
-
-.secondaryCTA-disabled,
-.secondaryCTA-disabled:visited {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 0.1em 1.2em;
-  border: 1px solid @rt-dark-gray;
-  color: @rt-dark-gray;
-  border-radius: 2px;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 12px;
-  transition: 0.15s;
-  background-color: transparent;
-}
 
 // Tertiary CTA
 // ====================================
 
 .tertiaryCTA,
 .tertiaryCTA:visited {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 0.1em 1.2em;
-  border: 1px solid #999;
-  color: #999;
-  border-radius: 2px;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 12px;
-  transition: 0.15s;
+  .ButtonCTA(transparent, @tertiaryCTA, @tertiaryCTA, @tertiaryCTAHighlight);
 }
 
-.tertiaryCTA:hover,
-.tertiaryCTA:active{
-  cursor: pointer;
-  border: 1px solid #fff;
-  color: #fff;
-  text-decoration:none;
-}
+
+
+// Cancel
+// ====================================
 
 .cancel-primary,
 .cancel-primary:visited {
@@ -149,7 +112,7 @@
 .cancel-primary:active{
   cursor: pointer;
   color: @rt-light-gray;
-  text-decoration:none;
+  text-decoration: none;
 }
 
 
@@ -189,15 +152,17 @@
 
   &:hover, &:focus {
     background: darken(@rt-blue, 10%);
+    color: @white;
     text-decoration:none;
   }
  
   &:active {
     background: lighten(@rt-blue, 5%);
+    color: @white;
     text-decoration:none;
   }
 }
 
-.modal-body .rt-btn {
+.modal-body .rt-btn{
   margin: 30px 0 40px 0;
 }
