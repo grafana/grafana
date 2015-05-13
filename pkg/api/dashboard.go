@@ -140,3 +140,14 @@ func GetDashboardFromJsonFile(c *middleware.Context) {
 
 	c.JSON(200, &dash)
 }
+
+func GetDashboardTags(c *middleware.Context) {
+	query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get tags from database", err)
+		return
+	}
+
+	c.JSON(200, query.Result)
+}

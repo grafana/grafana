@@ -61,21 +61,21 @@ function (angular, _, config) {
     };
 
     $scope.searchDashboards = function() {
+      $scope.tagsMode = false;
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
       return backendSrv.search($scope.query).then(function(results) {
         if (localSearchId < $scope.currentSearchId) { return; }
 
-        $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
-        $scope.results.tags = results.tags;
-        $scope.results.dashboards = _.map(results.dashboards, function(dash) {
+        $scope.resultCount = results.length;
+        $scope.results = _.map(results, function(dash) {
           dash.url = 'dashboard/' + dash.uri;
           return dash;
         });
 
         if ($scope.queryHasNoFilters()) {
-          $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          $scope.results.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
         }
       });
     };
@@ -96,10 +96,12 @@ function (angular, _, config) {
       }
     };
 
-    $scope.showTags = function() {
-      $scope.query.tagcloud = !$scope.query.tagcloud;
-      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.search();
+    $scope.getTags = function() {
+      $scope.tagsMode = true;
+      return backendSrv.get('/api/dashboards/tags').then(function(results) {
+        $scope.resultCount = results.length;
+        $scope.results = results;
+      });
     };
 
     $scope.showStarred = function() {

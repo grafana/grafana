@@ -24,11 +24,10 @@ type JsonDashIndexItem struct {
 }
 
 func NewJsonDashIndex(path string, orgIds string) *JsonDashIndex {
+	log.Info("Creating json dashboard index for path: ", path)
+
 	index := JsonDashIndex{}
 	index.path = path
-	// if orgIds != ""  || orgIds != "*" {
-	// }
-
 	index.updateIndex()
 	return &index
 }
@@ -37,8 +36,21 @@ func (index *JsonDashIndex) Search(query *Query) ([]*m.DashboardSearchHit, error
 	results := make([]*m.DashboardSearchHit, 0)
 
 	for _, item := range index.items {
+		if len(results) > query.Limit {
+			break
+		}
+
+		// filter out results with tag filter
+		if query.Tag != "" {
+			if !strings.Contains(item.TagsCsv, query.Tag) {
+				continue
+			}
+		}
+
+		// add results with matchig title filter
 		if strings.Contains(item.TitleLower, query.Title) {
 			results = append(results, &m.DashboardSearchHit{
+				Type:  m.DashTypeJson,
 				Title: item.Dashboard.Title,
 				Tags:  item.Dashboard.GetTags(),
 				Uri:   "file/" + item.Path,
@@ -60,7 +72,6 @@ func (index *JsonDashIndex) GetDashboard(path string) *m.Dashboard {
 }
 
 func (index *JsonDashIndex) updateIndex() error {
-	log.Info("Updating JSON dashboard index, path: %v", index.path)
 
 	index.items = make([]*JsonDashIndexItem, 0)
 

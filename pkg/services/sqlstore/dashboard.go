@@ -176,6 +176,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 				Id:    item.Id,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
+				Type:  m.DashTypeDB,
 				Tags:  []string{},
 			}
 			query.Result = append(query.Result, hit)

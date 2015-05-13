@@ -70,7 +70,7 @@ function (angular, $, config) {
     };
 
     $scope.updateTopNavPartial = function() {
-      if ($scope.dashboard.meta.type === 'snapshot') {
+      if ($scope.dashboard.meta.isSnapshot) {
         $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
       }
     };
