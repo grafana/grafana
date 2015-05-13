@@ -236,7 +236,15 @@ function (angular) {
       });
     }
 
+    $scope.addMonitor = function(monitor) {
+      monitor.endpoint_id = $scope.endpoint.id;
+      backendSrv.put('/api/monitors', monitor);
+    }
+
     $scope.updateMonitor = function(monitor) {
+      if (!monitor.id) {
+        return $scope.addMonitor(monitor);
+      }
       backendSrv.post('/api/monitors', monitor);
     }
 
