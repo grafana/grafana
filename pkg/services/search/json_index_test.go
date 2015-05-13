@@ -20,7 +20,7 @@ func TestJsonDashIndex(t *testing.T) {
 			res, err := index.Search(&Query{Title: "", Tag: ""})
 			So(err, ShouldBeNil)
 
-			So(len(res), ShouldEqual, 4)
+			So(len(res), ShouldEqual, 3)
 		})
 
 		Convey("Should be able to search index by title", func() {
