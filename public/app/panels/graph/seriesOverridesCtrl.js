@@ -1,14 +1,15 @@
 define([
   'angular',
+  'jquery',
   'app',
   'lodash',
-], function(angular, app, _) {
+], function(angular, jquery, app, _) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('SeriesOverridesCtrl', function($scope) {
+  module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv, $timeout) {
     $scope.overrideMenu = [];
     $scope.currentOverrides = [];
     $scope.override = $scope.override || {};
@@ -37,8 +38,30 @@ define([
         $scope.addSeriesOverride({ alias: subItem.value, lines: false });
       }
 
+      if (item.propertyName === 'color') {
+        $scope.openColorSelector();
+      }
+
       $scope.updateCurrentOverrides();
       $scope.render();
+    };
+
+    $scope.colorSelected = function(color) {
+      $scope.override['color'] = color;
+      $scope.updateCurrentOverrides();
+      $scope.render();
+    };
+
+    $scope.openColorSelector = function() {
+      var popoverScope = $scope.$new();
+      popoverScope.colorSelected = $scope.colorSelected;
+
+      popoverSrv.show({
+        element: $element.find(".dropdown"),
+        placement: 'top',
+        templateUrl:  'app/partials/colorpicker.html',
+        scope: popoverScope
+      });
     };
 
     $scope.removeOverride = function(option) {
@@ -75,6 +98,7 @@ define([
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);
     $scope.addOverrideOption('Stack', 'stack', [true, false, 2, 3, 4, 5]);
+    $scope.addOverrideOption('Color', 'color', ['change']);
     $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
     $scope.addOverrideOption('Z-index', 'zindex', [-1,-2,-3,0,1,2,3]);
     $scope.updateCurrentOverrides();

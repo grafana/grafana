@@ -21,12 +21,20 @@ function (angular, _) {
         return;
       }
 
+      options.scope.dismiss = function() {
+        popover = options.element.data('popover');
+        if (popover) {
+          popover.destroy();
+        }
+        options.scope.$destroy();
+      };
+
       this.getTemplate(options.templateUrl).then(function(result) {
         var template = _.isString(result) ? result : result.data;
 
         options.element.popover({
           content: template,
-          placement: 'bottom',
+          placement: options.placement || 'bottom',
           html: true
         });
 
