@@ -2,22 +2,12 @@ package search
 
 import (
 	"path/filepath"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-type Query struct {
-	Title     string
-	Tag       string
-	OrgId     int64
-	UserId    int64
-	Limit     int
-	IsStarred bool
-
-	Result []*m.DashboardSearchHit
-}
 
 var jsonDashIndex *JsonDashIndex
 
@@ -33,15 +23,14 @@ func Init() {
 			jsonFilesPath = filepath.Join(setting.HomePath, jsonFilesPath)
 		}
 
-		orgIds := jsonIndexCfg.Key("org_ids").String()
-		jsonDashIndex = NewJsonDashIndex(jsonFilesPath, orgIds)
+		jsonDashIndex = NewJsonDashIndex(jsonFilesPath)
 	}
 }
 
 func searchHandler(query *Query) error {
-	hits := make([]*m.DashboardSearchHit, 0)
+	hits := make(HitList, 0)
 
-	dashQuery := m.SearchDashboardsQuery{
+	dashQuery := FindPersistedDashboardsQuery{
 		Title:     query.Title,
 		Tag:       query.Tag,
 		UserId:    query.UserId,
@@ -65,6 +54,8 @@ func searchHandler(query *Query) error {
 		hits = append(hits, jsonHits...)
 	}
 
+	sort.Sort(hits)
+
 	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
 		return err
 	}
@@ -73,7 +64,7 @@ func searchHandler(query *Query) error {
 	return nil
 }
 
-func setIsStarredFlagOnSearchResults(userId int64, hits []*m.DashboardSearchHit) error {
+func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {
 	query := m.GetUserStarsQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
 		return err

@@ -24,41 +24,39 @@
 		</div>
 	</div>
 
-	<div ng-if="!showImport">
-		<div class="search-results-container" ng-if="tagsMode">
-			<div class="row">
-				<div class="span6 offset1">
-					<div ng-repeat="tag in results" class="pointer" style="width: 180px; float: left;"
-						ng-class="{'selected': $index === selectedIndex }"
-						ng-click="filterByTag(tag.term, $event)">
-						<a class="search-result-tag label label-tag" tag-color-from-name tag="tag.term">
-							<i class="fa fa-tag"></i>
-							<span>{{tag.term}} &nbsp;({{tag.count}})</span>
-						</a>
-					</div>
+	<div class="search-results-container" ng-if="tagsMode">
+		<div class="row">
+			<div class="span6 offset1">
+				<div ng-repeat="tag in results" class="pointer" style="width: 180px; float: left;"
+					ng-class="{'selected': $index === selectedIndex }"
+					ng-click="filterByTag(tag.term, $event)">
+					<a class="search-result-tag label label-tag" tag-color-from-name tag="tag.term">
+						<i class="fa fa-tag"></i>
+						<span>{{tag.term}} &nbsp;({{tag.count}})</span>
+					</a>
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<div class="search-results-container" ng-if="!tagsMode">
-			<h6 ng-hide="results.length">No dashboards matching your query were found.</h6>
+	<div class="search-results-container" ng-if="!tagsMode">
+		<h6 ng-hide="results.length">No dashboards matching your query were found.</h6>
 
-			<a class="search-result-item pointer search-result-item-{{row.type}}" bindonce ng-repeat="row in results"
-				ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
+		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in results"
+			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
 
-				<span class="search-result-tags">
-					<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
-						{{tag}}
-					</span>
-					<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
+			<span class="search-result-tags">
+				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
+					{{tag}}
 				</span>
+				<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
+			</span>
 
-				<span class="search-result-link">
-					<i class="search-result-icon"></i>
-					<span bo-text="row.title"></span>
-				</span>
-			</a>
-		</div>
+			<span class="search-result-link">
+				<i class="fa search-result-icon"></i>
+				<span bo-text="row.title"></span>
+			</span>
+		</a>
 	</div>
 
 	<div class="search-button-row">

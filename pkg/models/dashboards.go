@@ -126,3 +126,13 @@ type GetDashboardQuery struct {
 
 	Result *Dashboard
 }
+
+type DashboardTagCloudItem struct {
+	Term  string `json:"term"`
+	Count int    `json:"count"`
+}
+
+type GetDashboardTagsQuery struct {
+	OrgId  int64
+	Result []*DashboardTagCloudItem
+}

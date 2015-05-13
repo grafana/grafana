@@ -11,9 +11,8 @@ import (
 )
 
 type JsonDashIndex struct {
-	path    string
-	orgsIds []int64
-	items   []*JsonDashIndexItem
+	path  string
+	items []*JsonDashIndexItem
 }
 
 type JsonDashIndexItem struct {
@@ -23,7 +22,7 @@ type JsonDashIndexItem struct {
 	Dashboard  *m.Dashboard
 }
 
-func NewJsonDashIndex(path string, orgIds string) *JsonDashIndex {
+func NewJsonDashIndex(path string) *JsonDashIndex {
 	log.Info("Creating json dashboard index for path: ", path)
 
 	index := JsonDashIndex{}
@@ -32,8 +31,8 @@ func NewJsonDashIndex(path string, orgIds string) *JsonDashIndex {
 	return &index
 }
 
-func (index *JsonDashIndex) Search(query *Query) ([]*m.DashboardSearchHit, error) {
-	results := make([]*m.DashboardSearchHit, 0)
+func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
+	results := make([]*Hit, 0)
 
 	for _, item := range index.items {
 		if len(results) > query.Limit {
@@ -49,8 +48,8 @@ func (index *JsonDashIndex) Search(query *Query) ([]*m.DashboardSearchHit, error
 
 		// add results with matchig title filter
 		if strings.Contains(item.TitleLower, query.Title) {
-			results = append(results, &m.DashboardSearchHit{
-				Type:  m.DashTypeJson,
+			results = append(results, &Hit{
+				Type:  DashHitJson,
 				Title: item.Dashboard.Title,
 				Tags:  item.Dashboard.GetTags(),
 				Uri:   "file/" + item.Path,
