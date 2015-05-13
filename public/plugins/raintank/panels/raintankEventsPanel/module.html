@@ -3,12 +3,13 @@
         <div panel-scroll>
             <table class="table">
                 <tbody>
-                    <tr ng-repeat="event in events | orderBy:'timestamp':true" event-state>
+                    <tr ng-repeat="event in events | orderBy:'timestamp':true">
                         <td>{{event.timestamp | date:'medium'}}</td>
                         <td>{{event.severity}}</td>
-                        <td>{{event.location}}</td>
+                        <td>{{event.collector}}</td>
+                        <td>{{event.endpoint}}</td>
                         <td>{{event.message}}</td>
-                        <td>{{event.event_type}}</td>
+                        <td>{{event.monitor_type}}</td>
                     </tr>
                 </tbody>
             </table>

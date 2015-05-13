@@ -247,16 +247,19 @@ define([
   });
 
   module.directive('panelScroll', function() {
+    function getPanelHeight(scope) {
+	if (scope.fullscreen) {
+		return "80%";
+	}
+	var height = scope.height || scope.panel.height || scope.row.height;
+	var panel_height = parseInt(height.replace(/\D+/g, ''));
+        return  (panel_height - 30) + 'px';
+    }
+
     return function(scope, element) {
       element[0].style.overflow = 'auto';
-      scope.$watch('fullscreen', function(newVal) {
-        if (scope.fullscreen) {
-          element[0].style.height = "80%";
-        } else {
-          var row_height = scope.row.height.replace(/\D+/g, '');
-          var newHeight =  (row_height - 30) + 'px';
-          element[0].style.height = newHeight;
-        }
+      scope.$watchGroup(['fullscreen', 'height', 'panel.height', 'row.height'], function(newVal) {
+        element[0].style.height = getPanelHeight(scope);
       });
     };
   });
