@@ -67,7 +67,7 @@ func Executor(fn GraphiteReturner) {
 		if err != nil {
 			// expressions should be validated before they are stored in the db
 			// if they fail now it's a critical error
-			panic(fmt.Sprintf("received invalid check definition '%s': %s", err))
+			panic(fmt.Sprintf("received invalid check definition '%s': %s", job.Definition, err))
 		}
 
 		res, err := evaluator.Eval(job.ts)
