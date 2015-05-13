@@ -81,8 +81,8 @@
 					<div class="collectorCurrentStatus">
 						<div class="collectorStatus">
 							<div class="pull-left msg">This collector is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
-							<a ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</a>
-							<a ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</a>
+							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</button>
+							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</button>
 						</div>
 
 						<span class="{{collector.online?'online':'offline'}} jumbo">{{collector.online?'online':'offline'}}</span> <!--<span class="statusMsg">for 12 days</span>-->
@@ -90,7 +90,7 @@
 						<div class="statusEvents" >
 							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
 						</div>
-						<div class="secondaryCTA">View All Errors</div>
+						<!-- <button type="submit" class="secondaryCTA">View All Errors</button> -->
 						<div class="clearfix"></div>
 					</div>
 				</div>

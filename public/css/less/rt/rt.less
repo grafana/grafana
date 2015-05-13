@@ -341,6 +341,13 @@ raintank TYPE
   text-transform: uppercase;
 }
 
+.offline {
+  color: @disabled;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
 .warn {
   color: @warn;
   font-weight: 600;
@@ -854,7 +861,7 @@ input[type="checkbox"]:checked+label {
   border: solid 1px @inputBorder;
   .border-radius(2px);
   vertical-align: middle;
-  background-color: rgb(51,51,51);
+  background-color: @inputBackground;
   overflow: auto;
 }
 
@@ -995,6 +1002,11 @@ input[type="checkbox"]:checked+label {
 
 .modal-body .variable-value-link {
   color: @rt-primary;
+  font-size: @rt-fontSizeMed-2;
+}
+
+.variable-value-link {
+  color: lighten(@textColor, 10%);
   font-size: @rt-fontSizeMed-2;
 }
 
