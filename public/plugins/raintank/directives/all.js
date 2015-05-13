@@ -248,12 +248,12 @@ define([
 
   module.directive('panelScroll', function() {
     function getPanelHeight(scope) {
-	if (scope.fullscreen) {
-		return "80%";
-	}
-	var height = scope.height || scope.panel.height || scope.row.height;
-	var panel_height = parseInt(height.replace(/\D+/g, ''));
-        return  (panel_height - 30) + 'px';
+      if (scope.fullscreen) {
+        return "80%";
+      }
+      var height = scope.height || scope.panel.height || scope.row.height;
+      var panel_height = parseInt(height.replace(/\D+/g, ''));
+      return  (panel_height - 30) + 'px';
     }
 
     return function(scope, element) {

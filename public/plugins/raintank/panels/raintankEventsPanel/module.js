@@ -63,7 +63,7 @@ function (angular, app, _, kbn, PanelMeta) {
       }
       backendSrv.get('/api/events', params).then(function(events) {
         $scope.events = events;
-	$scope.panel.scopedVars['eventCount'] = {selected: true, text: events.length, value: events.length};
+        $scope.panel.scopedVars['eventCount'] = {selected: true, text: events.length, value: events.length};
       });
     }
 
