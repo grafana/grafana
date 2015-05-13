@@ -2,8 +2,10 @@ package alerting
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 
+	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -21,30 +23,14 @@ func getSchedules() ([]Schedule, error) {
 	// for now let's pretend we use this.
 	// we also need endpoint slug, and slugs for all the collectors
 	// see https://github.com/raintank/grafana/issues/83
-	// TODO: for some reason sometimes a handler is, then isn't, then is again, found for this :?
-	/*
-		query := m.GetMonitorsQuery{}
+	query := m.GetMonitorsQuery{}
 
-		fmt.Println(">getSchedules() dispatching GetMonitorsQuery")
-		if err := bus.Dispatch(&query); err != nil {
-			fmt.Println(">getSchedules() got error!", err)
-			return nil, err
-		}
-
-		fmt.Println(">getSchedules() got result!")
-		spew.Dump(query.Result)
-	*/
-	schedules := make([]Schedule, 0)
-	fakeRes := []*m.MonitorDTO{
-		&m.MonitorDTO{
-			HealthSettings: m.MonitorHealthSettingDTO{
-				NumCollectors: 2,
-				Steps:         2,
-			},
-		},
+	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
 	}
 
-	for _, monitor := range fakeRes { //query.Result {
+	schedules := make([]Schedule, 0)
+	for _, monitor := range query.Result {
 		schedules = append(schedules, buildScheduleForMonitor(monitor))
 	}
 
