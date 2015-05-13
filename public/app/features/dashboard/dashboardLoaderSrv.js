@@ -19,7 +19,7 @@ function (angular, moment, _, $, kbn) {
     var self = this;
 
     this._dashboardLoadFailed = function(title) {
-      return {meta: {}, dashboard: {title: title}};
+      return {meta: {canStar: false, canDelete: false, canSave: false}, dashboard: {title: title}};
     };
 
     this.loadDashboard = function(type, slug) {
@@ -28,9 +28,7 @@ function (angular, moment, _, $, kbn) {
       }
 
       if (type === 'snapshot') {
-        return backendSrv.get('/api/snapshots/' + $routeParams.slug).then(function(result) {
-          return result;
-        }, function() {
+        return backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
           return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
         });
       }
@@ -45,7 +43,7 @@ function (angular, moment, _, $, kbn) {
 
       return $http({ url: url, method: "GET" })
       .then(this._executeScript).then(function(result) {
-        return { meta: { fromScript: true, canDelete: false, canSave: false}, dashboard: result.data };
+        return { meta: { fromScript: true, canDelete: false, canSave: false, canStar: false}, dashboard: result.data };
       }, function(err) {
         console.log('Script dashboard error '+ err);
         $rootScope.appEvent('alert-error', ["Script Error", "Please make sure it exists and returns a valid dashboard"]);

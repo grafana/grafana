@@ -15,7 +15,6 @@
 						<i class="fa fa-caret-down"></i>
 					</a>
 				</div>
-
 			</div>
 
 			<ul class="nav pull-left top-nav-dash-actions">
@@ -27,7 +26,7 @@
 				<li ng-show="dashboardMeta.canShare">
 					<a class="pointer" ng-click="shareDashboard()" bs-tooltip="'Share dashboard'" data-placement="bottom"><i class="fa fa-share-square-o"></i></a>
 				</li>
-				<li ng-show="dashboardMeta.canSave && contextSrv.isEditor">
+				<li ng-show="dashboardMeta.canSave">
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
 				<li class="dropdown">
@@ -39,7 +38,7 @@
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
 						<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
-						<li ng-if="dashboardMeta.canDelete"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
+						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
 			</ul>

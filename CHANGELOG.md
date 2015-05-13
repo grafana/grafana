@@ -16,6 +16,7 @@
 
 **Breaking changes**
 - [Issue #1928](https://github.com/grafana/grafana/issues/1928). HTTP API: GET /api/dashboards/db/:slug response changed property `model` to `dashboard` to match the POST request nameing
+- Backend render URL changed from `/render/dashboard/solo` `render/dashboard-solo/` (in order to have consistent dashboard url `/dashboard/:type/:slug`)
 
 # 2.0.3 (unreleased - 2.0.x branch)
 

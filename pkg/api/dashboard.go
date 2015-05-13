@@ -53,7 +53,8 @@ func GetDashboard(c *middleware.Context) {
 			IsStarred: isStarred,
 			Slug:      slug,
 			Type:      m.DashTypeDB,
-			CanSave:   c.OrgRole != m.ROLE_VIEWER,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
 		},
 	}
 
@@ -136,7 +137,6 @@ func GetDashboardFromJsonFile(c *middleware.Context) {
 
 	dash := dtos.DashboardFullWithMeta{Dashboard: dashboard.Data}
 	dash.Meta.Type = m.DashTypeJson
-	dash.Meta.CanSave = false
 
 	c.JSON(200, &dash)
 }

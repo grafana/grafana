@@ -16,9 +16,10 @@ var (
 )
 
 var (
-	DashTypeJson   = "file"
-	DashTypeDB     = "db"
-	DashTypeScript = "script"
+	DashTypeJson     = "file"
+	DashTypeDB       = "db"
+	DashTypeScript   = "script"
+	DashTypeSnapshot = "snapshot"
 )
 
 // Dashboard model
