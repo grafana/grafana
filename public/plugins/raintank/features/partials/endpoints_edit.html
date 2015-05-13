@@ -97,7 +97,7 @@
 				<div class="rt-box rt-page-box" id="ping">
 					<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="ping-enabled1" type="checkbox" ng-model="monitors['ping'].enabled">
+							<input class="rt-modal" id="ping-enabled1" type="checkbox" ng-model="monitors['ping'].enabled" ng-click="updateMonitor(monitors['ping'])">
 							<label for="ping-enabled1" class="rt-h2 rt-modal">Ping <span class="freqMsg supplemental-copy" ng-show="monitors['ping'].enabled"> (enabled)</span></label>
 						</div>
 						<div class="rt-box-row-info">
@@ -183,7 +183,7 @@
 				<div class="rt-box rt-page-box" id="dns">
 					<div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled">
+							<input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled" ng-click="updateMonitor(monitors['dns'])">
 							<label for="dns-enabled1" class="rt-h2 rt-modal">DNS <span class="freqMsg supplemental-copy" ng-show="monitors['dns'].enabled"> (enabled)</span></label>
 						</div>
 						<div class="rt-box-row-info">
@@ -262,12 +262,12 @@
 				<div class="rt-box rt-page-box" id="http">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="http-enabled1" type="checkbox" ng-model="monitors['http'].enabled">
+							<input class="rt-modal" id="http-enabled1" type="checkbox" ng-model="monitors['http'].enabled" ng-click="updateMonitor(monitors['http'])">
 							<label for="http-enabled1" class="rt-h2 rt-modal">HTTP <span class="freqMsg supplemental-copy" ng-show="monitors['http'].enabled"> (enabled)</span></label>
 						</div>
 						<div class="rt-box-row-info">
 							<a href="#">
-								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['http'].enabled"></i>
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;" ng-show="monitors['http'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['http'].enabled" > Every {{monitors['http'].frequency}}s from {{collectorCount(monitors['http'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['http'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
@@ -342,12 +342,12 @@
 				<div class="rt-box rt-page-box" id="https">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTPS = !showHTTPS">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="https-enabled1" type="checkbox" ng-model="monitors['https'].enabled">
+							<input class="rt-modal" id="https-enabled1" type="checkbox" ng-model="monitors['https'].enabled" ng-click="updateMonitor(monitors['https'])">
 							<label for="https-enabled1" class="rt-h2 rt-modal">HTTPS <span class="freqMsg supplemental-copy" ng-show="monitors['https'].enabled"> (enabled)</span></label>
 						</div>
 						<div class="rt-box-row-info">
 							<a href="#">
-								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['https'].enabled"></i>
+								<i class="icon icon-rt-monitoring-tiny" style="font-size:17px;" ng-show="monitors['https'].enabled"></i>
 								<span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} Collectors |</span>
 								<span class="freqMsg" ng-show="!monitors['https'].enabled && discovered" > Not Discovered |</span>
 								<span class="freqMsg" style="color: #13b2d4"> Configure</span>
