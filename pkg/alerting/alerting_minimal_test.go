@@ -10,6 +10,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+type fakeGraphite struct {
+	resp graphite.Response
+}
+
+func (fg fakeGraphite) Query(*graphite.Request) (graphite.Response, error) {
+	return fg.resp, nil
+}
+
 func NewFakeGraphite(values [][]int, initialTs int64, step int) *fakeGraphite {
 	fg := &fakeGraphite{}
 	series := make([]graphite.Series, 0)
