@@ -11,10 +11,14 @@ import (
 )
 
 type fakeGraphite struct {
-	resp graphite.Response
+	resp    graphite.Response
+	queries chan *graphite.Request
 }
 
-func (fg fakeGraphite) Query(*graphite.Request) (graphite.Response, error) {
+func (fg fakeGraphite) Query(req *graphite.Request) (graphite.Response, error) {
+	if fg.queries != nil {
+		fg.queries <- req
+	}
 	return fg.resp, nil
 }
 

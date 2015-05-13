@@ -19,14 +19,18 @@ func NewKeysSeen(ts int64) *keysSeen {
 	}
 }
 
-func Executor() {
-	// TODO: once i have my own linux dev machine i can easily run docker and will nice authenticated requests to configured source
-	gr := graphite.HostHeader{
-		//"play.grafana.org/api/datasources/proxy/1",
-		"graphiteApi_1:8888",
-		http.Header{
-			"X-Org-Id": []string{"1"},
+type GraphiteReturner func(org_id int) graphite.Context
+
+func GraphiteAuthContextReturner(org_id int) graphite.Context {
+	return graphite.HostHeader{
+		Host: "graphiteApi_1:8888",
+		Header: http.Header{
+			"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 		}}
+}
+
+func Executor(fn GraphiteReturner) {
+	gr := fn(1)
 
 	var keysSeenLastSecond *keysSeen
 	var keysSeenCurrentSecond *keysSeen
@@ -53,7 +57,7 @@ func Executor() {
 			keysSeenCurrentSecond = NewKeysSeen(unix)
 		}
 		// skip old job if we've seen newer
-		if unix < keysSeenLastSecond.ts {
+		if (keysSeenLastSecond != nil && unix < keysSeenLastSecond.ts) || unix < keysSeenCurrentSecond.ts {
 			continue
 		}
 		// note: if timestamp is very old (and we haven't processed anything newer),

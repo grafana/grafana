@@ -10,14 +10,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/alerting"
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -68,7 +68,7 @@ func main() {
 		go metrics.StartUsageReportLoop()
 	}
 	go alerting.Dispatcher()
-	go alerting.Executor()
+	go alerting.Executor(alerting.GraphiteAuthContextReturner)
 
 	cmd.StartServer()
 
