@@ -73,7 +73,7 @@
 									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
 								</div>
 								<div ng-show="!getMonitorByTypeName('Ping').enabled">
-									<a href="endpoints/edit/{{endpoint.id}}" class="freqMsg disabled">Not enabled, configure now.</a> 
+									<a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">Not enabled, configure now.</a> 
 								</div>
 						</div>
 
@@ -105,7 +105,7 @@
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
 							</div>
 							<div ng-show="!getMonitorByTypeName('DNS').enabled">
-								<a href="endpoints/edit/{{endpoint.id}}" class="freqMsg disabled">Not enabled, configure now.</a>
+								<a href="endpoints/edit/{{endpoint.id}}#dns" class="freqMsg disabled">Not enabled, configure now.</a>
                                                         </div>
 						</div>
 						
@@ -138,8 +138,8 @@
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
 							</div>
 							<div ng-show="!getMonitorByTypeName('HTTP').enabled">
-                                                        	<a href="endpoints/edit/{{endpoint.id}}" class="freqMsg disabled">Not enabled, configure now.</a>
-                                                        </div>
+               					<a href="endpoints/edit/{{endpoint.id}}#http" class="freqMsg disabled">Not enabled, configure now.</a>
+              				</div>
 						</div>
 						
 						<div class="status" ng-show="getMonitorByTypeName('HTTP').enabled">
@@ -171,7 +171,7 @@
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
 							</div>
 							<div ng-show="!getMonitorByTypeName('HTTPS').enabled">
-								<a href="endpoints/edit/{{endpoint.id}}" class="freqMsg disabled">Not enabled, configure now.</a>
+								<a href="endpoints/edit/{{endpoint.id}}#https" class="freqMsg disabled">Not enabled, configure now.</a>
 							</div>
 						</div>
 						

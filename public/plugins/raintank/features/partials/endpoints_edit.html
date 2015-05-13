@@ -94,7 +94,7 @@
 				<!-- General Settings -->
 
 				<!-- Ping Tab  -->
-				<div class="rt-box rt-page-box">
+				<div class="rt-box rt-page-box" id="ping">
 					<div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
 							<input class="rt-modal" id="ping-enabled1" type="checkbox" ng-model="monitors['ping'].enabled">
@@ -178,7 +178,7 @@
 				<!-- End Ping Tab -->
 
 				<!-- DNS Tab  -->
-				<div class="rt-box rt-page-box">
+				<div class="rt-box rt-page-box" id="dns">
 					<div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
 							<input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled">
@@ -255,7 +255,7 @@
 				<!-- End DNS Tab -->
 
 				<!-- HTTP Tab  -->
-				<div class="rt-box rt-page-box">
+				<div class="rt-box rt-page-box" id="http">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
 							<input class="rt-modal" id="http-enabled1" type="checkbox" ng-model="monitors['http'].enabled">
@@ -333,7 +333,7 @@
 				<!-- End HTTP Tab -->
 
 				<!-- HTTPS Tab  -->
-				<div class="rt-box rt-page-box">
+				<div class="rt-box rt-page-box" id="https">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTPS = !showHTTPS">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
 							<input class="rt-modal" id="https-enabled1" type="checkbox" ng-model="monitors['https'].enabled">

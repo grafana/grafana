@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointConfCtrl', function($scope, $q, $location, $routeParams, $http, backendSrv) {
+  module.controller('EndpointConfCtrl', function($scope, $q, $location, $timeout, $anchorScroll, $routeParams, $http, backendSrv) {
 
     var defaults = {
       name: '',
@@ -18,6 +18,7 @@ function (angular) {
     });
 
     $scope.init = function() {
+      var promises = [];
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
       $scope.discoveryError = false;
@@ -44,15 +45,20 @@ function (angular) {
         });
       });
       if ("id" in $routeParams) {
-        $scope.getEndpoints().then(function() {
+        promises.push($scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);
-        });
+        }));
       } else {
         $scope.reset();
       }
       $scope.checks = {};
-      $scope.getCollectors();
-      $scope.getMonitorTypes();
+      promises.push($scope.getCollectors());
+      promises.push($scope.getMonitorTypes());
+      $q.all(promises).then(function() {
+        $timeout(function() {
+          $anchorScroll();
+        }, 0, false);
+      });
       $scope.$watch('endpoint.name', function(newVal, oldVal) {
         $scope.discovered = false;
         for (var type in $scope.monitors) {
@@ -64,10 +70,26 @@ function (angular) {
           });
         }
       });
+      if ($location.hash()) {
+        switch($location.hash()) {
+        case "ping":
+          $scope.showPing = true;
+          break;
+        case "dns":
+          $scope.showDNS = true;
+          break;
+        case "http":
+          $scope.showHTTP = true;
+          break;
+        case "https":
+          $scope.showHTTPS = true;
+          break;
+        }
+      }
     };
 
     $scope.getCollectors = function() {
-      backendSrv.get('/api/collectors').then(function(collectors) {
+      return backendSrv.get('/api/collectors').then(function(collectors) {
         $scope.collectors = collectors;
         _.forEach(collectors, function(c) {
           $scope.allCollectors.push(c.id);
@@ -100,7 +122,7 @@ function (angular) {
     };
 
     $scope.getMonitorTypes = function() {
-      backendSrv.get('/api/monitor_types').then(function(types) {
+      return backendSrv.get('/api/monitor_types').then(function(types) {
         var typesMap = {};
         _.forEach(types, function(type) {
           typesMap[type.id] = type;
