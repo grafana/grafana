@@ -24,6 +24,7 @@ func Init() {
 		}
 
 		jsonDashIndex = NewJsonDashIndex(jsonFilesPath)
+		go jsonDashIndex.updateLoop()
 	}
 }
 

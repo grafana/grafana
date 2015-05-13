@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -23,12 +24,24 @@ type JsonDashIndexItem struct {
 }
 
 func NewJsonDashIndex(path string) *JsonDashIndex {
-	log.Info("Creating json dashboard index for path: ", path)
+	log.Info("Creating json dashboard index for path: %v", path)
 
 	index := JsonDashIndex{}
 	index.path = path
 	index.updateIndex()
 	return &index
+}
+
+func (index *JsonDashIndex) updateLoop() {
+	ticker := time.NewTicker(time.Minute)
+	for {
+		select {
+		case <-ticker.C:
+			if err := index.updateIndex(); err != nil {
+				log.Error(3, "Failed to update dashboard json index %v", err)
+			}
+		}
+	}
 }
 
 func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
@@ -71,8 +84,7 @@ func (index *JsonDashIndex) GetDashboard(path string) *m.Dashboard {
 }
 
 func (index *JsonDashIndex) updateIndex() error {
-
-	index.items = make([]*JsonDashIndexItem, 0)
+	var items = make([]*JsonDashIndexItem, 0)
 
 	visitor := func(path string, f os.FileInfo, err error) error {
 		if err != nil {
@@ -81,12 +93,16 @@ func (index *JsonDashIndex) updateIndex() error {
 		if f.IsDir() {
 			return nil
 		}
+
 		if strings.HasSuffix(f.Name(), ".json") {
-			err = index.loadDashboardIntoCache(path)
+			dash, err := loadDashboardFromFile(path)
 			if err != nil {
 				return err
 			}
+
+			items = append(items, dash)
 		}
+
 		return nil
 	}
 
@@ -94,16 +110,7 @@ func (index *JsonDashIndex) updateIndex() error {
 		return err
 	}
 
-	return nil
-}
-
-func (index *JsonDashIndex) loadDashboardIntoCache(filename string) error {
-	dash, err := loadDashboardFromFile(filename)
-	if err != nil {
-		return err
-	}
-
-	index.items = append(index.items, dash)
+	index.items = items
 	return nil
 }
 
