@@ -53,6 +53,7 @@ function (_, kbn) {
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
       if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
+      if (override.color !== void 0) { this.color = override.color; }
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;

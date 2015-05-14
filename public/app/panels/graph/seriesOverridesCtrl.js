@@ -9,7 +9,7 @@ define([
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv, $timeout) {
+  module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv) {
     $scope.overrideMenu = [];
     $scope.currentOverrides = [];
     $scope.override = $scope.override || {};
@@ -29,6 +29,12 @@ define([
     };
 
     $scope.setOverride = function(item, subItem) {
+      // handle color overrides
+      if (item.propertyName === 'color') {
+        $scope.openColorSelector();
+        return;
+      }
+
       $scope.override[item.propertyName] = subItem.value;
 
       // automatically disable lines for this series and the fill bellow to series
@@ -36,10 +42,6 @@ define([
       if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;
         $scope.addSeriesOverride({ alias: subItem.value, lines: false });
-      }
-
-      if (item.propertyName === 'color') {
-        $scope.openColorSelector();
       }
 
       $scope.updateCurrentOverrides();
