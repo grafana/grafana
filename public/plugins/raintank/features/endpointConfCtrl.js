@@ -19,6 +19,7 @@ function (angular) {
 
     $scope.init = function() {
       var promises = [];
+      $scope.newEndpointName = "";
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
       $scope.discoveryError = false;
@@ -190,6 +191,7 @@ function (angular) {
       _.forEach($scope.endpoints, function(endpoint) {
         if (endpoint.id == id) {
           $scope.endpoint = endpoint;
+          $scope.newEndpointName = endpoint.name;
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
@@ -239,6 +241,7 @@ function (angular) {
     };
 
     $scope.updateEndpoint = function() {
+      $scope.endpoint.name = $scope.newEndpointName;
       backendSrv.post('/api/endpoints', $scope.endpoint);
     };
 
@@ -268,7 +271,6 @@ function (angular) {
         }
         var type = $scope.monitor_types[resp.monitor_type_id];
         var message = type.name.toLowerCase() + " " + action + " successfully";
-        console.log("addedMonitor: ", message);
         alertSrv.set(message, '', 'success', 3000);
       });
     }
