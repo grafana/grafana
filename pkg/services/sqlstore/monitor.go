@@ -183,14 +183,12 @@ FROM monitor
 		rawSql += `LEFT JOIN 
         (SELECT
             collector.id AS collector_id,
-            collector_tag.tag as tag
+            collector_tag.tag as tag,
+	    collector_tag.org_id as org_id
         FROM collector
-        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
-        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id=? OR collector_tag.id is NULL)) as ct
+        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id) as ct
 		ON ct.tag = monitor_collector_tag.tag
 		`
-		rawParams = append(rawParams, query.OrgId, query.OrgId)
-
 		p := make([]string, len(query.CollectorId))
 		for i, c := range query.CollectorId {
 			p[i] = "?"
@@ -202,7 +200,7 @@ FROM monitor
 			p2[i] = "?"
 			rawParams = append(rawParams, e)
 		}
-		whereSql = append(whereSql, fmt.Sprintf("(mc.collector_id IN (%s) OR ct.collector_id IN (%s))", strings.Join(p, ","), strings.Join(p2, ",")))
+		whereSql = append(whereSql, fmt.Sprintf("((ct.org_id=monitor.org_id OR ct.org_id is NULL) AND (mc.collector_id IN (%s) OR ct.collector_id IN (%s)))", strings.Join(p, ","), strings.Join(p2, ",")))
 	}
 
 	if query.Modulo > 0 {
@@ -240,12 +238,14 @@ FROM monitor
 		monitorCollectorTags := make([]string, 0)
 		if row.CollectorTags != "" {
 			monitorCollectorTags = strings.Split(row.CollectorTags, ",")
-			for _, l := range strings.Split(row.TagCollectors, ",") {
-				i, err := strconv.ParseInt(l, 10, 64)
-				if err != nil {
-					return err
+			if row.TagCollectors != "" {
+				for _, l := range strings.Split(row.TagCollectors, ",") {
+					i, err := strconv.ParseInt(l, 10, 64)
+					if err != nil {
+						return err
+					}
+					monitorCollectorsMap[i] = true
 				}
-				monitorCollectorsMap[i] = true
 			}
 		}
 
