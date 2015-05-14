@@ -20,8 +20,8 @@
 
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}} ONLINE</a> | 
-					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}} OFFLINE</a> 
+					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}} ONLINE</a> |
+					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}} OFFLINE</a>
 			</div>
 			<div class="editor-option" style="float: right;">
 				<span class="small">Sort By:</span>
@@ -60,7 +60,7 @@
 						</a>
 					</li>
 					<li>
-						<a ng-click="setEndpointFilter(tag)">
+						<a ng-click="setCollectorFilter(tag)">
 							<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
 							Filter
 						</a>
