@@ -48,8 +48,8 @@ func main() {
 
 	flag.Parse()
 
-	initRuntime()
 	writePIDFile()
+	initRuntime()
 
 	social.NewOAuthService()
 	eventpublisher.Init()
