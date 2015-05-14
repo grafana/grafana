@@ -41,31 +41,27 @@
 
 
 	<form name="collectorForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
-		<div class="grid">
-		<div class="grid-full rt-box">
-			<div class="rt-box-header">
-				<div style="padding:10px;">General Settings</div>
-			</div>
-			<div class="rt-box-body" style="min-height: 50px">
-				<div class="editor-row">
-					<div class="editor-option">
-						<label class="small">Collector Name</label>
-						<input type="text" class="input-medium" ng-model="collector.name" required></input>
-					</div>
-					<div class="editor-option" ng-if="contextSrv.isGrafanaAdmin">
-						<label class="small">Public</label>
-						<input type="checkbox" class="input-medium" ng-model="collector.public"></input>
-					</div>
+
+
+		<div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+			<div class="rt-mini-form new-endpoint-domain-form">
+				<div class="rt-mini-form-col">
+					<label class="rt-form-label-medium">Collector Name</label>
+					<input type="text" class="rt-form-input" ng-model="collector.name" required="">
+				</div>
+
+				<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
+					<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
+					<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
 				</div>
 			</div>
-		</div>
-		<div ng-if="collector.id">
-			
-		</div>
-		<div class="dashboard-editor-footer" style="margin-top: 20px">
-			<button type="submit" class="btn btn-info" ng-hide="collector.id" ng-click="cancel()">Cancel</button>
-			<button type="submit" class="btn btn-success" ng-hide="collector.id" ng-click="add()">Add</button>
-			<button type="submit" class="btn btn-success" ng-show="collector.id" ng-click="save()">Save</button>
+			<div class="rt-mini-form-col" style="margin-top: 15px;">
+				<div>
+					<div class="editor-row" ng-show="collector.id">
+						<button type="submit" class="secondaryCTA" ng-click="save()">Update Collector</button>
+					</div>
+				</div>															
+			</div>
 		</div>
 	</form>
 

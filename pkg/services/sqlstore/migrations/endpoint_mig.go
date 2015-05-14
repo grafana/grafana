@@ -26,7 +26,7 @@ func addEndpointMigration(mg *Migrator) {
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", endpointV1)
 
-	slugCol := &Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false}
+	slugCol := &Column{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: true}
 	migration := NewAddColumnMigration(endpointV1, slugCol)
 	migration.OnSuccess = func(sess *xorm.Session) error {
 		sess.Table("endpoint")
