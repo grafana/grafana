@@ -1,6 +1,5 @@
 define([
   'angular',
-  './dashLoadControllers',
 ],
 function (angular) {
   "use strict";

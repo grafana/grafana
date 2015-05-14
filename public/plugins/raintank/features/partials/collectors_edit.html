@@ -23,7 +23,7 @@
 			<!-- page title -->
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{collector.name}}</h1>
-		
+
 		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
 		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
@@ -57,13 +57,14 @@
 			</div>
 			<div class="rt-mini-form-col" style="margin-top: 15px;">
 				<div>
-					<div class="editor-row" ng-show="collector.id">
-						<button type="submit" class="secondaryCTA" ng-click="save()">Update Collector</button>
+					<div class="editor-row">
+						<button type="submit" class="secondaryCTA" ng-click="save()" ng-show="collector.id">Update Collector</button>
+						<button type="submit" class="secondaryCTA" ng-click="add()" ng-hide="collector.id">Create Collector</button>
 					</div>
-				</div>															
+				</div>
 			</div>
 		</div>
 	</form>
 
 
-			
+
