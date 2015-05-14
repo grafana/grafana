@@ -21,9 +21,15 @@ function (angular, app, _) {
           var variable = scope.variable;
 
           scope.show = function() {
+            if (scope.selectorOpen) {
+              return;
+            }
+
             scope.selectorOpen = true;
             scope.giveFocus = 1;
             scope.oldCurrentText = variable.current.text;
+            scope.highlightIndex = -1;
+
             var currentValues = variable.current.value;
 
             if (_.isString(currentValues)) {
@@ -37,31 +43,71 @@ function (angular, app, _) {
               return option;
             });
 
+            scope.search = {query: '', options: scope.options};
+
             $timeout(function() {
               bodyEl.on('click', scope.bodyOnClick);
             }, 0, false);
           };
 
-          scope.optionSelected = function(option) {
+          scope.queryChanged = function() {
+            scope.highlightIndex = -1;
+            scope.search.options = _.filter(scope.options, function(option) {
+              return option.text.toLowerCase().indexOf(scope.search.query.toLowerCase()) !== -1;
+            });
+          };
+
+          scope.keyDown = function (evt) {
+            if (evt.keyCode === 27) {
+              scope.hide();
+            }
+            if (evt.keyCode === 40) {
+              scope.moveHighlight(1);
+            }
+            if (evt.keyCode === 38) {
+              scope.moveHighlight(-1);
+            }
+            if (evt.keyCode === 13) {
+              scope.optionSelected(scope.search.options[scope.highlightIndex], {});
+            }
+          };
+
+          scope.moveHighlight = function(direction) {
+            scope.highlightIndex = (scope.highlightIndex + direction) % scope.search.options.length;
+          };
+
+          scope.optionSelected = function(option, event) {
             option.selected = !option.selected;
 
-            if (!variable.multi || option.text === 'All') {
+            var hideAfter = true;
+            var setAllExceptCurrentTo = function(newValue) {
               _.each(scope.options, function(other) {
-                if (option !== other) {
-                  other.selected = false;
-                }
+                if (option !== other) { other.selected = newValue; }
               });
+            };
+
+            if (option.text === 'All') {
+              setAllExceptCurrentTo(false);
+            }
+            else if (!variable.multi) {
+              setAllExceptCurrentTo(false);
+            } else {
+              if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                hideAfter = false;
+              }
+              else {
+                setAllExceptCurrentTo(false);
+              }
             }
 
             var selected = _.filter(scope.options, {selected: true});
 
-            // enfore the first selected if no option is selected
             if (selected.length === 0) {
-              scope.options[0].selected = true;
-              selected = [scope.options[0]];
+              option.selected = true;
+              selected = [option];
             }
 
-            if (selected.length > 1) {
+            if (selected.length > 1 && selected.length !== scope.options.length) {
               if (selected[0].text === 'All') {
                 selected[0].selected = false;
                 selected = selected.slice(1, selected.length);
@@ -80,14 +126,14 @@ function (angular, app, _) {
 
             scope.updateLinkText();
             scope.onUpdated();
+
+            if (hideAfter) {
+              scope.hide();
+            }
           };
 
           scope.hide = function() {
             scope.selectorOpen = false;
-            // if (scope.oldCurrentText !== variable.current.text) {
-            //   scope.onUpdated();
-            // }
-
             bodyEl.off('click', scope.bodyOnClick);
           };
 
@@ -99,12 +145,8 @@ function (angular, app, _) {
           };
 
           scope.updateLinkText = function() {
-            scope.linkText = "";
-            if (!variable.hideLabel) {
-              scope.linkText = (variable.label || variable.name) + ': ';
-            }
-
-            scope.linkText += variable.current.text;
+            scope.labelText = variable.label || '$' + variable.name;
+            scope.linkText = variable.current.text;
           };
 
           scope.$watchGroup(['variable.hideLabel', 'variable.name', 'variable.label', 'variable.current.text'], function() {

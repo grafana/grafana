@@ -6,11 +6,15 @@ define([
 
   describe('SeriesOverridesCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
+    var popoverSrv = {};
 
     beforeEach(module('grafana.services'));
     beforeEach(module('grafana.panels.graph'));
 
-    beforeEach(ctx.providePhase());
+    beforeEach(ctx.providePhase({
+      popoverSrv: popoverSrv
+    }));
+
     beforeEach(ctx.createControllerPhase('SeriesOverridesCtrl'));
     beforeEach(function() {
       ctx.scope.render = function() {};

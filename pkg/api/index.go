@@ -25,6 +25,10 @@ func setIndexViewData(c *middleware.Context) error {
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
 	}
 
+	if setting.DisableGravatar {
+		currentUser.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
+	}
+
 	if len(currentUser.Name) == 0 {
 		currentUser.Name = currentUser.Login
 	}

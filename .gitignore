@@ -27,4 +27,5 @@ grafana
 
 conf/custom.ini
 fig.yml
+profile.cov
 

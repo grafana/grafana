@@ -12,47 +12,29 @@ define([
     $routeProvider
       .when('/', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBCtrl',
+        controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/db/:slug', {
+      .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromDBCtrl',
+        controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/file/:jsonFile', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromFileCtrl',
-        reloadOnSearch: false,
+      .when('/dashboard-solo/:type/:slug', {
+        templateUrl: 'app/features/panel/partials/soloPanel.html',
+        controller : 'SoloPanelCtrl',
       })
-      .when('/dashboard/script/:jsFile', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromScriptCtrl',
-        reloadOnSearch: false,
-      })
-      .when('/dashboard/import/:file', {
+      .when('/dashboard-import/:file', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromImportCtrl',
         reloadOnSearch: false,
-      })
-      .when('/dashboard/snapshot/:key', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'DashFromSnapshotCtrl',
-      })
-      .when('/dashboard/solo/db/:slug', {
-        templateUrl: 'app/features/panel/partials/soloPanel.html',
-        controller : 'SoloPanelCtrl',
-      })
-      .when('/dashboard/solo/snapshot/:key', {
-        templateUrl: 'app/features/panel/partials/soloPanel.html',
-        controller : 'SoloPanelCtrl',
       })
       .when('/dashboard/new', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/import', {
+      .when('/import/dashboard', {
         templateUrl: 'app/features/dashboard/partials/import.html',
         controller : 'DashboardImportCtrl',
       })

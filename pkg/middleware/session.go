@@ -16,17 +16,46 @@ const (
 )
 
 var sessionManager *session.Manager
-var sessionOptions session.Options
+var sessionOptions *session.Options
+var startSessionGC func()
 
-func startSessionGC() {
-	sessionManager.GC()
-	time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+func init() {
+	startSessionGC = func() {
+		sessionManager.GC()
+		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+	}
 }
 
-func Sessioner(options session.Options) macaron.Handler {
+func prepareOptions(opt *session.Options) *session.Options {
+	if len(opt.Provider) == 0 {
+		opt.Provider = "memory"
+	}
+	if len(opt.ProviderConfig) == 0 {
+		opt.ProviderConfig = "data/sessions"
+	}
+	if len(opt.CookieName) == 0 {
+		opt.CookieName = "grafana_sess"
+	}
+	if len(opt.CookiePath) == 0 {
+		opt.CookiePath = "/"
+	}
+	if opt.Gclifetime == 0 {
+		opt.Gclifetime = 3600
+	}
+	if opt.Maxlifetime == 0 {
+		opt.Maxlifetime = opt.Gclifetime
+	}
+	if opt.IDLength == 0 {
+		opt.IDLength = 16
+	}
+
+	return opt
+}
+
+func Sessioner(options *session.Options) macaron.Handler {
 	var err error
-	sessionOptions = options
-	sessionManager, err = session.NewManager(options.Provider, options)
+	sessionOptions = prepareOptions(options)
+	sessionManager, err = session.NewManager(options.Provider, *options)
 	if err != nil {
 		panic(err)
 	}

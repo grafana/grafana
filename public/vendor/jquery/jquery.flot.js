@@ -122,6 +122,7 @@ Licensed under the MIT license.
 		// re-calculating them when the plot is re-rendered in a loop.
 
 		this._textCache = {};
+		this._textSizeCache = window.flotTextSizeCache = window.flotTextSizeCache || {};
 	}
 
 	// Resizes the canvas to the given dimensions.
@@ -368,13 +369,17 @@ Licensed under the MIT license.
 				element.addClass(font);
 			}
 
-			info = styleCache[text] = {
-				width: element.outerWidth(true),
-				height: element.outerHeight(true),
-				element: element,
-				positions: []
-			};
+      info = styleCache[text] = { element: element, positions: [] };
 
+      var size = this._textSizeCache[text];
+			if (size) {
+        info.width = size.width;
+        info.height = size.height;
+			} else {
+        info.width = element.outerWidth(true);
+        info.height = element.outerHeight(true);
+        this._textSizeCache[text] = { width: info.width, height: info.height };
+			}
 			element.detach();
 		}
 

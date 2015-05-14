@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(contextSrv)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -39,6 +39,7 @@ function (angular, $, kbn, _, moment) {
       this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
+      this.links = data.links || [];
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -55,13 +56,8 @@ function (angular, $, kbn, _, moment) {
 
       meta.canShare = meta.canShare === false ? false : true;
       meta.canSave = meta.canSave === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
       meta.canStar = meta.canStar === false ? false : true;
-      meta.canDelete = meta.canDelete === false ? false : true;
-
-      if (contextSrv.hasRole('Viewer')) {
-        meta.canSave = false;
-      }
+      meta.canEdit = meta.canEdit === false ? false : true;
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -149,8 +145,8 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
-    p.hasTemplateVarsOrAnnotations = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0;
+    p.isSubmenuFeaturesEnabled = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
@@ -309,8 +305,13 @@ function (angular, $, kbn, _, moment) {
     return {
       create: function(dashboard, meta) {
         return new DashboardModel(dashboard, meta);
-      }
+      },
+      setCurrent: function(dashboard) {
+        this.currentDashboard = dashboard;
+      },
+      getCurrent: function() {
+        return this.currentDashboard;
+      },
     };
-
   });
 });

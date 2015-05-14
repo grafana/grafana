@@ -65,12 +65,14 @@ var (
 	RouterLogging      bool
 	StaticRootPath     string
 	EnableGzip         bool
+	EnforceDomain      bool
 
 	// Security settings.
 	SecretKey          string
 	LogInRememberDays  int
 	CookieUserName     string
 	CookieRememberName string
+	DisableGravatar    bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -85,6 +87,12 @@ var (
 	AnonymousEnabled bool
 	AnonymousOrgName string
 	AnonymousOrgRole string
+
+	// Auth proxy settings
+	AuthProxyEnabled        bool
+	AuthProxyHeaderName     string
+	AuthProxyHeaderProperty string
+	AuthProxyAutoSignUp     bool
 
 	// Session settings.
 	SessionOptions session.Options
@@ -253,11 +261,13 @@ func loadSpecifedConfigFile(configFile string) {
 
 			defaultSec, err := Cfg.GetSection(section.Name())
 			if err != nil {
-				log.Fatal(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+				log.Error(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+				continue
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Fatal(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				log.Error(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				continue
 			}
 			defaultKey.SetValue(key.Value())
 		}
@@ -282,9 +292,12 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// command line props
 	commandLineProps := getCommandLineProperties(args.Args)
-
 	// load default overrides
 	applyCommandLineDefaultProperties(commandLineProps)
+
+	// init logging before specific config so we can log errors from here on
+	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
+	initLogging(args)
 
 	// load specified config file
 	loadSpecifedConfigFile(args.Config)
@@ -297,6 +310,10 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// evaluate config values containing environment variables
 	evalConfigValues()
+
+	// update data path and logging config
+	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
+	initLogging(args)
 }
 
 func pathExists(path string) bool {
@@ -332,9 +349,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
 
-	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
-
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 
@@ -351,16 +365,18 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
+	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
+	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	// admin
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
@@ -375,6 +391,13 @@ func NewConfigContext(args *CommandLineArgs) {
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
 	AnonymousOrgName = Cfg.Section("auth.anonymous").Key("org_name").String()
 	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
+
+	// auth proxy
+	authProxy := Cfg.Section("auth.proxy")
+	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+	AuthProxyHeaderName = authProxy.Key("header_name").String()
+	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
+	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")

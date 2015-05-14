@@ -1,17 +1,12 @@
 define([
-  'helpers',
   'features/dashboard/dashboardSrv'
-], function(helpers) {
+], function() {
   'use strict';
 
   describe('dashboardSrv', function() {
     var _dashboardSrv;
-    var contextSrv = new helpers.ContextSrvStub();
 
     beforeEach(module('grafana.services'));
-    beforeEach(module(function($provide) {
-      $provide.value('contextSrv', contextSrv);
-    }));
 
     beforeEach(inject(function(dashboardSrv) {
       _dashboardSrv = dashboardSrv;
@@ -29,7 +24,7 @@ define([
       });
 
       it('should have meta', function() {
-        expect(model.meta.canSave).to.be(false);
+        expect(model.meta.canSave).to.be(true);
         expect(model.meta.canShare).to.be(true);
       });
 

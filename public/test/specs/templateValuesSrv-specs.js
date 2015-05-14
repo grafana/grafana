@@ -10,7 +10,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', "$routeParams"]));
+    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
     beforeEach(ctx.createService('templateValuesSrv'));
 
     describe('update interval variable options', function() {
@@ -27,11 +27,57 @@ define([
       });
     });
 
+    describe('when template variable is present in url', function() {
+      var variable = {
+        name: 'apps',
+        current: {text: "test", value: "test"},
+        options: [{text: "test", value: "test"}]
+      };
+
+      beforeEach(function() {
+        var dashboard = { templating: { list: [variable] } };
+        var urlParams = {};
+        urlParams["var-apps"] = "new";
+        ctx.$location.search = sinon.stub().returns(urlParams);
+        ctx.service.init(dashboard);
+      });
+
+      it('should update current value', function() {
+        expect(variable.current.value).to.be("new");
+        expect(variable.current.text).to.be("new");
+      });
+    });
+
+    describe('when template variable is present in url multiple times', function() {
+      var variable = {
+        name: 'apps',
+        multi: true,
+        current: {text: "test", value: "test"},
+        options: [{text: "test", value: "test"}]
+      };
+
+      beforeEach(function() {
+        var dashboard = { templating: { list: [variable] } };
+        var urlParams = {};
+        urlParams["var-apps"] = ["new", "other"];
+        ctx.$location.search = sinon.stub().returns(urlParams);
+        ctx.service.init(dashboard);
+      });
+
+      it('should update current value', function() {
+        expect(variable.current.value.length).to.be(2);
+        expect(variable.current.value[0]).to.be("new");
+        expect(variable.current.value[1]).to.be("other");
+        expect(variable.current.text).to.be("new, other");
+      });
+    });
+
+
     function describeUpdateVariable(desc, fn) {
       describe(desc, function() {
         var scenario = {};
         scenario.setup = function(setupFn) {
-         scenario.setupFn = setupFn;
+          scenario.setupFn = setupFn;
         };
 
         beforeEach(function() {

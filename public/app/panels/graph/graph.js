@@ -112,7 +112,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
 
           if (elem.width() === 0) {
-            return;
+            return true;
           }
         }
 
@@ -277,7 +277,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
             return true;
           }
-          return false;
         }
 
         function addTimeAxis(options) {

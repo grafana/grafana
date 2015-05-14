@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'jquery',
 ],
-function (angular, _) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -14,30 +15,44 @@ function (angular, _) {
     };
 
     this.show = function(options) {
-      var popover = options.element.data('popover');
-      if (popover) {
-        popover.scope.$destroy();
-        popover.destroy();
-        return;
-      }
+      var popover;
+
+      // hide other popovers
+      $('.popover').each(function() {
+        popover = $(this).prev().data('popover');
+        if (popover) {
+          popover.scope.$destroy();
+          popover.destroy();
+        }
+      });
+
+      options.scope.dismiss = function() {
+        popover = options.element.data('popover');
+        if (popover) {
+          popover.destroy();
+        }
+        options.scope.$destroy();
+      };
 
       this.getTemplate(options.templateUrl).then(function(result) {
-        var template = _.isString(result) ? result : result.data;
+        $timeout(function() {
+          var template = _.isString(result) ? result : result.data;
 
-        options.element.popover({
-          content: template,
-          placement: 'bottom',
-          html: true
-        });
+          options.element.popover({
+            content: template,
+            placement: options.placement || 'bottom',
+            html: true
+          });
 
-        popover = options.element.data('popover');
-        popover.hasContent = function () {
-          return template;
-        };
+          popover = options.element.data('popover');
+          popover.hasContent = function () {
+            return template;
+          };
 
-        popover.toggle();
-        popover.scope = options.scope;
-        $compile(popover.$tip)(popover.scope);
+          popover.toggle();
+          popover.scope = options.scope;
+          $compile(popover.$tip)(popover.scope);
+        }, 1);
       });
     };
 

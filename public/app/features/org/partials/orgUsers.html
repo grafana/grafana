@@ -35,7 +35,7 @@
 
 		<br>
 
-		<table class="grafana-options-table">
+		<table class="grafana-options-table form-inline">
 			<tr>
 				<th>Login</th>
 				<th>Email</th>
@@ -46,7 +46,8 @@
 				<td>{{user.login}}</td>
 				<td>{{user.email}}</td>
 				<td>
-					{{user.role}}
+					<select type="text" ng-model="user.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(user)">
+					</select>
 				</td>
 				<td style="width: 1%">
 					<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">

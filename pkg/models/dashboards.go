@@ -10,9 +10,16 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound           = errors.New("Account not found")
+	ErrDashboardNotFound           = errors.New("Dashboard not found")
 	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
+)
+
+var (
+	DashTypeJson     = "file"
+	DashTypeDB       = "db"
+	DashTypeScript   = "script"
+	DashTypeSnapshot = "snapshot"
 )
 
 // Dashboard model
@@ -54,12 +61,10 @@ func (dash *Dashboard) GetTags() []string {
 	return b
 }
 
-// GetDashboardModel turns the command into the savable model
-func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
+func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 	dash := &Dashboard{}
-	dash.Data = cmd.Dashboard
+	dash.Data = data
 	dash.Title = dash.Data["title"].(string)
-	dash.OrgId = cmd.OrgId
 	dash.UpdateSlug()
 
 	if dash.Data["id"] != nil {
@@ -72,6 +77,14 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 		dash.Data["version"] = 0
 	}
 
+	return dash
+}
+
+// GetDashboardModel turns the command into the savable model
+func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
+	dash := NewDashboardFromJson(cmd.Dashboard)
+	dash.OrgId = cmd.OrgId
+	dash.UpdateSlug()
 	return dash
 }
 
@@ -112,4 +125,14 @@ type GetDashboardQuery struct {
 	OrgId int64
 
 	Result *Dashboard
+}
+
+type DashboardTagCloudItem struct {
+	Term  string `json:"term"`
+	Count int    `json:"count"`
+}
+
+type GetDashboardTagsQuery struct {
+	OrgId  int64
+	Result []*DashboardTagCloudItem
 }

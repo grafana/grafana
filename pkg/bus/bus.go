@@ -121,3 +121,7 @@ func Dispatch(msg Msg) error {
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
 }
+
+func ClearBusHandlers() {
+	globalBus = New()
+}

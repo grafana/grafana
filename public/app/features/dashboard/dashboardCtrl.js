@@ -17,6 +17,7 @@ function (angular, $, config) {
       templateValuesSrv,
       dynamicDashboardSrv,
       dashboardSrv,
+      unsavedChangesSrv,
       dashboardViewStateSrv,
       contextSrv,
       $timeout) {
@@ -39,7 +40,8 @@ function (angular, $, config) {
       $rootScope.performance.panelsInitialized = 0;
       $rootScope.performance.panelsRendered = 0;
 
-      var dashboard = dashboardSrv.create(data.model, data.meta);
+      var dashboard = dashboardSrv.create(data.dashboard, data.meta);
+      dashboardSrv.setCurrent(dashboard);
 
       // init services
       timeSrv.init(dashboard);
@@ -48,6 +50,8 @@ function (angular, $, config) {
       // the rest of the dashboard can load
       templateValuesSrv.init(dashboard).finally(function() {
         dynamicDashboardSrv.init(dashboard);
+        unsavedChangesSrv.init(dashboard, $scope);
+
         $scope.dashboard = dashboard;
         $scope.dashboardMeta = dashboard.meta;
         $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
@@ -60,7 +64,7 @@ function (angular, $, config) {
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       }).catch(function(err) {
-        console.log('Failed to initialize dashboard template variables, error: ', err);
+        console.log('Failed to initialize dashboard', err);
         $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
     };
@@ -72,7 +76,7 @@ function (angular, $, config) {
     };
 
     $scope.updateSubmenuVisibility = function() {
-      $scope.submenuEnabled = $scope.dashboard.hasTemplateVarsOrAnnotations();
+      $scope.submenuEnabled = $scope.dashboard.isSubmenuFeaturesEnabled();
     };
 
     $scope.setWindowTitleAndTheme = function() {
