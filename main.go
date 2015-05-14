@@ -49,8 +49,8 @@ func main() {
 
 	flag.Parse()
 
-	initRuntime()
 	writePIDFile()
+	initRuntime()
 
 	search.Init()
 	social.NewOAuthService()
