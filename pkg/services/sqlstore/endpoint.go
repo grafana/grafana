@@ -271,7 +271,12 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 			return err
 		}
 		if len(monitorQuery.Result) > 0 {
-			return m.ErrWithMonitorsDelete
+			for _, mon := range monitorQuery.Result {
+				monitorDelCmd := &m.DeleteMonitorCommand{Id: mon.Id, OrgId: cmd.OrgId}
+				if err := DeleteMonitorTransaction(monitorDelCmd, sess); err != nil {
+					return err
+				}
+			}
 		}
 
 		q := m.GetEndpointByIdQuery{

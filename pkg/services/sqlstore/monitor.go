@@ -57,7 +57,7 @@ FROM monitor
     INNER JOIN endpoint on monitor.endpoint_id = endpoint.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
-    LEFT JOIN 
+    LEFT JOIN
         (SELECT
             collector.id AS collector_id,
             collector_tag.tag as tag
@@ -153,7 +153,7 @@ FROM monitor
     INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
-    LEFT JOIN 
+    LEFT JOIN
         (SELECT
             collector.id AS collector_id,
             collector_tag.tag as tag
@@ -180,7 +180,7 @@ FROM monitor
 
 	if len(query.CollectorId) > 0 {
 		rawSql += "LEFT JOIN monitor_collector AS mc ON mc.monitor_id = monitor.id\n"
-		rawSql += `LEFT JOIN 
+		rawSql += `LEFT JOIN
         (SELECT
             collector.id AS collector_id,
             collector_tag.tag as tag,
@@ -340,46 +340,50 @@ func GetMonitorTypes(query *m.GetMonitorTypesQuery) error {
 
 func DeleteMonitor(cmd *m.DeleteMonitorCommand) error {
 	return inTransaction2(func(sess *session) error {
-		q := m.GetMonitorByIdQuery{
-			Id:    cmd.Id,
-			OrgId: cmd.OrgId,
-		}
-		err := GetMonitorById(&q)
-		if err != nil {
-			return err
-		}
-		var rawSql = "DELETE FROM monitor WHERE id=? and org_id=?"
-		_, err = sess.Exec(rawSql, cmd.Id, cmd.OrgId)
-		if err != nil {
-			return err
-		}
-		rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
-		_, err = sess.Exec(rawSql, cmd.Id)
-		if err != nil {
-			return err
-		}
-		rawSql = "DELETE FROM monitor_collector_tag WHERE monitor_id=?"
-		_, err = sess.Exec(rawSql, cmd.Id)
-		if err != nil {
-			return err
-		}
-		rawSql = "DELETE FROM monitor_collector_state WHERE monitor_id=?"
-		_, err = sess.Exec(rawSql, cmd.Id)
-		if err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.MonitorRemoved{
-			Timestamp:     time.Now(),
-			Id:            q.Result.Id,
-			EndpointId:    q.Result.EndpointId,
-			OrgId:         q.Result.OrgId,
-			CollectorIds:  q.Result.CollectorIds,
-			CollectorTags: q.Result.CollectorTags,
-			Collectors:    q.Result.Collectors,
-		})
-		return nil
+		return DeleteMonitorTransaction(cmd, sess)
 	})
+}
+
+func DeleteMonitorTransaction(cmd *m.DeleteMonitorCommand, sess *session) error {
+	q := m.GetMonitorByIdQuery{
+		Id:    cmd.Id,
+		OrgId: cmd.OrgId,
+	}
+	err := GetMonitorById(&q)
+	if err != nil {
+		return err
+	}
+	var rawSql = "DELETE FROM monitor WHERE id=? and org_id=?"
+	_, err = sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+	if err != nil {
+		return err
+	}
+	rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
+	_, err = sess.Exec(rawSql, cmd.Id)
+	if err != nil {
+		return err
+	}
+	rawSql = "DELETE FROM monitor_collector_tag WHERE monitor_id=?"
+	_, err = sess.Exec(rawSql, cmd.Id)
+	if err != nil {
+		return err
+	}
+	rawSql = "DELETE FROM monitor_collector_state WHERE monitor_id=?"
+	_, err = sess.Exec(rawSql, cmd.Id)
+	if err != nil {
+		return err
+	}
+
+	sess.publishAfterCommit(&events.MonitorRemoved{
+		Timestamp:     time.Now(),
+		Id:            q.Result.Id,
+		EndpointId:    q.Result.EndpointId,
+		OrgId:         q.Result.OrgId,
+		CollectorIds:  q.Result.CollectorIds,
+		CollectorTags: q.Result.CollectorTags,
+		Collectors:    q.Result.Collectors,
+	})
+	return nil
 }
 
 // store collector list query result
@@ -819,8 +823,8 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 	params := make([]interface{}, 0)
 	rawSql := `SELECT DISTINCT(collector.id) AS collector_id
 	FROM collector
-	INNER JOIN collector_tag ON collector.id = collector_tag.collector_id 
-	WHERE (collector.public=1 OR collector.org_id=?) 
+	INNER JOIN collector_tag ON collector.id = collector_tag.collector_id
+	WHERE (collector.public=1 OR collector.org_id=?)
 		AND collector_tag.org_id=?
 	`
 
