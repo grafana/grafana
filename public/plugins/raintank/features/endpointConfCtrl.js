@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointConfCtrl', function($scope, $q, $location, $timeout, $anchorScroll, $routeParams, $http, backendSrv) {
+  module.controller('EndpointConfCtrl', function($scope, $q, $location, $timeout, $anchorScroll, $routeParams, $http, backendSrv, alertSrv) {
 
     var defaults = {
       name: '',
@@ -260,14 +260,33 @@ function (angular) {
 
     $scope.addMonitor = function(monitor) {
       monitor.endpoint_id = $scope.endpoint.id;
-      backendSrv.put('/api/monitors', monitor);
+      backendSrv.put('/api/monitors', monitor).then(function(resp) {
+        monitor.id = resp.id;
+        var action = "disabled";
+        if (monitor.enabled) {
+          action = "enabled"
+        }
+        var type = $scope.monitor_types[resp.monitor_type_id];
+        var message = type.name.toLowerCase() + " " + action + " successfully";
+        console.log("addedMonitor: ", message);
+        alertSrv.set(message, '', 'success', 3000);
+      });
     }
 
     $scope.updateMonitor = function(monitor) {
       if (!monitor.id) {
         return $scope.addMonitor(monitor);
       }
-      backendSrv.post('/api/monitors', monitor);
+      backendSrv.post('/api/monitors', monitor).then(function() {
+        var action = "disabled";
+        if (monitor.enabled) {
+          action = "enabled"
+        }
+        var type = $scope.monitor_types[monitor.monitor_type_id];
+        var message = type.name.toLowerCase() + " " + action + " successfully";
+        console.log("addedMonitor: ", message);
+        alertSrv.set(message, '', 'success', 3000);
+      });
     }
 
     $scope.parseSuggestions = function(payload) {
@@ -317,6 +336,7 @@ function (angular) {
       });
       backendSrv.put('/api/endpoints', payload).then(function(resp) {
         $scope.endpoint = resp;
+        alertSrv.set("endpoint added", '', 'success', 3000);
         $location.path("endpoints/summary/"+resp.id);
       });
     }

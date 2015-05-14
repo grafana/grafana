@@ -50,7 +50,7 @@
 								<div class="editor-row" ng-show="endpoint.id">
 									<button type="submit" class="secondaryCTA" style="position:relative; top:-1px;" ng-click="updateEndpoint(endpoint)">Update Endpoint Name</button>
 								</div>
-							</div>															
+							</div>
 						</div>
 					</div>
 				</div>
@@ -121,12 +121,12 @@
 								<p class="rt-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p>
 								<div class="editor-option rt-input-styles">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: 34px;"></select> 
+									<select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: 34px;"></select>
 								</div>
 								<div class="editor-option">
 									<label class="small rt-label-override">Collectors</label>
 									<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
-								</div>								
+								</div>
 								<div>
 									<div class="editor-option rt-input-styles" style="padding-top: 15px; padding-bottom: 5px; width: auto; height: auto;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
 										<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
@@ -142,7 +142,7 @@
 								<!-- Im sure this can be refactored to be handled more cleanly -->
 								</div>
 							</div>
-	
+
 						</div>
 
 <!-- 						<div class="rt-box-interior-section">
@@ -164,7 +164,7 @@
 									<span class="rt-sentence-form-label">consecutive checks.</span>
 								</div>
 							</div>
-						</div>	
+						</div>
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
@@ -201,12 +201,12 @@
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
-							<div class="rt-box-interior-header rt-h3">Monitoring</div>							
+							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
 								<p class="rt-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select> 
+									<select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select>
 								</div>
 								<div class="editor-option">
 									<label class="small rt-label-override">Collectors</label>
@@ -244,7 +244,7 @@
 									<span class="rt-sentence-form-label">consecutive checks.</span>
 								</div>
 							</div>
-						</div>	
+						</div>
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
@@ -262,7 +262,7 @@
 				<div class="rt-box rt-page-box" id="http">
 					<div class="rt-box-header rt-page-box-header" ng-click="showHTTP = !showHTTP" ng-class="{ active: showhttp }">
 						<div class="rt-page-box-header-checkbox checkbox-check-enabled">
-							<input class="rt-modal" id="http-enabled1" type="checkbox" ng-model="monitors['http'].enabled" ng-click="updateMonitor(monitors['http'])">
+							<input class="rt-modal" id="http-enabled1" type="checkbox" ng-model="monitors['http'].enabled" ng-change="updateMonitor(monitors['http'])">
 							<label for="http-enabled1" class="rt-h2 rt-modal">HTTP <span class="freqMsg supplemental-copy" ng-show="monitors['http'].enabled"> (enabled)</span></label>
 						</div>
 						<div class="rt-box-row-info">
@@ -280,12 +280,12 @@
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
 							</div>
-							<div class="rt-box-interior-header rt-h3">Monitoring</div>								
+							<div class="rt-box-interior-header rt-h3">Monitoring</div>
 							<div class="rt-box-interior-content">
 								<p class="rt-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['http'].frequency}}" style="width: auto; height: 34px;"></select> 
+									<select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['http'].frequency}}" style="width: auto; height: 34px;"></select>
 								</div>
 								<div class="editor-option">
 									<label class="small rt-label-override">Collectors</label>
@@ -299,8 +299,8 @@
 							</div>
 	 						<div class="rt-box-interior-content rt-interior-update">
 									<div class="editor-row" ng-show="endpoint.id">
-										<button type="submit" ng-show="monitors['http'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['http'])">Update HTTP Settings</button>
-										<button type="submit" ng-show="monitors['http'].enabled == false" class="secondaryCTA" ng-click="monitors['http'].enabled=true ; updateMonitor(monitors['http'])">Enable HTTP</button>
+										<button type="submit" ng-show="monitors['http'].enabled" class="secondaryCTA" ng-click="updateMonitor(monitors['http'])">Update HTTP Settings</button>
+										<button type="submit" ng-hide="monitors['http'].enabled" class="secondaryCTA" ng-click="monitors['http'].enabled=true ; updateMonitor(monitors['http'])">Enable HTTP</button>
 										<!-- Im sure this can be refactored to be handled more cleanly -->
 									</div>
 							</div>
@@ -323,7 +323,7 @@
 									<span class="rt-sentence-form-label">consecutive checks.</span>
 								</div>
 							</div>
-						</div>	
+						</div>
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
@@ -365,7 +365,7 @@
 							<p class="rt-body-copy">We do an HTTPS request to your Endpoint every at the frequency selected, from every Collector. We will download content from your web server up to the limit you specify.</p>
 								<div class="editor-option rt-input-styles" style="display: inline-block;">
 									<label class="small">Frequency</label>
-									<select class="small" ng-model="monitors['https'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['https'].frequency}}" style="width: auto; height: 34px;"></select> 
+									<select class="small" ng-model="monitors['https'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['https'].frequency}}" style="width: auto; height: 34px;"></select>
 								</div>
 								<div class="editor-option">
 									<label class="small rt-label-override">Collectors</label>
@@ -403,7 +403,7 @@
 									<span class="rt-sentence-form-label">consecutive checks.</span>
 								</div>
 							</div>
-						</div>	
+						</div>
 						<div class="rt-box-interior-section">
 							<div class="rt-box-interior-header-icon">
 								<i class="icon icon-rt-alert" style="font-size: 26px;"></i>
@@ -419,4 +419,4 @@
 	</form>
 </div>
 
-			
+
