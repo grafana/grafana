@@ -1,0 +1,11 @@
+<div class="graph-legend-popover">
+	<a class="close" ng-click="dismiss();" href="">×</a>
+
+	<div class="editor-row">
+		<i ng-repeat="color in colors" class="pointer fa fa-circle"
+			ng-style="{color:color}"
+			ng-click="colorSelected(color);dismiss();">&nbsp;</i>
+	</div>
+
+</div>
+
