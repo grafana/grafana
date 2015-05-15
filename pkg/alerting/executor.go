@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"bosun.org/graphite"
 )
 
@@ -23,7 +25,7 @@ type GraphiteReturner func(org_id int) graphite.Context
 
 func GraphiteAuthContextReturner(org_id int) graphite.Context {
 	return graphite.HostHeader{
-		Host: "graphiteApi_1:8888",
+		Host: setting.GraphiteUrl,
 		Header: http.Header{
 			"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 		}}
