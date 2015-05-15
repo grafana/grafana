@@ -116,7 +116,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
-    $scope.logScales = {'linear': 1, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
+    $scope.logScales = {'linear': 1, 'log (base 2)': 2, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];

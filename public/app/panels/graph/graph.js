@@ -369,7 +369,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
-            secondY.logBase = scope.panel.grid.rightLogBase || 2,
+            secondY.logBase = scope.panel.grid.rightLogBase || 1,
             secondY.position = 'right';
             secondY.min = scope.panel.grid.rightMin;
             secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
