@@ -37,7 +37,7 @@ func Executor(fn GraphiteReturner) {
 	var keysSeenLastSecond *keysSeen
 	var keysSeenCurrentSecond *keysSeen
 
-	for job := range queue {
+	for job := range jobQueue {
 		unix := job.ts.Unix()
 		if keysSeenCurrentSecond != nil && unix == keysSeenCurrentSecond.ts {
 			if _, ok := keysSeenCurrentSecond.seen[job.key]; ok {

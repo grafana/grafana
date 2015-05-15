@@ -25,22 +25,23 @@ func init() {
 }
 
 type MonitorWithCollectorDTO struct {
-	Id            int64
-	EndpointId    int64
-	OrgId         int64
-	EndpointSlug  string
-	MonitorTypeId int64
-	CollectorIds  string
-	CollectorTags string
-	TagCollectors string
-	State         int64
-	StateChange   time.Time
-	Settings      []*m.MonitorSettingDTO
-	Frequency     int64
-	Enabled       bool
-	Offset        int64
-	Updated       time.Time
-	Created       time.Time
+	Id              int64
+	EndpointId      int64
+	OrgId           int64
+	EndpointSlug    string
+	MonitorTypeId   int64
+	MonitorTypeName string
+	CollectorIds    string
+	CollectorTags   string
+	TagCollectors   string
+	State           int64
+	StateChange     time.Time
+	Settings        []*m.MonitorSettingDTO
+	Frequency       int64
+	Enabled         bool
+	Offset          int64
+	Updated         time.Time
+	Created         time.Time
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -52,9 +53,11 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
     monitor.*
 FROM monitor
     INNER JOIN endpoint on monitor.endpoint_id = endpoint.id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN
@@ -148,9 +151,11 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
     monitor.*
 FROM monitor
     INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN
@@ -208,6 +213,11 @@ FROM monitor
 		rawParams = append(rawParams, query.Modulo, query.ModuloOffset)
 	}
 
+	if query.Timestamp > 0 {
+		whereSql = append(whereSql, "(? % monitor.frequency) = monitor.offset")
+		rawParams = append(rawParams, query.Timestamp)
+	}
+
 	if len(whereSql) > 0 {
 		rawSql += "WHERE " + strings.Join(whereSql, " AND ")
 	}
@@ -257,21 +267,22 @@ FROM monitor
 		}
 
 		monitors = append(monitors, &m.MonitorDTO{
-			Id:            row.Id,
-			EndpointId:    row.EndpointId,
-			OrgId:         row.OrgId,
-			EndpointSlug:  row.EndpointSlug,
-			MonitorTypeId: row.MonitorTypeId,
-			CollectorIds:  monitorCollectorIds,
-			CollectorTags: monitorCollectorTags,
-			Collectors:    mergedCollectors,
-			State:         row.State,
-			StateChange:   row.StateChange,
-			Settings:      row.Settings,
-			Frequency:     row.Frequency,
-			Enabled:       row.Enabled,
-			Offset:        row.Offset,
-			Updated:       row.Updated,
+			Id:              row.Id,
+			EndpointId:      row.EndpointId,
+			OrgId:           row.OrgId,
+			EndpointSlug:    row.EndpointSlug,
+			MonitorTypeId:   row.MonitorTypeId,
+			MonitorTypeName: row.MonitorTypeName,
+			CollectorIds:    monitorCollectorIds,
+			CollectorTags:   monitorCollectorTags,
+			Collectors:      mergedCollectors,
+			State:           row.State,
+			StateChange:     row.StateChange,
+			Settings:        row.Settings,
+			Frequency:       row.Frequency,
+			Enabled:         row.Enabled,
+			Offset:          row.Offset,
+			Updated:         row.Updated,
 		})
 	}
 	query.Result = monitors

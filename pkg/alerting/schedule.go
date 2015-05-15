@@ -3,6 +3,7 @@ package alerting
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -13,17 +14,27 @@ type Schedule struct {
 	//Id           int64
 	//OrgId        int64
 	//DataSourceId int64
-	Freq       uint32
-	Offset     uint8 // offset on top of "even" minute/10s/.. intervals
+	Freq       int64
+	Offset     int64 // offset on top of "even" minute/10s/.. intervals
 	Definition CheckDef
 }
 
-func getSchedules() ([]Schedule, error) {
-	// this may not be the ideal query to run, depending on where we store scheduling info,
-	// for now let's pretend we use this.
-	// we also need endpoint slug, and slugs for all the collectors
-	// see https://github.com/raintank/grafana/issues/83
-	query := m.GetMonitorsQuery{}
+//ts timestamps at which (or a bit later) checks will run
+func getSchedules(ts int64) ([]Schedule, error) {
+	// for now, for simplicity, let's just wait 30seconds for the data to come in
+	// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
+	// we just query at 37, 97, 157, ...
+	// so we should find the checks where ts-30 % frequency == offset
+	// and then ts-30 was a ts of the last point we should query for
+
+	// and then we query graphite, which behaves like so:
+	// from is exclusive (from=foo returns data at ts=foo+1 and higher)
+	// until is inclusive (until=bar returns data at ts=bar and lower)
+
+	query := m.GetMonitorsQuery{
+		IsGrafanaAdmin: true,
+		Timestamp:      ts - 30,
+	}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
@@ -38,32 +49,27 @@ func getSchedules() ([]Schedule, error) {
 }
 
 func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
-	type TempJoinedStruct struct {
-		Endpoint       string
-		Collector      string
-		Type           string
-		State          string // warn, error
-		HealthSettings m.MonitorHealthSettingDTO
+	//state could in theory be ok, warn, error, but we only use ok vs error for now
+
+	// temporary overrides since we don't have the data saved yet.
+	monitor.HealthSettings.NumCollectors = 7
+	monitor.HealthSettings.Steps = 2
+	fmt.Println("building schedule for")
+
+	funcMap := template.FuncMap{
+		"ToLower": strings.ToLower,
 	}
 
-	temp := TempJoinedStruct{
-		Endpoint:       "dieter_plaetinck_be", // as in graphite metric
-		Collector:      "*",
-		Type:           "http", // as in graphite metric: ping, http, https, dns. does this come from MonitorTypeId ?
-		State:          "warn", // as in.. ok, warn, error
-		HealthSettings: monitor.HealthSettings,
-	}
-	// TODO we must know the interval . is that what Frequency is?
-	tpl := `sum(graphite("{{.Endpoint}}.{{.Collector}}.network.{{.Type}}.{{.State}}_state", "{{.HealthSettings.Steps}}m", "", "") > 0) > {{.HealthSettings.NumCollectors}}`
-	var t = template.Must(template.New("query").Parse(tpl))
+	tpl := `sum(graphite("{{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state", "{{.HealthSettings.Steps}}m", "", "") >= {{.HealthSettings.NumCollectors}}) >= {{.HealthSettings.Steps}}`
+	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
-	err := t.Execute(&b, temp)
+	err := t.Execute(&b, monitor)
 	if err != nil {
 		panic(err)
 	}
 	s := Schedule{
-		Freq:   60, // TODO discuss how to do this with anthony
-		Offset: 5,
+		Freq:   monitor.Frequency,
+		Offset: monitor.Offset,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed

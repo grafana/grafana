@@ -49,12 +49,12 @@ func TestExecutor(t *testing.T) {
 			}
 		}
 		go Executor(fakeGraphiteReturner)
-		queue <- jobAt("foo", 0)
-		queue <- jobAt("foo", 1)
-		queue <- jobAt("foo", 2)
-		queue <- jobAt("foo", 2)
-		queue <- jobAt("foo", 1)
-		queue <- jobAt("foo", 0)
+		jobQueue <- jobAt("foo", 0)
+		jobQueue <- jobAt("foo", 1)
+		jobQueue <- jobAt("foo", 2)
+		jobQueue <- jobAt("foo", 2)
+		jobQueue <- jobAt("foo", 1)
+		jobQueue <- jobAt("foo", 0)
 		time.Sleep(100 * time.Millisecond) // yes hacky, can be synchronized later
 		assertReq(t, listener, "expected the first job")
 		assertReq(t, listener, "expected the second job")
