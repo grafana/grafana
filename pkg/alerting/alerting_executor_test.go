@@ -30,7 +30,7 @@ func TestExecutor(t *testing.T) {
 	listener := make(chan *graphite.Request, 100)
 	Convey("executor must do the right thing", t, func() {
 
-		fakeGraphiteReturner := func(org_id int) graphite.Context {
+		fakeGraphiteReturner := func(org_id int64) graphite.Context {
 			return fakeGraphite{
 				resp: graphite.Response(
 					make([]graphite.Series, 0),

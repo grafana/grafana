@@ -21,9 +21,9 @@ func NewKeysSeen(ts int64) *keysSeen {
 	}
 }
 
-type GraphiteReturner func(org_id int) graphite.Context
+type GraphiteReturner func(org_id int64) graphite.Context
 
-func GraphiteAuthContextReturner(org_id int) graphite.Context {
+func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 	return graphite.HostHeader{
 		Host: setting.GraphiteUrl,
 		Header: http.Header{
@@ -32,12 +32,11 @@ func GraphiteAuthContextReturner(org_id int) graphite.Context {
 }
 
 func Executor(fn GraphiteReturner) {
-	gr := fn(1)
-
 	var keysSeenLastSecond *keysSeen
 	var keysSeenCurrentSecond *keysSeen
 
 	for job := range jobQueue {
+		fmt.Println("executor read job from queue", job)
 		unix := job.ts.Unix()
 		if keysSeenCurrentSecond != nil && unix == keysSeenCurrentSecond.ts {
 			if _, ok := keysSeenCurrentSecond.seen[job.key]; ok {
@@ -65,6 +64,9 @@ func Executor(fn GraphiteReturner) {
 		// note: if timestamp is very old (and we haven't processed anything newer),
 		// we still process. better to be backlogged then not do jobs, up to operator to make system keep up
 		// if timestamp is in future, we still process and assume that whoever created the job knows what they are doing.
+
+		gr := fn(job.OrgId)
+
 		evaluator, err := NewGraphiteCheckEvaluator(gr, job.Definition)
 		if err != nil {
 			// expressions should be validated before they are stored in the db

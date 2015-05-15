@@ -14,6 +14,7 @@ func getAlignedTicker() *time.Ticker {
 
 type Job struct {
 	key        string
+	OrgId      int64
 	Definition CheckDef
 	ts         time.Time // sets an explicit "until" to match the data this alert run is meant for, even when execution is delayed
 }
@@ -65,6 +66,7 @@ func dispatchJobs() {
 		for _, sched := range schedules {
 			job := Job{
 				fmt.Sprintf("alert-id_%d", normalizedTime),
+				sched.OrgId,
 				sched.Definition,
 				t,
 			}

@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"text/template"
 
@@ -11,9 +10,7 @@ import (
 )
 
 type Schedule struct {
-	//Id           int64
-	//OrgId        int64
-	//DataSourceId int64
+	OrgId      int64
 	Freq       int64
 	Offset     int64 // offset on top of "even" minute/10s/.. intervals
 	Definition CheckDef
@@ -54,13 +51,19 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
 	// temporary overrides since we don't have the data saved yet.
 	monitor.HealthSettings.NumCollectors = 7
 	monitor.HealthSettings.Steps = 2
-	fmt.Println("building schedule for")
 
 	funcMap := template.FuncMap{
 		"ToLower": strings.ToLower,
 	}
 
-	tpl := `sum(graphite("{{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state", "{{.HealthSettings.Steps}}m", "", "") >= {{.HealthSettings.NumCollectors}}) >= {{.HealthSettings.Steps}}`
+	// TODO fix "from" arg
+	// graphite returns 1 series of <steps> points, each the sum of the errors of all enabled collectors
+	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
+	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
+
+	target := `sum({{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state)`
+	tpl := `sum(graphite("` + target + `", "{{.HealthSettings.Steps}}m", "", "") >= {{.HealthSettings.NumCollectors}}) == {{.HealthSettings.Steps}}`
+
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
 	err := t.Execute(&b, monitor)
@@ -68,6 +71,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
 		panic(err)
 	}
 	s := Schedule{
+		OrgId:  monitor.OrgId,
 		Freq:   monitor.Frequency,
 		Offset: monitor.Offset,
 		Definition: CheckDef{
