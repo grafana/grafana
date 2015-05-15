@@ -1,5 +1,19 @@
 <div class="editor-row">
     <div class="section">
+        <h5>Table Type</h5>
+        <div class="editor-option">
+           <label class="medium">
+                <input class="table-type-select" type="radio" ng-model="inTimeseriesMode" ng-value="true" />
+               Timeseries
+            </label>
+            <label class="medium">
+                <input class="table-type-select" type="radio" ng-model="inTimeseriesMode" ng-value="false" />
+                RAG
+            </label>
+        </div>
+    </div>
+
+    <div class="section">
         <h5>Styling Options</h5>
         <div class="editor-option">
             <label class="small">Max Column Width</label>
@@ -38,14 +52,14 @@
             </select>
         </div>
 
-        <div class="editor-option" ng-if="timestampColumnName"> <!-- Only show for time series table -->
+        <div class="editor-option" ng-if="inTimeseriesMode"> <!-- Only show for time series table -->
             <editor-opt-bool text="Time as Date" model="panel.showTimeAsDate" change="render()"
                 tip="If selected, the UNIX timestamp will be displayed in a regular date format"></editor-opt-bool>
         </div>
     </div>
 </div>
 
-<div class="editor-row" ng-if="!timestampColumnName"> <!-- Only show for RAG series table -->
+<div class="editor-row" ng-if="!inTimeseriesMode"> <!-- Only show for RAG series table -->
     <div class="section">
         <h5>Scripted Dashboard</h5>
         <div class="editor-option">
