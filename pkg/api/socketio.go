@@ -15,12 +15,47 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"reflect"
 	"runtime"
+	"sync"
 	"time"
 )
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
-var localSockets map[string]socketio.Socket
+var localSockets LocalSockets
+
+type LocalSockets struct {
+	sync.RWMutex
+	Sockets map[string]socketio.Socket
+}
+
+func (s *LocalSockets) Set(id string, socket socketio.Socket) {
+	s.Lock()
+	defer s.Unlock()
+	s.Sockets[id] = socket
+}
+
+func (s *LocalSockets) Remove(id string) {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.Sockets, id)
+}
+
+func (s *LocalSockets) Emit(id string, event string, payload interface{} ) {
+	s.RLock()
+	defer s.RUnlock()
+	socket, ok := s.Sockets[id]
+	if !ok {
+		log.Info("socket "+ id + " is not local.")
+		return
+	}
+	socket.Emit(event, payload)
+}
+
+func NewLocalSockets() LocalSockets {
+	return LocalSockets{
+		Sockets: make(map[string]socketio.Socket),
+	}
+}
 
 type CollectorContext struct {
 	*m.SignedInUser
@@ -96,7 +131,7 @@ func InitCollectorController() {
 }
 
 func init() {
-	localSockets = make(map[string]socketio.Socket)
+	localSockets = NewLocalSockets()
 	var err error
 	server, err = socketio.NewServer([]string{"polling", "websocket"})
 	if err != nil {
@@ -131,7 +166,7 @@ func (c *CollectorContext) Save() error {
 	if err := bus.Dispatch(cmd); err != nil {
 		return err
 	}
-	localSockets[c.SocketId] = c.Socket
+	localSockets.Set(c.SocketId, c.Socket)
 	return nil
 }
 
@@ -143,7 +178,7 @@ func (c *CollectorContext) Remove() error {
 		CollectorId: c.Collector.Id,
 	}
 	err := bus.Dispatch(cmd)
-	delete(localSockets, c.SocketId)
+	localSockets.Remove(c.SocketId)
 	return err
 }
 
@@ -212,14 +247,8 @@ func RefreshCollector(collectorId int64) {
 			return
 		}
 		log.Info("sending refresh to " + sess.SocketId)
-		//step 5. get socket
-		socket, ok := localSockets[sess.SocketId]
-		if !ok {
-			log.Error(0, "socket"+sess.SocketId+" is not local.", nil)
-		} else {
-			//step 6. send
-			socket.Emit("refresh", monQuery.Result)
-		}
+		//step 5. send to socket.
+		localSockets.Emit(sess.SocketId, "refresh", monQuery.Result)
 	}
 }
 
@@ -283,13 +312,9 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	log.Info(fmt.Sprintf("emitting %s event for MonitorId %d totalSessions: %d", eventName, eventId, totalSessions))
 	pos := eventId % totalSessions
 	socketId := q.Result[pos].SocketId
-	socket, ok := localSockets[socketId]
-	if !ok {
-		log.Info("socket" + socketId + " is not local.")
-	} else {
-		//step 6. send
-		socket.Emit(eventName, event)
-	}
+
+	localSockets.Emit(socketId, eventName, event)
+
 	return nil
 }
 
