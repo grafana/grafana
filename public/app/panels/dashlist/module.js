@@ -62,7 +62,7 @@ function (angular, app, _, config, PanelMeta) {
       }
 
       return backendSrv.search(params).then(function(result) {
-        $scope.dashList = result.dashboards;
+        $scope.dashList = result;
       });
     };
 

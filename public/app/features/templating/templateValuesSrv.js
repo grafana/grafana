@@ -57,6 +57,10 @@ function (angular, _, kbn) {
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 
+      if (_.isArray(urlValue)) {
+        option.text = urlValue.join(', ');
+      }
+
       this.updateAutoInterval(variable);
       return this.setVariableValue(variable, option);
     };

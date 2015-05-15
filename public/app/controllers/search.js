@@ -40,15 +40,15 @@ function (angular, _, config) {
         $scope.moveSelection(-1);
       }
       if (evt.keyCode === 13) {
-        if ($scope.query.tagcloud) {
-          var tag = $scope.results.tags[$scope.selectedIndex];
+        if ($scope.tagMode) {
+          var tag = $scope.results[$scope.selectedIndex];
           if (tag) {
             $scope.filterByTag(tag.term);
           }
           return;
         }
 
-        var selectedDash = $scope.results.dashboards[$scope.selectedIndex];
+        var selectedDash = $scope.results[$scope.selectedIndex];
         if (selectedDash) {
           $location.search({});
           $location.path(selectedDash.url);
@@ -57,25 +57,26 @@ function (angular, _, config) {
     };
 
     $scope.moveSelection = function(direction) {
-      $scope.selectedIndex = Math.max(Math.min($scope.selectedIndex + direction, $scope.resultCount - 1), 0);
+      var max = ($scope.results || []).length;
+      var newIndex = $scope.selectedIndex + direction;
+      $scope.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
     };
 
     $scope.searchDashboards = function() {
+      $scope.tagsMode = false;
       $scope.currentSearchId = $scope.currentSearchId + 1;
       var localSearchId = $scope.currentSearchId;
 
       return backendSrv.search($scope.query).then(function(results) {
         if (localSearchId < $scope.currentSearchId) { return; }
 
-        $scope.resultCount = results.tagsOnly ? results.tags.length : results.dashboards.length;
-        $scope.results.tags = results.tags;
-        $scope.results.dashboards = _.map(results.dashboards, function(dash) {
-          dash.url = 'dashboard/db/' + dash.slug;
+        $scope.results = _.map(results, function(dash) {
+          dash.url = 'dashboard/' + dash.uri;
           return dash;
         });
 
         if ($scope.queryHasNoFilters()) {
-          $scope.results.dashboards.unshift({ title: 'Home', url: config.appSubUrl + '/', isHome: true });
+          $scope.results.unshift({ title: 'Home', url: config.appSubUrl + '/', type: 'dash-home' });
         }
       });
     };
@@ -96,10 +97,12 @@ function (angular, _, config) {
       }
     };
 
-    $scope.showTags = function() {
-      $scope.query.tagcloud = !$scope.query.tagcloud;
-      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
-      $scope.search();
+    $scope.getTags = function() {
+      return backendSrv.get('/api/dashboards/tags').then(function(results) {
+        $scope.tagsMode = true;
+        $scope.results = results;
+        $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      });
     };
 
     $scope.showStarred = function() {
@@ -112,26 +115,6 @@ function (angular, _, config) {
       $scope.showImport = false;
       $scope.selectedIndex = 0;
       $scope.searchDashboards();
-    };
-
-    $scope.addMetricToCurrentDashboard = function (metricId) {
-      $scope.dashboard.rows.push({
-        title: '',
-        height: '250px',
-        editable: true,
-        panels: [
-      {
-        type: 'graphite',
-        title: 'test',
-        span: 12,
-        targets: [{ target: metricId }]
-      }
-      ]
-      });
-    };
-
-    $scope.toggleImport = function () {
-      $scope.showImport = !$scope.showImport;
     };
 
     $scope.newDashboard = function() {

@@ -69,6 +69,7 @@ define([
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
     self.backendSrv = {};
+    self.$location = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
@@ -130,6 +131,7 @@ define([
       return _.template(text, this.data,  this.templateSettings);
     };
     this.init = function() {};
+    this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
     this.highlightVariablesAsHtml = function(str) { return str; };

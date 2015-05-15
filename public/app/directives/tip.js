@@ -72,12 +72,7 @@ function (angular, kbn) {
                           '       ng-checked="' + attrs.model + '"></input>' +
                           ' <label for="' + scope.$id + attrs.model + '" class="cr1"></label>';
 
-          if (attrs.position === "front") {
-            template = label + template;
-          } else {
-            template = template + label;
-          }
-
+          template = label + template;
           elem.replaceWith($compile(angular.element(template))(scope));
         }
       };

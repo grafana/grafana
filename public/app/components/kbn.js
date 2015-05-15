@@ -81,11 +81,16 @@ function($, _, moment) {
     if(numminutes){
       return numminutes + 'm';
     }
-    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+    var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
     if(numseconds){
       return numseconds + 's';
     }
-    return 'less then a second'; //'just now' //or other string you like;
+    var nummilliseconds = Math.floor(seconds * 1000.0);
+    if(nummilliseconds){
+      return nummilliseconds + 'ms';
+    }
+
+    return 'less then a millisecond'; //'just now' //or other string you like;
   };
 
   kbn.to_percent = function(number,outof) {
@@ -398,6 +403,11 @@ function($, _, moment) {
   kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
   kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
   kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
+
+  kbn.roundValue = function (num, decimals) {
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
 
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {

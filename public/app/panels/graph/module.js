@@ -197,7 +197,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     $scope.render = function(data) {
-      $scope.$broadcast('render', data);
+      panelHelper.broadcastRender($scope, data);
     };
 
     $scope.changeSeriesColor = function(series, color) {

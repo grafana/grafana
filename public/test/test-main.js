@@ -29,7 +29,7 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                   '../vendor/jquery/jquery-2.1.1.min',
+    jquery:                   '../vendor/jquery/jquery-2.1.3',
 
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
@@ -139,7 +139,9 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
-    'specs/soloPanelCtrl-specs',
+    'specs/singlestat-specs',
+    'specs/dynamicDashboardSrv-specs',
+    'specs/unsavedChangesSrv-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

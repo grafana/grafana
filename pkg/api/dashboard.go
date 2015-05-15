@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,9 +47,15 @@ func GetDashboard(c *middleware.Context) {
 	}
 
 	dash := query.Result
-	dto := dtos.Dashboard{
-		Model: dash.Data,
-		Meta:  dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta: dtos.DashboardMeta{
+			IsStarred: isStarred,
+			Slug:      slug,
+			Type:      m.DashTypeDB,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+		},
 	}
 
 	c.JSON(200, dto)
@@ -87,6 +94,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 			c.JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 			return
 		}
+		if err == m.ErrDashboardNotFound {
+			c.JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
+			return
+		}
 		c.JsonApiErr(500, "Failed to save dashboard", err)
 		return
 	}
@@ -104,13 +115,39 @@ func GetHomeDashboard(c *middleware.Context) {
 		return
 	}
 
-	dash := dtos.Dashboard{}
+	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
 	jsonParser := json.NewDecoder(file)
-	if err := jsonParser.Decode(&dash.Model); err != nil {
+	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
 		c.JsonApiErr(500, "Failed to load home dashboard", err)
 		return
 	}
 
 	c.JSON(200, &dash)
+}
+
+func GetDashboardFromJsonFile(c *middleware.Context) {
+	file := c.Params(":file")
+
+	dashboard := search.GetDashboardFromJsonIndex(file)
+	if dashboard == nil {
+		c.JsonApiErr(404, "Dashboard not found", nil)
+		return
+	}
+
+	dash := dtos.DashboardFullWithMeta{Dashboard: dashboard.Data}
+	dash.Meta.Type = m.DashTypeJson
+
+	c.JSON(200, &dash)
+}
+
+func GetDashboardTags(c *middleware.Context) {
+	query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get tags from database", err)
+		return
+	}
+
+	c.JSON(200, query.Result)
 }

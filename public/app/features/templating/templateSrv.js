@@ -76,7 +76,7 @@ function (angular, _) {
     };
 
     this.replace = function(target, scopedVars) {
-      if (!target) { return; }
+      if (!target) { return target; }
 
       var value;
       this._regex.lastIndex = 0;
@@ -95,7 +95,7 @@ function (angular, _) {
     };
 
     this.replaceWithText = function(target, scopedVars) {
-      if (!target) { return; }
+      if (!target) { return target; }
 
       var value;
       var text;
@@ -112,6 +112,12 @@ function (angular, _) {
         if (!value) { return match; }
 
         return self._grafanaVariables[value] || text;
+      });
+    };
+
+    this.fillVariableValuesForUrl = function(params) {
+      _.each(this.variables, function(variable) {
+        params['var-' + variable.name] = variable.current.value;
       });
     };
 

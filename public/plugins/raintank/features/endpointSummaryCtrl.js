@@ -129,24 +129,24 @@ function (angular, _) {
       };
       switch(type) {
         case "summary":
-          $location.path("/dashboard/raintank/statusboard").search(search);
+          $location.path("/dashboard/file/statusboard.json").search(search);
           break;
         case "ping":
-          $location.path("/dashboard/raintank/rt-endpoint-ping").search(search);
+          $location.path("/dashboard/file/rt-endpoint-ping.json").search(search);
           break;
         case "dns":
-          $location.path("/dashboard/raintank/rt-endpoint-dns").search(search);
+          $location.path("/dashboard/file/rt-endpoint-dns.json").search(search);
           break;
         case "http":
           search['var-protocol'] = "http";
-          $location.path("/dashboard/raintank/rt-endpoint-web").search(search);
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
           break;
         case "https":
           search['var-protocol'] = "https";
-          $location.path("/dashboard/raintank/rt-endpoint-web").search(search);
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
           break;
         default:
-          $location.path("/dashboard/raintank/statusboard").search(search);
+          $location.path("/dashboard/file/statusboard.json").search(search);
           break;
       }
     };

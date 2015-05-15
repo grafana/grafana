@@ -4,7 +4,7 @@
 			{{model.collector_ids.length}} Collectors, {{model.collector_tags.length}} Dynamic Tags
 		</span>
 		<i class="fa fa-caret-down" style="float: right;"></i>
-	</a> 
+	</a>
 </div>
 
 <div ng-if="selectorOpen" class="variable-value-dropdown" style="overflow: scroll">
@@ -16,27 +16,21 @@
 	</div>
 
 	<div class="variable-options-container">
-		<div style="position:absolute; top: 45px; left:15px;" ng-hide="query.text">
-			<a ng-click="selectAll()">all</a>
-		</div>
-		<div style="display:inline-block; vertical-align:top; /* width: 50% */">
+			<a class="variable-option pointer" ng-hide="query.text"  ng-click="selectAll()">
+				<span>all</span>
+			</a>
 			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
 				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
-				<i class="fa fa-fw fa-square-o"></i>
-				<i class="fa fa-fw fa-check-square-o"></i>
 				<span >{{option.text}}</span>
+				<span class="fa fa-fw variable-option-icon"></span>
 			</a>
-		</div>
-		<div style="display:inline-block; vertical-align:top;">
 			<a class="variable-option pointer" bindonce ng-repeat="option in tags|filter:query"
 					ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
-				<i class="fa fa-fw fa-square-o"></i>
-				<i class="fa fa-fw fa-check-square-o"></i>
-					<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
-						{{option.text}}
-						<i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
-					</span>
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
+					{{option.text}}
+					<i ng-class="icon" class="tag-icon icon-rt-collector"></i>
+				</span>
+				<span class="fa fa-fw variable-option-icon"></span>
 			</a>
-		</div>
 	</div>
 </div>

@@ -121,7 +121,7 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
             "isStarred": false,
             "slug": "production-overview"
           },
-          "dashboard": {
+          "model": {
             "id": null,
             "title": "Production Overview",
             "tags": [ "templated" ],

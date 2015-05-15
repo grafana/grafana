@@ -15,7 +15,6 @@
 						<i class="fa fa-caret-down"></i>
 					</a>
 				</div>
-
 			</div>
 
 			<ul class="nav pull-left top-nav-dash-actions">
@@ -39,7 +38,7 @@
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
 						<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
-						<li ng-if="dashboardMeta.canDelete"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
+						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
 			</ul>

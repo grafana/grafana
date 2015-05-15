@@ -22,3 +22,4 @@ test:
      - godep go test -v ./pkg/...
      # js tests
      - ./node_modules/grunt-cli/bin/grunt test
+     - npm run coveralls

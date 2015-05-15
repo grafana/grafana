@@ -7,6 +7,11 @@ import (
 )
 
 func StarDashboard(c *middleware.Context) {
+	if !c.IsSignedIn {
+		c.JsonApiErr(412, "You need to sign in to star dashboards", nil)
+		return
+	}
+
 	var cmd = m.StarDashboardCommand{
 		UserId:      c.UserId,
 		DashboardId: c.ParamsInt64(":id"),

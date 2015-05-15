@@ -89,6 +89,8 @@ type GetUserByIdQuery struct {
 
 type GetSignedInUserQuery struct {
 	UserId int64
+	Login  string
+	Email  string
 	Result *SignedInUser
 }
 

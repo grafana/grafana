@@ -72,6 +72,7 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
 			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
 			r.Get("/users", GetOrgUsers)
+			r.Patch("/users/:id", bind(m.UpdateOrgUserCommand{}), UpdateOrgUser)
 			r.Delete("/users/:id", RemoveOrgUser)
 		}, reqAccountAdmin)
 
@@ -100,7 +101,9 @@ func Register(r *macaron.Macaron) {
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
+			r.Get("/tags", GetDashboardTags)
 		})
 
 		// Search

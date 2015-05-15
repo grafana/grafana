@@ -43,10 +43,6 @@ function(angular, $) {
         scope.broadcastRefresh();
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+l', function() {
-        scope.$broadcast('toggle-all-legends');
-      }, { inputDisabled: true });
-
       keyboardManager.bind('ctrl+h', function() {
         var current = scope.dashboard.hideControls;
         scope.dashboard.hideControls = !current;
