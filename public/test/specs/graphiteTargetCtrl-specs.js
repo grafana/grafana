@@ -141,13 +141,15 @@ define([
         ctx.scope.target.target = 'test.count';
         ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
         ctx.scope.init();
-        ctx.scope.getAltSegments(1);
+        ctx.scope.getAltSegments(1).then(function(results) {
+          ctx.altSegments = results;
+        });
         ctx.scope.$digest();
         ctx.scope.$parent = { get_data: sinon.spy() };
       });
 
       it('should have no segments', function() {
-        expect(ctx.scope.altSegments.length).to.be(0);
+        expect(ctx.altSegments.length).to.be(0);
       });
 
     });

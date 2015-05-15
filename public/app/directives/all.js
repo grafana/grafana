@@ -12,7 +12,7 @@ define([
   './bootstrap-tagsinput',
   './bodyClass',
   './variableValueSelect',
-  './graphiteSegment',
+  './metric.segment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
   './topnav',

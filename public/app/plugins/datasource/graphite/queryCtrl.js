@@ -152,23 +152,18 @@ function (angular, _, config, gfunc, Parser) {
     }
 
     $scope.getAltSegments = function (index) {
-      $scope.altSegments = [];
-
       var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery(query)
-        .then(function(segments) {
-          $scope.altSegments = _.map(segments, function(segment) {
+      return $scope.datasource.metricFindQuery(query).then(function(segments) {
+          var altSegments = _.map(segments, function(segment) {
             return new MetricSegment({ value: segment.text, expandable: segment.expandable });
           });
 
-          if ($scope.altSegments.length === 0) {
-            return;
-          }
+          if (altSegments.length === 0) { return altSegments; }
 
           // add template variables
           _.each(templateSrv.variables, function(variable) {
-            $scope.altSegments.unshift(new MetricSegment({
+            altSegments.unshift(new MetricSegment({
               type: 'template',
               value: '$' + variable.name,
               expandable: true,
@@ -176,10 +171,12 @@ function (angular, _, config, gfunc, Parser) {
           });
 
           // add wildcard option
-          $scope.altSegments.unshift(new MetricSegment('*'));
+          altSegments.unshift(new MetricSegment('*'));
+          return altSegments;
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
+          return [];
         });
     };
 

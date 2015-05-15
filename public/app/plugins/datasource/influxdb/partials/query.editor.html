@@ -62,23 +62,54 @@
 				</li>
 			</ul>
 
-			<input  type="text"
-			        class="tight-form-clear-input span10"
-              ng-model="target.query"
-              focus-me="target.rawQuery"
-              spellcheck='false'
-              ng-model-onblur ng-change="targetTextChanged()"
-              ng-show="target.rawQuery" />
+			<input  type="text" class="tight-form-clear-input span10" ng-model="target.query" focus-me="target.rawQuery"
+              spellcheck='false' ng-model-onblur ng-change="targetTextChanged()" ng-show="target.rawQuery" />
 
       <ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
-        <li ng-repeat="segment in segments" role="menuitem" graphite-segment></li>
-				<li ng-repeat="func in functions">
-          <span graphite-func-editor class="tight-form-item tight-form-func">
-          </span>
-        </li>
-        <li class="dropdown" graphite-add-func>
-        </li>
+				<li class="tight-form-item query-keyword">
+					SELECT
+				</li>
+				<li class="dropdown tight-form-item">
+					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
+						{{target.function}}<span>(value)</span>
+					</a>
+				</li>
+				<li class="tight-form-item query-keyword">
+					FROM
+				</li>
+				<li>
+					<metric-segment segment="measurementSegment" get-alt-segments="getMeasurements()" on-value-changed="measurementChanged()"></metric-segment>
+				</li>
+				<li class="tight-form-item query-keyword">
+					WHERE
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input" ng-model="target.condition"
+					  bs-tooltip="'Add a where clause'" data-placement="right" spellcheck='false' placeholder="column ~= value" ng-blur="get_data()">
+				</li>
+				<li class="tight-form-item">
+					<span class="query-keyword">GROUP BY</span>
+					time($interval), <i class="fa fa-plus"></i>
+				</li>
+
+				<li class="dropdown">
+					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
+						<span ng-show="target.fill">
+							fill ({{target.fill}})
+						</span>
+						<span ng-show="!target.fill">
+							no fill
+						</span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a ng-click="target.fill = ''">no fill</a></li>
+						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
+						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
+					</ul>
+				</li>
+
       </ul>
+
       <div class="clearfix"></div>
     </div>
 </div>
