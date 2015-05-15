@@ -1,17 +1,20 @@
 define([
   'helpers',
-  'panels/table/timeseries/module',
-  'panels/table/RAG/module'
+  'panels/table/module'
 ], function(helpers) {
   'use strict';
 
-  describe('TableTimePanelCtrl', function() {
+  describe('Time Table Testing', function() {
     var ctx = new helpers.ControllerTestContext();
 
-    beforeEach(module('grafana.services'));
-    beforeEach(module('grafana.panels.table.timeseries'));
-    beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('TableTimePanelCtrl'));
+    beforeEach(function() {
+      module('grafana.services');
+      module('grafana.panels.table');
+      ctx.providePhase();
+      ctx.createControllerPhase('TablePanelCtrl');
+      ctx.scope.inTimeseriesMode = true;
+    });
+
 
 
     it('should transform the data returned by the datasource correctly', function() {
@@ -68,13 +71,17 @@ define([
 
   });
 
-  describe('TableRagPanelCtrl', function() {
+  describe('RAG Table Testing', function() {
     var ctx = new helpers.ControllerTestContext();
 
-    beforeEach(module('grafana.services'));
-    beforeEach(module('grafana.panels.table.rag'));
-    beforeEach(ctx.providePhase());
-    beforeEach(ctx.createControllerPhase('TableRagPanelCtrl'));
+    beforeEach(function() {
+      module('grafana.services');
+      module('grafana.panels.table');
+      ctx.providePhase();
+      ctx.createControllerPhase('TablePanelCtrl');
+      ctx.scope.inTimeseriesMode = false;
+    });
+
 
     it('should transform the data returned by the datasource correctly', function() {
 

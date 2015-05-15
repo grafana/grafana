@@ -28,7 +28,6 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.inTimeseriesMode = true;
 
-
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
       editIcon:  "fa fa-table",
@@ -82,7 +81,6 @@ function (angular, app, _, require, PanelMeta) {
         $scope.tableData = ragDataTransform(results.data);
       }
 
-
       $scope.render();
     };
 
@@ -99,7 +97,6 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.init();
-
 
     /**
      * Transforms the raw datasource query into an array of objects
@@ -155,8 +152,6 @@ function (angular, app, _, require, PanelMeta) {
         columnOrder: columnOrder
       };
     }
-
-
 
     /**
      * Transforms the raw datasource query into an array of objects
