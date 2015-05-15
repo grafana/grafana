@@ -128,6 +128,7 @@ require([
     'specs/influxQueryBuilder-specs',
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
+    'specs/influxdbQueryCtrl-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',

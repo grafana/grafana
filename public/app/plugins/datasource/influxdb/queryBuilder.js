@@ -33,8 +33,8 @@ function (_) {
 
     query +=  aggregationFunc + '(value)';
     query += ' FROM ' + measurement + ' WHERE $timeFilter';
-    query += _.map(target.tags, function(value, key) {
-      return ' AND ' + key + '=' + "'" + value + "'";
+    query += _.map(target.tags, function(tag) {
+      return ' AND ' + tag.key + '=' + "'" + tag.value + "'";
     }).join('');
 
     query += ' GROUP BY time($interval)';

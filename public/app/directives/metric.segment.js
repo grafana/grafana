@@ -14,7 +14,8 @@ function (angular, app, _, $) {
                             ' class="tight-form-clear-input input-medium"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a class="tight-form-item" tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
+      var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+        'tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
 
       return {
         scope: {

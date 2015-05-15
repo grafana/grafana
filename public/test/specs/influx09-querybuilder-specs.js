@@ -21,7 +21,7 @@ define([
     describe('series with tags only', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',
-        tags: {'hostname': 'server1'}
+        tags: [{key: 'hostname', value: 'server1'}]
       });
 
       var query = builder.build();

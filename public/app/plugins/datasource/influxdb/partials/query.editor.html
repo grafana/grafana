@@ -83,15 +83,16 @@
 				<li class="tight-form-item query-keyword">
 					WHERE
 				</li>
-				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.condition"
-					  bs-tooltip="'Add a where clause'" data-placement="right" spellcheck='false' placeholder="column ~= value" ng-blur="get_data()">
+				<li ng-repeat="segment in tagSegments">
+					<metric-segment segment="segment" get-alt-segments="getTagsOrValues(segment, $index)" on-value-changed="tagSegmentUpdated(segment, $index)"></metric-segment>
 				</li>
 				<li class="tight-form-item">
 					<span class="query-keyword">GROUP BY</span>
-					time($interval), <i class="fa fa-plus"></i>
+					time($interval)
 				</li>
-
+				<li ng-repeat="segment in groupBySegments">
+					<metric-segment segment="segment" get-alt-segments="getTagsOrValues(segment, 0)" on-value-changed="groupByTagUpdated(segment, $index)"></metric-segment>
+				</li>
 				<li class="dropdown">
 					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
 						<span ng-show="target.fill">
@@ -106,7 +107,7 @@
 						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
 						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
 					</ul>
-				</li>
+			</li>
 
       </ul>
 
