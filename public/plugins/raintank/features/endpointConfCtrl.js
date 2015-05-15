@@ -11,6 +11,8 @@ function (angular) {
     var defaults = {
       name: '',
     };
+    var monitorLastState = {};
+
     var freqOpt = [10, 30, 60, 120];
     $scope.frequencyOpts = [];
     _.forEach(freqOpt, function(f) {
@@ -197,6 +199,7 @@ function (angular) {
             _.forEach(monitors, function(monitor) {
               var type = $scope.monitor_types[monitor.monitor_type_id];
               $scope.monitors[type.name.toLowerCase()] = monitor;
+              monitorLastState[monitor.id] = _.cloneDeep(monitor);
             });
           });
         }
@@ -264,7 +267,8 @@ function (angular) {
     $scope.addMonitor = function(monitor) {
       monitor.endpoint_id = $scope.endpoint.id;
       backendSrv.put('/api/monitors', monitor).then(function(resp) {
-        monitor.id = resp.id;
+        _.defaults(monitor, resp);
+        monitorLastState[monitor.id] = _.cloneDeep(monitor);
         var action = "disabled";
         if (monitor.enabled) {
           action = "enabled"
@@ -280,13 +284,17 @@ function (angular) {
         return $scope.addMonitor(monitor);
       }
       backendSrv.post('/api/monitors', monitor).then(function() {
-        var action = "disabled";
-        if (monitor.enabled) {
-          action = "enabled"
-        }
         var type = $scope.monitor_types[monitor.monitor_type_id];
-        var message = type.name.toLowerCase() + " " + action + " successfully";
-        console.log("addedMonitor: ", message);
+        if (monitorLastState[monitor.id].enabled != monitor.enabled) {
+          var action = "disabled";
+          if (monitor.enabled) {
+            action = "enabled"
+          }
+          var message = type.name.toLowerCase() + " " + action + " successfully";
+        } else {
+          var message = type.name.toLowerCase() + " updated";
+        }
+        monitorLastState[monitor.id] = _.cloneDeep(monitor);
         alertSrv.set(message, '', 'success', 3000);
       });
     }
