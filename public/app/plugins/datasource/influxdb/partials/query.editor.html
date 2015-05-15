@@ -91,7 +91,7 @@
 					time($interval)
 				</li>
 				<li ng-repeat="segment in groupBySegments">
-					<metric-segment segment="segment" get-alt-segments="getTagsOrValues(segment, 0)" on-value-changed="groupByTagUpdated(segment, $index)"></metric-segment>
+					<metric-segment segment="segment" get-alt-segments="getGroupByTagSegments(segment, 0)" on-value-changed="groupByTagUpdated(segment, $index)"></metric-segment>
 				</li>
 				<li class="dropdown">
 					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">

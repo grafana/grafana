@@ -101,18 +101,100 @@ define([
       });
     });
 
-    describe('when deleting is changed', function() {
+    describe('when deleting first tag filter after value is selected', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
+        ctx.scope.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
+        ctx.scope.tagSegmentUpdated(ctx.scope.removeTagFilterSegment, 0);
+      });
+
+      it('should remove tags', function() {
+        expect(ctx.scope.target.tags.length).to.be(0);
+      });
+
+      it('should remove all segment after 2 and replace with plus button', function() {
+        expect(ctx.scope.tagSegments.length).to.be(1);
+        expect(ctx.scope.tagSegments[0].type).to.be('plus-button');
+      });
+    });
+
+    describe('when deleting second tag value before second tag value is complete', function() {
       beforeEach(function() {
         ctx.scope.init();
         ctx.scope.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
         ctx.scope.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
         ctx.scope.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
-        ctx.scope.tagSegmentUpdated({value: 'remove tag filter', type: 'key'}, 4);
+        ctx.scope.tagSegmentUpdated(ctx.scope.removeTagFilterSegment, 4);
       });
 
       it('should remove all segment after 2 and replace with plus button', function() {
         expect(ctx.scope.tagSegments.length).to.be(4);
         expect(ctx.scope.tagSegments[3].type).to.be('plus-button');
+      });
+    });
+
+    describe('when deleting second tag value before second tag value is complete', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
+        ctx.scope.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
+        ctx.scope.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
+        ctx.scope.tagSegmentUpdated(ctx.scope.removeTagFilterSegment, 4);
+      });
+
+      it('should remove all segment after 2 and replace with plus button', function() {
+        expect(ctx.scope.tagSegments.length).to.be(4);
+        expect(ctx.scope.tagSegments[3].type).to.be('plus-button');
+      });
+    });
+
+    describe('when deleting second tag value after second tag filter is complete', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
+        ctx.scope.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
+        ctx.scope.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
+        ctx.scope.tagSegmentUpdated({value: 'value', type: 'value'}, 6);
+        ctx.scope.tagSegmentUpdated(ctx.scope.removeTagFilterSegment, 4);
+      });
+
+      it('should remove all segment after 2 and replace with plus button', function() {
+        expect(ctx.scope.tagSegments.length).to.be(4);
+        expect(ctx.scope.tagSegments[3].type).to.be('plus-button');
+      });
+    });
+
+    describe('when adding group by', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
+      });
+
+      it('should add group by', function() {
+        expect(ctx.scope.target.groupByTags.length).to.be(1);
+        expect(ctx.scope.target.groupByTags[0]).to.be('host');
+      });
+
+      it('should add another plus button segment', function() {
+        expect(ctx.scope.groupBySegments[1].type).to.be('plus-button');
+      });
+    });
+
+    describe('when removing group by', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
+        ctx.scope.groupByTagUpdated(ctx.scope.removeGroupBySegment, 0);
+      });
+
+      it('should add group by', function() {
+        expect(ctx.scope.target.groupByTags.length).to.be(0);
+      });
+
+      it('should remove segment', function() {
+        expect(ctx.scope.groupBySegments.length).to.be(1);
+        expect(ctx.scope.groupBySegments[0].type).to.be('plus-button');
       });
     });
 

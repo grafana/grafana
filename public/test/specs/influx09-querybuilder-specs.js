@@ -18,7 +18,7 @@ define([
 
     });
 
-    describe('series with tags only', function() {
+    describe('series with single tag only', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',
         tags: [{key: 'hostname', value: 'server1'}]
@@ -27,10 +27,39 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter ' +
-          'AND hostname=\'server1\' GROUP BY time($interval) ORDER BY asc');
+        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE hostname=\'server1\' AND $timeFilter'
+                            + ' GROUP BY time($interval) ORDER BY asc');
       });
 
+    });
+
+    describe('series with multiple tags only', function() {
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [{key: 'hostname', value: 'server1'}, {key: 'app', value: 'email', condition: "AND"}]
+      });
+
+      var query = builder.build();
+
+      it('should generate correct query', function() {
+        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE hostname=\'server1\' AND app=\'email\' AND ' +
+                            '$timeFilter GROUP BY time($interval) ORDER BY asc');
+      });
+    });
+
+    describe('series with groupByTag', function() {
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [],
+        groupByTags: ["host"]
+      });
+
+      var query = builder.build();
+
+      it('should generate correct query', function() {
+        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter ' +
+          'GROUP BY time($interval), host ORDER BY asc');
+      });
     });
 
   });

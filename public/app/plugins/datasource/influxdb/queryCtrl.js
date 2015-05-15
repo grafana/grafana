@@ -35,14 +35,12 @@ function (angular, _) {
         if (tag.condition) {
           $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
         }
-        $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key' }));
-        $scope.tagSegments.push(new MetricSegment({fake: true, value: "="}));
-        $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value'}));
+        $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
+        $scope.tagSegments.push(new MetricSegment({fake: true, value: "=", cssClass: 'query-segment-operator'}));
+        $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
       });
 
-      if ($scope.tagSegments.length % 3 === 0) {
-        $scope.tagSegments.push(MetricSegment.newPlusButton());
-      }
+      $scope.fixTagSegments();
 
       $scope.groupBySegments = [];
       _.each(target.groupByTags, function(tag) {
@@ -50,12 +48,37 @@ function (angular, _) {
       });
 
       $scope.groupBySegments.push(MetricSegment.newPlusButton());
+
+      $scope.removeTagFilterSegment = new MetricSegment({fake: true, value: 'remove tag filter'});
+      $scope.removeGroupBySegment = new MetricSegment({fake: true, value: 'remove group by'});
+    };
+
+    $scope.fixTagSegments = function() {
+      var count = $scope.tagSegments.length;
+      var lastSegment = $scope.tagSegments[Math.max(count-1, 0)];
+
+      if (!lastSegment || lastSegment.type !== 'plus-button') {
+        $scope.tagSegments.push(MetricSegment.newPlusButton());
+      }
     };
 
     $scope.groupByTagUpdated = function(segment, index) {
+      if (segment.value === $scope.removeGroupBySegment.value) {
+        $scope.target.groupByTags.splice(index, 1);
+        $scope.groupBySegments.splice(index, 1);
+        $scope.$parent.get_data();
+        return;
+      }
+
       if (index === $scope.groupBySegments.length-1) {
         $scope.groupBySegments.push(MetricSegment.newPlusButton());
       }
+
+      segment.type = 'group-by-key';
+      segment.fake = false;
+
+      $scope.target.groupByTags[index] = segment.value;
+      $scope.$parent.get_data();
     };
 
     $scope.changeFunction = function(func) {
@@ -65,7 +88,6 @@ function (angular, _) {
 
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
-      console.log('measurement updated', $scope.target.measurement);
       $scope.$parent.get_data();
     };
 
@@ -126,8 +148,23 @@ function (angular, _) {
       .then($scope.transformToSegments)
       .then($scope.addTemplateVariableSegments)
       .then(function(results) {
-        if (queryType === 'TAG_KEYS' && segment.type !== 'plus-button') {
-          results.push(new MetricSegment({fake: true, value: 'remove tag filter'}));
+        if (queryType === 'TAG_KEYS' && segment.type === 'key') {
+          results.push(angular.copy($scope.removeTagFilterSegment));
+        }
+        return results;
+      })
+      .then(null, $scope.handleQueryError);
+    };
+
+    $scope.getGroupByTagSegments = function(segment) {
+      var query = 'SHOW TAG KEYS FROM "' + $scope.target.measurement + '"';
+
+      return $scope.datasource.metricFindQuery(query, 'TAG_KEYS')
+      .then($scope.transformToSegments)
+      .then($scope.addTemplateVariableSegments)
+      .then(function(results) {
+        if (segment.type !== 'plus-button') {
+          results.push(angular.copy($scope.removeGroupBySegment));
         }
         return results;
       })
@@ -137,13 +174,15 @@ function (angular, _) {
     $scope.tagSegmentUpdated = function(segment, index) {
       $scope.tagSegments[index] = segment;
 
-      if (segment.value === 'remove tag filter') {
+      if (segment.value === $scope.removeTagFilterSegment.value) {
         $scope.tagSegments.splice(index, 3);
         if ($scope.tagSegments.length === 0) {
           $scope.tagSegments.push(MetricSegment.newPlusButton());
-        } else {
-          $scope.tagSegments.splice(index-1, 1);
-          $scope.tagSegments.push(MetricSegment.newPlusButton());
+        } else if ($scope.tagSegments.length > 2) {
+          $scope.tagSegments.splice(Math.max(index-1, 0), 1);
+          if ($scope.tagSegments[$scope.tagSegments.length-1].type !== 'plus-button') {
+            $scope.tagSegments.push(MetricSegment.newPlusButton());
+          }
         }
       }
       else {
@@ -151,9 +190,10 @@ function (angular, _) {
           if (index > 2) {
             $scope.tagSegments.splice(index, 0, MetricSegment.newCondition('AND'));
           }
-          $scope.tagSegments.push(new MetricSegment({fake: true, value: '=', type: 'operator'}));
-          $scope.tagSegments.push(new MetricSegment({fake: true, value: 'select tag value', type: 'value' }));
+          $scope.tagSegments.push(MetricSegment.newFake('=', 'operator', 'query-segment-operator'));
+          $scope.tagSegments.push(MetricSegment.newFake('select tag value', 'value', 'query-segment-value'));
           segment.type = 'key';
+          segment.cssClass = 'query-segment-key';
         }
 
         if ((index+1) === $scope.tagSegments.length) {
@@ -165,10 +205,13 @@ function (angular, _) {
     };
 
     $scope.rebuildTargetTagConditions = function() {
-      var tags = [{}];
+      var tags = [];
       var tagIndex = 0;
       _.each($scope.tagSegments, function(segment2) {
         if (segment2.type === 'key') {
+          if (tags.length === 0) {
+            tags.push({});
+          }
           tags[tagIndex].key = segment2.value;
         }
         else if (segment2.type === 'value') {
@@ -209,6 +252,10 @@ function (angular, _) {
 
     MetricSegment.newSelectMeasurement = function() {
       return new MetricSegment({value: 'select measurement', fake: true});
+    };
+
+    MetricSegment.newFake = function(text, type, cssClass) {
+      return new MetricSegment({value: text, fake: true, type: type, cssClass: cssClass});
     };
 
     MetricSegment.newCondition = function(condition) {

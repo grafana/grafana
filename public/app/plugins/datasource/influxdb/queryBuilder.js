@@ -1,5 +1,5 @@
 define([
-    'lodash'
+  'lodash'
 ],
 function (_) {
   'use strict';
@@ -32,12 +32,18 @@ function (_) {
     }
 
     query +=  aggregationFunc + '(value)';
-    query += ' FROM ' + measurement + ' WHERE $timeFilter';
-    query += _.map(target.tags, function(tag) {
-      return ' AND ' + tag.key + '=' + "'" + tag.value + "'";
-    }).join('');
+    query += ' FROM ' + measurement + ' WHERE ';
+    var conditions = _.map(target.tags, function(tag) {
+      return tag.key + '=' + "'" + tag.value + "' ";
+    });
+    conditions.push('$timeFilter');
+
+    query += conditions.join('AND ');
 
     query += ' GROUP BY time($interval)';
+    if  (target.groupByTags && target.groupByTags.length > 0) {
+      query += ', ' + target.groupByTags.join();
+    }
 
     if (target.fill) {
       query += ' fill(' + target.fill + ')';
