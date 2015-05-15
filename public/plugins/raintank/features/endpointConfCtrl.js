@@ -266,7 +266,7 @@ function (angular) {
 
     $scope.addMonitor = function(monitor) {
       monitor.endpoint_id = $scope.endpoint.id;
-      backendSrv.put('/api/monitors', monitor).then(function(resp) {
+      backendSrv.put('/api/monitors', monitor, true).then(function(resp) {
         _.defaults(monitor, resp);
         monitorLastState[monitor.id] = _.cloneDeep(monitor);
         var action = "disabled";
@@ -283,7 +283,7 @@ function (angular) {
       if (!monitor.id) {
         return $scope.addMonitor(monitor);
       }
-      backendSrv.post('/api/monitors', monitor).then(function() {
+      backendSrv.post('/api/monitors', monitor, true).then(function() {
         var type = $scope.monitor_types[monitor.monitor_type_id];
         if (monitorLastState[monitor.id].enabled != monitor.enabled) {
           var action = "disabled";
