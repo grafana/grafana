@@ -14,6 +14,16 @@ function (_) {
     return this.target.rawQuery ? this._modifyRawQuery() : this._buildQuery();
   };
 
+  p.showTagsQuery = function() {
+    var query = 'SHOW TAG KEYS';
+
+    if (this.target.measurement) {
+      query += ' FROM "' + this.target.measurement + '"';
+    }
+
+    return query;
+  };
+
   p._buildQuery = function() {
     var target = this.target;
 
@@ -27,7 +37,7 @@ function (_) {
     var measurement = target.measurement;
     var aggregationFunc = target.function || 'mean';
 
-    if(!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
       measurement = '"' + measurement+ '"';
     }
 

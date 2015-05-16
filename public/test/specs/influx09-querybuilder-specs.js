@@ -62,6 +62,34 @@ define([
       });
     });
 
+    describe('when building tag keys query', function() {
+
+      describe('given picked measurement', function() {
+        it('build query with measurement filter', function() {
+          var builder = new InfluxQueryBuilder({ measurement: 'cpu', tags: [] });
+          var query = builder.showTagsQuery();
+          expect(query).to.be('SHOW TAG KEYS FROM "cpu"');
+        });
+      });
+
+      describe('given no picked measurement', function() {
+        it('build query without filter', function() {
+          var builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+          var query = builder.showTagsQuery();
+          expect(query).to.be('SHOW TAG KEYS');
+        });
+      });
+
+      describe('given an existing tag', function() {
+        it('build query with filter', function() {
+          var builder = new InfluxQueryBuilder({ measurement: '', tags: [{key: 'host', value: 'se1'}] });
+          var query = builder.showTagsQuery();
+          expect(query).to.be('SHOW TAG KEYS');
+        });
+      });
+
+    });
+
   });
 
 });

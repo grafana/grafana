@@ -1,8 +1,9 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  './queryBuilder',
 ],
-function (angular, _) {
+function (angular, _, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -23,6 +24,8 @@ function (angular, _) {
       target.function = target.function || 'mean';
       target.tags = target.tags || [];
       target.groupByTags = target.groupByTags || [];
+
+      $scope.queryBuilder = new InfluxQueryBuilder(target);
 
       if (!target.measurement) {
         $scope.measurementSegment = MetricSegment.newSelectMeasurement();
@@ -129,21 +132,11 @@ function (angular, _) {
       return segments;
     };
 
-    $scope.buildTagKeysQuery = function(target) {
-      var query = 'SHOW TAG KEYS';
-
-      if (target.measurement) {
-        query += ' FROM "' + target.measurement + '"';
-      }
-
-      return query;
-    };
-
     $scope.getTagsOrValues = function(segment, index) {
       var query, queryType;
       if (segment.type === 'key' || segment.type === 'plus-button') {
         queryType = 'TAG_KEYS';
-        query = $scope.buildTagKeysQuery($scope.target, segment);
+        query = $scope.queryBuilder.showTagsQuery();
       } else if (segment.type === 'value')  {
         queryType = 'TAG_VALUES';
         query = 'SHOW TAG VALUES FROM "' + $scope.target.measurement + '" WITH KEY = ' + $scope.tagSegments[index-2].value;
