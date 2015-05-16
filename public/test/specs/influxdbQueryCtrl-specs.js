@@ -198,5 +198,23 @@ define([
       });
     });
 
+    describe('when building tag keys query', function() {
+
+      describe('given picked measurement', function() {
+        it('build query with measurement filter', function() {
+          var query = ctx.scope.buildTagKeysQuery({ measurement: 'cpu', tags: [] }, {type: 'key'});
+          expect(query).to.be('SHOW TAG KEYS FROM "cpu"');
+        });
+      });
+
+      describe('given no picked measurement', function() {
+        it('build query without filter', function() {
+          var query = ctx.scope.buildTagKeysQuery({ measurement: '', tags: [] }, {type: 'key'});
+          expect(query).to.be('SHOW TAG KEYS');
+        });
+      });
+
+    });
+
   });
 });

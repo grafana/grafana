@@ -49,8 +49,8 @@ function (angular, _) {
 
       $scope.groupBySegments.push(MetricSegment.newPlusButton());
 
-      $scope.removeTagFilterSegment = new MetricSegment({fake: true, value: 'remove tag filter'});
-      $scope.removeGroupBySegment = new MetricSegment({fake: true, value: 'remove group by'});
+      $scope.removeTagFilterSegment = new MetricSegment({fake: true, value: '-- remove tag filter --'});
+      $scope.removeGroupBySegment = new MetricSegment({fake: true, value: '-- remove group by --'});
     };
 
     $scope.fixTagSegments = function() {
@@ -129,11 +129,21 @@ function (angular, _) {
       return segments;
     };
 
+    $scope.buildTagKeysQuery = function(target) {
+      var query = 'SHOW TAG KEYS';
+
+      if (target.measurement) {
+        query += ' FROM "' + target.measurement + '"';
+      }
+
+      return query;
+    };
+
     $scope.getTagsOrValues = function(segment, index) {
       var query, queryType;
       if (segment.type === 'key' || segment.type === 'plus-button') {
         queryType = 'TAG_KEYS';
-        query = 'SHOW TAG KEYS FROM "' + $scope.target.measurement + '"';
+        query = $scope.buildTagKeysQuery($scope.target, segment);
       } else if (segment.type === 'value')  {
         queryType = 'TAG_VALUES';
         query = 'SHOW TAG VALUES FROM "' + $scope.target.measurement + '" WITH KEY = ' + $scope.tagSegments[index-2].value;
@@ -149,7 +159,7 @@ function (angular, _) {
       .then($scope.addTemplateVariableSegments)
       .then(function(results) {
         if (queryType === 'TAG_KEYS' && segment.type === 'key') {
-          results.push(angular.copy($scope.removeTagFilterSegment));
+          results.splice(0, 0, angular.copy($scope.removeTagFilterSegment));
         }
         return results;
       })
@@ -164,7 +174,7 @@ function (angular, _) {
       .then($scope.addTemplateVariableSegments)
       .then(function(results) {
         if (segment.type !== 'plus-button') {
-          results.push(angular.copy($scope.removeGroupBySegment));
+          results.splice(0, 0, angular.copy($scope.removeGroupBySegment));
         }
         return results;
       })
