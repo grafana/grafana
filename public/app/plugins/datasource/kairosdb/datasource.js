@@ -9,7 +9,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('KairosDBDatasource', function($q, $http) {
+  module.factory('KairosDBDatasource', function($q, $http, templateSrv) {
 
     function KairosDBDatasource(datasource) {
       this.type = datasource.type;
@@ -186,7 +186,7 @@ function (angular, _, kbn) {
       }
 
       var query = {
-        name: target.metric
+        name: templateSrv.replace(target.metric)
       };
 
       query.aggregators = [];
@@ -236,13 +236,20 @@ function (angular, _, kbn) {
 
       if (target.tags) {
         query.tags = angular.copy(target.tags);
+        _.forOwn(query.tags, function(value, key) {
+          query.tags[key] = _.map(value, function(tag) { return templateSrv.replace(tag); });
+        });
       }
 
       if (target.groupByTags || target.nonTagGroupBys) {
         query.group_by = [];
         if (target.groupByTags) {
-          query.group_by.push({name: "tag", tags: angular.copy(target.groupByTags)});
+          query.group_by.push({
+            name: "tag",
+            tags: _.map(angular.copy(target.groupByTags), function(tag) { return templateSrv.replace(tag); })
+          });
         }
+
         if (target.nonTagGroupBys) {
           _.each(target.nonTagGroupBys, function(rawGroupBy) {
             var formattedGroupBy = angular.copy(rawGroupBy);
@@ -261,6 +268,8 @@ function (angular, _, kbn) {
     //////////////////////////////////////////////////////////////////////
 
     KairosDBDatasource.prototype.convertToKairosInterval = function(intervalString) {
+      intervalString = templateSrv.replace(intervalString);
+
       var interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
       var interval_regex_ms = /(\d+(?:\.\d+)?)(ms)/;
       var matches = intervalString.match(interval_regex_ms);
