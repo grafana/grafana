@@ -68,8 +68,16 @@ function (angular, app, _, $) {
             value + '</span>';
         }
 
+        function getImg(className, fontSize, value) {
+          value = templateSrv.replace(value);
+          return '<img class="' + className + '" style="max-height:' + fontSize + '"' +
+            ' max-width"' + fontSize + ' src="' + value + '" />';
+        }
+
         function getBigValueHtml() {
           var body = '<div class="singlestat-panel-value-container">';
+
+          if (panel.image) { body += getImg('singlestat-panel-image', panel.imageFontSize, scope.panel.image); }
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
