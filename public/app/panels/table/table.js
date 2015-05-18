@@ -308,7 +308,7 @@ define([
 
           function getFormattedValue(value, columnIndex) {
             if (columnIndex === 0) { // reference column
-              if (scope.inTimeseriesMode && scope.panel.showTimeAsDate) { // if timeseries table and checkbox selected
+              if (scope.panel.inTimeSeriesMode && scope.panel.showTimeAsDate) { // if timeseries table and checkbox selected
                 return moment(value).format('L HH:mm:ss');
               }
 

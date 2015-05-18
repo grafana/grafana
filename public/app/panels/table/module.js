@@ -26,8 +26,6 @@ function (angular, app, _, require, PanelMeta) {
     $scope.tagColumnName = 'Name';
     $scope.tagValueColumnName = 'Value';
 
-    $scope.inTimeseriesMode = true;
-
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
       editIcon:  "fa fa-table",
@@ -51,7 +49,8 @@ function (angular, app, _, require, PanelMeta) {
       showTimeAsDate: true,
       allowPaging: true,
       pageLimit: 20,
-      allowSorting: true
+      allowSorting: true,
+      inTimeSeriesMode: true
     };
 
     $scope.permittedColumnWidthRange = _.range(40, 201);
@@ -74,7 +73,7 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.dataHandler = function(results) {
-      if ($scope.inTimeseriesMode) {
+      if ($scope.panel.inTimeSeriesMode) {
         $scope.tableData = timeseriesDataTransform(results.data);
       }
       else {
@@ -95,6 +94,10 @@ function (angular, app, _, require, PanelMeta) {
     $scope.shouldHideTable = function() {
       return !$scope.tableData || !$scope.tableData.values.length;
     };
+
+    $scope.$watch('panel.inTimeSeriesMode', function() {
+      $scope.render();
+    });
 
     $scope.init();
 
