@@ -7,15 +7,24 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetUser(c *middleware.Context) {
-	query := m.GetUserProfileQuery{UserId: c.UserId}
+// GET /api/user  (current authenticated user)
+func GetSignedInUser(c *middleware.Context) Response {
+	return getUserUserProfile(c.UserId)
+}
+
+// GET /api/user/:id
+func GetUserById(c *middleware.Context) Response {
+	return getUserUserProfile(c.ParamsInt64(":id"))
+}
+
+func getUserUserProfile(userId int64) Response {
+	query := m.GetUserProfileQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to get user", err)
-		return
+		return ApiError(500, "Failed to get user", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
 func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) {
@@ -29,22 +38,24 @@ func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) {
 	c.JsonOK("User updated")
 }
 
-func GetUserOrgList(c *middleware.Context) {
-	query := m.GetUserOrgListQuery{UserId: c.UserId}
+// GET /api/user/orgs
+func GetSignedInUserOrgList(c *middleware.Context) Response {
+	return getUserOrgList(c.UserId)
+}
+
+// GET /api/user/:id/orgs
+func GetUserOrgList(c *middleware.Context) Response {
+	return getUserOrgList(c.ParamsInt64(":id"))
+}
+
+func getUserOrgList(userId int64) Response {
+	query := m.GetUserOrgListQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to get user organizations", err)
-		return
+		return ApiError(500, "Faile to get user organziations", err)
 	}
 
-	for _, ac := range query.Result {
-		if ac.OrgId == c.OrgId {
-			ac.IsUsing = true
-			break
-		}
-	}
-
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
 func validateUsingOrg(userId int64, orgId int64) bool {

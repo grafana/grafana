@@ -58,8 +58,7 @@ type OrgDTO struct {
 }
 
 type UserOrgDTO struct {
-	OrgId   int64    `json:"orgId"`
-	Name    string   `json:"name"`
-	Role    RoleType `json:"role"`
-	IsUsing bool     `json:"isUsing"`
+	OrgId int64    `json:"orgId"`
+	Name  string   `json:"name"`
+	Role  RoleType `json:"role"`
 }

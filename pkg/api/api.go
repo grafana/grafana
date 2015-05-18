@@ -55,14 +55,20 @@ func Register(r *macaron.Macaron) {
 	r.Group("/api", func() {
 		// user
 		r.Group("/user", func() {
-			r.Get("/", GetUser)
+			r.Get("/", wrap(GetSignedInUser))
 			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
 			r.Post("/using/:id", UserSetUsingOrg)
-			r.Get("/orgs", GetUserOrgList)
+			r.Get("/orgs", wrap(GetSignedInUserOrgList))
 			r.Post("/stars/dashboard/:id", StarDashboard)
 			r.Delete("/stars/dashboard/:id", UnstarDashboard)
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
 		})
+
+		// users
+		r.Group("/users", func() {
+			r.Get("/:id/", wrap(GetUserById))
+			r.Get("/:id/org", wrap(GetUserOrgList))
+		}, reqGrafanaAdmin)
 
 		// account
 		r.Group("/org", func() {
@@ -127,5 +133,5 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
-	r.NotFound(NotFound)
+	r.NotFound(NotFoundHandler)
 }
