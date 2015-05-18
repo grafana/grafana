@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -48,7 +49,13 @@ func GetDashboard(c *middleware.Context) {
 	dash := query.Result
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
-		Meta:      dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
+		Meta: dtos.DashboardMeta{
+			IsStarred: isStarred,
+			Slug:      slug,
+			Type:      m.DashTypeDB,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+		},
 	}
 
 	c.JSON(200, dto)
@@ -117,4 +124,30 @@ func GetHomeDashboard(c *middleware.Context) {
 	}
 
 	c.JSON(200, &dash)
+}
+
+func GetDashboardFromJsonFile(c *middleware.Context) {
+	file := c.Params(":file")
+
+	dashboard := search.GetDashboardFromJsonIndex(file)
+	if dashboard == nil {
+		c.JsonApiErr(404, "Dashboard not found", nil)
+		return
+	}
+
+	dash := dtos.DashboardFullWithMeta{Dashboard: dashboard.Data}
+	dash.Meta.Type = m.DashTypeJson
+
+	c.JSON(200, &dash)
+}
+
+func GetDashboardTags(c *middleware.Context) {
+	query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get tags from database", err)
+		return
+	}
+
+	c.JSON(200, query.Result)
 }

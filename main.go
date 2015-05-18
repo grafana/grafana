@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/search"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,9 +49,10 @@ func main() {
 
 	flag.Parse()
 
-	initRuntime()
 	writePIDFile()
+	initRuntime()
 
+	search.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()

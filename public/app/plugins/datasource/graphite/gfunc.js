@@ -328,6 +328,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "changed",
+    category: categories.Special,
+    params: [],
+    defaultParams: []
+  });
+
+  addFuncDef({
     name: 'scale',
     category: categories.Transform,
     params: [{ name: "factor", type: "int", }],

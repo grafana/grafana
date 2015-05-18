@@ -56,9 +56,8 @@ function (angular, $, kbn, _, moment) {
 
       meta.canShare = meta.canShare === false ? false : true;
       meta.canSave = meta.canSave === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
       meta.canStar = meta.canStar === false ? false : true;
-      meta.canDelete = meta.canDelete === false ? false : true;
+      meta.canEdit = meta.canEdit === false ? false : true;
 
       if (!this.editable) {
         meta.canEdit = false;

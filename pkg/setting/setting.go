@@ -258,11 +258,13 @@ func loadSpecifedConfigFile(configFile string) {
 
 			defaultSec, err := Cfg.GetSection(section.Name())
 			if err != nil {
-				log.Fatal(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+				log.Error(3, "Unknown config section %s defined in %s", section.Name(), configFile)
+				continue
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Fatal(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				log.Error(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				continue
 			}
 			defaultKey.SetValue(key.Value())
 		}
@@ -287,9 +289,12 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// command line props
 	commandLineProps := getCommandLineProperties(args.Args)
-
 	// load default overrides
 	applyCommandLineDefaultProperties(commandLineProps)
+
+	// init logging before specific config so we can log errors from here on
+	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
+	initLogging(args)
 
 	// load specified config file
 	loadSpecifedConfigFile(args.Config)
@@ -302,6 +307,10 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// evaluate config values containing environment variables
 	evalConfigValues()
+
+	// update data path and logging config
+	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
+	initLogging(args)
 }
 
 func pathExists(path string) bool {
@@ -336,9 +345,6 @@ func setHomePath(args *CommandLineArgs) {
 func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
-
-	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
 
 	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")

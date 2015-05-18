@@ -6,6 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/search"
 )
 
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
@@ -85,7 +86,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to search for dashboard", func() {
-				query := m.SearchDashboardsQuery{
+				query := search.FindPersistedDashboardsQuery{
 					Title: "test",
 					OrgId: 1,
 				}
@@ -99,8 +100,8 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to search for dashboards using tags", func() {
-				query1 := m.SearchDashboardsQuery{Tag: "webapp", OrgId: 1}
-				query2 := m.SearchDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
+				query1 := search.FindPersistedDashboardsQuery{Tag: "webapp", OrgId: 1}
+				query2 := search.FindPersistedDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
 
 				err := SearchDashboards(&query1)
 				err = SearchDashboards(&query2)
@@ -146,7 +147,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to search for starred dashboards", func() {
-					query := m.SearchDashboardsQuery{OrgId: 1, UserId: 10, IsStarred: true}
+					query := search.FindPersistedDashboardsQuery{OrgId: 1, UserId: 10, IsStarred: true}
 					err := SearchDashboards(&query)
 
 					So(err, ShouldBeNil)

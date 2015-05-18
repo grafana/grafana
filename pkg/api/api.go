@@ -100,7 +100,9 @@ func Register(r *macaron.Macaron) {
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
+			r.Get("/tags", GetDashboardTags)
 		})
 
 		// Search

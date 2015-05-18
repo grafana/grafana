@@ -133,12 +133,12 @@ function (angular, _) {
 
     $scope.searchDashboards = function(link) {
       return backendSrv.search({tag: link.tag}).then(function(results) {
-        return _.reduce(results.dashboards, function(memo, dash) {
+        return _.reduce(results, function(memo, dash) {
           // do not add current dashboard
           if (dash.id !== currentDashId) {
             memo.push({
               title: dash.title,
-              url: 'dashboard/db/'+ dash.slug,
+              url: 'dashboard/' + dash.uri,
               icon: 'fa fa-th-large',
               keepTime: link.keepTime,
               includeVars: link.includeVars

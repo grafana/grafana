@@ -71,12 +71,11 @@ function (angular, _, require, config) {
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
       var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
-      soloUrl = soloUrl.replace('/dashboard/snapshot/', '/dashboard/solo/snapshot/');
+      soloUrl = soloUrl.replace('/dashboard/', '/dashboard-solo/');
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard/', '/render/dashboard/');
+      $scope.imageUrl = soloUrl.replace('/dashboard', '/render/dashboard');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

@@ -5,8 +5,7 @@ function (_) {
   'use strict';
 
   function InfluxSeries(options) {
-    this.seriesList = options.seriesList && options.seriesList.results && options.seriesList.results.length > 0
-      ? options.seriesList.results[0].series || [] : [];
+    this.series = options.series;
     this.alias = options.alias;
     this.annotation = options.annotation;
   }
@@ -17,23 +16,25 @@ function (_) {
     var output = [];
     var self = this;
 
-    console.log(self.seriesList);
-    if (self.seriesList.length === 0) {
+    if (self.series.length === 0) {
       return output;
     }
 
-    _.each(self.seriesList, function(series) {
+    _.each(self.series, function(series) {
       var datapoints = [];
       for (var i = 0; i < series.values.length; i++) {
         datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
       }
 
       var seriesName = series.name;
-      var tags = _.map(series.tags, function(value, key) {
-        return key + ': ' + value;
-      });
 
-      if (tags.length > 0) {
+      if (self.alias) {
+        seriesName = self.alias;
+      } else if (series.tags) {
+        var tags = _.map(series.tags, function(value, key) {
+          return key + ': ' + value;
+        });
+
         seriesName = seriesName + ' {' + tags.join(', ') + '}';
       }
 

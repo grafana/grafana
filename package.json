@@ -40,7 +40,7 @@
     "karma-coverage": "0.3.1",
     "karma-coveralls": "0.1.5",
     "karma-expect": "~1.1.0",
-    "karma-mocha": "~0.1.4",
+    "karma-mocha": "~0.1.10",
     "karma-phantomjs-launcher": "0.1.4",
     "karma-requirejs": "0.2.2",
     "karma-script-launcher": "0.1.0",

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/search"
 )
 
 func init() {
@@ -119,7 +120,7 @@ type DashboardSearchProjection struct {
 	Term  string
 }
 
-func SearchDashboards(query *m.SearchDashboardsQuery) error {
+func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -166,16 +167,17 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		return err
 	}
 
-	query.Result = make([]*m.DashboardSearchHit, 0)
-	hits := make(map[int64]*m.DashboardSearchHit)
+	query.Result = make([]*search.Hit, 0)
+	hits := make(map[int64]*search.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.Id]
 		if !exists {
-			hit = &m.DashboardSearchHit{
+			hit = &search.Hit{
 				Id:    item.Id,
 				Title: item.Title,
-				Slug:  item.Slug,
+				Uri:   "db/" + item.Slug,
+				Type:  search.DashHitDB,
 				Tags:  []string{},
 			}
 			query.Result = append(query.Result, hit)
