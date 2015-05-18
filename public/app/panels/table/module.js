@@ -48,7 +48,7 @@ function (angular, app, _, require, PanelMeta) {
       targets: [{ rawQuery: false }],
       columnWidth: 'auto',
       decimalLimit: 'auto',
-      showTimeAsDate: false,
+      showTimeAsDate: true,
       allowPaging: true,
       pageLimit: 20,
       allowSorting: true
