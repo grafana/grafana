@@ -56,7 +56,7 @@ func Register(r *macaron.Macaron) {
 		// user
 		r.Group("/user", func() {
 			r.Get("/", wrap(GetSignedInUser))
-			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
+			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
 			r.Post("/using/:id", UserSetUsingOrg)
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
 			r.Post("/stars/dashboard/:id", StarDashboard)
@@ -66,8 +66,9 @@ func Register(r *macaron.Macaron) {
 
 		// users
 		r.Group("/users", func() {
-			r.Get("/:id/", wrap(GetUserById))
+			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/org", wrap(GetUserOrgList))
+			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 		}, reqGrafanaAdmin)
 
 		// account
@@ -122,9 +123,7 @@ func Register(r *macaron.Macaron) {
 	r.Group("/api/admin", func() {
 		r.Get("/settings", AdminGetSettings)
 		r.Get("/users", AdminSearchUsers)
-		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		r.Put("/users/:id/details", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
 		r.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
 		r.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		r.Delete("/users/:id", AdminDeleteUser)

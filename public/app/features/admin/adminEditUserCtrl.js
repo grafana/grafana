@@ -17,7 +17,7 @@ function (angular) {
     };
 
     $scope.getUser = function(id) {
-      backendSrv.get('/api/admin/users/' + id).then(function(user) {
+      backendSrv.get('/api/users/' + id).then(function(user) {
         $scope.user = user;
         $scope.user_id = id;
         $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
@@ -52,7 +52,7 @@ function (angular) {
     $scope.update = function() {
       if (!$scope.userForm.$valid) { return; }
 
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/details', $scope.user).then(function() {
+      backendSrv.put('/api/users/' + $scope.user_id, $scope.user).then(function() {
         $location.path('/admin/users');
       });
     };

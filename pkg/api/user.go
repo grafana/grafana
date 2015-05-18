@@ -27,15 +27,31 @@ func getUserUserProfile(userId int64) Response {
 	return Json(200, query.Result)
 }
 
-func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) {
+// POST /api/user
+func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
 	cmd.UserId = c.UserId
+	return handleUpdateUser(cmd)
+}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(400, "Failed to update user", err)
-		return
+// POST /api/users/:id
+func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+	cmd.UserId = c.ParamsInt64(":id")
+	return handleUpdateUser(cmd)
+}
+
+func handleUpdateUser(cmd m.UpdateUserCommand) Response {
+	if len(cmd.Login) == 0 {
+		cmd.Login = cmd.Email
+		if len(cmd.Login) == 0 {
+			return ApiError(400, "Validation error, need specify either username or email", nil)
+		}
 	}
 
-	c.JsonOK("User updated")
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "failed to update user", err)
+	}
+
+	return ApiSuccess("User updated")
 }
 
 // GET /api/user/orgs

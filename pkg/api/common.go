@@ -26,12 +26,17 @@ type NormalResponse struct {
 	header http.Header
 }
 
-func wrap(action func(c *middleware.Context) Response) macaron.Handler {
+func wrap(action interface{}) macaron.Handler {
+
 	return func(c *middleware.Context) {
-		res := action(c)
-		if res == nil {
+		var res Response
+		val, err := c.Invoke(action)
+		if err == nil && val != nil && len(val) > 0 {
+			res = val[0].Interface().(Response)
+		} else {
 			res = ServerError
 		}
+
 		res.WriteTo(c.Resp)
 	}
 }
@@ -62,6 +67,12 @@ func Empty(status int) *NormalResponse {
 
 func Json(status int, body interface{}) *NormalResponse {
 	return Respond(status, body).Header("Content-Type", "application/json")
+}
+
+func ApiSuccess(message string) *NormalResponse {
+	resp := make(map[string]interface{})
+	resp["message"] = message
+	return Respond(200, resp)
 }
 
 func ApiError(status int, message string, err error) *NormalResponse {

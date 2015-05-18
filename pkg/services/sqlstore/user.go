@@ -231,10 +231,11 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 	}
 
 	query.Result = m.UserProfileDTO{
-		Name:  user.Name,
-		Email: user.Email,
-		Login: user.Login,
-		Theme: user.Theme,
+		Name:           user.Name,
+		Email:          user.Email,
+		Login:          user.Login,
+		Theme:          user.Theme,
+		IsGrafanaAdmin: user.IsAdmin,
 	}
 
 	return err
