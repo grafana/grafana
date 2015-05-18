@@ -1,22 +1,19 @@
 <div class="editor-row">
 
-	<div  ng-repeat="target in panel.targets"
-        class="tight-form"
-        ng-class="{'tight-form-disabled': target.hide}"
-        ng-controller="InfluxQueryCtrl"
-        ng-init="init()">
-      <ul class="tight-form-list pull-right">
-        <li ng-show="parserError" class="tight-form-item">
-          <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
-            <i class="fa fa-warning"></i>
-          </a>
-        </li>
-        <li class="tight-form-item">
-          <a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-            <i class="fa fa-pencil"></i>
-          </a>
-        </li>
-        <li class="tight-form-item">
+	<div ng-repeat="target in panel.targets" ng-controller="InfluxQueryCtrl" ng-init="init()" ng-class="{'tight-form-disabled': target.hide}" class="tight-form-container-no-item-borders" style="margin-bottom: 10px">
+		<div  class="tight-form">
+			<ul class="tight-form-list pull-right">
+				<li ng-show="parserError" class="tight-form-item">
+					<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+						<i class="fa fa-warning"></i>
+					</a>
+				</li>
+				<li class="tight-form-item">
+					<a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
+						<i class="fa fa-pencil"></i>
+					</a>
+				</li>
+				<li class="tight-form-item">
 					<div class="dropdown">
 						<a  class="pointer dropdown-toggle"
 							data-toggle="dropdown"
@@ -62,11 +59,10 @@
 				</li>
 			</ul>
 
-			<input  type="text" class="tight-form-clear-input span10" ng-model="target.query" focus-me="target.rawQuery"
-              spellcheck='false' ng-model-onblur ng-change="targetTextChanged()" ng-show="target.rawQuery" />
+			<input  type="text" class="tight-form-clear-input span10" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="targetTextChanged()" ng-show="target.rawQuery" />
 
-      <ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
-				<li class="tight-form-item query-keyword">
+			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
+				<li class="tight-form-item query-keyword" style="width: 75px;">
 					SELECT
 				</li>
 				<li class="dropdown tight-form-item">
@@ -74,22 +70,58 @@
 						{{target.function}}<span>(value)</span>
 					</a>
 				</li>
-				<li class="tight-form-item query-keyword">
+			</ul>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+				<li class="tight-form-item query-keyword" style="width: 75px;">
 					FROM
 				</li>
 				<li>
 					<metric-segment segment="measurementSegment" get-alt-segments="getMeasurements()" on-value-changed="measurementChanged()"></metric-segment>
 				</li>
-				<li class="tight-form-item query-keyword">
+			</ul>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item query-keyword" style="width: 75px;">
 					WHERE
 				</li>
+
 				<li ng-repeat="segment in tagSegments">
 					<metric-segment segment="segment" get-alt-segments="getTagsOrValues(segment, $index)" on-value-changed="tagSegmentUpdated(segment, $index)"></metric-segment>
 				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
 				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item" >
 					<span class="query-keyword">GROUP BY</span>
+				</li>
+
+				<li class="tight-form-item">
 					time($interval)
 				</li>
+
 				<li ng-repeat="segment in groupBySegments">
 					<metric-segment segment="segment" get-alt-segments="getGroupByTagSegments(segment, 0)" on-value-changed="groupByTagUpdated(segment, $index)"></metric-segment>
 				</li>
@@ -107,15 +139,16 @@
 						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
 						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
 					</ul>
-			</li>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
 
-      </ul>
-
-      <div class="clearfix"></div>
-    </div>
+	</div>
 </div>
 
 <div class="editor-row">
 	<div class="pull-left" style="margin-top: 30px;">
 	</div>
 </div>
+

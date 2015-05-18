@@ -266,7 +266,7 @@ function (angular, _, InfluxQueryBuilder) {
     };
 
     MetricSegment.newPlusButton = function() {
-      return new MetricSegment({fake: true, html: '<i class="fa fa-plus"></i>', type: 'plus-button' });
+      return new MetricSegment({fake: true, html: '<i class="fa fa-plus "></i>', type: 'plus-button' });
     };
 
     MetricSegment.newSelectTagValue = function() {
