@@ -69,8 +69,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var query = annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
-      return this._seriesQuery(query).then(function(results) {
-        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+      return this._seriesQuery(query).then(function(data) {
+        if (!data || !data.results || !data.results[0]) {
+          throw { message: 'No results in response from InfluxDB' };
+        }
+        return new InfluxSeries({ series: data.results[0].series, annotation: annotation }).getAnnotations();
       });
     };
 
@@ -168,9 +171,11 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return deferred.promise;
     };
 
-    function handleInfluxQueryResponse(alias, seriesList) {
-      var influxSeries = new InfluxSeries({ seriesList: seriesList, alias: alias });
-      return influxSeries.getTimeSeries();
+    function handleInfluxQueryResponse(alias, data) {
+      if (!data || !data.results || !data.results[0]) {
+        throw { message: 'No results in response from InfluxDB' };
+      }
+      return new InfluxSeries({ series: data.results[0].series, alias: alias }).getTimeSeries();
     }
 
     function getTimeFilter(options) {

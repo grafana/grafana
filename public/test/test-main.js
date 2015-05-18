@@ -125,6 +125,7 @@ require([
     'specs/graphiteTargetCtrl-specs',
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
+    'specs/influxSeries08-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
