@@ -84,9 +84,9 @@ func Register(r *macaron.Macaron) {
 
 		// auth api keys
 		r.Group("/auth/keys", func() {
-			r.Get("/", GetApiKeys)
-			r.Post("/", bind(m.AddApiKeyCommand{}), AddApiKey)
-			r.Delete("/:id", DeleteApiKey)
+			r.Get("/", wrap(GetApiKeys))
+			r.Post("/", bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
+			r.Delete("/:id", wrap(DeleteApiKey))
 		}, reqAccountAdmin)
 
 		// Data sources
