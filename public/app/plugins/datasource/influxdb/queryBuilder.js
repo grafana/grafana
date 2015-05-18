@@ -14,11 +14,41 @@ function (_) {
     return this.target.rawQuery ? this._modifyRawQuery() : this._buildQuery();
   };
 
-  p.showTagsQuery = function() {
-    var query = 'SHOW TAG KEYS';
+  p.buildExploreQuery = function(type, withKey) {
+    var query;
+    var measurement;
 
-    if (this.target.measurement) {
-      query += ' FROM "' + this.target.measurement + '"';
+    if (type === 'TAG_KEYS') {
+      query = 'SHOW TAG KEYS';
+      measurement= this.target.measurement;
+    } else if (type === 'TAG_VALUES') {
+      query = 'SHOW TAG VALUES';
+      measurement= this.target.measurement;
+    } else if (type === 'MEASUREMENTS') {
+      query = 'SHOW MEASUREMENTS';
+    }
+
+    if (measurement) {
+      query += ' FROM "' + measurement + '"';
+    }
+
+    if (withKey) {
+      query += ' WITH KEY = "' + withKey + '"';
+    }
+
+    if (this.target.tags && this.target.tags.length > 0) {
+      var whereConditions = _.reduce(this.target.tags, function(memo, tag) {
+        // do not add a condition for the key we want to explore for
+        if (tag.key === withKey) {
+          return memo;
+        }
+        memo.push(' ' + tag.key + '=' + "'" + tag.value + "'");
+        return memo;
+      }, []);
+
+      if (whereConditions.length > 0) {
+        query +=  ' WHERE' + whereConditions.join('AND');
+      }
     }
 
     return query;

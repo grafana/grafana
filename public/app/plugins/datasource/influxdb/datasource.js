@@ -74,7 +74,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.metricFindQuery = function (query, queryType) {
+    InfluxDatasource.prototype.metricFindQuery = function (query) {
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -83,39 +83,33 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         return $q.reject(err);
       }
 
-      console.log('metricFindQuery called with: ' + [query, queryType].join(', '));
-
-      return this._seriesQuery(interpolated, queryType).then(function (results) {
+      return this._seriesQuery(interpolated).then(function (results) {
         if (!results || results.results.length === 0) { return []; }
 
         var influxResults = results.results[0];
         if (!influxResults.series) {
           return [];
         }
-
-        console.log('metric find query response', results);
         var series = influxResults.series[0];
 
-        switch (queryType) {
-        case 'MEASUREMENTS':
+        if (query.indexOf('SHOW MEASUREMENTS') === 0) {
           return _.map(series.values, function(value) { return { text: value[0], expandable: true }; });
-        case 'TAG_KEYS':
-          var tagKeys = _.flatten(series.values);
-          return _.map(tagKeys, function(tagKey) { return { text: tagKey, expandable: true }; });
-        case 'TAG_VALUES':
-          var tagValues = _.flatten(series.values);
-          return _.map(tagValues, function(tagValue) { return { text: tagValue, expandable: true }; });
-        default: // template values service does not pass in a a query type
-          var flattenedValues = _.flatten(series.values);
-          return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
         }
+
+        var flattenedValues = _.flatten(series.values);
+        return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
       });
     };
 
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function(reason) {
         if (reason.status !== 0 || reason.status >= 300) {
-          reason.message = 'InfluxDB Error: <br/>' + reason.data;
+          if (reason.data && reason.data.error) {
+            reason.message = 'InfluxDB Error Response: ' + reason.data.error;
+          }
+          else {
+            reason.message = 'InfluxDB Error: ' + reason.message;
+          }
           deferred.reject(reason);
         }
         else {

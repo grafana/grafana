@@ -108,7 +108,8 @@ function (angular, _, InfluxQueryBuilder) {
     };
 
     $scope.getMeasurements = function () {
-      return $scope.datasource.metricFindQuery('SHOW MEASUREMENTS', 'MEASUREMENTS')
+      var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
+      return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments)
       .then($scope.addTemplateVariableSegments)
       .then(null, $scope.handleQueryError);
@@ -133,13 +134,12 @@ function (angular, _, InfluxQueryBuilder) {
     };
 
     $scope.getTagsOrValues = function(segment, index) {
-      var query, queryType;
+      var query;
+
       if (segment.type === 'key' || segment.type === 'plus-button') {
-        queryType = 'TAG_KEYS';
-        query = $scope.queryBuilder.showTagsQuery();
+        query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
       } else if (segment.type === 'value')  {
-        queryType = 'TAG_VALUES';
-        query = 'SHOW TAG VALUES FROM "' + $scope.target.measurement + '" WITH KEY = ' + $scope.tagSegments[index-2].value;
+        query = $scope.queryBuilder.buildExploreQuery('TAG_VALUES', $scope.tagSegments[index-2].value);
       } else if (segment.type === 'condition') {
         return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
       }
@@ -147,11 +147,11 @@ function (angular, _, InfluxQueryBuilder) {
         return $q.when([]);
       }
 
-      return $scope.datasource.metricFindQuery(query, queryType)
+      return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments)
       .then($scope.addTemplateVariableSegments)
       .then(function(results) {
-        if (queryType === 'TAG_KEYS' && segment.type === 'key') {
+        if (segment.type === 'key') {
           results.splice(0, 0, angular.copy($scope.removeTagFilterSegment));
         }
         return results;
@@ -160,9 +160,9 @@ function (angular, _, InfluxQueryBuilder) {
     };
 
     $scope.getGroupByTagSegments = function(segment) {
-      var query = 'SHOW TAG KEYS FROM "' + $scope.target.measurement + '"';
+      var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
 
-      return $scope.datasource.metricFindQuery(query, 'TAG_KEYS')
+      return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments)
       .then($scope.addTemplateVariableSegments)
       .then(function(results) {
