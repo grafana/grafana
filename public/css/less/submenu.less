@@ -55,31 +55,48 @@
   border-radius: 3px 3px 0 0;
 }
 
-.variable-options-container {
-  max-height: 350px;
-  overflow: auto;
-  display: block;
-  line-height: 26px;
+.variable-options-wrapper {
+  display: table;
+  width: 100%;
 }
 
-.variable-option {
+.variable-options-column {
+  max-height: 350px;
+  overflow: auto;
+  display: table-cell;
+  line-height: 26px;
+  &:nth-child(2) {
+    border-left: 1px solid @grafanaTargetFuncBackground;
+  }
+}
+
+.variable-option-tag,
+.variable-option,
+.variable-options-column-header {
   display: block;
-  padding: 0 8px;
+  padding: 0 27px 0 8px;
+  position: relative;
 
-  &:hover, &.highlighted {
-    background-color: @blueDark;
-  }
-
-  .fa {
-    line-height: 26px;
-    float: right;
-    padding-left: 4px;
-  }
+ .variable-option-icon { display: none }
 
   &.selected {
     .variable-option-icon:before {
       content: "\f00c";
     }
+    .variable-option-icon {
+      display: block;
+      padding-left: 4px;
+      line-height: 26px;
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+  }
+}
+
+.variable-option {
+  &:hover, &.highlighted {
+    background-color: @blueDark;
   }
 }
 
