@@ -94,6 +94,7 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
