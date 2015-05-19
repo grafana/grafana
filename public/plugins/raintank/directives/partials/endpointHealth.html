@@ -1,20 +1,16 @@
 <span class="rt-health-list freqMsg">
-	Ping: 
-	<img src="img/online.svg" width="20px" height="20px"> <!-- Delete when the below works -->
-	<!-- 	<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(getMonitorByTypeName('Ping'))}}'"> -->
+	Ping:
+	<img ng-src="img/{{monitorStateTxt(endpoint,'ping')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'ping')}}'">
 </span>
 <span class="rt-health-list freqMsg">
-	DNS: 
-	<img src="img/critical.svg" width="20px" height="20px"> <!-- Delete when the below works -->
-	<!-- 	<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(getMonitorByTypeName('Ping'))}}'"> -->
+	DNS:
+	<img ng-src="img/{{monitorStateTxt(endpoint,'dns')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'dns')}}'">
 </span>
 <span class="rt-health-list freqMsg">
-	HTTP: 
-	<img src="img/nodata.svg" width="20px" height="20px"> <!-- Delete when the below works -->
-	<!-- 	<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(getMonitorByTypeName('Ping'))}}'"> -->
+	HTTP:
+	<img ng-src="img/{{monitorStateTxt(endpoint,'http')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'http')}}'">
 </span>
 <span class="rt-health-list freqMsg">
-	HTTPS: 
-	<img src="img/warn.svg" width="20px" height="20px"> <!-- Delete when the below works -->
-	<!-- 	<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(getMonitorByTypeName('Ping'))}}'"> -->	
+	HTTPS:
+	<img ng-src="img/{{monitorStateTxt(endpoint,'https')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'https')}}'">
 </span>
