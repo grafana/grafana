@@ -23,8 +23,6 @@ function (angular, app, _, require, PanelMeta) {
 
   module.controller('TablePanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
     $scope.timestampColumnName = 'Time';
-    $scope.tagColumnName = 'Name';
-    $scope.tagValueColumnName = 'Value';
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
@@ -50,7 +48,9 @@ function (angular, app, _, require, PanelMeta) {
       allowPaging: true,
       pageLimit: 20,
       allowSorting: true,
-      inTimeSeriesMode: true
+      inTimeSeriesMode: true,
+      ragBaseColumnName: 'Name',
+      ragValueColumnName: 'Value'
     };
 
     $scope.permittedColumnWidthRange = _.range(40, 201);
@@ -96,7 +96,7 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.$watch('panel.inTimeSeriesMode', function() {
-      $scope.render();
+      $scope.get_data();
     });
 
     $scope.init();
@@ -163,25 +163,18 @@ function (angular, app, _, require, PanelMeta) {
      * @returns {{values: Array, columnOrder: Array}}
      */
     function ragDataTransform(results) {
-      function getTagName(rawName) {
-        var tagRegex = /\{.*?: ?(.*?)\}/g;
-        var match = tagRegex.exec(rawName);
-        return match !== null ? match[1] : rawName;
-      }
-
       var rowValues = _.map(results, function(queryResult) {
-        var curRowName = getTagName(queryResult.target);
         var rowData = queryResult.datapoints[0]; // each grouped row will only have one array of datapoints (for now)
-        var value = rowData[0]; // index 0 is the value, index 1 is the timestamp which is not needed here
+        var data = rowData[0];
         var result = {};
-        result[$scope.tagColumnName] = curRowName;
-        result[$scope.tagValueColumnName] = value;
+        result[$scope.panel.ragBaseColumnName] = queryResult.target;
+        result[$scope.panel.ragValueColumnName] = data || Math.random(); // TODO: REMOVE RANDOM
         return result;
       });
 
       return {
         values: rowValues,
-        columnOrder: [$scope.tagColumnName, $scope.tagValueColumnName]
+        columnOrder: [$scope.panel.ragBaseColumnName, $scope.panel.ragValueColumnName]
       };
     }
 
