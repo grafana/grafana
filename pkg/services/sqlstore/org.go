@@ -14,12 +14,23 @@ func init() {
 	bus.AddHandler("sql", CreateOrg)
 	bus.AddHandler("sql", UpdateOrg)
 	bus.AddHandler("sql", GetOrgByName)
-	bus.AddHandler("sql", GetOrgList)
+	bus.AddHandler("sql", SearchOrgs)
 	bus.AddHandler("sql", DeleteOrg)
 }
 
-func GetOrgList(query *m.GetOrgListQuery) error {
-	return x.Find(&query.Result)
+func SearchOrgs(query *m.SearchOrgsQuery) error {
+	query.Result = make([]*m.OrgDTO, 0)
+	sess := x.Table("org")
+	if query.Query != "" {
+		sess.Where("name LIKE ?", query.Query+"%")
+	}
+	if query.Name != "" {
+		sess.Where("name=?", query.Name)
+	}
+	sess.Limit(query.Limit, query.Limit*query.Page)
+	sess.Cols("id", "name")
+	err := sess.Find(&query.Result)
+	return err
 }
 
 func GetOrgById(query *m.GetOrgByIdQuery) error {

@@ -9,16 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminSearchUsers(c *middleware.Context) {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
-	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to fetch users", err)
-		return
-	}
-
-	c.JSON(200, query.Result)
-}
-
 func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 	cmd := m.CreateUserCommand{
 		Login:    form.Login,

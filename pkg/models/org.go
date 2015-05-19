@@ -48,8 +48,13 @@ type GetOrgByNameQuery struct {
 	Result *Org
 }
 
-type GetOrgListQuery struct {
-	Result []*Org
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+
+	Result []*OrgDTO
 }
 
 type OrgDTO struct {

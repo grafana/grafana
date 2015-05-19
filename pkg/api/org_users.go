@@ -84,6 +84,9 @@ func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrLastOrgAdmin {
+			return ApiError(400, "Cannot change role so that there is no organization admin left", nil)
+		}
 		return ApiError(500, "Failed update org user", err)
 	}
 

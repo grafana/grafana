@@ -142,3 +142,13 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 
 	c.JsonOK("User password changed")
 }
+
+// GET /api/users
+func SearchUsers(c *middleware.Context) Response {
+	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to fetch users", err)
+	}
+
+	return Json(200, query.Result)
+}

@@ -72,3 +72,18 @@ func updateOrgHelper(cmd m.UpdateOrgCommand) Response {
 
 	return ApiSuccess("Organization updated")
 }
+
+func SearchOrgs(c *middleware.Context) Response {
+	query := m.SearchOrgsQuery{
+		Query: c.Query("query"),
+		Name:  c.Query("name"),
+		Page:  0,
+		Limit: 1000,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to search orgs", err)
+	}
+
+	return Json(200, query.Result)
+}
