@@ -48,7 +48,7 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 		collector.*
 	FROM collector
 	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
-	WHERE 
+	WHERE
 		(collector.public=1 OR collector.org_id=?)
 	AND
 		collector.id=?
@@ -95,7 +95,7 @@ func GetCollectorByName(query *m.GetCollectorByNameQuery) error {
 		collector.*
 	FROM collector
 	LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id AND collector_tag.org_id=?
-	WHERE 
+	WHERE
 		(collector.public=1 OR collector.org_id=?)
 	AND
 		collector.name=?
@@ -464,9 +464,14 @@ func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
 
 func GetCollectorSessions(query *m.GetCollectorSessionsQuery) error {
 	sess := x.Table("collector_session")
+	return GetCollectorSessionsTransaction(query, sess)
+}
+
+func GetCollectorSessionsTransaction(query *m.GetCollectorSessionsQuery, sess *xorm.Session) error {
 	fmt.Printf("searching for sessions for collector %d\n", query.CollectorId)
 	err := sess.Where("collector_id=?", query.CollectorId).OrderBy("updated").Find(&query.Result)
 	return err
+
 }
 
 func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
@@ -476,7 +481,7 @@ func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
 			return err
 		}
 		q := m.GetCollectorSessionsQuery{CollectorId: cmd.CollectorId}
-		if err := GetCollectorSessions(&q); err != nil {
+		if err := GetCollectorSessionsTransaction(&q, sess); err != nil {
 			return err
 		}
 		if len(q.Result) < 1 {
