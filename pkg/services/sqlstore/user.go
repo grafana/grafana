@@ -283,6 +283,11 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 		return m.ErrUserNotFound
 	}
 
+	if user.OrgRole == "" {
+		user.OrgId = -1
+		user.OrgName = "Org missing"
+	}
+
 	query.Result = &user
 	return err
 }
