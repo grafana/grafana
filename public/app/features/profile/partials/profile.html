@@ -71,10 +71,10 @@
 				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
 				<td><strong>Role: </strong> {{org.role}}</td>
 				<td class="nobg max-width-btns">
-					<span class="btn btn-primary btn-mini" ng-show="org.isUsing">
+					<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
 						Current
 					</span>
-					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="!org.isUsing">
+					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
 						Select
 					</a>
 				</td>

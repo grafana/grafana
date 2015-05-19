@@ -11,7 +11,7 @@ function (angular) {
     $scope.newOrg = {name: ''};
 
     $scope.createOrg = function() {
-      backendSrv.post('/api/org/', $scope.newOrg).then($scope.getUserOrgs);
+      backendSrv.post('/api/orgs/', $scope.newOrg).then($scope.getUserOrgs);
     };
 
   });

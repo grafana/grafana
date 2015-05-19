@@ -231,10 +231,12 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 	}
 
 	query.Result = m.UserProfileDTO{
-		Name:  user.Name,
-		Email: user.Email,
-		Login: user.Login,
-		Theme: user.Theme,
+		Name:           user.Name,
+		Email:          user.Email,
+		Login:          user.Login,
+		Theme:          user.Theme,
+		IsGrafanaAdmin: user.IsAdmin,
+		OrgId:          user.OrgId,
 	}
 
 	return err
@@ -280,6 +282,11 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 		return err
 	} else if !has {
 		return m.ErrUserNotFound
+	}
+
+	if user.OrgRole == "" {
+		user.OrgId = -1
+		user.OrgName = "Org missing"
 	}
 
 	query.Result = &user
