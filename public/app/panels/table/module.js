@@ -24,6 +24,10 @@ function (angular, app, _, require, PanelMeta) {
   module.controller('TablePanelCtrl', function($scope, templateSrv, $sce, panelSrv, panelHelper) {
     $scope.timestampColumnName = 'Time';
 
+    // Since RAG/Timeseries tables have completely different data transforms, we want to retain the last data
+    // capture to work off of without performing a new query in case the user toggles between RAG/Timeseries
+    $scope.lastDataCapture = null;
+
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
       editIcon:  "fa fa-table",
@@ -67,12 +71,15 @@ function (angular, app, _, require, PanelMeta) {
       return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler, function(err) {
           $scope.tableData = {values: [], columnOrder: []};
+          $scope.lastDataCapture = null;
           $scope.render($scope.tableData);
           throw err;
         });
     };
 
     $scope.dataHandler = function(results) {
+      $scope.lastDataCapture = results;
+
       if ($scope.panel.inTimeSeriesMode) {
         $scope.tableData = timeseriesDataTransform(results.data);
       }
@@ -95,8 +102,16 @@ function (angular, app, _, require, PanelMeta) {
       return !$scope.tableData || !$scope.tableData.values.length;
     };
 
+    $scope.ragTimeSeriesSwitch = function() {
+      if (!$scope.lastDataCapture) {
+        return;
+      }
+
+      $scope.dataHandler($scope.lastDataCapture);
+    };
+
     $scope.$watch('panel.inTimeSeriesMode', function() {
-      $scope.render();
+      $scope.ragTimeSeriesSwitch();
     });
 
     $scope.init();
