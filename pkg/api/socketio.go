@@ -40,12 +40,12 @@ func (s *LocalSockets) Remove(id string) {
 	delete(s.Sockets, id)
 }
 
-func (s *LocalSockets) Emit(id string, event string, payload interface{} ) {
+func (s *LocalSockets) Emit(id string, event string, payload interface{}) {
 	s.RLock()
 	defer s.RUnlock()
 	socket, ok := s.Sockets[id]
 	if !ok {
-		log.Info("socket "+ id + " is not local.")
+		log.Info("socket " + id + " is not local.")
 		return
 	}
 	socket.Emit(event, payload)
@@ -86,37 +86,44 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 		keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 		if err := bus.Dispatch(&keyQuery); err != nil {
 			return nil, m.ErrInvalidApiKey
-		} else {
-			apikey := keyQuery.Result
-
-			// validate api key
-			if !apikeygen.IsValid(decoded, apikey.Key) {
-				return nil, m.ErrInvalidApiKey
-			}
-			// lookup collector
-			colQuery := m.GetCollectorByNameQuery{Name: name, OrgId: apikey.OrgId}
-			if err := bus.Dispatch(&colQuery); err != nil {
-				return nil, m.ErrCollectorNotFound
-			} else {
-
-				sess := &CollectorContext{
-					SignedInUser: &m.SignedInUser{
-						IsGrafanaAdmin: apikey.IsAdmin,
-						OrgRole:        apikey.Role,
-						ApiKeyId:       apikey.Id,
-						OrgId:          apikey.OrgId,
-						Name:           apikey.Name,
-					},
-					Collector: colQuery.Result,
-					Socket:    so,
-					SocketId:  so.Id(),
-				}
-				if err := sess.Save(); err != nil {
-					return nil, err
-				}
-				return sess, nil
-			}
 		}
+		apikey := keyQuery.Result
+
+		// validate api key
+		if !apikeygen.IsValid(decoded, apikey.Key) {
+			return nil, m.ErrInvalidApiKey
+		}
+		// lookup collector
+		colQuery := m.GetCollectorByNameQuery{Name: name, OrgId: apikey.OrgId}
+		if err := bus.Dispatch(&colQuery); err != nil {
+			//collector not found, so lets create a new one.
+			colCmd := m.AddCollectorCommand{
+				OrgId:   apikey.OrgId,
+				Name:    name,
+				Enabled: true,
+			}
+			if err := bus.Dispatch(&colCmd); err != nil {
+				return nil, err
+			}
+			colQuery.Result = colCmd.Result
+		}
+
+		sess := &CollectorContext{
+			SignedInUser: &m.SignedInUser{
+				IsGrafanaAdmin: apikey.IsAdmin,
+				OrgRole:        apikey.Role,
+				ApiKeyId:       apikey.Id,
+				OrgId:          apikey.OrgId,
+				Name:           apikey.Name,
+			},
+			Collector: colQuery.Result,
+			Socket:    so,
+			SocketId:  so.Id(),
+		}
+		if err := sess.Save(); err != nil {
+			return nil, err
+		}
+		return sess, nil
 	}
 	return nil, m.ErrInvalidApiKey
 }
@@ -139,13 +146,29 @@ func init() {
 		return
 	}
 	server.On("connection", func(so socketio.Socket) {
-		sess, err := register(so)
+		c, err := register(so)
 		if err != nil {
-			log.Error(0, "Failed to initialize collector.", err)
-			so.Emit("authFailed", err.Error())
+			if err == m.ErrInvalidApiKey {
+				log.Info("collector failed to authenticate.")
+			} else {
+				log.Error(0, "Failed to initialize collector.", err)
+			}
+			so.Emit("error", err.Error())
 			return
 		}
-		sess.OnConnection()
+		//get list of monitorTypes
+		cmd := &m.GetMonitorTypesQuery{}
+		if err := bus.Dispatch(cmd); err != nil {
+			log.Error(0, "Failed to initialize collector.", err)
+			so.Emit("error", err)
+			return
+		}
+		c.Socket.Emit("ready", map[string]interface{}{"collector": c.Collector, "monitor_types": cmd.Result})
+		log.Info(fmt.Sprintf("New connection for %s owned by OrgId: %d", c.Collector.Name, c.OrgId))
+		c.Socket.On("event", c.OnEvent)
+		c.Socket.On("results", c.OnResults)
+		c.Socket.On("disconnection", c.OnDisconnection)
+		RefreshCollector(c.Collector.Id)
 	})
 
 	server.On("error", func(so socketio.Socket, err error) {
@@ -180,15 +203,6 @@ func (c *CollectorContext) Remove() error {
 	err := bus.Dispatch(cmd)
 	localSockets.Remove(c.SocketId)
 	return err
-}
-
-func (c *CollectorContext) OnConnection() {
-	log.Info(fmt.Sprintf("New connection for %s owned by OrgId: %d", c.Collector.Name, c.OrgId))
-	c.Socket.Emit("ready", c.Collector)
-	c.Socket.On("event", c.OnEvent)
-	c.Socket.On("results", c.OnResults)
-	c.Socket.On("disconnection", c.OnDisconnection)
-	RefreshCollector(c.Collector.Id)
 }
 
 func (c *CollectorContext) OnDisconnection() {
