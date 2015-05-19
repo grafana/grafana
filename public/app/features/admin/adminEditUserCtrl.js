@@ -13,6 +13,7 @@ function (angular) {
     $scope.init = function() {
       if ($routeParams.id) {
         $scope.getUser($routeParams.id);
+        $scope.getUserOrgs($routeParams.id);
       }
     };
 
@@ -46,6 +47,12 @@ function (angular) {
 
       backendSrv.post('/api/admin/users', $scope.user).then(function() {
         $location.path('/admin/users');
+      });
+    };
+
+    $scope.getUserOrgs = function(id) {
+      backendSrv.get('/api/users/' + id + '/orgs').then(function(orgs) {
+        $scope.orgs = orgs;
       });
     };
 

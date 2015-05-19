@@ -94,5 +94,21 @@
 		<br>
 		<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
 
+		<h2>
+			Organizations
+		</h2>
+
+		<table class="grafana-options-table">
+			<tr ng-repeat="org in orgs">
+				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
+				<td><strong>Role: </strong> {{org.role}}</td>
+				<td class="nobg max-width-btns">
+					<span class="label label-info" ng-show="org.orgId === user.orgId">
+						Current
+					</span>
+				</td>
+			</tr>
+		</table>
+
 	</div>
 </div>

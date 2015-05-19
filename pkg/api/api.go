@@ -67,7 +67,7 @@ func Register(r *macaron.Macaron) {
 		// users
 		r.Group("/users", func() {
 			r.Get("/:id", wrap(GetUserById))
-			r.Get("/:id/org", wrap(GetUserOrgList))
+			r.Get("/:id/orgs", wrap(GetUserOrgList))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 		}, reqGrafanaAdmin)
 
