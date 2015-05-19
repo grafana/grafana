@@ -12,7 +12,7 @@ define([
       module('grafana.panels.table');
       ctx.providePhase();
       ctx.createControllerPhase('TablePanelCtrl');
-      ctx.scope.inTimeseriesMode = true;
+      ctx.scope.panel.inTimeSeriesMode = true;
     });
 
 
@@ -79,22 +79,22 @@ define([
       module('grafana.panels.table');
       ctx.providePhase();
       ctx.createControllerPhase('TablePanelCtrl');
-      ctx.scope.inTimeseriesMode = false;
+      ctx.scope.panel.inTimeSeriesMode = false;
     });
 
 
     it('should transform the data returned by the datasource correctly', function() {
 
+      var latestTimestamp = 23423490;
       // target name is composed of the series name and the object version of the grouped by tag
       var datasourceInput = {
-        data: [
-          {
-            target: 'randomThing.lists.maxFunCount {name: tag1}',
-            datapoints: [ [ 200, 1429885220822 ] ]
+        data: [{
+            target: 'Server',
+            datapoints: [ [ 100, latestTimestamp ] ]
           },
           {
-            target: 'randomThing.lists.maxFunCount {name: tag2}',
-            datapoints: [ [ 234, 1429885228707 ] ]
+            target: 'Backup Server',
+            datapoints: [ [ 50, latestTimestamp ] ]
           }
         ]
       };
@@ -102,13 +102,13 @@ define([
       ctx.scope.dataHandler(datasourceInput);
       ctx.scope.$digest();
 
-      var columnOrder = [ctx.scope.tagColumnName, ctx.scope.tagValueColumnName];
+      var columnOrder = [ctx.scope.panel.ragBaseColumnName, ctx.scope.panel.ragValueColumnName];
       var row1 = {};
-      row1[ctx.scope.tagColumnName] = 'tag1';
-      row1[ctx.scope.tagValueColumnName] = 200;
+      row1[ctx.scope.panel.ragBaseColumnName] = 'Server';
+      row1[ctx.scope.panel.ragValueColumnName] = 100;
       var row2 = {};
-      row2[ctx.scope.tagColumnName] = 'tag2';
-      row2[ctx.scope.tagValueColumnName] = 234;
+      row2[ctx.scope.panel.ragBaseColumnName] = 'Backup Server';
+      row2[ctx.scope.panel.ragValueColumnName] = 50;
 
       var expectedResult = {
         columnOrder: columnOrder,
@@ -116,8 +116,8 @@ define([
       };
 
       expect(ctx.scope.tableData.columnOrder).to.eql(expectedResult.columnOrder);
-      expect(ctx.scope.tableData.values[0][ctx.scope.tagValueColumnName]).to.eql(200);
-      expect(ctx.scope.tableData.values[1][ctx.scope.tagValueColumnName]).to.eql(234);
+      expect(ctx.scope.tableData.values[0][ctx.scope.panel.ragValueColumnName]).to.eql(100);
+      expect(ctx.scope.tableData.values[1][ctx.scope.panel.ragValueColumnName]).to.eql(50);
     });
   });
 

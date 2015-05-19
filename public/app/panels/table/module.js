@@ -96,7 +96,7 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.$watch('panel.inTimeSeriesMode', function() {
-      $scope.get_data();
+      $scope.render();
     });
 
     $scope.init();
@@ -168,7 +168,7 @@ function (angular, app, _, require, PanelMeta) {
         var data = rowData[0];
         var result = {};
         result[$scope.panel.ragBaseColumnName] = queryResult.target;
-        result[$scope.panel.ragValueColumnName] = data || Math.random(); // TODO: REMOVE RANDOM
+        result[$scope.panel.ragValueColumnName] = data;
         return result;
       });
 

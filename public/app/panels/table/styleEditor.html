@@ -71,11 +71,23 @@
             <label class="small">URL String</label>
             <input ng-disabled="!panel.allowScriptedRagLink"
                    type="text"
-                   class="input-xxlarge"
+                   class="scripted-rag-table-link"
                    ng-model="panel.scriptedRagLink"
                    ng-change="render()"
                    placeholder="Example: dashboard/script/scripted.js?&name=$tagName" />
 
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Column Names</h5>
+        <div class="editor-option">
+            <label class="small">Name Column</label>
+            <input type="text" class="input-small" placeholder="Name" ng-model="panel.ragBaseColumnName" ng-change="render()">
+        </div>
+        <div class="editor-option">
+            <label class="small">Value Column</label>
+            <input type="text" class="input-small" placeholder="Value" ng-model="panel.ragValueColumnName" ng-change="render()">
         </div>
     </div>
 </div>
