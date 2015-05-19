@@ -65,7 +65,7 @@
 								Name
 							</li>
 							<li>
-								<input type="text" class="input-large tight-form-input" placeholder="apps.servers.*" ng-model='current.name'></input>
+								<input type="text" class="input-large tight-form-input" placeholder="name" ng-model='current.name'></input>
 							</li>
 							<li class="tight-form-item">
 								Type
@@ -139,7 +139,7 @@
 									Query
 								</li>
 								<li>
-									<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" placeholder="name" ng-model='current.query' placeholder="apps.servers.*" ng-model-onblur ng-change="runQuery()"></input>
+									<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
 								</li>
 							</ul>
 							<div class="clearfix"></div>
