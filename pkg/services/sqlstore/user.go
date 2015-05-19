@@ -236,6 +236,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 		Login:          user.Login,
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
+		OrgId:          user.OrgId,
 	}
 
 	return err

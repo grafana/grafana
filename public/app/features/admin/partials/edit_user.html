@@ -98,17 +98,26 @@
 			Organizations
 		</h2>
 
-		<table class="grafana-options-table">
+		<table class="grafana-options-table form-inline">
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
 			<tr ng-repeat="org in orgs">
-				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
-				<td><strong>Role: </strong> {{org.role}}</td>
-				<td class="nobg max-width-btns">
-					<span class="label label-info" ng-show="org.orgId === user.orgId">
-						Current
-					</span>
+				<td>
+					{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
+				</td>
+				<td>
+					<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgRole(org)">
+					</select>
+				</td>
+				<td style="width: 1%">
+					<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
 				</td>
 			</tr>
 		</table>
-
 	</div>
 </div>

@@ -48,15 +48,14 @@ define([
     });
 
     describe('series with groupByTag', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-        tags: [],
-        groupByTags: ["host"]
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          tags: [],
+          groupByTags: ["host"]
+        });
+
+        var query = builder.build();
         expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter ' +
           'GROUP BY time($interval), host ORDER BY asc');
       });
