@@ -27,9 +27,10 @@ func NewKeysSeen(ts int64) *keysSeen {
 type GraphiteReturner func(org_id int64) graphite.Context
 
 type GraphiteContext struct {
-	hh   graphite.HostHeader
-	lock sync.Mutex
-	dur  time.Duration
+	hh          graphite.HostHeader
+	lock        sync.Mutex
+	dur         time.Duration
+	missingVals int
 }
 
 func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
@@ -39,8 +40,18 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 	spew.Dump(res)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
+	for _, s := range res {
+		for _, p := range s.Datapoints {
+			if p[0] == "" {
+				gc.missingVals += 1
+			}
+		}
+	}
 	// one Context might run multiple queries, we want to add all times
 	gc.dur += time.Since(pre)
+	if gc.missingVals > 0 {
+		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
+	}
 	gc.lock.Unlock()
 	fmt.Println(r, "GRAPHITE STOP")
 	return res, err
