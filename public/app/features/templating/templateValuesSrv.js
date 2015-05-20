@@ -120,7 +120,7 @@ function (angular, _, kbn) {
       }
 
       return datasourceSrv.get(variable.datasource).then(function(datasource) {
-        return datasource.metricFindQuery(variable.query).then(function (results) {
+        var queryPromise = datasource.metricFindQuery(variable.query).then(function (results) {
           variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
@@ -138,6 +138,19 @@ function (angular, _, kbn) {
 
           return self.setVariableValue(variable, variable.options[0]);
         });
+
+        if (variable.useTags) {
+          return queryPromise.then(function() {
+            datasource.metricFindQuery(variable.tagsQuery).then(function (results) {
+              variable.tags = [];
+              for (var i = 0; i < results.length; i++) {
+                variable.tags.push(results[i].text);
+              }
+            });
+          });
+        } else {
+          return queryPromise;
+        }
       });
     };
 

@@ -25,8 +25,8 @@
 			</div>
 			<div class="variable-options-column" ng-if="variable.tags">
 				<!-- <div class="variable&#45;options&#45;column&#45;header">Tags</div> -->
-				<a class="variable-option-tag pointer" ng-repeat="(key, values) in variable.tags" ng-click="selectTag(option, $event)">
-					<span class="label-tag" tag-color-from-name="key">{{key}}</span>
+				<a class="variable-option-tag pointer" ng-repeat="tag in variable.tags" ng-click="selectTag(option, $event)">
+					<span class="label-tag" tag-color-from-name="tag">{{tag}}</span>
 					<span class="fa fa-fw variable-option-icon"></span>
 				</a>
 			</div>
