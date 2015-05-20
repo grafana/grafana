@@ -32,13 +32,13 @@ func (job Job) String() string {
 // so that temporarily database hickups don't block the ticker.
 // however, if more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
 // and grafana will error out. so set this to whatever value you find tolerable, and watch your database query times.
-// TODO configurable, instrument number in queue
+// TODO configurable
 var tickQueueSize = 20
 var tickQueue = make(chan time.Time, tickQueueSize)
 
 // this should be set to above the max amount of jobs you expect to ever be invoked in 1 shot
 // so we can queue them all at once and then workers can process them
-// TODO configurable, instrument number in queue
+// TODO configurable
 // at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
 var jobQueueSize = 100
 var jobQueue = make(chan Job, jobQueueSize)
