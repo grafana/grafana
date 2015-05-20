@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -24,13 +25,11 @@ func getSchedules(ts int64) ([]Schedule, error) {
 	// so we should find the checks where ts-30 % frequency == offset
 	// and then ts-30 was a ts of the last point we should query for
 
-	// and then we query graphite, which behaves like so:
-	// from is exclusive (from=foo returns data at ts=foo+1 and higher)
-	// until is inclusive (until=bar returns data at ts=bar and lower)
+	lastPointAt := ts - 30
 
 	query := m.GetMonitorsQuery{
 		IsGrafanaAdmin: true,
-		Timestamp:      ts - 30,
+		Timestamp:      lastPointAt,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -39,34 +38,58 @@ func getSchedules(ts int64) ([]Schedule, error) {
 
 	schedules := make([]Schedule, 0)
 	for _, monitor := range query.Result {
-		schedules = append(schedules, buildScheduleForMonitor(monitor))
+		schedules = append(schedules, buildScheduleForMonitor(monitor, lastPointAt))
 	}
 
 	return schedules, nil
 }
 
-func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
+func buildScheduleForMonitor(monitor *m.MonitorDTO, lastPointAt int64) Schedule {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
-	// temporary overrides since we don't have the data saved yet.
-	monitor.HealthSettings.NumCollectors = 7
-	monitor.HealthSettings.Steps = 2
+	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
+		panic(fmt.Sprintf("bad monitor definition given: %#v", monitor))
+	}
+
+	type Settings struct {
+		EndpointSlug    string
+		MonitorTypeName string
+		From            string
+		Until           string
+		NumCollectors   int
+		Steps           int
+	}
+
+	// graphite behaves like so:
+	// from is exclusive (from=foo returns data at ts=foo+1 and higher)
+	// until is inclusive (until=bar returns data at ts=bar and lower)
+	// so if lastPointAt is 1000, and Steps = 3 and Frequency is 10
+	// we want points with timestamps 980, 990, 1000
+	// we can just query from 970
+
+	settings := Settings{
+		EndpointSlug:    monitor.EndpointSlug,
+		MonitorTypeName: monitor.MonitorTypeName,
+		From:            fmt.Sprintf("%d", lastPointAt-int64(monitor.HealthSettings.Steps)*monitor.Frequency),
+		Until:           fmt.Sprintf("%d", lastPointAt),
+		NumCollectors:   monitor.HealthSettings.NumCollectors,
+		Steps:           monitor.HealthSettings.Steps,
+	}
 
 	funcMap := template.FuncMap{
 		"ToLower": strings.ToLower,
 	}
 
-	// TODO fix "from" arg
 	// graphite returns 1 series of <steps> points, each the sum of the errors of all enabled collectors
 	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
 	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
 
 	target := `sum({{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state)`
-	tpl := `sum(graphite("` + target + `", "{{.HealthSettings.Steps}}m", "", "") >= {{.HealthSettings.NumCollectors}}) == {{.HealthSettings.Steps}}`
+	tpl := `sum(graphite("` + target + `", "{{.From}}", "{{.Until}}", "") >= {{.NumCollectors}}) == {{.Steps}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
-	err := t.Execute(&b, monitor)
+	err := t.Execute(&b, settings)
 	if err != nil {
 		panic(err)
 	}
