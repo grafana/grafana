@@ -51,7 +51,7 @@ func TestExecutor(t *testing.T) {
 					CritExpr: `graphite("foo", "2m", "", "")`,
 					WarnExpr: "0",
 				},
-				ts: time.Unix(ts, 0),
+				lastPointTs: time.Unix(ts, 0),
 			}
 		}
 		go Executor(fakeGraphiteReturner)

@@ -22,13 +22,13 @@ func TestScheduleBuilding(t *testing.T) {
 		}
 		sched := buildScheduleForMonitor(m)
 
-		if sched.Freq != 61 {
+		if sched.Freq != 60 {
 			t.Errorf("sched.Freq should be 60, not %d", sched.Freq)
 		}
 		if sched.Offset != 37 {
 			t.Errorf("sched.Offset should be 37, not %d", sched.Offset)
 		}
-		critExpr := "sum(graphite(\"sum(test_endpoint_be.*.network.smtp.error_state)\", \"300\", \"\", \"\") >= 16) == 5"
+		critExpr := "sum(graphite(\"sum(test_endpoint_be.*.network.smtp.error_state)\", \"300s\", \"\", \"\") >= 16) == 5"
 		if sched.Definition.CritExpr != critExpr {
 			t.Errorf("sched.Definition.CritExpr should be '%s' not '%s'", critExpr, sched.Definition.CritExpr)
 		}

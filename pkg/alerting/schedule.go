@@ -17,15 +17,7 @@ type Schedule struct {
 	Definition CheckDef
 }
 
-//ts timestamps at which (or a bit later) checks will run
-func getSchedules(ts int64) ([]Schedule, error) {
-	// for now, for simplicity, let's just wait 30seconds for the data to come in
-	// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
-	// we just query at 37, 97, 157, ...
-	// so we should find the checks where ts-30 % frequency == offset
-	// and then ts-30 was a ts of the last point we should query for
-
-	lastPointAt := ts - 30
+func getSchedules(lastPointAt int64) ([]Schedule, error) {
 
 	query := m.GetMonitorsQuery{
 		IsGrafanaAdmin: true,
@@ -38,13 +30,13 @@ func getSchedules(ts int64) ([]Schedule, error) {
 
 	schedules := make([]Schedule, 0)
 	for _, monitor := range query.Result {
-		schedules = append(schedules, buildScheduleForMonitor(monitor, lastPointAt))
+		schedules = append(schedules, buildScheduleForMonitor(monitor))
 	}
 
 	return schedules, nil
 }
 
-func buildScheduleForMonitor(monitor *m.MonitorDTO, lastPointAt int64) Schedule {
+func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
@@ -54,8 +46,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO, lastPointAt int64) Schedule 
 	type Settings struct {
 		EndpointSlug    string
 		MonitorTypeName string
-		From            string
-		Until           string
+		Duration        string
 		NumCollectors   int
 		Steps           int
 	}
@@ -70,8 +61,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO, lastPointAt int64) Schedule 
 	settings := Settings{
 		EndpointSlug:    monitor.EndpointSlug,
 		MonitorTypeName: monitor.MonitorTypeName,
-		From:            fmt.Sprintf("%d", lastPointAt-int64(monitor.HealthSettings.Steps)*monitor.Frequency),
-		Until:           fmt.Sprintf("%d", lastPointAt),
+		Duration:        fmt.Sprintf("%d", int64(monitor.HealthSettings.Steps)*monitor.Frequency),
 		NumCollectors:   monitor.HealthSettings.NumCollectors,
 		Steps:           monitor.HealthSettings.Steps,
 	}
@@ -85,7 +75,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO, lastPointAt int64) Schedule 
 	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
 
 	target := `sum({{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state)`
-	tpl := `sum(graphite("` + target + `", "{{.From}}", "{{.Until}}", "") >= {{.NumCollectors}}) == {{.Steps}}`
+	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer

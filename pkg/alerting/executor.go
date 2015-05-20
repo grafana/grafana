@@ -64,8 +64,7 @@ func Executor(fn GraphiteReturner) {
 	for job := range jobQueue {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
-		fmt.Println("executor read job from queue", job)
-		unix := job.ts.Unix()
+		unix := job.lastPointTs.Unix()
 		preConsider := time.Now()
 		if keysSeenCurrentSecond != nil && unix == keysSeenCurrentSecond.ts {
 			if _, ok := keysSeenCurrentSecond.seen[job.key]; ok {
@@ -106,7 +105,7 @@ func Executor(fn GraphiteReturner) {
 			panic(fmt.Sprintf("received invalid check definition '%s': %s", job.Definition, err))
 		}
 
-		res, err := evaluator.Eval(job.ts)
+		res, err := evaluator.Eval(job.lastPointTs)
 		fmt.Println(job, err, res)
 		durationExec := time.Since(preExec)
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.

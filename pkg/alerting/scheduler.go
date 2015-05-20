@@ -12,15 +12,20 @@ func getAlignedTicker() *time.Ticker {
 	return time.NewTicker(diff)
 }
 
+// Job is a job for an alert execution
+// note that LastPointTs is a time denoting the timestamp of the last point to run against
+// this way the check runs always on the right data, irrespective of execution delays
+// that said, for convenience, we track the generatedAt timestamp
 type Job struct {
-	key        string
-	OrgId      int64
-	Definition CheckDef
-	ts         time.Time // sets an explicit "until" to match the data this alert run is meant for, even when execution is delayed
+	key         string
+	OrgId       int64
+	Definition  CheckDef
+	generatedAt time.Time
+	lastPointTs time.Time
 }
 
 func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s time=%s definition: %s", job.key, job.ts, job.Definition)
+	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
 }
 
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
@@ -64,6 +69,14 @@ func dispatchJobs() {
 		Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
 		normalizedTime := t.Unix()
 
+		// for now, for simplicity, let's just wait 30seconds for the data to come in
+		// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
+		// we just query at 37, 97, 157, ...
+		// so we should find the checks where ts-30 % frequency == offset
+		// and then ts-30 was a ts of the last point we should query for
+
+		lastPointAt := normalizedTime - 30
+
 		pre := time.Now()
 		schedules, err := getSchedules(normalizedTime)
 		Stat.TimeDuration("alert-dispatcher.get-schedules", time.Since(pre))
@@ -80,6 +93,7 @@ func dispatchJobs() {
 				sched.OrgId,
 				sched.Definition,
 				t,
+				time.Unix(lastPointAt, 0),
 			}
 			Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 			Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
