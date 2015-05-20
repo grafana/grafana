@@ -58,11 +58,11 @@ func Register(r *macaron.Macaron) {
 		r.Group("/user", func() {
 			r.Get("/", wrap(GetSignedInUser))
 			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
-			r.Post("/using/:id", UserSetUsingOrg)
+			r.Post("/using/:id", wrap(UserSetUsingOrg))
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
-			r.Post("/stars/dashboard/:id", StarDashboard)
-			r.Delete("/stars/dashboard/:id", UnstarDashboard)
-			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
+			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
+			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 		})
 
 		// users (admin permission required)

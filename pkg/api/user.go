@@ -92,55 +92,47 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 	return valid
 }
 
-func UserSetUsingOrg(c *middleware.Context) {
+// POST /api/user/using/:id
+func UserSetUsingOrg(c *middleware.Context) Response {
 	orgId := c.ParamsInt64(":id")
 
 	if !validateUsingOrg(c.UserId, orgId) {
-		c.JsonApiErr(401, "Not a valid organization", nil)
-		return
+		return ApiError(401, "Not a valid organization", nil)
 	}
 
-	cmd := m.SetUsingOrgCommand{
-		UserId: c.UserId,
-		OrgId:  orgId,
-	}
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed change active organization", err)
-		return
+		return ApiError(500, "Failed change active organization", err)
 	}
 
-	c.JsonOK("Active organization changed")
+	return ApiSuccess("Active organization changed")
 }
 
-func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) {
+func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		c.JsonApiErr(500, "Could not read user from database", err)
-		return
+		return ApiError(500, "Could not read user from database", err)
 	}
 
 	passwordHashed := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
 	if passwordHashed != userQuery.Result.Password {
-		c.JsonApiErr(401, "Invalid old password", nil)
-		return
+		return ApiError(401, "Invalid old password", nil)
 	}
 
 	if len(cmd.NewPassword) < 4 {
-		c.JsonApiErr(400, "New password too short", nil)
-		return
+		return ApiError(400, "New password too short", nil)
 	}
 
 	cmd.UserId = c.UserId
 	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to change user password", err)
-		return
+		return ApiError(500, "Failed to change user password", err)
 	}
 
-	c.JsonOK("User password changed")
+	return ApiSuccess("User password changed")
 }
 
 // GET /api/users

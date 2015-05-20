@@ -172,7 +172,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     function handleInfluxQueryResponse(alias, data) {
-      if (!data || !data.results || !data.results[0]) {
+      if (!data || !data.results || !data.results[0].series) {
         throw { message: 'No results in response from InfluxDB' };
       }
       return new InfluxSeries({ series: data.results[0].series, alias: alias }).getTimeSeries();
