@@ -6,8 +6,14 @@ import (
 
 	"bosun.org/graphite"
 
+	"github.com/Dieterbe/statsd-go"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func init() {
+	Stat, _ := statsd.NewClient(false, "localhost:8125", "grafana")
+	Init(Stat)
+}
 
 func assertReq(t *testing.T, listener chan *graphite.Request, msg string) {
 	select {
