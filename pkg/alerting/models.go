@@ -15,7 +15,7 @@ type CheckDef struct {
 }
 
 func (c CheckDef) String() string {
-	return fmt.Sprintf("<CheckDef> Crit: %s -- Warn: %s", c.CritExpr, c.WarnExpr)
+	return fmt.Sprintf("<CheckDef> Crit: ''%s' -- Warn: '%s'", c.CritExpr, c.WarnExpr)
 }
 
 type Check struct {
