@@ -78,7 +78,7 @@ func dispatchJobs() {
 		lastPointAt := normalizedTime - 30
 
 		pre := time.Now()
-		schedules, err := getSchedules(normalizedTime)
+		schedules, err := getSchedules(lastPointAt)
 		Stat.TimeDuration("alert-dispatcher.get-schedules", time.Since(pre))
 
 		if err != nil {
