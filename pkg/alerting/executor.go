@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"strings"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -72,6 +74,14 @@ func Executor(fn GraphiteReturner) {
 	var keysSeenLastSecond *keysSeen
 	var keysSeenCurrentSecond *keysSeen
 
+	// create series explicitly otherwise the grafana-influxdb graphs don't work if the series doesn't exist
+	Stat.IncrementValue("alert-executor.alert-outcomes.ok", 0)
+	Stat.IncrementValue("alert-executor.alert-outcomes.critical", 0)
+	Stat.IncrementValue("alert-executor.alert-outcomes.unknown", 0)
+	Stat.TimeDuration("alert-executor.consider-job.already-done", 0)
+	Stat.TimeDuration("alert-executor.consider-job.out-of-date", 0)
+	Stat.TimeDuration("alert-executor.consider-job.original-todo", 0)
+
 	for job := range jobQueue {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
@@ -117,16 +127,17 @@ func Executor(fn GraphiteReturner) {
 		}
 
 		res, err := evaluator.Eval(job.lastPointTs)
-		fmt.Println(job, err, res)
+		fmt.Println("job results", job, err, res)
 		durationExec := time.Since(preExec)
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 		// we want to have some individual times
 		if gr, ok := gr.(*GraphiteContext); ok {
 			Stat.TimeDuration("alert-executor.job_query_graphite", gr.dur)
 			Stat.TimeDuration("alert-executor.job_parse-and-evaluate", durationExec-gr.dur)
+			Stat.Timing("alert-executor.graphite-missingVals", int64(gr.missingVals))
 		}
 
-		Stat.Increment(fmt.Sprintf("alert-executor.alert-outcomes.%s", res))
+		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
 
 		keysSeenCurrentSecond.seen[job.key] = struct{}{}
 
