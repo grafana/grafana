@@ -63,7 +63,6 @@ func dispatchJobs() {
 		Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
 		Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
 		normalizedTime := t.Unix()
-		fmt.Println(t, "querying for jobs that should run in second", normalizedTime)
 
 		pre := time.Now()
 		schedules, err := getSchedules(normalizedTime)

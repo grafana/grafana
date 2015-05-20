@@ -37,6 +37,7 @@ type MonitorWithCollectorDTO struct {
 	State           int64
 	StateChange     time.Time
 	Settings        []*m.MonitorSettingDTO
+	HealthSettings  map[string]int //note: wish we could use m.MonitorHealthSettingDTO directly, but xorm doesn't unmarshal to structs?
 	Frequency       int64
 	Enabled         bool
 	Offset          int64
@@ -266,6 +267,10 @@ FROM monitor
 			count += 1
 		}
 
+		h := m.MonitorHealthSettingDTO{}
+		h.NumCollectors = row.HealthSettings["numCollectors"]
+		h.Steps = row.HealthSettings["steps"]
+
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:              row.Id,
 			EndpointId:      row.EndpointId,
@@ -279,6 +284,7 @@ FROM monitor
 			State:           row.State,
 			StateChange:     row.StateChange,
 			Settings:        row.Settings,
+			HealthSettings:  h,
 			Frequency:       row.Frequency,
 			Enabled:         row.Enabled,
 			Offset:          row.Offset,
