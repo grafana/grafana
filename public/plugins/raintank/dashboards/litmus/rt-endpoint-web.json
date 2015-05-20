@@ -161,7 +161,7 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "150",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 1,
@@ -246,7 +246,7 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "100",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
@@ -270,7 +270,7 @@
               "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dns), 'dns')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dns), 'connect')"
+              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.connect), 'connect')"
             },
             {
               "target": "alias(averageSeries($endpoint.$collector.network.$protocol.send), 'send')"
@@ -349,7 +349,7 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "350",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 2,

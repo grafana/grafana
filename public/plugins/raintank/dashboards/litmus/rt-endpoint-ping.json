@@ -165,7 +165,7 @@
           "lines": true,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "100",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
@@ -197,13 +197,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(minSeries($endpoint.$collector.network.ping.min), 'minimum')"
+              "target": "alias(consolidateBy(minSeries($endpoint.$collector.network.ping.min), 'min'), 'minimum')"
             },
             {
               "target": "alias(averageSeries($endpoint.$collector.network.ping.mean), 'average')"
             },
             {
-              "target": "alias(maxSeries($endpoint.$collector.network.ping.max), 'maximum')"
+              "target": "alias(consolidateBy(maxSeries($endpoint.$collector.network.ping.max), 'max'), 'maximum')"
             },
             {
               "hide": false,
@@ -270,7 +270,7 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "200",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 2,

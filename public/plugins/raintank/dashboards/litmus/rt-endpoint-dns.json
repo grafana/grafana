@@ -162,7 +162,7 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "200",
+          "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
           "pointradius": 2,
