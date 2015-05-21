@@ -635,7 +635,7 @@ MATT STYLES
 .rt-tabs { 
   box-shadow: inset 0px -1px 0px 0px @tabBorder;
   font-size: 16px; 
-  padding:10px 20px;
+  padding:3px 20px 0 20px;
  
   .nonactive a:link, 
   .nonactive a:visited {
@@ -645,6 +645,7 @@ MATT STYLES
 
   .active a:link,
   .active a:visited  {
+    display:inline-block;
     color:@linkColorHover;
     background:@bodyBackground;
     border-top-left-radius:4px;
@@ -654,7 +655,7 @@ MATT STYLES
     border-left:1px solid @tabBorder;
     border-bottom: none;
     margin: 0 5px;
-    padding: 5px 15px 9px 15px;
+    padding: 6px 15px 9px 15px;
   }
 
   a:hover,
