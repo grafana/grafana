@@ -89,6 +89,9 @@ func dispatchJobs() {
 		Stat.IncrementValue("alert-dispatcher.job-schedules-seen", int64(len(schedules)))
 		for _, sched := range schedules {
 			job := Job{
+				// note: we don't include the timestamp here so that jobs for same monitor id get routed to same place
+				// this is not really a necessity but might be useful in the future if we want to get stateful and leverage
+				// output from past jobs.
 				fmt.Sprintf("%d", sched.MonitorId),
 				sched.OrgId,
 				sched.Definition,

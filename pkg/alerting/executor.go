@@ -8,23 +8,13 @@ import (
 
 	"strings"
 
+	"github.com/hashicorp/golang-lru"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"bosun.org/graphite"
 )
-
-type keysSeen struct {
-	ts   int64
-	seen map[string]struct{}
-}
-
-func NewKeysSeen(ts int64) *keysSeen {
-	return &keysSeen{
-		ts:   ts,
-		seen: make(map[string]struct{}),
-	}
-}
 
 type GraphiteReturner func(org_id int64) graphite.Context
 
@@ -69,51 +59,33 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 }
 
 func Executor(fn GraphiteReturner) {
-	var keysSeenLastSecond *keysSeen
-	var keysSeenCurrentSecond *keysSeen
-
+	cache, err := lru.New(10000) // TODO configurable
+	if err != nil {
+		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
+	}
 	// create series explicitly otherwise the grafana-influxdb graphs don't work if the series doesn't exist
 	Stat.IncrementValue("alert-executor.alert-outcomes.ok", 0)
 	Stat.IncrementValue("alert-executor.alert-outcomes.critical", 0)
 	Stat.IncrementValue("alert-executor.alert-outcomes.unknown", 0)
 	Stat.TimeDuration("alert-executor.consider-job.already-done", 0)
-	Stat.TimeDuration("alert-executor.consider-job.out-of-date", 0)
 	Stat.TimeDuration("alert-executor.consider-job.original-todo", 0)
 
 	for job := range jobQueue {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
-		unix := job.lastPointTs.Unix()
+
+		key := fmt.Sprintf("%s-%d", job.key, job.lastPointTs.Unix())
+
 		preConsider := time.Now()
-		if keysSeenCurrentSecond != nil && unix == keysSeenCurrentSecond.ts {
-			if _, ok := keysSeenCurrentSecond.seen[job.key]; ok {
-				Stat.TimeDuration("alert-executor.consider-job.already-done", time.Since(preConsider))
-				continue
-			}
-		}
-		if keysSeenLastSecond != nil && unix == keysSeenLastSecond.ts {
-			if _, ok := keysSeenLastSecond.seen[job.key]; ok {
-				Stat.TimeDuration("alert-executor.consider-job.already-done", time.Since(preConsider))
-				continue
-			}
-		}
-		if keysSeenCurrentSecond == nil {
-			keysSeenCurrentSecond = NewKeysSeen(unix)
-		}
-		if unix > keysSeenCurrentSecond.ts {
-			keysSeenLastSecond = keysSeenCurrentSecond
-			keysSeenCurrentSecond = NewKeysSeen(unix)
-		}
-		// skip old job if we've seen newer
-		if (keysSeenLastSecond != nil && unix < keysSeenLastSecond.ts) || unix < keysSeenCurrentSecond.ts {
-			Stat.TimeDuration("alert-executor.consider-job.out-of-date", time.Since(preConsider))
+
+		if _, ok := cache.Get(key); ok {
+			fmt.Println("T ", key, "already done")
+			Stat.TimeDuration("alert-executor.consider-job.already-done", time.Since(preConsider))
 			continue
 		}
-		Stat.TimeDuration("alert-executor.consider-job.original-todo", time.Since(preConsider))
-		// note: if timestamp is very old (and we haven't processed anything newer),
-		// we still process. better to be backlogged then not do jobs, up to operator to make system keep up
-		// if timestamp is in future, we still process and assume that whoever created the job knows what they are doing.
 
+		fmt.Println("T ", key, "doing")
+		Stat.TimeDuration("alert-executor.consider-job.original-todo", time.Since(preConsider))
 		gr := fn(job.OrgId)
 
 		preExec := time.Now()
@@ -137,7 +109,7 @@ func Executor(fn GraphiteReturner) {
 
 		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
 
-		keysSeenCurrentSecond.seen[job.key] = struct{}{}
+		cache.Add(key, true)
 
 	}
 }
