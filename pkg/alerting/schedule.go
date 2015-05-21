@@ -11,6 +11,7 @@ import (
 )
 
 type Schedule struct {
+	MonitorId  int64
 	OrgId      int64
 	Freq       int64
 	Offset     int64 // offset on top of "even" minute/10s/.. intervals
@@ -84,9 +85,10 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
 		panic(err)
 	}
 	s := Schedule{
-		OrgId:  monitor.OrgId,
-		Freq:   monitor.Frequency,
-		Offset: monitor.Offset,
+		MonitorId: monitor.Id,
+		OrgId:     monitor.OrgId,
+		Freq:      monitor.Frequency,
+		Offset:    monitor.Offset,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
