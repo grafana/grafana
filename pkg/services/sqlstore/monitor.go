@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -472,7 +471,7 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		EndpointId:    cmd.EndpointId,
 		OrgId:         cmd.OrgId,
 		MonitorTypeId: cmd.MonitorTypeId,
-		Offset:        rand.Int63n(cmd.Frequency - 1),
+		Offset:        cmd.EndpointId % cmd.Frequency,
 		Settings:      cmd.Settings,
 		Created:       time.Now(),
 		Updated:       time.Now(),
@@ -685,17 +684,13 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			EndpointId:    cmd.EndpointId,
 			OrgId:         cmd.OrgId,
 			MonitorTypeId: cmd.MonitorTypeId,
+			Offset:        cmd.EndpointId % cmd.Frequency,
 			Settings:      cmd.Settings,
 			Updated:       time.Now(),
 			Enabled:       cmd.Enabled,
 			State:         lastState.State,
 			StateChange:   lastState.StateChange,
 			Frequency:     cmd.Frequency,
-		}
-
-		//check if we need to update the time offset for when the monitor should run.
-		if mon.Offset >= mon.Frequency {
-			mon.Offset = rand.Int63n(mon.Frequency - 1)
 		}
 
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
