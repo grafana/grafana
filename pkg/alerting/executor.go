@@ -37,7 +37,6 @@ type GraphiteContext struct {
 
 func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
 	pre := time.Now()
-	fmt.Println(r, "GRAPHITE START")
 	res, err := gc.hh.Query(r)
 	spew.Dump(res)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
@@ -55,7 +54,6 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
 	}
 	gc.lock.Unlock()
-	fmt.Println(r, "GRAPHITE STOP")
 	return res, err
 }
 
