@@ -14,7 +14,7 @@
       "height": "20px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/file/rt-endpoint-summary.json?var-endpoint=$endpoint\"><big><u>SUMMARY</u></big></a> | \n<a href=\"/dashboard/file/rt-endpoint-dns.json?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/file/rt-endpoint-ping.json?var-endpoint=$endpoint\">PING</a> |\n<a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=All&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=All&var-protocol=https\">HTTPS</a></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/raintank/rt-endpoint-summary?var-endpoint=$endpoint\"><big><u>SUMMARY</u></big></a> | \n<a href=\"/dashboard/raintank/rt-endpoint-dns?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/raintank/rt-endpoint-ping?var-endpoint=$endpoint\">PING</a> |\n<a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=All&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/raintank/rt-endpoint-web?var-endpoint=$endpoint&var-collector=All&var-protocol=https\">HTTPS</a></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "height": "20px",
@@ -33,16 +33,16 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "50px",
       "panels": [
         {
           "cacheTimeout": null,
-          "colorBackground": true,
-          "colorValue": false,
+          "colorBackground": false,
+          "colorValue": true,
           "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
           "editable": true,
@@ -57,8 +57,8 @@
           "nullText": null,
           "postfix": "",
           "postfixFontSize": "50%",
-          "prefix": "DNS",
-          "prefixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "30%",
           "span": 3,
           "sparkline": {
             "fillColor": "rgba(31, 118, 189, 0.18)",
@@ -71,8 +71,8 @@
               "target": "scale(averageSeries($endpoint.$collector.network.dns.ok_state), 100)"
             }
           ],
-          "thresholds": "0,99,100",
-          "title": "",
+          "thresholds": "0,0,100",
+          "title": "DNS Uptime",
           "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
@@ -87,12 +87,12 @@
         },
         {
           "cacheTimeout": null,
-          "colorBackground": true,
-          "colorValue": false,
+          "colorBackground": false,
+          "colorValue": true,
           "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
           "editable": true,
@@ -107,8 +107,8 @@
           "nullText": null,
           "postfix": "",
           "postfixFontSize": "50%",
-          "prefix": "PING",
-          "prefixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "30%",
           "span": 3,
           "sparkline": {
             "fillColor": "rgba(31, 118, 189, 0.18)",
@@ -121,8 +121,8 @@
               "target": "scale(averageSeries($endpoint.$collector.network.ping.ok_state), 100)"
             }
           ],
-          "thresholds": "0,99,100",
-          "title": "",
+          "thresholds": "0,100",
+          "title": "Ping Uptime",
           "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
@@ -137,12 +137,12 @@
         },
         {
           "cacheTimeout": null,
-          "colorBackground": true,
-          "colorValue": false,
+          "colorBackground": false,
+          "colorValue": true,
           "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
           "editable": true,
@@ -157,8 +157,8 @@
           "nullText": null,
           "postfix": "",
           "postfixFontSize": "50%",
-          "prefix": "HTTP",
-          "prefixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "30%",
           "span": 3,
           "sparkline": {
             "fillColor": "rgba(31, 118, 189, 0.18)",
@@ -171,8 +171,8 @@
               "target": "scale(averageSeries($endpoint.$collector.network.http.ok_state), 100)"
             }
           ],
-          "thresholds": "0,99,100",
-          "title": "",
+          "thresholds": "0,100",
+          "title": "HTTP Uptime",
           "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
@@ -187,12 +187,12 @@
         },
         {
           "cacheTimeout": null,
-          "colorBackground": true,
-          "colorValue": false,
+          "colorBackground": false,
+          "colorValue": true,
           "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
           "editable": true,
@@ -207,8 +207,8 @@
           "nullText": null,
           "postfix": "",
           "postfixFontSize": "50%",
-          "prefix": "HTTPS",
-          "prefixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "30%",
           "span": 3,
           "sparkline": {
             "fillColor": "rgba(31, 118, 189, 0.18)",
@@ -221,8 +221,8 @@
               "target": "scale($endpoint.$collector.network.https.ok_state, 100)"
             }
           ],
-          "thresholds": "0,99,100",
-          "title": "",
+          "thresholds": "0,100",
+          "title": "HTTPS Uptime",
           "transparent": true,
           "type": "singlestat",
           "valueFontSize": "80%",
@@ -245,7 +245,7 @@
       "panels": [
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
@@ -254,7 +254,7 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
             "leftMin": 0,
             "rightLogBase": 1,
@@ -265,21 +265,21 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "150",
+          "height": "",
           "id": 6,
           "legend": {
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "60",
+          "maxDataPoints": "30",
           "nullPointMode": "connected",
           "percentage": true,
           "pointradius": 5,
@@ -291,14 +291,11 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.dns.error_state), 'error')"
-            },
-            {
-              "target": "alias(sumSeries($endpoint.$collector.network.dns.warn_state), 'warn')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.error_state), 'sum'), 'error')"
             },
             {
               "hide": false,
-              "target": "alias(sumSeries($endpoint.$collector.network.dns.ok_state), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -319,7 +316,7 @@
         },
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
@@ -328,7 +325,7 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
             "leftMin": 0,
             "rightLogBase": 1,
@@ -339,21 +336,21 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "150",
+          "height": "",
           "id": 5,
           "legend": {
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "60",
+          "maxDataPoints": "30",
           "nullPointMode": "connected",
           "percentage": true,
           "pointradius": 5,
@@ -365,13 +362,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.ok_state), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.warn_state), 'warn')"
-            },
-            {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.error_state), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -392,7 +386,7 @@
         },
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
@@ -401,7 +395,7 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
             "leftMin": 0,
             "rightLogBase": 1,
@@ -412,21 +406,22 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "150",
+          "height": "",
           "id": 7,
           "legend": {
+            "alignAsTable": false,
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "60",
+          "maxDataPoints": "40",
           "nullPointMode": "connected",
           "percentage": true,
           "pointradius": 5,
@@ -438,13 +433,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.http.ok_state), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.http.warn_state), 'warn')"
-            },
-            {
-              "target": "alias(sumSeries($endpoint.$collector.network.http.error_state), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -465,7 +457,7 @@
         },
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
@@ -474,7 +466,7 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
             "leftMin": 0,
             "rightLogBase": 1,
@@ -485,21 +477,21 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "150",
+          "height": "",
           "id": 8,
           "legend": {
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "60",
+          "maxDataPoints": "40",
           "nullPointMode": "connected",
           "percentage": true,
           "pointradius": 5,
@@ -511,13 +503,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.https.ok_state), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.https.warn_state), 'warn')"
-            },
-            {
-              "target": "alias(sumSeries($endpoint.$collector.network.https.error_state), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -553,9 +542,9 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 1,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -583,7 +572,7 @@
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
           "seriesOverrides": [],
@@ -619,9 +608,9 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": null,
+            "leftLogBase": 10,
+            "leftMax": 10000,
+            "leftMin": 1,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -648,7 +637,7 @@
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
           "seriesOverrides": [],
@@ -684,9 +673,9 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 1,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -713,7 +702,7 @@
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
           "seriesOverrides": [],
@@ -749,9 +738,9 @@
           "error": false,
           "fill": 1,
           "grid": {
-            "leftLogBase": 1,
+            "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": null,
+            "leftMin": 1,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -778,7 +767,7 @@
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
           "seriesOverrides": [],
