@@ -41,6 +41,7 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 	spew.Dump(res)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
+	defer gc.lock.Unlock()
 	for _, s := range res {
 		for _, p := range s.Datapoints {
 			if p[0] == "" {
@@ -53,7 +54,6 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 	if gc.missingVals > 0 {
 		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
 	}
-	gc.lock.Unlock()
 	return res, err
 }
 
