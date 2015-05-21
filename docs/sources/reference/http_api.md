@@ -352,3 +352,25 @@ Deletes the staring of the given Dashboard for the actual user.
 ### Renew session based on remember cookie
 
 `GET /api/login/ping`
+
+## Admin
+
+### Settings
+
+`GET /api/admin/settings`
+
+### Global Users
+
+`POST /api/admin/users`
+
+### Password for User
+
+`PUT /api/admin/users/:id/password`
+
+### Permissions
+
+`PUT /api/admin/users/:id/permissions`
+
+### Delete global User
+
+`DELETE /api/admin/users/:id`
