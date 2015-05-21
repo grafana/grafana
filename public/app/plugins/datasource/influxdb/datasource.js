@@ -43,7 +43,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
-        console.log('query builder result:' + query);
 
         // replace grafana variables
         query = query.replace('$timeFilter', timeFilter);
@@ -173,7 +172,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function handleInfluxQueryResponse(alias, data) {
       if (!data || !data.results || !data.results[0].series) {
-        throw { message: 'No results in response from InfluxDB' };
+        return [];
       }
       return new InfluxSeries({ series: data.results[0].series, alias: alias }).getTimeSeries();
     }
