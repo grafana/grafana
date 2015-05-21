@@ -35,25 +35,18 @@
 	</div>
 	<div ng-if="endpoints.length > 0" class="editor-row">
 		<div class="editor-option">
-			<span class="small">Filter by Endpoint Tag:</span>
+			<span class="small">Filtered by:</span>
 			<select class="input-medium rt-select-dropdown" ng-model="filter.tag" ng-options="t for t in endpointTags()">
 				<option value="">All Tags</option>
 			</select>
-			<select class="input-medium rt-select-dropdown" ng-model="filter.status" ng-options="s.value as s.label for s in statuses">
-				<option value="">All Statuses</option>
+			<span class="small">Sorted By:</span>
+				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
 			</select>
 		</div>
-		<div style="display: block; padding: 45px 0 0 0;">
+		<div style="display: block; padding: 25px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<a ng-click="setStatusFilter(0)" href="#" ng-class="{'rt-list-status-up': endpointState['0'] > 0}">{{endpointState['0']}} Ok</a> |
-					<a ng-click="setStatusFilter(1)" href="#" ng-class="{'rt-list-status-warning': endpointState['1'] > 0}">{{endpointState['1']}} Warning</a> |
-					<a ng-click="setStatusFilter(2)" href="#" ng-class="{'rt-list-status-down': endpointState['2'] > 0}">{{endpointState['2']}} Error</a> |
-					<a ng-click="setStatusFilter(-1)" href="#" ng-class="{'rt-list-status-disabled': endpointState['-1'] > 0}">{{endpointState['-1']}} Unknown</a>
 			</div>
 			<div class="editor-option" style="float: right;">
-				<span class="small">Sort By:</span>
-				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
-				</select>
 			</div>
 		</div>
 	</div>
