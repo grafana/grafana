@@ -30,8 +30,9 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 2;
     font-size: @rt-fontSizeLarge;
     line-height: @baseLineHeight;
-    color: @white;
-    border: solid 1px @grayDark;
+    color: @textColor;
+    border: solid 1px @inputBorder;
+    background-color: @inputBackground;
     .border-radius(2px);
     vertical-align: middle;
   }
@@ -45,7 +46,6 @@ input[type="color"] {
   label {
     color: @rt-light-gray;
   }
-
   select, 
   textarea, 
   input[type="text"] {
@@ -55,12 +55,27 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 4;
     font-size: @rt-fontSizeMed-1;
     line-height: @baseLineHeight;
-    color: @white;
-    border: solid 1px @grayDark;
+    color: @textColor;
+    border: solid 1px @inputBorder;
     .border-radius(2px);
     vertical-align: middle;
   }
 }
+
+
+  input[type="number"].natural-language-form {
+  font-size: @rt-fontSizeMed-1;
+  width: 30px; 
+  height: auto; 
+  margin: -6px -5px 0 5px;
+}
+
+.rt-textarea-row {
+  margin-top: 15px;
+  width: 450px;
+  min-height: 50px;
+}
+
 
 .rt-modal-input-styles {
   label {
@@ -76,7 +91,7 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 4;
     font-size: @rt-fontSizeMed-1;
     line-height: @baseLineHeight;
-    color: @white;
+    color: @textColor;
     border: solid 1px @grayDark;
     .border-radius(2px);
     vertical-align: middle;
@@ -105,6 +120,7 @@ input[type="color"] {
 
 .rt-form-row {
   margin: 20px 0;
+  max-width: 450px;
 }
 
 .rt-form-group {

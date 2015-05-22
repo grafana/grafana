@@ -56,43 +56,6 @@
         </div>
 
 
-
-      <!-- General Settings Tab  -->
-<!--        <div class="rt-box rt-page-box">
-          <div class="rt-box-header rt-page-box-header" ng-click="showSettings = !showSettings" ng-class="{ active: showsettings }">
-            <div class="rt-page-box-header-checkbox checkbox-check-enabled">
-              <span class="rt-h2 rt-modal">General Settings</span>
-            </div>
-            <div class="rt-box-row-info">
-              <a href="#">
-                <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['ping'].enabled"></i>
-                <span class="freqMsg" ng-show="monitors['ping'].enabled" > Every {{monitors['ping'].frequency}}s from {{collectorCount(monitors['ping'])}} Collectors |</span>
-                <span class="freqMsg" ng-show="!monitors['ping'].enabled && discovered" > Not Discovered |</span>
-                <span class="freqMsg" style="color: #13b2d4"> Configure</span>
-                <span><i class="fa fa-caret-down" ng-show="showSettings"></i></span>
-                <span><i class="fa fa-caret-right rt-box-accordian-control" ng-hide="showSettings"></i></span>
-              </a>
-            </div>
-          </div>
-          <div class="rt-box-body rt-page-box-body" ng-show="showSettings">
-            <div class="rt-box-interior-section">
-              <div class="rt-box-interior-content">
-                <div class="editor-option rt-input-styles">
-                  <label class="rt-form-label-medium">Domain Name</label>
-                  <input type="text" class="rt-form-input" ng-model="endpoint.name" required="">
-                </div>
-              </div>
-              <div class="rt-box-interior-content rt-interior-update">
-                <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" class="secondaryCTA" ng-click="updateEndpoint(endpoint)">Update Settings</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
- -->
-        <!-- General Settings -->
-
         <!-- Ping Tab  -->
         <div class="rt-box rt-page-box" id="ping">
           <div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
@@ -117,7 +80,7 @@
                 <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
               </div>
               <div class="rt-box-interior-header rt-h3">Monitoring
-                <div style="margin-left: 25px; display: inline;">
+                <div style="margin-left: 15px; display: inline;">
                   <input class="rt-modal" id="ping-enabled1" type="checkbox" ng-model="monitors['ping'].enabled" ng-click="updateMonitor(monitors['ping'])">
                   <label for="ping-enabled1" class="variable-value-link rt-modal">Enabled</label>
                 </div>
@@ -168,17 +131,17 @@
                 <i class="icon icon-rt-online" style="font-size: 30px;"></i>
               </div>
               <div class="rt-box-interior-header rt-h3">Health</div>
-              <div class="rt-box-interior-content">
+              <div class="rt-box-interior-content" style="margin-top: 10px;">
                 <div class="rt-body-copy">
-                  <span class="rt-sentence-form-label" style="margin: 0;">If more than</span>
+                  <span class="rt-body-copy" style="margin: 0;">If</span>
                   <div class="editor-option rt-input-styles">
-                    <label><input type="number" value="3"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+                    <label><input type="number" value="3"class="natural-language-form"></select></label>
                   </div>
-                  <span class="rt-sentence-form-label">of the selected Collectors return ERROR or WARNING for more than</span>
+                  <span class="rt-body-copy">or more collectors report <span class="emphasis">connection errors</span> for</span>
                   <div class="editor-option rt-input-styles">
-                    <label><input type="number" value="5"style="width: 30px; height: auto; margin: -5px 10px 0 10px;"></select></label>
+                    <label><input type="number" value="5" class="natural-language-form"></select></label>
                   </div>
-                  <span class="rt-sentence-form-label">consecutive checks.</span>
+                  <span class="rt-body-copy">or more consecutive checks, health will be marked as down <img width="20px" height="20px" src="img/critical.svg" class="rt-inline-health-icon">.</span>
                 </div>
               </div>
             </div>
@@ -186,9 +149,20 @@
               <div class="rt-box-interior-header-icon">
                 <i class="icon icon-rt-alert" style="font-size: 26px;"></i>
               </div>
-              <div class="rt-box-interior-header rt-h3">Alerting</div>
+              <div class="rt-box-interior-header rt-h3">Alerting
+                <div style="margin-left: 15px; display: inline;">
+                  <input class="rt-modal" id="ping-alert-enabled1" type="checkbox" ng-model="monitors['alert'].enabled" ng-click="updateMonitor(monitors['ping'])">
+                  <label for="ping-alert-enabled1" class="variable-value-link rt-modal">Enabled</label>
+                </div>
+              </div>
               <div class="rt-box-interior-content">
-                <span class="rt-sentence-form-label" style="margin: 0;">When things go bad, notify: </span>
+                <span class="rt-body-copy" style="margin: 0;">When the ping health changes, send a notification to the following emails: </span>
+                <div>
+                  <textarea class="rt-input-styles rt-textarea-row"></textarea>
+                </div>
+                <div style="margin-top: -10px;">
+                  <span class="small">Comma separate email addresses accepted.</span>
+                </div>
               </div>
             </div>
           </div>

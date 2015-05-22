@@ -373,16 +373,17 @@
 
 // raintank Variables
 // -------------------------
-@raintankPanelBackground: 	@grayDark;
+@raintankPanelBackground: 	@grayDarker;
 
-@raintankPanelBorder: 		solid 1px @grayDarker;
+@raintankPanelBorder: 		solid 1px @grayDark;
 @raintankTriggerBorder:		solid 1px #555;
 
 @rt-primary:				@rt-blue;
+@rt-emphasis:				lighten(@textColor, 20%);
 
 // Graphite Target Editor
-@raintankTargetBorder:         @grayDarkest;
-@raintankTargetBackground:     @grayDarker;
+@raintankTargetBorder:         @black;
+@raintankTargetBackground:     @grayDark;
 @raintankTargetColor:          #c8c8c8;
 @raintankTargetColorHide:      darken(#c8c8c8, 25%);
 @raintankTargetSegmentBorder:  #050505;
@@ -424,7 +425,7 @@
 // raintank Forms
 // -------------------------
 @inputBackground:               lighten(@grayDark,5%);
-@inputBorder:                   darken(@grayDark,5%);
+@inputBorder:                   lighten(@grayDark,7%);
 @inputBorderRadius:             @baseBorderRadius;
 @inputDisabledBackground:       #555;
 @formActionsBackground:         transparent;

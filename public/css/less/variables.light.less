@@ -408,6 +408,8 @@
 @raintankTriggerBorder:		solid 1px @grayLight;
 
 @rt-primary:				@rt-blue;
+@rt-emphasis:				darker(@textColor, 20%);
+
 
 // Graphite Target Editor
 @raintankTargetBorder:         @white;
@@ -427,7 +429,7 @@
 
 // raintank Forms
 // -------------------------
-@inputBackground:               @bodyBackground;
+@inputBackground:               lighten(@bodyBackground,3%);
 @inputBorder:                   darken(@bodyBackground, 20%);
 @inputBorderRadius:             @baseBorderRadius;
 @inputDisabledBackground:       #555;
