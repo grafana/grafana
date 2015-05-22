@@ -6,17 +6,16 @@
 		<i class="fa fa-caret-down" style="float: right;"></i>
 	</a>
 </div>
-
-<div ng-if="selectorOpen" class="variable-value-dropdown" style="overflow: scroll">
-	<div class="search-field-wrapper">
-		<span style="position: relative;">
-			<input  type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
+<div ng-if="selectorOpen" class="collector-dropdown variable-value-dropdown">
+	<div class="collector-dropdown-search search-field-wrapper">
+		<span>
+			<input type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
 			ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 		</span>
 	</div>
-
-	<div class="variable-options-container">
-			<a class="variable-option pointer" ng-hide="query.text"  ng-click="selectAll()">
+	<div class="collector-dropdown-container variable-options-container">
+		<div class="collector-dropdown-container-col">
+			<a class="variable-option pointer" ng-hide="query.text" ng-click="selectAll()">
 				<span>all</span>
 			</a>
 			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
@@ -32,5 +31,14 @@
 				</span>
 				<span class="fa fa-fw variable-option-icon"></span>
 			</a>
+		</div>
+		<div class="collector-dropdown-container-col">
+			<p class="collector-dropdown-desc">Tags allow you to create a <strong>dynamic</strong> set of collectors which will update as you add and remove collectors from tag groups.</p>
+		</div>
 	</div>
+	<div class="collector-dropdown-footer">
+    <p>Preview: London, Amsterdam, New York, New Jersey</p>
+    <button class="neutralCTA">Update</button>
+    <button class="neutralTextCTA">Cancel</button>
+  </div>
 </div>
