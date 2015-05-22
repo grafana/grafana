@@ -97,7 +97,7 @@ function (angular, _) {
       }
 
       var selected, copy, i, panel;
-      if (variable.current.text === 'All') {
+      if (variable.current && variable.current.text === 'All') {
         selected = variable.options.slice(1, variable.options.length);
       } else {
         selected = _.filter(variable.options, {selected: true});
