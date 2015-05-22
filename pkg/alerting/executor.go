@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/golang-lru"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"bosun.org/graphite"
@@ -29,7 +28,6 @@ type GraphiteContext struct {
 func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
 	pre := time.Now()
 	res, err := gc.hh.Query(r)
-	spew.Dump(res)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
 	defer gc.lock.Unlock()
