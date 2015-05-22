@@ -82,7 +82,9 @@ func main() {
 	}
 	alerting.Init(Stat)
 	go alerting.Dispatcher()
-	go alerting.Executor(alerting.GraphiteAuthContextReturner)
+	for i := 0; i < 10; i++ {
+		go alerting.Executor(alerting.GraphiteAuthContextReturner)
+	}
 
 	cmd.StartServer()
 
