@@ -23,6 +23,7 @@ type GraphiteContext struct {
 	lock        sync.Mutex
 	dur         time.Duration
 	missingVals int
+	emptyResp   bool
 }
 
 func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
@@ -39,6 +40,8 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 			}
 		}
 	}
+	gc.emptyResp = (len(res) == 0)
+
 	// one Context might run multiple queries, we want to add all times
 	gc.dur += time.Since(pre)
 	if gc.missingVals > 0 {
@@ -67,6 +70,7 @@ func Executor(fn GraphiteReturner) {
 	Stat.IncrementValue("alert-executor.alert-outcomes.ok", 0)
 	Stat.IncrementValue("alert-executor.alert-outcomes.critical", 0)
 	Stat.IncrementValue("alert-executor.alert-outcomes.unknown", 0)
+	Stat.IncrementValue("alert-executor.graphite-emptyresponse", 0)
 	Stat.TimeDuration("alert-executor.consider-job.already-done", 0)
 	Stat.TimeDuration("alert-executor.consider-job.original-todo", 0)
 
@@ -105,6 +109,9 @@ func Executor(fn GraphiteReturner) {
 			Stat.TimeDuration("alert-executor.job_query_graphite", gr.dur)
 			Stat.TimeDuration("alert-executor.job_parse-and-evaluate", durationExec-gr.dur)
 			Stat.Timing("alert-executor.graphite-missingVals", int64(gr.missingVals))
+			if gr.emptyResp {
+				Stat.Increment("alert-executor.graphite-emptyresponse")
+			}
 		}
 
 		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
