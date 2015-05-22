@@ -404,7 +404,9 @@
               "column": "value",
               "series": "stats.gauges.grafana.alert-jobqueue-internal.items",
               "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.items\" where $timeFilter group by time($interval) order asc",
-              "alias": "items"
+              "alias": "items",
+              "fill": "",
+              "interval": ""
             },
             {
               "target": "",
@@ -412,7 +414,9 @@
               "column": "value",
               "series": "stats.gauges.grafana.alert-jobqueue-internal.size",
               "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.size\" where $timeFilter group by time($interval) order asc",
-              "alias": "size"
+              "alias": "size",
+              "fill": "",
+              "interval": ""
             }
           ],
           "aliasColors": {},
@@ -595,7 +599,9 @@
               "column": "value",
               "series": "stats.timers.grafana.alert-executor.job_parse-and-evaluate.mean",
               "query": "select mean(value) from \"stats.timers.grafana.alert-executor.job_parse-and-evaluate.mean\" where $timeFilter group by time($interval) order asc",
-              "alias": "parse-evaluate mean"
+              "alias": "parse-evaluate mean",
+              "interval": "",
+              "fill": ""
             },
             {
               "target": "",
@@ -622,12 +628,13 @@
               "alias": "query-graphite upper"
             }
           ],
-          "aliasColors": {},
+          "aliasColors": {
+            "parse-evaluate mean": "#508642",
+            "parse-evaluate upper": "#3F6833",
+            "query-graphite-mean": "#C15C17",
+            "query-graphite upper": "#99440A"
+          },
           "seriesOverrides": [
-            {
-              "alias": "/evaluate/",
-              "linewidth": 0
-            },
             {
               "alias": "/graphite/",
               "fill": 0
