@@ -16,7 +16,9 @@
       "panels": [
         {
           "aliasColors": {
-            "tickqueue items": "#508642"
+            "tickqueue items": "#508642",
+            "skipped": "#890F02",
+            "tickqueue size": "#EF843C"
           },
           "bars": false,
           "datasource": "influxdb",
@@ -53,12 +55,7 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "/size/",
-              "color": "#E24D42"
-            }
-          ],
+          "seriesOverrides": [],
           "span": 6,
           "stack": false,
           "steppedLine": false,
@@ -78,6 +75,17 @@
               "query": "select mean(value) from \"stats.gauges.grafana.alert-tickqueue.size\" where $timeFilter group by time($interval) order asc",
               "series": "stats.gauges.grafana.alert-tickqueue.size",
               "target": ""
+            },
+            {
+              "target": "",
+              "function": "mean",
+              "column": "value",
+              "series": "stats.grafana.alert-dispatcher.ticks-skipped-due-to-slow-tickqueue",
+              "query": "select mean(value) from \"stats.grafana.alert-dispatcher.ticks-skipped-due-to-slow-tickqueue\" where $timeFilter group by time($interval) fill(0) order asc",
+              "alias": "skipped",
+              "hide": false,
+              "interval": "1s",
+              "fill": "0"
             }
           ],
           "timeFrom": null,
@@ -96,7 +104,7 @@
           ]
         },
         {
-          "content": "dispatcher reads ticks from the tickqueue  and reads job schedules from the database for the given tick.    \nif we can't read from DB fast enough, this queue wil fill up.\nthe queue should never fill up all the way. if it does, it means the database is consistently getting behind/slower to the point where we assume it will never keep up.  \n\n_if the number of items reaches the size limit, grafana will abort_",
+          "content": "dispatcher reads ticks (timestamps for each new second) from the tickqueue and reads job schedules from the database for the given tick.    \nif the scheduler can't read from DB fast enough, it won't read from the queue fast enough and the queue wil fill up.\nthe queue should never fill up all the way. if it does, it means the database is consistently getting behind/slower to the point where we assume it will never keep up and **grafana drops the ticks, causing jobs to be skipped instead of getting scheduled**\n",
           "editable": true,
           "error": false,
           "id": 2,
@@ -389,7 +397,7 @@
             "total": false,
             "avg": false
           },
-          "nullPointMode": "connected",
+          "nullPointMode": "null",
           "steppedLine": false,
           "tooltip": {
             "value_type": "cumulative",
@@ -403,23 +411,36 @@
               "function": "mean",
               "column": "value",
               "series": "stats.gauges.grafana.alert-jobqueue-internal.items",
-              "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.items\" where $timeFilter group by time($interval) order asc",
+              "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.items\" where $timeFilter group by time($interval) fill(0) order asc",
               "alias": "items",
-              "fill": "",
-              "interval": ""
+              "fill": "0",
+              "interval": "1s"
             },
             {
               "target": "",
               "function": "mean",
               "column": "value",
               "series": "stats.gauges.grafana.alert-jobqueue-internal.size",
-              "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.size\" where $timeFilter group by time($interval) order asc",
+              "query": "select mean(value) from \"stats.gauges.grafana.alert-jobqueue-internal.size\" where $timeFilter group by time($interval) fill(null) order asc",
               "alias": "size",
-              "fill": "",
-              "interval": ""
+              "fill": "null",
+              "interval": "1s"
+            },
+            {
+              "target": "",
+              "function": "mean",
+              "column": "value",
+              "series": "stats.grafana.alert-dispatcher.jobs-skipped-due-to-slow-jobqueue",
+              "query": "select mean(value) from \"stats.grafana.alert-dispatcher.jobs-skipped-due-to-slow-jobqueue\" where $timeFilter group by time($interval) fill(0) order asc",
+              "alias": "skipped",
+              "interval": "1s",
+              "fill": "0"
             }
           ],
-          "aliasColors": {},
+          "aliasColors": {
+            "skipped": "#890F02",
+            "size": "#E0752D"
+          },
           "seriesOverrides": [
             {
               "alias": "size",
@@ -436,7 +457,7 @@
           "type": "text",
           "id": 6,
           "mode": "markdown",
-          "content": "executors read from the jobqueue and execute the alerting job.  \n_if they can't keep up with the rate of new jobs, than this queue will fill up and grafana will error out._  \nthe size of this queue should comfortably encompass the amount of jobs scheduled at any point in time.\n\n\n   \n\n**alert outcomes** below:  \n\nno results should ever contain missing values, but if they do, than the results become unknown",
+          "content": "executors read from the jobqueue and execute the alerting job.    \n__if they can't keep up with the rate of new jobs, than this queue will fill up and the executors will skip the jobs__  \nthe size of this queue should comfortably encompass the amount of jobs scheduled at any point in time.\n\n\n   \n\n**alert outcomes** below:  \n\nno results should ever contain missing values, but if they do, than the results become unknown",
           "style": {},
           "links": []
         }

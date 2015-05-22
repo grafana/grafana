@@ -31,22 +31,26 @@ func (job Job) String() string {
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
 // so that temporarily database hickups don't block the ticker.
 // however, if more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
-// and grafana will error out. so set this to whatever value you find tolerable, and watch your database query times.
+// and grafana will skip the tick, resulting in lost job executions for that second.
+// so set this to whatever value you find tolerable, and watch your database query times.
 // TODO configurable
 var tickQueueSize = 20
 var tickQueue = make(chan time.Time, tickQueueSize)
 
-// this should be set to above the max amount of jobs you expect to ever be invoked in 1 shot
+// this should be set to above the max amount of jobs you expect to ever be created in 1 shot
 // so we can queue them all at once and then workers can process them
+// if more than this amount of jobs queue up, it means the workers can't process fast enough,
+// and the jobs will be skipped.
 // TODO configurable
 // at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
-var jobQueueSize = 100
+var jobQueueSize = 1000
 var jobQueue = make(chan Job, jobQueueSize)
 
 // Dispatcher dispatches, every second, all jobs that should run for that second
 // every job has an id so that you can run multiple dispatchers (for HA) while still only processing each job once.
 // (provided jobs get consistently routed to executors)
 func Dispatcher() {
+	Stat.IncrementValue("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue", 0)
 	go dispatchJobs()
 	for {
 		ticker := getAlignedTicker()
@@ -57,13 +61,15 @@ func Dispatcher() {
 			select {
 			case tickQueue <- t:
 			default:
-				panic(fmt.Sprintf("dispatchJobs() can't keep up with clock. database too slow?"))
+				// TODO: alert when this happens
+				Stat.Increment("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
 			}
 		}
 	}
 }
 
 func dispatchJobs() {
+	Stat.IncrementValue("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue", 0)
 	for t := range tickQueue {
 		Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
 		Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
@@ -103,7 +109,8 @@ func dispatchJobs() {
 			select {
 			case jobQueue <- job:
 			default:
-				panic(fmt.Sprintf("job queue can't keep up with dispatched jobs. workers not processing fast enough"))
+				// TODO: alert when this happens
+				Stat.Increment("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")
 			}
 			Stat.Increment("alert-dispatcher.jobs-scheduled")
 		}
