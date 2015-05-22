@@ -48,7 +48,7 @@ function (_) {
     var list = [];
     var self = this;
 
-    _.each(this.seriesList, function (series) {
+    _.each(this.series, function (series) {
       var titleCol = null;
       var timeCol = null;
       var tagsCol = null;
