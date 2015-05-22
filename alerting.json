@@ -1,5 +1,5 @@
 {
-  "id": 2,
+  "id": null,
   "title": "alerting.json",
   "originalTitle": "alerting.json",
   "tags": [],
@@ -488,7 +488,7 @@
             "total": false,
             "avg": false
           },
-          "nullPointMode": "connected",
+          "nullPointMode": "null as zero",
           "steppedLine": false,
           "tooltip": {
             "value_type": "cumulative",
@@ -513,16 +513,20 @@
               "function": "mean",
               "column": "value",
               "series": "stats.timers.grafana.alert-executor.consider-job.already-done.count_ps",
-              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.consider-job.already-done.count_ps\" where $timeFilter group by time($interval) order asc",
-              "alias": "already done"
+              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.consider-job.already-done.count_ps\" where $timeFilter group by time($interval) fill(0) order asc",
+              "alias": "already done",
+              "interval": "1s",
+              "fill": "0"
             },
             {
               "target": "",
               "function": "mean",
               "column": "value",
               "series": "stats.timers.grafana.alert-executor.consider-job.out-of-date.count_ps",
-              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.consider-job.out-of-date.count_ps\" where $timeFilter group by time($interval) order asc",
-              "alias": "out of date"
+              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.consider-job.out-of-date.count_ps\" where $timeFilter group by time($interval) fill(0) order asc",
+              "alias": "out of date",
+              "interval": "1s",
+              "fill": "0"
             }
           ],
           "aliasColors": {
@@ -719,12 +723,23 @@
               "target": "",
               "function": "mean",
               "column": "value",
-              "series": "stats.timers.grafana.alert-executor.graphite-missingVals.median",
-              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.graphite-missingVals.median\" where $timeFilter group by time($interval) fill(0) order asc",
+              "series": "stats.timers.grafana.alert-executor.graphite-missingVals.sum",
+              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.graphite-missingVals.sum\" where $timeFilter group by time($interval) fill(0) order asc",
               "alias": "missing-values",
               "fill": "0",
               "interval": "1s",
               "hide": false
+            },
+            {
+              "target": "",
+              "function": "mean",
+              "column": "value",
+              "series": "stats.grafana.alert-executor.graphite-emptyresponse",
+              "query": "select mean(value) from \"stats.grafana.alert-executor.graphite-emptyresponse\" where $timeFilter group by time($interval) fill(0) order asc",
+              "alias": "empty response",
+              "hide": false,
+              "interval": "1s",
+              "fill": "0"
             }
           ],
           "aliasColors": {
