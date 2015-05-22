@@ -521,16 +521,6 @@
               "alias": "already done",
               "interval": "1s",
               "fill": "0"
-            },
-            {
-              "target": "",
-              "function": "mean",
-              "column": "value",
-              "series": "stats.timers.grafana.alert-executor.consider-job.out-of-date.count_ps",
-              "query": "select mean(value) from \"stats.timers.grafana.alert-executor.consider-job.out-of-date.count_ps\" where $timeFilter group by time($interval) fill(0) order asc",
-              "alias": "out of date",
-              "interval": "1s",
-              "fill": "0"
             }
           ],
           "aliasColors": {
