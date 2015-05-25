@@ -7,10 +7,10 @@
 
 
 .variable-value-dropdown.collector-dropdown {
-  min-width: 400px;
-  max-width: 500px;
+  min-width: 300px;
+  max-width: 400px;
   height: auto;
-  max-height: 400px;
+  max-height: 380px;
   padding: 0;
   overflow-y: scroll;
 }
@@ -20,10 +20,6 @@
   margin-bottom: 10px;
   padding: 10px;
   font-size: 0; // fix inline-block white space for child columns
-}
-
-.search-field-wrapper.collector-dropdown-search {
-  padding-bottom: 10px;
 }
 
 .collector-dropdown-container-col {
@@ -39,6 +35,33 @@
   margin: 0 0 5px;
 }
 
+
+.rt-flex-select-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+
+// Tags
+// ====================================
+
+.collector-dropdown-tag {
+  display: block;
+
+  &:before {
+    display: inline-block;
+    width: 19px;
+    height: 19px;
+    background: url('../img/rt-checkbox_white.png') 0 0 no-repeat;
+    vertical-align: middle;
+    content: '';
+  }
+}
+
+.collector-dropdown-tag.selected:before {
+  background-position: 0 -21px;
+}
+
 .collector-dropdown-tag-count {
   font-size: 12px;
 }
@@ -50,15 +73,69 @@
 
 
 
+// Locations
+// ====================================
+
+.collector-dropdown-location {
+  display: block;
+  font-size: 14px;
+  color: #bbbfc2;
+
+  &:before {
+    display: inline-block;
+    width: 19px;
+    height: 19px;
+    margin-right: 10px;
+    background: url('../img/rt-checkbox_white.png') 0 0 no-repeat;
+    vertical-align: middle;
+    content: '';
+  }
+}
+
+.collector-dropdown-location.selected:before {
+  background-position: 0 -21px;
+}
+
+
+
+// Search
+// ====================================
+
+.search-field-wrapper.collector-dropdown-search {
+  margin-bottom: 0;
+  padding: 10px 0 10px 10px;
+}
+
+.collector-dropdown-search .collector-dropdown-search-input {
+  margin-bottom: 0;
+}
+
+
+
 // Counter
 // ====================================
 
-.collector-dropdown-count {
+.collector-dropdown-counter {
+  display: inline-block;
   margin-bottom: 10px;
-  padding: 3px;
+  padding: 3px 8px 3px 3px;
   background: #333;
   font-size: 14px;
   line-height: normal;
+}
+
+.collector-dropdown-count {
+  display: block;
+
+  &:before {
+    display: inline-block;
+    width: 19px;
+    height: 19px;
+    margin-right: 5px;
+    background: url('../img/rt-checkbox_white.png') 0 0 no-repeat;
+    vertical-align: top;
+    content: '';
+  }
 }
 
 

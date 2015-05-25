@@ -1,4 +1,121 @@
-                    <div class="editor-option rt-input-styles">
-                      <label class="small">Frequency</label>
-                      <select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select>
+        <!-- DNS Tab  -->
+        <div class="rt-box rt-page-box" id="dns">
+          <div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
+            <div class="rt-page-box-header-checkbox checkbox-check-enabled">
+              <span class="rt-h2 rt-modal">DNS</span>
+              <span class="freqMsg supplemental-copy" ng-show="monitors['dns'].enabled"> (enabled)</span>
+            </div>
+            <div class="rt-box-row-info">
+              <a href="#">
+                <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['dns'].enabled"></i>
+                <span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
+                <span class="freqMsg" ng-show="!monitors['dns'].enabled && discovered" > Not Discovered |</span>
+                <span class="freqMsg" style="color: #13b2d4"> Configure</span>
+                <span><i class="fa fa-caret-down" ng-show="showDNS"></i></span>
+                <span><i class="fa fa-caret-right rt-box-accordian-control" ng-hide="showDNS"></i></span>
+              </a>
+            </div>
+          </div>
+          <div class="rt-box-body rt-page-box-body" ng-show="showDNS">
+            <div class="rt-box-interior-section">
+              <div class="rt-box-interior-header-icon">
+                <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
+              </div>
+              <div class="rt-box-interior-header rt-h3">Monitoring
+                <div style="margin-left: 15px; display: inline;">
+                  <input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled" ng-click="updateMonitor(monitors['dns'])">
+                  <label for="dns-enabled1" class="variable-value-link rt-modal">Enabled</label>
+                </div>
+              </div>
+              <div class="rt-box-interior-content">
+                <p class="rt-body-copy">We do a single DNS lookup at the specified <span class="emphasis">frequency</span>, on the <span class="emphasis">DNS servers</span>, from the selected <span class="emphasis">dynamic or static footprint</span>. If one fails, we will move on to the next, just like DNS works in the real world.</p>
+                <div class="rt-form">
+                  <div class="rt-form-row">
+                    <label class="small">Monitoring from</label>
+                    <div class="rt-form-group">
+                      <endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
                     </div>
+                  </div>
+                  <div class="rt-form-row">
+<!--                     <div class="editor-option rt-input-styles" ng-repeat="setting in monitor_types_by_name['dns'].settings">
+                      <raintank-setting definition="setting" target="currentSettingByVariable(monitors['dns'], setting.variable)">
+                    </div> -->
+                    <div class="editor=option rt-input-styles rt-flex-form-block">
+                        <div class="rt-flex-form-field">
+                          <label class="small">Hostname</label>
+                          <input type="text" class="rt-input-long-text" ng-model=""> 
+                        </div>
+                        <div class="rt-flex-form-field">
+                          <label class="small">Frequency</label>
+                          <select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select>
+                        </div>
+                        <div class="rt-flex-form-field">
+                          <label class="small">DNS Servers</label>
+                           <textarea ng-model="" class="rt-input-styles rt-textarea-row"></textarea>
+                        </div>  
+                        <div class="rt-flex-form-field">
+                          <label class="small">Record Type</label>
+                           <select class="small" ng-model="" ng-options="f.value as f.label for f in type" ng-selected="{{monitors['dns'].type}}" style="width: auto; height: 34px;"></select>
+                        </div>  
+                        <div class="rt-flex-form-field">
+                          <label class="small">Port</label>
+                          <input type="text" style="width: 25px;" ng-model=""> 
+                        </div>  
+                        <div class="rt-flex-form-field">
+                          <label class="small">Protocol</label>
+                           <select class="small" ng-model="" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].protocol}}" style="width: auto; height: 34px;"></select>
+                        </div>                          
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="rt-box-interior-content rt-interior-update">
+                <div class="editor-row" ng-show="endpoint.id">
+                <button type="submit" ng-show="monitors['dns'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
+                <button type="submit" ng-show="monitors['dns'].enabled == false" class="secondaryCTA" ng-click="monitors['dns'].enabled=true ; updateMonitor(monitors['dns'])">Enable DNS</button>
+                <!-- Im sure this can be refactored to be handled more cleanly. MST. -->
+                </div>
+              </div>
+            </div>
+<!--             <div class="rt-box-interior-section">
+              <div class="rt-box-interior-header-icon">
+                <i class="icon icon-rt-online" style="font-size: 30px;"></i>
+              </div>
+              <div class="rt-box-interior-header rt-h3">Health</div>
+              <div class="rt-box-interior-content" style="margin-top: 10px;">
+                <div class="rt-body-copy">
+                  <span class="rt-body-copy" style="margin: 0;">If</span>
+                  <div class="rt-input-styles editor-option">
+                    <label><input type="number" value="3"class="natural-language-form"></select></label>
+                  </div>
+                  <span class="rt-body-copy">or more collectors report <span class="emphasis">connection errors</span> for</span>
+                  <div class="rt-input-styles editor-option">
+                    <label><input type="number" value="5" class="natural-language-form"></select></label>
+                  </div>
+                  <span class="rt-body-copy">or more consecutive checks, health will be marked as down <img width="20px" height="20px" src="img/critical.svg" class="rt-inline-health-icon">.</span>
+                </div>
+              </div>
+            </div>
+            <div class="rt-box-interior-section">
+              <div class="rt-box-interior-header-icon">
+                <i class="icon icon-rt-alert" style="font-size: 26px;"></i>
+              </div>
+              <div class="rt-box-interior-header rt-h3">Alerting
+                <div style="margin-left: 15px; display: inline;">
+                  <input class="rt-modal" id="dns-alert-enabled1" type="checkbox" ng-model="monitors['alert'].enabled" ng-click="updateMonitor(monitors['dns'])">
+                  <label for="dns-alert-enabled1" class="variable-value-link rt-modal">Enabled</label>
+                </div>
+              </div>
+              <div class="rt-box-interior-content">
+                <span class="rt-body-copy" style="margin: 0;">When the DNS health changes, send a notification to the following emails: </span>
+                <div style="margin-top: 15px;">
+                  <textarea class="rt-input-styles rt-textarea-row"></textarea>
+                </div>
+                <div style="margin-top: -10px;">
+                  <span class="small">Comma separate email addresses accepted.</span>
+                </div>
+              </div>
+            </div> -->
+          </div>
+        </div>
+        <!-- End DNS Tab -->
