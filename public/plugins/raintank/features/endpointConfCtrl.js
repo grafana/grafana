@@ -174,7 +174,7 @@ function (angular) {
       }
       if (s.value === null) {
         var type = $scope.monitor_types[monitor.monitor_type_id];
-        _.forEach(type.settings, function(settint) {
+        _.forEach(type.settings, function(setting) {
           if (setting.variable == variable) {
             s.value = setting.default_value;
           }
