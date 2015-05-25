@@ -172,6 +172,15 @@ function (angular) {
       if (! found) {
         monitor.settings.push(s);
       }
+      if (s.value === null) {
+        var type = $scope.monitor_types[monitor.monitor_type_id];
+        _.forEach(type.settings, function(settint) {
+          if (setting.variable == variable) {
+            s.value = setting.default_value;
+          }
+        });
+      }
+
       return s;
     }
     $scope.reset = function() {
