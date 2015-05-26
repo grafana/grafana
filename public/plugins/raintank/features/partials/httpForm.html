@@ -30,7 +30,7 @@
               <div class="rt-box-interior-content">
                 <p class="rt-body-copy">At the selected <span class="emphasis">frequency</span>, we'll do a <span class="emphasis">single</span> HTTP request to your <span class="emphasis">URL</span>, from each collector within your <span class="emphasis">dynamic or static footprint</span>.</p>
                 <div class="rt-form">
-                  <div class="rt-form-row">
+                  <div class="rt-form-row rt-form-row-long">
                     <label class="small">Monitoring from</label>
                     <div class="rt-form-group">
                       <endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
@@ -50,6 +50,15 @@
                           <label class="small">Frequency</label>
                           <select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px;"></select>
                         </div>
+                        <div class="rt-flex-form-field">
+                          <label class="small">Path</label>
+                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['http'], 'path').value"> 
+                          <!-- This is a complex field that should handle host, path and port ex: https://www.google.com/raintankrocks:8258-->
+                        </div>
+                        <div class="rt-flex-form-field">
+                          <label class="small">Port</label>
+                          <input type="text" class="rt-input-short-text" ng-model="currentSettingByVariable(monitors['http'], 'port').value"> 
+                        </div>                        
                         <div class="rt-flex-form-field">
                           <label class="small">Method</label>
                            <select class="small" ng-model="currentSettingByVariable(monitors['http'], 'method').value" ng-options="m for m in defaultSettingByVariable('http','method').conditions.values" style="width: auto; height: 34px;"></select>

@@ -1,6 +1,6 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 </topnav>
-<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px; min-width: 400px;">
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">Endpoints</h1>
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
@@ -57,26 +57,27 @@
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
 
-			<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag="tag" tag-color-from-name>
-				<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
-				<ul class="dropdown-menu rt-tag-dropup">
-					<li>
-						<a href="#">
-							<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
-							Dashboard
-						</a>
-					</li>
-					<li>
-						<a ng-click="setTagFilter(tag)">
-							<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
-							Filter
-						</a>
-					</li>
-				</ul>
-			</span>
+			<div style="display: inline-block;">
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag="tag" tag-color-from-name>
+					<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
+					<ul class="dropdown-menu rt-tag-dropup">
+						<li>
+							<a href="#">
+								<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
+								Dashboard
+							</a>
+						</li>
+						<li>
+							<a ng-click="setTagFilter(tag)">
+								<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
+								Filter
+							</a>
+						</li>
+					</ul>
+				</span>
+			</div>
 
-
- 				<div style="float: right; display: inline;">
+ 				<div style="float: right;">
 				<div style="display: inline;">
 					<rt-endpoint-health endpoint="endpoint"></rt-endpoint-health>
 				</div>
@@ -106,8 +107,7 @@
 					</ul>
 				</div>
 			</div>
-			<span style="float: right;">
-			</span>
+			<div class="clearfix"></div>
 		</div>
 	</div>
 </div>
