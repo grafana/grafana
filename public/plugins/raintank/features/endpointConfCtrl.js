@@ -31,22 +31,8 @@ function (angular) {
       $scope.allCollectors = [];
       $scope.collectorsOption = {selection: "all"};
       $scope.collectorsByTag = {};
-      $scope.$watch("collectorsOption.selection", function(newVal) {
-        if (newVal === "all") {
-          $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
-        }
-      });
       $scope.global_collectors = {collector_ids: [], collector_tags: []};
-      $scope.$watch("global_collectors.collector_ids", function(newVal) {
-        _.forEach($scope.monitors, function(monitor) {
-          monitor.collector_ids = newVal;
-        });
-      });
-      $scope.$watch("global_collectors.collector_tags", function(newVal) {
-        _.forEach($scope.monitors, function(monitor) {
-          monitor.collector_tags = newVal;
-        });
-      });
+
       if ("id" in $routeParams) {
         promises.push($scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);

@@ -234,22 +234,26 @@ define([
       templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
       link: function(scope, elem) {
         var bodyEl = angular.element($window.document.body);
-        scope.footprint = {value: "static"};
-        scope.error = false;
         var currentIds = scope.model.collector_ids;
         var currentTags = scope.model.collector_tags;
 
-        // determine if we are using static or dynamic allocation.
-        if (currentIds.length > 0) {
-          scope.footprint.value = 'static';
-          _.forEach(scope.tags, function(t) {
-            t.selected = false;
-          });
-        } else if (currentTags.length > 0) {
-          scope.footprint.value = 'dynamic';
-          _.forEach(scope.ids, function(i) {
-            i.selected = false;
-          });
+        scope.init = function() {
+          scope.footprint = {value: "static"};
+          scope.error = false;
+
+          // determine if we are using static or dynamic allocation.
+          if (currentIds.length > 0) {
+            scope.footprint.value = 'static';
+            _.forEach(scope.tags, function(t) {
+              t.selected = false;
+            });
+          } else if (currentTags.length > 0) {
+            scope.footprint.value = 'dynamic';
+            _.forEach(scope.ids, function(i) {
+              i.selected = false;
+            });
+          }
+          scope.reset();
         }
 
         scope.reset = function() {
@@ -330,7 +334,23 @@ define([
             });
           });
           return Object.keys(collectorList).join(', ');
-        }
+        };
+
+        scope.selectTagTitle = function() {
+          var selectedTags = _.filter(scope.tags, {selected: true});
+          if (selectedTags.length <= 2) {
+            return _.pluck(selectedTags, 'text').join(", ");
+          }
+          return _.pluck(selectedTags, 'text').slice(0, 2).join(", ") + " and " + (selectedTags.length - 2) + " more";
+        };
+
+        scope.selectIdTitle = function() {
+          var selectedIds = _.filter(scope.ids, {selected: true});
+          if (selectedIds.length <= 2) {
+            return _.pluck(selectedIds, 'text').join(", ");
+          }
+          return _.pluck(selectedIds, 'text').slice(0, 2).join(", ") + " and " + (selectedIds.length - 2) + " more";
+        };
 
         scope.hide = function() {
           // determine if we are using static or dynamic allocation.
@@ -378,6 +398,8 @@ define([
           });
           scope.hide();
         }
+
+        scope.init();
       },
     };
   });

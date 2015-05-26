@@ -9,7 +9,7 @@
 			<div class="rt-collector-select pointer" ng-click="show()">
 			 	<a class="variable-value-link">
 					<span class="pointer">
-						{{model.collector_tags.length}} Tags
+						{{selectTagTitle()}}
 					</span>
 					<i class="fa fa-caret-down" style="float: right;"></i>
 				</a>
@@ -61,7 +61,7 @@
 		<div class="rt-collector-select pointer" ng-click="show()">
 		 	<a class="variable-value-link">
 				<span class="pointer">
-					{{model.collector_ids.length}} Collectors
+					{{selectIdTitle()}}
 				</span>
 				<i class="fa fa-caret-down" style="float: right;"></i>
 			</a>
