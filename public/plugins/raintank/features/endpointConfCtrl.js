@@ -27,6 +27,7 @@ function (angular) {
       $scope.discoveryError = false;
       $scope.endpoints = [];
       $scope.monitors = {};
+      $scope.monitor_types = {};
       $scope.monitor_types_by_name = {};
       $scope.allCollectors = [];
       $scope.collectorsOption = {selection: "all"};
@@ -126,6 +127,7 @@ function (angular) {
           $scope.monitor_types_by_name[type.name.toLowerCase()] = type;
           if (!(type.name.toLowerCase() in $scope.monitors)) {
             $scope.monitors[type.name.toLowerCase()] = {
+              id: null,
               endpoint_id: null,
               monitor_type_id: type.id,
               collector_ids: $scope.global_collectors.collector_ids,
@@ -133,6 +135,7 @@ function (angular) {
               settings: settings,
               enabled: false,
               frequency: 10,
+              //test: true,
             };
           }
         });
@@ -203,8 +206,12 @@ function (angular) {
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
-              var type = $scope.monitor_types[monitor.monitor_type_id];
-              $scope.monitors[type.name.toLowerCase()] = monitor;
+              var type = $scope.monitor_types[monitor.monitor_type_id].name.toLowerCase();
+              if (type in $scope.monitors) {
+                _.assign($scope.monitors[type], monitor);
+              } else {
+                $scope.monitors[type] = monitor;
+              }
               monitorLastState[monitor.id] = _.cloneDeep(monitor);
             });
           });

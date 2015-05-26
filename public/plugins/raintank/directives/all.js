@@ -236,8 +236,9 @@ define([
         var bodyEl = angular.element($window.document.body);
         var currentIds = scope.model.collector_ids;
         var currentTags = scope.model.collector_tags;
-
         scope.init = function() {
+          currentIds = scope.model.collector_ids;
+          currentTags = scope.model.collector_tags;
           scope.footprint = {value: "static"};
           scope.error = false;
 
@@ -400,7 +401,10 @@ define([
           scope.hide();
         }
 
-        scope.init();
+        //scope.init();
+        scope.$watch('model.id', function() {
+          scope.init();
+        });
       },
     };
   });
