@@ -328,7 +328,6 @@ define([
           _.forEach(scope.collectors, function(c) {
             _.forEach(_.filter(scope.tags, {selected: true}), function(t) {
               if (_.indexOf(c.tags, t.text) != -1) {
-                console.log("%s is in ", t.text, c.tags);
                 collectorList[c.name] = true;
               }
             });
@@ -353,6 +352,7 @@ define([
         };
 
         scope.hide = function() {
+          var lastFootprint = scope.footprint.value;
           // determine if we are using static or dynamic allocation.
           if (scope.model.collector_ids.length > 0) {
             scope.footprint.value = 'static';
@@ -365,6 +365,7 @@ define([
               i.selected = false;
             });
           }
+          scope.reset();
           scope.selectorOpen = false;
           bodyEl.off('click', scope.bodyOnClick);
         };
