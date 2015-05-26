@@ -154,6 +154,17 @@ function (angular) {
       });
     };
 
+    $scope.defaultSettingByVariable = function(monitorType, variable) {
+      var s = null;
+      var type = $scope.monitor_types_by_name[monitorType];
+      _.forEach(type.settings, function(setting) {
+        if (setting.variable == variable) {
+          s = setting;
+        }
+      });
+      return s;
+    }
+
     $scope.currentSettingByVariable = function(monitor, variable) {
       var s = {
         "variable": variable,

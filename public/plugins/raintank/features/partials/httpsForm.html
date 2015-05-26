@@ -24,7 +24,7 @@
               </div>
               <div class="rt-box-interior-header rt-h3">Monitoring
                 <div style="margin-left: 15px; display: inline;">
-                  <input class="rt-modal" id="https-enabled1" type="checkbox" ng-model="monitors['https'].enabled" ng-click="updateMonitor(monitors['https'])">
+                  <input class="rt-modal" id="https-enabled1" type="checkbox" ng-model="monitors['https'].enabled">
                   <label for="https-enabled1" class="variable-value-link rt-modal">Enabled</label>
                 </div>
               </div>
@@ -44,7 +44,7 @@
                     <div class="editor=option rt-input-styles rt-flex-form-block">
                         <div class="rt-flex-form-field">
                           <label class="small">Hostname</label>
-                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['https'], 'hostname').value"> 
+                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['https'], 'host').value"> 
                           <!-- This is a complex field that should handle host, path and port ex: https://www.google.com/raintankrocks:8258-->
                         </div>
                         <div class="rt-flex-form-field">
@@ -53,15 +53,15 @@
                         </div>
                         <div class="rt-flex-form-field">
                           <label class="small">Method</label>
-                           <select class="small" ng-model="currentSettingByVariable(monitors['https'], 'method').value" ng-options="f.value as f.label for f in method" ng-selected="{{monitors['https'].method}}" style="width: auto; height: 34px;"></select>
+                           <select class="small" ng-model="currentSettingByVariable(monitors['https'], 'method').value" ng-options="m for m in defaultSettingByVariable('https','method').conditions.values" style="width: auto; height: 34px;"></select>
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Content Match</label>
-                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['https'], 'hostname').value"> 
+                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['https'], 'expectRegex').value"> 
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Headers</label>
-                           <textarea class="rt-input-styles rt-textarea-row"></textarea>
+                           <textarea class="rt-input-styles rt-textarea-row" ng-model="currentSettingByVariable(monitors['https'], 'headers').value"></textarea>
                         </div>  
                         <div class="rt-flex-form-field">
                           <input class="rt-modal" id="https-ssl-enabled1" type="checkbox"  ng-true-value="'true'" ng-false-value="'false'" ng-model="currentSettingByVariable(monitors['https'], 'validateCert').value">
@@ -73,8 +73,7 @@
               </div>
               <div class="rt-box-interior-content rt-interior-update">
                 <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" ng-show="monitors['https'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['https'])">Update HTTPS Settings</button>
-                <button type="submit" ng-show="monitors['https'].enabled == false" class="secondaryCTA" ng-click="monitors['https'].enabled=true ; updateMonitor(monitors['https'])">Enable HTTPS</button>
+                <button type="submit" ng-show="endpoint.id" class="secondaryCTA" ng-click="updateMonitor(monitors['https'])">Update HTTPS Settings</button>
                 <!-- Im sure this can be refactored to be handled more cleanly -->
                 </div>
               </div>

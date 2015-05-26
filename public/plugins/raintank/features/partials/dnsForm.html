@@ -23,7 +23,7 @@
               </div>
               <div class="rt-box-interior-header rt-h3">Monitoring
                 <div style="margin-left: 15px; display: inline;">
-                  <input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled" ng-click="updateMonitor(monitors['dns'])">
+                  <input class="rt-modal" id="dns-enabled1" type="checkbox" ng-model="monitors['dns'].enabled">
                   <label for="dns-enabled1" class="variable-value-link rt-modal">Enabled</label>
                 </div>
               </div>
@@ -43,27 +43,27 @@
                     <div class="editor=option rt-input-styles rt-flex-form-block">
                         <div class="rt-flex-form-field">
                           <label class="small">Hostname</label>
-                          <input type="text" class="rt-input-long-text" ng-model=""> 
+                          <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['dns'], 'name').value"> 
                         </div>
                         <div class="rt-flex-form-field">
                           <label class="small">Frequency</label>
-                          <select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].frequency}}" style="width: auto; height: 34px;"></select>
+                          <select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px;"></select>
                         </div>
                         <div class="rt-flex-form-field">
                           <label class="small">DNS Servers</label>
-                           <textarea ng-model="" class="rt-input-styles rt-textarea-row"></textarea>
+                           <textarea ng-model="currentSettingByVariable(monitors['dns'], 'server').value" class="rt-input-styles rt-textarea-row"></textarea>
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Record Type</label>
-                           <select class="small" ng-model="" ng-options="f.value as f.label for f in type" ng-selected="{{monitors['dns'].type}}" style="width: auto; height: 34px;"></select>
+                           <select class="small" ng-model="currentSettingByVariable(monitors['dns'], 'type').value" ng-options="r for r in defaultSettingByVariable('dns','type').conditions.values" style="width: auto; height: 34px;"></select>
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Port</label>
-                          <input type="text" style="width: 25px;" ng-model=""> 
+                          <input type="text" style="width: 25px;" ng-model="currentSettingByVariable(monitors['dns'], 'port').value"> 
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Protocol</label>
-                           <select class="small" ng-model="" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['dns'].protocol}}" style="width: auto; height: 34px;"></select>
+                           <select class="small" ng-model="currentSettingByVariable(monitors['dns'], 'protocol').value" ng-options="p for p in defaultSettingByVariable('dns','protocol').conditions.values" style="width: auto; height: 34px;"></select>
                         </div>                          
                     </div>
                   </div>
@@ -71,8 +71,7 @@
               </div>
               <div class="rt-box-interior-content rt-interior-update">
                 <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" ng-show="monitors['dns'].enabled == true" class="secondaryCTA" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
-                <button type="submit" ng-show="monitors['dns'].enabled == false" class="secondaryCTA" ng-click="monitors['dns'].enabled=true ; updateMonitor(monitors['dns'])">Enable DNS</button>
+                <button type="submit" ng-show="endpoint.id" class="secondaryCTA" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
                 <!-- Im sure this can be refactored to be handled more cleanly. MST. -->
                 </div>
               </div>
