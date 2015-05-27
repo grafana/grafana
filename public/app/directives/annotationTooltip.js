@@ -3,7 +3,7 @@ define([
   'jquery',
   'lodash'
 ],
-function (angular, $) {
+function (angular, $, _) {
   'use strict';
 
   angular
@@ -23,8 +23,17 @@ function (angular, $) {
           tooltip += text.replace(/\n/g, '<br>') + '<br>';
         }
 
-        if (event.tags && event.tags.length > 0) {
-          tooltip += '<span class="label label-tag" ng-repeat="tag in event.tags" tag-color-from-name="tag">{{tag}}</span><br/>';
+        var tags = event.tags;
+        if (_.isString(event.tags)) {
+          tags = event.tags.split(',');
+          if (tags.length === 1) {
+            tags = event.tags.split(' ');
+          }
+        }
+
+        if (tags && tags.length) {
+          scope.tags = tags;
+          tooltip += '<span class="label label-tag" ng-repeat="tag in tags" tag-color-from-name="tag">{{tag}}</span><br/>';
         }
 
         tooltip += "</div>";

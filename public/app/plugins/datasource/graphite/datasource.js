@@ -111,19 +111,12 @@ function (angular, _, $, config, kbn, moment) {
             var list = [];
             for (var i = 0; i < results.data.length; i++) {
               var e = results.data[i];
-              var tags = [];
-              if (e.tags) {
-                tags = e.tags.split(',');
-                if (tags.length === 1) {
-                  tags = e.tags.split(' ');
-                }
-              }
 
               list.push({
                 annotation: annotation,
                 time: e.when * 1000,
                 title: e.what,
-                tags: tags,
+                tags: e.tags,
                 text: e.data
               });
             }
