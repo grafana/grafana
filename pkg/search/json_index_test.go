@@ -31,5 +31,12 @@ func TestJsonDashIndex(t *testing.T) {
 			So(res[0].Title, ShouldEqual, "Home")
 		})
 
+		Convey("Should not return when starred is filtered", func() {
+			res, err := index.Search(&Query{Title: "", Tag: "", IsStarred: true})
+			So(err, ShouldBeNil)
+
+			So(len(res), ShouldEqual, 0)
+		})
+
 	})
 }

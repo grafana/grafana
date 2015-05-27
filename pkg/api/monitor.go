@@ -6,7 +6,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetMonitorById(c *middleware.Context) {
+func GetMonitorById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetMonitorByIdQuery{Id: id, OrgId: c.OrgId}
@@ -14,14 +14,13 @@ func GetMonitorById(c *middleware.Context) {
 
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(404, "Monitor not found", nil)
-		return
+		return ApiError(404, "Monitor not found", nil)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func getMonitorHealthById(c *middleware.Context) {
+func getMonitorHealthById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 	query := m.GetMonitorHealthByIdQuery{
 		Id:    id,
@@ -29,68 +28,62 @@ func getMonitorHealthById(c *middleware.Context) {
 	}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to query monitor health", err)
-		return
+		return ApiError(500, "Failed to query monitor health", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) {
+func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) Response {
 	query.OrgId = c.OrgId
 	query.IsGrafanaAdmin = c.IsGrafanaAdmin
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query monitors", err)
-		return
+		return ApiError(500, "Failed to query monitors", err)
 	}
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func GetMonitorTypes(c *middleware.Context) {
+func GetMonitorTypes(c *middleware.Context) Response {
 	query := m.GetMonitorTypesQuery{}
 	err := bus.Dispatch(&query)
 
 	if err != nil {
-		c.JsonApiErr(500, "Failed to query monitor_types", err)
-		return
+		return ApiError(500, "Failed to query monitor_types", err)
 	}
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func DeleteMonitor(c *middleware.Context) {
+func DeleteMonitor(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteMonitorCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete monitor", err)
-		return
+		return ApiError(500, "Failed to delete monitor", err)
 	}
 
-	c.JsonOK("monitor deleted")
+	return ApiSuccess("monitor deleted")
 }
 
-func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) {
+func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to add monitor", err)
-		return
+		return ApiError(500, "Failed to add monitor", err)
 	}
 
-	c.JSON(200, cmd.Result)
+	return Json(200, cmd.Result)
 }
 
-func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) {
+func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to update monitor", err)
-		return
+		return ApiError(500, "Failed to update monitor", err)
 	}
 
-	c.JsonOK("Monitor updated")
+	return ApiSuccess("Monitor updated")
 }

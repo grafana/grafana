@@ -8,12 +8,11 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetApiKeys(c *middleware.Context) {
+func GetApiKeys(c *middleware.Context) Response {
 	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to list api keys", err)
-		return
+		return ApiError(500, "Failed to list api keys", err)
 	}
 
 	result := make([]*m.ApiKeyDTO, len(query.Result))
@@ -24,34 +23,32 @@ func GetApiKeys(c *middleware.Context) {
 			Role: t.Role,
 		}
 	}
-	c.JSON(200, result)
+
+	return Json(200, result)
 }
 
-func DeleteApiKey(c *middleware.Context) {
+func DeleteApiKey(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete API key", err)
-		return
+		return ApiError(500, "Failed to delete API key", err)
 	}
 
-	c.JsonOK("API key deleted")
+	return ApiSuccess("API key deleted")
 }
 
-func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) {
+func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
-		c.JsonApiErr(400, "Invalid role specified", nil)
-		return
+		return ApiError(400, "Invalid role specified", nil)
 	}
 
 	cmd.OrgId = c.OrgId
 	if cmd.IsAdmin {
 		if !c.IsGrafanaAdmin {
-			c.JsonApiErr(400, "Only GrafanaAdmins can add admin keys", nil)
-			return
+			return ApiError(400, "Only GrafanaAdmins can add admin keys", nil)
 		}
 	}
 
@@ -59,14 +56,12 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) {
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to add API key", err)
-		return
+		return ApiError(500, "Failed to add API key", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
 		Name: cmd.Result.Name,
-		Key:  newKeyInfo.ClientSecret,
-	}
+		Key:  newKeyInfo.ClientSecret}
 
-	c.JSON(200, result)
+	return Json(200, result)
 }

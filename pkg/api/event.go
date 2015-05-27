@@ -8,7 +8,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetEvents(c *middleware.Context, query m.GetEventsQuery) {
+func GetEvents(c *middleware.Context, query m.GetEventsQuery) Response {
 	query.OrgId = c.OrgId
 
 	if query.End == 0 {
@@ -23,9 +23,8 @@ func GetEvents(c *middleware.Context, query m.GetEventsQuery) {
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query events", err)
-		return
+		return ApiError(500, "Failed to query events", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }

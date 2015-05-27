@@ -26,7 +26,7 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	cmd := exec.Command(binPath, "--ignore-ssl-errors=true", scriptPath, "url="+params.Url, "width="+params.Width,
+	cmd := exec.Command(binPath, "--ignore-ssl-errors=true", "--ssl-protocol=any", scriptPath, "url="+params.Url, "width="+params.Width,
 		"height="+params.Height, "png="+pngPath, "cookiename="+setting.SessionOptions.CookieName,
 		"domain="+setting.Domain, "sessionid="+params.SessionId)
 	stdout, err := cmd.StdoutPipe()

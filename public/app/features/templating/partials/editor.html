@@ -65,7 +65,7 @@
 								Name
 							</li>
 							<li>
-								<input type="text" class="input-xlarge tight-form-input" placeholder="apps.servers.*" ng-model='current.name'></input>
+								<input type="text" class="input-large tight-form-input" placeholder="name" ng-model='current.name'></input>
 							</li>
 							<li class="tight-form-item">
 								Type
@@ -139,7 +139,7 @@
 									Query
 								</li>
 								<li>
-									<input type="text" style="width: 646px" class="input-xxlarge tight-form-input last" placeholder="name" ng-model='current.query' placeholder="apps.servers.*" ng-model-onblur ng-change="runQuery()"></input>
+									<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
 								</li>
 							</ul>
 							<div class="clearfix"></div>
@@ -151,7 +151,7 @@
 									<tip>Optional, if you want to extract part of a series name or metric node segment</tip>
 								</li>
 								<li>
-									<input type="text" style="width: 646px" class="input tight-form-input last" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+									<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
 								</li>
 							</ul>
 							<div class="clearfix"></div>
@@ -163,7 +163,7 @@
 									<editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
 								</li>
 								<li ng-show="current.includeAll">
-									<input type="text" class="input-xlarge tight-form-input" style="width:422px" ng-model='current.options[0].value'></input>
+									<input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
 								</li>
 								<li class="tight-form-item" ng-show="current.includeAll">
 									All format

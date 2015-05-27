@@ -369,6 +369,6 @@ func updateState(event *m.EventDefinition) {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		log.Error(0, "faile to update MonitorcollectorState", err)
+		log.Error(0, "failed to update MonitorcollectorState", err)
 	}
 }
