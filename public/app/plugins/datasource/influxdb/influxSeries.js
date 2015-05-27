@@ -22,8 +22,11 @@ function (_) {
 
     _.each(self.series, function(series) {
       var datapoints = [];
-      for (var i = 0; i < series.values.length; i++) {
-        datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
+
+      if (series.values) {
+        for (var i = 0; i < series.values.length; i++) {
+          datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
+        }
       }
 
       var seriesName = series.name;
