@@ -41,7 +41,6 @@ function (angular, $) {
   angular
   .module('grafana.directives')
   .directive('tagColorFromName', function() {
-
     return {
       scope: { tagColorFromName: "=" },
       link: function (scope, element) {

@@ -17,4 +17,5 @@ define([
   './dropdown.typeahead',
   './topnav',
   './giveFocus',
+  './annotationTooltip',
 ], function () {});
