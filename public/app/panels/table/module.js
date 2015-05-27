@@ -57,7 +57,7 @@ function (angular, app, _, require, PanelMeta) {
       ragValueColumnName: 'Value'
     };
 
-    $scope.permittedColumnWidthRange = _.range(40, 201);
+    $scope.permittedColumnWidthRange = _.range(40, 301);
     _.defaults($scope.panel, _d);
 
     $scope.init = function() {

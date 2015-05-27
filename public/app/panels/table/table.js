@@ -189,16 +189,27 @@ define([
           }
 
           function performHeaderPositioning() {
+            function applyAutoMaxWidth(el$) {
+              el$.css({maxWidth: ''});
+            }
+
+            function applySpecifiedMaxWidth(el$) {
+              el$.css({maxWidth: scope.panel.columnWidth + 'px'});
+            }
+
             var container = elem.find('.table-vis-overflow-container');
             var yOffset = container.scrollTop();
             var fixedHeaders = elem.find('.fixed-table-header');
+            var tds = container.find('td');
 
             // set width according to option specification
             if (scope.panel.columnWidth === 'auto') {
-              fixedHeaders.width('auto');
+              applyAutoMaxWidth(fixedHeaders);
+              applyAutoMaxWidth(tds);
             }
             else {
-              fixedHeaders.width(scope.panel.columnWidth);
+              applySpecifiedMaxWidth(fixedHeaders);
+              applySpecifiedMaxWidth(tds);
             }
 
             for (var i = 0; i < fixedHeaders.length; ++i) {
