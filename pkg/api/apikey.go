@@ -48,8 +48,7 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
 	cmd.OrgId = c.OrgId
 	if cmd.IsAdmin {
 		if !c.IsGrafanaAdmin {
-			c.JsonApiErr(400, "Only GrafanaAdmins can add admin keys", nil)
-			return
+			return ApiError(400, "Only GrafanaAdmins can add admin keys", nil)
 		}
 	}
 
