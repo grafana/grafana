@@ -1,9 +1,8 @@
 define([
   'angular',
   'lodash',
-  'moment',
   './editorCtrl'
-], function (angular, _, moment) {
+], function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -11,7 +10,6 @@ define([
   module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope, $sanitize) {
     var promiseCached;
     var list = [];
-    var timezone;
     var self = this;
 
     this.init = function() {
@@ -33,7 +31,7 @@ define([
         return promiseCached;
       }
 
-      timezone = dashboard.timezone;
+      self.dashboard = dashboard;
       var annotations = _.where(dashboard.annotations.list, {enable: true});
 
       var promises  = _.map(annotations, function(annotation) {
@@ -54,29 +52,19 @@ define([
 
     this.receiveAnnotationResults = function(results) {
       for (var i = 0; i < results.length; i++) {
-        addAnnotation(results[i]);
+        self.addAnnotation(results[i]);
       }
     };
 
-    function errorHandler(err) {
-      console.log('Annotation error: ', err);
-      var message = err.message || "Annotation query failed";
-      alertSrv.set('Annotations error', message,'error');
-    }
-
-    function addAnnotation(options) {
+    this.addAnnotation = function(options) {
       var title = $sanitize(options.title);
-      var tooltip = "<small><b>" + title + "</b><br/>";
+      var time = '<i>' + self.dashboard.formatDate(options.time) + '</i>';
+
+      var tooltip = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ title + ' ' + time + '</div> ' ;
+
       if (options.tags) {
         var tags = $sanitize(options.tags);
         tooltip += '<span class="tag label label-tag">' + (tags || '') + '</span><br/>';
-      }
-
-      if (timezone === 'browser') {
-        tooltip += '<i>' + moment(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
-      }
-      else {
-        tooltip += '<i>' + moment.utc(options.time).format('YYYY-MM-DD HH:mm:ss') + '</i><br/>';
       }
 
       if (options.text) {
@@ -95,6 +83,12 @@ define([
         description: tooltip,
         score: 1
       });
+    };
+
+    function errorHandler(err) {
+      console.log('Annotation error: ', err);
+      var message = err.message || "Annotation query failed";
+      alertSrv.set('Annotations error', message,'error');
     }
 
     // Now init
