@@ -9,7 +9,7 @@ function (angular, app, _) {
 
   angular
     .module('grafana.directives')
-    .directive('variableValueSelect', function($compile, $window, $timeout, datasourceSrv) {
+    .directive('variableValueSelect', function($compile, $window, $timeout) {
       return {
         scope: {
           variable: "=",
@@ -130,9 +130,6 @@ function (angular, app, _) {
             if (hideAfter) {
               scope.hide();
             }
-          };
-
-          scope.selectTag = function(tag) {
           };
 
           scope.hide = function() {

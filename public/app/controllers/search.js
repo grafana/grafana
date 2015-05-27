@@ -13,7 +13,7 @@ function (angular, _, config) {
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
-      $scope.results = {dashboards: [], tags: [], metrics: []};
+      $scope.results = [];
       $scope.query = { query: '', tag: '', starred: false };
       $scope.currentSearchId = 0;
 
@@ -26,7 +26,6 @@ function (angular, _, config) {
         $scope.query.query = '';
         $scope.search();
       }, 100);
-
     };
 
     $scope.keyDown = function (evt) {
