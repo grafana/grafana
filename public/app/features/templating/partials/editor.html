@@ -226,41 +226,41 @@
 				</div>
 			</div>
 
-			<div class="editor-row" ng-if="current.type === 'query'">
-				<div class="tight-form-section">
-					<h5>Value Groups/Tags</h5>
-					<div class="tight-form" ng-if="current.useTags">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 115px">
-								Tags query
-							</li>
-							<li>
-								<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form" ng-if="current.useTags">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 115px;">
-								Tags values query
-							</li>
-							<li>
-								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$__tag.*" ng-model-onblur ng-change="runQuery()"></input>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item last">
-								<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-				</div>
-			</div>
+			<!-- <div class="editor&#45;row" ng&#45;if="current.type === 'query'"> -->
+			<!-- 	<div class="tight&#45;form&#45;section"> -->
+			<!-- 		<h5>Value Groups/Tags</h5> -->
+			<!-- 		<div class="tight&#45;form" ng&#45;if="current.useTags"> -->
+			<!-- 			<ul class="tight&#45;form&#45;list"> -->
+			<!-- 				<li class="tight&#45;form&#45;item" style="width: 115px"> -->
+			<!-- 					Tags query -->
+			<!-- 				</li> -->
+			<!-- 				<li> -->
+			<!-- 					<input type="text" style="width: 588px" class="input&#45;xxlarge tight&#45;form&#45;input last" ng&#45;model='current.tagsQuery' placeholder="metric name or tags query" ng&#45;model&#45;onblur ng&#45;change="runQuery()"></input> -->
+			<!-- 				</li> -->
+			<!-- 			</ul> -->
+			<!-- 			<div class="clearfix"></div> -->
+			<!-- 		</div> -->
+			<!-- 		<div class="tight&#45;form" ng&#45;if="current.useTags"> -->
+			<!-- 			<ul class="tight&#45;form&#45;list"> -->
+			<!-- 				<li class="tight&#45;form&#45;item" style="width: 115px;"> -->
+			<!-- 					Tags values query -->
+			<!-- 				</li> -->
+			<!-- 				<li> -->
+			<!-- 					<input type="text" style="width: 588px" class="input tight&#45;form&#45;input last" ng&#45;model='current.tagValuesQuery' placeholder="apps.$__tag.*" ng&#45;model&#45;onblur ng&#45;change="runQuery()"></input> -->
+			<!-- 				</li> -->
+			<!-- 			</ul> -->
+			<!-- 			<div class="clearfix"></div> -->
+			<!-- 		</div> -->
+			<!-- 		<div class="tight&#45;form"> -->
+			<!-- 			<ul class="tight&#45;form&#45;list"> -->
+			<!-- 				<li class="tight&#45;form&#45;item last"> -->
+			<!-- 					<editor&#45;checkbox text="Enable" model="current.useTags" change="runQuery()"></editor&#45;checkbox> -->
+			<!-- 				</li> -->
+			<!-- 			</ul> -->
+			<!-- 			<div class="clearfix"></div> -->
+			<!-- 		</div> -->
+			<!-- 	</div> -->
+			<!-- </div> -->
 
 			<div class="editor-row">
 				<div class="tight-form-section">

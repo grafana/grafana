@@ -82,14 +82,6 @@ function (angular, _) {
     };
 
     $scope.update = function() {
-      $scope.current.tags = {
-        "Europe": ["backend_03", "backend_04"],
-        "USA": ["backend_01", "backend_02"],
-        "Asia": ["backend_01"],
-        "South America": ["backend_02"],
-        "Africa": ["backend_03"],
-      };
-
       if ($scope.isValid()) {
         $scope.runQuery().then(function() {
           $scope.reset();
