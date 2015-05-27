@@ -13,7 +13,7 @@ func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	reqAccountAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	regOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	bind := binding.Bind
 
 	// not logged in views
@@ -54,34 +54,57 @@ func Register(r *macaron.Macaron) {
 
 	// authed api
 	r.Group("/api", func() {
-		// user
+
+		// user (signed in)
 		r.Group("/user", func() {
-			r.Get("/", GetUser)
-			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
-			r.Post("/using/:id", UserSetUsingOrg)
-			r.Get("/orgs", GetUserOrgList)
-			r.Post("/stars/dashboard/:id", StarDashboard)
-			r.Delete("/stars/dashboard/:id", UnstarDashboard)
-			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
+			r.Get("/", wrap(GetSignedInUser))
+			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
+			r.Post("/using/:id", wrap(UserSetUsingOrg))
+			r.Get("/orgs", wrap(GetSignedInUserOrgList))
+			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
+			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 		})
 
-		// Org
-		r.Get("/org", GetOrg)
+		// users (admin permission required)
+		r.Group("/users", func() {
+			r.Get("/", wrap(SearchUsers))
+			r.Get("/:id", wrap(GetUserById))
+			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
+		}, reqGrafanaAdmin)
+
+		// current org
 		r.Group("/org", func() {
-			r.Post("/", bind(m.CreateOrgCommand{}), CreateOrg)
-			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
-			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
-			r.Get("/users", GetOrgUsers)
-			r.Patch("/users/:id", bind(m.UpdateOrgUserCommand{}), UpdateOrgUser)
-			r.Delete("/users/:id", RemoveOrgUser)
-		}, reqAccountAdmin)
+			r.Get("/", wrap(GetOrgCurrent))
+			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrgCurrent))
+			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
+			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
+			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
+		}, regOrgAdmin)
+
+		// create new org
+		r.Post("/orgs", bind(m.CreateOrgCommand{}), wrap(CreateOrg))
+
+		// search all orgs
+		r.Get("/orgs", reqGrafanaAdmin, wrap(SearchOrgs))
+
+		// orgs (admin routes)
+		r.Group("/orgs/:orgId", func() {
+			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
+			r.Get("/users", wrap(GetOrgUsers))
+			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))
+			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
+			r.Delete("/users/:userId", wrap(RemoveOrgUser))
+		}, reqGrafanaAdmin)
 
 		// auth api keys
 		r.Group("/auth/keys", func() {
-			r.Get("/", GetApiKeys)
-			r.Post("/", bind(m.AddApiKeyCommand{}), AddApiKey)
-			r.Delete("/:id", DeleteApiKey)
-		}, reqAccountAdmin)
+			r.Get("/", wrap(GetApiKeys))
+			r.Post("/", bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
+			r.Delete("/:id", wrap(DeleteApiKey))
+		}, regOrgAdmin)
 
 		// Data sources
 		r.Group("/datasources", func() {
@@ -92,10 +115,11 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)
-		}, reqAccountAdmin)
+		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
@@ -157,10 +181,7 @@ func Register(r *macaron.Macaron) {
 	// admin api
 	r.Group("/api/admin", func() {
 		r.Get("/settings", AdminGetSettings)
-		r.Get("/users", AdminSearchUsers)
-		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		r.Put("/users/:id/details", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
 		r.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
 		r.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		r.Delete("/users/:id", AdminDeleteUser)
@@ -171,5 +192,5 @@ func Register(r *macaron.Macaron) {
 
 	r.Any("/socket.io/", SocketIO)
 
-	r.NotFound(NotFound)
+	r.NotFound(NotFoundHandler)
 }

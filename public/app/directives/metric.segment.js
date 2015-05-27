@@ -9,14 +9,21 @@ function (angular, app, _, $) {
 
   angular
     .module('grafana.directives')
-    .directive('graphiteSegment', function($compile, $sce) {
+    .directive('metricSegment', function($compile, $sce) {
       var inputTemplate = '<input type="text" data-provide="typeahead" ' +
                             ' class="tight-form-clear-input input-medium"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a class="tight-form-item" tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
+      var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+        'tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
 
       return {
+        scope: {
+          segment: "=",
+          getAltSegments: "&",
+          onValueChanged: "&"
+        },
+
         link: function($scope, elem) {
           var $input = $(inputTemplate);
           var $button = $(buttonTemplate);
@@ -46,7 +53,7 @@ function (angular, app, _, $) {
                 segment.expandable = true;
                 segment.fake = false;
               }
-              $scope.segmentValueChanged(segment, $scope.$index);
+              $scope.onValueChanged();
             });
           };
 
@@ -69,7 +76,8 @@ function (angular, app, _, $) {
             if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments($scope.$index).then(function() {
+              $scope.getAltSegments().then(function(altSegments) {
+                $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
