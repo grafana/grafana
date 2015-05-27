@@ -46,7 +46,7 @@
 			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
 
 			<span class="search-result-tags">
-				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
+				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
 					{{tag}}
 				</span>
 				<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
