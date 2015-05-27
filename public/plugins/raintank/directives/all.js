@@ -107,45 +107,7 @@ define([
   module.directive("rtEndpointHealth", function() {
     return {
       templateUrl: 'plugins/raintank/directives/partials/endpointHealth.html',
-      scope: {
-        model: "=",
-      },
-      link: function(scope, element) {
-        scope.$watch("model", function(health) {
-          if (typeof(health) == "object") {
-            showHealth(health);
-          }
-        });
-
-        function showHealth(health) {
-          var okCount = 0;
-          var warnCount = 0;
-          var errorCount = 0;
-          var unknownCount = 0;
-          _.forEach(health, function(checkState) {
-            if (checkState.state == -1) {
-              unknownCount++;
-              return
-            }
-            if (checkState.state == 0) {
-              okCount++;
-              return
-            }
-            if (checkState.state == 1) {
-              warnCount++;
-              return
-            }
-            if (checkState.state == 2) {
-              errorCount++;
-              return
-            }
-          });
-          scope.okCount = okCount;
-          scope.warnCount = warnCount;
-          scope.errorCount = errorCount;
-          scope.unknownCount = unknownCount;
-        }
-      }
+      scope: false,
     };
   });
 
@@ -272,16 +234,35 @@ define([
       templateUrl: 'plugins/raintank/directives/partials/endpointCollectorSelect.html',
       link: function(scope, elem) {
         var bodyEl = angular.element($window.document.body);
-        scope.show = function() {
-          scope.selectorOpen = true;
-          scope.giveFocus = 1;
+        var currentIds = scope.model.collector_ids;
+        var currentTags = scope.model.collector_tags;
+        scope.init = function() {
+          currentIds = scope.model.collector_ids;
+          currentTags = scope.model.collector_tags;
+          scope.footprint = {value: "static"};
+          scope.error = false;
 
-          var currentIds = scope.model.collector_ids;
-          var currentTags = scope.model.collector_tags;
+          // determine if we are using static or dynamic allocation.
+          if (currentIds.length > 0) {
+            scope.footprint.value = 'static';
+            _.forEach(scope.tags, function(t) {
+              t.selected = false;
+            });
+          } else if (currentTags.length > 0) {
+            scope.footprint.value = 'dynamic';
+            _.forEach(scope.ids, function(i) {
+              i.selected = false;
+            });
+          }
+          scope.reset();
+        }
 
-          var seenTags = {};
-          scope.options = [];
+        scope.reset = function() {
+          scope.error = false;
+          scope.ids = [];
           scope.tags = [];
+          //build out our list of collectorIds and tags
+          var seenTags = {};
           _.forEach(scope.collectors, function(c) {
             var option = {id: c.id, selected: false, text: c.name};
             if (_.indexOf(currentIds, c.id) >= 0) {
@@ -297,73 +278,95 @@ define([
                 scope.tags.push(o);
               }
             });
-            scope.options.push(option);
+            scope.ids.push(option);
           });
+          if (scope.footprint.value == 'dynamic') {
+            _.forEach(scope.ids, function(i) {
+              i.selected = false;
+            });
+          } else {
+            _.forEach(scope.tags, function(t) {
+              t.selected = false;
+            });
+          }
+        }
+
+        scope.show = function() {
+          scope.reset();
+          scope.selectorOpen = true;
+          scope.giveFocus = 1;
 
           $timeout(function() {
             bodyEl.on('click', scope.bodyOnClick);
           }, 0, false);
         };
 
-        scope.optionSelected = function(option) {
+        scope.idSelected = function(option) {
           option.selected = !option.selected;
-
-          var selectedIds = _.filter(scope.options, {selected: true});
-          var selectedTags = _.filter(scope.tags, {selected: true});
-
-          // enfore the first selected if no option is selected
-          if (selectedIds.length === 0 && selectedTags.length === 0) {
-            scope.options[0].selected = true;
-            selectedIds = [scope.options[0]];
-          }
-
-          scope.model.collector_ids = [];
-          _.forEach(selectedIds, function(c) {
-            scope.model.collector_ids.push(c.id);
-          });
+          var selectedIds = _.filter(scope.ids, {selected: true});
         };
+
         scope.selectAll = function() {
           var select = true;
-          var selectedIds = _.filter(scope.options, {selected: true});
-          var selectedTags = _.filter(scope.tags, {selected: true});
-          if (selectedIds.length == scope.options.length) {
+          var selectedIds = _.filter(scope.ids, {selected: true});
+
+          if (selectedIds.length == scope.ids.length) {
             select = false;
           }
-          _.forEach(scope.options, function(option) {
+          _.forEach(scope.ids, function(option) {
             option.selected = select;
-          });
-
-          // enfore the first selected if no option is selected
-          if (!select && selectedTags.length === 0) {
-            scope.options[0].selected = true;
-            selectedIds = [scope.options[0]];
-          }
-
-          scope.model.collector_ids = [];
-          _.forEach(selectedIds, function(c) {
-            scope.model.collector_ids.push(c.id);
           });
         }
 
         scope.tagSelected = function(option) {
           option.selected = !option.selected;
 
-          var selectedIds = _.filter(scope.options, {selected: true});
           var selectedTags = _.filter(scope.tags, {selected: true});
+        };
 
-          // enfore the first selected if no option is selected
-          if (selectedIds.length === 0 && selectedTags.length === 0) {
-            scope.options[0].selected = true;
-            scope.model.collector_ids = [scope.options[0].id];
-          }
-
-          scope.model.collector_tags = [];
-          _.forEach(selectedTags, function(t) {
-            scope.model.collector_tags.push(t.text);
+        scope.collectorsWithTags = function() {
+          var collectorList = {};
+          _.forEach(scope.collectors, function(c) {
+            _.forEach(_.filter(scope.tags, {selected: true}), function(t) {
+              if (_.indexOf(c.tags, t.text) != -1) {
+                collectorList[c.name] = true;
+              }
+            });
           });
+          return Object.keys(collectorList).join(', ');
+        };
+
+        scope.selectTagTitle = function() {
+          var selectedTags = _.filter(scope.tags, {selected: true});
+          if (selectedTags.length <= 2) {
+            return _.pluck(selectedTags, 'text').join(", ");
+          }
+          return _.pluck(selectedTags, 'text').slice(0, 2).join(", ") + " and " + (selectedTags.length - 2) + " more";
+        };
+
+        scope.selectIdTitle = function() {
+          var selectedIds = _.filter(scope.ids, {selected: true});
+          if (selectedIds.length <= 2) {
+            return _.pluck(selectedIds, 'text').join(", ");
+          }
+          return _.pluck(selectedIds, 'text').slice(0, 2).join(", ") + " and " + (selectedIds.length - 2) + " more";
         };
 
         scope.hide = function() {
+          var lastFootprint = scope.footprint.value;
+          // determine if we are using static or dynamic allocation.
+          if (scope.model.collector_ids.length > 0) {
+            scope.footprint.value = 'static';
+            _.forEach(scope.tags, function(t) {
+              t.selected = false;
+            });
+          } else if (scope.model.collector_tags.length > 0) {
+            scope.footprint.value = 'dynamic';
+            _.forEach(scope.ids, function(i) {
+              i.selected = false;
+            });
+          }
+          scope.reset();
           scope.selectorOpen = false;
           bodyEl.off('click', scope.bodyOnClick);
         };
@@ -375,6 +378,33 @@ define([
           }
         };
 
+        scope.cancel = function() {
+          scope.hide();
+        }
+
+        scope.update = function() {
+          var selectedIds = _.filter(scope.ids, {selected: true});
+          var selectedTags = _.filter(scope.tags, {selected: true});
+          if (selectedIds.length == 0 && selectedTags.length == 0) {
+            scope.error = "at least 1 option must be selected.";
+            return;
+          }
+
+          scope.model.collector_ids.splice(0,scope.model.collector_ids.length);
+          _.forEach(selectedIds, function(c) {
+            scope.model.collector_ids.push(c.id);
+          });
+          scope.model.collector_tags.splice(0, scope.model.collector_tags.length);
+          _.forEach(selectedTags, function(t) {
+            scope.model.collector_tags.push(t.text);
+          });
+          scope.hide();
+        }
+
+        //scope.init();
+        scope.$watch('model.id', function() {
+          scope.init();
+        });
       },
     };
   });

@@ -27,26 +27,13 @@ function (angular) {
       $scope.discoveryError = false;
       $scope.endpoints = [];
       $scope.monitors = {};
+      $scope.monitor_types = {};
       $scope.monitor_types_by_name = {};
       $scope.allCollectors = [];
       $scope.collectorsOption = {selection: "all"};
       $scope.collectorsByTag = {};
-      $scope.$watch("collectorsOption.selection", function(newVal) {
-        if (newVal === "all") {
-          $scope.global_collectors = {collector_ids: $scope.allCollectors, collector_tags: []};
-        }
-      });
       $scope.global_collectors = {collector_ids: [], collector_tags: []};
-      $scope.$watch("global_collectors.collector_ids", function(newVal) {
-        _.forEach($scope.monitors, function(monitor) {
-          monitor.collector_ids = newVal;
-        });
-      });
-      $scope.$watch("global_collectors.collector_tags", function(newVal) {
-        _.forEach($scope.monitors, function(monitor) {
-          monitor.collector_tags = newVal;
-        });
-      });
+
       if ("id" in $routeParams) {
         promises.push($scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);
@@ -140,6 +127,7 @@ function (angular) {
           $scope.monitor_types_by_name[type.name.toLowerCase()] = type;
           if (!(type.name.toLowerCase() in $scope.monitors)) {
             $scope.monitors[type.name.toLowerCase()] = {
+              id: null,
               endpoint_id: null,
               monitor_type_id: type.id,
               collector_ids: $scope.global_collectors.collector_ids,
@@ -147,12 +135,24 @@ function (angular) {
               settings: settings,
               enabled: false,
               frequency: 10,
+              //test: true,
             };
           }
         });
         $scope.monitor_types = typesMap;
       });
     };
+
+    $scope.defaultSettingByVariable = function(monitorType, variable) {
+      var s = null;
+      var type = $scope.monitor_types_by_name[monitorType];
+      _.forEach(type.settings, function(setting) {
+        if (setting.variable == variable) {
+          s = setting;
+        }
+      });
+      return s;
+    }
 
     $scope.currentSettingByVariable = function(monitor, variable) {
       var s = {
@@ -172,6 +172,15 @@ function (angular) {
       if (! found) {
         monitor.settings.push(s);
       }
+      if (s.value === null) {
+        var type = $scope.monitor_types[monitor.monitor_type_id];
+        _.forEach(type.settings, function(setting) {
+          if (setting.variable == variable) {
+            s.value = setting.default_value;
+          }
+        });
+      }
+
       return s;
     }
     $scope.reset = function() {
@@ -197,8 +206,12 @@ function (angular) {
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
-              var type = $scope.monitor_types[monitor.monitor_type_id];
-              $scope.monitors[type.name.toLowerCase()] = monitor;
+              var type = $scope.monitor_types[monitor.monitor_type_id].name.toLowerCase();
+              if (type in $scope.monitors) {
+                _.assign($scope.monitors[type], monitor);
+              } else {
+                $scope.monitors[type] = monitor;
+              }
               monitorLastState[monitor.id] = _.cloneDeep(monitor);
             });
           });

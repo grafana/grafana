@@ -94,6 +94,27 @@
 }
 
 
+
+// Neutral CTA
+// ====================================
+
+.neutralCTA,
+.neutralCTA:visited {
+  .ButtonCTA(transparent, #777, #777, #999);
+}
+
+.neutralTextCTA {
+  .ButtonCTA(transparent, transparent, #777, #999);
+
+  &:hover,
+  &:active {
+    border: transparent;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+
 .ButtonTall {
   height:32px;
 }

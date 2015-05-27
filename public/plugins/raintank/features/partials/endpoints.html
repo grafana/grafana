@@ -1,6 +1,6 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
 </topnav>
-<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px; min-width: 400px;">
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">Endpoints</h1>
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
@@ -33,62 +33,53 @@
 			</div>
 		</div>
 	</div>
-
 	<div ng-if="endpoints.length > 0" class="editor-row">
 		<div class="editor-option">
-			<span class="small">Filter by Endpoint Tag:</span>
-			<select class="input-medium rt-select-dropdown" style="" ng-model="endpoint_filter">
-				<option value="" label="All Tags" style="color:black">All Endpoints</option>
-				<option ng-repeat="t in endpointTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
+			<span class="small">Filtered by:</span>
+			<select class="input-medium rt-select-dropdown" ng-model="filter.tag" ng-options="t for t in endpointTags()">
+				<option value="">All Tags</option>
 			</select>
-			<select class="input-medium rt-select-dropdown" style="" ng-model="status_filter">
-				<option value="" label="All Statuses" style="color:black">All Statuses</option>
-				<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
+			<span class="small">Sorted By:</span>
+				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
 			</select>
 		</div>
-		<div style="display: block; padding: 45px 0 0 0;">
+		<div style="display: block; padding: 25px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<a ng-click="setStatusFilter(0)" href="#" ng-class="{'rt-list-status-up': endpointState['ok'] > 0}">{{endpointState['ok']}} Ok</a> |
-					<a ng-click="setStatusFilter(1)" href="#" ng-class="{'rt-list-status-warning': endpointState['warn'] > 0}">{{endpointState['warn']}} Warning</a> |
-					<a ng-click="setStatusFilter(2)" href="#" ng-class="{'rt-list-status-down': endpointState['error'] > 0}">{{endpointState['error']}} Error</a> |
-					<a ng-click="setStatusFilter(-1)" href="#" ng-class="{'rt-list-status-disabled': endpointState['unknown'] > 0}">{{endpointState['unknown']}} Unknown</a>
 			</div>
 			<div class="editor-option" style="float: right;">
-				<span class="small">Sort By:</span>
-				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
-				</select>
 			</div>
 		</div>
 	</div>
 </div>
 
 <div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
-	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:endpoint_filter | filter:{state:status_filter}:statusFilter | orderBy:sort_field">
+	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
 
-			<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag="tag" tag-color-from-name>
-				<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
-				<ul class="dropdown-menu rt-tag-dropup">
-					<li>
-						<a href="#">
-							<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
-							Dashboard
-						</a>
-					</li>
-					<li>
-						<a ng-click="setEndpointFilter(tag)">
-							<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
-							Filter
-						</a>
-					</li>
-				</ul>
-			</span>
+			<div style="display: inline-block;">
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag="tag" tag-color-from-name>
+					<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
+					<ul class="dropdown-menu rt-tag-dropup">
+						<li>
+							<a href="#">
+								<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
+								Dashboard
+							</a>
+						</li>
+						<li>
+							<a ng-click="setTagFilter(tag)">
+								<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
+								Filter
+							</a>
+						</li>
+					</ul>
+				</span>
+			</div>
 
-
- 				<div style="float: right; display: inline;">
+ 				<div style="float: right;">
 				<div style="display: inline;">
-					<rt-endpoint-health model="endpoint.health"></rt-endpoint-health>
+					<rt-endpoint-health endpoint="endpoint"></rt-endpoint-health>
 				</div>
 				<div style="display: inline; margin-left:6px;">
 					<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
@@ -115,9 +106,8 @@
 						</li>
 					</ul>
 				</div>
-			</div>	
-			<span style="float: right;">
-			</span>
+			</div>
+			<div class="clearfix"></div>
 		</div>
 	</div>
 </div>
