@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope, $sanitize) {
+  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
     var list = [];
     var self = this;
@@ -57,30 +57,14 @@ define([
     };
 
     this.addAnnotation = function(options) {
-      var title = $sanitize(options.title);
-      var time = '<i>' + self.dashboard.formatDate(options.time) + '</i>';
-
-      var tooltip = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ title + ' ' + time + '</div> ' ;
-
-      if (options.tags) {
-        var tags = $sanitize(options.tags);
-        tooltip += '<span class="tag label label-tag">' + (tags || '') + '</span><br/>';
-      }
-
-      if (options.text) {
-        var text = $sanitize(options.text);
-        tooltip += text.replace(/\n/g, '<br/>');
-      }
-
-      tooltip += "</small>";
-
       list.push({
         annotation: options.annotation,
         min: options.time,
         max: options.time,
         eventType: options.annotation.name,
-        title: null,
-        description: tooltip,
+        title: options.title,
+        tags: options.tags,
+        text: options.text,
         score: 1
       });
     };
