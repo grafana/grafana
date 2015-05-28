@@ -10,19 +10,27 @@
 	<input type="text" class="tight-form-clear-input input-small" style="display: none" ng-keydown="keyDown($event)" ng-model="search.query" ng-change="queryChanged()" ></input>
 
 	<div class="variable-value-dropdown" ng-if="dropdownVisible">
-		<div class="variable-options-column">
-			<!-- <div class="variable&#45;options&#45;column&#45;header">Selected</div> -->
-			<a class="variable-option pointer" bindonce ng-repeat="option in search.options" ng-class="{'selected': option.selected, 'highlighted': $index === highlightIndex}" ng-click="optionSelected(option, $event)">
-				<span class="fa fa-fw variable-option-icon"></span>
-				<span>{{option.text}}</span>
-			</a>
+		<div class="variable-options-wrapper">
+			<div class="variable-options-column">
+				<div class="variable-options-column-header" ng-if="variable.multi">
+					Selected ({{selectedValuesCount}})
+				</div>
+				<a class="variable-option pointer" bindonce ng-repeat="option in search.options" ng-class="{'selected': option.selected, 'highlighted': $index === highlightIndex}" ng-click="optionSelected(option, $event)">
+					<span class="fa fa-fw variable-option-icon"></span>
+					<span>{{option.text}}</span>
+				</a>
+			</div>
+			<div class="variable-options-column" ng-if="variable.tags.length">
+				<div class="variable-options-column-header" ng-if="variable.tags.length">Tags</div>
+				<a class="variable-option-tag pointer" ng-repeat="tag in variable.tags" ng-click="selectTag(option, $event)">
+					<span class="fa fa-fw variable-option-icon"></span>
+					<span class="label-tag" tag-color-from-name="tag">{{tag}}&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;</span>
+				</a>
+			</div>
 		</div>
-		<div class="variable-options-column" ng-if="variable.tags">
-			<!-- <div class="variable&#45;options&#45;column&#45;header">Tags</div> -->
-			<a class="variable-option-tag pointer" ng-repeat="tag in variable.tags" ng-click="selectTag(option, $event)">
-				<span class="fa fa-fw variable-option-icon"></span>
-				<span class="label-tag" tag-color-from-name="tag">{{tag}}&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;</span>
-			</a>
+		<div class="variable-options-footer" ng-if="variable.multi">
+			Update /
+			Cancel
 		</div>
 	</div>
 </div>
