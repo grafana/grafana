@@ -294,16 +294,19 @@ ul.rt-modal-ul {
 
 .mainLink i, .mainLink i:visited{
   color: @linkColor;  
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, #fff 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
   text-decoration:none;
-  // -moz-color: -moz-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
-  // -webkit-color: -webkit-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
-  // color: linear-gradient(to bottom right, @linkColorHover 0%, @rt-blue 100%); 
   transition: 0.15s; 
 }
 
 .mainLink i:hover, .mainLink i:active {
   color: @linkColorHover;  
+  -webkit-text-fill-color: @linkColorHover;
   text-decoration:none;
+  transition: 0.15s; 
 }
 
 .tag-icon {  
@@ -1285,5 +1288,11 @@ p.rt-dashboard-blurb{
 
 .rt-dashboard-icons {
   color: @rt-primary;
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, #fff 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
+  text-decoration:none;
+  transition: 0.15s; 
   font-size: 85px;
 }
