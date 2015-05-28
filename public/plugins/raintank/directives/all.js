@@ -336,6 +336,16 @@ define([
           return Object.keys(collectorList).join(', ');
         };
 
+        scope.collectorCount = function(tag) {
+          var count = 0;
+          _.forEach(scope.collectors, function(c) {
+            if (_.indexOf(c.tags, tag.text) != -1) {
+              count++;
+            }
+          });
+          return count;
+        }
+
         scope.selectTagTitle = function() {
           var selectedTags = _.filter(scope.tags, {selected: true});
           if (selectedTags.length <= 2) {
