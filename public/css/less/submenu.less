@@ -46,7 +46,10 @@
   top: 47px;
   min-width: 150px;
   max-height: 400px;
+  min-height: 150px;
   background: @dropdownBackground;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0px 0px 55px 0px black;
   border: 1px solid @grafanaTargetFuncBackground;
   z-index: 1000;
@@ -62,7 +65,6 @@
 
 .variable-options-column {
   max-height: 350px;
-  overflow: auto;
   display: table-cell;
   line-height: 26px;
   &:nth-child(2) {
@@ -95,19 +97,24 @@
   }
 }
 
+.variable-options-column-header {
+  background-color: @bodyBackground;
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+.variable-options-footer {
+  background-color: @bodyBackground;
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
 .variable-option {
   &:hover, &.highlighted {
     background-color: @blueDark;
-  }
-}
-
-.variable-search-wrapper {
-  input {
-    width: 100%;
-    padding: 7px 8px;
-    height: 100%;
-    box-sizing: border-box;
-    margin-bottom: 6px;
   }
 }
 

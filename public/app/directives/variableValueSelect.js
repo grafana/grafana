@@ -93,6 +93,7 @@ function (angular, app, _) {
             });
 
             scope.search = {query: '', options: scope.options};
+            scope.selectedValuesCount = currentValues.length;
 
             scope.openDropdown();
           };
@@ -176,8 +177,10 @@ function (angular, app, _) {
               value: _.pluck(selected, 'value'),
             };
 
+            scope.selectedValuesCount = variable.current.value.length;
+
             // only single value
-            if (variable.current.value.length === 1) {
+            if (scope.selectedValuesCount === 1) {
               variable.current.value = selected[0].value;
             }
 
