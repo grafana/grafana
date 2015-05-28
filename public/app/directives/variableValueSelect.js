@@ -115,7 +115,10 @@ function (angular, app, _) {
               scope.moveHighlight(-1);
             }
             if (evt.keyCode === 13) {
-              scope.optionSelected(scope.search.options[scope.highlightIndex], {});
+              scope.optionSelected(scope.search.options[scope.highlightIndex], {}, true, false);
+            }
+            if (evt.keyCode === 32) {
+              scope.optionSelected(scope.search.options[scope.highlightIndex], {}, false, false);
             }
           };
 
@@ -123,24 +126,34 @@ function (angular, app, _) {
             scope.highlightIndex = (scope.highlightIndex + direction) % scope.search.options.length;
           };
 
-          scope.optionSelected = function(option, event) {
+          scope.optionSelected = function(option, event, commitChange, excludeOthers) {
+            if (!option) { return; }
+
             option.selected = !option.selected;
 
-            var hideAfter = false;
+            commitChange = commitChange || false;
+            excludeOthers = excludeOthers || false;
+
             var setAllExceptCurrentTo = function(newValue) {
               _.each(scope.options, function(other) {
                 if (option !== other) { other.selected = newValue; }
               });
             };
 
-            if (option.text === 'All') {
+            // commit action (enter key), should not deselect it
+            if (commitChange) {
+              option.selected = true;
+            }
+
+            if (option.text === 'All' || excludeOthers) {
               setAllExceptCurrentTo(false);
+              commitChange = true;
             }
             else if (!variable.multi) {
               setAllExceptCurrentTo(false);
-              hideAfter = true;
+              commitChange = true;
             } else if (event.ctrlKey || event.metaKey || event.shiftKey) {
-              hideAfter = true;
+              commitChange = true;
               setAllExceptCurrentTo(false);
             }
 
@@ -168,7 +181,7 @@ function (angular, app, _) {
               variable.current.value = selected[0].value;
             }
 
-            if (hideAfter) {
+            if (commitChange) {
               scope.switchToLink();
             }
           };
