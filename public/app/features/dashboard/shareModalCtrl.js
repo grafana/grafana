@@ -43,9 +43,9 @@ function (angular, _, require, config) {
 
       var params = angular.copy($location.search());
 
-      var range = timeSrv.timeRangeForUrl();
-      params.from = range.from;
-      params.to = range.to;
+      var range = timeSrv.timeRange();
+      params.from = range.from.getTime();
+      params.to = range.to.getTime();
 
       if ($scope.options.includeTemplateVars) {
         templateSrv.fillVariableValuesForUrl(params);
