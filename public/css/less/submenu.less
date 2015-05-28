@@ -20,7 +20,7 @@
 }
 
 .submenu-item {
-  padding: 8px 7px;
+//  padding: 8px 7px;
   margin-right: 20px;
   display: inline-block;
   border-radius: 3px;
@@ -43,10 +43,10 @@
 
 .variable-value-dropdown {
   position: absolute;
-  top: 27px;
+  top: 47px;
   min-width: 150px;
   max-height: 400px;
-  background: @grafanaPanelBackground;
+  background: @dropdownBackground;
   box-shadow: 0px 0px 55px 0px black;
   border: 1px solid @grafanaTargetFuncBackground;
   z-index: 1000;
@@ -74,22 +74,23 @@
 .variable-option,
 .variable-options-column-header {
   display: block;
-  padding: 0 27px 0 8px;
+  padding: 2px 27px 0 8px;
   position: relative;
+  white-space: nowrap;
+  min-width: 115px;
 
- .variable-option-icon { display: none }
+ .variable-option-icon {
+   display: inline-block;
+   width: 24px;
+   height: 18px;
+   position: relative;
+   top: 4px;
+   background: url(@checkboxImageUrl) left top no-repeat;
+ }
 
   &.selected {
-    .variable-option-icon:before {
-      content: "\f00c";
-    }
-    .variable-option-icon {
-      display: block;
-      padding-left: 4px;
-      line-height: 26px;
-      position: absolute;
-      right: 0;
-      top: 0;
+    .variable-option-icon{
+      background: url(@checkboxImageUrl) 0px -18px no-repeat;
     }
   }
 }
