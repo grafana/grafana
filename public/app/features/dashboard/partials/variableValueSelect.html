@@ -5,6 +5,10 @@
 <div style="position: relative; display: inline-block">
 	<a ng-click="show()" class="variable-value-link tight-form-item">
 		{{linkText}}
+		<span class="label-tag" ng-repeat="tag in selectedTags" tag-color-from-name="tag.text">
+			{{tag.text}}
+			&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;
+		</span>
 		<i class="fa fa-caret-down"></i>
 	</a>
 	<input type="text" class="tight-form-clear-input input-small" style="display: none" ng-keydown="keyDown($event)" ng-model="search.query" ng-change="queryChanged()" ></input>
@@ -22,9 +26,9 @@
 			</div>
 			<div class="variable-options-column" ng-if="variable.tags.length">
 				<div class="variable-options-column-header" ng-if="variable.tags.length">Tags</div>
-				<a class="variable-option-tag pointer" ng-repeat="tag in variable.tags" ng-click="selectTag(option, $event)">
+				<a class="variable-option-tag pointer" ng-repeat="tag in tags" ng-click="selectTag(tag, $event)" ng-class="{'selected': tag.selected}">
 					<span class="fa fa-fw variable-option-icon"></span>
-					<span class="label-tag" tag-color-from-name="tag">{{tag}}&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;</span>
+					<span class="label-tag" tag-color-from-name="tag.text">{{tag.text}}&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;</span>
 				</a>
 			</div>
 		</div>
