@@ -82,6 +82,7 @@ function (angular, _) {
     };
 
     $scope.update = function() {
+      $scope.current.tags = [];
       if ($scope.isValid()) {
         $scope.runQuery().then(function() {
           $scope.reset();
