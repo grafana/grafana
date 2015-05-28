@@ -95,6 +95,12 @@ function (angular, app, _) {
             scope.search = {query: '', options: scope.options};
             scope.selectedValuesCount = currentValues.length;
 
+            if (!scope.tags) {
+              scope.tags = _.map(variable.tags, function(value) {
+                return { text: value, selected: false };
+              });
+            }
+
             scope.openDropdown();
           };
 
@@ -158,11 +164,15 @@ function (angular, app, _) {
               setAllExceptCurrentTo(false);
             }
 
+            scope.selectionsChanged(option, commitChange);
+          };
+
+          scope.selectionsChanged = function(defaultItem, commitChange) {
             var selected = _.filter(scope.options, {selected: true});
 
             if (selected.length === 0) {
-              option.selected = true;
-              selected = [option];
+              defaultItem.selected = true;
+              selected = [defaultItem];
             }
 
             if (selected.length > 1 && selected.length !== scope.options.length) {
@@ -177,6 +187,18 @@ function (angular, app, _) {
               value: _.pluck(selected, 'value'),
             };
 
+            var valuesNotInTag = _.filter(selected, function(test) {
+              for (var i = 0; i < scope.selectedTags.length; i++) {
+                var tag = scope.selectedTags[i];
+                if (_.indexOf(tag.values, test.value) !== -1) {
+                  return false;
+                }
+              }
+              return true;
+            });
+
+            variable.current.text = _.pluck(valuesNotInTag, 'text').join(', ');
+
             scope.selectedValuesCount = variable.current.value.length;
 
             // only single value
@@ -187,6 +209,27 @@ function (angular, app, _) {
             if (commitChange) {
               scope.switchToLink();
             }
+          };
+
+          scope.selectTag = function(tag) {
+            tag.selected = !tag.selected;
+            if (!tag.values) {
+              if (tag.text === 'backend') {
+                tag.values = ['backend_01', 'backend_02', 'backend_03', 'backend_04'];
+              } else {
+                tag.values = ['web_server_01', 'web_server_02', 'web_server_03', 'web_server_04'];
+              }
+              console.log('querying for tag values');
+            }
+
+            _.each(scope.options, function(option) {
+              if (_.indexOf(tag.values, option.value) !== -1) {
+                option.selected = tag.selected;
+              }
+            });
+
+            scope.selectedTags = _.filter(scope.tags, {selected: true});
+            scope.selectionsChanged(scope.options[0], false);
           };
 
           scope.updateLinkText = function() {
