@@ -30,13 +30,18 @@
               <div class="rt-box-interior-content">
                 <p class="rt-body-copy">At the selected <span class="emphasis">frequency</span>, we'll do a <span class="emphasis">single</span> HTTP request to your <span class="emphasis">URL</span>, from each collector within your <span class="emphasis">dynamic or static footprint</span>.</p>
                 <div class="rt-form">
-                  <div class="rt-form-row rt-form-row-long">
+                <div class="rt-form rt-input-styles rt-flex-form-block" style="margin: 20px 0 0 0;">
+                  <div style="margin-right: 45px;">
+                    <label class="small">Frequency</label>
+                    <select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px; margin-top: 5px;"></select>
+                  </div>                
+                  <div class="rt-form-row rt-form-row-long" style="margin-top: 0px;">                    
                     <label class="small">Monitoring from</label>
                     <div class="rt-form-group">
                       <endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
                     </div>
                   </div>
-                  <div class="rt-form-row">
+                  <div class="rt-form-row" style="margin: 0 0 20px 0;">
 <!--                     <div class="editor-option rt-input-styles" ng-repeat="setting in monitor_types_by_name['http'].settings">
                       <raintank-setting definition="setting" target="currentSettingByVariable(monitors['http'], setting.variable)">
                     </div> -->
@@ -45,10 +50,6 @@
                           <label class="small">Hostname</label>
                           <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['http'], 'host').value"> 
                           <!-- This is a complex field that should handle host, path and port ex: https://www.google.com/raintankrocks:8258-->
-                        </div>
-                        <div class="rt-flex-form-field">
-                          <label class="small">Frequency</label>
-                          <select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px;"></select>
                         </div>
                         <div class="rt-flex-form-field">
                           <label class="small">Path</label>

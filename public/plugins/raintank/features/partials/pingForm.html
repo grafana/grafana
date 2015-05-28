@@ -30,24 +30,22 @@
               <div class="rt-box-interior-content">
                 <p class="rt-body-copy">At the selected <span class="emphasis">frequency</span>, we'll send a burst of 10 ICMP echo ("ping") packets to the <span class="emphasis">hostname</span>.</p>
                 <div class="rt-form">
-                  <div class="rt-form-row rt-form-row-long">
+                <div class="rt-form rt-input-styles rt-flex-form-block" style="margin: 20px 0 0 0;">
+                  <div style="margin-right: 45px;">
+                    <label class="small">Frequency</label>
+                    <select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px; margin-top: 5px;"></select>
+                  </div>                
+                  <div class="rt-form-row rt-form-row-long" style="margin-top: 0px;">
                     <label class="small">Monitoring from</label>
                     <div class="rt-form-group">
                       <endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
                     </div>
                   </div>
-                  <div class="rt-form-row rt-form-row-long">
-<!--                     <div class="editor-option rt-input-styles" ng-repeat="setting in monitor_types_by_name['ping'].settings">
-                      <raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
-                    </div> -->
+                  <div class="rt-form-row" style="margin: 0 0 20px 0;">
                     <div class="editor=option rt-input-styles rt-flex-form-block">
                         <div class="rt-flex-form-field">
                           <label class="small">Hostname</label>
                           <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['ping'], 'hostname').value"> 
-                        </div>
-                        <div class="rt-flex-form-field">
-                          <label class="small">Frequency</label>
-                          <select class="small" ng-model="monitors['ping'].frequency" ng-options="f.value as f.label for f in frequencyOpts" ng-selected="{{monitors['ping'].frequency}}" style="width: auto; height: 34px;"></select>
                         </div>
                     </div>
                   </div>
