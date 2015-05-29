@@ -7,29 +7,16 @@
 	</div>
 
 	<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
-		<div style="text-align: center; padding-top: 50px; min-height: 250px; max-width: 500px;  margin: 0 auto;">
-			<svg viewBox="0 0 42 42" enable-background="new 0 0 42 42" xml:space="preserve" style="fill-opacity: 0.1; width:25%; margin: 50px 0;">
-			<g> 			    <circle fill="#FFFFFF" cx="5.8" cy="5.8" r="1.5"/>
-							    <circle fill="#FFFFFF" cx="9.7" cy="5.8" r="1.5"/>
-				 <rect x="5.6" y="15.7" fill="#FFFFFF" width="30.2" height="1.7"/>
-				<rect x="20.5" y="19.9" fill="#FFFFFF" width="15.2" height="1.7"/>
-				<rect x="20.5" y="32.8" fill="#FFFFFF" width="15.2" height="1.7"/>
-				<rect x="20.5" y="28.5" fill="#FFFFFF" width="15.2" height="1.7"/>
-				<rect x="20.5" y="24.2" fill="#FFFFFF" width="15.2" height="1.7"/>
-							      <path fill="#FFFFFF" d="M5.6,34.4h10.7V19.9H5.6V34.4z M7.2,21.6h7.4v11.1H7.2V21.6z"/>
-								  <path fill="#FFFFFF" d="M34.4,0H7.6C3.4,0,0,3.4,0,7.6v26.8C0,38.6,3.4,42,7.6,42h26.8c4.2,0,7.6-3.4,7.6-7.6V7.6
-					C42,3.4,38.6,0,34.4,0z M34.4,40.3H7.6c-3.3,0-5.9-2.6-5.9-5.9V7.6c0-3.3,2.6-5.9,5.9-5.9h26.8c3.3,0,5.9,2.6,5.9,5.9v1.5H1.7v1.7
-					h38.6v23.6C40.3,37.7,37.7,40.3,34.4,40.3z"/>
-			</g>
-			</svg>
+		<div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
+			<i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
 			<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="endpoints/new">Add an endpoint now.</a></p>
 		</div>
 		<div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
 			<label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>
 			<input id="_1" type="checkbox">
-			<div style="margin-top: -10px; background-color: rgb(43,43,43); padding: 25px; border-radius: 5px;">
-				<p>In Litmus, an endpoint is anything you want to monitor.</p>
-				<p>When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
+			<div class="rt-box rt-box-no-margin" style="margin-top:-10px; padding:20px">
+				<p class="rt-helper-blurb">In Litmus, an endpoint is anything you want to monitor.</p>
+				<p class="rt-helper-blurb">When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
 			</div>
 		</div>
 	</div>

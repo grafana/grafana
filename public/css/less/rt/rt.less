@@ -339,6 +339,14 @@ raintank TYPE
 
 .checkTime {color:@rt-dark-gray}
 
+.no-endpoints {
+    font-size:800%; 
+    color:@linkColor; 
+    opacity: 0.15;
+    display: block;
+    margin-bottom: 50px;
+  }
+
 .jumbo {font-weight:600;}
 
 .frequency {color:@rt-light-gray}
@@ -453,9 +461,9 @@ Crazy Helper Box
 
 .helperBorder1 {
     border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     padding:0em;
@@ -467,9 +475,9 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -479,9 +487,9 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -1260,7 +1268,7 @@ p.rt-dashboard-copy {
     width: 20%;               /* For old syntax, otherwise collapses. */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
-    flex: 1 100%;                  /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    flex: 1 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
     text-align: center;
     margin:0 auto;
 }
@@ -1272,12 +1280,18 @@ p.rt-dashboard-copy {
     width: 100%;               /* For old syntax, otherwise collapses. */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
-    flex: 0 100%;                  /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    flex: 0 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
     text-align: center;
     -webkit-flex-direction: column;
     flex-direction: column;
     margin:0 auto;
     }
+}
+
+p.rt-helper-blurb{
+     font-size:14px;
+     color: @textColor;
+     min-height: 35px;
 }
 
 p.rt-dashboard-blurb{
