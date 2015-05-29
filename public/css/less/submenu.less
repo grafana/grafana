@@ -44,6 +44,11 @@
   }
 }
 
+.variable-link-wrapper  {
+  display: inline-block;
+  position: relative;
+}
+
 .variable-value-dropdown {
   position: absolute;
   top: 47px;
@@ -57,7 +62,6 @@
   border: 1px solid @grafanaTargetFuncBackground;
   z-index: 1000;
   font-size: @baseFontSize;
-  padding: 0;
   border-radius: 3px 3px 0 0;
 }
 
@@ -84,20 +88,22 @@
   white-space: nowrap;
   min-width: 115px;
 
- .variable-option-icon {
-   display: inline-block;
-   width: 24px;
-   height: 18px;
-   position: relative;
-   top: 4px;
-   background: url(@checkboxImageUrl) left top no-repeat;
- }
+ &.multi {
+   .variable-option-icon {
+     display: inline-block;
+     width: 24px;
+     height: 18px;
+     position: relative;
+     top: 4px;
+     background: url(@checkboxImageUrl) left top no-repeat;
+   }
 
-  &.selected {
-    .variable-option-icon{
-      background: url(@checkboxImageUrl) 0px -18px no-repeat;
-    }
-  }
+   &.selected {
+     .variable-option-icon{
+       background: url(@checkboxImageUrl) 0px -18px no-repeat;
+     }
+   }
+ }
 }
 
 .variable-options-column-header {

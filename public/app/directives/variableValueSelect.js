@@ -11,20 +11,8 @@ function (angular, app, _) {
     .module('grafana.directives')
     .directive('variableValueSelect', function($compile, $window, $timeout) {
 
-      function openDropdown(inputEl, linkEl) {
-        inputEl.css('width', (linkEl.width() + 16) + 'px');
-
-        linkEl.hide();
-        inputEl.show();
-        inputEl.focus();
-      };
-
       return {
-        scope: {
-          variable: "=",
-          onUpdated: "&"
-        },
-
+        scope: { variable: "=", onUpdated: "&" },
         templateUrl: 'app/features/dashboard/partials/variableValueSelect.html',
 
         link: function(scope, elem) {
@@ -94,6 +82,7 @@ function (angular, app, _) {
 
             scope.search = {query: '', options: scope.options};
             scope.selectedValuesCount = currentValues.length;
+            scope.selectedTags = scope.selectedTag || [];
 
             if (!scope.tags) {
               scope.tags = _.map(variable.tags, function(value) {
