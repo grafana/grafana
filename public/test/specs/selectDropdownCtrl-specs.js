@@ -74,6 +74,18 @@ function () {
           expect(ctrl.options[2].selected).to.be(true);
         });
 
+        describe('and then dropdown is opened and closed without changes', function() {
+          beforeEach(function() {
+            ctrl.show();
+            ctrl.commitChanges();
+            rootScope.$digest();
+          });
+
+          it("should still have selected tag", function() {
+            expect(ctrl.selectedTags.length).to.be(1);
+          });
+        });
+
         describe('and then unselected', function() {
           beforeEach(function() {
             ctrl.selectTag(ctrl.tags[0]);

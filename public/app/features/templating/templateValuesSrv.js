@@ -78,7 +78,7 @@ function (angular, _, kbn) {
     };
 
     this.setVariableValue = function(variable, option) {
-      variable.current = option;
+      variable.current = angular.copy(option);
       templateSrv.updateTemplateData();
       return this.updateOptionsInChildVariables(variable);
     };
