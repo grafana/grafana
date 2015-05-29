@@ -200,6 +200,14 @@ function (angular, app, _) {
             }
           };
 
+          scope.clearSelections = function() {
+            _.each(scope.options, function(option) {
+              option.selected = false;
+            });
+
+            scope.selectionsChanged(scope.options[0], false);
+          };
+
           scope.selectTag = function(tag) {
             tag.selected = !tag.selected;
             if (!tag.values) {
@@ -231,7 +239,6 @@ function (angular, app, _) {
           });
 
           linkEl.click(scope.openDropdown);
-          //inputEl.blur(scope.switchToLink);
         },
       };
     });

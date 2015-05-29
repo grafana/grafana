@@ -65,15 +65,6 @@
   border-radius: 3px 3px 0 0;
 
   &.multi {
-   .variable-option-icon {
-     display: inline-block;
-     width: 24px;
-     height: 18px;
-     position: relative;
-     top: 4px;
-     background: url(@checkboxImageUrl) left top no-repeat;
-   }
-
    .selected {
      .variable-option-icon{
        background: url(@checkboxImageUrl) 0px -18px no-repeat;
@@ -82,10 +73,22 @@
  }
 
  &.single {
+   .variable-option-icon {
+     display: none;
+   }
    .selected {
      background-color: @grafanaTargetFuncHightlight;
    }
  }
+}
+
+.variable-option-icon {
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  position: relative;
+  top: 4px;
+  background: url(@checkboxImageUrl) left top no-repeat;
 }
 
 .variable-options-wrapper {
@@ -113,10 +116,14 @@
 }
 
 .variable-options-column-header {
-  text-align: center;
   padding-top: 5px;
   padding-bottom: 5px;
   margin-bottom: 5px;
+  &.many-selected {
+    .variable-option-icon {
+      background: url(@checkboxImageUrl) 0px -36px no-repeat;
+    }
+  }
 }
 
 .variable-option {
