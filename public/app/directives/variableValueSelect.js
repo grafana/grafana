@@ -9,7 +9,7 @@ function (angular, app, _) {
 
   angular
     .module('grafana.controllers')
-    .controller('SelectDropdownCtrl', function() {
+    .controller('SelectDropdownCtrl', function($q) {
       var vm = this;
 
       vm.show = function() {
@@ -56,23 +56,29 @@ function (angular, app, _) {
 
       vm.selectTag = function(tag) {
         tag.selected = !tag.selected;
+        var tagValuesPromise;
         if (!tag.values) {
-          if (tag.text === 'backend') {
-            tag.values = ['backend_01', 'backend_02', 'backend_03', 'backend_04'];
-          } else {
-            tag.values = ['web_server_01', 'web_server_02', 'web_server_03', 'web_server_04'];
-          }
-          console.log('querying for tag values');
+          tagValuesPromise = vm.getValuesForTag({tagKey: tag.text});
+          // if (tag.text === 'backend') {
+          //   tag.values = ['backend_01', 'backend_02', 'backend_03', 'backend_04'];
+          // } else {
+          //   tag.values = ['web_server_01', 'web_server_02', 'web_server_03', 'web_server_04'];
+          // }
+        } else {
+          tagValuesPromise = $q.when(tag.values);
         }
 
-        _.each(vm.options, function(option) {
-          if (_.indexOf(tag.values, option.value) !== -1) {
-            option.selected = tag.selected;
-          }
-        });
+        tagValuesPromise.then(function(values) {
+          tag.values = values;
+          _.each(vm.options, function(option) {
+            if (_.indexOf(tag.values, option.value) !== -1) {
+              option.selected = tag.selected;
+            }
+          });
 
-        vm.selectedTags = _.filter(vm.tags, {selected: true});
-        vm.selectionsChanged(false);
+          vm.selectedTags = _.filter(vm.tags, {selected: true});
+          vm.selectionsChanged(false);
+        });
       };
 
       vm.keyDown = function (evt) {
@@ -141,10 +147,16 @@ function (angular, app, _) {
           }
         }
 
-        vm.variable.current = {
-          text: _.pluck(selected, 'text').join(', '),
-          value: _.pluck(selected, 'value'),
-        };
+        // validate selected tags
+        _.each(vm.selectedTags, function(tag) {
+          _.each(tag.values, function(value) {
+            if (!_.findWhere(selected, {value: value})) {
+              tag.selected = false;
+            }
+          });
+        });
+
+        vm.selectedTags = _.filter(vm.tags, {selected: true});
 
         var valuesNotInTag = _.filter(selected, function(test) {
           for (var i = 0; i < vm.selectedTags.length; i++) {
@@ -156,8 +168,9 @@ function (angular, app, _) {
           return true;
         });
 
+        vm.variable.current = {};
+        vm.variable.current.value = _.pluck(selected, 'value');
         vm.variable.current.text = _.pluck(valuesNotInTag, 'text').join(', ');
-
         vm.selectedValuesCount = vm.variable.current.value.length;
 
         // only single value
@@ -195,12 +208,12 @@ function (angular, app, _) {
 
     });
 
-    angular
+  angular
     .module('grafana.directives')
     .directive('variableValueSelect', function($compile, $window, $timeout) {
 
       return {
-        scope: { variable: "=", onUpdated: "&" },
+        scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
         templateUrl: 'app/features/dashboard/partials/variableValueSelect.html',
         controller: 'SelectDropdownCtrl',
         controllerAs: 'vm',
@@ -209,7 +222,6 @@ function (angular, app, _) {
           var bodyEl = angular.element($window.document.body);
           var linkEl = elem.find('.variable-value-link');
           var inputEl = elem.find('input');
-          var cancelBlur = null;
 
           function openDropdown() {
             inputEl.css('width', Math.max(linkEl.width(), 30) + 'px');
@@ -217,27 +229,13 @@ function (angular, app, _) {
             inputEl.show();
             linkEl.hide();
 
-            linkEl.hide();
-            inputEl.show();
             inputEl.focus();
-
             $timeout(function() { bodyEl.on('click', bodyOnClick); }, 0, false);
           }
 
-          function switchToLink(now) {
-            if (now === true || cancelBlur) {
-              clearTimeout(cancelBlur);
-              cancelBlur = null;
-              inputEl.hide();
-              linkEl.show();
-
-           }
-            else {
-              // need to have long delay because the blur
-              // happens long before the click event on the typeahead options
-              cancelBlur = setTimeout(scope.switchToLink, 50);
-            }
-
+          function switchToLink() {
+            inputEl.hide();
+            linkEl.show();
             bodyEl.off('click', bodyOnClick);
           }
 
@@ -252,7 +250,7 @@ function (angular, app, _) {
           scope.$watch('vm.dropdownVisible', function(newValue) {
             if (newValue) {
               openDropdown();
-            } {
+            } else {
               switchToLink();
             }
           });
