@@ -61,10 +61,7 @@ func main() {
 	initRuntime()
 
 	fmt.Println("creating statsdclient. enabled", setting.StatsdEnabled, "addr", setting.StatsdAddr)
-	//Stat, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
-	// TODO: properly do config
-	// keep getting: [setting.go:267 loadSpecifedConfigFile()] [E] Unknown config section telemetry defined in /etc/grafana/custom.ini)
-	Stat, err := statsd.NewClient(true, "statsdaemon:8125", "grafana.")
+	Stat, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}

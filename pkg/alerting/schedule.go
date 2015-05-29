@@ -31,6 +31,9 @@ func getSchedules(lastPointAt int64) ([]Schedule, error) {
 
 	schedules := make([]Schedule, 0)
 	for _, monitor := range query.Result {
+		if monitor.HealthSettings == nil {
+			continue
+		}
 		schedules = append(schedules, buildScheduleForMonitor(monitor))
 	}
 

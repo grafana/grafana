@@ -249,6 +249,6 @@ func addMonitorMigration(mg *Migrator) {
 
 	// add health settings
 	mg.AddMigration("monitor add alerts v1", NewAddColumnMigration(monitorV3, &Column{
-		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: false, Default: "",
+		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: true, Default: "",
 	}))
 }

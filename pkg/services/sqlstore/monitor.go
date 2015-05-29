@@ -1,15 +1,15 @@
 package sqlstore
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -36,7 +36,7 @@ type MonitorWithCollectorDTO struct {
 	State           int64
 	StateChange     time.Time
 	Settings        []*m.MonitorSettingDTO
-	HealthSettings  map[string]int //note: wish we could use m.MonitorHealthSettingDTO directly, but xorm doesn't unmarshal to structs?
+	HealthSettings  *m.MonitorHealthSettingDTO //map[string]int //note: wish we could use m.MonitorHealthSettingDTO directly, but xorm doesn't unmarshal to structs?
 	Frequency       int64
 	Enabled         bool
 	Offset          int64
@@ -122,21 +122,22 @@ WHERE monitor.id=?
 	}
 
 	query.Result = &m.MonitorDTO{
-		Id:            result.Id,
-		EndpointId:    result.EndpointId,
-		OrgId:         result.OrgId,
-		EndpointSlug:  result.EndpointSlug,
-		MonitorTypeId: result.MonitorTypeId,
-		CollectorIds:  monitorCollectorIds,
-		CollectorTags: monitorCollectorTags,
-		Collectors:    mergedCollectors,
-		State:         result.State,
-		StateChange:   result.StateChange,
-		Settings:      result.Settings,
-		Frequency:     result.Frequency,
-		Enabled:       result.Enabled,
-		Offset:        result.Offset,
-		Updated:       result.Updated,
+		Id:             result.Id,
+		EndpointId:     result.EndpointId,
+		OrgId:          result.OrgId,
+		EndpointSlug:   result.EndpointSlug,
+		MonitorTypeId:  result.MonitorTypeId,
+		CollectorIds:   monitorCollectorIds,
+		CollectorTags:  monitorCollectorTags,
+		Collectors:     mergedCollectors,
+		State:          result.State,
+		StateChange:    result.StateChange,
+		Settings:       result.Settings,
+		HealthSettings: result.HealthSettings,
+		Frequency:      result.Frequency,
+		Enabled:        result.Enabled,
+		Offset:         result.Offset,
+		Updated:        result.Updated,
 	}
 
 	return nil
@@ -266,9 +267,11 @@ FROM monitor
 			count += 1
 		}
 
-		h := m.MonitorHealthSettingDTO{}
-		h.NumCollectors = row.HealthSettings["numCollectors"]
-		h.Steps = row.HealthSettings["steps"]
+		/*
+			h := m.MonitorHealthSettingDTO{}
+			h.NumCollectors = row.HealthSettings["numCollectors"]
+			h.Steps = row.HealthSettings["steps"]
+		*/
 
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:              row.Id,
@@ -283,7 +286,7 @@ FROM monitor
 			State:           row.State,
 			StateChange:     row.StateChange,
 			Settings:        row.Settings,
-			HealthSettings:  h,
+			HealthSettings:  row.HealthSettings,
 			Frequency:       row.Frequency,
 			Enabled:         row.Enabled,
 			Offset:          row.Offset,
@@ -498,7 +501,12 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		State:          -1,
 		StateChange:    time.Now(),
 	}
-
+	healthJson, err := json.Marshal(cmd.HealthSettings)
+	if err != nil {
+		log.Info(err.Error())
+		return err
+	}
+	log.Info(string(healthJson))
 	if _, err := sess.Insert(mon); err != nil {
 		return err
 	}
@@ -569,21 +577,22 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 	}
 
 	cmd.Result = &m.MonitorDTO{
-		Id:            mon.Id,
-		EndpointId:    mon.EndpointId,
-		OrgId:         mon.OrgId,
-		EndpointSlug:  endpointQuery.Result.Slug,
-		MonitorTypeId: mon.MonitorTypeId,
-		CollectorIds:  cmd.CollectorIds,
-		CollectorTags: cmd.CollectorTags,
-		Collectors:    collectorList,
-		Settings:      mon.Settings,
-		Frequency:     mon.Frequency,
-		Enabled:       mon.Enabled,
-		State:         mon.State,
-		StateChange:   mon.StateChange,
-		Offset:        mon.Offset,
-		Updated:       mon.Updated,
+		Id:             mon.Id,
+		EndpointId:     mon.EndpointId,
+		OrgId:          mon.OrgId,
+		EndpointSlug:   endpointQuery.Result.Slug,
+		MonitorTypeId:  mon.MonitorTypeId,
+		CollectorIds:   cmd.CollectorIds,
+		CollectorTags:  cmd.CollectorTags,
+		Collectors:     collectorList,
+		Settings:       mon.Settings,
+		HealthSettings: mon.HealthSettings,
+		Frequency:      mon.Frequency,
+		Enabled:        mon.Enabled,
+		State:          mon.State,
+		StateChange:    mon.StateChange,
+		Offset:         mon.Offset,
+		Updated:        mon.Updated,
 	}
 	sess.publishAfterCommit(&events.MonitorCreated{
 		Timestamp: mon.Updated,
