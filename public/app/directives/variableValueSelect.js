@@ -31,7 +31,7 @@ function (angular, app, _) {
 
         vm.search = {query: '', options: vm.options};
         vm.selectedValuesCount = currentValues.length;
-        vm.selectedTags = vm.selectedTag || [];
+        vm.selectedTags = vm.selectedTags || [];
 
         if (!vm.tags) {
           vm.tags = _.map(vm.variable.tags, function(value) {
@@ -76,7 +76,6 @@ function (angular, app, _) {
             }
           });
 
-          vm.selectedTags = _.filter(vm.tags, {selected: true});
           vm.selectionsChanged(false);
         });
       };
@@ -168,10 +167,9 @@ function (angular, app, _) {
           return true;
         });
 
-        vm.variable.current = {};
         vm.variable.current.value = _.pluck(selected, 'value');
         vm.variable.current.text = _.pluck(valuesNotInTag, 'text').join(', ');
-        vm.selectedValuesCount = vm.variable.current.value.length;
+        vm.selectedValuesCount = selected.length;
 
         // only single value
         if (vm.selectedValuesCount === 1) {
