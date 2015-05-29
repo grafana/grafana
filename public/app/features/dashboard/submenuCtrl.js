@@ -28,6 +28,10 @@ function (angular, _) {
       $rootScope.$broadcast('refresh');
     };
 
+    $scope.getValuesForTag = function() {
+      return $q.when(['backend_01', 'backend_02']);
+    };
+
     $scope.variableUpdated = function(variable) {
       templateValuesSrv.variableUpdated(variable).then(function() {
         dynamicDashboardSrv.update($scope.dashboard);
