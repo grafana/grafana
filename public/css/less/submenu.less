@@ -55,7 +55,7 @@
   min-width: 150px;
   max-height: 400px;
   min-height: 150px;
-  background: @dropdownBackground;
+  background-color: @dropdownBackground;
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0px 0px 55px 0px black;
@@ -63,6 +63,29 @@
   z-index: 1000;
   font-size: @baseFontSize;
   border-radius: 3px 3px 0 0;
+
+  &.multi {
+   .variable-option-icon {
+     display: inline-block;
+     width: 24px;
+     height: 18px;
+     position: relative;
+     top: 4px;
+     background: url(@checkboxImageUrl) left top no-repeat;
+   }
+
+   .selected {
+     .variable-option-icon{
+       background: url(@checkboxImageUrl) 0px -18px no-repeat;
+     }
+   }
+ }
+
+ &.single {
+   .selected {
+     background-color: @grafanaTargetFuncHightlight;
+   }
+ }
 }
 
 .variable-options-wrapper {
@@ -87,23 +110,6 @@
   position: relative;
   white-space: nowrap;
   min-width: 115px;
-
- &.multi {
-   .variable-option-icon {
-     display: inline-block;
-     width: 24px;
-     height: 18px;
-     position: relative;
-     top: 4px;
-     background: url(@checkboxImageUrl) left top no-repeat;
-   }
-
-   &.selected {
-     .variable-option-icon{
-       background: url(@checkboxImageUrl) 0px -18px no-repeat;
-     }
-   }
- }
 }
 
 .variable-options-column-header {
