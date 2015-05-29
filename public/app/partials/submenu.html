@@ -3,6 +3,9 @@
 
 		<ul class="tight-form-list" ng-if="dashboard.templating.list.length > 0">
 			<li ng-repeat="variable in variables" class="submenu-item">
+				<span class="template-variable tight-form-item" ng-show="!variable.hideLabel" style="padding-right: 5px">
+					{{variable.label || variable.name}}:
+				</span>
 				<variable-value-select variable="variable" on-updated="variableUpdated(variable)"></variable-value-select>
 			</li>
 		</ul>

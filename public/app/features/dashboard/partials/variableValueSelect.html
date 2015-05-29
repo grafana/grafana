@@ -1,9 +1,5 @@
-<span class="template-variable tight-form-item" ng-show="!vm.variable.hideLabel" style="padding-right: 5px">
-	{{vm.labelText}}:
-</span>
-
 <div class="variable-link-wrapper">
-	<a ng-click="show()" class="variable-value-link tight-form-item">
+	<a ng-click="vm.show()" class="variable-value-link tight-form-item">
 		{{vm.linkText}}
 		<span class="label-tag" ng-repeat="tag in vm.selectedTags" tag-color-from-name="tag.text">
 			{{tag.text}}
