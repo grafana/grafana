@@ -17,8 +17,10 @@ function (angular, _) {
     $scope.init = function() {
       $scope.panel = $scope.pulldown;
       $scope.row = $scope.pulldown;
-      $scope.variables = $scope.dashboard.templating.list;
       $scope.annotations = $scope.dashboard.templating.list;
+      $scope.variables = _.map($scope.dashboard.templating.list, function(variable) {
+        return variable;
+      });
     };
 
     $scope.disableAnnotation = function (annotation) {

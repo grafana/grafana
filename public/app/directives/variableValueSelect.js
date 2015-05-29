@@ -9,10 +9,10 @@ function (angular, app, _) {
 
   angular
     .module('grafana.controllers')
-    .controller('VariableSelectCtrl', function($scope) {
+    .controller('SelectDropdownCtrl', function() {
       var vm = this;
 
-      vm.beforeDropdownShow = function() {
+      vm.show = function() {
         vm.oldCurrentText = vm.variable.current.text;
         vm.highlightIndex = -1;
 
@@ -38,10 +38,11 @@ function (angular, app, _) {
             return { text: value, selected: false };
           });
         }
+
+        vm.dropdownVisible = true;
       };
 
       vm.updateLinkText = function() {
-        vm.labelText = vm.variable.label || '$' + vm.variable.name;
         vm.linkText = vm.variable.current.text;
       };
 
@@ -50,7 +51,7 @@ function (angular, app, _) {
           option.selected = false;
         });
 
-        vm.selectionsChanged(vm.options[0], false);
+        vm.selectionsChanged(false);
       };
 
       vm.selectTag = function(tag) {
@@ -71,7 +72,7 @@ function (angular, app, _) {
         });
 
         vm.selectedTags = _.filter(vm.tags, {selected: true});
-        vm.selectionsChanged(vm.options[0], false);
+        vm.selectionsChanged(false);
       };
 
       vm.keyDown = function (evt) {
@@ -127,16 +128,11 @@ function (angular, app, _) {
           setAllExceptCurrentTo(false);
         }
 
-        vm.selectionsChanged(option, commitChange);
+        vm.selectionsChanged(commitChange);
       };
 
-      vm.selectionsChanged = function(defaultItem, commitChange) {
+      vm.selectionsChanged = function(commitChange) {
         var selected = _.filter(vm.options, {selected: true});
-
-        if (selected.length === 0) {
-          defaultItem.selected = true;
-          selected = [defaultItem];
-        }
 
         if (selected.length > 1 && selected.length !== vm.options.length) {
           if (selected[0].text === 'All') {
@@ -170,8 +166,20 @@ function (angular, app, _) {
         }
 
         if (commitChange) {
-          vm.switchToLink();
+          vm.commitChanges();
         }
+      };
+
+      vm.commitChanges = function() {
+        // make sure one option is selected
+        var selected = _.filter(vm.options, {selected: true});
+        if (selected.length === 0) {
+          vm.options[0].selected = true;
+          vm.selectionsChanged(false);
+        }
+
+        vm.dropdownVisible = false;
+        vm.updateLinkText();
       };
 
       vm.queryChanged = function() {
@@ -181,9 +189,9 @@ function (angular, app, _) {
         });
       };
 
-      $scope.$watchGroup(['vm.variable.hideLabel', 'vm.variable.name', 'vm.variable.label', 'vm.variable.current.text'], function() {
+      vm.init = function() {
         vm.updateLinkText();
-      });
+      };
 
     });
 
@@ -194,64 +202,62 @@ function (angular, app, _) {
       return {
         scope: { variable: "=", onUpdated: "&" },
         templateUrl: 'app/features/dashboard/partials/variableValueSelect.html',
-        controller: 'VariableSelectCtrl',
+        controller: 'SelectDropdownCtrl',
         controllerAs: 'vm',
         bindToController: true,
         link: function(scope, elem) {
-          var vm = scope.vm;
           var bodyEl = angular.element($window.document.body);
           var linkEl = elem.find('.variable-value-link');
           var inputEl = elem.find('input');
           var cancelBlur = null;
 
-          scope.openDropdown = function() {
+          function openDropdown() {
+            inputEl.css('width', Math.max(linkEl.width(), 30) + 'px');
+
             inputEl.show();
             linkEl.hide();
-            vm.dropdownVisible = true;
-
-            inputEl.css('width', (linkEl.width() + 16) + 'px');
 
             linkEl.hide();
             inputEl.show();
             inputEl.focus();
 
-            $timeout(function() { bodyEl.on('click', scope.bodyOnClick); }, 0, false);
-          };
+            $timeout(function() { bodyEl.on('click', bodyOnClick); }, 0, false);
+          }
 
-          scope.switchToLink = function(now) {
+          function switchToLink(now) {
             if (now === true || cancelBlur) {
               clearTimeout(cancelBlur);
               cancelBlur = null;
               inputEl.hide();
               linkEl.show();
 
-              vm.dropdownVisible = false;
-              scope.$digest();
-
-              scope.vm.updateLinkText();
-              scope.vm.onUpdated();
-            }
+           }
             else {
               // need to have long delay because the blur
               // happens long before the click event on the typeahead options
               cancelBlur = setTimeout(scope.switchToLink, 50);
             }
 
-            bodyEl.off('click', scope.bodyOnClick);
-          };
+            bodyEl.off('click', bodyOnClick);
+          }
 
-          scope.bodyOnClick = function(e) {
+          function bodyOnClick (e) {
             if (elem.has(e.target).length === 0) {
-              scope.switchToLink();
+              scope.$apply(function() {
+                scope.vm.commitChanges();
+              });
             }
-          };
+          }
 
-          scope.show = function() {
-            vm.beforeDropdownShow();
-            scope.openDropdown();
-          };
+          scope.$watch('vm.dropdownVisible', function(newValue) {
+            if (newValue) {
+              openDropdown();
+            } {
+              switchToLink();
+            }
+          });
 
-          linkEl.click(scope.openDropdown);
+          scope.vm.init();
         },
       };
     });
