@@ -13,7 +13,7 @@ function (angular, app, _) {
       var vm = this;
 
       vm.show = function() {
-        vm.oldCurrentText = vm.variable.current.text;
+        vm.oldLinkText = vm.variable.current.text;
         vm.highlightIndex = -1;
 
         var currentValues = vm.variable.current.value;
@@ -44,6 +44,9 @@ function (angular, app, _) {
 
       vm.updateLinkText = function() {
         vm.linkText = vm.variable.current.text;
+        if (vm.oldLinkText && vm.oldLinkText !== vm.linkText) {
+          vm.onUpdated();
+        }
       };
 
       vm.clearSelections = function() {
