@@ -154,6 +154,17 @@ function (angular, _, kbn) {
       });
     };
 
+    this.getValuesForTag = function(variable, tagKey) {
+      return datasourceSrv.get(variable.datasource).then(function(datasource) {
+        var query = variable.tagValuesQuery.replace('$tag', tagKey);
+        return datasource.metricFindQuery(query).then(function (results) {
+          return _.map(results, function(value) {
+            return value.text;
+          });
+        });
+      });
+    };
+
     this.metricNamesToVariableValues = function(variable, metricNames) {
       var regex, options, i, matches;
       options = {}; // use object hash to remove duplicates

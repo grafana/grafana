@@ -228,25 +228,25 @@
 
 			<div class="editor-row" ng-if="current.type === 'query'">
 				<div class="tight-form-section">
-					<h5>value groups/tags</h5>
-					<div class="tight-form" ng-if="current.usetags">
+					<h5>Value groups/tags</h5>
+					<div class="tight-form" ng-if="current.useTags">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 115px">
-								tags query
+							<li class="tight-form-item" style="width: 135px">
+								Tags query
 							</li>
 							<li>
-								<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.tagsquery' placeholder="metric name or tags query" ng-model-onblur ng-change="runquery()"></input>
+								<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
-					<div class="tight-form" ng-if="current.usetags">
+					<div class="tight-form" ng-if="current.useTags">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 115px;">
-								tags values query
+							<li class="tight-form-item" style="width: 135px;">
+								Tag values query
 							</li>
 							<li>
-								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagvaluesquery' placeholder="apps.$__tag.*" ng-model-onblur ng-change="runquery()"></input>
+								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$__tag.*" ng-model-onblur></input>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -254,7 +254,7 @@
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item last">
-								<editor-checkbox text="enable" model="current.usetags" change="runquery()"></editor-checkbox>
+								<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
 							</li>
 						</ul>
 						<div class="clearfix"></div>

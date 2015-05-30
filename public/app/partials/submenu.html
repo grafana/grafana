@@ -6,7 +6,7 @@
 				<span class="template-variable tight-form-item" ng-show="!variable.hideLabel" style="padding-right: 5px">
 					{{variable.label || variable.name}}:
 				</span>
-				<variable-value-select variable="variable" on-updated="variableUpdated(variable)" get-values-for-tag="getValuesForTag(tagKey)"></variable-value-select>
+				<variable-value-select variable="variable" on-updated="variableUpdated(variable)" get-values-for-tag="getValuesForTag(variable, tagKey)"></variable-value-select>
 			</li>
 		</ul>
 
