@@ -1,0 +1,22 @@
+[----------] Running tests from PassingTest
+[ RUN      ] PassingTest.EmptyTestMethod
+[       OK ] PassingTest.EmptyTestMethod
+[ RUN      ] PassingTest.SuccessfullMatches
+[       OK ] PassingTest.SuccessfullMatches
+[ RUN      ] PassingTest.ExpectAliases
+[       OK ] PassingTest.ExpectAliases
+[ RUN      ] PassingTest.AssertAliases
+[       OK ] PassingTest.AssertAliases
+[ RUN      ] PassingTest.SlowTest
+[       OK ] PassingTest.SlowTest (1234ms)
+[----------] Finished with tests from PassingTest
+[----------] Running tests from PassingTestWithHelpers
+SetUpTestSuite ran.
+[ RUN      ] PassingTestWithHelpers.EmptyTestMethod
+SetUp ran.
+TearDown ran.
+[       OK ] PassingTestWithHelpers.EmptyTestMethod
+TearDownTestSuite ran.
+[----------] Finished with tests from PassingTestWithHelpers
+PASS
+ok somepkg 1.234s

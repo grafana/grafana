@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/GaryBoone/GoStats/stats",
@@ -112,6 +115,10 @@
 			"Rev": "995efda3e073b6946b175ed93901d729ad47466a"
 		},
 		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "9a4a02dbe491bef4bab3c24fd9f3087d6c4c6690"
+		},
+		{
 			"ImportPath": "github.com/lib/pq",
 			"Comment": "go1.0-cutoff-13-g19eeca3",
 			"Rev": "19eeca3e30d2577b1761db471ec130810e67f532"
@@ -132,6 +139,16 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions",
+			"Comment": "1.5.0-385-gf84dc26",
+			"Rev": "f84dc26dce9c465dec172485e01faf2e53517a13"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-392-g68c2220",
+			"Rev": "68c22200a00354e2a63e1a0ade46eadd20e00333"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",
