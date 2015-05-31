@@ -11,6 +11,7 @@
 
 @import "components/box.less";
 @import "components/buttons.less";
+@import "components/collector-footprint-dropdown";
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
 
@@ -90,6 +91,7 @@ div.rt-modal-override {
     float:none;
     transition: 0.15s;
   }
+  
 .modalLeft {padding-right:0px; margin-left:0px;}
 .modalRight {padding-left:0px;}
 }
@@ -220,6 +222,15 @@ ul.rt-modal-ul {
   font-weight: 600;
 }
 
+.rt-health-list {
+  margin: 0 5px;
+  vertical-align: text-top;
+}
+
+.rt-inline-health-icon {
+  vertical-align: sub;
+}
+
 .statusEvents {
   display:block; 
   margin-left:70px; 
@@ -284,16 +295,19 @@ ul.rt-modal-ul {
 
 .mainLink i, .mainLink i:visited{
   color: @linkColor;  
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
   text-decoration:none;
-  // -moz-color: -moz-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
-  // -webkit-color: -webkit-linear-gradient(top left, @linkColorHover 0%, @rt-blue 100%);  
-  // color: linear-gradient(to bottom right, @linkColorHover 0%, @rt-blue 100%); 
   transition: 0.15s; 
 }
 
 .mainLink i:hover, .mainLink i:active {
   color: @linkColorHover;  
+  -webkit-text-fill-color: @linkColorHover;
   text-decoration:none;
+  transition: 0.15s; 
 }
 
 .tag-icon {  
@@ -325,6 +339,14 @@ raintank TYPE
 }
 
 .checkTime {color:@rt-dark-gray}
+
+.no-endpoints {
+    font-size:800%; 
+    color:@linkColor; 
+    opacity: 0.15;
+    display: block;
+    margin-bottom: 50px;
+  }
 
 .jumbo {font-weight:600;}
 
@@ -373,6 +395,8 @@ raintank TYPE
   font-weight: 600;
   text-transform: uppercase;
 }
+
+
 
 /***********************************
 raintank POSITIONING
@@ -438,9 +462,9 @@ Crazy Helper Box
 
 .helperBorder1 {
     border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     padding:0em;
@@ -452,9 +476,9 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -464,9 +488,9 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @black 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @black 0%, @rt-blue 100%);  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
     border-image-slice: 1;  
     border-radius: 2px;
     width:100%;
@@ -635,7 +659,7 @@ MATT STYLES
 .rt-tabs { 
   box-shadow: inset 0px -1px 0px 0px @tabBorder;
   font-size: 16px; 
-  padding:10px 20px;
+  padding:3px 20px 0 20px;
  
   .nonactive a:link, 
   .nonactive a:visited {
@@ -645,6 +669,7 @@ MATT STYLES
 
   .active a:link,
   .active a:visited  {
+    display:inline-block;
     color:@linkColorHover;
     background:@bodyBackground;
     border-top-left-radius:4px;
@@ -654,7 +679,7 @@ MATT STYLES
     border-left:1px solid @tabBorder;
     border-bottom: none;
     margin: 0 5px;
-    padding: 5px 15px 9px 15px;
+    padding: 6px 15px 9px 15px;
   }
 
   a:hover,
@@ -732,37 +757,37 @@ MATT STYLES
 
 
 
-// Shared size and type resets
-select,
-textarea,
-input[type="text"],
-input[type="password"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="date"],
-input[type="month"],
-input[type="time"],
-input[type="week"],
-input[type="number"],
-input[type="email"],
-input[type="url"],
-input[type="search"],
-input[type="tel"],
-input[type="color"] {
-  &.rt-form-input {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 2;
-  font-size: @rt-fontSizeMed-1;
-  line-height: @baseLineHeight;
-  color: @textColor;
-    border: solid 1px @inputBorder;
-  border-radius: @baseBorderRadius;
-  .border-radius(2px);
-  vertical-align: middle;
-}
-}
+// // Shared size and type resets
+// select,
+// textarea,
+// input[type="text"],
+// input[type="password"],
+// input[type="datetime"],
+// input[type="datetime-local"],
+// input[type="date"],
+// input[type="month"],
+// input[type="time"],
+// input[type="week"],
+// input[type="number"],
+// input[type="email"],
+// input[type="url"],
+// input[type="search"],
+// input[type="tel"],
+// input[type="color"] {
+//   &.rt-form-input {
+//   display: inline-block;
+//   height: 20px;
+//   padding: 6px 10px;
+//   margin-bottom: @baseLineHeight / 2;
+//   font-size: @rt-fontSizeMed-1;
+//   line-height: @baseLineHeight;
+//   color: @textColor;
+//   border: solid 1px @inputBorder;
+//   border-radius: @baseBorderRadius;
+//   .border-radius(2px);
+//   vertical-align: middle;
+// }
+// }
 
 input[type="checkbox"].rt-modal {
   display: none;
@@ -779,45 +804,6 @@ select.rt-select-dropdown {
   &.small {
     font-size: @baseFontSize;
 }
-}
-.rt-input-styles{
-  label {
-  color: lighten(@textColor, 10%);
-  }
-  select, 
-  textarea, 
-  input[type="text"] {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 4;
-  font-size: @rt-fontSizeMed-1;
-  line-height: @baseLineHeight;
-  color: @textColor;
-  border: solid 1px @inputBorder;
-  .border-radius(2px);
-  vertical-align: middle;
-  }
-}
-
-.rt-modal-input-styles{
-  label {
-  color: @textColor;
-  }
-  select, 
-  textarea, 
-  input[type="text"] {
-  display: inline-block;
-  height: 20px;
-  padding: 6px 10px;
-  margin-bottom: @baseLineHeight / 4;
-  font-size: @rt-fontSizeMed-1;
-  line-height: @baseLineHeight;
-  color: @textColor;
-  border: solid 1px @inputBorder;
-  .border-radius(2px);
-  vertical-align: middle;
-  }
 }
 
 .editor-option label.rt-modal {
@@ -854,7 +840,9 @@ input[type="checkbox"]:checked+label {
   display: inline-block;
   height: auto;
   padding: 6px 10px;
+  margin-top: -3px;
   margin-bottom: @baseLineHeight / 4;
+  margin-left: 10px;
   font-size: @rt-fontSizeMed-1;
   line-height: @baseLineHeight;
   color: @textColor;
@@ -883,6 +871,11 @@ input[type="checkbox"]:checked+label {
   font-weight: 400;
   font-size: .85em;
 
+}
+
+.rt-summary-status {
+  margin-top: 10px;
+  margin-bottom: 15px;
 }
 
 // raintank from overrides.less
@@ -1015,18 +1008,23 @@ input[type="checkbox"]:checked+label {
 }
 
 .rt-label-copy {
-  color: @rt-light-gray;
+  color: @textColor;
   font-size: @rt-fontSizeMed-1;
   font-weight: 600;
 }
 
 .rt-body-copy {
-  color: @rt-light-gray;
+  color: @textColor;
   font-size: @rt-fontSizeMed-2;
 
   @media screen and (min-width: 950px) {
-  max-width: 660px;
+    max-width: 660px;
   }
+}
+
+.emphasis {
+  font-weight: 600;
+  color: @rt-emphasis;
 }
 
 .rt-modal-label-copy {
@@ -1271,7 +1269,7 @@ p.rt-dashboard-copy {
     width: 20%;               /* For old syntax, otherwise collapses. */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
-    flex: 1 100%;                  /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    flex: 1 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
     text-align: center;
     margin:0 auto;
 }
@@ -1283,12 +1281,18 @@ p.rt-dashboard-copy {
     width: 100%;               /* For old syntax, otherwise collapses. */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
-    flex: 0 100%;                  /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    flex: 0 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
     text-align: center;
     -webkit-flex-direction: column;
     flex-direction: column;
     margin:0 auto;
     }
+}
+
+p.rt-helper-blurb{
+     font-size:14px;
+     color: @textColor;
+     min-height: 35px;
 }
 
 p.rt-dashboard-blurb{
@@ -1299,5 +1303,10 @@ p.rt-dashboard-blurb{
 
 .rt-dashboard-icons {
   color: @rt-primary;
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
+  text-decoration:none;
   font-size: 85px;
 }

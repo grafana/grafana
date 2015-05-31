@@ -78,12 +78,14 @@ func NewOAuthService() {
 		if name == "github" {
 			setting.OAuthService.GitHub = true
 			teamIds := sec.Key("team_ids").Ints(",")
+			allowedOrganizations := sec.Key("allowed_organizations").Strings(" ")
 			SocialMap["github"] = &SocialGithub{
-				Config:         &config,
-				allowedDomains: info.AllowedDomains,
-				apiUrl:         info.ApiUrl,
-				allowSignup:    info.AllowSignup,
-				teamIds:        teamIds,
+				Config:               &config,
+				allowedDomains:       info.AllowedDomains,
+				apiUrl:               info.ApiUrl,
+				allowSignup:          info.AllowSignup,
+				teamIds:              teamIds,
+				allowedOrganizations: allowedOrganizations,
 			}
 		}
 
@@ -115,14 +117,19 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 
 type SocialGithub struct {
 	*oauth2.Config
-	allowedDomains []string
-	apiUrl         string
-	allowSignup    bool
-	teamIds        []int
+	allowedDomains       []string
+	allowedOrganizations []string
+	apiUrl               string
+	allowSignup          bool
+	teamIds              []int
 }
 
 var (
 	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
+)
+
+var (
+	ErrMissingOrganizationMembership = errors.New("User not a member of one of the required organizations")
 )
 
 func (s *SocialGithub) Type() int {
@@ -137,26 +144,100 @@ func (s *SocialGithub) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGithub) IsTeamMember(client *http.Client, username string, teamId int) bool {
-	var data struct {
-		Url   string `json:"url"`
-		State string `json:"state"`
+func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
+	if len(s.teamIds) == 0 {
+		return true
 	}
 
-	membershipUrl := fmt.Sprintf("https://api.github.com/teams/%d/memberships/%s", teamId, username)
-	r, err := client.Get(membershipUrl)
+	teamMemberships, err := s.FetchTeamMemberships(client)
 	if err != nil {
 		return false
 	}
 
-	defer r.Body.Close()
+	for _, teamId := range s.teamIds {
+		for _, membershipId := range teamMemberships {
+			if teamId == membershipId {
+				return true
+			}
+		}
+	}
 
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+	return false
+}
+
+func (s *SocialGithub) IsOrganizationMember(client *http.Client) bool {
+	if len(s.allowedOrganizations) == 0 {
+		return true
+	}
+
+	organizations, err := s.FetchOrganizations(client)
+	if err != nil {
 		return false
 	}
 
-	active := data.State == "active"
-	return active
+	for _, allowedOrganization := range s.allowedOrganizations {
+		for _, organization := range organizations {
+			if organization == allowedOrganization {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) {
+	type Record struct {
+		Id int `json:"id"`
+	}
+
+	membershipUrl := fmt.Sprintf("https://api.github.com/user/teams")
+	r, err := client.Get(membershipUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	defer r.Body.Close()
+
+	var records []Record
+
+	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
+		return nil, err
+	}
+
+	var ids = make([]int, len(records))
+	for i, record := range records {
+		ids[i] = record.Id
+	}
+
+	return ids, nil
+}
+
+func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error) {
+	type Record struct {
+		Login string `json:"login"`
+	}
+
+	url := fmt.Sprintf("https://api.github.com/user/orgs")
+	r, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer r.Body.Close()
+
+	var records []Record
+
+	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
+		return nil, err
+	}
+
+	var logins = make([]string, len(records))
+	for i, record := range records {
+		logins[i] = record.Login
+	}
+
+	return logins, nil
 }
 
 func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
@@ -185,17 +266,15 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 		Email:    data.Email,
 	}
 
-	if len(s.teamIds) > 0 {
-		for _, teamId := range s.teamIds {
-			if s.IsTeamMember(client, data.Name, teamId) {
-				return userInfo, nil
-			}
-		}
-
+	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
-	} else {
-		return userInfo, nil
 	}
+
+	if !s.IsOrganizationMember(client) {
+		return nil, ErrMissingOrganizationMembership
+	}
+
+	return userInfo, nil
 }
 
 //   ________                     .__

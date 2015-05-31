@@ -141,12 +141,236 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
 
 The above will delete the dashboard with the specified slug. The slug is the url friendly (unique) version of the dashboard title.
 
+### Gets the home dashboard
+
+`GET /api/dashboards/home`
+
+### Tags for Dashboard
+
+`GET /api/dashboards/tags`
+
+### Dashboard from JSON file
+
+`GET /file/:file`
+
+### Search Dashboards
+
+`GET /api/search/`
+
+Status Codes:
+
+- **query** – Search Query
+- **tags** – Tags to use
+- **starred** – Flag indicating if only starred Dashboards should be returned
+- **tagcloud** - Flag indicating if a tagcloud should be returned
+
+**Example Request**:
+
+        GET /api/search?query=MyDashboard&starred=true&tag=prod HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
 ## Data sources
+
+### Get all datasources
+
+`GET /api/datasources`
+
+### Get a single data sources by Id
+
+`GET /api/datasources/:datasourceId`
 
 ### Create data source
 
-## Organizations
+`PUT /api/datasources`
+
+**Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+        {"message":"Datasource added"}
+
+### Edit an existing data source
+
+`POST /api/datasources`
+
+### Delete an existing data source
+
+`DELETE /api/datasources/:datasourceId`
+
+**Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+       {"message":"Data source deleted"}
+
+### Available data source types
+
+`GET /api/datasources/plugins`
+
+## Data source proxy calls
+
+`GET /api/datasources/proxy/:datasourceId/*`
+
+Proxies all calls to the actual datasource.
+
+## Organisation
+
+### Get current Organisation
+
+`GET /api/org`
+
+### Get all users within the actual organisation
+
+`GET /api/org/users`
+
+### Add a new user to the actual organisation
+
+`POST /api/org/users`
+
+Adds a global user to the actual organisation.
+
+### Updates the given user
+
+`PATCH /api/org/users/:userId`
+
+### Delete user in actual organisation
+
+`DELETE /api/org/users/:userId`
+
+### Get all Users
+
+`GET /api/org/users`
+
+## Organisations
+
+### Search all Organisations
+
+`GET /api/orgs`
+
+### Update Organisation
+
+`PUT /api/orgs/:orgId`
+
+### Get Users in Organisation
+
+`GET /api/orgs/:orgId/users`
+
+### Add User in Organisation
+
+`POST /api/orgs/:orgId/users`
+
+### Update Users in Organisation
+
+`PATCH /api/orgs/:orgId/users/:userId`
+
+### Delete User in Organisation
+
+`DELETE /api/orgs/:orgId/users/:userId`    
 
 ## Users
 
+### Search Users
 
+`GET /api/users`
+
+### Get single user by Id
+
+`GET /api/users/:id`
+
+### User Update
+
+`PUT /api/users/:id`
+
+### Get Organisations for user
+
+`GET /api/users/:id/orgs`
+
+## User
+
+### Change Password
+
+`PUT /api/user/password`
+
+Changes the password for the user
+
+### Actual User
+
+`GET /api/user`
+
+The above will return the current user.
+
+### Switch user context
+
+`POST /api/user/using/:organisationId`
+
+Switch user context to the given organisation.
+
+### Organisations of the actual User 
+
+`GET /api/user/orgs`
+
+The above will return a list of all organisations of the current user.
+
+### Star a dashboard
+
+`POST /api/user/stars/dashboard/:dashboardId`
+
+Stars the given Dashboard for the actual user.
+
+### Unstar a dashboard
+
+`DELETE /api/user/stars/dashboard/:dashboardId`
+
+Deletes the staring of the given Dashboard for the actual user.
+
+## Snapshots
+
+### Create new snapshot
+
+`POST /api/snapshots`
+
+### Get Snapshot by Id
+
+`GET /api/snapshots/:key`
+
+### Delete Snapshot by Id
+
+`DELETE /api/snapshots-delete/:key`
+
+## Frontend Settings
+
+### Get Settings
+
+`GET /api/frontend/settings`
+
+## Login
+
+### Renew session based on remember cookie
+
+`GET /api/login/ping`
+
+## Admin
+
+### Settings
+
+`GET /api/admin/settings`
+
+### Global Users
+
+`POST /api/admin/users`
+
+### Password for User
+
+`PUT /api/admin/users/:id/password`
+
+### Permissions
+
+`PUT /api/admin/users/:id/permissions`
+
+### Delete global User
+
+`DELETE /api/admin/users/:id`

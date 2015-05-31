@@ -1,36 +1,104 @@
-<div class="rt-collector-select pointer" ng-click="show()">
- 	<a class="variable-value-link">
-		<span class="variable-option pointer">
-			{{model.collector_ids.length}} Collectors, {{model.collector_tags.length}} Dynamic Tags
-		</span>
-		<i class="fa fa-caret-down" style="float: right;"></i>
-	</a>
-</div>
+<div class="rt-flex-select-layout">
 
-<div ng-if="selectorOpen" class="variable-value-dropdown" style="overflow: scroll">
-	<div class="search-field-wrapper">
-		<span style="position: relative;">
-			<input  type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
-			ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
-		</span>
+	<!-- TAGS -->
+	<div style="min-height: 40px;">
+		<input id="rt-radio-collector-{{model['monitor_type_id']}}-1" class="rt-radio-custom"  type="radio" ng-model="footprint.value" value="dynamic" ng-click="show()">
+		<label for="rt-radio-collector-{{model['monitor_type_id']}}-1" class="rt-radio-body-label">Dynamic Footprint</label><i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A dynamic footprint is a set of collectors that will update as you add and remove collectors from tag.'" data-original-title="" title=""></i>
+		<div class="editor-option" ng-show="footprint.value == 'dynamic'">
+
+			<div class="rt-collector-select pointer" ng-click="show()">
+			 	<a class="variable-value-link">
+					<span class="pointer">
+						{{selectTagTitle()}}
+					</span>
+					<i class="fa fa-caret-down" style="float: right;"></i>
+				</a>
+			</div>
+			<div ng-if="selectorOpen" class="collector-dropdown variable-value-dropdown">
+				<div class="collector-dropdown-search search-field-wrapper">
+					<input class="collector-dropdown-search-input" type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
+					ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+				</div>
+				<div class="collector-dropdown-container variable-options-container">
+					<div class="collector-dropdown-container-col">
+
+						<!--
+						<div class="collector-dropdown-counter">
+			       			<span class="collector-dropdown-count">1 selected</span>
+			      		</div>
+			      		-->
+						
+						<a class="collector-dropdown-tag" bindonce ng-repeat="option in tags|filter:query" ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
+							<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
+								{{option.text}}
+								<i ng-class="icon" class="tag-icon icon-rt-collector"></i>
+							</span>
+							<span class="collector-dropdown-tag-count">({{collectorCount(option)}})</span>
+						</a>
+					</div>
+					<div class="collector-dropdown-container-col">
+						<p class="collector-dropdown-desc">Tags allow you to create a <strong>dynamic</strong> set of collectors which will update as you add and remove collectors from tag groups.</p>
+					</div>
+				</div>
+				<div class="collector-dropdown-footer">
+				    <p>Preview: {{collectorsWithTags()}}</p>
+				    <button class="neutralCTA" ng-click="update()">Update</button>
+		    		<button class="neutralTextCTA" ng-click="cancel()">Cancel</button>
+			    </div>
+			    <span ng-show="error">{{error}}</span>
+			</div>
+		</div>
+
 	</div>
 
-	<div class="variable-options-container">
-			<a class="variable-option pointer" ng-hide="query.text"  ng-click="selectAll()">
-				<span>all</span>
-			</a>
-			<a class="variable-option pointer" bindonce ng-repeat="option in options|filter:query"
-				ng-class="{'selected': option.selected}" ng-click="optionSelected(option)">
-				<span >{{option.text}}</span>
-				<span class="fa fa-fw variable-option-icon"></span>
-			</a>
-			<a class="variable-option pointer" bindonce ng-repeat="option in tags|filter:query"
-					ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
-				<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
-					{{option.text}}
-					<i ng-class="icon" class="tag-icon icon-rt-collector"></i>
+	<!-- LOCATIONS -->
+	<div style="min-height: 40px;">
+		<input id="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-custom" type="radio" ng-model="footprint.value" value="static"  ng-click="show()">
+		<label for="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-body-label">Static Footprint</label><i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A Static footprint will allow your monitoring footprint to remain the same, only monitoring from the specific individual collectors.'" data-original-title="" title=""></i>
+		
+		<div class="editor-option" ng-show="footprint.value == 'static'">
+
+		<div class="rt-collector-select pointer" ng-click="show()">
+		 	<a class="variable-value-link">
+				<span class="pointer">
+					{{selectIdTitle()}}
 				</span>
-				<span class="fa fa-fw variable-option-icon"></span>
+				<i class="fa fa-caret-down" style="float: right;"></i>
 			</a>
+		</div>
+
+		 <div ng-if="selectorOpen" class="collector-dropdown variable-value-dropdown">
+			<div class="collector-dropdown-search search-field-wrapper">
+				<input class="collector-dropdown-search-input" type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
+				ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
+			</div>
+			<div class="collector-dropdown-container variable-options-container">
+				<div class="collector-dropdown-container-col">
+					<!-- 
+					<div class="collector-dropdown-counter">
+		         		<span class="collector-dropdown-count">1 selected</span>
+		      		</div>
+		      		 -->
+					<a class="collector-dropdown-location" ng-hide="query.text" ng-click="selectAll()">
+						<span>all</span>
+					</a>
+					 <a class="collector-dropdown-location" bindonce ng-repeat="option in ids|filter:query"
+						ng-class="{'selected': option.selected}" ng-click="idSelected(option)">
+						<span >{{option.text}}</span>
+						<span class="fa fa-fw variable-option-icon"></span>
+					</a>
+				</div>
+				<div class="collector-dropdown-container-col">
+					<p class="collector-dropdown-desc">Selecting individual collectors will allow your monitoring footprint to remain <strong>static</strong>, always monitoring these collectors.</p>
+				</div>
+			</div>
+			<div class="collector-dropdown-footer">
+		    <button class="neutralCTA" ng-click="update()">Update</button>
+		    <button class="neutralTextCTA" ng-click="cancel()">Cancel</button>
+		  </div>
+		  <span ng-show="error">{{error}}</span>
+		</div>
 	</div>
+
+
 </div>

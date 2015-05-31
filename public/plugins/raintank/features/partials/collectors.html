@@ -1,6 +1,6 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
 </topnav>
-<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px; min-width: 400px;">
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">Collectors</h1>
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="/collectors/new">New Collector</a></span>
@@ -16,17 +16,19 @@
 				<option value="" label="All Statuses" style="color:black">All Statuses</option>
 				<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
 			</select>
+			<span class="small">Sorted By:</span>
+				<select class="input-medium rt-select-dropdown small" ng-model="sort_field" ng-options="field for field in ['name']" style="">
+			</select>
 		</div>
 
 		<div style="display: block; padding: 45px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">
-					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}} ONLINE</a> |
-					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}} OFFLINE</a>
+					<span class="small">Showing</span>
+					<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}}0 ONLINE</a> |
+					<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}}3 OFFLINE</a>
+					<span class="small"> of 3 total</span>
 			</div>
 			<div class="editor-option" style="float: right;">
-				<span class="small">Sort By:</span>
-				<select class="input-medium rt-select-dropdown small" ng-model="sort_field" ng-options="field for field in ['name']" style="">
-				</select>
 			</div>
 		</div>
 	</div>
@@ -54,7 +56,7 @@
 				<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
 				<ul class="dropdown-menu rt-tag-dropup">
 					<li>
-						<a href="#">
+						<a href="#" bs-tooltip="'Coming Soon'">
 							<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
 							Dashboard
 						</a>

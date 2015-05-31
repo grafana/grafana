@@ -13,7 +13,7 @@ func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	reqAccountAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	regOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	bind := binding.Bind
 
 	// not logged in views
@@ -54,34 +54,57 @@ func Register(r *macaron.Macaron) {
 
 	// authed api
 	r.Group("/api", func() {
-		// user
+
+		// user (signed in)
 		r.Group("/user", func() {
-			r.Get("/", GetUser)
-			r.Put("/", bind(m.UpdateUserCommand{}), UpdateUser)
-			r.Post("/using/:id", UserSetUsingOrg)
-			r.Get("/orgs", GetUserOrgList)
-			r.Post("/stars/dashboard/:id", StarDashboard)
-			r.Delete("/stars/dashboard/:id", UnstarDashboard)
-			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
+			r.Get("/", wrap(GetSignedInUser))
+			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
+			r.Post("/using/:id", wrap(UserSetUsingOrg))
+			r.Get("/orgs", wrap(GetSignedInUserOrgList))
+			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
+			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 		})
 
-		// Org
-		r.Get("/org", GetOrg)
+		// users (admin permission required)
+		r.Group("/users", func() {
+			r.Get("/", wrap(SearchUsers))
+			r.Get("/:id", wrap(GetUserById))
+			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
+		}, reqGrafanaAdmin)
+
+		// current org
 		r.Group("/org", func() {
-			r.Post("/", bind(m.CreateOrgCommand{}), CreateOrg)
-			r.Put("/", bind(m.UpdateOrgCommand{}), UpdateOrg)
-			r.Post("/users", bind(m.AddOrgUserCommand{}), AddOrgUser)
-			r.Get("/users", GetOrgUsers)
-			r.Patch("/users/:id", bind(m.UpdateOrgUserCommand{}), UpdateOrgUser)
-			r.Delete("/users/:id", RemoveOrgUser)
-		}, reqAccountAdmin)
+			r.Get("/", wrap(GetOrgCurrent))
+			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrgCurrent))
+			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
+			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
+			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
+		}, regOrgAdmin)
+
+		// create new org
+		r.Post("/orgs", bind(m.CreateOrgCommand{}), wrap(CreateOrg))
+
+		// search all orgs
+		r.Get("/orgs", reqGrafanaAdmin, wrap(SearchOrgs))
+
+		// orgs (admin routes)
+		r.Group("/orgs/:orgId", func() {
+			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
+			r.Get("/users", wrap(GetOrgUsers))
+			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))
+			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
+			r.Delete("/users/:userId", wrap(RemoveOrgUser))
+		}, reqGrafanaAdmin)
 
 		// auth api keys
 		r.Group("/auth/keys", func() {
-			r.Get("/", GetApiKeys)
-			r.Post("/", bind(m.AddApiKeyCommand{}), AddApiKey)
-			r.Delete("/:id", DeleteApiKey)
-		}, reqAccountAdmin)
+			r.Get("/", wrap(GetApiKeys))
+			r.Post("/", bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
+			r.Delete("/:id", wrap(DeleteApiKey))
+		}, regOrgAdmin)
 
 		// Data sources
 		r.Group("/datasources", func() {
@@ -92,10 +115,11 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)
-		}, reqAccountAdmin)
+		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
@@ -115,39 +139,39 @@ func Register(r *macaron.Macaron) {
 		// collectors
 		r.Group("/collectors", func() {
 			r.Combo("/").
-				Get(bind(m.GetCollectorsQuery{}), GetCollectors).
-				Put(reqEditorRole, bind(m.AddCollectorCommand{}), AddCollector).
-				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), UpdateCollector)
-			r.Get("/:id/health", getCollectorHealthById)
-			r.Get("/:id", GetCollectorById)
-			r.Delete("/:id", reqEditorRole, DeleteCollector)
+				Get(bind(m.GetCollectorsQuery{}), wrap(GetCollectors)).
+				Put(reqEditorRole, bind(m.AddCollectorCommand{}), wrap(AddCollector)).
+				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), wrap(UpdateCollector))
+			r.Get("/:id/health", wrap(getCollectorHealthById))
+			r.Get("/:id", wrap(GetCollectorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteCollector))
 		})
 
 		// Monitors
 		r.Group("/monitors", func() {
 			r.Combo("/").
-				Get(bind(m.GetMonitorsQuery{}), GetMonitors).
-				Put(reqEditorRole, bind(m.AddMonitorCommand{}), AddMonitor).
-				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), UpdateMonitor)
-			r.Get("/:id/health", getMonitorHealthById)
-			r.Get("/:id", GetMonitorById)
-			r.Delete("/:id", reqEditorRole, DeleteMonitor)
+				Get(bind(m.GetMonitorsQuery{}), wrap(GetMonitors)).
+				Put(reqEditorRole, bind(m.AddMonitorCommand{}), wrap(AddMonitor)).
+				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), wrap(UpdateMonitor))
+			r.Get("/:id/health", wrap(getMonitorHealthById))
+			r.Get("/:id", wrap(GetMonitorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteMonitor))
 		})
 		// endpoints
 		r.Group("/endpoints", func() {
-			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), GetEndpoints).
-				Put(reqEditorRole, bind(m.AddEndpointCommand{}), AddEndpoint).
-				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), UpdateEndpoint)
-			r.Get("/:id/health", getEndpointHealthById)
-			r.Get("/:id", GetEndpointById)
-			r.Delete("/:id", reqEditorRole, DeleteEndpoint)
-			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), DiscoverEndpoint)
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), wrap(GetEndpoints)).
+				Put(reqEditorRole, bind(m.AddEndpointCommand{}), wrap(AddEndpoint)).
+				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), wrap(UpdateEndpoint))
+			r.Get("/:id/health", wrap(getEndpointHealthById))
+			r.Get("/:id", wrap(GetEndpointById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteEndpoint))
+			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), wrap(DiscoverEndpoint))
 		})
 
-		r.Get("/monitor_types", GetMonitorTypes)
+		r.Get("/monitor_types", wrap(GetMonitorTypes))
 
 		//Events
-		r.Get("/events", bind(m.GetEventsQuery{}), GetEvents)
+		r.Get("/events", bind(m.GetEventsQuery{}), wrap(GetEvents))
 
 		//Get Graph data from Graphite.
 		r.Any("/graphite/*", GraphiteProxy)
@@ -157,10 +181,7 @@ func Register(r *macaron.Macaron) {
 	// admin api
 	r.Group("/api/admin", func() {
 		r.Get("/settings", AdminGetSettings)
-		r.Get("/users", AdminSearchUsers)
-		r.Get("/users/:id", AdminGetUser)
 		r.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		r.Put("/users/:id/details", bind(dtos.AdminUpdateUserForm{}), AdminUpdateUser)
 		r.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
 		r.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		r.Delete("/users/:id", AdminDeleteUser)
@@ -171,5 +192,5 @@ func Register(r *macaron.Macaron) {
 
 	r.Any("/socket.io/", SocketIO)
 
-	r.NotFound(NotFound)
+	r.NotFound(NotFoundHandler)
 }

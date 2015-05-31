@@ -9,36 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminSearchUsers(c *middleware.Context) {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
-	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to fetch users", err)
-		return
-	}
-
-	c.JSON(200, query.Result)
-}
-
-func AdminGetUser(c *middleware.Context) {
-	userId := c.ParamsInt64(":id")
-
-	query := m.GetUserByIdQuery{Id: userId}
-
-	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to fetch user", err)
-		return
-	}
-
-	result := dtos.AdminUserListItem{
-		Name:           query.Result.Name,
-		Email:          query.Result.Email,
-		Login:          query.Result.Login,
-		IsGrafanaAdmin: query.Result.IsAdmin,
-	}
-
-	c.JSON(200, result)
-}
-
 func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 	cmd := m.CreateUserCommand{
 		Login:    form.Login,
@@ -68,32 +38,6 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 	metrics.M_Api_Admin_User_Create.Inc(1)
 
 	c.JsonOK("User created")
-}
-
-func AdminUpdateUser(c *middleware.Context, form dtos.AdminUpdateUserForm) {
-	userId := c.ParamsInt64(":id")
-
-	cmd := m.UpdateUserCommand{
-		UserId: userId,
-		Login:  form.Login,
-		Email:  form.Email,
-		Name:   form.Name,
-	}
-
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			c.JsonApiErr(400, "Validation error, need specify either username or email", nil)
-			return
-		}
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "failed to update user", err)
-		return
-	}
-
-	c.JsonOK("User updated")
 }
 
 func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPasswordForm) {

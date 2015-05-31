@@ -30,13 +30,13 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 2;
     font-size: @rt-fontSizeLarge;
     line-height: @baseLineHeight;
-    color: @white;
-    border: solid 1px @grayDark;
+    color: @textColor;
+    border: solid 1px @inputBorder;
+    background-color: @inputBackground;
     .border-radius(2px);
     vertical-align: middle;
   }
 }
-
 
 .rt-label-override {
   color: lighten(@textColor, 10%);
@@ -46,7 +46,6 @@ input[type="color"] {
   label {
     color: @rt-light-gray;
   }
-
   select, 
   textarea, 
   input[type="text"] {
@@ -56,14 +55,46 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 4;
     font-size: @rt-fontSizeMed-1;
     line-height: @baseLineHeight;
-    color: @white;
-    border: solid 1px @grayDark;
+    color: @textColor;
+    border: solid 1px @inputBorder;
     .border-radius(2px);
     vertical-align: middle;
   }
 }
 
-.rt-modal-input-styles{
+
+  input[type="number"].natural-language-form {
+  font-size: @rt-fontSizeMed-1;
+  width: 30px; 
+  height: auto; 
+  margin: -6px -5px 0 5px;
+}
+
+.rt-textarea-row {
+  width: 450px;
+  min-height: 50px;
+}
+
+.rt-flex-form-block {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.rt-flex-form-field {
+  margin-top: 15px;
+  margin-right: 25px;
+}
+
+.rt-input-long-text {
+  width: 250px;
+}
+
+.rt-input-short-text {
+  width: 50px;
+}
+
+.rt-modal-input-styles {
   label {
     color: @grayDark;
   }
@@ -77,7 +108,7 @@ input[type="color"] {
     margin-bottom: @baseLineHeight / 4;
     font-size: @rt-fontSizeMed-1;
     line-height: @baseLineHeight;
-    color: @white;
+    color: @textColor;
     border: solid 1px @grayDark;
     .border-radius(2px);
     vertical-align: middle;
@@ -98,6 +129,25 @@ input[type="color"] {
   flex-wrap: wrap;
   align-items: flex-end;
 }
+
+
+
+// Layout
+// ==========================================================================
+
+.rt-form-row {
+  margin: 20px 0;
+  max-width: 450px;
+}
+
+.rt-form-group {
+  display: inline-block;
+}
+
+.rt-form-row-long {
+  max-width: 800px;
+}
+
 
 // Labels
 // ==========================================================================

@@ -90,6 +90,12 @@ define([
         ctx.service.setTime({from: '2011-01-01', to: 'now' });
         expect(_dashboard.refresh).to.be('10s');
       });
+
+      it('should keep refresh after relative time range is changed and now delay exists', function() {
+        _dashboard.refresh = '10s';
+        ctx.service.setTime({from: 'now-1h', to: 'now-10s' });
+        expect(_dashboard.refresh).to.be('10s');
+      });
     });
 
   });

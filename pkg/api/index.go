@@ -59,7 +59,7 @@ func Index(c *middleware.Context) {
 	c.HTML(200, "index")
 }
 
-func NotFound(c *middleware.Context) {
+func NotFoundHandler(c *middleware.Context) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

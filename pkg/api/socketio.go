@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"reflect"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -73,9 +75,36 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	req.ParseForm()
 	keyString := req.Form.Get("apiKey")
 	name := req.Form.Get("name")
+
 	if name == "" {
 		return nil, errors.New("collector name not provided.")
 	}
+
+	versionStr := req.Form.Get("version")
+	if versionStr == "" {
+		return nil, errors.New("version number not provided.")
+	}
+	versionParts := strings.SplitN(versionStr, ".", 2)
+	if len(versionParts) != 2 {
+		return nil, errors.New("could not parse version number")
+	}
+	versionMajor, err := strconv.ParseInt(versionParts[0], 10, 64)
+	if err != nil {
+		return nil, errors.New("could not parse version number")
+	}
+	versionMinor, err := strconv.ParseFloat(versionParts[1], 64)
+	if err != nil {
+		return nil, errors.New("could not parse version number.")
+	}
+
+	//--------- set required version of collector.------------//
+	//
+	if versionMajor < 0 || versionMinor < 1.1 {
+		return nil, errors.New("invalid collector version. Please upgrade.")
+	}
+	//
+	//--------- set required version of collector.------------//
+	log.Info(fmt.Sprintf("collector with version %d.%f connected", versionMajor, versionMinor))
 	if keyString != "" {
 		// base64 decode key
 		decoded, err := apikeygen.Decode(keyString)
@@ -150,6 +179,8 @@ func init() {
 		if err != nil {
 			if err == m.ErrInvalidApiKey {
 				log.Info("collector failed to authenticate.")
+			} else if err.Error() == "invalid collector version. Please upgrade." {
+				log.Info("collector is wrong version")
 			} else {
 				log.Error(0, "Failed to initialize collector.", err)
 			}
@@ -369,6 +400,6 @@ func updateState(event *m.EventDefinition) {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		log.Error(0, "faile to update MonitorcollectorState", err)
+		log.Error(0, "failed to update MonitorcollectorState", err)
 	}
 }

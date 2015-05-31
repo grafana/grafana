@@ -108,7 +108,7 @@ function (angular, _, $) {
           function addElementsAndCompile() {
             $funcLink.appendTo(elem);
 
-            var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + $scope.target.column + '</a>');
+            var $paramLink = $('<a ng-click="" class="graphite-func-param-link">value</a>');
             var $input = $(paramTemplate);
 
             $paramLink.appendTo(elem);

@@ -714,7 +714,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Frequency:      cmd.Frequency,
 		}
 
-
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {
 			return err

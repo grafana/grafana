@@ -1,9 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
-	"encoding/json"
 )
 
 // Typed errors
@@ -85,7 +85,7 @@ type MonitorHealthSettingDTO struct {
 // implement the go-xorm/core.Conversion interface
 func (e *MonitorHealthSettingDTO) FromDB(data []byte) error {
 	return json.Unmarshal(data, e)
-} 
+}
 
 func (e *MonitorHealthSettingDTO) ToDB() ([]byte, error) {
 	return json.Marshal(e)

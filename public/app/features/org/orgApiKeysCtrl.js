@@ -35,6 +35,8 @@ function (angular) {
           src: './app/features/org/partials/apikeyModal.html',
           scope: modalScope
         });
+
+        $scope.getTokens();
       });
     };
 

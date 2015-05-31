@@ -101,18 +101,18 @@ function (angular, _) {
       }
       if (duration < 60000) {
         var secs = Math.floor(duration/1000);
-        return secs + " seconds ago";
+        return "for " + secs + " seconds";
       }
       if (duration < 3600000) {
         var mins = Math.floor(duration/1000/60);
-        return mins + " minutes ago";
+        return "for " + mins + " minutes";
       }
       if (duration < 86400000) {
         var hours = Math.floor(duration/1000/60/60);
-        return hours + " hours ago";
+        return "for " + hours + " hours";
       }
       var days = Math.floor(duration/1000/60/60/24);
-      return days + " days ago";
+      return "for " + days + " days";
     }
 
     $scope.setEndpoint = function(id) {

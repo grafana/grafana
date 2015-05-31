@@ -21,11 +21,11 @@
 		<a ng-click="refresh()">
 			<span class="small">As of {{refreshTime | date:'shortTime'}}</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
 		</a>
-	</div>		
+	</div>
 </topnav>
 
 <div style="margin: 10px; position: relative; display: block; max-width: 1000px; min-width:400px;">
-	
+
 	<!-- page title -->
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{endpoint.name}}</h1>
@@ -40,7 +40,7 @@
 	<div class="rt-tabs">
 		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
 	</div>
-</div>	
+</div>
 
 <form name="endpointForm">
 	<div class="detailContainer">
@@ -63,17 +63,17 @@
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
  						<div class="health">
-							<img src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" width="40px" height="40px">
-						</div> 
+							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" style="width: 40px; height: 40px;">
+						</div>
 
 						<div class="check">
-							<span class="checkType">Ping:</span> 
+							<span class="checkType">Ping:</span>
 								<div ng-show="getMonitorByTypeName('Ping').enabled">
-									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span> 
+									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
 									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
 								</div>
 								<div ng-show="!getMonitorByTypeName('Ping').enabled">
-									<a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">Not enabled, configure now.</a> 
+									<a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">Not enabled, configure now.</a>
 								</div>
 						</div>
 
@@ -95,11 +95,11 @@
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
-							<img src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" width="40px" height="40px">
-						</div> 
+							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" style="width: 40px; height: 40px;">
+						</div>
 
 						<div class="check">
-							<span class="checkType">DNS:</span> 
+							<span class="checkType">DNS:</span>
 							<div ng-show="getMonitorByTypeName('DNS').enabled">
 								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
@@ -108,7 +108,7 @@
 								<a href="endpoints/edit/{{endpoint.id}}#dns" class="freqMsg disabled">Not enabled, configure now.</a>
                                                         </div>
 						</div>
-						
+
 						<div class="status" ng-show="getMonitorByTypeName('DNS').enabled">
 							<div class="frequency">
 								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('DNS').id].length}}<span class="freqMsg"> collectors:</span>
@@ -127,12 +127,12 @@
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
-							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" width="40px" height="40px">
-						</div> 
+							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
+						</div>
 
 
 						<div class="check">
-							<span class="checkType">HTTP:</span> 
+							<span class="checkType">HTTP:</span>
                 					<div ng-show="getMonitorByTypeName('HTTP').enabled">
 								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
@@ -141,7 +141,7 @@
                					<a href="endpoints/edit/{{endpoint.id}}#http" class="freqMsg disabled">Not enabled, configure now.</a>
               				</div>
 						</div>
-						
+
 						<div class="status" ng-show="getMonitorByTypeName('HTTP').enabled">
 							<div class="frequency">
 								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTP').id].length}}<span class="freqMsg"> collectors</span>:
@@ -160,12 +160,12 @@
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
-							<img src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" width="40px" height="40px">
-						</div> 
+							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" style="width: 40px; height: 40px;">
+						</div>
 
 
 						<div class="check">
-							<span class="checkType">HTTPS:</span> 
+							<span class="checkType">HTTPS:</span>
 							<div ng-show="getMonitorByTypeName('HTTPS').enabled")>
 								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
 								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
@@ -174,10 +174,10 @@
 								<a href="endpoints/edit/{{endpoint.id}}#https" class="freqMsg disabled">Not enabled, configure now.</a>
 							</div>
 						</div>
-						
+
 						<div class="status" ng-show="getMonitorByTypeName('HTTPS').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTPS').id].length}}<span class="freqMsg"> collectors:</span> 
+								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTPS').id].length}}<span class="freqMsg"> collectors:</span>
 							</div>
 							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
 						</div>
@@ -188,5 +188,16 @@
 				</div>
 			</div>
 		</div>
-	</div>	
+
+		<!-- Event Panel TBD
+
+		<div class="detailFull" style="display: inline-flex; margin-top: 10px; align-items: center; justify-content: center;">
+			<div style="display: inline-block; background: #1F1F1F; background-image:url(/img/loading-pulse.svg); background-repeat: no-repeat; background-position:center; padding: 0px; line-height: 0;">
+				<iframe src="http://128.199.88.198/dashboard-solo/db/events-sample?panelId=12&fullscreen&from=now-30d&to=now&var-collector={{collector.slug}}" width="1000" height="275" frameborder="0"></iframe>
+			</div>
+		</div>
+		
+		End Event Panel -->
+
+	</div>
 </form>

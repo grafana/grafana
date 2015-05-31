@@ -7,6 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"net"
 	"net/http"
+	"os/exec"
 	"strings"
 )
 
@@ -55,9 +56,12 @@ func DiscoverEndpoint(cmd *m.EndpointDiscoveryCommand) error {
 }
 
 func DiscoverPing(domain string) (*m.SuggestedMonitor, error) {
-
 	fmt.Println("PingHost: ", domain)
-	//exec("ping", "-q", "-c 2", host)
+	err := exec.Command("ping", "-c 3", "-W 1", "-q", domain).Run()
+	if err != nil {
+		return nil, errors.New("host unreachable")
+	}
+
 	settings := []m.MonitorSettingDTO{
 		m.MonitorSettingDTO{Variable: "hostname", Value: domain},
 	}

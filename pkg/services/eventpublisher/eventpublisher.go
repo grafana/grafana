@@ -111,25 +111,27 @@ func Setup() error {
 }
 
 func Publish(routingKey string, msgString []byte) {
-	err := channel.Publish(
-		exchange,   //exchange
-		routingKey, // routing key
-		false,      // mandatory
-		false,      // immediate
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        msgString,
-		},
-	)
-	if err != nil {
+	for {
+		err := channel.Publish(
+			exchange,   //exchange
+			routingKey, // routing key
+			false,      // mandatory
+			false,      // immediate
+			amqp.Publishing{
+				ContentType: "application/json",
+				Body:        msgString,
+			},
+		)
+		if err == nil {
+			return
+		}
+
 		// failures are most likely because the connection was lost.
 		// the connection will be re-established, so just keep
 		// retrying every 2seconds until we successfully publish.
 		time.Sleep(2 * time.Second)
 		fmt.Println("publish failed, retrying.")
-		Publish(routingKey, msgString)
 	}
-	return
 }
 
 func eventListener(event interface{}) error {

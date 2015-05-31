@@ -7,21 +7,20 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/endpointdiscovery"
 )
 
-func GetEndpointById(c *middleware.Context) {
+func GetEndpointById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetEndpointByIdQuery{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(404, "Endpoint not found", nil)
-		return
+		return ApiError(404, "Endpoint not found", nil)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func getEndpointHealthById(c *middleware.Context) {
+func getEndpointHealthById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 	query := m.GetEndpointHealthByIdQuery{
 		Id:    id,
@@ -29,63 +28,57 @@ func getEndpointHealthById(c *middleware.Context) {
 	}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to query endpoint health", err)
-		return
+		return ApiError(500, "Failed to query endpoint health", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func GetEndpoints(c *middleware.Context, query m.GetEndpointsQuery) {
+func GetEndpoints(c *middleware.Context, query m.GetEndpointsQuery) Response {
 	query.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query endpoints", err)
-		return
+		return ApiError(500, "Failed to query endpoints", err)
 	}
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func DeleteEndpoint(c *middleware.Context) {
+func DeleteEndpoint(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteEndpointCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete endpoint", err)
-		return
+		return ApiError(500, "Failed to delete endpoint", err)
 	}
 
-	c.JsonOK("endpoint deleted")
+	return ApiSuccess("endpoint deleted")
 }
 
-func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) {
+func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) Response {
 	cmd.OrgId = c.OrgId
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to add endpoint", err)
-		return
+		return ApiError(500, "Failed to add endpoint", err)
 	}
 
-	c.JSON(200, cmd.Result)
+	return Json(200, cmd.Result)
 }
 
-func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) {
+func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to update endpoint", err)
-		return
+		return ApiError(500, "Failed to update endpoint", err)
 	}
 
-	c.JsonOK("Endpoint updated")
+	return ApiSuccess("Endpoint updated")
 }
 
-func DiscoverEndpoint(c *middleware.Context, cmd m.EndpointDiscoveryCommand) {
+func DiscoverEndpoint(c *middleware.Context, cmd m.EndpointDiscoveryCommand) Response {
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to discover endpoint", err)
-		return
+		return ApiError(500, "Failed to discover endpoint", err)
 	}
-	c.JSON(200, cmd.Result)
+	return Json(200, cmd.Result)
 }

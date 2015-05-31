@@ -7,17 +7,16 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetCollectors(c *middleware.Context, query m.GetCollectorsQuery) {
+func GetCollectors(c *middleware.Context, query m.GetCollectorsQuery) Response {
 	query.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query collectors", err)
-		return
+		return ApiError(500, "Failed to query collectors", err)
 	}
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func getCollectorHealthById(c *middleware.Context) {
+func getCollectorHealthById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 	query := m.GetCollectorHealthByIdQuery{
 		Id:    id,
@@ -25,65 +24,59 @@ func getCollectorHealthById(c *middleware.Context) {
 	}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to query collector health", err)
-		return
+		return ApiError(500, "Failed to query collector health", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func GetCollectorById(c *middleware.Context) {
+func GetCollectorById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetCollectorByIdQuery{Id: id, OrgId: c.OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(404, "Collector not found", nil)
-		return
+		return ApiError(404, "Collector not found", nil)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func DeleteCollector(c *middleware.Context) {
+func DeleteCollector(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteCollectorCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete collector", err)
-		return
+		return ApiError(500, "Failed to delete collector", err)
 	}
 
-	c.JsonOK("collector deleted")
+	return ApiSuccess("collector deleted")
 }
 
-func AddCollector(c *middleware.Context, cmd m.AddCollectorCommand) {
+func AddCollector(c *middleware.Context, cmd m.AddCollectorCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if cmd.Public {
 		if !c.IsGrafanaAdmin {
-			c.JsonApiErr(400, "Only admins can make public collectors", nil)
-			return
+			return ApiError(400, "Only admins can make public collectors", nil)
 		}
 	}
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to add collector", err)
-		return
+		return ApiError(500, "Failed to add collector", err)
 	}
 
-	c.JSON(200, cmd.Result)
+	return Json(200, cmd.Result)
 }
 
-func UpdateCollector(c *middleware.Context, cmd m.UpdateCollectorCommand) {
+func UpdateCollector(c *middleware.Context, cmd m.UpdateCollectorCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to update collector", err)
-		return
+		return ApiError(500, "Failed to update collector", err)
 	}
 
-	c.JsonOK("Collector updated")
+	return ApiSuccess("Collector updated")
 }
