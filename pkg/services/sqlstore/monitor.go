@@ -707,17 +707,18 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		}
 
 		mon := &m.Monitor{
-			Id:            cmd.Id,
-			EndpointId:    cmd.EndpointId,
-			OrgId:         cmd.OrgId,
-			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        cmd.EndpointId % cmd.Frequency,
-			Settings:      cmd.Settings,
-			Updated:       time.Now(),
-			Enabled:       cmd.Enabled,
-			State:         lastState.State,
-			StateChange:   lastState.StateChange,
-			Frequency:     cmd.Frequency,
+			Id:             cmd.Id,
+			EndpointId:     cmd.EndpointId,
+			OrgId:          cmd.OrgId,
+			MonitorTypeId:  cmd.MonitorTypeId,
+			Offset:         cmd.EndpointId % cmd.Frequency,
+			Settings:       cmd.Settings,
+			HealthSettings: cmd.HealthSettings,
+			Updated:        time.Now(),
+			Enabled:        cmd.Enabled,
+			State:          lastState.State,
+			StateChange:    lastState.StateChange,
+			Frequency:      cmd.Frequency,
 		}
 
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"

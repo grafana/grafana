@@ -134,16 +134,17 @@ type AddMonitorCommand struct {
 }
 
 type UpdateMonitorCommand struct {
-	Id            int64                `json:"id" binding:"required"`
-	EndpointId    int64                `json:"endpoint_id" binding:"required"`
-	OrgId         int64                `json:"-"`
-	MonitorTypeId int64                `json:"monitor_type_id" binding:"required"`
-	CollectorIds  []int64              `json:"collector_ids"`
-	CollectorTags []string             `json:"collector_tags"`
-	Settings      []*MonitorSettingDTO `json:"settings"`
-	Frequency     int64                `json:"frequency"`
-	Enabled       bool                 `json:"enabled"`
-	Offset        int64                `json:"-"`
+	Id             int64                    `json:"id" binding:"required"`
+	EndpointId     int64                    `json:"endpoint_id" binding:"required"`
+	OrgId          int64                    `json:"-"`
+	MonitorTypeId  int64                    `json:"monitor_type_id" binding:"required"`
+	CollectorIds   []int64                  `json:"collector_ids"`
+	CollectorTags  []string                 `json:"collector_tags"`
+	Settings       []*MonitorSettingDTO     `json:"settings"`
+	HealthSettings *MonitorHealthSettingDTO `json:"health_settings"`
+	Frequency      int64                    `json:"frequency"`
+	Enabled        bool                     `json:"enabled"`
+	Offset         int64                    `json:"-"`
 }
 
 type DeleteMonitorCommand struct {
