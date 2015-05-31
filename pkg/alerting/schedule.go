@@ -18,7 +18,7 @@ type Schedule struct {
 	Definition CheckDef
 }
 
-func getSchedules(lastPointAt int64) ([]Schedule, error) {
+func getSchedules(lastPointAt int64) ([]*Schedule, error) {
 
 	query := m.GetMonitorsQuery{
 		IsGrafanaAdmin: true,
@@ -29,22 +29,27 @@ func getSchedules(lastPointAt int64) ([]Schedule, error) {
 		return nil, err
 	}
 
-	schedules := make([]Schedule, 0)
+	schedules := make([]*Schedule, 0)
 	for _, monitor := range query.Result {
-		if monitor.HealthSettings == nil {
-			continue
+		sched := buildScheduleForMonitor(monitor)
+		if sched != nil {
+			schedules = append(schedules, sched)
 		}
-		schedules = append(schedules, buildScheduleForMonitor(monitor))
 	}
 
 	return schedules, nil
 }
 
-func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
+func buildScheduleForMonitor(monitor *m.MonitorDTO) *Schedule {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
+	if monitor.HealthSettings == nil {
+		return nil
+	}
+
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
-		panic(fmt.Sprintf("bad monitor definition given: %#v", monitor))
+		fmt.Printf("bad monitor definition given: %#v", monitor)
+		return nil
 	}
 
 	type Settings struct {
@@ -87,7 +92,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) Schedule {
 	if err != nil {
 		panic(err)
 	}
-	s := Schedule{
+	s := &Schedule{
 		MonitorId: monitor.Id,
 		OrgId:     monitor.OrgId,
 		Freq:      monitor.Frequency,
