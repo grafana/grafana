@@ -237,6 +237,9 @@ func (j JsonHelper) Get(n string) interface{} {
 				root, ok = j[n]
 				if !ok {
 					return nil
+				} else {
+					//Warnf("returning root %T %#v", root, root)
+					return root
 				}
 			} else {
 				return nil
@@ -336,22 +339,22 @@ func (j JsonHelper) String(n string) string {
 }
 func (j JsonHelper) Strings(n string) []string {
 	if v := j.Get(n); v != nil {
-		//Debug(n, " ", v)
-		switch v.(type) {
+		//Debugf("Strings(%s) =>  %T %#v", n, v, v)
+		switch val := v.(type) {
 		case string:
-			return strings.Split(v.(string), ",")
+			return strings.Split(val, ",")
 		case []string:
 			//Debug("type []string")
-			return v.([]string)
+			return val
 		case []interface{}:
 			//Debug("Kind = []interface{} n=", n, "  v=", v)
 			sva := make([]string, 0)
-			for _, av := range v.([]interface{}) {
-				switch av.(type) {
+			for _, av := range val {
+				switch aval := av.(type) {
 				case string:
-					sva = append(sva, av.(string))
+					sva = append(sva, aval)
 				default:
-					//Debug("Kind ? ", av)
+					//Warnf("Kind ? %T v=%v", aval, aval)
 				}
 			}
 			return sva
@@ -438,6 +441,16 @@ func (j JsonHelper) Uint64(n string) uint64 {
 		return CoerceUintShort(v)
 	}
 	return 0
+}
+
+func (j JsonHelper) Uint64Safe(n string) (uint64, bool) {
+	v := j.Get(n)
+	if v != nil {
+		if uv, err := CoerceUint(v); err == nil {
+			return uv, true
+		}
+	}
+	return 0, false
 }
 
 func (j JsonHelper) BoolSafe(n string) (val bool, ok bool) {

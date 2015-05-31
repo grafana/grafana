@@ -1,4 +1,0 @@
-lookup l {
-	entry a=1,b=2 { }
-	entry b=2,a=1 { }
-}

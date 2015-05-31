@@ -1,25 +1,7 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.4.2",
-	"Packages": [
-		"./pkg/..."
-	],
 	"Deps": [
-		{
-			"ImportPath": "bosun.org/_third_party/code.google.com/p/draw2d/draw2d",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/code.google.com/p/freetype-go/freetype",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/code.google.com/p/graphics-go/graphics",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/GaryBoone/GoStats/stats",
 			"Comment": "20150506172827",
@@ -27,21 +9,6 @@
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/MiniProfiler/go/miniprofiler",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/github.com/ajstarks/svgo",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/github.com/boltdb/bolt",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/github.com/bradfitz/slice",
 			"Comment": "20150506172827",
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
@@ -56,42 +23,7 @@
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
-			"ImportPath": "bosun.org/_third_party/github.com/jordan-wright/email",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
 			"ImportPath": "bosun.org/_third_party/github.com/olivere/elastic",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/github.com/tatsushid/go-fastping",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/github.com/vdobler/chart",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/golang.org/x/net/icmp",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/golang.org/x/net/internal/iana",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/golang.org/x/net/ipv4",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/_third_party/golang.org/x/net/ipv6",
 			"Comment": "20150506172827",
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
@@ -101,17 +33,7 @@
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
-			"ImportPath": "bosun.org/cmd/bosun/conf",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
 			"ImportPath": "bosun.org/cmd/bosun/expr",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/cmd/bosun/sched",
 			"Comment": "20150506172827",
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
@@ -121,17 +43,7 @@
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
-			"ImportPath": "bosun.org/collect",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
 			"ImportPath": "bosun.org/graphite",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/metadata",
 			"Comment": "20150506172827",
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
@@ -141,14 +53,8 @@
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
-			"ImportPath": "bosun.org/slog",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
-		},
-		{
-			"ImportPath": "bosun.org/util",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"ImportPath": "github.com/Dieterbe/statsd-go",
+			"Rev": "6f55e9b6e154104c5aefbdbb8ea37d82e1b31f4b"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -159,16 +65,20 @@
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
+			"ImportPath": "github.com/araddon/gou",
+			"Rev": "cf9cf25f52be174c5878920a8021bd224cbe32c7"
+		},
+		{
+			"ImportPath": "github.com/bitly/go-hostpool",
+			"Rev": "d0e59c22a56e8dadfed24f74f452cea5a52722d2"
+		},
+		{
 			"ImportPath": "github.com/dalu/slug",
 			"Rev": "6dbd13912e9be466e2c1de349a2c7d1466c97e07"
 		},
 		{
 			"ImportPath": "github.com/dalu/unidecode",
 			"Rev": "339814d47f3e32a6f7036a0a4c56ed9b373dd755"
-		},
-		{
-			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Rev": "3e6e67c4dcea3ac2f25fd4731abc0e1deaf36216"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -185,13 +95,21 @@
 			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
 		},
 		{
-			"ImportPath": "github.com/jtolds/gls",
-			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
+			"ImportPath": "github.com/googollee/go-engine.io",
+			"Rev": "597faf3df88a01780a5881fafbcbccd9d5c3fab0"
 		},
 		{
 			"ImportPath": "github.com/googollee/go-socket.io",
 			"Comment": "0.9.x-23-g31886c5",
 			"Rev": "31886c5636253259f3c028ee398e780d2b1d1696"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "1551221275a7bd42978745a376b2531f791d88f3"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/golang-lru",
+			"Rev": "995efda3e073b6946b175ed93901d729ad47466a"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -214,16 +132,6 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/assertions",
-			"Comment": "1.5.0-380-g4727d76",
-			"Rev": "4727d767ce8a81811c40eedc2a836c85aebb4d09"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-356-gfbc0a1c",
-			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",

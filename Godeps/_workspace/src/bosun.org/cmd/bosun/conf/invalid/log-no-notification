@@ -1,4 +1,0 @@
-alert a {
-	crit = 1
-	log = true
-}

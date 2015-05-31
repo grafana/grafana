@@ -1,6 +1,0 @@
-tsdbHost = test
-
-alert broken {
-	crit = avg(q("avg:o{a=b,c=d}", "", ""))
-	warn = avg(q("avg:o{c=d}", "", ""))
-}

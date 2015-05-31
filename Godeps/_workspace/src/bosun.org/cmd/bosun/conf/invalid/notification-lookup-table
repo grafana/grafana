@@ -1,3 +1,0 @@
-alert nc 
-	critNotification = lookup("l", "v")
-}
