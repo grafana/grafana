@@ -3,9 +3,9 @@ package alerting
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
-
 	"strings"
 
 	"github.com/hashicorp/golang-lru"
@@ -49,9 +49,13 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 }
 
 func GraphiteAuthContextReturner(org_id int64) graphite.Context {
+	url, err := url.Parse(setting.GraphiteUrl)
+	if err != nil {
+		panic("could not parse graphiteUrl")
+	}
 	return &GraphiteContext{
 		hh: graphite.HostHeader{
-			Host: setting.GraphiteUrl,
+			Host: url.Host,
 			Header: http.Header{
 				"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 			},
