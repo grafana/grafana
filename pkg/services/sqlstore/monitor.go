@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -501,12 +500,6 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		State:          -1,
 		StateChange:    time.Now(),
 	}
-	healthJson, err := json.Marshal(cmd.HealthSettings)
-	if err != nil {
-		log.Info(err.Error())
-		return err
-	}
-	log.Info(string(healthJson))
 	if _, err := sess.Insert(mon); err != nil {
 		return err
 	}
@@ -720,6 +713,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			StateChange:    lastState.StateChange,
 			Frequency:      cmd.Frequency,
 		}
+
 
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
 		if _, err := sess.Exec(rawSql, cmd.Id); err != nil {

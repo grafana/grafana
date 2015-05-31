@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"time"
+	"encoding/json"
 )
 
 // Typed errors
@@ -77,8 +78,17 @@ type MonitorSettingDTO struct {
 }
 
 type MonitorHealthSettingDTO struct {
-	NumCollectors int `json:"numCollectors"`
+	NumCollectors int `json:"num_collectors"`
 	Steps         int `json:"steps"`
+}
+
+// implement the go-xorm/core.Conversion interface
+func (e *MonitorHealthSettingDTO) FromDB(data []byte) error {
+	return json.Unmarshal(data, e)
+} 
+
+func (e *MonitorHealthSettingDTO) ToDB() ([]byte, error) {
+	return json.Marshal(e)
 }
 
 type MonitorDTO struct {
