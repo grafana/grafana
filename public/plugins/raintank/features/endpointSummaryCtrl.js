@@ -11,7 +11,6 @@ function (angular, _) {
     $scope.init = function() {
       $scope.endpoints = [];
       $scope.monitors = {};
-      $scope.monitor_health = {};
       $scope.monitor_types = {};
       $scope.monitor_types_by_name = {};
       $scope.endpoint = null;
@@ -54,16 +53,6 @@ function (angular, _) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
             });
-          });
-          backendSrv.get('/api/endpoints/'+id+'/health').then(function(health) {
-            var healthByCheck = {};
-            _.forEach(health, function(checkState) {
-              if (!(checkState.monitor_id in healthByCheck)) {
-                healthByCheck[checkState.monitor_id] = [];
-              }
-              healthByCheck[checkState.monitor_id].push(checkState);
-            });
-            $scope.monitor_health = healthByCheck;
           });
         }
       });

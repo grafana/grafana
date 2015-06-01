@@ -58,43 +58,92 @@ define([
     };
   });
 
-  module.directive("rtCheckHealth", function($compile) {
+  module.directive("rtCheckHealth", function($compile, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/checkHealth.html',
       scope: {
         model: "=",
       },
       link: function(scope, element) {
-        scope.$watch("model", function(health) {
-          if (typeof(health) == "object") {
-            showHealth(health);
+
+        scope.$watch("model", function(monitor) {
+          if (typeof(monitor) == "object") {
+            var metricsQuery = {
+              range: {from: "now-"+ (monitor.frequency + 30) + 's', to: "now"},
+              interval: monitor.frequency + 's',
+              targets: [
+                {target: monitor.endpoint_slug + ".*.network."+monitor.monitor_type_name.toLowerCase()+".{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(health) {
+        function showHealth(metrics) {
+
           var tmpl = '';
           var okCount = 0;
           var warnCount = 0;
           var errorCount = 0;
           var unknownCount = 0;
-          _.forEach(health, function(checkState) {
-            if (checkState.state == -1) {
-              unknownCount++;
-              return
+          var collectorResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.')
+            var stateStr = parts[4];
+            var collector = parts[1];
+            var check = parts[3];
+            if (!(collector in collectorResults)) {
+              collectorResults[collector] = {ts: -1, state: -1};
             }
-            if (checkState.state == 0) {
-              okCount++;
-              return
-            }
-            if (checkState.state == 1) {
-              warnCount++;
-              return
-            }
-            if (checkState.state == 2) {
-              errorCount++;
-              return
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] == 1) && (point[1] > collectorResults[collector].ts)) {
+                  collectorResults[collector].ts = point[1];
+                  switch (stateStr) {
+                    case 'ok_state':
+                      collectorResults[collector].state = 0
+                      break;
+                    case 'warn_state':
+                      collectorResults[collector].state = 1
+                      break
+                    case 'error_state':
+                      collectorResults[collector].state = 2
+                      break
+                    default:
+                      collectorResults[collector].state = -1
+                      console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
+              }
             }
           });
+          for (col in collectorResults) {
+            switch (collectorResults[col].state) {
+              case 0:
+                okCount++;
+                break;
+              case 1:
+                warnCount++;
+                break;
+              case 2:
+                errorCount++;
+                break;
+              default:
+                unknownCount++;
+            }
+          }
           scope.okCount = okCount;
           scope.warnCount = warnCount;
           scope.errorCount = errorCount;
