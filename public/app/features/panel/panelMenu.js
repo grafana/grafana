@@ -8,7 +8,7 @@ function (angular, $, _) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile, linkSrv, contextSrv) {
+    .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
@@ -19,7 +19,7 @@ function (angular, $, _) {
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
 
-        if ($scope.dashboardMeta.canEdit && contextSrv.isEditor) {
+        if ($scope.dashboardMeta.canEdit) {
           template += '<div class="panel-menu-inner">';
           template += '<div class="panel-menu-row">';
           template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
@@ -34,7 +34,7 @@ function (angular, $, _) {
 
         _.each($scope.panelMeta.menu, function(item) {
           // skip edit actions if not editor
-          if (item.role === 'Editor' && (!contextSrv.isEditor || !$scope.dashboardMeta.canEdit)) {
+          if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
             return;
           }
 
