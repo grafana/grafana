@@ -3,12 +3,13 @@
           <div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
             <div class="rt-page-box-header-checkbox checkbox-check-enabled">
               <span class="rt-h2 rt-modal">Ping</span>
-              <span class="freqMsg supplemental-copy" ng-show="monitors['ping'].enabled"> (enabled)</span>
             </div>
             <div class="rt-box-row-info">
               <a href="#">
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['ping'].enabled"></i>
                 <span class="freqMsg" ng-show="monitors['ping'].enabled" > Every {{monitors['ping'].frequency}}s from {{collectorCount(monitors['ping'])}} Collectors |</span>
+                <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="!monitors['ping'].enabled"></i>
+                <span class="freqMsg disabled" ng-show="!monitors['ping'].enabled" > Not enabled |</span>
                 <span class="freqMsg" ng-show="!monitors['ping'].enabled && discovered" > Not Discovered |</span>
                 <span class="freqMsg" style="color: #13b2d4"> Configure</span>
                 <span><i class="fa fa-caret-down" ng-show="showPing"></i></span>
@@ -41,20 +42,15 @@
                       <endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
                     </div>
                   </div>
-                  <div class="rt-form-row" style="margin: 0 0 20px 0;">
+                  <div class="rt-form-row" style="margin: 0;">
                     <div class="editor=option rt-input-styles rt-flex-form-block">
                         <div class="rt-flex-form-field">
                           <label class="small">Hostname</label>
                           <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['ping'], 'hostname').value"> 
                         </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              <div class="rt-box-interior-content rt-interior-update">
-                <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" ng-show="endpoint.id"  class="secondaryCTA" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
-                <!-- Im sure this can be refactored to be handled more cleanly -->
                 </div>
               </div>
             </div>
@@ -97,6 +93,14 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="rt-box-footer-config" ng-show="showPing">
+              <div class="rt-box-interior-content rt-interior-update">
+                <div class="editor-row" ng-show="endpoint.id">
+                <button type="submit" ng-show="endpoint.id"  class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
+                <!-- Im sure this can be refactored to be handled more cleanly -->
+                </div>
+              </div>
           </div>
         </div>
         <!-- End Ping Section -->
