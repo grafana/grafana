@@ -15,13 +15,13 @@ type Schedule struct {
 	OrgId      int64
 	Freq       int64
 	Offset     int64 // offset on top of "even" minute/10s/.. intervals
+	State      int64
 	Definition CheckDef
 }
 
 func getSchedules(lastPointAt int64) ([]*Schedule, error) {
 
-	query := m.GetMonitorsQuery{
-		IsGrafanaAdmin: true,
+	query := m.GetMonitorsForAlertsQuery{
 		Timestamp:      lastPointAt,
 	}
 
@@ -40,7 +40,7 @@ func getSchedules(lastPointAt int64) ([]*Schedule, error) {
 	return schedules, nil
 }
 
-func buildScheduleForMonitor(monitor *m.MonitorDTO) *Schedule {
+func buildScheduleForMonitor(monitor *m.MonitorForAlertDTO) *Schedule {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.HealthSettings == nil {
@@ -48,7 +48,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) *Schedule {
 	}
 
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
-		fmt.Printf("bad monitor definition given: %#v", monitor)
+		//fmt.Printf("bad monitor definition given: %#v", monitor)
 		return nil
 	}
 
@@ -97,6 +97,7 @@ func buildScheduleForMonitor(monitor *m.MonitorDTO) *Schedule {
 		OrgId:     monitor.OrgId,
 		Freq:      monitor.Frequency,
 		Offset:    monitor.Offset,
+		State:     monitor.State,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed

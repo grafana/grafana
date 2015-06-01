@@ -13,6 +13,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetMonitors)
+	bus.AddHandler("sql", GetMonitorsForAlerts)
 	bus.AddHandler("sql", GetMonitorById)
 	bus.AddHandler("sql", GetMonitorTypes)
 	bus.AddHandler("sql", AddMonitor)
@@ -142,6 +143,23 @@ WHERE monitor.id=?
 	return nil
 }
 
+func GetMonitorsForAlerts(query *m.GetMonitorsForAlertsQuery) error {
+	sess := x.Table("monitor")
+	rawParams := make([]interface{}, 0)
+	rawSql := `
+SELECT
+    endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
+    monitor.*
+FROM monitor
+    INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
+WHERE (? % monitor.frequency) = monitor.offset
+`
+	rawParams = append(rawParams, query.Timestamp)
+	return sess.Sql(rawSql, rawParams...).Find(&query.Result)
+}
+
 func GetMonitors(query *m.GetMonitorsQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
@@ -211,11 +229,6 @@ FROM monitor
 	if query.Modulo > 0 {
 		whereSql = append(whereSql, "(monitor.id % ?) = ?")
 		rawParams = append(rawParams, query.Modulo, query.ModuloOffset)
-	}
-
-	if query.Timestamp > 0 {
-		whereSql = append(whereSql, "(? % monitor.frequency) = monitor.offset")
-		rawParams = append(rawParams, query.Timestamp)
 	}
 
 	if len(whereSql) > 0 {

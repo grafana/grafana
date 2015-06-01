@@ -104,6 +104,9 @@ func Executor(fn GraphiteReturner) {
 
 		res, err := evaluator.Eval(job.lastPointTs)
 		fmt.Println("job results", job, err, res)
+		
+		//TODO: store the result and emit an event if the state has changed.
+
 		durationExec := time.Since(preExec)
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 		// we want to have some individual times
