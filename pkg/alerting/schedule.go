@@ -22,7 +22,7 @@ type Schedule struct {
 func getSchedules(lastPointAt int64) ([]*Schedule, error) {
 
 	query := m.GetMonitorsForAlertsQuery{
-		Timestamp:      lastPointAt,
+		Timestamp: lastPointAt,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {

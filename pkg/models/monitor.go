@@ -92,21 +92,21 @@ func (e *MonitorHealthSettingDTO) ToDB() ([]byte, error) {
 }
 
 type MonitorForAlertDTO struct {
-	Id             int64
-	OrgId          int64
-	EndpointId     int64
-	EndpointSlug   string
-	MonitorTypeId  int64
-	MonitorTypeName string 
-	Offset         int64
-	Frequency      int64
-	Enabled        bool
-	State          int64
-	StateChange    time.Time
-	Settings       []*MonitorSettingDTO
-	HealthSettings *MonitorHealthSettingDTO
-	Created        time.Time
-	Updated        time.Time
+	Id              int64
+	OrgId           int64
+	EndpointId      int64
+	EndpointSlug    string
+	MonitorTypeId   int64
+	MonitorTypeName string
+	Offset          int64
+	Frequency       int64
+	Enabled         bool
+	State           int64
+	StateChange     time.Time
+	Settings        []*MonitorSettingDTO
+	HealthSettings  *MonitorHealthSettingDTO
+	Created         time.Time
+	Updated         time.Time
 }
 
 type MonitorDTO struct {
@@ -215,9 +215,10 @@ type GetMonitorByIdQuery struct {
 }
 
 type GetMonitorsForAlertsQuery struct {
-		Timestamp int64
-		Result    []*MonitorForAlertDTO
+	Timestamp int64
+	Result    []*MonitorForAlertDTO
 }
+
 type GetMonitorTypesQuery struct {
 	Result []*MonitorTypeDTO
 }

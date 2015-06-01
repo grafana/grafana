@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/hashicorp/golang-lru"
 
@@ -104,7 +104,7 @@ func Executor(fn GraphiteReturner) {
 
 		res, err := evaluator.Eval(job.lastPointTs)
 		fmt.Println("job results", job, err, res)
-		
+
 		//TODO: store the result and emit an event if the state has changed.
 
 		durationExec := time.Since(preExec)
