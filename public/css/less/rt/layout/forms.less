@@ -76,8 +76,14 @@ input[type="color"] {
 }
 
 .rt-flex-form-block {
+  display: -webkit-flex;
+  display: -moz-box;
   display: flex;
+  -webkit-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
   flex-wrap: wrap;
+  -webkit-justify-content: flex-start;
+  -mox-justify-content: flex-start;
   justify-content: flex-start;
 }
 
@@ -145,7 +151,9 @@ input[type="color"] {
 }
 
 .rt-form-row-long {
+  min-width: 300px;
   max-width: 800px;
+  margin: 20px 45px 0 0;
 }
 
 

@@ -33,9 +33,11 @@
                 <div class="rt-form rt-input-styles rt-flex-form-block">
                   <div style="margin: 20px 45px 0 0;">
                     <label class="small">Frequency</label>
-                    <select class="small" ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px; margin-top: 5px;"></select>
+                    <div class="select-input">
+                      <select ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts"></select>
+                    </div>
                   </div>                
-                  <div class="rt-form-row rt-form-row-long" style="margin: 20px 0 0 0;">                    
+                  <div class="rt-form-row rt-form-row-long">                    
                     <label class="small">Monitoring from</label>
                     <div class="rt-form-group">
                       <endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
@@ -56,7 +58,9 @@
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Record Type</label>
-                           <select class="small" ng-model="currentSettingByVariable(monitors['dns'], 'type').value" ng-options="r for r in defaultSettingByVariable('dns','type').conditions.values" style="width: auto; height: 34px;"></select>
+                          <div class="select-input">
+                            <select ng-model="currentSettingByVariable(monitors['dns'], 'type').value" ng-options="r for r in defaultSettingByVariable('dns','type').conditions.values"></select>
+                          </div>
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Port</label>
@@ -64,7 +68,9 @@
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Protocol</label>
-                           <select class="small" ng-model="currentSettingByVariable(monitors['dns'], 'protocol').value" ng-options="p for p in defaultSettingByVariable('dns','protocol').conditions.values" style="width: auto; height: 34px;"></select>
+                          <div class="select-input">
+                            <select ng-model="currentSettingByVariable(monitors['dns'], 'protocol').value" ng-options="p for p in defaultSettingByVariable('dns','protocol').conditions.values"></select>
+                          </div>
                         </div>                          
                     </div>
                   </div>
