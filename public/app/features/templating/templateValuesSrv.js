@@ -130,6 +130,10 @@ function (angular, _, kbn) {
           // if parameter has current value
           // if it exists in options array keep value
           if (variable.current) {
+            // if current value is an array do not do anything
+            if (_.isArray(variable.current.value)) {
+              return $q.when([]);
+            }
             var currentOption = _.findWhere(variable.options, { text: variable.current.text });
             if (currentOption) {
               return self.setVariableValue(variable, currentOption);
