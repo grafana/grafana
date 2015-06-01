@@ -15,9 +15,9 @@
 			<div class="variable-options-column">
 				<a class="variable-options-column-header" ng-if="vm.variable.multi" ng-class="{'many-selected': vm.selectedValuesCount > 1}" bs-tooltip="'Clear selections'" data-placement="top" ng-click="vm.clearSelections()">
 					<span class="variable-option-icon"></span>
-					Selected ({{vm.selectedValuesCount}})
+					Selected ({{vm.selectedValues.length}})
 				</a>
-				<a class="variable-option pointer" bindonce ng-repeat="option in vm.search.options" ng-class="{'selected': option.selected, 'highlighted': $index === vm.highlightIndex}" ng-click="vm.optionSelected(option, $event)">
+				<a class="variable-option pointer" bindonce ng-repeat="option in vm.search.options" ng-class="{'selected': option.selected, 'highlighted': $index === vm.highlightIndex}" ng-click="vm.selectValue(option, $event)">
 					<span class="variable-option-icon"></span>
 					<span>{{option.text}}</span>
 				</a>
