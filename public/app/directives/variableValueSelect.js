@@ -13,24 +13,20 @@ function (angular, app, _) {
       var vm = this;
 
       vm.show = function() {
-        vm.oldLinkText = vm.variable.current.text;
+        vm.oldVariableText = vm.variable.current.text;
         vm.highlightIndex = -1;
 
         var currentValues = vm.variable.current.value;
-
         if (_.isString(currentValues)) {
           currentValues  = [currentValues];
         }
 
         vm.options = _.map(vm.variable.options, function(option) {
-          if (_.indexOf(currentValues, option.value) >= 0) {
-            option.selected = true;
-          }
+          if (_.indexOf(currentValues, option.value) >= 0) { option.selected = true; }
           return option;
         });
 
-        vm.search = {query: '', options: vm.options};
-        vm.selectedValuesCount = currentValues.length;
+        vm.selectedValues = _.filter(vm.options, {selected: true});
         vm.selectedTags = vm.selectedTags || [];
 
         if (!vm.tags) {
@@ -39,14 +35,26 @@ function (angular, app, _) {
           });
         }
 
+        vm.search = {query: '', options: vm.options};
         vm.dropdownVisible = true;
       };
 
       vm.updateLinkText = function() {
+        // var currentValues = vm.variable.current.text;
+        //
+        // if (vm.variable.current.tags) {
+        //   selectedOptions = _.filter(selectedOptions, function(test) {
+        //     for (var i = 0; i < vm.variable.current.tags; i++) {
+        //       var tag = vm.selectedTags[i];
+        //       if (_.indexOf(tag.values, test.text) !== -1) {
+        //         return false;
+        //       }
+        //     }
+        //     return true;
+        //   });
+        // }
+        //
         vm.linkText = vm.variable.current.text;
-        if (vm.oldLinkText && vm.oldLinkText !== vm.linkText) {
-          vm.onUpdated();
-        }
       };
 
       vm.clearSelections = function() {
@@ -62,17 +70,13 @@ function (angular, app, _) {
         var tagValuesPromise;
         if (!tag.values) {
           tagValuesPromise = vm.getValuesForTag({tagKey: tag.text});
-          // if (tag.text === 'backend') {
-          //   tag.values = ['backend_01', 'backend_02', 'backend_03', 'backend_04'];
-          // } else {
-          //   tag.values = ['web_server_01', 'web_server_02', 'web_server_03', 'web_server_04'];
-          // }
         } else {
           tagValuesPromise = $q.when(tag.values);
         }
 
         tagValuesPromise.then(function(values) {
           tag.values = values;
+          tag.valuesText = values.join(', ');
           _.each(vm.options, function(option) {
             if (_.indexOf(tag.values, option.value) !== -1) {
               option.selected = tag.selected;
@@ -105,7 +109,7 @@ function (angular, app, _) {
         vm.highlightIndex = (vm.highlightIndex + direction) % vm.search.options.length;
       };
 
-      vm.optionSelected = function(option, event, commitChange, excludeOthers) {
+      vm.selectValue = function(option, event, commitChange, excludeOthers) {
         if (!option) { return; }
 
         option.selected = !option.selected;
@@ -140,43 +144,34 @@ function (angular, app, _) {
       };
 
       vm.selectionsChanged = function(commitChange) {
-        var selected = _.filter(vm.options, {selected: true});
+        vm.selectedValues = _.filter(vm.options, {selected: true});
 
-        if (selected.length > 1 && selected.length !== vm.options.length) {
-          if (selected[0].text === 'All') {
-            selected[0].selected = false;
-            selected = selected.slice(1, selected.length);
+        if (vm.selectedValues.length > 1 && vm.selectedValues.length !== vm.options.length) {
+          if (vm.selectedValues[0].text === 'All') {
+            vm.selectedValues[0].selected = false;
+            vm.selectedValues = vm.selectedValues.slice(1, vm.selectedValues.length);
           }
         }
 
         // validate selected tags
-        _.each(vm.selectedTags, function(tag) {
-          _.each(tag.values, function(value) {
-            if (!_.findWhere(selected, {value: value})) {
-              tag.selected = false;
-            }
-          });
+        _.each(vm.tags, function(tag) {
+          if (tag.selected)  {
+            _.each(tag.values, function(value) {
+              if (!_.findWhere(vm.selectedValues, {value: value})) {
+                tag.selected = false;
+              }
+            });
+          }
         });
 
         vm.selectedTags = _.filter(vm.tags, {selected: true});
-
-        var valuesNotInTag = _.filter(selected, function(test) {
-          for (var i = 0; i < vm.selectedTags.length; i++) {
-            var tag = vm.selectedTags[i];
-            if (_.indexOf(tag.values, test.value) !== -1) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-        vm.variable.current.value = _.pluck(selected, 'value');
-        vm.variable.current.text = _.pluck(valuesNotInTag, 'text').join(', ');
-        vm.selectedValuesCount = selected.length;
+        vm.variable.current.value = _.pluck(vm.selectedValues, 'value');
+        vm.variable.current.text = _.pluck(vm.selectedValues, 'text').join(' + ');
+        vm.variable.current.tags = vm.selectedTags;
 
         // only single value
-        if (vm.selectedValuesCount === 1) {
-          vm.variable.current.value = selected[0].value;
+        if (vm.selectedValues.length === 1) {
+          vm.variable.current.value = vm.selectedValues[0].value;
         }
 
         if (commitChange) {
@@ -186,14 +181,17 @@ function (angular, app, _) {
 
       vm.commitChanges = function() {
         // make sure one option is selected
-        var selected = _.filter(vm.options, {selected: true});
-        if (selected.length === 0) {
+        if (vm.selectedValues.length === 0) {
           vm.options[0].selected = true;
           vm.selectionsChanged(false);
         }
 
         vm.dropdownVisible = false;
         vm.updateLinkText();
+
+        if (vm.variable.current.text !== vm.oldVariableText) {
+          vm.onUpdated();
+        }
       };
 
       vm.queryChanged = function() {

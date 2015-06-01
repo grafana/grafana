@@ -19,6 +19,7 @@ function () {
       ctrl.getValuesForTag = function(obj) {
         return $q.when(tagValuesMap[obj.tagKey]);
       };
+      ctrl.onUpdated = sinon.spy();
     }));
 
     describe("Given simple variable", function() {
@@ -35,13 +36,14 @@ function () {
     describe("Given variable with tags and dropdown is opened", function() {
       beforeEach(function() {
         ctrl.variable = {
-          current: {text: 'hej', value: 'hej'},
+          current: {text: 'server-1', value: 'server-1'},
           options: [
             {text: 'server-1', value: 'server-1'},
             {text: 'server-2', value: 'server-2'},
             {text: 'server-3', value: 'server-3'},
           ],
-          tags: ["key1", "key2", "key3"]
+          tags: ["key1", "key2", "key3"],
+          multi: true
         };
         tagValuesMap.key1 = ['server-1', 'server-3'];
         tagValuesMap.key2 = ['server-2', 'server-3'];
@@ -59,10 +61,30 @@ function () {
         expect(ctrl.options.length).to.be(3);
       });
 
+      it("should init selected values array", function() {
+        expect(ctrl.selectedValues.length).to.be(1);
+      });
+
+      it("should set linkText", function() {
+        expect(ctrl.linkText).to.be('server-1');
+      });
+
+      describe('after adititional value is selected', function() {
+        beforeEach(function() {
+          ctrl.selectValue(ctrl.options[2], {});
+          ctrl.commitChanges();
+        });
+
+        it('should update link text', function() {
+          expect(ctrl.linkText).to.be('server-1 + server-3');
+        });
+      });
+
       describe('When tag is selected', function() {
         beforeEach(function() {
           ctrl.selectTag(ctrl.tags[0]);
           rootScope.$digest();
+          ctrl.commitChanges();
         });
 
         it("should select tag", function() {
@@ -72,6 +94,11 @@ function () {
         it("should select values", function() {
           expect(ctrl.options[0].selected).to.be(true);
           expect(ctrl.options[2].selected).to.be(true);
+          expect(ctrl.linkText).to.be('server-1 + server-2');
+        });
+
+        it("link text should not include tag values", function() {
+          expect(ctrl.linkText).to.not.contain('server-1');
         });
 
         describe('and then dropdown is opened and closed without changes', function() {
@@ -99,7 +126,7 @@ function () {
 
         describe('and then value is unselected', function() {
           beforeEach(function() {
-            ctrl.optionSelected(ctrl.options[0]);
+            ctrl.selectValue(ctrl.options[0], {});
           });
 
           it("should deselect tag", function() {
