@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
-
+	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/hashicorp/golang-lru"
 
 	"bosun.org/graphite"
 )
@@ -103,11 +104,21 @@ func Executor(fn GraphiteReturner) {
 		}
 
 		res, err := evaluator.Eval(job.lastPointTs)
-		fmt.Println("job results", job, err, res)
-
-		//TODO: store the result and emit an event if the state has changed.
+		//fmt.Println("job results", job, err, res)
 
 		durationExec := time.Since(preExec)
+
+		if job.State != res {
+			//monitor state has changed.
+			updateMonitorStateCmd := m.UpdateMonitorStateCommand{
+				Id:      job.MonitorId,
+				State:   res,
+				Updated: job.lastPointTs,
+			}
+			if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
+				panic(fmt.Sprintf("failed to update monitor state. %s", err.Error()))
+			}
+		}
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 		// we want to have some individual times
 		if gr, ok := gr.(*GraphiteContext); ok {

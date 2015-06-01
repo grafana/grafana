@@ -3,23 +3,34 @@ package alerting
 import (
 	"bytes"
 	"fmt"
-	"strings"
-	"text/template"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"strings"
+	"text/template"
+	"time"
 )
 
-type Schedule struct {
-	MonitorId  int64
-	OrgId      int64
-	Freq       int64
-	Offset     int64 // offset on top of "even" minute/10s/.. intervals
-	State      int64
-	Definition CheckDef
+// Job is a job for an alert execution
+// note that LastPointTs is a time denoting the timestamp of the last point to run against
+// this way the check runs always on the right data, irrespective of execution delays
+// that said, for convenience, we track the generatedAt timestamp
+type Job struct {
+	key         string
+	OrgId       int64
+	MonitorId   int64
+	Freq        int64
+	Offset      int64 // offset on top of "even" minute/10s/.. intervals
+	State       m.CheckEvalResult
+	Definition  CheckDef
+	generatedAt time.Time
+	lastPointTs time.Time
 }
 
-func getSchedules(lastPointAt int64) ([]*Schedule, error) {
+func (job Job) String() string {
+	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
+}
+
+func getJobs(lastPointAt int64) ([]*Job, error) {
 
 	query := m.GetMonitorsForAlertsQuery{
 		Timestamp: lastPointAt,
@@ -29,18 +40,18 @@ func getSchedules(lastPointAt int64) ([]*Schedule, error) {
 		return nil, err
 	}
 
-	schedules := make([]*Schedule, 0)
+	jobs := make([]*Job, 0)
 	for _, monitor := range query.Result {
-		sched := buildScheduleForMonitor(monitor)
-		if sched != nil {
-			schedules = append(schedules, sched)
+		job := buildJobForMonitor(monitor)
+		if job != nil {
+			jobs = append(jobs, job)
 		}
 	}
 
-	return schedules, nil
+	return jobs, nil
 }
 
-func buildScheduleForMonitor(monitor *m.MonitorForAlertDTO) *Schedule {
+func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.HealthSettings == nil {
@@ -92,7 +103,8 @@ func buildScheduleForMonitor(monitor *m.MonitorForAlertDTO) *Schedule {
 	if err != nil {
 		panic(err)
 	}
-	s := &Schedule{
+	j := &Job{
+		key:       fmt.Sprintf("%d", monitor.Id),
 		MonitorId: monitor.Id,
 		OrgId:     monitor.OrgId,
 		Freq:      monitor.Frequency,
@@ -103,5 +115,5 @@ func buildScheduleForMonitor(monitor *m.MonitorForAlertDTO) *Schedule {
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
 	}
-	return s
+	return j
 }

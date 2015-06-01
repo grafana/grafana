@@ -1,12 +1,12 @@
 package alerting
 
 import (
-	"fmt"
-	"time"
-
 	"bosun.org/cmd/bosun/cache"
 	"bosun.org/cmd/bosun/expr"
 	"bosun.org/graphite"
+	"fmt"
+	m "github.com/grafana/grafana/pkg/models"
+	"time"
 )
 
 type CheckDef struct {
@@ -26,32 +26,8 @@ type Check struct {
 	Definition CheckDef
 }
 
-type CheckEvalResult int
-
-const (
-	EvalResultOK CheckEvalResult = iota
-	EvalResultWarn
-	EvalResultCrit
-	EvalResultUnknown
-)
-
-func (c CheckEvalResult) String() string {
-	switch c {
-	case EvalResultOK:
-		return "OK"
-	case EvalResultWarn:
-		return "Warning"
-	case EvalResultCrit:
-		return "Critical"
-	case EvalResultUnknown:
-		return "Unknown"
-	default:
-		panic(fmt.Sprintf("Invalid CheckEvalResult value %d", int(c)))
-	}
-}
-
 type CheckEvaluator interface {
-	Eval() (*CheckEvalResult, error)
+	Eval() (*m.CheckEvalResult, error)
 }
 
 type GraphiteCheckEvaluator struct {
@@ -85,17 +61,17 @@ func NewGraphiteCheckEvaluator(c graphite.Context, check CheckDef) (*GraphiteChe
 	}, nil
 }
 
-func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (CheckEvalResult, error) {
+func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (m.CheckEvalResult, error) {
 	// create cache
 	// this is so that when bosun queries the same graphite query multiple times
 	// like in (median(graphite("foo", "2m", "",""))> 10 || avg(graphite("foo", "2m", "","")) > 20)
 	// it reuses the same resultsets internally.
 	// cache is unbounded so that we are guaranteed consistent results
 	cacheObj := cache.New(0)
-	eval := func(e *expr.Expr, code CheckEvalResult) (CheckEvalResult, error) {
+	eval := func(e *expr.Expr, code m.CheckEvalResult) (m.CheckEvalResult, error) {
 		results, _, err := e.Execute(nil, ce.Context, nil, cacheObj, nil, ts, 0, true, nil, nil, nil)
 		if err != nil {
-			return EvalResultUnknown, err
+			return m.EvalResultUnknown, err
 		}
 		for _, res := range results.Results {
 			switch i := res.Value.Value().(type) {
@@ -111,22 +87,22 @@ func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (CheckEvalResult, error) {
 				panic(fmt.Sprintf("expr.Execute returned unknown result with type %T and value %v", res, res))
 			}
 		}
-		return EvalResultOK, nil
+		return m.EvalResultOK, nil
 	}
 
 	if ce.critExpr != nil {
-		ret, err := eval(ce.critExpr, EvalResultCrit)
+		ret, err := eval(ce.critExpr, m.EvalResultCrit)
 		if err != nil {
 			return ret, err
 		}
-		if ret != EvalResultOK {
+		if ret != m.EvalResultOK {
 			return ret, err
 		}
 	}
 
 	if ce.warnExpr != nil {
-		return eval(ce.warnExpr, EvalResultWarn)
+		return eval(ce.warnExpr, m.EvalResultWarn)
 	}
 
-	return EvalResultOK, nil
+	return m.EvalResultOK, nil
 }

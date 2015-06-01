@@ -12,22 +12,6 @@ func getAlignedTicker() *time.Ticker {
 	return time.NewTicker(diff)
 }
 
-// Job is a job for an alert execution
-// note that LastPointTs is a time denoting the timestamp of the last point to run against
-// this way the check runs always on the right data, irrespective of execution delays
-// that said, for convenience, we track the generatedAt timestamp
-type Job struct {
-	key         string
-	OrgId       int64
-	Definition  CheckDef
-	generatedAt time.Time
-	lastPointTs time.Time
-}
-
-func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
-}
-
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
 // so that temporarily database hickups don't block the ticker.
 // however, if more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
@@ -84,7 +68,7 @@ func dispatchJobs() {
 		lastPointAt := normalizedTime - 30
 
 		pre := time.Now()
-		schedules, err := getSchedules(lastPointAt)
+		jobs, err := getJobs(lastPointAt)
 		Stat.TimeDuration("alert-dispatcher.get-schedules", time.Since(pre))
 
 		if err != nil {
@@ -92,9 +76,9 @@ func dispatchJobs() {
 			continue
 		}
 
-		Stat.IncrementValue("alert-dispatcher.job-schedules-seen", int64(len(schedules)))
-		for _, sched := range schedules {
-			job := Job{
+		Stat.IncrementValue("alert-dispatcher.job-schedules-seen", int64(len(jobs)))
+		for _, job := range jobs {
+			/*job := Job{
 				// note: we don't include the timestamp here so that jobs for same monitor id get routed to same place
 				// this is not really a necessity but might be useful in the future if we want to get stateful and leverage
 				// output from past jobs.
@@ -103,11 +87,14 @@ func dispatchJobs() {
 				sched.Definition,
 				t,
 				time.Unix(lastPointAt, 0),
-			}
+			}*/
+			job.generatedAt = t
+			job.lastPointTs = time.Unix(lastPointAt, 0)
+
 			Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 			Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
 			select {
-			case jobQueue <- job:
+			case jobQueue <- *job:
 			default:
 				// TODO: alert when this happens
 				Stat.Increment("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")

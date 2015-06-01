@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -13,6 +14,30 @@ var (
 	ErrMonitorSettingsInvalid   = errors.New("Invald variables used in Monitor Settings")
 	ErrorEndpointCantBeChanged  = errors.New("A monitor's endpoint_id can not be changed.")
 )
+
+type CheckEvalResult int
+
+const (
+	EvalResultOK CheckEvalResult = iota
+	EvalResultWarn
+	EvalResultCrit
+	EvalResultUnknown = -1
+)
+
+func (c CheckEvalResult) String() string {
+	switch c {
+	case EvalResultOK:
+		return "OK"
+	case EvalResultWarn:
+		return "Warning"
+	case EvalResultCrit:
+		return "Critical"
+	case EvalResultUnknown:
+		return "Unknown"
+	default:
+		panic(fmt.Sprintf("Invalid CheckEvalResult value %d", int(c)))
+	}
+}
 
 type MonitorType struct {
 	Id      int64
@@ -40,7 +65,7 @@ type Monitor struct {
 	Offset         int64
 	Frequency      int64
 	Enabled        bool
-	State          int64
+	State          CheckEvalResult
 	StateChange    time.Time
 	Settings       []*MonitorSettingDTO
 	HealthSettings *MonitorHealthSettingDTO
@@ -101,7 +126,7 @@ type MonitorForAlertDTO struct {
 	Offset          int64
 	Frequency       int64
 	Enabled         bool
-	State           int64
+	State           CheckEvalResult
 	StateChange     time.Time
 	Settings        []*MonitorSettingDTO
 	HealthSettings  *MonitorHealthSettingDTO
@@ -119,7 +144,7 @@ type MonitorDTO struct {
 	CollectorIds    []int64                  `json:"collector_ids"`
 	CollectorTags   []string                 `json:"collector_tags"`
 	Collectors      []int64                  `json:"collectors"`
-	State           int64                    `json:"state"`
+	State           CheckEvalResult          `json:"state"`
 	StateChange     time.Time                `json:"state_change"`
 	Settings        []*MonitorSettingDTO     `json:"settings"`
 	HealthSettings  *MonitorHealthSettingDTO `json:"health_settings"`
@@ -180,28 +205,25 @@ type DeleteMonitorCommand struct {
 	OrgId int64 `json:"-"`
 }
 
-type UpdateMonitorCollectorStateCommand struct {
-	MonitorId   int64     `json:"monitor_id"`
-	OrgId       int64     `json:"org_id"`
-	CollectorId int64     `json:"collector_id"`
-	EndpointId  int64     `json:"endpoint_id"`
-	State       int64     `json:"state"`
-	Updated     time.Time `json:"updated"`
+type UpdateMonitorStateCommand struct {
+	Id      int64
+	State   CheckEvalResult
+	Updated time.Time
 }
 
 // ---------------------
 // QUERIES
 
 type GetMonitorsQuery struct {
-	MonitorId      []int64 `form:"id"`
-	EndpointId     []int64 `form:"endpoint_id"`
-	MonitorTypeId  []int64 `form:"monitor_type_id"`
-	CollectorId    []int64 `form:"collector_id"`
-	Frequency      []int64 `form:"frequency"`
-	Enabled        string  `form:"enabled"`
-	Modulo         int64   `form:"modulo"`
-	ModuloOffset   int64   `form:"modulo_offset"`
-	State          int64   `form:"state"`
+	MonitorId      []int64         `form:"id"`
+	EndpointId     []int64         `form:"endpoint_id"`
+	MonitorTypeId  []int64         `form:"monitor_type_id"`
+	CollectorId    []int64         `form:"collector_id"`
+	Frequency      []int64         `form:"frequency"`
+	Enabled        string          `form:"enabled"`
+	Modulo         int64           `form:"modulo"`
+	ModuloOffset   int64           `form:"modulo_offset"`
+	State          CheckEvalResult `form:"state"`
 	OrgId          int64
 	IsGrafanaAdmin bool
 	Result         []*MonitorDTO
@@ -226,10 +248,4 @@ type GetMonitorTypesQuery struct {
 type GetMonitorTypeByIdQuery struct {
 	Id     int64
 	Result *MonitorTypeDTO
-}
-
-type GetMonitorHealthByIdQuery struct {
-	Id     int64
-	OrgId  int64
-	Result []*MonitorCollectorState
 }
