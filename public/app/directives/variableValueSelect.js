@@ -27,7 +27,6 @@ function (angular, app, _) {
         });
 
         vm.selectedValues = _.filter(vm.options, {selected: true});
-        vm.selectedTags = vm.selectedTags || [];
 
         if (!vm.tags) {
           vm.tags = _.map(vm.variable.tags, function(value) {
@@ -40,21 +39,37 @@ function (angular, app, _) {
       };
 
       vm.updateLinkText = function() {
-        // var currentValues = vm.variable.current.text;
-        //
-        // if (vm.variable.current.tags) {
-        //   selectedOptions = _.filter(selectedOptions, function(test) {
-        //     for (var i = 0; i < vm.variable.current.tags; i++) {
-        //       var tag = vm.selectedTags[i];
-        //       if (_.indexOf(tag.values, test.text) !== -1) {
-        //         return false;
-        //       }
-        //     }
-        //     return true;
-        //   });
-        // }
-        //
-        vm.linkText = vm.variable.current.text;
+        var current = vm.variable.current;
+        var currentValues = current.value;
+
+        if (_.isArray(currentValues) && current.tags.length) {
+          // filer out values that are in selected tags
+          currentValues = _.filter(currentValues, function(test) {
+            for (var i = 0; i < current.tags.length; i++) {
+              if (_.indexOf(current.tags[i].values, test) !== -1) {
+                return false;
+              }
+            }
+            return true;
+          });
+          // convert values to text
+          var currentTexts = _.map(currentValues, function(value) {
+            for (var i = 0; i < vm.variable.options.length; i++) {
+              var option = vm.variable.options[i];
+              if (option.value === value) {
+                return option.text;
+              }
+            }
+            return value;
+          });
+          // join texts
+          vm.linkText = currentTexts.join(' + ');
+          if (vm.linkText.length > 0) {
+            vm.linkText += ' + ';
+          }
+        } else {
+          vm.linkText = vm.variable.current.text;
+        }
       };
 
       vm.clearSelections = function() {
@@ -202,6 +217,7 @@ function (angular, app, _) {
       };
 
       vm.init = function() {
+        vm.selectedTags = vm.variable.current.tags || [];
         vm.updateLinkText();
       };
 
