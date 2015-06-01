@@ -199,16 +199,6 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.testDatasource = function() {
       return this.metricFindQuery('*').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
-      }, function(err) {
-        var message, title;
-        if (err.statusText) {
-          message = err.statusText;
-          title = "HTTP Error";
-        } else {
-          message = err;
-          title = "Unknown error";
-        }
-        return { status: "error", message: message, title: title };
       });
     };
 

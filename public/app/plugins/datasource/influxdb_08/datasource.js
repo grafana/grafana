@@ -99,6 +99,12 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
+    InfluxDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('list series').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     InfluxDatasource.prototype.metricFindQuery = function (query) {
       var interpolated;
       try {

@@ -75,10 +75,19 @@ function (angular, config) {
           $scope.testing.title = 'Unknown';
           return;
         }
+
         return datasource.testDatasource().then(function(result) {
           $scope.testing.message = result.message;
           $scope.testing.status = result.status;
           $scope.testing.title = result.title;
+        }, function(err) {
+          if (err.statusText) {
+            $scope.testing.message = err.statusText;
+            $scope.testing.title = "HTTP Error";
+          } else {
+            $scope.testing.message = err.message;
+            $scope.testing.title = "Unknown error";
+          }
         });
       }).finally(function() {
         $scope.testing.done = true;
