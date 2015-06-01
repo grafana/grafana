@@ -196,6 +196,12 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
+    GraphiteDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('*').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     GraphiteDatasource.prototype.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
         .then(function(results) {
