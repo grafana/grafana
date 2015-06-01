@@ -94,11 +94,10 @@ function () {
         it("should select values", function() {
           expect(ctrl.options[0].selected).to.be(true);
           expect(ctrl.options[2].selected).to.be(true);
-          expect(ctrl.linkText).to.be('server-1 + server-2');
         });
 
         it("link text should not include tag values", function() {
-          expect(ctrl.linkText).to.not.contain('server-1');
+          expect(ctrl.linkText).to.be('');
         });
 
         describe('and then dropdown is opened and closed without changes', function() {
