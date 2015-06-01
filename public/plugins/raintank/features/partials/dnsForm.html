@@ -6,12 +6,18 @@
             </div>
             <div class="rt-box-row-info">
               <a href="#">
+                <!-- Monitoring -->
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['dns'].enabled"></i>
                 <span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="!monitors['dns'].enabled"></i>
                 <span class="freqMsg disabled" ng-show="!monitors['dns'].enabled" > Not enabled |</span>
                 <span class="freqMsg" ng-show="!monitors['dns'].enabled && discovered" > Not Discovered |</span>
-                <span class="freqMsg" style="color: #13b2d4"> Configure</span>
+                <!-- Alerting
+                <i class="icon icon-rt-alert" style="font-size:17px;"ng-show="monitors['dns'].enabled && monitors['alert'].enabled"></i>
+                <span class="freqMsg" ng-show="monitors['dns'].enabled && monitors['alert'].enabled" > Alerting enabled |</span<!
+                -->
+                <!-- Configure -->
+                  <span class="freqMsg" style="color: #13b2d4"> Configure</span>
                 <span><i class="fa fa-caret-down" ng-show="showDNS"></i></span>
                 <span><i class="fa fa-caret-right rt-box-accordian-control" ng-hide="showDNS"></i></span>
               </a>
