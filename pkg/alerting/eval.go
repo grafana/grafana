@@ -29,7 +29,7 @@ type Check struct {
 type CheckEvalResult int
 
 const (
-	EvalResultOK CheckEvalResult = 1 << iota
+	EvalResultOK CheckEvalResult = iota
 	EvalResultWarn
 	EvalResultCrit
 	EvalResultUnknown
