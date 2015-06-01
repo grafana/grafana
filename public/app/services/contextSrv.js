@@ -60,6 +60,6 @@ function (angular, _, store, config) {
       store.set('grafana.sidemenu', false);
     }
 
-    this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
+    this.isEditor = this.hasRole('Editor') || this.hasRole('Admin') || this.hasRole('Read Only Editor');
   });
 });

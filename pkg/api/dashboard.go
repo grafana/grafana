@@ -55,6 +55,7 @@ func GetDashboard(c *middleware.Context) {
 			Type:      m.DashTypeDB,
 			CanStar:   c.IsSignedIn,
 			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
 		},
 	}
 
