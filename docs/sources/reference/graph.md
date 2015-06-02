@@ -62,7 +62,7 @@ The ``Left Y`` and ``Right Y`` can be customized using:
 
 - ``Unit`` - The display unit for the Y value
 - ``Grid Max`` - The maximum Y value. (default auto)
-- ``Grid Min`` - The minium Y value. (default auto)
+- ``Grid Min`` - The minimum Y value. (default auto)
 - ``Label`` - The Y axis label (default "")
 
 Axes can also be hidden by unchecking the appropriate box from `Show Axis`.
