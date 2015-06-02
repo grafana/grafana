@@ -26,7 +26,7 @@ func (s HitList) Less(i, j int) bool { return s[i].Title < s[j].Title }
 
 type Query struct {
 	Title     string
-	Tag       string
+	Tags      []string
 	OrgId     int64
 	UserId    int64
 	Limit     int
@@ -37,7 +37,6 @@ type Query struct {
 
 type FindPersistedDashboardsQuery struct {
 	Title     string
-	Tag       string
 	OrgId     int64
 	UserId    int64
 	Limit     int

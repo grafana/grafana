@@ -56,13 +56,6 @@ func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
 			break
 		}
 
-		// filter out results with tag filter
-		if query.Tag != "" {
-			if !strings.Contains(item.TagsCsv, query.Tag) {
-				continue
-			}
-		}
-
 		// add results with matchig title filter
 		if strings.Contains(item.TitleLower, query.Title) {
 			results = append(results, &Hit{

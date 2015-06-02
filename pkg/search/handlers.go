@@ -33,7 +33,6 @@ func searchHandler(query *Query) error {
 
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:     query.Title,
-		Tag:       query.Tag,
 		UserId:    query.UserId,
 		Limit:     query.Limit,
 		IsStarred: query.IsStarred,
@@ -55,6 +54,22 @@ func searchHandler(query *Query) error {
 		hits = append(hits, jsonHits...)
 	}
 
+	// filter out results with tag filter
+	if len(query.Tags) > 0 {
+		filtered := HitList{}
+		for _, hit := range hits {
+			if hasRequiredTags(query.Tags, hit.Tags) {
+				filtered = append(filtered, hit)
+			}
+		}
+		hits = filtered
+	}
+
+	// sort tags
+	for _, hit := range hits {
+		sort.Strings(hit.Tags)
+	}
+
 	// add isStarred info
 	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
 		return err
@@ -63,13 +78,27 @@ func searchHandler(query *Query) error {
 	// sort main result array
 	sort.Sort(hits)
 
-	// sort tags
-	for _, hit := range hits {
-		sort.Strings(hit.Tags)
-	}
-
 	query.Result = hits
 	return nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func hasRequiredTags(queryTags, hitTags []string) bool {
+	for _, queryTag := range queryTags {
+		if !stringInSlice(queryTag, hitTags) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {

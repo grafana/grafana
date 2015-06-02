@@ -14,7 +14,7 @@ function (angular, _, config) {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
       $scope.results = [];
-      $scope.query = { query: '', tag: '', starred: false };
+      $scope.query = { query: '', tag: [], starred: false };
       $scope.currentSearchId = 0;
 
       if ($scope.dashboardViewState.fullscreen) {
@@ -82,18 +82,25 @@ function (angular, _, config) {
 
     $scope.queryHasNoFilters = function() {
       var query = $scope.query;
-      return query.query === '' && query.starred === false && query.tag === '';
+      return query.query === '' && query.starred === false && query.tag.length === 0;
     };
 
     $scope.filterByTag = function(tag, evt) {
-      $scope.query.tag = tag;
-      $scope.query.tagcloud = false;
+      $scope.query.tag.push(tag);
       $scope.search();
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       if (evt) {
         evt.stopPropagation();
         evt.preventDefault();
       }
+    };
+
+    $scope.removeTag = function(tag, evt) {
+      $scope.query.tag = _.without($scope.query.tag, tag);
+      $scope.search();
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      evt.stopPropagation();
+      evt.preventDefault();
     };
 
     $scope.getTags = function() {

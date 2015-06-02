@@ -15,11 +15,14 @@
 				<i class="fa fa-remove" ng-show="tagsMode"></i>
 				tags
 			</a>
-			<span ng-show="query.tag">
-				| <a ng-click="filterByTag('')" tag-color-from-name="query.tag"  class="label label-tag" ng-if="query.tag">
-					<i class="fa fa-remove"></i>
-					{{query.tag}}
-				</a>
+			<span ng-if="query.tag.length">
+				|
+				<span ng-repeat="tagName in query.tag">
+					<a ng-click="removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+						<i class="fa fa-remove"></i>
+						{{tagName}}
+					</a>
+				</span>
 			</span>
 		</div>
 	</div>
