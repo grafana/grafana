@@ -25,7 +25,8 @@
 
 				<li class="tight-form-item" ng-show="link.type === 'dashboards'">With tag</li>
 				<li ng-show="link.type === 'dashboards'">
-					<input type="text" ng-model="link.tag" class="input-small tight-form-input" style="width: 151px" ng-model-onblur ng-change="updated()">
+					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="add tags">
+					</bootstrap-tagsinput>
 				</li>
 				<li class="tight-form-item" ng-show="link.type === 'dashboards'">
 					<editor-checkbox text="As dropdown" model="link.asDropdown" change="updated()"></editor-checkbox>
