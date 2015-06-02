@@ -99,18 +99,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(hit.Tags), ShouldEqual, 2)
 			})
 
-			Convey("Should be able to search for dashboards using tags", func() {
-				query1 := search.FindPersistedDashboardsQuery{Tag: "webapp", OrgId: 1}
-				query2 := search.FindPersistedDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
-
-				err := SearchDashboards(&query1)
-				err = SearchDashboards(&query2)
-				So(err, ShouldBeNil)
-
-				So(len(query1.Result), ShouldEqual, 1)
-				So(len(query2.Result), ShouldEqual, 0)
-			})
-
 			Convey("Should not be able to save dashboard with same name", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,

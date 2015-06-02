@@ -8,7 +8,7 @@ import (
 
 func Search(c *middleware.Context) {
 	query := c.Query("query")
-	tag := c.Query("tag")
+	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
 
@@ -18,7 +18,7 @@ func Search(c *middleware.Context) {
 
 	searchQuery := search.Query{
 		Title:     query,
-		Tag:       tag,
+		Tags:      tags,
 		UserId:    c.UserId,
 		Limit:     limit,
 		IsStarred: starred == "true",
