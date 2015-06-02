@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -34,7 +35,6 @@ func searchHandler(query *Query) error {
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:     query.Title,
 		UserId:    query.UserId,
-		Limit:     query.Limit,
 		IsStarred: query.IsStarred,
 		OrgId:     query.OrgId,
 	}
@@ -65,6 +65,14 @@ func searchHandler(query *Query) error {
 		hits = filtered
 	}
 
+	// sort main result array
+	sort.Sort(hits)
+
+	fmt.Printf("Length: %d", len(hits))
+	if len(hits) > query.Limit {
+		hits = hits[0 : query.Limit-1]
+	}
+
 	// sort tags
 	for _, hit := range hits {
 		sort.Strings(hit.Tags)
@@ -74,9 +82,6 @@ func searchHandler(query *Query) error {
 	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
 		return err
 	}
-
-	// sort main result array
-	sort.Sort(hits)
 
 	query.Result = hits
 	return nil

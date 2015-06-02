@@ -32,7 +32,7 @@ function (angular, app, _, config, PanelMeta) {
       mode: 'starred',
       query: '',
       limit: 10,
-      tag: '',
+      tags: []
     };
 
     $scope.modes = ['starred', 'search'];
@@ -43,6 +43,9 @@ function (angular, app, _, config, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
+      if ($scope.panel.tag) {
+        $scope.panel.tags = [$scope.panel.tag];
+      }
 
       if ($scope.isNewPanel()) {
         $scope.panel.title = "Starred Dashboards";
@@ -58,7 +61,7 @@ function (angular, app, _, config, PanelMeta) {
         params.starred = "true";
       } else {
         params.query = $scope.panel.query;
-        params.tag = $scope.panel.tag;
+        params.tag = $scope.panel.tags;
       }
 
       return backendSrv.search(params).then(function(result) {

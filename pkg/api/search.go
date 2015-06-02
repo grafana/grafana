@@ -13,7 +13,7 @@ func Search(c *middleware.Context) {
 	limit := c.QueryInt("limit")
 
 	if limit == 0 {
-		limit = 200
+		limit = 1000
 	}
 
 	searchQuery := search.Query{
