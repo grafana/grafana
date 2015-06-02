@@ -1,6 +1,10 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/go-xorm/xorm"
+	m "github.com/grafana/grafana/pkg/models"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addMonitorMigration(mg *Migrator) {
 
@@ -248,7 +252,31 @@ func addMonitorMigration(mg *Migrator) {
 	addTableIndicesMigrations(mg, "v1", monitorCollectorStateV1)
 
 	// add health settings
-	mg.AddMigration("monitor add alerts v1", NewAddColumnMigration(monitorV3, &Column{
+	migration := NewAddColumnMigration(monitorV3, &Column{
 		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: true, Default: "",
-	}))
+	})
+	migration.OnSuccess = func(sess *xorm.Session) error {
+		sess.Table("monitor")
+		monitors := make([]m.Monitor, 0)
+		if err := sess.Find(&monitors); err != nil {
+			return err
+		}
+		for _, mon := range monitors {
+
+			if (mon.HealthSettings != nil) && (mon.HealthSettings.Steps != 0) && (mon.HealthSettings.NumCollectors != 0) {
+				continue
+			}
+			if mon.HealthSettings == nil {
+				mon.HealthSettings = &m.MonitorHealthSettingDTO{1, 2}
+			} else {
+				mon.HealthSettings.NumCollectors = 1
+				mon.HealthSettings.Steps = 2
+			}
+			if _, err := sess.Id(mon.Id).Update(mon); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	mg.AddMigration("monitor add alerts v1", migration)
 }
