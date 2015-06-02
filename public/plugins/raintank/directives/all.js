@@ -162,7 +162,7 @@ define([
     };
   });
 
-  module.directive("rtCollectorHealth", function(backendSrv) {
+  module.directive("rtCollectorHealth", function(backendSrv, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/collectorHealth.html',
       scope: {
@@ -171,88 +171,180 @@ define([
       link: function(scope, element) {
         scope.$watch("model", function(model) {
           if (typeof(model) == "object") {
-            showHealth(model);
+            var metricsQuery = {
+              range: {from: "now-90s", to: "now"},
+              interval: '10s',
+              targets: [
+                {target: "*."+ model.slug +".network.*.{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(model) {
-          backendSrv.get('/api/collectors/'+model.id+'/health').then(function(health) {
-            var tmpl = '';
-            var okCount = 0;
-            var warnCount = 0;
-            var errorCount = 0;
-            var unknownCount = 0;
-            _.forEach(health, function(checkState) {
-              if (checkState.state == -1) {
-                unknownCount++;
-                return
+        function showHealth(metrics) {
+          var tmpl = '';
+          var okCount = 0;
+          var warnCount = 0;
+          var errorCount = 0;
+          var unknownCount = 0;
+          var endpointCheckResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.')
+            var stateStr = parts[4];
+            var endpoint = parts[0];
+            var check = parts[3];
+            var endpointCheck = endpoint + "."+check;
+            if (!(endpointCheck in endpointCheckResults)) {
+              endpointCheckResults[endpointCheck] = {ts: -1, state: -1};
+            }
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] == 1) && (point[1] > endpointCheckResults[endpointCheck].ts)) {
+                  endpointCheckResults[endpointCheck].ts = point[1];
+                  switch (stateStr) {
+                    case 'ok_state':
+                      endpointCheckResults[endpointCheck].state = 0
+                      break;
+                    case 'warn_state':
+                      endpointCheckResults[endpointCheck].state = 1
+                      break
+                    case 'error_state':
+                      endpointCheckResults[endpointCheck].state = 2
+                      break
+                    default:
+                      endpointCheckResults[endpointCheck].state = -1
+                      console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
               }
-              if (checkState.state == 0) {
-                okCount++;
-                return
-              }
-              if (checkState.state == 1) {
-                warnCount++;
-                return
-              }
-              if (checkState.state == 2) {
-                errorCount++;
-                return
-              }
-            });
-            scope.okCount = okCount;
-            scope.warnCount = warnCount;
-            scope.errorCount = errorCount;
-            scope.unknownCount = unknownCount;
+            }
           });
+          for (col in endpointCheckResults) {
+            switch (endpointCheckResults[col].state) {
+              case 0:
+                okCount++;
+                break;
+              case 1:
+                warnCount++;
+                break;
+              case 2:
+                errorCount++;
+                break;
+              default:
+                unknownCount++;
+            }
+          }
+          scope.okCount = okCount;
+          scope.warnCount = warnCount;
+          scope.errorCount = errorCount;
+          scope.unknownCount = unknownCount;
         }
       }
     };
   });
 
-  module.directive("rtCollectorSummaryHealth", function(backendSrv) {
+  module.directive("rtCollectorSummaryHealth", function(backendSrv, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/collectorSummaryHealth.html',
       scope: {
         model: "=",
       },
-      link: function(scope, element) {
+            link: function(scope, element) {
         scope.$watch("model", function(model) {
           if (typeof(model) == "object") {
-            showHealth(model);
+            var metricsQuery = {
+              range: {from: "now-90s", to: "now"},
+              interval: '10s',
+              targets: [
+                {target: "*."+ model.slug +".network.*.{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(model) {
-          backendSrv.get('/api/collectors/'+model.id+'/health').then(function(health) {
-            var tmpl = '';
-            var okCount = 0;
-            var warnCount = 0;
-            var errorCount = 0;
-            var unknownCount = 0;
-            _.forEach(health, function(checkState) {
-              if (checkState.state == -1) {
-                unknownCount++;
-                return
+        function showHealth(metrics) {
+          var tmpl = '';
+          var okCount = 0;
+          var warnCount = 0;
+          var errorCount = 0;
+          var unknownCount = 0;
+          var endpointCheckResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.')
+            var stateStr = parts[4];
+            var endpoint = parts[0];
+            var check = parts[3];
+            var endpointCheck = endpoint + "."+check;
+            if (!(endpointCheck in endpointCheckResults)) {
+              endpointCheckResults[endpointCheck] = {ts: -1, state: -1};
+            }
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] == 1) && (point[1] > endpointCheckResults[endpointCheck].ts)) {
+                  endpointCheckResults[endpointCheck].ts = point[1];
+                  switch (stateStr) {
+                    case 'ok_state':
+                      endpointCheckResults[endpointCheck].state = 0
+                      break;
+                    case 'warn_state':
+                      endpointCheckResults[endpointCheck].state = 1
+                      break
+                    case 'error_state':
+                      endpointCheckResults[endpointCheck].state = 2
+                      break
+                    default:
+                      endpointCheckResults[endpointCheck].state = -1
+                      console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
               }
-              if (checkState.state == 0) {
-                okCount++;
-                return
-              }
-              if (checkState.state == 1) {
-                warnCount++;
-                return
-              }
-              if (checkState.state == 2) {
-                errorCount++;
-                return
-              }
-            });
-            scope.okCount = okCount;
-            scope.warnCount = warnCount;
-            scope.errorCount = errorCount;
-            scope.unknownCount = unknownCount;
+            }
           });
+          for (col in endpointCheckResults) {
+            switch (endpointCheckResults[col].state) {
+              case 0:
+                okCount++;
+                break;
+              case 1:
+                warnCount++;
+                break;
+              case 2:
+                errorCount++;
+                break;
+              default:
+                unknownCount++;
+            }
+          }
+          scope.okCount = okCount;
+          scope.warnCount = warnCount;
+          scope.errorCount = errorCount;
+          scope.unknownCount = unknownCount;
         }
       }
     };

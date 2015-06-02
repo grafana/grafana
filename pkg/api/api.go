@@ -142,7 +142,6 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetCollectorsQuery{}), wrap(GetCollectors)).
 				Put(reqEditorRole, bind(m.AddCollectorCommand{}), wrap(AddCollector)).
 				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), wrap(UpdateCollector))
-			r.Get("/:id/health", wrap(getCollectorHealthById))
 			r.Get("/:id", wrap(GetCollectorById))
 			r.Delete("/:id", reqEditorRole, wrap(DeleteCollector))
 		})

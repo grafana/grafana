@@ -564,24 +564,6 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		}
 	}
 
-	if len(collectorList) > 0 {
-		monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
-		for i, c := range collectorList {
-			monitor_collector_states[i] = &m.MonitorCollectorState{
-				OrgId:       mon.OrgId,
-				EndpointId:  mon.EndpointId,
-				MonitorId:   mon.Id,
-				CollectorId: c,
-				State:       -1,
-				Updated:     time.Now(),
-			}
-		}
-		sess.Table("monitor_collector_state")
-		if _, err := sess.Insert(&monitor_collector_states); err != nil {
-			return err
-		}
-	}
-
 	cmd.Result = &m.MonitorDTO{
 		Id:             mon.Id,
 		EndpointId:     mon.EndpointId,

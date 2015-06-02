@@ -229,28 +229,6 @@ func addMonitorMigration(mg *Migrator) {
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorTagV1)
 
-	//monitorCollector
-	var monitorCollectorStateV1 = Table{
-		Name: "monitor_collector_state",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-		},
-		Indices: []*Index{
-			&Index{Cols: []string{"org_id"}},
-			&Index{Cols: []string{"monitor_id"}},
-			&Index{Cols: []string{"endpoint_id"}},
-		},
-	}
-	mg.AddMigration("create monitor_collector_state table", NewAddTableMigration(monitorCollectorStateV1))
-	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", monitorCollectorStateV1)
-
 	// add health settings
 	migration := NewAddColumnMigration(monitorV3, &Column{
 		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: true, Default: "",
