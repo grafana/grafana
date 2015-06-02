@@ -26,6 +26,8 @@ function (angular, app, _) {
           return option;
         });
 
+        _.sortBy(vm.options, 'text');
+
         vm.selectedValues = _.filter(vm.options, {selected: true});
 
         if (!vm.tags) {
