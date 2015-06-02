@@ -27,11 +27,11 @@
 					ng-model="panel.query" ng-change="get_data()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Tag
+					Tags
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" placeholder="full tag name"
-					ng-model="panel.tag" ng-change="get_data()" ng-model-onblur>
+					<bootstrap-tagsinput ng-model="panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="get_data()">
+					</bootstrap-tagsinput>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

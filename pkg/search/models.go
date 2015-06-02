@@ -39,7 +39,6 @@ type FindPersistedDashboardsQuery struct {
 	Title     string
 	OrgId     int64
 	UserId    int64
-	Limit     int
 	IsStarred bool
 
 	Result HitList

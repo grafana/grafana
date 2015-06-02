@@ -12,7 +12,7 @@ func TestSearch(t *testing.T) {
 
 	Convey("Given search query", t, func() {
 		jsonDashIndex = NewJsonDashIndex("../../public/dashboards/")
-		query := Query{}
+		query := Query{Limit: 2000}
 
 		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
