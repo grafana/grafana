@@ -20,10 +20,10 @@
 
 				<li class="tight-form-item">Type</li>
 				<li>
-					<select class="input-large tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
+					<select class="input-medium tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
 				</li>
 
-				<li class="tight-form-item" ng-show="link.type === 'dashboards'">With tag</li>
+				<li class="tight-form-item" ng-show="link.type === 'dashboards'">With tags</li>
 				<li ng-show="link.type === 'dashboards'">
 					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="add tags">
 					</bootstrap-tagsinput>
