@@ -118,7 +118,11 @@ func Executor(fn GraphiteReturner) {
 			if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
 				panic(fmt.Sprintf("failed to update monitor state. %s", err.Error()))
 			}
+			//emit a state change event.
 		}
+		//store the result in graphite.
+		job.StoreResult(res)
+
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 		// we want to have some individual times
 		if gr, ok := gr.(*GraphiteContext); ok {

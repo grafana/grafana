@@ -24,6 +24,10 @@ var server *socketio.Server
 var bufCh chan m.MetricDefinition
 var localSockets LocalSockets
 
+func StoreMetric(m *m.MetricDefinition) {
+	bufCh <- *m
+}
+
 type LocalSockets struct {
 	sync.RWMutex
 	Sockets map[string]socketio.Socket
@@ -261,7 +265,7 @@ func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 		if !c.Collector.Public {
 			r.OrgId = c.OrgId
 		}
-		bufCh <- *r
+		StoreMetric(r)
 	}
 }
 

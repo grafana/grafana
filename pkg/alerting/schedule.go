@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/api"
 	m "github.com/grafana/grafana/pkg/models"
 	"strings"
 	"text/template"
@@ -18,6 +19,9 @@ type Job struct {
 	key         string
 	OrgId       int64
 	MonitorId   int64
+	EndpointId  int64
+	EndpointSlug string
+	MonitorTypeName string
 	Freq        int64
 	Offset      int64 // offset on top of "even" minute/10s/.. intervals
 	State       m.CheckEvalResult
@@ -28,6 +32,33 @@ type Job struct {
 
 func (job Job) String() string {
 	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
+}
+
+func (job Job) StoreResult(res m.CheckEvalResult) {
+	metrics := make([]*m.MetricDefinition, 3)
+	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
+	for pos, state := range metricNames {
+		metrics[pos] = &m.MetricDefinition{
+			OrgId:     job.OrgId,
+			Name:      fmt.Sprintf("%s.alerting.%s.%s", job.EndpointSlug, job.MonitorTypeName, state),
+			Metric:     fmt.Sprintf("alerting.%s.%s", job.MonitorTypeName, state),
+			Interval:   job.Freq,
+			Value:      0.0,
+			Unit:       "state",
+			Time:       job.lastPointTs.Unix(),
+			TargetType: "gauge",
+			Extra:      map[string]interface{}{
+				"endpoint_id": job.EndpointId,
+				"monitor_id": job.MonitorId,
+			},
+		}
+	}
+	if int(res) >= 0 {
+		metrics[int(res)].Value = 1.0
+	}
+	for _, m := range metrics {
+		api.StoreMetric(m)
+	}
 }
 
 func getJobs(lastPointAt int64) ([]*Job, error) {
@@ -106,6 +137,9 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	j := &Job{
 		key:       fmt.Sprintf("%d", monitor.Id),
 		MonitorId: monitor.Id,
+		EndpointId: monitor.EndpointId,
+		EndpointSlug: monitor.EndpointSlug,
+		MonitorTypeName: monitor.MonitorTypeName,
 		OrgId:     monitor.OrgId,
 		Freq:      monitor.Frequency,
 		Offset:    monitor.Offset,
