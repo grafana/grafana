@@ -39,9 +39,11 @@
                 <div class="rt-form rt-input-styles rt-flex-form-block">
                   <div style="margin: 20px 45px 0 0;">
                     <label class="small">Frequency</label>
-                    <select class="small" ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts" style="width: auto; height: 34px; margin-top: 5px;"></select>
+                    <div class="select-input">
+                      <select ng-model="monitors['http'].frequency" ng-options="f.value as f.label for f in frequencyOpts"></select>
+                    </div>
                   </div>                
-                  <div class="rt-form-row rt-form-row-long" style="margin: 20px 0 0 0;">                    
+                  <div class="rt-form-row rt-form-row-long">                    
                     <label class="small">Monitoring from</label>
                     <div class="rt-form-group">
                       <endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
@@ -68,7 +70,9 @@
                         </div>                        
                         <div class="rt-flex-form-field">
                           <label class="small">Method</label>
-                           <select class="small" ng-model="currentSettingByVariable(monitors['http'], 'method').value" ng-options="m for m in defaultSettingByVariable('http','method').conditions.values" style="width: auto; height: 34px;"></select>
+                          <div class="select-input">
+                            <select ng-model="currentSettingByVariable(monitors['http'], 'method').value" ng-options="m for m in defaultSettingByVariable('http','method').conditions.values"></select>
+                          </div>
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Content Match</label>

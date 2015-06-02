@@ -23,12 +23,15 @@
 	<div ng-if="endpoints.length > 0" class="editor-row">
 		<div class="editor-option">
 			<span class="small">Filtered by:</span>
-			<select class="input-medium rt-select-dropdown" ng-model="filter.tag" ng-options="t for t in endpointTags()">
-				<option value="">All Tags</option>
-			</select>
+			<div class="select-input">
+				<select ng-model="filter.tag" ng-options="t for t in endpointTags()">
+					<option value="">All Tags</option>
+				</select>
+			</div>
 			<span class="small">Sorted By:</span>
-				<select class="input-medium rt-select-dropdown small" style="" ng-model="sort_field" ng-options="field for field in ['name']">
-			</select>
+				<div class="select-input">
+					<select ng-model="sort_field" ng-options="field for field in ['name']"></select>
+				</div>
 		</div>
 		<div style="display: block; padding: 25px 0 0 0;">
 			<div style="display: inline-block" class="rt-list-status">

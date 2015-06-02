@@ -1,0 +1,84 @@
+// ==========================================================================
+// DROPDOWN
+//
+// components/_dropdown.scss
+// ==========================================================================
+
+
+
+.select-input {
+  display: inline-block;
+  position: relative;
+  width: auto;
+  max-width: 100%;
+  margin: 0 5px;
+  padding: 0 12px 0 6px;
+  border: 0 solid transparent;
+  background-color: #1f1f1f;
+  overflow: hidden;
+  vertical-align: top;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+}
+
+.select-input > select {
+  width: 115%;
+  min-width: 110%;
+  max-width: 115%;
+  height: 24px;
+  margin: 0;
+  padding: 0 20px 0 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #d6d8da;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  text-indent: .01px;
+  text-overflow: '';
+  -webkit-appearance: none;
+  -moz-appearance: window;
+  appearance: none;
+}
+
+// This hides native dropdown button arrow in IE
+.select-input > select::-ms-expand {
+  display: none;
+}
+
+.select-input:after {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  height: 12px;
+  margin-top: -6px;
+  padding: 0;
+  background-color: transparent;
+  color: white;
+  font: normal normal normal 14px/1 FontAwesome;
+  text-align: center;
+  content: '\f0d7';
+  pointer-events: none;
+}
+
+.select-input > select:focus {
+  outline: none;
+}
+
+// This hides focus around selected option in FF
+.select-input > select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #adafae;
+}
+
+.rt-form .select-input {
+  margin: 0;
+  background: #333;
+}
+
+.rt-form .select-input > select {
+  height: 34px;
+  line-height: 34px;
+}
