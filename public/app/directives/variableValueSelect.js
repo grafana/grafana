@@ -93,7 +93,7 @@ function (angular, app, _) {
 
         tagValuesPromise.then(function(values) {
           tag.values = values;
-          tag.valuesText = values.join(', ');
+          tag.valuesText = values.join(' + ');
           _.each(vm.options, function(option) {
             if (_.indexOf(tag.values, option.value) !== -1) {
               option.selected = tag.selected;

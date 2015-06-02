@@ -1,9 +1,11 @@
 <div class="variable-link-wrapper">
 	<a ng-click="vm.show()" class="variable-value-link tight-form-item">
 		{{vm.linkText}}
-		<span class="label-tag" ng-repeat="tag in vm.selectedTags" tag-color-from-name="tag.text">
-			&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;
-			{{tag.text}}
+		<span ng-repeat="tag in vm.selectedTags" bs-tooltip='tag.valuesText' data-placement="bottom">
+			<span class="label-tag"tag-color-from-name="tag.text">
+				&nbsp;&nbsp;<i class="fa fa-tag"></i>&nbsp;
+				{{tag.text}}
+			</span>
 		</span>
 		<i class="fa fa-caret-down"></i>
 	</a>
