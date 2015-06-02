@@ -153,6 +153,7 @@ function (angular, _, kbn) {
             });
           });
         } else {
+          delete variable.tags;
           return queryPromise;
         }
       });
