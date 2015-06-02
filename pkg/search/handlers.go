@@ -55,10 +55,17 @@ func searchHandler(query *Query) error {
 		hits = append(hits, jsonHits...)
 	}
 
-	sort.Sort(hits)
-
+	// add isStarred info
 	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
 		return err
+	}
+
+	// sort main result array
+	sort.Sort(hits)
+
+	// sort tags
+	for _, hit := range hits {
+		sort.Strings(hit.Tags)
 	}
 
 	query.Result = hits
