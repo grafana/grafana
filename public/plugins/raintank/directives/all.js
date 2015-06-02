@@ -88,7 +88,6 @@ define([
         });
 
         function showHealth(metrics) {
-
           var tmpl = '';
           var okCount = 0;
           var warnCount = 0;
@@ -144,6 +143,9 @@ define([
                 unknownCount++;
             }
           }
+          var unknowns = scope.model.collectors - Object.keys(collectorResults).length;
+          unknownCount += unknowns;
+
           scope.okCount = okCount;
           scope.warnCount = warnCount;
           scope.errorCount = errorCount;
