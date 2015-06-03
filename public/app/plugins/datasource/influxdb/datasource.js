@@ -126,6 +126,12 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return this._influxRequest('GET', '/query', {q: query});
     };
 
+    InfluxDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var self = this;
       var deferred = $q.defer();

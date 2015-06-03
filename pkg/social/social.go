@@ -186,6 +186,37 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client) bool {
 	return false
 }
 
+func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
+	type Record struct {
+		Email    string `json:"email"`
+		Primary  bool   `json:"primary"`
+		Verified bool   `json:"verified"`
+	}
+
+	emailsUrl := fmt.Sprintf("https://api.github.com/user/emails")
+	r, err := client.Get(emailsUrl)
+	if err != nil {
+		return "", err
+	}
+
+	defer r.Body.Close()
+
+	var records []Record
+
+	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
+		return "", err
+	}
+
+	var email = ""
+	for _, record := range records {
+		if record.Primary {
+			email = record.Email
+		}
+	}
+
+	return email, nil
+}
+
 func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) {
 	type Record struct {
 		Id int `json:"id"`
@@ -272,6 +303,13 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	if !s.IsOrganizationMember(client) {
 		return nil, ErrMissingOrganizationMembership
+	}
+
+	if userInfo.Email == "" {
+		userInfo.Email, err = s.FetchPrivateEmail(client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return userInfo, nil

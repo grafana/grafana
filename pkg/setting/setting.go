@@ -79,6 +79,7 @@ var (
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
+	ViewerRoleMode     string
 
 	// Http auth
 	AdminUser     string
@@ -386,6 +387,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	ViewerRoleMode = users.Key("viewer_role_mode").In("default", []string{"default", "strinct"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
