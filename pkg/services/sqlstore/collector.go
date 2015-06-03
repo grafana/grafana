@@ -3,12 +3,13 @@ package sqlstore
 import (
 	"errors"
 	"fmt"
-	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -23,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", DeleteCollectorSession)
 	bus.AddHandler("sql", ClearCollectorSession)
 	bus.AddHandler("sql", GetCollectorSessions)
+	bus.AddHandler("sql", GetCollectorTags)
 }
 
 type CollectorWithTag struct {
@@ -506,4 +508,26 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		}
 		return nil
 	})
+}
+
+type tagNameWrapper struct {
+	Tag string
+}
+
+func GetCollectorTags(query *m.GetAllCollectorTagsQuery) error {
+	rawSql := `SELECT tag FROM collector_tag WHERE org_id=? GROUP BY tag`
+
+	sess := x.Sql(rawSql, query.OrgId)
+	tags := make([]tagNameWrapper, 0)
+
+	if err := sess.Find(&tags); err != nil {
+		return err
+	}
+
+	query.Result = make([]string, 0)
+	for _, tag := range tags {
+		query.Result = append(query.Result, tag.Tag)
+	}
+
+	return nil
 }

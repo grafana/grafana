@@ -145,3 +145,8 @@ type GetCollectorSessionsQuery struct {
 	CollectorId int64
 	Result      []*CollectorSession
 }
+
+type GetAllCollectorTagsQuery struct {
+	OrgId  int64
+	Result []string
+}
