@@ -142,11 +142,18 @@ func TestAccountDataAccess(t *testing.T) {
 					})
 				})
 
-				Convey("Cannot delete last admin account user", func() {
+				Convey("Cannot delete last admin org user", func() {
 					cmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id}
 					err := RemoveOrgUser(&cmd)
 					So(err, ShouldEqual, m.ErrLastOrgAdmin)
 				})
+
+				Convey("Cannot update role so no one is admin user", func() {
+					cmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id, Role: m.ROLE_VIEWER}
+					err := UpdateOrgUser(&cmd)
+					So(err, ShouldEqual, m.ErrLastOrgAdmin)
+				})
+
 			})
 		})
 	})

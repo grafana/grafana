@@ -111,6 +111,7 @@ function (angular, _, $, config, kbn, moment) {
             var list = [];
             for (var i = 0; i < results.data.length; i++) {
               var e = results.data[i];
+
               list.push({
                 annotation: annotation,
                 time: e.when * 1000,
@@ -193,6 +194,12 @@ function (angular, _, $, config, kbn, moment) {
             };
           });
         });
+    };
+
+    GraphiteDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('*').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
     };
 
     GraphiteDatasource.prototype.listDashboards = function(query) {

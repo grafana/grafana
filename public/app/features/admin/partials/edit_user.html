@@ -25,7 +25,7 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
-				<div class="tight-form" style="margin-top: 5px">
+				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
 							<strong>Email</strong>
@@ -36,7 +36,7 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
-				<div class="tight-form" style="margin-top: 5px">
+				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
 							<strong>Username</strong>
@@ -80,19 +80,73 @@
 			Permissions
 		</h2>
 
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item last">
-					Grafana Admin&nbsp;
-					<input class="cr1" id="permissions.isGrafanaAdmin" type="checkbox"
-					ng-model="permissions.isGrafanaAdmin" ng-checked="permissions.isGrafanaAdmin">
-					<label for="permissions.isGrafanaAdmin" class="cr1"></label>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+		<div>
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item last">
+						Grafana Admin&nbsp;
+						<input class="cr1" id="permissions.isGrafanaAdmin" type="checkbox"
+						ng-model="permissions.isGrafanaAdmin" ng-checked="permissions.isGrafanaAdmin">
+						<label for="permissions.isGrafanaAdmin" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<br>
+			<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
+			<br>
 		</div>
-		<br>
-		<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
+
+		<h2>
+			Organizations
+		</h2>
+
+		<form name="addOrgForm">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 160px">
+						Add organization
+					</li>
+					<li>
+						<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"
+									required class="input-xlarge tight-form-input" placeholder="organization name">
+					</li>
+					<li class="tight-form-item">
+						Role
+					</li>
+					<li>
+						<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
+						</select>
+					</li>
+					<li>
+						<button class="btn btn-success tight-form-btn" ng-click="addOrgUser()">Add</button>
+					</li>
+					<div class="clearfix"></div>
+				</ul>
+			</div>
+		</form>
+
+		<table class="grafana-options-table form-inline">
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
+			<tr ng-repeat="org in orgs">
+				<td>
+					{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
+				</td>
+				<td>
+					<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
+					</select>
+				</td>
+				<td style="width: 1%">
+					<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
 
 	</div>
 </div>

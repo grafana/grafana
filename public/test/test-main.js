@@ -125,9 +125,11 @@ require([
     'specs/graphiteTargetCtrl-specs',
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
+    'specs/influxSeries08-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
+    'specs/influxdbQueryCtrl-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',
@@ -142,6 +144,7 @@ require([
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',
+    'specs/selectDropdownCtrl-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

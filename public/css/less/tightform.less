@@ -20,6 +20,14 @@
   }
 }
 
+.tight-form-container-no-item-borders {
+  border: 1px solid @grafanaTargetBorder;
+
+  .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
+    border: none;
+  }
+}
+
 .spaced-form {
   .tight-form {
     margin: 7px 0;
@@ -85,8 +93,8 @@
   &.last {
     border-right: none;
   }
-
 }
+
 
 .tight-form-item-icon {
   i {
@@ -124,7 +132,6 @@ input[type=text].tight-form-clear-input {
   border: none;
   margin: 0px;
   background: transparent;
-  float: left;
   color: @grafanaTargetColor;
   border-radius: 0;
   border-right: 1px solid @grafanaTargetSegmentBorder;

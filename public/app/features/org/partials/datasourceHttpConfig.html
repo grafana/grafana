@@ -6,7 +6,7 @@
 			Url
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='current.url' placeholder="http://my.server.com:8080" required></input>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='current.url' placeholder="http://my.server.com:8080" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
 		</li>
 		<li class="tight-form-item">
 			Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
