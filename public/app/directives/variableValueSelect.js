@@ -223,7 +223,7 @@ function (angular, app, _) {
 
     });
 
-    angular
+  angular
     .module('grafana.directives')
     .directive('variableValueSelect', function($compile, $window, $timeout) {
 
