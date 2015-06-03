@@ -91,6 +91,34 @@ function (angular, _, kbn) {
       });
     };
 
+    KairosDBDatasource.prototype.performListTagNames = function() {
+      var options = {
+        url : this.url + '/api/v1/tagnames',
+        method : 'GET'
+      };
+
+      return $http(options).then(function(response) {
+        if (!response.data) {
+          return [];
+        }
+        return response.data.results;
+      });
+    };
+
+    KairosDBDatasource.prototype.performListTagValues = function() {
+      var options = {
+        url : this.url + '/api/v1/tagvalues',
+        method : 'GET'
+      };
+
+      return $http(options).then(function(response) {
+        if (!response.data) {
+          return [];
+        }
+        return response.data.results;
+      });
+    };
+
     KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname) {
       var options = {
         url : this.url + '/api/v1/datapoints/query/tags',
@@ -113,6 +141,20 @@ function (angular, _, kbn) {
     };
 
     KairosDBDatasource.prototype.metricFindQuery = function(query) {
+      function format(results, query) {
+        return _.chain(results)
+          .filter(function(result) {
+            return result.indexOf(query) >= 0;
+          })
+          .map(function(result) {
+            return {
+              text: result,
+              expandable: true
+            };
+          })
+          .value();
+      }
+
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -121,19 +163,30 @@ function (angular, _, kbn) {
         return $q.reject(err);
       }
 
-      return this.performMetricSuggestQuery().then(function(metrics) {
-        return _.chain(metrics)
-          .filter(function(metric) {
-            return metric.indexOf(interpolated) >= 0;
-          })
-          .map(function(metric) {
-            return {
-              text: metric,
-              expandable: true
-            };
-          })
-          .value();
-      });
+      var metrics_regex = /metrics\((.*)\)/;
+      var tag_names_regex = /tag_names\((.*)\)/;
+      var tag_values_regex = /tag_values\((.*)\)/;
+
+      var metrics_query = interpolated.match(metrics_regex);
+      if (metrics_query) {
+        return this.performMetricSuggestQuery().then(function(metrics) {
+          return format(metrics, metrics_query[1]);
+        });
+      }
+
+      var tag_names_query = interpolated.match(tag_names_regex);
+      if (tag_names_query) {
+        return this.performListTagNames().then(function(tag_names) {
+          return format(tag_names, tag_names_query[1]);
+        });
+      }
+
+      var tag_values_query = interpolated.match(tag_values_regex);
+      if (tag_values_query) {
+        return this.performListTagValues().then(function(tag_values) {
+          return format(tag_values, tag_values_query[1]);
+        });
+      }
     };
 
     /////////////////////////////////////////////////////////////////////////
