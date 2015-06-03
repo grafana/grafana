@@ -55,14 +55,14 @@
   min-width: 150px;
   max-height: 400px;
   min-height: 150px;
-  background-color: @dropdownBackground;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 0px 0px 55px 0px black;
-  border: 1px solid @grafanaTargetFuncBackground;
+  background-color: @dropdownBackground;
+  box-shadow: 0 0 25px 0 rgba(0,0,0,0.4);
   z-index: 1000;
   font-size: @baseFontSize;
   border-radius: 3px 3px 0 0;
+  border: 1px solid @grafanaTargetFuncBackground;
 
   &.multi {
    .selected {
