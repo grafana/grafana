@@ -30,11 +30,9 @@ function (angular, app, _) {
 
         vm.selectedValues = _.filter(vm.options, {selected: true});
 
-        if (!vm.tags) {
-          vm.tags = _.map(vm.variable.tags, function(value) {
-            return { text: value, selected: false };
-          });
-        }
+        vm.tags = _.map(vm.variable.tags, function(value) {
+          return { text: value, selected: false };
+        });
 
         vm.search = {query: '', options: vm.options};
         vm.dropdownVisible = true;
@@ -225,7 +223,7 @@ function (angular, app, _) {
 
     });
 
-  angular
+    angular
     .module('grafana.directives')
     .directive('variableValueSelect', function($compile, $window, $timeout) {
 
