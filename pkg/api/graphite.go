@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -37,7 +38,6 @@ func GraphiteProxy(c *middleware.Context) {
 		req.URL.Host = target.Host
 		req.Header.Add("X-Org-Id", strconv.FormatInt(c.OrgId, 10))
 		req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
-
 	}
 
 	proxy := &httputil.ReverseProxy{Director: director}
@@ -46,9 +46,10 @@ func GraphiteProxy(c *middleware.Context) {
 }
 
 func executeRaintankDbQuery(query string, orgId int64) (interface{}, error) {
-	values := []util.DynMap{}
+	values := []map[string]interface{}{}
 
 	if query == "raintank_db.tags.collectors.*" {
+		// return all tags
 		tagsQuery := m.GetAllCollectorTagsQuery{OrgId: orgId}
 		if err := bus.Dispatch(&tagsQuery); err != nil {
 			return nil, err
@@ -57,25 +58,31 @@ func executeRaintankDbQuery(query string, orgId int64) (interface{}, error) {
 		for _, tag := range tagsQuery.Result {
 			values = append(values, util.DynMap{"text": tag, "expandable": false})
 		}
-	}
-	// regex := regexp.MustCompile(`\${(\w+)}`)
-	// return regex.ReplaceAllStringFunc(value, func(envVar string) string {
-	// 	envVar = strings.TrimPrefix(envVar, "${")
-	// 	envVar = strings.TrimSuffix(envVar, "}")
-	// 	envValue := os.Getenv(envVar)
-	// 	return envValue
-	// })
 
-	// if query == "raintank_db.tags.collectors.*" {
-	// 	tagsQuery := m.GetAllCollectorTagsQuery{OrgId: c.OrgId}
-	// 	if err := bus.Dispatch(&tagsQuery); err != nil {
-	// 		return
-	// 	}
-	//
-	// 	for _, tag := range tagsQuery.Result {
-	// 		values = append(values, util.DynMap{"text": tag, "expandable": false})
-	// 	}
-	// }
-	//
+		return values, nil
+	}
+
+	regex := regexp.MustCompile(`^raintank_db\.tags\.collectors\.(\w+)\.\*`)
+	matches := regex.FindAllStringSubmatch(query, -1)
+	key := ""
+
+	if len(matches) == 0 {
+		return values, nil
+	}
+
+	key = matches[0][1]
+
+	if key != "" {
+		// return tag values for key
+		collectorsQuery := m.GetCollectorsQuery{OrgId: orgId, Tag: []string{key}}
+		if err := bus.Dispatch(&collectorsQuery); err != nil {
+			return nil, err
+		}
+
+		for _, collector := range collectorsQuery.Result {
+			values = append(values, util.DynMap{"text": collector.Slug, "expandable": false})
+		}
+	}
+
 	return values, nil
 }

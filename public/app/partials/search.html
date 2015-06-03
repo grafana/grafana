@@ -30,7 +30,7 @@
 				<div ng-repeat="tag in results" class="pointer" style="width: 180px; float: left;"
 					ng-class="{'selected': $index === selectedIndex }"
 					ng-click="filterByTag(tag.term, $event)">
-					<a class="search-result-tag label label-tag" tag-color-from-name tag="tag.term">
+					<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
 						<i class="fa fa-tag"></i>
 						<span>{{tag.term}} &nbsp;({{tag.count}})</span>
 					</a>
