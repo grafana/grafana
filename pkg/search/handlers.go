@@ -1,7 +1,6 @@
 package search
 
 import (
-	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -68,9 +67,8 @@ func searchHandler(query *Query) error {
 	// sort main result array
 	sort.Sort(hits)
 
-	fmt.Printf("Length: %d", len(hits))
 	if len(hits) > query.Limit {
-		hits = hits[0 : query.Limit-1]
+		hits = hits[0:query.Limit]
 	}
 
 	// sort tags
