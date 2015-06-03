@@ -112,6 +112,30 @@ function (angular, _, kbn) {
       });
     };
 
+    KairosDBDatasource.prototype.metricFindQuery = function(query) {
+      var interpolated;
+      try {
+        interpolated = templateSrv.replace(query);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      return this.performMetricSuggestQuery().then(function(metrics) {
+        return _.chain(metrics)
+          .filter(function(metric) {
+            return metric.indexOf(interpolated) >= 0;
+          })
+          .map(function(metric) {
+            return {
+              text: metric,
+              expandable: true
+            };
+          })
+          .value();
+      });
+    };
+
     /////////////////////////////////////////////////////////////////////////
     /// Formatting methods
     ////////////////////////////////////////////////////////////////////////
