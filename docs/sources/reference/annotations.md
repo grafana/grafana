@@ -18,9 +18,9 @@ dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add
 Graphite supports two ways to query annotations.
 
 - A regular metric query, use the `Graphite target expression` text input for this
-- Graphite events query, use the `Graphite event tags` text input, especify an tag or wildcard (leave empty should also work)
+- Graphite events query, use the `Graphite event tags` text input, specify an tag or wildcard (leave empty should also work)
 
-## Elasticsearch annoations
+## Elasticsearch annotations
 ![](/img/v2/annotations_es.png)
 
 Grafana can query any Elasticsearch index for annotation events. The index name can be the name of an alias or an index wildcard pattern.

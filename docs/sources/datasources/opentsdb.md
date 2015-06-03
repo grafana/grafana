@@ -27,7 +27,7 @@ Open a graph in edit mode by click the title.
 
 ![](/img/v2/opentsdb_query_editor.png)
 
-For details on opentsdb metric queries checkout the offical [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 
 
 

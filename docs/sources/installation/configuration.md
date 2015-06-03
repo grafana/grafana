@@ -296,12 +296,12 @@ Secret. Specify these in the Grafana configuration file. For example:
     scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
-    allowed_domains = mycompany.com
+    allowed_domains = mycompany.com mycompany.org
     allow_sign_up = false
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
-accounts. The `allowed_domains` option is optional.
+accounts. The `allowed_domains` option is optional, and domains were separated by space.
 
 You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any

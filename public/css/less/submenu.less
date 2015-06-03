@@ -20,7 +20,7 @@
 }
 
 .submenu-item {
-  padding: 8px 7px;
+//  padding: 8px 7px;
   margin-right: 20px;
   display: inline-block;
   border-radius: 3px;
@@ -39,57 +39,96 @@
 .variable-value-link {
   font-size: 16px;
   padding-right: 10px;
+  .label-tag {
+    margin: 0 5px;
+  }
+}
+
+.variable-link-wrapper  {
+  display: inline-block;
+  position: relative;
 }
 
 .variable-value-dropdown {
   position: absolute;
-  top: 27px;
+  top: 47px;
   min-width: 150px;
   max-height: 400px;
-  background: @grafanaPanelBackground;
-  box-shadow: 0px 0px 55px 0px black;
-  border: 1px solid @grafanaTargetFuncBackground;
+  min-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: @dropdownBackground;
+  box-shadow: 0 0 25px 0 rgba(0,0,0,0.4);
   z-index: 1000;
   font-size: @baseFontSize;
-  padding: 0;
   border-radius: 3px 3px 0 0;
+  border: 1px solid @grafanaTargetFuncBackground;
+
+  &.multi {
+   .selected {
+     .variable-option-icon{
+       background: url(@checkboxImageUrl) 0px -18px no-repeat;
+     }
+   }
+ }
+
+ &.single {
+   .variable-option-icon {
+     display: none;
+   }
+   .selected {
+     background-color: @grafanaTargetFuncHightlight;
+   }
+ }
 }
 
-.variable-options-container {
+.variable-options-wrapper {
+  display: table;
+  width: 100%;
+}
+
+.variable-options-column {
   max-height: 350px;
-  overflow: auto;
-  display: block;
+  display: table-cell;
   line-height: 26px;
+  &:nth-child(2) {
+    border-left: 1px solid @grafanaTargetFuncBackground;
+  }
 }
 
-.variable-option {
+.variable-option-tag,
+.variable-option,
+.variable-options-column-header {
   display: block;
-  padding: 0 8px;
+  padding: 2px 27px 0 8px;
+  position: relative;
+  white-space: nowrap;
+  min-width: 115px;
+}
 
-  &:hover, &.highlighted {
-    background-color: @blueDark;
-  }
-
-  .fa {
-    line-height: 26px;
-    float: right;
-    padding-left: 4px;
-  }
-
-  &.selected {
-    .variable-option-icon:before {
-      content: "\f00c";
+.variable-options-column-header {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  &.many-selected {
+    .variable-option-icon {
+      background: url(@checkboxImageUrl) 0px -36px no-repeat;
     }
   }
 }
 
-.variable-search-wrapper {
-  input {
-    width: 100%;
-    padding: 7px 8px;
-    height: 100%;
-    box-sizing: border-box;
-    margin-bottom: 6px;
+.variable-option-icon {
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  position: relative;
+  top: 4px;
+  background: url(@checkboxImageUrl) left top no-repeat;
+}
+
+.variable-option {
+  &:hover, &.highlighted {
+    background-color: @blueDark;
   }
 }
 

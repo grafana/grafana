@@ -34,6 +34,7 @@ type DashboardMeta struct {
 	IsSnapshot bool      `json:"isSnapshot,omitempty"`
 	Type       string    `json:"type,omitempty"`
 	CanSave    bool      `json:"canSave"`
+	CanEdit    bool      `json:"canEdit"`
 	CanStar    bool      `json:"canStar"`
 	Slug       string    `json:"slug"`
 	Expires    time.Time `json:"expires"`

@@ -1,15 +1,28 @@
 package api
 
 import (
+	"crypto/tls"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var dataProxyTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	Proxy:           http.ProxyFromEnvironment,
+	Dial: (&net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}).Dial,
+	TLSHandshakeTimeout: 10 * time.Second,
+}
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy {
 	target, _ := url.Parse(ds.Url)
@@ -56,5 +69,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	proxyPath := c.Params("*")
 	proxy := NewReverseProxy(&query.Result, proxyPath)
+	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.RW(), c.Req.Request)
 }

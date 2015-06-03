@@ -315,38 +315,37 @@ div.flot-text {
   position: fixed;
   right: 20px;
   top: 56px;
+}
 
-  .alert {
-    color: @white;
-    padding-bottom: 13px;
-    position: relative;
-  }
+.alert {
+  color: @white;
+  padding-bottom: 13px;
+  position: relative;
+}
 
-  .alert-close {
-    position: absolute;
-    top: -4px;
-    right: -2px;
-    width: 19px;
-    height: 19px;
-    padding: 0;
-    background: @grayLighter;
-    border-radius: 50%;
-    border: none;
-    font-size: 1.1rem;
-    color: @grayDarker;
-  }
+.alert-close {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  background: @grayLighter;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.1rem;
+  color: @grayDarker;
+}
 
-  .alert-title {
-    font-weight: bold;
-    padding-bottom: 2px;
-  }
+.alert-title {
+  font-weight: bold;
+  padding-bottom: 2px;
 }
 
 
 .alert-warning {
   background-color: @warningBackground;
   border-color: @warningBorder;
-  color: @warningText;
 }
 
 /* ===================================================
@@ -542,10 +541,13 @@ div.flot-text {
 .label-tag {
   background-color: @purple;
   color: darken(@white, 5%);
-  border-radius: 2px;
+  white-space: nowrap;
+  border-radius: 3px;
   text-shadow: none;
   font-size: 13px;
-  padding: 4px 6px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
   .icon-tag {
     position: relative;
     top: 1px;

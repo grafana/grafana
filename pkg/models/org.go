@@ -48,8 +48,13 @@ type GetOrgByNameQuery struct {
 	Result *Org
 }
 
-type GetOrgListQuery struct {
-	Result []*Org
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+
+	Result []*OrgDTO
 }
 
 type OrgDTO struct {
@@ -58,8 +63,7 @@ type OrgDTO struct {
 }
 
 type UserOrgDTO struct {
-	OrgId   int64    `json:"orgId"`
-	Name    string   `json:"name"`
-	Role    RoleType `json:"role"`
-	IsUsing bool     `json:"isUsing"`
+	OrgId int64    `json:"orgId"`
+	Name  string   `json:"name"`
+	Role  RoleType `json:"role"`
 }
