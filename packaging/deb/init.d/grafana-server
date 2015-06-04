@@ -38,7 +38,12 @@ DAEMON=/usr/sbin/$NAME
 
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
-	exit 1
+	exit 4
+fi
+
+if [ ! -x $DAEMON ]; then
+  echo "Program not installed or not executable"
+  exit 5
 fi
 
 . /lib/lsb/init-functions
@@ -53,9 +58,6 @@ if [ -f "$DEFAULT" ]; then
 fi
 
 DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR}"
-
-# Check DAEMON exists
-test -x $DAEMON || exit 0
 
 case "$1" in
   start)
@@ -137,7 +139,7 @@ case "$1" in
 	;;
   *)
 	log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
-	exit 1
+	exit 3
 	;;
 esac
 
