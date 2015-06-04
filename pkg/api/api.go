@@ -141,7 +141,6 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetCollectorsQuery{}), wrap(GetCollectors)).
 				Put(reqEditorRole, bind(m.AddCollectorCommand{}), wrap(AddCollector)).
 				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), wrap(UpdateCollector))
-			r.Get("/:id/health", wrap(getCollectorHealthById))
 			r.Get("/:id", wrap(GetCollectorById))
 			r.Delete("/:id", reqEditorRole, wrap(DeleteCollector))
 		})
@@ -152,7 +151,6 @@ func Register(r *macaron.Macaron) {
 				Get(bind(m.GetMonitorsQuery{}), wrap(GetMonitors)).
 				Put(reqEditorRole, bind(m.AddMonitorCommand{}), wrap(AddMonitor)).
 				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), wrap(UpdateMonitor))
-			r.Get("/:id/health", wrap(getMonitorHealthById))
 			r.Get("/:id", wrap(GetMonitorById))
 			r.Delete("/:id", reqEditorRole, wrap(DeleteMonitor))
 		})
@@ -161,7 +159,6 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), wrap(GetEndpoints)).
 				Put(reqEditorRole, bind(m.AddEndpointCommand{}), wrap(AddEndpoint)).
 				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), wrap(UpdateEndpoint))
-			r.Get("/:id/health", wrap(getEndpointHealthById))
 			r.Get("/:id", wrap(GetEndpointById))
 			r.Delete("/:id", reqEditorRole, wrap(DeleteEndpoint))
 			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), wrap(DiscoverEndpoint))

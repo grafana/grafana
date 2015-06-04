@@ -2,8 +2,9 @@ package migrator
 
 import (
 	"fmt"
-	"github.com/go-xorm/xorm"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 type OnSuccess func(*xorm.Session) error

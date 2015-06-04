@@ -19,7 +19,6 @@ func init() {
 	bus.AddHandler("sql", AddCollector)
 	bus.AddHandler("sql", UpdateCollector)
 	bus.AddHandler("sql", DeleteCollector)
-	bus.AddHandler("sql", GetCollectorHealthById)
 	bus.AddHandler("sql", AddCollectorSession)
 	bus.AddHandler("sql", DeleteCollectorSession)
 	bus.AddHandler("sql", ClearCollectorSession)
@@ -433,16 +432,6 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 
 		return nil
 	})
-}
-
-func GetCollectorHealthById(query *m.GetCollectorHealthByIdQuery) error {
-	sess := x.Table("monitor_collector_state")
-	sess.Where("collector_id=?", query.Id).And("org_id=?", query.OrgId)
-	err := sess.Find(&query.Result)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
