@@ -97,6 +97,14 @@ func TestJsonHelper(t *testing.T) {
 	Assert(ok, t, "int64safe ok")
 	Assert(i64 == 1234567890, t, "int64safe value")
 
+	u64, ok := jh.Uint64Safe("int64")
+	Assert(ok, t, "uint64safe ok")
+	Assert(u64 == 1234567890, t, "int64safe value")
+	_, ok = jh.Uint64Safe("notexistent")
+	assert.Tf(t, !ok, "should not be ok")
+	_, ok = jh.Uint64Safe("name")
+	assert.Tf(t, !ok, "should not be ok")
+
 	i, ok := jh.IntSafe("int")
 	Assert(ok, t, "intsafe ok")
 	Assert(i == 1, t, "intsafe value")

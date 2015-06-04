@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -10,13 +11,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Dieterbe/statsd-go"
+	"github.com/grafana/grafana/pkg/alerting"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -31,6 +34,8 @@ var buildstamp string
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
+
+var Stat statsd.Client
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -55,6 +60,12 @@ func main() {
 	writePIDFile()
 	initRuntime()
 
+	fmt.Println("creating statsdclient. enabled", setting.StatsdEnabled, "addr", setting.StatsdAddr)
+	Stat, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
+	if err != nil {
+		log.Error(3, "Statsd client:", err)
+	}
+
 	search.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
@@ -65,6 +76,11 @@ func main() {
 
 	if setting.ReportingEnabled {
 		go metrics.StartUsageReportLoop()
+	}
+	alerting.Init(Stat)
+	go alerting.Dispatcher()
+	for i := 0; i < 10; i++ {
+		go alerting.Executor(alerting.GraphiteAuthContextReturner)
 	}
 
 	cmd.StartServer()

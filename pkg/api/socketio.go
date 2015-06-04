@@ -15,15 +15,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"reflect"
 	"runtime"
-	"sync"
-	"time"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
 var localSockets LocalSockets
+
+func StoreMetric(m *m.MetricDefinition) {
+	bufCh <- *m
+}
 
 type LocalSockets struct {
 	sync.RWMutex
@@ -75,7 +78,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	req.ParseForm()
 	keyString := req.Form.Get("apiKey")
 	name := req.Form.Get("name")
-	
+
 	if name == "" {
 		return nil, errors.New("collector name not provided.")
 	}
@@ -179,7 +182,7 @@ func init() {
 		if err != nil {
 			if err == m.ErrInvalidApiKey {
 				log.Info("collector failed to authenticate.")
-			} else if (err.Error() == "invalid collector version. Please upgrade.") {
+			} else if err.Error() == "invalid collector version. Please upgrade." {
 				log.Info("collector is wrong version")
 			} else {
 				log.Error(0, "Failed to initialize collector.", err)
@@ -255,9 +258,6 @@ func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 	// send to RabbitMQ
 	routingKey := fmt.Sprintf("EVENT.%s.%s", msg.Severity, msg.EventType)
 	go eventpublisher.Publish(routingKey, msgString)
-	if msg.EventType == "monitor_state" {
-		updateState(msg)
-	}
 }
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
@@ -265,7 +265,7 @@ func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 		if !c.Collector.Public {
 			r.OrgId = c.OrgId
 		}
-		bufCh <- *r
+		StoreMetric(r)
 	}
 }
 
@@ -361,45 +361,4 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	localSockets.Emit(socketId, eventName, event)
 
 	return nil
-}
-
-func updateState(event *m.EventDefinition) {
-	collector, ok := event.Extra["collector_id"]
-	if !ok {
-		log.Error(0, "event does not have collector_id set.", nil)
-		return
-	}
-	endpoint, ok := event.Extra["endpoint_id"]
-	if !ok {
-		log.Error(0, "event does not have endpoint_id set.", nil)
-		return
-	}
-	monitor, ok := event.Extra["monitor_id"]
-	if !ok {
-		log.Error(0, "event does not have monitor_id set.", nil)
-		return
-	}
-	log.Debug(fmt.Sprintf("updating state of monitor: %v from %v", monitor, event.Extra["collector"]))
-	cmd := m.UpdateMonitorCollectorStateCommand{
-		OrgId:       event.OrgId,
-		EndpointId:  int64(endpoint.(float64)),
-		MonitorId:   int64(monitor.(float64)),
-		CollectorId: int64(collector.(float64)),
-		Updated:     time.Unix(0, event.Timestamp*int64(time.Millisecond)),
-	}
-	// update the check state
-	switch event.Severity {
-	case "OK":
-		cmd.State = 0
-	case "WARN":
-		cmd.State = 1
-	case "ERROR":
-		cmd.State = 2
-	default:
-		cmd.State = -1
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		log.Error(0, "failed to update MonitorcollectorState", err)
-	}
 }

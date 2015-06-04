@@ -20,20 +20,6 @@ func GetMonitorById(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func getMonitorHealthById(c *middleware.Context) Response {
-	id := c.ParamsInt64(":id")
-	query := m.GetMonitorHealthByIdQuery{
-		Id:    id,
-		OrgId: c.OrgId,
-	}
-	err := bus.Dispatch(&query)
-	if err != nil {
-		return ApiError(500, "Failed to query monitor health", err)
-	}
-
-	return Json(200, query.Result)
-}
-
 func GetMonitors(c *middleware.Context, query m.GetMonitorsQuery) Response {
 	query.OrgId = c.OrgId
 	query.IsGrafanaAdmin = c.IsGrafanaAdmin

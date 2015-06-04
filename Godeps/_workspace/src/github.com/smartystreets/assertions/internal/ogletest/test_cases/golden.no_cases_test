@@ -1,0 +1,6 @@
+[----------] Running tests from NoCasesTest
+SetUpTestSuite run!
+TearDownTestSuite run!
+[----------] Finished with tests from NoCasesTest
+PASS
+ok somepkg 1.234s
