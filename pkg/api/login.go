@@ -4,6 +4,8 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/ldapauth"
+	"github.com/grafana/grafana/pkg/auth"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -86,21 +88,28 @@ func LoginApiPing(c *middleware.Context) {
 	c.JsonOK("Logged in")
 }
 
-func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.User}
-	err := bus.Dispatch(&userQuery)
-
-	if err != nil {
-		c.JsonApiErr(401, "Invalid username or password", err)
-		return
+func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
+	sourcesQuery := auth.GetAuthSourcesQuery{}
+	if err := bus.Dispatch(&sourcesQuery); err != nil {
+		return ApiError(500, "Could not get login sources", err)
 	}
 
-	user := userQuery.Result
+	var err error
+	var user *m.User
 
-	passwordHashed := util.EncodePassword(cmd.Password, user.Salt)
-	if passwordHashed != user.Password {
-		c.JsonApiErr(401, "Invalid username or password", err)
-		return
+	for _, authSource := range sourcesQuery.Sources {
+		user, err = authSource.AuthenticateUser(cmd.User, cmd.Password)
+		if err == nil {
+			break
+		}
+		// handle non invalid credentials error, otherwise try next auth source
+		if err != auth.ErrInvalidCredentials {
+			return ApiError(500, "Error while trying to authenticate user", err)
+		}
+	}
+
+	if err != nil {
+		return ApiError(401, "Invalid username or password", err)
 	}
 
 	loginUserWithUser(user, c)
@@ -116,7 +125,20 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 
 	metrics.M_Api_Login_Post.Inc(1)
 
-	c.JSON(200, result)
+	return Json(200, result)
+}
+
+func LoginUsingLdap(c *middleware.Context, cmd dtos.LoginCommand) Response {
+	err := ldapauth.Login(cmd.User, cmd.Password)
+
+	if err != nil {
+		if err == ldapauth.ErrInvalidCredentials {
+			return ApiError(401, "Invalid username or password", err)
+		}
+		return ApiError(500, "Ldap login failed", err)
+	}
+
+	return Empty(401)
 }
 
 func loginUserWithUser(user *m.User, c *middleware.Context) {

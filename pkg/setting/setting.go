@@ -114,6 +114,10 @@ var (
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
+
+	// LDAP
+	LdapEnabled bool
+	LdapUrls    []string
 )
 
 type CommandLineArgs struct {
@@ -405,6 +409,10 @@ func NewConfigContext(args *CommandLineArgs) {
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+
+	ldapSec := Cfg.Section("auth.ldap")
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapUrls = ldapSec.Key("urls").Strings(" ")
 
 	readSessionConfig()
 }
