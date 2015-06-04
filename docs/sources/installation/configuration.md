@@ -301,7 +301,7 @@ Secret. Specify these in the Grafana configuration file. For example:
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
-accounts. The `allowed_domains` option is optional, and domains were seperated by space.
+accounts. The `allowed_domains` option is optional, and domains were separated by space.
 
 You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any

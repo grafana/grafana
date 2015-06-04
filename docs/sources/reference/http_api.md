@@ -84,8 +84,8 @@ Status Codes:
 - **401** – Unauthorized
 - **412** – Precondition failed
 
-The **412** status code is used when a newer dashboard already exists (newer, its version is greater than the verison that was sent). The
-same status code is also used if another dashboar exists with the same title. The response body will look like this:
+The **412** status code is used when a newer dashboard already exists (newer, its version is greater than the version that was sent). The
+same status code is also used if another dashboard exists with the same title. The response body will look like this:
 
     HTTP/1.1 412 Precondition Failed
     Content-Type: application/json; charset=UTF-8

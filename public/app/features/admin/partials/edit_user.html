@@ -115,7 +115,7 @@
 						Role
 					</li>
 					<li>
-						<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
+						<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
 						</select>
 					</li>
 					<li>
@@ -137,7 +137,7 @@
 					{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
 				</td>
 				<td>
-					<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(org)">
+					<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
 					</select>
 				</td>
 				<td style="width: 1%">

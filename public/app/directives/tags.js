@@ -70,7 +70,8 @@ function (angular, $) {
     return {
       restrict: 'EA',
       scope: {
-        model: '=ngModel'
+        model: '=ngModel',
+        onTagsUpdated: "&",
       },
       template: '<select multiple></select>',
       replace: false,
@@ -99,6 +100,9 @@ function (angular, $) {
         select.on('itemAdded', function(event) {
           if (scope.model.indexOf(event.item) === -1) {
             scope.model.push(event.item);
+            if (scope.onTagsUpdated) {
+              scope.onTagsUpdated();
+            }
           }
           var tagElement = select.next().children("span").filter(function() { return $(this).text() === event.item; });
           setColor(event.item, tagElement);
@@ -108,6 +112,9 @@ function (angular, $) {
           var idx = scope.model.indexOf(event.item);
           if (idx !== -1) {
             scope.model.splice(idx, 1);
+            if (scope.onTagsUpdated) {
+              scope.onTagsUpdated();
+            }
           }
         });
 
