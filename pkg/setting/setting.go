@@ -38,7 +38,6 @@ const (
 var (
 	// App settings.
 	Env       string = DEV
-	AppName   string
 	AppUrl    string
 	AppSubUrl string
 
@@ -350,7 +349,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
 
-	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 
 	server := Cfg.Section("server")

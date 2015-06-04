@@ -1,3 +1,7 @@
+// Copyright 2014 The Gogs Authors. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package mailer
 
 import (
@@ -11,16 +15,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var mailQueue chan *m.SendEmailCommand
+var mailQueue chan *notifications.SendEmailCommand
 
 func Init() {
 	bus.AddHandler("email", handleEmailCommand)
 
-	mailQueue = make(chan *m.SendEmailCommand, 10)
+	mailQueue = make(chan *notifications.SendEmailCommand, 10)
 
 	setting.Smtp = setting.SmtpSettings{
 		Host:        "smtp.gmail.com:587",
@@ -57,7 +61,7 @@ func encodeRFC2047(text string) string {
 	return strings.Trim(addr.String(), " <>")
 }
 
-func handleEmailCommand(cmd *m.SendEmailCommand) error {
+func handleEmailCommand(cmd *notifications.SendEmailCommand) error {
 	log.Info("Sending on queue")
 	mailQueue <- cmd
 	return nil
