@@ -58,11 +58,11 @@ func Register(r *macaron.Macaron) {
 		r.Group("/user", func() {
 			r.Get("/", wrap(GetSignedInUser))
 			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
-			r.Post("/using/:id", UserSetUsingOrg)
+			r.Post("/using/:id", wrap(UserSetUsingOrg))
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
-			r.Post("/stars/dashboard/:id", StarDashboard)
-			r.Delete("/stars/dashboard/:id", UnstarDashboard)
-			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), ChangeUserPassword)
+			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
+			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 		})
 
 		// users (admin permission required)
@@ -107,10 +107,9 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Combo("/").
-				Get(GetDataSources).
-				Put(bind(m.AddDataSourceCommand{}), AddDataSource).
-				Post(bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
+			r.Get("/", GetDataSources)
+			r.Post("/", bind(m.AddDataSourceCommand{}), AddDataSource)
+			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)
@@ -118,6 +117,7 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {

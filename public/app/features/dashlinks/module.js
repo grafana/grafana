@@ -89,7 +89,7 @@ function (angular, _) {
 
     function buildLinks(linkDef) {
       if (linkDef.type === 'dashboards') {
-        if (!linkDef.tag) {
+        if (!linkDef.tags) {
           console.log('Dashboard link missing tag');
           return $q.when([]);
         }
@@ -97,7 +97,7 @@ function (angular, _) {
         if (linkDef.asDropdown) {
           return $q.when([{
             title: linkDef.title,
-            tag: linkDef.tag,
+            tags: linkDef.tags,
             keepTime: linkDef.keepTime,
             includeVars: linkDef.includeVars,
             icon: "fa fa-bars",
@@ -132,7 +132,7 @@ function (angular, _) {
     }
 
     $scope.searchDashboards = function(link) {
-      return backendSrv.search({tag: link.tag}).then(function(results) {
+      return backendSrv.search({tag: link.tags}).then(function(results) {
         return _.reduce(results, function(memo, dash) {
           // do not add current dashboard
           if (dash.id !== currentDashId) {

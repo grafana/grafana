@@ -13,8 +13,8 @@ function (angular, _, config) {
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
       $scope.selectedIndex = -1;
-      $scope.results = {dashboards: [], tags: [], metrics: []};
-      $scope.query = { query: '', tag: '', starred: false };
+      $scope.results = [];
+      $scope.query = { query: '', tag: [], starred: false };
       $scope.currentSearchId = 0;
 
       if ($scope.dashboardViewState.fullscreen) {
@@ -26,7 +26,6 @@ function (angular, _, config) {
         $scope.query.query = '';
         $scope.search();
       }, 100);
-
     };
 
     $scope.keyDown = function (evt) {
@@ -83,18 +82,25 @@ function (angular, _, config) {
 
     $scope.queryHasNoFilters = function() {
       var query = $scope.query;
-      return query.query === '' && query.starred === false && query.tag === '';
+      return query.query === '' && query.starred === false && query.tag.length === 0;
     };
 
     $scope.filterByTag = function(tag, evt) {
-      $scope.query.tag = tag;
-      $scope.query.tagcloud = false;
+      $scope.query.tag.push(tag);
       $scope.search();
       $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
       if (evt) {
         evt.stopPropagation();
         evt.preventDefault();
       }
+    };
+
+    $scope.removeTag = function(tag, evt) {
+      $scope.query.tag = _.without($scope.query.tag, tag);
+      $scope.search();
+      $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
+      evt.stopPropagation();
+      evt.preventDefault();
     };
 
     $scope.getTags = function() {
@@ -123,32 +129,4 @@ function (angular, _, config) {
 
   });
 
-  module.directive('tagColorFromName', function() {
-
-    function djb2(str) {
-      var hash = 5381;
-      for (var i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
-      }
-      return hash;
-    }
-
-    return {
-      scope: { tag: "=" },
-      link: function (scope, element) {
-        var name = scope.tag;
-        var hash = djb2(name.toLowerCase());
-        var colors = [
-          "#E24D42","#1F78C1","#BA43A9","#705DA0","#466803",
-          "#508642","#447EBC","#C15C17","#890F02","#757575",
-          "#0A437C","#6D1F62","#584477","#629E51","#2F4F4F",
-          "#BF1B00","#806EB7","#8a2eb8", "#699e00","#000000",
-          "#3F6833","#2F575E","#99440A","#E0752D","#0E4AB4",
-          "#58140C","#052B51","#511749","#3F2B5B",
-        ];
-        var color = colors[Math.abs(hash % colors.length)];
-        element.css("background-color", color);
-      }
-    };
-  });
 });

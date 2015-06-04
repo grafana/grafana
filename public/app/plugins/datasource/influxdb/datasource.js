@@ -43,7 +43,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
         var query = queryBuilder.build();
-        console.log('query builder result:' + query);
 
         // replace grafana variables
         query = query.replace('$timeFilter', timeFilter);
@@ -127,6 +126,12 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return this._influxRequest('GET', '/query', {q: query});
     };
 
+    InfluxDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var self = this;
       var deferred = $q.defer();
@@ -172,8 +177,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     function handleInfluxQueryResponse(alias, data) {
-      if (!data || !data.results || !data.results[0]) {
-        throw { message: 'No results in response from InfluxDB' };
+      if (!data || !data.results || !data.results[0].series) {
+        return [];
       }
       return new InfluxSeries({ series: data.results[0].series, alias: alias }).getTimeSeries();
     }

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetDataSources(c *middleware.Context) {
@@ -94,11 +95,12 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 		return
 	}
 
-	c.JsonOK("Datasource added")
+	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id})
 }
 
 func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 	cmd.OrgId = c.OrgId
+	cmd.Id = c.ParamsInt64(":id")
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

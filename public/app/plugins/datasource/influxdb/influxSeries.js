@@ -32,7 +32,7 @@ function (_) {
       var seriesName = series.name;
 
       if (self.alias) {
-        seriesName = self.alias;
+        seriesName = self._getSeriesName(series);
       } else if (series.tags) {
         var tags = _.map(series.tags, function(value, key) {
           return key + ': ' + value;
@@ -47,11 +47,26 @@ function (_) {
     return output;
   };
 
+  p._getSeriesName = function(series) {
+    var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+
+    return this.alias.replace(regex, function(match, g1, g2) {
+      var group = g1 || g2;
+
+      if (group === 'm' || group === 'measurement') { return series.name; }
+      if (group.indexOf('tag_') !== 0) { return match; }
+
+      var tag = group.replace('tag_', '');
+      if (!series.tags) { return match; }
+      return series.tags[tag];
+    });
+  };
+
   p.getAnnotations = function () {
     var list = [];
     var self = this;
 
-    _.each(this.seriesList, function (series) {
+    _.each(this.series, function (series) {
       var titleCol = null;
       var timeCol = null;
       var tagsCol = null;

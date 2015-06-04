@@ -47,16 +47,13 @@ func (index *JsonDashIndex) updateLoop() {
 func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
 	results := make([]*Hit, 0)
 
+	if query.IsStarred {
+		return results, nil
+	}
+
 	for _, item := range index.items {
 		if len(results) > query.Limit {
 			break
-		}
-
-		// filter out results with tag filter
-		if query.Tag != "" {
-			if !strings.Contains(item.TagsCsv, query.Tag) {
-				continue
-			}
 		}
 
 		// add results with matchig title filter
