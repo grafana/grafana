@@ -96,44 +96,12 @@ function (angular, app, _) {
             if (_.indexOf(tag.values, option.value) !== -1) {
               option.selected = tag.selected;
             }
-<<<<<<< HEAD
-          });
-||||||| merged common ancestors
-=======
           });
 
           vm.selectionsChanged(false);
         });
       };
->>>>>>> grafana/master
 
-<<<<<<< HEAD
-          vm.selectionsChanged(false);
-        });
-      };
-||||||| merged common ancestors
-            var selected = _.filter(scope.options, {selected: true});
-=======
-      vm.keyDown = function (evt) {
-        if (evt.keyCode === 27) {
-          vm.hide();
-        }
-        if (evt.keyCode === 40) {
-          vm.moveHighlight(1);
-        }
-        if (evt.keyCode === 38) {
-          vm.moveHighlight(-1);
-        }
-        if (evt.keyCode === 13) {
-          vm.optionSelected(vm.search.options[vm.highlightIndex], {}, true, false);
-        }
-        if (evt.keyCode === 32) {
-          vm.optionSelected(vm.search.options[vm.highlightIndex], {}, false, false);
-        }
-      };
->>>>>>> grafana/master
-
-<<<<<<< HEAD
       vm.keyDown = function (evt) {
         if (evt.keyCode === 27) {
           vm.hide();
@@ -169,30 +137,6 @@ function (angular, app, _) {
             if (option !== other) { other.selected = newValue; }
           });
         };
-||||||| merged common ancestors
-            if (selected.length === 0) {
-              option.selected = true;
-              selected = [option];
-            }
-=======
-      vm.moveHighlight = function(direction) {
-        vm.highlightIndex = (vm.highlightIndex + direction) % vm.search.options.length;
-      };
-
-      vm.selectValue = function(option, event, commitChange, excludeOthers) {
-        if (!option) { return; }
-
-        option.selected = !option.selected;
-
-        commitChange = commitChange || false;
-        excludeOthers = excludeOthers || false;
-
-        var setAllExceptCurrentTo = function(newValue) {
-          _.each(vm.options, function(other) {
-            if (option !== other) { other.selected = newValue; }
-          });
-        };
->>>>>>> grafana/master
 
         // commit action (enter key), should not deselect it
         if (commitChange) {
