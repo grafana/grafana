@@ -114,6 +114,9 @@ var (
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
+
+	// SMTP email settings
+	Smtp SmtpSettings
 )
 
 type CommandLineArgs struct {
