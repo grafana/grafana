@@ -881,5 +881,16 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 1
+  "version": 1,
+  "links": [
+    {
+      "type": "dashboards",
+      "icon": "external link",
+      "tag": "endpoint",
+      "asDropdown": true,
+      "title": "Endpoint Dashboards",
+      "includeVars": true,
+      "keepTime": true
+    }
+  ]  
 }
