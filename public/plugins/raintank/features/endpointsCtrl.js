@@ -11,7 +11,7 @@ function (angular) {
     var defaults = {
       name: '',
     };
-
+    $scope.pageReady = false;
     $scope.statuses = [
       {label: "Ok", value: 0},
       {label: "Warning", value: 1},
@@ -84,6 +84,7 @@ function (angular) {
 
     $scope.getEndpoints = function() {
       backendSrv.get('/api/endpoints').then(function(endpoints) {
+        $scope.pageReady = true;
         $scope.endpoints = endpoints;
         _.forEach($scope.endpoints, function(endpoint) {
           backendSrv.get('/api/monitors', {"endpoint_id": endpoint.id}).then(function(monitors) {

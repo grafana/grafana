@@ -7,7 +7,8 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointSummaryCtrl', function($scope, $http, backendSrv, $location, $routeParams) {
+  module.controller('EndpointSummaryCtrl', function($scope, $q, $http, backendSrv, $location, $routeParams) {
+    $scope.pageReady = false;
     $scope.init = function() {
       $scope.endpoints = [];
       $scope.monitors = {};
@@ -53,6 +54,7 @@ function (angular, _) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
             });
+            $scope.pageReady = true;
           });
         }
       });
@@ -141,6 +143,7 @@ function (angular, _) {
     };
 
     $scope.refresh = function() {
+      $scope.pageReady = false;
       $scope.getEndpoint($scope.endpoint.id);
       $scope.refreshTime = new Date();
     }
