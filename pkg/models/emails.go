@@ -11,7 +11,7 @@ type SendEmailCommand struct {
 }
 
 type SendResetPasswordEmailCommand struct {
-	Email string
+	User *User
 }
 
 // create mail content

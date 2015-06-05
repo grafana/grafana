@@ -67,11 +67,12 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey          string
-	LogInRememberDays  int
-	CookieUserName     string
-	CookieRememberName string
-	DisableGravatar    bool
+	SecretKey             string
+	LogInRememberDays     int
+	CookieUserName        string
+	CookieRememberName    string
+	DisableGravatar       bool
+	EmailCodeValidMinutes int
 
 	// User settings
 	AllowUserSignUp    bool
