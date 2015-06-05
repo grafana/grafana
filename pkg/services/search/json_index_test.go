@@ -9,7 +9,7 @@ import (
 func TestJsonDashIndex(t *testing.T) {
 
 	Convey("Given the json dash index", t, func() {
-		index := NewJsonDashIndex("../../public/dashboards/")
+		index := NewJsonDashIndex("../../../public/dashboards/")
 
 		Convey("Should be able to update index", func() {
 			err := index.updateIndex()
