@@ -97,6 +97,10 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
+      .when('/reset-password/send', {
+        templateUrl: 'app/partials/reset_password.html',
+        controller : 'ResetPasswordCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
