@@ -1,7 +1,10 @@
 {
-  "title": "rt-endpoint-summary",
-  "originalTitle": "rt-endpoint-summary",
-  "tags": [],
+  "title": "Endpoints - Summary",
+  "originalTitle": "Endpoints - Summary",
+  "tags": [
+    "raintank",
+    "endpoint"
+    ],
   "style": "dark",
   "timezone": "browser",
   "editable": false,

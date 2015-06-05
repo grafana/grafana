@@ -1,7 +1,10 @@
 {
-  "title": "rt-endpoint-ping",
-  "originalTitle": "rt-endpoint-ping",
-  "tags": [],
+  "title": "Endpoints - Ping",
+  "originalTitle": "Endpoints - Ping",
+  "tags": [
+    "raintank",
+    "endpoint"
+    ],
   "style": "dark",
   "timezone": "browser",
   "editable": false,

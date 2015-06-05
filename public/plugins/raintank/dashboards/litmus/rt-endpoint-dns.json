@@ -1,7 +1,10 @@
 {
-  "title": "rt-endpoint-dns",
-  "originalTitle": "rt-endpoint-dns",
-  "tags": [],
+  "title": "Endpoints - DNS",
+  "originalTitle": "Endpoints - DNS",
+  "tags": [
+    "raintank",
+    "endpoint"
+    ],
   "style": "dark",
   "timezone": "browser",
   "editable": false,
