@@ -50,13 +50,13 @@ function (angular, _, kbn) {
 
     $scope.suggestTagKeys = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'tagk')
+        .performMetricKeyLookup($scope.target.metric)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
       $scope.datasource
-        .performSuggestQuery(query, 'tagv')
+        .performMetricKeyValueLookup($scope.target.metric, $scope.target.currentTagKey)
         .then(callback);
     };
 
