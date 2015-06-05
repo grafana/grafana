@@ -7,5 +7,5 @@ func Init() {
 }
 
 func sendResetPasswordEmail(cmd *SendResetPasswordEmailCommand) error {
-	email := NewMailMessage("")
+	return nil
 }

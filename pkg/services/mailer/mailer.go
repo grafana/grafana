@@ -15,16 +15,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/notifications"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var mailQueue chan *notifications.SendEmailCommand
+var mailQueue chan *m.SendEmailCommand
 
 func Init() {
 	bus.AddHandler("email", handleEmailCommand)
 
-	mailQueue = make(chan *notifications.SendEmailCommand, 10)
+	mailQueue = make(chan *m.SendEmailCommand, 10)
 
 	setting.Smtp = setting.SmtpSettings{
 		Host:        "smtp.gmail.com:587",
@@ -61,7 +61,7 @@ func encodeRFC2047(text string) string {
 	return strings.Trim(addr.String(), " <>")
 }
 
-func handleEmailCommand(cmd *notifications.SendEmailCommand) error {
+func handleEmailCommand(cmd *m.SendEmailCommand) error {
 	log.Info("Sending on queue")
 	mailQueue <- cmd
 	return nil

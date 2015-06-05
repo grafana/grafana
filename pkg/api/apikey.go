@@ -24,12 +24,12 @@ func GetApiKeys(c *middleware.Context) Response {
 		}
 	}
 
-	bus.Dispatch(&m.SendEmailCommand{
-		To:      []string{"torkel@raintank.io"},
-		From:    "grafana@test.com",
-		Subject: "Test from Grafana2",
-		Body:    "Body! hej hoppas allt är bra",
-	})
+	// bus.Dispatch(&m.SendEmailCommand{
+	// 	To:      []string{"torkel@raintank.io"},
+	// 	From:    "grafana@test.com",
+	// 	Subject: "Test from Grafana2",
+	// 	Body:    "Body! hej hoppas allt är bra",
+	// })
 
 	return Json(200, result)
 }
