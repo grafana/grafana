@@ -6,43 +6,53 @@
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
 	</div>
 
-	<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
-		<div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
-			<i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
-			<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="endpoints/new">Add an endpoint now.</a></p>
-		</div>
-		<div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
-			<label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>
-			<input id="_1" type="checkbox">
-			<div class="rt-box rt-box-no-margin" style="margin-top:-10px; padding:20px">
-				<p class="rt-helper-blurb">In Litmus, an endpoint is anything you want to monitor.</p>
-				<p class="rt-helper-blurb">When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
-			</div>
+	<div ng-if="!pageReady" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
+		<div style="text-align: center; padding-top: 90px; min-height: 150px; min-width: 400px;  margin: 0 auto;">
+			<img src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
+			<p class="freqMsg nodata">Negotiating with our endpoint overlords.</p>
 		</div>
 	</div>
-	<div ng-if="endpoints.length > 0" class="editor-row">
-		<div class="editor-option">
-			<span class="small">Filtered by:</span>
-			<div class="select-input">
-				<select ng-model="filter.tag" ng-options="t for t in endpointTags()">
-					<option value="">All Tags</option>
-				</select>
+
+	<div ng-if="pageReady">
+		<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
+			<div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
+				<i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
+				<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="endpoints/new">Add an endpoint now.</a></p>
 			</div>
-			<span class="small">Sorted By:</span>
-				<div class="select-input">
-					<select ng-model="sort_field" ng-options="field for field in ['name']"></select>
+			<div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
+				<label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>
+				<input id="_1" type="checkbox">
+				<div class="rt-box rt-box-no-margin" style="margin-top:-10px; padding:20px">
+					<p class="rt-helper-blurb">In Litmus, an endpoint is anything you want to monitor.</p>
+					<p class="rt-helper-blurb">When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
 				</div>
-		</div>
-		<div style="display: block; padding: 25px 0 0 0;">
-			<div style="display: inline-block" class="rt-list-status">
 			</div>
-			<div class="editor-option" style="float: right;">
+		</div>
+		<div ng-if="endpoints.length > 0" class="editor-row">
+			<div class="editor-option">
+				<span class="small">Filtered by:</span>
+				<div class="select-input">
+					<select ng-model="filter.tag" ng-options="t for t in endpointTags()">
+						<option value="">All Tags</option>
+					</select>
+				</div>
+				<span class="small">Sorted By:</span>
+					<div class="select-input">
+						<select ng-model="sort_field" ng-options="field for field in ['name']"></select>
+					</div>
+			</div>
+			<div style="display: block; padding: 25px 0 0 0;">
+				<div style="display: inline-block" class="rt-list-status">
+				</div>
+				<div class="editor-option" style="float: right;">
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
 
-<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+<div ng-if="pageReady">
+	<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
@@ -98,5 +108,6 @@
 			</div>
 			<div class="clearfix"></div>
 		</div>
+	</div>
 	</div>
 </div>
