@@ -51,7 +51,8 @@
 	</div>
 </div>
 
-<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+<div ng-if="pageReady">
+	<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
@@ -107,5 +108,6 @@
 			</div>
 			<div class="clearfix"></div>
 		</div>
+	</div>
 	</div>
 </div>
