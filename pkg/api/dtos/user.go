@@ -31,3 +31,9 @@ type AdminUserListItem struct {
 type SendResetPasswordEmailForm struct {
 	UserOrEmail string `json:"userOrEmail" binding:"Required"`
 }
+
+type ResetUserPasswordForm struct {
+	Code            string `json:"code"`
+	NewPassword     string `json:"newPassword"`
+	ConfirmPassword string `json:"confirmPassword"`
+}
