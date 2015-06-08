@@ -18,4 +18,5 @@ define([
   './topnav',
   './giveFocus',
   './annotationTooltip',
+  './passwordStrenght',
 ], function () {});
