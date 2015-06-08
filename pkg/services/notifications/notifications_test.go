@@ -15,6 +15,8 @@ func TestNotifications(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		setting.StaticRootPath = "../../../public/"
+		setting.Smtp.Enabled = true
+		setting.Smtp.TemplatesPattern = "emails/*.html"
 		setting.Smtp.FromAddress = "from@address.com"
 
 		err := Init()
@@ -26,7 +28,8 @@ func TestNotifications(t *testing.T) {
 		}
 
 		Convey("When sending reset email password", func() {
-			sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
+			err := sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
+			So(err, ShouldBeNil)
 			So(sentMsg.Body, ShouldContainSubstring, "body")
 			So(sentMsg.Subject, ShouldEqual, "Reset your Grafana password")
 			So(sentMsg.Body, ShouldNotContainSubstring, "Subject")

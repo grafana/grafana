@@ -32,7 +32,7 @@ func Init() error {
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(setting.StaticRootPath, "emails/*.html")
+	templatePattern := filepath.Join(setting.StaticRootPath, setting.Smtp.TemplatesPattern)
 	_, err := mailTemplates.ParseGlob(templatePattern)
 	if err != nil {
 		return err
