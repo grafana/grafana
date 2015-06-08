@@ -12,8 +12,10 @@ function (angular) {
     $scope.formModel = {};
     $scope.mode = 'send';
 
-    if ($location.search().code) {
+    var params = $location.search();
+    if (params.code) {
       $scope.mode = 'reset';
+      $scope.formModel.code = params.code;
     }
 
     $scope.sendResetEmail = function() {
@@ -33,7 +35,7 @@ function (angular) {
         return;
       }
 
-      backendSrv.post('/api/user/password/send-reset-email', $scope.formModel).then(function() {
+      backendSrv.post('/api/user/password/reset', $scope.formModel).then(function() {
         $location.path('login');
       });
     };

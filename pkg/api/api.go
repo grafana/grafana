@@ -46,7 +46,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/user/password/reset", Index)
 
 	r.Post("/api/user/password/send-reset-email", bind(dtos.SendResetPasswordEmailForm{}), wrap(SendResetPasswordEmail))
-	r.Post("/api/user/password/reset", wrap(ViewResetPasswordForm))
+	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), wrap(ResetPassword))
 
 	// dashboard snapshots
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

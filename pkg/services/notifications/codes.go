@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const timeLimitCodeLength = 12 + 6 + 40
+
 // create a time limit code
 // code format: 12 length date time string + 6 minutes string + 40 sha1 encoded string
-func CreateTimeLimitCode(data string, minutes int, startInf interface{}) string {
+func createTimeLimitCode(data string, minutes int, startInf interface{}) string {
 	format := "200601021504"
 
 	var start, end time.Time
@@ -42,10 +45,13 @@ func CreateTimeLimitCode(data string, minutes int, startInf interface{}) string 
 }
 
 // verify time limit code
-func VerifyTimeLimitCode(data string, minutes int, code string) bool {
+func validateUserEmailCode(user *m.User, code string) bool {
 	if len(code) <= 18 {
 		return false
 	}
+
+	minutes := setting.EmailCodeValidMinutes
+	code = code[:timeLimitCodeLength]
 
 	// split code
 	start := code[:12]
@@ -55,7 +61,9 @@ func VerifyTimeLimitCode(data string, minutes int, code string) bool {
 	}
 
 	// right active code
-	retCode := CreateTimeLimitCode(data, minutes, start)
+	data := com.ToStr(user.Id) + user.Email + user.Login + user.Password + user.Rands
+	retCode := createTimeLimitCode(data, minutes, start)
+	fmt.Printf("code : %s\ncode2: %s", retCode, code)
 	if retCode == code && minutes > 0 {
 		// check time is expired or not
 		before, _ := time.ParseInLocation("200601021504", start, time.Local)
@@ -66,4 +74,25 @@ func VerifyTimeLimitCode(data string, minutes int, code string) bool {
 	}
 
 	return false
+}
+
+func getLoginForEmailCode(code string) string {
+	if len(code) <= timeLimitCodeLength {
+		return ""
+	}
+
+	// use tail hex username query user
+	hexStr := code[timeLimitCodeLength:]
+	b, _ := hex.DecodeString(hexStr)
+	return string(b)
+}
+
+func createUserEmailCode(u *m.User, startInf interface{}) string {
+	minutes := setting.EmailCodeValidMinutes
+	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
+	code := createTimeLimitCode(data, minutes, startInf)
+
+	// add tail hex username
+	code += hex.EncodeToString([]byte(u.Login))
+	return code
 }

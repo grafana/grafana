@@ -1,5 +1,9 @@
 package models
 
+import "errors"
+
+var ErrInvalidEmailCode = errors.New("Invalid or expired email code")
+
 type SendEmailCommand struct {
 	To      []string
 	From    string
@@ -11,6 +15,11 @@ type SendEmailCommand struct {
 
 type SendResetPasswordEmailCommand struct {
 	User *User
+}
+
+type ValidateResetPasswordCodeQuery struct {
+	Code   string
+	Result *User
 }
 
 // create mail content

@@ -2,12 +2,10 @@ package notifications
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"html/template"
 	"path/filepath"
 
-	"github.com/Unknwon/com"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,6 +17,7 @@ var tmplResetPassword = "reset_password.html"
 
 func Init() error {
 	bus.AddHandler("email", sendResetPasswordEmail)
+	bus.AddHandler("email", validateResetPasswordCode)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -55,7 +54,7 @@ func sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
 	var buffer bytes.Buffer
 
 	var data = getMailTmplData(cmd.User)
-	code := CreateUserActiveCode(cmd.User, nil)
+	code := createUserEmailCode(cmd.User, nil)
 	data["Code"] = code
 
 	mailTemplates.ExecuteTemplate(&buffer, tmplResetPassword, data)
@@ -70,44 +69,21 @@ func sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
 	return nil
 }
 
-func CreateUserActiveCode(u *m.User, startInf interface{}) string {
-	minutes := setting.EmailCodeValidMinutes
-	data := com.ToStr(u.Id) + u.Email + u.Login + u.Password + u.Rands
-	code := CreateTimeLimitCode(data, minutes, startInf)
+func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
+	login := getLoginForEmailCode(query.Code)
+	if login == "" {
+		return m.ErrInvalidEmailCode
+	}
 
-	// add tail hex username
-	code += hex.EncodeToString([]byte(u.Login))
-	return code
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: login}
+	if err := bus.Dispatch(&userQuery); err != nil {
+		return err
+	}
+
+	if !validateUserEmailCode(userQuery.Result, query.Code) {
+		return m.ErrInvalidEmailCode
+	}
+
+	query.Result = userQuery.Result
+	return nil
 }
-
-// // verify active code when active account
-// func VerifyUserActiveCode(code string) (user *User) {
-// 	minutes := setting.Service.ActiveCodeLives
-//
-// 	if user = getVerifyUser(code); user != nil {
-// 		// time limit code
-// 		prefix := code[:base.TimeLimitCodeLength]
-// 		data := com.ToStr(user.Id) + user.Email + user.LowerName + user.Passwd + user.Rands
-//
-// 		if base.VerifyTimeLimitCode(data, minutes, prefix) {
-// 			return user
-// 		}
-// 	}
-// 	return nil
-// }
-//
-// // verify active code when active account
-// func VerifyUserActiveCode(code string) (user *User) {
-// 	minutes := setting.Service.ActiveCodeLives
-//
-// 	if user = getVerifyUser(code); user != nil {
-// 		// time limit code
-// 		prefix := code[:base.TimeLimitCodeLength]
-// 		data := com.ToStr(user.Id) + user.Email + user.LowerName + user.Passwd + user.Rands
-//
-// 		if base.VerifyTimeLimitCode(data, minutes, prefix) {
-// 			return user
-// 		}
-// 	}
-// 	return nil
-// }
