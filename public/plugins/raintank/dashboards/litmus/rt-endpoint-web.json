@@ -1,7 +1,10 @@
 {
-  "title": "rt-endpoint-web",
-  "originalTitle": "rt-endpoint-web",
-  "tags": [],
+  "title": "Endpoints - Web",
+  "originalTitle": "Endpoints - Web",
+  "tags": [
+    "raintank",
+    "endpoint"
+    ],
   "style": "dark",
   "timezone": "browser",
   "editable": false,
@@ -487,5 +490,16 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 21
+  "version": 21,
+  "links": [
+  {
+    "type": "dashboards",
+    "icon": "external link",
+    "tag": "endpoint",
+    "asDropdown": true,
+    "title": "Endpoint Dashboards",
+    "includeVars": true,
+    "keepTime": true
+  }
+]
 }

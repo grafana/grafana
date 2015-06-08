@@ -1,0 +1,12 @@
+[----------] Running tests from UnexportedTest
+[ RUN      ] UnexportedTest.SomeTest
+unexported_test.go:42:
+Expected: 4
+Actual:   3
+
+[  FAILED  ] UnexportedTest.SomeTest
+[----------] Finished with tests from UnexportedTest
+--- FAIL: TestSomething (1.23s)
+FAIL
+exit status 1
+FAIL somepkg 1.234s

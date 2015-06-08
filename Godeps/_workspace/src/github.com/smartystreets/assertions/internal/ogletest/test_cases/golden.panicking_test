@@ -1,0 +1,90 @@
+[----------] Running tests from PanickingTest
+[ RUN      ] PanickingTest.ExplicitPanic
+TearDown running.
+panicking_test.go:47:
+panic: Panic in ExplicitPanic
+
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.(*PanickingTest).ExplicitPanic
+	some_file.txt:0
+runtime.call16
+	/usr/local/go/src/runtime/asm_amd64.s:401
+reflect.Value.call
+	some_file.txt:0
+reflect.Value.Call
+	some_file.txt:0
+
+
+[  FAILED  ] PanickingTest.ExplicitPanic
+[ RUN      ] PanickingTest.ExplicitPanicInHelperFunction
+TearDown running.
+panicking_test.go:34:
+panic: Panic in someFuncThatPanics
+
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.someFuncThatPanics
+	some_file.txt:0
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.(*PanickingTest).ExplicitPanicInHelperFunction
+	some_file.txt:0
+runtime.call16
+	/usr/local/go/src/runtime/asm_amd64.s:401
+reflect.Value.call
+	some_file.txt:0
+reflect.Value.Call
+	some_file.txt:0
+
+
+[  FAILED  ] PanickingTest.ExplicitPanicInHelperFunction
+[ RUN      ] PanickingTest.NilPointerDerefence
+TearDown running.
+panicking_test.go:56:
+panic: runtime error: invalid memory address or nil pointer dereference
+
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.(*PanickingTest).NilPointerDerefence
+	some_file.txt:0
+runtime.call16
+	/usr/local/go/src/runtime/asm_amd64.s:401
+reflect.Value.call
+	some_file.txt:0
+reflect.Value.Call
+	some_file.txt:0
+
+
+[  FAILED  ] PanickingTest.NilPointerDerefence
+[ RUN      ] PanickingTest.ZzzSomeOtherTest
+TearDown running.
+[       OK ] PanickingTest.ZzzSomeOtherTest
+[----------] Finished with tests from PanickingTest
+[----------] Running tests from SetUpPanicTest
+[ RUN      ] SetUpPanicTest.SomeTestCase
+SetUp about to panic.
+TearDown running.
+panicking_test.go:74:
+panic: Panic in SetUp
+
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.(*SetUpPanicTest).SetUp
+	some_file.txt:0
+github.com/smartystreets/assertions/internal/ogletest.func·003
+	some_file.txt:0
+github.com/smartystreets/assertions/internal/ogletest.func·007
+	some_file.txt:0
+
+
+[  FAILED  ] SetUpPanicTest.SomeTestCase
+[----------] Finished with tests from SetUpPanicTest
+[----------] Running tests from TearDownPanicTest
+[ RUN      ] TearDownPanicTest.SomeTestCase
+TearDown about to panic.
+panicking_test.go:95:
+panic: Panic in TearDown
+
+github.com/smartystreets/assertions/internal/ogletest/somepkg_test.(*TearDownPanicTest).TearDown
+	some_file.txt:0
+github.com/smartystreets/assertions/internal/ogletest.func·005
+	some_file.txt:0
+
+
+[  FAILED  ] TearDownPanicTest.SomeTestCase
+[----------] Finished with tests from TearDownPanicTest
+--- FAIL: TestSomething (1.23s)
+FAIL
+exit status 1
+FAIL somepkg 1.234s

@@ -7,8 +7,8 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"net"
 	"net/http"
-	"strings"
 	"os/exec"
+	"strings"
 )
 
 func init() {

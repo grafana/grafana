@@ -1,0 +1,6 @@
+put this in config
+
+[telemetry]
+statsd_enabled = true
+statsd_addr = statsdaemon:8125
+

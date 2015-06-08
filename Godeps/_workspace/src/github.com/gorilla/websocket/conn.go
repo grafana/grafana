@@ -801,7 +801,7 @@ func (c *Conn) SetPingHandler(h func(string) error) {
 	c.handlePing = h
 }
 
-// SetPongHandler sets then handler for pong messages received from the peer.
+// SetPongHandler sets the handler for pong messages received from the peer.
 // The default pong handler does nothing.
 func (c *Conn) SetPongHandler(h func(string) error) {
 	if h == nil {

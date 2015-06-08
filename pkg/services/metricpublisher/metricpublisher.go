@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	enabled  bool
 	url      string
 	exchange string
 	conn     *amqp.Connection
@@ -52,7 +53,7 @@ func Init() {
 	if !sec.Key("enabled").MustBool(false) {
 		return
 	}
-
+	enabled = true
 	url = sec.Key("rabbitmq_url").String()
 	exchange = "metricResults"
 
@@ -106,6 +107,9 @@ func Setup() error {
 }
 
 func Publish(routingKey string, msgString []byte) {
+	if !enabled {
+		return
+	}
 	err := channel.Publish(
 		exchange,   //exchange
 		routingKey, // routing key
