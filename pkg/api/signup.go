@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -23,6 +24,13 @@ func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
 	}
 
 	user := cmd.Result
+
+	bus.Publish(&events.UserSignedUp{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+		Login: user.Login,
+	})
 
 	loginUserWithUser(&user, c)
 

@@ -409,6 +409,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 
 	readSessionConfig()
+	readSmtpSettings()
 }
 
 func readSessionConfig() {
