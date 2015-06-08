@@ -5,18 +5,23 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Create New mail message use MailFrom and MailUser
-func newMailMessageFrom(To []string, from, subject, body string) m.SendEmailCommand {
-	return m.NewSendEmailCommand(To, from, subject, body)
+type Message struct {
+	To      []string
+	From    string
+	Subject string
+	Body    string
+	Massive bool
+	Info    string
 }
 
-// Create New mail message use MailFrom and MailUser
-func newMailMessage(To string, subject, body string) m.SendEmailCommand {
-	return newMailMessageFrom([]string{To}, setting.Smtp.FromAddress, subject, body)
+// create mail content
+func (m *Message) Content() string {
+	contentType := "text/html; charset=UTF-8"
+	content := "From: " + m.From + "\r\nSubject: " + m.Subject + "\r\nContent-Type: " + contentType + "\r\n\r\n" + m.Body
+	return content
 }
 
-func getMailTmplData(u *m.User) map[interface{}]interface{} {
-	data := make(map[interface{}]interface{}, 10)
+func setDefaultTemplateData(data map[string]interface{}, u *m.User) {
 	data["AppUrl"] = setting.AppUrl
 	data["BuildVersion"] = setting.BuildVersion
 	data["BuildStamp"] = setting.BuildStamp
@@ -25,5 +30,4 @@ func getMailTmplData(u *m.User) map[interface{}]interface{} {
 	if u != nil {
 		data["Name"] = u.NameOrFallback()
 	}
-	return data
 }

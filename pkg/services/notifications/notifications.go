@@ -16,8 +16,11 @@ var mailTemplates *template.Template
 var tmplResetPassword = "reset_password.html"
 
 func Init() error {
+	initMailQueue()
+
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
+	bus.AddHandler("email", sendEmailCommandHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -41,32 +44,40 @@ func Init() error {
 	return nil
 }
 
-var dispatchMail = func(cmd *m.SendEmailCommand) error {
-	return bus.Dispatch(cmd)
-}
-
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
 }
 
-func sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
+func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
 	var buffer bytes.Buffer
+	data := cmd.Data
+	if data == nil {
+		data = make(map[string]interface{}, 10)
+	}
 
-	var data = getMailTmplData(cmd.User)
-	code := createUserEmailCode(cmd.User, nil)
-	data["Code"] = code
+	setDefaultTemplateData(data, nil)
+	mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
 
-	mailTemplates.ExecuteTemplate(&buffer, tmplResetPassword, data)
-
-	dispatchMail(&m.SendEmailCommand{
-		To:      []string{cmd.User.Email},
+	addToMailQueue(&Message{
+		To:      cmd.To,
 		From:    setting.Smtp.FromAddress,
 		Subject: data["Subject"].(map[string]interface{})["value"].(string),
 		Body:    buffer.String(),
 	})
 
 	return nil
+}
+
+func sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       []string{cmd.User.Email},
+		Template: tmplResetPassword,
+		Data: map[string]interface{}{
+			"Code": createUserEmailCode(cmd.User, nil),
+			"Name": cmd.User.NameOrFallback(),
+		},
+	})
 }
 
 func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
