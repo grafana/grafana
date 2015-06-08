@@ -380,6 +380,44 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 
 func eventConsumer(msg *amqp.Delivery) error {
 	log.Info("processing amqp message with routing key: " + msg.RoutingKey)
-	log.Info(string(msg.Body))
+	eventRaw := events.OnTheWireEvent{}
+	err := json.Unmarshal(msg.Body, &eventRaw)
+	if err != nil {
+		log.Error(0, "failed to unmarshal event.", err)
+	}
+	payloadRaw, err := json.Marshal(eventRaw.Payload)
+	if err != nil {
+		log.Error(0, "unable to marshal event payload back to json.", err)
+	}
+	switch msg.RoutingKey {
+	case "INFO.monitor.updated":
+		event := events.MonitorUpdated{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitUpdateMonitor(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.monitor.created":
+		event := events.MonitorCreated{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitAddMonitor(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.monitor.removed":
+		event := events.MonitorRemoved{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitDeleteMonitor(&event); err != nil {
+			return err
+		}
+		break;
+	}
+
 	return nil
 }
