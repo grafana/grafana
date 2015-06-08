@@ -70,6 +70,7 @@ pages:
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 - ['datasources/prometheus.md', 'Data Sources', 'Prometheus']
+- ['datasources/gnocchi.md', 'Data Sources', 'Gnocchi']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
