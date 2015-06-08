@@ -20,17 +20,16 @@ func TestNotifications(t *testing.T) {
 		err := Init()
 		So(err, ShouldBeNil)
 
-		var sentMail *m.SendEmailCommand
-		dispatchMail = func(cmd *m.SendEmailCommand) error {
-			sentMail = cmd
-			return nil
+		var sentMsg *Message
+		addToMailQueue = func(msg *Message) {
+			sentMsg = msg
 		}
 
 		Convey("When sending reset email password", func() {
 			sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
-			So(sentMail.Body, ShouldContainSubstring, "body")
-			So(sentMail.Subject, ShouldEqual, "Reset your Grafana password")
-			So(sentMail.Body, ShouldNotContainSubstring, "Subject")
+			So(sentMsg.Body, ShouldContainSubstring, "body")
+			So(sentMsg.Subject, ShouldEqual, "Reset your Grafana password")
+			So(sentMsg.Body, ShouldNotContainSubstring, "Subject")
 		})
 	})
 

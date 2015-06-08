@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package mailer
+package notifications
 
 import (
 	"crypto/tls"
@@ -13,18 +13,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var mailQueue chan *m.SendEmailCommand
+var mailQueue chan *Message
 
-func Init() {
-	bus.AddHandler("email", handleEmailCommand)
-
-	mailQueue = make(chan *m.SendEmailCommand, 10)
+func initMailQueue() {
+	mailQueue = make(chan *Message, 10)
 
 	setting.Smtp = setting.SmtpSettings{
 		Host:        "smtp.gmail.com:587",
@@ -55,10 +51,8 @@ func processMailQueue() {
 	}
 }
 
-func handleEmailCommand(cmd *m.SendEmailCommand) error {
-	log.Info("Sending on queue")
-	mailQueue <- cmd
-	return nil
+var addToMailQueue = func(msg *Message) {
+	mailQueue <- msg
 }
 
 func sendToSmtpServer(recipients []string, msgContent []byte) error {
@@ -162,7 +156,7 @@ func sendToSmtpServer(recipients []string, msgContent []byte) error {
 	return client.Quit()
 }
 
-func buildAndSend(msg *m.SendEmailCommand) (int, error) {
+func buildAndSend(msg *Message) (int, error) {
 	log.Trace("Sending mails to: %s", strings.Join(msg.To, "; "))
 
 	// get message body
