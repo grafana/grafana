@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -14,6 +16,7 @@ import (
 
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password.html"
+var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
 func Init() error {
 	initMailQueue()
@@ -21,6 +24,8 @@ func Init() error {
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
+
+	bus.AddEventListener(userSignedUpHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -50,6 +55,10 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 }
 
 func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
+	if !setting.Smtp.Enabled {
+		return errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+	}
+
 	var buffer bytes.Buffer
 	data := cmd.Data
 	if data == nil {
@@ -97,4 +106,20 @@ func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
 
 	query.Result = userQuery.Result
 	return nil
+}
+
+func userSignedUpHandler(evt *events.UserSignedUp) error {
+	log.Info("User signed up: %s, send_option: %s", evt.Email, setting.Smtp.SendWelcomeEmailOnSignUp)
+
+	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
+		return nil
+	}
+
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       []string{evt.Email},
+		Template: tmplWelcomeOnSignUp,
+		Data: map[string]interface{}{
+			"Name": evt.Login,
+		},
+	})
 }

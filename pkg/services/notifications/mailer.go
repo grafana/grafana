@@ -21,14 +21,6 @@ var mailQueue chan *Message
 
 func initMailQueue() {
 	mailQueue = make(chan *Message, 10)
-
-	setting.Smtp = setting.SmtpSettings{
-		Host:        "smtp.gmail.com:587",
-		User:        "torkel.odegaard@gmail.com",
-		Password:    "peslpwstnnloiksq",
-		FromAddress: "grafana@grafana.org",
-	}
-
 	go processMailQueue()
 }
 
