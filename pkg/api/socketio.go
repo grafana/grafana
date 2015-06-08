@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
-	"github.com/streadway/amqp"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/streadway/amqp"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -170,20 +170,20 @@ func InitCollectorController() {
 		url := sec.Key("rabbitmq_url").String()
 		exchange := sec.Key("exchange").String()
 		exch := rabbitmq.Exchange{
-			Name: exchange,
+			Name:         exchange,
 			ExchangeType: "topic",
-			Durable: true,
+			Durable:      true,
 		}
 		q := rabbitmq.Queue{
-			Name: "",
-			Durable: false,
+			Name:       "",
+			Durable:    false,
 			AutoDelete: true,
-			Exclusive: true,
+			Exclusive:  true,
 		}
 		consumer := rabbitmq.Consumer{
-			Url: url,
-			Exchange: &exch,
-			Queue: &q,
+			Url:        url,
+			Exchange:   &exch,
+			Queue:      &q,
 			BindingKey: "INFO.monitor.#",
 		}
 		err := consumer.Connect()
@@ -433,7 +433,7 @@ func eventConsumer(msg *amqp.Delivery) error {
 		if err := EmitDeleteMonitor(&event); err != nil {
 			return err
 		}
-		break;
+		break
 	}
 
 	return nil

@@ -1,12 +1,12 @@
 package alerting
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/Dieterbe/statsd-go"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/streadway/amqp"
 )
 
@@ -58,9 +58,9 @@ func standalone() {
 func distributed(url string) error {
 	exchange := "alertingJobs"
 	exch := rabbitmq.Exchange{
-		Name: exchange,
+		Name:         exchange,
 		ExchangeType: "x-consistent-hash",
-		Durable: true,
+		Durable:      true,
 	}
 
 	publisher := &rabbitmq.Publisher{Url: url, Exchange: &exch}
@@ -79,7 +79,7 @@ func distributed(url string) error {
 			msg, err := json.Marshal(job)
 			//log.Info("sending: " + string(msg))
 			if err != nil {
-				log.Error(3, "failed to marshal job to json.", err);
+				log.Error(3, "failed to marshal job to json.", err)
 				continue
 			}
 			publisher.Publish(routingKey, msg)
@@ -87,15 +87,15 @@ func distributed(url string) error {
 	}(jobQueue)
 
 	q := rabbitmq.Queue{
-		Name: "",
-		Durable: false,
+		Name:       "",
+		Durable:    false,
 		AutoDelete: true,
-		Exclusive: true,
+		Exclusive:  true,
 	}
 	consumer := rabbitmq.Consumer{
-		Url: url,
-		Exchange: &exch,
-		Queue: &q,
+		Url:        url,
+		Exchange:   &exch,
+		Queue:      &q,
 		BindingKey: "10", //consistant hashing weight.
 	}
 	if err := consumer.Connect(); err != nil {

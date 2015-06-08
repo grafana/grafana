@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
+	"github.com/grafana/grafana/pkg/setting"
 	"time"
 )
 
@@ -25,9 +25,9 @@ func Init() {
 	exchange := "metricResults"
 
 	exch := rabbitmq.Exchange{
-		Name: exchange,
+		Name:         exchange,
 		ExchangeType: "x-consistent-hash",
-		Durable: true,
+		Durable:      true,
 	}
 	globalPublisher = &rabbitmq.Publisher{Url: url, Exchange: &exch}
 	err := globalPublisher.Connect()

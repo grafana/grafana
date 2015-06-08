@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -27,9 +27,9 @@ func Init() {
 	url := sec.Key("rabbitmq_url").String()
 	exchange := sec.Key("exchange").String()
 	exch := rabbitmq.Exchange{
-		Name: exchange,
+		Name:         exchange,
 		ExchangeType: "topic",
-		Durable: true,
+		Durable:      true,
 	}
 	globalPublisher = &rabbitmq.Publisher{Url: url, Exchange: &exch}
 	err := globalPublisher.Connect()

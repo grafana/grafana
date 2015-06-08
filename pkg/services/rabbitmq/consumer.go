@@ -1,30 +1,30 @@
 package rabbitmq
 
 import (
+	"github.com/streadway/amqp"
 	"log"
 	"time"
-	"github.com/streadway/amqp"
 )
 
 type ConsumerCallback func(*amqp.Delivery) error
 
 type Queue struct {
-	Name string
-	Durable	bool
+	Name       string
+	Durable    bool
 	AutoDelete bool
-	Exclusive bool
-	NoWait bool
-	Arguments amqp.Table
+	Exclusive  bool
+	NoWait     bool
+	Arguments  amqp.Table
 }
 
 type Consumer struct {
-	Url string
-	Exchange *Exchange
-	Queue *Queue
+	Url        string
+	Exchange   *Exchange
+	Queue      *Queue
 	BindingKey string
-	callback ConsumerCallback
-	conn *amqp.Connection
-	channel  *amqp.Channel
+	callback   ConsumerCallback
+	conn       *amqp.Connection
+	channel    *amqp.Channel
 }
 
 func (c *Consumer) Connect() error {
@@ -58,32 +58,32 @@ func (c *Consumer) getChannel() error {
 	}
 
 	err = ch.ExchangeDeclare(
-		c.Exchange.Name, // name
-		c.Exchange.ExchangeType,  // type
-		c.Exchange.Durable,     // durable
-		c.Exchange.AutoDeleted,    // auto-deleted
-		c.Exchange.Internal,    // internal
-		c.Exchange.NoWait,    // no-wait
-		c.Exchange.Arguments,      // arguments
+		c.Exchange.Name,         // name
+		c.Exchange.ExchangeType, // type
+		c.Exchange.Durable,      // durable
+		c.Exchange.AutoDeleted,  // auto-deleted
+		c.Exchange.Internal,     // internal
+		c.Exchange.NoWait,       // no-wait
+		c.Exchange.Arguments,    // arguments
 	)
 	if err != nil {
 		return err
 	}
 	q, err := ch.QueueDeclare(
-		c.Queue.Name,    // name
-		c.Queue.Durable, // durable
+		c.Queue.Name,       // name
+		c.Queue.Durable,    // durable
 		c.Queue.AutoDelete, // delete when usused
 		c.Queue.Exclusive,  // exclusive
-		c.Queue.NoWait, // no-wait
-		c.Queue.Arguments,   // arguments
+		c.Queue.NoWait,     // no-wait
+		c.Queue.Arguments,  // arguments
 	)
 	if err != nil {
 		return err
 	}
 	err = ch.QueueBind(
-		q.Name,       // queue name
-		c.BindingKey, // routing key
-		c.Exchange.Name,   // exchange
+		q.Name,          // queue name
+		c.BindingKey,    // routing key
+		c.Exchange.Name, // exchange
 		false,
 		nil,
 	)
@@ -127,12 +127,12 @@ func (c *Consumer) Consume(cb ConsumerCallback) error {
 func (c *Consumer) consume() error {
 	msgs, err := c.channel.Consume(
 		c.Queue.Name, // queue
-		"",     // consumer
-		false,   // auto ack
-		false,  // exclusive
-		false,  // no local
-		false,  // no wait
-		nil,    // args
+		"",           // consumer
+		false,        // auto ack
+		false,        // exclusive
+		false,        // no local
+		false,        // no wait
+		nil,          // args
 	)
 	if err != nil {
 		return err

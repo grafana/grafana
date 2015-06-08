@@ -1,9 +1,9 @@
 package elasticstore
 
 import (
-	"strconv"
 	"github.com/grafana/grafana/pkg/setting"
 	elastigo "github.com/mattbaird/elastigo/lib"
+	"strconv"
 )
 
 var (

@@ -2,22 +2,22 @@ package rabbitmq
 
 import (
 	"fmt"
-	"time"
 	"github.com/streadway/amqp"
+	"time"
 )
 
 type Exchange struct {
-	Name string
+	Name         string
 	ExchangeType string
-	Durable bool
-	AutoDeleted bool
-	Internal bool
-	NoWait bool
-	Arguments amqp.Table
+	Durable      bool
+	AutoDeleted  bool
+	Internal     bool
+	NoWait       bool
+	Arguments    amqp.Table
 }
 
 type Publisher struct {
-	Url string
+	Url      string
 	Exchange *Exchange
 	conn     *amqp.Connection
 	channel  *amqp.Channel
@@ -51,13 +51,13 @@ func (p *Publisher) getChannel() error {
 	}
 
 	err = ch.ExchangeDeclare(
-		p.Exchange.Name, // name
-		p.Exchange.ExchangeType,  // type
-		p.Exchange.Durable,     // durable
-		p.Exchange.AutoDeleted,    // auto-deleted
-		p.Exchange.Internal,    // internal
-		p.Exchange.NoWait,    // no-wait
-		p.Exchange.Arguments,      // arguments
+		p.Exchange.Name,         // name
+		p.Exchange.ExchangeType, // type
+		p.Exchange.Durable,      // durable
+		p.Exchange.AutoDeleted,  // auto-deleted
+		p.Exchange.Internal,     // internal
+		p.Exchange.NoWait,       // no-wait
+		p.Exchange.Arguments,    // arguments
 	)
 	if err != nil {
 		return err
@@ -93,10 +93,10 @@ func (p *Publisher) getChannel() error {
 func (p *Publisher) Publish(routingKey string, msgString []byte) {
 	for {
 		err := p.channel.Publish(
-			p.Exchange.Name,     //exchange
-			routingKey, // routing key
-			false,      // mandatory
-			false,      // immediate
+			p.Exchange.Name, //exchange
+			routingKey,      // routing key
+			false,           // mandatory
+			false,           // immediate
 			amqp.Publishing{
 				ContentType: "application/json",
 				Body:        msgString,
