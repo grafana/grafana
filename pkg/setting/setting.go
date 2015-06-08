@@ -43,8 +43,8 @@ var (
 	AppSubUrl string
 
 	// Proxy settings.
-	Proxy     bool
-	ProxyUrl  string
+	Proxy    bool
+	ProxyUrl string
 
 	// build
 	BuildVersion string
@@ -138,7 +138,7 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	return appUrl, appSubUrl
 }
 
-func parseProxyUrl(section *ini.Section) (string) {
+func parseProxyUrl(section *ini.Section) string {
 	proxyUrl := section.Key("proxy_url").MustString("http://localhost:3000/")
 	if proxyUrl[len(proxyUrl)-1] != '/' {
 		proxyUrl += "/"
