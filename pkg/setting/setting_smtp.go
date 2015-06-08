@@ -11,6 +11,7 @@ type SmtpSettings struct {
 	SkipVerify  bool
 
 	SendWelcomeEmailOnSignUp bool
+	TemplatesPattern         string
 }
 
 func readSmtpSettings() {
@@ -26,4 +27,5 @@ func readSmtpSettings() {
 
 	emails := Cfg.Section("emails")
 	Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
+	Smtp.TemplatesPattern = emails.Key("templates_pattern").MustString("emails/*.html")
 }
