@@ -35,6 +35,10 @@ func Init() error {
 		return errors.New("Invalid email address for smpt from_adress config")
 	}
 
+	if setting.EmailCodeValidMinutes == 0 {
+		setting.EmailCodeValidMinutes = 120
+	}
+
 	return nil
 }
 
@@ -50,7 +54,7 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 func sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
 	var buffer bytes.Buffer
 
-	var data = getMailTmplData(nil)
+	var data = getMailTmplData(cmd.User)
 	code := CreateUserActiveCode(cmd.User, nil)
 	data["Code"] = code
 
@@ -75,3 +79,35 @@ func CreateUserActiveCode(u *m.User, startInf interface{}) string {
 	code += hex.EncodeToString([]byte(u.Login))
 	return code
 }
+
+// // verify active code when active account
+// func VerifyUserActiveCode(code string) (user *User) {
+// 	minutes := setting.Service.ActiveCodeLives
+//
+// 	if user = getVerifyUser(code); user != nil {
+// 		// time limit code
+// 		prefix := code[:base.TimeLimitCodeLength]
+// 		data := com.ToStr(user.Id) + user.Email + user.LowerName + user.Passwd + user.Rands
+//
+// 		if base.VerifyTimeLimitCode(data, minutes, prefix) {
+// 			return user
+// 		}
+// 	}
+// 	return nil
+// }
+//
+// // verify active code when active account
+// func VerifyUserActiveCode(code string) (user *User) {
+// 	minutes := setting.Service.ActiveCodeLives
+//
+// 	if user = getVerifyUser(code); user != nil {
+// 		// time limit code
+// 		prefix := code[:base.TimeLimitCodeLength]
+// 		data := com.ToStr(user.Id) + user.Email + user.LowerName + user.Passwd + user.Rands
+//
+// 		if base.VerifyTimeLimitCode(data, minutes, prefix) {
+// 			return user
+// 		}
+// 	}
+// 	return nil
+// }

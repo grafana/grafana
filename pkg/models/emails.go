@@ -5,7 +5,6 @@ type SendEmailCommand struct {
 	From    string
 	Subject string
 	Body    string
-	Type    string
 	Massive bool
 	Info    string
 }
@@ -16,13 +15,7 @@ type SendResetPasswordEmailCommand struct {
 
 // create mail content
 func (m *SendEmailCommand) Content() string {
-	// set mail type
-	contentType := "text/plain; charset=UTF-8"
-	if m.Type == "html" {
-		contentType = "text/html; charset=UTF-8"
-	}
-
-	// create mail content
+	contentType := "text/html; charset=UTF-8"
 	content := "From: " + m.From + "\r\nSubject: " + m.Subject + "\r\nContent-Type: " + contentType + "\r\n\r\n" + m.Body
 	return content
 }
@@ -34,6 +27,5 @@ func NewSendEmailCommand(To []string, From, Subject, Body string) SendEmailComma
 		From:    From,
 		Subject: Subject,
 		Body:    Body,
-		Type:    "html",
 	}
 }

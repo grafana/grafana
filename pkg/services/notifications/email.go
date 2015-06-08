@@ -20,10 +20,10 @@ func getMailTmplData(u *m.User) map[interface{}]interface{} {
 	data["AppUrl"] = setting.AppUrl
 	data["BuildVersion"] = setting.BuildVersion
 	data["BuildStamp"] = setting.BuildStamp
-	data["BuildCommit"] = setting.BuildCommit
+	data["EmailCodeValidHours"] = setting.EmailCodeValidMinutes / 60
 	data["Subject"] = map[string]interface{}{}
 	if u != nil {
-		data["User"] = u
+		data["Name"] = u.NameOrFallback()
 	}
 	return data
 }
