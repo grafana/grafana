@@ -164,6 +164,25 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 }
 
 func InitCollectorController() {
+	sec := setting.Cfg.Section("event_publisher")
+
+	if sec.Key("enabled").MustBool(false) {
+		url := sec.Key("rabbitmq_url").String()
+		exchange := sec.Key("exchange").String()
+		consumer, err := eventconsumer.NewEventConsumer(url, exchange, "INFO.monitor.#")
+		if err != nil {
+			log.Fatal(0, "failed to start event.consumer.", err)
+		}
+		consumer.Consume(func(msg *amqp.Delivery) error {
+			log.Info("processing amqp message with routing key: " + msg.RoutingKey)
+			return nil
+		})
+	} else {
+		//tap into the update/add/Delete events emitted when monitors are modified.
+		bus.AddEventListener(EmitUpdateMonitor)
+		bus.AddEventListener(EmitAddMonitor)
+		bus.AddEventListener(EmitDeleteMonitor)
+	}
 	cmd := m.ClearCollectorSessionCommand{ProcessId: 0}
 	if err := bus.Dispatch(&cmd); err != nil {
 		log.Fatal(4, "failed to clear collectorSessions.", err)
@@ -211,25 +230,6 @@ func init() {
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Error(0, "socket emitted error", err)
 	})
-	sec := setting.Cfg.Section("event_publisher")
-
-	if sec.Key("enabled").MustBool(false) {
-		url := sec.Key("rabbitmq_url").String()
-		exchange := sec.Key("exchange").String()
-		consumer, err := eventconsumer.NewEventConsumer(url, exchange, "INFO.monitor.#")
-		if err != nil {
-			log.Fatal(0, "failed to start event.consumer.", err)
-		}
-		consumer.Consume(func(msg *amqp.Delivery) error {
-			log.Info("processing amqp message with routing key: " + msg.RoutingKey)
-			return nil
-		})
-	} else {
-		//tap into the update/add/Delete events emitted when monitors are modified.
-		bus.AddEventListener(EmitUpdateMonitor)
-		bus.AddEventListener(EmitAddMonitor)
-		bus.AddEventListener(EmitDeleteMonitor)
-	}
 }
 
 func (c *CollectorContext) Save() error {
