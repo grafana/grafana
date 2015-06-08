@@ -13,7 +13,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
-	"github.com/grafana/grafana/pkg/services/eventconsumer"
+	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/streadway/amqp"
 	"github.com/grafana/grafana/pkg/setting"
 	"reflect"
@@ -169,7 +169,24 @@ func InitCollectorController() {
 	if sec.Key("enabled").MustBool(false) {
 		url := sec.Key("rabbitmq_url").String()
 		exchange := sec.Key("exchange").String()
-		consumer, err := eventconsumer.NewEventConsumer(url, exchange, "INFO.monitor.#")
+		exch := rabbitmq.Exchange{
+			Name: exchange,
+			ExchangeType: "topic",
+			Durable: true,
+		}
+		q := rabbitmq.Queue{
+			Name: "",
+			Durable: false,
+			AutoDelete: true,
+			Exclusive: true,
+		}
+		consumer := rabbitmq.Consumer{
+			Url: url,
+			Exchange: &exch,
+			Queue: &q,
+			BindingKey: "INFO.monitor.#",
+		}
+		err := consumer.Connect()
 		if err != nil {
 			log.Fatal(0, "failed to start event.consumer.", err)
 		}
