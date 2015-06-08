@@ -28,8 +28,8 @@ func TestNotifications(t *testing.T) {
 
 		Convey("When sending reset email password", func() {
 			sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
-			So(sentMail.Body, ShouldContainSubstring, "h2")
-			So(sentMail.Subject, ShouldEqual, "Welcome to Grafana")
+			So(sentMail.Body, ShouldContainSubstring, "body")
+			So(sentMail.Subject, ShouldEqual, "Reset your Grafana password")
 			So(sentMail.Body, ShouldNotContainSubstring, "Subject")
 		})
 	})

@@ -30,6 +30,16 @@ type User struct {
 	Updated time.Time
 }
 
+func (u *User) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	} else if u.Login != "" {
+		return u.Login
+	} else {
+		return u.Email
+	}
+}
+
 // ---------------------
 // COMMANDS
 
