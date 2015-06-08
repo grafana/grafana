@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -60,12 +59,6 @@ func main() {
 	writePIDFile()
 	initRuntime()
 
-	fmt.Println("creating statsdclient. enabled", setting.StatsdEnabled, "addr", setting.StatsdAddr)
-	Stat, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
-	if err != nil {
-		log.Error(3, "Statsd client:", err)
-	}
-
 	search.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
@@ -73,14 +66,10 @@ func main() {
 	metricpublisher.Init()
 	elasticstore.Init()
 	api.InitCollectorController()
+	alerting.Init()
 
 	if setting.ReportingEnabled {
 		go metrics.StartUsageReportLoop()
-	}
-	alerting.Init(Stat)
-	go alerting.Dispatcher()
-	for i := 0; i < 10; i++ {
-		go alerting.Executor(alerting.GraphiteAuthContextReturner)
 	}
 
 	cmd.StartServer()

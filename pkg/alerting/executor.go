@@ -64,7 +64,7 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 	}
 }
 
-func Executor(fn GraphiteReturner) {
+func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 	cache, err := lru.New(10000) // TODO configurable
 	if err != nil {
 		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
