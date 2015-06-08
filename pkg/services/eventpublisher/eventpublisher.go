@@ -15,28 +15,52 @@ import (
 )
 
 var (
-	url      string
-	exchange string
-	conn     *amqp.Connection
-	channel  *amqp.Channel
+	globalPublisher *EventPublisher
 )
 
-func getConnection() (*amqp.Connection, error) {
-	c, err := amqp.Dial(url)
-	if err != nil {
-		return nil, err
-	}
-	return c, err
+type EventPublisher struct {
+	url string
+	exchange string
+	conn *amqp.Connection
+	channel  *amqp.Channel
 }
 
-func getChannel() (*amqp.Channel, error) {
-	ch, err := conn.Channel()
+func NewEventPublisher(url string, exchange string) (*EventPublisher, error) {
+	publisher := &EventPublisher{url: url, exchange: exchange}
+	
+	err := publisher.Connect()
+	return publisher, err
+}
+
+func (e *EventPublisher) Connect() error {
+	err := e.getConnection()
 	if err != nil {
-		return nil, err
+		return err
+	}
+	err = e.getChannel()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *EventPublisher) getConnection() error {
+	c, err := amqp.Dial(e.url)
+	if err != nil {
+		return err
+	}
+	e.conn = c
+	return nil
+}
+
+func (e *EventPublisher) getChannel() error {
+	ch, err := e.conn.Channel()
+	if err != nil {
+		return err
 	}
 
 	err = ch.ExchangeDeclare(
-		exchange, // name
+		e.exchange, // name
 		"topic",  // type
 		true,     // durable
 		false,    // auto-deleted
@@ -45,75 +69,40 @@ func getChannel() (*amqp.Channel, error) {
 		nil,      // arguments
 	)
 	if err != nil {
-		return nil, err
-	}
-	return ch, err
-}
-
-func Init() {
-	sec := setting.Cfg.Section("event_publisher")
-
-	if !sec.Key("enabled").MustBool(false) {
-		return
-	}
-
-	url = sec.Key("rabbitmq_url").String()
-	exchange = sec.Key("exchange").String()
-	bus.AddWildcardListener(eventListener)
-
-	if err := Setup(); err != nil {
-		log.Fatal(4, "Failed to connect to notification queue: %v", err)
-		return
-	}
-}
-
-// Every connection should declare the topology they expect
-func Setup() error {
-	c, err := getConnection()
-	if err != nil {
 		return err
 	}
-	conn = c
-	ch, err := getChannel()
-	if err != nil {
-		return err
-	}
-
-	channel = ch
-
+	e.channel = ch
 	// listen for close events so we can reconnect.
-	errChan := channel.NotifyClose(make(chan *amqp.Error))
+	errChan := e.channel.NotifyClose(make(chan *amqp.Error))
 	go func() {
-		for e := range errChan {
+		for er := range errChan {
 			fmt.Println("connection to rabbitmq lost.")
-			fmt.Println(e)
+			fmt.Println(er)
 			fmt.Println("attempting to create new rabbitmq channel.")
-			ch, err := getChannel()
+			err := e.getChannel()
 			if err == nil {
-				channel = ch
 				break
 			}
 
 			//could not create channel, so lets close the connection
 			// and re-create.
-			_ = conn.Close()
+			_ = e.conn.Close()
 
 			for err != nil {
 				time.Sleep(2 * time.Second)
 				fmt.Println("attempting to reconnect to rabbitmq.")
-				err = Setup()
+				err = e.Connect()
 			}
 			fmt.Println("Connected to rabbitmq again.")
 		}
 	}()
-
 	return nil
 }
 
-func Publish(routingKey string, msgString []byte) {
+func (e *EventPublisher) Publish(routingKey string, msgString []byte) {
 	for {
-		err := channel.Publish(
-			exchange,   //exchange
+		err := e.channel.Publish(
+			e.exchange,   //exchange
 			routingKey, // routing key
 			false,      // mandatory
 			false,      // immediate
@@ -134,6 +123,25 @@ func Publish(routingKey string, msgString []byte) {
 	}
 }
 
+func Init() {
+	sec := setting.Cfg.Section("event_publisher")
+
+	if !sec.Key("enabled").MustBool(false) {
+		return
+	}
+
+	url := sec.Key("rabbitmq_url").String()
+	exchange := sec.Key("exchange").String()
+	var err error
+	globalPublisher, err = NewEventPublisher(url, exchange)
+
+	if err != nil {
+		log.Fatal(4, "Failed to connect to notification queue: %v", err)
+		return
+	}
+	bus.AddWildcardListener(eventListener)
+}
+
 func eventListener(event interface{}) error {
 	wireEvent, err := events.ToOnWriteEvent(event)
 	if err != nil {
@@ -148,7 +156,7 @@ func eventListener(event interface{}) error {
 	routingKey := fmt.Sprintf("%s.%s", wireEvent.Priority, CamelToDotted(wireEvent.EventType))
 	// this is run in a greenthread and we expect that publish will keep
 	// retrying until the message gets sent.
-	go Publish(routingKey, msgString)
+	go globalPublisher.Publish(routingKey, msgString)
 	return nil
 }
 
@@ -180,4 +188,8 @@ func CamelToDotted(s string) string {
 	}
 
 	return result
+}
+
+func Publish(routingKey string, msgString []byte) {
+	globalPublisher.Publish(routingKey, msgString)
 }

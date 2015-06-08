@@ -13,6 +13,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
+	"github.com/grafana/grafana/pkg/services/eventconsumer"
+	"github.com/streadway/amqp"
+	"github.com/grafana/grafana/pkg/setting"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -208,10 +211,25 @@ func init() {
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Error(0, "socket emitted error", err)
 	})
-	//tap into the update/add/Delete events emitted when monitors are modified.
-	bus.AddEventListener(EmitUpdateMonitor)
-	bus.AddEventListener(EmitAddMonitor)
-	bus.AddEventListener(EmitDeleteMonitor)
+	sec := setting.Cfg.Section("event_publisher")
+
+	if sec.Key("enabled").MustBool(false) {
+		url := sec.Key("rabbitmq_url").String()
+		exchange := sec.Key("exchange").String()
+		consumer, err := eventconsumer.NewEventConsumer(url, exchange, "INFO.monitor.#")
+		if err != nil {
+			log.Fatal(0, "failed to start event.consumer.", err)
+		}
+		consumer.Consume(func(msg *amqp.Delivery) error {
+			log.Info("processing amqp message with routing key: " + msg.RoutingKey)
+			return nil
+		})
+	} else {
+		//tap into the update/add/Delete events emitted when monitors are modified.
+		bus.AddEventListener(EmitUpdateMonitor)
+		bus.AddEventListener(EmitAddMonitor)
+		bus.AddEventListener(EmitDeleteMonitor)
+	}
 }
 
 func (c *CollectorContext) Save() error {
