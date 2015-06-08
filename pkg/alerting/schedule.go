@@ -16,7 +16,7 @@ import (
 // this way the check runs always on the right data, irrespective of execution delays
 // that said, for convenience, we track the generatedAt timestamp
 type Job struct {
-	key         string
+	Key         string
 	OrgId       int64
 	MonitorId   int64
 	EndpointId  int64
@@ -31,7 +31,7 @@ type Job struct {
 }
 
 func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
+	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.Key, job.generatedAt, job.lastPointTs, job.Definition)
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
@@ -135,7 +135,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		panic(err)
 	}
 	j := &Job{
-		key:       fmt.Sprintf("%d", monitor.Id),
+		Key:       fmt.Sprintf("%d", monitor.Id),
 		MonitorId: monitor.Id,
 		EndpointId: monitor.EndpointId,
 		EndpointSlug: monitor.EndpointSlug,

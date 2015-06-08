@@ -81,7 +81,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
 
-		key := fmt.Sprintf("%s-%d", job.key, job.lastPointTs.Unix())
+		key := fmt.Sprintf("%s-%d", job.Key, job.lastPointTs.Unix())
 
 		preConsider := time.Now()
 

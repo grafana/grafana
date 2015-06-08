@@ -76,7 +76,8 @@ func distributed(url string) error {
 	go func(jobQueue <-chan Job) {
 		for job := range jobQueue {
 			routingKey := fmt.Sprintf("%d", job.MonitorId)
-			msg, err := json.Marshal(routingKey)
+			msg, err := json.Marshal(job)
+			log.Info("sending: " + string(msg))
 			if err != nil {
 				log.Error(3, "failed to marshal job to json.", err);
 				continue
@@ -107,6 +108,7 @@ func distributed(url string) error {
 	consumer.Consume(func(msg *amqp.Delivery) error {
 		//convert from json to Job
 		job := Job{}
+		log.Info(string(msg.Body))
 		if err := json.Unmarshal(msg.Body, &job); err != nil {
 			log.Error(0, "failed to unmarshal msg body.", err)
 			return err
