@@ -173,10 +173,7 @@ func InitCollectorController() {
 		if err != nil {
 			log.Fatal(0, "failed to start event.consumer.", err)
 		}
-		consumer.Consume(func(msg *amqp.Delivery) error {
-			log.Info("processing amqp message with routing key: " + msg.RoutingKey)
-			return nil
-		})
+		consumer.Consume(eventConsumer)
 	} else {
 		//tap into the update/add/Delete events emitted when monitors are modified.
 		bus.AddEventListener(EmitUpdateMonitor)
@@ -378,5 +375,11 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 
 	localSockets.Emit(socketId, eventName, event)
 
+	return nil
+}
+
+func eventConsumer(msg *amqp.Delivery) error {
+	log.Info("processing amqp message with routing key: " + msg.RoutingKey)
+	log.Info(string(msg.Body))
 	return nil
 }
