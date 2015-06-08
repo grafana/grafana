@@ -42,6 +42,10 @@ var (
 	AppUrl    string
 	AppSubUrl string
 
+	// Proxy settings.
+	Proxy     bool
+	ProxyUrl  string
+
 	// build
 	BuildVersion string
 	BuildCommit  string
@@ -132,6 +136,15 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
 
 	return appUrl, appSubUrl
+}
+
+func parseProxyUrl(section *ini.Section) (string) {
+	proxyUrl := section.Key("proxy_url").MustString("http://localhost:3000/")
+	if proxyUrl[len(proxyUrl)-1] != '/' {
+		proxyUrl += "/"
+	}
+
+	return proxyUrl
 }
 
 func ToAbsUrl(relativeUrl string) string {
@@ -344,6 +357,9 @@ func NewConfigContext(args *CommandLineArgs) {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	//proxy
+	ProxyUrl = parseProxyUrl(server)
+	Proxy = server.Key("proxy").MustBool(false)
 
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
