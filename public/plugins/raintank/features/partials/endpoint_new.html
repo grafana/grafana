@@ -22,7 +22,7 @@
 <div ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
     <div class="rt-page">
         <div class="rt-page-header">
-            <i ng-class="icon" class="icon-rt-endpoint" style="font-size:24px;"></i> <h1 class="rt-h1">New Endpoint</h1>
+            <i ng-class="icon" class="icon-rt-endpoint" style="font-size:24px;"></i> <h1 class="rt-h1">Add a new endpoint</h1>
         </div>
         <div class="rt-page-body">
             <form name="endpointForm">
@@ -90,17 +90,17 @@
                 </div>
 
 
-                <div ng-include src="'plugins/raintank/features/partials/dnsForm.html'" ng-if="monitors['dns']"></div>
-                <div ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
-                <div ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
-                <div ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
+                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/dnsForm.html'" ng-if="monitors['dns']"></div>
+                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
+                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
+                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
 
-                <div class="editor-row">
+                <div ng-show="discovered" class="editor-row">
                     <div style="display: block; margin-top: 5px;" class="editor-option">
                         <bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label label-tag" placeholder="add tags"></bootstrap-tagsinput>
                     </div>
                 </div>
-                <div style="margin: 25px 0 0 10px;">
+                <div ng-show="discovered" style="margin: 25px 0 0 10px;">
                     <button type="submit" class="rt-btn btn-modal" ng-click="endpointForm.$valid && addEndpoint(endpoint)">Add Endpoint</button>
                     <span class="cancel-primary" ng-click="cancel();">Cancel</span>
                 </div>
