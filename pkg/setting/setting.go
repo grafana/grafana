@@ -38,7 +38,6 @@ const (
 var (
 	// App settings.
 	Env       string = DEV
-	AppName   string
 	AppUrl    string
 	AppSubUrl string
 
@@ -68,11 +67,12 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey          string
-	LogInRememberDays  int
-	CookieUserName     string
-	CookieRememberName string
-	DisableGravatar    bool
+	SecretKey             string
+	LogInRememberDays     int
+	CookieUserName        string
+	CookieRememberName    string
+	DisableGravatar       bool
+	EmailCodeValidMinutes int
 
 	// User settings
 	AllowUserSignUp    bool
@@ -114,6 +114,9 @@ var (
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
+
+	// SMTP email settings
+	Smtp SmtpSettings
 )
 
 type CommandLineArgs struct {
@@ -347,7 +350,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
 
-	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 
 	server := Cfg.Section("server")
@@ -407,6 +409,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 
 	readSessionConfig()
+	readSmtpSettings()
 }
 
 func readSessionConfig() {
