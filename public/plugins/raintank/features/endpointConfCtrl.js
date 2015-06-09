@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointConfCtrl', function($scope, $q, $location, $timeout, $anchorScroll, $routeParams, $http, backendSrv, alertSrv) {
+  module.controller('EndpointConfCtrl', function($scope, $q, $modal, $location, $timeout, $anchorScroll, $routeParams, $http, $window, backendSrv, alertSrv) {
     $scope.pageReady = false;
     var defaults = {
       name: '',
@@ -33,6 +33,8 @@ function (angular) {
       $scope.collectorsOption = {selection: "all"};
       $scope.collectorsByTag = {};
       $scope.global_collectors = {collector_ids: [], collector_tags: []};
+      $scope.ignoreChanges = false;
+      $scope.originalState = {};
 
       if ("id" in $routeParams) {
         promises.push($scope.getEndpoints().then(function() {
@@ -41,6 +43,7 @@ function (angular) {
       } else {
         $scope.pageReady = true;
         $scope.reset();
+
       }
       $scope.checks = {};
       promises.push($scope.getCollectors());
@@ -77,6 +80,44 @@ function (angular) {
           break;
         }
       }
+
+      $window.onbeforeunload = function() {
+        if ($scope.ignoreChanges) { return; }
+        if ($scope.changesPending()) {
+          return "There are unsaved changes to this dashboard";
+        }
+      }
+
+      $scope.$on('$locationChangeStart', function(event, next, current) {
+        if ((!$scope.ignoreChanges) && ($scope.changesPending())) {
+          event.preventDefault();
+          var baseLen = $location.absUrl().length - $location.url().length;
+          var nextUrl = next.substring(baseLen);
+          var modalScope = $scope.$new();
+          modalScope.ignore = function() {
+            $scope.ignoreChanges = true;
+            $location.path(nextUrl);
+            return;
+          };
+
+          modalScope.save = function() {
+            $scope.save(nextUrl);
+          };
+
+          var confirmModal = $modal({
+            template: './app/partials/unsaved-changes.html',
+            modalClass: 'confirm-modal',
+            persist: false,
+            show: false,
+            scope: modalScope,
+            keyboard: false
+          });
+
+          $q.when(confirmModal).then(function(modalEl) {
+            modalEl.modal('show');
+          });
+        }
+      });
     };
 
     $scope.getCollectors = function() {
@@ -263,7 +304,7 @@ function (angular) {
       backendSrv.post('/api/endpoints', $scope.endpoint);
     };
 
-    $scope.save = function() {
+    $scope.save = function(location) {
       var promises = [];
       _.forEach($scope.monitors, function(monitor) {
         monitor.endpoint_id = $scope.endpoint.id;
@@ -275,7 +316,11 @@ function (angular) {
       });
       promises.push(backendSrv.post('/api/endpoints', $scope.endpoint));
       $q.all(promises).then(function() {
-        $location.path("/endpoints");
+        if (location) {
+          $location.path(location);
+        } else {
+          $location.path("/endpoints");
+        }
       });
     }
 
@@ -364,6 +409,16 @@ function (angular) {
         alertSrv.set("endpoint added", '', 'success', 3000);
         $location.path("endpoints/summary/"+resp.id);
       });
+    }
+
+    $scope.changesPending = function() {
+      var changes = false;
+      _.forEach($scope.monitors, function(monitor) {
+        if (!angular.equals(monitor, monitorLastState[monitor.id])) {
+          changes = true;
+        }
+      });
+      return changes;
     }
 
     $scope.gotoDashboard = function(endpoint) {
