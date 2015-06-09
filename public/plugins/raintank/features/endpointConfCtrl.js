@@ -334,12 +334,19 @@ function (angular) {
       });
     }
 
+    $scope.skipDiscovery = function() {
+      $scope.discoveryInProgress = false;
+      $scope.discovered = true;
+    }
+
     $scope.discover = function(endpoint) {
       $scope.discoveryInProgress = true;
       $scope.discoveryError = false;
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
-        $scope.discovered = true;
-        $scope.parseSuggestions(resp);
+        if (!$scope.discovered) {
+          $scope.discovered = true;
+          $scope.parseSuggestions(resp);
+        }
       }, function(err) {
         $scope.discoveryError = "Failed to discover endpoint.";
       }).finally(function() {
