@@ -1177,43 +1177,80 @@ a.rt-modal-body-link {
     min-height: 150px; 
     min-width: 400px;
     margin: 0 auto;  
-    opacity: 0;
+  }
 
-   -webkit-animation: loading-opacity 500ms 500ms ease-in forwards; /* Safari 4+ */
-   -moz-animation:    loading-opacity 500ms 500ms ease-in forwards;/* Fx 5+ */
-   -o-animation:      loading-opacity 500ms 500ms ease-in forwards;/* Opera 12+ */
-    animation:        loading-opacity 500ms 500ms ease-in forwards;/* IE 10+, Fx 29+ */
+.rt-loading-pulse {
+    opacity: 0;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+
+   -webkit-animation: loading-opacity 200ms 500ms ease-in forwards; /* Safari 4+ */
+   -moz-animation:    loading-opacity 200ms 500ms ease-in forwards;/* Fx 5+ */
+   -o-animation:      loading-opacity 200ms 500ms ease-in forwards;/* Opera 12+ */
+    animation:        loading-opacity 200ms 500ms ease-in forwards;/* IE 10+, Fx 29+ */
 }
 
-.rt-loading-slow {
-    opacity: 0;
-
-   -webkit-animation: loading-opacity 500ms 5s ease-in forwards; /* Safari 4+ */
-   -moz-animation:    loading-opacity 500ms 5s ease-in forwards; /* Fx 5+ */
-   -o-animation:      loading-opacity 500ms 5s ease-in forwards; /* Opera 12+ */
-    animation:        loading-opacity 500ms 5s ease-in forwards; /* IE 10+, Fx 29+ */
+.rt-loading-msg {
+  opacity: 0;
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
 }
 
-.rt-loading-very-slow {
-    opacity: 0;
+.rt-loading-msg-1 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 500ms ease-in forwards, loading-clear 200ms 5s ease-in forwards; 
+}
 
-   -webkit-animation: loading-opacity 500ms 15s ease-in forwards; /* Safari 4+ */
-   -moz-animation:    loading-opacity 500ms 15s ease-in forwards; /* Fx 5+ */
-   -o-animation:      loading-opacity 500ms 15s ease-in forwards; /* Opera 12+ */
-    animation:        loading-opacity 500ms 15s ease-in forwards; /* IE 10+, Fx 29+ */
+.rt-loading-msg-2 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 5.5s ease-in forwards, loading-clear 200ms 15s ease-in forwards; 
+}
+
+.rt-loading-msg-3 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 15.5s ease-in forwards; 
 }
 
 @-webkit-keyframes loading-opacity {
-  to { opacity: 1; }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 @-moz-keyframes loading-opacity {
-  to { opacity: 1; }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 @-o-keyframes loading-opacity {
-  to { opacity: 1; }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 @keyframes loading-opacity {
-  to { opacity: 1; }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@-webkit-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 // raintank form elements

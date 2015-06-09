@@ -6,16 +6,16 @@
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
 	</div>
 
-	<div ng-if="!pageReady" class="rt-loading-message-container">
+	<div ng-if="pageReady" class="rt-loading-message-container">
 		<div class="rt-loading-message-inside">
-			<img src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
-			<p class="freqMsg nodata">To infinity...and beyond.</p>
-			<p class="freqMsg nodata rt-loading-slow">This is taking longer than expected.</p>
-			<p class="freqMsg nodata rt-loading-very-slow">We apologize, something may be up. Please contact us if this continues to happen.</p>
+			<img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
+			<p class="freqMsg nodata rt-loading-msg-1">To infinity...and beyond.</p>
+			<p class="freqMsg nodata rt-loading-msg-2">This is taking longer than expected.</p>
+			<p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>
 		</div>
 	</div>
 
-	<div ng-if="pageReady">
+	<div ng-if="!pageReady">
 		<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
 			<div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
 				<i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
@@ -53,7 +53,7 @@
 	</div>
 </div>
 
-<div ng-if="pageReady">
+<div ng-if="!pageReady">
 	<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
