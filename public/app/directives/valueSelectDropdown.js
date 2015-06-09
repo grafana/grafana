@@ -34,7 +34,7 @@ function (angular, app, _) {
           var tag = { text: value, selected: false };
           _.each(vm.variable.current.tags, function(tagObj) {
             if (tagObj.text === value) {
-              tag.selected = true;
+              tag = tagObj;
             }
           });
           return tag;
