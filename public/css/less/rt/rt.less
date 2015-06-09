@@ -1164,42 +1164,57 @@ a.rt-modal-body-link {
     };
 }
 
-
 .rt-loading-message-container {
+    display: flex;flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 350px;
+}
+
+.rt-loading-message-inside {
     text-align: center;
     padding-top: 90px;
     min-height: 150px; 
     min-width: 400px;
     margin: 0 auto;  
+    opacity: 0;
 
-   -webkit-animation: loading-opacity 1s ease-in; /* Safari 4+ */
-   -moz-animation:    loading-opacity 1s ease-in; /* Fx 5+ */
-   -o-animation:      loading-opacity 1s ease-in; /* Opera 12+ */
-    animation:        loading-opacity 1s ease-in; /* IE 10+, Fx 29+ */
+   -webkit-animation: loading-opacity 500ms 500ms ease-in forwards; /* Safari 4+ */
+   -moz-animation:    loading-opacity 500ms 500ms ease-in forwards;/* Fx 5+ */
+   -o-animation:      loading-opacity 500ms 500ms ease-in forwards;/* Opera 12+ */
+    animation:        loading-opacity 500ms 500ms ease-in forwards;/* IE 10+, Fx 29+ */
+}
 
+.rt-loading-slow {
+    opacity: 0;
+
+   -webkit-animation: loading-opacity 500ms 5s ease-in forwards; /* Safari 4+ */
+   -moz-animation:    loading-opacity 500ms 5s ease-in forwards; /* Fx 5+ */
+   -o-animation:      loading-opacity 500ms 5s ease-in forwards; /* Opera 12+ */
+    animation:        loading-opacity 500ms 5s ease-in forwards; /* IE 10+, Fx 29+ */
+}
+
+.rt-loading-very-slow {
+    opacity: 0;
+
+   -webkit-animation: loading-opacity 500ms 15s ease-in forwards; /* Safari 4+ */
+   -moz-animation:    loading-opacity 500ms 15s ease-in forwards; /* Fx 5+ */
+   -o-animation:      loading-opacity 500ms 15s ease-in forwards; /* Opera 12+ */
+    animation:        loading-opacity 500ms 15s ease-in forwards; /* IE 10+, Fx 29+ */
 }
 
 @-webkit-keyframes loading-opacity {
-  0%   { opacity: 0; }
-  75%  { opacity: 0; }  
-  100% { opacity: 1; }
+  to { opacity: 1; }
 }
 @-moz-keyframes loading-opacity {
-  0%   { opacity: 0; }
-  75%  { opacity: 0; }    
-  100% { opacity: 1; }
+  to { opacity: 1; }
 }
 @-o-keyframes loading-opacity {
-  0%   { opacity: 0; }
-  75%  { opacity: 0; }    
-  100% { opacity: 1; }
+  to { opacity: 1; }
 }
 @keyframes loading-opacity {
-  0%   { opacity: 0; }
-  75%  { opacity: 0; }    
-  100% { opacity: 1; }
+  to { opacity: 1; }
 }
-
 
 // raintank form elements
 

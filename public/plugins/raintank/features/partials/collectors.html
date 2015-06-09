@@ -5,6 +5,14 @@
 		<h1 class="rt-h1">Collectors</h1>
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="/collectors/new">New Collector</a></span>
 	</div>
+
+	<div ng-if="!pageReady" class="rt-loading-message-container">
+		<div class="rt-loading-message-inside">
+			<img src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
+			<p class="freqMsg nodata">Ground Control to Major Tom</p>
+		</div>
+	</div>
+
 	<div class="editor-row">
 		<div class="editor-option">
 			<span class="small">Filter by:</span>
