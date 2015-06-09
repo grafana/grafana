@@ -1,20 +1,27 @@
 define([
   'angular',
+  'lodash',
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointConfCtrl', function($scope, $q, $modal, $location, $timeout, $anchorScroll, $routeParams, $http, $window, backendSrv, alertSrv) {
+  module.controller('EndpointConfCtrl', function(
+      $scope, $q, $modal, $location, $timeout, $anchorScroll,
+      $routeParams, $http, $window, backendSrv, alertSrv) {
+
     $scope.pageReady = false;
+
     var defaults = {
       name: '',
     };
-    var monitorLastState = {};
 
+    var monitorLastState = {};
     var freqOpt = [10, 30, 60, 120];
+
     $scope.frequencyOpts = [];
+
     _.forEach(freqOpt, function(f) {
       $scope.frequencyOpts.push({value: f, label: "Every "+f+"s"});
     });
@@ -43,8 +50,8 @@ function (angular) {
       } else {
         $scope.pageReady = true;
         $scope.reset();
-
       }
+
       $scope.checks = {};
       promises.push($scope.getCollectors());
       promises.push($scope.getMonitorTypes());
@@ -53,17 +60,19 @@ function (angular) {
           $anchorScroll();
         }, 0, false);
       });
+
       $scope.$watch('endpoint.name', function(newVal, oldVal) {
         $scope.discovered = false;
-        for (var type in $scope.monitors) {
-          var monitor = $scope.monitors[type];
-          _.forEach(monitor.settings, function(setting) {
-            if ((setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") && ((setting.value == "") || (setting.value == oldVal))) {
+        _.each($scope.monitors, function(monitor) {
+          _.each(monitor.settings, function(setting) {
+            if ((setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") &&
+                ((setting.value === "") || (setting.value === oldVal))) {
               setting.value = newVal;
             }
           });
-        }
+        });
       });
+
       if ($location.hash()) {
         switch($location.hash()) {
         case "ping":
@@ -86,9 +95,9 @@ function (angular) {
         if ($scope.changesPending()) {
           return "There are unsaved changes to this dashboard";
         }
-      }
+      };
 
-      $scope.$on('$locationChangeStart', function(event, next, current) {
+      $scope.$on('$locationChangeStart', function(event, next) {
         if ((!$scope.ignoreChanges) && ($scope.changesPending())) {
           event.preventDefault();
           var baseLen = $location.absUrl().length - $location.url().length;
@@ -141,7 +150,6 @@ function (angular) {
         return 0;
       }
       var ids = {};
-      var tags = monitor.collector_tags;
       _.forEach(monitor.collector_ids, function(id) {
         ids[id] = true;
       });
@@ -161,7 +169,7 @@ function (angular) {
           var settings = [];
           _.forEach(type.settings, function(setting) {
             var val = setting.default_value;
-            if (setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") {
+            if (setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") {
               val = $scope.endpoint.name || "";
             }
             settings.push({variable: setting.variable, value: val});
@@ -189,24 +197,24 @@ function (angular) {
       var s = null;
       var type = $scope.monitor_types_by_name[monitorType];
       _.forEach(type.settings, function(setting) {
-        if (setting.variable == variable) {
+        if (setting.variable === variable) {
           s = setting;
         }
       });
       return s;
-    }
+    };
 
     $scope.currentSettingByVariable = function(monitor, variable) {
       var s = {
         "variable": variable,
         "value": null
       };
-      var found = false
+      var found = false;
       _.forEach(monitor.settings, function(setting) {
         if (found) {
           return;
         }
-        if (setting.variable == variable) {
+        if (setting.variable === variable) {
           s = setting;
           found = true;
         }
@@ -217,14 +225,15 @@ function (angular) {
       if (s.value === null) {
         var type = $scope.monitor_types[monitor.monitor_type_id];
         _.forEach(type.settings, function(setting) {
-          if (setting.variable == variable) {
+          if (setting.variable === variable) {
             s.value = setting.default_value;
           }
         });
       }
 
       return s;
-    }
+    };
+
     $scope.reset = function() {
       $scope.endpoint = angular.copy(defaults);
     };
@@ -233,16 +242,19 @@ function (angular) {
       $scope.reset();
       window.history.back();
     };
+
     $scope.getEndpoints = function() {
-      var promise = backendSrv.get('/api/endpoints')
+      var promise = backendSrv.get('/api/endpoints');
       promise.then(function(endpoints) {
         $scope.endpoints = endpoints;
       });
       return promise;
-    }
-    $scope.getEndpoint = function(id) {
+    };
+
+    $scope.getEndpoint = function(idString) {
+      var id = parseInt(idString);
       _.forEach($scope.endpoints, function(endpoint) {
-        if (endpoint.id == id) {
+        if (endpoint.id === id) {
           $scope.endpoint = endpoint;
           $scope.newEndpointName = endpoint.name;
           //get monitors for this endpoint.
@@ -264,7 +276,7 @@ function (angular) {
 
     $scope.setEndpoint = function(id) {
       $location.path('/endpoints/edit/'+id);
-    }
+    };
 
     $scope.remove = function(endpoint) {
       backendSrv.delete('/api/endpoints/' + endpoint.id).then(function() {
@@ -278,13 +290,13 @@ function (angular) {
         var settings = [];
         _.forEach($scope.monitor_types[type.id].settings, function(setting) {
           var val = setting.default_value;
-          if (setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") {
+          if (setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") {
             val = $scope.endpoint.name;
           }
           settings.push({variable: setting.variable, value: val});
         });
         var frequency = 10;
-        if ($scope.monitor_types[type.id].name.indexOf("HTTP") == 0) {
+        if ($scope.monitor_types[type.id].name.indexOf("HTTP") === 0) {
           frequency = 60;
         }
         $scope.monitors[type.name.toLowerCase()] = {
@@ -322,7 +334,7 @@ function (angular) {
           $location.path("/endpoints");
         }
       });
-    }
+    };
 
     $scope.addMonitor = function(monitor) {
       monitor.endpoint_id = $scope.endpoint.id;
@@ -331,33 +343,35 @@ function (angular) {
         monitorLastState[monitor.id] = _.cloneDeep(monitor);
         var action = "disabled";
         if (monitor.enabled) {
-          action = "enabled"
+          action = "enabled";
         }
         var type = $scope.monitor_types[resp.monitor_type_id];
         var message = type.name.toLowerCase() + " " + action + " successfully";
         alertSrv.set(message, '', 'success', 3000);
       });
-    }
+    };
 
     $scope.updateMonitor = function(monitor) {
       if (!monitor.id) {
         return $scope.addMonitor(monitor);
       }
+
       backendSrv.post('/api/monitors', monitor, true).then(function() {
+        var message;
         var type = $scope.monitor_types[monitor.monitor_type_id];
-        if (monitorLastState[monitor.id].enabled != monitor.enabled) {
+        if (monitorLastState[monitor.id].enabled !== monitor.enabled) {
           var action = "disabled";
           if (monitor.enabled) {
-            action = "enabled"
+            action = "enabled";
           }
-          var message = type.name.toLowerCase() + " " + action + " successfully";
+          message = type.name.toLowerCase() + " " + action + " successfully";
         } else {
-          var message = type.name.toLowerCase() + " updated";
+          message = type.name.toLowerCase() + " updated";
         }
         monitorLastState[monitor.id] = _.cloneDeep(monitor);
         alertSrv.set(message, '', 'success', 3000);
       });
-    }
+    };
 
     $scope.parseSuggestions = function(payload) {
       var defaults = {
@@ -372,12 +386,12 @@ function (angular) {
       _.forEach(payload, function(suggestion) {
         _.defaults(suggestion, defaults);
         var type = $scope.monitor_types[suggestion.monitor_type_id];
-        if (type.name.indexOf("HTTP") == 0) {
+        if (type.name.indexOf("HTTP") === 0) {
           suggestion.frequency = 60;
         }
         $scope.monitors[type.name.toLowerCase()] = suggestion;
       });
-    }
+    };
 
     $scope.discover = function(endpoint) {
       $scope.discoveryInProgress = true;
@@ -385,16 +399,16 @@ function (angular) {
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
         $scope.discovered = true;
         $scope.parseSuggestions(resp);
-      }, function(err) {
+      }, function() {
         $scope.discoveryError = "Failed to discover endpoint.";
       }).finally(function() {
         $scope.discoveryInProgress = false;
       });
-    }
+    };
 
     $scope.addEndpoint = function() {
       if ($scope.endpoint.id) {
-        return updateEndpoint();
+        return $scope.updateEndpoint();
       }
 
       var payload = $scope.endpoint;
@@ -409,7 +423,7 @@ function (angular) {
         alertSrv.set("endpoint added", '', 'success', 3000);
         $location.path("endpoints/summary/"+resp.id);
       });
-    }
+    };
 
     $scope.changesPending = function() {
       var changes = false;
@@ -419,11 +433,11 @@ function (angular) {
         }
       });
       return changes;
-    }
+    };
 
-    $scope.gotoDashboard = function(endpoint) {
+    $scope.gotoDashboard = function() {
       $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.endpoint.slug});
-    }
+    };
 
     $scope.init();
 
