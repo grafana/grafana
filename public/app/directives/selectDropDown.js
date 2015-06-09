@@ -225,11 +225,11 @@ function (angular, app, _) {
 
   angular
     .module('grafana.directives')
-    .directive('variableValueSelect', function($compile, $window, $timeout) {
+    .directive('selectDropdown', function($compile, $window, $timeout) {
 
       return {
         scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
-        templateUrl: 'app/features/dashboard/partials/variableValueSelect.html',
+        templateUrl: 'app/partials/selectDropdown.html',
         controller: 'SelectDropdownCtrl',
         controllerAs: 'vm',
         bindToController: true,
