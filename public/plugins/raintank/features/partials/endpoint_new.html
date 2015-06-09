@@ -34,7 +34,7 @@
                             <div ng-show="discovered" style="width: auto; min-width:228px; height: 34px; line-height: 34px; font-size: 25px; margin-right: 25px;"> {{endpoint.name }}</div>
                         </div>
                         <div class="rt-mini-form-col" style="margin-top: 15px;">
-                        <div ng-hide="discovered || discoveryInProgress">
+                        <div ng-hide="showConfig || discoveryInProgress">
                                 <button type="submit" class="secondaryCTA ButtonTall" ng-click="endpointForm.$valid && discover(endpoint)">Auto Discover</button>
                             </div>                                                          
                             <div ng-show="discoveryInProgress">
@@ -80,28 +80,33 @@
                             <!-- Below replaces Auto-Discover button on success -->
                             <div ng-show="discovered">
                                 <p class="rt-body-copy">
-                                    <b>Discovery Successful.</b> We've suggested some default checks below based on what we were able to detect. <a class="rt-modal-body-link" ng-click="discovered=false">Start Over</a>
+                                    <b>Discovery Successful.</b> We've suggested some default checks below based on what we were able to detect. <a class="rt-modal-body-link" ng-click="reset()">Start Over</a>
                                 </p>
                             </div>
-                                <div ng-show="discoveryError">
-                                     <p>{{discoveryError}}</p>
-                                </div>
+                            <div ng-show="discoveryError">
+                                 <p>{{discoveryError}}</p>
+                            </div>
+                            <div ng-show="!discovered && showConfig">
+                                <p class="rt-body-copy">
+                                    <b>Discovery Skipped. </b><a class="rt-modal-body-link" ng-click="reset()">Start Over</a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
 
-                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/dnsForm.html'" ng-if="monitors['dns']"></div>
-                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
-                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
-                <div ng-show="discovered" ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
+                <div ng-show="showConfig" ng-include src="'plugins/raintank/features/partials/dnsForm.html'" ng-if="monitors['dns']"></div>
+                <div ng-show="showConfig" ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
+                <div ng-show="showConfig" ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
+                <div ng-show="showConfig" ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
 
-                <div ng-show="discovered" class="editor-row">
+                <div ng-show="showConfig" class="editor-row">
                     <div style="display: block; margin-top: 5px;" class="editor-option">
                         <bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label label-tag" placeholder="add tags"></bootstrap-tagsinput>
                     </div>
                 </div>
-                <div ng-show="discovered" style="margin: 25px 0 0 10px;">
+                <div ng-show="showConfig" style="margin: 25px 0 0 10px;">
                     <button type="submit" class="rt-btn btn-modal" ng-click="endpointForm.$valid && addEndpoint(endpoint)">Add Endpoint</button>
                     <span class="cancel-primary" ng-click="cancel();">Cancel</span>
                 </div>

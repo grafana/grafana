@@ -22,9 +22,6 @@ function (angular) {
     $scope.init = function() {
       var promises = [];
       $scope.newEndpointName = "";
-      $scope.discovered = false;
-      $scope.discoveryInProgress = false;
-      $scope.discoveryError = false;
       $scope.endpoints = [];
       $scope.monitors = {};
       $scope.monitor_types = {};
@@ -38,18 +35,19 @@ function (angular) {
         promises.push($scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);
         }));
-      } else {
-        $scope.pageReady = true;
-        $scope.reset();
       }
+
       $scope.checks = {};
       promises.push($scope.getCollectors());
       promises.push($scope.getMonitorTypes());
       $q.all(promises).then(function() {
+        $scope.pageReady = true;
+        $scope.reset();
         $timeout(function() {
           $anchorScroll();
         }, 0, false);
       });
+
       $scope.$watch('endpoint.name', function(newVal, oldVal) {
         $scope.discovered = false;
         for (var type in $scope.monitors) {
@@ -61,6 +59,7 @@ function (angular) {
           });
         }
       });
+
       if ($location.hash()) {
         switch($location.hash()) {
         case "ping":
@@ -117,31 +116,36 @@ function (angular) {
         var typesMap = {};
         _.forEach(types, function(type) {
           typesMap[type.id] = type;
-          var settings = [];
-          _.forEach(type.settings, function(setting) {
-            var val = setting.default_value;
-            if (setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname") {
-              val = $scope.endpoint.name || "";
-            }
-            settings.push({variable: setting.variable, value: val});
-          });
           $scope.monitor_types_by_name[type.name.toLowerCase()] = type;
-          if (!(type.name.toLowerCase() in $scope.monitors)) {
-            $scope.monitors[type.name.toLowerCase()] = {
-              id: null,
-              endpoint_id: null,
-              monitor_type_id: type.id,
-              collector_ids: $scope.global_collectors.collector_ids,
-              collector_tags: $scope.global_collectors.collector_tags,
-              settings: settings,
-              enabled: false,
-              frequency: 10,
-              //test: true,
-            };
-          }
+          $scope.setDefaultMonitor(type);
         });
         $scope.monitor_types = typesMap;
       });
+    };
+
+    $scope.setDefaultMonitor = function(type) {
+      var settings = [];
+      _.forEach(type.settings, function(setting) {
+        var val = setting.default_value;
+        if ($scope.endpoint && (setting.variable == "host" || setting.variable == "name" || setting.variable == "hostname")) {
+          val = $scope.endpoint.name || "";
+        }
+        settings.push({variable: setting.variable, value: val});
+      });
+      
+      if (!(type.name.toLowerCase() in $scope.monitors)) {
+        $scope.monitors[type.name.toLowerCase()] = {
+          id: null,
+          endpoint_id: null,
+          monitor_type_id: type.id,
+          collector_ids: $scope.global_collectors.collector_ids,
+          collector_tags: $scope.global_collectors.collector_tags,
+          settings: settings,
+          enabled: false,
+          frequency: 10,
+          //test: true,
+        };
+      }
     };
 
     $scope.defaultSettingByVariable = function(monitorType, variable) {
@@ -186,6 +190,14 @@ function (angular) {
     }
     $scope.reset = function() {
       $scope.endpoint = angular.copy(defaults);
+      $scope.discovered = false;
+      $scope.discoveryInProgress = false;
+      $scope.discoveryError = false;
+      $scope.showConfig = false;
+      $scope.monitors = {};
+      _.forEach($scope.monitor_types, function(type){
+        $scope.setDefaultMonitor(type);
+      });
     };
 
     $scope.cancel = function() {
@@ -336,14 +348,15 @@ function (angular) {
 
     $scope.skipDiscovery = function() {
       $scope.discoveryInProgress = false;
-      $scope.discovered = true;
+      $scope.showConfig = true;
     }
 
     $scope.discover = function(endpoint) {
       $scope.discoveryInProgress = true;
       $scope.discoveryError = false;
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
-        if (!$scope.discovered) {
+        if (!$scope.showConfig) {
+          $scope.showConfig = true;
           $scope.discovered = true;
           $scope.parseSuggestions(resp);
         }
