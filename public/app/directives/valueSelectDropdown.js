@@ -9,7 +9,7 @@ function (angular, app, _) {
 
   angular
     .module('grafana.controllers')
-    .controller('SelectDropdownCtrl', function($q) {
+    .controller('ValueSelectDropdownCtrl', function($q) {
       var vm = this;
 
       vm.show = function() {
@@ -31,7 +31,13 @@ function (angular, app, _) {
         vm.selectedValues = _.filter(vm.options, {selected: true});
 
         vm.tags = _.map(vm.variable.tags, function(value) {
-          return { text: value, selected: false };
+          var tag = { text: value, selected: false };
+          _.each(vm.variable.current.tags, function(tagObj) {
+            if (tagObj.text === value) {
+              tag.selected = true;
+            }
+          });
+          return tag;
         });
 
         vm.search = {query: '', options: vm.options};
@@ -225,12 +231,12 @@ function (angular, app, _) {
 
   angular
     .module('grafana.directives')
-    .directive('selectDropdown', function($compile, $window, $timeout) {
+    .directive('valueSelectDropdown', function($compile, $window, $timeout) {
 
       return {
         scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
-        templateUrl: 'app/partials/selectDropdown.html',
-        controller: 'SelectDropdownCtrl',
+        templateUrl: 'app/partials/valueSelectDropdown.html',
+        controller: 'ValueSelectDropdownCtrl',
         controllerAs: 'vm',
         bindToController: true,
         link: function(scope, elem) {

@@ -11,7 +11,7 @@ define([
   './spectrumPicker',
   './tags',
   './bodyClass',
-  './selectDropDown',
+  './valueSelectDropdown',
   './metric.segment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
