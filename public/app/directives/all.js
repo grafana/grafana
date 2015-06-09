@@ -11,11 +11,12 @@ define([
   './spectrumPicker',
   './tags',
   './bodyClass',
-  './variableValueSelect',
+  './valueSelectDropdown',
   './metric.segment',
   './grafanaVersionCheck',
   './dropdown.typeahead',
   './topnav',
   './giveFocus',
   './annotationTooltip',
+  './passwordStrenght',
 ], function () {});

@@ -15,7 +15,7 @@
 	<div class="variable-value-dropdown" ng-if="vm.dropdownVisible" ng-class="{'multi': vm.variable.multi, 'single': !vm.variable.multi}">
 		<div class="variable-options-wrapper">
 			<div class="variable-options-column">
-				<a class="variable-options-column-header" ng-if="vm.variable.multi" ng-class="{'many-selected': vm.selectedValuesCount > 1}" bs-tooltip="'Clear selections'" data-placement="top" ng-click="vm.clearSelections()">
+				<a class="variable-options-column-header" ng-if="vm.variable.multi" ng-class="{'many-selected': vm.selectedValues.length > 1}" bs-tooltip="'Clear selections'" data-placement="top" ng-click="vm.clearSelections()">
 					<span class="variable-option-icon"></span>
 					Selected ({{vm.selectedValues.length}})
 				</a>

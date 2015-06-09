@@ -145,7 +145,7 @@ require([
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',
-    'specs/selectDropdownCtrl-specs',
+    'specs/valueSelectDropdown-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

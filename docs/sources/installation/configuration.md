@@ -323,6 +323,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.
