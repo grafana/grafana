@@ -21,6 +21,7 @@ function (angular) {
 
     $scope.init = function() {
       var promises = [];
+      $scope.editor = {index: 0};
       $scope.newEndpointName = "";
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
@@ -406,6 +407,7 @@ function (angular) {
       });
       backendSrv.put('/api/endpoints', payload).then(function(resp) {
         $scope.endpoint = resp;
+        $scope.ignoreChanges = true;
         alertSrv.set("endpoint added", '', 'success', 3000);
         $location.path("endpoints/summary/"+resp.id);
       });
