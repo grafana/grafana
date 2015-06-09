@@ -506,36 +506,6 @@ define([
         };
 
         scope.hide = function() {
-          var lastFootprint = scope.footprint.value;
-          // determine if we are using static or dynamic allocation.
-          if (scope.model.collector_ids.length > 0) {
-            scope.footprint.value = 'static';
-            _.forEach(scope.tags, function(t) {
-              t.selected = false;
-            });
-          } else if (scope.model.collector_tags.length > 0) {
-            scope.footprint.value = 'dynamic';
-            _.forEach(scope.ids, function(i) {
-              i.selected = false;
-            });
-          }
-          scope.reset();
-          scope.selectorOpen = false;
-          bodyEl.off('click', scope.bodyOnClick);
-        };
-
-        scope.bodyOnClick = function(e) {
-          var dropdown = elem.find('.variable-value-dropdown');
-          if (dropdown.has(e.target).length === 0) {
-            scope.$apply(scope.hide);
-          }
-        };
-
-        scope.cancel = function() {
-          scope.hide();
-        }
-
-        scope.update = function() {
           var selectedIds = _.filter(scope.ids, {selected: true});
           var selectedTags = _.filter(scope.tags, {selected: true});
           if (selectedIds.length == 0 && selectedTags.length == 0) {
@@ -551,8 +521,16 @@ define([
           _.forEach(selectedTags, function(t) {
             scope.model.collector_tags.push(t.text);
           });
-          scope.hide();
-        }
+          scope.selectorOpen = false;
+          bodyEl.off('click', scope.bodyOnClick);
+        };
+
+        scope.bodyOnClick = function(e) {
+          var dropdown = elem.find('.variable-value-dropdown');
+          if (dropdown.has(e.target).length === 0) {
+            scope.$apply(scope.hide);
+          }
+        };
 
         //scope.init();
         scope.$watch('model.id', function() {
