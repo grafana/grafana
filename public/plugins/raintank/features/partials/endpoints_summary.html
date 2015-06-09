@@ -46,42 +46,40 @@
 	<div class="detailContainer">
 		<div class="detailFull detailLeft">
 			<div class="rt-box">
-				<!-- <div class="rt-box-header">
-					<div style="padding:10px;">Status</div>
-					<div class="refresh" style="display: inline; position:absolute; top:20px; right:10px; z-index:1000;">
-						<a ng-click="refresh()">
-							<span class="small">As of {{refreshTime | date:'shortTime'}}</span> <i ng-class="icon" class="icon-rt-refresh" style="font-size:20px; vertical-align:text-bottom;"></i>
-						</a>
-					</div>
-				</div> -->
-
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
 						<div class="pull-right" ng-show="getMonitorByTypeName('Ping').enabled">
 							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
 						</div>
-						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
- 						<div class="health">
+ 						<div ng-if="!pageReady" class="health">
+							<img ng-src="img/heart-loading.svg" style="width: 40px; height: 40px; opacity: 0.4;">
+						</div>
+ 						<div ng-if="pageReady" class="health">
 							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" style="width: 40px; height: 40px;">
 						</div>
 
 						<div class="check">
 							<span class="checkType">Ping:</span>
-								<div ng-show="getMonitorByTypeName('Ping').enabled">
-									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
-									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
+								<div ng-if="!pageReady">
+									<div class="checkStatus">&nbsp;</div>
 								</div>
-								<div ng-show="!getMonitorByTypeName('Ping').enabled">
-									<a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">Not enabled, configure now.</a>
+								<div ng-if="pageReady">
+									<div ng-show="getMonitorByTypeName('Ping').enabled">
+										<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
+										<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
+									</div>
+									<div ng-show="!getMonitorByTypeName('Ping').enabled">
+										<a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">Not enabled, configure now.</a>
+									</div>
 								</div>
 						</div>
 
 						<div class="status" ng-show="getMonitorByTypeName('Ping').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('Ping').id].length}}<span class="freqMsg">  collectors:</span>
+								<span class="freqMsg">Last check from </span>{{getMonitorByTypeName('Ping').collectors.length}}<span class="freqMsg">  collectors:</span>
 							</div>
-							<rt-check-health model="monitor_health[getMonitorByTypeName('Ping').id]"></rt-check-health>
+							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
 						</div>
 
 						<div class="clearfix"></div>
@@ -111,9 +109,9 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('DNS').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('DNS').id].length}}<span class="freqMsg"> collectors:</span>
+								<span class="freqMsg">Last check from </span>{{getMonitorByTypeName('DNS').collectors.length}}<span class="freqMsg"> collectors:</span>
 							</div>
-							<rt-check-health model="monitor_health[getMonitorByTypeName('DNS').id]"></rt-check-health>
+							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 						</div>
 
 						<div class="clearfix"></div>
@@ -144,9 +142,9 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTP').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTP').id].length}}<span class="freqMsg"> collectors</span>:
+								<span class="freqMsg">Last check from </span>{{getMonitorByTypeName('HTTP').collectors.length}}<span class="freqMsg"> collectors</span>:
 							</div>
-							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTP').id]"></rt-check-health>
+							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 						</div>
 
 						<div class="clearfix"></div>
@@ -177,9 +175,9 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTPS').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from </span>{{monitor_health[getMonitorByTypeName('HTTPS').id].length}}<span class="freqMsg"> collectors:</span>
+								<span class="freqMsg">Last check from </span>{{getMonitorByTypeName('HTTPS').collectors.length}}<span class="freqMsg"> collectors:</span>
 							</div>
-							<rt-check-health model="monitor_health[getMonitorByTypeName('HTTPS').id]"></rt-check-health>
+							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 						</div>
 
 						<div class="clearfix"></div>

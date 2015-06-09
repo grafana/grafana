@@ -7,7 +7,7 @@ function (angular) {
   var module = angular.module('grafana.controllers');
 
   module.controller('EndpointConfCtrl', function($scope, $q, $location, $timeout, $anchorScroll, $routeParams, $http, backendSrv, alertSrv) {
-
+    $scope.pageReady = false;
     var defaults = {
       name: '',
     };
@@ -39,6 +39,7 @@ function (angular) {
           $scope.getEndpoint($routeParams.id);
         }));
       } else {
+        $scope.pageReady = true;
         $scope.reset();
       }
       $scope.checks = {};
@@ -214,6 +215,7 @@ function (angular) {
               }
               monitorLastState[monitor.id] = _.cloneDeep(monitor);
             });
+            $scope.pageReady = true;
           });
         }
       });

@@ -1,6 +1,10 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/go-xorm/xorm"
+	m "github.com/grafana/grafana/pkg/models"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addMonitorMigration(mg *Migrator) {
 
@@ -225,25 +229,32 @@ func addMonitorMigration(mg *Migrator) {
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorTagV1)
 
-	//monitorCollector
-	var monitorCollectorStateV1 = Table{
-		Name: "monitor_collector_state",
-		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
-		},
-		Indices: []*Index{
-			&Index{Cols: []string{"org_id"}},
-			&Index{Cols: []string{"monitor_id"}},
-			&Index{Cols: []string{"endpoint_id"}},
-		},
+	// add health settings
+	migration := NewAddColumnMigration(monitorV3, &Column{
+		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: true, Default: "",
+	})
+	migration.OnSuccess = func(sess *xorm.Session) error {
+		sess.Table("monitor")
+		monitors := make([]m.Monitor, 0)
+		if err := sess.Find(&monitors); err != nil {
+			return err
+		}
+		for _, mon := range monitors {
+
+			if (mon.HealthSettings != nil) && (mon.HealthSettings.Steps != 0) && (mon.HealthSettings.NumCollectors != 0) {
+				continue
+			}
+			if mon.HealthSettings == nil {
+				mon.HealthSettings = &m.MonitorHealthSettingDTO{1, 2}
+			} else {
+				mon.HealthSettings.NumCollectors = 1
+				mon.HealthSettings.Steps = 2
+			}
+			if _, err := sess.Id(mon.Id).Update(mon); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
-	mg.AddMigration("create monitor_collector_state table", NewAddTableMigration(monitorCollectorStateV1))
-	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", monitorCollectorStateV1)
+	mg.AddMigration("monitor add alerts v1", migration)
 }

@@ -87,12 +87,6 @@ type GetEndpointByIdQuery struct {
 	Result *EndpointDTO
 }
 
-type GetEndpointHealthByIdQuery struct {
-	Id     int64
-	OrgId  int64
-	Result []*MonitorCollectorState
-}
-
 func (endpoint *Endpoint) UpdateEndpointSlug() {
 	name := strings.ToLower(endpoint.Name)
 	re := regexp.MustCompile("[^\\w ]+")

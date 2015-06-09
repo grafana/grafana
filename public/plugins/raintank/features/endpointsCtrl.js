@@ -11,7 +11,7 @@ function (angular) {
     var defaults = {
       name: '',
     };
-
+    $scope.pageReady = false;
     $scope.statuses = [
       {label: "Ok", value: 0},
       {label: "Warning", value: 1},
@@ -84,6 +84,7 @@ function (angular) {
 
     $scope.getEndpoints = function() {
       backendSrv.get('/api/endpoints').then(function(endpoints) {
+        $scope.pageReady = true;
         $scope.endpoints = endpoints;
         _.forEach($scope.endpoints, function(endpoint) {
           backendSrv.get('/api/monitors', {"endpoint_id": endpoint.id}).then(function(monitors) {
@@ -113,7 +114,7 @@ function (angular) {
     };
 
     $scope.monitorStateTxt = function(endpoint, type) {
-      var mon=endpoint.monitors[type];
+      var mon = endpoint.monitors[type];
       if (typeof(mon) != "object") {
         return "disabled";
       }
@@ -126,6 +127,31 @@ function (angular) {
       var states = ["online", "warn", "critical"];
       return states[mon.state];
     };
+
+    $scope.monitorStateChangeStr = function(endpoint, type) {
+      var mon = endpoint.monitors[type];
+      if (typeof(mon) != "object") {
+        return "";
+      }
+      var duration = new Date().getTime() - new Date(mon.state_change).getTime();
+      if (duration < 10000) {
+        return "for a few seconds ago";
+      }
+      if (duration < 60000) {
+        var secs = Math.floor(duration/1000);
+        return "for " + secs + " seconds";
+      }
+      if (duration < 3600000) {
+        var mins = Math.floor(duration/1000/60);
+        return "for " + mins + " minutes";
+      }
+      if (duration < 86400000) {
+        var hours = Math.floor(duration/1000/60/60);
+        return "for " + hours + " hours";
+      }
+      var days = Math.floor(duration/1000/60/60/24);
+      return "for " + days + " days";
+    }
 
     $scope.gotoDashboard = function(endpoint) {
       $location.path("/dashboard/file/rt-endpoint-summary.json").search({"var-collector": "All", "var-endpoint": endpoint.slug});

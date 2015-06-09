@@ -135,12 +135,6 @@ func (collector *Collector) UpdateCollectorSlug() {
 	collector.Slug = re2.ReplaceAllString(re.ReplaceAllString(name, ""), "-")
 }
 
-type GetCollectorHealthByIdQuery struct {
-	Id     int64
-	OrgId  int64
-	Result []*MonitorCollectorState
-}
-
 type GetCollectorSessionsQuery struct {
 	CollectorId int64
 	Result      []*CollectorSession
