@@ -138,7 +138,7 @@ function () {
     describe("Given variable with selected tags", function() {
       beforeEach(function() {
         ctrl.variable = {
-          current: {text: 'server-1', value: 'server-1', tags: [{text: 'key1'}] },
+          current: {text: 'server-1', value: 'server-1', tags: [{text: 'key1', selected: true}] },
           options: [
             {text: 'server-1', value: 'server-1'},
             {text: 'server-2', value: 'server-2'},
