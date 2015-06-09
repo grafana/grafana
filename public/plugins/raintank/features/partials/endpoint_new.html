@@ -30,8 +30,8 @@
                     <div class="rt-mini-form new-endpoint-domain-form">
                         <div class="rt-mini-form-col">
                             <label class="rt-form-label-medium">Domain Name</label>
-                            <input type="text" class="rt-form-input" ng-model="endpoint.name" required="" ng-hide="discovered" ng-class="{ 'rt-text-box-success' : discovered, 'rt-font-shrinker' : endpoint.name > 10 }">
-                            <div ng-show="discovered" style="width: auto; min-width:228px; height: 34px; line-height: 34px; font-size: 25px; margin-right: 25px;"> {{endpoint.name }}</div>
+                            <input type="text" class="rt-form-input" ng-model="endpoint.name" required="" ng-hide="showConfig" ng-class="{ 'rt-text-box-success' : discovered, 'rt-font-shrinker' : endpoint.name > 10 }">
+                            <div ng-show="showConfig" style="width: auto; min-width:228px; height: 34px; line-height: 34px; font-size: 25px; margin-right: 25px;"> {{endpoint.name }}</div>
                         </div>
                         <div class="rt-mini-form-col" style="margin-top: 15px;">
                         <div ng-hide="showConfig || discoveryInProgress">
@@ -88,7 +88,7 @@
                             </div>
                             <div ng-show="!discovered && showConfig">
                                 <p class="rt-body-copy">
-                                    <b>Discovery Skipped. </b><a class="rt-modal-body-link" ng-click="reset()">Start Over</a>
+                                    <b>Discovery Skipped. </b>You can manually configure your endpoint below or <a class="rt-modal-body-link" ng-click="reset()">start over</a> to enter a new domain. 
                                 </p>
                             </div>
                         </div>
