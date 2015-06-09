@@ -21,6 +21,7 @@ function (angular) {
 
     $scope.init = function() {
       var promises = [];
+      $scope.editor = {index: 0};
       $scope.newEndpointName = "";
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
@@ -43,9 +44,9 @@ function (angular) {
       } else {
         $scope.pageReady = true;
         $scope.reset();
+        $scope.ignoreChanges = true;
 
       }
-      $scope.checks = {};
       promises.push($scope.getCollectors());
       promises.push($scope.getMonitorTypes());
       $q.all(promises).then(function() {
@@ -231,8 +232,10 @@ function (angular) {
 
     $scope.cancel = function() {
       $scope.reset();
+      $scope.ignoreChanges = true;
       window.history.back();
     };
+
     $scope.getEndpoints = function() {
       var promise = backendSrv.get('/api/endpoints')
       promise.then(function(endpoints) {
@@ -240,6 +243,7 @@ function (angular) {
       });
       return promise;
     }
+
     $scope.getEndpoint = function(id) {
       _.forEach($scope.endpoints, function(endpoint) {
         if (endpoint.id == id) {
@@ -309,11 +313,14 @@ function (angular) {
       _.forEach($scope.monitors, function(monitor) {
         monitor.endpoint_id = $scope.endpoint.id;
         if (monitor.id) {
-          promises.push(backendSrv.post('/api/monitors', monitor));
+          if (!angular.equals(monitor, monitorLastState[monitor.id])) {
+            promises.push($scope.updateMonitor(monitor));
+          }
         } else if (monitor.enabled) {
-          promises.push(backendSrv.put('/api/monitors', monitor));
+          promises.push($scope.addMonitor(monitor));
         }
       });
+
       promises.push(backendSrv.post('/api/endpoints', $scope.endpoint));
       $q.all(promises).then(function() {
         if (location) {
@@ -326,7 +333,7 @@ function (angular) {
 
     $scope.addMonitor = function(monitor) {
       monitor.endpoint_id = $scope.endpoint.id;
-      backendSrv.put('/api/monitors', monitor, true).then(function(resp) {
+      return backendSrv.put('/api/monitors', monitor, true).then(function(resp) {
         _.defaults(monitor, resp);
         monitorLastState[monitor.id] = _.cloneDeep(monitor);
         var action = "disabled";
@@ -343,7 +350,7 @@ function (angular) {
       if (!monitor.id) {
         return $scope.addMonitor(monitor);
       }
-      backendSrv.post('/api/monitors', monitor, true).then(function() {
+      return backendSrv.post('/api/monitors', monitor, true).then(function() {
         var type = $scope.monitor_types[monitor.monitor_type_id];
         if (monitorLastState[monitor.id].enabled != monitor.enabled) {
           var action = "disabled";
@@ -406,6 +413,7 @@ function (angular) {
       });
       backendSrv.put('/api/endpoints', payload).then(function(resp) {
         $scope.endpoint = resp;
+        $scope.ignoreChanges = true;
         alertSrv.set("endpoint added", '', 'success', 3000);
         $location.path("endpoints/summary/"+resp.id);
       });
@@ -414,6 +422,9 @@ function (angular) {
     $scope.changesPending = function() {
       var changes = false;
       _.forEach($scope.monitors, function(monitor) {
+        if (monitor.id === null) {
+          return;
+        }
         if (!angular.equals(monitor, monitorLastState[monitor.id])) {
           changes = true;
         }
