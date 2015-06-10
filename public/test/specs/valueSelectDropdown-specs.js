@@ -1,5 +1,5 @@
 define([
-  'directives/variableValueSelect',
+  'directives/valueSelectDropdown',
 ],
 function () {
   'use strict';
@@ -15,7 +15,7 @@ function () {
     beforeEach(inject(function($controller, $rootScope, $q) {
       rootScope = $rootScope;
       scope = $rootScope.$new();
-      ctrl = $controller('SelectDropdownCtrl', {$scope: scope});
+      ctrl = $controller('ValueSelectDropdownCtrl', {$scope: scope});
       ctrl.getValuesForTag = function(obj) {
         return $q.when(tagValuesMap[obj.tagKey]);
       };
@@ -134,5 +134,28 @@ function () {
         });
       });
     });
+
+    describe("Given variable with selected tags", function() {
+      beforeEach(function() {
+        ctrl.variable = {
+          current: {text: 'server-1', value: 'server-1', tags: [{text: 'key1', selected: true}] },
+          options: [
+            {text: 'server-1', value: 'server-1'},
+            {text: 'server-2', value: 'server-2'},
+            {text: 'server-3', value: 'server-3'},
+          ],
+          tags: ["key1", "key2", "key3"],
+          multi: true
+        };
+        ctrl.init();
+        ctrl.show();
+      });
+
+      it("should set tag as selected", function() {
+        expect(ctrl.tags[0].selected).to.be(true);
+      });
+
+    });
+
   });
 });
