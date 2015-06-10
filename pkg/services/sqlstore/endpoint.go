@@ -2,11 +2,12 @@ package sqlstore
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -15,6 +16,7 @@ func init() {
 	bus.AddHandler("sql", AddEndpoint)
 	bus.AddHandler("sql", UpdateEndpoint)
 	bus.AddHandler("sql", DeleteEndpoint)
+	bus.AddHandler("sql", GetAllEndpointTags)
 }
 
 type EndpointWithTag struct {
@@ -305,4 +307,22 @@ func DeleteEndpoint(cmd *m.DeleteEndpointCommand) error {
 		})
 		return err
 	})
+}
+
+func GetAllEndpointTags(query *m.GetAllEndpointTagsQuery) error {
+	rawSql := `SELECT tag FROM endpoint_tag WHERE org_id=? GROUP BY tag`
+
+	sess := x.Sql(rawSql, query.OrgId)
+	tags := make([]tagNameWrapper, 0)
+
+	if err := sess.Find(&tags); err != nil {
+		return err
+	}
+
+	query.Result = make([]string, 0)
+	for _, tag := range tags {
+		query.Result = append(query.Result, tag.Tag)
+	}
+
+	return nil
 }

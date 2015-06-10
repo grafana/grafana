@@ -48,39 +48,62 @@ func GraphiteProxy(c *middleware.Context) {
 func executeRaintankDbQuery(query string, orgId int64) (interface{}, error) {
 	values := []map[string]interface{}{}
 
-	if query == "raintank_db.tags.collectors.*" {
-		// return all tags
-		tagsQuery := m.GetAllCollectorTagsQuery{OrgId: orgId}
-		if err := bus.Dispatch(&tagsQuery); err != nil {
-			return nil, err
-		}
-
-		for _, tag := range tagsQuery.Result {
-			values = append(values, util.DynMap{"text": tag, "expandable": false})
-		}
-
-		return values, nil
-	}
-
-	regex := regexp.MustCompile(`^raintank_db\.tags\.collectors\.(\w+)\.\*`)
+	regex := regexp.MustCompile(`^raintank_db\.tags\.(\w+)\.(\w+|\*)`)
 	matches := regex.FindAllStringSubmatch(query, -1)
-	key := ""
 
 	if len(matches) == 0 {
 		return values, nil
 	}
 
-	key = matches[0][1]
+	tagType := matches[0][1]
+	tagValue := matches[0][2]
 
-	if key != "" {
-		// return tag values for key
-		collectorsQuery := m.GetCollectorsQuery{OrgId: orgId, Tag: []string{key}}
-		if err := bus.Dispatch(&collectorsQuery); err != nil {
-			return nil, err
+	if tagType == "collectors" {
+		if tagValue == "*" {
+			// return all tags
+			tagsQuery := m.GetAllCollectorTagsQuery{OrgId: orgId}
+			if err := bus.Dispatch(&tagsQuery); err != nil {
+				return nil, err
+			}
+
+			for _, tag := range tagsQuery.Result {
+				values = append(values, util.DynMap{"text": tag, "expandable": false})
+			}
+			return values, nil
+		} else if tagValue != "" {
+			// return tag values for key
+			collectorsQuery := m.GetCollectorsQuery{OrgId: orgId, Tag: []string{tagValue}}
+			if err := bus.Dispatch(&collectorsQuery); err != nil {
+				return nil, err
+			}
+
+			for _, collector := range collectorsQuery.Result {
+				values = append(values, util.DynMap{"text": collector.Slug, "expandable": false})
+			}
 		}
+	} else if tagType == "endpoints" {
+		if tagValue == "*" {
+			// return all tags
+			tagsQuery := m.GetAllEndpointTagsQuery{OrgId: orgId}
+			if err := bus.Dispatch(&tagsQuery); err != nil {
+				return nil, err
+			}
 
-		for _, collector := range collectorsQuery.Result {
-			values = append(values, util.DynMap{"text": collector.Slug, "expandable": false})
+			for _, tag := range tagsQuery.Result {
+				values = append(values, util.DynMap{"text": tag, "expandable": false})
+			}
+			return values, nil
+		} else if tagValue != "" {
+			// return tag values for key
+			endpointsQuery := m.GetEndpointsQuery{OrgId: orgId, Tag: []string{tagValue}}
+			if err := bus.Dispatch(&endpointsQuery); err != nil {
+				return nil, err
+			}
+
+			for _, endpoint := range endpointsQuery.Result {
+				values = append(values, util.DynMap{"text": endpoint.Slug, "expandable": false})
+			}
+
 		}
 	}
 

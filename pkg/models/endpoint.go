@@ -87,6 +87,11 @@ type GetEndpointByIdQuery struct {
 	Result *EndpointDTO
 }
 
+type GetAllEndpointTagsQuery struct {
+	OrgId  int64
+	Result []string
+}
+
 func (endpoint *Endpoint) UpdateEndpointSlug() {
 	name := strings.ToLower(endpoint.Name)
 	re := regexp.MustCompile("[^\\w ]+")
