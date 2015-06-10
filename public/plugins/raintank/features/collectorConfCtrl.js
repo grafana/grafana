@@ -44,7 +44,7 @@ function (angular, _) {
 
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
-        if (collector.id === id) {
+        if (collector.id === parseInt(id)) {
           if (collector.org_id !== contextSrv.user.orgId) {
             $location.path('/collectors');
           } else {
