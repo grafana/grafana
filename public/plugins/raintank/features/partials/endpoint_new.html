@@ -19,7 +19,7 @@
     </ul> -->
 </topnav>
 
-<div ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
+<div>
     <div class="rt-page">
         <div class="rt-page-header">
             <i ng-class="icon" class="icon-rt-endpoint" style="font-size:24px;"></i> <h1 class="rt-h1">Add a new endpoint</h1>
@@ -36,10 +36,10 @@
                         <div class="rt-mini-form-col" style="margin-top: 15px;">
                         <div ng-hide="showConfig || discoveryInProgress">
                                 <button type="submit" class="secondaryCTA ButtonTall" ng-click="endpointForm.$valid && discover(endpoint)">Auto Discover</button>
-                            </div>                                                          
+                            </div>
                             <div ng-show="discoveryInProgress">
                                 <svg width="25" height="25" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" stroke="#13B3D4" class="puff">
-                                    <g fill="none" fill-rule="evenodd" stroke-width="3"> 
+                                    <g fill="none" fill-rule="evenodd" stroke-width="3">
                                         <circle cx="22" cy="22" r="1">
                                             <animate attributeName="r"
                                                 begin="0s" dur="3s"
