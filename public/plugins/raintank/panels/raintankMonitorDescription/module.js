@@ -49,7 +49,7 @@ function (angular, app, _, kbn, PanelMeta) {
               if (found) {
                 return;
               }
-              if (type.id == monitor.monitor_type_id) {
+              if (type.id === monitor.monitor_type_id) {
                 $scope.monitor_type = type;
               }
             });

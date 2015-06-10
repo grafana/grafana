@@ -365,15 +365,15 @@ function (angular, _) {
 
       return backendSrv.post('/api/monitors', monitor, true).then(function() {
         var type = $scope.monitor_types[monitor.monitor_type_id];
+        var message = type.name.toLowerCase() + " updated";
         if (monitorLastState[monitor.id].enabled !== monitor.enabled) {
           var action = "disabled";
           if (monitor.enabled) {
             action = "enabled";
           }
           message = type.name.toLowerCase() + " " + action + " successfully";
-        } else {
-          message = type.name.toLowerCase() + " updated";
         }
+
         monitorLastState[monitor.id] = _.cloneDeep(monitor);
         alertSrv.set(message, '', 'success', 3000);
       });
