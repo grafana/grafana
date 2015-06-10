@@ -379,7 +379,7 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 		// create list of tags to add.
 		tagsToAdd := make([]string, len(tagsToAddMap))
 		i := 0
-		for t, _ := range tagsToAddMap {
+		for t := range tagsToAddMap {
 			tagsToAdd[i] = t
 			i += 1
 		}

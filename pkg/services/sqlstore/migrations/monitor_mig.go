@@ -12,22 +12,22 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorV3 = Table{
 		Name: "monitor",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
-			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
-			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "state_change", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "namespace", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+			{Name: "offset", Type: DB_BigInt, Nullable: false},
+			{Name: "frequency", Type: DB_BigInt, Nullable: false},
+			{Name: "enabled", Type: DB_Bool, Nullable: false},
+			{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
+			{Name: "state", Type: DB_BigInt, Nullable: false},
+			{Name: "state_change", Type: DB_DateTime, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		}, Indices: []*Index{
-			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"org_id", "namespace", "monitor_type_id"}, Type: UniqueIndex},
+			{Cols: []string{"monitor_type_id"}},
+			{Cols: []string{"org_id", "namespace", "monitor_type_id"}, Type: UniqueIndex},
 		},
 	}
 
@@ -45,21 +45,21 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorV4 = Table{
 		Name: "monitor",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "offset", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "frequency", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "enabled", Type: DB_Bool, Nullable: false},
-			&Column{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
-			&Column{Name: "state", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "state_change", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "endpoint_id", Type: DB_BigInt, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+			{Name: "offset", Type: DB_BigInt, Nullable: false},
+			{Name: "frequency", Type: DB_BigInt, Nullable: false},
+			{Name: "enabled", Type: DB_Bool, Nullable: false},
+			{Name: "settings", Type: DB_NVarchar, Length: 2048, Nullable: false},
+			{Name: "state", Type: DB_BigInt, Nullable: false},
+			{Name: "state_change", Type: DB_DateTime, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		}, Indices: []*Index{
-			&Index{Cols: []string{"monitor_type_id"}},
-			&Index{Cols: []string{"org_id", "endpoint_id", "monitor_type_id"}, Type: UniqueIndex},
+			{Cols: []string{"monitor_type_id"}},
+			{Cols: []string{"org_id", "endpoint_id", "monitor_type_id"}, Type: UniqueIndex},
 		},
 	}
 
@@ -88,10 +88,10 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorTypeV1 = Table{
 		Name: "monitor_type",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 	}
 	mg.AddMigration("create monitor_type table", NewAddTableMigration(monitorTypeV1))
@@ -112,19 +112,19 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorTypeSettingV1 = Table{
 		Name: "monitor_type_setting",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "variable", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "data_type", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "conditions", Type: DB_NVarchar, Length: 1024, Nullable: false},
-			&Column{Name: "default_value", Type: DB_NVarchar, Length: 255, Nullable: false},
-			&Column{Name: "required", Type: DB_Bool, Nullable: false},
-			&Column{Name: "created", Type: DB_DateTime, Nullable: false},
-			&Column{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "monitor_type_id", Type: DB_BigInt, Nullable: false},
+			{Name: "variable", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "data_type", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "conditions", Type: DB_NVarchar, Length: 1024, Nullable: false},
+			{Name: "default_value", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "required", Type: DB_Bool, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"monitor_type_id"}},
+			{Cols: []string{"monitor_type_id"}},
 		},
 	}
 	mg.AddMigration("create monitor_type_setting table", NewAddTableMigration(monitorTypeSettingV1))
@@ -198,12 +198,12 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorCollectorV1 = Table{
 		Name: "monitor_collector",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "collector_id", Type: DB_BigInt, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			{Name: "collector_id", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"monitor_id", "collector_id"}},
+			{Cols: []string{"monitor_id", "collector_id"}},
 		},
 	}
 	mg.AddMigration("create monitor_collector table", NewAddTableMigration(monitorCollectorV1))
@@ -215,13 +215,13 @@ func addMonitorMigration(mg *Migrator) {
 	var monitorCollectorTagV1 = Table{
 		Name: "monitor_collector_tag",
 		Columns: []*Column{
-			&Column{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			&Column{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
-			&Column{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "monitor_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag", Type: DB_NVarchar, Length: 255, Nullable: false},
 		},
 		Indices: []*Index{
-			&Index{Cols: []string{"monitor_id"}},
-			&Index{Cols: []string{"monitor_id", "tag"}, Type: UniqueIndex},
+			{Cols: []string{"monitor_id"}},
+			{Cols: []string{"monitor_id", "tag"}, Type: UniqueIndex},
 		},
 	}
 	mg.AddMigration("create monitor_collector_tag table v1", NewAddTableMigration(monitorCollectorTagV1))
