@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func init() {
@@ -150,16 +150,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		params = append(params, "%"+query.Title+"%")
 	}
 
-	if len(query.Tag) > 0 {
-		sql.WriteString(" AND dashboard_tag.term=?")
-		params = append(params, query.Tag)
-	}
-
-	if query.Limit == 0 || query.Limit > 10000 {
-		query.Limit = 300
-	}
-
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT %d", query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
 	err := x.Sql(sql.String(), params...).Find(&res)

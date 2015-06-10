@@ -69,7 +69,6 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Id                int64                  `json:"id" binding:"Required"`
 	Name              string                 `json:"name" binding:"Required"`
 	Type              string                 `json:"type" binding:"Required"`
 	Access            DsAccess               `json:"access" binding:"Required"`
@@ -84,6 +83,7 @@ type UpdateDataSourceCommand struct {
 	JsonData          map[string]interface{} `json:"jsonData"`
 
 	OrgId int64 `json:"-"`
+	Id    int64 `json:"-"`
 }
 
 type DeleteDataSourceCommand struct {

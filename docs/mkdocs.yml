@@ -61,7 +61,7 @@ pages:
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 
-- ['project/building_from_source.md', 'Project', 'Building from souce']
+- ['project/building_from_source.md', 'Project', 'Building from source']
 - ['project/cla.md', 'Project', 'Contributor License Agreement']
 
 - ['jsearch.md', '**HIDDEN**']

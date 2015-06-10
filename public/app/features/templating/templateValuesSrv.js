@@ -78,7 +78,7 @@ function (angular, _, kbn) {
     };
 
     this.setVariableValue = function(variable, option) {
-      variable.current = option;
+      variable.current = angular.copy(option);
       templateSrv.updateTemplateData();
       return this.updateOptionsInChildVariables(variable);
     };
@@ -120,7 +120,7 @@ function (angular, _, kbn) {
       }
 
       return datasourceSrv.get(variable.datasource).then(function(datasource) {
-        return datasource.metricFindQuery(variable.query).then(function (results) {
+        var queryPromise = datasource.metricFindQuery(variable.query).then(function (results) {
           variable.options = self.metricNamesToVariableValues(variable, results);
 
           if (variable.includeAll) {
@@ -130,6 +130,10 @@ function (angular, _, kbn) {
           // if parameter has current value
           // if it exists in options array keep value
           if (variable.current) {
+            // if current value is an array do not do anything
+            if (_.isArray(variable.current.value)) {
+              return $q.when([]);
+            }
             var currentOption = _.findWhere(variable.options, { text: variable.current.text });
             if (currentOption) {
               return self.setVariableValue(variable, currentOption);
@@ -137,6 +141,31 @@ function (angular, _, kbn) {
           }
 
           return self.setVariableValue(variable, variable.options[0]);
+        });
+
+        if (variable.useTags) {
+          return queryPromise.then(function() {
+            datasource.metricFindQuery(variable.tagsQuery).then(function (results) {
+              variable.tags = [];
+              for (var i = 0; i < results.length; i++) {
+                variable.tags.push(results[i].text);
+              }
+            });
+          });
+        } else {
+          delete variable.tags;
+          return queryPromise;
+        }
+      });
+    };
+
+    this.getValuesForTag = function(variable, tagKey) {
+      return datasourceSrv.get(variable.datasource).then(function(datasource) {
+        var query = variable.tagValuesQuery.replace('$tag', tagKey);
+        return datasource.metricFindQuery(query).then(function (results) {
+          return _.map(results, function(value) {
+            return value.text;
+          });
         });
       });
     };

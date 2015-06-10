@@ -40,7 +40,14 @@ func Register(r *macaron.Macaron) {
 	r.Get("/endpoints", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
+
+	// reset password
+	r.Get("/user/password/send-reset-email", Index)
+	r.Get("/user/password/reset", Index)
+
+	r.Post("/api/user/password/send-reset-email", bind(dtos.SendResetPasswordEmailForm{}), wrap(SendResetPasswordEmail))
+	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), wrap(ResetPassword))
 
 	// dashboard snapshots
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
@@ -108,10 +115,9 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Combo("/").
-				Get(GetDataSources).
-				Put(bind(m.AddDataSourceCommand{}), AddDataSource).
-				Post(bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
+			r.Get("/", GetDataSources)
+			r.Post("/", bind(m.AddDataSourceCommand{}), AddDataSource)
+			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)

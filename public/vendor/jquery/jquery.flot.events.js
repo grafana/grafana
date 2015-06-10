@@ -191,14 +191,12 @@
             console.log(tooltip);
             */
 
-            // @rashidkpc - hack to work with our normal tooltip placer
-            var $tooltip = $('<div id="tooltip">');
+          // grafana addition
+            var $tooltip = $('<div id="tooltip" annotation-tooltip>');
             if (event) {
                 $tooltip
                     .html(event.description)
-                    .place_tt(x, y, {
-                        offset: 10
-                    });
+                    .place_tt(x, y, {offset: 10, compile: true, scopeData: {event: event}});
             } else {
                 $tooltip.remove();
             }

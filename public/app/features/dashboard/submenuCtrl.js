@@ -17,13 +17,17 @@ function (angular, _) {
     $scope.init = function() {
       $scope.panel = $scope.pulldown;
       $scope.row = $scope.pulldown;
-      $scope.variables = $scope.dashboard.templating.list;
       $scope.annotations = $scope.dashboard.templating.list;
+      $scope.variables = $scope.dashboard.templating.list;
     };
 
     $scope.disableAnnotation = function (annotation) {
       annotation.enable = !annotation.enable;
       $rootScope.$broadcast('refresh');
+    };
+
+    $scope.getValuesForTag = function(variable, tagKey) {
+      return templateValuesSrv.getValuesForTag(variable, tagKey);
     };
 
     $scope.variableUpdated = function(variable) {
