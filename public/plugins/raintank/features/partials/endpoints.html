@@ -6,10 +6,12 @@
 		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
 	</div>
 
-	<div ng-if="!pageReady" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
-		<div style="text-align: center; padding-top: 90px; min-height: 150px; min-width: 400px;  margin: 0 auto;">
-			<img src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
-			<p class="freqMsg nodata">To infinity...and beyond.</p>
+	<div ng-if="!pageReady" class="rt-loading-message-container">
+		<div class="rt-loading-message-inside">
+			<img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
+			<p class="freqMsg nodata rt-loading-msg-1">To infinity...and beyond.</p>
+			<p class="freqMsg nodata rt-loading-msg-2">This is taking longer than expected.</p>
+			<p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>
 		</div>
 	</div>
 

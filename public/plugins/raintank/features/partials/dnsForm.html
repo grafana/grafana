@@ -126,13 +126,15 @@
             </div>
           </div>
 -->
-          <div class="rt-box-footer-config" ng-show="showDNS">
-              <div class="rt-box-interior-content rt-interior-update">
-                <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" ng-show="endpoint.id" class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
-                <!-- Im sure this can be refactored to be handled more cleanly. MST. -->
-              </div>
+          <div ng-show="endpoint.id">
+            <div class="rt-box-footer-config" ng-show="showDNS">
+                <div class="rt-box-interior-content rt-interior-update">
+                  <div class="editor-row">
+                  <button type="submit" ng-show="endpoint.id" class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>
+                  <!-- Im sure this can be refactored to be handled more cleanly. MST. -->
+                </div>
+              </div>  
             </div>  
-          </div>           
+          </div>         
         </div>
         <!-- End DNS Tab -->

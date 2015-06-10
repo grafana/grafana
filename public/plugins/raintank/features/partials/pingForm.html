@@ -98,13 +98,15 @@
             </div>
           </div>
 -->
-          <div class="rt-box-footer-config" ng-show="showPing">
-              <div class="rt-box-interior-content rt-interior-update">
-                <div class="editor-row" ng-show="endpoint.id">
-                <button type="submit" ng-show="endpoint.id"  class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
-                <!-- Im sure this can be refactored to be handled more cleanly -->
+          <div ng-show="endpoint.id">
+            <div class="rt-box-footer-config" ng-show="showPing">
+                <div class="rt-box-interior-content rt-interior-update">
+                  <div class="editor-row">
+                  <button type="submit" ng-show="endpoint.id"  class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>
+                  <!-- Im sure this can be refactored to be handled more cleanly -->
+                  </div>
                 </div>
-              </div>
+            </div>
           </div>
         </div>
         <!-- End Ping Section -->

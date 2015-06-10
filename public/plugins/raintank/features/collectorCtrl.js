@@ -8,6 +8,7 @@ function (angular, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('CollectorCtrl', function($scope, $http, $location, backendSrv) {
+    $scope.pageReady = false;
     $scope.statuses = [
       {label: "Up", value: "up"},
       {label: "Down", value: "down"},
@@ -53,6 +54,7 @@ function (angular, _) {
 
     $scope.getCollectors = function() {
       backendSrv.get('/api/collectors').then(function(collectors) {
+        $scope.pageReady = true;
         $scope.collectors = collectors;
       });
     };
