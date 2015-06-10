@@ -17,7 +17,7 @@ func GetEventsQuery(query *m.GetEventsQuery) error {
 			"filtered": map[string]interface{}{
 				"filter": map[string]interface{}{
 					"and": []map[string]interface{}{
-						map[string]interface{}{
+						{
 							"range": map[string]interface{}{
 								"timestamp": map[string]interface{}{
 									"gte": query.Start,
@@ -25,7 +25,7 @@ func GetEventsQuery(query *m.GetEventsQuery) error {
 								},
 							},
 						},
-						map[string]interface{}{
+						{
 							"term": map[string]int64{
 								"org_id": query.OrgId,
 							},

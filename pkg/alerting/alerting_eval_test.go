@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"bosun.org/graphite"
+	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -30,10 +31,11 @@ func NewFakeGraphite(values [][]int, initialTs int64, step int) *fakeGraphite {
 			Target: fmt.Sprintf("test.serie.%d", serieNum),
 		}
 		for i, point := range pointSlice {
-			serie.Datapoints = append(serie.Datapoints, graphite.DataPoint{
-				json.Number(fmt.Sprintf("%d", point)),
-				json.Number(fmt.Sprintf("%d", int(initialTs)+i*step)),
-			})
+			v := json.Number(fmt.Sprintf("%d", point))
+			ts := json.Number(fmt.Sprintf("%d", int(initialTs)+i*step))
+			pt := graphite.DataPoint{}
+			pt = append(pt, v, ts)
+			serie.Datapoints = append(serie.Datapoints, pt)
 		}
 		series = append(series, serie)
 	}
@@ -42,7 +44,7 @@ func NewFakeGraphite(values [][]int, initialTs int64, step int) *fakeGraphite {
 	return fg
 }
 
-func check(expr string, warn, crit int, values [][]int, expectErr error, expectRes CheckEvalResult) {
+func check(expr string, warn, crit int, values [][]int, expectErr error, expectRes m.CheckEvalResult) {
 	checkDef := CheckDef{}
 	if warn != -1 {
 		checkDef.WarnExpr = fmt.Sprintf(expr, `graphite("test", "2m", "", "")`, warn)
@@ -72,36 +74,36 @@ func check(expr string, warn, crit int, values [][]int, expectErr error, expectR
 func TestAlertingMinimal(t *testing.T) {
 
 	Convey("check result on 1 series with 1 point should match expected outcome", t, func() {
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{150}}, nil, EvalResultCrit)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{100}}, nil, EvalResultOK)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{70}}, nil, EvalResultOK)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{70}}, nil, EvalResultCrit)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{100}}, nil, EvalResultWarn)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{150}}, nil, EvalResultOK)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{200}}, nil, EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{150}}, nil, m.EvalResultCrit)
+		check(`median(%s) > %d`, -1, 100, [][]int{{100}}, nil, m.EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{70}}, nil, m.EvalResultOK)
+		check(`median(%s) < %d`, 150, 100, [][]int{{70}}, nil, m.EvalResultCrit)
+		check(`median(%s) < %d`, 150, 100, [][]int{{100}}, nil, m.EvalResultWarn)
+		check(`median(%s) < %d`, 150, 100, [][]int{{150}}, nil, m.EvalResultOK)
+		check(`median(%s) < %d`, 150, 100, [][]int{{200}}, nil, m.EvalResultOK)
 	})
 
 	Convey("check result on 1 series with 3 points should match expected outcome", t, func() {
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{50, 150, 200}}, nil, EvalResultCrit)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{50, 100, 150}}, nil, EvalResultOK)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{20, 70, 120}}, nil, EvalResultOK)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{20, 70, 120}}, nil, EvalResultCrit)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{50, 100, 150}}, nil, EvalResultWarn)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{100, 150, 200}}, nil, EvalResultOK)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{150, 200, 250}}, nil, EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{50, 150, 200}}, nil, m.EvalResultCrit)
+		check(`median(%s) > %d`, -1, 100, [][]int{{50, 100, 150}}, nil, m.EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{20, 70, 120}}, nil, m.EvalResultOK)
+		check(`median(%s) < %d`, 150, 100, [][]int{{20, 70, 120}}, nil, m.EvalResultCrit)
+		check(`median(%s) < %d`, 150, 100, [][]int{{50, 100, 150}}, nil, m.EvalResultWarn)
+		check(`median(%s) < %d`, 150, 100, [][]int{{100, 150, 200}}, nil, m.EvalResultOK)
+		check(`median(%s) < %d`, 150, 100, [][]int{{150, 200, 250}}, nil, m.EvalResultOK)
 	})
 
 	Convey("check result on 3 series with 1 point each should match the worst series", t, func() {
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{50}, []int{150}, []int{200}}, nil, EvalResultCrit)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{50}, []int{100}, []int{150}}, nil, EvalResultCrit)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{20}, []int{70}, []int{120}}, nil, EvalResultCrit)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{10}, []int{50}, []int{100}}, nil, EvalResultOK)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{10}, []int{10}, []int{80}}, nil, EvalResultOK)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{10}, []int{10}, []int{60}}, nil, EvalResultOK)
-		check(`median(%s) > %d`, -1, 100, [][]int{[]int{10}, []int{101}, []int{50}}, nil, EvalResultCrit)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{20}, []int{70}, []int{120}}, nil, EvalResultCrit)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{50}, []int{100}, []int{150}}, nil, EvalResultCrit)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{100}, []int{150}, []int{200}}, nil, EvalResultWarn)
-		check(`median(%s) < %d`, 150, 100, [][]int{[]int{150}, []int{200}, []int{250}}, nil, EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{50}, {150}, {200}}, nil, m.EvalResultCrit)
+		check(`median(%s) > %d`, -1, 100, [][]int{{50}, {100}, {150}}, nil, m.EvalResultCrit)
+		check(`median(%s) > %d`, -1, 100, [][]int{{20}, {70}, {120}}, nil, m.EvalResultCrit)
+		check(`median(%s) > %d`, -1, 100, [][]int{{10}, {50}, {100}}, nil, m.EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{10}, {10}, {80}}, nil, m.EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{10}, {10}, {60}}, nil, m.EvalResultOK)
+		check(`median(%s) > %d`, -1, 100, [][]int{{10}, {101}, {50}}, nil, m.EvalResultCrit)
+		check(`median(%s) < %d`, 150, 100, [][]int{{20}, {70}, {120}}, nil, m.EvalResultCrit)
+		check(`median(%s) < %d`, 150, 100, [][]int{{50}, {100}, {150}}, nil, m.EvalResultCrit)
+		check(`median(%s) < %d`, 150, 100, [][]int{{100}, {150}, {200}}, nil, m.EvalResultWarn)
+		check(`median(%s) < %d`, 150, 100, [][]int{{150}, {200}, {250}}, nil, m.EvalResultOK)
 	})
 }

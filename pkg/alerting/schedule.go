@@ -28,6 +28,7 @@ type Job struct {
 	Definition      CheckDef
 	generatedAt     time.Time
 	lastPointTs     time.Time
+	StoreMetricFunc func(m *m.MetricDefinition)
 }
 
 func (job Job) String() string {
@@ -35,6 +36,9 @@ func (job Job) String() string {
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
+	if job.StoreMetricFunc == nil {
+		return
+	}
 	metrics := make([]*m.MetricDefinition, 3)
 	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
 	for pos, state := range metricNames {
@@ -57,7 +61,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 		metrics[int(res)].Value = 1.0
 	}
 	for _, m := range metrics {
-		api.StoreMetric(m)
+		job.StoreMetricFunc(m)
 	}
 }
 
@@ -148,6 +152,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
+		StoreMetricFunc: api.StoreMetric,
 	}
 	return j
 }
