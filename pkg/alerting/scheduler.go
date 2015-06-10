@@ -79,8 +79,8 @@ func dispatchJobs(jobQueue chan<- Job) {
 				t,
 				time.Unix(lastPointAt, 0),
 			}*/
-			job.generatedAt = t
-			job.lastPointTs = time.Unix(lastPointAt, 0)
+			job.GeneratedAt = t
+			job.LastPointTs = time.Unix(lastPointAt, 0)
 
 			Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 			Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
