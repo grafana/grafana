@@ -40,6 +40,10 @@ func Init() {
 	}
 }
 
+func setStatsdClient(s *statsd.Client) {
+	Stat = s
+}
+
 func standalone() {
 	jobQueue := make(chan Job, jobQueueSize)
 

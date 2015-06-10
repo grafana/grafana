@@ -10,17 +10,17 @@ import (
 func TestScheduleBuilding(t *testing.T) {
 
 	Convey("Can build schedules from monitor configs", t, func() {
-		m := &m.MonitorDTO{
+		m := &m.MonitorForAlertDTO{
 			EndpointSlug:    "test_endpoint_be",
 			MonitorTypeName: "smtp",
 			Frequency:       60,
 			Offset:          37,
-			HealthSettings: m.MonitorHealthSettingDTO{
+			HealthSettings: &m.MonitorHealthSettingDTO{
 				NumCollectors: 16,
 				Steps:         5,
 			},
 		}
-		sched := buildScheduleForMonitor(m)
+		sched := buildJobForMonitor(m)
 
 		if sched.Freq != 60 {
 			t.Errorf("sched.Freq should be 60, not %d", sched.Freq)
