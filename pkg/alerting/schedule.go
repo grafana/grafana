@@ -28,7 +28,7 @@ type Job struct {
 	Definition      CheckDef
 	generatedAt     time.Time
 	lastPointTs     time.Time
-	StoreMetricFunc func(m *m.MetricDefinition)
+	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
 }
 
 func (job Job) String() string {
