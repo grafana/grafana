@@ -25,7 +25,7 @@ import (
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
-var localSockets LocalSockets
+var localSockets *LocalSockets
 
 func StoreMetric(m *m.MetricDefinition) {
 	bufCh <- *m
@@ -59,8 +59,8 @@ func (s *LocalSockets) Emit(id string, event string, payload interface{}) {
 	socket.Emit(event, payload)
 }
 
-func NewLocalSockets() LocalSockets {
-	return LocalSockets{
+func NewLocalSockets() *LocalSockets {
+	return &LocalSockets{
 		Sockets: make(map[string]socketio.Socket),
 	}
 }

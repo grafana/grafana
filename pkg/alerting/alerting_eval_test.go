@@ -31,10 +31,11 @@ func NewFakeGraphite(values [][]int, initialTs int64, step int) *fakeGraphite {
 			Target: fmt.Sprintf("test.serie.%d", serieNum),
 		}
 		for i, point := range pointSlice {
-			serie.Datapoints = append(serie.Datapoints, graphite.DataPoint{
-				json.Number(fmt.Sprintf("%d", point)),
-				json.Number(fmt.Sprintf("%d", int(initialTs)+i*step)),
-			})
+			v := json.Number(fmt.Sprintf("%d", point))
+			ts :=  json.Number(fmt.Sprintf("%d", int(initialTs)+i*step))
+			pt := graphite.DataPoint{}
+			pt = append(pt, v, ts)
+			serie.Datapoints = append(serie.Datapoints, pt)
 		}
 		series = append(series, serie)
 	}

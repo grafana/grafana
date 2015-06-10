@@ -245,7 +245,7 @@ func addMonitorMigration(mg *Migrator) {
 				continue
 			}
 			if mon.HealthSettings == nil {
-				mon.HealthSettings = &m.MonitorHealthSettingDTO{1, 2}
+				mon.HealthSettings = &m.MonitorHealthSettingDTO{NumCollectors: 1, Steps: 2}
 			} else {
 				mon.HealthSettings.NumCollectors = 1
 				mon.HealthSettings.Steps = 2
