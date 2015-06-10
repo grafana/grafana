@@ -74,4 +74,4 @@ You only need to add the options you want to override. Config files are applied 
 
 ## Create a pull requests
 
-Before or after your create a pull requests, sign the [contributor license aggrement](/docs/contributing/cla.html).
+Before or after your create a pull requests, sign the [contributor license agreement](/docs/contributing/cla.html).

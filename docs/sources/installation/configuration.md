@@ -296,12 +296,12 @@ Secret. Specify these in the Grafana configuration file. For example:
     scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
-    allowed_domains = mycompany.com
+    allowed_domains = mycompany.com mycompany.org
     allow_sign_up = false
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
-accounts. The `allowed_domains` option is optional.
+accounts. The `allowed_domains` option is optional, and domains were separated by space.
 
 You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
@@ -323,6 +323,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.

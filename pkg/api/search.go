@@ -3,22 +3,22 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func Search(c *middleware.Context) {
 	query := c.Query("query")
-	tag := c.Query("tag")
+	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
 
 	if limit == 0 {
-		limit = 200
+		limit = 1000
 	}
 
 	searchQuery := search.Query{
 		Title:     query,
-		Tag:       tag,
+		Tags:      tags,
 		UserId:    c.UserId,
 		Limit:     limit,
 		IsStarred: starred == "true",

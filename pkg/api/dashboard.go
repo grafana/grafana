@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -55,6 +55,7 @@ func GetDashboard(c *middleware.Context) {
 			Type:      m.DashTypeDB,
 			CanStar:   c.IsSignedIn,
 			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_READ_ONLY_EDITOR,
 		},
 	}
 

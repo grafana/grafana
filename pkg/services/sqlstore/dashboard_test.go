@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
@@ -97,18 +97,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 				hit := query.Result[0]
 				So(len(hit.Tags), ShouldEqual, 2)
-			})
-
-			Convey("Should be able to search for dashboards using tags", func() {
-				query1 := search.FindPersistedDashboardsQuery{Tag: "webapp", OrgId: 1}
-				query2 := search.FindPersistedDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
-
-				err := SearchDashboards(&query1)
-				err = SearchDashboards(&query2)
-				So(err, ShouldBeNil)
-
-				So(len(query1.Result), ShouldEqual, 1)
-				So(len(query2.Result), ShouldEqual, 0)
 			})
 
 			Convey("Should not be able to save dashboard with same name", func() {

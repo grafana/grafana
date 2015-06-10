@@ -15,11 +15,14 @@
 				<i class="fa fa-remove" ng-show="tagsMode"></i>
 				tags
 			</a>
-			<span ng-show="query.tag">
-				| <a ng-click="filterByTag('')" tag-color-from-name tag="query.tag"  class="label label-tag" ng-if="query.tag">
-					<i class="fa fa-remove"></i>
-					{{query.tag}}
-				</a>
+			<span ng-if="query.tag.length">
+				|
+				<span ng-repeat="tagName in query.tag">
+					<a ng-click="removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+						<i class="fa fa-remove"></i>
+						{{tagName}}
+					</a>
+				</span>
 			</span>
 		</div>
 	</div>
@@ -30,7 +33,7 @@
 				<div ng-repeat="tag in results" class="pointer" style="width: 180px; float: left;"
 					ng-class="{'selected': $index === selectedIndex }"
 					ng-click="filterByTag(tag.term, $event)">
-					<a class="search-result-tag label label-tag" tag-color-from-name tag="tag.term">
+					<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
 						<i class="fa fa-tag"></i>
 						<span>{{tag.term}} &nbsp;({{tag.count}})</span>
 					</a>
@@ -46,7 +49,7 @@
 			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
 
 			<span class="search-result-tags">
-				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
+				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
 					{{tag}}
 				</span>
 				<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>

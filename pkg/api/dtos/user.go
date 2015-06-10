@@ -27,3 +27,13 @@ type AdminUserListItem struct {
 	Login          string `json:"login"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
+
+type SendResetPasswordEmailForm struct {
+	UserOrEmail string `json:"userOrEmail" binding:"Required"`
+}
+
+type ResetUserPasswordForm struct {
+	Code            string `json:"code"`
+	NewPassword     string `json:"newPassword"`
+	ConfirmPassword string `json:"confirmPassword"`
+}
