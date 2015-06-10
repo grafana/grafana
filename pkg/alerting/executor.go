@@ -137,6 +137,5 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
 
 		cache.Add(key, true)
-
 	}
 }
