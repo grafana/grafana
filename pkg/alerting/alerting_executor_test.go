@@ -54,7 +54,7 @@ func TestExecutor(t *testing.T) {
 					CritExpr: `graphite("foo", "2m", "", "")`,
 					WarnExpr: "0",
 				},
-				lastPointTs: time.Unix(ts, 0),
+				LastPointTs: time.Unix(ts, 0),
 			}
 		}
 		jobQueue := make(chan Job, 10)
