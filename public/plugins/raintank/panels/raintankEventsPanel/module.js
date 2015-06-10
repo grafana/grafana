@@ -20,7 +20,6 @@ function (angular, app, _, kbn, PanelMeta) {
   });
 
   module.controller('raintankEventsPanel', function($scope, panelSrv, timeSrv, backendSrv, templateSrv) {
-    console.log('raintankEventsPanel');
     $scope.panelMeta = new PanelMeta({
       panelName: 'Raintank Events',
       description : "Events",
@@ -55,17 +54,19 @@ function (angular, app, _, kbn, PanelMeta) {
         //filter ends with a colon. elasticsearch will send a 500error for this.
         return;
       }
+
       var params = {
         query: templateSrv.replace($scope.panel.filter, $scope.panel.scopedVars),
         start: $scope.range.from.getTime(),
         end:  $scope.range.to.getTime(),
         size: $scope.panel.size,
-      }
+      };
+
       backendSrv.get('/api/events', params).then(function(events) {
         $scope.events = events;
         $scope.panel.scopedVars['eventCount'] = {selected: true, text: events.length, value: events.length};
       });
-    }
+    };
 
     $scope.init();
   });
