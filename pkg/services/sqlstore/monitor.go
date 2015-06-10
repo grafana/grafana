@@ -2,44 +2,45 @@ package sqlstore
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func init() {
 	bus.AddHandler("sql", GetMonitors)
+	bus.AddHandler("sql", GetMonitorsForAlerts)
 	bus.AddHandler("sql", GetMonitorById)
 	bus.AddHandler("sql", GetMonitorTypes)
 	bus.AddHandler("sql", AddMonitor)
 	bus.AddHandler("sql", UpdateMonitor)
 	bus.AddHandler("sql", DeleteMonitor)
-	bus.AddHandler("sql", UpdateMonitorCollectorState)
-	bus.AddHandler("sql", GetMonitorHealthById)
+	bus.AddHandler("sql", UpdateMonitorState)
 }
 
 type MonitorWithCollectorDTO struct {
-	Id            int64
-	EndpointId    int64
-	OrgId         int64
-	EndpointSlug  string
-	MonitorTypeId int64
-	CollectorIds  string
-	CollectorTags string
-	TagCollectors string
-	State         int64
-	StateChange   time.Time
-	Settings      []*m.MonitorSettingDTO
-	Frequency     int64
-	Enabled       bool
-	Offset        int64
-	Updated       time.Time
-	Created       time.Time
+	Id              int64
+	EndpointId      int64
+	OrgId           int64
+	EndpointSlug    string
+	MonitorTypeId   int64
+	MonitorTypeName string
+	CollectorIds    string
+	CollectorTags   string
+	TagCollectors   string
+	State           m.CheckEvalResult
+	StateChange     time.Time
+	Settings        []*m.MonitorSettingDTO
+	HealthSettings  *m.MonitorHealthSettingDTO //map[string]int //note: wish we could use m.MonitorHealthSettingDTO directly, but xorm doesn't unmarshal to structs?
+	Frequency       int64
+	Enabled         bool
+	Offset          int64
+	Updated         time.Time
+	Created         time.Time
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -51,9 +52,11 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
     monitor.*
 FROM monitor
     INNER JOIN endpoint on monitor.endpoint_id = endpoint.id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN
@@ -118,24 +121,43 @@ WHERE monitor.id=?
 	}
 
 	query.Result = &m.MonitorDTO{
-		Id:            result.Id,
-		EndpointId:    result.EndpointId,
-		OrgId:         result.OrgId,
-		EndpointSlug:  result.EndpointSlug,
-		MonitorTypeId: result.MonitorTypeId,
-		CollectorIds:  monitorCollectorIds,
-		CollectorTags: monitorCollectorTags,
-		Collectors:    mergedCollectors,
-		State:         result.State,
-		StateChange:   result.StateChange,
-		Settings:      result.Settings,
-		Frequency:     result.Frequency,
-		Enabled:       result.Enabled,
-		Offset:        result.Offset,
-		Updated:       result.Updated,
+		Id:              result.Id,
+		EndpointId:      result.EndpointId,
+		OrgId:           result.OrgId,
+		EndpointSlug:    result.EndpointSlug,
+		MonitorTypeId:   result.MonitorTypeId,
+		MonitorTypeName: result.MonitorTypeName,
+		CollectorIds:    monitorCollectorIds,
+		CollectorTags:   monitorCollectorTags,
+		Collectors:      mergedCollectors,
+		State:           result.State,
+		StateChange:     result.StateChange,
+		Settings:        result.Settings,
+		HealthSettings:  result.HealthSettings,
+		Frequency:       result.Frequency,
+		Enabled:         result.Enabled,
+		Offset:          result.Offset,
+		Updated:         result.Updated,
 	}
 
 	return nil
+}
+
+func GetMonitorsForAlerts(query *m.GetMonitorsForAlertsQuery) error {
+	sess := x.Table("monitor")
+	rawParams := make([]interface{}, 0)
+	rawSql := `
+SELECT
+    endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
+    monitor.*
+FROM monitor
+    INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
+WHERE (? % monitor.frequency) = monitor.offset
+`
+	rawParams = append(rawParams, query.Timestamp)
+	return sess.Sql(rawSql, rawParams...).Find(&query.Result)
 }
 
 func GetMonitors(query *m.GetMonitorsQuery) error {
@@ -147,9 +169,11 @@ SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
     GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
     endpoint.slug as endpoint_slug,
+    monitor_type.name as monitor_type_name,
     monitor.*
 FROM monitor
     INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
+    LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
     LEFT JOIN
@@ -255,22 +279,30 @@ FROM monitor
 			count += 1
 		}
 
+		/*
+			h := m.MonitorHealthSettingDTO{}
+			h.NumCollectors = row.HealthSettings["numCollectors"]
+			h.Steps = row.HealthSettings["steps"]
+		*/
+
 		monitors = append(monitors, &m.MonitorDTO{
-			Id:            row.Id,
-			EndpointId:    row.EndpointId,
-			OrgId:         row.OrgId,
-			EndpointSlug:  row.EndpointSlug,
-			MonitorTypeId: row.MonitorTypeId,
-			CollectorIds:  monitorCollectorIds,
-			CollectorTags: monitorCollectorTags,
-			Collectors:    mergedCollectors,
-			State:         row.State,
-			StateChange:   row.StateChange,
-			Settings:      row.Settings,
-			Frequency:     row.Frequency,
-			Enabled:       row.Enabled,
-			Offset:        row.Offset,
-			Updated:       row.Updated,
+			Id:              row.Id,
+			EndpointId:      row.EndpointId,
+			OrgId:           row.OrgId,
+			EndpointSlug:    row.EndpointSlug,
+			MonitorTypeId:   row.MonitorTypeId,
+			MonitorTypeName: row.MonitorTypeName,
+			CollectorIds:    monitorCollectorIds,
+			CollectorTags:   monitorCollectorTags,
+			Collectors:      mergedCollectors,
+			State:           row.State,
+			StateChange:     row.StateChange,
+			Settings:        row.Settings,
+			HealthSettings:  row.HealthSettings,
+			Frequency:       row.Frequency,
+			Enabled:         row.Enabled,
+			Offset:          row.Offset,
+			Updated:         row.Updated,
 		})
 	}
 	query.Result = monitors
@@ -468,19 +500,19 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 	}
 
 	mon := &m.Monitor{
-		EndpointId:    cmd.EndpointId,
-		OrgId:         cmd.OrgId,
-		MonitorTypeId: cmd.MonitorTypeId,
-		Offset:        cmd.EndpointId % cmd.Frequency,
-		Settings:      cmd.Settings,
-		Created:       time.Now(),
-		Updated:       time.Now(),
-		Frequency:     cmd.Frequency,
-		Enabled:       cmd.Enabled,
-		State:         -1,
-		StateChange:   time.Now(),
+		EndpointId:     cmd.EndpointId,
+		OrgId:          cmd.OrgId,
+		MonitorTypeId:  cmd.MonitorTypeId,
+		Offset:         cmd.EndpointId % cmd.Frequency,
+		Settings:       cmd.Settings,
+		HealthSettings: cmd.HealthSettings,
+		Created:        time.Now(),
+		Updated:        time.Now(),
+		Frequency:      cmd.Frequency,
+		Enabled:        cmd.Enabled,
+		State:          -1,
+		StateChange:    time.Now(),
 	}
-
 	if _, err := sess.Insert(mon); err != nil {
 		return err
 	}
@@ -532,40 +564,23 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		}
 	}
 
-	if len(collectorList) > 0 {
-		monitor_collector_states := make([]*m.MonitorCollectorState, len(collectorList))
-		for i, c := range collectorList {
-			monitor_collector_states[i] = &m.MonitorCollectorState{
-				OrgId:       mon.OrgId,
-				EndpointId:  mon.EndpointId,
-				MonitorId:   mon.Id,
-				CollectorId: c,
-				State:       -1,
-				Updated:     time.Now(),
-			}
-		}
-		sess.Table("monitor_collector_state")
-		if _, err := sess.Insert(&monitor_collector_states); err != nil {
-			return err
-		}
-	}
-
 	cmd.Result = &m.MonitorDTO{
-		Id:            mon.Id,
-		EndpointId:    mon.EndpointId,
-		OrgId:         mon.OrgId,
-		EndpointSlug:  endpointQuery.Result.Slug,
-		MonitorTypeId: mon.MonitorTypeId,
-		CollectorIds:  cmd.CollectorIds,
-		CollectorTags: cmd.CollectorTags,
-		Collectors:    collectorList,
-		Settings:      mon.Settings,
-		Frequency:     mon.Frequency,
-		Enabled:       mon.Enabled,
-		State:         mon.State,
-		StateChange:   mon.StateChange,
-		Offset:        mon.Offset,
-		Updated:       mon.Updated,
+		Id:             mon.Id,
+		EndpointId:     mon.EndpointId,
+		OrgId:          mon.OrgId,
+		EndpointSlug:   endpointQuery.Result.Slug,
+		MonitorTypeId:  mon.MonitorTypeId,
+		CollectorIds:   cmd.CollectorIds,
+		CollectorTags:  cmd.CollectorTags,
+		Collectors:     collectorList,
+		Settings:       mon.Settings,
+		HealthSettings: mon.HealthSettings,
+		Frequency:      mon.Frequency,
+		Enabled:        mon.Enabled,
+		State:          mon.State,
+		StateChange:    mon.StateChange,
+		Offset:         mon.Offset,
+		Updated:        mon.Updated,
 	}
 	sess.publishAfterCommit(&events.MonitorCreated{
 		Timestamp: mon.Updated,
@@ -680,17 +695,18 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 		}
 
 		mon := &m.Monitor{
-			Id:            cmd.Id,
-			EndpointId:    cmd.EndpointId,
-			OrgId:         cmd.OrgId,
-			MonitorTypeId: cmd.MonitorTypeId,
-			Offset:        cmd.EndpointId % cmd.Frequency,
-			Settings:      cmd.Settings,
-			Updated:       time.Now(),
-			Enabled:       cmd.Enabled,
-			State:         lastState.State,
-			StateChange:   lastState.StateChange,
-			Frequency:     cmd.Frequency,
+			Id:             cmd.Id,
+			EndpointId:     cmd.EndpointId,
+			OrgId:          cmd.OrgId,
+			MonitorTypeId:  cmd.MonitorTypeId,
+			Offset:         cmd.EndpointId % cmd.Frequency,
+			Settings:       cmd.Settings,
+			HealthSettings: cmd.HealthSettings,
+			Updated:        time.Now(),
+			Enabled:        cmd.Enabled,
+			State:          lastState.State,
+			StateChange:    lastState.StateChange,
+			Frequency:      cmd.Frequency,
 		}
 
 		var rawSql = "DELETE FROM monitor_collector WHERE monitor_id=?"
@@ -752,14 +768,6 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			if _, ok := collectorIdMap[id]; !ok {
 				collectorList = append(collectorList, id)
 			}
-		}
-
-		stateChange, err := updateCollectorState(mon, collectorList, sess)
-		if err != nil {
-			return err
-		}
-		if stateChange {
-			fmt.Println("TODO: propagate stateChange to endpoint.")
 		}
 
 		sess.Table("monitor")
@@ -842,178 +850,23 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 			result = append(result, r.CollectorId)
 		}
 	}
-
 	return result, nil
 }
 
-func updateCollectorState(mon *m.Monitor, collectorList []int64, sess *session) (bool, error) {
-	states := make([]*m.MonitorCollectorState, 0)
-	sess.Table("monitor_collector_state")
-	err := sess.Where("monitor_id=?", mon.Id).Find(&states)
-	if err != nil {
-		return false, err
-	}
-
-	collectorMap := make(map[int64]bool)
-	for _, id := range collectorList {
-		collectorMap[id] = false
-	}
-
-	collectorsToDel := make([]int64, 0)
-
-	state := int64(-1)
-	okCount, unknownCount, warnCount, errorCount := 0, 0, 0, 0
-	totalCount := len(collectorList)
-
-	if len(states) > 0 {
-		for _, row := range states {
-			if _, ok := collectorMap[row.CollectorId]; !ok {
-				collectorsToDel = append(collectorsToDel, row.CollectorId)
-				continue
-			}
-			collectorMap[row.CollectorId] = true
-
-			switch row.State {
-			case 0:
-				okCount++
-			case 1:
-				warnCount++
-			case 2:
-				errorCount++
-			default:
-				unknownCount++
-			}
-		}
-	}
-
-	for _, seen := range collectorMap {
-		if !seen {
-			unknownCount++
-		}
-	}
-
-	if len(collectorsToDel) > 0 {
-		params := make([]interface{}, len(collectorsToDel)+1)
-		params[0] = mon.Id
-		p := make([]string, len(collectorsToDel))
-		for i, c := range collectorsToDel {
-			p[i] = "?"
-			params[i+1] = c
-		}
-		rawSql := fmt.Sprintf("DELETE FROM monitor_collector_state WHERE monitor_id=? and collector_id IN (%s)", strings.Join(p, ","))
-		if _, err := sess.Exec(rawSql, params...); err != nil {
-			return false, err
-		}
-	}
-
-	// determine our state
-	if okCount < totalCount/2 || (totalCount-okCount) >= 3 {
-		//state is not OK.
-		if errorCount > 0 {
-			state = 2
-		} else if warnCount > 0 {
-			state = 1
-		} else {
-			state = -1
-		}
-	} else {
-		state = 0
-	}
-	stateChange := false
-	if mon.State != state {
-		mon.State = state
-		mon.StateChange = time.Now()
-		mon.Updated = time.Now()
-		stateChange = true
-	}
-	return stateChange, nil
-}
-
-func UpdateMonitorCollectorState(cmd *m.UpdateMonitorCollectorStateCommand) error {
+func UpdateMonitorState(cmd *m.UpdateMonitorStateCommand) error {
 	return inTransaction2(func(sess *session) error {
-		sess.Table("monitor_collector_state")
-		results := make([]*m.MonitorCollectorState, 0)
-		sess.Where("monitor_id=?", cmd.MonitorId)
-		sess.And("org_id=?", cmd.OrgId).And("endpoint_id=?", cmd.EndpointId).And("collector_id=?", cmd.CollectorId)
-		if err := sess.Find(&results); err != nil {
-			return err
-		}
-		stateChange := false
-		if len(results) < 1 {
-			//need to insert
-			state := &m.MonitorCollectorState{
-				OrgId:       cmd.OrgId,
-				MonitorId:   cmd.MonitorId,
-				EndpointId:  cmd.EndpointId,
-				CollectorId: cmd.CollectorId,
-				State:       cmd.State,
-				Updated:     cmd.Updated,
-			}
-			sess.UseBool("state")
-			if _, err := sess.Insert(state); err != nil {
-				return err
-			}
-			stateChange = true
-		} else if results[0].State != cmd.State {
-			//need to update
-			state := results[0]
-			state.State = cmd.State
-			state.Updated = cmd.Updated
-			sess.UseBool("state")
-			if _, err := sess.Id(state.Id).Update(state); err != nil {
-				return err
-			}
-			stateChange = true
+		sess.Table("monitor")
+		sess.UseBool("state")
+		sess.Cols("state", "state_change")
+		mon := &m.Monitor{
+			Id:          cmd.Id,
+			State:       cmd.State,
+			StateChange: cmd.Updated,
 		}
 
-		if stateChange {
-			//update state of monitor.
-			q := m.GetMonitorByIdQuery{
-				Id:    cmd.MonitorId,
-				OrgId: cmd.OrgId,
-			}
-			err := GetMonitorById(&q)
-			if err != nil {
-				return err
-			}
-			monView := q.Result
-			mon := &m.Monitor{
-				Id:            monView.Id,
-				EndpointId:    monView.EndpointId,
-				OrgId:         monView.OrgId,
-				MonitorTypeId: monView.MonitorTypeId,
-				Offset:        monView.Offset,
-				Settings:      monView.Settings,
-				Updated:       monView.StateChange,
-				Frequency:     monView.Frequency,
-				Enabled:       monView.Enabled,
-				State:         monView.State,
-				StateChange:   monView.StateChange,
-			}
-			monStateChange, err := updateCollectorState(mon, monView.Collectors, sess)
-			if err != nil {
-				return err
-			}
-			if monStateChange {
-				sess.Table("monitor")
-				sess.UseBool("state")
-				if _, err := sess.Id(mon.Id).Update(mon); err != nil {
-					return err
-				}
-				fmt.Println("TODO: propagate stateChange to endpoint.")
-			}
+		if _, err := sess.Where("id=?", mon.Id).Update(mon); err != nil {
+			return err
 		}
 		return nil
 	})
-}
-
-func GetMonitorHealthById(query *m.GetMonitorHealthByIdQuery) error {
-	sess := x.Table("monitor_collector_state")
-	sess.Where("monitor_id=?", query.Id).And("org_id=?", query.OrgId)
-	//query.result = make([]*m.MonitorCollectorState, 0)
-	err := sess.Find(&query.Result)
-	if err != nil {
-		return err
-	}
-	return nil
 }

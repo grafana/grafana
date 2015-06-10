@@ -117,6 +117,9 @@ var (
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
+
+	StatsdEnabled bool
+	StatsdAddr    string
 )
 
 type CommandLineArgs struct {
@@ -418,6 +421,10 @@ func NewConfigContext(args *CommandLineArgs) {
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+
+	telemetry := Cfg.Section("telemetry")
+	StatsdEnabled = telemetry.Key("statsd_enabled").MustBool(false)
+	StatsdAddr = telemetry.Key("statsd_addr").String()
 
 	readSessionConfig()
 }

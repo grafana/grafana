@@ -1,0 +1,24 @@
+[----------] Running tests from PartiallyFilteredTest
+[ RUN      ] PartiallyFilteredTest.PassingTestBar
+[       OK ] PartiallyFilteredTest.PassingTestBar
+[ RUN      ] PartiallyFilteredTest.PartiallyFilteredTestBar
+filtered_test.go:49:
+Expected: has substring "blah"
+Actual:   taco
+
+[  FAILED  ] PartiallyFilteredTest.PartiallyFilteredTestBar
+[ RUN      ] PartiallyFilteredTest.PartiallyFilteredTestBaz
+filtered_test.go:53:
+Expected: less than 17
+Actual:   18
+
+[  FAILED  ] PartiallyFilteredTest.PartiallyFilteredTestBaz
+[----------] Finished with tests from PartiallyFilteredTest
+[----------] Running tests from CompletelyFilteredTest
+SetUpTestSuite run!
+TearDownTestSuite run!
+[----------] Finished with tests from CompletelyFilteredTest
+--- FAIL: TestSomething (1.23s)
+FAIL
+exit status 1
+FAIL somepkg 1.234s

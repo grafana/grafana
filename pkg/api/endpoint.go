@@ -20,20 +20,6 @@ func GetEndpointById(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func getEndpointHealthById(c *middleware.Context) Response {
-	id := c.ParamsInt64(":id")
-	query := m.GetEndpointHealthByIdQuery{
-		Id:    id,
-		OrgId: c.OrgId,
-	}
-	err := bus.Dispatch(&query)
-	if err != nil {
-		return ApiError(500, "Failed to query endpoint health", err)
-	}
-
-	return Json(200, query.Result)
-}
-
 func GetEndpoints(c *middleware.Context, query m.GetEndpointsQuery) Response {
 	query.OrgId = c.OrgId
 

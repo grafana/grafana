@@ -121,14 +121,11 @@ func CoerceIntShort(v interface{}) int {
 
 // Coerce a val(interface{}) into a Uint64
 func CoerceUint(v interface{}) (uint64, error) {
-	i64, ok := valToInt64(v)
+	u64, ok := valToUint64(v)
 	if !ok {
 		return 0, fmt.Errorf("Could not Coerce %v", v)
 	}
-	if i64 < 0 {
-		return 0, fmt.Errorf("Could not Coerce %v", v)
-	}
-	return uint64(i64), nil
+	return u64, nil
 }
 
 // Coerce a Val(interface{}) into Uint64
@@ -209,6 +206,65 @@ func valToInt64(i interface{}) (int64, bool) {
 			}
 			if iv, err := strconv.ParseFloat(string(x), 64); err == nil {
 				return valToInt64(iv)
+			}
+		}
+	}
+	return 0, false
+}
+
+// Given any simple type (float*, int*, uint*, string, []byte, json.RawMessage) return an int64.
+// Returns false if it would overflow or if the the argument is not numeric.
+func valToUint64(i interface{}) (uint64, bool) {
+	switch x := i.(type) {
+	case float32:
+		return uint64(x), true
+	case float64:
+		return uint64(x), true
+	case uint8:
+		return uint64(x), true
+	case uint16:
+		return uint64(x), true
+	case uint32:
+		return uint64(x), true
+	case uint64:
+		return x, true
+	case int8:
+		return uint64(x), true
+	case int16:
+		return uint64(x), true
+	case int32:
+		return uint64(x), true
+	case int64:
+		return uint64(x), true
+	case int:
+		return uint64(x), true
+	case uint:
+		return uint64(x), true
+	case string:
+		if len(x) > 0 {
+			if uiv, err := strconv.ParseUint(x, 10, 64); err == nil {
+				return uiv, true
+			}
+			if fv, err := strconv.ParseFloat(x, 64); err == nil {
+				return uint64(fv), true
+			}
+		}
+	case []byte:
+		if len(x) > 0 {
+			if uiv, err := strconv.ParseUint(string(x), 10, 64); err == nil {
+				return uiv, true
+			}
+			if fv, err := strconv.ParseFloat(string(x), 64); err == nil {
+				return uint64(fv), true
+			}
+		}
+	case json.RawMessage:
+		if len(x) > 0 {
+			if uiv, err := strconv.ParseUint(string(x), 10, 64); err == nil {
+				return uiv, true
+			}
+			if fv, err := strconv.ParseFloat(string(x), 64); err == nil {
+				return uint64(fv), true
 			}
 		}
 	}

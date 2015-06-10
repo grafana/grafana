@@ -3,16 +3,50 @@
         <div panel-scroll>
             <table class="table">
                 <tbody>
+                    <div ng-repeat="event in events | orderBy:'timestamp':true" class="freqMsg font-monospace table-flex-container">
+                            <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'OK'">
+                                <i class="fa-fw icon-rt-event online table-row-icon"></i>
+                            </div>
+                            <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'ERROR'">
+                                <i class="fa-fw icon-rt-event-error critical table-row-icon"></i>
+                            </div>
+                            <div  class="table-flex-item">
+                                <div style="margin-right: 15px; min-width: 185px;">
+                                     {{event.timestamp | date:'medium'}}
+                                </div>
+                                <div style="margin-right: 15px;">
+                                    <span class="emphasis">{{event.endpoint}}</span> from <span class="emphasis">{{event.collector}}</span>
+                                </div>
+                                <div>
+                                    <span class="emphasis">{{event.monitor_type}}</span> {{event.severity}}: {{event.message}}
+                                </div>
+                            </div>
+                    </div>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</grafana-panel>
+
+
+
+<!--  
+<grafana-panel>
+    <div class="row">
+        <div panel-scroll>
+            <table class="table">
+                <tbody>
                     <tr ng-repeat="event in events | orderBy:'timestamp':true">
-                        <td>{{event.timestamp | date:'medium'}}</td>
-                        <td>{{event.severity}}</td>
-                        <td>{{event.collector}}</td>
-                        <td>{{event.endpoint}}</td>
-                        <td>{{event.message}}</td>
-                        <td>{{event.monitor_type}}</td>
+                        <td class="freqMsg">{{event.severity}}</td>
+                        <td class="freqMsg">{{event.timestamp | date:'medium'}}</td>
+                        <td class="freqMsg emphasis">{{event.collector}}</td>
+                        <td class="freqMsg emphasis">{{event.endpoint}}</td>
+                        <td class="freqMsg">{{event.message}}</td>
+                        <td class="freqMsg emphasis">{{event.monitor_type}}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 </grafana-panel>
+ -->

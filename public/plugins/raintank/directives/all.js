@@ -1,8 +1,8 @@
 define([
   'angular',
-  'lodash',
-  'jquery'
-], function (angular, _, $) {
+  'lodash'
+], function (angular, _) {
+  'use strict';
   var module = angular.module('grafana.directives');
 
   module.directive('raintankSetting', function ($compile) {
@@ -15,41 +15,48 @@ define([
       },
       template: '<div></div>',
       replace: true,
-      link: function(scope,element, attrs) {
+      link: function(scope, element) {
         var tmpl;
         if (!scope.target.value && scope.target.value !== 0 && scope.target.value !== false) {
           scope.target.value = scope.definition.default_value;
         }
 
         switch (scope.definition.data_type) {
-          case 'String':
-            tmpl = '<label class="small">{{definition.description}}</label>';
-            tmpl += '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
-            break;
-          case 'Text':
-            tmpl = '<label class="small">{{definition.description}}</label>';
-            tmpl += '<textarea placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
-            break;
-          case 'Number':
-            tmpl = '<label class="small">{{definition.description}}</label>';
-            scope.target.value = parseFloat(scope.target.value).toString();
-            tmpl += '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
-            break;
-          case 'Boolean':
-            scope.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-              var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-              return v.toString(16);
-            });
-            tmpl = '<input type="checkbox" ng-true-value="\'true\'" id={{id}} ng-false-value="\'false\'" ng-model="target.value" class="rt-modal">';
-            tmpl += '<label class="rt-modal rt-modal-label-copy" for="{{id}}">{{definition.description}}</label>';
-            break;
-          case 'Enum':
-            tmpl = '<label class="small">{{definition.description}}</label>';
-            tmpl += '<select ng-model="target.value" class="rt-form-input form-control" ng-options="e for e in definition.conditions.values" ng-required="definition.required" style="height: 34px;">';
-            break;
-          default:
-            tmpl = '<label class="small">{{definition.description}}</label>';
-            tmpl += '<input type="text" placeholder="{{definition.description}} : {{definition.data_type}}" ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
+        case 'String':
+          tmpl = '<label class="small">{{definition.description}}</label>';
+          tmpl += '<input type="text" placeholder="{{definition.description}}" ' +
+                'ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
+          break;
+        case 'Text':
+          tmpl = '<label class="small">{{definition.description}}</label>';
+          tmpl += '<textarea placeholder="{{definition.description}}" ng-required="definition.required" ' +
+                'ng-model="target.value" class="rt-form-input form-control">';
+          break;
+        case 'Number':
+          tmpl = '<label class="small">{{definition.description}}</label>';
+          scope.target.value = parseFloat(scope.target.value).toString();
+          tmpl += '<input type="text" placeholder="{{definition.description}}" ng-required="definition.required" ' +
+                'ng-model="target.value" class="rt-form-input form-control">';
+          break;
+        case 'Boolean':
+          scope.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            //generate UUID
+            var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+          });
+          tmpl = '<input type="checkbox" ng-true-value="\'true\'" id={{id}} ng-false-value="\'false\'" ' +
+                  'ng-model="target.value" class="rt-modal">';
+          tmpl += '<label class="rt-modal rt-modal-label-copy" for="{{id}}">{{definition.description}}</label>';
+          break;
+        case 'Enum':
+          tmpl = '<label class="small">{{definition.description}}</label>';
+          tmpl += '<select ng-model="target.value" class="rt-form-input form-control" ' +
+                'ng-options="e for e in definition.conditions.values" ng-required="definition.required" style="height: 34px;">';
+          break;
+        default:
+          tmpl = '<label class="small">{{definition.description}}</label>';
+          tmpl += '<input type="text" placeholder="{{definition.description}} : {{definition.data_type}}" ' +
+                'ng-required="definition.required" ng-model="target.value" class="rt-form-input form-control">';
         }
 
         element.html(tmpl);
@@ -58,43 +65,92 @@ define([
     };
   });
 
-  module.directive("rtCheckHealth", function($compile) {
+  module.directive("rtCheckHealth", function($compile, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/checkHealth.html',
       scope: {
         model: "=",
       },
-      link: function(scope, element) {
-        scope.$watch("model", function(health) {
-          if (typeof(health) == "object") {
-            showHealth(health);
+      link: function(scope) {
+
+        scope.$watch("model", function(monitor) {
+          if (typeof(monitor) === "object") {
+            var metricsQuery = {
+              range: {from: "now-"+ (monitor.frequency + 30) + 's', to: "now"},
+              interval: monitor.frequency + 's',
+              targets: [
+                {target: monitor.endpoint_slug + ".*.network."+monitor.monitor_type_name.toLowerCase()+".{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(health) {
-          var tmpl = '';
+        function showHealth(metrics) {
           var okCount = 0;
           var warnCount = 0;
           var errorCount = 0;
           var unknownCount = 0;
-          _.forEach(health, function(checkState) {
-            if (checkState.state == -1) {
-              unknownCount++;
-              return
+          var collectorResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.');
+            var stateStr = parts[4];
+            var collector = parts[1];
+            if (!(collector in collectorResults)) {
+              collectorResults[collector] = {ts: -1, state: -1};
             }
-            if (checkState.state == 0) {
-              okCount++;
-              return
-            }
-            if (checkState.state == 1) {
-              warnCount++;
-              return
-            }
-            if (checkState.state == 2) {
-              errorCount++;
-              return
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] === 1) && (point[1] > collectorResults[collector].ts)) {
+                  collectorResults[collector].ts = point[1];
+                  switch (stateStr) {
+                    case 'ok_state':
+                      collectorResults[collector].state = 0;
+                      break;
+                    case 'warn_state':
+                      collectorResults[collector].state = 1;
+                      break;
+                    case 'error_state':
+                      collectorResults[collector].state = 2;
+                      break;
+                    default:
+                      collectorResults[collector].state = -1;
+                      console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
+              }
             }
           });
+          for (var col in collectorResults) {
+            switch (collectorResults[col].state) {
+            case 0:
+              okCount++;
+              break;
+            case 1:
+              warnCount++;
+              break;
+            case 2:
+              errorCount++;
+              break;
+            default:
+              unknownCount++;
+            }
+          }
+          var unknowns = scope.model.collectors - Object.keys(collectorResults).length;
+          unknownCount += unknowns;
+
           scope.okCount = okCount;
           scope.warnCount = warnCount;
           scope.errorCount = errorCount;
@@ -111,97 +167,187 @@ define([
     };
   });
 
-  module.directive("rtCollectorHealth", function(backendSrv) {
+  module.directive("rtCollectorHealth", function(backendSrv, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/collectorHealth.html',
       scope: {
         model: "=",
       },
-      link: function(scope, element) {
+      link: function(scope) {
         scope.$watch("model", function(model) {
-          if (typeof(model) == "object") {
-            showHealth(model);
+          if (typeof(model) === "object") {
+            var metricsQuery = {
+              range: {from: "now-90s", to: "now"},
+              interval: '10s',
+              targets: [
+                {target: "*."+ model.slug +".network.*.{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(model) {
-          backendSrv.get('/api/collectors/'+model.id+'/health').then(function(health) {
-            var tmpl = '';
-            var okCount = 0;
-            var warnCount = 0;
-            var errorCount = 0;
-            var unknownCount = 0;
-            _.forEach(health, function(checkState) {
-              if (checkState.state == -1) {
-                unknownCount++;
-                return
+        function showHealth(metrics) {
+          var okCount = 0;
+          var warnCount = 0;
+          var errorCount = 0;
+          var unknownCount = 0;
+          var endpointCheckResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.');
+            var stateStr = parts[4];
+            var endpoint = parts[0];
+            var check = parts[3];
+            var endpointCheck = endpoint + "."+check;
+            if (!(endpointCheck in endpointCheckResults)) {
+              endpointCheckResults[endpointCheck] = {ts: -1, state: -1};
+            }
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] === 1) && (point[1] > endpointCheckResults[endpointCheck].ts)) {
+                  endpointCheckResults[endpointCheck].ts = point[1];
+                  switch (stateStr) {
+                  case 'ok_state':
+                    endpointCheckResults[endpointCheck].state = 0;
+                    break;
+                  case 'warn_state':
+                    endpointCheckResults[endpointCheck].state = 1;
+                    break;
+                  case 'error_state':
+                    endpointCheckResults[endpointCheck].state = 2;
+                    break;
+                  default:
+                    endpointCheckResults[endpointCheck].state = -1;
+                    console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
               }
-              if (checkState.state == 0) {
-                okCount++;
-                return
-              }
-              if (checkState.state == 1) {
-                warnCount++;
-                return
-              }
-              if (checkState.state == 2) {
-                errorCount++;
-                return
-              }
-            });
-            scope.okCount = okCount;
-            scope.warnCount = warnCount;
-            scope.errorCount = errorCount;
-            scope.unknownCount = unknownCount;
+            }
           });
+          for (var col in endpointCheckResults) {
+            switch (endpointCheckResults[col].state) {
+            case 0:
+              okCount++;
+              break;
+            case 1:
+              warnCount++;
+              break;
+            case 2:
+              errorCount++;
+              break;
+            default:
+              unknownCount++;
+            }
+          }
+          scope.okCount = okCount;
+          scope.warnCount = warnCount;
+          scope.errorCount = errorCount;
+          scope.unknownCount = unknownCount;
         }
       }
     };
   });
 
-  module.directive("rtCollectorSummaryHealth", function(backendSrv) {
+  module.directive("rtCollectorSummaryHealth", function(backendSrv, datasourceSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/collectorSummaryHealth.html',
       scope: {
         model: "=",
       },
-      link: function(scope, element) {
+            link: function(scope) {
         scope.$watch("model", function(model) {
-          if (typeof(model) == "object") {
-            showHealth(model);
+          if (typeof(model) === "object") {
+            var metricsQuery = {
+              range: {from: "now-90s", to: "now"},
+              interval: '10s',
+              targets: [
+                {target: "*."+ model.slug +".network.*.{ok_state,warn_state,error_state}"}
+              ],
+              format: 'json',
+              maxDataPoints: 10,
+            };
+
+            var datasource = datasourceSrv.get('raintank');
+            datasource.then(function(ds) {
+              ds.query(metricsQuery).then(function(results) {
+                showHealth(results);
+              });
+            });
           }
         });
 
-        function showHealth(model) {
-          backendSrv.get('/api/collectors/'+model.id+'/health').then(function(health) {
-            var tmpl = '';
-            var okCount = 0;
-            var warnCount = 0;
-            var errorCount = 0;
-            var unknownCount = 0;
-            _.forEach(health, function(checkState) {
-              if (checkState.state == -1) {
-                unknownCount++;
-                return
+        function showHealth(metrics) {
+          var okCount = 0;
+          var warnCount = 0;
+          var errorCount = 0;
+          var unknownCount = 0;
+          var endpointCheckResults = {};
+          _.forEach(metrics.data, function(result) {
+            var parts = result.target.split('.');
+            var stateStr = parts[4];
+            var endpoint = parts[0];
+            var check = parts[3];
+            var endpointCheck = endpoint + "."+check;
+            if (!(endpointCheck in endpointCheckResults)) {
+              endpointCheckResults[endpointCheck] = {ts: -1, state: -1};
+            }
+
+            //start with the last point and work backwards till we find a non-null value.
+            for (var i = result.datapoints.length - 1 ; i >= 0; i--) {
+              var point = result.datapoints[i];
+              if (!isNaN(point[0])) {
+                if ((point[0] === 1) && (point[1] > endpointCheckResults[endpointCheck].ts)) {
+                  endpointCheckResults[endpointCheck].ts = point[1];
+                  switch (stateStr) {
+                  case 'ok_state':
+                    endpointCheckResults[endpointCheck].state = 0;
+                    break;
+                  case 'warn_state':
+                    endpointCheckResults[endpointCheck].state = 1;
+                    break;
+                  case 'error_state':
+                    endpointCheckResults[endpointCheck].state = 2;
+                    break;
+                  default:
+                    endpointCheckResults[endpointCheck].state = -1;
+                    console.log("unknown state returned. this shouldnt happen :(");
+                  }
+                  break;
+                }
               }
-              if (checkState.state == 0) {
-                okCount++;
-                return
-              }
-              if (checkState.state == 1) {
-                warnCount++;
-                return
-              }
-              if (checkState.state == 2) {
-                errorCount++;
-                return
-              }
-            });
-            scope.okCount = okCount;
-            scope.warnCount = warnCount;
-            scope.errorCount = errorCount;
-            scope.unknownCount = unknownCount;
+            }
           });
+          for (var col in endpointCheckResults) {
+            switch (endpointCheckResults[col].state) {
+            case 0:
+              okCount++;
+              break;
+            case 1:
+              warnCount++;
+              break;
+            case 2:
+              errorCount++;
+              break;
+            default:
+              unknownCount++;
+            }
+          }
+          scope.okCount = okCount;
+          scope.warnCount = warnCount;
+          scope.errorCount = errorCount;
+          scope.unknownCount = unknownCount;
         }
       }
     };
@@ -219,7 +365,7 @@ define([
 
     return function(scope, element) {
       element[0].style.overflow = 'auto';
-      scope.$watchGroup(['fullscreen', 'height', 'panel.height', 'row.height'], function(newVal) {
+      scope.$watchGroup(['fullscreen', 'height', 'panel.height', 'row.height'], function() {
         element[0].style.height = getPanelHeight(scope);
       });
     };
@@ -255,7 +401,7 @@ define([
             });
           }
           scope.reset();
-        }
+        };
 
         scope.reset = function() {
           scope.error = false;
@@ -280,7 +426,7 @@ define([
             });
             scope.ids.push(option);
           });
-          if (scope.footprint.value == 'dynamic') {
+          if (scope.footprint.value === 'dynamic') {
             _.forEach(scope.ids, function(i) {
               i.selected = false;
             });
@@ -289,7 +435,7 @@ define([
               t.selected = false;
             });
           }
-        }
+        };
 
         scope.show = function() {
           scope.reset();
@@ -303,32 +449,29 @@ define([
 
         scope.idSelected = function(option) {
           option.selected = !option.selected;
-          var selectedIds = _.filter(scope.ids, {selected: true});
         };
 
         scope.selectAll = function() {
           var select = true;
           var selectedIds = _.filter(scope.ids, {selected: true});
 
-          if (selectedIds.length == scope.ids.length) {
+          if (selectedIds.length === scope.ids.length) {
             select = false;
           }
           _.forEach(scope.ids, function(option) {
             option.selected = select;
           });
-        }
+        };
 
         scope.tagSelected = function(option) {
           option.selected = !option.selected;
-
-          var selectedTags = _.filter(scope.tags, {selected: true});
         };
 
         scope.collectorsWithTags = function() {
           var collectorList = {};
           _.forEach(scope.collectors, function(c) {
             _.forEach(_.filter(scope.tags, {selected: true}), function(t) {
-              if (_.indexOf(c.tags, t.text) != -1) {
+              if (_.indexOf(c.tags, t.text) !== -1) {
                 collectorList[c.name] = true;
               }
             });
@@ -339,12 +482,12 @@ define([
         scope.collectorCount = function(tag) {
           var count = 0;
           _.forEach(scope.collectors, function(c) {
-            if (_.indexOf(c.tags, tag.text) != -1) {
+            if (_.indexOf(c.tags, tag.text) !== -1) {
               count++;
             }
           });
           return count;
-        }
+        };
 
         scope.selectTagTitle = function() {
           var selectedTags = _.filter(scope.tags, {selected: true});
@@ -363,39 +506,9 @@ define([
         };
 
         scope.hide = function() {
-          var lastFootprint = scope.footprint.value;
-          // determine if we are using static or dynamic allocation.
-          if (scope.model.collector_ids.length > 0) {
-            scope.footprint.value = 'static';
-            _.forEach(scope.tags, function(t) {
-              t.selected = false;
-            });
-          } else if (scope.model.collector_tags.length > 0) {
-            scope.footprint.value = 'dynamic';
-            _.forEach(scope.ids, function(i) {
-              i.selected = false;
-            });
-          }
-          scope.reset();
-          scope.selectorOpen = false;
-          bodyEl.off('click', scope.bodyOnClick);
-        };
-
-        scope.bodyOnClick = function(e) {
-          var dropdown = elem.find('.variable-value-dropdown');
-          if (dropdown.has(e.target).length === 0) {
-            scope.$apply(scope.hide);
-          }
-        };
-
-        scope.cancel = function() {
-          scope.hide();
-        }
-
-        scope.update = function() {
           var selectedIds = _.filter(scope.ids, {selected: true});
           var selectedTags = _.filter(scope.tags, {selected: true});
-          if (selectedIds.length == 0 && selectedTags.length == 0) {
+          if (selectedIds.length === 0 && selectedTags.length === 0) {
             scope.error = "at least 1 option must be selected.";
             return;
           }
@@ -408,8 +521,16 @@ define([
           _.forEach(selectedTags, function(t) {
             scope.model.collector_tags.push(t.text);
           });
-          scope.hide();
-        }
+          scope.selectorOpen = false;
+          bodyEl.off('click', scope.bodyOnClick);
+        };
+
+        scope.bodyOnClick = function(e) {
+          var dropdown = elem.find('.variable-value-dropdown');
+          if (dropdown.has(e.target).length === 0) {
+            scope.$apply(scope.hide);
+          }
+        };
 
         //scope.init();
         scope.$watch('model.id', function() {
