@@ -42,8 +42,9 @@
 				</div>
 				<div class="collector-dropdown-footer">
 				    <p>Preview: {{collectorsWithTags()}}</p>
+				    <p ng-show="error">{{error}}</p>
 			    </div>
-			    <span ng-show="error">{{error}}</span>
+			    
 			</div>
 		</div>
 
@@ -90,7 +91,9 @@
 					<p class="collector-dropdown-desc">Selecting individual collectors will allow your monitoring footprint to remain <strong>static</strong>, always monitoring these collectors.</p>
 				</div>
 			</div>
-		  <span ng-show="error">{{error}}</span>
+			<div ng-show="error" class="collector-dropdown-footer">
+			    <p>{{error}}</p>
+		    </div>			
 		</div>
 	</div>
 
