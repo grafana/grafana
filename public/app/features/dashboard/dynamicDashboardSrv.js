@@ -105,6 +105,8 @@ function (angular, _) {
 
       _.each(selected, function(option, index) {
         copy = self.getRowClone(row, index);
+        copy.scopedVars = {};
+        copy.scopedVars[variable.name] = option;
 
         for (i = 0; i < copy.panels.length; i++) {
           panel = copy.panels[i];
