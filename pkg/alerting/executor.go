@@ -123,17 +123,17 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 				emails := strings.Split(job.Notifications.Addresses, ",")
 				if len(emails) < 1 {
 					fmt.Printf("no email addresses provided.")
-					continue;
+					continue
 				}
 				sendCmd := m.SendEmailCommand{
-			        To:       emails,
-			        Template: "alerting_notification.html",
-			        Data: map[string]interface{}{
-			            "Endpoint": job.EndpointSlug,
-			            "CheckType": job.MonitorTypeName,
-			            "State": res.String(),
-			             },
-			    }
+					To:       emails,
+					Template: "alerting_notification.html",
+					Data: map[string]interface{}{
+						"Endpoint":  job.EndpointSlug,
+						"CheckType": job.MonitorTypeName,
+						"State":     res.String(),
+					},
+				}
 
 				if err := bus.Dispatch(&sendCmd); err != nil {
 					fmt.Printf("failed to send email to %s.", emails)
