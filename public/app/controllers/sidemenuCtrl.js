@@ -68,11 +68,13 @@ function (angular, _, $, config) {
           });
         });
 
-        $scope.orgMenu.push({
-          text: "New Organization",
-          icon: "fa fa-fw fa-plus",
-          href: $scope.getUrl('/org/new')
-        });
+        if (config.allowOrgCreate) {
+          $scope.orgMenu.push({
+            text: "New Organization",
+            icon: "fa fa-fw fa-plus",
+            href: $scope.getUrl('/org/new')
+          });
+        }
       });
     };
 
