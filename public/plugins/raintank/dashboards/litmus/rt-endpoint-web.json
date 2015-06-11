@@ -87,15 +87,15 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.ok_state), 'ok')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.ok_state), 'ok')"
             },
             {
               "hide": false,
-              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.warn_state), 'warn')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.warn_state), 'warn')"
             },
             {
               "hide": false,
-              "target": "alias(sumSeries($endpoint.$collector.network.$protocol.error_state), 'error')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.error_state), 'error')"
             }
           ],
           "timeFrom": null,
@@ -186,10 +186,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dataLength), 'content size')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.dataLength), 'content size')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.throughput), 'download speed')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.throughput), 'download speed')"
             }
           ],
           "timeFrom": null,
@@ -270,19 +270,19 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.dns), 'dns')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.dns), 'dns')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.connect), 'connect')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.connect), 'connect')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.send), 'send')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.send), 'send')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.wait), 'wait')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.wait), 'wait')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.$protocol.recv), 'recv')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.recv), 'recv')"
             }
           ],
           "timeFrom": null,
@@ -365,7 +365,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.$protocol.total, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.$protocol.total, 1)"
             }
           ],
           "timeFrom": null,

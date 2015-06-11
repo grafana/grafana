@@ -71,7 +71,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.dns.ok_state), 100)"
+              "target": "scale(averageSeries($endpoint.$collector.litmus.dns.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -121,7 +121,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.ping.ok_state), 100)"
+              "target": "scale(averageSeries($endpoint.$collector.litmus.ping.ok_state), 100)"
             }
           ],
           "thresholds": "0,100",
@@ -171,7 +171,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.http.ok_state), 100)"
+              "target": "scale(averageSeries($endpoint.$collector.litmus.http.ok_state), 100)"
             }
           ],
           "thresholds": "0,100",
@@ -221,7 +221,7 @@
           },
           "targets": [
             {
-              "target": "scale($endpoint.$collector.network.https.ok_state, 100)"
+              "target": "scale($endpoint.$collector.litmus.https.ok_state, 100)"
             }
           ],
           "thresholds": "0,100",
@@ -294,11 +294,11 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.dns.error_state), 'sum'), 'error')"
             },
             {
               "hide": false,
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.dns.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -365,10 +365,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.ping.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.ping.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -436,10 +436,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.http.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.http.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -506,10 +506,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.https.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.litmus.https.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -584,7 +584,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.dns.time, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.dns.time, 1)"
             }
           ],
           "timeFrom": null,
@@ -649,7 +649,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.ping.mean, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.ping.mean, 1)"
             }
           ],
           "timeFrom": null,
@@ -714,7 +714,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.http.total, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.http.total, 1)"
             }
           ],
           "timeFrom": null,
@@ -779,7 +779,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.https.total, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.https.total, 1)"
             }
           ],
           "timeFrom": null,
