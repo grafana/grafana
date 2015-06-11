@@ -54,7 +54,7 @@
           },
           "targets": [
             {
-              "target": "$endpoint.$collector.network.http.total"
+              "target": "$endpoint.$collector.litmus.http.total"
             }
           ],
           "thresholds": "",
@@ -116,7 +116,7 @@
           },
           "targets": [
             {
-              "target": "$endpoint.$collector.network.dns.time"
+              "target": "$endpoint.$collector.litmus.dns.time"
             }
           ],
           "thresholds": "",
@@ -178,7 +178,7 @@
           },
           "targets": [
             {
-              "target": "$endpoint.$collector.network.https.total"
+              "target": "$endpoint.$collector.litmus.https.total"
             }
           ],
           "thresholds": "",
@@ -240,7 +240,7 @@
           },
           "targets": [
             {
-              "target": "$endpoint.$collector.network.ping.mean"
+              "target": "$endpoint.$collector.litmus.ping.mean"
             }
           ],
           "thresholds": "",
