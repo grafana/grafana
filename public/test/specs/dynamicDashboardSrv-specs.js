@@ -135,6 +135,11 @@ define([
       expect(ctx.rows[1].repeat).to.be(null);
     });
 
+    it('should add scopedVars to rows', function() {
+      expect(ctx.rows[0].scopedVars.servers.value).to.be('se1');
+      expect(ctx.rows[1].scopedVars.servers.value).to.be('se2');
+    });
+
     it('should generate a repeartRowId based on repeat row index', function() {
       expect(ctx.rows[1].repeatRowId).to.be(1);
     });
