@@ -188,6 +188,14 @@ function (angular, _) {
           settings: settings,
           enabled: false,
           frequency: 10,
+          health_settings: {
+            steps: 2,
+            num_collectors: 1,
+            notifications: {
+              enabled: false,
+              addresses: ""
+            }
+          }
         };
       }
     };
@@ -294,27 +302,8 @@ function (angular, _) {
     $scope.removeMonitor = function(mon) {
       var type = $scope.monitor_types[mon.monitor_type_id];
       backendSrv.delete('/api/monitors/' + mon.id).then(function() {
-        var settings = [];
-        _.forEach($scope.monitor_types[type.id].settings, function(setting) {
-          var val = setting.default_value;
-          if (setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") {
-            val = $scope.endpoint.name;
-          }
-          settings.push({variable: setting.variable, value: val});
-        });
-        var frequency = 10;
-        if ($scope.monitor_types[type.id].name.indexOf("HTTP") === 0) {
-          frequency = 60;
-        }
-        $scope.monitors[type.name.toLowerCase()] = {
-          endpoint_id: null,
-          monitor_type_id: type.id,
-          collector_ids: $scope.global_collectors.collector_ids,
-          collector_tags: $scope.global_collectors.collector_tags,
-          settings: settings,
-          enabled: false,
-          frequency: frequency,
-        };
+        $scope.setDefaultMonitor(type.name.toLowerCase());
+        delete monitorLastState[mon.id];
       });
     };
 
@@ -391,6 +380,14 @@ function (angular, _) {
         settings: [],
         enabled: true,
         frequency: 10,
+        health_settings: {
+          steps: 2,
+          num_collectors: 1,
+          notifications: {
+            enabled: false,
+            addresses: ""
+          }
+        }
       };
       _.forEach(payload, function(suggestion) {
         _.defaults(suggestion, defaults);

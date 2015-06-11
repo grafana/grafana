@@ -22,6 +22,7 @@ type Job struct {
 	EndpointId      int64
 	EndpointSlug    string
 	MonitorTypeName string
+	Notifications   m.MonitorNotificationSetting
 	Freq            int64
 	Offset          int64 // offset on top of "even" minute/10s/.. intervals
 	State           m.CheckEvalResult
@@ -144,6 +145,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		EndpointId:      monitor.EndpointId,
 		EndpointSlug:    monitor.EndpointSlug,
 		MonitorTypeName: monitor.MonitorTypeName,
+		Notifications:   monitor.HealthSettings.Notifications,
 		OrgId:           monitor.OrgId,
 		Freq:            monitor.Frequency,
 		Offset:          monitor.Offset,

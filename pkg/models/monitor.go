@@ -95,6 +95,12 @@ type MonitorSettingDTO struct {
 type MonitorHealthSettingDTO struct {
 	NumCollectors int `json:"num_collectors"`
 	Steps         int `json:"steps"`
+	Notifications MonitorNotificationSetting `json:"notifications"`
+}
+
+type MonitorNotificationSetting struct {
+	Enabled bool `json:"enabled"`
+	Addresses string `json:"addresses"`
 }
 
 // implement the go-xorm/core.Conversion interface

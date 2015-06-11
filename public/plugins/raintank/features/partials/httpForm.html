@@ -107,20 +107,19 @@
                 </div>
               </div>
             </div>
-<!--
             <div class="rt-box-interior-section">
               <div class="rt-box-interior-header-icon">
                 <i class="icon icon-rt-alert" style="font-size: 26px;"></i>
               </div>
               <div class="rt-box-interior-header rt-h3">Alerting</div>
                 <div style="margin-left: 15px; display: inline;">
-                  <input class="rt-modal" id="http-alert-enabled1" type="checkbox" ng-model="monitors['alert'].enabled" ng-click="updateMonitor(monitors['http'])">
+                  <input class="rt-modal" id="http-alert-enabled1" type="checkbox" ng-model="monitors['http'].health_settings.notifications.enabled">
                   <label for="http-alert-enabled1" class="variable-value-link rt-modal">Enabled</label>
                 </div>
               <div class="rt-box-interior-content">
-                <span class="rt-body-copy" style="margin: 0;">When the http health changes, send a notification to the following emails: </span>
-                <div>
-                  <textarea class="rt-input-styles rt-textarea-row"></textarea>
+                <span class="rt-body-copy" style="margin: 0;">When the DNS health changes, send a notification to the following emails: </span>
+                <div style="margin-top: 15px;">
+                  <textarea class="rt-input-styles rt-textarea-row" ng-model="monitors['http'].health_settings.notifications.addresses"></textarea>
                 </div>
                 <div style="margin-top: -10px;">
                   <span class="small">Comma separate email addresses accepted.</span>
@@ -128,7 +127,6 @@
               </div>
             </div>
           </div>
--->
           <div ng-show="endpoint.id">
             <div class="rt-box-footer-config" ng-show="showHTTP">
                 <div class="rt-box-interior-content rt-interior-update">
