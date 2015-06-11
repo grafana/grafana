@@ -99,7 +99,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
 		"appSubUrl":         setting.AppSubUrl,
-		"viewerRoleMode":    setting.ViewerRoleMode,
+		"allowOrgCreate":    setting.AllowUserOrgCreate || c.IsGrafanaAdmin,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,
