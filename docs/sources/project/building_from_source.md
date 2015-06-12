@@ -28,6 +28,11 @@ godep restore                    (will pull down all golang lib dependecies in y
 go build .
 ```
 
+If you do not have `godep`  already, you will need to install it first:
+```
+go get github.com/kr/godep
+```
+You should also ensure that `$GOPATH\bin` is in your `$PATH`.
 # Building on Windows
 The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
 to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
@@ -42,7 +47,7 @@ npm install
 npm install -g grunt-cli
 grunt
 ```
-
+_Please note that depending on how you have installed Node, `npm install -g` may need to be run as `root`._
 ## Recompile backend on source change
 To rebuild on source change (requires that you executed godep restore)
 ```
