@@ -1226,6 +1226,19 @@ Licensed under the MIT license.
             // give the hooks a chance to run
             for (i = 0; i < series.length; ++i) {
                 s = series[i];
+                points = s.datapoints.points;
+                ps = s.datapoints.pointsize;
+
+                // grafana
+                if (s.transform === 'negative-Y') {
+                  for (j = 0; j < points.length; j += ps) {
+                    if (points[j] == null)
+                        continue;
+
+                      val = points[j + 1];
+                      points[j + 1] = -val;
+                  }
+                }
 
                 executeHooks(hooks.processDatapoints, [ s, s.datapoints]);
             }
