@@ -49,7 +49,7 @@ func NewDashboard(title string) *Dashboard {
 // GetTags turns the tags in data json into go string array
 func (dash *Dashboard) GetTags() []string {
 	jsonTags := dash.Data["tags"]
-	if jsonTags == nil {
+	if jsonTags == nil || jsonTags == "" {
 		return []string{}
 	}
 

@@ -15,4 +15,17 @@ func TestDashboardModel(t *testing.T) {
 		So(dashboard.Slug, ShouldEqual, "grafana-play-home")
 	})
 
+	Convey("Given a dashboard json", t, func() {
+		json := map[string]interface{}{
+			"title": "test dash",
+		}
+
+		Convey("With tags as string value", func() {
+			json["tags"] = ""
+			dash := NewDashboardFromJson(json)
+
+			So(len(dash.GetTags()), ShouldEqual, 0)
+		})
+	})
+
 }
