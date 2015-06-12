@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.3",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -12,14 +12,6 @@
 		{
 			"ImportPath": "github.com/Unknwon/macaron",
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
-		},
-		{
-			"ImportPath": "github.com/dalu/slug",
-			"Rev": "6dbd13912e9be466e2c1de349a2c7d1466c97e07"
-		},
-		{
-			"ImportPath": "github.com/dalu/unidecode",
-			"Rev": "339814d47f3e32a6f7036a0a4c56ed9b373dd755"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -34,6 +26,10 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.2-58-ge2889e5",
 			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
+		},
+		{
+			"ImportPath": "github.com/gosimple/slug",
+			"Rev": "8d258463b4459f161f51d6a357edacd3eef9d663"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",
@@ -55,6 +51,10 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+		},
+		{
+			"ImportPath": "github.com/rainycape/unidecode",
+			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
@@ -87,10 +87,6 @@
 			"ImportPath": "gopkg.in/redis.v2",
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
-		},
-		{
-			"ImportPath": "gopkgs.com/pool.v1",
-			"Rev": "c850f092aad1780cbffff25f471c5cc32097932a"
 		}
 	]
 }

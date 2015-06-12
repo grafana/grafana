@@ -4,9 +4,10 @@ slug
 Package `slug` generate slug from unicode string, URL-friendly slugify with
 multiple languages support.
 
-[![GoDoc](https://godoc.org/github.com/dalu/slug?status.png)](https://godoc.org/github.com/dalu/slug)
+[![GoDoc](https://godoc.org/github.com/gosimple/slug?status.png)](https://godoc.org/github.com/gosimple/slug)
+[![Build Status](https://drone.io/github.com/gosimple/slug/status.png)](https://drone.io/github.com/gosimple/slug/latest)
 
-[Documentation online](http://godoc.org/github.com/dalu/slug)
+[Documentation online](http://godoc.org/github.com/gosimple/slug)
 
 ## Example
 
@@ -37,9 +38,12 @@ multiple languages support.
 		fmt.Println(textSub) // Will print 'sand-is-hot'
 	}
 
+### Requests or bugs?
+<https://github.com/gosimple/slug/issues>
+
 ## Installation
 
-	go get -u github.com/dalu/slug
+	go get -u github.com/gosimple/slug
 
 ## License
 
