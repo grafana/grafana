@@ -1,0 +1,283 @@
+{
+  "id": 11,
+  "title": "Litmus Events",
+  "originalTitle": "Litmus Events",
+  "tags": [
+    "raintank",
+    "events"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": true,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "editable": true,
+          "error": false,
+          "filter": "endpoint:$endpoint AND collector:$collector AND monitor_type:$monitor_type AND severity:$severity",
+          "height": "500",
+          "id": 1,
+          "links": [],
+          "size": 50,
+          "span": 12,
+          "title": "Events for $endpoint on $collector for $monitor_type (showing $severity)",
+          "type": "raintankEventsPanel"
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "nav": [
+    {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+    }
+  ],
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "regex values",
+        "current": {
+          "text": "All",
+          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+        },
+        "datasource": null,
+        "includeAll": true,
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "endpoint",
+        "options": [
+          {
+            "text": "All",
+            "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+          },
+          {
+            "text": "alerting",
+            "value": "alerting"
+          },
+          {
+            "text": "boeing_com",
+            "value": "boeing_com"
+          },
+          {
+            "text": "cloudera_com",
+            "value": "cloudera_com"
+          },
+          {
+            "text": "cnn_com",
+            "value": "cnn_com"
+          },
+          {
+            "text": "google_com",
+            "value": "google_com"
+          },
+          {
+            "text": "internap_com",
+            "value": "internap_com"
+          },
+          {
+            "text": "raintank_io",
+            "value": "raintank_io"
+          },
+          {
+            "text": "reddit_com",
+            "value": "reddit_com"
+          },
+          {
+            "text": "telstra_com",
+            "value": "telstra_com"
+          },
+          {
+            "text": "vps_monkey_id_au",
+            "value": "vps_monkey_id_au"
+          }
+        ],
+        "query": "*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "type": "query"
+      },
+      {
+        "allFormat": "regex values",
+        "current": {
+          "text": "All",
+          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+        },
+        "datasource": null,
+        "includeAll": true,
+        "label": "collector",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "collector",
+        "options": [
+          {
+            "text": "All",
+            "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+          },
+          {
+            "text": "alerting",
+            "value": "alerting"
+          },
+          {
+            "text": "boeing_com",
+            "value": "boeing_com"
+          },
+          {
+            "text": "cloudera_com",
+            "value": "cloudera_com"
+          },
+          {
+            "text": "cnn_com",
+            "value": "cnn_com"
+          },
+          {
+            "text": "google_com",
+            "value": "google_com"
+          },
+          {
+            "text": "internap_com",
+            "value": "internap_com"
+          },
+          {
+            "text": "publictest",
+            "value": "publictest"
+          },
+          {
+            "text": "raintank_io",
+            "value": "raintank_io"
+          },
+          {
+            "text": "reddit_com",
+            "value": "reddit_com"
+          },
+          {
+            "text": "telstra_com",
+            "value": "telstra_com"
+          },
+          {
+            "text": "vps_monkey_id_au",
+            "value": "vps_monkey_id_au"
+          }
+        ],
+        "query": "*.*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "http",
+          "value": "http"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "monitor_type",
+        "options": [
+          {
+            "selected": false,
+            "text": "dns",
+            "value": "dns"
+          },
+          {
+            "selected": true,
+            "text": "http",
+            "value": "http"
+          },
+          {
+            "selected": false,
+            "text": "https",
+            "value": "https"
+          },
+          {
+            "selected": false,
+            "text": "ping",
+            "value": "ping"
+          }
+        ],
+        "query": "*.*.*.*",
+        "refresh_on_load": false,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "tags": [],
+          "text": "ERROR + OK",
+          "value": [
+            "ERROR",
+            "OK"
+          ]
+        },
+        "datasource": null,
+        "includeAll": false,
+        "multi": true,
+        "multiFormat": "regex values",
+        "name": "severity",
+        "options": [
+          {
+            "selected": true,
+            "text": "ERROR",
+            "value": "ERROR"
+          },
+          {
+            "selected": true,
+            "text": "OK",
+            "value": "OK"
+          }
+        ],
+        "query": "ERROR,OK",
+        "refresh_on_load": false,
+        "regex": "",
+        "type": "custom"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 6,
+  "version": 3,
+  "links": []
+}
