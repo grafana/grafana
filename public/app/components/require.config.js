@@ -8,8 +8,7 @@ require.config({
     kbn:                      'components/kbn',
     store:                    'components/store',
 
-    css:                      '../vendor/require/css',
-    text:                     '../vendor/require/text',
+    text:                     '../vendor/requirejs-text/text',
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',

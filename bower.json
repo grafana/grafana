@@ -19,6 +19,8 @@
     "angular-mocks": "~1.4.0",
     "angular-sanitize": "~1.4.0",
     "angular-native-dragdrop": "~1.1.0",
-    "angular-bindonce": "~0.3.3"
+    "angular-bindonce": "~0.3.3",
+    "requirejs": "~2.1.18",
+    "requirejs-text": "~2.0.14"
   }
 }
