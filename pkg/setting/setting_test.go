@@ -15,7 +15,6 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("Given the default ini files", func() {
 			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
 
-			So(AppName, ShouldEqual, "Grafana")
 			So(AdminUser, ShouldEqual, "admin")
 		})
 

@@ -13,6 +13,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
+	"github.com/grafana/grafana/pkg/services/rabbitmq"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/streadway/amqp"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -161,6 +164,39 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 }
 
 func InitCollectorController() {
+	sec := setting.Cfg.Section("event_publisher")
+
+	if sec.Key("enabled").MustBool(false) {
+		url := sec.Key("rabbitmq_url").String()
+		exchange := sec.Key("exchange").String()
+		exch := rabbitmq.Exchange{
+			Name:         exchange,
+			ExchangeType: "topic",
+			Durable:      true,
+		}
+		q := rabbitmq.Queue{
+			Name:       "",
+			Durable:    false,
+			AutoDelete: true,
+			Exclusive:  true,
+		}
+		consumer := rabbitmq.Consumer{
+			Url:        url,
+			Exchange:   &exch,
+			Queue:      &q,
+			BindingKey: "INFO.monitor.#",
+		}
+		err := consumer.Connect()
+		if err != nil {
+			log.Fatal(0, "failed to start event.consumer.", err)
+		}
+		consumer.Consume(eventConsumer)
+	} else {
+		//tap into the update/add/Delete events emitted when monitors are modified.
+		bus.AddEventListener(EmitUpdateMonitor)
+		bus.AddEventListener(EmitAddMonitor)
+		bus.AddEventListener(EmitDeleteMonitor)
+	}
 	cmd := m.ClearCollectorSessionCommand{ProcessId: 0}
 	if err := bus.Dispatch(&cmd); err != nil {
 		log.Fatal(4, "failed to clear collectorSessions.", err)
@@ -208,10 +244,6 @@ func init() {
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Error(0, "socket emitted error", err)
 	})
-	//tap into the update/add/Delete events emitted when monitors are modified.
-	bus.AddEventListener(EmitUpdateMonitor)
-	bus.AddEventListener(EmitAddMonitor)
-	bus.AddEventListener(EmitDeleteMonitor)
 }
 
 func (c *CollectorContext) Save() error {
@@ -359,6 +391,50 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	socketId := q.Result[pos].SocketId
 
 	localSockets.Emit(socketId, eventName, event)
+
+	return nil
+}
+
+func eventConsumer(msg *amqp.Delivery) error {
+	log.Info("processing amqp message with routing key: " + msg.RoutingKey)
+	eventRaw := events.OnTheWireEvent{}
+	err := json.Unmarshal(msg.Body, &eventRaw)
+	if err != nil {
+		log.Error(0, "failed to unmarshal event.", err)
+	}
+	payloadRaw, err := json.Marshal(eventRaw.Payload)
+	if err != nil {
+		log.Error(0, "unable to marshal event payload back to json.", err)
+	}
+	switch msg.RoutingKey {
+	case "INFO.monitor.updated":
+		event := events.MonitorUpdated{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitUpdateMonitor(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.monitor.created":
+		event := events.MonitorCreated{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitAddMonitor(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.monitor.removed":
+		event := events.MonitorRemoved{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+		}
+		if err := EmitDeleteMonitor(&event); err != nil {
+			return err
+		}
+		break
+	}
 
 	return nil
 }

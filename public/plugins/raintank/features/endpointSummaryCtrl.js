@@ -7,7 +7,8 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('EndpointSummaryCtrl', function($scope, $http, backendSrv, $location, $routeParams) {
+  module.controller('EndpointSummaryCtrl', function($scope, $q, $http, backendSrv, $location, $routeParams) {
+    $scope.pageReady = false;
     $scope.init = function() {
       $scope.endpoints = [];
       $scope.monitors = {};
@@ -20,19 +21,19 @@ function (angular, _) {
       promise.then(function() {
         $scope.getEndpoint($routeParams.id);
       });
-
     };
 
     $scope.getEndpoints = function() {
-      var promise = backendSrv.get('/api/endpoints')
+      var promise = backendSrv.get('/api/endpoints');
       promise.then(function(endpoints) {
         $scope.endpoints = endpoints;
       });
       return promise;
     };
-    $scope.tagsUpdated = function(newVal) {
+
+    $scope.tagsUpdated = function() {
       backendSrv.post("/api/endpoints", $scope.endpoint);
-    }
+    };
 
     $scope.getMonitorTypes = function() {
       backendSrv.get('/api/monitor_types').then(function(types) {
@@ -46,13 +47,14 @@ function (angular, _) {
 
     $scope.getEndpoint = function(id) {
       _.forEach($scope.endpoints, function(endpoint) {
-        if (endpoint.id == id) {
+        if (endpoint.id === id) {
           $scope.endpoint = endpoint;
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {
             _.forEach(monitors, function(monitor) {
               $scope.monitors[monitor.monitor_type_id] = monitor;
             });
+            $scope.pageReady = true;
           });
         }
       });
@@ -64,10 +66,10 @@ function (angular, _) {
         return $scope.monitors[type.id];
       }
       return undefined;
-    }
+    };
 
     $scope.monitorStateTxt = function(mon) {
-      if (typeof(mon) != "object") {
+      if (typeof(mon) !== "object") {
         return "disabled";
       }
       if (!mon.enabled) {
@@ -78,10 +80,10 @@ function (angular, _) {
       }
       var states = ["online", "warn", "critical"];
       return states[mon.state];
-    }
+    };
 
     $scope.stateChangeStr = function(mon) {
-      if (typeof(mon) != "object") {
+      if (typeof(mon) !== "object") {
         return "";
       }
       var duration = new Date().getTime() - new Date(mon.state_change).getTime();
@@ -102,11 +104,11 @@ function (angular, _) {
       }
       var days = Math.floor(duration/1000/60/60/24);
       return "for " + days + " days";
-    }
+    };
 
     $scope.setEndpoint = function(id) {
       $location.path('/endpoints/summary/'+id);
-    }
+    };
 
     $scope.gotoDashboard = function(endpoint, type) {
       if (!type) {
@@ -141,9 +143,11 @@ function (angular, _) {
     };
 
     $scope.refresh = function() {
+      $scope.pageReady = false;
       $scope.getEndpoint($scope.endpoint.id);
       $scope.refreshTime = new Date();
-    }
+    };
+
     $scope.init();
   });
 });

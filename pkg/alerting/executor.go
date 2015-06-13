@@ -64,7 +64,7 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 	}
 }
 
-func Executor(fn GraphiteReturner) {
+func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 	cache, err := lru.New(10000) // TODO configurable
 	if err != nil {
 		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
@@ -81,7 +81,7 @@ func Executor(fn GraphiteReturner) {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
 
-		key := fmt.Sprintf("%s-%d", job.key, job.lastPointTs.Unix())
+		key := fmt.Sprintf("%s-%d", job.Key, job.lastPointTs.Unix())
 
 		preConsider := time.Now()
 

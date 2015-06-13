@@ -3,8 +3,8 @@ package alerting
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"strings"
 	"text/template"
@@ -16,22 +16,22 @@ import (
 // this way the check runs always on the right data, irrespective of execution delays
 // that said, for convenience, we track the generatedAt timestamp
 type Job struct {
-	key         string
-	OrgId       int64
-	MonitorId   int64
-	EndpointId  int64
-	EndpointSlug string
+	Key             string
+	OrgId           int64
+	MonitorId       int64
+	EndpointId      int64
+	EndpointSlug    string
 	MonitorTypeName string
-	Freq        int64
-	Offset      int64 // offset on top of "even" minute/10s/.. intervals
-	State       m.CheckEvalResult
-	Definition  CheckDef
-	generatedAt time.Time
-	lastPointTs time.Time
+	Freq            int64
+	Offset          int64 // offset on top of "even" minute/10s/.. intervals
+	State           m.CheckEvalResult
+	Definition      CheckDef
+	generatedAt     time.Time
+	lastPointTs     time.Time
 }
 
 func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.key, job.generatedAt, job.lastPointTs, job.Definition)
+	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.Key, job.generatedAt, job.lastPointTs, job.Definition)
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
@@ -39,17 +39,17 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
 	for pos, state := range metricNames {
 		metrics[pos] = &m.MetricDefinition{
-			OrgId:     job.OrgId,
-			Name:      fmt.Sprintf("%s.alerting.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
+			OrgId:      job.OrgId,
+			Name:       fmt.Sprintf("%s.alerting.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
 			Metric:     fmt.Sprintf("alerting.%s.%s", strings.ToLower(job.MonitorTypeName), state),
 			Interval:   job.Freq,
 			Value:      0.0,
 			Unit:       "state",
 			Time:       job.lastPointTs.Unix(),
 			TargetType: "gauge",
-			Extra:      map[string]interface{}{
+			Extra: map[string]interface{}{
 				"endpoint_id": job.EndpointId,
-				"monitor_id": job.MonitorId,
+				"monitor_id":  job.MonitorId,
 			},
 		}
 	}
@@ -135,15 +135,15 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		panic(err)
 	}
 	j := &Job{
-		key:       fmt.Sprintf("%d", monitor.Id),
-		MonitorId: monitor.Id,
-		EndpointId: monitor.EndpointId,
-		EndpointSlug: monitor.EndpointSlug,
+		Key:             fmt.Sprintf("%d", monitor.Id),
+		MonitorId:       monitor.Id,
+		EndpointId:      monitor.EndpointId,
+		EndpointSlug:    monitor.EndpointSlug,
 		MonitorTypeName: monitor.MonitorTypeName,
-		OrgId:     monitor.OrgId,
-		Freq:      monitor.Frequency,
-		Offset:    monitor.Offset,
-		State:     monitor.State,
+		OrgId:           monitor.OrgId,
+		Freq:            monitor.Frequency,
+		Offset:          monitor.Offset,
+		State:           monitor.State,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed

@@ -28,7 +28,7 @@ func TestGraphiteRaintankQueries(t *testing.T) {
 		})
 	})
 
-	Convey("Given raintank collector tag valuess query", t, func() {
+	Convey("Given raintank collector tag values query", t, func() {
 		bus.AddHandler("test", func(query *m.GetCollectorsQuery) error {
 			So(query.OrgId, ShouldEqual, 10)
 			So(len(query.Tag), ShouldEqual, 1)
@@ -50,4 +50,42 @@ func TestGraphiteRaintankQueries(t *testing.T) {
 		})
 	})
 
+	Convey("Given raintank endpoint tags query", t, func() {
+		bus.AddHandler("test", func(query *m.GetAllEndpointTagsQuery) error {
+			So(query.OrgId, ShouldEqual, 10)
+			query.Result = []string{"dev1"}
+			return nil
+		})
+
+		resp, err := executeRaintankDbQuery("raintank_db.tags.endpoints.*", 10)
+		So(err, ShouldBeNil)
+
+		Convey("should return tags", func() {
+			array := resp.([]map[string]interface{})
+			So(len(array), ShouldEqual, 1)
+			So(array[0]["text"], ShouldEqual, "dev1")
+		})
+	})
+
+	Convey("Given raintank endpoint tag values query", t, func() {
+		bus.AddHandler("test", func(query *m.GetEndpointsQuery) error {
+			So(query.OrgId, ShouldEqual, 10)
+			So(len(query.Tag), ShouldEqual, 1)
+			So(query.Tag[0], ShouldEqual, "Asia")
+
+			query.Result = []*m.EndpointDTO{
+				&m.EndpointDTO{Name: "dev-2", Slug: "dev2"},
+			}
+			return nil
+		})
+
+		resp, err := executeRaintankDbQuery("raintank_db.tags.endpoints.Asia.*", 10)
+		So(err, ShouldBeNil)
+
+		Convey("should return tags", func() {
+			array := resp.([]map[string]interface{})
+			So(len(array), ShouldEqual, 1)
+			So(array[0]["text"], ShouldEqual, "dev2")
+		})
+	})
 }

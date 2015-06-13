@@ -50,19 +50,18 @@
 
 .password-strength {
   display: block;
-  width: 50px;
+  width: 15%;
   overflow: visible;
   white-space: nowrap;
   padding-top: 3px;
-  margin-left: 97px;
   color: darken(@textColor, 20%);
   border-top: 3px solid @red;
   &.password-strength-ok {
-    width: 170px;
+    width: 40%;
     border-top: 3px solid lighten(@yellow, 10%);
   }
   &.password-strength-good {
-    width: 254px;
+    width: 100%;
     border-top: 3px solid lighten(@green, 10%);
   }
 }
@@ -74,7 +73,7 @@
     padding: 9px 7px;
     font-size: 14px;
     font-weight: bold;
-    width: 150px;
+    min-width: 150px;
     display: inline-block;
     border: 1px solid lighten(@btnInverseBackground, 10%);
   }

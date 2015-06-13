@@ -19,18 +19,20 @@ function (angular, _) {
     };
 
     $scope.getCollectors = function() {
-      var promise = backendSrv.get('/api/collectors')
+      var promise = backendSrv.get('/api/collectors');
       promise.then(function(collectors) {
         $scope.collectors = collectors;
       });
       return promise;
     };
-    $scope.tagsUpdated = function(newVal) {
+
+    $scope.tagsUpdated = function() {
       backendSrv.post("/api/collectors", $scope.collector);
-    }
+    };
+
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
-        if (collector.id == id) {
+        if (collector.id === id) {
           $scope.collector = collector;
           //get monitors for this collector.
           backendSrv.get('/api/monitors?collector_id='+id).then(function(monitors) {

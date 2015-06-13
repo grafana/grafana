@@ -42,7 +42,7 @@
 
 				<div class="tight-form" ng-if="!loginMode">
           <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 80px">
+            <li class="tight-form-item" style="width: 79px">
 							<strong>Email</strong>
             </li>
             <li>
@@ -54,24 +54,22 @@
 
 				<div class="tight-form" ng-if="!loginMode">
           <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 80px">
+            <li class="tight-form-item" style="width: 79px">
 							<strong>Password</strong>
             </li>
             <li>
-							<input type="password" class="tight-form-input last" watch-change="passwordChanged(inputValue)" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 253px">
+							<input type="password" class="tight-form-input last" watch-change="formModel.password = inputValue;" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 253px">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
 
-				<div class="password-strength small" ng-if="!loginMode" ng-class="strengthClass">
-					<em>{{strengthText}}</em>
+				<div ng-if="!loginMode" style="margin-left: 97px; width: 254px;">
+					<password-strength password="formModel.password"></password-strength>
 				</div>
 
-
 				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-click="submit();"
-						      ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
 						{{submitBtnText}}
 					</button>
 				</div>
@@ -91,7 +89,15 @@
 			</div>
 	</div>
 
-	<div class="row" style="margin-top: 100px">
+	<div class="row" style="margin-top: 40px">
+		<div class="text-center">
+			<a href="user/password/send-reset-email">
+				Forgot your password?
+			</a>
+		</div>
+	</div>
+
+	<div class="row" style="margin-top: 50px">
 		<div class="version-footer text-center small">
 			Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
 			build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}

@@ -21,21 +21,12 @@ func getAlignedTicker() *time.Ticker {
 var tickQueueSize = 20
 var tickQueue = make(chan time.Time, tickQueueSize)
 
-// this should be set to above the max amount of jobs you expect to ever be created in 1 shot
-// so we can queue them all at once and then workers can process them
-// if more than this amount of jobs queue up, it means the workers can't process fast enough,
-// and the jobs will be skipped.
-// TODO configurable
-// at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
-var jobQueueSize = 1000
-var jobQueue = make(chan Job, jobQueueSize)
-
 // Dispatcher dispatches, every second, all jobs that should run for that second
 // every job has an id so that you can run multiple dispatchers (for HA) while still only processing each job once.
 // (provided jobs get consistently routed to executors)
-func Dispatcher() {
+func Dispatcher(jobQueue chan<- Job) {
 	Stat.IncrementValue("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue", 0)
-	go dispatchJobs()
+	go dispatchJobs(jobQueue)
 	for {
 		ticker := getAlignedTicker()
 		select {
@@ -52,7 +43,7 @@ func Dispatcher() {
 	}
 }
 
-func dispatchJobs() {
+func dispatchJobs(jobQueue chan<- Job) {
 	Stat.IncrementValue("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue", 0)
 	for t := range tickQueue {
 		Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
