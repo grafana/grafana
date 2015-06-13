@@ -29,22 +29,22 @@ require.config({
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                   '../vendor/jquery/jquery-2.1.3',
+    jquery:                   '../vendor/jquery/dist/jquery',
 
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
     'extend-jquery':          'components/extend-jquery',
 
-    'jquery.flot':            '../vendor/jquery/jquery.flot',
-    'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
-    'jquery.flot.events':     '../vendor/jquery/jquery.flot.events',
-    'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
-    'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
-    'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
-    'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
-    'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
-    'jquery.flot.fillbelow':  '../vendor/jquery/jquery.flot.fillbelow',
+    'jquery.flot':             '../vendor/flot/jquery.flot',
+    'jquery.flot.pie':         '../vendor/flot/jquery.flot.pie',
+    'jquery.flot.events':      '../vendor/flot/jquery.flot.events',
+    'jquery.flot.selection':   '../vendor/flot/jquery.flot.selection',
+    'jquery.flot.stack':       '../vendor/flot/jquery.flot.stack',
+    'jquery.flot.stackpercent':'../vendor/flot/jquery.flot.stackpercent',
+    'jquery.flot.time':        '../vendor/flot/jquery.flot.time',
+    'jquery.flot.crosshair':   '../vendor/flot/jquery.flot.crosshair',
+    'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
   },
