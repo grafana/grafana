@@ -886,7 +886,7 @@
     {
       "type": "dashboards",
       "icon": "external link",
-      "tag": "endpoint",
+      "tags": ["endpoint"],
       "asDropdown": true,
       "title": "Endpoint Dashboards",
       "includeVars": true,
