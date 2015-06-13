@@ -1,0 +1,9 @@
+{
+  "name": "angular-mocks",
+  "version": "1.4.0",
+  "main": "./angular-mocks.js",
+  "ignore": [],
+  "dependencies": {
+    "angular": "1.4.0"
+  }
+}
