@@ -23,17 +23,17 @@
 </topnav>
 
 <div style="margin: 10px; position: relative; display: block; max-width: 1000px; min-width:400px;">
-	
+
 	<!-- page title -->
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{collector.name}}</h1>
-		
+
 		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public" bs-tooltip="'This is a public collector'"></i></span>
 		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="!collector.public" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
 	<div class="editor-row rt-detail-pages">
 		<div class="editor-option">
-			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-update="tagsUpdated" ></bootstrap-tagsinput>
+			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
 		</div>
 	</div>
 
@@ -41,7 +41,7 @@
 	<div class="rt-tabs">
 		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
-</div>	
+</div>
 
 <form name="collectorForm">
 	<div class="detailContainer">
@@ -53,7 +53,7 @@
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="collectorCurrentStatus">
 						<div class="rt-summary-status">
-							<span class="{{collector.online?'online':'offline'}} jumbo"> {{collector.online?'online':'offline'}}</span> 
+							<span class="{{collector.online?'online':'offline'}} jumbo"> {{collector.online?'online':'offline'}}</span>
 							<!--<span class="statusMsg">for 12 days</span>-->
 						</div>
 						<div class="collectorStatus">
@@ -77,7 +77,7 @@
 				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 
-			
+
 		</div>
 
 		<div class="detailFull" style="display: inline-flex; margin-top: 10px; align-items: center; justify-content: center;">
@@ -85,5 +85,5 @@
 		<!--<iframe src="dashboard-solo/file/rt-collector-events.json?panelId=12&fullscreen&from=now-30d&to=now&var-collector={{collector.slug}}" width="100%" height="275" frameborder="0"></iframe>-->
 		</div>
 		</div>
-	</div>	
+	</div>
 </form>
