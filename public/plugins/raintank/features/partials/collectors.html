@@ -27,9 +27,6 @@
 					<option value="" label="All Statuses" style="color:black">All Statuses</option>
 					<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
 				</select>
-				<span class="small">Sorted By:</span>
-					<select class="input-medium rt-select-dropdown small" ng-model="sort_field" ng-options="field for field in ['name']" style="">
-				</select>
 			</div>
 
 			<div style="display: block; padding: 45px 0 0 0;">
@@ -37,9 +34,12 @@
 					<span class="small">Showing</span>
 						<a ng-click="setStatusFilter('up')" href="#" class="rt-list-status-up">{{(collectors|filterByTag:collector_filter.value|filter:{online:'up'}:statusFilter).length}} ONLINE</a> |
 						<a ng-click="setStatusFilter('down')" href="#" class="rt-list-status-disabled">{{(collectors|filterByTag:collector_filter.value|filter:{online:'down'}:statusFilter).length}} OFFLINE</a>
-						<span class="small"> of {{(collectors|filterByTag:collector_filter.value).length}} total</span>
+						<span class="small"> of {{(collectors|filterByTag:collector_filter.value).length}} total. <a ng-click="setTagFilter('')" style="text-transform: lowercase;">Show all</a></span>
 				</div>
 				<div class="editor-option" style="float: right;">
+				<span class="small">Sorted By:</span>
+					<select class="input-medium rt-select-dropdown small" ng-model="sort_field" ng-options="field for field in ['name']" style="">
+					</select>				
 				</div>
 			</div>
 		</div>
