@@ -40,7 +40,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/endpoints", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
 
 	// reset password
 	r.Get("/user/password/send-reset-email", Index)

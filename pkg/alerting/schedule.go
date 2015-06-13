@@ -26,26 +26,30 @@ type Job struct {
 	Offset          int64 // offset on top of "even" minute/10s/.. intervals
 	State           m.CheckEvalResult
 	Definition      CheckDef
-	generatedAt     time.Time
-	lastPointTs     time.Time
+	GeneratedAt     time.Time
+	LastPointTs     time.Time
+	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
 }
 
 func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.Key, job.generatedAt, job.lastPointTs, job.Definition)
+	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.Key, job.GeneratedAt, job.LastPointTs, job.Definition)
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
+	if job.StoreMetricFunc == nil {
+		return
+	}
 	metrics := make([]*m.MetricDefinition, 3)
 	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
 	for pos, state := range metricNames {
 		metrics[pos] = &m.MetricDefinition{
 			OrgId:      job.OrgId,
-			Name:       fmt.Sprintf("%s.alerting.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
+			Name:       fmt.Sprintf("alerting.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
 			Metric:     fmt.Sprintf("alerting.%s.%s", strings.ToLower(job.MonitorTypeName), state),
 			Interval:   job.Freq,
 			Value:      0.0,
 			Unit:       "state",
-			Time:       job.lastPointTs.Unix(),
+			Time:       job.LastPointTs.Unix(),
 			TargetType: "gauge",
 			Extra: map[string]interface{}{
 				"endpoint_id": job.EndpointId,
@@ -57,7 +61,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 		metrics[int(res)].Value = 1.0
 	}
 	for _, m := range metrics {
-		api.StoreMetric(m)
+		job.StoreMetricFunc(m)
 	}
 }
 
@@ -148,6 +152,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
+		StoreMetricFunc: api.StoreMetric,
 	}
 	return j
 }

@@ -32,7 +32,7 @@ function (angular, _) {
 
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
-        if (collector.id === id) {
+        if (collector.id === parseInt(id)) {
           $scope.collector = collector;
           //get monitors for this collector.
           backendSrv.get('/api/monitors?collector_id='+id).then(function(monitors) {

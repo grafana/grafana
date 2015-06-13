@@ -32,7 +32,7 @@
 	</div>
 	<div class="editor-row rt-detail-pages">
 		<div class="editor-option">
-			<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-update="tagsUpdated" ></bootstrap-tagsinput>
+			<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
 		</div>
 	</div>
 
@@ -194,7 +194,7 @@
 				<iframe src="http://128.199.88.198/dashboard-solo/db/events-sample?panelId=12&fullscreen&from=now-30d&to=now&var-collector={{collector.slug}}" width="1000" height="275" frameborder="0"></iframe>
 			</div>
 		</div>
-		
+
 		End Event Panel -->
 
 	</div>

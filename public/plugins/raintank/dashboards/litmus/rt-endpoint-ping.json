@@ -1,6 +1,6 @@
 {
-  "title": "Endpoints - Ping",
-  "originalTitle": "Endpoints - Ping",
+  "title": "Litmus Endpoints - Ping",
+  "originalTitle": "Litmus Endpoints - Ping",
   "tags": [
     "raintank",
     "endpoint"
@@ -88,13 +88,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.ok_state), 'ok')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.ok_state), 'ok')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.warn_state), 'warn')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.warn_state), 'warn')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.network.ping.error_state), 'error')"
+              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.error_state), 'error')"
             }
           ],
           "timeFrom": null,
@@ -200,17 +200,17 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(minSeries($endpoint.$collector.network.ping.min), 'min'), 'minimum')"
+              "target": "alias(consolidateBy(minSeries($endpoint.$collector.litmus.ping.min), 'min'), 'minimum')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.network.ping.mean), 'average')"
+              "target": "alias(averageSeries($endpoint.$collector.litmus.ping.mean), 'average')"
             },
             {
-              "target": "alias(consolidateBy(maxSeries($endpoint.$collector.network.ping.max), 'max'), 'maximum')"
+              "target": "alias(consolidateBy(maxSeries($endpoint.$collector.litmus.ping.max), 'max'), 'maximum')"
             },
             {
               "hide": false,
-              "target": "alias(removeBelowValue(averageSeries($endpoint.$collector.network.ping.loss), 1), 'loss')"
+              "target": "alias(removeBelowValue(averageSeries($endpoint.$collector.litmus.ping.loss), 1), 'loss')"
             }
           ],
           "timeFrom": null,
@@ -285,7 +285,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.ping.mean, 1)"
+              "target": "aliasByNode($endpoint.$collector.litmus.ping.mean, 1)"
             }
           ],
           "timeFrom": null,
@@ -386,7 +386,7 @@
     {
       "type": "dashboards",
       "icon": "external link",
-      "tag": "endpoint",
+      "tags": ["endpoint"],
       "asDropdown": true,
       "title": "Endpoint Dashboards",
       "includeVars": true,

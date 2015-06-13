@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Dieterbe/statsd-go"
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,6 +39,10 @@ func Init() {
 	} else {
 		standalone()
 	}
+}
+
+func setStatsdClient(s *statsd.Client) {
+	Stat = s
 }
 
 func standalone() {
@@ -113,7 +118,7 @@ func distributed(url string) error {
 			log.Error(0, "failed to unmarshal msg body.", err)
 			return err
 		}
-
+		job.StoreMetricFunc = api.StoreMetric
 		select {
 		case consumeQueue <- job:
 		default:

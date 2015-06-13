@@ -5,14 +5,16 @@ import (
 	"time"
 
 	"bosun.org/graphite"
-
 	"github.com/Dieterbe/statsd-go"
+	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func init() {
 	Stat, _ := statsd.NewClient(false, "localhost:8125", "grafana")
-	Init(Stat)
+	setStatsdClient(Stat)
+
+	standalone()
 }
 
 func assertReq(t *testing.T, listener chan *graphite.Request, msg string) {
@@ -46,22 +48,24 @@ func TestExecutor(t *testing.T) {
 		}
 		jobAt := func(key string, ts int64) Job {
 			return Job{
-				key: key,
+				Key:   key,
+				State: m.EvalResultUnknown,
 				Definition: CheckDef{
 					CritExpr: `graphite("foo", "2m", "", "")`,
 					WarnExpr: "0",
 				},
-				lastPointTs: time.Unix(ts, 0),
+				LastPointTs: time.Unix(ts, 0),
 			}
 		}
-		go Executor(fakeGraphiteReturner)
+		jobQueue := make(chan Job, 10)
+		go Executor(fakeGraphiteReturner, jobQueue)
 		jobQueue <- jobAt("foo", 0)
 		jobQueue <- jobAt("foo", 1)
 		jobQueue <- jobAt("foo", 2)
 		jobQueue <- jobAt("foo", 2)
 		jobQueue <- jobAt("foo", 1)
 		jobQueue <- jobAt("foo", 0)
-		time.Sleep(100 * time.Millisecond) // yes hacky, can be synchronized later
+		time.Sleep(1000 * time.Millisecond) // yes hacky, can be synchronized later
 		assertReq(t, listener, "expected the first job")
 		assertReq(t, listener, "expected the second job")
 		assertReq(t, listener, "expected the third job")

@@ -19,11 +19,11 @@
 		<div class="editor-row">
 			<div class="editor-option">
 				<span class="small">Filter by:</span>
-				<select class="input-medium rt-select-dropdown" style="" ng-model="collector_filter">
+				<select class="input-medium rt-select-dropdown" style="" ng-model="collector_filter.value">
 					<option value="" label="All Tags" style="color:black">All Collectors</option>
 					<option ng-repeat="t in collectorTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
 				</select>
-				<select class="input-medium rt-select-dropdown" style="" ng-model="status_filter">
+				<select class="input-medium rt-select-dropdown" style="" ng-model="status_filter.value">
 					<option value="" label="All Statuses" style="color:black">All Statuses</option>
 					<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
 				</select>
@@ -34,10 +34,10 @@
 
 			<div style="display: block; padding: 45px 0 0 0;">
 				<div style="display: inline-block" class="rt-list-status">
-						<span class="small">Showing</span>
-						<a ng-click="setStatusFilter(true)" href="#" class="rt-list-status-up">{{collectorCount(true)}}0 ONLINE</a> |
-						<a ng-click="setStatusFilter(false)" href="#" class="rt-list-status-disabled">{{collectorCount(false)}}3 OFFLINE</a>
-						<span class="small"> of 3 total</span>
+					<span class="small">Showing</span>
+						<a ng-click="setStatusFilter('up')" href="#" class="rt-list-status-up">{{(collectors|filterByTag:collector_filter.value|filter:{online:'up'}:statusFilter).length}} ONLINE</a> |
+						<a ng-click="setStatusFilter('down')" href="#" class="rt-list-status-disabled">{{(collectors|filterByTag:collector_filter.value|filter:{online:'down'}:statusFilter).length}} OFFLINE</a>
+						<span class="small"> of {{(collectors|filterByTag:collector_filter.value).length}} total</span>
 				</div>
 				<div class="editor-option" style="float: right;">
 				</div>
@@ -51,7 +51,7 @@
 		<div ng-if="collectors.length === 0">
 			<em>No collectors defined</em>
 		</div>
-		<div class="rt-list" ng-repeat="collector in collectors | filterByTag:collector_filter | filter:{online:status_filter}:statusFilter | orderBy:sort_field">
+		<div class="rt-list" ng-repeat="collector in collectors | filterByTag:collector_filter.value | filter:{online:status_filter.value}:statusFilter | orderBy:sort_field">
 			<div class="rt-list-header">
 				<span class="rt-list-item-title"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
 				<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raintank Public Collector'"></img></span>
@@ -66,7 +66,7 @@
 						</ul>
 					</span> -->
 
-					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag="tag" tag-color-from-name>
+					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name="tag">
 						<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
 						<ul class="dropdown-menu rt-tag-dropup">
 							<li>

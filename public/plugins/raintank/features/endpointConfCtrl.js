@@ -13,10 +13,6 @@ function (angular, _) {
 
     $scope.pageReady = false;
 
-    var defaults = {
-      name: '',
-    };
-
     var monitorLastState = {};
     var freqOpt = [10, 30, 60, 120];
 
@@ -45,6 +41,8 @@ function (angular, _) {
         promises.push($scope.getEndpoints().then(function() {
           $scope.getEndpoint($routeParams.id);
         }));
+      } else {
+        $scope.endpoint = {name: ""};
       }
 
       $scope.checks = {};
@@ -172,16 +170,15 @@ function (angular, _) {
     };
 
     $scope.setDefaultMonitor = function(type) {
-      var settings = [];
-      _.forEach(type.settings, function(setting) {
-        var val = setting.default_value;
-        if ($scope.endpoint && (setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname")) {
-          val = $scope.endpoint.name || "";
-        }
-        settings.push({variable: setting.variable, value: val});
-      });
-
       if (!(type.name.toLowerCase() in $scope.monitors)) {
+        var settings = [];
+        _.forEach(type.settings, function(setting) {
+          var val = setting.default_value;
+          if ($scope.endpoint && (setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname")) {
+            val = $scope.endpoint.name || "";
+          }
+          settings.push({variable: setting.variable, value: val});
+        });
         $scope.monitors[type.name.toLowerCase()] = {
           id: null,
           endpoint_id: null,
@@ -191,7 +188,6 @@ function (angular, _) {
           settings: settings,
           enabled: false,
           frequency: 10,
-          //test: true,
         };
       }
     };
@@ -238,7 +234,6 @@ function (angular, _) {
     };
 
     $scope.reset = function() {
-      $scope.endpoint = angular.copy(defaults);
       $scope.discovered = false;
       $scope.discoveryInProgress = false;
       $scope.discoveryError = false;

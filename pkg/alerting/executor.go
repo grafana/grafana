@@ -81,7 +81,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
 		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
 
-		key := fmt.Sprintf("%s-%d", job.Key, job.lastPointTs.Unix())
+		key := fmt.Sprintf("%s-%d", job.Key, job.LastPointTs.Unix())
 
 		preConsider := time.Now()
 
@@ -103,17 +103,16 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 			panic(fmt.Sprintf("received invalid check definition '%s': %s", job.Definition, err))
 		}
 
-		res, err := evaluator.Eval(job.lastPointTs)
+		res, err := evaluator.Eval(job.LastPointTs)
 		//fmt.Println("job results", job, err, res)
 
 		durationExec := time.Since(preExec)
-
 		if job.State != res {
 			//monitor state has changed.
 			updateMonitorStateCmd := m.UpdateMonitorStateCommand{
 				Id:      job.MonitorId,
 				State:   res,
-				Updated: job.lastPointTs,
+				Updated: job.LastPointTs,
 			}
 			if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
 				panic(fmt.Sprintf("failed to update monitor state. %s", err.Error()))
@@ -137,6 +136,5 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
 
 		cache.Add(key, true)
-
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Events can be passed to external systems via for example AMPQ
+// Events can be passed to external systems via for example AMQP
 // Treat these events as basically DTOs so changes has to be backward compatible
 
 type Priority string

@@ -10,17 +10,15 @@ import (
 )
 
 // POST /api/user/signup
-func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
+func SignUp(c *middleware.Context, cmd m.CreateUserCommand) Response {
 	if !setting.AllowUserSignUp {
-		c.JsonApiErr(401, "User signup is disabled", nil)
-		return
+		return ApiError(401, "User signup is disabled", nil)
 	}
 
 	cmd.Login = cmd.Email
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "failed to create user", err)
-		return
+		return ApiError(500, "failed to create user", err)
 	}
 
 	user := cmd.Result
@@ -34,7 +32,7 @@ func SignUp(c *middleware.Context, cmd m.CreateUserCommand) {
 
 	loginUserWithUser(&user, c)
 
-	c.JsonOK("User created and logged in")
-
 	metrics.M_Api_User_SignUp.Inc(1)
+
+	return ApiSuccess("User created and logged in")
 }

@@ -47,7 +47,7 @@ function (angular, _) {
 
     $scope.getEndpoint = function(id) {
       _.forEach($scope.endpoints, function(endpoint) {
-        if (endpoint.id === id) {
+        if (endpoint.id === parseInt(id)) {
           $scope.endpoint = endpoint;
           //get monitors for this endpoint.
           backendSrv.get('/api/monitors?endpoint_id='+id).then(function(monitors) {

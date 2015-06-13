@@ -63,7 +63,7 @@ func DiscoverPing(domain string) (*m.SuggestedMonitor, error) {
 	}
 
 	settings := []m.MonitorSettingDTO{
-		m.MonitorSettingDTO{Variable: "hostname", Value: domain},
+		{Variable: "hostname", Value: domain},
 	}
 
 	return &m.SuggestedMonitor{MonitorTypeId: 3, Settings: settings}, nil
@@ -83,8 +83,8 @@ func DiscoverHttp(domain string) (*m.SuggestedMonitor, error) {
 	}
 	//httpHost := RequestURrl.Host
 	settings := []m.MonitorSettingDTO{
-		m.MonitorSettingDTO{Variable: "host", Value: requestUrl.Host},
-		m.MonitorSettingDTO{Variable: "path", Value: requestUrl.Path},
+		{Variable: "host", Value: requestUrl.Host},
+		{Variable: "path", Value: requestUrl.Path},
 	}
 	return &m.SuggestedMonitor{MonitorTypeId: 1, Settings: settings}, nil
 }
@@ -98,8 +98,8 @@ func DiscoverHttps(domain string) (*m.SuggestedMonitor, error) {
 	requestUrl := resp.Request.URL
 
 	settings := []m.MonitorSettingDTO{
-		m.MonitorSettingDTO{Variable: "host", Value: requestUrl.Host},
-		m.MonitorSettingDTO{Variable: "path", Value: requestUrl.Path},
+		{Variable: "host", Value: requestUrl.Host},
+		{Variable: "path", Value: requestUrl.Path},
 	}
 	return &m.SuggestedMonitor{MonitorTypeId: 2, Settings: settings}, nil
 }
@@ -128,9 +128,9 @@ func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
 	}
 
 	settings := []m.MonitorSettingDTO{
-		m.MonitorSettingDTO{Variable: "name", Value: recordName},
-		m.MonitorSettingDTO{Variable: "type", Value: recordType},
-		m.MonitorSettingDTO{Variable: "server", Value: server},
+		{Variable: "name", Value: recordName},
+		{Variable: "type", Value: recordType},
+		{Variable: "server", Value: server},
 	}
 	return &m.SuggestedMonitor{MonitorTypeId: 4, Settings: settings}, nil
 }
