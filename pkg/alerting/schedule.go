@@ -129,7 +129,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
 	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
 
-	target := `sum({{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state)`
+	target := `sum(litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
 	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
