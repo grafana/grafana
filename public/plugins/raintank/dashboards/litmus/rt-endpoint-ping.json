@@ -285,7 +285,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 2)"
             }
           ],
           "timeFrom": null,
