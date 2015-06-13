@@ -21,7 +21,7 @@ require.config({
     'angular-route':          '../vendor/angular-route/angular-route',
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
     angularMocks:             '../vendor/angular-mocks/angular-mocks',
-    'angular-dragdrop':       '../vendor/angular-other/angular-dragdrop',
+    'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          '../vendor/angular-other/angular-strap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
