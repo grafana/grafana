@@ -6,9 +6,10 @@
 package slug
 
 import (
-	"github.com/dalu/unidecode"
 	"regexp"
 	"strings"
+
+	"github.com/rainycape/unidecode"
 )
 
 var (

@@ -5,12 +5,9 @@ import (
 	"encoding/binary"
 	"io"
 	"strings"
-	"sync"
 )
 
 var (
-	decoded          = false
-	mutex            sync.Mutex
 	transliterations [65536][]rune
 	transCount       = rune(len(transliterations))
 	getUint16        = binary.LittleEndian.Uint16
