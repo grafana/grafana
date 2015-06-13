@@ -2,7 +2,7 @@
 	"use strict";
 	/**
 	 * Bindonce - Zero watches binding for AngularJs
-	 * @version v0.3.2
+	 * @version v0.3.3
 	 * @link https://github.com/Pasvaz/bindonce
 	 * @author Pasquale Vazzana <pasqualevazzana@gmail.com>
 	 * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -185,6 +185,9 @@
 								case 'style':
 									binder.element.css(value);
 									break;
+								case 'disabled':
+									binder.element.prop('disabled', value);
+									break;
 								case 'src':
 									binder.element.attr(binder.attr, value);
 									if (msie) binder.element.prop('src', value);
@@ -251,6 +254,7 @@
 		{ directiveName: 'boTitle', attribute: 'title' },
 		{ directiveName: 'boId', attribute: 'id' },
 		{ directiveName: 'boStyle', attribute: 'style' },
+		{ directiveName: 'boDisabled', attribute: 'disabled' },
 		{ directiveName: 'boValue', attribute: 'value' },
 		{ directiveName: 'boAttr', attribute: 'attr' },
 
