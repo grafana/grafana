@@ -25,7 +25,7 @@ type AddApiKeyCommand struct {
 	Role    RoleType `json:"role" binding:"Required"`
 	OrgId   int64    `json:"-"`
 	Key     string   `json:"-"`
-	IsAdmin bool     `json:"-"`
+	IsAdmin bool     `json:"isAdmin"`
 
 	Result *ApiKey `json:"-"`
 }
