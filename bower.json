@@ -18,6 +18,7 @@
     "angular-route": "~1.4.0",
     "angular-mocks": "~1.4.0",
     "angular-sanitize": "~1.4.0",
-    "angular-native-dragdrop": "~1.1.0"
+    "angular-native-dragdrop": "~1.1.0",
+    "angular-bindonce": "~0.3.3"
   }
 }

@@ -25,7 +25,7 @@ require.config({
     'angular-strap':          '../vendor/angular-other/angular-strap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
-    bindonce:                 '../vendor/angular-other/bindonce',
+    bindonce:                 '../vendor/angular-bindonce/bindonce',
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
