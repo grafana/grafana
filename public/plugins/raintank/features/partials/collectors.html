@@ -11,7 +11,7 @@
 			<img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
 			<p class="freqMsg nodata rt-loading-msg-1">Ground Control to Major Tom</p>
 			<p class="freqMsg nodata rt-loading-msg-2">This is taking longer than expected.</p>
-			<p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>			
+			<p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>
 		</div>
 	</div>
 
@@ -66,7 +66,7 @@
 						</ul>
 					</span> -->
 
-					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag="tag" tag-color-from-name>
+					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name="tag">
 						<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
 						<ul class="dropdown-menu rt-tag-dropup">
 							<li>

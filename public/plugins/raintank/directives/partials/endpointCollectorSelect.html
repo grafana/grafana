@@ -27,9 +27,9 @@
 			       			<span class="collector-dropdown-count">1 selected</span>
 			      		</div>
 			      		-->
-						
+
 						<a class="collector-dropdown-tag" bindonce ng-repeat="option in tags|filter:query" ng-class="{'selected': option.selected}" ng-click="tagSelected(option)">
-							<span class="label rt-label-tag dropdown rt-list-tag-menu" tag="option.text" tag-color-from-name>
+							<span class="label rt-label-tag dropdown rt-list-tag-menu" tag-color-from-name="option.text">
 								{{option.text}}
 								<i ng-class="icon" class="tag-icon icon-rt-collector"></i>
 							</span>
@@ -44,7 +44,7 @@
 				    <p>Preview: {{collectorsWithTags()}}</p>
 				    <p ng-show="error">{{error}}</p>
 			    </div>
-			    
+
 			</div>
 		</div>
 
@@ -54,7 +54,7 @@
 	<div style="min-height: 40px;">
 		<input id="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-custom" type="radio" ng-model="footprint.value" value="static"  ng-click="show()">
 		<label for="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-body-label">Static Footprint</label><i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A Static footprint will allow your monitoring footprint to remain the same, only monitoring from the specific individual collectors.'" data-original-title="" title=""></i>
-		
+
 		<div class="editor-option" ng-show="footprint.value == 'static'">
 
 		<div class="rt-collector-select pointer" ng-click="show()">
@@ -73,7 +73,7 @@
 			</div>
 			<div class="collector-dropdown-container variable-options-container">
 				<div class="collector-dropdown-container-col">
-					<!-- 
+					<!--
 					<div class="collector-dropdown-counter">
 		         		<span class="collector-dropdown-count">1 selected</span>
 		      		</div>
@@ -92,7 +92,7 @@
 			</div>
 			<div ng-show="error" class="collector-dropdown-footer">
 			    <p>{{error}}</p>
-		    </div>			
+		    </div>
 		</div>
 	</div>
 
