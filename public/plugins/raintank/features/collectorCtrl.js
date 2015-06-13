@@ -15,8 +15,8 @@ function (angular, _) {
     ];
 
     $scope.init = function() {
-      $scope.collector_filter = "";
-      $scope.status_filter = "";
+      $scope.collector_filter = {value: ""};
+      $scope.status_filter = {value: ""};
       $scope.sort_field = "name";
       $scope.collectors = [];
       $scope.getCollectors();
@@ -33,15 +33,14 @@ function (angular, _) {
     };
 
     $scope.setCollectorFilter = function(tag) {
-      $scope.collector_filter = tag;
+      $scope.collector_filter.value = tag;
     };
 
-    $scope.setStatusFilter = function(status) {
-      var newStatus = status ? "up":"down";
-      if (newStatus === $scope.status_filter) {
+    $scope.setStatusFilter = function(newStatus) {
+      if (newStatus === $scope.status_filter.value) {
         newStatus = "";
       }
-      $scope.status_filter = newStatus;
+      $scope.status_filter.value = newStatus;
     };
 
     $scope.statusFilter = function(actual, expected) {
