@@ -1,4 +1,3 @@
-
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
   baseUrl: 'public/app',
@@ -17,7 +16,7 @@ require.config({
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular-route/angular-route',
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
-    'angular-dragdrop':       '../vendor/angular-other/angular-dragdrop',
+    'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          '../vendor/angular-other/angular-strap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
@@ -101,5 +100,4 @@ require.config({
 
     'bootstrap-tagsinput':          ['jquery'],
   },
-  waitSeconds: 60,
 });
