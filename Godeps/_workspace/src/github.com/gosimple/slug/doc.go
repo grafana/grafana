@@ -12,7 +12,7 @@ Example:
 	package main
 
 	import(
-		"github.com/dalu/slug"
+		"github.com/gosimple/slug"
 		"fmt"
 	)
 
@@ -35,5 +35,9 @@ Example:
 		textSub := slug.Make("water is hot")
 		fmt.Println(textSub) // Will print 'sand-is-hot'
 	}
+
+Requests or bugs?
+
+https://github.com/gosimple/slug/issues
 */
 package slug
