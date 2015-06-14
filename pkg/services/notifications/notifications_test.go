@@ -31,7 +31,7 @@ func TestNotifications(t *testing.T) {
 			err := sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
 			So(err, ShouldBeNil)
 			So(sentMsg.Body, ShouldContainSubstring, "body")
-			So(sentMsg.Subject, ShouldEqual, "Reset your Grafana password")
+			So(sentMsg.Subject, ShouldEqual, "Reset your Grafana password asd@asd.com")
 			So(sentMsg.Body, ShouldNotContainSubstring, "Subject")
 		})
 	})

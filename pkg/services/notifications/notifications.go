@@ -68,10 +68,22 @@ func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
 	setDefaultTemplateData(data, nil)
 	mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
 
+	subjectTmplText := data["Subject"].(map[string]interface{})["value"].(string)
+	subjectTmpl, err := template.New("subject").Parse(subjectTmplText)
+	if err != nil {
+		return err
+	}
+
+	var subjectBuffer bytes.Buffer
+	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+	if err != nil {
+		return err
+	}
+
 	addToMailQueue(&Message{
 		To:      cmd.To,
 		From:    setting.Smtp.FromAddress,
-		Subject: data["Subject"].(map[string]interface{})["value"].(string),
+		Subject: subjectBuffer.String(),
 		Body:    buffer.String(),
 	})
 
