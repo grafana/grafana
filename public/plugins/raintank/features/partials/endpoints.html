@@ -43,7 +43,7 @@
 			<div style="display: block; padding: 45px 0 0 0;">
 				<div style="display: inline-block" class="rt-list-status">
 					<span class="small">Showing {{(endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter ).length}}</span>
-					<span class="small"> of {{endpoints.length}} total. <a ng-click="setTagFilter('')" style="text-transform: lowercase;">Show all</a></span>
+					<span class="small"> of <span class="rt-list-links" ng-click="setTagFilter('')">{{endpoints.length}} total</a></span>
 				</div>
 				<div class="editor-option" style="float: right;">
 					<span class="small">Sorted By:</span>
