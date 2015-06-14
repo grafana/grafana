@@ -35,7 +35,7 @@ func TestGraphiteRaintankQueries(t *testing.T) {
 			So(query.Tag[0], ShouldEqual, "Europe")
 
 			query.Result = []*m.CollectorDTO{
-				&m.CollectorDTO{Name: "dev-1", Slug: "dev1"},
+				{Name: "dev-1", Slug: "dev1"},
 			}
 			return nil
 		})
@@ -74,7 +74,7 @@ func TestGraphiteRaintankQueries(t *testing.T) {
 			So(query.Tag[0], ShouldEqual, "Asia")
 
 			query.Result = []*m.EndpointDTO{
-				&m.EndpointDTO{Name: "dev-2", Slug: "dev2"},
+				{Name: "dev-2", Slug: "dev2"},
 			}
 			return nil
 		})
