@@ -38,7 +38,7 @@ function () {
         ctrl.variable = {
           current: {text: 'server-1', value: 'server-1'},
           options: [
-            {text: 'server-1', value: 'server-1'},
+            {text: 'server-1', value: 'server-1', selected: true},
             {text: 'server-2', value: 'server-2'},
             {text: 'server-3', value: 'server-3'},
           ],

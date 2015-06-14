@@ -1,4 +1,3 @@
-
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
   baseUrl: 'public/app',
@@ -9,19 +8,18 @@ require.config({
     kbn:                      'components/kbn',
     store:                    'components/store',
 
-    css:                      '../vendor/require/css',
-    text:                     '../vendor/require/text',
+    text:                     '../vendor/requirejs-text/text',
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',
     angular:                  '../vendor/angular/angular',
-    'angular-route':          '../vendor/angular/angular-route',
-    'angular-sanitize':       '../vendor/angular/angular-sanitize',
-    'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
-    'angular-strap':          '../vendor/angular/angular-strap',
-    timepicker:               '../vendor/angular/timepicker',
-    datepicker:               '../vendor/angular/datepicker',
-    bindonce:                 '../vendor/angular/bindonce',
+    'angular-route':          '../vendor/angular-route/angular-route',
+    'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
+    'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
+    'angular-strap':          '../vendor/angular-other/angular-strap',
+    timepicker:               '../vendor/angular-other/timepicker',
+    datepicker:               '../vendor/angular-other/datepicker',
+    bindonce:                 '../vendor/angular-bindonce/bindonce',
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
@@ -29,19 +27,19 @@ require.config({
     'lodash-src':             '../vendor/lodash',
     bootstrap:                '../vendor/bootstrap/bootstrap',
 
-    jquery:                   '../vendor/jquery/jquery-2.1.3',
+    jquery:                   '../vendor/jquery/dist/jquery',
 
     'extend-jquery':          'components/extend-jquery',
 
-    'jquery.flot':            '../vendor/jquery/jquery.flot',
-    'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
-    'jquery.flot.events':     '../vendor/jquery/jquery.flot.events',
-    'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
-    'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
-    'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
-    'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
-    'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
-    'jquery.flot.fillbelow':  '../vendor/jquery/jquery.flot.fillbelow',
+    'jquery.flot':             '../vendor/flot/jquery.flot',
+    'jquery.flot.pie':         '../vendor/flot/jquery.flot.pie',
+    'jquery.flot.events':      '../vendor/flot/jquery.flot.events',
+    'jquery.flot.selection':   '../vendor/flot/jquery.flot.selection',
+    'jquery.flot.stack':       '../vendor/flot/jquery.flot.stack',
+    'jquery.flot.stackpercent':'../vendor/flot/jquery.flot.stackpercent',
+    'jquery.flot.time':        '../vendor/flot/jquery.flot.time',
+    'jquery.flot.crosshair':   '../vendor/flot/jquery.flot.crosshair',
+    'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
 
@@ -106,5 +104,4 @@ require.config({
 
     'bootstrap-tagsinput':          ['jquery'],
   },
-  waitSeconds: 60,
 });

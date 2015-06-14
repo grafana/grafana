@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+    <title>Angular DragDrop</title>
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css"/>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/github.min.css">
+    <script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+    <script data-require="angular.js@1.3.x" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"
+            data-semver="1.3.x"></script>
+    <script src="http://pc035860.github.io/angular-highlightjs/angular-highlightjs.min.js"></script>
+</head>
+<body>
+
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
+    <div class="container">
+        <div class="navbar-header">
+            <a href="#" class="navbar-brand">Angular DragDrop</a>
+        </div>
+    </div>
+</header>
+<a class="ribbon" href="https://github.com/angular-dragdrop/angular-dragdrop"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+<div class="jumbotron">
+    <div class="container">
+        <h1>Angular Drag and Drop</h1>
+
+        <p>Angular-DragDrop is a <a href="http://www.angularjs.org">AngularJS</a> HTML5 Drag and Drop directive written in pure with no dependency on JQuery.</p>
+        <iframe src="http://ghbtns.com/github-btn.html?user=angular-dragdrop&repo=angular-dragdrop&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+        <iframe src="http://ghbtns.com/github-btn.html?user=angular-dragdrop&repo=angular-dragdrop&type=fork&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+    </div>
+
+
+</div>
+<div class="container content">
+    <h2>Directives</h2>
+    <hr>
+
+    <h3 class="text-info"><em>ui-draggable</em></h3>
+
+    <p>
+        directive in module <em>ngDragDrop</em>
+    </p>
+
+    <p>The <code>ui-draggable</code> attribute tells Angular that the element is draggable. <code>ui-draggable</code>
+        takes an expression as the attribute value. The expression should evaluate to either <code>true</code> or <code>false</code>.
+        You can toggle the draggability of an element using this expression.
+    </p>
+
+
+    <h3 class="heading"><strong>Additional Attributes</strong></h3>
+
+    <h4 class="text-info"><em>drag</em></h4>
+
+    <p>The <code>drag</code> property is used to assign the data that needs to be passed along with the dragging
+        element.</p>
+    <hr>
+    <h4 class="text-info"><em>drag-handle-class</em></h4>
+
+    <p>The class used to mark child elements of draggable object to be used as drag handle. Default class name is
+        <code>drag-handle</code>.</p>
+    <div>
+        <strong>NOTE</strong>: If attribute is not present drag handle feature is not active.
+    </div>
+    <hr>
+    <h4 class="text-info"><em>on-drop-success</em></h4>
+
+    <p>The <code>on-drop-success</code> attribute takes a function. We can consider this to be an on-drop-success
+        handler function.
+        This can be useful if you need to do some post processing after the dragged element is dropped successfully on
+        the drop site.
+
+    <div>
+        <strong>NOTE</strong>: This callback function is only called when the drop succeeds.
+    </div>
+    You can request the <code>drag-end</code> event ( very similiar to requesting the click event in
+    <code>ng-click</code> )
+    by passing <code>$event</code> in the event handler.
+    </p>
+    
+    <hr>
+    <h4 class="text-info"><em>on-drop-failure</em></h4>
+
+    <p>The <code>on-drop-failure</code> attribute takes a function. We can consider this to be an on-drop-failure
+        handler function.
+        This can be useful if you need to do some post processing after the dragged element is dropped unsuccessfully on
+        any drop site.
+
+    <div>
+        <strong>NOTE</strong>: This callback function is only called when the drop fails.
+    </div>
+    You can request the <code>drag-end</code> event ( very similiar to requesting the click event in
+    <code>ng-click</code> )
+    by passing <code>$event</code> in the event handler.
+    </p>
+
+
+    <hr>
+    <h3 class="heading"><strong>Usage</strong></h3>
+
+    <p>
+
+    <div hljs>
+        <ANY ui-draggable="{expression}"
+             drag="dragData"
+             drag-handle-class="my-drag-handle"
+             on-drop-success="onDropSuccessHandler($event)"
+             on-drop-failure="onDropFailureHandler($event)"
+             drag-channel="mydropchannel">...
+        </ANY>
+    </div>
+    </p>
+
+    <h3 class="heading"><strong>Details</strong></h3>
+
+    <p>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <td>Param</td>
+            <td>Type</td>
+            <td>Details</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>ui-draggable</td>
+            <td><label class="text-muted">expression</label></td>
+            <td><a target="_blank" href="http://docs.angularjs.org/guide/expression">Expression</a> that should be
+                evaluated. The given expression should resolve to true or false.
+            </td>
+        </tr>
+        <tr>
+            <td>drag</td>
+            <td><label class="text-muted">variable</label></td>
+            <td>Takes any JSON convertable <code>$scope</code> variable.</td>
+        </tr>
+        <tr>
+            <td>drag-handle-class</td>
+            <td><label class="text-muted">string</label></td>
+            <td>Class name used to mark child elements of draggable object to be used as drag handle. <br/>If attribute
+                is not present drag handle feature is not used. <br/>If attribute is present but have no value
+                <code>drag-handle</code> used as default.</td>
+        </tr>
+        <tr>
+            <td>on-drop-success</td>
+            <td><label class="text-muted">function</label></td>
+            <td>Takes any <code>$scope</code> function. Can also pass <code>$event</code>.</td>
+        </tr>
+        <tr>
+            <td>on-drop-failure</td>
+            <td><label class="text-muted">function</label></td>
+            <td>Takes any <code>$scope</code> function. Can also pass <code>$event</code>.</td>
+        </tr>
+        <tr>
+            <td>drag-channel</td>
+            <td><label class="text-muted">string</label></td>
+            <td>Takes a string that can be used as the channel name for the dragging operation.
+                Default channel is <code>"defaultchannel"</code>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </p>
+    <hr>
+
+    <h3 class="heading"><strong>Events</strong></h3>
+
+    <p>On start of dragging an Angular Event <code>ANGULAR_DRAG_START</code> is dispatched from the
+        <code>$rootScope</code>. The event also carries
+        carries the information about the channel in which the dragging has started.
+    </p>
+
+    <p>On end of dragging an Angular Event <code>ANGULAR_DRAG_END</code> is dispatched from the <code>$rootScope</code>.
+        The event also carries
+        carries the information about the channel in which the dragging has started.
+    </p>
+
+    <p>When hovering a draggable element on top of a drop area an Angular Event <code>ANGULAR_HOVER</code>
+        is dispatched from the <code>$rootScope</code>.
+        The event also carries the information about the channel in which the dragging has started.
+    </p>
+
+    <hr>
+
+    <h3 class="text-info"><em>ui-on-drop</em></h3>
+
+    <p>
+        directive in module <em>ngDragDrop</em>
+    </p>
+
+    <p>The <code>ui-on-drop</code> attribute tells Angular that the element is a drop site. <code>ui-on-drop</code>
+        takes a function as the attribute value. The function will be called when a valid dragged element is dropped in
+        that location.
+        A valid dragged element is one which has the same channel as the drop location.
+
+    <div>
+        <strong>NOTE</strong> : This callback function is only called when the drop succeeds.
+    </div>
+    The <code>ui-on-drop</code> callback can request additional parameters. The data that is dragged is available to the
+    callback as <code>$data</code> and its channel as <code>$channel</code>. Apart from this the drop event is exposed as <code>$event</code>.
+    </p>
+    <h3 class="heading"><strong>Additional Attributes</strong></h3>
+
+    <h4 class="text-info"><em>drop-channel</em></h4>
+
+    <p>The channel that the drop site accepts. The dragged element should have the same channel as this drop site for it
+        to be droppable at this location. It is possible to provide comma separated list of channels.
+
+        <div>
+            <strong>NOTE</strong>: Also special value of <code>drag-channel</code> attribute is available to accept
+            dragged element with any channel value — <code>*</code>
+        </div>
+    </p>
+
+    <hr>
+
+    <h4 class="text-info"><em>drop-validate</em></h4>
+
+    <p>Extra validation that makes sure that the drop site accepts the dragged element beyond having the same channel. If
+       not defined, no extra validation is made.
+
+        <div>
+            <strong>NOTE</strong>: This callback function is called only if the channel condition is met, when the element
+            starts being dragged
+        </div>
+    </p>
+
+    <hr>
+
+    <h4 class="text-info"><em>drag-enter-class</em></h4>
+
+    <p>The class that will be added to the the droppable element when a dragged element ( which is droppable )
+        enters the drop location. The default value for this is <code>on-drag-enter</code></p>
+
+    <h4 class="text-info"><em>drag-hover-class</em></h4>
+
+    <p>The class that will be added to the drop area element when hovering with an element.
+        The default value for this is <code>on-drag-hover</code></p>
+
+    <hr>
+    <h3 class="heading"><strong>Usage</strong></h3>
+
+    <p>
+
+    <div hljs>
+        <ANY ui-on-drop="onDrop($data,$channel,$event)" drop-channel="mydropchannel" drag-enter-class="dragEnter">...</ANY>
+    </div>
+    </p>
+
+    <h3 class="heading"><strong>Details</strong></h3>
+
+    <p>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <td>Param</td>
+            <td>Type</td>
+            <td>Details</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>ui-on-drop</td>
+            <td><label class="text-muted">function</label></td>
+            <td>Takes any <code>$scope</code> function. Can also pass <code>$event</code>, <code>$data</code> and <code>$channel</code>.
+            </td>
+        </tr>
+        <tr>
+            <td>drop-channel</td>
+            <td><label class="text-muted">expression</label></td>
+            <td>The channel on which the drop has to listen for drag events. <br/>
+            Single value, comma separated list or special value <code>*</code> are possible</td>
+        </tr>
+        <tr>
+            <td>drop-validate</td>
+            <td><label class="text-muted">function</label></td>
+            <td>Takes any <code>$scope</code> function. Can also pass <code>$data</code> and <code>$channel</code>
+            </td>
+        </tr>        
+        <tr>
+            <td>drag-enter-class</td>
+            <td><label class="text-muted">string</label></td>
+            <td>A class name that will be put on the droppable element when the dragged objects enters its boundaries.
+                <br/>Default class name is <code>on-drag-enter</code>.</td>
+        </tr>
+            <td>drag-hover-class</td>
+            <td><label class="text-muted">string</label></td>
+            <td>A class name that will be put on the drop area when an element is dragged onto it. <br/>Default class
+                name is <code>on-drag-hover</code>.</td>
+        </tr>
+        </tbody>
+    </table>
+    </p>
+    <hr>
+    <h3 class="heading"><strong>Demo</strong></h3>
+    <iframe style="width: 100%; height: 500px" src="http://embed.plnkr.co/5RLvCpDPoRcEk6u77dBM" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+    <iframe style="width: 100%; height: 500px" src="http://embed.plnkr.co/xRmz4TlCvlJKxybGrhQH" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+
+</div>
+<footer class="navbar navbar-default navbar-fixed-bottom"></footer>
+<script type="text/javascript" src="../js/app.js"></script>
+
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-44888767-1', 'ganarajpr.github.io');
+    ga('send', 'pageview');
+
+</script>
+</body>
+</html>

@@ -119,43 +119,58 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      return datasourceSrv.get(variable.datasource).then(function(datasource) {
-        var queryPromise = datasource.metricFindQuery(variable.query).then(function (results) {
-          variable.options = self.metricNamesToVariableValues(variable, results);
+      return datasourceSrv.get(variable.datasource)
+        .then(_.partial(this.updateOptionsFromMetricFindQuery, variable))
+        .then(_.partial(this.updateTags, variable))
+        .then(_.partial(this.validateVariableSelectionState, variable));
+    };
 
-          if (variable.includeAll) {
-            self.addAllOption(variable);
-          }
+    this.validateVariableSelectionState = function(variable) {
+      if (!variable.current) {
+        return self.setVariableValue(variable, variable.options[0]);
+      }
 
-          // if parameter has current value
-          // if it exists in options array keep value
-          if (variable.current) {
-            // if current value is an array do not do anything
-            if (_.isArray(variable.current.value)) {
-              return $q.when([]);
+      if (_.isArray(variable.current.value)) {
+        for (var i = 0; i < variable.current.value.length; i++) {
+          var value = variable.current.value[i];
+          for (var y = 0; y < variable.options.length; y++) {
+            var option = variable.options[y];
+            if (option.value === value) {
+              option.selected = true;
             }
-            var currentOption = _.findWhere(variable.options, { text: variable.current.text });
-            if (currentOption) {
-              return self.setVariableValue(variable, currentOption);
-            }
           }
-
-          return self.setVariableValue(variable, variable.options[0]);
-        });
-
-        if (variable.useTags) {
-          return queryPromise.then(function() {
-            datasource.metricFindQuery(variable.tagsQuery).then(function (results) {
-              variable.tags = [];
-              for (var i = 0; i < results.length; i++) {
-                variable.tags.push(results[i].text);
-              }
-            });
-          });
-        } else {
-          delete variable.tags;
-          return queryPromise;
         }
+      } else {
+        var currentOption = _.findWhere(variable.options, { text: variable.current.text });
+        if (currentOption) {
+          return self.setVariableValue(variable, currentOption);
+        }
+      }
+    };
+
+    this.updateTags = function(variable, datasource) {
+      if (variable.useTags) {
+        return datasource.metricFindQuery(variable.tagsQuery).then(function (results) {
+          variable.tags = [];
+          for (var i = 0; i < results.length; i++) {
+            variable.tags.push(results[i].text);
+          }
+          return datasource;
+        });
+      } else {
+        delete variable.tags;
+      }
+
+      return datasource;
+    };
+
+    this.updateOptionsFromMetricFindQuery = function(variable, datasource) {
+      return datasource.metricFindQuery(variable.query).then(function (results) {
+        variable.options = self.metricNamesToVariableValues(variable, results);
+        if (variable.includeAll) {
+          self.addAllOption(variable);
+        }
+        return datasource;
       });
     };
 
@@ -192,7 +207,7 @@ function (angular, _, kbn) {
         options[value] = value;
       }
 
-      return _.map(_.keys(options), function(key) {
+      return _.map(_.keys(options).sort(), function(key) {
         return { text: key, value: key };
       });
     };
@@ -200,19 +215,19 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-        case 'wildcard':
-          allValue = '*';
-          break;
-        case 'regex wildcard':
-          allValue = '.*';
-          break;
-        case 'regex values':
-          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
-          break;
-        default:
-          allValue = '{';
-          allValue += _.pluck(variable.options, 'text').join(',');
-          allValue += '}';
+      case 'wildcard':
+        allValue = '*';
+        break;
+      case 'regex wildcard':
+        allValue = '.*';
+        break;
+      case 'regex values':
+        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+        break;
+      default:
+        allValue = '{';
+        allValue += _.pluck(variable.options, 'text').join(',');
+        allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});

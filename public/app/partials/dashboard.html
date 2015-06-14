@@ -75,7 +75,7 @@
 				</div>
 
 				<div class="panels-wrapper" ng-if="!row.collapse">
-					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title">
+					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
 					</div>
 
 					<!-- Panels, draggable needs to be disabled in fullscreen because Firefox bug -->
