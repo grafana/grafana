@@ -45,8 +45,8 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	for pos, state := range metricNames {
 		metrics[pos] = &m.MetricDefinition{
 			OrgId:      job.OrgId,
-			Name:       fmt.Sprintf("alerting.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
-			Metric:     fmt.Sprintf("alerting.%s.%s", strings.ToLower(job.MonitorTypeName), state),
+			Name:       fmt.Sprintf("health.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
+			Metric:     fmt.Sprintf("health.%s.%s", strings.ToLower(job.MonitorTypeName), state),
 			Interval:   job.Freq,
 			Value:      0.0,
 			Unit:       "state",
