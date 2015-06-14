@@ -18,7 +18,7 @@ type AdminUpdateUserPasswordForm struct {
 }
 
 type AdminUpdateUserPermissionsForm struct {
-	IsGrafanaAdmin bool `json:"IsGrafanaAdmin" binding:"Required"`
+	IsGrafanaAdmin bool `json:"IsGrafanaAdmin"`
 }
 
 type AdminUserListItem struct {

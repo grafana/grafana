@@ -32,8 +32,16 @@ function (angular, $) {
       "#658E59","#557D84","#BF6A30","#FF9B53","#3470DA",
       "#7E3A32","#2B5177","#773D6F","#655181",
     ];
+
     var color = colors[Math.abs(hash % colors.length)];
     var borderColor = borderColors[Math.abs(hash % borderColors.length)];
+
+    // fixed color for raintank
+    if (hash === -657812483) {
+      color = "#13B2D4";
+      borderColor = "#3CD7F9";
+    }
+
     element.css("background-color", color);
     element.css("border-color", borderColor);
   }

@@ -1,0 +1,26 @@
+{
+  "name": "grafana",
+  "version": "2.0.2",
+  "homepage": "https://github.com/grafana/grafana",
+  "authors": [],
+  "license": "Apache 2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/vendor/",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4",
+    "angular": "~1.4.0",
+    "angular-route": "~1.4.0",
+    "angular-mocks": "~1.4.0",
+    "angular-sanitize": "~1.4.0",
+    "angular-native-dragdrop": "~1.1.0",
+    "angular-bindonce": "~0.3.3",
+    "requirejs": "~2.1.18",
+    "requirejs-text": "~2.0.14"
+  }
+}

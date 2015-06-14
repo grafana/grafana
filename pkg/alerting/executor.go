@@ -107,7 +107,6 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		//fmt.Println("job results", job, err, res)
 
 		durationExec := time.Since(preExec)
-
 		if job.State != res {
 			//monitor state has changed.
 			updateMonitorStateCmd := m.UpdateMonitorStateCommand{

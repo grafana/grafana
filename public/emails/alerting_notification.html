@@ -1,18 +1,59 @@
-{{Subject .Subject "Raintank Alert Notification"}}
+{{Subject .Subject "Alert: {{.Endpoint}}"}}
+
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Raintank Alert Notification</title>
+<title>Alert: {{.Endpoint}}</title>
 </head>
-<body>
-<div>
-Endpoint: {{.Endpoint}}<br>
+<body style="background:#eee;">
+<div style="color:#333; font:12px/1.5 Tahoma,Arial,sans-serif;; text-shadow:1px 1px #fff; padding:0; margin:0;">
+    <div style="width:600px;margin:0 auto; padding:40px 0 20px;">
+        <div style="border:1px solid #d9d9d9;border-radius:3px; background:#fff; box-shadow: 0px 2px 5px rgba(0, 0, 0,.05); -webkit-box-shadow: 0px 2px 5px rgba(0, 0, 0,.05);">
+            <div style="padding: 20px 15px;">
+                <div style="padding:40px 15px;">
+                    <div style="font-size:16px; padding-bottom:30px; font-weight:bold;">
+                        <span style="color: #13B2D4;">Alert Notification</span>
+                        <div style="font-size:14px; padding-bottom:10px; font-weight: normal;">One of your endpoints has experience an event:
+                        </div>
+                        <div>
+                            <div>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
+                                    Endpoint:
+                                </span>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
+                                    {{.Endpoint}}
+                                </span>
+                            </div>
+                            <div>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
+                                    CheckType:
+                                </span>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
+                                    {{.CheckType}}
+                                </span>
+                            </div>
+                            <div>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
+                                    State:
+                                </span>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
+                                    {{.State}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size:14px; padding:0 15px;">
 
-CheckType: {{.CheckType}}<br>
-
-State: {{.State}}<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="color:#aaa;padding:10px;text-align:center;">
+            © 2015 <a style="color:#888;text-decoration:none;" target="_blank" href="http://raintank.io">raintank</a>
+        </div>
+    </div>
 </div>
 </body>
 </html>

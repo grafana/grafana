@@ -64,7 +64,7 @@ function (angular, _, $, config) {
 
       backendSrv.get('/api/user/orgs').then(function(orgs) {
         _.each(orgs, function(org) {
-          if (org.isUsing) {
+          if (org.orgId === contextSrv.user.orgId) {
             return;
           }
 
@@ -77,11 +77,13 @@ function (angular, _, $, config) {
           });
         });
 
-        /*$scope.orgMenu.push({
-          text: "New Organization",
-          icon: "fa fa-fw fa-plus",
-          href: $scope.getUrl('/org/new')
-        });*/
+        if (config.allowOrgCreate) {
+          $scope.orgMenu.push({
+            text: "New Organization",
+            icon: "fa fa-fw fa-plus",
+            href: $scope.getUrl('/org/new')
+          });
+        }
       });
     };
 

@@ -1,6 +1,6 @@
 {
-  "title": "Endpoints - Summary",
-  "originalTitle": "Endpoints - Summary",
+  "title": "Litmus Endpoints - Summary",
+  "originalTitle": "Litmus Endpoints - Summary",
   "tags": [
     "raintank",
     "endpoint"
@@ -71,7 +71,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.dns.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -121,7 +121,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.ping.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$collector.ping.ok_state), 100)"
             }
           ],
           "thresholds": "0,100",
@@ -171,7 +171,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries($endpoint.$collector.network.http.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$collector.http.ok_state), 100)"
             }
           ],
           "thresholds": "0,100",
@@ -221,7 +221,7 @@
           },
           "targets": [
             {
-              "target": "scale($endpoint.$collector.network.https.ok_state, 100)"
+              "target": "scale(litmus.$endpoint.$collector.https.ok_state, 100)"
             }
           ],
           "thresholds": "0,100",
@@ -294,11 +294,11 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.error_state), 'sum'), 'error')"
             },
             {
               "hide": false,
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.dns.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -365,10 +365,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.ping.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -436,10 +436,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.http.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.http.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.http.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -506,10 +506,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.ok_state), 'sum'), 'ok')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries($endpoint.$collector.network.https.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.error_state), 'sum'), 'error')"
             }
           ],
           "timeFrom": null,
@@ -584,7 +584,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.dns.time, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.dns.time, 2)"
             }
           ],
           "timeFrom": null,
@@ -649,7 +649,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.ping.mean, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 2)"
             }
           ],
           "timeFrom": null,
@@ -714,7 +714,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.http.total, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.http.total, 2)"
             }
           ],
           "timeFrom": null,
@@ -779,7 +779,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.network.https.total, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.https.total, 2)"
             }
           ],
           "timeFrom": null,
@@ -850,7 +850,7 @@
         "multiFormat": "glob",
         "name": "endpoint",
         "options": [],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -869,7 +869,7 @@
             "value": "{}"
           }
         ],
-        "query": "*.*",
+        "query": "litmus.*.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -886,11 +886,11 @@
     {
       "type": "dashboards",
       "icon": "external link",
-      "tag": "endpoint",
+      "tags": ["endpoint"],
       "asDropdown": true,
       "title": "Endpoint Dashboards",
       "includeVars": true,
       "keepTime": true
     }
-  ]  
+  ]
 }

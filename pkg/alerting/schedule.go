@@ -45,7 +45,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	for pos, state := range metricNames {
 		metrics[pos] = &m.MetricDefinition{
 			OrgId:      job.OrgId,
-			Name:       fmt.Sprintf("%s.alerting.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
+			Name:       fmt.Sprintf("alerting.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
 			Metric:     fmt.Sprintf("alerting.%s.%s", strings.ToLower(job.MonitorTypeName), state),
 			Interval:   job.Freq,
 			Value:      0.0,
@@ -130,7 +130,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
 	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
 
-	target := `sum({{.EndpointSlug}}.*.network.{{.MonitorTypeName | ToLower }}.error_state)`
+	target := `sum(litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
 	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))

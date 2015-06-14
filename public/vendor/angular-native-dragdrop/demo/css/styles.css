@@ -1,0 +1,29 @@
+body {
+    background-color: #f8f7f8;
+}
+
+.heading {
+    border-bottom: 1px solid #b7b7b7;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.topRow {
+    margin-bottom: 30px;
+}
+
+.on-drag-enter {
+    background-color : #677ba6;
+}
+
+.on-drag-enter-custom {
+    background-color : #d78cc7;
+}
+
+.on-drag-hover {
+    background-color : #3eb352;
+}
+
+.on-drag-hover-custom {
+    background-color : #d7a931;
+}
