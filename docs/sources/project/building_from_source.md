@@ -60,6 +60,8 @@ bra run
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
 
 ## Creating optimized release packages
+This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
+
 ```
 go run build.go build package
 ```

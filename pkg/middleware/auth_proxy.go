@@ -60,8 +60,10 @@ func getCreateUserCommandForProxyAuth(headerVal string) *m.CreateUserCommand {
 	cmd := m.CreateUserCommand{}
 	if setting.AuthProxyHeaderProperty == "username" {
 		cmd.Login = headerVal
+		cmd.Email = headerVal
 	} else if setting.AuthProxyHeaderProperty == "email" {
 		cmd.Email = headerVal
+		cmd.Login = headerVal
 	} else {
 		panic("Auth proxy header property invalid")
 	}
