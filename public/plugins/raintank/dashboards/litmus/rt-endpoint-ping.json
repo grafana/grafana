@@ -88,13 +88,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.ok_state), 'ok')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'ok')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.warn_state), 'warn')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.warn_state), 'warn')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.ping.error_state), 'error')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'error')"
             }
           ],
           "timeFrom": null,
@@ -200,17 +200,17 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(minSeries($endpoint.$collector.litmus.ping.min), 'min'), 'minimum')"
+              "target": "alias(consolidateBy(minSeries(litmus.$endpoint.$collector.ping.min), 'min'), 'minimum')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.ping.mean), 'average')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.ping.mean), 'average')"
             },
             {
-              "target": "alias(consolidateBy(maxSeries($endpoint.$collector.litmus.ping.max), 'max'), 'maximum')"
+              "target": "alias(consolidateBy(maxSeries(litmus.$endpoint.$collector.ping.max), 'max'), 'maximum')"
             },
             {
               "hide": false,
-              "target": "alias(removeBelowValue(averageSeries($endpoint.$collector.litmus.ping.loss), 1), 'loss')"
+              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$collector.ping.loss), 1), 'loss')"
             }
           ],
           "timeFrom": null,
@@ -285,7 +285,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.litmus.ping.mean, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 2)"
             }
           ],
           "timeFrom": null,
@@ -355,7 +355,7 @@
         "multiFormat": "glob",
         "name": "endpoint",
         "options": [],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -369,7 +369,7 @@
         "multiFormat": "glob",
         "name": "collector",
         "options": [],
-        "query": "*.*",
+        "query": "litmus.*.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -392,5 +392,5 @@
       "includeVars": true,
       "keepTime": true
     }
-  ]  
+  ]
 }
