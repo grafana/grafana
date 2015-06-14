@@ -17,7 +17,7 @@
       "height": "20px",
       "panels": [
         {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/file/rt-endpoint-summary.json?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/file/rt-endpoint-dns.json?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/file/rt-endpoint-ping.json?var-endpoint=$endpoint\">PING</a> |\n<u><big><a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/db/rt-endpoint-web?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></big></u></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
+          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/file/rt-endpoint-summary.json?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/file/rt-endpoint-dns.json?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/file/rt-endpoint-ping.json?var-endpoint=$endpoint\">PING</a> |\n<u><big><a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></big></u></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
           "editable": true,
           "error": false,
           "id": 585,
@@ -87,15 +87,15 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.ok_state), 'ok')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.$protocol.ok_state), 'ok')"
             },
             {
               "hide": false,
-              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.warn_state), 'warn')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.$protocol.warn_state), 'warn')"
             },
             {
               "hide": false,
-              "target": "alias(sumSeries($endpoint.$collector.litmus.$protocol.error_state), 'error')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.$protocol.error_state), 'error')"
             }
           ],
           "timeFrom": null,
@@ -186,10 +186,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.dataLength), 'content size')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dataLength), 'content size')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.throughput), 'download speed')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.throughput), 'download speed')"
             }
           ],
           "timeFrom": null,
@@ -270,19 +270,19 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.dns), 'dns')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dns), 'dns')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.connect), 'connect')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.connect), 'connect')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.send), 'send')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.send), 'send')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.wait), 'wait')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.wait), 'wait')"
             },
             {
-              "target": "alias(averageSeries($endpoint.$collector.litmus.$protocol.recv), 'recv')"
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.recv), 'recv')"
             }
           ],
           "timeFrom": null,
@@ -365,7 +365,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.litmus.$protocol.total, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.$protocol.total, 2)"
             }
           ],
           "timeFrom": null,
@@ -436,7 +436,7 @@
         "multiFormat": "glob",
         "name": "endpoint",
         "options": [],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,
         "type": "query"
@@ -450,7 +450,7 @@
         "multiFormat": "glob",
         "name": "collector",
         "options": [],
-        "query": "*.*",
+        "query": "litmus.*.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"

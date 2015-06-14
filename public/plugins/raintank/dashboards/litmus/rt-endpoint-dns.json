@@ -88,13 +88,13 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.dns.error_state), 'error')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.dns.error_state), 'error')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.dns.warn_state), 'warn')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.dns.warn_state), 'warn')"
             },
             {
-              "target": "alias(sumSeries($endpoint.$collector.litmus.dns.ok_state), 'ok')"
+              "target": "alias(sumSeries(litmus.$endpoint.$collector.dns.ok_state), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -185,7 +185,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode($endpoint.$collector.litmus.dns.time, 1)"
+              "target": "aliasByNode(litmus.$endpoint.$collector.dns.time, 2)"
             }
           ],
           "timeFrom": null,
@@ -256,7 +256,7 @@
         "multiFormat": "glob",
         "name": "endpoint",
         "options": [],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -275,7 +275,7 @@
             "value": "{}"
           }
         ],
-        "query": "*.*",
+        "query": "litmus.*.*",
         "refresh": true,
         "refresh_on_load": true,
         "type": "query"
@@ -298,5 +298,5 @@
       "includeVars": true,
       "keepTime": true
     }
-  ]  
+  ]
 }

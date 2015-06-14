@@ -16,18 +16,7 @@ function (angular, app, _) {
         vm.oldVariableText = vm.variable.current.text;
         vm.highlightIndex = -1;
 
-        var currentValues = vm.variable.current.value;
-        if (_.isString(currentValues)) {
-          currentValues  = [currentValues];
-        }
-
-        vm.options = _.map(vm.variable.options, function(option) {
-          if (_.indexOf(currentValues, option.value) >= 0) { option.selected = true; }
-          return option;
-        });
-
-        _.sortBy(vm.options, 'text');
-
+        vm.options = vm.variable.options;
         vm.selectedValues = _.filter(vm.options, {selected: true});
 
         vm.tags = _.map(vm.variable.tags, function(value) {
@@ -46,28 +35,23 @@ function (angular, app, _) {
 
       vm.updateLinkText = function() {
         var current = vm.variable.current;
-        var currentValues = current.value;
 
-        if (_.isArray(currentValues) && current.tags.length) {
+        if (current.tags && current.tags.length) {
           // filer out values that are in selected tags
-          currentValues = _.filter(currentValues, function(test) {
-            for (var i = 0; i < current.tags.length; i++) {
-              if (_.indexOf(current.tags[i].values, test) !== -1) {
+          var selectedAndNotInTag = _.filter(vm.variable.options, function(option) {
+            if (!option.selected) { return false; }
+            for (var i = 0; i < current.tags.length; i++)  {
+              var tag = current.tags[i];
+              if (_.indexOf(tag.values, option.value) !== -1) {
                 return false;
               }
             }
             return true;
           });
+
           // convert values to text
-          var currentTexts = _.map(currentValues, function(value) {
-            for (var i = 0; i < vm.variable.options.length; i++) {
-              var option = vm.variable.options[i];
-              if (option.value === value) {
-                return option.text;
-              }
-            }
-            return value;
-          });
+          var currentTexts = _.pluck(selectedAndNotInTag, 'text');
+
           // join texts
           vm.linkText = currentTexts.join(' + ');
           if (vm.linkText.length > 0) {

@@ -584,45 +584,71 @@ MATT STYLES
 }
 
 .rt-list-status-up {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
   &:link, &:visited {
     .rt-list-status;  
     font-size: 20px;
     font-weight: 600;
     color: @rt-green;
+    &:hover {color: lighten(@rt-green, 10%);} 
   }
-  &:hover {color: lighten(@rt-green, 10%);} 
 }
 
 .rt-list-status-warning {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
   &:link, &:visited {
     .rt-list-status;
     font-size: 20px;
     font-weight: 600;
     color: @rt-yellow;
+    &:hover {color: lighten(@rt-yellow, 10%);} 
   }
-  &:hover {color: lighten(@rt-yellow, 10%);} 
 }
 
 .rt-list-status-down {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
   &:link, &:visited {
     .rt-list-status;
     font-size: 20px;
     font-weight: 600;
     color: @rt-red;
+    &:hover {color: lighten(@rt-red, 10%);} 
   }
-  &:hover {color: lighten(@rt-red, 10%);} 
 }
 
 .rt-list-status-disabled {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-light-gray;
   &:link, &:visited {
     .rt-list-status;
     font-size: 20px;
     font-weight: 600;
     color: @rt-light-gray;
+    &:hover {color: lighten(@rt-light-gray, 10%);} 
   }
-  &:hover {color: lighten(@rt-light-gray, 10%);} 
 }
 
+.rt-list-links {
+  color: @rt-dark-gray;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover {
+    color: lighten(@rt-light-gray, 10%);
+  } 
+}
 
 // raintank override styles from gfbox.less
 
