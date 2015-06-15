@@ -79,7 +79,8 @@ define([
               range: {from: "now-"+ (monitor.frequency + 30) + 's', to: "now"},
               interval: monitor.frequency + 's',
               targets: [
-                {target: monitor.endpoint_slug + ".*.network."+monitor.monitor_type_name.toLowerCase()+".{ok_state,warn_state,error_state}"}
+                {target: "litmus."+monitor.endpoint_slug + ".*." +
+                  monitor.monitor_type_name.toLowerCase()+".{ok_state,warn_state,error_state}"}
               ],
               format: 'json',
               maxDataPoints: 10,
