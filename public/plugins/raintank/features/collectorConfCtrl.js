@@ -66,7 +66,7 @@ function (angular, _) {
     };
 
     $scope.setCollector = function(id) {
-      $location.path('/collectors/edit/'+id);
+      $location.path('/collectors/summary/'+id);
     };
 
     $scope.remove = function(collector) {

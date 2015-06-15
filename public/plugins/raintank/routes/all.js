@@ -14,7 +14,7 @@ function (angular) {
       })
       .when('/collectors/summary/:id', {
         templateUrl: 'plugins/raintank/features/partials/collectors_summary.html',
-        controller : 'CollectorSummaryCtrl',
+        controller : 'CollectorConfCtrl',
       })
       .when('/collectors/edit/:id', {
         templateUrl: 'plugins/raintank/features/partials/collectors_edit.html',
