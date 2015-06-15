@@ -97,11 +97,11 @@
                 <div class="rt-body-copy">
                   <span class="rt-body-copy" style="margin: 0;">If</span>
                   <div class="rt-input-styles editor-option">
-                    <label><input type="number" min="0" value="3"class="natural-language-form"  ng-model="monitors['http'].health_settings.num_collectors"></select></label>
+                    <label><input type="number" min="1" value="3"class="natural-language-form"  ng-model="monitors['http'].health_settings.num_collectors"></select></label>
                   </div>
                   <span class="rt-body-copy">or more collectors report <span class="emphasis">connection errors</span> for</span>
                   <div class="rt-input-styles editor-option">
-                    <label><input type="number" min="0" value="5" class="natural-language-form" ng-model="monitors['http'].health_settings.steps"></select></label>
+                    <label><input type="number" min="1" value="5" class="natural-language-form" ng-model="monitors['http'].health_settings.steps"></select></label>
                   </div>
                   <span class="rt-body-copy">or more consecutive checks, health will be marked as down <img width="20px" height="20px" src="img/critical.svg" class="rt-inline-health-icon">.</span>
                 </div>
