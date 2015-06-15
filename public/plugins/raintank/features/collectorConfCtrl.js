@@ -45,11 +45,11 @@ function (angular, _) {
     $scope.getCollector = function(id) {
       _.forEach($scope.collectors, function(collector) {
         if (collector.id === parseInt(id)) {
-          if (collector.org_id !== contextSrv.user.orgId) {
-            $location.path('/collectors');
-          } else {
-            $scope.collector = collector;
-          }
+          $scope.collector = collector;
+          $scope.collectorUpdates = {
+            "name": collector.name,
+            "public": collector.public
+          };
         }
       });
     };
@@ -77,6 +77,12 @@ function (angular, _) {
 
     $scope.save = function() {
       backendSrv.post('/api/collectors', $scope.collector);
+    };
+
+    $scope.update = function() {
+      $scope.collector.name = $scope.collectorUpdates.name;
+      $scope.collector.public = $scope.collectorUpdates.public;
+      $scope.save();
     };
 
     $scope.add = function() {
