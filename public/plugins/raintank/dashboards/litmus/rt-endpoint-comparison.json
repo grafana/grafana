@@ -840,6 +840,8 @@
     {
       "type": "dashboards",
       "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,      
       "tags": [
         "Endpoints"
       ],
