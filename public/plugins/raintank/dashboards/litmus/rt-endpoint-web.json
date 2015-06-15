@@ -14,27 +14,6 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "20px",
-      "panels": [
-        {
-          "content": "<div style=\"margin-top: -15px;\">\n<div style=\"float: left;\"\n<small>\n<a href=\"/dashboard/file/rt-endpoint-summary.json?var-endpoint=$endpoint\">SUMMARY</a> | \n<a href=\"/dashboard/file/rt-endpoint-dns.json?var-endpoint=$endpoint\">DNS</a> | \n<a href=\"/dashboard/file/rt-endpoint-ping.json?var-endpoint=$endpoint\">PING</a> |\n<u><big><a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=$collector&var-protocol=http\">HTTP</a> |\n<a href=\"/dashboard/file/rt-endpoint-web.json?var-endpoint=$endpoint&var-collector=$collector&var-protocol=https\">HTTPS</a></big></u></small>\n</div>\n<div style=\"float: right;\">\n<small>(r) LITMUS (?)</small>\n</div>\n</div>",
-          "editable": true,
-          "error": false,
-          "id": 585,
-          "links": [],
-          "mode": "html",
-          "span": 12,
-          "style": {},
-          "title": "",
-          "transparent": true,
-          "type": "text"
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
       "height": "100px",
       "panels": [
         {
