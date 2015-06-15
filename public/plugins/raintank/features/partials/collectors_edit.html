@@ -21,13 +21,21 @@
 
 <div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
 			<!-- page title -->
-	<div class="rt-page-header-area">
+
+    <div class="rt-page-header" ng-if="!collector.id">
+         <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
+         <h1 class="rt-h1">Add a new collector</h1>
+    </div>
+
+	<div class="rt-page-header-area" ng-if="collector.id">
+
 		<h1 class="rt-h1">{{collector.name}}</h1>
 
 		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
 		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
-	<div class="editor-row rt-detail-pages">
+    
+	<div class="editor-row rt-detail-pages" ng-if="collector.id">
 		<div class="editor-option">
 			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
 		</div>
@@ -37,13 +45,11 @@
 	<div class="rt-tabs" ng-if="collector.id">
 		<span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="active" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
 	</div>
-</div>
-
 
 	<form name="collectorForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
 
 
-		<div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+<!-- 		<div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
 			<div class="rt-mini-form new-endpoint-domain-form">
 				<div class="rt-mini-form-col">
 					<label class="rt-form-label-medium">Collector Name</label>
@@ -63,8 +69,33 @@
 					</div>
 				</div>
 			</div>
-		</div>
+		</div> -->
+
+        <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+          <div class="rt-mini-form new-endpoint-domain-form">
+            <div class="rt-mini-form-col">
+              <label class="rt-form-label-medium">Collector Name</label>
+			  <input type="text" class="rt-form-input" ng-model="collector.name" required="">
+            </div>
+			<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
+				<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
+				<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
+			</div>            
+            <div class="rt-mini-form-col" style="margin-top: 15px;">
+              <div>
+				<div class="editor-row">
+					<button type="submit" class="secondaryCTA" ng-click="save()" ng-show="collector.id">Update Collector</button>
+					<button type="submit" class="secondaryCTA" ng-click="add()" ng-hide="collector.id">Create Collector</button>
+				</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
 	</form>
+</div>
+
+<div style="padding-bottom: 100px;"></div>
 
 
 
