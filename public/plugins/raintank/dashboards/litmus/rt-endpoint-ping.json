@@ -1,9 +1,9 @@
 {
-  "title": "Litmus Endpoints - Ping",
-  "originalTitle": "Litmus Endpoints - Ping",
+  "title": "Litmus Endpoint: |--- Ping",
+  "originalTitle": "Litmus Endpoint: |--- Ping",
   "tags": [
     "raintank",
-    "endpoint"
+    "Endpoints"
     ],
   "style": "dark",
   "timezone": "browser",
