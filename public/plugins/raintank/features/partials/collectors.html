@@ -19,14 +19,18 @@
 		<div class="editor-row">
 			<div class="editor-option">
 				<span class="small">Filter by:</span>
-				<select class="input-medium rt-select-dropdown" style="" ng-model="collector_filter.value">
-					<option value="" label="All Tags" style="color:black">All Collectors</option>
-					<option ng-repeat="t in collectorTags()" value="{{t}}" label="{{t}}" style="color:black">{{t}}</option>
-				</select>
-				<select class="input-medium rt-select-dropdown" style="" ng-model="status_filter.value">
-					<option value="" label="All Statuses" style="color:black">All Statuses</option>
-					<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}" style="color:black">{{s.label}}</option>
-				</select>
+					<div class="select-input">
+						<select ng-model="collector_filter.value">
+							<option value="" label="All Tags">All Collectors</option>
+							<option ng-repeat="t in collectorTags()" value="{{t}}" label="{{t}}">{{t}}</option>
+						</select>
+					</div>
+					<div class="select-input">
+						<select class="select-input" style="" ng-model="status_filter.value">
+							<option value="" label="All Statuses">All Statuses</option>
+							<option ng-repeat="s in statuses" value="{{s.value}}" label="{{s.label}}">{{s.label}}</option>
+						</select>
+					</div>
 			</div>
 
 			<div style="display: block; padding: 45px 0 0 0;">

@@ -33,13 +33,16 @@
 	</div>
 	<div class="editor-row rt-detail-pages">
 		<div class="editor-option">
-			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
+			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="save()" ></bootstrap-tagsinput>
 		</div>
 	</div>
 
 	<!-- tabs -->
 	<div class="rt-tabs">
-		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="nonactive" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
+		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
+<!-- 		<span class="nonactive" ng-show="collector.org_id == contextSrv.user.orgId">
+			<a href="collectors/edit/{{collector.id}}">Configuration</a>
+		</span> -->
 	</div>
 </div>
 
@@ -50,6 +53,13 @@
 				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
 			</div>
 			<div class="rt-box">
+				<div class="rt-box-header">Collector Details
+					<div style="float: right; display: inline;">
+						<div style="display: inline; margin-left:6px;">
+							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{collector.name}} dashboard'"></i></a>
+						</div>
+					</div>
+				</div>
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="collectorCurrentStatus">
 						<div class="rt-summary-status">
@@ -72,9 +82,31 @@
 
 
 		</div>
-		<div class="detailColumn detailRight">
+		<div class="detailColumn detailRight" ng-if="collector.org_id === contextSrv.user.orgId">
 			<div class="rt-box clearBack twoCol">
-				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
+				<div class="rt-box">
+					<div class="rt-box-header">Configuration</div>
+					<div class="rt-box-body no-padding" style="min-height: 50px">
+						<div class="rt-mini-form new-endpoint-domain-form collectorCurrentStatus">
+				            <div class="rt-mini-form-col">
+				              <label class="rt-form-label-medium">Collector Name</label>
+							  <input type="text" class="rt-form-input" ng-model="collectorUpdates.name" required="">
+				            </div>
+							<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin" style="padding: 15px 0;">
+								<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collectorUpdates.public">
+								<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
+							</div>
+				            <div class="rt-mini-form-col" style="margin-top: 15px; display: block;">
+				              <div>
+								<div class="editor-row">
+									<button type="submit" class="secondaryCTA" ng-click="update()" ng-if="collector.id">Update Collector</button>
+									<button type="submit" class="secondaryCTA" ng-click="add()" ng-if="!collector.id">Create Collector</button>
+								</div>
+				              </div>
+				            </div>
+				          </div>
+				    </div>
+				</div>
 			</div>
 
 
