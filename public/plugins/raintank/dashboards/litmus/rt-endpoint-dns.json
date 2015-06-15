@@ -1,9 +1,9 @@
 {
-  "title": "Litmus Endpoints - DNS",
-  "originalTitle": "Litmus Endpoints - DNS",
+  "title": "Litmus Endpoint: |--- DNS",
+  "originalTitle": "Litmus Endpoint: |--- DNS",
   "tags": [
     "raintank",
-    "endpoint"
+    "Endpoints"
     ],
   "style": "dark",
   "timezone": "browser",

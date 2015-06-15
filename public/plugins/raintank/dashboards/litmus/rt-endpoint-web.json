@@ -1,9 +1,9 @@
 {
-  "title": "Litmus Endpoints - Web",
-  "originalTitle": "Litmus Endpoints - Web",
+  "title": "Litmus Endpoint: |--- Web",
+  "originalTitle": "Litmus Endpoint: |--- Web",
   "tags": [
     "raintank",
-    "endpoint"
+    "Endpoints"
     ],
   "style": "dark",
   "timezone": "browser",
