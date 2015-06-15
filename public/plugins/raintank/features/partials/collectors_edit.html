@@ -84,8 +84,8 @@
             <div class="rt-mini-form-col" style="margin-top: 15px;">
               <div>
 				<div class="editor-row">
-					<button type="submit" class="secondaryCTA" ng-click="save()" ng-show="collector.id">Update Collector</button>
-					<button type="submit" class="secondaryCTA" ng-click="add()" ng-hide="collector.id">Create Collector</button>
+					<button type="submit" class="secondaryCTA" ng-click="save()" ng-if="collector.id">Update Collector</button>
+					<button type="submit" class="secondaryCTA" ng-click="add()" ng-if="!collector.id">Create Collector</button>
 				</div>
               </div>
             </div>
