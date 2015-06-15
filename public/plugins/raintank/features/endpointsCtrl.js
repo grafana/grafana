@@ -84,12 +84,11 @@ function (angular, _) {
     $scope.getEndpoints = function() {
       backendSrv.get('/api/endpoints').then(function(endpoints) {
         $scope.pageReady = true;
-        $scope.endpoints = endpoints;
-        _.forEach($scope.endpoints, function(endpoint) {
+        _.forEach(endpoints, function(endpoint) {
+          endpoint.states = [];
+          endpoint.monitors = {};
           backendSrv.get('/api/monitors', {"endpoint_id": endpoint.id}).then(function(monitors) {
-            endpoint.states = [];
             var seenStates = {};
-            endpoint.monitors = {};
             _.forEach(monitors, function(mon) {
               if (!mon.enabled) {
                 return;
@@ -103,6 +102,7 @@ function (angular, _) {
             }
           });
         });
+        $scope.endpoints = endpoints;
       });
     };
 

@@ -42,7 +42,7 @@
 			</div>
 			<div style="display: block; padding: 45px 0 0 0;">
 				<div style="display: inline-block" class="rt-list-status">
-					<span class="small">Showing {{(endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter ).length}}</span>
+					<span class="small">Showing {{(endpoints | filterByTag:filter.tag).length}}</span>
 					<span class="small"> of <span class="rt-list-links" ng-click="setTagFilter('')">{{endpoints.length}} total</a></span>
 				</div>
 				<div class="editor-option" style="float: right;">
@@ -58,7 +58,7 @@
 
 <div ng-if="pageReady">
 	<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
-	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | filter:{states:filter.status}:statusFilter | orderBy:sort_field">
+	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | orderBy:sort_field">
 		<div class="rt-list-header" style="overflow: visible; padding:5px;">
 			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
 
