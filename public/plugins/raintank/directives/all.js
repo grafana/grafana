@@ -104,7 +104,7 @@ define([
           _.forEach(metrics.data, function(result) {
             var parts = result.target.split('.');
             var stateStr = parts[4];
-            var collector = parts[1];
+            var collector = parts[2];
             if (!(collector in collectorResults)) {
               collectorResults[collector] = {ts: -1, state: -1};
             }
@@ -181,7 +181,7 @@ define([
               range: {from: "now-90s", to: "now"},
               interval: '10s',
               targets: [
-                {target: "*."+ model.slug +".network.*.{ok_state,warn_state,error_state}"}
+                {target: "litmus.*."+ model.slug +".*.{ok_state,warn_state,error_state}"}
               ],
               format: 'json',
               maxDataPoints: 10,
@@ -205,7 +205,7 @@ define([
           _.forEach(metrics.data, function(result) {
             var parts = result.target.split('.');
             var stateStr = parts[4];
-            var endpoint = parts[0];
+            var endpoint = parts[1];
             var check = parts[3];
             var endpointCheck = endpoint + "."+check;
             if (!(endpointCheck in endpointCheckResults)) {
