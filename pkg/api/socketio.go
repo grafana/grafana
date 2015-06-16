@@ -238,7 +238,7 @@ func init() {
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
 		c.Socket.On("disconnection", c.OnDisconnection)
-		RefreshCollector(c.Collector.Id)
+		c.Refresh()
 	})
 
 	server.On("error", func(so socketio.Socket, err error) {
@@ -301,20 +301,24 @@ func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 	}
 }
 
-func RefreshCollector(collectorId int64) {
-	log.Info(fmt.Sprintf("Collector %d refreshing", collectorId))
+func (c *CollectorContext) Refresh() {
+	log.Info(fmt.Sprintf("Collector %d refreshing", c.Collector.Id))
 	//step 1. get list of collectorSessions for this collector.
-	q := m.GetCollectorSessionsQuery{CollectorId: collectorId}
+	q := m.GetCollectorSessionsQuery{CollectorId: c.Collector.Id}
 	if err := bus.Dispatch(&q); err != nil {
 		log.Error(0, "failed to get list of collectorSessions.", err)
 		return
+	}
+	org := c.Collector.OrgId
+	if c.Collector.Public {
+		org = 0
 	}
 	totalSessions := len(q.Result)
 	//step 2. for each session
 	for pos, sess := range q.Result {
 		//step 3. get list of monitors configured for this colletor.
 		monQuery := m.GetMonitorsQuery{
-			CollectorId:    []int64{collectorId},
+			OrgId:          org,
 			IsGrafanaAdmin: true,
 			Modulo:         int64(totalSessions),
 			ModuloOffset:   int64(pos),
@@ -325,7 +329,16 @@ func RefreshCollector(collectorId int64) {
 		}
 		log.Info("sending refresh to " + sess.SocketId)
 		//step 5. send to socket.
-		localSockets.Emit(sess.SocketId, "refresh", monQuery.Result)
+		monitors := make([]*m.MonitorDTO, 0)
+		for _, mon := range monQuery.Result {
+			for _, col := range mon.Collectors {
+				if col == c.Collector.Id {
+					monitors = append(monitors, mon)
+					break
+				}
+			}
+		}
+		localSockets.Emit(sess.SocketId, "refresh", monitors)
 	}
 }
 
