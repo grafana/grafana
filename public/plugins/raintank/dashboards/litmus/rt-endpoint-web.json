@@ -15,7 +15,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "125px",
       "panels": [
         {
           "aliasColors": {
@@ -40,7 +40,7 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "100",
+          "height": "",
           "id": 583,
           "legend": {
             "avg": false,

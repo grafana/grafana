@@ -1,5 +1,5 @@
 {
-  "id": 19,
+  "id": 25,
   "title": "Litmus Events",
   "originalTitle": "Litmus Events",
   "tags": [
@@ -76,8 +76,7 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "",
-          "tags": []
+          "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
         },
         "datasource": null,
         "includeAll": true,
@@ -87,62 +86,40 @@
         "options": [
           {
             "text": "All",
-            "value": "",
-            "selected": true
-          },
-          {
-            "text": "alerting",
-            "value": "alerting"
-          },
-          {
-            "text": "boeing_com",
-            "value": "boeing_com"
-          },
-          {
-            "text": "cloudera_com",
-            "value": "cloudera_com"
-          },
-          {
-            "text": "cnn_com",
-            "value": "cnn_com"
+            "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
           },
           {
             "text": "google_com",
             "value": "google_com"
           },
           {
-            "text": "internap_com",
-            "value": "internap_com"
+            "text": "health",
+            "value": "health"
+          },
+          {
+            "text": "litmus",
+            "value": "litmus"
+          },
+          {
+            "text": "monkey_id_au",
+            "value": "monkey_id_au"
           },
           {
             "text": "raintank_io",
             "value": "raintank_io"
-          },
-          {
-            "text": "reddit_com",
-            "value": "reddit_com"
-          },
-          {
-            "text": "telstra_com",
-            "value": "telstra_com"
-          },
-          {
-            "text": "vps_monkey_id_au",
-            "value": "vps_monkey_id_au"
           }
         ],
         "query": "*",
         "refresh": true,
         "refresh_on_load": false,
-        "type": "query",
-        "regex": ""
+        "regex": "",
+        "type": "query"
       },
       {
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)",
-          "tags": []
+          "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
         },
         "datasource": null,
         "includeAll": true,
@@ -153,32 +130,43 @@
         "options": [
           {
             "text": "All",
-            "value": "",
-            "selected": true
+            "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
           },
           {
             "text": "alerting",
             "value": "alerting"
           },
           {
-            "text": "boeing_com",
-            "value": "boeing_com"
+            "text": "collector1be",
+            "value": "collector1be"
           },
           {
-            "text": "cloudera_com",
-            "value": "cloudera_com"
+            "text": "collector2be",
+            "value": "collector2be"
           },
           {
-            "text": "cnn_com",
-            "value": "cnn_com"
+            "text": "collector2tw",
+            "value": "collector2tw"
+          },
+          {
+            "text": "collector2us",
+            "value": "collector2us"
+          },
+          {
+            "text": "collector3tw",
+            "value": "collector3tw"
+          },
+          {
+            "text": "collectortw1",
+            "value": "collectortw1"
           },
           {
             "text": "google_com",
             "value": "google_com"
           },
           {
-            "text": "internap_com",
-            "value": "internap_com"
+            "text": "monkey_id_au",
+            "value": "monkey_id_au"
           },
           {
             "text": "publictest",
@@ -189,16 +177,8 @@
             "value": "raintank_io"
           },
           {
-            "text": "reddit_com",
-            "value": "reddit_com"
-          },
-          {
-            "text": "telstra_com",
-            "value": "telstra_com"
-          },
-          {
-            "text": "vps_monkey_id_au",
-            "value": "vps_monkey_id_au"
+            "text": "springhofeldt_com",
+            "value": "springhofeldt_com"
           }
         ],
         "query": "*.*",
@@ -207,43 +187,55 @@
         "type": "query"
       },
       {
-        "allFormat": "glob",
+        "allFormat": "regex values",
         "current": {
-          "text": "http",
-          "value": "http"
+          "text": "All",
+          "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
         },
         "datasource": null,
-        "includeAll": false,
-        "multi": false,
+        "includeAll": true,
+        "multi": true,
         "multiFormat": "glob",
         "name": "monitor_type",
         "options": [
           {
-            "selected": false,
+            "text": "All",
+            "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
+          },
+          {
             "text": "dns",
             "value": "dns"
           },
           {
-            "selected": true,
+            "text": "error_state",
+            "value": "error_state"
+          },
+          {
             "text": "http",
             "value": "http"
           },
           {
-            "selected": false,
             "text": "https",
             "value": "https"
           },
           {
-            "selected": false,
+            "text": "ok_state",
+            "value": "ok_state"
+          },
+          {
             "text": "ping",
             "value": "ping"
+          },
+          {
+            "text": "warn_state",
+            "value": "warn_state"
           }
         ],
         "query": "*.*.*.*",
+        "refresh": true,
         "refresh_on_load": false,
         "regex": "",
-        "type": "query",
-        "refresh": true
+        "type": "query"
       },
       {
         "allFormat": "glob",
@@ -284,6 +276,6 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 2,
+  "version": 12,
   "links": []
 }
