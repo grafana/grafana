@@ -1,5 +1,5 @@
 {
-  "id": 11,
+  "id": 19,
   "title": "Litmus Events",
   "originalTitle": "Litmus Events",
   "tags": [
@@ -76,7 +76,8 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+          "value": "",
+          "tags": []
         },
         "datasource": null,
         "includeAll": true,
@@ -86,7 +87,8 @@
         "options": [
           {
             "text": "All",
-            "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+            "value": "",
+            "selected": true
           },
           {
             "text": "alerting",
@@ -132,13 +134,15 @@
         "query": "*",
         "refresh": true,
         "refresh_on_load": false,
-        "type": "query"
+        "type": "query",
+        "regex": ""
       },
       {
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+          "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)",
+          "tags": []
         },
         "datasource": null,
         "includeAll": true,
@@ -149,7 +153,8 @@
         "options": [
           {
             "text": "All",
-            "value": "(alerting|boeing_com|cloudera_com|cnn_com|google_com|internap_com|publictest|raintank_io|reddit_com|telstra_com|vps_monkey_id_au)"
+            "value": "",
+            "selected": true
           },
           {
             "text": "alerting",
@@ -237,7 +242,8 @@
         "query": "*.*.*.*",
         "refresh_on_load": false,
         "regex": "",
-        "type": "query"
+        "type": "query",
+        "refresh": true
       },
       {
         "allFormat": "glob",
@@ -278,6 +284,6 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 3,
+  "version": 2,
   "links": []
 }

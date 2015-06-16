@@ -1,10 +1,10 @@
 {
-  "id": 9,
-  "title": "Litmus Endpoint: Summary",
-  "originalTitle": "Litmus Endpoint: Summary",
+  "id": 5,
+  "title": "Litmus: Collectors",
+  "originalTitle": "Litmus: Collectors",
   "tags": [
     "raintank",
-    "Endpoints"
+    "Collectors"
   ],
   "style": "dark",
   "timezone": "browser",
@@ -825,39 +825,94 @@
     "list": [
       {
         "allFormat": "glob",
+        "current": {
+          "text": "collector1be",
+          "value": "collector1be",
+          "tags": []
+        },
         "datasource": null,
         "includeAll": false,
-        "label": "Endpoint",
+        "label": "Collector",
         "multi": false,
-        "multiFormat": "glob",
-        "name": "endpoint",
-        "options": [],
-        "query": "litmus.*",
-        "refresh": true,
-        "refresh_on_load": true,
-        "type": "query"
-      },
-      {
-        "allFormat": "glob",
-        "datasource": null,
-        "includeAll": true,
-        "label": "Collector(s)",
-        "multi": true,
         "multiFormat": "glob",
         "name": "collector",
         "options": [
           {
-            "text": "All",
-            "value": "{}"
+            "text": "collector1be",
+            "value": "collector1be",
+            "selected": true
+          },
+          {
+            "text": "collector2be",
+            "value": "collector2be"
+          },
+          {
+            "text": "collector2tw",
+            "value": "collector2tw"
+          },
+          {
+            "text": "collector2us",
+            "value": "collector2us"
+          },
+          {
+            "text": "collector3tw",
+            "value": "collector3tw"
+          },
+          {
+            "text": "collectortw1",
+            "value": "collectortw1"
+          },
+          {
+            "text": "publictest",
+            "value": "publictest"
           }
         ],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
-        "type": "query",
-        "useTags": true,
         "tagValuesQuery": "raintank_db.tags.collectors.$tag",
-        "tagsQuery": "raintank_db.tags.collectors.*"
+        "tagsQuery": "raintank_db.tags.collectors.*",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "google_com",
+          "value": "google_com",
+          "tags": []
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "Endpoint(s)",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "endpoint",
+        "options": [
+          {
+            "text": "google_com",
+            "value": "google_com",
+            "selected": true
+          },
+          {
+            "text": "monkey_id_au",
+            "value": "monkey_id_au"
+          },
+          {
+            "text": "raintank_io",
+            "value": "raintank_io"
+          }
+        ],
+        "query": "litmus.*",
+        "refresh": true,
+        "refresh_on_load": true,
+        "tagValuesQuery": "raintank_db.tags.endpoints.$tag",
+        "tags": [
+          "prod"
+        ],
+        "tagsQuery": "raintank_db.tags.endpoints.*",
+        "type": "query",
+        "useTags": true
       }
     ]
   },
@@ -866,7 +921,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 0,
+  "version": 1,
   "links": [
     {
       "asDropdown": true,
@@ -874,7 +929,7 @@
       "includeVars": true,
       "keepTime": true,
       "tags": [
-        "Endpoints"
+        "endpoint"
       ],
       "title": "Endpoint Dashboards",
       "type": "dashboards"

@@ -1,13 +1,14 @@
 {
+  "id": 17,
   "title": "Litmus Endpoint: |--- Ping",
   "originalTitle": "Litmus Endpoint: |--- Ping",
   "tags": [
     "raintank",
     "Endpoints"
-    ],
+  ],
   "style": "dark",
   "timezone": "browser",
-  "editable": false,
+  "editable": true,
   "hideControls": false,
   "sharedCrosshair": false,
   "rows": [
@@ -54,7 +55,7 @@
           "links": [],
           "maxDataPoints": "100",
           "nullPointMode": "connected",
-          "percentage": true,
+          "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -84,7 +85,7 @@
           "transparent": true,
           "type": "graph",
           "x-axis": true,
-          "y-axis": false,
+          "y-axis": true,
           "y_formats": [
             "short",
             "short"
@@ -289,7 +290,7 @@
       "collapse": false,
       "enable": true,
       "notice": false,
-      "now": false,
+      "now": true,
       "refresh_intervals": [
         "5s",
         "10s",
@@ -358,16 +359,18 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 29,
+  "version": 2,
   "links": [
     {
-      "type": "dashboards",
-      "icon": "external link",
-      "tags": ["endpoint"],
       "asDropdown": true,
-      "title": "Endpoint Dashboards",
+      "icon": "external link",
       "includeVars": true,
-      "keepTime": true
+      "keepTime": true,
+      "tags": [
+        "Endpoints"
+      ],
+      "title": "Endpoint Dashboards",
+      "type": "dashboards"
     }
   ]
 }

@@ -1,0 +1,852 @@
+{
+  "id": 14,
+  "title": "Litmus Endpoint: Comparison",
+  "originalTitle": "Litmus Endpoint: Comparison",
+  "tags": [
+    "raintank",
+    "Endpoints"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": true,
+  "rows": [
+    {
+      "collapse": true,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "decimals": 1,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "350",
+          "id": 10,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "groupByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1, 'avg')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "overall $protocol endpoint performance (average all selected collectors)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 1,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": "collector",
+          "scopedVars": {
+            "collector": {
+              "text": "collector1be",
+              "value": "collector1be"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 11,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "collector2be",
+              "value": "collector2be"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 12,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "collector2tw",
+              "value": "collector2tw"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 13,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "collector2us",
+              "value": "collector2us"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 14,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "collector3tw",
+              "value": "collector3tw"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 15,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "collectortw1",
+              "value": "collectortw1"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        },
+        {
+          "aliasColors": {
+            "raindex": "#DEDAF7"
+          },
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": false
+          },
+          "id": 16,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "repeat": null,
+          "scopedVars": {
+            "collector": {
+              "text": "publictest",
+              "value": "publictest"
+            }
+          },
+          "seriesOverrides": [
+            {
+              "alias": "raindex",
+              "lines": true,
+              "linewidth": 1,
+              "points": false
+            }
+          ],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.$protocol.default), 1)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "$collector",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "repeatIteration": 1434411460935,
+          "repeatPanelId": 1
+        }
+      ],
+      "repeat": null,
+      "showTitle": true,
+      "title": "$protocol PERFORMANCE (FOR EACH COLLECTOR)"
+    }
+  ],
+  "nav": [
+    {
+      "collapse": false,
+      "enable": true,
+      "notice": false,
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "status": "Stable",
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ],
+      "type": "timepicker"
+    }
+  ],
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "current": {
+          "tags": [],
+          "text": "google_com + monkey_id_au",
+          "value": [
+            "google_com",
+            "monkey_id_au"
+          ]
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "Endpoint",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "endpoint",
+        "options": [
+          {
+            "selected": true,
+            "text": "google_com",
+            "value": "google_com"
+          },
+          {
+            "selected": true,
+            "text": "monkey_id_au",
+            "value": "monkey_id_au"
+          },
+          {
+            "text": "raintank_io",
+            "value": "raintank_io"
+          }
+        ],
+        "query": "litmus.*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "tagValuesQuery": "raintank_db.tags.endpoints.$tag",
+        "tags": [
+          "prod"
+        ],
+        "tagsQuery": "raintank_db.tags.endpoints.*",
+        "type": "query",
+        "useTags": true
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "All",
+          "value": "{collector1be,collector2be,collector2tw,collector2us,collector3tw,collectortw1,publictest}"
+        },
+        "datasource": null,
+        "includeAll": true,
+        "label": "Collector(s)",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "collector",
+        "options": [
+          {
+            "text": "All",
+            "value": "{collector1be,collector2be,collector2tw,collector2us,collector3tw,collectortw1,publictest}"
+          },
+          {
+            "text": "collector1be",
+            "value": "collector1be"
+          },
+          {
+            "text": "collector2be",
+            "value": "collector2be"
+          },
+          {
+            "text": "collector2tw",
+            "value": "collector2tw"
+          },
+          {
+            "text": "collector2us",
+            "value": "collector2us"
+          },
+          {
+            "text": "collector3tw",
+            "value": "collector3tw"
+          },
+          {
+            "text": "collectortw1",
+            "value": "collectortw1"
+          },
+          {
+            "text": "publictest",
+            "value": "publictest"
+          }
+        ],
+        "query": "litmus.$endpoint.*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "tagValuesQuery": "raintank_db.tags.collectors.$tag",
+        "tags": [
+          "aasdASD"
+        ],
+        "tagsQuery": "raintank_db.tags.collectors.*",
+        "type": "query",
+        "useTags": true
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "ping",
+          "value": "ping"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "Protocol",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "protocol",
+        "options": [
+          {
+            "text": "dns",
+            "value": "dns"
+          },
+          {
+            "text": "http",
+            "value": "http"
+          },
+          {
+            "text": "https",
+            "value": "https"
+          },
+          {
+            "text": "ping",
+            "value": "ping"
+          }
+        ],
+        "query": "litmus.$endpoint.$collector.*",
+        "refresh": true,
+        "refresh_on_load": false,
+        "type": "query"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 6,
+  "version": 3,
+  "links": [
+    {
+      "type": "dashboards",
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,      
+      "tags": [
+        "Endpoints"
+      ],
+      "asDropdown": true,
+      "title": "Endpoint Dashboards"
+    }
+  ]
+}
