@@ -20,25 +20,39 @@ function (_) {
       return output;
     }
 
+    var field_datapoints = function(datapoints, column_index) {
+      return _.map(datapoints, function(datapoint) {
+        return [datapoint[column_index - 1], _.last(datapoint)];
+      });
+    };
+
     _.each(self.series, function(series) {
       var datapoints = [];
+      var columns = series.columns.length;
       for (var i = 0; i < series.values.length; i++) {
-        datapoints[i] = [series.values[i][1], new Date(series.values[i][0]).getTime()];
+        datapoints[i] = series.values[i].slice(1);
+        datapoints[i].push(new Date(series.values[i][0]).getTime());
       }
 
-      var seriesName = series.name;
+      for (var j = 1; j < columns; j++) {
+        var seriesName = series.name;
+        var columnName = series.columns[j];
 
-      if (self.alias) {
-        seriesName = self._getSeriesName(series);
-      } else if (series.tags) {
-        var tags = _.map(series.tags, function(value, key) {
-          return key + ': ' + value;
-        });
+        if (self.alias) {
+          seriesName = self._getSeriesName(series);
+        } else if (series.tags) {
+          var tags = _.map(series.tags, function(value, key) {
+            return key + ': ' + value;
+          });
+          if (columnName === 'value') {
+            seriesName = seriesName + ' {' + tags.join(', ') + '}';
+          } else {
+            seriesName = seriesName + '.' + columnName + ' {' + tags.join(', ') + '}';
+          }
+        }
 
-        seriesName = seriesName + ' {' + tags.join(', ') + '}';
+        output.push({ target: seriesName, datapoints: field_datapoints(datapoints, j)});
       }
-
-      output.push({ target: seriesName, datapoints: datapoints });
     });
 
     return output;
