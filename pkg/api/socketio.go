@@ -25,43 +25,43 @@ import (
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
-var localSockets *LocalSockets
+var contextCache *ContextCache
 
 func StoreMetric(m *m.MetricDefinition) {
 	bufCh <- *m
 }
 
-type LocalSockets struct {
+type ContextCache struct {
 	sync.RWMutex
-	Sockets map[string]socketio.Socket
+	Contexts map[string]*CollectorContext
 }
 
-func (s *LocalSockets) Set(id string, socket socketio.Socket) {
+func (s *ContextCache) Set(id string, context *CollectorContext) {
 	s.Lock()
 	defer s.Unlock()
-	s.Sockets[id] = socket
+	s.Contexts[id] = context
 }
 
-func (s *LocalSockets) Remove(id string) {
+func (s *ContextCache) Remove(id string) {
 	s.Lock()
 	defer s.Unlock()
-	delete(s.Sockets, id)
+	delete(s.Contexts, id)
 }
 
-func (s *LocalSockets) Emit(id string, event string, payload interface{}) {
+func (s *ContextCache) Emit(id string, event string, payload interface{}) {
 	s.RLock()
 	defer s.RUnlock()
-	socket, ok := s.Sockets[id]
+	context, ok := s.Context[id]
 	if !ok {
 		log.Info("socket " + id + " is not local.")
 		return
 	}
-	socket.Emit(event, payload)
+	context.Socket.Emit(event, payload)
 }
 
-func NewLocalSockets() *LocalSockets {
-	return &LocalSockets{
-		Sockets: make(map[string]socketio.Socket),
+func NewContextCache() *LocalSockets {
+	return &ContextCache{
+		Context: make(map[string]*CollectorContext),
 	}
 }
 
@@ -158,6 +158,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 		if err := sess.Save(); err != nil {
 			return nil, err
 		}
+	  collectorCache.Set(sess.SocketId, sess)
 		return sess, nil
 	}
 	return nil, m.ErrInvalidApiKey
@@ -206,7 +207,7 @@ func InitCollectorController() {
 }
 
 func init() {
-	localSockets = NewLocalSockets()
+	contextCache = NewContextCache()
 	var err error
 	server, err = socketio.NewServer([]string{"polling", "websocket"})
 	if err != nil {
@@ -255,8 +256,19 @@ func (c *CollectorContext) Save() error {
 	if err := bus.Dispatch(cmd); err != nil {
 		return err
 	}
-	localSockets.Set(c.SocketId, c.Socket)
 	return nil
+}
+
+func (c *ollectorContext) Update() error {
+  cmd := &m.UpdateCollectorSessionCmd{
+    CollectorId: c.Collector.Id,
+    SocketId:    c.Socket.Id(),
+    OrgId:       c.OrgId,
+  }
+  if err := bus.Dispatch(cmd); err != nil {
+    return err
+  }
+  return nil
 }
 
 func (c *CollectorContext) Remove() error {
@@ -267,7 +279,6 @@ func (c *CollectorContext) Remove() error {
 		CollectorId: c.Collector.Id,
 	}
 	err := bus.Dispatch(cmd)
-	localSockets.Remove(c.SocketId)
 	return err
 }
 
@@ -276,6 +287,7 @@ func (c *CollectorContext) OnDisconnection() {
 	if err := c.Remove(); err != nil {
 		log.Error(4, fmt.Sprintf("Failed to remove collectorSession. %s", c.Collector.Name), err)
 	}
+	collectorCache.Remove(c.SocketId)
 }
 
 func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
