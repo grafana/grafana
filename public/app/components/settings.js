@@ -13,7 +13,7 @@ function (_) {
      */
     var defaults = {
       datasources                   : {},
-      window_title_prefix           : 'Grafana - ',
+      window_title_prefix           : 'raintank - ',
       panels                        : {
         'graph':      { path: 'panels/graph',      name: 'Graph' },
         'singlestat': { path: 'panels/singlestat', name: 'Single stat' },
