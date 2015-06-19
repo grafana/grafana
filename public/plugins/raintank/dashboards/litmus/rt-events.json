@@ -1,5 +1,5 @@
 {
-  "id": 25,
+  "id": 83,
   "title": "Litmus Events",
   "originalTitle": "Litmus Events",
   "tags": [
@@ -20,7 +20,7 @@
         {
           "editable": true,
           "error": false,
-          "filter": "endpoint:$endpoint AND collector:$collector AND monitor_type:$monitor_type AND severity:$severity",
+          "filter": "endpoint:$endpoint",
           "height": "500",
           "id": 1,
           "links": [],
@@ -76,7 +76,8 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
+          "value": "(monkey_id_au|newrelic_com|snapshot_raintank_io|td_com|www_cisco_com|www_cnn_com|www_ebay_com|www_facebook_com|www_google_com|www_imgur_com|www_merchantplus_com|www_nsone_net|www_packet_net|www_raintank_io|www_reddit_com|www_techcrunch_com|www_whitehouse_gov|www_wikipedia_org|www_yahoo_com)",
+          "tags": []
         },
         "datasource": null,
         "includeAll": true,
@@ -86,30 +87,106 @@
         "options": [
           {
             "text": "All",
-            "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
-          },
-          {
-            "text": "google_com",
-            "value": "google_com"
-          },
-          {
-            "text": "health",
-            "value": "health"
-          },
-          {
-            "text": "litmus",
-            "value": "litmus"
+            "value": "(monkey_id_au|newrelic_com|snapshot_raintank_io|td_com|www_cisco_com|www_cnn_com|www_ebay_com|www_facebook_com|www_google_com|www_imgur_com|www_merchantplus_com|www_nsone_net|www_packet_net|www_raintank_io|www_reddit_com|www_techcrunch_com|www_whitehouse_gov|www_wikipedia_org|www_yahoo_com)",
+            "selected": true
           },
           {
             "text": "monkey_id_au",
-            "value": "monkey_id_au"
+            "value": "monkey_id_au",
+            "selected": false
           },
           {
-            "text": "raintank_io",
-            "value": "raintank_io"
+            "text": "newrelic_com",
+            "value": "newrelic_com",
+            "selected": false
+          },
+          {
+            "text": "snapshot_raintank_io",
+            "value": "snapshot_raintank_io",
+            "selected": false
+          },
+          {
+            "text": "td_com",
+            "value": "td_com",
+            "selected": false
+          },
+          {
+            "text": "www_cisco_com",
+            "value": "www_cisco_com",
+            "selected": false
+          },
+          {
+            "text": "www_cnn_com",
+            "value": "www_cnn_com",
+            "selected": false
+          },
+          {
+            "text": "www_ebay_com",
+            "value": "www_ebay_com",
+            "selected": false
+          },
+          {
+            "text": "www_facebook_com",
+            "value": "www_facebook_com",
+            "selected": false
+          },
+          {
+            "text": "www_google_com",
+            "value": "www_google_com",
+            "selected": false
+          },
+          {
+            "text": "www_imgur_com",
+            "value": "www_imgur_com",
+            "selected": false
+          },
+          {
+            "text": "www_merchantplus_com",
+            "value": "www_merchantplus_com",
+            "selected": false
+          },
+          {
+            "text": "www_nsone_net",
+            "value": "www_nsone_net",
+            "selected": false
+          },
+          {
+            "text": "www_packet_net",
+            "value": "www_packet_net",
+            "selected": false
+          },
+          {
+            "text": "www_raintank_io",
+            "value": "www_raintank_io",
+            "selected": false
+          },
+          {
+            "text": "www_reddit_com",
+            "value": "www_reddit_com",
+            "selected": false
+          },
+          {
+            "text": "www_techcrunch_com",
+            "value": "www_techcrunch_com",
+            "selected": false
+          },
+          {
+            "text": "www_whitehouse_gov",
+            "value": "www_whitehouse_gov",
+            "selected": false
+          },
+          {
+            "text": "www_wikipedia_org",
+            "value": "www_wikipedia_org",
+            "selected": false
+          },
+          {
+            "text": "www_yahoo_com",
+            "value": "www_yahoo_com",
+            "selected": false
           }
         ],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,
         "regex": "",
@@ -119,7 +196,7 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
+          "value": "(amsterdam|charleroi|frankfurt|london|new-jersey|new-york|omaha|paris|san-francisco|seattle|singapore|taipei)"
         },
         "datasource": null,
         "includeAll": true,
@@ -130,85 +207,77 @@
         "options": [
           {
             "text": "All",
-            "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
+            "value": "(amsterdam|charleroi|frankfurt|london|new-jersey|new-york|omaha|paris|san-francisco|seattle|singapore|taipei)"
           },
           {
-            "text": "alerting",
-            "value": "alerting"
+            "text": "amsterdam",
+            "value": "amsterdam"
           },
           {
-            "text": "collector1be",
-            "value": "collector1be"
+            "text": "charleroi",
+            "value": "charleroi"
           },
           {
-            "text": "collector2be",
-            "value": "collector2be"
+            "text": "frankfurt",
+            "value": "frankfurt"
           },
           {
-            "text": "collector2tw",
-            "value": "collector2tw"
+            "text": "london",
+            "value": "london"
           },
           {
-            "text": "collector2us",
-            "value": "collector2us"
+            "text": "new-jersey",
+            "value": "new-jersey"
           },
           {
-            "text": "collector3tw",
-            "value": "collector3tw"
+            "text": "new-york",
+            "value": "new-york"
           },
           {
-            "text": "collectortw1",
-            "value": "collectortw1"
+            "text": "omaha",
+            "value": "omaha"
           },
           {
-            "text": "google_com",
-            "value": "google_com"
+            "text": "paris",
+            "value": "paris"
           },
           {
-            "text": "monkey_id_au",
-            "value": "monkey_id_au"
+            "text": "san-francisco",
+            "value": "san-francisco"
           },
           {
-            "text": "publictest",
-            "value": "publictest"
+            "text": "seattle",
+            "value": "seattle"
           },
           {
-            "text": "raintank_io",
-            "value": "raintank_io"
+            "text": "singapore",
+            "value": "singapore"
           },
           {
-            "text": "springhofeldt_com",
-            "value": "springhofeldt_com"
+            "text": "taipei",
+            "value": "taipei"
           }
         ],
-        "query": "*.*",
+        "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": false,
         "type": "query"
       },
       {
-        "allFormat": "regex values",
+        "allFormat": "glob",
         "current": {
-          "text": "All",
-          "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
+          "text": "dns",
+          "value": "dns"
         },
         "datasource": null,
-        "includeAll": true,
-        "multi": true,
+        "includeAll": false,
+        "multi": false,
         "multiFormat": "glob",
         "name": "monitor_type",
         "options": [
           {
-            "text": "All",
-            "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
-          },
-          {
             "text": "dns",
             "value": "dns"
-          },
-          {
-            "text": "error_state",
-            "value": "error_state"
           },
           {
             "text": "http",
@@ -219,19 +288,11 @@
             "value": "https"
           },
           {
-            "text": "ok_state",
-            "value": "ok_state"
-          },
-          {
             "text": "ping",
             "value": "ping"
-          },
-          {
-            "text": "warn_state",
-            "value": "warn_state"
           }
         ],
-        "query": "*.*.*.*",
+        "query": "litmus.$endpoint.$collector.*",
         "refresh": true,
         "refresh_on_load": false,
         "regex": "",
@@ -241,11 +302,8 @@
         "allFormat": "glob",
         "current": {
           "tags": [],
-          "text": "ERROR + OK",
-          "value": [
-            "ERROR",
-            "OK"
-          ]
+          "text": "ERROR",
+          "value": "ERROR"
         },
         "datasource": null,
         "includeAll": false,
@@ -259,7 +317,7 @@
             "value": "ERROR"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "OK",
             "value": "OK"
           }
@@ -276,6 +334,6 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 12,
+  "version": 1,
   "links": []
 }

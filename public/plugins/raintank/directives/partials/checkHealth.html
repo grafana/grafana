@@ -1,11 +1,28 @@
-<div class="statusType" ng-show="okCount > 0">OK:&nbsp;<span class="online">{{okCount}}</span></div> 
-<div class="statusType" ng-show="okCount == 0">OK:&nbsp;<span class="nodata">--</span></div> 
+<div class="statusType" ng-show="okCount > 0">OK:&nbsp;
+	<span class="online" bs-tooltip="'View recent OK events'">{{okCount}}</span>
+</div> 
 
-<div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;<span class="warn">{{warnCount}}</span></div>
-<div class="statusType" ng-show="warnCount == 0">Warn:&nbsp;<span class="nodata">--</span></div>
+<div class="statusType" ng-show="!okCount">OK:&nbsp;
+	<span class="nodata">--</span>
+</div> 
 
-<div class="statusType" ng-show="errorCount > 0">Error:&nbsp;<span class="critical">{{errorCount}}</span></div>
-<div class="statusType" ng-show="errorCount == 0">Error:&nbsp;<span class="nodata">--</span></div>
+<div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;
+	<span class="warn" bs-tooltip="'View recent Warn events'">{{warnCount}}</span>
+</div>
+<div class="statusType" ng-show="!warnCount">Warn:&nbsp;
+	<span class="nodata">--</span>
+</div>
 
-<div class="statusType" ng-show="unknownCount > 0">Unknown:&nbsp;<span class="none">{{unknownCount}}</span></div>
-<div class="statusType" ng-show="unknownCount == 0">Unknown:&nbsp;<span class="nodata">--</span></div>
+<div class="statusType" ng-show="errorCount > 0">Error:&nbsp;
+	<span class="critical" bs-tooltip="'View recent Error events'">{{errorCount}}</span>
+</div>
+<div class="statusType" ng-show="!errorCount">Error:&nbsp;
+	<span class="nodata">--</span>
+</div>
+
+<div class="statusType" ng-show="unknownCount > 0">Unknown:&nbsp;
+	<span class="none" bs-tooltip="'View recent Unknown events'">{{unknownCount}}</span>
+</div>
+<div class="statusType" ng-show="!unknownCount">Unknown:&nbsp;
+	<span class="nodata">--</span>
+</div>
