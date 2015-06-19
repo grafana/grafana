@@ -68,7 +68,7 @@ define([
         expect(variable.current.value.length).to.be(2);
         expect(variable.current.value[0]).to.be("new");
         expect(variable.current.value[1]).to.be("other");
-        expect(variable.current.text).to.be("new, other");
+        expect(variable.current.text).to.be("new + other");
       });
     });
 

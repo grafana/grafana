@@ -57,10 +57,6 @@ function (angular, _, kbn) {
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 
-      if (_.isArray(urlValue)) {
-        option.text = urlValue.join(', ');
-      }
-
       this.updateAutoInterval(variable);
       return this.setVariableValue(variable, option);
     };
@@ -79,6 +75,11 @@ function (angular, _, kbn) {
 
     this.setVariableValue = function(variable, option) {
       variable.current = angular.copy(option);
+
+      if (_.isArray(variable.current.value)) {
+        variable.current.text = variable.current.value.join(' + ');
+      }
+
       templateSrv.updateTemplateData();
       return this.updateOptionsInChildVariables(variable);
     };
@@ -127,6 +128,7 @@ function (angular, _, kbn) {
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
+        if (!variable.options.length) { return; }
         return self.setVariableValue(variable, variable.options[0]);
       }
 
