@@ -35,7 +35,7 @@
                 <div class="rt-form rt-input-styles rt-flex-form-block">
                   <div style="margin: 20px 45px 0 0;">
                     <label class="small">Frequency</label>
-                    <div class="select-input">
+                    <div class="select-input select-interior">
                       <select ng-model="monitors['https'].frequency" ng-options="f.value as f.label for f in frequencyOpts"></select>
                     </div>
                   </div>                
@@ -66,7 +66,7 @@
                         </div>                        
                         <div class="rt-flex-form-field">
                           <label class="small">Method</label>
-                          <div class="select-input">
+                          <div class="select-input select-interior">
                             <select ng-model="currentSettingByVariable(monitors['https'], 'method').value" ng-options="m for m in defaultSettingByVariable('https','method').conditions.values"></select>
                           </div>
                         </div>  

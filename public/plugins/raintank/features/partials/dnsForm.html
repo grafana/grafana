@@ -40,7 +40,7 @@
                 <div class="rt-form rt-input-styles rt-flex-form-block">
                   <div style="margin: 20px 45px 0 0;">
                     <label class="small">Frequency</label>
-                    <div class="select-input">
+                    <div class="select-input select-interior">
                       <select ng-model="monitors['dns'].frequency" ng-options="f.value as f.label for f in frequencyOpts"></select>
                     </div>
                   </div>                
@@ -65,7 +65,7 @@
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Record Type</label>
-                          <div class="select-input">
+                          <div class="select-input select-interior">
                             <select ng-model="currentSettingByVariable(monitors['dns'], 'type').value" ng-options="r for r in defaultSettingByVariable('dns','type').conditions.values"></select>
                           </div>
                         </div>  
@@ -75,7 +75,7 @@
                         </div>  
                         <div class="rt-flex-form-field">
                           <label class="small">Protocol</label>
-                          <div class="select-input">
+                          <div class="select-input select-interior">
                             <select ng-model="currentSettingByVariable(monitors['dns'], 'protocol').value" ng-options="p for p in defaultSettingByVariable('dns','protocol').conditions.values"></select>
                           </div>
                         </div>                          
