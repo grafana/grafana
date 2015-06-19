@@ -30,6 +30,7 @@
 
 **Fixes**
 - [Issue #2185](https://github.com/grafana/grafana/issues/2185). Graph: fixed PNG rendering of panels with legend table to the right
+- [Issue #2163](https://github.com/grafana/grafana/issues/2163). Backend: Load dashboards with capital letters in the dashboard url slug (url id)
 
 # 2.0.3 (unreleased - 2.0.x branch)
 
