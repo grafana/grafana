@@ -1,6 +1,5 @@
 <div class="statusType" ng-show="okCount > 0">OK:&nbsp;
-	<a class="online" bs-tooltip="'View last 15m of OK events'" href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase
-}}&var-severity=OK">{{okCount}}</a>
+	<a class="online" bs-tooltip="'View last 15m of OK events'" href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=OK">{{okCount}}</a>
 </div> 
 
 <div class="statusType" ng-show="!okCount">OK:&nbsp;
@@ -8,16 +7,14 @@
 </div>
 
 <div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;
-	<span class="warn" bs-tooltip="'View last 15m of Warn events'" href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase
-}}&var-severity=WARN">{{warnCount}}</span>
+	<span class="warn" bs-tooltip="'View last 15m of Warn events'" href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=WARN">{{warnCount}}</span>
 </div>
 <div class="statusType" ng-show="!warnCount">Warn:&nbsp;
 	<span class="nodata">--</span>
 </div>
 
 <div class="statusType" ng-show="errorCount > 0">Error:&nbsp;
-	<span class="critical" bs-tooltip="'View last 15m of Error events'"href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase
-}}&var-severity=ERROR">{{errorCount}}</span>
+	<span class="critical" bs-tooltip="'View last 15m of Error events'"href="dashboard/file/rt-events.json?from=15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=ERROR">{{errorCount}}</span>
 </div>
 <div class="statusType" ng-show="!errorCount">Error:&nbsp;
 	<span class="nodata">--</span>
