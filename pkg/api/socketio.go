@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -25,43 +28,54 @@ import (
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
-var localSockets *LocalSockets
+var contextCache *ContextCache
+var instanceId string
 
 func StoreMetric(m *m.MetricDefinition) {
 	bufCh <- *m
 }
 
-type LocalSockets struct {
+type ContextCache struct {
 	sync.RWMutex
-	Sockets map[string]socketio.Socket
+	Contexts map[string]*CollectorContext
 }
 
-func (s *LocalSockets) Set(id string, socket socketio.Socket) {
+func (s *ContextCache) Set(id string, context *CollectorContext) {
 	s.Lock()
 	defer s.Unlock()
-	s.Sockets[id] = socket
+	s.Contexts[id] = context
 }
 
-func (s *LocalSockets) Remove(id string) {
+func (s *ContextCache) Remove(id string) {
 	s.Lock()
 	defer s.Unlock()
-	delete(s.Sockets, id)
+	delete(s.Contexts, id)
 }
 
-func (s *LocalSockets) Emit(id string, event string, payload interface{}) {
+func (s *ContextCache) Emit(id string, event string, payload interface{}) {
 	s.RLock()
 	defer s.RUnlock()
-	socket, ok := s.Sockets[id]
+	context, ok := s.Contexts[id]
 	if !ok {
 		log.Info("socket " + id + " is not local.")
 		return
 	}
-	socket.Emit(event, payload)
+	context.Socket.Emit(event, payload)
 }
 
-func NewLocalSockets() *LocalSockets {
-	return &LocalSockets{
-		Sockets: make(map[string]socketio.Socket),
+func (c *ContextCache) Refresh(collectorId int64) {
+	c.RLock()
+	defer c.RUnlock()
+	for _, ctx := range c.Contexts {
+		if ctx.Collector.Id == collectorId {
+			ctx.Refresh()
+		}
+	}
+}
+
+func NewContextCache() *ContextCache {
+	return &ContextCache{
+		Contexts: make(map[string]*CollectorContext),
 	}
 }
 
@@ -158,6 +172,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 		if err := sess.Save(); err != nil {
 			return nil, err
 		}
+		contextCache.Set(sess.SocketId, sess)
 		return sess, nil
 	}
 	return nil, m.ErrInvalidApiKey
@@ -165,6 +180,37 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 
 func InitCollectorController() {
 	sec := setting.Cfg.Section("event_publisher")
+	// get our instance-id
+	dataPath := setting.DataPath + "/instance-id"
+	log.Info("instance-id path: " + dataPath)
+	fs, err := os.Open(dataPath)
+	if err != nil {
+		fs, err = os.Create(dataPath)
+		if err != nil {
+			log.Fatal(0, "failed to create instance-id file", err)
+		}
+		defer fs.Close()
+		instanceId = uuid.NewV4().String()
+		if _, err := fs.Write([]byte(instanceId)); err != nil {
+			log.Fatal(0, "failed to write instanceId to file", err)
+		}
+	} else {
+		defer fs.Close()
+		content, err := ioutil.ReadAll(fs)
+		if err != nil {
+			log.Fatal(0, "failed to read instanceId", err)
+		}
+		instanceId = strings.Split(string(content), "\n")[0]
+	}
+	if instanceId == "" {
+		log.Fatal(0, "invalid instanceId. check "+dataPath, nil)
+	}
+	cmd := &m.ClearCollectorSessionCommand{
+		InstanceId: instanceId,
+	}
+	if err := bus.Dispatch(cmd); err != nil {
+		log.Fatal(0, "failed to clear collectorSessions", err)
+	}
 
 	if sec.Key("enabled").MustBool(false) {
 		url := sec.Key("rabbitmq_url").String()
@@ -184,7 +230,7 @@ func InitCollectorController() {
 			Url:        url,
 			Exchange:   &exch,
 			Queue:      &q,
-			BindingKey: "INFO.monitor.#",
+			BindingKey: []string{"INFO.monitor.*", "INFO.collector.*"},
 		}
 		err := consumer.Connect()
 		if err != nil {
@@ -196,17 +242,15 @@ func InitCollectorController() {
 		bus.AddEventListener(EmitUpdateMonitor)
 		bus.AddEventListener(EmitAddMonitor)
 		bus.AddEventListener(EmitDeleteMonitor)
-	}
-	cmd := m.ClearCollectorSessionCommand{ProcessId: 0}
-	if err := bus.Dispatch(&cmd); err != nil {
-		log.Fatal(4, "failed to clear collectorSessions.", err)
+		bus.AddEventListener(HandleCollectorConnected)
+		bus.AddEventListener(HandleCollectorDisconnected)
 	}
 	bufCh = make(chan m.MetricDefinition, runtime.NumCPU())
 	go metricpublisher.ProcessBuffer(bufCh)
 }
 
 func init() {
-	localSockets = NewLocalSockets()
+	contextCache = NewContextCache()
 	var err error
 	server, err = socketio.NewServer([]string{"polling", "websocket"})
 	if err != nil {
@@ -238,12 +282,12 @@ func init() {
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
 		c.Socket.On("disconnection", c.OnDisconnection)
-		c.Refresh()
 	})
 
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Error(0, "socket emitted error", err)
 	})
+
 }
 
 func (c *CollectorContext) Save() error {
@@ -251,11 +295,23 @@ func (c *CollectorContext) Save() error {
 		CollectorId: c.Collector.Id,
 		SocketId:    c.Socket.Id(),
 		OrgId:       c.OrgId,
+		InstanceId:  instanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		return err
 	}
-	localSockets.Set(c.SocketId, c.Socket)
+	return nil
+}
+
+func (c *CollectorContext) Update() error {
+	cmd := &m.UpdateCollectorSessionCmd{
+		CollectorId: c.Collector.Id,
+		SocketId:    c.Socket.Id(),
+		OrgId:       c.OrgId,
+	}
+	if err := bus.Dispatch(cmd); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -267,7 +323,6 @@ func (c *CollectorContext) Remove() error {
 		CollectorId: c.Collector.Id,
 	}
 	err := bus.Dispatch(cmd)
-	localSockets.Remove(c.SocketId)
 	return err
 }
 
@@ -276,6 +331,7 @@ func (c *CollectorContext) OnDisconnection() {
 	if err := c.Remove(); err != nil {
 		log.Error(4, fmt.Sprintf("Failed to remove collectorSession. %s", c.Collector.Name), err)
 	}
+	contextCache.Remove(c.SocketId)
 }
 
 func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
@@ -338,7 +394,7 @@ func (c *CollectorContext) Refresh() {
 				}
 			}
 		}
-		localSockets.Emit(sess.SocketId, "refresh", monitors)
+		contextCache.Emit(sess.SocketId, "refresh", monitors)
 	}
 }
 
@@ -401,10 +457,20 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	eventId := reflect.ValueOf(event).Elem().FieldByName("Id").Int()
 	log.Info(fmt.Sprintf("emitting %s event for MonitorId %d totalSessions: %d", eventName, eventId, totalSessions))
 	pos := eventId % totalSessions
-	socketId := q.Result[pos].SocketId
+	if q.Result[pos].InstanceId == instanceId {
+		socketId := q.Result[pos].SocketId
+		contextCache.Emit(socketId, eventName, event)
+	}
+	return nil
+}
 
-	localSockets.Emit(socketId, eventName, event)
+func HandleCollectorConnected(event *events.CollectorConnected) error {
+	contextCache.Refresh(event.CollectorId)
+	return nil
+}
 
+func HandleCollectorDisconnected(event *events.CollectorDisconnected) error {
+	contextCache.Refresh(event.CollectorId)
 	return nil
 }
 
@@ -424,6 +490,7 @@ func eventConsumer(msg *amqp.Delivery) error {
 		event := events.MonitorUpdated{}
 		if err := json.Unmarshal(payloadRaw, &event); err != nil {
 			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+			return err
 		}
 		if err := EmitUpdateMonitor(&event); err != nil {
 			return err
@@ -433,6 +500,7 @@ func eventConsumer(msg *amqp.Delivery) error {
 		event := events.MonitorCreated{}
 		if err := json.Unmarshal(payloadRaw, &event); err != nil {
 			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+			return err
 		}
 		if err := EmitAddMonitor(&event); err != nil {
 			return err
@@ -442,8 +510,29 @@ func eventConsumer(msg *amqp.Delivery) error {
 		event := events.MonitorRemoved{}
 		if err := json.Unmarshal(payloadRaw, &event); err != nil {
 			log.Error(0, "unable to unmarshal payload into MonitorUpdated event.", err)
+			return err
 		}
 		if err := EmitDeleteMonitor(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.collector.connected":
+		event := events.CollectorConnected{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into CollectorConnected event.", err)
+			return err
+		}
+		if err := HandleCollectorConnected(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.collector.disconnected":
+		event := events.CollectorDisconnected{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into CollectorDisconnected event.", err)
+			return err
+		}
+		if err := HandleCollectorDisconnected(&event); err != nil {
 			return err
 		}
 		break

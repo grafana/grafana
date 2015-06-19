@@ -72,3 +72,13 @@ type EndpointRemoved struct {
 	OrgId     int64     `json:"org_id"`
 	Tags      []string  `json:"tags"`
 }
+
+type CollectorConnected struct {
+	CollectorId int64  `json:"collector_id"`
+	InstanceId  string `json:"instance_id"`
+}
+
+type CollectorDisconnected struct {
+	CollectorId int64  `json:"collector_id"`
+	InstanceId  string `json:"instance_id"`
+}

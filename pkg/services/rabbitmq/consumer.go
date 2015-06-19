@@ -21,7 +21,7 @@ type Consumer struct {
 	Url        string
 	Exchange   *Exchange
 	Queue      *Queue
-	BindingKey string
+	BindingKey []string
 	callback   ConsumerCallback
 	conn       *amqp.Connection
 	channel    *amqp.Channel
@@ -80,17 +80,19 @@ func (c *Consumer) getChannel() error {
 	if err != nil {
 		return err
 	}
-	err = ch.QueueBind(
-		q.Name,          // queue name
-		c.BindingKey,    // routing key
-		c.Exchange.Name, // exchange
-		false,
-		nil,
-	)
-
-	if err != nil {
-		return err
+	for _, key := range c.BindingKey {
+		err = ch.QueueBind(
+			q.Name,          // queue name
+			key,             // routing key
+			c.Exchange.Name, // exchange
+			false,
+			nil,
+		)
+		if err != nil {
+			return err
+		}
 	}
+
 	c.channel = ch
 
 	// listen for close events so we can reconnect.
