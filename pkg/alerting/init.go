@@ -101,7 +101,7 @@ func distributed(url string) error {
 		Url:        url,
 		Exchange:   &exch,
 		Queue:      &q,
-		BindingKey: "10", //consistant hashing weight.
+		BindingKey: []string{"10"}, //consistant hashing weight.
 	}
 	if err := consumer.Connect(); err != nil {
 		log.Fatal(0, "failed to start event.consumer.", err)

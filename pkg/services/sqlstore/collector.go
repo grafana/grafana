@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -435,11 +436,12 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 }
 
 func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 		collectorSess := m.CollectorSession{
 			OrgId:       cmd.OrgId,
 			CollectorId: cmd.CollectorId,
 			SocketId:    cmd.SocketId,
+			InstanceId:  cmd.InstanceId,
 			Updated:     time.Now(),
 		}
 		if _, err := sess.Insert(&collectorSess); err != nil {
@@ -449,24 +451,34 @@ func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
 		if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
 			return err
 		}
+		sess.publishAfterCommit(&events.CollectorConnected{
+			CollectorId: cmd.CollectorId,
+			InstanceId:  cmd.InstanceId,
+		})
 		return nil
 	})
 }
 
 func GetCollectorSessions(query *m.GetCollectorSessionsQuery) error {
-	sess := x.Table("collector_session")
-	return GetCollectorSessionsTransaction(query, sess)
+	sess := session{Session: x.Table("collector_session")}
+	return GetCollectorSessionsTransaction(query, &sess)
 }
 
-func GetCollectorSessionsTransaction(query *m.GetCollectorSessionsQuery, sess *xorm.Session) error {
+func GetCollectorSessionsTransaction(query *m.GetCollectorSessionsQuery, sess *session) error {
 	fmt.Printf("searching for sessions for collector %d\n", query.CollectorId)
-	err := sess.Where("collector_id=?", query.CollectorId).OrderBy("updated").Find(&query.Result)
+	if query.CollectorId != 0 {
+		sess.And("collector_id=?", query.CollectorId)
+	}
+	if query.InstanceId != "" {
+		sess.And("instance_id=?", query.InstanceId)
+	}
+	err := sess.OrderBy("updated").Find(&query.Result)
 	return err
 
 }
 
 func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 		var rawSql = "DELETE FROM collector_session WHERE org_id=? AND socket_id=?"
 		if _, err := sess.Exec(rawSql, cmd.OrgId, cmd.SocketId); err != nil {
 			return err
@@ -481,19 +493,84 @@ func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
 				return err
 			}
 		}
+		sess.publishAfterCommit(&events.CollectorDisconnected{
+			CollectorId: cmd.CollectorId,
+			InstanceId:  "",
+		})
 		return nil
 	})
 }
 
+type collectorOnlineSession struct {
+	CollectorId int64
+	Online      bool
+	SessionId   int64
+}
+
 func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "DELETE FROM collector_session"
-		if _, err := sess.Exec(rawSql); err != nil {
+	return inTransaction2(func(sess *session) error {
+		q := m.GetCollectorSessionsQuery{
+			InstanceId: cmd.InstanceId,
+		}
+		sess.Table("collector_session")
+		if err := GetCollectorSessionsTransaction(&q, sess); err != nil {
 			return err
 		}
-		rawSql = "UPDATE collector set online=0"
-		if _, err := sess.Exec(rawSql); err != nil {
+		var rawSql = "DELETE FROM collector_session where instance_id=?"
+		if _, err := sess.Exec(rawSql, cmd.InstanceId); err != nil {
 			return err
+		}
+
+		rawSql = `select collector.id as collector_id, online, collector_session.id as session_id
+		      from collector LEFT join collector_session
+		      on collector_session.collector_id = collector.id group by collector.id`
+		result := make([]*collectorOnlineSession, 0)
+		if err := sess.Sql(rawSql).Find(&result); err != nil {
+			return err
+		}
+		toOnline := make([]int64, 0)
+		toOffline := make([]int64, 0)
+		for _, r := range result {
+			if r.Online && r.SessionId == 0 {
+				toOffline = append(toOffline, r.CollectorId)
+			} else if !r.Online && r.SessionId > 0 {
+				toOnline = append(toOnline, r.CollectorId)
+			}
+		}
+		if len(toOnline) > 0 {
+			a := make([]string, len(toOnline))
+			args := make([]interface{}, len(toOnline))
+			for i, id := range toOnline {
+				args[i] = id
+				a[i] = "?"
+			}
+			rawSql = fmt.Sprintf("UPDATE collector set online=1 where id in (%s)", strings.Join(a, ","))
+
+			if _, err := sess.Exec(rawSql, args...); err != nil {
+				fmt.Println("failed to set collectors to online: ", rawSql)
+				return err
+			}
+		}
+		if len(toOffline) > 0 {
+			a := make([]string, len(toOffline))
+			args := make([]interface{}, len(toOffline))
+			for i, id := range toOffline {
+				args[i] = id
+				a[i] = "?"
+			}
+			rawSql = fmt.Sprintf("UPDATE collector set online=0 where id in (%s)", strings.Join(a, ","))
+
+			if _, err := sess.Exec(rawSql, args...); err != nil {
+				fmt.Println("failed to set collectors to offline:", rawSql)
+				return err
+			}
+		}
+		//send collectorDisconnected event for each collector-session deleted.
+		for _, session := range q.Result {
+			sess.publishAfterCommit(&events.CollectorDisconnected{
+				CollectorId: session.CollectorId,
+				InstanceId:  session.InstanceId,
+			})
 		}
 		return nil
 	})

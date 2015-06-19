@@ -39,6 +39,7 @@ type CollectorSession struct {
 	OrgId       int64
 	CollectorId int64
 	SocketId    string
+	InstanceId  string
 	Updated     time.Time
 }
 
@@ -92,6 +93,14 @@ type AddCollectorSessionCommand struct {
 	CollectorId int64
 	SocketId    string
 	OrgId       int64
+	InstanceId  string
+}
+
+type UpdateCollectorSessionCmd struct {
+	CollectorId int64
+	SocketId    string
+	OrgId       int64
+	InstanceId  string
 }
 
 type DeleteCollectorSessionCommand struct {
@@ -101,7 +110,7 @@ type DeleteCollectorSessionCommand struct {
 }
 
 type ClearCollectorSessionCommand struct {
-	ProcessId int64
+	InstanceId string
 }
 
 // ---------------------
@@ -137,6 +146,7 @@ func (collector *Collector) UpdateCollectorSlug() {
 
 type GetCollectorSessionsQuery struct {
 	CollectorId int64
+	InstanceId  string
 	Result      []*CollectorSession
 }
 

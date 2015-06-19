@@ -1,5 +1,6 @@
 package migrations
 
+import "github.com/go-xorm/xorm"
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addCollectorMigration(mg *Migrator) {
@@ -65,5 +66,13 @@ func addCollectorMigration(mg *Migrator) {
 	}
 	mg.AddMigration("create collector_session table", NewAddTableMigration(collectorSessionV1))
 	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", collectorSessionV1)
+	instanceCol := &Column{Name: "instance_id", Type: DB_NVarchar, Length: 255, Nullable: true}
+	migration := NewAddColumnMigration(collectorSessionV1, instanceCol)
+	migration.OnSuccess = func(sess *xorm.Session) error {
+		rawSql := "DELETE FROM collector_session"
+		sess.Table("collector_session")
+		_, err := sess.Exec(rawSql)
+		return err
+	}
+	mg.AddMigration("add instance_id to collector_session table v1", migration)
 }
