@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd"
@@ -42,8 +43,8 @@ func main() {
 	setting.BuildStamp = buildstampInt64
 
 	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT)
 		<-c
 		os.Exit(0)
 	}()
