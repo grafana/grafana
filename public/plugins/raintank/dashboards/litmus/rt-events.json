@@ -1,5 +1,5 @@
 {
-  "id": 25,
+  "id": 83,
   "title": "Litmus Events",
   "originalTitle": "Litmus Events",
   "tags": [
@@ -20,7 +20,7 @@
         {
           "editable": true,
           "error": false,
-          "filter": "endpoint:$endpoint AND collector:$collector AND monitor_type:$monitor_type AND severity:$severity",
+          "filter": "endpoint:$endpoint",
           "height": "500",
           "id": 1,
           "links": [],
@@ -76,7 +76,8 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
+          "value": "",
+          "tags": []
         },
         "datasource": null,
         "includeAll": true,
@@ -86,30 +87,11 @@
         "options": [
           {
             "text": "All",
-            "value": "(google_com|health|litmus|monkey_id_au|raintank_io)"
-          },
-          {
-            "text": "google_com",
-            "value": "google_com"
-          },
-          {
-            "text": "health",
-            "value": "health"
-          },
-          {
-            "text": "litmus",
-            "value": "litmus"
-          },
-          {
-            "text": "monkey_id_au",
-            "value": "monkey_id_au"
-          },
-          {
-            "text": "raintank_io",
-            "value": "raintank_io"
+            "value": "",
+            "selected": true
           }
         ],
-        "query": "*",
+        "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,
         "regex": "",
@@ -119,7 +101,7 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
+          "value": ""
         },
         "datasource": null,
         "includeAll": true,
@@ -130,108 +112,27 @@
         "options": [
           {
             "text": "All",
-            "value": "(alerting|collector1be|collector2be|collector2tw|collector2us|collector3tw|collectortw1|google_com|monkey_id_au|publictest|raintank_io|springhofeldt_com)"
-          },
-          {
-            "text": "alerting",
-            "value": "alerting"
-          },
-          {
-            "text": "collector1be",
-            "value": "collector1be"
-          },
-          {
-            "text": "collector2be",
-            "value": "collector2be"
-          },
-          {
-            "text": "collector2tw",
-            "value": "collector2tw"
-          },
-          {
-            "text": "collector2us",
-            "value": "collector2us"
-          },
-          {
-            "text": "collector3tw",
-            "value": "collector3tw"
-          },
-          {
-            "text": "collectortw1",
-            "value": "collectortw1"
-          },
-          {
-            "text": "google_com",
-            "value": "google_com"
-          },
-          {
-            "text": "monkey_id_au",
-            "value": "monkey_id_au"
-          },
-          {
-            "text": "publictest",
-            "value": "publictest"
-          },
-          {
-            "text": "raintank_io",
-            "value": "raintank_io"
-          },
-          {
-            "text": "springhofeldt_com",
-            "value": "springhofeldt_com"
+            "value": ""
           }
         ],
-        "query": "*.*",
+        "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": false,
         "type": "query"
       },
       {
-        "allFormat": "regex values",
+        "allFormat": "glob",
         "current": {
-          "text": "All",
-          "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
+          "text": "dns",
+          "value": "dns"
         },
         "datasource": null,
-        "includeAll": true,
-        "multi": true,
+        "includeAll": false,
+        "multi": false,
         "multiFormat": "glob",
         "name": "monitor_type",
-        "options": [
-          {
-            "text": "All",
-            "value": "(dns|error_state|http|https|ok_state|ping|warn_state)"
-          },
-          {
-            "text": "dns",
-            "value": "dns"
-          },
-          {
-            "text": "error_state",
-            "value": "error_state"
-          },
-          {
-            "text": "http",
-            "value": "http"
-          },
-          {
-            "text": "https",
-            "value": "https"
-          },
-          {
-            "text": "ok_state",
-            "value": "ok_state"
-          },
-          {
-            "text": "ping",
-            "value": "ping"
-          },
-          {
-            "text": "warn_state",
-            "value": "warn_state"
-          }
-        ],
-        "query": "*.*.*.*",
+        "options": [],
+        "query": "litmus.$endpoint.$collector.*",
         "refresh": true,
         "refresh_on_load": false,
         "regex": "",
@@ -241,11 +142,8 @@
         "allFormat": "glob",
         "current": {
           "tags": [],
-          "text": "ERROR + OK",
-          "value": [
-            "ERROR",
-            "OK"
-          ]
+          "text": "ERROR",
+          "value": "ERROR"
         },
         "datasource": null,
         "includeAll": false,
@@ -259,7 +157,7 @@
             "value": "ERROR"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "OK",
             "value": "OK"
           }
@@ -276,6 +174,6 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 12,
+  "version": 1,
   "links": []
 }
