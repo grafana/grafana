@@ -20,6 +20,7 @@ function (angular, app, _, $) {
 
         scope.$on('render', function() {
           render();
+          scope.panelRenderingComplete();
         });
 
         function setElementHeight() {

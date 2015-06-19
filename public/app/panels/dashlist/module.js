@@ -66,6 +66,7 @@ function (angular, app, _, config, PanelMeta) {
 
       return backendSrv.search(params).then(function(result) {
         $scope.dashList = result;
+        $scope.panelRenderingComplete();
       });
     };
 
