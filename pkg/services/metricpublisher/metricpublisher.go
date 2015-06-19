@@ -7,6 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	"hash/crc32"
 	"time"
 )
 
@@ -53,7 +54,9 @@ func ProcessBuffer(c <-chan m.MetricDefinition) {
 		case b := <-c:
 			if b.OrgId != 0 {
 				//get hash.
-				hash := uint32(1)
+				h := crc32.NewIEEE()
+				h.Write([]byte(b.Name))
+				hash := h.Sum32() % uint32(1024)
 				if _, ok := buf[hash]; !ok {
 					buf[hash] = make([]m.MetricDefinition, 0)
 				}
