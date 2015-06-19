@@ -129,7 +129,7 @@
           },
           "height": "250",
           "id": 584,
-          "leftYAxisLabel": "latency",
+          "leftYAxisLabel": "size",
           "legend": {
             "alignAsTable": false,
             "avg": false,
