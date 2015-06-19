@@ -86,6 +86,10 @@ function (angular, _, config) {
         return datasourceSrv.get($scope.panel.datasource);
       };
 
+      $scope.panelRenderingComplete = function() {
+        $rootScope.performance.panelsRendered++;
+      };
+
       $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
 

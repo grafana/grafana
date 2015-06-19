@@ -84,6 +84,7 @@ function (angular, $, config) {
     };
 
     $scope.broadcastRefresh = function() {
+      $rootScope.performance.panelsRendered = 0;
       $rootScope.$broadcast('refresh');
     };
 
