@@ -1,30 +1,42 @@
-{{Subject .Subject "Welcome to Grafana"}}
+{{Subject .Subject "Welcome to Litmus"}}
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>{{.Name}} Welcome to Grafana</title>
+<title>Welcome to Litmus, {{.Name}}</title>
 </head>
 <body style="background:#eee;">
-<div style="color:#333; font:12px/1.5 Tahoma,Arial,sans-serif;; text-shadow:1px 1px #fff; padding:0; margin:0;">
-    <div style="width:600px;margin:0 auto; padding:40px 0 20px;">
+<div style="color:#333; font:14px/1.5 Tahoma,Arial,sans-serif;; text-shadow:1px 1px #fff; padding:0; margin:0;">
+    <div style="max-width:600px;margin:0 auto; padding:40px 0 20px;">
         <div style="border:1px solid #d9d9d9;border-radius:3px; background:#fff; box-shadow: 0px 2px 5px rgba(0, 0, 0,.05); -webkit-box-shadow: 0px 2px 5px rgba(0, 0, 0,.05);">
             <div style="padding: 20px 15px;">
-                <div style="padding:40px 15px;">
-                    <div style="font-size:16px; padding-bottom:30px; font-weight:bold;">
-                        Hi <span style="color: #00BFFF;">{{.Name}}</span>,
-                    </div>
-                    <div style="font-size:14px; padding:0 15px;">
+                <div style="padding:40px 15px 0 15px;">
+                    <img src="http://raintank.io/dist/img/litmus-by.svg" style="width: 300px; margin-bottom: 25px; margin-left: -8px;">
+                    <div style="font-size:14px;">
+                        <span style="font-weight:600";>Hi {{.Name}},</span>
+                        <div style="padding-bottom:10px; font-weight: normal; margin-top: 15px;">
+                        Thanks for signing up, we're happy to have you. 
+                        </br></br>
+                        Litmus lets you to monitor your web app performance and uptime, over the Internet and/or your internal network, so that you can make your users happier.</br></br>                        Whether you have a simple blog or a globally distributed application, Litmus can help you analyze its performance and availability from around the world.
+                        </div>
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
+                            <tr>
+                               <td style="text-align: center;">
+                                   <button style="  background: #13b2d4; color: #fff; font-weight: 500; padding: 10px 12px; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; border: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none;" href="endpoints/new">Log into app.raintank.io</button>
+                                </td>
+                            </tr>
+                        </table>
 
-                    </div>
+                        <div style="font-size:12px; font-weight: normal; margin-bottom: 15px; text-align: center; max-width: 400px; margin: 0 auto;">If you have any difficuly logging in, getting configured or just want to ask a question, please email us at <a href="mailto:help@raintank.io">hello@raintank.io</a>.
+                      </div>
                 </div>
             </div>
         </div>
-        <div style="color:#aaa;padding:10px;text-align:center;">
-            © 2015 <a style="color:#888;text-decoration:none;" target="_blank" href="http://grafana.org">Grafana</a>
-        </div>
     </div>
+        <div style="color:#aaa;padding:10px;text-align:center; font-size: 12px;">
+            © 2015 <a style="color:#888;text-decoration:none;" target="_blank" href="http://raintank.io">raintank</a>
+        </div>
 </div>
 </body>
 </html>
