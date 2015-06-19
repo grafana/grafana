@@ -76,7 +76,7 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(monkey_id_au|newrelic_com|snapshot_raintank_io|td_com|www_cisco_com|www_cnn_com|www_ebay_com|www_facebook_com|www_google_com|www_imgur_com|www_merchantplus_com|www_nsone_net|www_packet_net|www_raintank_io|www_reddit_com|www_techcrunch_com|www_whitehouse_gov|www_wikipedia_org|www_yahoo_com)",
+          "value": "",
           "tags": []
         },
         "datasource": null,
@@ -87,103 +87,8 @@
         "options": [
           {
             "text": "All",
-            "value": "(monkey_id_au|newrelic_com|snapshot_raintank_io|td_com|www_cisco_com|www_cnn_com|www_ebay_com|www_facebook_com|www_google_com|www_imgur_com|www_merchantplus_com|www_nsone_net|www_packet_net|www_raintank_io|www_reddit_com|www_techcrunch_com|www_whitehouse_gov|www_wikipedia_org|www_yahoo_com)",
+            "value": "",
             "selected": true
-          },
-          {
-            "text": "monkey_id_au",
-            "value": "monkey_id_au",
-            "selected": false
-          },
-          {
-            "text": "newrelic_com",
-            "value": "newrelic_com",
-            "selected": false
-          },
-          {
-            "text": "snapshot_raintank_io",
-            "value": "snapshot_raintank_io",
-            "selected": false
-          },
-          {
-            "text": "td_com",
-            "value": "td_com",
-            "selected": false
-          },
-          {
-            "text": "www_cisco_com",
-            "value": "www_cisco_com",
-            "selected": false
-          },
-          {
-            "text": "www_cnn_com",
-            "value": "www_cnn_com",
-            "selected": false
-          },
-          {
-            "text": "www_ebay_com",
-            "value": "www_ebay_com",
-            "selected": false
-          },
-          {
-            "text": "www_facebook_com",
-            "value": "www_facebook_com",
-            "selected": false
-          },
-          {
-            "text": "www_google_com",
-            "value": "www_google_com",
-            "selected": false
-          },
-          {
-            "text": "www_imgur_com",
-            "value": "www_imgur_com",
-            "selected": false
-          },
-          {
-            "text": "www_merchantplus_com",
-            "value": "www_merchantplus_com",
-            "selected": false
-          },
-          {
-            "text": "www_nsone_net",
-            "value": "www_nsone_net",
-            "selected": false
-          },
-          {
-            "text": "www_packet_net",
-            "value": "www_packet_net",
-            "selected": false
-          },
-          {
-            "text": "www_raintank_io",
-            "value": "www_raintank_io",
-            "selected": false
-          },
-          {
-            "text": "www_reddit_com",
-            "value": "www_reddit_com",
-            "selected": false
-          },
-          {
-            "text": "www_techcrunch_com",
-            "value": "www_techcrunch_com",
-            "selected": false
-          },
-          {
-            "text": "www_whitehouse_gov",
-            "value": "www_whitehouse_gov",
-            "selected": false
-          },
-          {
-            "text": "www_wikipedia_org",
-            "value": "www_wikipedia_org",
-            "selected": false
-          },
-          {
-            "text": "www_yahoo_com",
-            "value": "www_yahoo_com",
-            "selected": false
           }
         ],
         "query": "litmus.*",
@@ -196,7 +101,7 @@
         "allFormat": "regex values",
         "current": {
           "text": "All",
-          "value": "(amsterdam|charleroi|frankfurt|london|new-jersey|new-york|omaha|paris|san-francisco|seattle|singapore|taipei)"
+          "value": ""
         },
         "datasource": null,
         "includeAll": true,
@@ -207,55 +112,7 @@
         "options": [
           {
             "text": "All",
-            "value": "(amsterdam|charleroi|frankfurt|london|new-jersey|new-york|omaha|paris|san-francisco|seattle|singapore|taipei)"
-          },
-          {
-            "text": "amsterdam",
-            "value": "amsterdam"
-          },
-          {
-            "text": "charleroi",
-            "value": "charleroi"
-          },
-          {
-            "text": "frankfurt",
-            "value": "frankfurt"
-          },
-          {
-            "text": "london",
-            "value": "london"
-          },
-          {
-            "text": "new-jersey",
-            "value": "new-jersey"
-          },
-          {
-            "text": "new-york",
-            "value": "new-york"
-          },
-          {
-            "text": "omaha",
-            "value": "omaha"
-          },
-          {
-            "text": "paris",
-            "value": "paris"
-          },
-          {
-            "text": "san-francisco",
-            "value": "san-francisco"
-          },
-          {
-            "text": "seattle",
-            "value": "seattle"
-          },
-          {
-            "text": "singapore",
-            "value": "singapore"
-          },
-          {
-            "text": "taipei",
-            "value": "taipei"
+            "value": ""
           }
         ],
         "query": "litmus.$endpoint.*",
@@ -274,24 +131,7 @@
         "multi": false,
         "multiFormat": "glob",
         "name": "monitor_type",
-        "options": [
-          {
-            "text": "dns",
-            "value": "dns"
-          },
-          {
-            "text": "http",
-            "value": "http"
-          },
-          {
-            "text": "https",
-            "value": "https"
-          },
-          {
-            "text": "ping",
-            "value": "ping"
-          }
-        ],
+        "options": [],
         "query": "litmus.$endpoint.$collector.*",
         "refresh": true,
         "refresh_on_load": false,
