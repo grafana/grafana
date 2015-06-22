@@ -51,7 +51,7 @@
               "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
             }
           ],
-          "thresholds": "",
+          "thresholds": "0,0,100",
           "title": "DNS UPTIME",
           "type": "singlestat",
           "valueFontSize": "80%",
