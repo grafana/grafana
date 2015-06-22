@@ -22,7 +22,7 @@ var jobQueueSize = 1000
 
 func Init() {
 	fmt.Println("statsdclient enabled=", setting.StatsdEnabled, "addr", setting.StatsdAddr)
-	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
+	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana.")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}

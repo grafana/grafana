@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	Stat, _ := statsd.NewClient(false, "localhost:8125", "grafana")
+	Stat, _ := statsd.NewClient(false, "localhost:8125", "grafana.")
 	setStatsdClient(Stat)
 
 	standalone()
