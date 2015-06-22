@@ -1,5 +1,5 @@
 {
-  "id": 9,
+  "id": 92,
   "title": "Litmus Endpoint: Summary",
   "originalTitle": "Litmus Endpoint: Summary",
   "tags": [
@@ -219,7 +219,7 @@
         }
       ],
       "showTitle": true,
-      "title": "Uptime"
+      "title": "$endpoint Uptime"
     },
     {
       "collapse": false,
@@ -345,10 +345,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -486,10 +486,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -510,7 +510,7 @@
         }
       ],
       "showTitle": true,
-      "title": "Errors"
+      "title": "$endpoint Status"
     },
     {
       "collapse": false,
@@ -780,7 +780,7 @@
         }
       ],
       "showTitle": true,
-      "title": "Performance"
+      "title": "$endpoint Performance"
     }
   ],
   "nav": [
@@ -818,13 +818,14 @@
     }
   ],
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "templating": {
     "list": [
       {
         "allFormat": "glob",
+        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Endpoint",
@@ -839,25 +840,25 @@
       },
       {
         "allFormat": "glob",
+        "current": {
+          "text": "All",
+          "value": "{}"
+        },
         "datasource": null,
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
         "multiFormat": "glob",
         "name": "collector",
-        "options": [
-          {
-            "text": "All",
-            "value": "{}"
-          }
-        ],
+        "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
-        "type": "query",
-        "useTags": true,
         "tagValuesQuery": "raintank_db.tags.collectors.$tag",
-        "tagsQuery": "raintank_db.tags.collectors.*"
+        "tags": [],
+        "tagsQuery": "raintank_db.tags.collectors.*",
+        "type": "query",
+        "useTags": true
       }
     ]
   },
@@ -866,7 +867,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 0,
+  "version": 4,
   "links": [
     {
       "asDropdown": true,

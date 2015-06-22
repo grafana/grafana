@@ -1,5 +1,5 @@
 {
-  "id": 17,
+  "id": 93,
   "title": "Litmus Endpoint: |--- Ping",
   "originalTitle": "Litmus Endpoint: |--- Ping",
   "tags": [
@@ -15,7 +15,156 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "125px",
+      "height": "100px",
+      "panels": [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "editable": true,
+          "error": false,
+          "format": "percent",
+          "id": 590,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 4,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "target": "scale(averageSeries(litmus.$endpoint.$collector.ping.ok_state), 100)"
+            }
+          ],
+          "thresholds": "0,100,100",
+          "title": "PING UPTIME",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "editable": true,
+          "error": false,
+          "format": "ms",
+          "id": 591,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 4,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "target": "averageSeries(litmus.$endpoint.$collector.ping.mean)"
+            }
+          ],
+          "thresholds": "",
+          "title": "PING LATENCY",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "editable": true,
+          "error": false,
+          "format": "percent",
+          "id": 592,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 4,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "target": "averageSeries(litmus.$endpoint.$collector.ping.loss)"
+            }
+          ],
+          "thresholds": "",
+          "title": "PING PACKET LOSS",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "100px",
       "panels": [
         {
           "aliasColors": {
@@ -39,21 +188,21 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "",
+          "height": "100",
           "id": 586,
           "legend": {
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "100",
+          "maxDataPoints": "120",
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
@@ -66,18 +215,15 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.warn_state), 'warn')"
-            },
-            {
-              "target": "alias(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Ping status for $endpoint (across all selected Collectors)",
+          "title": "",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -85,14 +231,15 @@
           "transparent": true,
           "type": "graph",
           "x-axis": true,
-          "y-axis": true,
+          "y-axis": false,
           "y_formats": [
             "short",
             "short"
           ]
         }
       ],
-      "title": "New row"
+      "showTitle": true,
+      "title": "ping status for $endpoint (all selected Collectors)"
     },
     {
       "collapse": false,
@@ -101,12 +248,13 @@
       "panels": [
         {
           "aliasColors": {
-            "average": "#0A50A1",
+            "average": "#6ED0E0",
             "connect": "#508642",
             "dns": "#0A50A1",
-            "loss": "#E24D42",
-            "maximum": "#052B51",
-            "minimum": "#052B51",
+            "loss": "#BF1B00",
+            "loss %": "#BF1B00",
+            "maximum": "#2F575E",
+            "minimum": "#2F575E",
             "recv": "#BA43A9",
             "send": "#1F78C1",
             "wait": "#EA6460"
@@ -152,6 +300,7 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
+          "rightYAxisLabel": "",
           "seriesOverrides": [
             {
               "alias": "maximum",
@@ -163,9 +312,10 @@
               "lines": false
             },
             {
-              "alias": "loss",
-              "bars": true,
+              "alias": "loss %",
               "lines": false,
+              "pointradius": 1,
+              "points": true,
               "yaxis": 2
             },
             {
@@ -188,12 +338,12 @@
             },
             {
               "hide": false,
-              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$collector.ping.loss), 1), 'loss')"
+              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$collector.ping.loss), 1), 'loss %')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Ping response range for $endpoint (across all selected Collectors)",
+          "title": "",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -203,9 +353,18 @@
           "y-axis": true,
           "y_formats": [
             "ms",
-            "short"
+            "percent"
           ]
-        },
+        }
+      ],
+      "showTitle": true,
+      "title": "ping performance range and loss for $endpoint (average all selected collectors)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
         {
           "aliasColors": {
             "connect": "#0A50A1",
@@ -268,7 +427,7 @@
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Individual ping response time for $endpoint (mean of each selected Collector)",
+          "title": "",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -282,7 +441,8 @@
           ]
         }
       ],
-      "title": "New row"
+      "showTitle": true,
+      "title": "ping performance for $endpoint (mean of each selected Collector)"
     }
   ],
   "nav": [
@@ -291,6 +451,7 @@
       "enable": true,
       "notice": false,
       "now": true,
+      "nowDelay": "1m",
       "refresh_intervals": [
         "5s",
         "10s",
@@ -319,16 +480,17 @@
     }
   ],
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "templating": {
     "list": [
       {
         "allFormat": "glob",
+        "current": {},
         "datasource": null,
         "includeAll": false,
-        "label": "Endpoint(s)",
+        "label": "Endpoint",
         "multi": false,
         "multiFormat": "glob",
         "name": "endpoint",
@@ -340,6 +502,10 @@
       },
       {
         "allFormat": "glob",
+        "current": {
+          "text": "All",
+          "value": "{}"
+        },
         "datasource": null,
         "includeAll": true,
         "label": "Collector(s)",
@@ -347,10 +513,14 @@
         "multiFormat": "glob",
         "name": "collector",
         "options": [],
-        "query": "litmus.*.*",
+        "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
-        "type": "query"
+        "tagValuesQuery": "raintank_db.tags.collectors.$tag",
+        "tags": [],
+        "tagsQuery": "raintank_db.tags.collectors.*",
+        "type": "query",
+        "useTags": true
       }
     ]
   },
@@ -359,7 +529,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 2,
+  "version": 47,
   "links": [
     {
       "asDropdown": true,
