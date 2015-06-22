@@ -818,55 +818,21 @@
     }
   ],
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "templating": {
     "list": [
       {
         "allFormat": "glob",
-        "current": {
-          "text": "collector1be",
-          "value": "collector1be",
-          "tags": []
-        },
+        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Collector",
         "multi": false,
         "multiFormat": "glob",
         "name": "collector",
-        "options": [
-          {
-            "text": "collector1be",
-            "value": "collector1be",
-            "selected": true
-          },
-          {
-            "text": "collector2be",
-            "value": "collector2be"
-          },
-          {
-            "text": "collector2tw",
-            "value": "collector2tw"
-          },
-          {
-            "text": "collector2us",
-            "value": "collector2us"
-          },
-          {
-            "text": "collector3tw",
-            "value": "collector3tw"
-          },
-          {
-            "text": "collectortw1",
-            "value": "collectortw1"
-          },
-          {
-            "text": "publictest",
-            "value": "publictest"
-          }
-        ],
+        "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
@@ -877,32 +843,14 @@
       },
       {
         "allFormat": "glob",
-        "current": {
-          "text": "google_com",
-          "value": "google_com",
-          "tags": []
-        },
+        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Endpoint(s)",
         "multi": true,
         "multiFormat": "glob",
         "name": "endpoint",
-        "options": [
-          {
-            "text": "google_com",
-            "value": "google_com",
-            "selected": true
-          },
-          {
-            "text": "monkey_id_au",
-            "value": "monkey_id_au"
-          },
-          {
-            "text": "raintank_io",
-            "value": "raintank_io"
-          }
-        ],
+        "options": [],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
