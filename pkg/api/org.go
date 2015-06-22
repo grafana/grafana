@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/org
@@ -50,7 +51,10 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 
 	metrics.M_Api_Org_Create.Inc(1)
 
-	return ApiSuccess("Organization created")
+	return Json(200, &util.DynMap{
+		"orgId":   cmd.Result.Id,
+		"message": "Organization created",
+	})
 }
 
 // PUT /api/org
