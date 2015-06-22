@@ -154,7 +154,10 @@ func GetCollectors(query *m.GetCollectorsQuery) error {
 		// match only collectors that have the tag(s),
 		// but we still need to return all of the tags that
 		// the collector has.
-		rawSql += "LEFT JOIN collector_tag AS lt ON lt.collector_id = collector.id AND collector.org_id = collector_tag.org_id\n"
+		rawSql += `LEFT JOIN collector_tag AS lt
+		           ON lt.collector_id = collector.id AND collector_tag.org_id=?
+		           `
+		rawParams = append(rawParams, query.OrgId)
 		p := make([]string, len(query.Tag))
 		for i, t := range query.Tag {
 			p[i] = "?"
@@ -351,6 +354,14 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 			_, err := sess.Id(cmd.Id).Update(l)
 			if err != nil {
 				return err
+			}
+			//if we are un-publicing a collector, then we need to remove
+			//the tags created by all users on the collector.
+			if collectorQuery.Result.Public && !cmd.Public {
+				rawSql := "DELETE from collector_tag where collector_id=? AND org_id != ?"
+				if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
+					return err
+				}
 			}
 		}
 
