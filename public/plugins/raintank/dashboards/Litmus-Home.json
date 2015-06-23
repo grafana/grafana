@@ -15,9 +15,7 @@
       "height": "100px",
       "panels": [
         {
-          "content": "</br>\n<div class=\"rt-dashboard-h1\" style=\"color:#999\">LITMUS</div>\n<span style=\"margin:0 5px;\">by</span><i class=\"icon-rt-raintank_wordmark\" style=\"font-size:300%; color:#999; position:relative; top:11px;\"></i>",
-
-
+          "content": "<img src=\"/img/litmus-by-grey.svg\" width=\"450\" style=\"margin-top: 25px;\">",
           "editable": true,
           "error": false,
           "id": 1,

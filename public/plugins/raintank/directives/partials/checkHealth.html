@@ -6,12 +6,12 @@
 	<span class="nodata">--</span>
 </div>
 
-<div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;
+<!-- <div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;
 	<span class="warn" bs-tooltip="'View recent Warn events'" href="dashboard/file/rt-events.json?from=now-15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=WARN">{{warnCount}}</span>
 </div>
 <div class="statusType" ng-show="!warnCount">Warn:&nbsp;
 	<span class="nodata">--</span>
-</div>
+</div> -->
 
 <div class="statusType" ng-show="errorCount > 0">Error:&nbsp;
 	<span class="critical" bs-tooltip="'View recent Error events'"href="dashboard/file/rt-events.json?from=now-15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=ERROR">{{errorCount}}</span>

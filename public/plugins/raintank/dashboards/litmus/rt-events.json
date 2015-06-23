@@ -1,5 +1,5 @@
 {
-  "id": 83,
+  "id": 110,
   "title": "Litmus Events",
   "originalTitle": "Litmus Events",
   "tags": [
@@ -74,23 +74,12 @@
     "list": [
       {
         "allFormat": "regex values",
-        "current": {
-          "text": "All",
-          "value": "",
-          "tags": []
-        },
         "datasource": null,
         "includeAll": true,
         "multi": true,
-        "multiFormat": "glob",
+        "multiFormat": "regex values",
         "name": "endpoint",
-        "options": [
-          {
-            "text": "All",
-            "value": "",
-            "selected": true
-          }
-        ],
+        "options": [],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,
@@ -99,39 +88,24 @@
       },
       {
         "allFormat": "regex values",
-        "current": {
-          "text": "All",
-          "value": ""
-        },
         "datasource": null,
         "includeAll": true,
         "label": "collector",
         "multi": true,
-        "multiFormat": "glob",
+        "multiFormat": "regex values",
         "name": "collector",
-        "options": [
-          {
-            "text": "All",
-            "value": ""
-          }
-        ],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": false,
         "type": "query"
       },
       {
-        "allFormat": "glob",
-        "current": {
-          "text": "dns",
-          "value": "dns"
-        },
+        "allFormat": "regex values",
         "datasource": null,
-        "includeAll": false,
-        "multi": false,
-        "multiFormat": "glob",
+        "includeAll": true,
+        "multi": true,
+        "multiFormat": "regex values",
         "name": "monitor_type",
-        "options": [],
         "query": "litmus.$endpoint.$collector.*",
         "refresh": true,
         "refresh_on_load": false,
@@ -141,9 +115,12 @@
       {
         "allFormat": "glob",
         "current": {
-          "tags": [],
-          "text": "ERROR",
-          "value": "ERROR"
+          "text": "ERROR + OK",
+          "value": [
+            "ERROR",
+            "OK"
+          ],
+          "tags": []
         },
         "datasource": null,
         "includeAll": false,
@@ -152,14 +129,14 @@
         "name": "severity",
         "options": [
           {
-            "selected": true,
             "text": "ERROR",
-            "value": "ERROR"
+            "value": "ERROR",
+            "selected": true
           },
           {
-            "selected": false,
             "text": "OK",
-            "value": "OK"
+            "value": "OK",
+            "selected": true
           }
         ],
         "query": "ERROR,OK",
