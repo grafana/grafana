@@ -156,6 +156,10 @@ function (angular, _) {
       $location.path("/dashboard/file/rt-endpoint-summary.json").search({"var-collector": "All", "var-endpoint": endpoint.slug});
     };
 
+    $scope.gotoEndpointURL = function (endpoint) {
+      $location.path('/endpoints/summary/'+ endpoint.id);
+    };
+
     $scope.init();
 
   });
