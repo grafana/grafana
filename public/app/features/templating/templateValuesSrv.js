@@ -146,6 +146,9 @@ function (angular, _, kbn) {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
           return self.setVariableValue(variable, currentOption);
+        } else {
+          if (!variable.options.length) { return; }
+          return self.setVariableValue(variable, variable.options[0]);
         }
       }
     };
