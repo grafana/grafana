@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/golang-lru"
@@ -86,12 +87,12 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		preConsider := time.Now()
 
 		if _, ok := cache.Get(key); ok {
-			fmt.Println("T ", key, "already done")
+			log.Debug("T %s alredy done", key)
 			Stat.TimeDuration("alert-executor.consider-job.already-done", time.Since(preConsider))
 			continue
 		}
 
-		fmt.Println("T ", key, "doing")
+		log.Debug("T %s doing", key)
 		Stat.TimeDuration("alert-executor.consider-job.original-todo", time.Since(preConsider))
 		gr := fn(job.OrgId)
 
@@ -104,7 +105,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 		}
 
 		res, err := evaluator.Eval(job.LastPointTs)
-		//fmt.Println("job results", job, err, res)
+		log.Debug("job results - job:%v err:%v res:%v", job, err, res)
 
 		durationExec := time.Since(preExec)
 		if job.State != res {
@@ -121,7 +122,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 			if job.Notifications.Enabled {
 				emails := strings.Split(job.Notifications.Addresses, ",")
 				if len(emails) < 1 {
-					fmt.Printf("no email addresses provided.")
+					log.Debug("no email addresses provided. OrgId: %d monitorId: %d", job.OrgId, job.MonitorId)
 					continue
 				}
 				sendCmd := m.SendEmailCommand{
@@ -135,8 +136,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 				}
 
 				if err := bus.Dispatch(&sendCmd); err != nil {
-					fmt.Printf("failed to send email to %s.", emails)
-					fmt.Println(err)
+					log.Info("failed to send email to %s. OrgId: %d monitorId: %d", emails, job.OrgId, job.MonitorId, err)
 				}
 			}
 		}
