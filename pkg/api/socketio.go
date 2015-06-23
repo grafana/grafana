@@ -300,6 +300,7 @@ func (c *CollectorContext) Save() error {
 		InstanceId:  instanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
+		log.Info("could not write collector_sesison to DB.", err)
 		return err
 	}
 	log.Info("collector_session %s for collector_id: %d saved to DB.", cmd.SocketId, cmd.CollectorId)
