@@ -215,7 +215,7 @@ function (angular, app, _) {
 
   angular
     .module('grafana.directives')
-    .directive('valueSelectDropdown', function($compile, $window, $timeout) {
+    .directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
 
       return {
         scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
@@ -258,6 +258,14 @@ function (angular, app, _) {
             } else {
               switchToLink();
             }
+          });
+
+          var cleanUp = $rootScope.$on('template-variable-value-updated', function() {
+            scope.vm.updateLinkText();
+          });
+
+          scope.$on("$destroy", function() {
+            cleanUp();
           });
 
           scope.vm.init();

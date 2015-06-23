@@ -1,18 +1,12 @@
 define([
   'angular',
-  'lodash'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
   module.controller('SubmenuCtrl', function($scope, $q, $rootScope, templateValuesSrv, dynamicDashboardSrv) {
-    var _d = {
-      enable: true
-    };
-
-    _.defaults($scope.pulldown,_d);
 
     $scope.init = function() {
       $scope.panel = $scope.pulldown;
@@ -33,6 +27,7 @@ function (angular, _) {
     $scope.variableUpdated = function(variable) {
       templateValuesSrv.variableUpdated(variable).then(function() {
         dynamicDashboardSrv.update($scope.dashboard);
+        $rootScope.$emit('template-variable-value-updated');
         $rootScope.$broadcast('refresh');
       });
     };
