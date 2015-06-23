@@ -124,7 +124,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	}
 	//
 	//--------- set required version of collector.------------//
-	log.Info(fmt.Sprintf("collector with version %d.%f connected", versionMajor, versionMinor))
+	log.Info("collector %s with version %d.%f connected", name, versionMajor, versionMinor)
 	if keyString != "" {
 		// base64 decode key
 		decoded, err := apikeygen.Decode(keyString)
@@ -169,6 +169,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 			Socket:    so,
 			SocketId:  so.Id(),
 		}
+		log.Info("collector %s with id %d owned by %d authenticated successfully.", name, colQuery.Result.Id, apikey.OrgId)
 		if err := sess.Save(); err != nil {
 			return nil, err
 		}
@@ -300,6 +301,7 @@ func (c *CollectorContext) Save() error {
 	if err := bus.Dispatch(cmd); err != nil {
 		return err
 	}
+	log.Info("collector_session %s for collector_id: %d saved to DB.", cmd.SocketId, cmd.CollectorId)
 	return nil
 }
 
