@@ -283,6 +283,7 @@ func init() {
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
 		c.Socket.On("disconnection", c.OnDisconnection)
+		c.Refresh()
 	})
 
 	server.On("error", func(so socketio.Socket, err error) {
