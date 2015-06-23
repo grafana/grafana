@@ -60,6 +60,7 @@ pages:
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
+- ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 
 - ['project/building_from_source.md', 'Project', 'Building from souce']
 - ['project/cla.md', 'Project', 'Contributor License Agreement']
