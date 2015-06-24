@@ -53,6 +53,8 @@ func (s *ContextCache) Remove(id string) {
 }
 
 func (s *ContextCache) Emit(id string, event string, payload interface{}) {
+	s.RLock()
+	defer s.RUnlock()
 	context, ok := s.Contexts[id]
 	if !ok {
 		log.Info("socket " + id + " is not local.")
@@ -286,7 +288,6 @@ func init() {
 		c.Socket.On("results", c.OnResults)
 		c.Socket.On("disconnection", c.OnDisconnection)
 		log.Info("calling refresh for collector %s owned by OrgId: %d", c.Collector.Name, c.OrgId)
-		c.Refresh()
 	})
 
 	server.On("error", func(so socketio.Socket, err error) {
@@ -365,7 +366,7 @@ func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 }
 
 func (c *CollectorContext) Refresh() {
-	log.Info(fmt.Sprintf("Collector %d refreshing", c.Collector.Id))
+	log.Info("Collector %d refreshing", c.Collector.Id)
 	//step 1. get list of collectorSessions for this collector.
 	q := m.GetCollectorSessionsQuery{CollectorId: c.Collector.Id}
 	if err := bus.Dispatch(&q); err != nil {
@@ -379,6 +380,10 @@ func (c *CollectorContext) Refresh() {
 	totalSessions := len(q.Result)
 	//step 2. for each session
 	for pos, sess := range q.Result {
+		//we only need to refresh the 1 socket.
+		if sess.SocketId != c.SocketId {
+			continue
+		}
 		//step 3. get list of monitors configured for this colletor.
 		monQuery := m.GetMonitorsQuery{
 			OrgId:          org,
@@ -401,7 +406,7 @@ func (c *CollectorContext) Refresh() {
 				}
 			}
 		}
-		contextCache.Emit(sess.SocketId, "refresh", monitors)
+		c.Socket.Emit("refresh", monitors)
 	}
 }
 
@@ -466,8 +471,6 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	pos := eventId % totalSessions
 	if q.Result[pos].InstanceId == instanceId {
 		socketId := q.Result[pos].SocketId
-		contextCache.Lock()
-		defer contextCache.Unlock()
 		contextCache.Emit(socketId, eventName, event)
 	}
 	return nil
