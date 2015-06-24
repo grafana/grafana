@@ -53,8 +53,6 @@ func (s *ContextCache) Remove(id string) {
 }
 
 func (s *ContextCache) Emit(id string, event string, payload interface{}) {
-	s.RLock()
-	defer s.RUnlock()
 	context, ok := s.Contexts[id]
 	if !ok {
 		log.Info("socket " + id + " is not local.")
@@ -468,18 +466,20 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	pos := eventId % totalSessions
 	if q.Result[pos].InstanceId == instanceId {
 		socketId := q.Result[pos].SocketId
+		contextCache.Lock()
+		defer contextCache.Unlock()
 		contextCache.Emit(socketId, eventName, event)
 	}
 	return nil
 }
 
 func HandleCollectorConnected(event *events.CollectorConnected) error {
-	//contextCache.Refresh(event.CollectorId)
+	contextCache.Refresh(event.CollectorId)
 	return nil
 }
 
 func HandleCollectorDisconnected(event *events.CollectorDisconnected) error {
-	//contextCache.Refresh(event.CollectorId)
+	contextCache.Refresh(event.CollectorId)
 	return nil
 }
 
