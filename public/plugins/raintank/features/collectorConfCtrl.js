@@ -96,7 +96,11 @@ function (angular, _) {
           $location.path('/collectors/edit/'+resp.id);
         });
     };
-
+    $scope.getEventsDashboardLink = function() {
+      var path = "/dashboard-solo/file/rt-events.json";
+      var qstring = "?panelId=1&fullscreen&from=now-30d&to=now&var-collector="+$scope.collector.slug;
+      return path + qstring;
+    };
     $scope.init();
 
   });
