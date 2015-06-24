@@ -149,7 +149,7 @@ define([
               unknownCount++;
             }
           }
-          var unknowns = scope.model.collectors - Object.keys(collectorResults).length;
+          var unknowns = scope.model.collectors.length - Object.keys(collectorResults).length;
           unknownCount += unknowns;
 
           scope.okCount = okCount;
