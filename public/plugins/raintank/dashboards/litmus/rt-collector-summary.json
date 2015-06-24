@@ -825,7 +825,6 @@
     "list": [
       {
         "allFormat": "glob",
-        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Collector",
@@ -843,7 +842,6 @@
       },
       {
         "allFormat": "glob",
-        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Endpoint(s)",

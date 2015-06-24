@@ -375,7 +375,6 @@
     "list": [
       {
         "allFormat": "glob",
-        "current": {},
         "datasource": null,
         "includeAll": false,
         "label": "Endpoint",
