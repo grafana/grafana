@@ -65,7 +65,7 @@ function (angular, _) {
     };
 
     $scope.gotoDashboard = function(collector) {
-      $location.path("/dashboard/file/statusboard.json").search({"var-collector": collector.slug, "var-endpoint": "All"});
+      $location.path("/dashboard/file/rt-collector-summary.json").search({"var-collector": collector.slug, "var-endpoint": "All"});
     };
 
     $scope.init();
