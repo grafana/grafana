@@ -173,7 +173,9 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 		if err := sess.Save(); err != nil {
 			return nil, err
 		}
+		log.Info("saving session to contextCache")
 		contextCache.Set(sess.SocketId, sess)
+		log.Info("session saved to contextCache")
 		return sess, nil
 	}
 	return nil, m.ErrInvalidApiKey
@@ -271,6 +273,7 @@ func init() {
 			so.Emit("error", err.Error())
 			return
 		}
+		log.Info("connection registered without error")
 		//get list of monitorTypes
 		cmd := &m.GetMonitorTypesQuery{}
 		if err := bus.Dispatch(cmd); err != nil {
@@ -278,11 +281,13 @@ func init() {
 			so.Emit("error", err)
 			return
 		}
+		log.Info("sending ready event to collector %s", c.Collector.Name)
 		c.Socket.Emit("ready", map[string]interface{}{"collector": c.Collector, "monitor_types": cmd.Result})
-		log.Info(fmt.Sprintf("New connection for %s owned by OrgId: %d", c.Collector.Name, c.OrgId))
+		log.Info("binding event handlers for collector %s owned by OrgId: %d", c.Collector.Name, c.OrgId)
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
 		c.Socket.On("disconnection", c.OnDisconnection)
+		log.Info("calling refresh for collector %s owned by OrgId: %d", c.Collector.Name, c.OrgId)
 		c.Refresh()
 	})
 
@@ -469,12 +474,12 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 }
 
 func HandleCollectorConnected(event *events.CollectorConnected) error {
-	contextCache.Refresh(event.CollectorId)
+	//contextCache.Refresh(event.CollectorId)
 	return nil
 }
 
 func HandleCollectorDisconnected(event *events.CollectorDisconnected) error {
-	contextCache.Refresh(event.CollectorId)
+	//contextCache.Refresh(event.CollectorId)
 	return nil
 }
 
