@@ -128,6 +128,10 @@
 			"Rev": "31e841d95c7302b9ac456c830ea2d6dfcef4f84a"
 		},
 		{
+			"ImportPath": "github.com/macaron-contrib/toolbox",
+			"Rev": "acbfe36e16c17e0a227948c76749ca81a4ebf262"
+		},
+		{
 			"ImportPath": "github.com/mattbaird/elastigo/lib",
 			"Comment": "v1.0-139-gba038c1",
 			"Rev": "ba038c10f634af5e7f3bd27b81bd8c37af844edf"
