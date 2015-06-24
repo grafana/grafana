@@ -100,7 +100,7 @@ function (angular, _) {
     $scope.gotoDashboard = function(collector) {
       $location.path("/dashboard/file/statusboard.json").search({"var-collector": collector.slug, "var-endpoint": "All"});
     };
-    
+
     $scope.getEventsDashboardLink = function() {
       var path = "/dashboard-solo/file/rt-events.json";
       var qstring = "?panelId=1&fullscreen&from=now-30d&to=now&var-collector="+$scope.collector.slug;
