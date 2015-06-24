@@ -491,8 +491,14 @@ func GetCollectorSessionsTransaction(query *m.GetCollectorSessionsQuery, sess *s
 func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
 	return inTransaction2(func(sess *session) error {
 		var rawSql = "DELETE FROM collector_session WHERE org_id=? AND socket_id=?"
-		if _, err := sess.Exec(rawSql, cmd.OrgId, cmd.SocketId); err != nil {
+		result, err := sess.Exec(rawSql, cmd.OrgId, cmd.SocketId)
+		if err != nil {
 			return err
+		}
+		rowsAffected, err := result.RowsAffected()
+		if rowsAffected == 0 {
+			//nothing was deleted. so no need to cleanup anything
+			return nil
 		}
 		q := m.GetCollectorSessionsQuery{CollectorId: cmd.CollectorId}
 		if err := GetCollectorSessionsTransaction(&q, sess); err != nil {

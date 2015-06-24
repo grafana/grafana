@@ -95,10 +95,11 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	req.ParseForm()
 	keyString := req.Form.Get("apiKey")
 	name := req.Form.Get("name")
-
 	if name == "" {
 		return nil, errors.New("collector name not provided.")
 	}
+
+	lastSocketId := req.Form.Get("lastSocketId")
 
 	versionStr := req.Form.Get("version")
 	if versionStr == "" {
@@ -170,6 +171,19 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 			SocketId:  so.Id(),
 		}
 		log.Info("collector %s with id %d owned by %d authenticated successfully.", name, colQuery.Result.Id, apikey.OrgId)
+		if lastSocketId != "" {
+			log.Info("removing socket with Id %s", lastSocketId)
+			cmd := &m.DeleteCollectorSessionCommand{
+				SocketId:    lastSocketId,
+				OrgId:       sess.OrgId,
+				CollectorId: sess.Collector.Id,
+			}
+			if err := bus.Dispatch(cmd); err != nil {
+				log.Error(0, "failed to remove collectors lastSocketId", err)
+				return nil, err
+			}
+		}
+
 		if err := sess.Save(); err != nil {
 			return nil, err
 		}
@@ -282,7 +296,12 @@ func init() {
 			return
 		}
 		log.Info("sending ready event to collector %s", c.Collector.Name)
-		c.Socket.Emit("ready", map[string]interface{}{"collector": c.Collector, "monitor_types": cmd.Result})
+		readyPayload := map[string]interface{}{
+			"collector":     c.Collector,
+			"monitor_types": cmd.Result,
+			"socket_id":     c.SocketId,
+		}
+		c.Socket.Emit("ready", readyPayload)
 		log.Info("binding event handlers for collector %s owned by OrgId: %d", c.Collector.Name, c.OrgId)
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
