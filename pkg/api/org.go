@@ -40,7 +40,7 @@ func getOrgHelper(orgId int64) Response {
 
 // POST /api/orgs
 func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
-	if !setting.AllowUserOrgCreate && !c.IsGrafanaAdmin {
+	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
 		return ApiError(401, "Access denied", nil)
 	}
 
