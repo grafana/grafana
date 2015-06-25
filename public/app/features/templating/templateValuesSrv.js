@@ -24,22 +24,52 @@ function (angular, _, kbn) {
 
       var queryParams = $location.search();
       var promises = [];
+      //use promises to delay processing variables that
+      //depend on other variables.
+      this.variableLock = {};
+      var self = this;
+      _.forEach(this.variables, function(variable) {
+        self.variableLock[variable.name] = $q.defer();
+      });
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
-        var urlValue = queryParams['var-' + variable.name];
-        if (urlValue !== void 0) {
-          promises.push(this.setVariableFromUrl(variable, urlValue));
-        }
-        else if (variable.refresh) {
-          promises.push(this.updateOptions(variable));
-        }
-        else if (variable.type === 'interval') {
-          this.updateAutoInterval(variable);
-        }
+        promises.push(this.processVariable(variable, queryParams));
       }
 
       return $q.all(promises);
+    };
+
+    this.processVariable = function(variable, queryParams) {
+      var dependencies = [];
+      var self = this;
+      if (variable.type === "query") {
+        _.forEach(this.variables, function(v) {
+          if (templateSrv.containsVariable(variable.query, v.name)) {
+            dependencies.push(self.variableLock[v.name].promise);
+          }
+        });
+      }
+      return $q.all(dependencies).then(function() {
+        var variableName = variable.name;
+        var urlValue = queryParams['var-' + variable.name];
+        if (urlValue !== void 0) {
+          return self.setVariableFromUrl(variable, urlValue).then(function() {
+            self.variableLock[variableName].resolve();
+          });
+        }
+        else if (variable.refresh) {
+          return self.updateOptions(variable).then(function() {
+            self.variableLock[variableName].resolve();
+          });
+        }
+        else if (variable.type === 'interval') {
+          self.updateAutoInterval(variable);
+          self.variableLock[variableName].resolve();
+        } else {
+          self.variableLock[variableName].resolve();
+        }
+      });
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
@@ -56,10 +86,6 @@ function (angular, _, kbn) {
       }
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
-
-      if (_.isArray(urlValue)) {
-        option.text = urlValue.join(', ');
-      }
 
       this.updateAutoInterval(variable);
       return this.setVariableValue(variable, option);
@@ -79,6 +105,11 @@ function (angular, _, kbn) {
 
     this.setVariableValue = function(variable, option) {
       variable.current = angular.copy(option);
+
+      if (_.isArray(variable.current.value)) {
+        variable.current.text = variable.current.value.join(' + ');
+      }
+
       templateSrv.updateTemplateData();
       return this.updateOptionsInChildVariables(variable);
     };
@@ -127,6 +158,7 @@ function (angular, _, kbn) {
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
+        if (!variable.options.length) { return; }
         return self.setVariableValue(variable, variable.options[0]);
       }
 
@@ -144,6 +176,9 @@ function (angular, _, kbn) {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
           return self.setVariableValue(variable, currentOption);
+        } else {
+          if (!variable.options.length) { return; }
+          return self.setVariableValue(variable, variable.options[0]);
         }
       }
     };

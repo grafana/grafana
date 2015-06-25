@@ -138,6 +138,7 @@ case "$1" in
     ;;
   status)
     status -p $PID_FILE $NAME
+    exit $?
     ;;
   restart|force-reload)
     if [ -f "$PID_FILE" ]; then

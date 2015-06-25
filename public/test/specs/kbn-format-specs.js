@@ -51,7 +51,12 @@ define([
     });
   });
 
-
+  describe('kbn roundValue', function() {
+    it('should should handle null value', function() {
+      var str = kbn.roundValue(null, 2);
+      expect(str).to.be(null);
+    });
+  });
 
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {

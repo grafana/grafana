@@ -62,10 +62,14 @@ function (angular, kbn, _) {
       this.getPanelLinkAnchorInfo = function(link) {
         var info = {};
         if (link.type === 'absolute') {
-          info.target = '_blank';
+          info.target = link.targetBlank ? '_blank' : '';
           info.href = templateSrv.replace(link.url || '');
           info.title = templateSrv.replace(link.title || '');
           info.href += '?';
+        }
+        else if (link.dashUri) {
+          info.href = 'dashboard/' + link.dashUri + '?';
+          info.title = templateSrv.replace(link.title || '');
         }
         else {
           info.title = templateSrv.replace(link.title || '');
@@ -73,10 +77,19 @@ function (angular, kbn, _) {
           info.href = 'dashboard/db/' + slug + '?';
         }
 
-        var range = timeSrv.timeRangeForUrl();
-        info.href += 'from=' + range.from;
-        info.href += '&to=' + range.to;
+        var params = {};
 
+        if (link.keepTime) {
+          var range = timeSrv.timeRangeForUrl();
+          params['from'] = range.from;
+          params['to'] = range.to;
+        }
+
+        if (link.includeVars) {
+          templateSrv.fillVariableValuesForUrl(params);
+        }
+
+        info.href = this.addParamsToUrl(info.href, params);
         if (link.params) {
           info.href += "&" + templateSrv.replace(link.params);
         }

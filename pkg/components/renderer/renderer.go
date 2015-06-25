@@ -54,7 +54,7 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	}()
 
 	select {
-	case <-time.After(10 * time.Second):
+	case <-time.After(15 * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			log.Error(4, "failed to kill: %v", err)
 		}

@@ -49,9 +49,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         query = query.replace(/\$interval/g, (target.interval || options.interval));
 
         // replace templated variables
-        query = templateSrv.replace(query);
+        query = templateSrv.replace(query, options.scopedVars);
 
-        var alias = target.alias ? templateSrv.replace(target.alias) : '';
+        var alias = target.alias ? templateSrv.replace(target.alias, options.scopedVars) : '';
 
         var handleResponse = _.partial(handleInfluxQueryResponse, alias);
         return this._seriesQuery(query).then(handleResponse);

@@ -26,19 +26,26 @@ function (angular, _) {
       $scope.addLink = function() {
         $scope.panel.links.push({
           type: 'dashboard',
-          name: 'Drilldown dashboard'
         });
       };
 
       $scope.searchDashboards = function(queryStr, callback) {
-        var query = {query: queryStr};
-
-        backendSrv.search(query).then(function(result) {
-          var dashboards = _.map(result.dashboards, function(dash) {
+        backendSrv.search({query: queryStr}).then(function(hits) {
+          var dashboards = _.map(hits, function(dash) {
             return dash.title;
           });
 
           callback(dashboards);
+        });
+      };
+
+      $scope.dashboardChanged = function(link) {
+        backendSrv.search({query: link.dashboard}).then(function(hits) {
+          var dashboard = _.findWhere(hits, {title: link.dashboard});
+          if (dashboard) {
+            link.dashUri = dashboard.uri;
+            link.title = dashboard.title;
+          }
         });
       };
 
