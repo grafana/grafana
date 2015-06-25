@@ -34,10 +34,12 @@ page.open(params.url, function (status) {
 
   function checkIsReady() {
     var canvas = page.evaluate(function() {
-      return $('canvas').length > 0;
+      var body = angular.element(document.body);   // 1
+      var rootScope = body.scope().$root;
+      return rootScope.performance.panelsRendered > 0;
     });
 
-    if (canvas || tries === 100) {
+    if (canvas || tries === 1000) {
       page.render(params.png);
       phantom.exit();
     }

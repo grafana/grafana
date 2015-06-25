@@ -36,6 +36,7 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "img", "img")
 	mapStatic(m, "fonts", "fonts")
 	mapStatic(m, "plugins", "plugins")
+	mapStatic(m, "robots.txt", "robots.txxt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),

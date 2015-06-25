@@ -6,9 +6,9 @@ page_keywords: grafana, graphite, metrics, query, documentation
 
 # Graphite
 
-Grafana has an advanced graphite query editor that lets you quickly navigate the metric space, add functions.
-Change function parameters and much more. The editor cannot handle all types of queries yet.
-To switch to a regular text box click the pen icon to the right.
+Grafana has an advanced graphite query editor that lets you quickly navigate the metric space, add functions,
+change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
+queries through the use of query references.
 
 ## Adding the data source to Grafana
 Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you

@@ -247,22 +247,26 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
-          function callPlot() {
+          function callPlot(incrementRenderCounter) {
             try {
               $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
             }
+
+            if (incrementRenderCounter) {
+              scope.panelRenderingComplete();
+            }
           }
 
           if (shouldDelayDraw(panel)) {
             // temp fix for legends on the side, need to render twice to get dimensions right
-            callPlot();
-            setTimeout(callPlot, 50);
+            callPlot(false);
+            setTimeout(function() { callPlot(true); }, 50);
             legendSideLastValue = panel.legend.rightSide;
           }
           else {
-            callPlot();
+            callPlot(true);
           }
         }
 

@@ -68,7 +68,7 @@ define([
         expect(variable.current.value.length).to.be(2);
         expect(variable.current.value[0]).to.be("new");
         expect(variable.current.value[1]).to.be("other");
-        expect(variable.current.text).to.be("new, other");
+        expect(variable.current.text).to.be("new + other");
       });
     });
 
@@ -105,6 +105,31 @@ define([
         expect(scenario.variable.options[0].value).to.be('1s');
       });
     });
+
+    describeUpdateVariable('query variable with empty current object and refresh', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
+        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
+      });
+
+      it('should set current value to first option', function() {
+        expect(scenario.variable.options.length).to.be(2);
+        expect(scenario.variable.current.value).to.be('backend1');
+      });
+    });
+
+    describeUpdateVariable('interval variable without auto', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
+      });
+
+      it('should update options array', function() {
+        expect(scenario.variable.options.length).to.be(4);
+        expect(scenario.variable.options[0].text).to.be('1s');
+        expect(scenario.variable.options[0].value).to.be('1s');
+      });
+    });
+
 
     describeUpdateVariable('interval variable with auto', function(scenario) {
       scenario.setup(function() {
@@ -171,7 +196,7 @@ define([
     describeUpdateVariable('and existing value still exists in options', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
-        scenario.variable.current = { text: 'backend2'};
+        scenario.variable.current = { value: 'backend2', text: 'backend2'};
         scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
       });
 

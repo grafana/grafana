@@ -58,7 +58,7 @@ function (angular, config) {
     };
 
     $scope.updateFrontendSettings = function() {
-      backendSrv.get('/api/frontend/settings').then(function(settings) {
+      return backendSrv.get('/api/frontend/settings').then(function(settings) {
         config.datasources = settings.datasources;
         config.defaultDatasource = settings.defaultDatasource;
         datasourceSrv.init();
@@ -101,12 +101,13 @@ function (angular, config) {
 
       if ($scope.current.id) {
         return backendSrv.put('/api/datasources/' + $scope.current.id, $scope.current).then(function() {
-          $scope.updateFrontendSettings();
-          if (test) {
-            $scope.testDatasource();
-          } else {
-            $location.path('datasources');
-          }
+          $scope.updateFrontendSettings().then(function() {
+            if (test) {
+              $scope.testDatasource();
+            } else {
+              $location.path('datasources');
+            }
+          });
         });
       } else {
         return backendSrv.post('/api/datasources', $scope.current).then(function(result) {

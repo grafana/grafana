@@ -36,6 +36,7 @@ define([
               }
             };
 
+            scope.panelRenderingComplete = sinon.spy();
             scope.appEvent = sinon.spy();
             scope.onAppEvent = sinon.spy();
             scope.hiddenSeries = {};
