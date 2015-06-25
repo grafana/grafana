@@ -130,6 +130,7 @@ require([
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
     'specs/influxdbQueryCtrl-specs',
+    'specs/kairosdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',
@@ -155,4 +156,3 @@ require([
     window.__karma__.start();
   });
 });
-
