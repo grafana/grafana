@@ -42,10 +42,11 @@ define([
         ctx.service.init(dashboard);
       });
 
-      it('should update current value', function() {
+      it('should update current value', inject(function($rootScope) {
+	$rootScope.$apply();
         expect(variable.current.value).to.be("new");
         expect(variable.current.text).to.be("new");
-      });
+      }));
     });
 
     describe('when template variable is present in url multiple times', function() {
@@ -64,12 +65,13 @@ define([
         ctx.service.init(dashboard);
       });
 
-      it('should update current value', function() {
+      it('should update current value', inject(function($rootScope) {
+        $rootScope.$apply();
         expect(variable.current.value.length).to.be(2);
         expect(variable.current.value[0]).to.be("new");
         expect(variable.current.value[1]).to.be("other");
         expect(variable.current.text).to.be("new + other");
-      });
+      }));
     });
 
 
