@@ -6,6 +6,7 @@ define([
   'kbn',
   'components/panelmeta',
   './singleStatPanel',
+  '../../directives/coloring'
 ],
 function (angular, app, _, TimeSeries, kbn, PanelMeta) {
   'use strict';
@@ -53,10 +54,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       prefixFontSize: '50%',
       valueFontSize: '80%',
       postfixFontSize: '50%',
-      thresholds: '',
-      colorBackground: false,
-      colorValue: false,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       sparkline: {
         show: false,
         full: false,
@@ -121,13 +118,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       $scope.render();
     };
 
-    $scope.invertColorOrder = function() {
-      var tmp = $scope.panel.colors[0];
-      $scope.panel.colors[0] = $scope.panel.colors[2];
-      $scope.panel.colors[2] = tmp;
-      $scope.render();
-    };
-
     $scope.getDecimalsForValue = function(value) {
       if (_.isNumber($scope.panel.decimals)) {
         return { decimals: $scope.panel.decimals, scaledDecimals: null };
@@ -171,12 +161,6 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       var data = {};
 
       $scope.setValues(data);
-
-      data.thresholds = $scope.panel.thresholds.split(',').map(function(strVale) {
-        return Number(strVale.trim());
-      });
-
-      data.colorMap = $scope.panel.colors;
 
       $scope.data = data;
       $scope.$broadcast('render');

@@ -47,7 +47,8 @@
     "load-grunt-tasks": "0.2.0",
     "mocha": "2.2.4",
     "requirejs": "2.1.17",
-    "rjs-build-analysis": "0.0.3"
+    "rjs-build-analysis": "0.0.3",
+    "requirejs-text": "~2.0.12"
   },
   "engines": {
     "node": "0.10.x",

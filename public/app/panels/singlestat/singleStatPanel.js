@@ -15,7 +15,7 @@ function (angular, app, _, $) {
 
     return {
       link: function(scope, elem) {
-        var data, panel;
+        var data, panel, coloring;
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
@@ -42,7 +42,7 @@ function (angular, app, _, $) {
         }
 
         function applyColoringThresholds(value, valueString) {
-          if (!panel.colorValue) {
+          if (!coloring.colorValue) {
             return valueString;
           }
 
@@ -55,9 +55,9 @@ function (angular, app, _, $) {
         }
 
         function getColorForValue(value) {
-          for (var i = data.thresholds.length - 1; i >= 0 ; i--) {
-            if (value >= data.thresholds[i]) {
-              return data.colorMap[i];
+          for (var i = coloring.thresholdValues.length - 1; i >= 0 ; i--) {
+            if (value >= coloring.thresholdValues[i]) {
+              return coloring.colors[i];
             }
           }
           return null;
@@ -146,9 +146,12 @@ function (angular, app, _, $) {
 
           setElementHeight();
 
+          // should only be 1 target for single stat
+          coloring = scope.panel.targets.length > 0 ? scope.panel.targets[0].coloring || {} : {};
+
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && !isNaN(data.valueRounded)) {
+          if (coloring.colorBackground && !isNaN(data.valueRounded)) {
             var color = getColorForValue(data.valueRounded);
             if (color) {
               $panelContainer.css('background-color', color);

@@ -1,0 +1,10 @@
+<div class="table-paging-control">
+    <i class="fa fa-arrow-left" ng-click="arrowChange(-1)"></i>
+    <div class="table-paging-numeric">
+        <input type="text" class="input-smaller" ng-model="panel.curTablePage" />
+        <span class="table-last-page-number">
+            &nbsp;/&nbsp;<a ng-click="panel.curTablePage = panel.numPages">{{panel.numPages}}</a>
+        </span>
+    </div>
+    <i class="fa fa-arrow-right" ng-click="arrowChange(1)"></i>
+</div>

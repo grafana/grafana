@@ -1,0 +1,19 @@
+<div class="table-visualization"> 
+    <div class="table-vis-overflow-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="fixed-table-header"
+                        ng-disabled="!panel.allowSorting"
+                        ng-click="headerClicked(header)"
+                        ng-repeat="header in headers">
+                        {{header.columnName}}&nbsp;&nbsp;&nbsp; <!-- add nbsp room for sorting caret -->
+                        <i ng-if="header.sortType === sortType.asc" class="fa fa-caret-up"></i>
+                        <i ng-if="header.sortType === sortType.desc" class="fa fa-caret-down"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody ng-bind-html="tableData"></tbody>
+        </table>
+    </div>
+</div>

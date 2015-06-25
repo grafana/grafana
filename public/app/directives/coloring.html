@@ -1,0 +1,41 @@
+<div class="editor-row">
+    <div class="section" style="margin-bottom: 20px">
+        <div class="tight-form">
+            <ul class="tight-form-list">
+                <li class="tight-form-item" style="width: 80px">
+                    <strong>Coloring</strong>
+                </li>
+                <li class="tight-form-item">
+                    Background&nbsp;
+                    <input class="cr1" id="target.coloring.colorBackground{{target.$$hashKey}}" type="checkbox"
+                           ng-model="target.coloring.colorBackground" ng-checked="target.coloring.colorBackground" ng-change="render()">
+                    <label for="target.coloring.colorBackground{{target.$$hashKey}}" class="cr1"></label>
+                </li>
+                <li class="tight-form-item">
+                    Value&nbsp;
+                    <input class="cr1" id="target.coloring.colorValue{{target.$$hashKey}}" type="checkbox"
+                           ng-model="target.coloring.colorValue" ng-checked="target.coloring.colorValue" ng-change="render()">
+                    <label for="target.coloring.colorValue{{target.$$hashKey}}" class="cr1"></label>
+                </li>
+                <li class="tight-form-item">
+                    Thresholds<tip>Comma seperated values</tip>
+                </li>
+                <li>
+                    <input type="text" class="input-large tight-form-input" ng-model="target.coloring.thresholdCommaString" ng-blur="render()" placeholder="0,50,80"></input>
+                </li>
+                <li class="tight-form-item">
+                    Colors
+                </li>
+                <li class="tight-form-item">
+                    <spectrum-picker ng-model="target.coloring.colors[0]" ng-change="render()" ></spectrum-picker>
+                    <spectrum-picker ng-model="target.coloring.colors[1]" ng-change="render()" ></spectrum-picker>
+                    <spectrum-picker ng-model="target.coloring.colors[2]" ng-change="render()" ></spectrum-picker>
+                </li>
+                <li class="tight-form-item last">
+                    <a class="pointer" ng-click="invertColorOrder()">invert order</a>
+                </li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</div>

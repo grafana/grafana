@@ -19,6 +19,7 @@ function (_) {
         'singlestat': { path: 'panels/singlestat', name: 'Single stat' },
         'text':       { path: 'panels/text',       name: 'Text' },
         'dashlist':   { path: 'panels/dashlist',   name: 'Dashboard list' },
+        'table':      { path: 'panels/table',   name: 'Table' }
       },
       new_panel_title: 'no title (click here)',
       plugins: {},

@@ -1,0 +1,16 @@
+<grafana-panel>
+    <div ng-show="!shouldHideTable()">
+        <div grafana-table></div>
+        <div ng-show="!shouldHidePaginationControl()">
+            <!-- if dashboard is constantly refreshing, viewing a specific page on a table has no meaning,
+                since it is constantly updating -->
+            <div grafana-table-pager></div>
+        </div>
+    </div>
+
+    <div ng-show="shouldHideTable()" class="datapoints-warning">
+        <span class="small">
+            No datapoints <tip>No datapoints returned from metric query</tip>
+        </span>
+    </div>
+</grafana-panel>

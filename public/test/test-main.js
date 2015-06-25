@@ -2,6 +2,7 @@ require.config({
   baseUrl: 'http://localhost:9876/base/public/app',
 
   paths: {
+    text:                  '../vendor/require/text',
     specs:                 '../test/specs',
     mocks:                 '../test/mocks',
     helpers:               '../test/specs/helpers',
@@ -125,11 +126,9 @@ require([
     'specs/graphiteTargetCtrl-specs',
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
-    'specs/influxSeries08-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
-    'specs/influxdbQueryCtrl-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',
@@ -141,6 +140,8 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
+    'specs/table-specs',
+    'specs/table-ctrl-specs',
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',

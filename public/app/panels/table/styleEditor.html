@@ -1,0 +1,101 @@
+<div class="editor-row">
+    <div class="section">
+        <h5>Table Type</h5>
+        <div class="editor-option">
+           <label class="medium">
+                <input class="table-type-select" type="radio" ng-model="panel.inTimeSeriesMode" ng-value="true" />
+               Timeseries
+            </label>
+            <label class="medium">
+                <input class="table-type-select" type="radio" ng-model="panel.inTimeSeriesMode" ng-value="false" />
+                RAG
+            </label>
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Styling Options</h5>
+        <div class="editor-option">
+            <label class="small">Max Column Width</label>
+            <select class="input-small" ng-model="panel.columnWidth" ng-change="panel.adjustColumnWidth()">
+                <option ng-selected="panel.columnWidth == 'auto'" value="auto">Auto</option>
+                <option ng-selected="panel.columnWidth == {{width}}" ng-repeat="width in permittedColumnWidthRange" value="{{width}}">{{width}}</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Sorting</h5>
+        <editor-opt-bool text="Allow Sorting" model="panel.allowSorting" change="panel.clearSortOrder()" tip="Click on column headers to sort"></editor-opt-bool>
+    </div>
+
+    <div class="section">
+        <h5>Paging</h5>
+        <div class="editor-option">
+            <label class="small">Results per Page</label>
+            <input type="number" class="input-small" ng-model="panel.pageLimit" min="5" max="500" ng-change="curTablePage = 1; render()" />
+        </div>
+
+        <editor-opt-bool text="Allow Paging" model="panel.allowPaging" change="render()"
+             tip="When graph is not in auto refresh mode, allow paging of current data selection">
+         </editor-opt-bool>
+    </div>
+
+    <div class="section">
+        <h5>Formatting</h5>
+
+        <div class="editor-option">
+            <label class="small">Decimal Places</label>
+            <select class="input-small" ng-model="panel.decimalLimit" ng-change="render()">
+                <option ng-selected="panel.decimalLimit == 'none'" value="auto">None</option>
+                <option ng-selected="panel.decimalLimit == {{n}}" ng-repeat="n in [1,2,3,4,5,6,7,8]" value="{{n}}">{{n}}</option>
+            </select>
+        </div>
+
+        <div class="editor-option" ng-if="panel.inTimeSeriesMode"> <!-- Only show for time series table -->
+            <editor-opt-bool text="Time as Date" model="panel.showTimeAsDate" change="render()"
+                tip="If selected, the UNIX timestamp will be displayed in a regular date format"></editor-opt-bool>
+        </div>
+    </div>
+</div>
+
+<div class="editor-row" ng-if="!panel.inTimeSeriesMode"> <!-- Only show for RAG series table -->
+    <div class="section">
+        <h5>Scripted Dashboard</h5>
+        <div class="editor-option">
+            <editor-opt-bool text="Enable" model="panel.allowScriptedRagLink" change="render()"
+                             tip="Clicking on a table row will navigate to the URL with the $tagName replaced"></editor-opt-bool>
+        </div>
+
+        <div class="editor-option">
+            <label class="small">URL String</label>
+            <input ng-disabled="!panel.allowScriptedRagLink"
+                   type="text"
+                   class="scripted-rag-table-link"
+                   ng-model="panel.scriptedRagLink"
+                   ng-change="render()"
+                   placeholder="Example: dashboard/script/scripted.js?&name=$tagName" />
+
+        </div>
+    </div>
+
+    <div class="section">
+        <h5>Column Names</h5>
+        <div class="editor-option">
+            <label class="small">Name Column</label>
+            <input type="text" class="input-small" placeholder="Name" ng-model="panel.ragBaseColumnName" ng-change="ragTimeSeriesSwitch()">
+        </div>
+        <div class="editor-option">
+            <label class="small">Value Column</label>
+            <input type="text" class="input-small" placeholder="Value" ng-model="panel.ragValueColumnName" ng-change="ragTimeSeriesSwitch()">
+        </div>
+    </div>
+</div>
+
+
+<div class="editor-row">
+    <h5>Column Coloring</h5>
+    <div ng-repeat="target in panel.targets">
+        <div coloring target="target" render="render()"></div>
+    </div>
+</div>
