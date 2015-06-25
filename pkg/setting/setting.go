@@ -117,8 +117,11 @@ var (
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
 
-	StatsdEnabled bool
-	StatsdAddr    string
+	StatsdEnabled   bool
+	StatsdAddr      string
+	ProfileHeapMB   int
+	ProfileHeapWait int
+	ProfileHeapDir  string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -425,6 +428,9 @@ func NewConfigContext(args *CommandLineArgs) {
 	telemetry := Cfg.Section("telemetry")
 	StatsdEnabled = telemetry.Key("statsd_enabled").MustBool(false)
 	StatsdAddr = telemetry.Key("statsd_addr").String()
+	ProfileHeapMB = telemetry.Key("profile_heap_MB").MustInt(0)
+	ProfileHeapWait = telemetry.Key("profile_heap_wait").MustInt(3600)
+	ProfileHeapDir = telemetry.Key("profile_heap_dir").MustString("/tmp")
 
 	readSessionConfig()
 	readSmtpSettings()

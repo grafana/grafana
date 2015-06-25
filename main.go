@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Dieterbe/profiletrigger/heap"
 	"github.com/grafana/grafana/pkg/alerting"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
@@ -56,6 +57,18 @@ func main() {
 
 	writePIDFile()
 	initRuntime()
+
+	if setting.ProfileHeapMB > 0 {
+		errors := make(chan error)
+		go func() {
+			for e := range errors {
+				// TODO: skip arg should be documented and corrected if neccesary.
+				log.Error(0, e.Error())
+			}
+		}()
+		heap, _ := heap.New(setting.ProfileHeapDir, setting.ProfileHeapMB, setting.ProfileHeapWait, time.Duration(1)*time.Second, errors)
+		go heap.Run()
+	}
 
 	search.Init()
 	social.NewOAuthService()

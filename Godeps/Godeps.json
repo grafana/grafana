@@ -56,6 +56,10 @@
 			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
 		},
 		{
+			"ImportPath": "github.com/Dieterbe/profiletrigger/heap",
+			"Rev": "98e0b12887d327f412fe36bf0ab33d3fc15dad47"
+		},
+		{
 			"ImportPath": "github.com/Dieterbe/statsd-go",
 			"Rev": "6f55e9b6e154104c5aefbdbb8ea37d82e1b31f4b"
 		},
