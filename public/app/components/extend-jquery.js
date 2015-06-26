@@ -24,14 +24,14 @@ function ($, angular, _) {
         $tooltip.appendTo(document.body);
 
         if (opts.compile) {
-          angular.element(document).injector().invoke(function($compile, $rootScope) {
+          angular.element(document).injector().invoke(["$compile", "$rootScope", function($compile, $rootScope) {
             var tmpScope = $rootScope.$new(true);
             _.extend(tmpScope, opts.scopeData);
 
             $compile($tooltip)(tmpScope);
             tmpScope.$digest();
-            //tmpScope.$destroy();
-          });
+            tmpScope.$destroy();
+          }]);
         }
 
         width = $tooltip.outerWidth(true);
