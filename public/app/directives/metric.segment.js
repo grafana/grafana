@@ -103,8 +103,19 @@ function (angular, app, _, $) {
             return value;
           };
 
+          $scope.matcher = function(item) {
+            var str = this.query;
+            if (str[0] === '/') { str = str.substring(1); }
+            if (str[str.length - 1] === '/') { str = str.substring(0, str.length-1); }
+            try {
+              return item.toLowerCase().match(str);
+            } catch(e) {
+              return false;
+            }
+          };
+
           $input.attr('data-provide', 'typeahead');
-          $input.typeahead({ source: $scope.source, minLength: 0, items: 10000, updater: $scope.updater });
+          $input.typeahead({ source: $scope.source, minLength: 0, items: 10000, updater: $scope.updater, matcher: $scope.matcher });
 
           var typeahead = $input.data('typeahead');
           typeahead.lookup = function () {

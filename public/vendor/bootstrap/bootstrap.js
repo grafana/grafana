@@ -2069,6 +2069,11 @@
   , move: function (e) {
       if (!this.shown) return
 
+      // grafana change, shift+left paranthesis
+      if (e.shiftKey && e.keyCode === 40) {
+        return;
+      }
+
       switch(e.keyCode) {
         case 9: // tab
         case 13: // enter
