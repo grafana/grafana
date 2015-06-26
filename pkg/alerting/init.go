@@ -3,6 +3,7 @@ package alerting
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/Dieterbe/statsd-go"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
@@ -30,7 +31,7 @@ func Init() {
 
 	sec := setting.Cfg.Section("event_publisher")
 	if sec.Key("enabled").MustBool(false) {
-		//rabbitmq is enabled, lets us it for our jobs.
+		//rabbitmq is enabled, let's use it for our jobs.
 		url := sec.Key("rabbitmq_url").String()
 		if err := distributed(url); err != nil {
 			log.Fatal(0, "failed to start amqp consumer.", err)
