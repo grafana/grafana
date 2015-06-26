@@ -3,6 +3,8 @@ package alerting
 import (
 	"fmt"
 	"time"
+
+	"github.com/benbjohnson/clock"
 )
 
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
@@ -22,7 +24,7 @@ func Dispatcher(jobQueue chan<- Job) {
 	go dispatchJobs(jobQueue)
 	offset := time.Duration(30) * time.Second                      // for now, for simplicity, let's just wait 30seconds for the data to come in
 	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
-	ticker := NewTicker(lastProcessed, offset)
+	ticker := NewTicker(lastProcessed, offset, clock.New())
 	for {
 		select {
 		case t := <-ticker.C:

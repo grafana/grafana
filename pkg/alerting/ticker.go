@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/benbjohnson/clock"
 )
 
 // ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
@@ -20,6 +22,7 @@ type Ticker struct {
 	offset time.Duration
 	lock   sync.Mutex
 
+	clock    clock.Clock
 	lastTick Tick
 
 	C chan Tick
@@ -45,10 +48,11 @@ func (t *Ticker) NewTickDataUntil(dataUntil time.Time) Tick {
 }
 
 // NewTicker returns a ticker that ticks on second marks or very shortly after, and never drops ticks
-func NewTicker(lastProcessed time.Time, initialOffset time.Duration) *Ticker {
+func NewTicker(lastProcessed time.Time, initialOffset time.Duration, c clock.Clock) *Ticker {
 	t := &Ticker{
 		offset: initialOffset,
 		C:      make(chan Tick),
+		clock:  c,
 	}
 	t.lastTick = t.NewTickDataUntil(lastProcessed)
 	go t.run()
@@ -64,12 +68,12 @@ func (t *Ticker) updateOffset(offset time.Duration) {
 func (t *Ticker) run() {
 	for {
 		nextTick := t.NewTickDataUntil(t.lastTick.dataUntil.Add(time.Duration(1) * time.Second))
-		now := time.Now()
+		now := t.clock.Now()
 
 		if nextTick.executeAt.Unix() > now.Unix() {
 			// we're caught up. don't process times that are in the future.
 			// rather sleep until nextTick.
-			time.Sleep(nextTick.executeAt.Sub(now))
+			t.clock.Sleep(nextTick.executeAt.Sub(now))
 		}
 
 		t.C <- nextTick
