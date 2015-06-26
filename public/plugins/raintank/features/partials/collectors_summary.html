@@ -56,7 +56,7 @@
 				<div class="rt-box-header">Collector Details
 					<div style="float: right; display: inline;">
 						<div style="display: inline; margin-left:6px;">
-							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{collector.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: {{collector.name}} dashboard'"></i></a>
 						</div>
 					</div>
 				</div>
@@ -111,11 +111,25 @@
 
 
 		</div>
-
-		<div class="panel-iframe-container detailFull">
-		<div class="panel-iframe-container-bg">
-			<iframe ng-src="{{getEventsDashboardLink()}}" width="100%" height="525" frameborder="0"></iframe>
-		</div>
+	</div>
+	<div class="detailContainer">
+		<div class="detailColumn detailFull">
+			<div class="rt-box">
+				<div class="rt-box-header">Collector Events: Last 30 Days
+					<div style="float: right; display: inline;">
+						<div style="display: inline; margin-right: 15px;">
+							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Go to Event Dashboard</span></a>
+						</div>
+					</div>
+				</div>
+				<div class="rt-box-body no-padding">	
+					<div class="panel-iframe-container">
+						<div class="panel-iframe-container-bg">	
+						<iframe ng-src="{{getEventsDashboardLink()}}" width="100%" height="501" frameborder="0"></iframe>
+					</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </form>
