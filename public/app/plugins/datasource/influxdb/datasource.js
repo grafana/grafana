@@ -34,32 +34,39 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
+      var i, y;
 
-      var promises = _.map(options.targets, function(target) {
-        if (target.hide) {
-          return [];
-        }
+      var allQueries = _.map(options.targets, function(target) {
+        if (target.hide) { return []; }
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
-        var query = queryBuilder.build();
-
-        // replace grafana variables
-        query = query.replace('$timeFilter', timeFilter);
+        var query =  queryBuilder.build();
         query = query.replace(/\$interval/g, (target.interval || options.interval));
+        return query;
 
-        // replace templated variables
-        query = templateSrv.replace(query, options.scopedVars);
+      }).join("\n");
 
-        var alias = target.alias ? templateSrv.replace(target.alias, options.scopedVars) : '';
+      // replace grafana variables
+      allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias);
-        return this._seriesQuery(query).then(handleResponse);
+      // replace templated variables
+      allQueries = templateSrv.replace(allQueries, options.scopedVars);
+      return this._seriesQuery(allQueries).then(function(data) {
+        if (!data || !data.results || !data.results[0].series) {
+          return [];
+        }
 
-      }, this);
+        var seriesList = [];
+        for (i = 0; i < data.results.length; i++) {
+          var alias = (options.targets[i] || {}).alias;
+          var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
+          for (y = 0; y < targetSeries.length; y++) {
+            seriesList.push(targetSeries[y]);
+          }
+        }
 
-      return $q.all(promises).then(function(results) {
-        return { data: _.flatten(results) };
+        return { data: seriesList };
       });
     };
 
@@ -175,13 +182,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       return deferred.promise;
     };
-
-    function handleInfluxQueryResponse(alias, data) {
-      if (!data || !data.results || !data.results[0].series) {
-        return [];
-      }
-      return new InfluxSeries({ series: data.results[0].series, alias: alias }).getTimeSeries();
-    }
 
     function getTimeFilter(options) {
       var from = getInfluxTime(options.range.from);
