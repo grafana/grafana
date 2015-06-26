@@ -7,16 +7,16 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CollectorCtrl', function($scope, $http, $location, backendSrv) {
+  module.controller('CollectorCtrl', function($scope, $http, $location, $filter, backendSrv) {
     $scope.pageReady = false;
     $scope.statuses = [
-      {label: "Up", value: "up"},
-      {label: "Down", value: "down"},
+      {label: "Online", value: {online: true, enabled: true}, id: 2},
+      {label: "Offline", value: {online: false, enabled: true}, id: 3},
+      {label: "Disabled", value: {enabled: false}, id: 4},
     ];
 
     $scope.init = function() {
-      $scope.collector_filter = {value: ""};
-      $scope.status_filter = {value: ""};
+      $scope.filter = {tag: "", status: ""};
       $scope.sort_field = "name";
       $scope.collectors = [];
       $scope.getCollectors();
@@ -33,24 +33,15 @@ function (angular, _) {
     };
 
     $scope.setCollectorFilter = function(tag) {
-      $scope.collector_filter.value = tag;
+      $scope.filter.tag = tag;
     };
-
-    $scope.setStatusFilter = function(newStatus) {
-      if (newStatus === $scope.status_filter.value) {
-        newStatus = "";
-      }
-      $scope.status_filter.value = newStatus;
-    };
-
-    $scope.statusFilter = function(actual, expected) {
-      if (expected === "") {
+    $scope.statusFilter = function(actual) {
+      if (!$scope.filter.status) {
         return true;
       }
-      var equal = ((actual ? "up" :"down") === expected);
-      return equal;
+      var res = $filter('filter')([actual], $scope.filter.status);
+      return res.length > 0;
     };
-
     $scope.getCollectors = function() {
       backendSrv.get('/api/collectors').then(function(collectors) {
         $scope.pageReady = true;
