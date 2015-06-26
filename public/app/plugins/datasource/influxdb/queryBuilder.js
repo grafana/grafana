@@ -8,6 +8,13 @@ function (_) {
     this.target = target;
   }
 
+  function renderTagCondition (key, value) {
+    if (value && value[0] === '/' && value[value.length - 1] === '/') {
+      return key + ' =~ ' + value;
+    }
+    return key + " = '" + value + "'";
+  }
+
   var p = InfluxQueryBuilder.prototype;
 
   p.build = function() {
@@ -42,12 +49,12 @@ function (_) {
         if (tag.key === withKey) {
           return memo;
         }
-        memo.push(' ' + tag.key + '=' + "'" + tag.value + "'");
+        memo.push(renderTagCondition(tag.key, tag.value));
         return memo;
       }, []);
 
       if (whereConditions.length > 0) {
-        query +=  ' WHERE' + whereConditions.join('AND');
+        query +=  ' WHERE ' + whereConditions.join(' AND ');
       }
     }
 
@@ -72,11 +79,11 @@ function (_) {
     query +=  aggregationFunc + '(value)';
     query += ' FROM ' + measurement + ' WHERE ';
     var conditions = _.map(target.tags, function(tag) {
-      return tag.key + '=' + "'" + tag.value + "' ";
+      return renderTagCondition(tag.key, tag.value);
     });
     conditions.push('$timeFilter');
 
-    query += conditions.join('AND ');
+    query += conditions.join(' AND ');
 
     query += ' GROUP BY time($interval)';
     if  (target.groupByTags && target.groupByTags.length > 0) {
