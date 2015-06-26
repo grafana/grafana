@@ -12,7 +12,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var Stat *statsd.Client
+var Stat, _ = statsd.NewClient(false, "", "")
 
 // this should be set to above the max amount of jobs you expect to ever be created in 1 shot
 // so we can queue them all at once and then workers can process them
@@ -21,14 +21,7 @@ var Stat *statsd.Client
 // TODO configurable
 var jobQueueSize = 1000
 
-func Init() {
-	log.Info("statsdclient enabled:%t  addr:%s", setting.StatsdEnabled, setting.StatsdAddr)
-	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
-	if err != nil {
-		log.Error(3, "Statsd client:", err)
-	}
-	Stat = s
-
+func Construct() {
 	sec := setting.Cfg.Section("event_publisher")
 	if sec.Key("enabled").MustBool(false) {
 		//rabbitmq is enabled, let's use it for our jobs.
@@ -40,10 +33,6 @@ func Init() {
 	} else {
 		standalone()
 	}
-}
-
-func setStatsdClient(s *statsd.Client) {
-	Stat = s
 }
 
 func standalone() {

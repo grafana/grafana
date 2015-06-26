@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Dieterbe/profiletrigger/heap"
+	"github.com/Dieterbe/statsd-go"
 	"github.com/grafana/grafana/pkg/alerting"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
@@ -77,7 +78,15 @@ func main() {
 	metricpublisher.Init()
 	elasticstore.Init()
 	api.InitCollectorController()
-	alerting.Init()
+
+	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
+	if err != nil {
+		log.Error(3, "Statsd client:", err)
+	}
+	// for now only alerting uses statsd, but soon other packages will too.
+	alerting.Stat = s
+
+	alerting.Construct()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
