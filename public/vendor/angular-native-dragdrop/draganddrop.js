@@ -75,6 +75,10 @@
             function dragstartHandler(e) {
                 var isDragAllowed = !isDragHandleUsed || dragTarget.classList.contains(dragHandleClass);
 
+                if (dragTarget.classList.contains("resize-panel-handle")) {
+                  return;
+                }
+
                 if (isDragAllowed) {
                     var sendChannel = attrs.dragChannel || 'defaultchannel';
                     var dragData = '';
