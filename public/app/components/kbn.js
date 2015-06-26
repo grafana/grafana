@@ -399,7 +399,7 @@ function($, _, moment) {
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
-  kbn.valueFormats.pressurebar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
+  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
   kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
   kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
   kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
