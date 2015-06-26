@@ -592,8 +592,8 @@ function($, _, moment) {
           {text: 'Celcius (°C)',         value: 'celsius'  },
           {text: 'Farenheit (°F)',       value: 'farenheit'},
           {text: 'Humidity (%H)',        value: 'humidity' },
-		  {text: 'Pressure (mbar)',      value: 'pressurembar' },
-		  {text: 'Pressure (hPa)',       value: 'pressurehpa' },
+          {text: 'Pressure (mbar)',      value: 'pressurembar' },
+          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
         ]
       },
       {
