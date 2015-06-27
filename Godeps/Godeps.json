@@ -76,6 +76,10 @@
 			"Rev": "cf9cf25f52be174c5878920a8021bd224cbe32c7"
 		},
 		{
+			"ImportPath": "github.com/benbjohnson/clock",
+			"Rev": "ae77645379a07929edeef20b47ba761ecfe5fde8"
+		},
+		{
 			"ImportPath": "github.com/bitly/go-hostpool",
 			"Rev": "d0e59c22a56e8dadfed24f74f452cea5a52722d2"
 		},
