@@ -3,14 +3,9 @@ package alerting
 import (
 	"fmt"
 	"time"
-)
 
-// getAlignedTicker returns a ticker that ticks at the next second or very shortly after
-func getAlignedTicker() *time.Ticker {
-	unix := time.Now().UnixNano()
-	diff := time.Duration(time.Second - (time.Duration(unix) % time.Second))
-	return time.NewTicker(diff)
-}
+	"github.com/benbjohnson/clock"
+)
 
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
 // so that temporarily database hickups don't block the ticker.
@@ -27,14 +22,22 @@ var tickQueue = make(chan time.Time, tickQueueSize)
 func Dispatcher(jobQueue chan<- Job) {
 	Stat.IncrementValue("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue", 0)
 	go dispatchJobs(jobQueue)
+	offset := time.Duration(30) * time.Second                      // for now, for simplicity, let's just wait 30seconds for the data to come in
+	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
+	ticker := NewTicker(lastProcessed, offset, clock.New())
 	for {
-		ticker := getAlignedTicker()
 		select {
-		case t := <-ticker.C:
+		case tick := <-ticker.C:
 			Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
 			Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
+
+			// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
+			// and offset was 30 seconds, so we query for data with last point at 37, 97, 157, ...
+			// so we should find the checks where ts-30 % frequency == offset
+			// and then ts-30 was a ts of the last point we should query for
+
 			select {
-			case tickQueue <- t:
+			case tickQueue <- tick:
 			default:
 				// TODO: alert when this happens
 				Stat.Increment("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
@@ -48,15 +51,7 @@ func dispatchJobs(jobQueue chan<- Job) {
 	for t := range tickQueue {
 		Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
 		Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
-		normalizedTime := t.Unix()
-
-		// for now, for simplicity, let's just wait 30seconds for the data to come in
-		// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
-		// we just query at 37, 97, 157, ...
-		// so we should find the checks where ts-30 % frequency == offset
-		// and then ts-30 was a ts of the last point we should query for
-
-		lastPointAt := normalizedTime - 30
+		lastPointAt := t.Unix()
 
 		pre := time.Now()
 		jobs, err := getJobs(lastPointAt)
