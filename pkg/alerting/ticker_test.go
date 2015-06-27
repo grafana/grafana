@@ -101,17 +101,17 @@ func TestTickerNoAdvance(t *testing.T) {
 
 	// note that some cases add up to now, others go into the future
 	cases := []Case{
-		Case{50, 10},
-		Case{50, 30},
-		Case{59, 1},
-		Case{59, 10},
-		Case{59, 30},
-		Case{60, 1},
-		Case{60, 10},
-		Case{60, 30},
-		Case{90, 1},
-		Case{90, 10},
-		Case{90, 30},
+		{50, 10},
+		{50, 30},
+		{59, 1},
+		{59, 10},
+		{59, 30},
+		{60, 1},
+		{60, 10},
+		{60, 30},
+		{90, 1},
+		{90, 10},
+		{90, 30},
 	}
 	for _, c := range cases {
 		last, offset := getCase(c.last, c.offset)
