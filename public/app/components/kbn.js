@@ -543,6 +543,7 @@ function($, _, moment) {
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
+          {text: 'dB', value: 'dB'},
         ]
       },
       {
