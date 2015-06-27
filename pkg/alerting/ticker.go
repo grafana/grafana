@@ -1,8 +1,6 @@
 package alerting
 
 import (
-	"fmt"
-	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -19,64 +17,44 @@ import (
 //   - adjusting offset over time to compensate for storage backing up or getting fast and providing lower latency
 //   you specify a lastProcessed timestamp as well as an offset at creation, or runtime
 type Ticker struct {
-	offset time.Duration
-	lock   sync.Mutex
-
-	clock    clock.Clock
-	lastTick Tick
-
-	C chan Tick
-}
-
-type Tick struct {
-	dataUntil time.Time // time corresponding to timestamp of last point(s) to query for
-	executeAt time.Time // earliest time at which it can be acted on
-}
-
-func (t Tick) String() string {
-	return fmt.Sprintf("Tick for data @%s (executeAt %s)", t.dataUntil, t.executeAt)
-}
-
-func (t *Ticker) NewTickDataUntil(dataUntil time.Time) Tick {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-	tick := Tick{
-		dataUntil,
-		dataUntil.Add(t.offset),
-	}
-	return tick
+	C         chan time.Time
+	clock     clock.Clock
+	last      time.Time
+	offset    time.Duration
+	newOffset chan time.Duration
 }
 
 // NewTicker returns a ticker that ticks on second marks or very shortly after, and never drops ticks
-func NewTicker(lastProcessed time.Time, initialOffset time.Duration, c clock.Clock) *Ticker {
+func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock) *Ticker {
 	t := &Ticker{
-		offset: initialOffset,
-		C:      make(chan Tick),
-		clock:  c,
+		C:         make(chan time.Time),
+		clock:     c,
+		last:      last,
+		offset:    initialOffset,
+		newOffset: make(chan time.Duration),
 	}
-	t.lastTick = t.NewTickDataUntil(lastProcessed)
 	go t.run()
 	return t
 }
 
 func (t *Ticker) updateOffset(offset time.Duration) {
-	t.lock.Lock()
-	t.offset = offset
-	t.lock.Unlock()
+	t.newOffset <- offset
 }
 
 func (t *Ticker) run() {
 	for {
-		nextTick := t.NewTickDataUntil(t.lastTick.dataUntil.Add(time.Duration(1) * time.Second))
-		now := t.clock.Now()
-
-		if nextTick.executeAt.Unix() > now.Unix() {
-			// we're caught up. don't process times that are in the future.
-			// rather sleep until nextTick.
-			t.clock.Sleep(nextTick.executeAt.Sub(now))
+		next := t.last.Add(time.Duration(1) * time.Second)
+		diff := t.clock.Now().Add(-t.offset).Sub(next)
+		if diff >= 0 {
+			t.C <- next
+			t.last = next
+			continue
 		}
-
-		t.C <- nextTick
-		t.lastTick = nextTick
+		// tick is too young. try again when time is right or somebody updates offset
+		select {
+		case <-time.After(diff):
+		case offset := <-t.newOffset:
+			t.offset = offset
+		}
 	}
 }

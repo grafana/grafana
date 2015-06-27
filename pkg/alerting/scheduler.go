@@ -27,7 +27,7 @@ func Dispatcher(jobQueue chan<- Job) {
 	ticker := NewTicker(lastProcessed, offset, clock.New())
 	for {
 		select {
-		case t := <-ticker.C:
+		case tick := <-ticker.C:
 			Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
 			Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
 
@@ -37,7 +37,7 @@ func Dispatcher(jobQueue chan<- Job) {
 			// and then ts-30 was a ts of the last point we should query for
 
 			select {
-			case tickQueue <- t.dataUntil:
+			case tickQueue <- tick:
 			default:
 				// TODO: alert when this happens
 				Stat.Increment("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
