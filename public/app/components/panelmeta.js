@@ -13,12 +13,12 @@ function () {
     this.extendedMenu = [];
 
     if (options.fullscreen) {
-      this.addMenuItem('view', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
+      this.addMenuItem('View', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
     }
 
-    this.addMenuItem('edit', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
-    this.addMenuItem('duplicate', 'icon-copy', 'duplicatePanel()', 'Editor');
-    this.addMenuItem('share', 'icon-share', 'sharePanel(); dismiss();');
+    this.addMenuItem('Edit', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
+    this.addMenuItem('Duplicate', 'icon-copy', 'duplicatePanel()', 'Editor');
+    this.addMenuItem('Share', 'icon-share', 'sharePanel(); dismiss();');
 
     this.addEditorTab('General', 'app/partials/panelgeneral.html');
 
