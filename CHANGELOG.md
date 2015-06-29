@@ -8,6 +8,7 @@
 - [Issue #590](https://github.com/grafana/grafana/issues/590).   Graph: Define series color using regex rule
 - [Issue #2162](https://github.com/grafana/grafana/issues/2162). Graph: New series style override, negative-y transform and stack groups
 - [Issue #2096](https://github.com/grafana/grafana/issues/2096). Dashboard list panel: Now supports search by multiple tags
+- [Issue #2203](https://github.com/grafana/grafana/issues/2203). Singlestat: Now support string values
 
 **User or Organization admin**
 - [Issue #1899](https://github.com/grafana/grafana/issues/1899). Organization: You can now update the organization user role directly (without removing and readding the organization user).

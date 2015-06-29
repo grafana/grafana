@@ -41,8 +41,10 @@ function (_) {
         }
 
         var datapoints = [];
-        for (i = 0; i < series.values.length; i++) {
-          datapoints[i] = [series.values[i][j], series.values[i][0]];
+        if (series.values) {
+          for (i = 0; i < series.values.length; i++) {
+            datapoints[i] = [series.values[i][j], series.values[i][0]];
+          }
         }
 
         output.push({ target: seriesName, datapoints: datapoints});
