@@ -326,7 +326,7 @@ func CopyPublicCollectorTags(orgId int64, sess *session) error {
 
 func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction2(func(sess *session) error {
 		//Query the collector to make sure we own it.
 		collectorQuery := m.GetCollectorByIdQuery{
 			Id:    cmd.Id,
@@ -361,6 +361,18 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				rawSql := "DELETE from collector_tag where collector_id=? AND org_id != ?"
 				if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
 					return err
+				}
+			}
+			if collectorQuery.Result.Enabled != cmd.Enabled {
+				//emit event so that collector gets notified
+				if cmd.Enabled {
+					sess.publishAfterCommit(&events.CollectorEnabled{
+						CollectorId: cmd.Id,
+					})
+				} else {
+					sess.publishAfterCommit(&events.CollectorDisabled{
+						CollectorId: cmd.Id,
+					})
 				}
 			}
 		}

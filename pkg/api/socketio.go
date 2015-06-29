@@ -288,20 +288,9 @@ func init() {
 			return
 		}
 		log.Info("connection registered without error")
-		//get list of monitorTypes
-		cmd := &m.GetMonitorTypesQuery{}
-		if err := bus.Dispatch(cmd); err != nil {
-			log.Error(0, "Failed to initialize collector.", err)
-			so.Emit("error", err)
+		if err := c.EmitReady(); err != nil {
 			return
 		}
-		log.Info("sending ready event to collector %s", c.Collector.Name)
-		readyPayload := map[string]interface{}{
-			"collector":     c.Collector,
-			"monitor_types": cmd.Result,
-			"socket_id":     c.SocketId,
-		}
-		c.Socket.Emit("ready", readyPayload)
 		log.Info("binding event handlers for collector %s owned by OrgId: %d", c.Collector.Name, c.OrgId)
 		c.Socket.On("event", c.OnEvent)
 		c.Socket.On("results", c.OnResults)
@@ -313,6 +302,24 @@ func init() {
 		log.Error(0, "socket emitted error", err)
 	})
 
+}
+
+func (c *CollectorContext) EmitReady() error {
+	//get list of monitorTypes
+	cmd := &m.GetMonitorTypesQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		log.Error(0, "Failed to initialize collector.", err)
+		c.Socket.Emit("error", err)
+		return err
+	}
+	log.Info("sending ready event to collector %s", c.Collector.Name)
+	readyPayload := map[string]interface{}{
+		"collector":     c.Collector,
+		"monitor_types": cmd.Result,
+		"socket_id":     c.SocketId,
+	}
+	c.Socket.Emit("ready", readyPayload)
+	return nil
 }
 
 func (c *CollectorContext) Save() error {
@@ -505,6 +512,60 @@ func HandleCollectorDisconnected(event *events.CollectorDisconnected) error {
 	return nil
 }
 
+func HandleCollectorEnabled(event *events.CollectorEnabled) error {
+	contextCache.RLock()
+	defer contextCache.RUnlock()
+	// get list of local sockets for this collector.
+	contexts := make([]*CollectorContext, 0)
+	for _, ctx := range contextCache.Contexts {
+		if ctx.Collector.Id == event.CollectorId {
+			contexts = append(contexts, ctx)
+		}
+	}
+	if len(contexts) > 0 {
+		q := m.GetCollectorByIdQuery{
+			Id:    event.CollectorId,
+			OrgId: contexts[0].Collector.OrgId,
+		}
+		if err := bus.Dispatch(&q); err != nil {
+			return err
+		}
+		for _, ctx := range contexts {
+			ctx.Collector = q.Result
+			_ = ctx.EmitReady()
+		}
+	}
+
+	return nil
+}
+
+func HandleCollectorDisabled(event *events.CollectorDisabled) error {
+	contextCache.RLock()
+	defer contextCache.RUnlock()
+	// get list of local sockets for this collector.
+	contexts := make([]*CollectorContext, 0)
+	for _, ctx := range contextCache.Contexts {
+		if ctx.Collector.Id == event.CollectorId {
+			contexts = append(contexts, ctx)
+		}
+	}
+	if len(contexts) > 0 {
+		q := m.GetCollectorByIdQuery{
+			Id:    event.CollectorId,
+			OrgId: contexts[0].Collector.OrgId,
+		}
+		if err := bus.Dispatch(&q); err != nil {
+			return err
+		}
+		for _, ctx := range contexts {
+			ctx.Collector = q.Result
+			_ = ctx.EmitReady()
+		}
+	}
+
+	return nil
+}
+
 func eventConsumer(msg *amqp.Delivery) error {
 	log.Info("processing amqp message with routing key: " + msg.RoutingKey)
 	eventRaw := events.OnTheWireEvent{}
@@ -564,6 +625,26 @@ func eventConsumer(msg *amqp.Delivery) error {
 			return err
 		}
 		if err := HandleCollectorDisconnected(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.collector.enabled":
+		event := events.CollectorEnabled{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into CollectorEnabled event.", err)
+			return err
+		}
+		if err := HandleCollectorEnabled(&event); err != nil {
+			return err
+		}
+		break
+	case "INFO.collector.disabled":
+		event := events.CollectorDisabled{}
+		if err := json.Unmarshal(payloadRaw, &event); err != nil {
+			log.Error(0, "unable to unmarshal payload into CollectorDisabled event.", err)
+			return err
+		}
+		if err := HandleCollectorDisabled(&event); err != nil {
 			return err
 		}
 		break

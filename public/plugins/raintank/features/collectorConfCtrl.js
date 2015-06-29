@@ -106,6 +106,12 @@ function (angular, _) {
       var qstring = "?panelId=1&fullscreen&from=now-30d&to=now&var-collector="+$scope.collector.slug;
       return path + qstring;
     };
+
+    $scope.setEnabled = function(newState) {
+      $scope.collector.enabled = newState;
+      $scope.save();
+    };
+
     $scope.init();
 
   });
