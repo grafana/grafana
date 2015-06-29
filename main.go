@@ -63,7 +63,6 @@ func main() {
 		errors := make(chan error)
 		go func() {
 			for e := range errors {
-				// TODO: skip arg should be documented and corrected if neccesary.
 				log.Error(0, e.Error())
 			}
 		}()
