@@ -154,7 +154,7 @@ SELECT
 FROM monitor
     INNER JOIN endpoint on endpoint.id = monitor.endpoint_id
     LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
-WHERE (? % monitor.frequency) = monitor.offset
+WHERE monitor.enabled=1 AND (? % monitor.frequency) = monitor.offset
 `
 	rawParams = append(rawParams, query.Timestamp)
 	return sess.Sql(rawSql, rawParams...).Find(&query.Result)
@@ -190,6 +190,15 @@ FROM monitor
 	if !query.IsGrafanaAdmin {
 		whereSql = append(whereSql, "monitor.org_id=?")
 		rawParams = append(rawParams, query.OrgId)
+	}
+
+	if query.Enabled != "" {
+		enabled, err := strconv.ParseBool(query.Enabled)
+		if err != nil {
+			return err
+		}
+		whereSql = append(whereSql, "monitor.enabled=?")
+		rawParams = append(rawParams, enabled)
 	}
 
 	if len(query.EndpointId) > 0 {
