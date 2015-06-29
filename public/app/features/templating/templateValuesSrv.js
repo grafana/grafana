@@ -10,6 +10,7 @@ function (angular, _, kbn) {
 
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
+    function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
     $rootScope.onAppEvent('time-range-changed', function()  {
       var variable = _.findWhere(self.variables, { type: 'interval' });
@@ -174,6 +175,9 @@ function (angular, _, kbn) {
         variable.options = self.metricNamesToVariableValues(variable, results);
         if (variable.includeAll) {
           self.addAllOption(variable);
+        }
+        if (!variable.options.length) {
+          variable.options.push(getNoneOption());
         }
         return datasource;
       });
