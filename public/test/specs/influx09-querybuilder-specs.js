@@ -52,6 +52,20 @@ define([
       });
     });
 
+    describe('series with tags OR condition', function() {
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [{key: 'hostname', value: 'server1'}, {key: 'hostname', value: 'server2', condition: "OR"}]
+      });
+
+      var query = builder.build();
+
+      it('should generate correct query', function() {
+        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE hostname = \'server1\' OR hostname = \'server2\' AND ' +
+                            '$timeFilter GROUP BY time($interval) ORDER BY asc');
+      });
+    });
+
     describe('series with groupByTag', function() {
       it('should generate correct query', function() {
         var builder = new InfluxQueryBuilder({
