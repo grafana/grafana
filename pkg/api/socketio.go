@@ -75,7 +75,7 @@ func (c *ContextCache) Refresh(collectorId int64) {
 }
 
 func (c *ContextCache) RefreshLoop() {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(time.Minute * 5)
 	for {
 		select {
 		case <-ticker.C:
