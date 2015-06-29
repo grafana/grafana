@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var server *socketio.Server
@@ -73,10 +74,26 @@ func (c *ContextCache) Refresh(collectorId int64) {
 	}
 }
 
+func (c *ContextCache) RefreshLoop() {
+	ticker := time.NewTicker(time.Minute * 5)
+	for {
+		select {
+		case <-ticker.C:
+			c.RLock()
+			for _, ctx := range c.Contexts {
+				ctx.Refresh()
+			}
+			c.RUnlock()
+		}
+	}
+}
+
 func NewContextCache() *ContextCache {
-	return &ContextCache{
+	cache := &ContextCache{
 		Contexts: make(map[string]*CollectorContext),
 	}
+	go cache.RefreshLoop()
+	return cache
 }
 
 type CollectorContext struct {
