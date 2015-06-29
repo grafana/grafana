@@ -1,5 +1,5 @@
 {
-  "id": 89,
+  "id": 128,
   "title": "Litmus Endpoint: |--- Web",
   "originalTitle": "Litmus Endpoint: |--- Web",
   "tags": [
@@ -17,6 +17,58 @@
       "editable": true,
       "height": "100px",
       "panels": [
+        {
+          "title": "WEB HEALTH (LAST)",
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "type": "singlestat",
+          "id": 588,
+          "links": [],
+          "maxDataPoints": 100,
+          "interval": null,
+          "targets": [
+            {
+              "target": "averageSeries(health.$endpoint.$protocol.ok_state)"
+            }
+          ],
+          "cacheTimeout": null,
+          "format": "none",
+          "prefix": "",
+          "postfix": "",
+          "nullText": null,
+          "valueMaps": [
+            {
+              "value": "1",
+              "op": "=",
+              "text": "OK"
+            },
+            {
+              "value": "0",
+              "op": "=",
+              "text": "ERROR"
+            }
+          ],
+          "nullPointMode": "connected",
+          "valueName": "current",
+          "prefixFontSize": "50%",
+          "valueFontSize": "80%",
+          "postfixFontSize": "50%",
+          "thresholds": "0,1,1",
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": false
+          },
+        },
         {
           "cacheTimeout": null,
           "colorBackground": false,
@@ -39,7 +91,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -86,7 +138,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -133,7 +185,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -564,7 +616,6 @@
         "multi": false,
         "multiFormat": "glob",
         "name": "endpoint",
-        "options": [],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,
@@ -572,22 +623,21 @@
       },
       {
         "allFormat": "glob",
-        "current": {
-          "text": "All",
-          "value": "{}"
-        },
         "datasource": null,
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
         "multiFormat": "glob",
         "name": "collector",
-        "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
         "tagValuesQuery": "raintank_db.tags.collectors.$tag",
-        "tags": [],
+        "tags": [
+          "AsiaPac",
+          "EMEA",
+          "USA"
+        ],
         "tagsQuery": "raintank_db.tags.collectors.*",
         "type": "query",
         "useTags": true
@@ -596,8 +646,7 @@
         "allFormat": "glob",
         "current": {
           "text": "http",
-          "value": "http",
-          "tags": []
+          "value": "http"
         },
         "datasource": null,
         "includeAll": false,
@@ -605,7 +654,12 @@
         "multi": false,
         "multiFormat": "glob",
         "name": "protocol",
-        "options": [],
+        "options": [
+          {
+            "text": "http",
+            "value": "http"
+          }
+        ],
         "query": "litmus.$endpoint.$collector.{http,https}",
         "refresh": true,
         "refresh_on_load": false,
@@ -618,7 +672,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 27,
+  "version": 3,
   "links": [
     {
       "asDropdown": true,

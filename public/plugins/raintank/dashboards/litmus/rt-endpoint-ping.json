@@ -1,5 +1,5 @@
 {
-  "id": 93,
+  "id": 122,
   "title": "Litmus Endpoint: |--- Ping",
   "originalTitle": "Litmus Endpoint: |--- Ping",
   "tags": [
@@ -28,18 +28,70 @@
           ],
           "editable": true,
           "error": false,
-          "format": "percent",
+          "format": "none",
           "id": 590,
           "interval": null,
           "links": [],
-          "maxDataPoints": 100,
+          "maxDataPoints": "100",
           "nullPointMode": "connected",
           "nullText": null,
           "postfix": "",
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": false
+          },
+          "targets": [
+            {
+              "target": "averageSeries(health.$endpoint.ping.ok_state)"
+            }
+          ],
+          "thresholds": "0,1,1",
+          "title": "PING HEALTH (LAST)",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "OK",
+              "value": "1"
+            },
+            {
+              "op": "=",
+              "text": "ERROR",
+              "value": "0"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "editable": true,
+          "error": false,
+          "format": "percent",
+          "id": 593,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -75,8 +127,8 @@
           ],
           "editable": true,
           "error": false,
-          "format": "ms",
-          "id": 591,
+          "format": "percent",
+          "id": 592,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -86,7 +138,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -95,11 +147,11 @@
           },
           "targets": [
             {
-              "target": "averageSeries(litmus.$endpoint.$collector.ping.mean)"
+              "target": "averageSeries(litmus.$endpoint.$collector.ping.loss)"
             }
           ],
           "thresholds": "",
-          "title": "PING LATENCY",
+          "title": "PING PACKET LOSS",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -122,8 +174,8 @@
           ],
           "editable": true,
           "error": false,
-          "format": "percent",
-          "id": 592,
+          "format": "ms",
+          "id": 591,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -133,7 +185,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -142,11 +194,11 @@
           },
           "targets": [
             {
-              "target": "averageSeries(litmus.$endpoint.$collector.ping.loss)"
+              "target": "averageSeries(litmus.$endpoint.$collector.ping.mean)"
             }
           ],
           "thresholds": "",
-          "title": "PING PACKET LOSS",
+          "title": "PING LATENCY",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -450,7 +502,7 @@
       "collapse": false,
       "enable": true,
       "notice": false,
-      "now": true,
+      "now": false,
       "nowDelay": "1m",
       "refresh_intervals": [
         "5s",
@@ -493,7 +545,6 @@
         "multi": false,
         "multiFormat": "glob",
         "name": "endpoint",
-        "options": [],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
@@ -501,22 +552,21 @@
       },
       {
         "allFormat": "glob",
-        "current": {
-          "text": "All",
-          "value": "{}"
-        },
         "datasource": null,
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
         "multiFormat": "glob",
         "name": "collector",
-        "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
         "tagValuesQuery": "raintank_db.tags.collectors.$tag",
-        "tags": [],
+        "tags": [
+          "AsiaPac",
+          "EMEA",
+          "USA"
+        ],
         "tagsQuery": "raintank_db.tags.collectors.*",
         "type": "query",
         "useTags": true
@@ -528,7 +578,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 47,
+  "version": 5,
   "links": [
     {
       "asDropdown": true,
