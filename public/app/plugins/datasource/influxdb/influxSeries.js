@@ -15,43 +15,37 @@ function (_) {
   p.getTimeSeries = function() {
     var output = [];
     var self = this;
+    var i, j;
 
     if (self.series.length === 0) {
       return output;
     }
 
-    var field_datapoints = function(datapoints, column_index) {
-      return _.map(datapoints, function(datapoint) {
-        return [datapoint[column_index - 1], _.last(datapoint)];
-      });
-    };
-
     _.each(self.series, function(series) {
-      var datapoints = [];
       var columns = series.columns.length;
-      for (var i = 0; i < series.values.length; i++) {
-        datapoints[i] = series.values[i].slice(1);
-        datapoints[i].push(new Date(series.values[i][0]).getTime());
-      }
+      var tags = _.map(series.tags, function(value, key) {
+        return key + ': ' + value;
+      });
 
-      for (var j = 1; j < columns; j++) {
+      for (j = 1; j < columns; j++) {
         var seriesName = series.name;
         var columnName = series.columns[j];
+        if (columnName !== 'value') {
+          seriesName = seriesName + '.' + columnName;
+        }
 
         if (self.alias) {
           seriesName = self._getSeriesName(series);
         } else if (series.tags) {
-          var tags = _.map(series.tags, function(value, key) {
-            return key + ': ' + value;
-          });
-          if (columnName === 'value') {
-            seriesName = seriesName + ' {' + tags.join(', ') + '}';
-          } else {
-            seriesName = seriesName + '.' + columnName + ' {' + tags.join(', ') + '}';
-          }
+          seriesName = seriesName + ' {' + tags.join(', ') + '}';
         }
 
-        output.push({ target: seriesName, datapoints: field_datapoints(datapoints, j)});
+        var datapoints = [];
+        for (i = 0; i < series.values.length; i++) {
+          datapoints[i] = [series.values[i][j], series.values[i][0]];
+        }
+
+        output.push({ target: seriesName, datapoints: datapoints});
       }
     });
 

@@ -130,7 +130,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     InfluxDatasource.prototype._seriesQuery = function(query) {
-      return this._influxRequest('GET', '/query', {q: query});
+      return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
     };
 
     InfluxDatasource.prototype.testDatasource = function() {
