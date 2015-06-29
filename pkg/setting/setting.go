@@ -114,6 +114,11 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
+	TickQueueSize   int
+	JobQueueSize    int
+	ExecutorLRUSize int
+	Executors       int
+
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
 
@@ -420,6 +425,12 @@ func NewConfigContext(args *CommandLineArgs) {
 	if err != nil {
 		log.Fatal(4, "Invalid graphite_url(%s): %s", GraphiteUrl, err)
 	}
+
+	alerting := Cfg.Section("alerting")
+	TickQueueSize = alerting.Key("queue_ticks_size").MustInt(0)
+	JobQueueSize = alerting.Key("queue_jobs_size").MustInt(0)
+	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
+	Executors = alerting.Key("executors").MustInt(100)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

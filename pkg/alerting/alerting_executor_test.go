@@ -1,11 +1,13 @@
 package alerting
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"bosun.org/graphite"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/hashicorp/golang-lru"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -50,7 +52,11 @@ func TestExecutor(t *testing.T) {
 			}
 		}
 		jobQueue := make(chan Job, 10)
-		go Executor(fakeGraphiteReturner, jobQueue)
+		cache, err := lru.New(1000)
+		if err != nil {
+			panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
+		}
+		go Executor(fakeGraphiteReturner, jobQueue, cache)
 		jobQueue <- jobAt("foo", 0)
 		jobQueue <- jobAt("foo", 1)
 		jobQueue <- jobAt("foo", 2)

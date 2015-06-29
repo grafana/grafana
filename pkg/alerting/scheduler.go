@@ -5,16 +5,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // this channel decouples the secondly tick from the dispatching (which is mainly database querying)
 // so that temporarily database hickups don't block the ticker.
-// however, if more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
-// and grafana will skip the tick, resulting in lost job executions for that second.
-// so set this to whatever value you find tolerable, and watch your database query times.
-// TODO configurable
-var tickQueueSize = 20
-var tickQueue = make(chan time.Time, tickQueueSize)
+var tickQueue = make(chan time.Time, setting.TickQueueSize)
 
 // Dispatcher dispatches, every second, all jobs that should run for that second
 // every job has an id so that you can run multiple dispatchers (for HA) while still only processing each job once.
@@ -29,7 +25,7 @@ func Dispatcher(jobQueue chan<- Job) {
 		select {
 		case tick := <-ticker.C:
 			Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
-			Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
+			Stat.Gauge("alert-tickqueue.size", int64(setting.TickQueueSize))
 
 			// let's say jobs with freq 60 and offset 7 trigger at 7, 67, 127, ...
 			// and offset was 30 seconds, so we query for data with last point at 37, 97, 157, ...
@@ -50,7 +46,7 @@ func dispatchJobs(jobQueue chan<- Job) {
 	Stat.IncrementValue("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue", 0)
 	for t := range tickQueue {
 		Stat.Gauge("alert-tickqueue.items", int64(len(tickQueue)))
-		Stat.Gauge("alert-tickqueue.size", int64(tickQueueSize))
+		Stat.Gauge("alert-tickqueue.size", int64(setting.TickQueueSize))
 		lastPointAt := t.Unix()
 
 		pre := time.Now()
@@ -78,7 +74,7 @@ func dispatchJobs(jobQueue chan<- Job) {
 			job.LastPointTs = time.Unix(lastPointAt, 0)
 
 			Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
-			Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
+			Stat.Gauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
 			select {
 			case jobQueue <- *job:
 			default:

@@ -65,11 +65,7 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 	}
 }
 
-func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
-	cache, err := lru.New(10000) // TODO configurable
-	if err != nil {
-		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
-	}
+func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 	// create series explicitly otherwise the grafana-influxdb graphs don't work if the series doesn't exist
 	Stat.IncrementValue("alert-executor.alert-outcomes.ok", 0)
 	Stat.IncrementValue("alert-executor.alert-outcomes.critical", 0)
@@ -80,7 +76,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job) {
 
 	for job := range jobQueue {
 		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
-		Stat.Gauge("alert-jobqueue-internal.size", int64(jobQueueSize))
+		Stat.Gauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
 
 		key := fmt.Sprintf("%s-%d", job.Key, job.LastPointTs.Unix())
 

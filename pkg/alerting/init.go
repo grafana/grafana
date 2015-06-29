@@ -9,34 +9,32 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/hashicorp/golang-lru"
 	"github.com/streadway/amqp"
 )
 
 var Stat, _ = statsd.NewClient(false, "", "")
 
-// this should be set to above the max amount of jobs you expect to ever be created in 1 shot
-// so we can queue them all at once and then workers can process them
-// if more than this amount of jobs queue up, it means the workers can't process fast enough,
-// and the jobs will be skipped.
-// TODO configurable
-var jobQueueSize = 1000
-
 func Construct() {
+	cache, err := lru.New(setting.ExecutorLRUSize)
+	if err != nil {
+		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
+	}
 	sec := setting.Cfg.Section("event_publisher")
 	if sec.Key("enabled").MustBool(false) {
 		//rabbitmq is enabled, let's use it for our jobs.
 		url := sec.Key("rabbitmq_url").String()
-		if err := distributed(url); err != nil {
+		if err := distributed(url, cache); err != nil {
 			log.Fatal(0, "failed to start amqp consumer.", err)
 		}
 		return
 	} else {
-		standalone()
+		standalone(cache)
 	}
 }
 
-func standalone() {
-	jobQueue := make(chan Job, jobQueueSize)
+func standalone(cache *lru.Cache) {
+	jobQueue := make(chan Job, setting.JobQueueSize)
 
 	// start dispatcher.
 	// at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
@@ -45,12 +43,12 @@ func standalone() {
 	go Dispatcher(jobQueue)
 
 	//start group of workers to execute the checks.
-	for i := 0; i < 10; i++ {
-		go Executor(GraphiteAuthContextReturner, jobQueue)
+	for i := 0; i < setting.Executors; i++ {
+		go Executor(GraphiteAuthContextReturner, jobQueue, cache)
 	}
 }
 
-func distributed(url string) error {
+func distributed(url string, cache *lru.Cache) error {
 	exchange := "alertingJobs"
 	exch := rabbitmq.Exchange{
 		Name:         exchange,
@@ -63,7 +61,7 @@ func distributed(url string) error {
 	if err != nil {
 		return err
 	}
-	jobQueue := make(chan Job, jobQueueSize)
+	jobQueue := make(chan Job, setting.JobQueueSize)
 
 	go Dispatcher(jobQueue)
 
@@ -97,7 +95,7 @@ func distributed(url string) error {
 		log.Fatal(0, "failed to start event.consumer.", err)
 	}
 
-	consumeQueue := make(chan Job, jobQueueSize)
+	consumeQueue := make(chan Job, setting.JobQueueSize)
 
 	//read jobs from rabbitmq and push them into the execution channel.
 	consumer.Consume(func(msg *amqp.Delivery) error {
@@ -119,8 +117,8 @@ func distributed(url string) error {
 	})
 
 	//start group of workers to execute the jobs in the execution channel.
-	for i := 0; i < 10; i++ {
-		go Executor(GraphiteAuthContextReturner, consumeQueue)
+	for i := 0; i < setting.Executors; i++ {
+		go Executor(GraphiteAuthContextReturner, consumeQueue, cache)
 	}
 	return nil
 }

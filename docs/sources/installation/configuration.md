@@ -354,6 +354,34 @@ Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
+## [alerting]
+
+### queue_ticks_size
+
+If more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
+and grafana will skip the tick, resulting in lost job executions for that second.
+so set this to whatever value you find tolerable, and watch your database query times.
+Defaults to 20
+
+### queue_jobs_size
+
+this should be set to above the max amount of jobs you expect to ever be created in 1 shot
+so we can queue them all at once and then workers can process them.
+If more than this amount of jobs queue up, it means the workers can't process fast enough,
+and the jobs will be skipped. Defaults to 1000.
+
+### executor_lru_size
+
+All executors within a grafana instance share an LRU cache.
+Based on how many schedulers you have and whether they recently restarted,
+jobs might be scheduled multiple times and the executors use the cache to avoid acting on the same job twice.
+Defaults to 10000.
+
+### executors
+
+How many alerting executors should this instance of Grafana run?
+They have low cpu and memory overhead but may query your datastore simultaneously.  Defaults to 10.
+
 ## [analytics]
 
 ### reporting_enabled
