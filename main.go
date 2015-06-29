@@ -66,7 +66,7 @@ func main() {
 				log.Error(0, e.Error())
 			}
 		}()
-		heap, _ := heap.New(setting.ProfileHeapDir, setting.ProfileHeapMB, setting.ProfileHeapWait, time.Duration(1)*time.Second, errors)
+		heap, _ := heap.New(setting.ProfileHeapDir, setting.ProfileHeapMB*1000000, setting.ProfileHeapWait, time.Duration(1)*time.Second, errors)
 		go heap.Run()
 	}
 
