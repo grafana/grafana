@@ -11,7 +11,7 @@ define([
           name: 'cpu',
           tags:  {app: 'test', server: 'server1'},
           columns: ['time', 'mean', 'max', 'min'],
-          values: [["2015-05-18T10:57:05Z", 10, 11, 9], ["2015-05-18T10:57:06Z", 20, 21, 19]]
+          values: [[1431946625000, 10, 11, 9], [1431946626000, 20, 21, 19]]
         }
       ]};
       describe('and no alias', function() {
@@ -101,13 +101,13 @@ define([
           name: 'cpu',
           tags:  {app: 'test', server: 'server1'},
           columns: ['time', 'mean'],
-          values: [["2015-05-18T10:57:05Z", 10], ["2015-05-18T10:57:06Z", 12]]
+          values: [[1431946625000, 10], [1431946626000, 12]]
         },
         {
           name: 'cpu',
           tags:  {app: 'test2', server: 'server2'},
           columns: ['time', 'mean'],
-          values: [["2015-05-18T10:57:05Z", 15], ["2015-05-18T10:57:06Z", 16]]
+          values: [[1431946625000, 15], [1431946626000, 16]]
         }
       ]};
 
