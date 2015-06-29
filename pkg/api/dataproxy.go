@@ -23,6 +23,7 @@ var dataProxyTransport = &http.Transport{
 	}).Dial,
 	TLSHandshakeTimeout: 10 * time.Second,
 }
+var proxyCache map[int64]*httputil.ReverseProxy
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy {
 	target, _ := url.Parse(ds.Url)
@@ -57,7 +58,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 	return &httputil.ReverseProxy{Director: director}
 }
 
-//ProxyDataSourceRequest TODO need to cache datasources
+//ProxyDataSourceRequest TODO the cache is not updated when a data source is updated
 func ProxyDataSourceRequest(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
@@ -67,8 +68,15 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	proxyPath := c.Params("*")
-	proxy := NewReverseProxy(&query.Result, proxyPath)
-	proxy.Transport = dataProxyTransport
-	proxy.ServeHTTP(c.RW(), c.Req.Request)
+	if proxyCache == nil {
+		proxyCache = make(map[int64]*httputil.ReverseProxy)
+	}
+
+	if proxyCache[id] == nil {
+		proxyPath := c.Params("*")
+		proxyCache[id] = NewReverseProxy(&query.Result, proxyPath)
+		proxyCache[id].Transport = dataProxyTransport
+	}
+
+	proxyCache[id].ServeHTTP(c.RW(), c.Req.Request)
 }
