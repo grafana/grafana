@@ -82,3 +82,11 @@ type CollectorDisconnected struct {
 	CollectorId int64  `json:"collector_id"`
 	InstanceId  string `json:"instance_id"`
 }
+
+type CollectorEnabled struct {
+	CollectorId int64 `json:"collector_id"`
+}
+
+type CollectorDisabled struct {
+	CollectorId int64 `json:"collector_id"`
+}
