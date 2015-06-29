@@ -51,13 +51,13 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 }
 
 func GraphiteAuthContextReturner(org_id int64) graphite.Context {
-	url, err := url.Parse(setting.GraphiteUrl)
+	_, err := url.Parse(setting.GraphiteUrl)
 	if err != nil {
-		panic("could not parse graphiteUrl")
+		panic(fmt.Sprintf("could not parse graphiteUrl: %s", err))
 	}
 	return &GraphiteContext{
 		hh: graphite.HostHeader{
-			Host: url.Host,
+			Host: setting.GraphiteUrl,
 			Header: http.Header{
 				"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 			},
