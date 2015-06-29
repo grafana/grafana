@@ -1,5 +1,5 @@
 {
-  "id": 94,
+  "id": 127,
   "title": "Litmus Endpoint: |--- DNS",
   "originalTitle": "Litmus Endpoint: |--- DNS",
   "tags": [
@@ -20,7 +20,65 @@
         {
           "cacheTimeout": null,
           "colorBackground": false,
-          "colorValue": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "id": 588,
+          "interval": null,
+          "links": [
+            {
+              "dashboard": "",
+              "name": "Drilldown dashboard",
+              "type": "dashboard"
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "targets": [
+            {
+              "target": "averageSeries(health.$endpoint.dns.ok_state)"
+            }
+          ],
+          "thresholds": "0,1,1",
+          "title": "DNS HEALTH (LAST)",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "OK",
+              "value": "1"
+            },
+            {
+              "op": "=",
+              "text": "ERROR",
+              "value": "0"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
           "colors": [
             "rgba(139, 139, 139, 1)",
             "rgba(139, 139, 139, 1)",
@@ -39,7 +97,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -51,7 +109,7 @@
               "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
             }
           ],
-          "thresholds": "0,0,100",
+          "thresholds": "0,100,100",
           "title": "DNS UPTIME",
           "type": "singlestat",
           "valueFontSize": "80%",
@@ -86,7 +144,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -133,7 +191,7 @@
           "postfixFontSize": "50%",
           "prefix": "",
           "prefixFontSize": "50%",
-          "span": 4,
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
@@ -381,7 +439,6 @@
         "multi": false,
         "multiFormat": "glob",
         "name": "endpoint",
-        "options": [],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": true,
@@ -389,22 +446,21 @@
       },
       {
         "allFormat": "glob",
-        "current": {
-          "text": "All",
-          "value": "{}"
-        },
         "datasource": null,
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
         "multiFormat": "glob",
         "name": "collector",
-        "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
         "tagValuesQuery": "raintank_db.tags.collectors.$tag",
-        "tags": [],
+        "tags": [
+          "AsiaPac",
+          "EMEA",
+          "USA"
+        ],
         "tagsQuery": "raintank_db.tags.collectors.*",
         "type": "query",
         "useTags": true
@@ -416,7 +472,7 @@
   },
   "refresh": false,
   "schemaVersion": 6,
-  "version": 22,
+  "version": 4,
   "links": [
     {
       "asDropdown": true,
