@@ -32,6 +32,7 @@ type ScanService struct {
 	indices   []string
 	types     []string
 	keepAlive string
+	fields    []string
 	query     Query
 	size      *int
 	pretty    bool
@@ -88,6 +89,13 @@ func (s *ScanService) Scroll(keepAlive string) *ScanService {
 // available before expiration (e.g. "5m" for 5 minutes).
 func (s *ScanService) KeepAlive(keepAlive string) *ScanService {
 	s.keepAlive = keepAlive
+	return s
+}
+
+// Fields specifies the fields the scan query should load.
+// By default fields is nil so _source is loaded
+func (s *ScanService) Fields(fields ...string) *ScanService {
+	s.fields = fields
 	return s
 }
 
@@ -156,6 +164,9 @@ func (s *ScanService) Do() (*ScanCursor, error) {
 	}
 	if s.size != nil && *s.size > 0 {
 		params.Set("size", fmt.Sprintf("%d", *s.size))
+	}
+	if s.fields != nil {
+		params.Set("fields", strings.Join(s.fields, ","))
 	}
 
 	// Set body
@@ -236,7 +247,7 @@ func (c *ScanCursor) Next() (*SearchResult, error) {
 		}
 	}
 	if c.Results.ScrollId == "" {
-		return nil, ErrNoScrollId
+		return nil, EOS
 	}
 
 	// Build url

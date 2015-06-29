@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"time"
 
 	"bosun.org/_third_party/github.com/olivere/elastic"
@@ -138,7 +139,19 @@ func Example() {
 	// and all kinds of other information from Elasticsearch.
 	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
 
-	// Number of hits
+	// Each is a convenience function that iterates over hits in a search result.
+	// It makes sure you don't need to check for nil values in the response.
+	// However, it ignores errors in serialization. If you want full control
+	// over iterating the hits, see below.
+	var ttyp Tweet
+	for _, item := range searchResult.Each(reflect.TypeOf(ttyp)) {
+		t := item.(Tweet)
+		fmt.Printf("Tweet by %s: %s\n", t.User, t.Message)
+	}
+	// TotalHits is another convenience function that works even when something goes wrong.
+	fmt.Printf("Found a total of %d tweets\n", searchResult.TotalHits())
+
+	// Here's how you iterate through results with full control over each step.
 	if searchResult.Hits != nil {
 		fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
 
@@ -378,6 +391,57 @@ func ExampleAggregations() {
 				fmt.Printf("user %q has %d tweets in %q\n", user, year.DocCount, year.KeyAsString)
 			}
 		}
+	}
+}
+
+func ExampleSearchResult() {
+	client, err := elastic.NewClient()
+	if err != nil {
+		panic(err)
+	}
+
+	// Do a search
+	searchResult, err := client.Search().Index("twitter").Query(elastic.NewMatchAllQuery()).Do()
+	if err != nil {
+		panic(err)
+	}
+
+	// searchResult is of type SearchResult and returns hits, suggestions,
+	// and all kinds of other information from Elasticsearch.
+	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
+
+	// Each is a utility function that iterates over hits in a search result.
+	// It makes sure you don't need to check for nil values in the response.
+	// However, it ignores errors in serialization. If you want full control
+	// over iterating the hits, see below.
+	var ttyp Tweet
+	for _, item := range searchResult.Each(reflect.TypeOf(ttyp)) {
+		t := item.(Tweet)
+		fmt.Printf("Tweet by %s: %s\n", t.User, t.Message)
+	}
+	fmt.Printf("Found a total of %d tweets\n", searchResult.TotalHits())
+
+	// Here's how you iterate hits with full control.
+	if searchResult.Hits != nil {
+		fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
+
+		// Iterate through results
+		for _, hit := range searchResult.Hits.Hits {
+			// hit.Index contains the name of the index
+
+			// Deserialize hit.Source into a Tweet (could also be just a map[string]interface{}).
+			var t Tweet
+			err := json.Unmarshal(*hit.Source, &t)
+			if err != nil {
+				// Deserialization failed
+			}
+
+			// Work with tweet
+			fmt.Printf("Tweet by %s: %s\n", t.User, t.Message)
+		}
+	} else {
+		// No hits
+		fmt.Print("Found no tweets\n")
 	}
 }
 

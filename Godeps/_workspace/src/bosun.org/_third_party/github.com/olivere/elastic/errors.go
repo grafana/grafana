@@ -29,7 +29,7 @@ func checkResponse(res *http.Response) error {
 		if errReply.Status == 0 {
 			errReply.Status = res.StatusCode
 		}
-		return errReply.Error()
+		return errReply
 	}
 	return nil
 }
@@ -39,10 +39,10 @@ type Error struct {
 	Message string `json:"error"`
 }
 
-func (e *Error) Error() error {
+func (e *Error) Error() string {
 	if e.Message != "" {
-		return fmt.Errorf("elastic: Error %d (%s): %s", e.Status, http.StatusText(e.Status), e.Message)
+		return fmt.Sprintf("elastic: Error %d (%s): %s", e.Status, http.StatusText(e.Status), e.Message)
 	} else {
-		return fmt.Errorf("elastic: Error %d (%s)", e.Status, http.StatusText(e.Status))
+		return fmt.Sprintf("elastic: Error %d (%s)", e.Status, http.StatusText(e.Status))
 	}
 }

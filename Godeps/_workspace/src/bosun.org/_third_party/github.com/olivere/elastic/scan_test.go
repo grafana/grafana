@@ -179,3 +179,90 @@ func TestScanWithQuery(t *testing.T) {
 		t.Errorf("expected to retrieve %d hits; got %d", 2, numDocs)
 	}
 }
+
+func TestScanAndScrollWithMissingIndex(t *testing.T) {
+	client := setupTestClient(t) // does not create testIndexName
+
+	cursor, err := client.Scan(testIndexName).Scroll("30s").Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cursor == nil {
+		t.Fatalf("expected cursor; got: %v", cursor)
+	}
+
+	// First request immediately returns EOS
+	res, err := cursor.Next()
+	if err != EOS {
+		t.Fatal(err)
+	}
+	if res != nil {
+		t.Fatalf("expected results == %v; got: %v", nil, res)
+	}
+}
+
+func TestScanAndScrollWithEmptyIndex(t *testing.T) {
+	client := setupTestClientAndCreateIndex(t)
+
+	if isTravis() {
+		t.Skip("test on Travis failes regularly with " +
+			"Error 503 (Service Unavailable): SearchPhaseExecutionException[Failed to execute phase [init_scan], all shards failed]")
+	}
+
+	_, err := client.Flush().Index(testIndexName).WaitIfOngoing(true).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cursor, err := client.Scan(testIndexName).Scroll("30s").Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cursor == nil {
+		t.Fatalf("expected cursor; got: %v", cursor)
+	}
+
+	// First request returns no error, but no hits
+	res, err := cursor.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res == nil {
+		t.Fatalf("expected results != nil; got: nil")
+	}
+	if res.ScrollId == "" {
+		t.Errorf("expected scrollId in results; got: %q", res.ScrollId)
+	}
+	if res.TotalHits() != 0 {
+		t.Errorf("expected TotalHits() = %d; got %d", 0, res.TotalHits())
+	}
+	if res.Hits == nil {
+		t.Errorf("expected results.Hits != nil; got: nil")
+	}
+	if res.Hits.TotalHits != 0 {
+		t.Errorf("expected results.Hits.TotalHits = %d; got %d", 0, res.Hits.TotalHits)
+	}
+	if res.Hits.Hits == nil {
+		t.Errorf("expected results.Hits.Hits != nil; got: %v", res.Hits.Hits)
+	}
+	if len(res.Hits.Hits) != 0 {
+		t.Errorf("expected len(results.Hits.Hits) == %d; got: %d", 0, len(res.Hits.Hits))
+	}
+
+	// Subsequent requests return EOS
+	res, err = cursor.Next()
+	if err != EOS {
+		t.Fatal(err)
+	}
+	if res != nil {
+		t.Fatalf("expected results == %v; got: %v", nil, res)
+	}
+
+	res, err = cursor.Next()
+	if err != EOS {
+		t.Fatal(err)
+	}
+	if res != nil {
+		t.Fatalf("expected results == %v; got: %v", nil, res)
+	}
+}

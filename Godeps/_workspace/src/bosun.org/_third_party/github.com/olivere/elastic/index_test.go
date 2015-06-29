@@ -6,6 +6,7 @@ package elastic
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -21,6 +22,16 @@ const (
 		"number_of_replicas":0
 	},
 	"mappings":{
+		"_default_": {
+			"_timestamp": {
+				"enabled": true,
+				"store": "yes"
+			},
+			"_ttl": {
+				"enabled": true,
+				"store": "yes"
+			}
+		},
 		"tweet":{
 			"properties":{
 				"tags":{
@@ -33,6 +44,11 @@ const (
 					"type":"completion",
 					"payloads":true
 				}
+			}
+		},
+		"comment":{
+			"_parent": {
+				"type":	"tweet"
 			}
 		}
 	}
@@ -49,6 +65,20 @@ type tweet struct {
 	Tags     []string      `json:"tags,omitempty"`
 	Location string        `json:"location,omitempty"`
 	Suggest  *SuggestField `json:"suggest_field,omitempty"`
+}
+
+func (t tweet) String() string {
+	return fmt.Sprintf("tweet{User:%q,Message:%q,Retweets:%d}", t.User, t.Message, t.Retweets)
+}
+
+type comment struct {
+	User    string    `json:"user"`
+	Comment string    `json:"comment"`
+	Created time.Time `json:"created,omitempty"`
+}
+
+func (c comment) String() string {
+	return fmt.Sprintf("comment{User:%q,Comment:%q}", c.User, c.Comment)
 }
 
 func isTravis() bool {
@@ -105,6 +135,37 @@ func setupTestClientAndCreateIndex(t logger, options ...ClientOptionFunc) *Clien
 		t.Errorf("expected result to be != nil; got: %v", createIndex2)
 	}
 
+	return client
+}
+
+func setupTestClientAndCreateIndexAndAddDocs(t logger, options ...ClientOptionFunc) *Client {
+	client := setupTestClientAndCreateIndex(t, options...)
+
+	tweet1 := tweet{User: "olivere", Message: "Welcome to Golang and Elasticsearch."}
+	tweet2 := tweet{User: "olivere", Message: "Another unrelated topic."}
+	tweet3 := tweet{User: "sandrae", Message: "Cycling is fun."}
+	comment1 := comment{User: "nico", Comment: "You bet."}
+
+	_, err := client.Index().Index(testIndexName).Type("tweet").Id("1").BodyJson(&tweet1).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Index().Index(testIndexName).Type("tweet").Id("2").BodyJson(&tweet2).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Index().Index(testIndexName).Type("tweet").Id("3").Routing("someroutingkey").BodyJson(&tweet3).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Index().Index(testIndexName).Type("comment").Id("1").Parent("3").BodyJson(&comment1).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Flush().Index(testIndexName).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
 	return client
 }
 

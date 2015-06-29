@@ -172,14 +172,15 @@ func (s *ClusterHealthService) Do() (*ClusterHealthResponse, error) {
 
 // ClusterHealthResponse is the response of ClusterHealthService.Do.
 type ClusterHealthResponse struct {
-	ClusterName         string `json:"cluster_name"`
-	Status              string `json:"status"`
-	TimedOut            bool   `json:"timed_out"`
-	NumberOfNodes       int    `json:"number_of_nodes"`
-	NumberOfDataNodes   int    `json:"number_of_data_nodes"`
-	ActivePrimaryShards int    `json:"active_primary_shards"`
-	ActiveShards        int    `json:"active_shards"`
-	RelocatingShards    int    `json:"relocating_shards"`
-	InitializedShards   int    `json:"initialized_shards"`
-	UnassignedShards    int    `json:"unassigned_shards"`
+	ClusterName          string `json:"cluster_name"`
+	Status               string `json:"status"`
+	TimedOut             bool   `json:"timed_out"`
+	NumberOfNodes        int    `json:"number_of_nodes"`
+	NumberOfDataNodes    int    `json:"number_of_data_nodes"`
+	ActivePrimaryShards  int    `json:"active_primary_shards"`
+	ActiveShards         int    `json:"active_shards"`
+	RelocatingShards     int    `json:"relocating_shards"`
+	InitializingShards   int    `json:"initializing_shards"`
+	UnassignedShards     int    `json:"unassigned_shards"`
+	NumberOfPendingTasks int    `json:"number_of_pending_tasks"`
 }

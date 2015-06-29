@@ -174,6 +174,11 @@ type ClusterStateMetadata struct {
 }
 
 type ClusterStateNode struct {
+	Name             string                 `json:"name"`
+	TransportAddress string                 `json:"transport_address"`
+	Attributes       map[string]interface{} `json:"attributes"`
+
+	// TODO(oe) are these still valid?
 	State          string  `json:"state"`
 	Primary        bool    `json:"primary"`
 	Node           string  `json:"node"`

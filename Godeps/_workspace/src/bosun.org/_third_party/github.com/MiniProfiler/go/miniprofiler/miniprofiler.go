@@ -75,12 +75,12 @@ var (
 )
 
 func init() {
-	http.Handle(PATH, http.StripPrefix(PATH, http.HandlerFunc(miniProfilerHandler)))
+	http.Handle(PATH, http.StripPrefix(PATH, http.HandlerFunc(MiniProfilerHandler)))
 }
 
 // miniProfilerHandler serves requests to the /mini-profiler-resources/
 // path. For use only by miniprofiler helper libraries.
-func miniProfilerHandler(w http.ResponseWriter, r *http.Request) {
+func MiniProfilerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "results" {
 		results(w, r)
 	} else {

@@ -1,5 +1,5 @@
 // Package graphite defines structures for interacting with a Graphite server.
-package graphite
+package graphite // import "bosun.org/graphite"
 
 import (
 	"encoding/json"
@@ -35,6 +35,10 @@ func (r *Request) CacheKey() string {
 	return fmt.Sprintf("graphite-%d-%d-%s", r.Start.Unix(), r.End.Unix(), targets)
 }
 
+// Query performs a request to Graphite at the given host. host specifies
+// a hostname with optional port, and may optionally begin with a scheme
+// (http, https) to specify the protocol (http is the default). header is
+// the headers to send.
 func (r *Request) Query(host string, header http.Header) (Response, error) {
 	v := url.Values{
 		"format": []string{"json"},
@@ -51,6 +55,13 @@ func (r *Request) Query(host string, header http.Header) (Response, error) {
 		Host:     host,
 		Path:     "/render/",
 		RawQuery: v.Encode(),
+	}
+	if u, _ := url.Parse(host); u.Scheme != "" && u.Host != "" {
+		r.URL.Scheme = u.Scheme
+		r.URL.Host = u.Host
+		if u.Path != "" {
+			r.URL.Path = u.Path
+		}
 	}
 	req, err := http.NewRequest("GET", r.URL.String(), nil)
 	if err != nil {

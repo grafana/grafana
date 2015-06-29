@@ -36,6 +36,7 @@ type SearchSource struct {
 	defaultRescoreWindowSize *int
 	indexBoosts              map[string]float64
 	stats                    []string
+	innerHits                map[string]*InnerHit
 }
 
 func NewSearchSource() *SearchSource {
@@ -53,6 +54,7 @@ func NewSearchSource() *SearchSource {
 		rescores:        make([]*Rescore, 0),
 		indexBoosts:     make(map[string]float64),
 		stats:           make([]string, 0),
+		innerHits:       make(map[string]*InnerHit),
 	}
 }
 
@@ -246,6 +248,11 @@ func (s *SearchSource) Stats(statsGroup ...string) *SearchSource {
 	return s
 }
 
+func (s *SearchSource) InnerHit(name string, innerHit *InnerHit) *SearchSource {
+	s.innerHits[name] = innerHit
+	return s
+}
+
 func (s *SearchSource) Source() interface{} {
 	source := make(map[string]interface{})
 
@@ -383,6 +390,41 @@ func (s *SearchSource) Source() interface{} {
 
 	if len(s.stats) > 0 {
 		source["stats"] = s.stats
+	}
+
+	if len(s.innerHits) > 0 {
+		// Top-level inner hits
+		// See http://www.elastic.co/guide/en/elasticsearch/reference/1.5/search-request-inner-hits.html#top-level-inner-hits
+		// "inner_hits": {
+		//   "<inner_hits_name>": {
+		//     "<path|type>": {
+		//       "<path-to-nested-object-field|child-or-parent-type>": {
+		//         <inner_hits_body>,
+		//         [,"inner_hits" : { [<sub_inner_hits>]+ } ]?
+		//       }
+		//     }
+		//   },
+		//   [,"<inner_hits_name_2>" : { ... } ]*
+		// }
+		m := make(map[string]interface{})
+		for name, hit := range s.innerHits {
+			if hit.path != "" {
+				path := make(map[string]interface{})
+				path[hit.path] = hit.Source()
+				m[name] = map[string]interface{}{
+					"path": path,
+				}
+			} else if hit.typ != "" {
+				typ := make(map[string]interface{})
+				typ[hit.typ] = hit.Source()
+				m[name] = map[string]interface{}{
+					"type": typ,
+				}
+			} else {
+				// TODO the Java client throws here, because either path or typ must be specified
+			}
+		}
+		source["inner_hits"] = m
 	}
 
 	return source

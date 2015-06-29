@@ -1,8 +1,17 @@
 package expr
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"math"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
+
+	"bosun.org/opentsdb"
 )
 
 func TestExprSimple(t *testing.T) {
@@ -33,6 +42,16 @@ func TestExprSimple(t *testing.T) {
 		{"1>=2", 0},
 		{"-1 > 0", 0},
 		{"-1 < 0", 1},
+
+		// NaN
+		{"0 / 0", Scalar(math.NaN())},
+		{"1 / 0", Scalar(math.Inf(1))},
+
+		// short circuit
+		{"0 && 0 / 0", 0},
+		{"1 || 0 / 0", 1},
+		{"1 && 0 / 0", Scalar(math.NaN())},
+		{"0 || 0 / 0", Scalar(math.NaN())},
 	}
 
 	for _, et := range exprTests {
@@ -51,6 +70,8 @@ func TestExprSimple(t *testing.T) {
 		} else if len(r.Results[0].Group) != 0 {
 			t.Error("bad group len", r.Results[0].Group)
 			break
+		} else if math.IsNaN(float64(et.output)) && math.IsNaN(float64(r.Results[0].Value.(Scalar))) {
+			// ok
 		} else if r.Results[0].Value != et.output {
 			t.Errorf("expected %v, got %v: %v\nast: %v", et.output, r.Results[0].Value, et.input, e)
 		}
@@ -89,17 +110,117 @@ func TestExprParse(t *testing.T) {
 	}
 }
 
-/*
-const TSDBHost = "ny-devtsdb04:4242"
+var queryTime = time.Date(2000, 1, 1, 12, 0, 0, 0, time.UTC)
 
-func TestExprQuery(t *testing.T) {
-	e, err := New(`forecastlr(q("avg:os.cpu{host=ny-lb05}", "1m", ""), -10)`)
+func TestQueryExpr(t *testing.T) {
+	queries := map[string]opentsdb.ResponseSet{
+		`q("avg:m{a=*}", "9.467241e+08", "9.467244e+08")`: {
+			{
+				Metric: "m",
+				Tags:   opentsdb.TagSet{"a": "b"},
+				DPS:    map[string]opentsdb.Point{"0": 1, "1": 2},
+			},
+			{
+				Metric: "m",
+				Tags:   opentsdb.TagSet{"a": "c"},
+				DPS:    map[string]opentsdb.Point{"3": 7, "1": 8},
+			},
+		},
+		`q("avg:m{a=*}", "9.467205e+08", "9.467208e+08")`: {
+			{
+				Metric: "m",
+				Tags:   opentsdb.TagSet{"a": "b"},
+				DPS:    map[string]opentsdb.Point{"2": 6, "3": 4},
+			},
+			{
+				Metric: "m",
+				Tags:   opentsdb.TagSet{"a": "d"},
+				DPS:    map[string]opentsdb.Point{"8": 8, "9": 9},
+			},
+		},
+	}
+	d := time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)
+	tests := map[string]map[string]map[time.Time]float64{
+		`window("avg:m{a=*}", "5m", "1h", 2, "max")`: {
+			"a=b": {
+				d: 2,
+				d.Add(time.Second * 2): 6,
+			},
+			"a=c": {
+				d.Add(time.Second * 1): 8,
+			},
+			"a=d": {
+				d.Add(time.Second * 8): 9,
+			},
+		},
+		`window("avg:m{a=*}", "5m", "1h", 2, "avg")`: {
+			"a=b": {
+				d: 1.5,
+				d.Add(time.Second * 2): 5,
+			},
+			"a=c": {
+				d.Add(time.Second * 1): 7.5,
+			},
+			"a=d": {
+				d.Add(time.Second * 8): 8.5,
+			},
+		},
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req opentsdb.Request
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Fatal(err)
+		}
+		var resp opentsdb.ResponseSet
+		for _, rq := range req.Queries {
+			qs := fmt.Sprintf(`q("%s", "%v", "%v")`, rq, req.Start, req.End)
+			q, ok := queries[qs]
+			if !ok {
+				t.Errorf("unknown query: %s", qs)
+				return
+			}
+			if q == nil {
+				return // Put nil entry in map to simulate opentsdb error.
+			}
+			resp = append(resp, q...)
+		}
+		if err := json.NewEncoder(w).Encode(&resp); err != nil {
+			log.Fatal(err)
+		}
+	}))
+	defer ts.Close()
+	u, err := url.Parse(ts.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = e.Execute(opentsdb.Host(TSDBHost), nil)
-	if err != nil {
-		t.Fatal(err)
+
+	for exprText, expected := range tests {
+		e, err := New(exprText, TSDB)
+		if err != nil {
+			t.Fatal(err)
+		}
+		results, _, err := e.Execute(opentsdb.Host(u.Host), nil, nil, nil, nil, queryTime, 0, false, nil, nil, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, r := range results.Results {
+			tag := r.Group.Tags()
+			ex := expected[tag]
+			if ex == nil {
+				t.Errorf("missing tag %v", tag)
+				continue
+			}
+			val := r.Value.(Series)
+			if len(val) != len(ex) {
+				t.Errorf("unmatched values in %v", tag)
+			}
+			for k, v := range ex {
+				got := val[k]
+				if got != v {
+					t.Errorf("%v, %v: got %v, expected %v", tag, k, got, v)
+				}
+			}
+		}
 	}
 }
-*/

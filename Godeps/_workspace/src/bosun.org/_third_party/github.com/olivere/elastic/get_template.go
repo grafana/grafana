@@ -29,19 +29,19 @@ func NewGetTemplateService(client *Client) *GetTemplateService {
 	}
 }
 
-// Id is documented as: Template ID.
+// Id is the template ID.
 func (s *GetTemplateService) Id(id string) *GetTemplateService {
 	s.id = id
 	return s
 }
 
-// Version is documented as: Explicit version number for concurrency control.
+// Version is an explicit version number for concurrency control.
 func (s *GetTemplateService) Version(version interface{}) *GetTemplateService {
 	s.version = version
 	return s
 }
 
-// VersionType is documented as: Specific version type.
+// VersionType is a specific version type.
 func (s *GetTemplateService) VersionType(versionType string) *GetTemplateService {
 	s.versionType = versionType
 	return s

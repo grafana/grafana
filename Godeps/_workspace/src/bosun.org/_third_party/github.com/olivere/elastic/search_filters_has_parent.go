@@ -11,13 +11,13 @@ package elastic
 // For more details, see
 // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-has-parent-filter.html
 type HasParentFilter struct {
-	filter             Filter
-	query              Query
-	parentType         string
-	filterName         string
-	cache              *bool
-	cacheKey           string
-	shortCircuitCutoff *int
+	filter     Filter
+	query      Query
+	parentType string
+	filterName string
+	cache      *bool
+	cacheKey   string
+	innerHit   *InnerHit
 }
 
 // NewHasParentFilter creates a new has_parent filter.
@@ -50,6 +50,11 @@ func (f HasParentFilter) Cache(cache bool) HasParentFilter {
 
 func (f HasParentFilter) CacheKey(cacheKey string) HasParentFilter {
 	f.cacheKey = cacheKey
+	return f
+}
+
+func (f HasParentFilter) InnerHit(innerHit *InnerHit) HasParentFilter {
+	f.innerHit = innerHit
 	return f
 }
 
@@ -86,6 +91,9 @@ func (f HasParentFilter) Source() interface{} {
 	}
 	if f.cacheKey != "" {
 		filter["_cache_key"] = f.cacheKey
+	}
+	if f.innerHit != nil {
+		filter["inner_hits"] = f.innerHit.Source()
 	}
 	return source
 }

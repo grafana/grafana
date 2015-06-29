@@ -1,4 +1,4 @@
-package search
+package search // import "bosun.org/cmd/bosun/search"
 
 import (
 	"fmt"

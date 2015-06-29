@@ -1,5 +1,5 @@
 // Package opentsdb defines structures for interacting with an OpenTSDB server.
-package opentsdb
+package opentsdb // import "bosun.org/opentsdb"
 
 import (
 	"bytes"

@@ -7,53 +7,53 @@
 	"Deps": [
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/GaryBoone/GoStats/stats",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/MiniProfiler/go/miniprofiler",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/golang/groupcache/lru",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/golang/groupcache/singleflight",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/_third_party/github.com/olivere/elastic",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/cache",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/expr",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/cmd/bosun/search",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/graphite",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "bosun.org/opentsdb",
-			"Comment": "20150506172827",
-			"Rev": "502e6253e846bd97b5ea1cb1998c4c7fa95fa776"
+			"Comment": "20150515173231-173-gf1a105a",
+			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
 			"ImportPath": "github.com/Dieterbe/profiletrigger/heap",

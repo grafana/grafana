@@ -124,7 +124,30 @@ func (b *GetService) IgnoreErrorsOnGeneratedFields(ignore bool) *GetService {
 	return b
 }
 
+// Validate checks if the operation is valid.
+func (s *GetService) Validate() error {
+	var invalid []string
+	if s.id == "" {
+		invalid = append(invalid, "Id")
+	}
+	if s.index == "" {
+		invalid = append(invalid, "Index")
+	}
+	if s.typ == "" {
+		invalid = append(invalid, "Type")
+	}
+	if len(invalid) > 0 {
+		return fmt.Errorf("missing required fields: %v", invalid)
+	}
+	return nil
+}
+
 func (b *GetService) Do() (*GetResult, error) {
+	// Check pre-conditions
+	if err := b.Validate(); err != nil {
+		return nil, err
+	}
+
 	// Build url
 	path, err := uritemplates.Expand("/{index}/{type}/{id}", map[string]string{
 		"index": b.index,
@@ -189,12 +212,12 @@ func (b *GetService) Do() (*GetResult, error) {
 // -- Result of a get request.
 
 type GetResult struct {
-	Index   string           `json:"_index"`
-	Type    string           `json:"_type"`
-	Id      string           `json:"_id"`
-	Version int64            `json:"_version,omitempty"`
-	Source  *json.RawMessage `json:"_source,omitempty"`
-	Found   bool             `json:"found,omitempty"`
-	Fields  []string         `json:"fields,omitempty"`
-	Error   string           `json:"error,omitempty"` // used only in MultiGet
+	Index   string                 `json:"_index"`
+	Type    string                 `json:"_type"`
+	Id      string                 `json:"_id"`
+	Version int64                  `json:"_version,omitempty"`
+	Source  *json.RawMessage       `json:"_source,omitempty"`
+	Found   bool                   `json:"found,omitempty"`
+	Fields  map[string]interface{} `json:"fields,omitempty"`
+	Error   string                 `json:"error,omitempty"` // used only in MultiGet
 }

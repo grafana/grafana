@@ -280,6 +280,15 @@ func TestBulkRequestsSerialization(t *testing.T) {
 		t.Errorf("expected updated[0].Version == %d; got %d", 2, updated[0].Version)
 	}
 
+	// Succeeded actions
+	succeeded := bulkResponse.Succeeded()
+	if succeeded == nil {
+		t.Fatal("expected succeeded to be != nil; got nil")
+	}
+	if len(succeeded) != 4 {
+		t.Fatalf("expected len(succeeded) == %d; got %d", 4, len(succeeded))
+	}
+
 	// ById
 	id1Results := bulkResponse.ById("1")
 	if id1Results == nil {

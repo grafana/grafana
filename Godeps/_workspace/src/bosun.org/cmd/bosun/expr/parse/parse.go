@@ -5,7 +5,7 @@
 // Package parse builds parse trees for expressions as defined by expr. Clients
 // should use that package to construct expressions rather than this one, which
 // provides shared internal data structures not intended for general use.
-package parse
+package parse // import "bosun.org/cmd/bosun/expr/parse"
 
 import (
 	"fmt"
@@ -19,8 +19,10 @@ import (
 type Tree struct {
 	Text string // text parsed to create the expression.
 	Root Node   // top-level root of the tree, returns a number.
+
+	funcs []map[string]Func
+
 	// Parsing only; cleared after parse.
-	funcs     []map[string]Func
 	lex       *lexer
 	token     [1]item // one-token lookahead for parser.
 	peekCount int
@@ -31,17 +33,18 @@ type Func struct {
 	Return FuncType
 	Tags   func([]Node) (Tags, error)
 	F      interface{}
+	Check  func(*Tree, *FuncNode) error
 }
 
 type FuncType int
 
 func (f FuncType) String() string {
 	switch f {
-	case TypeNumber:
+	case TypeNumberSet:
 		return "number"
 	case TypeString:
 		return "string"
-	case TypeSeries:
+	case TypeSeriesSet:
 		return "series"
 	case TypeScalar:
 		return "scalar"
@@ -53,8 +56,8 @@ func (f FuncType) String() string {
 const (
 	TypeString FuncType = iota
 	TypeScalar
-	TypeNumber
-	TypeSeries
+	TypeNumberSet
+	TypeSeriesSet
 )
 
 type Tags map[string]struct{}
@@ -203,7 +206,7 @@ func (t *Tree) startParse(funcs []map[string]Func, lex *lexer) {
 	for _, funcMap := range funcs {
 		for name, f := range funcMap {
 			switch f.Return {
-			case TypeSeries, TypeNumber:
+			case TypeSeriesSet, TypeNumberSet:
 				if f.Tags == nil {
 					panic(fmt.Errorf("%v: expected Tags definition: got nil", name))
 				}
@@ -219,7 +222,6 @@ func (t *Tree) startParse(funcs []map[string]Func, lex *lexer) {
 // stopParse terminates parsing.
 func (t *Tree) stopParse() {
 	t.lex = nil
-	t.funcs = nil
 }
 
 // Parse parses the expression definition string to construct a representation
@@ -238,7 +240,7 @@ func (t *Tree) Parse(text string, funcs ...map[string]Func) (err error) {
 func (t *Tree) parse() {
 	t.Root = t.O()
 	t.expect(itemEOF, "input")
-	if err := t.Root.Check(); err != nil {
+	if err := t.Root.Check(t); err != nil {
 		t.error(err)
 	}
 }
@@ -352,7 +354,7 @@ func (t *Tree) v() Node {
 
 func (t *Tree) Func() (f *FuncNode) {
 	token := t.next()
-	funcv, ok := t.getFunction(token.val)
+	funcv, ok := t.GetFunction(token.val)
 	if !ok {
 		t.errorf("non existent function %s", token.val)
 	}
@@ -383,7 +385,7 @@ func (t *Tree) Func() (f *FuncNode) {
 	}
 }
 
-func (t *Tree) getFunction(name string) (v Func, ok bool) {
+func (t *Tree) GetFunction(name string) (v Func, ok bool) {
 	for _, funcMap := range t.funcs {
 		if funcMap == nil {
 			continue

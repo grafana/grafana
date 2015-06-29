@@ -6,6 +6,7 @@ package elastic
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -418,8 +419,11 @@ func TestAggs(t *testing.T) {
 	if percentilesAggRes == nil {
 		t.Fatalf("expected != nil; got: nil")
 	}
-	if len(percentilesAggRes.Values) != 7 {
-		t.Fatalf("expected %d; got: %d\nValues are: %#v", 7, len(percentilesAggRes.Values), percentilesAggRes.Values)
+	// ES 1.4.x returns  7: {"1.0":...}
+	// ES 1.5.0 returns 14: {"1.0":..., "1.0_as_string":...}
+	// So we're relaxing the test here.
+	if len(percentilesAggRes.Values) == 0 {
+		t.Errorf("expected at least %d value; got: %d\nValues are: %#v", 1, len(percentilesAggRes.Values), percentilesAggRes.Values)
 	}
 	if _, found := percentilesAggRes.Values["0.0"]; found {
 		t.Errorf("expected %v; got: %v", false, found)
@@ -442,8 +446,8 @@ func TestAggs(t *testing.T) {
 	if percentileRanksAggRes == nil {
 		t.Fatalf("expected != nil; got: nil")
 	}
-	if len(percentileRanksAggRes.Values) != 3 {
-		t.Fatalf("expected %d; got %d\nValues are: %#v", 3, len(percentileRanksAggRes.Values), percentileRanksAggRes.Values)
+	if len(percentileRanksAggRes.Values) == 0 {
+		t.Errorf("expected at least %d value; got %d\nValues are: %#v", 1, len(percentileRanksAggRes.Values), percentileRanksAggRes.Values)
 	}
 	if _, found := percentileRanksAggRes.Values["0.0"]; found {
 		t.Errorf("expected %v; got: %v", true, found)
@@ -804,6 +808,59 @@ func TestAggs(t *testing.T) {
 		if countByUserAggRes.Buckets[1].DocCount != 1 {
 			t.Errorf("expected %d; got: %d", 1, countByUserAggRes.Buckets[1].DocCount)
 		}
+	}
+}
+
+// TestAggsMarshal ensures that marshaling aggregations back into a string
+// does not yield base64 encoded data. See https://github.com/olivere/elastic/issues/51
+// and https://groups.google.com/forum/#!topic/Golang-Nuts/38ShOlhxAYY for details.
+func TestAggsMarshal(t *testing.T) {
+	client := setupTestClientAndCreateIndex(t)
+
+	tweet1 := tweet{
+		User:     "olivere",
+		Retweets: 108,
+		Message:  "Welcome to Golang and Elasticsearch.",
+		Image:    "http://golang.org/doc/gopher/gophercolor.png",
+		Tags:     []string{"golang", "elasticsearch"},
+		Location: "48.1333,11.5667", // lat,lon
+		Created:  time.Date(2012, 12, 12, 17, 38, 34, 0, time.UTC),
+	}
+
+	// Add all documents
+	_, err := client.Index().Index(testIndexName).Type("tweet").Id("1").BodyJson(&tweet1).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Flush().Index(testIndexName).Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Match all should return all documents
+	all := NewMatchAllQuery()
+	dhagg := NewDateHistogramAggregation().Field("created").Interval("year")
+
+	// Run query
+	builder := client.Search().Index(testIndexName).Query(&all)
+	builder = builder.Aggregation("dhagg", dhagg)
+	searchResult, err := builder.Do()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searchResult.TotalHits() != 1 {
+		t.Errorf("expected Hits.TotalHits = %d; got: %d", 1, searchResult.TotalHits())
+	}
+	if _, found := searchResult.Aggregations["dhagg"]; !found {
+		t.Fatalf("expected aggregation %q", "dhagg")
+	}
+	buf, err := json.Marshal(searchResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(buf)
+	if i := strings.Index(s, `{"dhagg":{"buckets":[{"key_as_string":"2012-01-01`); i < 0 {
+		t.Errorf("expected to serialize aggregation into string; got: %v", s)
 	}
 }
 
@@ -2513,3 +2570,18 @@ func TestAggsSubAggregates(t *testing.T) {
 		t.Errorf("expected key_as_string %q; got: %q", "2012-01-01T00:00:00.000Z", *ts.Buckets[0].KeyAsString)
 	}
 }
+
+/*
+// TestAggsRawMessage is a test for issue #51 (https://github.com/olivere/elastic/issues/51).
+// See also: http://play.golang.org/p/b8fzGMxrMC
+func TestAggsRawMessage(t *testing.T) {
+	f := json.RawMessage([]byte(`42`))
+	m := Aggregations(map[string]*json.RawMessage{
+		"k": &f,
+	})
+	b, _ := json.Marshal(m)
+	if string(b) != `{"k":42}` {
+		t.Errorf("expected %s; got: %s", `{"k":42}`, string(b))
+	}
+}
+*/

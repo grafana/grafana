@@ -282,3 +282,20 @@ func (r *BulkResponse) Failed() []*BulkResponseItem {
 	}
 	return errors
 }
+
+// Succeeded returns those items of a bulk response that have no errors,
+// i.e. those have a status code between 200 and 299.
+func (r *BulkResponse) Succeeded() []*BulkResponseItem {
+	if r.Items == nil {
+		return nil
+	}
+	succeeded := make([]*BulkResponseItem, 0)
+	for _, item := range r.Items {
+		for _, result := range item {
+			if result.Status >= 200 && result.Status <= 299 {
+				succeeded = append(succeeded, result)
+			}
+		}
+	}
+	return succeeded
+}

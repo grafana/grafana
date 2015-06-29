@@ -72,3 +72,38 @@ func TestClusterHealthURLs(t *testing.T) {
 		}
 	}
 }
+
+func TestClusterHealthWaitForStatus(t *testing.T) {
+	client := setupTestClientAndCreateIndex(t)
+
+	// Cluster health on an index that does not exist should never get to yellow
+	health, err := client.ClusterHealth().Index("no-such-index").WaitForStatus("yellow").Timeout("1s").Do()
+	if err != nil {
+		t.Fatalf("expected no error; got: %v", err)
+	}
+	if health.TimedOut != true {
+		t.Fatalf("expected to timeout; got: %v", health.TimedOut)
+	}
+	if health.Status != "red" {
+		t.Fatalf("expected health = %q; got: %q", "red", health.Status)
+	}
+
+	// Cluster wide health
+	health, err = client.ClusterHealth().WaitForStatus("green").Timeout("10s").Do()
+	if err != nil {
+		t.Fatalf("expected no error; got: %v", err)
+	}
+	if health.TimedOut != false {
+		t.Fatalf("expected no timeout; got: %v "+
+			"(does your local cluster contain unassigned shards?)", health.TimedOut)
+	}
+	if health.Status != "green" {
+		t.Fatalf("expected health = %q; got: %q", "green", health.Status)
+	}
+
+	// Cluster wide health via shortcut on client
+	err = client.WaitForGreenStatus("10s")
+	if err != nil {
+		t.Fatalf("expected no error; got: %v", err)
+	}
+}

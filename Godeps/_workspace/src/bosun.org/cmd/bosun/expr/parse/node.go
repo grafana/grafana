@@ -20,8 +20,8 @@ type Node interface {
 	Type() NodeType
 	String() string
 	StringAST() string
-	Position() Pos // byte position of start of node in full original input string
-	Check() error  // performs type checking for itself and sub-nodes
+	Position() Pos     // byte position of start of node in full original input string
+	Check(*Tree) error // performs type checking for itself and sub-nodes
 	Return() FuncType
 	Tags() (Tags, error)
 	// Make sure only functions in this package can create Nodes.
@@ -101,7 +101,7 @@ func (f *FuncNode) StringAST() string {
 	return s
 }
 
-func (f *FuncNode) Check() error {
+func (f *FuncNode) Check(t *Tree) error {
 	const errFuncType = "parse: bad argument type in %s, expected %s, got %s"
 	if len(f.Args) < len(f.F.Args) {
 		return fmt.Errorf("parse: not enough arguments for %s", f.Name)
@@ -109,14 +109,17 @@ func (f *FuncNode) Check() error {
 		return fmt.Errorf("parse: too many arguments for %s", f.Name)
 	}
 	for i, a := range f.Args {
-		t := f.F.Args[i]
+		ft := f.F.Args[i]
 		at := a.Return()
-		if t != at {
-			return fmt.Errorf("parse: expected %v, got %v", t, at)
+		if ft != at {
+			return fmt.Errorf("parse: expected %v, got %v", ft, at)
 		}
-		if err := a.Check(); err != nil {
+		if err := a.Check(t); err != nil {
 			return err
 		}
+	}
+	if f.F.Check != nil {
+		return f.F.Check(t, f)
 	}
 	return nil
 }
@@ -183,7 +186,7 @@ func (n *NumberNode) StringAST() string {
 	return n.String()
 }
 
-func (n *NumberNode) Check() error {
+func (n *NumberNode) Check(*Tree) error {
 	return nil
 }
 
@@ -215,7 +218,7 @@ func (s *StringNode) StringAST() string {
 	return s.String()
 }
 
-func (s *StringNode) Check() error {
+func (s *StringNode) Check(*Tree) error {
 	return nil
 }
 
@@ -248,23 +251,23 @@ func (b *BinaryNode) StringAST() string {
 	return fmt.Sprintf("%s(%s, %s)", b.Operator.val, b.Args[0], b.Args[1])
 }
 
-func (b *BinaryNode) Check() error {
+func (b *BinaryNode) Check(t *Tree) error {
 	t1 := b.Args[0].Return()
 	t2 := b.Args[1].Return()
-	if t1 == TypeSeries && t2 == TypeSeries {
+	if t1 == TypeSeriesSet && t2 == TypeSeriesSet {
 		return fmt.Errorf("parse: type error in %s: at least one side must be a number", b)
 	}
 	check := t1
-	if t1 == TypeSeries {
+	if t1 == TypeSeriesSet {
 		check = t2
 	}
-	if check != TypeNumber && check != TypeScalar {
+	if check != TypeNumberSet && check != TypeScalar {
 		return fmt.Errorf("parse: type error in %s: expected a number", b)
 	}
-	if err := b.Args[0].Check(); err != nil {
+	if err := b.Args[0].Check(t); err != nil {
 		return err
 	}
-	if err := b.Args[1].Check(); err != nil {
+	if err := b.Args[1].Check(t); err != nil {
 		return err
 	}
 	g1, err := b.Args[0].Tags()
@@ -322,12 +325,12 @@ func (u *UnaryNode) StringAST() string {
 	return fmt.Sprintf("%s(%s)", u.Operator.val, u.Arg)
 }
 
-func (u *UnaryNode) Check() error {
-	switch t := u.Arg.Return(); t {
-	case TypeNumber, TypeSeries, TypeScalar:
-		return u.Arg.Check()
+func (u *UnaryNode) Check(t *Tree) error {
+	switch rt := u.Arg.Return(); rt {
+	case TypeNumberSet, TypeSeriesSet, TypeScalar:
+		return u.Arg.Check(t)
 	default:
-		return fmt.Errorf("parse: type error in %s, expected %s, got %s", u, "number", t)
+		return fmt.Errorf("parse: type error in %s, expected %s, got %s", u, "number", rt)
 	}
 }
 

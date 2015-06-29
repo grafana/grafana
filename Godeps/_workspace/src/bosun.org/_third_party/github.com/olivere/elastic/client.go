@@ -22,7 +22,7 @@ import (
 
 const (
 	// Version is the current version of Elastic.
-	Version = "2.0.0.alpha1"
+	Version = "2.0.0"
 
 	// DefaultUrl is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -34,6 +34,17 @@ const (
 
 	// DefaultHealthcheckEnabled specifies if healthchecks are enabled by default.
 	DefaultHealthcheckEnabled = true
+
+	// DefaultHealthcheckTimeoutStartup is the time the healthcheck waits
+	// for a response from Elasticsearch on startup, i.e. when creating a
+	// client. After the client is started, a shorter timeout is commonly used
+	// (its default is specified in DefaultHealthcheckTimeout).
+	DefaultHealthcheckTimeoutStartup = 5 * time.Second
+
+	// DefaultHealthcheckTimeout specifies the time a running client waits for
+	// a response from Elasticsearch. Notice that the healthcheck timeout
+	// when a client is created is larger by default (see DefaultHealthcheckTimeoutStartup).
+	DefaultHealthcheckTimeout = 1 * time.Second
 
 	// DefaultHealthcheckInterval is the default interval between
 	// two health checks of the nodes in the cluster.
@@ -47,9 +58,15 @@ const (
 	// from the list of actual connections.
 	DefaultSnifferInterval = 15 * time.Minute
 
+	// DefaultSnifferTimeoutStartup is the default timeout for the sniffing
+	// process that is initiated while creating a new client. For subsequent
+	// sniffing processes, DefaultSnifferTimeout is used (by default).
+	DefaultSnifferTimeoutStartup = 5 * time.Second
+
 	// DefaultSnifferTimeout is the default timeout after which the
-	// sniffing process times out.
-	DefaultSnifferTimeout = 1 * time.Second
+	// sniffing process times out. Notice that for the initial sniffing
+	// process, DefaultSnifferTimeoutStartup is used.
+	DefaultSnifferTimeout = 2 * time.Second
 
 	// DefaultMaxRetries is the number of retries for a single request after
 	// Elastic will give up and return an error. It is zero by default, so
@@ -64,6 +81,10 @@ var (
 	// ErrRetry is raised when a request cannot be executed after the configured
 	// number of retries.
 	ErrRetry = errors.New("cannot connect after several retries")
+
+	// ErrTimeout is raised when a request timed out, e.g. when WaitForStatus
+	// didn't return in time.
+	ErrTimeout = errors.New("timeout")
 )
 
 // ClientOptionFunc is a function that configures a Client.
@@ -78,22 +99,25 @@ type Client struct {
 	conns   []*conn      // all connections
 	cindex  int          // index into conns
 
-	mu                  sync.RWMutex  // guards the next block
-	urls                []string      // set of URLs passed initially to the client
-	running             bool          // true if the client's background processes are running
-	errorlog            *log.Logger   // error log for critical messages
-	infolog             *log.Logger   // information log for e.g. response times
-	tracelog            *log.Logger   // trace log for debugging
-	maxRetries          int           // max. number of retries
-	scheme              string        // http or https
-	healthcheckEnabled  bool          // healthchecks enabled or disabled
-	healthcheckInterval time.Duration // interval between healthchecks
-	healthcheckStop     chan bool     // notify healthchecker to stop, and notify back
-	snifferEnabled      bool          // sniffer enabled or disabled
-	snifferTimeout      time.Duration // time the sniffer waits for a response from nodes info API
-	snifferInterval     time.Duration // interval between sniffing
-	snifferStop         chan bool     // notify sniffer to stop, and notify back
-	decoder             Decoder       // used to decode data sent from Elasticsearch
+	mu                        sync.RWMutex  // guards the next block
+	urls                      []string      // set of URLs passed initially to the client
+	running                   bool          // true if the client's background processes are running
+	errorlog                  *log.Logger   // error log for critical messages
+	infolog                   *log.Logger   // information log for e.g. response times
+	tracelog                  *log.Logger   // trace log for debugging
+	maxRetries                int           // max. number of retries
+	scheme                    string        // http or https
+	healthcheckEnabled        bool          // healthchecks enabled or disabled
+	healthcheckTimeoutStartup time.Duration // time the healthcheck waits for a response from Elasticsearch on startup
+	healthcheckTimeout        time.Duration // time the healthcheck waits for a response from Elasticsearch
+	healthcheckInterval       time.Duration // interval between healthchecks
+	healthcheckStop           chan bool     // notify healthchecker to stop, and notify back
+	snifferEnabled            bool          // sniffer enabled or disabled
+	snifferTimeoutStartup     time.Duration // time the sniffer waits for a response from nodes info API on startup
+	snifferTimeout            time.Duration // time the sniffer waits for a response from nodes info API
+	snifferInterval           time.Duration // interval between sniffing
+	snifferStop               chan bool     // notify sniffer to stop, and notify back
+	decoder                   Decoder       // used to decode data sent from Elasticsearch
 }
 
 // NewClient creates a new client to work with Elasticsearch.
@@ -142,20 +166,22 @@ type Client struct {
 func NewClient(options ...ClientOptionFunc) (*Client, error) {
 	// Set up the client
 	c := &Client{
-		urls:                []string{DefaultURL},
-		c:                   http.DefaultClient,
-		conns:               make([]*conn, 0),
-		cindex:              -1,
-		scheme:              DefaultScheme,
-		decoder:             &DefaultDecoder{},
-		maxRetries:          DefaultMaxRetries,
-		healthcheckEnabled:  DefaultHealthcheckEnabled,
-		healthcheckInterval: DefaultHealthcheckInterval,
-		healthcheckStop:     make(chan bool),
-		snifferEnabled:      DefaultSnifferEnabled,
-		snifferInterval:     DefaultSnifferInterval,
-		snifferStop:         make(chan bool),
-		snifferTimeout:      DefaultSnifferTimeout,
+		c:                         http.DefaultClient,
+		conns:                     make([]*conn, 0),
+		cindex:                    -1,
+		scheme:                    DefaultScheme,
+		decoder:                   &DefaultDecoder{},
+		maxRetries:                DefaultMaxRetries,
+		healthcheckEnabled:        DefaultHealthcheckEnabled,
+		healthcheckTimeoutStartup: DefaultHealthcheckTimeoutStartup,
+		healthcheckTimeout:        DefaultHealthcheckTimeout,
+		healthcheckInterval:       DefaultHealthcheckInterval,
+		healthcheckStop:           make(chan bool),
+		snifferEnabled:            DefaultSnifferEnabled,
+		snifferTimeoutStartup:     DefaultSnifferTimeoutStartup,
+		snifferTimeout:            DefaultSnifferTimeout,
+		snifferInterval:           DefaultSnifferInterval,
+		snifferStop:               make(chan bool),
 	}
 
 	// Run the options on it
@@ -172,7 +198,7 @@ func NewClient(options ...ClientOptionFunc) (*Client, error) {
 
 	if c.snifferEnabled {
 		// Sniff the cluster initially
-		if err := c.sniff(); err != nil {
+		if err := c.sniff(c.snifferTimeoutStartup); err != nil {
 			return nil, err
 		}
 	} else {
@@ -182,8 +208,12 @@ func NewClient(options ...ClientOptionFunc) (*Client, error) {
 		}
 	}
 
-	// Perform an initial health check
-	c.healthcheck()
+	// Perform an initial health check and
+	// ensure that we have at least one connection available
+	c.healthcheck(c.healthcheckTimeoutStartup, true)
+	if err := c.mustActiveConn(); err != nil {
+		return nil, err
+	}
 
 	go c.sniffer()       // periodically update cluster information
 	go c.healthchecker() // start goroutine periodically ping all nodes of the cluster
@@ -217,10 +247,7 @@ func SetURL(urls ...string) ClientOptionFunc {
 		case 0:
 			c.urls = []string{DefaultURL}
 		default:
-			c.urls = make([]string, 0)
-			for _, url := range urls {
-				c.urls = append(c.urls, url)
-			}
+			c.urls = urls
 		}
 		return nil
 	}
@@ -243,6 +270,28 @@ func SetSniff(enabled bool) ClientOptionFunc {
 	}
 }
 
+// SetSnifferTimeoutStartup sets the timeout for the sniffer that is used
+// when creating a new client. The default is 5 seconds. Notice that the
+// timeout being used for subsequent sniffing processes is set with
+// SetSnifferTimeout.
+func SetSnifferTimeoutStartup(timeout time.Duration) ClientOptionFunc {
+	return func(c *Client) error {
+		c.snifferTimeoutStartup = timeout
+		return nil
+	}
+}
+
+// SetSnifferTimeout sets the timeout for the sniffer that finds the
+// nodes in a cluster. The default is 2 seconds. Notice that the timeout
+// used when creating a new client on startup is usually greater and can
+// be set with SetSnifferTimeoutStartup.
+func SetSnifferTimeout(timeout time.Duration) ClientOptionFunc {
+	return func(c *Client) error {
+		c.snifferTimeout = timeout
+		return nil
+	}
+}
+
 // SetSnifferInterval sets the interval between two sniffing processes.
 // The default interval is 15 minutes.
 func SetSnifferInterval(interval time.Duration) ClientOptionFunc {
@@ -252,19 +301,33 @@ func SetSnifferInterval(interval time.Duration) ClientOptionFunc {
 	}
 }
 
-// SetSnifferTimeout sets the timeout for the sniffer that finds the
-// nodes in a cluster. The default is 1 second.
-func SetSnifferTimeout(timeout time.Duration) ClientOptionFunc {
-	return func(c *Client) error {
-		c.snifferTimeout = timeout
-		return nil
-	}
-}
-
 // SetHealthcheck enables or disables healthchecks (enabled by default).
 func SetHealthcheck(enabled bool) ClientOptionFunc {
 	return func(c *Client) error {
 		c.healthcheckEnabled = enabled
+		return nil
+	}
+}
+
+// SetHealthcheckTimeoutStartup sets the timeout for the initial health check.
+// The default timeout is 5 seconds (see DefaultHealthcheckTimeoutStartup).
+// Notice that timeouts for subsequent health checks can be modified with
+// SetHealthcheckTimeout.
+func SetHealthcheckTimeoutStartup(timeout time.Duration) ClientOptionFunc {
+	return func(c *Client) error {
+		c.healthcheckTimeoutStartup = timeout
+		return nil
+	}
+}
+
+// SetHealthcheckTimeout sets the timeout for periodic health checks.
+// The default timeout is 1 second (see DefaultHealthcheckTimeout).
+// Notice that a different (usually larger) timeout is used for the initial
+// healthcheck, which is initiated while creating a new client.
+// The startup timeout can be modified with SetHealthcheckTimeoutStartup.
+func SetHealthcheckTimeout(timeout time.Duration) ClientOptionFunc {
+	return func(c *Client) error {
+		c.healthcheckTimeout = timeout
 		return nil
 	}
 }
@@ -448,6 +511,7 @@ func (c *Client) dumpResponse(resp *http.Response) {
 func (c *Client) sniffer() {
 	for {
 		c.mu.RLock()
+		timeout := c.snifferTimeout
 		ticker := time.NewTicker(c.snifferInterval)
 		c.mu.RUnlock()
 
@@ -457,7 +521,7 @@ func (c *Client) sniffer() {
 			c.snifferStop <- true
 			return
 		case <-ticker.C:
-			c.sniff()
+			c.sniff(timeout)
 		}
 	}
 }
@@ -467,7 +531,7 @@ func (c *Client) sniffer() {
 // by the preceding sniffing process (if sniffing is enabled).
 //
 // If sniffing is disabled, this is a no-op.
-func (c *Client) sniff() error {
+func (c *Client) sniff(timeout time.Duration) error {
 	c.mu.RLock()
 	if !c.snifferEnabled {
 		c.mu.RUnlock()
@@ -483,7 +547,6 @@ func (c *Client) sniff() error {
 		urlsMap[url] = true
 		urls = append(urls, url)
 	}
-	timeout := c.snifferTimeout
 	c.mu.RUnlock()
 
 	// Add all URLs found by sniffing
@@ -614,6 +677,7 @@ func (c *Client) updateConns(conns []*conn) {
 func (c *Client) healthchecker() {
 	for {
 		c.mu.RLock()
+		timeout := c.healthcheckTimeout
 		ticker := time.NewTicker(c.healthcheckInterval)
 		c.mu.RUnlock()
 
@@ -623,17 +687,18 @@ func (c *Client) healthchecker() {
 			c.healthcheckStop <- true
 			return
 		case <-ticker.C:
-			c.healthcheck()
+			c.healthcheck(timeout, false)
 		}
 	}
 }
 
 // healthcheck does a health check on all nodes in the cluster. Depending on
 // the node state, it marks connections as dead, sets them alive etc.
-// If healthchecks are disabled, this is a no-op.
-func (c *Client) healthcheck() {
+// If healthchecks are disabled and force is false, this is a no-op.
+// The timeout specifies how long to wait for a response from Elasticsearch.
+func (c *Client) healthcheck(timeout time.Duration, force bool) {
 	c.mu.RLock()
-	if !c.healthcheckEnabled {
+	if !c.healthcheckEnabled && !force {
 		c.mu.RUnlock()
 		return
 	}
@@ -643,9 +708,11 @@ func (c *Client) healthcheck() {
 	conns := c.conns
 	c.connsMu.RUnlock()
 
+	timeoutInMillis := int64(timeout / time.Millisecond)
+
 	for _, conn := range conns {
 		params := make(url.Values)
-		params.Set("timeout", "1")
+		params.Set("timeout", fmt.Sprintf("%dms", timeoutInMillis))
 		req, err := NewRequest("HEAD", conn.URL()+"/?"+params.Encode())
 		if err == nil {
 			res, err := c.c.Do((*http.Request)(req))
@@ -673,7 +740,7 @@ func (c *Client) healthcheck() {
 // next returns the next available connection, or ErrNoClient.
 func (c *Client) next() (*conn, error) {
 	// We do round-robin here.
-	// TODO: This should be a pluggable strategy, like the Selector in the official clients.
+	// TODO(oe) This should be a pluggable strategy, like the Selector in the official clients.
 	c.connsMu.Lock()
 	defer c.connsMu.Unlock()
 
@@ -694,10 +761,24 @@ func (c *Client) next() (*conn, error) {
 		}
 	}
 
-	// TODO: As a last resort, we could try to awake a dead connection here.
+	// TODO(oe) As a last resort, we could try to awake a dead connection here.
 
 	// We tried hard, but there is no node available
 	return nil, ErrNoClient
+}
+
+// mustActiveConn returns nil if there is an active connection,
+// otherwise ErrNoClient is returned.
+func (c *Client) mustActiveConn() error {
+	c.connsMu.Lock()
+	defer c.connsMu.Unlock()
+
+	for _, c := range c.conns {
+		if !c.IsDead() {
+			return nil
+		}
+	}
+	return ErrNoClient
 }
 
 // PerformRequest does a HTTP request to Elasticsearch.
@@ -706,6 +787,7 @@ func (c *Client) PerformRequest(method, path string, params url.Values, body int
 	start := time.Now().UTC()
 
 	c.mu.RLock()
+	timeout := c.healthcheckTimeout
 	retries := c.maxRetries
 	c.mu.RUnlock()
 
@@ -730,7 +812,7 @@ func (c *Client) PerformRequest(method, path string, params url.Values, body int
 		if err == ErrNoClient {
 			if !retried {
 				// Force a healtcheck as all connections seem to be dead.
-				c.healthcheck()
+				c.healthcheck(timeout, false)
 			}
 			retries -= 1
 			if retries <= 0 {
@@ -872,6 +954,19 @@ func (c *Client) IndexExists(name string) *IndexExistsService {
 	return builder
 }
 
+// TypeExists allows to check if one or more types exist in one or more indices.
+func (c *Client) TypeExists() *IndicesExistsTypeService {
+	return NewIndicesExistsTypeService(c)
+}
+
+// IndexStats provides statistics on different operations happining
+// in one or more indices.
+func (c *Client) IndexStats(indices ...string) *IndicesStatsService {
+	builder := NewIndicesStatsService(c)
+	builder = builder.Index(indices...)
+	return builder
+}
+
 // OpenIndex opens an index.
 func (c *Client) OpenIndex(name string) *OpenIndexService {
 	builder := NewOpenIndexService(c)
@@ -952,6 +1047,13 @@ func (c *Client) Count(indices ...string) *CountService {
 func (c *Client) Search(indices ...string) *SearchService {
 	builder := NewSearchService(c)
 	builder.Indices(indices...)
+	return builder
+}
+
+// Percolate allows to send a document and return matching queries.
+// See http://www.elastic.co/guide/en/elasticsearch/reference/current/search-percolate.html.
+func (c *Client) Percolate() *PercolateService {
+	builder := NewPercolateService(c)
 	return builder
 }
 
@@ -1037,18 +1139,53 @@ func (c *Client) Aliases() *AliasesService {
 }
 
 // GetTemplate gets a search template.
+// Use IndexXXXTemplate funcs to manage index templates.
 func (c *Client) GetTemplate() *GetTemplateService {
 	return NewGetTemplateService(c)
 }
 
 // PutTemplate creates or updates a search template.
+// Use IndexXXXTemplate funcs to manage index templates.
 func (c *Client) PutTemplate() *PutTemplateService {
 	return NewPutTemplateService(c)
 }
 
 // DeleteTemplate deletes a search template.
+// Use IndexXXXTemplate funcs to manage index templates.
 func (c *Client) DeleteTemplate() *DeleteTemplateService {
 	return NewDeleteTemplateService(c)
+}
+
+// IndexGetTemplate gets an index template.
+// Use XXXTemplate funcs to manage search templates.
+func (c *Client) IndexGetTemplate(names ...string) *IndicesGetTemplateService {
+	builder := NewIndicesGetTemplateService(c)
+	builder = builder.Name(names...)
+	return builder
+}
+
+// IndexTemplateExists gets check if an index template exists.
+// Use XXXTemplate funcs to manage search templates.
+func (c *Client) IndexTemplateExists(name string) *IndicesExistsTemplateService {
+	builder := NewIndicesExistsTemplateService(c)
+	builder = builder.Name(name)
+	return builder
+}
+
+// IndexPutTemplate creates or updates an index template.
+// Use XXXTemplate funcs to manage search templates.
+func (c *Client) IndexPutTemplate(name string) *IndicesPutTemplateService {
+	builder := NewIndicesPutTemplateService(c)
+	builder = builder.Name(name)
+	return builder
+}
+
+// IndexDeleteTemplate deletes an index template.
+// Use XXXTemplate funcs to manage search templates.
+func (c *Client) IndexDeleteTemplate(name string) *IndicesDeleteTemplateService {
+	builder := NewIndicesDeleteTemplateService(c)
+	builder = builder.Name(name)
+	return builder
 }
 
 // GetMapping gets a mapping.
@@ -1076,7 +1213,49 @@ func (c *Client) ClusterState() *ClusterStateService {
 	return NewClusterStateService(c)
 }
 
+// ClusterStats retrieves cluster statistics.
+func (c *Client) ClusterStats() *ClusterStatsService {
+	return NewClusterStatsService(c)
+}
+
 // NodesInfo retrieves one or more or all of the cluster nodes information.
 func (c *Client) NodesInfo() *NodesInfoService {
 	return NewNodesInfoService(c)
+}
+
+// Reindex returns a service that will reindex documents from a source
+// index into a target index. See
+// http://www.elastic.co/guide/en/elasticsearch/guide/current/reindex.html
+// for more information about reindexing.
+func (c *Client) Reindex(sourceIndex, targetIndex string) *Reindexer {
+	return NewReindexer(c, sourceIndex, CopyToTargetIndex(targetIndex))
+}
+
+// WaitForStatus waits for the cluster to have the given status.
+// This is a shortcut method for the ClusterHealth service.
+//
+// WaitForStatus waits for the specified timeout, e.g. "10s".
+// If the cluster will have the given state within the timeout, nil is returned.
+// If the request timed out, ErrTimeout is returned.
+func (c *Client) WaitForStatus(status string, timeout string) error {
+	health, err := c.ClusterHealth().WaitForStatus(status).Timeout(timeout).Do()
+	if err != nil {
+		return err
+	}
+	if health.TimedOut {
+		return ErrTimeout
+	}
+	return nil
+}
+
+// WaitForGreenStatus waits for the cluster to have the "green" status.
+// See WaitForStatus for more details.
+func (c *Client) WaitForGreenStatus(timeout string) error {
+	return c.WaitForStatus("green", timeout)
+}
+
+// WaitForYellowStatus waits for the cluster to have the "yellow" status.
+// See WaitForStatus for more details.
+func (c *Client) WaitForYellowStatus(timeout string) error {
+	return c.WaitForStatus("yellow", timeout)
 }

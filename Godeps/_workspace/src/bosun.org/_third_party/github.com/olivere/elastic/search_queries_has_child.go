@@ -14,8 +14,11 @@ type HasChildQuery struct {
 	childType          string
 	boost              *float32
 	scoreType          string
+	minChildren        *int
+	maxChildren        *int
 	shortCircuitCutoff *int
 	queryName          string
+	innerHit           *InnerHit
 }
 
 // NewHasChildQuery creates a new has_child query.
@@ -37,6 +40,16 @@ func (q HasChildQuery) ScoreType(scoreType string) HasChildQuery {
 	return q
 }
 
+func (q HasChildQuery) MinChildren(minChildren int) HasChildQuery {
+	q.minChildren = &minChildren
+	return q
+}
+
+func (q HasChildQuery) MaxChildren(maxChildren int) HasChildQuery {
+	q.maxChildren = &maxChildren
+	return q
+}
+
 func (q HasChildQuery) ShortCircuitCutoff(shortCircuitCutoff int) HasChildQuery {
 	q.shortCircuitCutoff = &shortCircuitCutoff
 	return q
@@ -44,6 +57,11 @@ func (q HasChildQuery) ShortCircuitCutoff(shortCircuitCutoff int) HasChildQuery 
 
 func (q HasChildQuery) QueryName(queryName string) HasChildQuery {
 	q.queryName = queryName
+	return q
+}
+
+func (q HasChildQuery) InnerHit(innerHit *InnerHit) HasChildQuery {
+	q.innerHit = innerHit
 	return q
 }
 
@@ -59,7 +77,6 @@ func (q HasChildQuery) Source() interface{} {
 	//       }
 	//   }
 	// }
-
 	source := make(map[string]interface{})
 
 	query := make(map[string]interface{})
@@ -73,11 +90,20 @@ func (q HasChildQuery) Source() interface{} {
 	if q.scoreType != "" {
 		query["score_type"] = q.scoreType
 	}
+	if q.minChildren != nil {
+		query["min_children"] = *q.minChildren
+	}
+	if q.maxChildren != nil {
+		query["max_children"] = *q.maxChildren
+	}
 	if q.shortCircuitCutoff != nil {
 		query["short_circuit_cutoff"] = *q.shortCircuitCutoff
 	}
 	if q.queryName != "" {
 		query["_name"] = q.queryName
+	}
+	if q.innerHit != nil {
+		query["inner_hits"] = q.innerHit.Source()
 	}
 	return source
 }

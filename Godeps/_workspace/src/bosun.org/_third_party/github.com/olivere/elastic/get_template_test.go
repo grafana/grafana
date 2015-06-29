@@ -11,27 +11,16 @@ import (
 func TestGetPutDeleteTemplate(t *testing.T) {
 	client := setupTestClientAndCreateIndex(t)
 
+	// This is a search template, not an index template!
 	tmpl := `{
-	"template":"elastic-test*",
-	"settings":{
-		"number_of_shards":1,
-		"number_of_replicas":0
+	"template": {
+		"query" : { "term" : { "{{my_field}}" : "{{my_value}}" } },
+		"size"  : "{{my_size}}"
 	},
-	"mappings":{
-		"tweet":{
-			"properties":{
-				"tags":{
-					"type":"string"
-				},
-				"location":{
-					"type":"geo_point"
-				},
-				"suggest_field":{
-					"type":"completion",
-					"payloads":true
-				}
-			}
-		}
+	"params":{
+		"my_field" : "user",
+		"my_value" : "olivere",
+		"my_size" : 5
 	}
 }`
 	putres, err := client.PutTemplate().Id("elastic-template").BodyString(tmpl).Do()

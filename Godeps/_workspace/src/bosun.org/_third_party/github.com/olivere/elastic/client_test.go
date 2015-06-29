@@ -26,6 +26,37 @@ func findConn(s string, slice ...*conn) (int, bool) {
 
 // -- NewClient --
 
+func TestClientDefaults(t *testing.T) {
+	client, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.healthcheckEnabled != true {
+		t.Errorf("expected health checks to be enabled, got: %v", client.healthcheckEnabled)
+	}
+	if client.healthcheckTimeoutStartup != DefaultHealthcheckTimeoutStartup {
+		t.Errorf("expected health checks timeout on startup = %v, got: %v", DefaultHealthcheckTimeoutStartup, client.healthcheckTimeoutStartup)
+	}
+	if client.healthcheckTimeout != DefaultHealthcheckTimeout {
+		t.Errorf("expected health checks timeout = %v, got: %v", DefaultHealthcheckTimeout, client.healthcheckTimeout)
+	}
+	if client.healthcheckInterval != DefaultHealthcheckInterval {
+		t.Errorf("expected health checks interval = %v, got: %v", DefaultHealthcheckInterval, client.healthcheckInterval)
+	}
+	if client.snifferEnabled != true {
+		t.Errorf("expected sniffing to be enabled, got: %v", client.snifferEnabled)
+	}
+	if client.snifferTimeoutStartup != DefaultSnifferTimeoutStartup {
+		t.Errorf("expected sniffer timeout on startup = %v, got: %v", DefaultSnifferTimeoutStartup, client.snifferTimeoutStartup)
+	}
+	if client.snifferTimeout != DefaultSnifferTimeout {
+		t.Errorf("expected sniffer timeout = %v, got: %v", DefaultSnifferTimeout, client.snifferTimeout)
+	}
+	if client.snifferInterval != DefaultSnifferInterval {
+		t.Errorf("expected sniffer interval = %v, got: %v", DefaultSnifferInterval, client.snifferInterval)
+	}
+}
+
 func TestClientWithoutURL(t *testing.T) {
 	client, err := NewClient()
 	if err != nil {
@@ -210,7 +241,7 @@ func TestClientSniffOnDefaultURL(t *testing.T) {
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- client.sniff()
+		ch <- client.sniff(DefaultSnifferTimeoutStartup)
 	}()
 
 	select {

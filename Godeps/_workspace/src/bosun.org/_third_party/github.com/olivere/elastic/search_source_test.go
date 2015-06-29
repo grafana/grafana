@@ -172,3 +172,19 @@ func TestSearchSourceIndexBoost(t *testing.T) {
 		t.Errorf("expected\n%s\n,got:\n%s", expected, got)
 	}
 }
+
+func TestSearchSourceInnerHits(t *testing.T) {
+	matchAllQ := NewMatchAllQuery()
+	builder := NewSearchSource().Query(matchAllQ).
+		InnerHit("comments", NewInnerHit().Type("comment").Query(NewMatchQuery("user", "olivere"))).
+		InnerHit("views", NewInnerHit().Path("view"))
+	data, err := json.Marshal(builder.Source())
+	if err != nil {
+		t.Fatalf("marshaling to JSON failed: %v", err)
+	}
+	got := string(data)
+	expected := `{"inner_hits":{"comments":{"type":{"comment":{"query":{"match":{"user":{"query":"olivere"}}}}}},"views":{"path":{"view":{}}}},"query":{"match_all":{}}}`
+	if got != expected {
+		t.Errorf("expected\n%s\n,got:\n%s", expected, got)
+	}
+}

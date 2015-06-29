@@ -181,7 +181,7 @@ func (s *ScrollService) GetFirstPage() (*SearchResult, error) {
 
 func (s *ScrollService) GetNextPage() (*SearchResult, error) {
 	if s.scrollId == "" {
-		return nil, ErrNoScrollId
+		return nil, EOS
 	}
 
 	// Build url

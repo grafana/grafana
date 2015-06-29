@@ -98,7 +98,6 @@ searchResult, err := client.Search().
     Query(&termQuery).  // specify the query
     Sort("user", true). // sort by "user" field, ascending
     From(0).Size(10).   // take documents 0-9
-    Debug(true).        // print request and response to stdout
     Pretty(true).       // pretty print request and response JSON
     Do()                // execute
 if err != nil {
@@ -110,7 +109,20 @@ if err != nil {
 // and all kinds of other information from Elasticsearch.
 fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
 
-// Number of hits
+// Each is a convenience function that iterates over hits in a search result.
+// It makes sure you don't need to check for nil values in the response.
+// However, it ignores errors in serialization. If you want full control
+// over iterating the hits, see below.
+var ttyp Tweet
+for _, item := range searchResult.Each(reflect.TypeOf(ttyp)) {
+    if t, ok := item.(Tweet); ok {
+        fmt.Printf("Tweet by %s: %s\n", t.User, t.Message)
+    }
+}
+// TotalHits is another convenience function that works even when something goes wrong.
+fmt.Printf("Found a total of %d tweets\n", searchResult.TotalHits())
+
+// Here's how you iterate through results with full control over each step.
 if searchResult.Hits != nil {
     fmt.Printf("Found a total of %d tweets\n", searchResult.Hits.TotalHits)
 
@@ -141,7 +153,7 @@ if err != nil {
 }
 ```
 
-See the [wiki](/olivere/elastic/wiki) for more details.
+See the [wiki](https://github.com/olivere/elastic/wiki) for more details.
 
 
 ## API Status
@@ -170,7 +182,7 @@ Here's the current API status.
 - [x] Facets (most are implemented, see below)
 - [x] Aggregates (most are implemented, see below)
 - [x] Multi Search
-- [ ] Percolate
+- [x] Percolate
 - [ ] More like this
 - [ ] Benchmark
 
@@ -184,7 +196,7 @@ Here's the current API status.
 - [x] Put mapping
 - [x] Get mapping
 - [ ] Get field mapping
-- [ ] Types exist
+- [x] Types exist
 - [x] Delete mapping
 - [x] Index aliases
 - [ ] Update indices settings
@@ -193,7 +205,7 @@ Here's the current API status.
 - [x] Index templates
 - [ ] Warmers
 - [ ] Status
-- [ ] Indices stats
+- [x] Indices stats
 - [ ] Indices segments
 - [ ] Indices recovery
 - [ ] Clear cache
@@ -219,7 +231,7 @@ on the command line.
 
 - [x] Health
 - [x] State
-- [ ] Stats
+- [x] Stats
 - [ ] Pending cluster tasks
 - [ ] Cluster reroute
 - [ ] Cluster update settings
@@ -227,6 +239,10 @@ on the command line.
 - [x] Nodes info
 - [ ] Nodes hot_threads
 - [ ] Nodes shutdown
+
+### Search
+
+- [x] Inner hits (for ES >= 1.5.0; see [docs](www.elastic.co/guide/en/elasticsearch/reference/1.5/search-request-inner-hits.html))
 
 ### Query DSL
 

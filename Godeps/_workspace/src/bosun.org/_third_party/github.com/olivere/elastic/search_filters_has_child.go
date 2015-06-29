@@ -17,6 +17,9 @@ type HasChildFilter struct {
 	cache              *bool
 	cacheKey           string
 	shortCircuitCutoff *int
+	minChildren        *int
+	maxChildren        *int
+	innerHit           *InnerHit
 }
 
 // NewHasChildFilter creates a new has_child query.
@@ -57,6 +60,21 @@ func (f HasChildFilter) ShortCircuitCutoff(shortCircuitCutoff int) HasChildFilte
 	return f
 }
 
+func (f HasChildFilter) MinChildren(minChildren int) HasChildFilter {
+	f.minChildren = &minChildren
+	return f
+}
+
+func (f HasChildFilter) MaxChildren(maxChildren int) HasChildFilter {
+	f.maxChildren = &maxChildren
+	return f
+}
+
+func (f HasChildFilter) InnerHit(innerHit *InnerHit) HasChildFilter {
+	f.innerHit = innerHit
+	return f
+}
+
 // Source returns the JSON document for the filter.
 func (f HasChildFilter) Source() interface{} {
 	// {
@@ -93,6 +111,15 @@ func (f HasChildFilter) Source() interface{} {
 	}
 	if f.shortCircuitCutoff != nil {
 		filter["short_circuit_cutoff"] = *f.shortCircuitCutoff
+	}
+	if f.minChildren != nil {
+		filter["min_children"] = *f.minChildren
+	}
+	if f.maxChildren != nil {
+		filter["max_children"] = *f.maxChildren
+	}
+	if f.innerHit != nil {
+		filter["inner_hits"] = f.innerHit.Source()
 	}
 	return source
 }

@@ -4,10 +4,13 @@
 
 package elastic
 
-// Match query is a family of match queries that
-// accept text/numerics/dates, analyzes it, and
-// constructs a query out of it. For more details,
-// see http://www.elasticsearch.org/guide/reference/query-dsl/match-query.html
+// MatchQuery is a family of queries that accept text/numerics/dates,
+// analyzes it, and constructs a query out of it. For more details,
+// see http://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html.
+//
+// To create a new MatchQuery, use NewMatchQuery. To create specific types
+// of queries, e.g. a match_phrase query, use NewMatchQuery(...).Type("phrase"),
+// or use one of the shortcuts like NewMatchPhraseQuery(...).
 type MatchQuery struct {
 	Query
 	name                string
@@ -30,8 +33,21 @@ type MatchQuery struct {
 	queryName           string
 }
 
+// NewMatchQuery creates a new MatchQuery.
 func NewMatchQuery(name string, value interface{}) MatchQuery {
 	q := MatchQuery{name: name, value: value}
+	return q
+}
+
+// NewMatchPhraseQuery creates a new MatchQuery with type phrase.
+func NewMatchPhraseQuery(name string, value interface{}) MatchQuery {
+	q := MatchQuery{name: name, value: value, matchQueryType: "phrase"}
+	return q
+}
+
+// NewMatchPhrasePrefixQuery creates a new MatchQuery with type phrase_prefix.
+func NewMatchPhrasePrefixQuery(name string, value interface{}) MatchQuery {
+	q := MatchQuery{name: name, value: value, matchQueryType: "phrase_prefix"}
 	return q
 }
 

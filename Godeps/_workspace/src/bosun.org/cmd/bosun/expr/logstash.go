@@ -20,16 +20,16 @@ var lsClient *elastic.Client
 // logstash. They are only loaded when the elastic hosts are set in the config file
 var LogstashElastic = map[string]parse.Func{
 	"lscount": {
-		[]parse.FuncType{parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString},
-		parse.TypeSeries,
-		logstashTagQuery,
-		LSCount,
+		Args:   []parse.FuncType{parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString},
+		Return: parse.TypeSeriesSet,
+		Tags:   logstashTagQuery,
+		F:      LSCount,
 	},
 	"lsstat": {
-		[]parse.FuncType{parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString},
-		parse.TypeSeries,
-		logstashTagQuery,
-		LSStat,
+		Args:   []parse.FuncType{parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString, parse.TypeString},
+		Return: parse.TypeSeriesSet,
+		Tags:   logstashTagQuery,
+		F:      LSStat,
 	},
 }
 
@@ -122,6 +122,10 @@ func (e *LogstashElasticHosts) GenIndices(r *LogstashRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// Short-circut when using concrete ES index name
+	if strings.HasSuffix(r.IndexRoot, "/") {
+		return r.IndexRoot[:len(r.IndexRoot)-1], nil
+	}
 	indices, err := lsClient.IndexNames()
 	if err != nil {
 		return "", err
@@ -147,7 +151,7 @@ func (e *LogstashElasticHosts) GenIndices(r *LogstashRequest) (string, error) {
 		}
 	}
 	if len(selectedIndices) == 0 {
-		return "", fmt.Errorf("no elastic indices available during this time range")
+		return "", fmt.Errorf("no elastic indices available during this time range, index[%s], start/end [%s|%s]", r.IndexRoot, start.Format("2006.01.02"), end.Format("2006.01.02"))
 	}
 	return strings.Join(selectedIndices, ","), nil
 }
