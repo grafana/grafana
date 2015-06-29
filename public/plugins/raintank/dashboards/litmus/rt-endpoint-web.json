@@ -67,7 +67,7 @@
             "full": false,
             "lineColor": "rgb(110, 208, 224)",
             "show": false
-          },
+          }
         },
         {
           "cacheTimeout": null,
