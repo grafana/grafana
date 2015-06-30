@@ -90,6 +90,55 @@ function (angular, _, kbn) {
       });
     };
 
+    OpenTSDBDatasource.prototype.performMetricKeyValueLookup = function(metric, key) {
+      if(!metric || !key) {
+        return $q.when([]);
+      }
+
+      var m = metric + "{" + key + "=*}";
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/search/lookup',
+        params: {
+          m: m,
+        }
+      };
+
+      return backendSrv.datasourceRequest(options).then(function(result) {
+        result = result.data.results;
+        var tagvs = [];
+        _.each(result, function(r) {
+          tagvs.push(r.tags[key]);
+        });
+        return tagvs;
+      });
+    };
+
+    OpenTSDBDatasource.prototype.performMetricKeyLookup = function(metric) {
+      if(metric === "") {
+        throw "Metric not set.";
+      }
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/search/lookup',
+        params: {
+          m: metric,
+        }
+      };
+      return backendSrv.datasourceRequest(options).then(function(result) {
+        result = result.data.results;
+        var tagks = [];
+        _.each(result, function(r) {
+          _.each(r.tags, function(tagv, tagk) {
+            if(tagks.indexOf(tagk) === -1) {
+              tagks.push(tagk);
+            }
+          });
+        });
+        return tagks;
+      });
+    };
+
     OpenTSDBDatasource.prototype.testDatasource = function() {
       return this.performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
