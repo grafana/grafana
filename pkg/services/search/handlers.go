@@ -1,6 +1,7 @@
 package search
 
 import (
+	"log"
 	"path/filepath"
 	"sort"
 
@@ -15,6 +16,12 @@ func Init() {
 	bus.AddHandler("search", searchHandler)
 
 	jsonIndexCfg, _ := setting.Cfg.GetSection("dashboards.json")
+
+	if jsonIndexCfg == nil {
+		log.Fatal("Config section missing: dashboards.json")
+		return
+	}
+
 	jsonIndexEnabled := jsonIndexCfg.Key("enabled").MustBool(false)
 
 	if jsonIndexEnabled {
