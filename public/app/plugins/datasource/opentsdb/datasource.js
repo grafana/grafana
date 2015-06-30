@@ -91,11 +91,10 @@ function (angular, _, kbn) {
     };
 
     OpenTSDBDatasource.prototype.performMetricKeyValueLookup = function(metric, key) {
-      if(metric === "") {
-        throw "Metric not set.";
-      } else if(key === "") {
-        throw "Key not set.";
+      if(!metric || !key) {
+        return $q.when([]);
       }
+
       var m = metric + "{" + key + "=*}";
       var options = {
         method: 'GET',
@@ -104,6 +103,7 @@ function (angular, _, kbn) {
           m: m,
         }
       };
+
       return backendSrv.datasourceRequest(options).then(function(result) {
         result = result.data.results;
         var tagvs = [];
