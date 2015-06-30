@@ -78,7 +78,7 @@ func main() {
 	elasticstore.Init()
 	api.InitCollectorController()
 
-	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana")
+	s, err := statsd.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana.")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}
