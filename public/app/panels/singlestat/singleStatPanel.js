@@ -70,6 +70,10 @@ function (angular, app, _, $) {
 
         function getImg(className, fontSize, value) {
           value = templateSrv.replace(value);
+          if (value.substring(0,2) === "fa") {
+            return '<span class="' + className + '" style="font-size:' + fontSize + '"><i class="' +
+            value + '"></i></span>';
+          }
           return '<img class="' + className + '" style="max-height:' + fontSize + '"' +
             ' max-width"' + fontSize + ' src="' + value + '" />';
         }
@@ -81,7 +85,7 @@ function (angular, app, _, $) {
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
-          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          var value = applyColoringThresholds(data.valueRounded, data.valueFormated);
           body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
           if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -155,8 +159,8 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && !isNaN(data.mainValue)) {
-            var color = getColorForValue(data.mainValue);
+          if (panel.colorBackground && !isNaN(data.valueRounded)) {
+            var color = getColorForValue(data.valueRounded);
             if (color) {
               $panelContainer.css('background-color', color);
               if (scope.fullscreen) {

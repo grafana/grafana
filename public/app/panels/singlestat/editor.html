@@ -6,13 +6,6 @@
 					<strong>Big value</strong>
 				</li>
 				<li class="tight-form-item">
-					Image
-				</li>
-				<li>
-					<input type="text" class="input-small tight-form-input"
-					ng-model="panel.image" ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
 					Prefix
 				</li>
 				<li>
@@ -39,12 +32,6 @@
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
 					<strong>Font size</strong>
-				</li>
-				<li class="tight-form-item">
-					Image
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="panel.imageFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Prefix
@@ -194,6 +181,31 @@
 					</a>
 				</li>
 
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<strong>Image</strong>
+				</li>
+				<li class="tight-form-item">
+					Link
+				</li>
+				<li>
+					<input type="text" class="input-large tight-form-input"
+					ng-model="panel.image" ng-change="render()" ng-model-onblur placeholder="&quot;/img/fav32.png&quot; or &quot;fa fa-bolt&quot;">
+				</li>
+				<li class="tight-form-item">
+					Size
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="panel.imageFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
