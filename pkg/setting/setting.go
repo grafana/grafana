@@ -94,6 +94,9 @@ var (
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
 
+	// Basic Auth
+	BasicAuthEnabled bool
+
 	// Session settings.
 	SessionOptions session.Options
 
@@ -397,6 +400,9 @@ func NewConfigContext(args *CommandLineArgs) {
 	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+
+	authBasic := Cfg.Section("auth.basic")
+	AuthProxyEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
