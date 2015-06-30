@@ -402,7 +402,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
 	authBasic := Cfg.Section("auth.basic")
-	AuthProxyEnabled = authBasic.Key("enabled").MustBool(true)
+	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
