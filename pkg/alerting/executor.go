@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -51,13 +52,14 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 }
 
 func GraphiteAuthContextReturner(org_id int64) graphite.Context {
-	_, err := url.Parse(setting.GraphiteUrl)
+	u, err := url.Parse(setting.GraphiteUrl)
 	if err != nil {
 		panic(fmt.Sprintf("could not parse graphiteUrl: %s", err))
 	}
+	u.Path = path.Join(u.Path, "render/")
 	return &GraphiteContext{
 		hh: graphite.HostHeader{
-			Host: setting.GraphiteUrl,
+			Host: u.String(),
 			Header: http.Header{
 				"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 			},
