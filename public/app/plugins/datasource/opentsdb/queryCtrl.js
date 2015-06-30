@@ -42,21 +42,25 @@ function (angular, _, kbn) {
       $scope.panel.targets.push(clone);
     };
 
+    $scope.getTextValues = function(metricFindResult) {
+      return _.map(metricFindResult, function(value) { return value.text; });
+    };
+
     $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'metrics')
+      $scope.datasource.metricFindQuery('metrics()')
+        .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource
-        .performMetricKeyLookup($scope.target.metric)
+      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+        .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource
-        .performMetricKeyValueLookup($scope.target.metric, $scope.target.currentTagKey)
+      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+        .then($scope.getTextValues)
         .then(callback);
     };
 

@@ -146,6 +146,7 @@ require([
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',
     'specs/valueSelectDropdown-specs',
+    'specs/opentsdbDatasource-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
