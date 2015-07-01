@@ -5,6 +5,7 @@ define([
   'kbn',
   'moment',
   './queryBuilder',
+  './queryCtrl',
   './directives'
 ],
 function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
@@ -295,21 +296,18 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     ElasticDatasource.prototype.query = function(options) {
       var self = this;
-      var allQueries = _.map(options.targets, function(target) {
+      var allQueries = options.targets.map(function(target) {
         if (target.hide) { return []; }
-
         var queryBuilder = new ElasticQueryBuilder(target);
         var query = queryBuilder.build();
         query = query.replace(/\$interval/g, target.interval || options.interval);
         query = query.replace(/\$rangeFrom/g, options.range.from);
         query = query.replace(/\$rangeTo/g, options.range.to);
         query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
+        query = templateSrv.replace(query, options.scopedVars);
         return query;
-
       }).join("\n");
 
-      // replace templated variables
-      // allQueries = templateSrv.replace(allQueries, options.scopedVars);
       return this._post('/_search?search_type=count', allQueries).then(function(results) {
         if (!results || !results.facets) {
           return { data: [] };
