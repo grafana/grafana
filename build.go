@@ -169,7 +169,7 @@ func createLinuxPackages() {
 		depends: []string{"adduser", "libfontconfig"},
 	})
 
-	ubuntuIteration = linuxPackageIteration
+	ubuntuIteration := linuxPackageIteration
 	if ubuntuIteration != "" {
 		ubuntuIteration = fmt.Sprintf("%subuntu", ubuntuIteration)
 	}
@@ -186,7 +186,7 @@ func createLinuxPackages() {
 		iteration: ubuntuIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
-		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		initdScriptSrc: "packaging/deb/init.d/grafana-server",
 		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
@@ -222,6 +222,7 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeDir))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.configDir))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init"))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
@@ -230,6 +231,7 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
 	// copy init.d script
 	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
+	runPrint("cp", "-p", options.upstartScriptSrc, filepath.Join(packageRoot, options.upstartFilePath))
 	// copy environment var file
 	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
 	// copy systemd file
@@ -253,6 +255,7 @@ func createPackage(options linuxPackageOptions) {
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
+		"--config-files", options.upstartFilePath,
 		"--after-install", options.postinstSrc,
 		"--name", "grafana",
 		"--version", linuxPackageVersion,
