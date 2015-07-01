@@ -167,7 +167,7 @@ func GetMonitors(query *m.GetMonitorsQuery) error {
 SELECT
     GROUP_CONCAT(DISTINCT(monitor_collector.collector_id)) as collector_ids,
     GROUP_CONCAT(DISTINCT(monitor_collector_tag.tag)) as collector_tags,
-    GROUP_CONCAT(DISTINCT(collector_tags.collector_id)) as tag_collectors,
+    GROUP_CONCAT(DISTINCT(collector_tag.collector_id)) as tag_collectors,
     endpoint.slug as endpoint_slug,
     monitor_type.name as monitor_type_name,
     monitor.*
@@ -176,16 +176,8 @@ FROM monitor
     LEFT JOIN monitor_type ON monitor.monitor_type_id = monitor_type.id
     LEFT JOIN monitor_collector ON monitor.id = monitor_collector.monitor_id
     LEFT JOIN monitor_collector_tag ON monitor.id = monitor_collector_tag.monitor_id
-    LEFT JOIN
-        (SELECT
-            collector.id AS collector_id,
-            collector_tag.tag as tag
-        FROM collector
-        LEFT JOIN collector_tag ON collector.id = collector_tag.collector_id
-        WHERE (collector.public=1 OR collector.org_id=?) AND (collector_tag.org_id=? OR collector_tag.id is NULL)) as collector_tags
-    ON collector_tags.tag = monitor_collector_tag.tag
+    LEFT JOIN collector_tag on collector_tag.tag = monitor_collector_tag.tag AND collector_tag.org_id = monitor.org_id
 `
-	rawParams = append(rawParams, query.OrgId, query.OrgId)
 	whereSql := make([]string, 0)
 	if !query.IsGrafanaAdmin {
 		whereSql = append(whereSql, "monitor.org_id=?")

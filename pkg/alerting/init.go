@@ -4,16 +4,74 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Dieterbe/statsd-go"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	sm "github.com/grafana/grafana/pkg/statsdmetric"
 	"github.com/hashicorp/golang-lru"
 	"github.com/streadway/amqp"
 )
 
-var Stat, _ = statsd.NewClient(false, "", "")
+// TODO metric for executors running
+
+var jobQueueInternalItems sm.Gauge
+var jobQueueInternalSize sm.Gauge
+var tickQueueItems sm.Gauge
+var tickQueueSize sm.Gauge
+var dispatcherJobsSkippedDueToSlowJobQueue sm.Count
+var dispatcherTicksSkippedDueToSlowTickQueue sm.Count
+
+var dispatcherGetSchedules sm.Timer
+var dispatcherNumGetSchedules sm.Count
+var dispatcherJobSchedulesSeen sm.Count
+var dispatcherJobsScheduled sm.Count
+
+var executorConsiderJobAlreadyDone sm.Timer
+var executorConsiderJobOriginalTodo sm.Timer
+
+var executorNumAlreadyDone sm.Count
+var executorNumOriginalTodo sm.Count
+var executorAlertOutcomesOk sm.Count
+var executorAlertOutcomesWarn sm.Count
+var executorAlertOutcomesCrit sm.Count
+var executorAlertOutcomesUnkn sm.Count
+var executorGraphiteEmptyResponse sm.Count
+
+var executorJobQueryGraphite sm.Timer
+var executorJobParseAndEval sm.Timer
+var executorGraphiteMissingVals sm.Meter
+
+// Init initalizes all metrics
+// run this function when statsd is ready, so we can create the series
+func Init() {
+	jobQueueInternalItems = sm.NewGauge("alert-jobqueue-internal.items", 0)
+	jobQueueInternalSize = sm.NewGauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
+	tickQueueItems = sm.NewGauge("alert-tickqueue.items", 0)
+	tickQueueSize = sm.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
+	dispatcherJobsSkippedDueToSlowJobQueue = sm.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")
+	dispatcherTicksSkippedDueToSlowTickQueue = sm.NewCount("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
+
+	dispatcherGetSchedules = sm.NewTimer("alert-dispatcher.get-schedules", 0)
+	dispatcherNumGetSchedules = sm.NewCount("alert-dispatcher.num-getschedules")
+	dispatcherJobSchedulesSeen = sm.NewCount("alert-dispatcher.job-schedules-seen")
+	dispatcherJobsScheduled = sm.NewCount("alert-dispatcher.jobs-scheduled")
+
+	executorConsiderJobAlreadyDone = sm.NewTimer("alert-executor.consider-job.already-done", 0)
+	executorConsiderJobOriginalTodo = sm.NewTimer("alert-executor.consider-job.original-todo", 0)
+
+	executorNumAlreadyDone = sm.NewCount("alert-executor.already-done")
+	executorNumOriginalTodo = sm.NewCount("alert-executor.original-todo")
+	executorAlertOutcomesOk = sm.NewCount("alert-executor.alert-outcomes.ok")
+	executorAlertOutcomesWarn = sm.NewCount("alert-executor.alert-outcomes.warning")
+	executorAlertOutcomesCrit = sm.NewCount("alert-executor.alert-outcomes.critical")
+	executorAlertOutcomesUnkn = sm.NewCount("alert-executor.alert-outcomes.unknown")
+	executorGraphiteEmptyResponse = sm.NewCount("alert-executor.graphite-emptyresponse")
+
+	executorJobQueryGraphite = sm.NewTimer("alert-executor.job_query_graphite", 0)
+	executorJobParseAndEval = sm.NewTimer("alert-executor.job_parse-and-evaluate", 0)
+	executorGraphiteMissingVals = sm.NewMeter("alert-executor.graphite-missingVals", 0)
+}
 
 func Construct() {
 	cache, err := lru.New(setting.ExecutorLRUSize)
@@ -111,7 +169,7 @@ func distributed(url string, cache *lru.Cache) error {
 		case consumeQueue <- job:
 		default:
 			// TODO: alert when this happens
-			Stat.Increment("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")
+			dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
 		}
 		return nil
 	})

@@ -77,13 +77,22 @@ the latest master builds [here](http://grafana.org/download/builds)
 - Go 1.4
 - NodeJS
 
-### Get Code
+### Setting up the code directories for the raintank version.
 
 ```
 go get github.com/grafana/grafana
+go get github.com/raintank/grafana
+cd $GOPATH/src/github.com/grafana/
+mv grafana grafana-upstream
+ln -s $GOPATH/src/github.com/raintank/grafana .
 ```
 
 ### Building the backend
+
+Note that we need to use the `github.com/grafana/grafana` directory because that's what the import path is.
+If you so desire, you can switch back and forth between raintank version and upstream version by adding a remote
+and switching branches.  But if you followed the above instructions, this will by default let you work with the raintank version:
+
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
