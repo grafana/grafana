@@ -157,12 +157,14 @@ func createLinuxPackages() {
 		etcDefaultPath:         "/etc/default",
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		upstartFilePath:    "/etc/init/grafana-server.conf",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version: linuxPackageVersion,
 		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
 		initdScriptSrc: "packaging/deb/init.d/grafana-server",
+		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		defaultFileSrc: "packaging/deb/default/grafana-server",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
@@ -202,12 +204,14 @@ func createLinuxPackages() {
 		etcDefaultPath:         "/etc/sysconfig",
 		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		upstartFilePath:    "/etc/init/grafana-server.conf",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version: linuxPackageVersion,
 		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/rpm/control/postinst",
 		initdScriptSrc: "packaging/rpm/init.d/grafana-server",
+		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
