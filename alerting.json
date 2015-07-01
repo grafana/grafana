@@ -660,7 +660,9 @@
             },
             {
               "alias": "num collectors",
-              "yaxis": 2
+              "yaxis": 2,
+              "linewidth": 0,
+              "fill": 2
             }
           ],
           "links": []
