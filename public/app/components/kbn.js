@@ -327,6 +327,10 @@ function($, _, moment) {
     return kbn.toFixed(size, decimals) + '%';
   };
 
+  kbn.valueFormats.HundredthOfAPercent = function(size, decimals) {
+    return kbn.toFixed(size/100, decimals) + '%';
+  };
+
   kbn.formatFuncCreator = function(factor, extArray) {
     return function(size, decimals, scaledDecimals) {
       if (size === null) {
@@ -542,6 +546,7 @@ function($, _, moment) {
           {text: 'none' , value: 'none'},
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
+          {text: 'Hundredth Percent', value: 'HundredthOfAPercent'},
           {text: 'ppm', value: 'ppm'},
           {text: 'dB', value: 'dB'},
         ]
