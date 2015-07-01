@@ -27,7 +27,7 @@ function (angular, _, kbn) {
       var qs = [];
 
       _.each(options.targets, function(target) {
-        qs.push(convertTargetToQuery(target, options.interval));
+        qs.push(convertTargetToQuery(target, options));
       });
 
       var queries = _.compact(qs);
@@ -47,10 +47,10 @@ function (angular, _, kbn) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options.targets);
+        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];
-          return transformMetricData(metricData, groupByTags, options.targets[index]);
+          return transformMetricData(metricData, groupByTags, options.targets[index], options);
         });
         return { data: result };
       });
@@ -125,6 +125,8 @@ function (angular, _, kbn) {
     };
 
     OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
+      if (!query) { return $q.when([]); }
+
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -147,8 +149,8 @@ function (angular, _, kbn) {
       if (metrics_query) {
         return this._performSuggestQuery(metrics_query[1]).then(responseTransform);
       }
-      var tag_names_query = interpolated.match(tag_names_regex);
 
+      var tag_names_query = interpolated.match(tag_names_regex);
       if (tag_names_query) {
         return this._performMetricKeyLookup(tag_names_query[1]).then(responseTransform);
       }
@@ -157,6 +159,8 @@ function (angular, _, kbn) {
       if (tag_values_query) {
         return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
       }
+
+      return $q.when([]);
     };
 
     OpenTSDBDatasource.prototype.testDatasource = function() {
@@ -165,8 +169,8 @@ function (angular, _, kbn) {
       });
     };
 
-    function transformMetricData(md, groupByTags, options) {
-      var metricLabel = createMetricLabel(md, options, groupByTags);
+    function transformMetricData(md, groupByTags, target, options) {
+      var metricLabel = createMetricLabel(md, target, groupByTags, options);
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
@@ -178,13 +182,13 @@ function (angular, _, kbn) {
       return { target: metricLabel, datapoints: dps };
     }
 
-    function createMetricLabel(md, options, groupByTags) {
-      if (!_.isUndefined(options) && options.alias) {
-        var scopedVars = {};
+    function createMetricLabel(md, target, groupByTags, options) {
+      if (target.alias) {
+        var scopedVars = _.clone(options.scopedVars || {});
         _.each(md.tags, function(value, key) {
           scopedVars['tag_' + key] = {value: value};
         });
-        return templateSrv.replace(options.alias, scopedVars);
+        return templateSrv.replace(target.alias, scopedVars);
       }
 
       var label = md.metric;
@@ -205,13 +209,13 @@ function (angular, _, kbn) {
       return label;
     }
 
-    function convertTargetToQuery(target, interval) {
+    function convertTargetToQuery(target, options) {
       if (!target.metric || target.hide) {
         return null;
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric),
+        metric: templateSrv.replace(target.metric, options.scopedVars),
         aggregator: "avg"
       };
 
@@ -235,7 +239,7 @@ function (angular, _, kbn) {
       }
 
       if (!target.disableDownsampling) {
-        interval =  templateSrv.replace(target.downsampleInterval || interval);
+        var interval =  templateSrv.replace(target.downsampleInterval || options.interval);
 
         if (interval.match(/\.[0-9]+s/)) {
           interval = parseFloat(interval)*1000 + "ms";
@@ -247,20 +251,20 @@ function (angular, _, kbn) {
       query.tags = angular.copy(target.tags);
       if(query.tags){
         for(var key in query.tags){
-          query.tags[key] = templateSrv.replace(query.tags[key]);
+          query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
         }
       }
 
       return query;
     }
 
-    function mapMetricsToTargets(metrics, targets) {
+    function mapMetricsToTargets(metrics, options) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
-        return _.findIndex(targets, function(target) {
+        return _.findIndex(options.targets, function(target) {
           return target.metric === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
-            interpolatedTagValue = templateSrv.replace(tagV);
+            interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
             return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
           });
         });

@@ -59,7 +59,7 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
