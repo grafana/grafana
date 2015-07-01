@@ -85,7 +85,7 @@ function (angular, app, _, $) {
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
-          var value = applyColoringThresholds(data.valueRounded, data.valueFormated);
+          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
           body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
           if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -159,8 +159,8 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && !isNaN(data.valueRounded)) {
-            var color = getColorForValue(data.valueRounded);
+          if (panel.colorBackground && !isNaN(data.mainValue)) {
+            var color = getColorForValue(data.mainValue);
             if (color) {
               $panelContainer.css('background-color', color);
               if (scope.fullscreen) {
