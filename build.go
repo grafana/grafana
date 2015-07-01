@@ -119,6 +119,8 @@ func readVersionFromPackageJson() {
 	if len(parts) > 1 {
 		linuxPackageVersion = parts[0]
 		linuxPackageIteration = parts[1]
+	} else {
+		linuxPackageIteration = strconv.FormatInt(time.Now().Unix(), 10)
 	}
 }
 
@@ -131,10 +133,14 @@ type linuxPackageOptions struct {
 	etcDefaultPath         string
 	etcDefaultFilePath     string
 	initdScriptFilePath    string
+	upstartFilePath string
 	systemdServiceFilePath string
+	version string
+	iteration string
 
 	postinstSrc    string
 	initdScriptSrc string
+	upstartScriptSrc string
 	defaultFileSrc string
 	systemdFileSrc string
 
@@ -152,10 +158,36 @@ func createLinuxPackages() {
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+		version: linuxPackageVersion,
+		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
 		initdScriptSrc: "packaging/deb/init.d/grafana-server",
 		defaultFileSrc: "packaging/deb/default/grafana-server",
+		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
+
+		depends: []string{"adduser", "libfontconfig"},
+	})
+
+	ubuntuIteration = linuxPackageIteration
+	if ubuntuIteration != "" {
+		ubuntuIteration = fmt.Sprintf("%subuntu", ubuntuIteration)
+	}
+	createPackage(linuxPackageOptions{
+		packageType:            "deb",
+		homeDir:                "/usr/share/grafana",
+		binPath:                "/usr/sbin/grafana-server",
+		configDir:              "/etc/grafana",
+		configFilePath:         "/etc/grafana/grafana.ini",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		upstartFilePath:    "/etc/init/grafana-server.conf",
+		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+		version: linuxPackageVersion,
+		iteration: ubuntuIteration,
+
+		postinstSrc:    "packaging/deb/control/postinst",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
+		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
 		depends: []string{"adduser", "libfontconfig"},
@@ -171,6 +203,8 @@ func createLinuxPackages() {
 		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+		version: linuxPackageVersion,
+		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/rpm/control/postinst",
 		initdScriptSrc: "packaging/rpm/init.d/grafana-server",
