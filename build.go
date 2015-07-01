@@ -148,6 +148,7 @@ type linuxPackageOptions struct {
 }
 
 func createLinuxPackages() {
+	// debian wheezy and before
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
@@ -157,16 +158,12 @@ func createLinuxPackages() {
 		etcDefaultPath:         "/etc/default",
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
-		upstartFilePath:    "/etc/init/grafana-server.conf",
-		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version: linuxPackageVersion,
 		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
 		initdScriptSrc: "packaging/deb/init.d/grafana-server",
-		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		defaultFileSrc: "packaging/deb/default/grafana-server",
-		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
 		depends: []string{"adduser", "libfontconfig"},
 	})
@@ -181,14 +178,12 @@ func createLinuxPackages() {
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
-		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		upstartFilePath:    "/etc/init/grafana-server.conf",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version: linuxPackageVersion,
 		iteration: ubuntuIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
-		initdScriptSrc: "packaging/deb/init.d/grafana-server",
 		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
@@ -201,18 +196,11 @@ func createLinuxPackages() {
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
-		etcDefaultPath:         "/etc/sysconfig",
-		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
-		initdScriptFilePath:    "/etc/init.d/grafana-server",
-		upstartFilePath:    "/etc/init/grafana-server.conf",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version: linuxPackageVersion,
 		iteration: linuxPackageIteration,
 
 		postinstSrc:    "packaging/rpm/control/postinst",
-		initdScriptSrc: "packaging/rpm/init.d/grafana-server",
-		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
-		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
 		depends: []string{"initscripts", "fontconfig"},
@@ -225,21 +213,26 @@ func createPackage(options linuxPackageOptions) {
 	// create directories
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeDir))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.configDir))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init"))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
 	// copy binary
 	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
 	// copy init.d script
-	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
-	runPrint("cp", "-p", options.upstartScriptSrc, filepath.Join(packageRoot, options.upstartFilePath))
-	// copy environment var file
-	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
+	if options.initdScriptSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
+		runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
+		runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
+	}
+	if options.upstartScriptSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init"))
+		runPrint("cp", "-p", options.upstartScriptSrc, filepath.Join(packageRoot, options.upstartFilePath))
+	}
 	// copy systemd file
-	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
+	if options.systemdFileSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
+		runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
+	}
 	// copy release files
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
