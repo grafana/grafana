@@ -20,7 +20,6 @@ function () {
           }
         }
       },
-      "fields": [],
       "query": {
         "filtered": {
           "filter": {
