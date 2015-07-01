@@ -2,12 +2,14 @@ package statsdmetric
 
 import (
 	"sync"
+	"time"
 )
 
 type Gauge struct {
 	key string
 	val int64
 	sync.Mutex
+	autoFlush bool
 }
 
 func NewGauge(key string, val int64) *Gauge {
@@ -16,6 +18,21 @@ func NewGauge(key string, val int64) *Gauge {
 	}
 	g.Value(val)
 	return &g
+}
+
+func (g *Gauge) AutoFlush() *Gauge {
+	if !g.autoFlush {
+		go func() {
+			for {
+				g.Lock()
+				Stat.Gauge(g.key, g.val)
+				g.Unlock()
+				time.Sleep(time.Duration(1) * time.Second)
+			}
+		}()
+	}
+	g.autoFlush = true
+	return g
 }
 
 func (g *Gauge) Value(val int64) {

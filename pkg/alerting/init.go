@@ -64,7 +64,7 @@ func Init() {
 	}
 	hostClean := strings.Replace(host, ".", "_", -1)
 
-	executorNum = sm.NewGauge(fmt.Sprintf("alert-executor.%s.%d.num", hostClean, os.Getpid()), 0)
+	executorNum = sm.NewGauge(fmt.Sprintf("alert-executor.%s.%d.num", hostClean, os.Getpid()), 0).AutoFlush()
 	executorConsiderJobAlreadyDone = sm.NewTimer("alert-executor.consider-job.already-done", 0)
 	executorConsiderJobOriginalTodo = sm.NewTimer("alert-executor.consider-job.original-todo", 0)
 
