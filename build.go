@@ -249,18 +249,31 @@ func createPackage(options linuxPackageOptions) {
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
-		"--config-files", options.initdScriptFilePath,
-		"--config-files", options.etcDefaultFilePath,
-		"--config-files", options.systemdServiceFilePath,
-		"--config-files", options.upstartFilePath,
 		"--after-install", options.postinstSrc,
 		"--name", "grafana",
-		"--version", linuxPackageVersion,
+		"--version", options.version,
 		"-p", "./dist",
+	}
+	if options.initdScriptSrc != "" {
+		b := []string{
+			"--config-files", options.initdScriptFilePath,
+			"--config-files", options.etcDefaultFilePath,
+		}
+		args = append(args, b...)
+	} else if options.upstartScriptSrc != "" {
+		b := []string{
+			"--config-files", options.upstartFilePath,
+		}
+		args = append(args, b...)
+	} else {
+		b := []string{
+			"--config-files", options.systemdServiceFilePath,
+		}
+		args = append(args, b...)
 	}
 
 	if linuxPackageIteration != "" {
-		args = append(args, "--iteration", linuxPackageIteration)
+		args = append(args, "--iteration", options.iteration)
 	}
 
 	// add dependenciesj
