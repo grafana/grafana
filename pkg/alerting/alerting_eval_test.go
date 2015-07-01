@@ -16,6 +16,10 @@ type fakeGraphite struct {
 	queries chan *graphite.Request
 }
 
+func init() {
+	Init()
+}
+
 func (fg fakeGraphite) Query(req *graphite.Request) (graphite.Response, error) {
 	if fg.queries != nil {
 		fg.queries <- req

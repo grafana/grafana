@@ -3,6 +3,8 @@ package alerting
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
@@ -13,12 +15,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// TODO metric for executors running
-
-var jobQueueInternalItems sm.Gauge
-var jobQueueInternalSize sm.Gauge
-var tickQueueItems sm.Gauge
-var tickQueueSize sm.Gauge
+var jobQueueInternalItems *sm.Gauge
+var jobQueueInternalSize *sm.Gauge
+var tickQueueItems *sm.Gauge
+var tickQueueSize *sm.Gauge
 var dispatcherJobsSkippedDueToSlowJobQueue sm.Count
 var dispatcherTicksSkippedDueToSlowTickQueue sm.Count
 
@@ -27,6 +27,7 @@ var dispatcherNumGetSchedules sm.Count
 var dispatcherJobSchedulesSeen sm.Count
 var dispatcherJobsScheduled sm.Count
 
+var executorNum *sm.Gauge
 var executorConsiderJobAlreadyDone sm.Timer
 var executorConsiderJobOriginalTodo sm.Timer
 
@@ -57,6 +58,13 @@ func Init() {
 	dispatcherJobSchedulesSeen = sm.NewCount("alert-dispatcher.job-schedules-seen")
 	dispatcherJobsScheduled = sm.NewCount("alert-dispatcher.jobs-scheduled")
 
+	host, err := os.Hostname()
+	if err != nil {
+		panic("Can't get hostname:" + err.Error())
+	}
+	hostClean := strings.Replace(host, ".", "_", -1)
+
+	executorNum = sm.NewGauge(fmt.Sprintf("alert-executor.%s.%d.num", hostClean, os.Getpid()), 0)
 	executorConsiderJobAlreadyDone = sm.NewTimer("alert-executor.consider-job.already-done", 0)
 	executorConsiderJobOriginalTodo = sm.NewTimer("alert-executor.consider-job.original-todo", 0)
 

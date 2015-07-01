@@ -637,6 +637,14 @@
               "series": "stats.timers.grafana.alert-executor.job_query_graphite.upper",
               "query": "select mean(value) from \"stats.timers.grafana.alert-executor.job_query_graphite.upper\" where $timeFilter group by time($interval) order asc",
               "alias": "query-graphite upper"
+            },
+            {
+              "target": "",
+              "function": "mean",
+              "column": "value",
+              "series": "/stats.gauges.grafana.alert-executor.*num/",
+              "query": "select mean(value) from /stats.gauges.grafana.alert-executor.*num/ where $timeFilter group by time($interval) order asc",
+              "alias": "num collectors"
             }
           ],
           "aliasColors": {
@@ -649,6 +657,10 @@
             {
               "alias": "/graphite/",
               "fill": 0
+            },
+            {
+              "alias": "num collectors",
+              "yaxis": 2
             }
           ],
           "links": []

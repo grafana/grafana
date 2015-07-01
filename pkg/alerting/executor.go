@@ -68,6 +68,8 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 }
 
 func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
+	executorNum.Inc(1)
+	defer executorNum.Dec(1)
 
 	for job := range jobQueue {
 		jobQueueInternalItems.Value(int64(len(jobQueue)))
