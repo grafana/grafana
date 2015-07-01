@@ -68,17 +68,10 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 }
 
 func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
-	// create series explicitly otherwise the grafana-influxdb graphs don't work if the series doesn't exist
-	Stat.IncrementValue("alert-executor.alert-outcomes.ok", 0)
-	Stat.IncrementValue("alert-executor.alert-outcomes.critical", 0)
-	Stat.IncrementValue("alert-executor.alert-outcomes.unknown", 0)
-	Stat.IncrementValue("alert-executor.graphite-emptyresponse", 0)
-	Stat.TimeDuration("alert-executor.consider-job.already-done", 0)
-	Stat.TimeDuration("alert-executor.consider-job.original-todo", 0)
 
 	for job := range jobQueue {
-		Stat.Gauge("alert-jobqueue-internal.items", int64(len(jobQueue)))
-		Stat.Gauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
+		jobQueueInternalItems.Value(int64(len(jobQueue)))
+		jobQueueInternalSize.Value(int64(setting.JobQueueSize))
 
 		key := fmt.Sprintf("%s-%d", job.Key, job.LastPointTs.Unix())
 
@@ -86,12 +79,14 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 
 		if _, ok := cache.Get(key); ok {
 			log.Debug("T %s alredy done", key)
-			Stat.TimeDuration("alert-executor.consider-job.already-done", time.Since(preConsider))
+			executorNumAlreadyDone.Inc(1)
+			executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 			continue
 		}
 
 		log.Debug("T %s doing", key)
-		Stat.TimeDuration("alert-executor.consider-job.original-todo", time.Since(preConsider))
+		executorNumOriginalTodo.Inc(1)
+		executorConsiderJobOriginalTodo.Value(time.Since(preConsider))
 		gr := fn(job.OrgId)
 
 		preExec := time.Now()
@@ -144,15 +139,24 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 		// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 		// we want to have some individual times
 		if gr, ok := gr.(*GraphiteContext); ok {
-			Stat.TimeDuration("alert-executor.job_query_graphite", gr.dur)
-			Stat.TimeDuration("alert-executor.job_parse-and-evaluate", durationExec-gr.dur)
-			Stat.Timing("alert-executor.graphite-missingVals", int64(gr.missingVals))
+			executorJobQueryGraphite.Value(gr.dur)
+			executorJobParseAndEval.Value(durationExec - gr.dur)
+			executorGraphiteMissingVals.Value(int64(gr.missingVals))
 			if gr.emptyResp {
-				Stat.Increment("alert-executor.graphite-emptyresponse")
+				executorGraphiteEmptyResponse.Inc(1)
 			}
 		}
 
-		Stat.Increment(strings.ToLower(fmt.Sprintf("alert-executor.alert-outcomes.%s", res)))
+		switch res {
+		case m.EvalResultOK:
+			executorAlertOutcomesOk.Inc(1)
+		case m.EvalResultWarn:
+			executorAlertOutcomesWarn.Inc(1)
+		case m.EvalResultCrit:
+			executorAlertOutcomesCrit.Inc(1)
+		case m.EvalResultUnknown:
+			executorAlertOutcomesUnkn.Inc(1)
+		}
 
 		cache.Add(key, true)
 	}
