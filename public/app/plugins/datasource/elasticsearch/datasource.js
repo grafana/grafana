@@ -4,9 +4,10 @@ define([
   'config',
   'kbn',
   'moment',
+  './queryBuilder',
   './directives'
 ],
-function (angular, _, config, kbn, moment) {
+function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -292,8 +293,46 @@ function (angular, _, config, kbn, moment) {
         });
     };
 
-    return ElasticDatasource;
+    ElasticDatasource.prototype.query = function(options) {
+      var self = this;
+      var allQueries = _.map(options.targets, function(target) {
+        if (target.hide) { return []; }
 
+        var queryBuilder = new ElasticQueryBuilder(target);
+        var query = queryBuilder.build();
+        query = query.replace(/\$interval/g, target.interval || options.interval);
+        query = query.replace(/\$rangeFrom/g, options.range.from);
+        query = query.replace(/\$rangeTo/g, options.range.to);
+        query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
+        return query;
+
+      }).join("\n");
+
+      // replace templated variables
+      // allQueries = templateSrv.replace(allQueries, options.scopedVars);
+      return this._post('/_search?search_type=count', allQueries).then(function(results) {
+        if (!results || !results.facets) {
+          return { data: [] };
+        }
+        return { data: self._getTimeSeries(results.facets) };
+      });
+    };
+
+    ElasticDatasource.prototype._getTimeSeries = function(facets) {
+      var self = this;
+      var targets = ['metric'];
+      var data = targets.map(function(target) {
+        var datapoints = facets[target].entries.map(self._getDatapoint);
+        return { target: target, datapoints: datapoints };
+      });
+      return data;
+    };
+
+    ElasticDatasource.prototype._getDatapoint = function(entry) {
+      return [entry.mean, entry.time];
+    };
+
+    return ElasticDatasource;
   });
 
 });
