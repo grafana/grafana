@@ -47,7 +47,7 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource.metricFindQuery('metrics()')
+      $scope.datasource.metricFindQuery('metrics(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
