@@ -1,4 +1,4 @@
-{{Subject .Subject "Alert: {{.Endpoint}}"}}
+{{Subject .Subject "{{ .State }} Alert: {{.Endpoint}}"}}
 
 
 <!DOCTYPE html>
@@ -14,9 +14,8 @@
             <div style="padding: 20px 15px;">
                 <div style="padding:40px 15px 0 15px;">
                     <img src="http://raintank.io/dist/img/litmus-by.svg" style="width: 300px; margin-bottom: 25px; margin-left: -8px;">                    
-                    <div style="font-size:16px; padding-bottom:30px;">
-                        <span style="color: #13B2D4;font-weight:bold;">Alert Notification</span>
-                        <div style="font-size:14px; padding-bottom:10px; font-weight: normal;">One of your endpoints has experienced an event:
+                    <div style="font-size:14px; padding-bottom:30px;">
+                        <div style="font-size:12px; padding-bottom:10px; font-weight: normal;">There has been a state change on {{.Endpoint}}:
                         </div>
                         <div>
                             <div>
@@ -45,6 +44,9 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <button style="  background: #13b2d4; color: #fff; font-weight: 500; padding: 10px 12px; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; border: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none;" href="endpoints/new">Go to {{.Endpoint}} Dashboard</button>     
+                    
                     <div style="font-size:14px; padding:0 15px;">
 
                     </div>
