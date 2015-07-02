@@ -27,6 +27,7 @@ function (angular, _, kbn) {
       var qs = [];
 
       _.each(options.targets, function(target) {
+        if (!target.metric) { return; }
         qs.push(convertTargetToQuery(target, options));
       });
 
