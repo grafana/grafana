@@ -63,12 +63,44 @@
 
 			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
 				<li class="tight-form-item query-keyword" style="width: 75px;">
-					SELECT
+					Function
 				</li>
 				<li class="dropdown tight-form-item">
 					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
 						{{target.function}}<span>(value)</span>
 					</a>
+				</li>
+			</ul>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<!-- <div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+				<li class="tight-form-item query-keyword" style="width: 75px;">
+					Measurement
+				</li>
+				<li>
+					<metric-segment segment="measurementSegment" get-alt-segments="getMeasurements()" on-value-changed="measurementChanged()"></metric-segment>
+				</li>
+			</ul>
+
+			<div class="clearfix"></div>
+		</div> -->
+
+		<div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+				<li class="tight-form-item query-keyword" style="width: 75px;">
+					Key Field
+				</li>
+				<li>
+					<metric-segment segment="keyFieldSegment" on-value-changed="keyFieldChanged()"></metric-segment>
 				</li>
 			</ul>
 
@@ -81,10 +113,10 @@
 					<i class="fa fa-eye invisible"></i>
 				</li>
 				<li class="tight-form-item query-keyword" style="width: 75px;">
-					FROM
+					Value Field
 				</li>
 				<li>
-					<metric-segment segment="measurementSegment" get-alt-segments="getMeasurements()" on-value-changed="measurementChanged()"></metric-segment>
+					<metric-segment segment="valueFieldSegment" on-value-changed="valueFieldChanged()"></metric-segment>
 				</li>
 			</ul>
 
@@ -92,6 +124,31 @@
 		</div>
 
 		<div class="tight-form" ng-hide="target.rawQuery">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<i class="fa fa-eye invisible"></i>
+				</li>
+
+				<li class="tight-form-item query-keyword" style="width: 75px;">
+					Term
+				</li>
+
+				<li>
+					<metric-segment segment="termKeySegment" on-value-changed="termKeySegmentChanged()"></metric-segment>
+				</li>
+
+				<li>
+					<span class="tight-form-item">:</span>
+				</li>
+
+				<li>
+					<metric-segment segment="termValueSegment" on-value-changed="termValueSegmentChanged()"></metric-segment>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<!-- <div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
 					<i class="fa fa-eye invisible"></i>
@@ -106,9 +163,9 @@
 				</li>
 			</ul>
 			<div class="clearfix"></div>
-		</div>
+		</div> -->
 
-		<div class="tight-form">
+		<!-- <div class="tight-form">
 			<ul class="tight-form-list" ng-hide="target.rawQuery">
 				<li class="tight-form-item">
 					<i class="fa fa-eye invisible"></i>
@@ -150,7 +207,7 @@
 				</li>
 			</ul>
 			<div class="clearfix"></div>
-		</div>
+		</div> -->
 
 	</div>
 </div>

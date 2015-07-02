@@ -300,13 +300,20 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         if (target.hide) { return []; }
         var queryBuilder = new ElasticQueryBuilder(target);
         var query = queryBuilder.build();
+        console.log(target);
         query = query.replace(/\$interval/g, target.interval || options.interval);
         query = query.replace(/\$rangeFrom/g, options.range.from);
         query = query.replace(/\$rangeTo/g, options.range.to);
         query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
+        query = query.replace(/\$keyField/g, target.keyField);
+        query = query.replace(/\$valueField/g, target.valueField);
+        query = query.replace(/\$termKey/g, target.termKey);
+        query = query.replace(/\$termValue/g, target.termValue);
         query = templateSrv.replace(query, options.scopedVars);
         return query;
       }).join("\n");
+
+      console.log(allQueries);
 
       return this._post('/_search?search_type=count', allQueries).then(function(results) {
         if (!results || !results.facets) {
