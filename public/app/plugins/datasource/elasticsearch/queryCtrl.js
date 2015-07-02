@@ -24,6 +24,26 @@ function (angular, _, ElasticQueryBuilder) {
 
       $scope.queryBuilder = new ElasticQueryBuilder(target);
 
+      if (!target.keyField) {
+        target.keyField = '@timestamp';
+      }
+      $scope.keyFieldSegment = new MetricSegment({value: target.keyField});
+
+      if (!target.valueField) {
+        target.valueField = 'metric';
+      }
+      $scope.valueFieldSegment = new MetricSegment({value: target.valueField});
+
+      if (!target.termKey) {
+        target.termKey = 'service';
+      }
+      $scope.termKeySegment = new MetricSegment({value: target.termKey});
+
+      if (!target.termValue) {
+        target.termValue = 'cpu';
+      }
+      $scope.termValueSegment = new MetricSegment({value: target.termValue});
+
       if (!target.measurement) {
         $scope.measurementSegment = MetricSegment.newSelectMeasurement();
       } else {
@@ -51,6 +71,26 @@ function (angular, _, ElasticQueryBuilder) {
 
       $scope.removeTagFilterSegment = new MetricSegment({fake: true, value: '-- remove tag filter --'});
       $scope.removeGroupBySegment = new MetricSegment({fake: true, value: '-- remove group by --'});
+    };
+
+    $scope.valueFieldChanged = function() {
+      $scope.target.valueField = $scope.valueFieldSegment.value;
+      $scope.$parent.get_data();
+    };
+
+    $scope.keyFieldChanged = function() {
+      $scope.target.keyField = $scope.keyFieldSegment.value;
+      $scope.$parent.get_data();
+    };
+
+    $scope.termValueSegmentChanged = function() {
+      $scope.target.termValue = $scope.termValueSegment.value;
+      $scope.$parent.get_data();
+    };
+
+    $scope.termKeySegmentChanged = function() {
+      $scope.target.termKey = $scope.termKeySegment.value;
+      $scope.$parent.get_data();
     };
 
     $scope.fixTagSegments = function() {

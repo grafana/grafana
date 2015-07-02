@@ -14,9 +14,9 @@ function () {
         "metric": {
           "date_histogram": {
             "interval": "$interval",
-            "key_field": "@timestamp",
+            "key_field": "$keyField",
             "min_doc_count": 0,
-            "value_field": "metric"
+            "value_field": "$valueField"
           }
         }
       },
@@ -34,7 +34,7 @@ function () {
               },
               {
                 "term": {
-                  "service": "cpu",
+                  "$termKey": "$termValue",
                 }
               }
             ]
