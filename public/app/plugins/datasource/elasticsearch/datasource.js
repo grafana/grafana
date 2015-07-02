@@ -295,46 +295,29 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     };
 
     ElasticDatasource.prototype.query = function(options) {
-      var self = this;
-      var allQueries = options.targets.map(function(target) {
-        if (target.hide) { return []; }
-        var queryBuilder = new ElasticQueryBuilder(target);
-        var query = queryBuilder.build();
-        console.log(target);
-        query = query.replace(/\$interval/g, target.interval || options.interval);
-        query = query.replace(/\$rangeFrom/g, options.range.from);
-        query = query.replace(/\$rangeTo/g, options.range.to);
-        query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
-        query = query.replace(/\$keyField/g, target.keyField);
-        query = query.replace(/\$valueField/g, target.valueField);
-        query = query.replace(/\$termKey/g, target.termKey);
-        query = query.replace(/\$termValue/g, target.termValue);
-        query = templateSrv.replace(query, options.scopedVars);
-        return query;
-      }).join("\n");
+      var queryBuilder = new ElasticQueryBuilder;
+      var query = queryBuilder.build(options.targets);
+      query = query.replace(/\$interval/g, options.interval);
+      query = query.replace(/\$rangeFrom/g, options.range.from);
+      query = query.replace(/\$rangeTo/g, options.range.to);
+      query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
+      query = templateSrv.replace(query, options.scopedVars);
+      return this._post('/_search?search_type=count', query).then(this._getTimeSeries);
+    };
 
-      console.log(allQueries);
-
-      return this._post('/_search?search_type=count', allQueries).then(function(results) {
-        if (!results || !results.facets) {
-          return { data: [] };
+    ElasticDatasource.prototype._getTimeSeries = function(results) {
+      var data = [];
+      if (results && results.facets) {
+        for (var target in results.facets) {
+          if (results.facets.hasOwnProperty(target) && results.facets[target].entries) {
+            var datapoints = results.facets[target].entries.map(function(entry) {
+              return [entry.mean, entry.time];
+            });
+            data.push({ target: target, datapoints: datapoints });
+          }
         }
-        return { data: self._getTimeSeries(results.facets) };
-      });
-    };
-
-    ElasticDatasource.prototype._getTimeSeries = function(facets) {
-      var self = this;
-      var targets = ['metric'];
-      var data = targets.map(function(target) {
-        var datapoints = facets[target].entries.map(self._getDatapoint);
-        return { target: target, datapoints: datapoints };
-      });
-      return data;
-    };
-
-    ElasticDatasource.prototype._getDatapoint = function(entry) {
-      return [entry.mean, entry.time];
+      }
+      return { data: data };
     };
 
     return ElasticDatasource;
