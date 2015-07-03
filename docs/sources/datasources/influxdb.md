@@ -43,6 +43,10 @@ panel title, then edit. The editor allows you to select metrics and tags.
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
 the tag key and select `--remove tag filter--`.
 
+### Regex matching
+You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
+will automaticallay adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+
 ### Editor group by
 To group by a tag click the plus icon after the `GROUP BY ($interval)` text. Pick a tag from the dropdown that appears.
 You can remove the group by by clicking on the tag and then select `--remove group by--` from the dropdown.
@@ -83,20 +87,18 @@ SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 ![](/img/influxdb/templating_simple_ex1.png)
 
 ### Annotations
+Annotations allows you to overlay rich event information on top of graphs.
+
+An example query:
+
+```SQL
+SELECT title, description from events WHERE $timeFilter order asc
+```
 
 ### InfluxDB 0.8.x
 
 ![](/img/v1/influxdb_editor.png)
 
-## InfluxDB 0.8 Filters & Templated queries
-
-![](/img/animated_gifs/influxdb_templated_query.gif)
-
-Use a distinct influxdb query in the filter query input box:
-
-```sql
-select distinct(host) from app.status
-```
 
 
 
