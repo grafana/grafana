@@ -144,7 +144,7 @@ function (angular, _, kbn) {
 
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
-      var tag_values_regex = /tag_values\((\w+),\s?(\w+)/;
+      var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
