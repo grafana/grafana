@@ -1,24 +1,18 @@
-<span class="rt-health-list small">
-	Ping:
-	<img ng-src="img/{{monitorStateTxt(endpoint,'ping')}}.svg" width="20px" height="20px" >
-</span>
-<span class="rt-health-list small">
-	DNS:
-	<img ng-src="img/{{monitorStateTxt(endpoint,'dns')}}.svg" width="20px" height="20px">
-</span>
-<span class="rt-health-list small">
-	HTTP:
-	<img ng-src="img/{{monitorStateTxt(endpoint,'http')}}.svg" width="20px" height="20px">
-</span>
-<span class="rt-health-list small">
-	HTTPS:
-	<img ng-src="img/{{monitorStateTxt(endpoint,'https')}}.svg" width="20px" height="20px">
-</span>
-
-
-<!--
-bs-tooltip="'{{monitorStateTxt(endpoint,'ping')}} {{monitorStateChangeStr(endpoint, 'ping')}}'"
-bs-tooltip="'{{monitorStateTxt(endpoint,'dns')}} {{monitorStateChangeStr(endpoint, 'dns')}}'"
-bs-tooltip="'{{monitorStateTxt(endpoint,'http')}} {{monitorStateChangeStr(endpoint, 'http')}}'"
-bs-tooltip="'{{monitorStateTxt(endpoint,'https')}} {{monitorStateChangeStr(endpoint, 'https')}}'"
--->
+<div ng-if="isEndPointReady(endpoint)" style="display:inline-block;">
+	<span class="rt-health-list small">
+		Ping:
+		<img ng-src="img/{{monitorStateTxt(endpoint,'ping')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'ping')}} {{monitorStateChangeStr(endpoint, 'ping')}}'">
+	</span>
+	<span class="rt-health-list small">
+		DNS:
+		<img ng-src="img/{{monitorStateTxt(endpoint,'dns')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'dns')}} {{monitorStateChangeStr(endpoint, 'dns')}}'">
+	</span>
+	<span class="rt-health-list small">
+		HTTP:
+		<img ng-src="img/{{monitorStateTxt(endpoint,'http')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'http')}} {{monitorStateChangeStr(endpoint, 'http')}}'">
+	</span>
+	<span class="rt-health-list small">
+		HTTPS:
+		<img ng-src="img/{{monitorStateTxt(endpoint,'https')}}.svg" width="20px" height="20px" bs-tooltip="'{{monitorStateTxt(endpoint,'https')}} {{monitorStateChangeStr(endpoint, 'https')}}'">
+	</span>
+<div>

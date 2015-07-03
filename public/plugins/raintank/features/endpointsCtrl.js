@@ -80,6 +80,9 @@ function (angular, _) {
         $scope.monitor_types = typesMap;
       });
     };
+    $scope.isEndPointReady = function(endpoint) {
+      return endpoint && endpoint.hasOwnProperty('ready') &&  endpoint.ready;
+    };
 
     $scope.getEndpoints = function() {
       backendSrv.get('/api/endpoints').then(function(endpoints) {
@@ -87,6 +90,7 @@ function (angular, _) {
         _.forEach(endpoints, function(endpoint) {
           endpoint.states = [];
           endpoint.monitors = {};
+          endpoint.ready = false;
           backendSrv.get('/api/monitors', {"endpoint_id": endpoint.id}).then(function(monitors) {
             var seenStates = {};
             _.forEach(monitors, function(mon) {
@@ -100,6 +104,7 @@ function (angular, _) {
               $scope.endpointState[s]++;
               endpoint.states.push(parseInt(s));
             }
+            endpoint.ready = true;
           });
         });
         $scope.endpoints = endpoints;
