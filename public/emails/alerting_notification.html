@@ -1,62 +1,56 @@
 {{Subject .Subject "{{.CheckType}} {{ .State }} for {{.Endpoint}}"}}
 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
+  <head>
+<!-- If you delete this meta tag, Half Life 3 will never be released. -->
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>{{.CheckType}} {{ .State }} for {{.Endpoint}}"}}</title>
+  </head>
+  <body bgcolor="#FFFFFF" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; margin: 0; padding: 0;"><style type="text/css">
+@media only screen and (max-width: 600px) {
+  a[class="btn"] {
+    display: block !important; margin-bottom: 10px !important; background-image: none !important; margin-right: 0 !important;
+  }
+  div[class="column"] {
+    width: auto !important; float: none !important;
+  }
+  table.social div[class="column"] {
+    width: auto !important;
+  }
+}
+</style>
 
-<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Alert: {{.Endpoint}}</title>
-</head>
-<body style="background:#eee;">
-<div style="color:#333; font:14px/1.5 Tahoma,Arial,sans-serif;; text-shadow:1px 1px #fff; padding:0; margin:0;">
-    <div style="max-width:600px;margin:0 auto; padding:40px 0 20px;">
-        <div style="border:1px solid #d9d9d9;border-radius:3px; background:#fff; box-shadow: 0px 2px 5px rgba(0, 0, 0,.05); -webkit-box-shadow: 0px 2px 5px rgba(0, 0, 0,.05);">
-            <div style="padding: 20px 15px;">
-                <div style="padding:15px 15px 0 15px;">
-                     <img src="https://app.raintank.io/img/litmus-by-{{ .State }}.svg" style="width: 250px; margin-bottom: 25px; margin-left: -8px;">
-                    <div style="font-size:14px; padding-bottom:15px;">
-                        <div style="padding-bottom: 15px;">
-                            <div>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
-                                    State:
-                                </span>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;"> 
-                                    {{.State}} <img src="https://app.raintank.io/img/{{.State}}-email.svg" style="width: 16px; vertical-align: sub;">
-                                </span>
-                            </div>
-                            <div>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
-                                    Endpoint:
-                                </span>  
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
-                                    {{.Endpoint}}
-                                </span>
-                            </div>
-                            <div>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
-                                    CheckType:
-                                </span>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
-                                    {{.CheckType}}
-                                </span>
-                            </div>
-                        </div>
-                        <div style="font-size:12px; font-weight: normal;"><p><i>False alert?</i> You can configure health settings for each check in your endpoint configuration.</p>
-                        </div>                    
-                    </div>
-                    
-                    <button style="  background: #13b2d4; color: #fff; font-weight: 500; padding: 10px 12px; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; border: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none; width: 200px;" href="https://app.raintank.io/">Log In</button>     
-                    
-                    <div style="font-size:14px; padding:0 15px;">
+<!-- HEADER -->
+<table class="head-wrap" bgcolor="#999999" background="https://app.raintank.io/img/{{.State}}-email-bg.png" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
+        <td class="header container" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto; padding: 0;">
+                
+                <div class="content" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 600px; display: block; margin: 0 auto; padding: 15px;">
+                <table style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><img src="https://app.raintank.io/img/litmus-by-white.svg" style="width: 200px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;" /></td>
+                    </tr></table></div>
+                
+        </td>
+        <td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
+    </tr></table><!-- /HEADER --><!-- BODY --><table class="body-wrap" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
+        <td class="container" bgcolor="#FFFFFF" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto; padding: 0;">
 
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div style="color:#aaa;padding:10px;text-align:center;">
-            © 2015 <a style="color:#888;text-decoration:none;" target="_blank" href="http://raintank.io">raintank</a>
-        </div>
-    </div>
-</div>
-</body>
+            <div class="content" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 600px; display: block; margin: 0 auto; padding: 15px;">
+            <table style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
+                        <h4 style="font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; color: #000; font-weight: 500; font-size: 18px; margin: 0 0 15px; padding: 0;"><strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.CheckType}}</strong> for <strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.Endpoint}}</strong> is now</h4>
+                        <h3 class="{{.State}}" style="font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; color: #EC2128; font-weight: 900; font-size: 24px; text-transform: uppercase; margin: 0 0 15px; padding: 0;">{{.State}}</h3>
+                        <img src="https://app.raintank.io/img/{{.State}}-email.svg" style="width: 150px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;" /></td>
+                </tr><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
+                        <button style="color: #fff; font-weight: 500; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none; width: 200px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; background: #13b2d4; margin: 20px 0; padding: 15px 12px; border: 0;" href="https://app.raintank.io/">Log In Now</button>                       
+                        <!-- Callout Panel -->
+                        <p class="callout" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; color: #999; font-weight: normal; font-size: 14px; line-height: 1.6; margin: 0 0 15px; padding: 15px;">
+                            <strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">ProTip:</strong> Too many alerts? Not enough? You can configure health settings for each check in your endpoint configuration.
+                        </p><!-- /Callout Panel -->                 
+                                                
+                    </td>
+                </tr></table></div><!-- /content -->
+                                    
+        </td>
+        <td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
+    </tr></table><!-- /BODY --></body>
 </html>
