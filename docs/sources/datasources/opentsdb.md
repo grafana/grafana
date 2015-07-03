@@ -27,6 +27,10 @@ Open a graph in edit mode by click the title.
 
 ![](/img/v2/opentsdb_query_editor.png)
 
+### Auto complete suggestions
+You should get auto complete suggestions for tags and tag values. If you do not you need to enable `tsd.core.meta.enable_realtime_ts` in
+the OpentSDB server settings. This is required for the OpenTSDB `lookup` api to work.
+
 ## Templating queries
 
 When using OpenTSDB with a template variable of `query` type you can use following syntax for lookup.
