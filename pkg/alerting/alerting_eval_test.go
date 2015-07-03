@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"bosun.org/graphite"
+	"github.com/grafana/grafana/pkg/metric/helper"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -17,7 +18,8 @@ type fakeGraphite struct {
 }
 
 func init() {
-	Init()
+	backend, _ := helper.New(false, "", "standard", "")
+	Init(backend)
 }
 
 func (fg fakeGraphite) Query(req *graphite.Request) (graphite.Response, error) {

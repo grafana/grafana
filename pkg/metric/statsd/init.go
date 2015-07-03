@@ -9,18 +9,31 @@
 // but it's worth the trade-off.
 // (for count 0 is harmless and accurate)
 
-package statsdmetric
+package statsd
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/Dieterbe/statsd-go"
 )
 
-var Stat, _ = statsd.NewClient(false, "", "")
+type Backend struct {
+	client *statsd.Client
+}
 
-func NewClient(enabled bool, addr, prefix string) error {
-	client, err := statsd.NewClient(enabled, addr, prefix)
-	if err == nil {
-		Stat = client
+// note: prefix must end on a dot
+func New(enabled bool, addr, prefix string) (Backend, error) {
+	host, err := os.Hostname()
+	if err != nil {
+		panic("Can't get hostname:" + err.Error())
 	}
-	return err
+	hostClean := strings.Replace(host, ".", "_", -1)
+
+	prefix = fmt.Sprintf("%s%s.%d.", prefix, hostClean, os.Getpid())
+
+	client, err := statsd.NewClient(enabled, addr, prefix)
+	b := Backend{client}
+	return b, err
 }
