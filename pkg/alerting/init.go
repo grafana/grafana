@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
@@ -37,6 +38,7 @@ var executorAlertOutcomesCrit met.Count
 var executorAlertOutcomesUnkn met.Count
 var executorGraphiteEmptyResponse met.Count
 
+var executorJobExecDelay met.Timer
 var executorJobQueryGraphite met.Timer
 var executorJobParseAndEval met.Timer
 var executorGraphiteMissingVals met.Meter
@@ -71,6 +73,7 @@ func Init(metrics met.Backend) {
 	executorAlertOutcomesUnkn = metrics.NewCount("alert-executor.alert-outcomes.unknown")
 	executorGraphiteEmptyResponse = metrics.NewCount("alert-executor.graphite-emptyresponse")
 
+	executorJobExecDelay = metrics.NewTimer("alert-executor.job_execution_delay", time.Duration(30)*time.Second)
 	executorJobQueryGraphite = metrics.NewTimer("alert-executor.job_query_graphite", 0)
 	executorJobParseAndEval = metrics.NewTimer("alert-executor.job_parse-and-evaluate", 0)
 	executorGraphiteMissingVals = metrics.NewMeter("alert-executor.graphite-missingVals", 0)

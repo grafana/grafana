@@ -136,6 +136,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 
 	preExec := time.Now()
+	executorJobExecDelay.Value(preExec.Sub(job.LastPointTs))
 	evaluator, err := NewGraphiteCheckEvaluator(gr, job.Definition)
 	if err != nil {
 		// expressions should be validated before they are stored in the db!
