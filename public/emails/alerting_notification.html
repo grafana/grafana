@@ -12,16 +12,22 @@
     <div style="max-width:600px;margin:0 auto; padding:40px 0 20px;">
         <div style="border:1px solid #d9d9d9;border-radius:3px; background:#fff; box-shadow: 0px 2px 5px rgba(0, 0, 0,.05); -webkit-box-shadow: 0px 2px 5px rgba(0, 0, 0,.05);">
             <div style="padding: 20px 15px;">
-                <div style="padding:40px 15px 0 15px;">
-                    <img src="https://app.raintank.io/img/litmus-by-{{ .State }}.svg" style="width: 300px; margin-bottom: 25px; margin-left: -8px;">
-                    <div style="font-size:14px; padding-bottom:30px;">
-                        <div style="font-size:12px; padding-bottom:10px; font-weight: normal;">{{.Endpoint}} is now {{.State}}:
-                        </div>
-                        <div>
+                <div style="padding:15px 15px 0 15px;">
+                     <img src="https://app.raintank.io/img/litmus-by-{{ .State }}.svg" style="width: 250px; margin-bottom: 25px; margin-left: -8px;">
+                    <div style="font-size:14px; padding-bottom:15px;">
+                        <div style="padding-bottom: 15px;">
+                            <div>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
+                                    State:
+                                </span>
+                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;"> 
+                                    {{.State}} <img src="https://app.raintank.io/img/{{.State}}-email.svg" style="width: 16px; vertical-align: sub;">
+                                </span>
+                            </div>
                             <div>
                                 <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
                                     Endpoint:
-                                </span>
+                                </span>  
                                 <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
                                     {{.Endpoint}}
                                 </span>
@@ -34,18 +40,12 @@
                                     {{.CheckType}}
                                 </span>
                             </div>
-                            <div>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: bold;">
-                                    State:
-                                </span>
-                                <span style="font-size:14px; padding-bottom:10px; font-weight: normal;">
-                                    {{.State}}
-                                </span>
-                            </div>
                         </div>
+                        <div style="font-size:12px; font-weight: normal;"><p><i>False alert?</i> You can configure your health thresholds in your endpoint config.</p>
+                        </div>                    
                     </div>
                     
-                    <button style="  background: #13b2d4; color: #fff; font-weight: 500; padding: 10px 12px; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; border: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none;" href="https://app.raintank.io/">Log In</button>     
+                    <button style="  background: #13b2d4; color: #fff; font-weight: 500; padding: 10px 12px; border-radius: 2px; text-align: center; cursor: pointer; outline: 0; border: 0; font-size: 16px; transition: all .1s ease 0s; text-decoration: none; width: 200px;" href="https://app.raintank.io/">Log In</button>     
                     
                     <div style="font-size:14px; padding:0 15px;">
 
