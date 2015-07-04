@@ -1,6 +1,6 @@
 [run]
 init_cmds = [
-  ["go", "build", "-o", "./bin/grafana-server"],
+  ["godep", "go", "build", "-o", "./bin/grafana-server"],
 	["./bin/grafana-server"]
 ]
 watch_all = true
@@ -12,6 +12,6 @@ watch_dirs = [
 watch_exts = [".go", ".ini"]
 build_delay = 1500
 cmds = [
-  ["go", "build", "-o", "./bin/grafana-server"],
+  ["godep", "go", "build", "-o", "./bin/grafana-server"],
 	["./bin/grafana-server"]
 ]

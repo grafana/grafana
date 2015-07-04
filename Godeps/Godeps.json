@@ -56,6 +56,10 @@
 			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
+			"ImportPath": "github.com/DataDog/datadog-go/statsd",
+			"Rev": "a27810dd518c69be741a7fd5d0e39f674f615be8"
+		},
+		{
 			"ImportPath": "github.com/Dieterbe/profiletrigger/heap",
 			"Rev": "98e0b12887d327f412fe36bf0ab33d3fc15dad47"
 		},

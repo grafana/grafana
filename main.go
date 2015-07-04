@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metric/helper"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
-	"github.com/grafana/grafana/pkg/statsdmetric"
 )
 
 var version = "master"
@@ -78,12 +78,12 @@ func main() {
 	elasticstore.Init()
 	api.InitCollectorController()
 
-	err := statsdmetric.NewClient(setting.StatsdEnabled, setting.StatsdAddr, "grafana.")
+	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana.")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}
 
-	alerting.Init()
+	alerting.Init(metricsBackend)
 	alerting.Construct()
 
 	if err := notifications.Init(); err != nil {

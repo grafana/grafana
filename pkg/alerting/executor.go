@@ -68,6 +68,8 @@ func GraphiteAuthContextReturner(org_id int64) graphite.Context {
 }
 
 func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
+	executorNum.Inc(1)
+	defer executorNum.Dec(1)
 
 	for job := range jobQueue {
 		jobQueueInternalItems.Value(int64(len(jobQueue)))
@@ -83,6 +85,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 			executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 			continue
 		}
+		cache.Add(key, true)
 
 		log.Debug("T %s doing", key)
 		executorNumOriginalTodo.Inc(1)
@@ -109,7 +112,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 				Updated: job.LastPointTs,
 			}
 			if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
-				panic(fmt.Sprintf("failed to update monitor state. %s", err.Error()))
+				log.Error(0, "failed to update monitor state", err)
 			}
 			//emit a state change event.
 			if job.Notifications.Enabled {
@@ -158,6 +161,5 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 			executorAlertOutcomesUnkn.Inc(1)
 		}
 
-		cache.Add(key, true)
 	}
 }
