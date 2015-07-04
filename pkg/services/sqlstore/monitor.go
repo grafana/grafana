@@ -857,17 +857,13 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 func UpdateMonitorState(cmd *m.UpdateMonitorStateCommand) error {
 	return inTransaction2(func(sess *session) error {
 		sess.Table("monitor")
-		sess.UseBool("state")
-		sess.Cols("state", "state_change")
-		mon := &m.Monitor{
-			Id:          cmd.Id,
-			State:       cmd.State,
-			StateChange: cmd.Updated,
-		}
+		rawSql := "UPDATE monitor SET state=?, state_change=? WHERE id=? AND state != ?"
 
-		if _, err := sess.Where("id=?", mon.Id).Update(mon); err != nil {
+		if _, err := sess.Exec(rawSql, cmd.State, cmd.Updated, cmd.Id, cmd.State); err != nil {
+			fmt.Println("failed to update monitor state.", err)
 			return err
 		}
+
 		return nil
 	})
 }
