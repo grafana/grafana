@@ -18,7 +18,7 @@ specified in a `.ini` configuration file or specified using environment variable
 > **Note.** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+> init.d script using `-config` file parameter.
 
 ## Using environment variables
 
