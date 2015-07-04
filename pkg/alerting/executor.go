@@ -85,6 +85,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 			executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 			continue
 		}
+		cache.Add(key, true)
 
 		log.Debug("T %s doing", key)
 		executorNumOriginalTodo.Inc(1)
@@ -160,6 +161,5 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 			executorAlertOutcomesUnkn.Inc(1)
 		}
 
-		cache.Add(key, true)
 	}
 }
