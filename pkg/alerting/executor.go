@@ -112,7 +112,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 				Updated: job.LastPointTs,
 			}
 			if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
-				panic(fmt.Sprintf("failed to update monitor state. %s", err.Error()))
+				log.Error(0, "failed to update monitor state", err)
 			}
 			//emit a state change event.
 			if job.Notifications.Enabled {
