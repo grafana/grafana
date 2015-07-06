@@ -117,6 +117,7 @@ var (
 	TickQueueSize   int
 	JobQueueSize    int
 	ExecutorLRUSize int
+	EnableScheduler bool
 	Executors       int
 
 	ReportingEnabled  bool
@@ -431,6 +432,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	TickQueueSize = alerting.Key("queue_ticks_size").MustInt(0)
 	JobQueueSize = alerting.Key("queue_jobs_size").MustInt(0)
 	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
+	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
 	Executors = alerting.Key("executors").MustInt(100)
 
 	analytics := Cfg.Section("analytics")

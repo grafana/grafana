@@ -377,6 +377,10 @@ Based on how many schedulers you have and whether they recently restarted,
 jobs might be scheduled multiple times and the executors use the cache to avoid acting on the same job twice.
 Defaults to 10000.
 
+### EnableScheduler
+
+Wether to run a scheduler. Defaults to true.
+
 ### executors
 
 How many alerting executors should this instance of Grafana run?
