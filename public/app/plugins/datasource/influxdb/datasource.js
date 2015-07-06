@@ -28,8 +28,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       this.supportAnnotations = true;
       this.supportMetrics = true;
-      this.editorSrc = 'app/features/influxdb/partials/query.editor.html';
-      this.annotationEditorSrc = 'app/features/influxdb/partials/annotations.editor.html';
     }
 
     InfluxDatasource.prototype.query = function(options) {
