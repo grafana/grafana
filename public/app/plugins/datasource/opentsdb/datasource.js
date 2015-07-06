@@ -78,7 +78,7 @@ function (angular, _, kbn) {
     };
 
     OpenTSDBDatasource.prototype._performSuggestQuery = function(query) {
-      return this._get('/api/suggest', {type: 'metrics', q: query}).then(function(result) {
+      return this._get('/api/suggest', {type: 'metrics', q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
