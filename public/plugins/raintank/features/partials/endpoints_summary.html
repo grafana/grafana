@@ -48,6 +48,24 @@
 			<div class="rt-box">
 				<div class="rt-box-body no-padding" style="min-height: 50px">
 					<div class="currentStatus">
+						<div class="dropdown" style="float: right; margin-left: 5px;">
+							<a data-toggle="dropdown">
+								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+							</a>
+							<ul class="dropdown-menu" role="menu">
+								<li>
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable/Disable
+									</a>
+								</li>
+								<li>
+									<a href="endpoints/edit/{{endpoint.id}}">
+										Configure
+									</a>
+								</li>
+							</ul>
+						</div>
+
 						<div class="pull-right" ng-show="getMonitorByTypeName('Ping').enabled">
 							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
 						</div>
@@ -87,6 +105,25 @@
 
 
 					<div class="currentStatus">
+
+						<div class="dropdown" style="float: right; margin-left: 5px;">
+							<a data-toggle="dropdown">
+								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+							</a>
+							<ul class="dropdown-menu" role="menu">
+								<li>
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable/Disable
+									</a>
+								</li>
+								<li>
+									<a href="endpoints/edit/{{endpoint.id}}">
+										Configure
+									</a>
+								</li>
+							</ul>
+						</div>
+
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
@@ -119,6 +156,25 @@
 
 
 					<div class="currentStatus">
+
+						<div class="dropdown" style="float: right; margin-left: 5px;">
+							<a data-toggle="dropdown">
+								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+							</a>
+							<ul class="dropdown-menu" role="menu">
+								<li>
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable/Disable
+									</a>
+								</li>
+								<li>
+									<a href="endpoints/edit/{{endpoint.id}}">
+										Configure
+									</a>
+								</li>
+							</ul>
+						</div>
+
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
@@ -152,9 +208,29 @@
 
 
 					<div class="currentStatus">
+
+						<div class="dropdown" style="float: right; margin-left: 5px;">
+							<a data-toggle="dropdown">
+								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+							</a>
+							<ul class="dropdown-menu" role="menu">
+								<li>
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable/Disable
+									</a>
+								</li>
+								<li>
+									<a href="endpoints/edit/{{endpoint.id}}">
+										Configure
+									</a>
+								</li>
+							</ul>
+						</div>
+
 						<div class="pull-right">
 							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
 						</div>
+
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">

@@ -85,27 +85,27 @@
 				<div style="display: inline;">
 					<rt-endpoint-health endpoint="endpoint"></rt-endpoint-health>
 				</div>
-				<div style="display: inline; margin-left:6px;">
-					<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+				<div style="display: inline; margin-left:25px;">
+					<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Endpoint Summary</br> dashboard for {{endpoint.name}}'"></i></a>
 				</div>
-				<div class="dropdown" style="float: right;">
+				<div class="dropdown" style="float: right; margin-left: 5px; vertical-align: middle;">
 					<a data-toggle="dropdown">
 						<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
 					</a>
 					<ul class="dropdown-menu" role="menu">
 						<li>
 							<a href="endpoints/summary/{{endpoint.id}}">
-								View
+								View Endpoint
 							</a>
 						</li>
 						<li>
 							<a href="endpoints/edit/{{endpoint.id}}">
-								Configure
+								Configure Endpoint
 							</a>
 						</li>
 						<li>
 							<a ng-click="remove(endpoint)">
-								Delete
+								Delete Endpoint
 							</a>
 						</li>
 					</ul>
