@@ -2069,7 +2069,7 @@
   , move: function (e) {
       if (!this.shown) return
 
-      // grafana change, shift+left paranthesis
+      // grafana change, shift+left parenthesis
       if (e.shiftKey && e.keyCode === 40) {
         return;
       }
