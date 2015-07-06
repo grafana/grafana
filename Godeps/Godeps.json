@@ -120,7 +120,7 @@
 		},
 		{
 			"ImportPath": "github.com/hashicorp/golang-lru",
-			"Rev": "995efda3e073b6946b175ed93901d729ad47466a"
+			"Rev": "61b79a797853a3649b5c1261f1a75166e0e4096e"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",

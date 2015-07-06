@@ -115,6 +115,29 @@ func (c *Cache) Peek(key interface{}) (value interface{}, ok bool) {
 	return nil, ok
 }
 
+// ContainsOrAdd checks if a key is in the cache (without updating the recent-ness or deleting it for being stale),
+// if not, adds the value. Returns whether found and whether an eviction occurred.
+func (c *Cache) ContainsOrAdd(key, value interface{}) (ok, evict bool) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	_, ok = c.items[key]
+	if ok {
+		return true, false
+	}
+
+	ent := &entry{key, value}
+	entry := c.evictList.PushFront(ent)
+	c.items[key] = entry
+
+	evict = c.evictList.Len() > c.size
+	// Verify size not exceeded
+	if evict {
+		c.removeOldest()
+	}
+	return false, evict
+}
+
 // Remove removes the provided key from the cache.
 func (c *Cache) Remove(key interface{}) {
 	c.lock.Lock()
