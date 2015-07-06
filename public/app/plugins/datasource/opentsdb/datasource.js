@@ -14,7 +14,6 @@ function (angular, _, kbn) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
-      this.editorSrc = 'app/features/opentsdb/partials/query.editor.html';
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
