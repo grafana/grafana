@@ -45,7 +45,7 @@ pages:
 
 - ['reference/graph.md', 'Reference', 'Graph Panel']
 - ['reference/singlestat.md', 'Reference', 'Singlestat Panel']
-- ['reference/dashlist.md', 'Reference', 'Dashlist Panel']
+- ['reference/dashlist.md', 'Reference', 'Dashboard list Panel']
 - ['reference/sharing.md', 'Reference', 'Sharing']
 - ['reference/annotations.md', 'Reference', 'Annotations']
 - ['reference/timerange.md', 'Reference', 'Time range controls']
