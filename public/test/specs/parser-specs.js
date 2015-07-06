@@ -118,11 +118,11 @@ define([
       expect(rootNode.pos).to.be(19);
     });
 
-    it('invalid function expression missing closing paranthesis', function() {
+    it('invalid function expression missing closing parenthesis', function() {
       var parser = new Parser('sum(test');
       var rootNode = parser.getAst();
 
-      expect(rootNode.message).to.be('Expected closing paranthesis instead found end of string');
+      expect(rootNode.message).to.be('Expected closing parenthesis instead found end of string');
       expect(rootNode.pos).to.be(9);
     });
 
