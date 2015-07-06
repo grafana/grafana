@@ -10,6 +10,7 @@ function (angular, _, kbn) {
 
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
+
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
     $rootScope.onAppEvent('time-range-changed', function()  {

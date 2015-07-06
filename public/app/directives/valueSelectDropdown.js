@@ -29,7 +29,11 @@ function (angular, app, _) {
           return tag;
         });
 
-        vm.search = {query: '', options: vm.options};
+        vm.search = {
+          query: '',
+          options: vm.options.slice(0, Math.min(vm.options.length, 1000))
+        };
+
         vm.dropdownVisible = true;
       };
 
@@ -204,6 +208,8 @@ function (angular, app, _) {
         vm.search.options = _.filter(vm.options, function(option) {
           return option.text.toLowerCase().indexOf(vm.search.query.toLowerCase()) !== -1;
         });
+
+        vm.search.options = vm.search.options.slice(0, Math.min(vm.search.options.length, 1000));
       };
 
       vm.init = function() {

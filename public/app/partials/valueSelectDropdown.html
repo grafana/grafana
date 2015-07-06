@@ -19,7 +19,7 @@
 					<span class="variable-option-icon"></span>
 					Selected ({{vm.selectedValues.length}})
 				</a>
-				<a class="variable-option pointer" bindonce ng-repeat="option in vm.search.options" ng-class="{'selected': option.selected, 'highlighted': $index === vm.highlightIndex}" ng-click="vm.selectValue(option, $event)">
+				<a class="variable-option pointer" ng-repeat="option in vm.search.options" ng-class="{'selected': option.selected, 'highlighted': $index === vm.highlightIndex}" ng-click="vm.selectValue(option, $event)">
 					<span class="variable-option-icon"></span>
 					<span>{{option.text}}</span>
 				</a>
