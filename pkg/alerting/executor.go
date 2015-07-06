@@ -79,13 +79,12 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 
 		preConsider := time.Now()
 
-		if _, ok := cache.Get(key); ok {
+		if found, _ := cache.ContainsOrAdd(key, true); found {
 			log.Debug("T %s alredy done", key)
 			executorNumAlreadyDone.Inc(1)
 			executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 			continue
 		}
-		cache.Add(key, true)
 
 		log.Debug("T %s doing", key)
 		executorNumOriginalTodo.Inc(1)
