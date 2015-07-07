@@ -13,7 +13,7 @@ you can get title, tags, and text information for the event.
 To add an annotation query click dashboard settings icon in top menu and select `Annotations` from the
 dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add a new annotation query.
 
-### Graphite annotations
+## Graphite annotations
 
 Graphite supports two ways to query annotations.
 
@@ -36,5 +36,4 @@ as the name for the fields that should be used for the annotation title, tags an
 
 For InfluxDB you need to enter a query like in the above screenshot. You need to have the ```where $timeFilter``` part.
 If you only select one column you will not need to enter anything in the column mapping fields.
-If you have multiple columns you need to specify which column should be treated as title, tags and text column.
 
