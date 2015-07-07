@@ -57,3 +57,16 @@ this consolidation is done using `avg` function. You can how graphite consolidat
 
 > *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
 > client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
+
+## Templating
+You can create a template variable in Grafana and have that variable filled with values from any Graphite metric exploration query.
+You can then use this variable in your Graphite queries, either as part of a metric path or as arguments to functions.
+
+For example a query like `prod.servers.*` will fill the variable with all possible
+values that exists in the wildcard position.
+
+You can also create nested variables that use other variables in their definition. For example
+`apps.$app.servers.*` uses the variable `$app` in its query definition.
+
+![](/img/v2/templated_variable_parameter.png)
+
