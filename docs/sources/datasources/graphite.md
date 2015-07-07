@@ -6,7 +6,7 @@ page_keywords: grafana, graphite, metrics, query, documentation
 
 # Graphite
 
-Grafana has an advanced graphite query editor that lets you quickly navigate the metric space, add functions,
+Grafana has an advanced Graphite query editor that lets you quickly navigate the metric space, add functions,
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
@@ -52,8 +52,8 @@ Some functions like aliasByNode support an optional second argument. To add this
 
 ## Point consolidation
 
-All graphite metrics are consolidated so that graphite doesn't return more data points than there are pixels in the graph. By default
-this consolidation is done using `avg` function. You can how graphite consolidates metrics by adding the Graphite consolidateBy function.
+All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default
+this consolidation is done using `avg` function. You can how Graphite consolidates metrics by adding the Graphite consolidateBy function.
 
 > *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
 > client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
