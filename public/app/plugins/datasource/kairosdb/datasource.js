@@ -76,7 +76,7 @@ function (angular, _, kbn) {
      * Gets the list of metrics
      * @returns {*|Promise}
      */
-    KairosDBDatasource.prototype.performMetricSuggestQuery = function() {
+    KairosDBDatasource.prototype._performMetricSuggestQuery = function(metric) {
       var options = {
         url : this.url + '/api/v1/metricnames',
         method : 'GET'
@@ -84,46 +84,74 @@ function (angular, _, kbn) {
 
       return $http(options).then(function(response) {
         if (!response.data) {
-          return [];
+          return $q.when([]);
         }
-        return response.data.results;
+        var metrics = [];
+        _.each(response.data.results, function(r) {
+          if (r.indexOf(metric) >= 0) {
+            metrics.push(r);
+          }
+        });
+        return metrics;
       });
     };
 
-    KairosDBDatasource.prototype.performListTagNames = function() {
+    KairosDBDatasource.prototype._performMetricKeyLookup = function(metric) {
+      if(!metric) { return $q.when([]); }
+
       var options = {
-        url : this.url + '/api/v1/tagnames',
-        method : 'GET'
+	method: 'POST',
+	url: this.url + '/api/v1/datapoints/query/tags',
+	data: {
+          metrics : [{ name : metric }],
+          cache_time : 0,
+          start_absolute: 0
+	}
       };
 
-      return $http(options).then(function(response) {
-        if (!response.data) {
-          return [];
+      return $http(options).then(function(result) {
+        if (!result.data) {
+          return $q.when([]);
         }
-        return response.data.results;
+        var tagks = [];
+        _.each(result.data.queries[0].results[0].tags, function(tagv, tagk) {
+          if(tagks.indexOf(tagk) === -1) {
+            tagks.push(tagk);
+          }
+        });
+        return tagks;
       });
     };
 
-    KairosDBDatasource.prototype.performListTagValues = function() {
+    KairosDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
+      if(!metric || !key) {
+        return $q.when([]);
+      }
+
       var options = {
-        url : this.url + '/api/v1/tagvalues',
-        method : 'GET'
+	method: 'POST',
+	url: this.url + '/api/v1/datapoints/query/tags',
+	data: {
+          metrics : [{ name : metric }],
+          cache_time : 0,
+          start_absolute: 0
+	}
       };
 
-      return $http(options).then(function(response) {
-        if (!response.data) {
-          return [];
+      return $http(options).then(function(result) {
+        if (!result.data) {
+          return $q.when([]);
         }
-        return response.data.results;
+        return result.data.queries[0].results[0].tags[key];
       });
     };
 
-    KairosDBDatasource.prototype.performTagSuggestQuery = function(metricname) {
+    KairosDBDatasource.prototype.performTagSuggestQuery = function(metric) {
       var options = {
         url : this.url + '/api/v1/datapoints/query/tags',
         method : 'POST',
         data : {
-          metrics : [{ name : metricname }],
+          metrics : [{ name : metric }],
           cache_time : 0,
           start_absolute: 0
         }
@@ -140,19 +168,7 @@ function (angular, _, kbn) {
     };
 
     KairosDBDatasource.prototype.metricFindQuery = function(query) {
-      function format(results, query) {
-        return _.chain(results)
-          .filter(function(result) {
-            return result.indexOf(query) >= 0;
-          })
-          .map(function(result) {
-            return {
-              text: result,
-              expandable: true
-            };
-          })
-          .value();
-      }
+      if (!query) { return $q.when([]); }
 
       var interpolated;
       try {
@@ -162,30 +178,32 @@ function (angular, _, kbn) {
         return $q.reject(err);
       }
 
+      var responseTransform = function(result) {
+        return _.map(result, function(value) {
+          return {text: value};
+        });
+      };
+
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
-      var tag_values_regex = /tag_values\((.*)\)/;
+      var tag_values_regex = /tag_values\((.*),\s?(.*?)\)/;
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
-        return this.performMetricSuggestQuery().then(function(metrics) {
-          return format(metrics, metrics_query[1]);
-        });
+        return this._performMetricSuggestQuery(metrics_query[1]).then(responseTransform);
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
       if (tag_names_query) {
-        return this.performListTagNames().then(function(tag_names) {
-          return format(tag_names, tag_names_query[1]);
-        });
+        return this._performMetricKeyLookup(tag_names_query[1]).then(responseTransform);
       }
 
       var tag_values_query = interpolated.match(tag_values_regex);
       if (tag_values_query) {
-        return this.performListTagValues().then(function(tag_values) {
-          return format(tag_values, tag_values_query[1]);
-        });
+        return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
       }
+
+      return $q.when([]);
     };
 
     /////////////////////////////////////////////////////////////////////////
