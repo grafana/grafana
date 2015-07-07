@@ -116,8 +116,16 @@ function (angular, _) {
     };
 
     this.fillVariableValuesForUrl = function(params) {
+      var toUrlVal = function(current) {
+        if (current.text === 'All') {
+          return 'All';
+        } else {
+          return current.value;
+        }
+      };
+
       _.each(this.variables, function(variable) {
-        params['var-' + variable.name] = variable.current.value;
+        params['var-' + variable.name] = toUrlVal(variable.current);
       });
     };
 
