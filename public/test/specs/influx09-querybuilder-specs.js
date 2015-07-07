@@ -97,7 +97,7 @@ define([
       it('should have where condition in tag keys query with tags', function() {
         var builder = new InfluxQueryBuilder({ measurement: '', tags: [{key: 'host', value: 'se1'}] });
         var query = builder.buildExploreQuery('TAG_KEYS');
-        expect(query).to.be("SHOW TAG KEYS WHERE host = 'se1'");
+        expect(query).to.be("SHOW TAG KEYS WHERE \"host\" = 'se1'");
       });
 
       it('should have no conditions in measurement query for query with no tags', function() {
@@ -109,7 +109,7 @@ define([
       it('should have where condition in measurement query for query with tags', function() {
         var builder = new InfluxQueryBuilder({measurement: '', tags: [{key: 'app', value: 'email'}]});
         var query = builder.buildExploreQuery('MEASUREMENTS');
-        expect(query).to.be("SHOW MEASUREMENTS WHERE app = 'email'");
+        expect(query).to.be("SHOW MEASUREMENTS WHERE \"app\" = 'email'");
       });
 
       it('should have where tag name IN filter in tag values query for query with one tag', function() {
