@@ -75,7 +75,7 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 		jobQueueInternalItems.Value(int64(len(jobQueue)))
 		jobQueueInternalSize.Value(int64(setting.JobQueueSize))
 
-		key := fmt.Sprintf("%s-%d", job.Key, job.LastPointTs.Unix())
+		key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
 
 		preConsider := time.Now()
 
