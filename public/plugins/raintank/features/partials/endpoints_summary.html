@@ -60,11 +60,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+								<li ng-show="getMonitorByTypeName('Ping').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable Ping
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('Ping').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable Ping
+									</a>
+								</li>		
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -118,11 +123,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+								<li ng-show="getMonitorByTypeName('dns').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable DNS
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('dns').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable DNS
+									</a>
+								</li>		
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -169,11 +179,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+								<li ng-show="getMonitorByTypeName('HTTP').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable HTTP
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('HTTP').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable HTTP
+									</a>
+								</li>								
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -221,11 +236,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+								<li ng-show="getMonitorByTypeName('HTTPS').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable HTTPS
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('HTTPS').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable HTTPS
+									</a>
+								</li>		
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
