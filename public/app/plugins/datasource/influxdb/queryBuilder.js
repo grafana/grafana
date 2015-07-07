@@ -15,9 +15,9 @@ function (_) {
     }
 
     if (tag.value && tag.value[0] === '/' && tag.value[tag.value.length - 1] === '/') {
-      return str + tag.key + ' =~ ' + tag.value;
+      return str + '"' +tag.key + '"' + ' =~ ' + tag.value;
     }
-    return str + tag.key + " = '" + tag.value + "'";
+    return str + '"' + tag.key + '"' + " = '" + tag.value + "'";
   }
 
   var p = InfluxQueryBuilder.prototype;
@@ -92,7 +92,7 @@ function (_) {
 
     query += ' GROUP BY time($interval)';
     if  (target.groupByTags && target.groupByTags.length > 0) {
-      query += ', ' + target.groupByTags.join();
+      query += ', "' + target.groupByTags.join('", "') + '"';
     }
 
     if (target.fill) {
