@@ -27,6 +27,18 @@ Open a graph in edit mode by click the title.
 
 ![](/img/v2/opentsdb_query_editor.png)
 
+### Auto complete suggestions
+You should get auto complete suggestions for tags and tag values. If you do not you need to enable `tsd.core.meta.enable_realtime_ts` in
+the OpentSDB server settings. This is required for the OpenTSDB `lookup` api to work.
+
+## Templating queries
+
+When using OpenTSDB with a template variable of `query` type you can use following syntax for lookup.
+
+    metrics()                     // returns metric names
+    tag_names(cpu)                // return tag names (i.e. keys) for a specific cpu metric
+    tag_values(cpu, hostname)     // return tag values for metric cpu and tag key hostname
+
 For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 
 

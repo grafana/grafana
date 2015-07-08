@@ -87,10 +87,10 @@ func ApiError(status int, message string, err error) *NormalResponse {
 
 	switch status {
 	case 404:
-		resp["message"] = "Not Found"
-		metrics.M_Api_Status_500.Inc(1)
-	case 500:
 		metrics.M_Api_Status_404.Inc(1)
+		resp["message"] = "Not Found"
+	case 500:
+		metrics.M_Api_Status_500.Inc(1)
 		resp["message"] = "Internal Server Error"
 	}
 

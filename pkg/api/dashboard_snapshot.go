@@ -59,7 +59,7 @@ func GetDashboardSnapshot(c *middleware.Context) {
 
 	// expired snapshots should also be removed from db
 	if snapshot.Expires.Before(time.Now()) {
-		c.JsonApiErr(404, "Snapshot not found", err)
+		c.JsonApiErr(404, "Dashboard snapshot not found", err)
 		return
 	}
 

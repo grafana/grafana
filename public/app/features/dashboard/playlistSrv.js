@@ -18,7 +18,7 @@ function (angular, _, kbn) {
       angular.element(window).unbind('resize');
       var dash = self.dashboards[self.index % self.dashboards.length];
 
-      $location.url('dashboard/db/' + dash.slug);
+      $location.url('dashboard/' + dash.uri);
 
       self.index++;
       self.cancelPromise = $timeout(self.next, self.interval);
