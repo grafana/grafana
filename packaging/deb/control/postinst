@@ -43,9 +43,9 @@ case "$1" in
 	chmod 755 /var/log/grafana /var/lib/grafana
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
-	chown -Rh root:root /etc/grafana/*
+	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
 	chmod 755 /etc/grafana
-	find /etc/grafana -type f -exec chmod 644 {} ';'
+	find /etc/grafana -type f -exec chmod 640 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
 	# if $2 is set, this is an upgrade
