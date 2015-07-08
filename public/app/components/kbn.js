@@ -399,6 +399,8 @@ function($, _, moment) {
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
+  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
+  kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
   kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
   kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
   kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
@@ -541,6 +543,7 @@ function($, _, moment) {
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
+          {text: 'dB', value: 'dB'},
         ]
       },
       {
@@ -590,6 +593,8 @@ function($, _, moment) {
           {text: 'Celcius (°C)',         value: 'celsius'  },
           {text: 'Farenheit (°F)',       value: 'farenheit'},
           {text: 'Humidity (%H)',        value: 'humidity' },
+          {text: 'Pressure (mbar)',      value: 'pressurembar' },
+          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
         ]
       },
       {

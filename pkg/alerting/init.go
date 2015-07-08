@@ -87,6 +87,13 @@ func Construct() {
 		}
 		return
 	} else {
+		if !setting.EnableScheduler {
+			log.Fatal(0, "Alerting in standalone mode requires a scheduler (enable_scheduler = true)")
+		}
+		if setting.Executors == 0 {
+			log.Fatal(0, "Alerting in standalone mode requires at least 1 executor (try: executors = 10)")
+		}
+
 		standalone(cache)
 	}
 }
@@ -114,69 +121,73 @@ func distributed(url string, cache *lru.Cache) error {
 		Durable:      true,
 	}
 
-	publisher := &rabbitmq.Publisher{Url: url, Exchange: &exch}
-	err := publisher.Connect()
-	if err != nil {
-		return err
-	}
-	jobQueue := make(chan Job, setting.JobQueueSize)
-
-	go Dispatcher(jobQueue)
-
-	//send dispatched jobs to rabbitmq.
-	go func(jobQueue <-chan Job) {
-		for job := range jobQueue {
-			routingKey := fmt.Sprintf("%d", job.MonitorId)
-			msg, err := json.Marshal(job)
-			//log.Info("sending: " + string(msg))
-			if err != nil {
-				log.Error(3, "failed to marshal job to json.", err)
-				continue
-			}
-			publisher.Publish(routingKey, msg)
-		}
-	}(jobQueue)
-
-	q := rabbitmq.Queue{
-		Name:       "",
-		Durable:    false,
-		AutoDelete: true,
-		Exclusive:  true,
-	}
-	consumer := rabbitmq.Consumer{
-		Url:        url,
-		Exchange:   &exch,
-		Queue:      &q,
-		BindingKey: []string{"10"}, //consistant hashing weight.
-	}
-	if err := consumer.Connect(); err != nil {
-		log.Fatal(0, "failed to start event.consumer.", err)
-	}
-
-	consumeQueue := make(chan Job, setting.JobQueueSize)
-
-	//read jobs from rabbitmq and push them into the execution channel.
-	consumer.Consume(func(msg *amqp.Delivery) error {
-		//convert from json to Job
-		job := Job{}
-		//log.Info("recvd: " + string(msg.Body))
-		if err := json.Unmarshal(msg.Body, &job); err != nil {
-			log.Error(0, "failed to unmarshal msg body.", err)
+	if setting.EnableScheduler {
+		publisher := &rabbitmq.Publisher{Url: url, Exchange: &exch}
+		err := publisher.Connect()
+		if err != nil {
 			return err
 		}
-		job.StoreMetricFunc = api.StoreMetric
-		select {
-		case consumeQueue <- job:
-		default:
-			// TODO: alert when this happens
-			dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
-		}
-		return nil
-	})
+		jobQueue := make(chan Job, setting.JobQueueSize)
 
-	//start group of workers to execute the jobs in the execution channel.
-	for i := 0; i < setting.Executors; i++ {
-		go Executor(GraphiteAuthContextReturner, consumeQueue, cache)
+		go Dispatcher(jobQueue)
+
+		//send dispatched jobs to rabbitmq.
+		go func(jobQueue <-chan Job) {
+			for job := range jobQueue {
+				routingKey := fmt.Sprintf("%d", job.MonitorId)
+				msg, err := json.Marshal(job)
+				//log.Info("sending: " + string(msg))
+				if err != nil {
+					log.Error(3, "failed to marshal job to json.", err)
+					continue
+				}
+				publisher.Publish(routingKey, msg)
+			}
+		}(jobQueue)
+	}
+
+	if setting.Executors > 0 {
+		q := rabbitmq.Queue{
+			Name:       "",
+			Durable:    false,
+			AutoDelete: true,
+			Exclusive:  true,
+		}
+		consumer := rabbitmq.Consumer{
+			Url:        url,
+			Exchange:   &exch,
+			Queue:      &q,
+			BindingKey: []string{"10"}, //consistant hashing weight.
+		}
+		if err := consumer.Connect(); err != nil {
+			log.Fatal(0, "failed to start event.consumer.", err)
+		}
+
+		consumeQueue := make(chan Job, setting.JobQueueSize)
+
+		//read jobs from rabbitmq and push them into the execution channel.
+		consumer.Consume(func(msg *amqp.Delivery) error {
+			//convert from json to Job
+			job := Job{}
+			//log.Info("recvd: " + string(msg.Body))
+			if err := json.Unmarshal(msg.Body, &job); err != nil {
+				log.Error(0, "failed to unmarshal msg body.", err)
+				return err
+			}
+			job.StoreMetricFunc = api.StoreMetric
+			select {
+			case consumeQueue <- job:
+			default:
+				// TODO: alert when this happens
+				dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
+			}
+			return nil
+		})
+
+		//start group of workers to execute the jobs in the execution channel.
+		for i := 0; i < setting.Executors; i++ {
+			go Executor(GraphiteAuthContextReturner, consumeQueue, cache)
+		}
 	}
 	return nil
 }

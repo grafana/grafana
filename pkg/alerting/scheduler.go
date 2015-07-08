@@ -59,16 +59,6 @@ func dispatchJobs(jobQueue chan<- Job) {
 
 		dispatcherJobSchedulesSeen.Inc(int64(len(jobs)))
 		for _, job := range jobs {
-			/*job := Job{
-				// note: we don't include the timestamp here so that jobs for same monitor id get routed to same place
-				// this is not really a necessity but might be useful in the future if we want to get stateful and leverage
-				// output from past jobs.
-				fmt.Sprintf("%d", sched.MonitorId),
-				sched.OrgId,
-				sched.Definition,
-				t,
-				time.Unix(lastPointAt, 0),
-			}*/
 			job.GeneratedAt = t
 			job.LastPointTs = time.Unix(lastPointAt, 0)
 

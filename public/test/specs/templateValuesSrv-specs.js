@@ -226,8 +226,9 @@ define([
         scenario.queryResult = [{text: 'apps.backend.backend_01.counters.req'}, {text: 'apps.backend.backend_02.counters.req'}];
       });
 
-      it('should not add non matching items', function() {
-        expect(scenario.variable.options.length).to.be(0);
+      it('should not add non matching items, None option should be added instead', function() {
+        expect(scenario.variable.options.length).to.be(1);
+        expect(scenario.variable.options[0].isNone).to.be(true);
       });
     });
 

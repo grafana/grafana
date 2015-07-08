@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Context struct {
@@ -39,6 +40,7 @@ func GetContextHandler() macaron.Handler {
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		if initContextWithApiKey(ctx) ||
+			initContextWithBasicAuth(ctx) ||
 			initContextWithAuthProxy(ctx) ||
 			initContextWithUserSessionCookie(ctx) ||
 			initContextWithApiKeyFromSession(ctx) ||
@@ -127,6 +129,47 @@ func initContextWithApiKey(ctx *Context) bool {
 	}
 }
 
+func initContextWithBasicAuth(ctx *Context) bool {
+	if !setting.BasicAuthEnabled {
+		return false
+	}
+
+	header := ctx.Req.Header.Get("Authorization")
+	if header == "" {
+		return false
+	}
+
+	username, password, err := util.DecodeBasicAuthHeader(header)
+	if err != nil {
+		ctx.JsonApiErr(401, "Invalid Basic Auth Header", err)
+		return true
+	}
+
+	loginQuery := m.GetUserByLoginQuery{LoginOrEmail: username}
+	if err := bus.Dispatch(&loginQuery); err != nil {
+		ctx.JsonApiErr(401, "Basic auth failed", err)
+		return true
+	}
+
+	user := loginQuery.Result
+
+	// validate password
+	if util.EncodePassword(password, user.Salt) != user.Password {
+		ctx.JsonApiErr(401, "Invalid username or password", nil)
+		return true
+	}
+
+	query := m.GetSignedInUserQuery{UserId: user.Id}
+	if err := bus.Dispatch(&query); err != nil {
+		ctx.JsonApiErr(401, "Authentication error", err)
+		return true
+	} else {
+		ctx.SignedInUser = query.Result
+		ctx.IsSignedIn = true
+		return true
+	}
+}
+
 // special case for panel render calls with api key
 func initContextWithApiKeyFromSession(ctx *Context) bool {
 	keyId := ctx.Session.Get(SESS_KEY_APIKEY)
@@ -196,10 +239,10 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 	switch status {
 	case 404:
-		resp["message"] = "Not Found"
-		metrics.M_Api_Status_500.Inc(1)
-	case 500:
 		metrics.M_Api_Status_404.Inc(1)
+		resp["message"] = "Not Found"
+	case 500:
+		metrics.M_Api_Status_500.Inc(1)
 		resp["message"] = "Internal Server Error"
 	}
 

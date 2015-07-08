@@ -39,7 +39,7 @@ function (angular, _, InfluxQueryBuilder) {
           $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
         }
         $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
-        $scope.tagSegments.push(new MetricSegment({fake: true, value: "=", cssClass: 'query-segment-operator'}));
+        $scope.tagSegments.push(new MetricSegment.newOperator("="));
         $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
       });
 
@@ -177,6 +177,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.tagSegmentUpdated = function(segment, index) {
       $scope.tagSegments[index] = segment;
 
+      // handle remove tag condition
       if (segment.value === $scope.removeTagFilterSegment.value) {
         $scope.tagSegments.splice(index, 3);
         if ($scope.tagSegments.length === 0) {
@@ -193,7 +194,7 @@ function (angular, _, InfluxQueryBuilder) {
           if (index > 2) {
             $scope.tagSegments.splice(index, 0, MetricSegment.newCondition('AND'));
           }
-          $scope.tagSegments.push(MetricSegment.newFake('=', 'operator', 'query-segment-operator'));
+          $scope.tagSegments.push(MetricSegment.newOperator('='));
           $scope.tagSegments.push(MetricSegment.newFake('select tag value', 'value', 'query-segment-value'));
           segment.type = 'key';
           segment.cssClass = 'query-segment-key';
@@ -210,7 +211,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.rebuildTargetTagConditions = function() {
       var tags = [];
       var tagIndex = 0;
-      _.each($scope.tagSegments, function(segment2) {
+      _.each($scope.tagSegments, function(segment2, index) {
         if (segment2.type === 'key') {
           if (tags.length === 0) {
             tags.push({});
@@ -219,6 +220,7 @@ function (angular, _, InfluxQueryBuilder) {
         }
         else if (segment2.type === 'value') {
           tags[tagIndex].value = segment2.value;
+          $scope.tagSegments[index-1] = $scope.getTagValueOperator(segment2.value);
         }
         else if (segment2.type === 'condition') {
           tags.push({ condition: segment2.value });
@@ -228,6 +230,14 @@ function (angular, _, InfluxQueryBuilder) {
 
       $scope.target.tags = tags;
       $scope.$parent.get_data();
+    };
+
+    $scope.getTagValueOperator = function(tagValue) {
+      if (tagValue[0] === '/' && tagValue[tagValue.length - 1] === '/') {
+        return MetricSegment.newOperator('=~');
+      }
+
+      return MetricSegment.newOperator('=');
     };
 
     function MetricSegment(options) {
@@ -263,6 +273,10 @@ function (angular, _, InfluxQueryBuilder) {
 
     MetricSegment.newCondition = function(condition) {
       return new MetricSegment({value: condition, type: 'condition', cssClass: 'query-keyword' });
+    };
+
+    MetricSegment.newOperator = function(op) {
+      return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
     };
 
     MetricSegment.newPlusButton = function() {

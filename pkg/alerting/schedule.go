@@ -3,12 +3,13 @@ package alerting
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 // Job is a job for an alert execution
@@ -16,7 +17,6 @@ import (
 // this way the check runs always on the right data, irrespective of execution delays
 // that said, for convenience, we track the generatedAt timestamp
 type Job struct {
-	Key             string
 	OrgId           int64
 	MonitorId       int64
 	EndpointId      int64
@@ -33,7 +33,7 @@ type Job struct {
 }
 
 func (job Job) String() string {
-	return fmt.Sprintf("<Job> key=%s generatedAt=%s lastPointTs=%s definition: %s", job.Key, job.GeneratedAt, job.LastPointTs, job.Definition)
+	return fmt.Sprintf("<Job> monitorId=%d generatedAt=%s lastPointTs=%s definition: %s", job.MonitorId, job.GeneratedAt, job.LastPointTs, job.Definition)
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
@@ -140,7 +140,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		panic(err)
 	}
 	j := &Job{
-		Key:             fmt.Sprintf("%d", monitor.Id),
 		MonitorId:       monitor.Id,
 		EndpointId:      monitor.EndpointId,
 		EndpointSlug:    monitor.EndpointSlug,

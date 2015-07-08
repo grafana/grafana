@@ -8,6 +8,18 @@ function (_) {
     this.target = target;
   }
 
+  function renderTagCondition (tag, index) {
+    var str = "";
+    if (index > 0) {
+      str = (tag.condition || 'AND') + ' ';
+    }
+
+    if (tag.value && tag.value[0] === '/' && tag.value[tag.value.length - 1] === '/') {
+      return str + tag.key + ' =~ ' + tag.value;
+    }
+    return str + tag.key + " = '" + tag.value + "'";
+  }
+
   var p = InfluxQueryBuilder.prototype;
 
   p.build = function() {
@@ -42,12 +54,12 @@ function (_) {
         if (tag.key === withKey) {
           return memo;
         }
-        memo.push(' ' + tag.key + '=' + "'" + tag.value + "'");
+        memo.push(renderTagCondition(tag, memo.length));
         return memo;
       }, []);
 
       if (whereConditions.length > 0) {
-        query +=  ' WHERE' + whereConditions.join('AND');
+        query +=  ' WHERE ' + whereConditions.join(' ');
       }
     }
 
@@ -71,12 +83,12 @@ function (_) {
 
     query +=  aggregationFunc + '(value)';
     query += ' FROM ' + measurement + ' WHERE ';
-    var conditions = _.map(target.tags, function(tag) {
-      return tag.key + '=' + "'" + tag.value + "' ";
+    var conditions = _.map(target.tags, function(tag, index) {
+      return renderTagCondition(tag, index);
     });
-    conditions.push('$timeFilter');
 
-    query += conditions.join('AND ');
+    query += conditions.join(' ');
+    query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
 
     query += ' GROUP BY time($interval)';
     if  (target.groupByTags && target.groupByTags.length > 0) {

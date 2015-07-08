@@ -18,7 +18,7 @@ specified in a `.ini` configuration file or specified using environment variable
 > **Note.** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+> init.d script using `-config` file parameter.
 
 ## Using environment variables
 
@@ -376,6 +376,10 @@ All executors within a grafana instance share an LRU cache.
 Based on how many schedulers you have and whether they recently restarted,
 jobs might be scheduled multiple times and the executors use the cache to avoid acting on the same job twice.
 Defaults to 10000.
+
+### EnableScheduler
+
+Wether to run a scheduler. Defaults to true.
 
 ### executors
 

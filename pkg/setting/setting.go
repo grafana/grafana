@@ -94,6 +94,9 @@ var (
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
 
+	// Basic Auth
+	BasicAuthEnabled bool
+
 	// Session settings.
 	SessionOptions session.Options
 
@@ -117,6 +120,7 @@ var (
 	TickQueueSize   int
 	JobQueueSize    int
 	ExecutorLRUSize int
+	EnableScheduler bool
 	Executors       int
 
 	ReportingEnabled  bool
@@ -413,6 +417,9 @@ func NewConfigContext(args *CommandLineArgs) {
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
+	authBasic := Cfg.Section("auth.basic")
+	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
@@ -431,6 +438,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	TickQueueSize = alerting.Key("queue_ticks_size").MustInt(0)
 	JobQueueSize = alerting.Key("queue_jobs_size").MustInt(0)
 	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
+	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
 	Executors = alerting.Key("executors").MustInt(100)
 
 	analytics := Cfg.Section("analytics")
