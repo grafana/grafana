@@ -100,13 +100,13 @@ function (angular, _, kbn) {
       if(!metric) { return $q.when([]); }
 
       var options = {
-	method: 'POST',
-	url: this.url + '/api/v1/datapoints/query/tags',
-	data: {
+        method: 'POST',
+        url: this.url + '/api/v1/datapoints/query/tags',
+        data: {
           metrics: [{ name: metric }],
           cache_time: 0,
           start_absolute: 0
-	}
+        }
       };
 
       return $http(options).then(function(result) {
@@ -129,13 +129,13 @@ function (angular, _, kbn) {
       }
 
       var options = {
-	method: 'POST',
-	url: this.url + '/api/v1/datapoints/query/tags',
-	data: {
+        method: 'POST',
+        url: this.url + '/api/v1/datapoints/query/tags',
+        data: {
           metrics: [{ name: metric }],
           cache_time: 0,
           start_absolute: 0
-	}
+        }
       };
 
       return $http(options).then(function(result) {
