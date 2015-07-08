@@ -53,7 +53,7 @@ function (angular, _) {
         return metricList;
       }
       else {
-        $scope.datasource.performMetricSuggestQuery().then(function(result) {
+        $scope.datasource._performMetricSuggestQuery().then(function(result) {
           metricList = result;
           callback(metricList);
         });
@@ -69,7 +69,7 @@ function (angular, _) {
         }
       }
 
-      $scope.datasource.performTagSuggestQuery($scope.target.metric).then(function(result) {
+      $scope.datasource._performTagSuggestQuery($scope.target.metric).then(function(result) {
         if (!_.isEmpty(result)) {
           tagList.push(result);
           callback(_.keys(result.tags));
