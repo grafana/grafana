@@ -32,10 +32,10 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
     [security]
     admin_user = admin
-    
+
     [auth.google]
     client_secret = 0ldS3cretKey
-    
+
 
 Then you can override that using:
 
@@ -367,3 +367,14 @@ enabled. Counters are sent every 24 hours. Default value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
 here. By default this feature is disabled.
+
+## [dashboards.json]
+
+If you have a system that automatically builds dashboards as json files you can enable this feature to have the
+Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+
+### enabled
+`true` or `false`. Is disabled by default.
+
+### path
+The full path to a directory containing your json dashboards.
