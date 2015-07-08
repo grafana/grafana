@@ -39,6 +39,11 @@
 	<!-- tabs -->
 	<div class="rt-tabs">
 		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+		<div style="float: right; display: inline;">
+			<div style="display: inline;">
+				<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Litmus Endpoint: Summary</span></a>
+			</div>
+		</div>
 	</div>
 </div>
 
@@ -47,17 +52,24 @@
 		<div class="detailFull detailLeft">
 			<div class="rt-box">
 				<div class="rt-box-body no-padding" style="min-height: 50px">
+
 					<div class="currentStatus">
+
 						<div class="dropdown" style="float: right; margin-left: 5px;">
 							<a data-toggle="dropdown">
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+<!-- 								<li ng-show="getMonitorByTypeName('Ping').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable Ping
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('Ping').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable Ping
+									</a>
+								</li>		 -->
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -67,7 +79,7 @@
 						</div>
 
 						<div class="pull-right" ng-show="getMonitorByTypeName('Ping').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Jump to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for Ping'"></i></a>
 						</div>
 
  						<div ng-if="!pageReady" class="health">
@@ -95,7 +107,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('Ping').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from&nbsp;</span>{{getMonitorByTypeName('Ping').collectors.length}}<span class="freqMsg">&nbsp;collectors:</span>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('Ping').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for Ping'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
 						</div>
@@ -111,11 +123,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+<!-- 								<li ng-show="getMonitorByTypeName('dns').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable DNS
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('dns').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable DNS
+									</a>
+								</li>	 -->	
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -125,7 +142,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>
 						</div>
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
@@ -146,7 +163,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('DNS').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from&nbsp;</span>{{getMonitorByTypeName('DNS').collectors.length}}<span class="freqMsg">&nbsp;collectors:</span>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('DNS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for DNS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 						</div>
@@ -162,11 +179,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+<!-- 								<li ng-show="getMonitorByTypeName('HTTP').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable HTTP
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('HTTP').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable HTTP
+									</a>
+								</li>		 -->						
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -176,7 +198,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i></a>
 						</div>
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
@@ -198,7 +220,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTP').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from&nbsp;</span>{{getMonitorByTypeName('HTTP').collectors.length}}<span class="freqMsg">&nbsp;collectors</span>:
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTP').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTP'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 						</div>
@@ -214,11 +236,16 @@
 								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
-								<li>
+<!-- 								<li ng-show="getMonitorByTypeName('HTTPS').enabled">
 									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable/Disable
+										Disable HTTPS
 									</a>
 								</li>
+								<li ng-hide="getMonitorByTypeName('HTTPS').enabled">
+									<a href="endpoints/summary/{{endpoint.id}}">
+										Enable HTTPS
+									</a>
+								</li>	 -->	
 								<li>
 									<a href="endpoints/edit/{{endpoint.id}}">
 										Configure
@@ -228,7 +255,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{endpoint.name}} dashboard'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i></a>
 						</div>
 
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
@@ -251,7 +278,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTPS').enabled">
 							<div class="frequency">
-								<span class="freqMsg">Last check from&nbsp;</span>{{getMonitorByTypeName('HTTPS').collectors.length}}<span class="freqMsg">&nbsp;collectors:</span>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTPS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTPS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 						</div>
@@ -262,16 +289,5 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Event Panel TBD
-
-		<div class="detailFull" style="display: inline-flex; margin-top: 10px; align-items: center; justify-content: center;">
-			<div style="display: inline-block; background: #1F1F1F; background-image:url(/img/loading-pulse.svg); background-repeat: no-repeat; background-position:center; padding: 0px; line-height: 0;">
-				<iframe src="http://128.199.88.198/dashboard-solo/db/events-sample?panelId=12&fullscreen&from=now-30d&to=now&var-collector={{collector.slug}}" width="1000" height="275" frameborder="0"></iframe>
-			</div>
-		</div>
-
-		End Event Panel -->
-
 	</div>
 </form>
