@@ -130,6 +130,12 @@ define([
         expect(query).to.be('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" =~ /server.*/');
       });
 
+      it('should build show field query', function() {
+        var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'app', value: 'email'}]});
+        var query = builder.buildExploreQuery('FIELDS');
+        expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
+      });
+
     });
 
   });

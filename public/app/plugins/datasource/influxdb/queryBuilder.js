@@ -32,12 +32,15 @@ function (_) {
 
     if (type === 'TAG_KEYS') {
       query = 'SHOW TAG KEYS';
-      measurement= this.target.measurement;
+      measurement = this.target.measurement;
     } else if (type === 'TAG_VALUES') {
       query = 'SHOW TAG VALUES';
-      measurement= this.target.measurement;
+      measurement = this.target.measurement;
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
+    } else if (type === 'FIELDS') {
+      query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
+      return query;
     }
 
     if (measurement) {

@@ -65,10 +65,9 @@
 				<li class="tight-form-item query-keyword" style="width: 75px;">
 					SELECT
 				</li>
-				<li class="dropdown tight-form-item">
-					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
-						{{target.function}}<span>(value)</span>
-					</a>
+				<li class="dropdown" ng-repeat="field in target.fields">
+					<span influxdb-func-editor field="field" class="tight-form-item tight-form-func">
+					</span>
 				</li>
 			</ul>
 
@@ -114,8 +113,8 @@
 					<i class="fa fa-eye invisible"></i>
 				</li>
 
-				<li class="tight-form-item" >
-					<span class="query-keyword">GROUP BY</span>
+				<li class="tight-form-item query-keyword">
+					GROUP BY
 				</li>
 
 				<li class="tight-form-item">
