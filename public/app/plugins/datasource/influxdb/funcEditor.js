@@ -11,22 +11,18 @@ function (angular, _, $) {
     .directive('influxdbFuncEditor', function($compile) {
 
       var funcSpanTemplate = '<a gf-dropdown="functionMenu" class="dropdown-toggle" ' +
-                             'data-toggle="dropdown">{{target.function}}</a><span>(</span>';
+                             'data-toggle="dropdown">{{field.func}}</a><span>(</span>';
 
       var paramTemplate = '<input type="text" style="display:none"' +
                           ' class="input-mini tight-form-func-param"></input>';
 
       return {
         restrict: 'A',
+        scope: {
+          field: "=",
+        },
         link: function postLink($scope, elem) {
           var $funcLink = $(funcSpanTemplate);
-
-          $scope.functionMenu = _.map($scope.functions, function(func) {
-            return {
-              text: func,
-              click: "changeFunction('" + func + "');"
-            };
-          });
 
           function clickFuncParam() {
             /*jshint validthis:true */
@@ -34,7 +30,7 @@ function (angular, _, $) {
             var $link = $(this);
             var $input = $link.next();
 
-            $input.val($scope.target.column);
+            $input.val($scope.field.name);
             $input.css('width', ($link.width() + 16) + 'px');
 
             $link.hide();
@@ -58,7 +54,7 @@ function (angular, _, $) {
             if ($input.val() !== '') {
               $link.text($input.val());
 
-              $scope.target.column = $input.val();
+              $scope.field.name = $input.val();
               $scope.$apply($scope.get_data);
             }
 
@@ -84,7 +80,7 @@ function (angular, _, $) {
 
             $input.typeahead({
               source: function () {
-                return $scope.listColumns.apply(null, arguments);
+                return $scope.getFields.apply(null, arguments);
               },
               minLength: 0,
               items: 20,

@@ -21,9 +21,12 @@ function (angular, _, InfluxQueryBuilder) {
 
     $scope.init = function() {
       var target = $scope.target;
-      target.function = target.function || 'mean';
       target.tags = target.tags || [];
       target.groupByTags = target.groupByTags || [];
+      target.fields = target.fields || [{
+        name: 'value',
+        func: target.function || 'mean'
+      }];
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
@@ -92,6 +95,15 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
       $scope.$parent.get_data();
+    };
+
+    $scope.getFields = function(query, callback) {
+      var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
+      return $scope.datasource.metricFindQuery(fieldsQuery)
+      .then(function(results) {
+        var fields = _.pluck(results, 'text');
+        callback(fields);
+      });
     };
 
     $scope.toggleQueryMode = function () {
