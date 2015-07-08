@@ -78,8 +78,8 @@ function (angular, _, kbn) {
      */
     KairosDBDatasource.prototype._performMetricSuggestQuery = function(metric) {
       var options = {
-        url : this.url + '/api/v1/metricnames',
-        method : 'GET'
+        url: this.url + '/api/v1/metricnames',
+        method: 'GET'
       };
 
       return $http(options).then(function(response) {
@@ -103,8 +103,8 @@ function (angular, _, kbn) {
 	method: 'POST',
 	url: this.url + '/api/v1/datapoints/query/tags',
 	data: {
-          metrics : [{ name : metric }],
-          cache_time : 0,
+          metrics: [{ name: metric }],
+          cache_time: 0,
           start_absolute: 0
 	}
       };
@@ -132,8 +132,8 @@ function (angular, _, kbn) {
 	method: 'POST',
 	url: this.url + '/api/v1/datapoints/query/tags',
 	data: {
-          metrics : [{ name : metric }],
-          cache_time : 0,
+          metrics: [{ name: metric }],
+          cache_time: 0,
           start_absolute: 0
 	}
       };
@@ -148,11 +148,11 @@ function (angular, _, kbn) {
 
     KairosDBDatasource.prototype.performTagSuggestQuery = function(metric) {
       var options = {
-        url : this.url + '/api/v1/datapoints/query/tags',
-        method : 'POST',
-        data : {
-          metrics : [{ name : metric }],
-          cache_time : 0,
+        url: this.url + '/api/v1/datapoints/query/tags',
+        method: 'POST',
+        data: {
+          metrics: [{ name: metric }],
+          cache_time: 0,
           start_absolute: 0
         }
       };
