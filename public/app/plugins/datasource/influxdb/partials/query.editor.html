@@ -66,8 +66,11 @@
 					SELECT
 				</li>
 				<li class="dropdown" ng-repeat="field in target.fields">
-					<span influxdb-func-editor field="field" get-fields="getFields()" on-change="get_data()" class="tight-form-item">
+					<span influxdb-func-editor field="field" get-fields="getFields()" on-change="fieldChanged(field)" class="tight-form-item">
 					</span>
+				</li>
+				<li>
+					<metric-segment segment="addFieldSegment" get-alt-segments="getFieldSegments()" on-value-changed="addField()"></metric-segment>
 				</li>
 			</ul>
 
