@@ -76,15 +76,25 @@ function (_) {
       throw "Metric measurement is missing";
     }
 
-    var query = 'SELECT ';
-    var measurement = target.measurement;
-    var aggregationFunc = target.function || 'mean';
+    if (!target.fields) {
+      target.fields = [{name: 'value', func: target.function || 'mean'}];
+    }
 
+    var query = 'SELECT ';
+    var i;
+    for (i = 0; i < target.fields.length; i++) {
+      var field = target.fields[i];
+      if (i > 0) {
+        query += ', ';
+      }
+      query += field.func + '(' + field.name + ')';
+    }
+
+    var measurement = target.measurement;
     if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
       measurement = '"' + measurement+ '"';
     }
 
-    query +=  aggregationFunc + '(value)';
     query += ' FROM ' + measurement + ' WHERE ';
     var conditions = _.map(target.tags, function(tag, index) {
       return renderTagCondition(tag, index);
