@@ -48,7 +48,6 @@ in the main Time Picker in the upper right, but they can also have relative time
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
 3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
 
-
 ## Drag-and-Drop panels
 
 You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location.

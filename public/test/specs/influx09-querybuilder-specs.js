@@ -38,6 +38,20 @@ define([
       });
     });
 
+    describe('series with multiple fields', function() {
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [],
+        fields: [{ name: 'tx_in', func: 'sum' }, { name: 'tx_out', func: 'mean' }]
+      });
+
+      var query = builder.build();
+
+      it('should generate correct query', function() {
+        expect(query).to.be('SELECT sum(tx_in), mean(tx_out) FROM "cpu" WHERE $timeFilter GROUP BY time($interval) ORDER BY asc');
+      });
+    });
+
     describe('series with multiple tags only', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',
@@ -128,6 +142,12 @@ define([
         var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'host', value: '/server.*/'}]});
         var query = builder.buildExploreQuery('TAG_VALUES', 'app');
         expect(query).to.be('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" =~ /server.*/');
+      });
+
+      it('should build show field query', function() {
+        var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'app', value: 'email'}]});
+        var query = builder.buildExploreQuery('FIELDS');
+        expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
       });
 
     });
