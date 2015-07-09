@@ -17,7 +17,7 @@ dev environment.
 ## Get Code
 
 ```
-export GOPATH=``pwd`
+export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
 
