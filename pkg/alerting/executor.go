@@ -124,9 +124,11 @@ func Executor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
 					To:       emails,
 					Template: "alerting_notification.html",
 					Data: map[string]interface{}{
-						"Endpoint":  job.EndpointSlug,
-						"CheckType": job.MonitorTypeName,
-						"State":     res.String(),
+						"Endpoint":   job.EndpointSlug,
+						"EndpointId": job.EndpointId,
+						"CheckType":  job.MonitorTypeName,
+						"State":      res.String(),
+						"Timestamp":  job.LastPointTs,
 					},
 				}
 
