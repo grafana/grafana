@@ -38,6 +38,20 @@ define([
       });
     });
 
+    describe('series with multiple fields', function() {
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [],
+        fields: [{ name: 'tx_in', func: 'sum' }, { name: 'tx_out', func: 'mean' }]
+      });
+
+      var query = builder.build();
+
+      it('should generate correct query', function() {
+        expect(query).to.be('SELECT sum(tx_in), mean(tx_out) FROM "cpu" WHERE $timeFilter GROUP BY time($interval) ORDER BY asc');
+      });
+    });
+
     describe('series with multiple tags only', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',

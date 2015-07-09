@@ -16,13 +16,31 @@ function (angular, _, $) {
       var paramTemplate = '<input type="text" style="display:none"' +
                           ' class="input-mini tight-form-func-param"></input>';
 
+      var functionList = [
+        'count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
+        'derivative', 'stddev', 'first', 'last', 'difference'
+      ];
+
+      var functionMenu = _.map(functionList, function(func) {
+        return { text: func, click: "changeFunction('" + func + "');" };
+      });
+
       return {
         restrict: 'A',
         scope: {
           field: "=",
+          getFields: "&",
+          onChange: "&",
         },
         link: function postLink($scope, elem) {
           var $funcLink = $(funcSpanTemplate);
+
+          $scope.functionMenu = functionMenu;
+
+          $scope.changeFunction = function(func) {
+            $scope.field.func = func;
+            $scope.onChange();
+          };
 
           function clickFuncParam() {
             /*jshint validthis:true */
@@ -55,7 +73,7 @@ function (angular, _, $) {
               $link.text($input.val());
 
               $scope.field.name = $input.val();
-              $scope.$apply($scope.get_data);
+              $scope.$apply($scope.onChange());
             }
 
             $input.hide();
@@ -79,8 +97,10 @@ function (angular, _, $) {
             $input.attr('data-provide', 'typeahead');
 
             $input.typeahead({
-              source: function () {
-                return $scope.getFields.apply(null, arguments);
+              source: function (query, callback) {
+                return $scope.getFields().then(function(results) {
+                  callback(results);
+                });
               },
               minLength: 0,
               items: 20,

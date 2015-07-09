@@ -10,15 +10,6 @@ function (angular, _, InfluxQueryBuilder) {
 
   module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q) {
 
-    $scope.functionList = [
-      'count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-      'derivative', 'stddev', 'first', 'last', 'difference'
-    ];
-
-    $scope.functionMenu = _.map($scope.functionList, function(func) {
-      return { text: func, click: "changeFunction('" + func + "');" };
-    });
-
     $scope.init = function() {
       var target = $scope.target;
       target.tags = target.tags || [];
@@ -97,12 +88,11 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.$parent.get_data();
     };
 
-    $scope.getFields = function(query, callback) {
+    $scope.getFields = function() {
       var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
       return $scope.datasource.metricFindQuery(fieldsQuery)
       .then(function(results) {
-        var fields = _.pluck(results, 'text');
-        callback(fields);
+        return _.pluck(results, 'text');
       });
     };
 
