@@ -76,7 +76,7 @@ function (angular, _) {
     };
 
     $scope.save = function() {
-      backendSrv.post('/api/collectors', $scope.collector);
+      return backendSrv.post('/api/collectors', $scope.collector);
     };
 
     $scope.update = function() {
@@ -109,7 +109,9 @@ function (angular, _) {
 
     $scope.setEnabled = function(newState) {
       $scope.collector.enabled = newState;
-      $scope.save();
+      $scope.save().then(function() {
+        $scope.collector.enabled_change = new Date();
+      });
     };
 
     $scope.init();
