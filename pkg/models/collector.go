@@ -14,17 +14,19 @@ var (
 )
 
 type Collector struct {
-	Id        int64
-	OrgId     int64
-	Slug      string
-	Name      string
-	Public    bool
-	Latitude  float64
-	Longitude float64
-	Created   time.Time
-	Updated   time.Time
-	Online    bool
-	Enabled   bool
+	Id            int64
+	OrgId         int64
+	Slug          string
+	Name          string
+	Public        bool
+	Latitude      float64
+	Longitude     float64
+	Created       time.Time
+	Updated       time.Time
+	Online        bool
+	OnlineChange  time.Time
+	Enabled       bool
+	EnabledChange time.Time
 }
 
 type CollectorTag struct {
@@ -46,16 +48,18 @@ type CollectorSession struct {
 // ----------------------
 // DTO
 type CollectorDTO struct {
-	Id        int64    `json:"id"`
-	OrgId     int64    `json:"org_id"`
-	Slug      string   `json:"slug"`
-	Name      string   `json:"name"`
-	Tags      []string `json:"tags"`
-	Public    bool     `json:"public"`
-	Latitude  float64  `json:"latitude"`
-	Longitude float64  `json:"longitude"`
-	Online    bool     `json:"online"`
-	Enabled   bool     `json:"enabled"`
+	Id            int64     `json:"id"`
+	OrgId         int64     `json:"org_id"`
+	Slug          string    `json:"slug"`
+	Name          string    `json:"name"`
+	Tags          []string  `json:"tags"`
+	Public        bool      `json:"public"`
+	Latitude      float64   `json:"latitude"`
+	Longitude     float64   `json:"longitude"`
+	Online        bool      `json:"online"`
+	OnlineChange  time.Time `json:"online_change"`
+	Enabled       bool      `json:"enabled"`
+	EnabledChange time.Time `json:"enabled_change"`
 }
 
 // ----------------------
