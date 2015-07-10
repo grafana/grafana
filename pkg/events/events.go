@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Events can be passed to external systems via for example AMPQ
+// Events can be passed to external systems via for example AMQP
 // Treat these events as basically DTOs so changes has to be backward compatible
 
 type Priority string
@@ -63,6 +63,14 @@ type OrgUpdated struct {
 }
 
 type UserCreated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Id        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Login     string    `json:"login"`
+	Email     string    `json:"email"`
+}
+
+type UserSignedUp struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`

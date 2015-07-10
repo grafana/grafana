@@ -27,7 +27,7 @@ function (angular, _) {
       this._texts = {};
 
       _.each(this.variables, function(variable) {
-        if (!variable.current || !variable.current.value) { return; }
+        if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
 
         this._values[variable.name] = this.renderVariableValue(variable);
         this._texts[variable.name] = variable.current.text;
@@ -116,8 +116,16 @@ function (angular, _) {
     };
 
     this.fillVariableValuesForUrl = function(params) {
+      var toUrlVal = function(current) {
+        if (current.text === 'All') {
+          return 'All';
+        } else {
+          return current.value;
+        }
+      };
+
       _.each(this.variables, function(variable) {
-        params['var-' + variable.name] = variable.current.value;
+        params['var-' + variable.name] = toUrlVal(variable.current);
       });
     };
 

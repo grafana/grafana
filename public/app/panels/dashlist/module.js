@@ -21,7 +21,7 @@ function (angular, app, _, config, PanelMeta) {
   module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      panelName: 'Dash list',
+      panelName: 'Dashboard list',
       editIcon:  "fa fa-star",
       fullscreen: true,
     });
@@ -66,6 +66,7 @@ function (angular, app, _, config, PanelMeta) {
 
       return backendSrv.search(params).then(function(result) {
         $scope.dashList = result;
+        $scope.panelRenderingComplete();
       });
     };
 

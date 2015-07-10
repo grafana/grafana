@@ -1,7 +1,5 @@
 package models
 
-import "errors"
-
 type OAuthType int
 
 const (
@@ -9,5 +7,3 @@ const (
 	GOOGLE
 	TWITTER
 )
-
-var ErrNotFound = errors.New("Not found")

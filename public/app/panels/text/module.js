@@ -61,6 +61,7 @@ function (angular, app, _, require, PanelMeta) {
       else if ($scope.panel.mode === 'text') {
         $scope.renderText($scope.panel.content);
       }
+      $scope.panelRenderingComplete();
     };
 
     $scope.renderText = function(content) {

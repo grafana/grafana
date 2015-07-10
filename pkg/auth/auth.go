@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,36 +39,46 @@ type AuthSource interface {
 	AuthenticateUser(username, password string) (*m.User, error)
 }
 
-type GetAuthSourcesQuery struct {
-	Sources []AuthSource
+type AuthenticateUserQuery struct {
+	Username string
+	Password string
+	User     *m.User
 }
 
 func init() {
-	bus.AddHandler("auth", GetAuthSources)
+	bus.AddHandler("auth", AuthenticateUser)
 }
 
-func GetAuthSources(query *GetAuthSourcesQuery) error {
-	query.Sources = []AuthSource{&GrafanaDBAuthSource{}}
-	return nil
+func AuthenticateUser(query *AuthenticateUserQuery) error {
+	err := loginUsingGrafanaDB(query)
+	if err == nil || err != ErrInvalidCredentials {
+		return err
+	}
+
+	if setting.LdapEnabled {
+		err = loginUsingLdap(query)
+	}
+
+	return err
 }
 
-type GrafanaDBAuthSource struct {
-}
+func loginUsingGrafanaDB(query *AuthenticateUserQuery) error {
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
-func (s *GrafanaDBAuthSource) AuthenticateUser(username, password string) (*m.User, error) {
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: username}
-	err := bus.Dispatch(&userQuery)
-
-	if err != nil {
-		return nil, ErrInvalidCredentials
+	if err := bus.Dispatch(&userQuery); err != nil {
+		if err == m.ErrUserNotFound {
+			return ErrInvalidCredentials
+		}
+		return err
 	}
 
 	user := userQuery.Result
 
-	passwordHashed := util.EncodePassword(password, user.Salt)
+	passwordHashed := util.EncodePassword(query.Password, user.Salt)
 	if passwordHashed != user.Password {
-		return nil, ErrInvalidCredentials
+		return ErrInvalidCredentials
 	}
 
-	return user, nil
+	query.User = user
+	return nil
 }

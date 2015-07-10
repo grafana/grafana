@@ -18,7 +18,7 @@ specified in a `.ini` configuration file or specified using environment variable
 > **Note.** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+> init.d script using `-config` file parameter.
 
 ## Using environment variables
 
@@ -28,14 +28,19 @@ using environment variables using the syntax:
     GF_<SectionName>_<KeyName>
 
 Where the section name is the text within the brackets. Everything
-should be upper case. For example, given this configuration setting:
+should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
     [security]
     admin_user = admin
 
+    [auth.google]
+    client_secret = 0ldS3cretKey
+
+
 Then you can override that using:
 
     export GF_SECURITY_ADMIN_USER=true
+    export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 <hr>
 
@@ -322,7 +327,8 @@ This option should be configured differently depending on what type of
 session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.
@@ -361,3 +367,14 @@ enabled. Counters are sent every 24 hours. Default value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
 here. By default this feature is disabled.
+
+## [dashboards.json]
+
+If you have a system that automatically builds dashboards as json files you can enable this feature to have the
+Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+
+### enabled
+`true` or `false`. Is disabled by default.
+
+### path
+The full path to a directory containing your json dashboards.

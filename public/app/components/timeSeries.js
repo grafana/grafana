@@ -54,6 +54,7 @@ function (_, kbn) {
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
       if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
       if (override.color !== void 0) { this.color = override.color; }
+      if (override.transform !== void 0) { this.transform = override.transform; }
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;

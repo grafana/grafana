@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/gogits/gogs/modules/ldap"
+	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -15,7 +15,7 @@ var (
 )
 
 func Login(username, password string) error {
-	url, err := url.Parse(setting.LdapUrls[0])
+	url, err := url.Parse(setting.LdapHosts[0])
 	if err != nil {
 		return err
 	}

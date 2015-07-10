@@ -65,6 +65,18 @@ define([
       });
     });
 
+    describe('when last tag value segment is updated to regex', function() {
+      beforeEach(function() {
+        ctx.scope.init();
+        ctx.scope.tagSegmentUpdated({value: 'asd', type: 'plus-button'}, 0);
+        ctx.scope.tagSegmentUpdated({value: '/server.*/', type: 'value'}, 2);
+      });
+
+      it('should update operator', function() {
+        expect(ctx.scope.tagSegments[1].value).to.be('=~');
+      });
+    });
+
     describe('when second tag key is added', function() {
       beforeEach(function() {
         ctx.scope.init();
