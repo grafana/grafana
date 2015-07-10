@@ -1,4 +1,4 @@
-// a metrics class that uses statsd on the backend
+// a metrics class that uses dogstatsd on the backend
 // at some point, we could/might try to unite this with the metrics package
 
 // note that on creation, we automatically send a default value so that:
