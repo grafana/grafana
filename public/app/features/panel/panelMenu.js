@@ -11,25 +11,33 @@ function (angular, $, _) {
     .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars}}</span>' +
+            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
             '<span class="panel-links-icon"></span>' +
             '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
           '</span>';
 
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
-        template += '<div class="panel-menu-inner">';
-        template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
-        template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
-        template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
-        template += '<div class="clearfix"></div>';
-        template += '</div>';
+
+        if ($scope.dashboardMeta.canEdit) {
+          template += '<div class="panel-menu-inner">';
+          template += '<div class="panel-menu-row">';
+          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
+          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
+          template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
+          template += '<div class="clearfix"></div>';
+          template += '</div>';
+        }
 
         template += '<div class="panel-menu-row">';
         template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="fa fa-bars"></i></a>';
 
         _.each($scope.panelMeta.menu, function(item) {
+          // skip edit actions if not editor
+          if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
+            return;
+          }
+
           template += '<a class="panel-menu-link" ';
           if (item.click) { template += ' ng-click="' + item.click + '"'; }
           if (item.editorLink) { template += ' dash-editor-link="' + item.editorLink + '"'; }
@@ -61,7 +69,6 @@ function (angular, $, _) {
         link: function($scope, elem) {
           var $link = $(linkTemplate);
           var $panelContainer = elem.parents(".panel-container");
-          var menuWidth = $scope.panelMeta.menu.length === 4 ? 236 : 191;
           var menuScope = null;
           var timeout = null;
           var $menu = null;
@@ -111,21 +118,8 @@ function (angular, $, _) {
               return;
             }
 
-            var windowWidth = $(window).width();
-            var panelLeftPos = $(elem).offset().left;
-            var panelWidth = $(elem).width();
-            var menuLeftPos = (panelWidth / 2) - (menuWidth/2);
-            var stickingOut = panelLeftPos + menuLeftPos + menuWidth - windowWidth;
-            if (stickingOut > 0) {
-              menuLeftPos -= stickingOut + 10;
-            }
-            if (panelLeftPos + menuLeftPos < 0) {
-              menuLeftPos = 0;
-            }
-
             var menuTemplate = createMenuTemplate($scope);
             $menu = $(menuTemplate);
-            $menu.css('left', menuLeftPos);
             $menu.mouseleave(function() {
               dismiss(1000);
             });
@@ -136,14 +130,37 @@ function (angular, $, _) {
               dismiss(null, true);
             };
 
-            $('.panel-menu').remove();
-            elem.append($menu);
-            $scope.$apply(function() {
-              $compile($menu.contents())(menuScope);
-            });
-
             $(".panel-container").removeClass('panel-highlight');
             $panelContainer.toggleClass('panel-highlight');
+
+            $('.panel-menu').remove();
+
+            elem.append($menu);
+
+            $scope.$apply(function() {
+              $compile($menu.contents())(menuScope);
+
+              var menuWidth =  $menu[0].offsetWidth;
+              var menuHeight =  $menu[0].offsetHeight;
+
+              var windowWidth = $(window).width();
+              var panelLeftPos = $(elem).offset().left;
+              var panelWidth = $(elem).width();
+
+              var menuLeftPos = (panelWidth / 2) - (menuWidth/2);
+              var stickingOut = panelLeftPos + menuLeftPos + menuWidth - windowWidth;
+              if (stickingOut > 0) {
+                menuLeftPos -= stickingOut + 10;
+              }
+              if (panelLeftPos + menuLeftPos < 0) {
+                menuLeftPos = 0;
+              }
+              if ($scope.fullscreen) {
+                menuHeight = -(menuHeight/2);
+              }
+
+              $menu.css({'left': menuLeftPos, top: -menuHeight});
+            });
 
             dismiss(2200);
           };

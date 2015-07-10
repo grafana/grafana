@@ -17,34 +17,34 @@ require.config({
     chromath:              '../vendor/chromath',
     filesaver:             '../vendor/filesaver',
 
-    angular:               '../vendor/angular/angular',
-    'angular-route':       '../vendor/angular/angular-route',
-    'angular-sanitize':    '../vendor/angular/angular-sanitize',
-    angularMocks:          '../vendor/angular/angular-mocks',
-    'angular-dragdrop':       '../vendor/angular/angular-dragdrop',
-    'angular-strap':          '../vendor/angular/angular-strap',
-    timepicker:               '../vendor/angular/timepicker',
-    datepicker:               '../vendor/angular/datepicker',
-    bindonce:                 '../vendor/angular/bindonce',
+    angular:                  '../vendor/angular/angular',
+    'angular-route':          '../vendor/angular-route/angular-route',
+    'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
+    angularMocks:             '../vendor/angular-mocks/angular-mocks',
+    'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
+    'angular-strap':          '../vendor/angular-other/angular-strap',
+    timepicker:               '../vendor/angular-other/timepicker',
+    datepicker:               '../vendor/angular-other/datepicker',
+    bindonce:                 '../vendor/angular-bindonce/bindonce',
     crypto:                   '../vendor/crypto.min',
     spectrum:                 '../vendor/spectrum',
 
-    jquery:                   '../vendor/jquery/jquery-2.1.1.min',
+    jquery:                   '../vendor/jquery/dist/jquery',
 
     bootstrap:                '../vendor/bootstrap/bootstrap',
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 
     'extend-jquery':          'components/extend-jquery',
 
-    'jquery.flot':            '../vendor/jquery/jquery.flot',
-    'jquery.flot.pie':        '../vendor/jquery/jquery.flot.pie',
-    'jquery.flot.events':     '../vendor/jquery/jquery.flot.events',
-    'jquery.flot.selection':  '../vendor/jquery/jquery.flot.selection',
-    'jquery.flot.stack':      '../vendor/jquery/jquery.flot.stack',
-    'jquery.flot.stackpercent':'../vendor/jquery/jquery.flot.stackpercent',
-    'jquery.flot.time':       '../vendor/jquery/jquery.flot.time',
-    'jquery.flot.crosshair':  '../vendor/jquery/jquery.flot.crosshair',
-    'jquery.flot.fillbelow':  '../vendor/jquery/jquery.flot.fillbelow',
+    'jquery.flot':             '../vendor/flot/jquery.flot',
+    'jquery.flot.pie':         '../vendor/flot/jquery.flot.pie',
+    'jquery.flot.events':      '../vendor/flot/jquery.flot.events',
+    'jquery.flot.selection':   '../vendor/flot/jquery.flot.selection',
+    'jquery.flot.stack':       '../vendor/flot/jquery.flot.stack',
+    'jquery.flot.stackpercent':'../vendor/flot/jquery.flot.stackpercent',
+    'jquery.flot.time':        '../vendor/flot/jquery.flot.time',
+    'jquery.flot.crosshair':   '../vendor/flot/jquery.flot.crosshair',
+    'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
   },
@@ -125,9 +125,12 @@ require([
     'specs/graphiteTargetCtrl-specs',
     'specs/graphiteDatasource-specs',
     'specs/influxSeries-specs',
+    'specs/influxSeries08-specs',
     'specs/influxQueryBuilder-specs',
     'specs/influx09-querybuilder-specs',
     'specs/influxdb-datasource-specs',
+    'specs/influxdbQueryCtrl-specs',
+    'specs/kairosdb-datasource-specs',
     'specs/graph-ctrl-specs',
     'specs/graph-specs',
     'specs/graph-tooltip-specs',
@@ -139,7 +142,11 @@ require([
     'specs/kbn-format-specs',
     'specs/dashboardSrv-specs',
     'specs/dashboardViewStateSrv-specs',
-    'specs/soloPanelCtrl-specs',
+    'specs/singlestat-specs',
+    'specs/dynamicDashboardSrv-specs',
+    'specs/unsavedChangesSrv-specs',
+    'specs/valueSelectDropdown-specs',
+    'specs/opentsdbDatasource-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
@@ -150,4 +157,3 @@ require([
     window.__karma__.start();
   });
 });
-

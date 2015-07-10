@@ -15,9 +15,8 @@ no_toc: true
   <div class="columns medium-6">
     <h3>Episode 2 - Templated Graphite Queries</h3>
     <div class="video-container">
-    <iframe height="315" src="//www.youtube.com/embed/FhNUrueWwOk?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
+    <iframe height="215" src="//www.youtube.com/embed/FhNUrueWwOk?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
     </div>
-  </div>
   </div>
 </div>
 
@@ -34,7 +33,6 @@ no_toc: true
     <iframe height="215" src="https://www.youtube.com/embed/JY22EBOR9hQ?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
     </div>
   </div>
-  </div>
 </div>
 
 <div class="row">
@@ -49,7 +47,6 @@ no_toc: true
     <div class="video-container">
     <iframe height="215" src="https://www.youtube.com/embed/9ZCMVNxUf6s?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
     </div>
-  </div>
   </div>
 </div>
 

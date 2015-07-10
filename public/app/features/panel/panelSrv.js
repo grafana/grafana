@@ -11,6 +11,7 @@ function (angular, _, config) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
 
     this.init = function($scope) {
+
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
       $scope.inspector = {};
@@ -83,6 +84,10 @@ function (angular, _, config) {
         }
 
         return datasourceSrv.get($scope.panel.datasource);
+      };
+
+      $scope.panelRenderingComplete = function() {
+        $rootScope.performance.panelsRendered++;
       };
 
       $scope.get_data = function() {

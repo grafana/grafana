@@ -16,7 +16,7 @@ function (angular, _, $) {
 
           // tooltip removal fix
           $scope.$on("$routeChangeSuccess", function() {
-            $("#tooltip").remove();
+            $("#tooltip, .tooltip").remove();
           });
 
           $scope.$watch('submenuEnabled', function() {

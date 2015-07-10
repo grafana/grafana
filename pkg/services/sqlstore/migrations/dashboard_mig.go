@@ -86,4 +86,10 @@ func addDashboardMigration(mg *Migrator) {
 	}))
 
 	mg.AddMigration("drop table dashboard_v1", NewDropTableMigration("dashboard_v1"))
+
+	// change column type of dashboard.data
+	mg.AddMigration("alter dashboard.data to mediumtext v1", new(RawSqlMigration).
+		Sqlite("SELECT 0 WHERE 0;").
+		Postgres("SELECT 0;").
+		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
 }

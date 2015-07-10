@@ -25,14 +25,14 @@ function (angular, _, config) {
       }
 
       backendSrv.search(query).then(function(results) {
-        $scope.searchHits = results.dashboards;
+        $scope.searchHits = results;
         $scope.filterHits();
       });
     };
 
     $scope.filterHits = function() {
       $scope.filteredHits = _.reject($scope.searchHits, function(dash) {
-        return _.findWhere($scope.playlist, {slug: dash.slug});
+        return _.findWhere($scope.playlist, {uri: dash.uri});
       });
     };
 

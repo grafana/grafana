@@ -1,23 +1,17 @@
 <div class="submenu-controls" ng-controller="SubmenuCtrl">
 	<div class="tight-form borderless">
 
-
 		<ul class="tight-form-list" ng-if="dashboard.templating.list.length > 0">
-			<li ng-repeat-start="variable in variables" class="tight-form-item template-param-name">
-				<span class="template-variable ">
-					${{variable.name}}:
+			<li ng-repeat="variable in variables" class="submenu-item">
+				<span class="template-variable tight-form-item" ng-show="!variable.hideLabel" style="padding-right: 5px">
+					{{variable.label || variable.name}}:
 				</span>
-			</li>
-
-			<li ng-repeat-end template-param-selector>
-			</li>
-
-			<li class="tight-form-item" style="width: 15px">
+				<value-select-dropdown variable="variable" on-updated="variableUpdated(variable)" get-values-for-tag="getValuesForTag(variable, tagKey)"></value-select-dropdown>
 			</li>
 		</ul>
 
 		<ul class="tight-form-list" ng-if="dashboard.annotations.list.length > 0">
-			<li ng-repeat="annotation in dashboard.annotations.list" class="tight-form-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
+			<li ng-repeat="annotation in dashboard.annotations.list" class="submenu-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 				<a ng-click="disableAnnotation(annotation)">
 					<i class="fa fa-bolt"></i>
 					{{annotation.name}}
@@ -25,6 +19,10 @@
 					<label for="hideYAxis" class="cr1"></label>
 				</a>
 			</li>
+		</ul>
+
+		<ul class="tight-form-list pull-right" ng-if="dashboard.links.length > 0">
+			<dash-links-container links="dashboard.links"></dash-links-container>
 		</ul>
 
 		<div class="clearfix"></div>

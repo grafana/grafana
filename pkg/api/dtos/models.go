@@ -21,24 +21,29 @@ type CurrentUser struct {
 	Email          string     `json:"email"`
 	Name           string     `json:"name"`
 	LightTheme     bool       `json:"lightTheme"`
-	OrgRole        m.RoleType `json:"orgRole"`
+	OrgId          int64      `json:"orgId"`
 	OrgName        string     `json:"orgName"`
+	OrgRole        m.RoleType `json:"orgRole"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 }
 
 type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred"`
-	IsHome     bool      `json:"isHome"`
-	IsSnapshot bool      `json:"isSnapshot"`
+	IsStarred  bool      `json:"isStarred,omitempty"`
+	IsHome     bool      `json:"isHome,omitempty"`
+	IsSnapshot bool      `json:"isSnapshot,omitempty"`
+	Type       string    `json:"type,omitempty"`
+	CanSave    bool      `json:"canSave"`
+	CanEdit    bool      `json:"canEdit"`
+	CanStar    bool      `json:"canStar"`
 	Slug       string    `json:"slug"`
 	Expires    time.Time `json:"expires"`
 	Created    time.Time `json:"created"`
 }
 
-type Dashboard struct {
-	Meta  DashboardMeta          `json:"meta"`
-	Model map[string]interface{} `json:"model"`
+type DashboardFullWithMeta struct {
+	Meta      DashboardMeta          `json:"meta"`
+	Dashboard map[string]interface{} `json:"dashboard"`
 }
 
 type DataSource struct {

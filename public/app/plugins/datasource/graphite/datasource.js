@@ -36,7 +36,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildGraphiteParams(graphOptions);
+        var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -111,6 +111,7 @@ function (angular, _, $, config, kbn, moment) {
             var list = [];
             for (var i = 0; i < results.data.length; i++) {
               var e = results.data[i];
+
               list.push({
                 annotation: annotation,
                 time: e.when * 1000,
@@ -195,6 +196,12 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
+    GraphiteDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('*').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     GraphiteDatasource.prototype.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
         .then(function(results) {
@@ -231,7 +238,7 @@ function (angular, _, $, config, kbn, moment) {
       '#Y', '#Z'
     ];
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(options) {
+    GraphiteDatasource.prototype.buildGraphiteParams = function(options, scopedVars) {
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
@@ -252,7 +259,7 @@ function (angular, _, $, config, kbn, moment) {
           continue;
         }
 
-        targetValue = templateSrv.replace(target.target);
+        targetValue = templateSrv.replace(target.target, scopedVars);
         targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
         targets[this._seriesRefLetters[i]] = targetValue;
       }

@@ -19,7 +19,7 @@ The image above shows you the top header for a dashboard.
 
 1. Side menubar toggle: This toggles the side menu, allowing you to focus on the data presented in the dashboard. The side menu provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
 2. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage Dashboard playlists.
-3. Star Dashboard: Star (or unstar) the current Dashboar. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+3. Star Dashboard: Star (or unstar) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
 4. Share Dashboard: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
 5. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
 6. Settings: Manage Dashboard settings and features such as Templating and Annotations.
@@ -28,7 +28,7 @@ The image above shows you the top header for a dashboard.
 Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows.
 By adjusting the display properties of Panels and Rows, you can customize the perfect Dashboard for your exact needs.
 Each panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB).
-This allows you to create a single dashboard that unifies the data across your organization. Panels use the time range specificed
+This allows you to create a single dashboard that unifies the data across your organization. Panels use the time range specified
 in the main Time Picker in the upper right, but they can also have relative time overrides.
 
 <img src="/img/v2/dashboard_annotated.png" class="no-shadow">
@@ -39,6 +39,14 @@ in the main Time Picker in the upper right, but they can also have relative time
 4. Row controls menu. Via this menu you can add panels to the row, set row height and more.
 5. Dashboard panel. You edit panels by clicking the panel title.
 6. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
+
+## Adding & Editing Graphs and Panels
+
+![](/img/v2/graph_metrics_tab_graphite.png)
+
+1. You add panels via row menu. The row menu is the green icon to the left of each row.
+2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
+3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
 
 ## Drag-and-Drop panels
 

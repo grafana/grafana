@@ -16,7 +16,7 @@ module.exports = function(config) {
       configFile: '<%= srcDir %>/test/karma.conf.js',
       reporters: ['dots','coverage','coveralls'],
       preprocessors: {
-        '<%= srcDir %>/app/**/*.js': ['coverage']
+        'public/app/**/*.js': ['coverage']
       },
       coverageReporter: {
         type: 'lcov',

@@ -20,6 +20,7 @@ function (angular, app, _, $) {
 
         scope.$on('render', function() {
           render();
+          scope.panelRenderingComplete();
         });
 
         function setElementHeight() {
@@ -73,7 +74,7 @@ function (angular, app, _, $) {
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
-          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          var value = applyColoringThresholds(data.valueRounded, data.valueFormated);
           body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
           if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -147,8 +148,8 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && !isNaN(data.mainValue)) {
-            var color = getColorForValue(data.mainValue);
+          if (panel.colorBackground && !isNaN(data.valueRounded)) {
+            var color = getColorForValue(data.valueRounded);
             if (color) {
               $panelContainer.css('background-color', color);
               if (scope.fullscreen) {
@@ -181,9 +182,13 @@ function (angular, app, _, $) {
 
         elem.click(function() {
           if (panel.links.length === 0) { return; }
-
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0]);
-          if (linkInfo.href[0] === '#') { linkInfo.href = linkInfo.href.substring(1); }
+          var link = panel.links[0];
+          var linkInfo = linkSrv.getPanelLinkAnchorInfo(link);
+          if (panel.links[0].targetBlank) {
+            var redirectWindow = window.open(linkInfo.href, '_blank');
+            redirectWindow.location;
+            return;
+          }
 
           if (linkInfo.href.indexOf('http') === 0) {
             window.location.href = linkInfo.href;

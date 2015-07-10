@@ -11,22 +11,36 @@ function (angular, _, $) {
     .directive('influxdbFuncEditor', function($compile) {
 
       var funcSpanTemplate = '<a gf-dropdown="functionMenu" class="dropdown-toggle" ' +
-                             'data-toggle="dropdown">{{target.function}}</a><span>(</span>';
+                             'data-toggle="dropdown">{{field.func}}</a><span>(</span>';
 
       var paramTemplate = '<input type="text" style="display:none"' +
                           ' class="input-mini tight-form-func-param"></input>';
 
+      var functionList = [
+        'count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
+        'derivative', 'stddev', 'first', 'last', 'difference'
+      ];
+
+      var functionMenu = _.map(functionList, function(func) {
+        return { text: func, click: "changeFunction('" + func + "');" };
+      });
+
       return {
         restrict: 'A',
+        scope: {
+          field: "=",
+          getFields: "&",
+          onChange: "&",
+        },
         link: function postLink($scope, elem) {
           var $funcLink = $(funcSpanTemplate);
 
-          $scope.functionMenu = _.map($scope.functions, function(func) {
-            return {
-              text: func,
-              click: "changeFunction('" + func + "');"
-            };
-          });
+          $scope.functionMenu = functionMenu;
+
+          $scope.changeFunction = function(func) {
+            $scope.field.func = func;
+            $scope.onChange();
+          };
 
           function clickFuncParam() {
             /*jshint validthis:true */
@@ -34,7 +48,7 @@ function (angular, _, $) {
             var $link = $(this);
             var $input = $link.next();
 
-            $input.val($scope.target.column);
+            $input.val($scope.field.name);
             $input.css('width', ($link.width() + 16) + 'px');
 
             $link.hide();
@@ -58,8 +72,8 @@ function (angular, _, $) {
             if ($input.val() !== '') {
               $link.text($input.val());
 
-              $scope.target.column = $input.val();
-              $scope.$apply($scope.get_data);
+              $scope.field.name = $input.val();
+              $scope.$apply($scope.onChange());
             }
 
             $input.hide();
@@ -83,8 +97,10 @@ function (angular, _, $) {
             $input.attr('data-provide', 'typeahead');
 
             $input.typeahead({
-              source: function () {
-                return $scope.listColumns.apply(null, arguments);
+              source: function (query, callback) {
+                return $scope.getFields().then(function(results) {
+                  callback(results);
+                });
               },
               minLength: 0,
               items: 20,
@@ -108,7 +124,7 @@ function (angular, _, $) {
           function addElementsAndCompile() {
             $funcLink.appendTo(elem);
 
-            var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + $scope.target.column + '</a>');
+            var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + $scope.field.name + '</a>');
             var $input = $(paramTemplate);
 
             $paramLink.appendTo(elem);

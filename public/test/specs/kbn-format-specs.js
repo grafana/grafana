@@ -51,7 +51,12 @@ define([
     });
   });
 
-
+  describe('kbn roundValue', function() {
+    it('should should handle null value', function() {
+      var str = kbn.roundValue(null, 2);
+      expect(str).to.be(null);
+    });
+  });
 
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {
@@ -63,7 +68,7 @@ define([
     it('10m 1600 resolution', function() {
       var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
       var str = kbn.calculateInterval(range, 1600, null);
-      expect(str).to.be('0.1s');
+      expect(str).to.be('100ms');
     });
 
     it('fixed user interval', function() {

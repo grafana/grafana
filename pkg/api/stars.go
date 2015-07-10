@@ -6,40 +6,35 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func StarDashboard(c *middleware.Context) {
-	var cmd = m.StarDashboardCommand{
-		UserId:      c.UserId,
-		DashboardId: c.ParamsInt64(":id"),
+func StarDashboard(c *middleware.Context) Response {
+	if !c.IsSignedIn {
+		return ApiError(412, "You need to sign in to star dashboards", nil)
 	}
 
+	cmd := m.StarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
+
 	if cmd.DashboardId <= 0 {
-		c.JsonApiErr(400, "Missing dashboard id", nil)
-		return
+		return ApiError(400, "Missing dashboard id", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to star dashboard", err)
-		return
+		return ApiError(500, "Failed to star dashboard", err)
 	}
 
-	c.JsonOK("Dashboard starred!")
+	return ApiSuccess("Dashboard starred!")
 }
 
-func UnstarDashboard(c *middleware.Context) {
-	var cmd = m.UnstarDashboardCommand{
-		UserId:      c.UserId,
-		DashboardId: c.ParamsInt64(":id"),
-	}
+func UnstarDashboard(c *middleware.Context) Response {
+
+	cmd := m.UnstarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
 
 	if cmd.DashboardId <= 0 {
-		c.JsonApiErr(400, "Missing dashboard id", nil)
-		return
+		return ApiError(400, "Missing dashboard id", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to unstar dashboard", err)
-		return
+		return ApiError(500, "Failed to unstar dashboard", err)
 	}
 
-	c.JsonOK("Dashboard unstarred")
+	return ApiSuccess("Dashboard unstarred")
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func init() {
@@ -23,21 +24,17 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
-		existing := m.Dashboard{Slug: dash.Slug, OrgId: dash.OrgId}
-		hasExisting, err := sess.Get(&existing)
-		if err != nil {
-			return err
-		}
+		var existing, sameTitle m.Dashboard
 
-		if hasExisting {
-			// another dashboard with same name
-			if dash.Id != existing.Id {
-				if cmd.Overwrite {
-					dash.Id = existing.Id
-				} else {
-					return m.ErrDashboardWithSameNameExists
-				}
+		if dash.Id > 0 {
+			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+			if err != nil {
+				return err
 			}
+			if !dashWithIdExists {
+				return m.ErrDashboardNotFound
+			}
+
 			// check for is someone else has written in between
 			if dash.Version != existing.Version {
 				if cmd.Overwrite {
@@ -48,13 +45,35 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
+		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
+		if err != nil {
+			return err
+		}
+
+		if sameTitleExists {
+			// another dashboard with same name
+			if dash.Id != sameTitle.Id {
+				if cmd.Overwrite {
+					dash.Id = sameTitle.Id
+				} else {
+					return m.ErrDashboardWithSameNameExists
+				}
+			}
+		}
+
+		affectedRows := int64(0)
+
 		if dash.Id == 0 {
 			metrics.M_Models_Dashboard_Insert.Inc(1)
-			_, err = sess.Insert(dash)
+			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
 			dash.Data["version"] = dash.Version
-			_, err = sess.Id(dash.Id).Update(dash)
+			affectedRows, err = sess.Id(dash.Id).Update(dash)
+		}
+
+		if affectedRows == 0 {
+			return m.ErrDashboardNotFound
 		}
 
 		// delete existing tabs
@@ -101,7 +120,7 @@ type DashboardSearchProjection struct {
 	Term  string
 }
 
-func SearchDashboards(query *m.SearchDashboardsQuery) error {
+func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -131,16 +150,7 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		params = append(params, "%"+query.Title+"%")
 	}
 
-	if len(query.Tag) > 0 {
-		sql.WriteString(" AND dashboard_tag.term=?")
-		params = append(params, query.Tag)
-	}
-
-	if query.Limit == 0 || query.Limit > 10000 {
-		query.Limit = 300
-	}
-
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT %d", query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
 	err := x.Sql(sql.String(), params...).Find(&res)
@@ -148,16 +158,17 @@ func SearchDashboards(query *m.SearchDashboardsQuery) error {
 		return err
 	}
 
-	query.Result = make([]*m.DashboardSearchHit, 0)
-	hits := make(map[int64]*m.DashboardSearchHit)
+	query.Result = make([]*search.Hit, 0)
+	hits := make(map[int64]*search.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.Id]
 		if !exists {
-			hit = &m.DashboardSearchHit{
+			hit = &search.Hit{
 				Id:    item.Id,
 				Title: item.Title,
-				Slug:  item.Slug,
+				Uri:   "db/" + item.Slug,
+				Type:  search.DashHitDB,
 				Tags:  []string{},
 			}
 			query.Result = append(query.Result, hit)

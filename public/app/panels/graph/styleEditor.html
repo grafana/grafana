@@ -73,27 +73,30 @@
 					<li class="tight-form-item">
 						alias or regex
 					</li>
+
 					<li>
-						<input type="text"
-						ng-model="override.alias"
-						bs-typeahead="getSeriesNames"
-						ng-blur="render()"
-						data-min-length=0 data-items=100
-						class="input-medium tight-form-input" >
+						<input type="text" ng-model="override.alias" bs-typeahead="getSeriesNames" ng-blur="render()" data-min-length=0 data-items=100 class="input-medium tight-form-input" >
 					</li>
+
 					<li class="tight-form-item" ng-repeat="option in currentOverrides">
 						<i class="pointer fa fa-remove" ng-click="removeOverride(option)"></i>
-						{{option.name}}: {{option.value}}
+						<span ng-show="option.propertyName === 'color'">
+							Color: <i class="fa fa-circle" ng-style="{color:option.value}"></i>
+						</span>
+						<span ng-show="option.propertyName !== 'color'">
+							{{option.name}}: {{option.value}}
+						</span>
 					</li>
 
 					<li class="dropdown" dropdown-typeahead="overrideMenu" dropdown-typeahead-on-select="setOverride($item, $subItem)">
 					</li>
-
 				</ul>
 				<div class="clearfix"></div>
 			</div>
 		</div>
 
-		<button class="btn btn-success" style="margin-top: 20px" ng-click="addSeriesOverride()">Add series override rule</button>
+		<button class="btn btn-inverse" style="margin-top: 20px" ng-click="addSeriesOverride()">
+			Add series specific option
+		</button>
 	</div>
 </div>

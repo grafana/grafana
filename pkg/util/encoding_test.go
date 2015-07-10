@@ -13,4 +13,14 @@ func TestEncoding(t *testing.T) {
 
 		So(result, ShouldEqual, "Basic Z3JhZmFuYToxMjM0")
 	})
+
+	Convey("When decoding basic auth header", t, func() {
+		header := GetBasicAuthHeader("grafana", "1234")
+		username, password, err := DecodeBasicAuthHeader(header)
+		So(err, ShouldBeNil)
+
+		So(username, ShouldEqual, "grafana")
+		So(password, ShouldEqual, "1234")
+	})
+
 }

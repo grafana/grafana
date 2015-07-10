@@ -45,7 +45,7 @@ pages:
 
 - ['reference/graph.md', 'Reference', 'Graph Panel']
 - ['reference/singlestat.md', 'Reference', 'Singlestat Panel']
-- ['reference/dashlist.md', 'Reference', 'Dashlist Panel']
+- ['reference/dashlist.md', 'Reference', 'Dashboard list Panel']
 - ['reference/sharing.md', 'Reference', 'Sharing']
 - ['reference/annotations.md', 'Reference', 'Annotations']
 - ['reference/timerange.md', 'Reference', 'Time range controls']
@@ -60,8 +60,9 @@ pages:
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
+- ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 
-- ['project/building_from_source.md', 'Project', 'Building from souce']
+- ['project/building_from_source.md', 'Project', 'Building from source']
 - ['project/cla.md', 'Project', 'Contributor License Agreement']
 
 - ['jsearch.md', '**HIDDEN**']

@@ -1,24 +1,18 @@
 define([
   'angular',
-  'lodash'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SubmenuCtrl', function($scope, $q, $rootScope, templateValuesSrv) {
-    var _d = {
-      enable: true
-    };
-
-    _.defaults($scope.pulldown,_d);
+  module.controller('SubmenuCtrl', function($scope, $q, $rootScope, templateValuesSrv, dynamicDashboardSrv) {
 
     $scope.init = function() {
       $scope.panel = $scope.pulldown;
       $scope.row = $scope.pulldown;
-      $scope.variables = $scope.dashboard.templating.list;
       $scope.annotations = $scope.dashboard.templating.list;
+      $scope.variables = $scope.dashboard.templating.list;
     };
 
     $scope.disableAnnotation = function (annotation) {
@@ -26,8 +20,16 @@ function (angular, _) {
       $rootScope.$broadcast('refresh');
     };
 
-    $scope.setVariableValue = function(param, option) {
-      templateValuesSrv.setVariableValue(param, option);
+    $scope.getValuesForTag = function(variable, tagKey) {
+      return templateValuesSrv.getValuesForTag(variable, tagKey);
+    };
+
+    $scope.variableUpdated = function(variable) {
+      templateValuesSrv.variableUpdated(variable).then(function() {
+        dynamicDashboardSrv.update($scope.dashboard);
+        $rootScope.$emit('template-variable-value-updated');
+        $rootScope.$broadcast('refresh');
+      });
     };
 
     $scope.init();
