@@ -582,7 +582,7 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		if len(toOnline) > 0 {
 			a := make([]string, len(toOnline))
 			args := make([]interface{}, len(toOnline)+1)
-            args[0] = time.Now()
+			args[0] = time.Now()
 			for i, id := range toOnline {
 				args[i+1] = id
 				a[i] = "?"
@@ -597,7 +597,7 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		if len(toOffline) > 0 {
 			a := make([]string, len(toOffline))
 			args := make([]interface{}, len(toOffline)+1)
-            args[0] = time.Now()
+			args[0] = time.Now()
 			for i, id := range toOffline {
 				args[i+1] = id
 				a[i] = "?"
