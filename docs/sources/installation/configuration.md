@@ -32,10 +32,10 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
     [security]
     admin_user = admin
-    
+
     [auth.google]
     client_secret = 0ldS3cretKey
-    
+
 
 Then you can override that using:
 
@@ -385,6 +385,10 @@ Wether to run a scheduler. Defaults to true.
 
 How many alerting executors should this instance of Grafana run?
 They have low cpu and memory overhead but may query your datastore simultaneously.  Defaults to 10.
+
+### write_individual_alert_results
+
+Whether to write the individual state metrics for each alerting rule. Defaults to false
 
 ## [analytics]
 
