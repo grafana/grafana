@@ -3,7 +3,6 @@
   border-left: 1px solid @grafanaTargetBorder;
   border-right: 1px solid @grafanaTargetBorder;
   background: @grafanaTargetBackground;
-  width: 100%;
 
   &:last-child, &.last {
     border-bottom: 1px solid @grafanaTargetBorder;
@@ -18,6 +17,14 @@
     display: inline;
     padding-right: 4px;
     margin-bottom: 0;
+  }
+}
+
+.tight-form-container-no-item-borders {
+  border: 1px solid @grafanaTargetBorder;
+
+  .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
+    border: none;
   }
 }
 
@@ -44,7 +51,7 @@
 }
 
 .tight-form-btn {
-  padding: 8px 12px;
+  padding: 7px 12px;
 }
 
 .tight-form-list {
@@ -83,25 +90,11 @@
     background: @grafanaTargetFuncBackground;
   }
 
-  &.template-param-name {
-    border-right: none;
-    padding-right: 0;
-    padding-left: 18px;
-  }
-  &.annotation-segment {
-    padding: 8px 13px;
-  }
-
   &.last {
     border-right: none;
   }
-
-  .fa-caret-down {
-    font-size: 75%;
-    position: relative;
-    top: 1px;
-  }
 }
+
 
 .tight-form-item-icon {
   i {
@@ -139,7 +132,6 @@ input[type=text].tight-form-clear-input {
   border: none;
   margin: 0px;
   background: transparent;
-  float: left;
   color: @grafanaTargetColor;
   border-radius: 0;
   border-right: 1px solid @grafanaTargetSegmentBorder;
@@ -206,3 +198,14 @@ select.tight-form-input {
     display: inline;
   }
 }
+
+.tight-form-section {
+  margin-bottom: 20px;
+  margin-right: 40px;
+  vertical-align: top;
+  display: inline-block;
+  .tight-form {
+    margin-left: 20px;
+  }
+}
+

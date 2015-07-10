@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width">
+    <meta name="theme-color" content="#000">
 
     <title>Grafana</title>
 
@@ -17,7 +18,7 @@
 		<base href="[[.AppSubUrl]]/" />
 
 		<!-- build:js [[.AppSubUrl]]/app/app.js -->
-    <script src="[[.AppSubUrl]]/public/vendor/require/require.js"></script>
+    <script src="[[.AppSubUrl]]/public/vendor/requirejs/require.js"></script>
     <script src="[[.AppSubUrl]]/public/app/components/require.config.js"></script>
     <!-- endbuild -->
   </head>
@@ -35,7 +36,7 @@
 						<i class="fa fa-times-circle"></i>
 					</button>
 					<div class="alert-title">{{alert.title}}</div>
-					<div ng-bind-html='alert.text'></div>
+					<div ng-bind='alert.text'></div>
 				</div>
 			</div>
 

@@ -114,7 +114,7 @@
 
   th {
     text-align: right;
-    padding: 5px 10px;
+    padding: 0px 10px 1px 0;
     font-weight: bold;
     color: @blue;
     font-size: 85%;
@@ -164,6 +164,7 @@
 
 .graph-legend-popover {
   width: 200px;
+  min-height: 100px;
   label {
     display: inline-block;
   }
@@ -209,6 +210,11 @@
     font-weight: bold;
     position: relative;
     top: -3px;
+  }
+
+  .label-tag {
+    margin-right: 4px;
+    margin-top: 8px;
   }
 
   .graph-tooltip-list-item {

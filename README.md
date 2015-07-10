@@ -87,7 +87,7 @@ go get github.com/grafana/grafana
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
 go build .
 ```
 
@@ -125,8 +125,9 @@ You only need to add the options you want to override. Config files are applied 
 2. dev.ini (if found)
 3. custom.ini
 
-## Create a pull requests
-Before or after your create a pull requests, sign the [contributor license aggrement](/docs/contributing/cla.html).## Contribute
+## Create a pull request
+Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!

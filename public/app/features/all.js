@@ -1,5 +1,6 @@
 define([
-  './panellinkeditor/module',
+  './panellinks/module',
+  './dashlinks/module',
   './annotations/annotationsSrv',
   './templating/templateSrv',
   './dashboard/all',

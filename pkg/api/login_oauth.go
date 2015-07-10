@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"golang.org/x/oauth2"
 
@@ -45,7 +46,13 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	userInfo, err := connect.UserInfo(token)
 	if err != nil {
-		ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
+		if err == social.ErrMissingTeamMembership {
+			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github team membership not fulfilled"))
+		} else if err == social.ErrMissingOrganizationMembership {
+			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github organization membership not fulfilled"))
+		} else {
+			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
+		}
 		return
 	}
 
@@ -54,7 +61,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
 		log.Info("OAuth login attempt with unallowed email, %s", userInfo.Email)
-		ctx.Redirect(setting.AppSubUrl + "/login?email_not_allowed=1")
+		ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required email domain not fulfilled"))
 		return
 	}
 

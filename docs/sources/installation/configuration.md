@@ -6,173 +6,243 @@ page_keywords: grafana, configuration, documentation
 
 # Configuration
 
-The Grafana backend has a number of configuration options that can be specified in a `.ini` config file
-or specified using `ENV` variables.
+The Grafana back-end has a number of configuration options that can be
+specified in a `.ini` configuration file or specified using environment variables.
 
 ## Config file locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
-- The custom config file path can be overriden using the `--config` parameter
+- The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note.** If you have installed grafana using the `deb` or `rpm` packages, then your configuration file is located
-> at `/etc/grafana/grafana.ini`. This path is specified in the grafana init.d script using `--config` file
-> parameter.
+> **Note.** If you have installed Grafana using the `deb` or `rpm`
+> packages, then your configuration file is located at
+> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
+> init.d script using `-config` file parameter.
 
-## Using ENV variables
-All options in the config file (listed below) can be overriden using ENV variables using the syntax:
+## Using environment variables
+
+All options in the configuration file (listed below) can be overridden
+using environment variables using the syntax:
 
     GF_<SectionName>_<KeyName>
 
-Where the section name is the text within the brackets. Everything should be upper case.
-
-Example, given this config setting:
+Where the section name is the text within the brackets. Everything
+should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
     [security]
     admin_user = admin
 
+    [auth.google]
+    client_secret = 0ldS3cretKey
+
+
 Then you can override that using:
 
     export GF_SECURITY_ADMIN_USER=true
+    export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 <hr>
+
 ## [paths]
 
 ### data
-Path to where grafana can store the sqlite3 database (if used), file based sessions (if used), and other data.
-This path is usually specified via command line in the init.d script or the systemd service file.
+
+Path to where Grafana stores the sqlite3 database (if used), file based
+sessions (if used), and other data.  This path is usually specified via
+command line in the init.d script or the systemd service file.
 
 ### logs
-Path to where grafana can store logs. This path is usually specified via command line in the init.d script or the systemd service file.
-It can be overriden in the config file or in the default environment variable file.
+
+Path to where Grafana will store logs. This path is usually specified via
+command line in the init.d script or the systemd service file.  It can
+be overridden in the configuration file or in the default environment variable
+file.
 
 ## [server]
 
 ### http_addr
-The ip address to bind to, if empty will bind to all interfaces
+
+The IP address to bind to, if empty will bind to all interfaces
 
 ### http_port
-The port to bind to, defaults to `3000`. To use port 80 you need to either give the grafana binary permission for example:
 
-```
-$ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
-```
+The port to bind to, defaults to `3000`. To use port 80 you need to
+either give the Grafana binary permission for example:
 
-Or redirect port 80 to the grafana port using:
-```
-$ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
-```
+    $ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
 
-Another way is put nginx or apache infront of Grafana and have them proxy requests to Grafana.
+Or redirect port 80 to the Grafana port using:
+
+    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+
+Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
 ### protocol
+
 `http` or `https`
 
 ### domain
-This setting is only used in as a part of the root_url setting (see below). Important if you
-use github or google oauth.
+
+This setting is only used in as a part of the `root_url` setting (see below). Important if you
+use GitHub or Google OAuth.
+
+### enforce_domain
+
+Redirect to correct domain if host header does not match domain.
+Prevents DNS rebinding attacks. Default is false.
 
 ### root_url
-This is the full url used to access grafana from a web browser. This is important if you use
-google or github oauth authentication (for the callback url to be correct).
 
-> **Note** This setting is also important if you have a reverse proxy infront of Grafana
-> that exposes grafana through a subpath. In that case add the subpath to the end of this url setting.
+This is the full URL used to access Grafana from a web browser. This is
+important if you use Google or GitHub OAuth authentication (for the
+callback URL to be correct).
+
+> **Note** This setting is also important if you have a reverse proxy
+> in front of Grafana that exposes it through a subpath. In that
+> case add the subpath to the end of this URL setting.
 
 ### static_root_path
-The path to the directory where the frontend files (html & js & css). Default to `public` which is
-why the Grafana binary needs to be executed with working directory set to the installation path.
+
+The path to the directory where the front end files (HTML, JS, and CSS
+files). Default to `public` which is why the Grafana binary needs to be
+executed with working directory set to the installation path.
 
 ### cert_file
-Path to cert file (if protocol is https)
+
+Path to the certificate file (if `protocol` is set to `https`).
 
 ### cert_key
-Path to cert key file (if protocol is https)
+
+Path to the certificate key file (if `protocol` is set to `https`).
 
 <hr>
 
 <hr>
+
 ## [database]
 
-Grafana needs a database to store users and dashboards (and other things). By default it is configured to
-use `sqlite3` which is an embedded database (included in the main Grafana binary).
+Grafana needs a database to store users and dashboards (and other
+things). By default it is configured to use `sqlite3` which is an
+embedded database (included in the main Grafana binary).
 
 ### type
+
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
 
 ### path
-Only applicable for `sqlite3` database. The file path where the database will be stored.
+
+Only applicable for `sqlite3` database. The file path where the database
+will be stored.
 
 ### host
-Only applicable to mysql or postgres. Include ip/hostname & port.
-Example for mysql same host as Grafana: `host = 127.0.0.1:3306`
+
+Only applicable to MySQL or Postgres. Includes IP or hostname and port.
+For example, for MySQL running on the same host as Grafana: `host =
+127.0.0.1:3306`
 
 ### name
-The name of the grafana database. Leave it set to `grafana` or some other name.
+
+The name of the Grafana database. Leave it set to `grafana` or some
+other name.
 
 ### user
+
 The database user (not applicable for `sqlite3`).
 
 ### password
+
 The database user's password (not applicable for `sqlite3`).
 
 ### ssl_mode
-For `postgres` only, either "disable", "require" or "verify-full".
+
+For `postgres` only, either `disable`, `require` or `verify-full`.
 
 <hr>
+
 ## [security]
 
 ### admin_user
-The name of the default grafana admin user (who has full permissions). Defaults to `admin`.
+
+The name of the default Grafana admin user (who has full permissions).
+Defaults to `admin`.
 
 ### admin_password
-The password of the default grafana admin.  Defaults to `admin`.
+
+The password of the default Grafana admin.  Defaults to `admin`.
 
 ### login_remember_days
+
 The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
+
 Used for signing keep me logged in / remember me cookies.
 
+### disable_gravatar
+
+Set to `true` to disable the use of Gravatar for user profile images.
+Default is `false`.
+
 <hr>
-## [user]
+
+## [users]
 
 ### allow_sign_up
-Set to `false` to prohibit users from being able to sign up / create user accounts. Defaults to `true`.
-The admin can still create users from the [Grafana Admin Pages](../reference/admin.md)
+
+Set to `false` to prohibit users from being able to sign up / create
+user accounts. Defaults to `true`.  The admin user can still create
+users from the [Grafana Admin Pages](../reference/admin.md)
 
 ### allow_org_create
-Set to `false` to prohibit users from creating new organizations. Defaults to `true`.
+
+Set to `false` to prohibit users from creating new organizations.
+Defaults to `true`.
 
 ### auto_assign_org
-Set to `true` to automatically add new users to the main organization (id 1). When set to `false`,
-new users will automatically cause a new organization to be created for that new user.
+
+Set to `true` to automatically add new users to the main organization
+(id 1). When set to `false`, new users will automatically cause a new
+organization to be created for that new user.
 
 ### auto_assign_org_role
-The role new users will be assigned for the main organization (if the above setting is set to true).
-Defaults to `Viewer`, other valid options are `Admin` and `Editor`.
+
+The role new users will be assigned for the main organization (if the
+above setting is set to true).  Defaults to `Viewer`, other valid
+options are `Admin` and `Editor`.
 
 <hr>
+
 ## [auth.anonymous]
 
 ### enabled
-Set to `true` to enable anonymous access. Defaults to `false`
-### org_name
-Set the organization name that should be used for anonymous users. If you change your organization name
-in the Grafana UI this setting needs to be updated to match the new name.
-### org_role
-Specify role for anonymous users. Defaults to `Viewer`, other valid options are `Editor` and `Admin`.
 
+Set to `true` to enable anonymous access. Defaults to `false`
+
+### org_name
+
+Set the organization name that should be used for anonymous users. If
+you change your organization name in the Grafana UI this setting needs
+to be updated to match the new name.
+
+### org_role
+
+Specify role for anonymous users. Defaults to `Viewer`, other valid
+options are `Editor` and `Admin`.
 
 ## [auth.github]
-You need to create a github application (you find this under the github profile page). When
-you create the application you will need to specify a callback URL. Specify this as callback:
+
+You need to create a GitHub application (you find this under the GitHub
+profile page). When you create the application you will need to specify
+a callback URL. Specify this as callback:
 
     http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
 
-This callback url must match the full http address that you use in your browser to access grafana, but
-with the prefix path of `/login/github`. When the github application is created you will get a
-Client ID and a Client Secret. Specify these in the grafana config file. Example:
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/github`.
+When the GitHub application is created you will get a Client ID and a
+Client Secret. Specify these in the Grafana configuration file. For
+example:
 
     [auth.github]
     enabled = true
@@ -182,22 +252,47 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
+    team_ids =
 
-Restart the grafana backend. You should now see a github login button on the login page. You can
-now login or signup with your github accounts.
+Restart the Grafana back-end. You should now see a GitHub login button
+on the login page. You can now login or sign up with your GitHub
+accounts.
 
-You may allow users to sign-up via github auth by setting allow_sign_up to true. When this option is
-set to true, any user successfully authenticating via github auth will be automatically signed up.
+You may allow users to sign-up via GitHub authentication by setting the
+`allow_sign_up` option to `true`. When this option is set to `true`, any
+user successfully authenticating via GitHub authentication will be
+automatically signed up.
+
+### team_ids
+
+Require an active team membership for at least one of the given teams on
+GitHub.  If the authenticated user isn't a member of at least one the
+teams they will not be able to register or authenticate with your
+Grafana instance. For example:
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email
+    team_ids = 150,300
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
 
 ## [auth.google]
-You need to create a google project. You can do this in the [Google Developer Console](https://console.developers.google.com/project).
-When you create the project you will need to specify a callback URL. Specify this as callback:
+
+You need to create a Google project. You can do this in the [Google
+Developer Console](https://console.developers.google.com/project).  When
+you create the project you will need to specify a callback URL. Specify
+this as callback:
 
     http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
 
-This callback url must match the full http address that you use in your browser to access grafana, but
-with the prefix path of `/login/google`. When the google project is created you will get a
-Client ID and a Client Secret. Specify these in the grafana config file. Example:
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/google`.
+When the Google project is created you will get a Client ID and a Client
+Secret. Specify these in the Grafana configuration file. For example:
 
     [auth.google]
     enabled = true
@@ -206,28 +301,38 @@ Client ID and a Client Secret. Specify these in the grafana config file. Example
     scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
-    allowed_domains = mycompany.com
+    allowed_domains = mycompany.com mycompany.org
     allow_sign_up = false
 
-Restart the grafana backend. You should now see a google login button on the login page. You can
-now login or signup with your google accounts. `allowed_domains` option is optional.
+Restart the Grafana back-end. You should now see a Google login button
+on the login page. You can now login or sign up with your Google
+accounts. The `allowed_domains` option is optional, and domains were separated by space.
 
-You may allow users to sign-up via google auth by setting allow_sign_up to true. When this option is
-set to true, any user successfully authenticating via google auth will be automatically signed up.
+You may allow users to sign-up via Google authentication by setting the
+`allow_sign_up` option to `true`. When this option is set to `true`, any
+user successfully authenticating via Google authentication will be
+automatically signed up.
 
 <hr>
+
 ## [session]
 
 ### provider
-Valid values are "memory", "file", "mysql", 'postgres'. Default is "memory".
+
+Valid values are `memory`, `file`, `mysql`, `postgres`. Default is `file`.
 
 ### provider_config
-This option should be configured differently depending on what type of session provider you have configured.
+
+This option should be configured differently depending on what type of
+session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
-if you use mysql or postgres as session store you need to create the session table manually.
+If you use MySQL or Postgres as the session store you need to create the
+session table manually.
+
 Mysql Example:
 
     CREATE TABLE `session` (
@@ -238,24 +343,38 @@ Mysql Example:
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 ### cookie_name
-The name of the grafana session cookie
+
+The name of the Grafana session cookie.
 
 ### cookie_secure
+
 Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 
 ### session_life_time
+
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ## [analytics]
 
 ### reporting_enabled
-When enabled Grafana will send anonymous usage statistics to stats.grafana.org.
-No ip addresses are being tracked, only simple counters to track running instances,
+
+When enabled Grafana will send anonymous usage statistics to `stats.grafana.org`.
+No IP addresses are being tracked, only simple counters to track running instances,
 versions, dashboard & error counts. It is very helpful to us, please leave this
 enabled. Counters are sent every 24 hours. Default value is `true`.
 
 ### google_analytics_ua_id
-If you want to track Grafana usage via Google analytics specify *your* Univeral Analytics ID
-here. By defualt this feature is disabled.
 
+If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
+here. By default this feature is disabled.
 
+## [dashboards.json]
+
+If you have a system that automatically builds dashboards as json files you can enable this feature to have the
+Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+
+### enabled
+`true` or `false`. Is disabled by default.
+
+### path
+The full path to a directory containing your json dashboards.

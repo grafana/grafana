@@ -18,10 +18,15 @@ func setIndexViewData(c *middleware.Context) error {
 		Email:          c.Email,
 		Name:           c.Name,
 		LightTheme:     c.Theme == "light",
+		OrgId:          c.OrgId,
 		OrgName:        c.OrgName,
 		OrgRole:        c.OrgRole,
 		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
+	}
+
+	if setting.DisableGravatar {
+		currentUser.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
 	}
 
 	if len(currentUser.Name) == 0 {
@@ -54,7 +59,7 @@ func Index(c *middleware.Context) {
 	c.HTML(200, "index")
 }
 
-func NotFound(c *middleware.Context) {
+func NotFoundHandler(c *middleware.Context) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

@@ -1,0 +1,84 @@
+<div class="editor-row">
+  <div class="section">
+		<h5>Drilldown / detail link<tip>These links appear in the dropdown menu in the panel menu. </tip></h5>
+
+		<div ng-repeat="link in panel.links" style="margin-top: 20px;">
+			<div class="tight-form">
+				<ul class="tight-form-list pull-right">
+					<li class="tight-form-item">
+						<i ng-click="moveLink($index, -1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
+						<i ng-click="moveLink($index, 1)" ng-hide="$last" class="pointer fa fa-fw fa-arrow-down"></i>
+					</li>
+					<li class="tight-form-item last">
+						<i class="fa fa-remove pointer" ng-click="deleteLink(link)"></i>
+					</li>
+				</ul>
+
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 20px">
+						<i class="fa fa-fw fa-unlink"></i>
+					</li>
+
+					<li class="tight-form-item">Type</li>
+					<li>
+						<select class="input-medium tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
+					</li>
+
+					<li class="tight-form-item" ng-show="link.type === 'dashboard'" style="width: 73px;">Dashboard</li>
+					<li ng-show="link.type === 'dashboard'">
+						<input type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="input-large tight-form-input" ng-blur="dashboardChanged(link)">
+					</li>
+
+					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 73px;">Url</li>
+					<li ng-show="link.type === 'absolute'">
+						<input type="text" ng-model="link.url" class="input-large tight-form-input">
+					</li>
+
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 20px">
+						<i class="fa fa-fw fa-unlink invisible"></i>
+					</li>
+					<li class="tight-form-item" style="width: 31px">Title</li>
+					<li>
+						<input type="text" ng-model="link.title" class="input-medium tight-form-input">
+					</li>
+					<li class="tight-form-item" style="width: 73px;">
+						Url params
+					</li>
+					<li>
+						<input type="text" ng-model="link.params" class="input-large tight-form-input">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 20px">
+						<i class="fa fa-fw fa-unlink invisible"></i>
+					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="Keep current time range" model="link.keepTime"></editor-checkbox>
+					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="Add current variable values" model="link.includeVars"></editor-checkbox>
+					</li>
+					<li class="tight-form-item last">
+						<editor-checkbox text="Open in new tab " model="link.targetBlank"></editor-checkbox>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<div class="editor-row">
+	<br>
+	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> Add link</button>
+</div>

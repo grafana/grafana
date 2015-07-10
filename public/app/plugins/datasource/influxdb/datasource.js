@@ -28,39 +28,43 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       this.supportAnnotations = true;
       this.supportMetrics = true;
-      this.editorSrc = 'app/features/influxdb/partials/query.editor.html';
-      this.annotationEditorSrc = 'app/features/influxdb/partials/annotations.editor.html';
     }
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
+      var i, y;
 
-      var promises = _.map(options.targets, function(target) {
-        if (target.hide) {
-          return [];
-        }
+      var allQueries = _.map(options.targets, function(target) {
+        if (target.hide) { return []; }
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
-        var query = queryBuilder.build();
-        console.log('query builder result:' + query);
-
-        // replace grafana variables
-        query = query.replace('$timeFilter', timeFilter);
+        var query =  queryBuilder.build();
         query = query.replace(/\$interval/g, (target.interval || options.interval));
+        return query;
 
-        // replace templated variables
-        query = templateSrv.replace(query);
+      }).join("\n");
 
-        var alias = target.alias ? templateSrv.replace(target.alias) : '';
+      // replace grafana variables
+      allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
 
-        var handleResponse = _.partial(handleInfluxQueryResponse, alias);
-        return this._seriesQuery(query).then(handleResponse);
+      // replace templated variables
+      allQueries = templateSrv.replace(allQueries, options.scopedVars);
+      return this._seriesQuery(allQueries).then(function(data) {
+        if (!data || !data.results || !data.results[0].series) {
+          return [];
+        }
 
-      }, this);
+        var seriesList = [];
+        for (i = 0; i < data.results.length; i++) {
+          var alias = (options.targets[i] || {}).alias;
+          var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
+          for (y = 0; y < targetSeries.length; y++) {
+            seriesList.push(targetSeries[y]);
+          }
+        }
 
-      return $q.all(promises).then(function(results) {
-        return { data: _.flatten(results) };
+        return { data: seriesList };
       });
     };
 
@@ -69,12 +73,15 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       var query = annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
-      return this._seriesQuery(query).then(function(results) {
-        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+      return this._seriesQuery(query).then(function(data) {
+        if (!data || !data.results || !data.results[0]) {
+          throw { message: 'No results in response from InfluxDB' };
+        }
+        return new InfluxSeries({ series: data.results[0].series, annotation: annotation }).getAnnotations();
       });
     };
 
-    InfluxDatasource.prototype.metricFindQuery = function (query, queryType) {
+    InfluxDatasource.prototype.metricFindQuery = function (query) {
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -83,39 +90,33 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
         return $q.reject(err);
       }
 
-      console.log('metricFindQuery called with: ' + [query, queryType].join(', '));
-
-      return this._seriesQuery(interpolated, queryType).then(function (results) {
+      return this._seriesQuery(interpolated).then(function (results) {
         if (!results || results.results.length === 0) { return []; }
 
         var influxResults = results.results[0];
         if (!influxResults.series) {
           return [];
         }
-
-        console.log('metric find query response', results);
         var series = influxResults.series[0];
 
-        switch (queryType) {
-        case 'MEASUREMENTS':
+        if (query.indexOf('SHOW MEASUREMENTS') === 0) {
           return _.map(series.values, function(value) { return { text: value[0], expandable: true }; });
-        case 'TAG_KEYS':
-          var tagKeys = _.flatten(series.values);
-          return _.map(tagKeys, function(tagKey) { return { text: tagKey, expandable: true }; });
-        case 'TAG_VALUES':
-          var tagValues = _.flatten(series.values);
-          return _.map(tagValues, function(tagValue) { return { text: tagValue, expandable: true }; });
-        default: // template values service does not pass in a a query type
-          var flattenedValues = _.flatten(series.values);
-          return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
         }
+
+        var flattenedValues = _.flatten(series.values);
+        return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
       });
     };
 
     function retry(deferred, callback, delay) {
       return callback().then(undefined, function(reason) {
         if (reason.status !== 0 || reason.status >= 300) {
-          reason.message = 'InfluxDB Error: <br/>' + reason.data;
+          if (reason.data && reason.data.error) {
+            reason.message = 'InfluxDB Error Response: ' + reason.data.error;
+          }
+          else {
+            reason.message = 'InfluxDB Error: ' + reason.message;
+          }
           deferred.reject(reason);
         }
         else {
@@ -127,7 +128,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     InfluxDatasource.prototype._seriesQuery = function(query) {
-      return this._influxRequest('GET', '/query', {q: query});
+      return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
+    };
+
+    InfluxDatasource.prototype.testDatasource = function() {
+      return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(function () {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
     };
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
@@ -173,11 +180,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       return deferred.promise;
     };
-
-    function handleInfluxQueryResponse(alias, seriesList) {
-      var influxSeries = new InfluxSeries({ seriesList: seriesList, alias: alias });
-      return influxSeries.getTimeSeries();
-    }
 
     function getTimeFilter(options) {
       var from = getInfluxTime(options.range.from);

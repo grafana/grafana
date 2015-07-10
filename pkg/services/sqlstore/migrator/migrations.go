@@ -25,8 +25,9 @@ func (m *MigrationBase) GetCondition() MigrationCondition {
 type RawSqlMigration struct {
 	MigrationBase
 
-	sqlite string
-	mysql  string
+	sqlite   string
+	mysql    string
+	postgres string
 }
 
 func (m *RawSqlMigration) Sql(dialect Dialect) string {
@@ -35,6 +36,8 @@ func (m *RawSqlMigration) Sql(dialect Dialect) string {
 		return m.mysql
 	case SQLITE:
 		return m.sqlite
+	case POSTGRES:
+		return m.postgres
 	}
 
 	panic("db type not supported")
@@ -47,6 +50,11 @@ func (m *RawSqlMigration) Sqlite(sql string) *RawSqlMigration {
 
 func (m *RawSqlMigration) Mysql(sql string) *RawSqlMigration {
 	m.mysql = sql
+	return m
+}
+
+func (m *RawSqlMigration) Postgres(sql string) *RawSqlMigration {
+	m.postgres = sql
 	return m
 }
 

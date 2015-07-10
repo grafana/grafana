@@ -142,13 +142,13 @@ define([
         name: this.consumeToken().value,
       };
 
-      // consume left paranthesis
+      // consume left parenthesis
       this.consumeToken();
 
       node.params = this.functionParameters();
 
       if (!this.match(')')) {
-        this.errorMark('Expected closing paranthesis');
+        this.errorMark('Expected closing parenthesis');
       }
 
       this.consumeToken();

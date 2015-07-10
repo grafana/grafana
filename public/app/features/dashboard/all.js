@@ -1,5 +1,6 @@
 define([
   './dashboardCtrl',
+  './dashboardLoaderSrv',
   './dashboardNavCtrl',
   './snapshotTopNavCtrl',
   './saveDashboardAsCtrl',
@@ -16,5 +17,6 @@ define([
   './unsavedChangesSrv',
   './directives/dashSearchView',
   './graphiteImportCtrl',
+  './dynamicDashboardSrv',
   './importCtrl',
 ], function () {});

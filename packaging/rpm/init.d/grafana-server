@@ -35,6 +35,16 @@ MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
 
+if [ `id -u` -ne 0 ]; then
+  echo "You need root privileges to run this script"
+  exit 4
+fi
+
+if [ ! -x $DAEMON ]; then
+  echo "Program not installed or not executable"
+  exit 5
+fi
+
 #
 # init.d / servicectl compatibility (openSUSE)
 #
@@ -55,9 +65,6 @@ fi
 
 DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR}"
 
-# Check DAEMON exists
-test -x $DAEMON || exit 0
-
 function isRunning() {
   status -p $PID_FILE $NAME > /dev/null 2>&1
 }
@@ -69,7 +76,7 @@ case "$1" in
     isRunning
     if [ $? -eq 0 ]; then
       echo "Already running."
-      exit 2
+      exit 0
     fi
 
     # Prepare environment
@@ -82,7 +89,7 @@ case "$1" in
 
     # Start Daemon
     cd $GRAFANA_HOME
-    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER
+    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER 2> /dev/null
     return=$?
     if [ $return -eq 0 ]
     then
@@ -90,7 +97,7 @@ case "$1" in
       # check if pid file has been written two
       if ! [[ -s $PID_FILE ]]; then
         echo "FAILED"
-        exit 3
+        exit 1
       fi
       i=0
       timeout=10
@@ -101,7 +108,7 @@ case "$1" in
         i=$(($i + 1))
         if [ $i -gt $timeout ]; then
           echo "FAILED"
-          exit 4
+          exit 1
         fi
       done
     fi
@@ -131,6 +138,7 @@ case "$1" in
     ;;
   status)
     status -p $PID_FILE $NAME
+    exit $?
     ;;
   restart|force-reload)
     if [ -f "$PID_FILE" ]; then
@@ -141,8 +149,6 @@ case "$1" in
     ;;
   *)
     echo -n "Usage: $0 {start|stop|restart|force-reload|status}"
-    exit 1
+    exit 3
     ;;
 esac
-
-exit 0

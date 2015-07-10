@@ -14,6 +14,7 @@ func init() {
 	bus.AddHandler("sql", AddOrgUser)
 	bus.AddHandler("sql", RemoveOrgUser)
 	bus.AddHandler("sql", GetOrgUsers)
+	bus.AddHandler("sql", UpdateOrgUser)
 }
 
 func AddOrgUser(cmd *m.AddOrgUserCommand) error {
@@ -29,6 +30,29 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 
 		_, err := sess.Insert(&entity)
 		return err
+	})
+}
+
+func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var orgUser m.OrgUser
+		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return m.ErrOrgUserNotFound
+		}
+
+		orgUser.Role = cmd.Role
+		orgUser.Updated = time.Now()
+		_, err = sess.Id(orgUser.Id).Update(&orgUser)
+		if err != nil {
+			return err
+		}
+
+		return validateOneAdminLeftInOrg(cmd.OrgId, sess)
 	})
 }
 
@@ -52,16 +76,20 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 			return err
 		}
 
-		// validate that there is an admin user left
-		res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", cmd.OrgId)
-		if err != nil {
-			return err
-		}
-
-		if len(res) == 0 {
-			return m.ErrLastOrgAdmin
-		}
-
-		return err
+		return validateOneAdminLeftInOrg(cmd.OrgId, sess)
 	})
+}
+
+func validateOneAdminLeftInOrg(orgId int64, sess *xorm.Session) error {
+	// validate that there is an admin user left
+	res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and role='Admin'", orgId)
+	if err != nil {
+		return err
+	}
+
+	if len(res) == 0 {
+		return m.ErrLastOrgAdmin
+	}
+
+	return err
 }

@@ -81,11 +81,16 @@ function($, _, moment) {
     if(numminutes){
       return numminutes + 'm';
     }
-    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+    var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
     if(numseconds){
       return numseconds + 's';
     }
-    return 'less then a second'; //'just now' //or other string you like;
+    var nummilliseconds = Math.floor(seconds * 1000.0);
+    if(nummilliseconds){
+      return nummilliseconds + 'ms';
+    }
+
+    return 'less then a millisecond'; //'just now' //or other string you like;
   };
 
   kbn.to_percent = function(number,outof) {
@@ -376,10 +381,15 @@ function($, _, moment) {
   kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.gbytes = kbn.formatFuncCreator(1024, [' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
+  kbn.valueFormats.pps = kbn.formatFuncCreator(1000, [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps']);
   kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
-  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
+  kbn.valueFormats.amp = kbn.formatFuncCreator(1000, [' A', ' kA', ' MA', ' GA', ' TA', ' PA', ' EA', ' ZA', ' YA']);
+  kbn.valueFormats.volt = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
+  kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
   kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
   kbn.valueFormats.kwatt = kbn.formatFuncCreator(1000, [' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
   kbn.valueFormats.watth = kbn.formatFuncCreator(1000, [' Wh', ' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
@@ -389,11 +399,19 @@ function($, _, moment) {
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
+  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
+  kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
   kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
   kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
   kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
   kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
   kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
+
+  kbn.roundValue = function (num, decimals) {
+    if (num === null) { return null; }
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
 
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
@@ -525,6 +543,7 @@ function($, _, moment) {
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
+          {text: 'dB', value: 'dB'},
         ]
       },
       {
@@ -534,6 +553,7 @@ function($, _, moment) {
           {text: 'microseconds (µs)', value: 'µs'},
           {text: 'milliseconds (ms)', value: 'ms'},
           {text: 'seconds (s)', value: 's'},
+          {text: 'Hertz (1/s)', value: 'hertz'},
         ]
       },
       {
@@ -543,11 +563,13 @@ function($, _, moment) {
           {text: 'bytes', value: 'bytes'},
           {text: 'kilobytes', value: 'kbytes'},
           {text: 'megabytes', value: 'mbytes'},
+          {text: 'gigabytes', value: 'gbytes'},
         ]
       },
       {
         text: 'data rate',
         submenu: [
+          {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec', value: 'bps'},
           {text: 'bytes/sec', value: 'Bps'},
         ]
@@ -561,6 +583,8 @@ function($, _, moment) {
           {text: 'kilowatt-hour (kWh)',   value: 'kwatth'},
           {text: 'joule (J)',             value: 'joule'},
           {text: 'electron volt (eV)',    value: 'ev'},
+          {text: 'Ampere (A)',            value: 'amp'},
+          {text: 'Volt (V)',              value: 'volt'},
         ]
       },
       {
@@ -569,6 +593,8 @@ function($, _, moment) {
           {text: 'Celcius (°C)',         value: 'celsius'  },
           {text: 'Farenheit (°F)',       value: 'farenheit'},
           {text: 'Humidity (%H)',        value: 'humidity' },
+          {text: 'Pressure (mbar)',      value: 'pressurembar' },
+          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
         ]
       },
       {

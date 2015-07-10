@@ -52,6 +52,10 @@ function (angular, _) {
     };
 
     $scope.saveDashboard = function(options) {
+      if ($scope.dashboardMeta.canSave === false) {
+        return;
+      }
+
       var clone = $scope.dashboard.getSaveModelClone();
 
       backendSrv.saveDashboard(clone, options).then(function(data) {
@@ -119,6 +123,8 @@ function (angular, _) {
     $scope.saveDashboardAs = function() {
       var newScope = $rootScope.$new();
       newScope.clone = $scope.dashboard.getSaveModelClone();
+      newScope.clone.editable = true;
+      newScope.clone.hideControls = false;
 
       $scope.appEvent('show-modal', {
         src: './app/features/dashboard/partials/saveDashboardAs.html',

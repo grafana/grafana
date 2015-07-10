@@ -6,9 +6,9 @@ function (angular, $) {
   'use strict';
 
   var editViewMap = {
-    'settings':    { src: 'app/partials/dasheditor.html', title: "Settings" },
+    'settings':    { src: 'app/features/dashboard/partials/settings.html', title: "Settings" },
     'annotations': { src: 'app/features/annotations/partials/editor.html', title: "Annotations" },
-    'templating':  { src: 'app/partials/templating_editor.html', title: "Templating" }
+    'templating':  { src: 'app/features/templating/partials/editor.html', title: "Templating" }
   };
 
   angular

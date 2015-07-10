@@ -264,7 +264,7 @@ function (angular, _, config, kbn, moment) {
       var query = {
         query: { query_string: { query: queryString } },
         facets: { tags: { terms: { field: "tags", order: "term", size: 50 } } },
-        size: this.searchMaxResults,
+        size: 10000,
         sort: ["_uid"],
       };
 

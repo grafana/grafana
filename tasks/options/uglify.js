@@ -2,7 +2,7 @@ module.exports = function(config) {
   return {
     dest: {
       expand: true,
-      src: ['**/*.js', '!dashboards/*.js'],
+      src: ['**/*.js', '!dashboards/*.js', '!vendor/jquery/**/*.js'],
       dest: '<%= destDir %>',
       cwd: '<%= destDir %>',
       options: {

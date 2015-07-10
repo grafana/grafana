@@ -22,7 +22,8 @@
   padding-bottom: 10px;
   input {
     width: 100%;
-    padding: 18px 8px;
+    padding: 8px 8px;
+    height: 100%;
     box-sizing: border-box;
   }
   button {
@@ -40,7 +41,7 @@
   display: block;
   line-height: 28px;
 
-  .search-result-item:hover, .search-result-item.selected {
+  .search-item:hover, .search-item.selected {
     background-color: @grafanaListHighlight;
   }
 
@@ -66,12 +67,19 @@
     }
   }
 
-  .search-result-item {
+  .search-item {
     display: block;
     padding: 3px 10px;
     white-space: nowrap;
     background-color: @grafanaListBackground;
     margin-bottom: 4px;
+    .search-result-icon:before {
+      content: "\f009";
+    }
+
+    &.search-item-dash-home .search-result-icon:before {
+      content: "\f015";
+    }
   }
 
   .search-result-tags {

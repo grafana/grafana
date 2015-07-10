@@ -40,7 +40,6 @@ module.exports = function(config,grunt) {
       // main/common module
       name: 'app',
         include: [
-          'css',
           'kbn',
           'text',
           'jquery',
@@ -75,7 +74,6 @@ module.exports = function(config,grunt) {
     // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {
       requireModules[0].include.push('panels/'+panelName+'/module');
-      requireModules[0].include.push('text!panels/'+panelName+'/module.html');
     });
 
     return { options: options };

@@ -1,0 +1,131 @@
+<div class="gf-box-header">
+	<div class="gf-box-title">
+		<i class="fa fa-cogs"></i>
+		Settings
+	</div>
+
+	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+		<div ng-repeat="tab in ['General', 'Rows', 'Links']" data-title="{{tab}}">
+		</div>
+		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
+		</div>
+	</div>
+
+	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</button>
+</div>
+
+<div class="gf-box-body" style="padding-bottom: 50px;">
+	<div ng-if="editor.index == 0">
+		<div class="editor-row">
+			<div class="tight-form-section">
+				<h5>Dashboard info</h5>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 90px">
+							Title
+						</li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input" ng-model='dashboard.title'></input>
+						</li>
+						<li class="tight-form-item">
+							Tags
+							<tip>Press enter to a add tag</tip>
+						</li>
+						<li>
+							<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+							</bootstrap-tagsinput>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 90px">
+							Timezone
+						</li>
+						<li>
+							<select ng-model="dashboard.timezone" class='input-small tight-form-input' ng-options="f for f in ['browser','utc']"></select>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="editor-row">
+			<div class="tight-form-section">
+				<h5>Toggles</h5>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
+						</li>
+						<li class="tight-form-item">
+							<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
+						</li>
+						<li class="tight-form-item">
+							<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div ng-if="editor.index == 1">
+		<div class="editor-row">
+			<div class="tight-form-section">
+				<h5>Rows settings</h5>
+				<div class="tight-form" ng-repeat="row in dashboard.rows">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							Title
+						</li>
+						<li>
+							<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
+						</li>
+						<li class="tight-form-item">
+							<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
+						</li>
+						<li class="tight-form-item last">
+							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
+						</li>
+						<li class="tight-form-item last">
+							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
+						</li>
+						<li class="tight-form-item last">
+							<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div ng-if="editor.index == 2">
+		<dash-links-editor></dash-links-editor>
+	</div>
+
+	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 3+$index">
+		<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
+		<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
+	</div>
+
+</div>
+
+<div class="clearfix"></div>
+</div>
+
+<div class="gf-box-footer">
+	<div class="grafana-version-info" ng-show="editor.index === 0">
+		<span class="editor-option small">
+			Grafana version: {{contextSrv.version}} &nbsp;&nbsp;
+		</span>
+		<span grafana-version-check>
+		</span>
+	</div>
+</div>

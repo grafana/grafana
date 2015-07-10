@@ -125,13 +125,16 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
+      this.$scope.appEvent('hide-dash-editor');
+
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.3);
       var fullscreenHeight = Math.floor(docHeight * 0.7);
-      this.oldTimeRange = panelScope.range;
 
-      panelScope.height = this.state.edit ? editHeight : fullscreenHeight;
-      panelScope.editMode = this.state.edit;
+      panelScope.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
+      panelScope.height = panelScope.editMode ? editHeight : fullscreenHeight;
+
+      this.oldTimeRange = panelScope.range;
       this.fullscreenPanel = panelScope;
 
       $(window).scrollTop(0);

@@ -23,6 +23,10 @@ function (angular, _, config) {
       return this.request({ method: 'POST', url: url, data: data });
     };
 
+    this.patch = function(url, data) {
+      return this.request({ method: 'PATCH', url: url, data: data });
+    };
+
     this.put = function(url, data) {
       return this.request({ method: 'PUT', url: url, data: data });
     };
@@ -63,8 +67,9 @@ function (angular, _, config) {
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
-      if (requestIsLocal && firstAttempt) {
+      if (requestIsLocal && !options.hasSubUrl) {
         options.url = config.appSubUrl + options.url;
+        options.hasSubUrl = true;
       }
 
       return $http(options).then(function(results) {
@@ -114,8 +119,8 @@ function (angular, _, config) {
       return this.get('/api/search', query);
     };
 
-    this.getDashboard = function(slug) {
-      return this.get('/api/dashboards/db/' + slug);
+    this.getDashboard = function(type, slug) {
+      return this.get('/api/dashboards/' + type + '/' + slug);
     };
 
     this.saveDashboard = function(dash, options) {

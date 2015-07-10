@@ -6,9 +6,10 @@
 package slug
 
 import (
-	"gopkgs.com/unidecode.v1"
 	"regexp"
 	"strings"
+
+	"github.com/rainycape/unidecode"
 )
 
 var (

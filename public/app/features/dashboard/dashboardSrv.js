@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(contextSrv)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -39,6 +39,7 @@ function (angular, $, kbn, _, moment) {
       this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
+      this.links = data.links || [];
 
       if (this.nav.length === 0) {
         this.nav.push({ type: 'timepicker' });
@@ -52,24 +53,17 @@ function (angular, $, kbn, _, moment) {
 
     p._initMeta = function(meta) {
       meta = meta || {};
-      meta.canShare = true;
-      meta.canSave = true;
-      meta.canEdit = true;
-      meta.canStar = true;
 
-      if (contextSrv.hasRole('Viewer')) {
-        meta.canSave = false;
-      }
+      meta.canShare = meta.canShare === false ? false : true;
+      meta.canSave = meta.canSave === false ? false : true;
+      meta.canStar = meta.canStar === false ? false : true;
+      meta.canEdit = meta.canEdit === false ? false : true;
 
-      if (meta.isSnapshot) {
-        meta.canSave = false;
-      }
-
-      if (meta.isHome) {
-        meta.canShare = false;
-        meta.canStar = false;
-        meta.canSave = false;
+      if (!this.editable) {
         meta.canEdit = false;
+        meta.canDelete = false;
+        meta.canSave = false;
+        this.hideControls = true;
       }
 
       this.meta = meta;
@@ -151,8 +145,8 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
-    p.hasTemplateVarsOrAnnotations = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0;
+    p.isSubmenuFeaturesEnabled = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
@@ -182,6 +176,7 @@ function (angular, $, kbn, _, moment) {
 
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
+      return newPanel;
     };
 
     p.formatDate = function(date, format) {
@@ -310,8 +305,13 @@ function (angular, $, kbn, _, moment) {
     return {
       create: function(dashboard, meta) {
         return new DashboardModel(dashboard, meta);
-      }
+      },
+      setCurrent: function(dashboard) {
+        this.currentDashboard = dashboard;
+      },
+      getCurrent: function() {
+        return this.currentDashboard;
+      },
     };
-
   });
 });

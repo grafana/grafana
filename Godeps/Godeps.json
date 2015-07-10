@@ -29,7 +29,7 @@
 		},
 		{
 			"ImportPath": "github.com/gosimple/slug",
-			"Rev": "a2392a4a87fa0366cbff131d3fd421f83f52492f"
+			"Rev": "8d258463b4459f161f51d6a357edacd3eef9d663"
 		},
 		{
 			"ImportPath": "github.com/jtolds/gls",
@@ -51,6 +51,10 @@
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+		},
+		{
+			"ImportPath": "github.com/rainycape/unidecode",
+			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
@@ -83,14 +87,6 @@
 			"ImportPath": "gopkg.in/redis.v2",
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
-		},
-		{
-			"ImportPath": "gopkgs.com/pool.v1",
-			"Rev": "c850f092aad1780cbffff25f471c5cc32097932a"
-		},
-		{
-			"ImportPath": "gopkgs.com/unidecode.v1",
-			"Rev": "4deae2c05236b41cc39f8144ac87a837ba974d40"
 		}
 	]
 }

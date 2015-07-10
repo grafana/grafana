@@ -54,6 +54,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
+		if len(ds.JsonData) > 0 {
+			dsMap["jsonData"] = ds.JsonData
+		}
+
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
@@ -95,6 +99,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
 		"appSubUrl":         setting.AppSubUrl,
+		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,

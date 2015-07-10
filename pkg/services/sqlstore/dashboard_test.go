@@ -6,6 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
@@ -51,8 +52,41 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result.Slug, ShouldEqual, "test-dash-23")
 			})
 
+			Convey("Should return error if no dashboard is updated", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId:     1,
+					Overwrite: true,
+					Dashboard: map[string]interface{}{
+						"id":    float64(123412321),
+						"title": "Expect error",
+						"tags":  []interface{}{},
+					},
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldNotBeNil)
+			})
+
+			Convey("Should not be able to overwrite dashboard in another org", func() {
+				query := m.GetDashboardQuery{Slug: "test-dash-23", OrgId: 1}
+				GetDashboard(&query)
+
+				cmd := m.SaveDashboardCommand{
+					OrgId:     2,
+					Overwrite: true,
+					Dashboard: map[string]interface{}{
+						"id":    float64(query.Result.Id),
+						"title": "Expect error",
+						"tags":  []interface{}{},
+					},
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldNotBeNil)
+			})
+
 			Convey("Should be able to search for dashboard", func() {
-				query := m.SearchDashboardsQuery{
+				query := search.FindPersistedDashboardsQuery{
 					Title: "test",
 					OrgId: 1,
 				}
@@ -63,18 +97,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 				hit := query.Result[0]
 				So(len(hit.Tags), ShouldEqual, 2)
-			})
-
-			Convey("Should be able to search for dashboards using tags", func() {
-				query1 := m.SearchDashboardsQuery{Tag: "webapp", OrgId: 1}
-				query2 := m.SearchDashboardsQuery{Tag: "tagdoesnotexist", OrgId: 1}
-
-				err := SearchDashboards(&query1)
-				err = SearchDashboards(&query2)
-				So(err, ShouldBeNil)
-
-				So(len(query1.Result), ShouldEqual, 1)
-				So(len(query2.Result), ShouldEqual, 0)
 			})
 
 			Convey("Should not be able to save dashboard with same name", func() {
@@ -113,7 +135,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to search for starred dashboards", func() {
-					query := m.SearchDashboardsQuery{OrgId: 1, UserId: 10, IsStarred: true}
+					query := search.FindPersistedDashboardsQuery{OrgId: 1, UserId: 10, IsStarred: true}
 					err := SearchDashboards(&query)
 
 					So(err, ShouldBeNil)

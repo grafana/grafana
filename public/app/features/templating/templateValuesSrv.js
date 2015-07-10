@@ -11,6 +11,8 @@ function (angular, _, kbn) {
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
 
+    function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
+
     $rootScope.onAppEvent('time-range-changed', function()  {
       var variable = _.findWhere(self.variables, { type: 'interval' });
       if (variable) {
@@ -29,13 +31,7 @@ function (angular, _, kbn) {
         var variable = this.variables[i];
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          var promise = this.setVariableValue(variable, option, true);
-          this.updateAutoInterval(variable);
-
-          promises.push(promise);
+          promises.push(this.setVariableFromUrl(variable, urlValue));
         }
         else if (variable.refresh) {
           promises.push(this.updateOptions(variable));
@@ -46,6 +42,25 @@ function (angular, _, kbn) {
       }
 
       return $q.all(promises);
+    };
+
+    this.setVariableFromUrl = function(variable, urlValue) {
+      if (variable.refresh) {
+        var self = this;
+        //refresh the list of options before setting the value
+        return this.updateOptions(variable).then(function() {
+          var option = _.findWhere(variable.options, { text: urlValue });
+          option = option || { text: urlValue, value: urlValue };
+
+          self.updateAutoInterval(variable);
+          return self.setVariableValue(variable, option);
+        });
+      }
+      var option = _.findWhere(variable.options, { text: urlValue });
+      option = option || { text: urlValue, value: urlValue };
+
+      this.updateAutoInterval(variable);
+      return this.setVariableValue(variable, option);
     };
 
     this.updateAutoInterval = function(variable) {
@@ -60,17 +75,20 @@ function (angular, _, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, recursive) {
-      variable.current = option;
+    this.setVariableValue = function(variable, option) {
+      variable.current = angular.copy(option);
+
+      if (_.isArray(variable.current.value)) {
+        variable.current.text = variable.current.value.join(' + ');
+      }
 
       templateSrv.updateTemplateData();
+      return this.updateOptionsInChildVariables(variable);
+    };
 
-      return this.updateOptionsInChildVariables(variable)
-        .then(function() {
-          if (!recursive) {
-            $rootScope.$broadcast('refresh');
-          }
-        });
+    this.variableUpdated = function(variable) {
+      templateSrv.updateTemplateData();
+      return this.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
@@ -104,24 +122,75 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      return datasourceSrv.get(variable.datasource).then(function(datasource) {
-        return datasource.metricFindQuery(variable.query).then(function (results) {
-          variable.options = self.metricNamesToVariableValues(variable, results);
+      return datasourceSrv.get(variable.datasource)
+        .then(_.partial(this.updateOptionsFromMetricFindQuery, variable))
+        .then(_.partial(this.updateTags, variable))
+        .then(_.partial(this.validateVariableSelectionState, variable));
+    };
 
-          if (variable.includeAll) {
-            self.addAllOption(variable);
-          }
+    this.validateVariableSelectionState = function(variable) {
+      if (!variable.current) {
+        if (!variable.options.length) { return; }
+        return self.setVariableValue(variable, variable.options[0]);
+      }
 
-          // if parameter has current value
-          // if it exists in options array keep value
-          if (variable.current) {
-            var currentOption = _.findWhere(variable.options, { text: variable.current.text });
-            if (currentOption) {
-              return self.setVariableValue(variable, currentOption, true);
+      if (_.isArray(variable.current.value)) {
+        for (var i = 0; i < variable.current.value.length; i++) {
+          var value = variable.current.value[i];
+          for (var y = 0; y < variable.options.length; y++) {
+            var option = variable.options[y];
+            if (option.value === value) {
+              option.selected = true;
             }
           }
+        }
+      } else {
+        var currentOption = _.findWhere(variable.options, { text: variable.current.text });
+        if (currentOption) {
+          return self.setVariableValue(variable, currentOption);
+        } else {
+          if (!variable.options.length) { return; }
+          return self.setVariableValue(variable, variable.options[0]);
+        }
+      }
+    };
 
-          return self.setVariableValue(variable, variable.options[0], true);
+    this.updateTags = function(variable, datasource) {
+      if (variable.useTags) {
+        return datasource.metricFindQuery(variable.tagsQuery).then(function (results) {
+          variable.tags = [];
+          for (var i = 0; i < results.length; i++) {
+            variable.tags.push(results[i].text);
+          }
+          return datasource;
+        });
+      } else {
+        delete variable.tags;
+      }
+
+      return datasource;
+    };
+
+    this.updateOptionsFromMetricFindQuery = function(variable, datasource) {
+      return datasource.metricFindQuery(variable.query).then(function (results) {
+        variable.options = self.metricNamesToVariableValues(variable, results);
+        if (variable.includeAll) {
+          self.addAllOption(variable);
+        }
+        if (!variable.options.length) {
+          variable.options.push(getNoneOption());
+        }
+        return datasource;
+      });
+    };
+
+    this.getValuesForTag = function(variable, tagKey) {
+      return datasourceSrv.get(variable.datasource).then(function(datasource) {
+        var query = variable.tagValuesQuery.replace('$tag', tagKey);
+        return datasource.metricFindQuery(query).then(function (results) {
+          return _.map(results, function(value) {
+            return value.text;
+          });
         });
       });
     };
@@ -148,7 +217,7 @@ function (angular, _, kbn) {
         options[value] = value;
       }
 
-      return _.map(_.keys(options), function(key) {
+      return _.map(_.keys(options).sort(), function(key) {
         return { text: key, value: key };
       });
     };
@@ -156,19 +225,19 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-        case 'wildcard':
-          allValue = '*';
-          break;
-        case 'regex wildcard':
-          allValue = '.*';
-          break;
-        case 'regex values':
-          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
-          break;
-        default:
-          allValue = '{';
-          allValue += _.pluck(variable.options, 'text').join(',');
-          allValue += '}';
+      case 'wildcard':
+        allValue = '*';
+        break;
+      case 'regex wildcard':
+        allValue = '.*';
+        break;
+      case 'regex values':
+        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+        break;
+      default:
+        allValue = '{';
+        allValue += _.pluck(variable.options, 'text').join(',');
+        allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});
