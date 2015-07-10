@@ -483,8 +483,8 @@ func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
 		if _, err := sess.Insert(&collectorSess); err != nil {
 			return err
 		}
-		rawSql := "UPDATE collector set online=1, online_change=NOW() where id=?"
-		if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+		rawSql := "UPDATE collector set online=1, online_change=? where id=?"
+		if _, err := sess.Exec(rawSql, time.Now(), cmd.CollectorId); err != nil {
 			return err
 		}
 		sess.publishAfterCommit(&events.CollectorConnected{
@@ -530,8 +530,8 @@ func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
 			return err
 		}
 		if len(q.Result) < 1 {
-			rawSql := "UPDATE collector set online=0, online_change=NOW() where id=?"
-			if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+			rawSql := "UPDATE collector set online=0, online_change=? where id=?"
+			if _, err := sess.Exec(rawSql, time.Now(), cmd.CollectorId); err != nil {
 				return err
 			}
 		}
@@ -581,12 +581,13 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		}
 		if len(toOnline) > 0 {
 			a := make([]string, len(toOnline))
-			args := make([]interface{}, len(toOnline))
+			args := make([]interface{}, len(toOnline)+1)
+            args[0] = time.Now()
 			for i, id := range toOnline {
-				args[i] = id
+				args[i+1] = id
 				a[i] = "?"
 			}
-			rawSql = fmt.Sprintf("UPDATE collector set online=1, online_change=NOW() where id in (%s)", strings.Join(a, ","))
+			rawSql = fmt.Sprintf("UPDATE collector set online=1, online_change=? where id in (%s)", strings.Join(a, ","))
 
 			if _, err := sess.Exec(rawSql, args...); err != nil {
 				fmt.Println("failed to set collectors to online: ", rawSql)
@@ -595,12 +596,13 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		}
 		if len(toOffline) > 0 {
 			a := make([]string, len(toOffline))
-			args := make([]interface{}, len(toOffline))
+			args := make([]interface{}, len(toOffline)+1)
+            args[0] = time.Now()
 			for i, id := range toOffline {
-				args[i] = id
+				args[i+1] = id
 				a[i] = "?"
 			}
-			rawSql = fmt.Sprintf("UPDATE collector set online=0, online_change=NOW() where id in (%s)", strings.Join(a, ","))
+			rawSql = fmt.Sprintf("UPDATE collector set online=0, online_change=? where id in (%s)", strings.Join(a, ","))
 
 			if _, err := sess.Exec(rawSql, args...); err != nil {
 				fmt.Println("failed to set collectors to offline:", rawSql)

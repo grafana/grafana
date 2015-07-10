@@ -2,6 +2,7 @@ package migrations
 
 import "github.com/go-xorm/xorm"
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import "time"
 
 func addCollectorMigration(mg *Migrator) {
 
@@ -84,9 +85,9 @@ func addCollectorMigration(mg *Migrator) {
 	changeCol := &Column{Name: "enabled_change", Type: DB_DateTime, Nullable: true}
 	addEnableChangeMig := NewAddColumnMigration(collectorV1, changeCol)
 	addEnableChangeMig.OnSuccess = func(sess *xorm.Session) error {
-		rawSQL := "UPDATE collector set enabled_change=NOW()"
+		rawSQL := "UPDATE collector set enabled_change=?"
 		sess.Table("collector")
-		_, err := sess.Exec(rawSQL)
+		_, err := sess.Exec(rawSQL, time.Now())
 		return err
 	}
 	mg.AddMigration("add enabled_change col to collector table v1", addEnableChangeMig)
