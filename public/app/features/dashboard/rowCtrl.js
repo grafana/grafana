@@ -22,7 +22,6 @@ function (angular, app, _, config) {
 
     $scope.init = function() {
       $scope.editor = {index: 0};
-      $scope.reset_panel();
     };
 
     $scope.togglePanelMenu = function(posX) {
@@ -64,8 +63,18 @@ function (angular, app, _, config) {
     };
 
     $scope.add_panel_default = function(type) {
-      $scope.reset_panel(type);
-      $scope.add_panel($scope.panel);
+      var defaultSpan = 12;
+      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
+
+      var panel = {
+        title: config.new_panel_title,
+        error: false,
+        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+        editable: true,
+        type: type
+      };
+
+      $scope.add_panel(panel);
 
       $timeout(function() {
         $scope.$broadcast('render');
@@ -103,31 +112,6 @@ function (angular, app, _, config) {
         newPanel.span = oldPanel.span;
         row.panels.splice(index, 0, newPanel);
       });
-    };
-
-    $scope.reset_panel = function(type) {
-      var defaultSpan = 12;
-      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
-
-      $scope.panel = {
-        title: config.new_panel_title,
-        error: false,
-        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
-        editable: true,
-        type: type
-      };
-
-      function fixRowHeight(height) {
-        if (!height) {
-          return '200px';
-        }
-        if (!_.isString(height)) {
-          return height + 'px';
-        }
-        return height;
-      }
-
-      $scope.row.height = fixRowHeight($scope.row.height);
     };
 
     $scope.init();

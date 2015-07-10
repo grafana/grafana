@@ -20,6 +20,7 @@ function (angular, app, _, $) {
 
         scope.$on('render', function() {
           render();
+          scope.panelRenderingComplete();
         });
 
         function setElementHeight() {
@@ -181,9 +182,13 @@ function (angular, app, _, $) {
 
         elem.click(function() {
           if (panel.links.length === 0) { return; }
-
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0]);
-          if (linkInfo.href[0] === '#') { linkInfo.href = linkInfo.href.substring(1); }
+          var link = panel.links[0];
+          var linkInfo = linkSrv.getPanelLinkAnchorInfo(link);
+          if (panel.links[0].targetBlank) {
+            var redirectWindow = window.open(linkInfo.href, '_blank');
+            redirectWindow.location;
+            return;
+          }
 
           if (linkInfo.href.indexOf('http') === 0) {
             window.location.href = linkInfo.href;

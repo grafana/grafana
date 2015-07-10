@@ -105,7 +105,7 @@ function (angular, _) {
           }]);
         }
 
-        return $scope.searchDashboards(linkDef);
+        return $scope.searchDashboards(linkDef, 7);
       }
 
       if (linkDef.type === 'link') {
@@ -131,8 +131,8 @@ function (angular, _) {
       });
     }
 
-    $scope.searchDashboards = function(link) {
-      return backendSrv.search({tag: link.tags}).then(function(results) {
+    $scope.searchDashboards = function(link, limit) {
+      return backendSrv.search({tag: link.tags, limit: limit}).then(function(results) {
         return _.reduce(results, function(memo, dash) {
           // do not add current dashboard
           if (dash.id !== currentDashId) {
@@ -150,7 +150,7 @@ function (angular, _) {
     };
 
     $scope.fillDropdown = function(link) {
-      $scope.searchDashboards(link).then(function(results) {
+      $scope.searchDashboards(link, 100).then(function(results) {
         _.each(results, function(hit) {
           hit.url = linkSrv.getLinkUrl(hit);
         });

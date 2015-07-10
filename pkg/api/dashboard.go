@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/search"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -31,7 +32,7 @@ func isDasboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) 
 func GetDashboard(c *middleware.Context) {
 	metrics.M_Api_Dashboard_Get.Inc(1)
 
-	slug := c.Params(":slug")
+	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
 	err := bus.Dispatch(&query)

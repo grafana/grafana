@@ -26,6 +26,7 @@ func Register(r *macaron.Macaron) {
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
 	r.Get("/org/", reqSignedIn, Index)
+	r.Get("/org/new", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
 	r.Get("/datasources/edit/*", reqSignedIn, Index)
 	r.Get("/org/users/", reqSignedIn, Index)
@@ -39,7 +40,14 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), SignUp)
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
+
+	// reset password
+	r.Get("/user/password/send-reset-email", Index)
+	r.Get("/user/password/reset", Index)
+
+	r.Post("/api/user/password/send-reset-email", bind(dtos.SendResetPasswordEmailForm{}), wrap(SendResetPasswordEmail))
+	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), wrap(ResetPassword))
 
 	// dashboard snapshots
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

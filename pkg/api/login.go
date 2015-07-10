@@ -4,7 +4,6 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/ldapauth"
 	"github.com/grafana/grafana/pkg/auth"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -89,28 +88,20 @@ func LoginApiPing(c *middleware.Context) {
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
-	sourcesQuery := auth.GetAuthSourcesQuery{}
-	if err := bus.Dispatch(&sourcesQuery); err != nil {
-		return ApiError(500, "Could not get login sources", err)
+	authQuery := auth.AuthenticateUserQuery{
+		Username: cmd.User,
+		Password: cmd.Password,
 	}
 
-	var err error
-	var user *m.User
-
-	for _, authSource := range sourcesQuery.Sources {
-		user, err = authSource.AuthenticateUser(cmd.User, cmd.Password)
-		if err == nil {
-			break
+	if err := bus.Dispatch(&authQuery); err != nil {
+		if err == auth.ErrInvalidCredentials {
+			return ApiError(401, "Invalid username or password", err)
 		}
-		// handle non invalid credentials error, otherwise try next auth source
-		if err != auth.ErrInvalidCredentials {
-			return ApiError(500, "Error while trying to authenticate user", err)
-		}
+
+		return ApiError(500, "Error while trying to authenticate user", err)
 	}
 
-	if err != nil {
-		return ApiError(401, "Invalid username or password", err)
-	}
+	user := authQuery.User
 
 	loginUserWithUser(user, c)
 
@@ -126,19 +117,6 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 	metrics.M_Api_Login_Post.Inc(1)
 
 	return Json(200, result)
-}
-
-func LoginUsingLdap(c *middleware.Context, cmd dtos.LoginCommand) Response {
-	err := ldapauth.Login(cmd.User, cmd.Password)
-
-	if err != nil {
-		if err == ldapauth.ErrInvalidCredentials {
-			return ApiError(401, "Invalid username or password", err)
-		}
-		return ApiError(500, "Ldap login failed", err)
-	}
-
-	return Empty(401)
 }
 
 func loginUserWithUser(user *m.User, c *middleware.Context) {

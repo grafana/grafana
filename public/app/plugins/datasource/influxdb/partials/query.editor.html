@@ -59,16 +59,18 @@
 				</li>
 			</ul>
 
-			<input  type="text" class="tight-form-clear-input span10" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="targetTextChanged()" ng-show="target.rawQuery" />
+			<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
 
 			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
 				<li class="tight-form-item query-keyword" style="width: 75px;">
 					SELECT
 				</li>
-				<li class="dropdown tight-form-item">
-					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
-						{{target.function}}<span>(value)</span>
-					</a>
+				<li class="dropdown" ng-repeat="field in target.fields">
+					<span influxdb-func-editor field="field" get-fields="getFields()" on-change="fieldChanged(field)" class="tight-form-item">
+					</span>
+				</li>
+				<li>
+					<metric-segment segment="addFieldSegment" get-alt-segments="getFieldSegments()" on-value-changed="addField()"></metric-segment>
 				</li>
 			</ul>
 
@@ -108,14 +110,14 @@
 			<div class="clearfix"></div>
 		</div>
 
-		<div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
+		<div class="tight-form">
+			<ul class="tight-form-list" ng-hide="target.rawQuery">
 				<li class="tight-form-item">
 					<i class="fa fa-eye invisible"></i>
 				</li>
 
-				<li class="tight-form-item" >
-					<span class="query-keyword">GROUP BY</span>
+				<li class="tight-form-item query-keyword">
+					GROUP BY
 				</li>
 
 				<li class="tight-form-item">

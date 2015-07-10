@@ -38,7 +38,6 @@ const (
 var (
 	// App settings.
 	Env       string = DEV
-	AppName   string
 	AppUrl    string
 	AppSubUrl string
 
@@ -68,18 +67,18 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey          string
-	LogInRememberDays  int
-	CookieUserName     string
-	CookieRememberName string
-	DisableGravatar    bool
+	SecretKey             string
+	LogInRememberDays     int
+	CookieUserName        string
+	CookieRememberName    string
+	DisableGravatar       bool
+	EmailCodeValidMinutes int
 
 	// User settings
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
-	ViewerRoleMode     string
 
 	// Http auth
 	AdminUser     string
@@ -94,6 +93,9 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
+
+	// Basic Auth
+	BasicAuthEnabled bool
 
 	// Session settings.
 	SessionOptions session.Options
@@ -117,7 +119,10 @@ var (
 
 	// LDAP
 	LdapEnabled bool
-	LdapUrls    []string
+	LdapHosts   []string
+
+	// SMTP email settings
+	Smtp SmtpSettings
 )
 
 type CommandLineArgs struct {
@@ -351,7 +356,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
 
-	AppName = Cfg.Section("").Key("app_name").MustString("Grafana")
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 
 	server := Cfg.Section("server")
@@ -388,7 +392,6 @@ func NewConfigContext(args *CommandLineArgs) {
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
-	ViewerRoleMode = users.Key("viewer_role_mode").In("default", []string{"default", "strinct"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -402,6 +405,9 @@ func NewConfigContext(args *CommandLineArgs) {
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
+	authBasic := Cfg.Section("auth.basic")
+	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
@@ -412,9 +418,10 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapUrls = ldapSec.Key("urls").Strings(" ")
+	LdapHosts = ldapSec.Key("hosts").Strings(" ")
 
 	readSessionConfig()
+	readSmtpSettings()
 }
 
 func readSessionConfig() {

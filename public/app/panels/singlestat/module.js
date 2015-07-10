@@ -186,14 +186,21 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       data.flotpairs = [];
 
       if ($scope.series && $scope.series.length > 0) {
-        data.value = $scope.series[0].stats[$scope.panel.valueName];
-        data.flotpairs = $scope.series[0].flotpairs;
-      }
+        var lastValue = _.last($scope.series[0].datapoints)[0];
+        if (_.isString(lastValue)) {
+          data.value = 0;
+          data.valueFormated = lastValue;
+          data.valueRounded = 0;
+        } else {
+          data.value = $scope.series[0].stats[$scope.panel.valueName];
+          data.flotpairs = $scope.series[0].flotpairs;
 
-      var decimalInfo = $scope.getDecimalsForValue(data.value);
-      var formatFunc = kbn.valueFormats[$scope.panel.format];
-      data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
-      data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
+          var decimalInfo = $scope.getDecimalsForValue(data.value);
+          var formatFunc = kbn.valueFormats[$scope.panel.format];
+          data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
+          data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
+        }
+      }
 
       // check value to text mappings
       for(var i = 0; i < $scope.panel.valueMaps.length; i++) {
