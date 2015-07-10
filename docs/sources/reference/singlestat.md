@@ -34,8 +34,7 @@ The coloring options of the singlestat config allow you to dynamically change th
 2. `Value`: The Value checkbox applies the configured thresholds and colors to the value within the singlestat panel.
 3. `Thresholds`: Thresholds allow you to change the background and value colors dyanmically within the panel. The threshold field accepts **3 comma-separated** values, corresponding to the three colors directly to the right.
 4. `Colors`: The color picker allows you to select a color and opacity
-5. `Invert order`: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img src="/images/GYR.png">) will become Red, Orange, Green (<img src="/images/RYG.png">).
-
+5. `Invert order`: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/v1/ryg.png">).
 
 ### Spark Lines
 
@@ -44,7 +43,7 @@ Spark lines are a great way of seeing the historical data associated with a sing
 <img class="no-shadow" src="/img/v1/Singlestat-Sparklines.png">
 
 1. `Show`: The show checkbox will toggle whether the spark line is shown in the panel. When unselected, only the value will appear.
-2. `Background`: **ASK TORKEL.**
+2. `Background`: Check if you want the sparklines to take up the full panel width or uncheck if they should only be at the bottom.
 3. `Line Color`: This color selection applies to the color of the sparkline itself.
 4. `Fill Color`: This color selection applies to the area below the sparkline.
 
