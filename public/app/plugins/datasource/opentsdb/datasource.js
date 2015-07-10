@@ -173,11 +173,7 @@ function (angular, _, kbn) {
     };
 
     OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
-      var options = {
-        method: 'GET',
-        url: this.url + '/api/aggregators'
-      };
-      return $http(options).then(function(result) {
+      return this._get('/api/aggregators', {}).then(function(result) {
         if (result.data instanceof Array) {
           return result.data.sort();
         } else {
