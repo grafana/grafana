@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/golang-lru"
-	"github.com/streadway/amqp"
 )
 
 var jobQueueInternalItems met.Gauge
@@ -101,15 +99,12 @@ func Construct() {
 func standalone(cache *lru.Cache) {
 	jobQueue := make(chan Job, setting.JobQueueSize)
 
-	// start dispatcher.
-	// at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
-	// to allow that we would use two queues. The dispatch would write to one, and the executor would read from another.
-	// another thread would then handle useing rabbitmq as an intermediary between the two.
+	// create jobs
 	go Dispatcher(jobQueue)
 
 	//start group of workers to execute the checks.
 	for i := 0; i < setting.Executors; i++ {
-		go Executor(GraphiteAuthContextReturner, jobQueue, cache)
+		go ChanExecutor(GraphiteAuthContextReturner, jobQueue, cache)
 	}
 }
 
@@ -146,13 +141,13 @@ func distributed(url string, cache *lru.Cache) error {
 		}(jobQueue)
 	}
 
-	if setting.Executors > 0 {
-		q := rabbitmq.Queue{
-			Name:       "",
-			Durable:    false,
-			AutoDelete: true,
-			Exclusive:  true,
-		}
+	q := rabbitmq.Queue{
+		Name:       "",
+		Durable:    false,
+		AutoDelete: true,
+		Exclusive:  true,
+	}
+	for i := 0; i < setting.Executors; i++ {
 		consumer := rabbitmq.Consumer{
 			Url:        url,
 			Exchange:   &exch,
@@ -162,32 +157,7 @@ func distributed(url string, cache *lru.Cache) error {
 		if err := consumer.Connect(); err != nil {
 			log.Fatal(0, "failed to start event.consumer.", err)
 		}
-
-		consumeQueue := make(chan Job, setting.JobQueueSize)
-
-		//read jobs from rabbitmq and push them into the execution channel.
-		consumer.Consume(func(msg *amqp.Delivery) error {
-			//convert from json to Job
-			job := Job{}
-			//log.Info("recvd: " + string(msg.Body))
-			if err := json.Unmarshal(msg.Body, &job); err != nil {
-				log.Error(0, "failed to unmarshal msg body.", err)
-				return err
-			}
-			job.StoreMetricFunc = api.StoreMetric
-			select {
-			case consumeQueue <- job:
-			default:
-				// TODO: alert when this happens
-				dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
-			}
-			return nil
-		})
-
-		//start group of workers to execute the jobs in the execution channel.
-		for i := 0; i < setting.Executors; i++ {
-			go Executor(GraphiteAuthContextReturner, consumeQueue, cache)
-		}
+		AmqpExecutor(GraphiteAuthContextReturner, consumer, cache)
 	}
 	return nil
 }
