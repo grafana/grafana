@@ -161,11 +161,10 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 			//check if we failed due to deadlock.
 			if err.Error() == "Error 1213: Deadlock found when trying to get lock; try restarting transaction" {
 				err = bus.Dispatch(&updateMonitorStateCmd)
-				if err == nil {
-					continue
-				}
 			}
-			log.Error(0, "failed to update monitor state", err)
+		}
+		if err != nil {
+			return fmt.Errorf("non-fatal: failed to update monitor state: %q", err)
 		}
 		//emit a state change event.
 		if job.Notifications.Enabled {
