@@ -104,6 +104,7 @@ define([
     $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
     $scope.addOverrideOption('Z-index', 'zindex', [-1,-2,-3,0,1,2,3]);
     $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
+    $scope.addOverrideOption('Legend', 'legend', [true, false]);
     $scope.updateCurrentOverrides();
 
   });

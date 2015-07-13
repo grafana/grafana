@@ -53,7 +53,7 @@ Creates a new dashboard or updates an existing dashboard.
             "rows": [
               {
               }
-            ]
+            ],
             "schemaVersion": 6,
             "version": 0
           },
