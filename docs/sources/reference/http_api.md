@@ -11,7 +11,20 @@ dashboards, creating users and updating data sources.
 
 ## Authorization
 
+### Tokens
+
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).
+
+### Basic Auth
+
+If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
+standard basic auth.
+
+curl example:
+```
+❯curl http://admin:admin@localhost:3000/api/org
+{"id":1,"name":"Main Org."}
+```
 
 ### Create API Token
 
@@ -309,7 +322,7 @@ The above will return the current user.
 
 Switch user context to the given organisation.
 
-### Organisations of the actual User 
+### Organisations of the actual User
 
 `GET /api/user/orgs`
 
