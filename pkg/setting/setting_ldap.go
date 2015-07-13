@@ -15,10 +15,10 @@ type LdapServerConf struct {
 	AttrUsername string
 	AttrName     string
 	AttrSurname  string
-	AttrMail     string
+	AttrEmail    string
 	AttrMemberOf string
 
-	SearchFilter  []string
+	SearchFilter  string
 	SearchBaseDNs []string
 
 	LdapMemberMap []LdapMemberToOrgRole

@@ -5,19 +5,24 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
 	setting.LdapServers = []*setting.LdapServerConf{
 		&setting.LdapServerConf{
-			UseSSL: false,
-			Host:   "127.0.0.1",
-			Port:   "389",
-			BindDN: "cn=%s,dc=grafana,dc=org",
+			UseSSL:        false,
+			Host:          "127.0.0.1",
+			Port:          "389",
+			BindDN:        "cn=%s,dc=grafana,dc=org",
+			AttrName:      "givenName",
+			AttrSurname:   "sn",
+			AttrUsername:  "cn",
+			AttrMemberOf:  "memberOf",
+			AttrEmail:     "email",
+			SearchFilter:  "(cn=%s)",
+			SearchBaseDNs: []string{"dc=grafana,dc=org"},
 		},
 	}
 }
@@ -25,6 +30,14 @@ func init() {
 type ldapAuther struct {
 	server *setting.LdapServerConf
 	conn   *ldap.Conn
+}
+
+type ldapUserInfo struct {
+	FirstName string
+	LastName  string
+	Username  string
+	Email     string
+	MemberOf  []string
 }
 
 func NewLdapAuthenticator(server *setting.LdapServerConf) *ldapAuther {
@@ -51,9 +64,32 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 	}
 	defer a.conn.Close()
 
-	bindPath := fmt.Sprintf(a.server.BindDN, query.Username)
+	// perform initial authentication
+	if err := a.initialBind(query.Username, query.Password); err != nil {
+		return err
+	}
 
-	if err := a.conn.Bind(bindPath, query.Password); err != nil {
+	// find user entry & attributes
+	if user, err := a.searchForUser(query.Username); err != nil {
+		return err
+	} else {
+		log.Info("Surname: %s", user.LastName)
+		log.Info("givenName: %s", user.FirstName)
+		log.Info("email: %s", user.Email)
+		log.Info("memberOf: %s", user.MemberOf)
+	}
+
+	return errors.New("Aasd")
+}
+
+func (a *ldapAuther) initialBind(username, userPassword string) error {
+	if a.server.BindPassword != "" {
+		userPassword = a.server.BindPassword
+	}
+
+	bindPath := fmt.Sprintf(a.server.BindDN, username)
+
+	if err := a.conn.Bind(bindPath, userPassword); err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials
@@ -62,49 +98,53 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 		return err
 	}
 
-	searchReq := ldap.SearchRequest{
-		BaseDN:       "dc=grafana,dc=org",
-		Scope:        ldap.ScopeWholeSubtree,
-		DerefAliases: ldap.NeverDerefAliases,
-		Attributes:   []string{"sn", "email", "givenName", "memberOf"},
-		Filter:       fmt.Sprintf("(cn=%s)", query.Username),
-	}
-
-	result, err := a.conn.Search(&searchReq)
-	if err != nil {
-		return err
-	}
-
-	if len(result.Entries) == 0 {
-		return errors.New("Ldap search matched no entry, please review your filter setting.")
-	}
-
-	if len(result.Entries) > 1 {
-		return errors.New("Ldap search matched mopre than one entry, please review your filter setting")
-	}
-
-	surname := getLdapAttr("sn", result)
-	givenName := getLdapAttr("givenName", result)
-	email := getLdapAttr("email", result)
-	memberOf := getLdapAttrArray("memberOf", result)
-
-	log.Info("Surname: %s", surname)
-	log.Info("givenName: %s", givenName)
-	log.Info("email: %s", email)
-	log.Info("memberOf: %s", memberOf)
-
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
-	err = bus.Dispatch(&userQuery)
-
-	if err != nil {
-		if err == m.ErrUserNotFound {
-		}
-		return err
-	}
-
-	query.User = userQuery.Result
-
 	return nil
+}
+
+func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
+	var searchResult *ldap.SearchResult
+	var err error
+
+	for _, searchBase := range a.server.SearchBaseDNs {
+		searchReq := ldap.SearchRequest{
+			BaseDN:       searchBase,
+			Scope:        ldap.ScopeWholeSubtree,
+			DerefAliases: ldap.NeverDerefAliases,
+			Attributes: []string{
+				a.server.AttrUsername,
+				a.server.AttrSurname,
+				a.server.AttrEmail,
+				a.server.AttrName,
+				a.server.AttrMemberOf,
+			},
+			Filter: fmt.Sprintf(a.server.SearchFilter, username),
+		}
+
+		searchResult, err = a.conn.Search(&searchReq)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(searchResult.Entries) > 0 {
+			break
+		}
+	}
+
+	if len(searchResult.Entries) == 0 {
+		return nil, errors.New("Ldap search matched no entry, please review your filter setting.")
+	}
+
+	if len(searchResult.Entries) > 1 {
+		return nil, errors.New("Ldap search matched mopre than one entry, please review your filter setting")
+	}
+
+	return &ldapUserInfo{
+		LastName:  getLdapAttr(a.server.AttrSurname, searchResult),
+		FirstName: getLdapAttr(a.server.AttrName, searchResult),
+		Username:  getLdapAttr(a.server.AttrUsername, searchResult),
+		Email:     getLdapAttr(a.server.AttrEmail, searchResult),
+		MemberOf:  getLdapAttrArray(a.server.AttrMemberOf, searchResult),
+	}, nil
 }
 
 func getLdapAttr(name string, result *ldap.SearchResult) string {
