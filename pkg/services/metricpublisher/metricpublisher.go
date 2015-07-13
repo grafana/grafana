@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana/pkg/log"
+	met "github.com/grafana/grafana/pkg/metric"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
@@ -12,10 +13,12 @@ import (
 )
 
 var (
-	globalPublisher *rabbitmq.Publisher
+	globalPublisher        *rabbitmq.Publisher
+	metricPublisherMetrics met.Count
+	metricPublisherMsgs    met.Count
 )
 
-func Init() {
+func Init(metrics met.Backend) {
 	sec := setting.Cfg.Section("event_publisher")
 
 	if !sec.Key("enabled").MustBool(false) {
@@ -36,6 +39,8 @@ func Init() {
 		log.Fatal(4, "Failed to connect to metricResults exchange: %v", err)
 		return
 	}
+	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
+	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
 }
 
 func Publish(routingKey string, msgString []byte) {
@@ -56,7 +61,7 @@ func ProcessBuffer(c <-chan m.MetricDefinition) {
 				//get hash.
 				h := crc32.NewIEEE()
 				h.Write([]byte(b.Name))
-				hash := h.Sum32() % uint32(1024)
+				hash := h.Sum32() % uint32(512)
 				if _, ok := buf[hash]; !ok {
 					buf[hash] = make([]m.MetricDefinition, 0)
 				}
@@ -73,6 +78,8 @@ func ProcessBuffer(c <-chan m.MetricDefinition) {
 				if err != nil {
 					log.Error(0, "Failed to marshal metrics payload.", err)
 				} else {
+					metricPublisherMetrics.Inc(int64(len(currentBuf)))
+					metricPublisherMsgs.Inc(1)
 					go Publish(fmt.Sprintf("%d", hash), msgString)
 				}
 			}

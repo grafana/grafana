@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/log"
+	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
@@ -31,6 +32,7 @@ var server *socketio.Server
 var bufCh chan m.MetricDefinition
 var contextCache *ContextCache
 var instanceId string
+var metricsRecvd met.Count
 
 func StoreMetric(m *m.MetricDefinition) {
 	bufCh <- *m
@@ -212,7 +214,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	return nil, m.ErrInvalidApiKey
 }
 
-func InitCollectorController() {
+func InitCollectorController(metrics met.Backend) {
 	sec := setting.Cfg.Section("event_publisher")
 	// get our instance-id
 	dataPath := setting.DataPath + "/instance-id"
@@ -279,7 +281,8 @@ func InitCollectorController() {
 		bus.AddEventListener(HandleCollectorConnected)
 		bus.AddEventListener(HandleCollectorDisconnected)
 	}
-	bufCh = make(chan m.MetricDefinition, runtime.NumCPU())
+	metricsRecvd = metrics.NewCount("collector-ctrl.metrics-recv")
+	bufCh = make(chan m.MetricDefinition, runtime.NumCPU()*100)
 	go metricpublisher.ProcessBuffer(bufCh)
 }
 
@@ -400,6 +403,7 @@ func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 }
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
+	metricsRecvd.Inc(int64(len(results)))
 	for _, r := range results {
 		if !c.Collector.Public {
 			r.OrgId = c.OrgId
