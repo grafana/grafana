@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,6 +42,24 @@ type ldapUserInfo struct {
 	MemberOf  []string
 }
 
+func (u *ldapUserInfo) isMemberOfAny(groups []string) bool {
+	for _, group := range groups {
+		if u.isMemberOf(group) {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *ldapUserInfo) isMemberOf(group string) bool {
+	for _, member := range u.MemberOf {
+		if member == group {
+			return true
+		}
+	}
+	return false
+}
+
 func NewLdapAuthenticator(server *setting.LdapServerConf) *ldapAuther {
 	return &ldapAuther{
 		server: server,
@@ -70,16 +90,48 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 	}
 
 	// find user entry & attributes
-	if user, err := a.searchForUser(query.Username); err != nil {
+	if ldapUser, err := a.searchForUser(query.Username); err != nil {
 		return err
 	} else {
-		log.Info("Surname: %s", user.LastName)
-		log.Info("givenName: %s", user.FirstName)
-		log.Info("email: %s", user.Email)
-		log.Info("memberOf: %s", user.MemberOf)
+		log.Info("Surname: %s", ldapUser.LastName)
+		log.Info("givenName: %s", ldapUser.FirstName)
+		log.Info("email: %s", ldapUser.Email)
+		log.Info("memberOf: %s", ldapUser.MemberOf)
+
+		if grafanaUser, err := a.getGrafanaUserFor(ldapUser); err != nil {
+			return err
+		} else {
+			query.User = grafanaUser
+			return nil
+		}
+	}
+}
+
+func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) {
+	// get user from grafana db
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: ldapUser.Username}
+	if err := bus.Dispatch(&userQuery); err != nil {
+		if err == m.ErrUserNotFound {
+			return a.createGrafanaUser(ldapUser)
+		}
 	}
 
-	return errors.New("Aasd")
+	return userQuery.Result, nil
+}
+
+func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) {
+
+	cmd := m.CreateUserCommand{
+		Login: ldapUser.Username,
+		Email: ldapUser.Email,
+		Name:  fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return nil, err
+	}
+
+	return &cmd.Result, nil
 }
 
 func (a *ldapAuther) initialBind(username, userPassword string) error {
