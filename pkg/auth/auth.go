@@ -13,32 +13,6 @@ var (
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
 
-type LoginSettings struct {
-	LdapEnabled bool
-}
-
-type LdapFilterToOrg struct {
-	Filter  string
-	OrgId   int
-	OrgRole string
-}
-
-type LdapSettings struct {
-	Enabled      bool
-	Hosts        []string
-	UseSSL       bool
-	BindDN       string
-	AttrUsername string
-	AttrName     string
-	AttrSurname  string
-	AttrMail     string
-	Filters      []LdapFilterToOrg
-}
-
-type AuthSource interface {
-	AuthenticateUser(username, password string) (*m.User, error)
-}
-
 type AuthenticateUserQuery struct {
 	Username string
 	Password string
@@ -56,7 +30,13 @@ func AuthenticateUser(query *AuthenticateUserQuery) error {
 	}
 
 	if setting.LdapEnabled {
-		err = loginUsingLdap(query)
+		for _, server := range setting.LdapServers {
+			auther := NewLdapAuthenticator(server)
+			err = auther.login(query)
+			if err == nil || err != ErrInvalidCredentials {
+				return err
+			}
+		}
 	}
 
 	return err
