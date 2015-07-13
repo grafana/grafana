@@ -29,7 +29,7 @@ type GraphiteContext struct {
 	lock        sync.Mutex
 	dur         time.Duration
 	missingVals int
-	emptyResp   bool
+	emptyResp   int
 }
 
 func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
@@ -45,12 +45,16 @@ func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error)
 			}
 		}
 	}
-	gc.emptyResp = (len(res) == 0)
 
 	// one Context might run multiple queries, we want to add all times
 	gc.dur += time.Since(pre)
 	if gc.missingVals > 0 {
 		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
+	}
+	// TODO: find a way to verify the entire response, or at least the number of points.
+	if len(res) == 0 {
+		gc.emptyResp += 1
+		return res, fmt.Errorf("GraphiteContext got an empty response")
 	}
 	return res, err
 }
@@ -193,8 +197,8 @@ func execute(fn GraphiteReturner, job Job, cache *lru.Cache) error {
 		executorJobQueryGraphite.Value(gr.dur)
 		executorJobParseAndEval.Value(durationExec - gr.dur)
 		executorGraphiteMissingVals.Value(int64(gr.missingVals))
-		if gr.emptyResp {
-			executorGraphiteEmptyResponse.Inc(1)
+		if gr.emptyResp != 0 {
+			executorGraphiteEmptyResponse.Inc(int64(gr.emptyResp))
 		}
 	}
 
