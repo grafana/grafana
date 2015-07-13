@@ -1,9 +1,9 @@
 package setting
 
-type LdapMemberToOrgRole struct {
-	LdapMemberPattern string
-	OrgId             int
-	OrgRole           string
+type LdapGroupToOrgRole struct {
+	LdapGroupPath string
+	OrgId         int
+	OrgRole       string
 }
 
 type LdapServerConf struct {
@@ -21,5 +21,5 @@ type LdapServerConf struct {
 	SearchFilter  string
 	SearchBaseDNs []string
 
-	LdapMemberMap []LdapMemberToOrgRole
+	LdapGroups []LdapGroupToOrgRole
 }
