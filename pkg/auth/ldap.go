@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,23 +11,49 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func loginUsingLdap(query *AuthenticateUserQuery) error {
-	url, err := url.Parse(setting.LdapHosts[0])
-	if err != nil {
-		return err
+func init() {
+	setting.LdapServers = []*setting.LdapServerConf{
+		&setting.LdapServerConf{
+			UseSSL: false,
+			Host:   "127.0.0.1",
+			Port:   "389",
+			BindDN: "cn=%s,dc=grafana,dc=org",
+		},
+	}
+}
+
+type ldapAuther struct {
+	server *setting.LdapServerConf
+	conn   *ldap.Conn
+}
+
+func NewLdapAuthenticator(server *setting.LdapServerConf) *ldapAuther {
+	return &ldapAuther{
+		server: server,
+	}
+}
+
+func (a *ldapAuther) Dial() error {
+	address := fmt.Sprintf("%s:%s", a.server.Host, a.server.Port)
+	var err error
+	if a.server.UseSSL {
+		a.conn, err = ldap.DialTLS("tcp", address, nil)
+	} else {
+		a.conn, err = ldap.Dial("tcp", address)
 	}
 
-	conn, err := ldap.Dial("tcp", url.Host)
-	if err != nil {
+	return err
+}
+
+func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
+	if err := a.Dial(); err != nil {
 		return err
 	}
+	defer a.conn.Close()
 
-	defer conn.Close()
+	bindPath := fmt.Sprintf(a.server.BindDN, query.Username)
 
-	bindPath := fmt.Sprintf(setting.LdapBindPath, query.Username)
-	err = conn.Bind(bindPath, query.Password)
-
-	if err != nil {
+	if err := a.conn.Bind(bindPath, query.Password); err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials
@@ -40,21 +66,32 @@ func loginUsingLdap(query *AuthenticateUserQuery) error {
 		BaseDN:       "dc=grafana,dc=org",
 		Scope:        ldap.ScopeWholeSubtree,
 		DerefAliases: ldap.NeverDerefAliases,
-		Attributes:   []string{"cn", "sn", "email"},
+		Attributes:   []string{"sn", "email", "givenName", "memberOf"},
 		Filter:       fmt.Sprintf("(cn=%s)", query.Username),
 	}
 
-	result, err := conn.Search(&searchReq)
+	result, err := a.conn.Search(&searchReq)
 	if err != nil {
 		return err
 	}
 
-	log.Info("Search result: %v, error: %v", result, err)
-
-	for _, entry := range result.Entries {
-		log.Info("cn: %s", entry.Attributes[0].Values[0])
-		log.Info("email: %s", entry.Attributes[2].Values[0])
+	if len(result.Entries) == 0 {
+		return errors.New("Ldap search matched no entry, please review your filter setting.")
 	}
+
+	if len(result.Entries) > 1 {
+		return errors.New("Ldap search matched mopre than one entry, please review your filter setting")
+	}
+
+	surname := getLdapAttr("sn", result)
+	givenName := getLdapAttr("givenName", result)
+	email := getLdapAttr("email", result)
+	memberOf := getLdapAttrArray("memberOf", result)
+
+	log.Info("Surname: %s", surname)
+	log.Info("givenName: %s", givenName)
+	log.Info("email: %s", email)
+	log.Info("memberOf: %s", memberOf)
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
 	err = bus.Dispatch(&userQuery)
@@ -68,6 +105,26 @@ func loginUsingLdap(query *AuthenticateUserQuery) error {
 	query.User = userQuery.Result
 
 	return nil
+}
+
+func getLdapAttr(name string, result *ldap.SearchResult) string {
+	for _, attr := range result.Entries[0].Attributes {
+		if attr.Name == name {
+			if len(attr.Values) > 0 {
+				return attr.Values[0]
+			}
+		}
+	}
+	return ""
+}
+
+func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
+	for _, attr := range result.Entries[0].Attributes {
+		if attr.Name == name {
+			return attr.Values
+		}
+	}
+	return []string{}
 }
 
 func createUserFromLdapInfo() error {
