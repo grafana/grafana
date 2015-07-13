@@ -20,14 +20,21 @@ function (angular, _, config, gfunc, Parser) {
       parseTarget();
     };
 
+    $scope.toggleEditorMode = function() {
+      $scope.target.textEditor = !$scope.target.textEditor;
+      parseTarget();
+    };
+
     // The way parsing and the target editor works needs
     // to be rewritten to handle functions that take multiple series
     function parseTarget() {
       $scope.functions = [];
       $scope.segments = [];
-      $scope.showTextEditor = false;
-
       delete $scope.parserError;
+
+      if ($scope.target.textEditor) {
+        return;
+      }
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
@@ -38,7 +45,7 @@ function (angular, _, config, gfunc, Parser) {
 
       if (astNode.type === 'error') {
         $scope.parserError = astNode.message + " at position: " + astNode.pos;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
         return;
       }
 
@@ -48,7 +55,7 @@ function (angular, _, config, gfunc, Parser) {
       catch (err) {
         console.log('error parsing target:', err.message);
         $scope.parserError = err.message;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
       }
 
       checkOtherSegments($scope.segments.length - 1);
