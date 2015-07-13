@@ -327,7 +327,7 @@ This option should be configured differently depending on what type of
 session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
 If you use MySQL or Postgres as the session store you need to create the
@@ -403,3 +403,14 @@ enabled. Counters are sent every 24 hours. Default value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
 here. By default this feature is disabled.
+
+## [dashboards.json]
+
+If you have a system that automatically builds dashboards as json files you can enable this feature to have the
+Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+
+### enabled
+`true` or `false`. Is disabled by default.
+
+### path
+The full path to a directory containing your json dashboards.

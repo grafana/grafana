@@ -15,9 +15,9 @@ function (_) {
     }
 
     if (tag.value && tag.value[0] === '/' && tag.value[tag.value.length - 1] === '/') {
-      return str + tag.key + ' =~ ' + tag.value;
+      return str + '"' +tag.key + '"' + ' =~ ' + tag.value;
     }
-    return str + tag.key + " = '" + tag.value + "'";
+    return str + '"' + tag.key + '"' + " = '" + tag.value + "'";
   }
 
   var p = InfluxQueryBuilder.prototype;
@@ -32,12 +32,15 @@ function (_) {
 
     if (type === 'TAG_KEYS') {
       query = 'SHOW TAG KEYS';
-      measurement= this.target.measurement;
+      measurement = this.target.measurement;
     } else if (type === 'TAG_VALUES') {
       query = 'SHOW TAG VALUES';
-      measurement= this.target.measurement;
+      measurement = this.target.measurement;
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
+    } else if (type === 'FIELDS') {
+      query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
+      return query;
     }
 
     if (measurement) {
@@ -73,15 +76,25 @@ function (_) {
       throw "Metric measurement is missing";
     }
 
-    var query = 'SELECT ';
-    var measurement = target.measurement;
-    var aggregationFunc = target.function || 'mean';
+    if (!target.fields) {
+      target.fields = [{name: 'value', func: target.function || 'mean'}];
+    }
 
+    var query = 'SELECT ';
+    var i;
+    for (i = 0; i < target.fields.length; i++) {
+      var field = target.fields[i];
+      if (i > 0) {
+        query += ', ';
+      }
+      query += field.func + '(' + field.name + ')';
+    }
+
+    var measurement = target.measurement;
     if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
       measurement = '"' + measurement+ '"';
     }
 
-    query +=  aggregationFunc + '(value)';
     query += ' FROM ' + measurement + ' WHERE ';
     var conditions = _.map(target.tags, function(tag, index) {
       return renderTagCondition(tag, index);
@@ -92,7 +105,7 @@ function (_) {
 
     query += ' GROUP BY time($interval)';
     if  (target.groupByTags && target.groupByTags.length > 0) {
-      query += ', ' + target.groupByTags.join();
+      query += ', "' + target.groupByTags.join('", "') + '"';
     }
 
     if (target.fill) {
