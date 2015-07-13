@@ -40,8 +40,8 @@ func TestExecutor(t *testing.T) {
 				queries: listener,
 			}, nil
 		}
-		jobAt := func(ts int64) Job {
-			return Job{
+		jobAt := func(ts int64) *Job {
+			return &Job{
 				State: m.EvalResultUnknown,
 				Definition: CheckDef{
 					CritExpr: `graphite("foo", "2m", "", "")`,
@@ -50,19 +50,19 @@ func TestExecutor(t *testing.T) {
 				LastPointTs: time.Unix(ts, 0),
 			}
 		}
-		jobQueue := make(chan Job, 10)
+		jobQueue := newInternalJobQueue(10)
 		cache, err := lru.New(1000)
 		if err != nil {
 			panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
 		}
 		go ChanExecutor(fakeGraphiteReturner, jobQueue, cache)
-		jobQueue <- jobAt(0)
-		jobQueue <- jobAt(1)
-		jobQueue <- jobAt(2)
-		jobQueue <- jobAt(2)
-		jobQueue <- jobAt(1)
-		jobQueue <- jobAt(0)
-		time.Sleep(1000 * time.Millisecond) // yes hacky, can be synchronized later
+		jobQueue.Put(jobAt(0))
+		jobQueue.Put(jobAt(1))
+		jobQueue.Put(jobAt(2))
+		jobQueue.Put(jobAt(2))
+		jobQueue.Put(jobAt(1))
+		jobQueue.Put(jobAt(0))
+		time.Sleep(100 * time.Millisecond) // yes hacky, can be synchronized later
 		assertReq(t, listener, "expected the first job")
 		assertReq(t, listener, "expected the second job")
 		assertReq(t, listener, "expected the third job")

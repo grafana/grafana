@@ -118,7 +118,8 @@ var (
 	appliedEnvOverrides          []string
 
 	TickQueueSize               int
-	JobQueueSize                int
+	InternalJobQueueSize        int
+	PreAMQPJobQueueSize         int
 	ExecutorLRUSize             int
 	EnableScheduler             bool
 	Executors                   int
@@ -436,8 +437,9 @@ func NewConfigContext(args *CommandLineArgs) {
 	}
 
 	alerting := Cfg.Section("alerting")
-	TickQueueSize = alerting.Key("queue_ticks_size").MustInt(0)
-	JobQueueSize = alerting.Key("queue_jobs_size").MustInt(0)
+	TickQueueSize = alerting.Key("tickqueue_size").MustInt(0)
+	InternalJobQueueSize = alerting.Key("internal_jobqueue_size").MustInt(0)
+	PreAMQPJobQueueSize = alerting.Key("pre_amqp_jobqueue_size").MustInt(0)
 	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
 	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
 	Executors = alerting.Key("executors").MustInt(100)

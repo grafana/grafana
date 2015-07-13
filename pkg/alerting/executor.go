@@ -76,13 +76,15 @@ func GraphiteAuthContextReturner(org_id int64) (graphite.Context, error) {
 	return &ctx, nil
 }
 
-func ChanExecutor(fn GraphiteReturner, jobQueue <-chan Job, cache *lru.Cache) {
+func ChanExecutor(fn GraphiteReturner, jobQueue JobQueue, cache *lru.Cache) {
 	executorNum.Inc(1)
 	defer executorNum.Dec(1)
 
-	for job := range jobQueue {
-		jobQueueInternalItems.Value(int64(len(jobQueue)))
-		jobQueueInternalSize.Value(int64(setting.JobQueueSize))
+	realQueue := jobQueue.(internalJobQueue).queue
+
+	for job := range realQueue {
+		jobQueueInternalItems.Value(int64(len(realQueue)))
+		jobQueueInternalSize.Value(int64(setting.InternalJobQueueSize))
 		execute(fn, job, cache)
 	}
 }
@@ -98,7 +100,7 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			return nil
 		}
 		job.StoreMetricFunc = api.StoreMetric
-		err := execute(GraphiteAuthContextReturner, job, cache)
+		err := execute(GraphiteAuthContextReturner, &job, cache)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "fatal:") {
 				log.Error(0, err.Error()+". removing job from queue")
@@ -113,7 +115,7 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 // execute executes an alerting job and returns any errors.
 // errors are always prefixed with 'non-fatal' (i.e. error condition that imply retrying the job later might fix it)
 // or 'fatal', when we're sure the job will never process successfully.
-func execute(fn GraphiteReturner, job Job, cache *lru.Cache) error {
+func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
 
 	preConsider := time.Now()

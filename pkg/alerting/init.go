@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -13,9 +12,12 @@ import (
 
 var jobQueueInternalItems met.Gauge
 var jobQueueInternalSize met.Gauge
+var jobQueuePreAMQPItems met.Gauge
+var jobQueuePreAMQPSize met.Gauge
 var tickQueueItems met.Gauge
 var tickQueueSize met.Gauge
-var dispatcherJobsSkippedDueToSlowJobQueue met.Count
+var dispatcherJobsSkippedDueToSlowJobQueueInternal met.Count
+var dispatcherJobsSkippedDueToSlowJobQueuePreAMQP met.Count
 var dispatcherTicksSkippedDueToSlowTickQueue met.Count
 
 var dispatcherGetSchedules met.Timer
@@ -43,10 +45,13 @@ var executorGraphiteMissingVals met.Meter
 // run this function when statsd is ready, so we can create the series
 func Init(metrics met.Backend) {
 	jobQueueInternalItems = metrics.NewGauge("alert-jobqueue-internal.items", 0)
-	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
+	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.InternalJobQueueSize))
+	jobQueuePreAMQPItems = metrics.NewGauge("alert-jobqueue-preamqp.items", 0)
+	jobQueuePreAMQPSize = metrics.NewGauge("alert-jobqueue-preamqp.size", int64(setting.PreAMQPJobQueueSize))
 	tickQueueItems = metrics.NewGauge("alert-tickqueue.items", 0)
 	tickQueueSize = metrics.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
-	dispatcherJobsSkippedDueToSlowJobQueue = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")
+	dispatcherJobsSkippedDueToSlowJobQueueInternal = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-internal-jobqueue")
+	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-pre-amqp-jobqueue")
 	dispatcherTicksSkippedDueToSlowTickQueue = metrics.NewCount("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
 
 	dispatcherGetSchedules = metrics.NewTimer("alert-dispatcher.get-schedules", 0)
@@ -97,7 +102,7 @@ func Construct() {
 }
 
 func standalone(cache *lru.Cache) {
-	jobQueue := make(chan Job, setting.JobQueueSize)
+	jobQueue := newInternalJobQueue(setting.InternalJobQueueSize)
 
 	// create jobs
 	go Dispatcher(jobQueue)
@@ -122,23 +127,10 @@ func distributed(url string, cache *lru.Cache) error {
 		if err != nil {
 			return err
 		}
-		jobQueue := make(chan Job, setting.JobQueueSize)
+
+		jobQueue := newPreAMQPJobQueue(setting.PreAMQPJobQueueSize, publisher)
 
 		go Dispatcher(jobQueue)
-
-		//send dispatched jobs to rabbitmq.
-		go func(jobQueue <-chan Job) {
-			for job := range jobQueue {
-				routingKey := fmt.Sprintf("%d", job.MonitorId)
-				msg, err := json.Marshal(job)
-				//log.Info("sending: " + string(msg))
-				if err != nil {
-					log.Error(3, "failed to marshal job to json.", err)
-					continue
-				}
-				publisher.Publish(routingKey, msg)
-			}
-		}(jobQueue)
 	}
 
 	q := rabbitmq.Queue{
