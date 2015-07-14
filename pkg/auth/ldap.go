@@ -27,7 +27,7 @@ func init() {
 			SearchFilter:  "(cn=%s)",
 			SearchBaseDNs: []string{"dc=grafana,dc=org"},
 			LdapGroups: []*LdapGroupToOrgRole{
-				{GroupDN: "cn=users,dc=grafana,dc=org", OrgRole: "Editor"},
+				{GroupDN: "cn=users,dc=grafana,dc=org", OrgRole: m.ROLE_EDITOR},
 			},
 		},
 	}
@@ -89,7 +89,9 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 
 func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) {
 	// validate that the user has access
-	access := false
+	// if there are no ldap group mappings access is true
+	// otherwise a single group must match
+	access := len(a.server.LdapGroups) == 0
 	for _, ldapGroup := range a.server.LdapGroups {
 		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
 			access = true
@@ -129,6 +131,49 @@ func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) 
 }
 
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
+	if len(a.server.LdapGroups) == 0 {
+		return nil
+	}
+
+	orgsQuery := m.GetUserOrgListQuery{UserId: user.Id}
+	if err := bus.Dispatch(&orgsQuery); err != nil {
+		return err
+	}
+
+	// remove or update org roles
+	for _, org := range orgsQuery.Result {
+		for _, group := range a.server.LdapGroups {
+			if group.OrgId == org.OrgId && ldapUser.isMemberOf(group.GroupDN) {
+				if org.Role != group.OrgRole {
+					// update role
+				}
+			} else {
+				// remove role
+			}
+		}
+	}
+
+	for _, group := range a.server.LdapGroups {
+		if !ldapUser.isMemberOf(group.GroupDN) {
+			continue
+		}
+
+		match := false
+		for _, org := range orgsQuery.Result {
+			if group.OrgId == org.OrgId {
+				match = true
+			}
+		}
+
+		if !match {
+			// add role
+			cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
+			if err := bus.Dispatch(&cmd); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

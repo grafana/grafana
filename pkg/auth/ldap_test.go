@@ -13,7 +13,9 @@ func TestLdapAuther(t *testing.T) {
 	Convey("When translating ldap user to grafana user", t, func() {
 
 		Convey("Given no ldap group map match", func() {
-			ldapAuther := NewLdapAuthenticator(&LdapServerConf{})
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{{}},
+			})
 			_, err := ldapAuther.getGrafanaUserFor(&ldapUserInfo{})
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
@@ -24,7 +26,7 @@ func TestLdapAuther(t *testing.T) {
 		ldapAutherScenario("Given wildcard group match", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "*", OrgRole: "Admin", OrgName: "Main"},
+					{GroupDN: "*", OrgRole: "Admin"},
 				},
 			})
 
@@ -38,7 +40,7 @@ func TestLdapAuther(t *testing.T) {
 		ldapAutherScenario("Given exact group match", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "cn=users", OrgRole: "Admin", OrgName: "Main"},
+					{GroupDN: "cn=users", OrgRole: "Admin"},
 				},
 			})
 
@@ -52,7 +54,7 @@ func TestLdapAuther(t *testing.T) {
 		ldapAutherScenario("Given no existing grafana user", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "cn=users", OrgRole: "Admin", OrgName: "Main"},
+					{GroupDN: "cn=users", OrgRole: "Admin"},
 				},
 			})
 
@@ -78,6 +80,28 @@ func TestLdapAuther(t *testing.T) {
 		})
 
 	})
+
+	Convey("When syncing ldap groups to grafana org roles", t, func() {
+
+		ldapAutherScenario("given no current user orgs", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should create new org user", func() {
+				So(err, ShouldBeNil)
+				So(sc.addOrgUserCommand, ShouldNotBeNil)
+				So(sc.addOrgUserCommand.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+	})
 }
 
 func ldapAutherScenario(desc string, fn scenarioFunc) {
@@ -85,9 +109,15 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		sc := &scenarioContext{}
+
 		bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
 			sc.createUserCmd = cmd
 			sc.createUserCmd.Result = m.User{Login: cmd.Login}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.AddOrgUserCommand) error {
+			sc.addOrgUserCommand = cmd
 			return nil
 		})
 
@@ -96,7 +126,8 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	createUserCmd *m.CreateUserCommand
+	createUserCmd     *m.CreateUserCommand
+	addOrgUserCommand *m.AddOrgUserCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {
@@ -107,6 +138,13 @@ func (sc *scenarioContext) userQueryReturns(user *m.User) {
 			query.Result = user
 			return nil
 		}
+	})
+}
+
+func (sc *scenarioContext) userOrgsQueryReturns(orgs []*m.UserOrgDTO) {
+	bus.AddHandler("test", func(query *m.GetUserOrgListQuery) error {
+		query.Result = orgs
+		return nil
 	})
 }
 

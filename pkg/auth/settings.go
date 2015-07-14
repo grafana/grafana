@@ -1,9 +1,11 @@
 package auth
 
+import m "github.com/grafana/grafana/pkg/models"
+
 type LdapGroupToOrgRole struct {
 	GroupDN string
-	OrgId   int
-	OrgRole string
+	OrgId   int64
+	OrgRole m.RoleType
 }
 
 type LdapServerConf struct {
