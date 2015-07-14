@@ -17,7 +17,7 @@ var tickQueue = make(chan time.Time, setting.TickQueueSize)
 // (provided jobs get consistently routed to executors)
 func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
-	offset := time.Duration(30) * time.Second                      // for now, for simplicity, let's just wait 30seconds for the data to come in
+	offset := time.Duration(LoadOrSetOffset()) * time.Second
 	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
 	ticker := NewTicker(lastProcessed, offset, clock.New())
 	for {

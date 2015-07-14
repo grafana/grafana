@@ -19,6 +19,7 @@ func AddMigrations(mg *Migrator) {
 	addMonitorMigration(mg)
 	addEndpointMigration(mg)
 	addDashboardSnapshotMigrations(mg)
+	addAlertSchedulerValueMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
