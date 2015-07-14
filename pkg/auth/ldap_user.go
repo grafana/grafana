@@ -1,6 +1,7 @@
 package auth
 
 type ldapUserInfo struct {
+	DN        string
 	FirstName string
 	LastName  string
 	Username  string
