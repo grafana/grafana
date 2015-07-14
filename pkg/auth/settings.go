@@ -3,7 +3,6 @@ package auth
 type LdapGroupToOrgRole struct {
 	GroupDN string
 	OrgId   int
-	OrgName string
 	OrgRole string
 }
 
