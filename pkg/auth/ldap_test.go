@@ -97,10 +97,48 @@ func TestLdapAuther(t *testing.T) {
 
 			Convey("Should create new org user", func() {
 				So(err, ShouldBeNil)
-				So(sc.addOrgUserCommand, ShouldNotBeNil)
-				So(sc.addOrgUserCommand.Role, ShouldEqual, m.ROLE_ADMIN)
+				So(sc.addOrgUserCmd, ShouldNotBeNil)
+				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
 			})
 		})
+
+		ldapAutherScenario("given different current org role", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should update org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+				So(sc.updateOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+
+		ldapAutherScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=other"},
+			})
+
+			Convey("Should remove org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.removeOrgUserCmd, ShouldNotBeNil)
+			})
+		})
+
 	})
 }
 
@@ -117,7 +155,17 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 		})
 
 		bus.AddHandler("test", func(cmd *m.AddOrgUserCommand) error {
-			sc.addOrgUserCommand = cmd
+			sc.addOrgUserCmd = cmd
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.UpdateOrgUserCommand) error {
+			sc.updateOrgUserCmd = cmd
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.RemoveOrgUserCommand) error {
+			sc.removeOrgUserCmd = cmd
 			return nil
 		})
 
@@ -126,8 +174,10 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	createUserCmd     *m.CreateUserCommand
-	addOrgUserCommand *m.AddOrgUserCommand
+	createUserCmd    *m.CreateUserCommand
+	addOrgUserCmd    *m.AddOrgUserCommand
+	updateOrgUserCmd *m.UpdateOrgUserCommand
+	removeOrgUserCmd *m.RemoveOrgUserCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {

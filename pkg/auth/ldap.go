@@ -27,7 +27,7 @@ func init() {
 			SearchFilter:  "(cn=%s)",
 			SearchBaseDNs: []string{"dc=grafana,dc=org"},
 			LdapGroups: []*LdapGroupToOrgRole{
-				{GroupDN: "cn=users,dc=grafana,dc=org", OrgRole: m.ROLE_EDITOR},
+				{GroupDN: "cn=users,dc=grafana,dc=org", OrgId: 1, OrgRole: m.ROLE_VIEWER},
 			},
 		},
 	}
@@ -143,16 +143,29 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	// remove or update org roles
 	for _, org := range orgsQuery.Result {
 		for _, group := range a.server.LdapGroups {
-			if group.OrgId == org.OrgId && ldapUser.isMemberOf(group.GroupDN) {
+			if org.OrgId != group.OrgId {
+				continue
+			}
+
+			if ldapUser.isMemberOf(group.GroupDN) {
 				if org.Role != group.OrgRole {
 					// update role
+					cmd := m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: group.OrgRole}
+					if err := bus.Dispatch(&cmd); err != nil {
+						return err
+					}
 				}
 			} else {
 				// remove role
+				cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
+				if err := bus.Dispatch(&cmd); err != nil {
+					return err
+				}
 			}
 		}
 	}
 
+	// add missing org roles
 	for _, group := range a.server.LdapGroups {
 		if !ldapUser.isMemberOf(group.GroupDN) {
 			continue
