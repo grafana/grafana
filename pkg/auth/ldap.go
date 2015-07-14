@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
@@ -18,7 +19,8 @@ func init() {
 			UseSSL:        false,
 			Host:          "127.0.0.1",
 			Port:          "389",
-			BindDN:        "cn=%s,dc=grafana,dc=org",
+			BindDN:        "cn=admin,dc=grafana,dc=org",
+			BindPassword:  "grafana",
 			AttrName:      "givenName",
 			AttrSurname:   "sn",
 			AttrUsername:  "cn",
@@ -73,6 +75,13 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 		log.Info("givenName: %s", ldapUser.FirstName)
 		log.Info("email: %s", ldapUser.Email)
 		log.Info("memberOf: %s", ldapUser.MemberOf)
+
+		// check if a second user bind is needed
+		if a.server.BindPassword != "" {
+			if err := a.secondBind(ldapUser, query.Password); err != nil {
+				return err
+			}
+		}
 
 		if grafanaUser, err := a.getGrafanaUserFor(ldapUser); err != nil {
 			return err
@@ -190,12 +199,28 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	return nil
 }
 
+func (a *ldapAuther) secondBind(ldapUser *ldapUserInfo, userPassword string) error {
+	if err := a.conn.Bind(ldapUser.DN, userPassword); err != nil {
+		if ldapErr, ok := err.(*ldap.Error); ok {
+			if ldapErr.ResultCode == 49 {
+				return ErrInvalidCredentials
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (a *ldapAuther) initialBind(username, userPassword string) error {
 	if a.server.BindPassword != "" {
 		userPassword = a.server.BindPassword
 	}
 
-	bindPath := fmt.Sprintf(a.server.BindDN, username)
+	bindPath := a.server.BindDN
+	if strings.Contains(bindPath, "%s") {
+		bindPath = fmt.Sprintf(a.server.BindDN, username)
+	}
 
 	if err := a.conn.Bind(bindPath, userPassword); err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -247,6 +272,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 	}
 
 	return &ldapUserInfo{
+		DN:        searchResult.Entries[0].DN,
 		LastName:  getLdapAttr(a.server.AttrSurname, searchResult),
 		FirstName: getLdapAttr(a.server.AttrName, searchResult),
 		Username:  getLdapAttr(a.server.AttrUsername, searchResult),
