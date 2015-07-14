@@ -356,19 +356,32 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ## [alerting]
 
-### queue_ticks_size
+### tickqueue_size
 
 If more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
 and grafana will skip the tick, resulting in lost job executions for that second.
 so set this to whatever value you find tolerable, and watch your database query times.
 Defaults to 20
 
-### queue_jobs_size
+### internal_jobqueue_size
 
 this should be set to above the max amount of jobs you expect to ever be created in 1 shot
 so we can queue them all at once and then workers can process them.
 If more than this amount of jobs queue up, it means the workers can't process fast enough,
 and the jobs will be skipped. Defaults to 1000.
+
+### pre_amqp_jobqueue_size
+
+There's two things to keep in mind for this setting:
+* this should be set to above the max amount of jobs you expect to ever be created in 1 shot
+  so we can queue them all at once and then they can be loaded into your queue.
+  If more than this amount of jobs queue up, it means they aren't loaded into rabbitmq fast enough
+  and the jobs will be skipped.
+* you might want to take into account slowness or transient unavailability of your queue, and configure
+  this to cover a certain timeframe worth of new jobs created. The other side of the coin is that you
+  probably prefer your messages in your queue rather than the less safe in memory buffer.
+
+Defaults to 1000.
 
 ### executor_lru_size
 

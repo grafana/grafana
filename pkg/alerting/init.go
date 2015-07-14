@@ -1,23 +1,24 @@
 package alerting
 
 import (
-	"encoding/json"
 	"fmt"
+	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/golang-lru"
-	"github.com/streadway/amqp"
 )
 
 var jobQueueInternalItems met.Gauge
 var jobQueueInternalSize met.Gauge
+var jobQueuePreAMQPItems met.Gauge
+var jobQueuePreAMQPSize met.Gauge
 var tickQueueItems met.Gauge
 var tickQueueSize met.Gauge
-var dispatcherJobsSkippedDueToSlowJobQueue met.Count
+var dispatcherJobsSkippedDueToSlowJobQueueInternal met.Count
+var dispatcherJobsSkippedDueToSlowJobQueuePreAMQP met.Count
 var dispatcherTicksSkippedDueToSlowTickQueue met.Count
 
 var dispatcherGetSchedules met.Timer
@@ -37,6 +38,7 @@ var executorAlertOutcomesCrit met.Count
 var executorAlertOutcomesUnkn met.Count
 var executorGraphiteEmptyResponse met.Count
 
+var executorJobExecDelay met.Timer
 var executorJobQueryGraphite met.Timer
 var executorJobParseAndEval met.Timer
 var executorGraphiteMissingVals met.Meter
@@ -45,10 +47,13 @@ var executorGraphiteMissingVals met.Meter
 // run this function when statsd is ready, so we can create the series
 func Init(metrics met.Backend) {
 	jobQueueInternalItems = metrics.NewGauge("alert-jobqueue-internal.items", 0)
-	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.JobQueueSize))
+	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.InternalJobQueueSize))
+	jobQueuePreAMQPItems = metrics.NewGauge("alert-jobqueue-preamqp.items", 0)
+	jobQueuePreAMQPSize = metrics.NewGauge("alert-jobqueue-preamqp.size", int64(setting.PreAMQPJobQueueSize))
 	tickQueueItems = metrics.NewGauge("alert-tickqueue.items", 0)
 	tickQueueSize = metrics.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
-	dispatcherJobsSkippedDueToSlowJobQueue = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-jobqueue")
+	dispatcherJobsSkippedDueToSlowJobQueueInternal = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-internal-jobqueue")
+	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-pre-amqp-jobqueue")
 	dispatcherTicksSkippedDueToSlowTickQueue = metrics.NewCount("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
 
 	dispatcherGetSchedules = metrics.NewTimer("alert-dispatcher.get-schedules", 0)
@@ -68,6 +73,7 @@ func Init(metrics met.Backend) {
 	executorAlertOutcomesUnkn = metrics.NewCount("alert-executor.alert-outcomes.unknown")
 	executorGraphiteEmptyResponse = metrics.NewCount("alert-executor.graphite-emptyresponse")
 
+	executorJobExecDelay = metrics.NewTimer("alert-executor.job_execution_delay", time.Duration(30)*time.Second)
 	executorJobQueryGraphite = metrics.NewTimer("alert-executor.job_query_graphite", 0)
 	executorJobParseAndEval = metrics.NewTimer("alert-executor.job_parse-and-evaluate", 0)
 	executorGraphiteMissingVals = metrics.NewMeter("alert-executor.graphite-missingVals", 0)
@@ -99,17 +105,14 @@ func Construct() {
 }
 
 func standalone(cache *lru.Cache) {
-	jobQueue := make(chan Job, setting.JobQueueSize)
+	jobQueue := newInternalJobQueue(setting.InternalJobQueueSize)
 
-	// start dispatcher.
-	// at some point we'll support rabbitmq or something so we can have multiple grafana dispatchers and executors.
-	// to allow that we would use two queues. The dispatch would write to one, and the executor would read from another.
-	// another thread would then handle useing rabbitmq as an intermediary between the two.
+	// create jobs
 	go Dispatcher(jobQueue)
 
 	//start group of workers to execute the checks.
 	for i := 0; i < setting.Executors; i++ {
-		go Executor(GraphiteAuthContextReturner, jobQueue, cache)
+		go ChanExecutor(GraphiteAuthContextReturner, jobQueue, cache)
 	}
 }
 
@@ -127,32 +130,19 @@ func distributed(url string, cache *lru.Cache) error {
 		if err != nil {
 			return err
 		}
-		jobQueue := make(chan Job, setting.JobQueueSize)
+
+		jobQueue := newPreAMQPJobQueue(setting.PreAMQPJobQueueSize, publisher)
 
 		go Dispatcher(jobQueue)
-
-		//send dispatched jobs to rabbitmq.
-		go func(jobQueue <-chan Job) {
-			for job := range jobQueue {
-				routingKey := fmt.Sprintf("%d", job.MonitorId)
-				msg, err := json.Marshal(job)
-				//log.Info("sending: " + string(msg))
-				if err != nil {
-					log.Error(3, "failed to marshal job to json.", err)
-					continue
-				}
-				publisher.Publish(routingKey, msg)
-			}
-		}(jobQueue)
 	}
 
-	if setting.Executors > 0 {
-		q := rabbitmq.Queue{
-			Name:       "",
-			Durable:    false,
-			AutoDelete: true,
-			Exclusive:  true,
-		}
+	q := rabbitmq.Queue{
+		Name:       "",
+		Durable:    false,
+		AutoDelete: true,
+		Exclusive:  true,
+	}
+	for i := 0; i < setting.Executors; i++ {
 		consumer := rabbitmq.Consumer{
 			Url:        url,
 			Exchange:   &exch,
@@ -162,32 +152,7 @@ func distributed(url string, cache *lru.Cache) error {
 		if err := consumer.Connect(); err != nil {
 			log.Fatal(0, "failed to start event.consumer.", err)
 		}
-
-		consumeQueue := make(chan Job, setting.JobQueueSize)
-
-		//read jobs from rabbitmq and push them into the execution channel.
-		consumer.Consume(func(msg *amqp.Delivery) error {
-			//convert from json to Job
-			job := Job{}
-			//log.Info("recvd: " + string(msg.Body))
-			if err := json.Unmarshal(msg.Body, &job); err != nil {
-				log.Error(0, "failed to unmarshal msg body.", err)
-				return err
-			}
-			job.StoreMetricFunc = api.StoreMetric
-			select {
-			case consumeQueue <- job:
-			default:
-				// TODO: alert when this happens
-				dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
-			}
-			return nil
-		})
-
-		//start group of workers to execute the jobs in the execution channel.
-		for i := 0; i < setting.Executors; i++ {
-			go Executor(GraphiteAuthContextReturner, consumeQueue, cache)
-		}
+		AmqpExecutor(GraphiteAuthContextReturner, consumer, cache)
 	}
 	return nil
 }

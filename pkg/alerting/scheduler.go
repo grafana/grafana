@@ -15,7 +15,7 @@ var tickQueue = make(chan time.Time, setting.TickQueueSize)
 // Dispatcher dispatches, every second, all jobs that should run for that second
 // every job has an id so that you can run multiple dispatchers (for HA) while still only processing each job once.
 // (provided jobs get consistently routed to executors)
-func Dispatcher(jobQueue chan<- Job) {
+func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
 	offset := time.Duration(30) * time.Second                      // for now, for simplicity, let's just wait 30seconds for the data to come in
 	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
@@ -41,7 +41,7 @@ func Dispatcher(jobQueue chan<- Job) {
 	}
 }
 
-func dispatchJobs(jobQueue chan<- Job) {
+func dispatchJobs(jobQueue JobQueue) {
 	for t := range tickQueue {
 		tickQueueItems.Value(int64(len(tickQueue)))
 		tickQueueSize.Value(int64(setting.TickQueueSize))
@@ -62,15 +62,8 @@ func dispatchJobs(jobQueue chan<- Job) {
 			job.GeneratedAt = t
 			job.LastPointTs = time.Unix(lastPointAt, 0)
 
-			jobQueueInternalItems.Value(int64(len(jobQueue)))
-			jobQueueInternalSize.Value(int64(setting.JobQueueSize))
+			jobQueue.Put(job)
 
-			select {
-			case jobQueue <- *job:
-			default:
-				// TODO: alert when this happens
-				dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
-			}
 			dispatcherJobsScheduled.Inc(1)
 		}
 	}

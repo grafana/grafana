@@ -141,7 +141,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	var b bytes.Buffer
 	err := t.Execute(&b, settings)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Could not execute alert query template: %q", err))
 	}
 	j := &Job{
 		MonitorId:       monitor.Id,

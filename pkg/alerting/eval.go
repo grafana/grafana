@@ -1,12 +1,14 @@
 package alerting
 
 import (
+	"fmt"
+	"strings"
+	"time"
+
 	"bosun.org/cmd/bosun/cache"
 	"bosun.org/cmd/bosun/expr"
 	"bosun.org/graphite"
-	"fmt"
 	m "github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 type CheckDef struct {
@@ -61,6 +63,9 @@ func NewGraphiteCheckEvaluator(c graphite.Context, check CheckDef) (*GraphiteChe
 	}, nil
 }
 
+//TODO instrument error scenarios
+// Eval evaluates the crit/warn expression and returns the result, and any non-fatal error (implying the query should be retried later,
+// when a temporary infra problem restores) as well as fatal errors.
 func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (m.CheckEvalResult, error) {
 	// create cache
 	// this is so that when bosun queries the same graphite query multiple times
@@ -71,7 +76,12 @@ func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (m.CheckEvalResult, error) 
 	eval := func(e *expr.Expr, code m.CheckEvalResult) (m.CheckEvalResult, error) {
 		results, _, err := e.Execute(nil, ce.Context, nil, cacheObj, nil, ts, 0, true, nil, nil, nil)
 		if err != nil {
-			return m.EvalResultUnknown, err
+			// graphite errors are probably transient and non-fatal.
+			if strings.Contains(err.Error(), "graphite") {
+				return m.EvalResultUnknown, fmt.Errorf("non-fatal: %q", err)
+			}
+			// others are probably fatal, i.e. not transient. (expression mixes incompatible types, incorrect function call,...)
+			return m.EvalResultUnknown, fmt.Errorf("fatal: %q", err)
 		}
 		for _, res := range results.Results {
 			switch i := res.Value.Value().(type) {
@@ -84,7 +94,7 @@ func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (m.CheckEvalResult, error) 
 					return code, nil
 				}
 			default:
-				panic(fmt.Sprintf("expr.Execute returned unknown result with type %T and value %v", res, res))
+				return m.EvalResultUnknown, fmt.Errorf("fatal: expr.Execute for %q returned unknown result with type %T and value %v", e, res, res)
 			}
 		}
 		return m.EvalResultOK, nil
@@ -92,10 +102,7 @@ func (ce *GraphiteCheckEvaluator) Eval(ts time.Time) (m.CheckEvalResult, error) 
 
 	if ce.critExpr != nil {
 		ret, err := eval(ce.critExpr, m.EvalResultCrit)
-		if err != nil {
-			return ret, err
-		}
-		if ret != m.EvalResultOK {
+		if err != nil || ret != m.EvalResultOK {
 			return ret, err
 		}
 	}
