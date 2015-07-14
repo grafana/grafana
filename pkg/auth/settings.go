@@ -1,9 +1,10 @@
-package setting
+package auth
 
 type LdapGroupToOrgRole struct {
-	LdapGroupPath string
-	OrgId         int
-	OrgRole       string
+	GroupDN string
+	OrgId   int
+	OrgName string
+	OrgRole string
 }
 
 type LdapServerConf struct {
@@ -21,5 +22,5 @@ type LdapServerConf struct {
 	SearchFilter  string
 	SearchBaseDNs []string
 
-	LdapGroups []LdapGroupToOrgRole
+	LdapGroups []*LdapGroupToOrgRole
 }
