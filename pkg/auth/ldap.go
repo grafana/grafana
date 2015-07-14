@@ -27,7 +27,7 @@ func init() {
 			SearchFilter:  "(cn=%s)",
 			SearchBaseDNs: []string{"dc=grafana,dc=org"},
 			LdapGroups: []*LdapGroupToOrgRole{
-				{GroupDN: "cn=users,dc=grafana,dc=org", OrgName: "Main Org.", OrgRole: "Editor"},
+				{GroupDN: "cn=users,dc=grafana,dc=org", OrgRole: "Editor"},
 			},
 		},
 	}
@@ -77,6 +77,10 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 		if grafanaUser, err := a.getGrafanaUserFor(ldapUser); err != nil {
 			return err
 		} else {
+			// sync org roles
+			if err := a.syncOrgRoles(grafanaUser, ldapUser); err != nil {
+				return err
+			}
 			query.User = grafanaUser
 			return nil
 		}
@@ -111,7 +115,6 @@ func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) 
 }
 
 func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) {
-
 	cmd := m.CreateUserCommand{
 		Login: ldapUser.Username,
 		Email: ldapUser.Email,
@@ -123,6 +126,10 @@ func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) 
 	}
 
 	return &cmd.Result, nil
+}
+
+func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
+	return nil
 }
 
 func (a *ldapAuther) initialBind(username, userPassword string) error {
