@@ -8,12 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
+var ldapServers []*LdapServerConf
+
 func init() {
-	setting.LdapServers = []*setting.LdapServerConf{
-		&setting.LdapServerConf{
+	ldapServers = []*LdapServerConf{
+		{
 			UseSSL:        false,
 			Host:          "127.0.0.1",
 			Port:          "389",
@@ -25,45 +26,20 @@ func init() {
 			AttrEmail:     "email",
 			SearchFilter:  "(cn=%s)",
 			SearchBaseDNs: []string{"dc=grafana,dc=org"},
+			LdapGroups: []*LdapGroupToOrgRole{
+				{GroupDN: "cn=users,dc=grafana,dc=org", OrgName: "Main Org.", OrgRole: "Editor"},
+			},
 		},
 	}
 }
 
 type ldapAuther struct {
-	server *setting.LdapServerConf
+	server *LdapServerConf
 	conn   *ldap.Conn
 }
 
-type ldapUserInfo struct {
-	FirstName string
-	LastName  string
-	Username  string
-	Email     string
-	MemberOf  []string
-}
-
-func (u *ldapUserInfo) isMemberOfAny(groups []string) bool {
-	for _, group := range groups {
-		if u.isMemberOf(group) {
-			return true
-		}
-	}
-	return false
-}
-
-func (u *ldapUserInfo) isMemberOf(group string) bool {
-	for _, member := range u.MemberOf {
-		if member == group {
-			return true
-		}
-	}
-	return false
-}
-
-func NewLdapAuthenticator(server *setting.LdapServerConf) *ldapAuther {
-	return &ldapAuther{
-		server: server,
-	}
+func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
+	return &ldapAuther{server: server}
 }
 
 func (a *ldapAuther) Dial() error {
@@ -108,11 +84,26 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 }
 
 func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) {
+	// validate that the user has access
+	access := false
+	for _, ldapGroup := range a.server.LdapGroups {
+		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
+			access = true
+		}
+	}
+
+	if !access {
+		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups", ldapUser.Username)
+		return nil, ErrInvalidCredentials
+	}
+
 	// get user from grafana db
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: ldapUser.Username}
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if err == m.ErrUserNotFound {
 			return a.createGrafanaUser(ldapUser)
+		} else {
+			return nil, err
 		}
 	}
 
@@ -221,5 +212,4 @@ func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
 
 func createUserFromLdapInfo() error {
 	return nil
-
 }

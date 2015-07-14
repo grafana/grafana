@@ -119,7 +119,6 @@ var (
 
 	// LDAP
 	LdapEnabled bool
-	LdapServers []*LdapServerConf
 
 	// SMTP email settings
 	Smtp SmtpSettings
