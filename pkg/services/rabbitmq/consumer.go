@@ -144,6 +144,8 @@ func (c *Consumer) consume() error {
 			err = c.callback(&d)
 			if err == nil {
 				d.Ack(false)
+			} else {
+				d.Nack(false, true)
 			}
 		}
 	}()
