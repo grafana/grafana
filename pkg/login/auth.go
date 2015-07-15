@@ -1,4 +1,4 @@
-package auth
+package login
 
 import (
 	"errors"
@@ -13,24 +13,25 @@ var (
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
 
-type AuthenticateUserQuery struct {
+type LoginUserQuery struct {
 	Username string
 	Password string
 	User     *m.User
 }
 
-func init() {
+func Init() {
 	bus.AddHandler("auth", AuthenticateUser)
+	loadLdapConfig()
 }
 
-func AuthenticateUser(query *AuthenticateUserQuery) error {
+func AuthenticateUser(query *LoginUserQuery) error {
 	err := loginUsingGrafanaDB(query)
 	if err == nil || err != ErrInvalidCredentials {
 		return err
 	}
 
 	if setting.LdapEnabled {
-		for _, server := range ldapServers {
+		for _, server := range ldapCfg.Servers {
 			auther := NewLdapAuthenticator(server)
 			err = auther.login(query)
 			if err == nil || err != ErrInvalidCredentials {
@@ -42,7 +43,7 @@ func AuthenticateUser(query *AuthenticateUserQuery) error {
 	return err
 }
 
-func loginUsingGrafanaDB(query *AuthenticateUserQuery) error {
+func loginUsingGrafanaDB(query *LoginUserQuery) error {
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
 	if err := bus.Dispatch(&userQuery); err != nil {

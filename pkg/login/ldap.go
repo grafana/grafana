@@ -1,39 +1,16 @@
-package auth
+package login
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
-
-var ldapServers []*LdapServerConf
-
-func init() {
-	ldapServers = []*LdapServerConf{
-		{
-			UseSSL:        false,
-			Host:          "127.0.0.1",
-			Port:          "389",
-			BindDN:        "cn=admin,dc=grafana,dc=org",
-			BindPassword:  "grafana",
-			AttrName:      "givenName",
-			AttrSurname:   "sn",
-			AttrUsername:  "cn",
-			AttrMemberOf:  "memberOf",
-			AttrEmail:     "email",
-			SearchFilter:  "(cn=%s)",
-			SearchBaseDNs: []string{"dc=grafana,dc=org"},
-			LdapGroups: []*LdapGroupToOrgRole{
-				{GroupDN: "cn=users,dc=grafana,dc=org", OrgId: 1, OrgRole: m.ROLE_VIEWER},
-			},
-		},
-	}
-}
 
 type ldapAuther struct {
 	server *LdapServerConf
@@ -45,7 +22,7 @@ func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
 }
 
 func (a *ldapAuther) Dial() error {
-	address := fmt.Sprintf("%s:%s", a.server.Host, a.server.Port)
+	address := fmt.Sprintf("%s:%d", a.server.Host, a.server.Port)
 	var err error
 	if a.server.UseSSL {
 		a.conn, err = ldap.DialTLS("tcp", address, nil)
@@ -56,7 +33,7 @@ func (a *ldapAuther) Dial() error {
 	return err
 }
 
-func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
+func (a *ldapAuther) login(query *LoginUserQuery) error {
 	if err := a.Dial(); err != nil {
 		return err
 	}
@@ -71,10 +48,9 @@ func (a *ldapAuther) login(query *AuthenticateUserQuery) error {
 	if ldapUser, err := a.searchForUser(query.Username); err != nil {
 		return err
 	} else {
-		log.Info("Surname: %s", ldapUser.LastName)
-		log.Info("givenName: %s", ldapUser.FirstName)
-		log.Info("email: %s", ldapUser.Email)
-		log.Info("memberOf: %s", ldapUser.MemberOf)
+		if ldapCfg.VerboseLogging {
+			log.Info("Ldap User Info: %s", spew.Sdump(ldapUser))
+		}
 
 		// check if a second user bind is needed
 		if a.server.BindPassword != "" {
@@ -164,6 +140,8 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 						return err
 					}
 				}
+				// ignore subsequent ldap group mapping matches
+				break
 			} else {
 				// remove role
 				cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
@@ -244,11 +222,11 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 			Scope:        ldap.ScopeWholeSubtree,
 			DerefAliases: ldap.NeverDerefAliases,
 			Attributes: []string{
-				a.server.AttrUsername,
-				a.server.AttrSurname,
-				a.server.AttrEmail,
-				a.server.AttrName,
-				a.server.AttrMemberOf,
+				a.server.Attr.Username,
+				a.server.Attr.Surname,
+				a.server.Attr.Email,
+				a.server.Attr.Name,
+				a.server.Attr.MemberOf,
 			},
 			Filter: fmt.Sprintf(a.server.SearchFilter, username),
 		}
@@ -264,20 +242,20 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 	}
 
 	if len(searchResult.Entries) == 0 {
-		return nil, errors.New("Ldap search matched no entry, please review your filter setting.")
+		return nil, ErrInvalidCredentials
 	}
 
 	if len(searchResult.Entries) > 1 {
-		return nil, errors.New("Ldap search matched mopre than one entry, please review your filter setting")
+		return nil, errors.New("Ldap search matched more than one entry, please review your filter setting")
 	}
 
 	return &ldapUserInfo{
 		DN:        searchResult.Entries[0].DN,
-		LastName:  getLdapAttr(a.server.AttrSurname, searchResult),
-		FirstName: getLdapAttr(a.server.AttrName, searchResult),
-		Username:  getLdapAttr(a.server.AttrUsername, searchResult),
-		Email:     getLdapAttr(a.server.AttrEmail, searchResult),
-		MemberOf:  getLdapAttrArray(a.server.AttrMemberOf, searchResult),
+		LastName:  getLdapAttr(a.server.Attr.Surname, searchResult),
+		FirstName: getLdapAttr(a.server.Attr.Name, searchResult),
+		Username:  getLdapAttr(a.server.Attr.Username, searchResult),
+		Email:     getLdapAttr(a.server.Attr.Email, searchResult),
+		MemberOf:  getLdapAttrArray(a.server.Attr.MemberOf, searchResult),
 	}, nil
 }
 

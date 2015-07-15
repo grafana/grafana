@@ -1,0 +1,31 @@
+verbose_logging = true
+
+[[servers]]
+host = "127.0.0.1"
+port = 389
+use_ssl = false
+
+bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_password = "grafana"
+
+search_filter = "(cn=%s)"
+search_base_dns = ["dc=grafana,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "email"
+
+[[servers.group_mappings]]
+group_dn = "cn=admins,dc=grafana,dc=org"
+org_role = "Admin"
+
+[[server.ldap_group_to_org_role_mappings]]
+group_dn = "cn=users,dc=grafana,dc=org"
+org_role = "Editor"
+
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
