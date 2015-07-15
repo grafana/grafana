@@ -210,7 +210,7 @@ func createPackage(options linuxPackageOptions) {
 	// copy sample ini file to /etc/grafana
 	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
 	// copy sample ldap toml config file to /etc/grafana/ldap.toml
-	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, ldapFilePath))
+	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.ldapFilePath))
 
 	args := []string{
 		"-s", "dir",
