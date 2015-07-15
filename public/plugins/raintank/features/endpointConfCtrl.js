@@ -409,6 +409,12 @@ function (angular, _) {
       $scope.discoveryError = false;
       backendSrv.get('/api/endpoints/discover', endpoint).then(function(resp) {
         if (!$scope.showConfig) {
+          if (endpoint.name.indexOf("://") > -1) {
+            //endpoint name is in the form scheme://domain
+            var parser = document.createElement('a');
+            parser.href = endpoint.name;
+            endpoint.name = parser.hostname;
+          }
           $scope.showConfig = true;
           $scope.discovered = true;
           $scope.parseSuggestions(resp);

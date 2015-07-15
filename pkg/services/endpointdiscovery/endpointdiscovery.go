@@ -7,6 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"net"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"strings"
 )
@@ -15,65 +16,99 @@ func init() {
 	bus.AddHandler("endpoint", DiscoverEndpoint)
 }
 
+type Endpoint struct {
+	Host string
+	IsIP bool
+	URL  *url.URL
+}
+
+func NewEndpoint(domainName string) (*Endpoint, error) {
+	host := strings.ToLower(domainName)
+	e := &Endpoint{Host: host}
+	if strings.Contains(host, "://") {
+		u, err := url.Parse(host)
+		if err != nil {
+			return nil, err
+		}
+		e.Host = strings.Split(u.Host, ":")[0]
+		e.URL = u
+	}
+
+	if net.ParseIP(e.Host) != nil {
+		// the parsed host is an IP address.
+		e.IsIP = true
+		return e, nil
+	}
+
+	addr, err := net.LookupHost(e.Host)
+	if err != nil || len(addr) < 1 {
+		e.Host = "www." + domainName
+		addr, err = net.LookupHost(e.Host)
+		if err != nil || len(addr) < 1 {
+			return nil, fmt.Errorf("failed to lookup IP of domain %s.", e.Host)
+		}
+	}
+
+	return e, nil
+}
+
 func DiscoverEndpoint(cmd *m.EndpointDiscoveryCommand) error {
 	monitors := make([]*m.SuggestedMonitor, 0)
 
-	domain, err := getHostName(cmd.Name)
+	endpoint, err := NewEndpoint(cmd.Name)
 	if err != nil {
 		return err
 	}
 
-	pingMonitor, err := DiscoverPing(domain)
-	if err != nil {
-		fmt.Println("failed to discover Ping", err)
-	} else {
+	pingMonitor, err := DiscoverPing(endpoint)
+	if err == nil {
 		monitors = append(monitors, pingMonitor)
 	}
 
-	httpMonitor, err := DiscoverHttp(domain)
-	if err != nil {
-		fmt.Println("failed to discover HTTP", err)
-	} else {
+	httpMonitor, err := DiscoverHttp(endpoint)
+	if err == nil {
 		monitors = append(monitors, httpMonitor)
 	}
 
-	httpsMonitor, err := DiscoverHttps(domain)
-	if err != nil {
-		fmt.Println("failed to discover HTTPS", err)
-	} else {
+	httpsMonitor, err := DiscoverHttps(endpoint)
+	if err == nil {
 		monitors = append(monitors, httpsMonitor)
 	}
 
-	dnsMonitor, err := DiscoverDNS(domain)
-	if err != nil {
-		fmt.Println("failed to discover DNS", err)
-	} else {
-		monitors = append(monitors, dnsMonitor)
+	if !endpoint.IsIP {
+		dnsMonitor, err := DiscoverDNS(endpoint)
+		if err == nil {
+			monitors = append(monitors, dnsMonitor)
+		}
 	}
+
 	cmd.Result = monitors
 	return nil
 
 }
 
-func DiscoverPing(domain string) (*m.SuggestedMonitor, error) {
-	fmt.Println("PingHost: ", domain)
-	err := exec.Command("ping", "-c 3", "-W 1", "-q", domain).Run()
+func DiscoverPing(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
+	err := exec.Command("ping", "-c 3", "-W 1", "-q", endpoint.Host).Run()
 	if err != nil {
 		return nil, errors.New("host unreachable")
 	}
 
 	settings := []m.MonitorSettingDTO{
-		{Variable: "hostname", Value: domain},
+		{Variable: "hostname", Value: endpoint.Host},
 	}
 
 	return &m.SuggestedMonitor{MonitorTypeId: 3, Settings: settings}, nil
 }
 
-func DiscoverHttp(domain string) (*m.SuggestedMonitor, error) {
-	fmt.Println("HTTPHost: ", domain)
-	resp, err := http.Head(fmt.Sprintf("http://%s/", domain))
+func DiscoverHttp(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
+	host := endpoint.Host
+	path := "/"
+	if endpoint.URL != nil && endpoint.URL.Scheme == "http" {
+		host = endpoint.URL.Host
+		path = endpoint.URL.Path
+	}
+	resp, err := http.Head(fmt.Sprintf("http://%s%s", host, path))
 	if err != nil {
-		fmt.Println("failed to make HTTP call to host.", err)
 		return nil, err
 	}
 
@@ -81,30 +116,53 @@ func DiscoverHttp(domain string) (*m.SuggestedMonitor, error) {
 	if requestUrl.Scheme != "http" {
 		return nil, errors.New("HTTP redirects to HTTPS")
 	}
-	//httpHost := RequestURrl.Host
+
+	hostParts := strings.Split(requestUrl.Host, ":")
+	varHost := hostParts[0]
+	varPort := "80"
+	if len(hostParts) > 1 {
+		varPort = hostParts[1]
+	}
+
 	settings := []m.MonitorSettingDTO{
-		{Variable: "host", Value: requestUrl.Host},
+		{Variable: "host", Value: varHost},
+		{Variable: "port", Value: varPort},
 		{Variable: "path", Value: requestUrl.Path},
 	}
+
 	return &m.SuggestedMonitor{MonitorTypeId: 1, Settings: settings}, nil
 }
 
-func DiscoverHttps(domain string) (*m.SuggestedMonitor, error) {
-	resp, err := http.Head(fmt.Sprintf("https://%s/", domain))
+func DiscoverHttps(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
+	host := endpoint.Host
+	path := "/"
+	if endpoint.URL != nil && endpoint.URL.Scheme == "https" {
+		host = endpoint.URL.Host
+		path = endpoint.URL.Path
+	}
+	resp, err := http.Head(fmt.Sprintf("https://%s%s", host, path))
 	if err != nil {
-		fmt.Println("failed to make HTTPS call to host.", err)
 		return nil, err
 	}
 	requestUrl := resp.Request.URL
 
+	hostParts := strings.Split(requestUrl.Host, ":")
+	varHost := hostParts[0]
+	varPort := "443"
+	if len(hostParts) > 1 {
+		varPort = hostParts[1]
+	}
+
 	settings := []m.MonitorSettingDTO{
-		{Variable: "host", Value: requestUrl.Host},
+		{Variable: "host", Value: varHost},
+		{Variable: "port", Value: varPort},
 		{Variable: "path", Value: requestUrl.Path},
 	}
 	return &m.SuggestedMonitor{MonitorTypeId: 2, Settings: settings}, nil
 }
 
-func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
+func DiscoverDNS(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
+	domain := endpoint.Host
 	recordType := "A"
 	recordName := domain
 	server := "8.8.8.8"
@@ -133,17 +191,4 @@ func DiscoverDNS(domain string) (*m.SuggestedMonitor, error) {
 		{Variable: "server", Value: server},
 	}
 	return &m.SuggestedMonitor{MonitorTypeId: 4, Settings: settings}, nil
-}
-
-func getHostName(domainName string) (string, error) {
-	host := strings.ToLower(domainName)
-	addr, err := net.LookupHost(host)
-	if err != nil || len(addr) < 1 {
-		host = "www." + domainName
-		addr, err = net.LookupHost(host)
-		if err != nil || len(addr) < 1 {
-			return "", errors.New("failed to lookup IP of domain.")
-		}
-	}
-	return host, nil
 }
