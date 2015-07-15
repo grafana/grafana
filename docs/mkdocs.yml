@@ -34,6 +34,7 @@ pages:
 - ['installation/docker.md', 'Installation', 'Installing on Docker']
 
 - ['installation/configuration.md', 'Installation', 'Configuration']
+- ['installation/ldap.md', 'Installation', 'LDAP Integration']
 - ['installation/provisioning.md', 'Installation', 'Provisioning']
 - ['installation/performance.md', 'Installation', 'Performance tips']
 - ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']

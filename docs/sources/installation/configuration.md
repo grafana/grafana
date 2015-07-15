@@ -280,6 +280,8 @@ Grafana instance. For example:
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
 
+<hr>
+
 ## [auth.google]
 
 You need to create a Google project. You can do this in the [Google
@@ -312,6 +314,23 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+<hr>
+
+## [auth.basic]
+### enable
+When enable is `true` (default) the http api will accept basic authentication.
+
+<hr>
+
+## [auth.ldap]
+### enable
+Set to `true` to enable ldap integration (default: `false`)
+
+### config_file
+Path to the ldap specific configuration file (default: `/etc/grafana/ldap.toml`)
+
+> For detail on LDAP Configuration, go to the [Ldap Integration](ldap.md) page.
 
 <hr>
 
@@ -354,6 +373,8 @@ Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
+<hr>
+
 ## [analytics]
 
 ### reporting_enabled
@@ -367,6 +388,8 @@ enabled. Counters are sent every 24 hours. Default value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
 here. By default this feature is disabled.
+
+<hr>
 
 ## [dashboards.json]
 
