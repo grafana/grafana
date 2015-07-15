@@ -53,7 +53,7 @@ Creates a new dashboard or updates an existing dashboard.
             "rows": [
               {
               }
-            ]
+            ],
             "schemaVersion": 6,
             "version": 0
           },
@@ -183,7 +183,7 @@ Status Codes:
 
 ### Create data source
 
-`PUT /api/datasources`
+`POST /api/datasources`
 
 **Example Response**:
 
@@ -192,9 +192,9 @@ Status Codes:
 
         {"message":"Datasource added"}
 
-### Edit an existing data source
+### Update an existing data source
 
-`POST /api/datasources`
+`PUT /api/datasources/:datasourceId`
 
 ### Delete an existing data source
 
@@ -269,7 +269,7 @@ Adds a global user to the actual organisation.
 
 ### Delete User in Organisation
 
-`DELETE /api/orgs/:orgId/users/:userId`    
+`DELETE /api/orgs/:orgId/users/:userId`
 
 ## Users
 

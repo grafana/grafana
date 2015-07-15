@@ -28,18 +28,20 @@ func init() {
 }
 
 type CollectorWithTag struct {
-	Id        int64
-	OrgId     int64
-	Name      string
-	Slug      string
-	Tags      string
-	Latitude  float64
-	Longitude float64
-	Public    bool
-	Created   time.Time
-	Updated   time.Time
-	Online    bool
-	Enabled   bool
+	Id            int64
+	OrgId         int64
+	Name          string
+	Slug          string
+	Tags          string
+	Latitude      float64
+	Longitude     float64
+	Public        bool
+	Created       time.Time
+	Updated       time.Time
+	Online        bool
+	OnlineChange  time.Time
+	Enabled       bool
+	EnabledChange time.Time
 }
 
 func GetCollectorById(query *m.GetCollectorByIdQuery) error {
@@ -74,16 +76,18 @@ func GetCollectorById(query *m.GetCollectorByIdQuery) error {
 	}
 
 	query.Result = &m.CollectorDTO{
-		Id:        result.Id,
-		OrgId:     result.OrgId,
-		Name:      result.Name,
-		Slug:      result.Slug,
-		Tags:      tags,
-		Latitude:  result.Latitude,
-		Longitude: result.Longitude,
-		Public:    result.Public,
-		Online:    result.Online,
-		Enabled:   result.Enabled,
+		Id:            result.Id,
+		OrgId:         result.OrgId,
+		Name:          result.Name,
+		Slug:          result.Slug,
+		Tags:          tags,
+		Latitude:      result.Latitude,
+		Longitude:     result.Longitude,
+		Public:        result.Public,
+		Online:        result.Online,
+		OnlineChange:  result.OnlineChange,
+		Enabled:       result.Enabled,
+		EnabledChange: result.EnabledChange,
 	}
 
 	return err
@@ -121,16 +125,18 @@ func GetCollectorByName(query *m.GetCollectorByNameQuery) error {
 	}
 
 	query.Result = &m.CollectorDTO{
-		Id:        result.Id,
-		OrgId:     result.OrgId,
-		Name:      result.Name,
-		Slug:      result.Slug,
-		Tags:      tags,
-		Latitude:  result.Latitude,
-		Longitude: result.Longitude,
-		Public:    result.Public,
-		Online:    result.Online,
-		Enabled:   result.Enabled,
+		Id:            result.Id,
+		OrgId:         result.OrgId,
+		Name:          result.Name,
+		Slug:          result.Slug,
+		Tags:          tags,
+		Latitude:      result.Latitude,
+		Longitude:     result.Longitude,
+		Public:        result.Public,
+		Online:        result.Online,
+		OnlineChange:  result.OnlineChange,
+		Enabled:       result.Enabled,
+		EnabledChange: result.EnabledChange,
 	}
 
 	return err
@@ -200,16 +206,18 @@ func GetCollectors(query *m.GetCollectorsQuery) error {
 			tags = strings.Split(row.Tags, ",")
 		}
 		collectors[i] = &m.CollectorDTO{
-			Id:        row.Id,
-			OrgId:     row.OrgId,
-			Name:      row.Name,
-			Slug:      row.Slug,
-			Latitude:  row.Latitude,
-			Longitude: row.Longitude,
-			Tags:      tags,
-			Public:    row.Public,
-			Online:    row.Online,
-			Enabled:   row.Enabled,
+			Id:            row.Id,
+			OrgId:         row.OrgId,
+			Name:          row.Name,
+			Slug:          row.Slug,
+			Latitude:      row.Latitude,
+			Longitude:     row.Longitude,
+			Tags:          tags,
+			Public:        row.Public,
+			Online:        row.Online,
+			OnlineChange:  row.OnlineChange,
+			Enabled:       row.Enabled,
+			EnabledChange: row.EnabledChange,
 		}
 	}
 
@@ -248,15 +256,17 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
 		l := &m.Collector{
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Public:    cmd.Public,
-			Latitude:  cmd.Latitude,
-			Longitude: cmd.Longitude,
-			Created:   time.Now(),
-			Updated:   time.Now(),
-			Online:    cmd.Online,
-			Enabled:   cmd.Enabled,
+			OrgId:         cmd.OrgId,
+			Name:          cmd.Name,
+			Public:        cmd.Public,
+			Latitude:      cmd.Latitude,
+			Longitude:     cmd.Longitude,
+			Created:       time.Now(),
+			Updated:       time.Now(),
+			Online:        cmd.Online,
+			OnlineChange:  time.Now(),
+			Enabled:       cmd.Enabled,
+			EnabledChange: time.Now(),
 		}
 		l.UpdateCollectorSlug()
 		sess.UseBool("public")
@@ -281,16 +291,18 @@ func AddCollector(cmd *m.AddCollectorCommand) error {
 		}
 
 		cmd.Result = &m.CollectorDTO{
-			Id:        l.Id,
-			OrgId:     l.OrgId,
-			Name:      l.Name,
-			Slug:      l.Slug,
-			Tags:      cmd.Tags,
-			Latitude:  l.Latitude,
-			Longitude: l.Longitude,
-			Public:    l.Public,
-			Online:    l.Online,
-			Enabled:   l.Enabled,
+			Id:            l.Id,
+			OrgId:         l.OrgId,
+			Name:          l.Name,
+			Slug:          l.Slug,
+			Tags:          cmd.Tags,
+			Latitude:      l.Latitude,
+			Longitude:     l.Longitude,
+			Public:        l.Public,
+			Online:        l.Online,
+			OnlineChange:  l.OnlineChange,
+			Enabled:       l.Enabled,
+			EnabledChange: l.EnabledChange,
 		}
 		return nil
 	})
@@ -348,6 +360,19 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				Enabled:   cmd.Enabled,
 				Updated:   time.Now(),
 			}
+			if collectorQuery.Result.Enabled != cmd.Enabled {
+				l.EnabledChange = time.Now()
+				//emit event so that collector gets notified
+				if cmd.Enabled {
+					sess.publishAfterCommit(&events.CollectorEnabled{
+						CollectorId: cmd.Id,
+					})
+				} else {
+					sess.publishAfterCommit(&events.CollectorDisabled{
+						CollectorId: cmd.Id,
+					})
+				}
+			}
 			l.UpdateCollectorSlug()
 			sess.UseBool("enabled")
 			sess.UseBool("public")
@@ -361,18 +386,6 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 				rawSql := "DELETE from collector_tag where collector_id=? AND org_id != ?"
 				if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
 					return err
-				}
-			}
-			if collectorQuery.Result.Enabled != cmd.Enabled {
-				//emit event so that collector gets notified
-				if cmd.Enabled {
-					sess.publishAfterCommit(&events.CollectorEnabled{
-						CollectorId: cmd.Id,
-					})
-				} else {
-					sess.publishAfterCommit(&events.CollectorDisabled{
-						CollectorId: cmd.Id,
-					})
 				}
 			}
 		}
@@ -470,8 +483,8 @@ func AddCollectorSession(cmd *m.AddCollectorSessionCommand) error {
 		if _, err := sess.Insert(&collectorSess); err != nil {
 			return err
 		}
-		rawSql := "UPDATE collector set online=1 where id=?"
-		if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+		rawSql := "UPDATE collector set online=1, online_change=? where id=?"
+		if _, err := sess.Exec(rawSql, time.Now(), cmd.CollectorId); err != nil {
 			return err
 		}
 		sess.publishAfterCommit(&events.CollectorConnected{
@@ -517,8 +530,8 @@ func DeleteCollectorSession(cmd *m.DeleteCollectorSessionCommand) error {
 			return err
 		}
 		if len(q.Result) < 1 {
-			rawSql := "UPDATE collector set online=0 where id=?"
-			if _, err := sess.Exec(rawSql, cmd.CollectorId); err != nil {
+			rawSql := "UPDATE collector set online=0, online_change=? where id=?"
+			if _, err := sess.Exec(rawSql, time.Now(), cmd.CollectorId); err != nil {
 				return err
 			}
 		}
@@ -568,12 +581,13 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		}
 		if len(toOnline) > 0 {
 			a := make([]string, len(toOnline))
-			args := make([]interface{}, len(toOnline))
+			args := make([]interface{}, len(toOnline)+1)
+			args[0] = time.Now()
 			for i, id := range toOnline {
-				args[i] = id
+				args[i+1] = id
 				a[i] = "?"
 			}
-			rawSql = fmt.Sprintf("UPDATE collector set online=1 where id in (%s)", strings.Join(a, ","))
+			rawSql = fmt.Sprintf("UPDATE collector set online=1, online_change=? where id in (%s)", strings.Join(a, ","))
 
 			if _, err := sess.Exec(rawSql, args...); err != nil {
 				fmt.Println("failed to set collectors to online: ", rawSql)
@@ -582,12 +596,13 @@ func ClearCollectorSession(cmd *m.ClearCollectorSessionCommand) error {
 		}
 		if len(toOffline) > 0 {
 			a := make([]string, len(toOffline))
-			args := make([]interface{}, len(toOffline))
+			args := make([]interface{}, len(toOffline)+1)
+			args[0] = time.Now()
 			for i, id := range toOffline {
-				args[i] = id
+				args[i+1] = id
 				a[i] = "?"
 			}
-			rawSql = fmt.Sprintf("UPDATE collector set online=0 where id in (%s)", strings.Join(a, ","))
+			rawSql = fmt.Sprintf("UPDATE collector set online=0, online_change=? where id in (%s)", strings.Join(a, ","))
 
 			if _, err := sess.Exec(rawSql, args...); err != nil {
 				fmt.Println("failed to set collectors to offline:", rawSql)

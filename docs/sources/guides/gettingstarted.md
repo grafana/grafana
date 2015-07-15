@@ -40,6 +40,14 @@ in the main Time Picker in the upper right, but they can also have relative time
 5. Dashboard panel. You edit panels by clicking the panel title.
 6. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
+## Adding & Editing Graphs and Panels
+
+![](/img/v2/graph_metrics_tab_graphite.png)
+
+1. You add panels via row menu. The row menu is the green icon to the left of each row.
+2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
+3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
+
 ## Drag-and-Drop panels
 
 You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location.

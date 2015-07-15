@@ -32,10 +32,10 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
     [security]
     admin_user = admin
-    
+
     [auth.google]
     client_secret = 0ldS3cretKey
-    
+
 
 Then you can override that using:
 
@@ -327,7 +327,7 @@ This option should be configured differently depending on what type of
 session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1)/database_name`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 
 If you use MySQL or Postgres as the session store you need to create the
@@ -356,19 +356,32 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ## [alerting]
 
-### queue_ticks_size
+### tickqueue_size
 
 If more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
 and grafana will skip the tick, resulting in lost job executions for that second.
 so set this to whatever value you find tolerable, and watch your database query times.
 Defaults to 20
 
-### queue_jobs_size
+### internal_jobqueue_size
 
 this should be set to above the max amount of jobs you expect to ever be created in 1 shot
 so we can queue them all at once and then workers can process them.
 If more than this amount of jobs queue up, it means the workers can't process fast enough,
 and the jobs will be skipped. Defaults to 1000.
+
+### pre_amqp_jobqueue_size
+
+There's two things to keep in mind for this setting:
+* this should be set to above the max amount of jobs you expect to ever be created in 1 shot
+  so we can queue them all at once and then they can be loaded into your queue.
+  If more than this amount of jobs queue up, it means they aren't loaded into rabbitmq fast enough
+  and the jobs will be skipped.
+* you might want to take into account slowness or transient unavailability of your queue, and configure
+  this to cover a certain timeframe worth of new jobs created. The other side of the coin is that you
+  probably prefer your messages in your queue rather than the less safe in memory buffer.
+
+Defaults to 1000.
 
 ### executor_lru_size
 
@@ -386,6 +399,10 @@ Wether to run a scheduler. Defaults to true.
 How many alerting executors should this instance of Grafana run?
 They have low cpu and memory overhead but may query your datastore simultaneously.  Defaults to 10.
 
+### write_individual_alert_results
+
+Whether to write the individual state metrics for each alerting rule. Defaults to false
+
 ## [analytics]
 
 ### reporting_enabled
@@ -399,3 +416,14 @@ enabled. Counters are sent every 24 hours. Default value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
 here. By default this feature is disabled.
+
+## [dashboards.json]
+
+If you have a system that automatically builds dashboards as json files you can enable this feature to have the
+Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+
+### enabled
+`true` or `false`. Is disabled by default.
+
+### path
+The full path to a directory containing your json dashboards.

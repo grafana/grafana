@@ -10,20 +10,14 @@ function (angular, _, InfluxQueryBuilder) {
 
   module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q) {
 
-    $scope.functionList = [
-      'count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-      'derivative', 'stddev', 'first', 'last', 'difference'
-    ];
-
-    $scope.functionMenu = _.map($scope.functionList, function(func) {
-      return { text: func, click: "changeFunction('" + func + "');" };
-    });
-
     $scope.init = function() {
       var target = $scope.target;
-      target.function = target.function || 'mean';
       target.tags = target.tags || [];
       target.groupByTags = target.groupByTags || [];
+      target.fields = target.fields || [{
+        name: 'value',
+        func: target.function || 'mean'
+      }];
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
@@ -32,6 +26,8 @@ function (angular, _, InfluxQueryBuilder) {
       } else {
         $scope.measurementSegment = new MetricSegment(target.measurement);
       }
+
+      $scope.addFieldSegment = MetricSegment.newPlusButton();
 
       $scope.tagSegments = [];
       _.each(target.tags, function(tag) {
@@ -92,6 +88,18 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
       $scope.$parent.get_data();
+    };
+
+    $scope.getFields = function() {
+      var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
+      return $scope.datasource.metricFindQuery(fieldsQuery)
+      .then(function(results) {
+        var values = _.pluck(results, 'text');
+        if ($scope.target.fields.length > 1) {
+          values.splice(0, 0, "-- remove from select --");
+        }
+        return values;
+      });
     };
 
     $scope.toggleQueryMode = function () {
@@ -157,6 +165,25 @@ function (angular, _, InfluxQueryBuilder) {
         return results;
       })
       .then(null, $scope.handleQueryError);
+    };
+
+    $scope.getFieldSegments = function() {
+      var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
+      return $scope.datasource.metricFindQuery(fieldsQuery)
+        .then($scope.transformToSegments)
+        .then(null, $scope.handleQueryError);
+    };
+
+    $scope.addField = function() {
+      $scope.target.fields.push({name: $scope.addFieldSegment.value, func: 'mean'});
+      _.extend($scope.addFieldSegment, MetricSegment.newPlusButton());
+    };
+
+    $scope.fieldChanged = function(field) {
+      if (field.name === '-- remove from select --') {
+        $scope.target.fields = _.without($scope.target.fields, field);
+      }
+      $scope.get_data();
     };
 
     $scope.getGroupByTagSegments = function(segment) {

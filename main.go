@@ -74,15 +74,14 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-	metricpublisher.Init()
 	elasticstore.Init()
-	api.InitCollectorController()
 
 	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana.")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}
-
+	metricpublisher.Init(metricsBackend)
+	api.InitCollectorController(metricsBackend)
 	alerting.Init(metricsBackend)
 	alerting.Construct()
 

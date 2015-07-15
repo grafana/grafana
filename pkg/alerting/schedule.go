@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Job is a job for an alert execution
@@ -38,6 +39,9 @@ func (job Job) String() string {
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
 	if job.StoreMetricFunc == nil {
+		return
+	}
+	if !setting.WriteIndividualAlertResults {
 		return
 	}
 	metrics := make([]*m.MetricDefinition, 3)
@@ -137,7 +141,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	var b bytes.Buffer
 	err := t.Execute(&b, settings)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Could not execute alert query template: %q", err))
 	}
 	j := &Job{
 		MonitorId:       monitor.Id,

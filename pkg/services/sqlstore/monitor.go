@@ -860,7 +860,6 @@ func UpdateMonitorState(cmd *m.UpdateMonitorStateCommand) error {
 		rawSql := "UPDATE monitor SET state=?, state_change=? WHERE id=? AND state != ?"
 
 		if _, err := sess.Exec(rawSql, cmd.State, cmd.Updated, cmd.Id, cmd.State); err != nil {
-			fmt.Println("failed to update monitor state.", err)
 			return err
 		}
 
