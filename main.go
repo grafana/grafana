@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
@@ -54,6 +55,7 @@ func main() {
 	initRuntime()
 
 	search.Init()
+	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()

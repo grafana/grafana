@@ -1,4 +1,4 @@
-package auth
+package login
 
 import (
 	"testing"
@@ -136,6 +136,25 @@ func TestLdapAuther(t *testing.T) {
 			Convey("Should remove org role", func() {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldNotBeNil)
+			})
+		})
+
+		ldapAutherScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should take first match, and ignore subsequent matches", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldBeNil)
 			})
 		})
 

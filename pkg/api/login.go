@@ -4,9 +4,9 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/auth"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -88,13 +88,13 @@ func LoginApiPing(c *middleware.Context) {
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
-	authQuery := auth.AuthenticateUserQuery{
+	authQuery := login.LoginUserQuery{
 		Username: cmd.User,
 		Password: cmd.Password,
 	}
 
 	if err := bus.Dispatch(&authQuery); err != nil {
-		if err == auth.ErrInvalidCredentials {
+		if err == login.ErrInvalidCredentials {
 			return ApiError(401, "Invalid username or password", err)
 		}
 

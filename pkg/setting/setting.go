@@ -118,7 +118,8 @@ var (
 	GoogleAnalyticsId string
 
 	// LDAP
-	LdapEnabled bool
+	LdapEnabled    bool
+	LdapConfigFile string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -417,6 +418,7 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapConfigFile = ldapSec.Key("config_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()
