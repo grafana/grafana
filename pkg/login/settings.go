@@ -13,12 +13,14 @@ type LdapConfig struct {
 }
 
 type LdapServerConf struct {
-	Host         string           `toml:"host"`
-	Port         int              `toml:"port"`
-	UseSSL       bool             `toml:"use_ssl"`
-	BindDN       string           `toml:"bind_dn"`
-	BindPassword string           `toml:"bind_password"`
-	Attr         LdapAttributeMap `toml:"attributes"`
+	Host           string           `toml:"host"`
+	Port           int              `toml:"port"`
+	UseSSL         bool             `toml:"use_ssl"`
+	SkipVerifySSL  bool             `toml:"ssl_skip_verify"`
+	CertServerName string           `toml:"ssl_server_name"`
+	BindDN         string           `toml:"bind_dn"`
+	BindPassword   string           `toml:"bind_password"`
+	Attr           LdapAttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`

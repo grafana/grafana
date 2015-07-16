@@ -1,6 +1,7 @@
 package login
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strings"
@@ -25,7 +26,11 @@ func (a *ldapAuther) Dial() error {
 	address := fmt.Sprintf("%s:%d", a.server.Host, a.server.Port)
 	var err error
 	if a.server.UseSSL {
-		a.conn, err = ldap.DialTLS("tcp", address, nil)
+		tlsCfg := &tls.Config{
+			InsecureSkipVerify: a.server.SkipVerifySSL,
+			ServerName:         a.server.CertServerName,
+		}
+		a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
 	} else {
 		a.conn, err = ldap.Dial("tcp", address)
 	}
