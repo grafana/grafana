@@ -38,9 +38,9 @@ case "$1" in
   fi
 
 	# Set user permissions on /var/log/grafana, /var/lib/grafana
-	mkdir -p /var/log/grafana /var/lib/grafana
-	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
-	chmod 755 /var/log/grafana /var/lib/grafana
+	mkdir -p /var/log/grafana /var/lib/grafana /var/run/grafana-server
+	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana /var/run/grafana-server
+	chmod 755 /var/log/grafana /var/lib/grafana /var/run/grafana-server
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
 	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*

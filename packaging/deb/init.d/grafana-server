@@ -33,7 +33,8 @@ DATA_DIR=/var/lib/grafana
 LOG_DIR=/var/log/grafana
 CONF_FILE=$CONF_DIR/grafana.ini
 MAX_OPEN_FILES=10000
-PID_FILE=/var/run/$NAME.pid
+PID_DIR==/var/run/$NAME
+PID_FILE=$PID_DIR/$NAME.pid
 DAEMON=/usr/sbin/$NAME
 
 if [ `id -u` -ne 0 ]; then
@@ -72,7 +73,7 @@ case "$1" in
 	fi
 
 	# Prepare environment
-	mkdir -p "$LOG_DIR" "$DATA_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR"
+	mkdir -p "$LOG_DIR" "$DATA_DIR" "$PID_DIR" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$LOG_DIR" "$DATA_DIR"
 	touch "$PID_FILE" && chown "$GRAFANA_USER":"$GRAFANA_GROUP" "$PID_FILE"
 
   if [ -n "$MAX_OPEN_FILES" ]; then
