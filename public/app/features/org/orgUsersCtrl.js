@@ -39,7 +39,7 @@ function (angular) {
 
     $scope.openInviteModal = function() {
       $scope.appEvent('show-modal', {
-        src: './app/partials/invite_users.html',
+        src: './app/features/org/partials/invite.html',
         modalClass: 'modal-no-header invite-modal',
         scope: $scope.$new()
       });
