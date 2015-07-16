@@ -9,54 +9,45 @@
 
 		<h2>Organization users</h2>
 
-		<form name="form">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 127px">
-						<strong>Username or Email</strong>
-					</li>
-					<li>
-						<input type="text" ng-model="user.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="user@email.com or username">
-					</li>
-					<li class="tight-form-item">
-						role
-					</li>
-					<li>
-						<select type="text" ng-model="user.role" class="input-medium tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
-						</select>
-					</li>
-					<li>
-						<button class="btn btn-success tight-form-btn" ng-click="addUser()">Add</button>
-					</li>
-					<div class="clearfix"></div>
-				</ul>
-			</div>
-		</form>
+		<button class="btn btn-success pull-right" ng-click="openInviteModal()">
+			Invite Users
+		</button>
 
 		<br>
 
-		<table class="grafana-options-table form-inline">
-			<tr>
-				<th>Login</th>
-				<th>Email</th>
-				<th>Role</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="user in users">
-				<td>{{user.login}}</td>
-				<td>{{user.email}}</td>
-				<td>
-					<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
-					</select>
-				</td>
-				<td style="width: 1%">
-					<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
+		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+			<div ng-repeat="tab in ['Users', 'Pending Invitations']" data-title="{{tab}}">
+			</div>
+		</div>
 
+		<div ng-if="editor.index == 0">
+			<table class="grafana-options-table form-inline">
+				<tr>
+					<th>Login</th>
+					<th>Email</th>
+					<th>Role</th>
+					<th></th>
+				</tr>
+				<tr ng-repeat="user in users">
+					<td>{{user.login}}</td>
+					<td>{{user.email}}</td>
+					<td>
+						<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
+						</select>
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
+
+		</div>
+
+		<div ng-if="editor.index == 1">
+			Pending invitaitons
+		</div>
 	</div>
 </div>
 

@@ -15,6 +15,7 @@ function (angular) {
 
     $scope.init = function() {
       $scope.get();
+      $scope.editor = { index: 0 };
     };
 
     $scope.get = function() {
@@ -34,6 +35,14 @@ function (angular) {
     $scope.addUser = function() {
       if (!$scope.form.$valid) { return; }
       backendSrv.post('/api/org/users', $scope.user).then($scope.get);
+    };
+
+    $scope.openInviteModal = function() {
+      $scope.appEvent('show-modal', {
+        src: './app/partials/invite_users.html',
+        modalClass: 'modal-no-header invite-modal',
+        scope: $scope.$new()
+      });
     };
 
     $scope.init();
