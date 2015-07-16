@@ -44,6 +44,12 @@ Then you can override that using:
 
 <hr>
 
+### instance_id
+
+Identifier used for this grafana instance (for instrumentation and collectorcontroller)
+Should be unique across all grafana instances in your infrastructure (on same or different hosts)
+Defaults to "default"
+
 ## [paths]
 
 ### data
@@ -51,6 +57,7 @@ Then you can override that using:
 Path to where Grafana stores the sqlite3 database (if used), file based
 sessions (if used), and other data.  This path is usually specified via
 command line in the init.d script or the systemd service file.
+It should be unique if you run multiple grafana processes on the same machine.
 
 ### logs
 

@@ -4,6 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/googollee/go-socket.io"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -16,16 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
-	"io/ioutil"
-	"os"
-	"reflect"
-	"runtime"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 var server *socketio.Server
@@ -216,33 +214,8 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 
 func InitCollectorController(metrics met.Backend) {
 	sec := setting.Cfg.Section("event_publisher")
-	// get our instance-id
-	dataPath := setting.DataPath + "/instance-id"
-	log.Info("instance-id path: " + dataPath)
-	fs, err := os.Open(dataPath)
-	if err != nil {
-		fs, err = os.Create(dataPath)
-		if err != nil {
-			log.Fatal(0, "failed to create instance-id file", err)
-		}
-		defer fs.Close()
-		instanceId = uuid.NewV4().String()
-		if _, err := fs.Write([]byte(instanceId)); err != nil {
-			log.Fatal(0, "failed to write instanceId to file", err)
-		}
-	} else {
-		defer fs.Close()
-		content, err := ioutil.ReadAll(fs)
-		if err != nil {
-			log.Fatal(0, "failed to read instanceId", err)
-		}
-		instanceId = strings.Split(string(content), "\n")[0]
-	}
-	if instanceId == "" {
-		log.Fatal(0, "invalid instanceId. check "+dataPath, nil)
-	}
 	cmd := &m.ClearCollectorSessionCommand{
-		InstanceId: instanceId,
+		InstanceId: setting.InstanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		log.Fatal(0, "failed to clear collectorSessions", err)
