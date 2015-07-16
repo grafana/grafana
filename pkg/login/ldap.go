@@ -28,7 +28,7 @@ func (a *ldapAuther) Dial() error {
 	if a.server.UseSSL {
 		tlsCfg := &tls.Config{
 			InsecureSkipVerify: a.server.SkipVerifySSL,
-			ServerName:         a.server.CertServerName,
+			ServerName:         a.server.Host,
 		}
 		a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
 	} else {

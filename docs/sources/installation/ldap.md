@@ -29,8 +29,6 @@ port = 389
 use_ssl = false
 # set to true if you want to skip ssl cert validation
 ssl_skip_verify = false
-# if cert validation is enabled, provide ldap cert server name
-ssl_server_name = ""
 
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
