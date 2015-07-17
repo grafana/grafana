@@ -13,6 +13,9 @@ function (angular) {
       role: 'Viewer',
     };
 
+    $scope.users = [];
+    $scope.pendingInvites = [];
+
     $scope.init = function() {
       $scope.get();
       $scope.editor = { index: 0 };
@@ -21,6 +24,9 @@ function (angular) {
     $scope.get = function() {
       backendSrv.get('/api/org/users').then(function(users) {
         $scope.users = users;
+      });
+      backendSrv.get('/api/org/invites').then(function(pendingInvites) {
+        $scope.pendingInvites = pendingInvites;
       });
     };
 

@@ -10,15 +10,16 @@ var (
 	ErrTempUserNotFound = errors.New("User not found")
 )
 
-// TempUser holds data for org invites and new sign ups
+// TempUser holds data for org invites and unconfirmed sign ups
 type TempUser struct {
-	Id       int64
-	OrgId    int64
-	Version  int
-	Email    string
-	Name     string
-	Role     string
-	IsInvite bool
+	Id              int64
+	OrgId           int64
+	Version         int
+	Email           string
+	Name            string
+	Role            string
+	IsInvite        bool
+	InvitedByUserId int64
 
 	EmailSent   bool
 	EmailSentOn time.Time
@@ -32,11 +33,12 @@ type TempUser struct {
 // COMMANDS
 
 type CreateTempUserCommand struct {
-	Email    string
-	Name     string
-	OrgId    int64
-	IsInvite bool
-	Code     string
+	Email           string
+	Name            string
+	OrgId           int64
+	IsInvite        bool
+	InvitedByUserId int64
+	Code            string
 
 	Result *TempUser
 }

@@ -14,7 +14,7 @@ func addTempUserMigrations(mg *Migrator) {
 			{Name: "role", Type: DB_NVarchar, Length: 20, Nullable: true},
 			{Name: "code", Type: DB_NVarchar, Length: 255},
 			{Name: "is_invite", Type: DB_Bool},
-			{Name: "invited_by", Type: DB_NVarchar, Length: 255, Nullable: true},
+			{Name: "invited_by_user_id", Type: DB_BigInt, Nullable: true},
 			{Name: "email_sent", Type: DB_Bool},
 			{Name: "email_sent_on", Type: DB_DateTime, Nullable: true},
 			{Name: "created", Type: DB_DateTime},
@@ -28,7 +28,7 @@ func addTempUserMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create temp user table v1", NewAddTableMigration(tempUserV1))
+	mg.AddMigration("create temp user table v1-3", NewAddTableMigration(tempUserV1))
 
-	addTableIndicesMigrations(mg, "v1-1", tempUserV1)
+	addTableIndicesMigrations(mg, "v1-3", tempUserV1)
 }
