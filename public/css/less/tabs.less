@@ -4,16 +4,21 @@
   padding-left: 10px;
 
 	& > li > a {
-		.border-radius(3px);
+	  color: darken(@linkColor, 20%);
 	}
 
-	li > a:hover,
+	li > a:hover {
+    border-bottom: none;
+	}
+
 	li.active > a,
 	li.active > a:focus,
 	li.active > a:hover {
+    .border-radius(3px);
 		border: @grafanaTriggerBorder;
 	  background-color: transparent;
 	  border-bottom: 1px solid @grafanaPanelBackground;
+	  color: @linkColor;
 	}
 
 	li.disabled > a {
