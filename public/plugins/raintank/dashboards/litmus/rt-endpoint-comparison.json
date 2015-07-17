@@ -125,6 +125,7 @@
           "lines": false,
           "linewidth": 1,
           "links": [],
+          "minSpan": 3,          
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 1,
@@ -677,6 +678,7 @@
         "5m",
         "15m",
         "1h",
+        "3h",
         "6h",
         "12h",
         "24h",
@@ -688,7 +690,7 @@
     }
   ],
   "time": {
-    "from": "now-12h",
+    "from": "now-3h",
     "to": "now"
   },
   "templating": {
