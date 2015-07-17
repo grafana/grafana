@@ -380,11 +380,11 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
-            configureAxisMode(options.yaxes[1], scope.panel.y_formats[1]);
+            configureAxisMode(options.yaxes[1], scope.panel.percentage && scope.panel.stack ? "percent" : scope.panel.y_formats[1]);
           }
 
           applyLogScale(options.yaxes[0], data);
-          configureAxisMode(options.yaxes[0], scope.panel.y_formats[0]);
+          configureAxisMode(options.yaxes[0], scope.panel.percentage && scope.panel.stack ? "percent" : scope.panel.y_formats[0]);
         }
 
         function applyLogScale(axis, data) {
