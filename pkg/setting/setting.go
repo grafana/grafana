@@ -37,9 +37,10 @@ const (
 
 var (
 	// App settings.
-	Env       string = DEV
-	AppUrl    string
-	AppSubUrl string
+	Env        string = DEV
+	InstanceId string
+	AppUrl     string
+	AppSubUrl  string
 
 	// build
 	BuildVersion string
@@ -371,6 +372,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
+	InstanceId = Cfg.Section("").Key("instance_id").MustString("default")
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
