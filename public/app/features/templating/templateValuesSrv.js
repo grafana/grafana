@@ -80,6 +80,7 @@ function (angular, _, kbn) {
 
       if (_.isArray(variable.current.value)) {
         variable.current.text = variable.current.value.join(' + ');
+        this.selectOptionsForCurrentValue(variable);
       }
 
       templateSrv.updateTemplateData();
@@ -128,6 +129,18 @@ function (angular, _, kbn) {
         .then(_.partial(this.validateVariableSelectionState, variable));
     };
 
+    this.selectOptionsForCurrentValue = function(variable) {
+      for (var i = 0; i < variable.current.value.length; i++) {
+        var value = variable.current.value[i];
+        for (var y = 0; y < variable.options.length; y++) {
+          var option = variable.options[y];
+          if (option.value === value) {
+            option.selected = true;
+          }
+        }
+      }
+    };
+
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
@@ -135,15 +148,7 @@ function (angular, _, kbn) {
       }
 
       if (_.isArray(variable.current.value)) {
-        for (var i = 0; i < variable.current.value.length; i++) {
-          var value = variable.current.value[i];
-          for (var y = 0; y < variable.options.length; y++) {
-            var option = variable.options[y];
-            if (option.value === value) {
-              option.selected = true;
-            }
-          }
-        }
+        this.selectOptionsForCurrentValue(variable);
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
@@ -225,17 +230,17 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-      case 'wildcard':
-        allValue = '*';
+        case 'wildcard':
+          allValue = '*';
         break;
-      case 'regex wildcard':
-        allValue = '.*';
+        case 'regex wildcard':
+          allValue = '.*';
         break;
-      case 'regex values':
-        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+        case 'regex values':
+          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
         break;
-      default:
-        allValue = '{';
+        default:
+          allValue = '{';
         allValue += _.pluck(variable.options, 'text').join(',');
         allValue += '}';
       }
