@@ -19,7 +19,15 @@ func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
 	offset := time.Duration(LoadOrSetOffset()) * time.Second
 	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
-	ticker := NewTicker(lastProcessed, offset, clock.New())
+	cl := clock.New()
+	ticker := NewTicker(lastProcessed, offset, cl)
+	go func() {
+		offsetReadTicker := cl.Ticker(time.Duration(1) * time.Second)
+		for _ = range offsetReadTicker.C {
+			offset := time.Duration(LoadOrSetOffset()) * time.Second
+			ticker.updateOffset(offset)
+		}
+	}()
 	for {
 		select {
 		case tick := <-ticker.C:
