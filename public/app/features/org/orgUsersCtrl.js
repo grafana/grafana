@@ -44,10 +44,15 @@ function (angular) {
     };
 
     $scope.openInviteModal = function() {
+      var modalScope = $scope.$new();
+      modalScope.invitesSent = function() {
+        $scope.get();
+      };
+
       $scope.appEvent('show-modal', {
         src: './app/features/org/partials/invite.html',
         modalClass: 'modal-no-header invite-modal',
-        scope: $scope.$new()
+        scope: modalScope
       });
     };
 

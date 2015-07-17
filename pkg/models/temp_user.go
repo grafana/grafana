@@ -17,7 +17,7 @@ type TempUser struct {
 	Version         int
 	Email           string
 	Name            string
-	Role            string
+	Role            RoleType
 	IsInvite        bool
 	InvitedByUserId int64
 
@@ -39,6 +39,7 @@ type CreateTempUserCommand struct {
 	IsInvite        bool
 	InvitedByUserId int64
 	Code            string
+	Role            RoleType
 
 	Result *TempUser
 }
@@ -54,6 +55,7 @@ type TempUserDTO struct {
 	Name        string    `json:"name"`
 	Email       string    `json:"email"`
 	Role        string    `json:"role"`
+	InvitedBy   string    `json:"invitedBy"`
 	EmailSent   bool      `json:"emailSent"`
 	EmailSentOn time.Time `json:"emailSentOn"`
 	Created     time.Time `json:"createdOn"`

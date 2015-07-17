@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('UserInviteCtrl', function($scope, backendSrv) {
+  module.controller('UserInviteCtrl', function($scope, backendSrv, $q) {
 
     $scope.invites = [
       {name: '', email: '', role: 'Editor'},
@@ -27,8 +27,12 @@ function (angular, _) {
     $scope.sendInvites = function() {
       if (!$scope.inviteForm.$valid) { return; }
 
-      _.each($scope.invites, function(invite) {
-        backendSrv.post('/api/org/invites', invite);
+      var promises = _.map($scope.invites, function(invite) {
+        return backendSrv.post('/api/org/invites', invite);
+      });
+
+      $q.all(promises).then(function() {
+        $scope.invitesSent();
       });
 
       $scope.dismiss();

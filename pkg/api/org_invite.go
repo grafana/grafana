@@ -30,6 +30,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	cmd.IsInvite = true
 	cmd.InvitedByUserId = c.UserId
 	cmd.Code = util.GetRandomString(30)
+	cmd.Role = inviteDto.Role
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to save invite to database", err)
