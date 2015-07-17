@@ -565,7 +565,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.dns.time, 2)"
+              "target": "aliasByNode((sortByName(litmus.$endpoint.$collector.dns.time), 2)"
             }
           ],
           "timeFrom": null,
@@ -630,7 +630,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.ping.mean), 2)"
             }
           ],
           "timeFrom": null,
@@ -695,7 +695,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.http.total, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.http.total), 2)"
             }
           ],
           "timeFrom": null,
@@ -760,7 +760,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.https.total, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.https.total), 2)"
             }
           ],
           "timeFrom": null,
@@ -807,6 +807,7 @@
         "5m",
         "15m",
         "1h",
+        "3h",
         "6h",
         "12h",
         "24h",
@@ -818,7 +819,7 @@
     }
   ],
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "templating": {
