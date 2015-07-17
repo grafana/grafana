@@ -230,17 +230,17 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-        case 'wildcard':
-          allValue = '*';
+      case 'wildcard':
+        allValue = '*';
         break;
-        case 'regex wildcard':
-          allValue = '.*';
+      case 'regex wildcard':
+        allValue = '.*';
         break;
-        case 'regex values':
-          allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+      case 'regex values':
+        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
         break;
-        default:
-          allValue = '{';
+      default:
+        allValue = '{';
         allValue += _.pluck(variable.options, 'text').join(',');
         allValue += '}';
       }
