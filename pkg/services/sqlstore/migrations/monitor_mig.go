@@ -257,4 +257,9 @@ func addMonitorMigration(mg *Migrator) {
 		return nil
 	}
 	mg.AddMigration("monitor add alerts v1", migration)
+
+	migration = NewAddColumnMigration(monitorV3, &Column{
+		Name: "state_check", Type: DB_DateTime, Nullable: false,
+	})
+	mg.AddMigration("monitor add state_check v1", migration)
 }
