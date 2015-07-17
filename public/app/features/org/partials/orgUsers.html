@@ -44,20 +44,18 @@
 					<tr>
 						<th>Email</th>
 						<th>Name</th>
-						<th>Role</th>
-						<th>Invited on</th>
-						<th>By</th>
 						<th></th>
 					</tr>
 					<tr ng-repeat="invite in pendingInvites">
 						<td>{{invite.email}}</td>
 						<td>{{invite.name}}</td>
-						<td>{{invite.role}}</td>
-						<td>{{invite.createdOn | date:'shortDate'}}</td>
-						<td>{{invite.invitedBy}}</td>
 						<td style="width: 1%">
-							<a ng-click="removeInvite(invite)" class="btn btn-danger btn-mini">
-								<i class="fa fa-remove"></i>
+							<button class="btn btn-inverse btn-mini" data-clipboard-text="{{snapshotUrl}}" clipboard-button>
+								<i class="fa fa-clipboard"></i> Copy Invite
+							</button>
+							&nbsp;&nbsp;
+							<a class="pointer">
+								<i class="fa fa-caret-right"></i>
 							</a>
 						</td>
 					</tr>
