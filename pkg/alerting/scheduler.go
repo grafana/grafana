@@ -23,7 +23,7 @@ func Dispatcher(jobQueue JobQueue) {
 	ticker := NewTicker(lastProcessed, offset, cl)
 	go func() {
 		offsetReadTicker := cl.Ticker(time.Duration(1) * time.Second)
-		for _ = range offsetReadTicker.C {
+		for range offsetReadTicker.C {
 			offset := time.Duration(LoadOrSetOffset()) * time.Second
 			ticker.updateOffset(offset)
 		}
