@@ -52,23 +52,25 @@ define([
       var variable = {
         name: 'apps',
         multi: true,
-        current: {text: "test", value: "test"},
-        options: [{text: "test", value: "test"}]
+        current: {text: "val1", value: "val1"},
+        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}]
       };
 
       beforeEach(function() {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
-        urlParams["var-apps"] = ["new", "other"];
+        urlParams["var-apps"] = ["val1", "val2"];
         ctx.$location.search = sinon.stub().returns(urlParams);
         ctx.service.init(dashboard);
       });
 
       it('should update current value', function() {
         expect(variable.current.value.length).to.be(2);
-        expect(variable.current.value[0]).to.be("new");
-        expect(variable.current.value[1]).to.be("other");
-        expect(variable.current.text).to.be("new + other");
+        expect(variable.current.value[0]).to.be("val1");
+        expect(variable.current.value[1]).to.be("val2");
+        expect(variable.current.text).to.be("val1 + val2");
+        expect(variable.options[0].selected).to.be(true);
+        expect(variable.options[1].selected).to.be(true);
       });
     });
 
