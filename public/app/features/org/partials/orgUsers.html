@@ -15,39 +15,56 @@
 
 		<br>
 
-		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Users', 'Pending Invitations']" data-title="{{tab}}">
-			</div>
-		</div>
+		<tabset>
+			<tab heading="Users ({{users.length}})">
+				<table class="grafana-options-table form-inline">
+					<tr>
+						<th>Login</th>
+						<th>Email</th>
+						<th>Role</th>
+						<th></th>
+					</tr>
+					<tr ng-repeat="user in users">
+						<td>{{user.login}}</td>
+						<td>{{user.email}}</td>
+						<td>
+							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
+							</select>
+						</td>
+						<td style="width: 1%">
+							<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</tab>
+			<tab heading="Pending Invitations ({{pendingInvites.length}})">
+				<table class="grafana-options-table form-inline">
+					<tr>
+						<th>Email</th>
+						<th>Name</th>
+						<th>Role</th>
+						<th>Created on</th>
+						<th>Invited by</th>
+						<th></th>
+					</tr>
+					<tr ng-repeat="invite in pendingInvites">
+						<td>{{invite.email}}</td>
+						<td>{{invite.name}}</td>
+						<td>{{invite.role}}</td>
+						<td>{{invite.createdOn | date:'medium'}}</td>
+						<td>{{invite.invitedBy}}</td>
+						<td style="width: 1%">
+							<a ng-click="removeInvite(invite)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</tab>
+		</tabset>
 
-		<div ng-if="editor.index == 0">
-			<table class="grafana-options-table form-inline">
-				<tr>
-					<th>Login</th>
-					<th>Email</th>
-					<th>Role</th>
-					<th></th>
-				</tr>
-				<tr ng-repeat="user in users">
-					<td>{{user.login}}</td>
-					<td>{{user.email}}</td>
-					<td>
-						<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
-						</select>
-					</td>
-					<td style="width: 1%">
-						<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</table>
-
-		</div>
-
-		<div ng-if="editor.index == 1">
-			Pending invitaitons
-		</div>
 	</div>
 </div>
 

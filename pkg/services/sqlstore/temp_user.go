@@ -17,13 +17,14 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 
 		// create user
 		user := &m.TempUser{
-			Email:    cmd.Email,
-			Name:     cmd.Name,
-			OrgId:    cmd.OrgId,
-			Code:     cmd.Code,
-			IsInvite: cmd.IsInvite,
-			Created:  time.Now(),
-			Updated:  time.Now(),
+			Email:           cmd.Email,
+			Name:            cmd.Name,
+			OrgId:           cmd.OrgId,
+			Code:            cmd.Code,
+			IsInvite:        cmd.IsInvite,
+			InvitedByUserId: cmd.InvitedByUserId,
+			Created:         time.Now(),
+			Updated:         time.Now(),
 		}
 
 		sess.UseBool("is_invite")

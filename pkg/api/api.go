@@ -89,6 +89,10 @@ func Register(r *macaron.Macaron) {
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
+
+			// invites
+			r.Get("/invites", wrap(GetPendingOrgInvites))
+			r.Post("/invites", bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 		}, regOrgAdmin)
 
 		// create new org
