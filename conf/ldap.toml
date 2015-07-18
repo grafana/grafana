@@ -8,11 +8,13 @@ host = "127.0.0.1"
 port = 389
 # Set to true if ldap server supports TLS
 use_ssl = false
+# set to true if you want to skip ssl cert validation
+ssl_skip_verify = false
 
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
-bind_password = "grafana"
+bind_password = 'grafana'
 
 # Search filter, for example "(cn=%s)" or "(sAMAccountName=%s)"
 search_filter = "(cn=%s)"
@@ -34,7 +36,7 @@ org_role = "Admin"
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used
 # org_id = 1
 
-[[server.ldap_group_to_org_role_mappings]]
+[[server.group_mappings]]
 group_dn = "cn=users,dc=grafana,dc=org"
 org_role = "Editor"
 

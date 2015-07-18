@@ -1,6 +1,7 @@
 package login
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strings"
@@ -25,7 +26,11 @@ func (a *ldapAuther) Dial() error {
 	address := fmt.Sprintf("%s:%d", a.server.Host, a.server.Port)
 	var err error
 	if a.server.UseSSL {
-		a.conn, err = ldap.DialTLS("tcp", address, nil)
+		tlsCfg := &tls.Config{
+			InsecureSkipVerify: a.server.SkipVerifySSL,
+			ServerName:         a.server.Host,
+		}
+		a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
 	} else {
 		a.conn, err = ldap.Dial("tcp", address)
 	}
@@ -125,14 +130,17 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 		return err
 	}
 
-	// remove or update org roles
+	// update or remove org roles
 	for _, org := range orgsQuery.Result {
+		match := false
+
 		for _, group := range a.server.LdapGroups {
 			if org.OrgId != group.OrgId {
 				continue
 			}
 
 			if ldapUser.isMemberOf(group.GroupDN) {
+				match = true
 				if org.Role != group.OrgRole {
 					// update role
 					cmd := m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: group.OrgRole}
@@ -142,12 +150,14 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 				}
 				// ignore subsequent ldap group mapping matches
 				break
-			} else {
-				// remove role
-				cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
-				if err := bus.Dispatch(&cmd); err != nil {
-					return err
-				}
+			}
+		}
+
+		// remove role if no mappings match
+		if !match {
+			cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
+			if err := bus.Dispatch(&cmd); err != nil {
+				return err
 			}
 		}
 	}

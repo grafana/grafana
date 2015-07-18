@@ -27,6 +27,8 @@ host = "127.0.0.1"
 port = 389
 # Set to true if ldap server supports TLS
 use_ssl = false
+# set to true if you want to skip ssl cert validation
+ssl_skip_verify = false
 
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
