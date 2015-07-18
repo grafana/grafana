@@ -80,6 +80,9 @@ function(angular, _) {
           // remove scopedVars
           panel.scopedVars = null;
 
+          // ignore span changes
+          panel.span = null;
+
           // ignore panel legend sort
           if (panel.legend)  {
             delete panel.legend.sort;
