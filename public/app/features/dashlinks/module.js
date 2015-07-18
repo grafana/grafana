@@ -114,7 +114,7 @@ function (angular, _) {
           title: linkDef.title,
           icon: iconMap[linkDef.icon],
           tooltip: linkDef.tooltip,
-          target: linkDef.targetBlank ? "_blank" : "",
+          target: linkDef.targetBlank ? "_blank" : "_self",
           keepTime: linkDef.keepTime,
           includeVars: linkDef.includeVars,
         }]);

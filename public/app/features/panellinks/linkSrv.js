@@ -62,7 +62,7 @@ function (angular, kbn, _) {
       this.getPanelLinkAnchorInfo = function(link) {
         var info = {};
         if (link.type === 'absolute') {
-          info.target = link.targetBlank ? '_blank' : '';
+          info.target = link.targetBlank ? '_blank' : '_self';
           info.href = templateSrv.replace(link.url || '');
           info.title = templateSrv.replace(link.title || '');
           info.href += '?';
@@ -70,6 +70,7 @@ function (angular, kbn, _) {
         else if (link.dashUri) {
           info.href = 'dashboard/' + link.dashUri + '?';
           info.title = templateSrv.replace(link.title || '');
+          info.target = link.targetBlank ? '_blank' : '';
         }
         else {
           info.title = templateSrv.replace(link.title || '');
