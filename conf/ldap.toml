@@ -14,7 +14,7 @@ ssl_skip_verify = false
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
-bind_password = "grafana"
+bind_password = 'grafana'
 
 # Search filter, for example "(cn=%s)" or "(sAMAccountName=%s)"
 search_filter = "(cn=%s)"
