@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,6 +22,9 @@ func GetPendingOrgInvites(c *middleware.Context) Response {
 func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response {
 	if !inviteDto.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
+	}
+	if !util.IsEmail(inviteDto.Email) {
+		return ApiError(400, "Invalid email specified", nil)
 	}
 
 	// first try get existing user
@@ -50,6 +54,25 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to save invite to database", err)
+	}
+
+	// send invite email
+	if !inviteDto.SkipEmails {
+		emailCmd := m.SendEmailCommand{
+			To:       []string{inviteDto.Email},
+			Template: "new_user_invite.html",
+			Data: map[string]interface{}{
+				"NameOrEmail": util.StringsFallback2(cmd.Name, cmd.Email),
+				"OrgName":     c.OrgName,
+				"Email":       c.Email,
+				"LinkUrl":     setting.ToAbsUrl("signup/invited/" + cmd.Code),
+				"InvitedBy":   util.StringsFallback2(c.Name, c.Email),
+			},
+		}
+
+		if err := bus.Dispatch(&emailCmd); err != nil {
+			return ApiError(500, "Failed to send email invite", err)
+		}
 	}
 
 	return ApiSuccess("ok, done!")
