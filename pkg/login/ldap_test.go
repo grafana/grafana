@@ -139,6 +139,26 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
+		ldapAutherScenario("given org role is updated in config", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admin", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should update org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.removeOrgUserCmd, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+			})
+		})
+
 		ldapAutherScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
