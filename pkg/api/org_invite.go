@@ -23,6 +23,22 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		return ApiError(400, "Invalid role specified", nil)
 	}
 
+	// first try get existing user
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: inviteDto.Email}
+	if err := bus.Dispatch(&userQuery); err != nil {
+		if err != m.ErrUserNotFound {
+			return ApiError(500, "Failed to query db for existing user check", err)
+		}
+	} else {
+		// user exists, add org role
+		createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: userQuery.Result.Id, Role: inviteDto.Role}
+		if err := bus.Dispatch(&createOrgUserCmd); err != nil {
+			return ApiError(500, "Error while trying to create org user", err)
+		} else {
+			return ApiSuccess("Existing Grafana user added to org " + c.OrgName)
+		}
+	}
+
 	cmd := m.CreateTempUserCommand{}
 	cmd.OrgId = c.OrgId
 	cmd.Email = inviteDto.Email
