@@ -1,4 +1,5 @@
 <div class="container">
+
 	<div class="login-page-background">
 	</div>
 
@@ -9,14 +10,6 @@
 		</div>
 
     <div class="login-inner-box">
-			<div class="login-tab-header">
-				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
-					Log in
-				</button>
-				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
-					Sign up
-				</button>
-			</div>
 
       <form name="loginForm" class="login-form">
 				<div class="tight-from-container">
@@ -80,25 +73,6 @@
 			</form>
 
 			<div class="clearfix"></div>
-
-			<div class="login-oauth text-center">
-				<a class="btn btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
-					<i class="fa fa-google"></i>
-					with Google
-				</a>
-				<a class="btn btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
-					<i class="fa fa-github"></i>
-					with Github
-				</a>
-			</div>
-		</div>
-
-		<div class="row" style="margin-top: 40px">
-			<div class="text-center">
-				<a href="user/password/send-reset-email">
-					Forgot your password?
-				</a>
-			</div>
 		</div>
 
 		<div class="row" style="margin-top: 50px">
@@ -109,5 +83,7 @@
 		</div>
 
 	</div>
+
+</div>
 
 

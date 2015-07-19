@@ -97,6 +97,10 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
+      .when('/signup/invited', {
+        templateUrl: 'app/partials/signup_invited.html',
+        controller : 'InvitedCtrl',
+      })
       .when('/user/password/send-reset-email', {
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
