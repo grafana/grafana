@@ -115,6 +115,7 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
+<<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129:public/app/core/routes/all.js
       .when('/invite/:code', {
         templateUrl: 'app/partials/signup_invited.html',
         controller : 'InvitedCtrl',
@@ -123,6 +124,12 @@ define([
         templateUrl: 'app/partials/signup_step2.html',
         controller : 'SignUpCtrl',
       })
+=======
+      .when('/signup/invited', {
+        templateUrl: 'app/partials/signup_invited.html',
+        controller : 'InvitedCtrl',
+      })
+>>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353:public/app/routes/all.js
       .when('/user/password/send-reset-email', {
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
