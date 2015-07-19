@@ -6,6 +6,7 @@ define([
   './inspectCtrl',
   './jsonEditorCtrl',
   './loginCtrl',
+  './invitedCtrl',
   './resetPasswordCtrl',
   './sidemenuCtrl',
   './errorCtrl',
