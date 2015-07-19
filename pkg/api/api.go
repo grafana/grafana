@@ -86,7 +86,11 @@ func Register(r *macaron.Macaron) {
 	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), wrap(LoginPost))
 	r.Get("/login/:name", quota("session"), OAuthLogin)
 	r.Get("/login", LoginView)
+<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 	r.Get("/invite/:code", Index)
+=======
+	r.Get("/signup/invited", Index)
+>>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
@@ -109,6 +113,7 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
+<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), wrap(SignUp))
 	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), wrap(SignUpStep2))
@@ -116,6 +121,9 @@ func Register(r *macaron.Macaron) {
 	// invited
 	r.Get("/api/user/invite/:code", wrap(GetInviteInfoByCode))
 	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), wrap(CompleteInvite))
+=======
+	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
+>>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 
 	// reset password
 	r.Get("/user/password/send-reset-email", Index)
