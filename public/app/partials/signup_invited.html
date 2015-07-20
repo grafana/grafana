@@ -9,65 +9,83 @@
 			<img src="img/logo_transparent_200x75.png">
 		</div>
 
-    <div class="login-inner-box">
+    <div class="invite-box">
+			<h3>
+				Hi, {{greeting}}, Welcome to Grafana party.
+			</h3>
 
-      <form name="loginForm" class="login-form">
+			<div class="modal-tagline">
+				Beer and wine in the fridge, food out back - <br>
+				but first introduce yourself.
+			</div>
+
+      <form name="inviteForm" class="login-form">
 				<div class="tight-from-container">
-					<div class="tight-form" ng-if="loginMode">
+					<div class="tight-form">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>User</strong>
+							<li class="tight-form-item" style="width: 128px">
+								Email
 							</li>
 							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.user' placeholder="email or username" style="width: 253px">
+								<input type="email" name="email" class="tight-form-input last" required ng-model='user.email' placeholder="Email" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
-					<div class="tight-form" ng-if="loginMode">
+					<div class="tight-form">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>Password</strong>
+							<li class="tight-form-item" style="width: 128px">
+								Name
 							</li>
 							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
+								<input type="text" name="name" class="tight-form-input last" ng-model='user.name' placeholder="Name (optional)" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Username
+							</li>
+							<li>
+								<input type="text" name="username" class="tight-form-input last" required ng-model='user.username' placeholder="Username" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
 
-					<div class="tight-form" ng-if="!loginMode">
+					<div class="tight-form">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>Email</strong>
+							<li class="tight-form-item" style="width: 128px">
+								Password
 							</li>
 							<li>
-								<input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 253px">
+								<input type="password" name="password" class="tight-form-input last" required ng-model="user.password" id="inputPassword" style="width: 253px" placeholder="password">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
-
-					<div class="tight-form" ng-if="!loginMode">
+					<div class="tight-form">
 						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>Password</strong>
+							<li class="tight-form-item" style="width: 128px">
+								Confirm Password
 							</li>
 							<li>
-								<input type="password" class="tight-form-input last" watch-change="formModel.password = inputValue;" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 253px">
+								<input type="password" name="confirmPassword" class="tight-form-input last" required ng-model="user.confirmPassword" id="confirmPassword" style="width: 253px" placeholder="confirm password">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
 				</div>
 
-				<div ng-if="!loginMode" style="margin-left: 97px; width: 254px;">
-					<password-strength password="formModel.password"></password-strength>
+				<div style="margin-left: 147px; width: 254px;">
+					<password-strength password="user.password"></password-strength>
 				</div>
 
 				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-						{{submitBtnText}}
+					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
+						Continue
 					</button>
 				</div>
 			</form>

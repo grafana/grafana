@@ -68,6 +68,12 @@ type GetTempUsersForOrgQuery struct {
 	Result []*TempUserDTO
 }
 
+type GetTempUsersByCodeQuery struct {
+	Code string
+
+	Result *TempUser
+}
+
 type TempUserDTO struct {
 	Id          int64     `json:"id"`
 	Name        string    `json:"name"`

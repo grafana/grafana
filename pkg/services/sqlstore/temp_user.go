@@ -12,6 +12,7 @@ func init() {
 	bus.AddHandler("sql", CreateTempUser)
 	bus.AddHandler("sql", GetTempUsersForOrg)
 	bus.AddHandler("sql", UpdateTempUserStatus)
+	bus.AddHandler("sql", GetTempUsersByCode)
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
@@ -66,5 +67,19 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 	query.Result = make([]*m.TempUserDTO, 0)
 	sess := x.Sql(rawSql, query.OrgId, string(query.Status))
 	err := sess.Find(&query.Result)
+	return err
+}
+
+func GetTempUsersByCode(query *m.GetTempUsersByCodeQuery) error {
+	var user m.TempUser
+	has, err := x.Table("temp_user").Where("code=?", query.Code).Get(&user)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrTempUserNotFound
+	}
+
+	query.Result = &user
 	return err
 }
