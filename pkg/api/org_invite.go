@@ -96,3 +96,22 @@ func RevokeInvite(c *middleware.Context) Response {
 
 	return ApiSuccess("Invite revoked")
 }
+
+func GetInviteInfoByCode(c *middleware.Context) Response {
+	query := m.GetTempUsersByCodeQuery{Code: c.Params(":code")}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrTempUserNotFound {
+			return ApiError(404, "Invite not found", nil)
+		}
+		return ApiError(500, "Failed to get invite", err)
+	}
+
+	info := dtos.InviteInfo{
+		Email:    query.Result.Email,
+		Name:     query.Result.Name,
+		Username: query.Result.Email,
+	}
+
+	return Json(200, &info)
+}
