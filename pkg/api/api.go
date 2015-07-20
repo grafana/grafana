@@ -214,7 +214,11 @@ func Register(r *macaron.Macaron) {
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
 			r.Delete("/users/:userId", wrap(RemoveOrgUser))
 			r.Get("/quotas", wrap(GetOrgQuotas))
+<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 			r.Put("/quotas/:target", bind(m.UpdateOrgQuotaCmd{}), wrap(UpdateOrgQuota))
+=======
+			r.Put("/quotas/:target", bind(m.UpdateQuotaCmd{}), wrap(UpdateOrgQuota))
+>>>>>>> inital backend suport for quotas. issue #321
 		}, reqGrafanaAdmin)
 
 		// auth api keys

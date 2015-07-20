@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+<<<<<<< 072caca2c6e358edadedc76a9c996c33fd47837b
 	"github.com/Cepave/grafana/pkg/cmd"
 	"github.com/Cepave/grafana/pkg/log"
 	"github.com/Cepave/grafana/pkg/login"
@@ -22,6 +23,20 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
+=======
+	"github.com/grafana/grafana/pkg/cmd"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/social"
+>>>>>>> inital backend suport for quotas. issue #321
 )
 
 var version = "master"
@@ -56,6 +71,8 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
+
+	models.InitQuotaDefaults()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
