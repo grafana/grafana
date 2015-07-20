@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/setting"
 	"time"
 )
@@ -60,4 +61,15 @@ type UpdateQuotaCmd struct {
 	Target QuotaTarget `json:"target"`
 	Limit  int64       `json:"limit"`
 	OrgId  int64       `json:"-"`
+}
+
+func QuotaReached(org_id int64, target QuotaTarget) (bool, error) {
+	query := GetQuotaByTargetQuery{OrgId: org_id, Target: target}
+	if err := bus.Dispatch(&query); err != nil {
+		return true, err
+	}
+	if query.Result.Used >= query.Result.Limit {
+		return true, nil
+	}
+	return false, nil
 }

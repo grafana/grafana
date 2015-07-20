@@ -14,6 +14,7 @@ func Register(r *macaron.Macaron) {
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
 	regOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	limitQuota := middleware.LimitQuota
 	bind := binding.Bind
 
 	// not logged in views
@@ -95,7 +96,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(GetOrgCurrent))
 			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
-			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+			r.Post("/users", limitQuota(m.QUOTA_USER), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
@@ -136,7 +137,7 @@ func Register(r *macaron.Macaron) {
 		// Data sources
 		r.Group("/datasources", func() {
 			r.Get("/", GetDataSources)
-			r.Post("/", bind(m.AddDataSourceCommand{}), AddDataSource)
+			r.Post("/", limitQuota(m.QUOTA_DATASOURCE), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
@@ -161,6 +162,7 @@ func Register(r *macaron.Macaron) {
 
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
+
 	}, reqSignedIn)
 
 	// admin api
