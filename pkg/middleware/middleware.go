@@ -258,6 +258,7 @@ func LimitQuota(target m.QuotaTarget) macaron.Handler {
 		limitReached, err := m.QuotaReached(c.OrgId, target)
 		if err != nil {
 			c.JsonApiErr(500, "failed to get quota", err)
+			return
 		}
 		if limitReached {
 			c.JsonApiErr(403, "Quota reached", nil)

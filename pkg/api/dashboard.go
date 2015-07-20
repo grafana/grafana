@@ -91,6 +91,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		limitReached, err := m.QuotaReached(cmd.OrgId, m.QUOTA_DASHBOARD)
 		if err != nil {
 			c.JsonApiErr(500, "failed to get quota", err)
+			return
 		}
 		if limitReached {
 			c.JsonApiErr(403, "Quota reached", nil)
