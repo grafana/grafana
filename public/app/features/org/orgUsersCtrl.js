@@ -38,9 +38,8 @@ function (angular) {
       backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
     };
 
-    $scope.addUser = function() {
-      if (!$scope.form.$valid) { return; }
-      backendSrv.post('/api/org/users', $scope.user).then($scope.get);
+    $scope.revokeInvite = function(invite) {
+      backendSrv.patch('/api/org/invites/' + invite.id + '/revoke').then($scope.get);
     };
 
     $scope.openInviteModal = function() {

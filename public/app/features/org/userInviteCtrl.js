@@ -13,8 +13,8 @@ function (angular, _) {
       {name: '', email: '', role: 'Editor'},
     ];
 
-    $scope.init = function() {
-    };
+    $scope.options = {skipEmails: false};
+    $scope.init = function() { };
 
     $scope.addInvite = function() {
       $scope.invites.push({name: '', email: '', role: 'Editor'});
@@ -28,6 +28,7 @@ function (angular, _) {
       if (!$scope.inviteForm.$valid) { return; }
 
       var promises = _.map($scope.invites, function(invite) {
+        invite.skipEmails = $scope.options.skipEmails;
         return backendSrv.post('/api/org/invites', invite);
       });
 

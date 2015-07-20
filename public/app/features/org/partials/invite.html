@@ -52,14 +52,17 @@
 				</div>
 			</div>
 
-			<br>
-			<div style="text-align: left">
+			<div style="text-align: left; margin-top: 6px;">
 				<a ng-click="addInvite()">+ Invite another</a>
+				<div class="form-inline" style="margin-top: 20px">
+					<editor-checkbox text="Skip sending emails" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
+				</div>
 			</div>
 
 			<div class="" style="margin-top: 30px; margin-bottom: 20px;">
 				<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
 				<button type="submit" class="btn btn-success" ng-click="sendInvites();">Invite Users</button>
+
 			</div>
 		</div>
 	</form>

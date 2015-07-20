@@ -10,7 +10,7 @@ import (
 )
 
 func GetPendingOrgInvites(c *middleware.Context) Response {
-	query := m.GetTempUsersForOrgQuery{OrgId: c.OrgId}
+	query := m.GetTempUsersForOrgQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get invites from db", err)
@@ -47,10 +47,11 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	cmd.OrgId = c.OrgId
 	cmd.Email = inviteDto.Email
 	cmd.Name = inviteDto.Name
-	cmd.IsInvite = true
+	cmd.Status = m.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
 	cmd.Code = util.GetRandomString(30)
 	cmd.Role = inviteDto.Role
+	cmd.RemoteAddr = c.Req.RemoteAddr
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to save invite to database", err)
@@ -76,4 +77,18 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	}
 
 	return ApiSuccess("ok, done!")
+}
+
+func RevokeInvite(c *middleware.Context) Response {
+	cmd := m.UpdateTempUserStatusCommand{
+		Id:     c.ParamsInt64(":id"),
+		OrgId:  c.OrgId,
+		Status: m.TmpUserRevoked,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update invite status", err)
+	}
+
+	return ApiSuccess("Invite revoked")
 }
