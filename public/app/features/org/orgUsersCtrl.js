@@ -38,8 +38,13 @@ function (angular) {
       backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
     };
 
-    $scope.revokeInvite = function(invite) {
+    $scope.revokeInvite = function(invite, evt) {
+      evt.stopPropagation();
       backendSrv.patch('/api/org/invites/' + invite.id + '/revoke').then($scope.get);
+    };
+
+    $scope.copyInviteToClipboard = function(evt) {
+      evt.stopPropagation();
     };
 
     $scope.openInviteModal = function() {

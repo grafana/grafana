@@ -75,6 +75,7 @@ type TempUserDTO struct {
 	Role        string    `json:"role"`
 	InvitedBy   string    `json:"invitedBy"`
 	Code        string    `json:"code"`
+	Url         string    `json:"url"`
 	EmailSent   bool      `json:"emailSent"`
 	EmailSentOn time.Time `json:"emailSentOn"`
 	Created     time.Time `json:"createdOn"`

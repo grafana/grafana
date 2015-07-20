@@ -44,7 +44,7 @@
 					{{invite.email}}
 					<span ng-show="invite.name" style="padding-left: 20px"> {{invite.name}}</span>
 					<span class="pull-right">
-						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button>
+						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)"
 							<i class="fa fa-clipboard"></i> Copy Invite
 						</button>
 						&nbsp;
@@ -54,6 +54,7 @@
 						</a>
 					</span>
 					<div ng-show="invite.expanded">
+						<a href="{{invite.url}}">{{invite.url}}</a><br>
 						<button class="btn btn-inverse btn-mini">
 							<i class="fa fa-envelope-o"></i> Resend invite
 						</button>

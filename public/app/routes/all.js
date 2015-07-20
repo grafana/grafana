@@ -97,7 +97,7 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
-      .when('/signup/invited', {
+      .when('/invite/:code', {
         templateUrl: 'app/partials/signup_invited.html',
         controller : 'InvitedCtrl',
       })

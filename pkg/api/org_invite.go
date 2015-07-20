@@ -16,6 +16,10 @@ func GetPendingOrgInvites(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get invites from db", err)
 	}
 
+	for _, invite := range query.Result {
+		invite.Url = setting.ToAbsUrl("invite/" + invite.Code)
+	}
+
 	return Json(200, query.Result)
 }
 
