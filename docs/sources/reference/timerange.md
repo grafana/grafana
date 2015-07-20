@@ -30,4 +30,4 @@ From Dashboard settings, click the Timepicker tab. From here you can specify the
 
 ## Panel time override
 
-In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../guides/whats-new-in-v2/) for further information
+In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../../guides/whats-new-in-v2/) for further information
