@@ -29,7 +29,7 @@ func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
 	}
 
 	//get quota used.
-	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", string(query.Target))
+	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(string(query.Target)))
 	resp := make([]*targetCount, 0)
 	if err := x.Sql(rawSql, query.OrgId).Find(&resp); err != nil {
 		return err
@@ -69,7 +69,7 @@ func GetQuotas(query *m.GetQuotasQuery) error {
 	result := make([]*m.QuotaDTO, len(quotas))
 	for i, q := range quotas {
 		//get quota used.
-		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", string(q.Target))
+		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(string(q.Target)))
 		resp := make([]*targetCount, 0)
 		if err := x.Sql(rawSql, q.OrgId).Find(&resp); err != nil {
 			return err
