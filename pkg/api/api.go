@@ -45,6 +45,7 @@ func Register(r *macaron.Macaron) {
 
 	// invited
 	r.Get("/api/user/invite/:code", wrap(GetInviteInfoByCode))
+	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), wrap(CompleteInvite))
 
 	// reset password
 	r.Get("/user/password/send-reset-email", Index)
@@ -97,7 +98,7 @@ func Register(r *macaron.Macaron) {
 			// invites
 			r.Get("/invites", wrap(GetPendingOrgInvites))
 			r.Post("/invites", bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
-			r.Patch("/invites/:id/revoke", wrap(RevokeInvite))
+			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 		}, regOrgAdmin)
 
 		// create new org

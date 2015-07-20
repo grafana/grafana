@@ -12,13 +12,13 @@ func init() {
 	bus.AddHandler("sql", CreateTempUser)
 	bus.AddHandler("sql", GetTempUsersForOrg)
 	bus.AddHandler("sql", UpdateTempUserStatus)
-	bus.AddHandler("sql", GetTempUsersByCode)
+	bus.AddHandler("sql", GetTempUserByCode)
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "UPDATE temp_user SET status=? WHERE id=? and org_id=?"
-		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Id, cmd.OrgId)
+		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
+		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
 		return err
 	})
 }
@@ -70,7 +70,7 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 	return err
 }
 
-func GetTempUsersByCode(query *m.GetTempUsersByCodeQuery) error {
+func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 	var user m.TempUser
 	has, err := x.Table("temp_user").Where("code=?", query.Code).Get(&user)
 

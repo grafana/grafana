@@ -3,6 +3,8 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -85,8 +87,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 
 func RevokeInvite(c *middleware.Context) Response {
 	cmd := m.UpdateTempUserStatusCommand{
-		Id:     c.ParamsInt64(":id"),
-		OrgId:  c.OrgId,
+		Code:   c.Params(":code"),
 		Status: m.TmpUserRevoked,
 	}
 
@@ -98,7 +99,7 @@ func RevokeInvite(c *middleware.Context) Response {
 }
 
 func GetInviteInfoByCode(c *middleware.Context) Response {
-	query := m.GetTempUsersByCodeQuery{Code: c.Params(":code")}
+	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrTempUserNotFound {
@@ -114,4 +115,49 @@ func GetInviteInfoByCode(c *middleware.Context) Response {
 	}
 
 	return Json(200, &info)
+}
+
+func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteForm) Response {
+	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrTempUserNotFound {
+			return ApiError(404, "Invite not found", nil)
+		}
+		return ApiError(500, "Failed to get invite", err)
+	}
+
+	invite := query.Result
+
+	cmd := m.CreateUserCommand{
+		Email:    completeInvite.Email,
+		Name:     completeInvite.Name,
+		Login:    completeInvite.Username,
+		Password: completeInvite.Password,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "failed to create user", err)
+	}
+
+	user := cmd.Result
+
+	bus.Publish(&events.UserSignedUp{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+		Login: user.Login,
+	})
+
+	// update temp user status
+	updateTmpUserCmd := m.UpdateTempUserStatusCommand{Code: invite.Code, Status: m.TmpUserCompleted}
+	if err := bus.Dispatch(&updateTmpUserCmd); err != nil {
+		return ApiError(500, "Failed to update invite status", err)
+	}
+
+	loginUserWithUser(&user, c)
+
+	metrics.M_Api_User_SignUp.Inc(1)
+
+	return ApiSuccess("User created and logged in")
 }

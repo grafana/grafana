@@ -17,6 +17,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			cmd := m.CreateTempUserCommand{
 				OrgId:  2256,
 				Name:   "hello",
+				Code:   "asd",
 				Email:  "e@as.co",
 				Status: m.TmpUserInvitePending,
 			}
@@ -32,7 +33,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able update status", func() {
-				cmd2 := m.UpdateTempUserStatusCommand{OrgId: 2256, Status: m.TmpUserRevoked, Id: cmd.Result.Id}
+				cmd2 := m.UpdateTempUserStatusCommand{Code: "asd", Status: m.TmpUserRevoked}
 				err := UpdateTempUserStatus(&cmd2)
 				So(err, ShouldBeNil)
 			})
