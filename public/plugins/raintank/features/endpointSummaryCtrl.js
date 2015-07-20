@@ -120,7 +120,7 @@ function (angular, _) {
       };
       switch(type) {
         case "summary":
-          $location.path("/dashboard/file/statusboard.json").search(search);
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
           break;
         case "ping":
           $location.path("/dashboard/file/rt-endpoint-ping.json").search(search);
@@ -137,7 +137,7 @@ function (angular, _) {
           $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
           break;
         default:
-          $location.path("/dashboard/file/statusboard.json").search(search);
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
           break;
       }
     };
