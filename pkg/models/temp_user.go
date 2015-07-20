@@ -56,8 +56,7 @@ type CreateTempUserCommand struct {
 }
 
 type UpdateTempUserStatusCommand struct {
-	Id     int64
-	OrgId  int64
+	Code   string
 	Status TempUserStatus
 }
 
@@ -68,7 +67,7 @@ type GetTempUsersForOrgQuery struct {
 	Result []*TempUserDTO
 }
 
-type GetTempUsersByCodeQuery struct {
+type GetTempUserByCodeQuery struct {
 	Code string
 
 	Result *TempUser

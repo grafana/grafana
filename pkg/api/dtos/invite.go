@@ -14,3 +14,12 @@ type InviteInfo struct {
 	Name     string `json:"name"`
 	Username string `json:"username"`
 }
+
+type CompleteInviteForm struct {
+	InviteCode      string `json:"inviteCode"`
+	Email           string `json:"email" binding:"Required"`
+	Name            string `json:"name"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
+}

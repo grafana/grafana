@@ -40,7 +40,7 @@ function (angular) {
 
     $scope.revokeInvite = function(invite, evt) {
       evt.stopPropagation();
-      backendSrv.patch('/api/org/invites/' + invite.id + '/revoke').then($scope.get);
+      backendSrv.patch('/api/org/invites/' + invite.code + '/revoke').then($scope.get);
     };
 
     $scope.copyInviteToClipboard = function(evt) {

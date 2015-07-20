@@ -27,7 +27,7 @@
 								Email
 							</li>
 							<li>
-								<input type="email" name="email" class="tight-form-input last" required ng-model='user.email' placeholder="Email" style="width: 253px">
+								<input type="email" name="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="Email" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -38,7 +38,7 @@
 								Name
 							</li>
 							<li>
-								<input type="text" name="name" class="tight-form-input last" ng-model='user.name' placeholder="Name (optional)" style="width: 253px">
+								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -49,7 +49,7 @@
 								Username
 							</li>
 							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='user.username' placeholder="Username" style="width: 253px">
+								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -61,7 +61,7 @@
 								Password
 							</li>
 							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="user.password" id="inputPassword" style="width: 253px" placeholder="password">
+								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -72,7 +72,7 @@
 								Confirm Password
 							</li>
 							<li>
-								<input type="password" name="confirmPassword" class="tight-form-input last" required ng-model="user.confirmPassword" id="confirmPassword" style="width: 253px" placeholder="confirm password">
+								<input type="password" name="confirmPassword" class="tight-form-input last" required ng-model="formModel.confirmPassword" id="confirmPassword" style="width: 253px" placeholder="confirm password">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -80,7 +80,7 @@
 				</div>
 
 				<div style="margin-left: 147px; width: 254px;">
-					<password-strength password="user.password"></password-strength>
+					<password-strength password="formModel.password"></password-strength>
 				</div>
 
 				<div class="login-submit-button-row">

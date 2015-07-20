@@ -1,7 +1,8 @@
 define([
   'angular',
+  'config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -10,20 +11,27 @@ function (angular) {
 
     contextSrv.sidemenu = false;
 
-    $scope.user = {};
+    $scope.formModel = {};
 
     $scope.init = function() {
       backendSrv.get('/api/user/invite/' + $routeParams.code).then(function(invite) {
-        $scope.user.name = invite.name;
-        $scope.user.email = invite.email;
-        $scope.user.username = invite.email;
-        $scope.user.inviteId =  invite.id;
+        $scope.formModel.name = invite.name;
+        $scope.formModel.email = invite.email;
+        $scope.formModel.username = invite.email;
+        $scope.formModel.inviteCode =  $routeParams.code;
 
         $scope.greeting = invite.name || invite.email;
       });
     };
 
     $scope.submit = function() {
+      if (!$scope.inviteForm.$valid) {
+        return;
+      }
+
+      backendSrv.post('/api/user/invite/complete', $scope.formModel).then(function() {
+        window.location.href = config.appSubUrl + '/';
+      });
     };
 
     $scope.init();
