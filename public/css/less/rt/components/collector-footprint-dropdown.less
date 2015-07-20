@@ -14,7 +14,7 @@
   padding: 0;
   display: flex; 
   flex-direction: column; 
-  height: 100%;
+  height: auto;
 }
 
 .variable-options-container.collector-dropdown-container {
@@ -157,14 +157,10 @@
 // ====================================
 
 .collector-dropdown-footer {
-  // position: absolute;
-  // right: 0;
-  // bottom: 0;
-  // left: 0;
   padding: 5px 20px 0 20px;
-  border: 1px solid #333;
-  border-width: 1px 1px 0 0;
-  background: rgba(22, 22, 22, 0.8);
+  border: @raintankPanelBorder;
+  border-width: 1px 0 0;
+  background: @raintankPanelBackground;
   font-size: 0; // fix inline-block white space for child columns
   flex: none;
 }
