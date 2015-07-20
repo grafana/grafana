@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -10,6 +11,15 @@ import (
 func init() {
 	bus.AddHandler("sql", CreateTempUser)
 	bus.AddHandler("sql", GetTempUsersForOrg)
+	bus.AddHandler("sql", UpdateTempUserStatus)
+}
+
+func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "UPDATE temp_user SET status=? WHERE id=? and org_id=?"
+		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Id, cmd.OrgId)
+		return err
+	})
 }
 
 func CreateTempUser(cmd *m.CreateTempUserCommand) error {
@@ -22,13 +32,12 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 			OrgId:           cmd.OrgId,
 			Code:            cmd.Code,
 			Role:            cmd.Role,
-			IsInvite:        cmd.IsInvite,
+			Status:          cmd.Status,
+			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
 			Created:         time.Now(),
 			Updated:         time.Now(),
 		}
-
-		sess.UseBool("is_invite")
 
 		if _, err := sess.Insert(user); err != nil {
 			return err
@@ -51,10 +60,10 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 									u.login						as invited_by
 	                FROM ` + dialect.Quote("temp_user") + ` as tu
 									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
-	                WHERE tu.org_id=? ORDER BY tu.created desc`
+	                WHERE tu.org_id=? AND tu.status =? ORDER BY tu.created desc`
 
 	query.Result = make([]*m.TempUserDTO, 0)
-	sess := x.Sql(rawSql, query.OrgId)
+	sess := x.Sql(rawSql, query.OrgId, string(query.Status))
 	err := sess.Find(&query.Result)
 	return err
 }

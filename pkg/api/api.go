@@ -94,6 +94,7 @@ func Register(r *macaron.Macaron) {
 			// invites
 			r.Get("/invites", wrap(GetPendingOrgInvites))
 			r.Post("/invites", bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
+			r.Patch("/invites/:id/revoke", wrap(RevokeInvite))
 		}, regOrgAdmin)
 
 		// create new org

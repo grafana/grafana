@@ -13,10 +13,11 @@ func addTempUserMigrations(mg *Migrator) {
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "role", Type: DB_NVarchar, Length: 20, Nullable: true},
 			{Name: "code", Type: DB_NVarchar, Length: 255},
-			{Name: "is_invite", Type: DB_Bool},
+			{Name: "status", Type: DB_Varchar, Length: 20},
 			{Name: "invited_by_user_id", Type: DB_BigInt, Nullable: true},
 			{Name: "email_sent", Type: DB_Bool},
 			{Name: "email_sent_on", Type: DB_DateTime, Nullable: true},
+			{Name: "remote_addr", Type: DB_Varchar, Nullable: true},
 			{Name: "created", Type: DB_DateTime},
 			{Name: "updated", Type: DB_DateTime},
 		},
@@ -24,11 +25,14 @@ func addTempUserMigrations(mg *Migrator) {
 			{Cols: []string{"email"}, Type: IndexType},
 			{Cols: []string{"org_id"}, Type: IndexType},
 			{Cols: []string{"code"}, Type: IndexType},
+			{Cols: []string{"status"}, Type: IndexType},
 		},
 	}
 
-	// create table
-	mg.AddMigration("create temp user table v1-3", NewAddTableMigration(tempUserV1))
+	// addDropAllIndicesMigrations(mg, "v7", tempUserV1)
+	// mg.AddMigration("Drop old table tempUser v7", NewDropTableMigration("temp_user"))
 
-	addTableIndicesMigrations(mg, "v1-3", tempUserV1)
+	// create table
+	mg.AddMigration("create temp user table v1-7", NewAddTableMigration(tempUserV1))
+	addTableIndicesMigrations(mg, "v1-7", tempUserV1)
 }
