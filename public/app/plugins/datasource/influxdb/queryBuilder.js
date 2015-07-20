@@ -112,7 +112,6 @@ function (_) {
       query += ' fill(' + target.fill + ')';
     }
 
-    query += " ORDER BY asc";
     target.query = query;
 
     return query;
