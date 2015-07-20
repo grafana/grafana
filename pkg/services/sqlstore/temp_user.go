@@ -54,6 +54,7 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 	                tu.email          as email,
 									tu.name           as name,
 									tu.role           as role,
+									tu.code           as code,
 									tu.email_sent     as email_sent,
 									tu.email_sent_on  as email_sent_on,
 									tu.created				as created,
