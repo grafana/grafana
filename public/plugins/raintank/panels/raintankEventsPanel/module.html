@@ -37,11 +37,14 @@
                     <i class="fa-fw icon-rt-event-error critical table-row-icon" ng-show="event.severity == 'ERROR'"></i>
                 </li>
                 <li class="rt-event-time rt-table-item">
-                    {{event.timestamp | date:'medium'}}
+                    {{event.timestamp | date:'MMM d, h:mm:ss a'}}
                 </li>
                 <li class="rt-event-endpoint rt-table-item">
-                    <span class="emphasis">{{event.endpoint}}</span> from <span class="emphasis">{{event.collector}}</span>
+                    <span class="emphasis">{{event.endpoint}}</span>
                 </li>
+                <li class="rt-event-endpoint rt-table-item">
+                    from <span class="emphasis">{{event.collector}}</span>
+                </li>                
                 <li class="rt-event-type rt-table-item">
                     <span class="emphasis">{{event.monitor_type}}</span> 
                     <p class="rt-event-message">{{event.severity}}: {{event.message}}</p>
