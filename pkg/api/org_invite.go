@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -43,6 +45,9 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		// user exists, add org role
 		createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: userQuery.Result.Id, Role: inviteDto.Role}
 		if err := bus.Dispatch(&createOrgUserCmd); err != nil {
+			if err == m.ErrOrgUserAlreadyAdded {
+				return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.Email), err)
+			}
 			return ApiError(500, "Error while trying to create org user", err)
 		} else {
 			return ApiSuccess("Existing Grafana user added to org " + c.OrgName)
@@ -80,9 +85,10 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		if err := bus.Dispatch(&emailCmd); err != nil {
 			return ApiError(500, "Failed to send email invite", err)
 		}
+		return ApiSuccess(fmt.Sprintf("Sent invite to %s", inviteDto.Email))
 	}
 
-	return ApiSuccess("ok, done!")
+	return ApiSuccess(fmt.Sprintf("Created invite for %s", inviteDto.Email))
 }
 
 func RevokeInvite(c *middleware.Context) Response {

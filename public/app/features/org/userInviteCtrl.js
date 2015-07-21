@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('UserInviteCtrl', function($scope, backendSrv, $q) {
+  module.controller('UserInviteCtrl', function($scope, backendSrv) {
 
     $scope.invites = [
       {name: '', email: '', role: 'Editor'},
@@ -26,17 +26,23 @@ function (angular, _) {
 
     $scope.sendInvites = function() {
       if (!$scope.inviteForm.$valid) { return; }
+      $scope.sendSingleInvite(0);
+    };
 
-      var promises = _.map($scope.invites, function(invite) {
-        invite.skipEmails = $scope.options.skipEmails;
-        return backendSrv.post('/api/org/invites', invite);
+    $scope.sendSingleInvite = function(index) {
+      var invite = $scope.invites[index];
+      invite.skipEmails = $scope.options.skipEmails;
+
+      return backendSrv.post('/api/org/invites', invite).finally(function() {
+        index += 1;
+
+        if (index === $scope.invites.length) {
+          $scope.invitesSent();
+          $scope.dismiss();
+        } else {
+          $scope.sendSingleInvite(index);
+        }
       });
-
-      $q.all(promises).then(function() {
-        $scope.invitesSent();
-      });
-
-      $scope.dismiss();
     };
   });
 });
