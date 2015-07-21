@@ -14,7 +14,7 @@
   padding: 0;
   display: flex; 
   flex-direction: column; 
-  height: 100%;
+  height: auto;
 }
 
 .variable-options-container.collector-dropdown-container {
@@ -91,7 +91,6 @@
 .collector-dropdown-location {
   display: block;
   font-size: 14px;
-  color: #bbbfc2;
 
   &:before {
     display: inline-block;
@@ -125,31 +124,31 @@
 
 
 
-// Counter
-// ====================================
+// // Counter (Commenting this out before outright deleting it - MST)
+// // ====================================
 
-.collector-dropdown-counter {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 3px 8px 3px 3px;
-  background: #333;
-  font-size: 14px;
-  line-height: normal;
-}
+// .collector-dropdown-counter {
+//   display: inline-block;
+//   margin-bottom: 10px;
+//   padding: 3px 8px 3px 3px;
+//   background: #333;
+//   font-size: 14px;
+//   line-height: normal;
+// }
 
-.collector-dropdown-count {
-  display: block;
+// .collector-dropdown-count {
+//   display: block;
 
-  &:before {
-    display: inline-block;
-    width: 19px;
-    height: 19px;
-    margin-right: 5px;
-    background: url('../img/rt-checkbox_white.png') 0 0 no-repeat;
-    vertical-align: top;
-    content: '';
-  }
-}
+//   &:before {
+//     display: inline-block;
+//     width: 19px;
+//     height: 19px;
+//     margin-right: 5px;
+//     background: url('../img/rt-checkbox_white.png') 0 0 no-repeat;
+//     vertical-align: top;
+//     content: '';
+//   }
+// }
 
 
 
@@ -157,14 +156,10 @@
 // ====================================
 
 .collector-dropdown-footer {
-  // position: absolute;
-  // right: 0;
-  // bottom: 0;
-  // left: 0;
   padding: 5px 20px 0 20px;
-  border: 1px solid #333;
-  border-width: 1px 1px 0 0;
-  background: rgba(22, 22, 22, 0.8);
+  border: @raintankPanelBorder;
+  border-width: 1px 0 0;
+  background: @raintankPanelBackground;
   font-size: 0; // fix inline-block white space for child columns
   flex: none;
 }
