@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/setting"
 	"time"
@@ -15,6 +16,13 @@ const (
 	QUOTA_ENDPOINT   QuotaTarget = "endpoint"
 	QUOTA_COLLECTOR  QuotaTarget = "collector"
 )
+
+var ErrInvalidQuotaTarget = errors.New("Invalid quota target")
+
+func (q QuotaTarget) IsValid() bool {
+	_, ok := DefaultQuotas[q]
+	return ok
+}
 
 // defaults are set from settings package.
 var DefaultQuotas map[QuotaTarget]int64
@@ -64,6 +72,9 @@ type UpdateQuotaCmd struct {
 }
 
 func QuotaReached(org_id int64, target QuotaTarget) (bool, error) {
+	if !target.IsValid() {
+		return true, ErrInvalidQuotaTarget
+	}
 	query := GetQuotaByTargetQuery{OrgId: org_id, Target: target}
 	if err := bus.Dispatch(&query); err != nil {
 		return true, err
