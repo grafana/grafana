@@ -101,6 +101,10 @@ function (angular, _) {
       $location.path("/dashboard/file/rt-collector-summary.json").search({"var-collector": collector.slug, "var-endpoint": "All"});
     };
 
+    $scope.gotoEventDashboard = function(collector) {
+      $location.path("/dashboard/file/rt-events.json").search({"var-collector": collector.slug, "var-endpoint": "All"});
+    };
+
     $scope.getEventsDashboardLink = function() {
       var path = "/dashboard-solo/file/rt-events.json";
       var qstring = "?panelId=1&fullscreen&from=now-30d&to=now&var-collector="+$scope.collector.slug;
