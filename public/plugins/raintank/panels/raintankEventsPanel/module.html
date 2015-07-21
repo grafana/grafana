@@ -1,52 +1,55 @@
-<grafana-panel>
+<!-- <grafana-panel>
 	<div class="row">
         <div panel-scroll>
             <table class="table">
                 <tbody>
                     <div ng-repeat="event in events | orderBy:'timestamp':true" class="freqMsg font-monospace table-flex-container">
-                            <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'OK'">
-                                <i class="fa-fw icon-rt-event online table-row-icon"></i>
+                        <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'OK'">
+                            <i class="fa-fw icon-rt-event online table-row-icon"></i>
+                        </div>
+                        <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'ERROR'">
+                            <i class="fa-fw icon-rt-event-error critical table-row-icon"></i>
+                        </div>
+                        <div class="table-flex-item">
+                            <div style="margin-right: 15px; min-width: 185px;">
+                                 {{event.timestamp | date:'medium'}}
                             </div>
-                            <div style="margin: 0 25px; display: inline;" ng-show="event.severity == 'ERROR'">
-                                <i class="fa-fw icon-rt-event-error critical table-row-icon"></i>
+                            <div style="margin-right: 15px;">
+                                <span class="emphasis">{{event.endpoint}}</span> from <span class="emphasis">{{event.collector}}</span>
                             </div>
-                            <div  class="table-flex-item">
-                                <div style="margin-right: 15px; min-width: 185px;">
-                                     {{event.timestamp | date:'medium'}}
-                                </div>
-                                <div style="margin-right: 15px;">
-                                    <span class="emphasis">{{event.endpoint}}</span> from <span class="emphasis">{{event.collector}}</span>
-                                </div>
-                                <div>
-                                    <span class="emphasis">{{event.monitor_type}}</span> {{event.severity}}: {{event.message}}
-                                </div>
+                            <div>
+                                <span class="emphasis">{{event.monitor_type}}</span> {{event.severity}}: {{event.message}}
                             </div>
+                        </div>
                     </div>
                 </tbody>
             </table>
         </div>
     </div>
-</grafana-panel>
+</grafana-panel> -->
 
-
-
-<!--  
 <grafana-panel>
-    <div class="row">
-        <div panel-scroll>
-            <table class="table">
-                <tbody>
-                    <tr ng-repeat="event in events | orderBy:'timestamp':true">
-                        <td class="freqMsg">{{event.severity}}</td>
-                        <td class="freqMsg">{{event.timestamp | date:'medium'}}</td>
-                        <td class="freqMsg emphasis">{{event.collector}}</td>
-                        <td class="freqMsg emphasis">{{event.endpoint}}</td>
-                        <td class="freqMsg">{{event.message}}</td>
-                        <td class="freqMsg emphasis">{{event.monitor_type}}</td>
-                    </tr>
-                </tbody>
-            </table>
+    <div panel-scroll>
+        <div ng-repeat="event in events | orderBy:'timestamp':true" class="freqMsg font-monospace">
+            <ul class="rt-event-table rt-table">
+                <li class="rt-event-severity rt-table-item">
+                    <i class="fa-fw icon-rt-event online table-row-icon" ng-show="event.severity == 'OK'"></i>
+                    <i class="fa-fw icon-rt-event-error critical table-row-icon" ng-show="event.severity == 'ERROR'"></i>
+                </li>
+                <li class="rt-event-time rt-table-item">
+                    {{event.timestamp | date:'MMM d, h:mm:ss a'}}
+                </li>
+                <li class="rt-event-endpoint rt-table-item">
+                    <span class="emphasis">{{event.endpoint}}</span>
+                </li>
+                <li class="rt-event-endpoint rt-table-item">
+                    from <span class="emphasis">{{event.collector}}</span>
+                </li>                
+                <li class="rt-event-type rt-table-item">
+                    <span class="emphasis">{{event.monitor_type}}</span> 
+                    <p class="rt-event-message">{{event.severity}}: {{event.message}}</p>
+                </li>
+            </ul>
         </div>
     </div>
 </grafana-panel>
- -->
