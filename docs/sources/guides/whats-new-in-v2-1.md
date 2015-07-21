@@ -9,7 +9,6 @@ page_keywords: grafana, new, changes, features, documentation
 ##More Dynamic Dashboards
 The Templating system is one of the most powerful and well-used features of Grafana. The 2.1 release brings numerous improvements that make Dashboards more dynamic than ever before.
 
-
 ### Multi-Value Template Select
 Multi-Value Select allows for the selection of multiple template variables.
 These variables can be used in any Panel to make them more dynamic, and automatically show only the desired data.
@@ -39,8 +38,10 @@ Grafana can now index Dashboards saved locally as JSON from a given directory.
 - - -
 
 ## Improved authentication engine
+New authentication methods add numerous options to manage users, roles and organizations. Grafana 2.1 also includes a "Read-only Editor" role which disables the query editor for that user.
 
 ### LDAP support
+This highly requested feature now allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP group memberships and Grafana Organization user roles.
 
 ### Basic Auth support
 You can now authenticate against the Grafana API utilizing a simple username and password with basic HTTP authentication.
@@ -55,13 +56,13 @@ You can now authenticate utilizing a header (eg. X-Authenticated-User, or X-WEBA
 
 
 ### New “Read-only Editor” User Role
-There is a new User role available in this version of Grafana: “Read-only Editor”. This role disables the query editor for the user and puts him in a read-only sandbox of sorts.
-
-> ***Note:*** Even with this role assigned, Read-only Editors still have access to ALL metrics from that Datasource. This is not a way to achieve a true multitenant segregated environment with Grafana.
+There is a new User role available in this version of Grafana: “Read-only Editor”. This role behaves just like the Viewer role does in Grafana 2.0.
+That is you can edit graphs and queries but no save dashboards. The Viewer role has been modified in Grafana 2.1 so that users assigned this role
+can no longer edit panels.
 
 - - -
 
-##Improved data source support
+## Improved data source support
 
 ### Improved Data Sources
 We continue to make progress on fully supporting InfluxDB 0.9, but it has proven to be a bit of a moving target. This Grafana release brings a much improved query editor for InfluxDB 0.9
@@ -84,7 +85,7 @@ Experimental support for the KairosDB is now shipping in Grafana. Thank you to <
 ## Panel Improvements
 
 ### Graph Panel
-Define series color using regex rule    
+Define series color using regex rule
 ![Define series color using regex rule  ](/img/v2/regex_color.gif "Define series color using regex rule  ")
 
 New series style override, negative-y transform and stack groups
