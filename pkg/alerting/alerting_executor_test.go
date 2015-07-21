@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"bosun.org/graphite"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/hashicorp/golang-lru"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -42,7 +41,6 @@ func TestExecutor(t *testing.T) {
 		}
 		jobAt := func(ts int64) *Job {
 			return &Job{
-				State: m.EvalResultUnknown,
 				Definition: CheckDef{
 					CritExpr: `graphite("foo", "2m", "", "")`,
 					WarnExpr: "0",

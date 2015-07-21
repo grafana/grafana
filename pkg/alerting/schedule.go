@@ -26,7 +26,6 @@ type Job struct {
 	Notifications   m.MonitorNotificationSetting
 	Freq            int64
 	Offset          int64 // offset on top of "even" minute/10s/.. intervals
-	State           m.CheckEvalResult
 	Definition      CheckDef
 	GeneratedAt     time.Time
 	LastPointTs     time.Time
@@ -152,7 +151,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		OrgId:           monitor.OrgId,
 		Freq:            monitor.Frequency,
 		Offset:          monitor.Offset,
-		State:           monitor.State,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
