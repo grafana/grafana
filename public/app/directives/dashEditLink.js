@@ -38,19 +38,7 @@ function (angular, $) {
           var editorScope;
           var lastEditor;
 
-          function hideScrollbars(value) {
-            if (value) {
-              window.scrollTo(0,0);
-              document.documentElement.style.overflow = 'hidden';  // firefox, chrome
-              document.body.scroll = "no"; // ie only
-            } else {
-              document.documentElement.style.overflow = 'auto';
-              document.body.scroll = "yes";
-            }
-          }
-
           function hideEditorPane() {
-            hideScrollbars(false);
             if (editorScope) { editorScope.dismiss(); }
           }
 
@@ -77,7 +65,6 @@ function (angular, $) {
               elem.empty();
               lastEditor = null;
               editorScope = null;
-              hideScrollbars(false);
 
               if (editview) {
                 var urlParams = $location.search();
@@ -87,9 +74,6 @@ function (angular, $) {
                 }
               }
             };
-
-            // hide page scrollbars while edit pane is visible
-            hideScrollbars(true);
 
             var src = "'" + payload.src + "'";
             var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
