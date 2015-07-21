@@ -252,3 +252,17 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 	ctx.JSON(status, resp)
 }
+
+func LimitQuota(target m.QuotaTarget) macaron.Handler {
+	return func(c *Context) {
+		limitReached, err := m.QuotaReached(c.OrgId, target)
+		if err != nil {
+			c.JsonApiErr(500, "failed to get quota", err)
+			return
+		}
+		if limitReached {
+			c.JsonApiErr(403, "Quota reached", nil)
+			return
+		}
+	}
+}
