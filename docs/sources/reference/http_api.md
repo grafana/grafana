@@ -22,7 +22,7 @@ standard basic auth.
 
 curl example:
 ```
-❯curl http://admin:admin@localhost:3000/api/org
+?curl http://admin:admin@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
 ```
 
@@ -158,10 +158,88 @@ The above will delete the dashboard with the specified slug. The slug is the url
 
 `GET /api/dashboards/home`
 
+Will return the home dashboard.
+
+**Example Request**:
+
+        GET /api/dashboards/home HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+		{
+		"meta":	{
+			"isHome":true,
+			"canSave":false,
+			"canEdit":false,
+			"canStar":false,
+			"slug":"",
+			"expires":"0001-01-01T00:00:00Z",
+			"created":"0001-01-01T00:00:00Z"
+		},
+		"dashboard": {
+			"editable":false,
+			"hideControls":true,
+			"nav":[
+			{
+				"enable":false,
+			"type":"timepicker"
+			}
+			],
+			"rows": [
+				{
+					
+				}
+			],
+			"style":"dark",
+			"tags":[],
+			"templating":{
+				"list":[
+				]
+			},
+			"time":{
+			},
+			"timezone":"browser",
+			"title":"Home",
+			"version":5
+	        }
+        }
+
 ### Tags for Dashboard
+
 
 `GET /api/dashboards/tags`
 
+Get all tabs of dashboards
+
+**Example Request**:
+
+        GET /api/dashboards/home HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+		[
+			{
+				"term":"tag1",
+				"count":1
+			},
+			{
+				"term":"tag2",
+				"count":4
+			}
+		]
+		
 ### Dashboard from JSON file
 
 `GET /file/:file`
@@ -184,34 +262,164 @@ Status Codes:
         Content-Type: application/json
         Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+		
+		[
+			{
+				"id":1,
+				"title":"Production Overview",
+				"uri":"db/production-overview",
+				"type":"dash-db",
+				"tags":[],
+				"isStarred":false
+			}
+		]
+		
 ## Data sources
 
 ### Get all datasources
 
 `GET /api/datasources`
 
+**Example Request**:
+
+        GET /api/datasources HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json		
+
+		[
+			{
+				"id":1,
+				"orgId":1,
+				"name":"datasource_elastic",
+				"type":"elasticsearch",
+				"access":"proxy",
+				"url":"http://mydatasource.com",
+				"password":"",
+				"user":"",
+				"database":"grafana-dash",
+				"basicAuth":false,
+				"basicAuthUser":"",
+				"basicAuthPassword":"",
+				"isDefault":false,
+				"jsonData":null
+			}
+		]
+
 ### Get a single data sources by Id
 
 `GET /api/datasources/:datasourceId`
 
+**Example Request**:
+
+        GET /api/datasources/1 HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+
+		{
+			"id":1,
+			"orgId":1,
+			"name":"test_datasource",
+			"type":"graphite",
+			"access":"proxy",
+			"url":"http://mydatasource.com",
+			"password":"",
+			"user":"",
+			"database":"",
+			"basicAuth":false,
+			"basicAuthUser":"",
+			"basicAuthPassword":"",
+			"isDefault":false,
+			"jsonData":null
+		}		
+
 ### Create data source
 
 `POST /api/datasources`
+
+**Example Request**:
+
+		POST /api/datasources HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+		{
+			"name":"test_datasource",
+			"type":"graphite",
+			"url":"http://mydatasource.com",
+			"access":"proxy",
+			"basicAuth":false
+		}
+
 
 **Example Response**:
 
         HTTP/1.1 200
         Content-Type: application/json
 
-        {"message":"Datasource added"}
+        {"id":1,"message":"Datasource added"}
 
 ### Update an existing data source
 
 `PUT /api/datasources/:datasourceId`
 
+**Example Request**:
+
+        PUT /api/datasources/1 HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+		
+		{
+			"id":1,
+			"orgId":1,
+			"name":"test_datasource",
+			"type":"graphite",
+			"access":"proxy",
+			"url":"http://mydatasource.com",
+			"password":"",
+			"user":"",
+			"database":"",
+			"basicAuth":true,
+			"basicAuthUser":"basicuser",
+			"basicAuthPassword":"basicuser",
+			"isDefault":false,
+			"jsonData":null
+		}
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+
+		{"message":"Datasource updated"}
+
 ### Delete an existing data source
 
 `DELETE /api/datasources/:datasourceId`
+
+**Example Request**:
+
+        DELETE /api/datasources/1 HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
@@ -224,6 +432,31 @@ Status Codes:
 
 `GET /api/datasources/plugins`
 
+**Example Request**:
+
+        GET /api/datasources/plugins HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+		
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+
+		{
+			"grafana":{
+				"metrics":true,"module":"plugins/datasource/grafana/datasource",
+				"name":"Grafana (for testing)",
+				"partials":{
+					"query":"app/plugins/datasource/grafana/partials/query.editor.html"
+				},
+				"pluginType":"datasource",
+				"serviceName":"GrafanaDatasource",
+				"type":"grafana"
+			}
+		}
+		
 ## Data source proxy calls
 
 `GET /api/datasources/proxy/:datasourceId/*`
@@ -236,9 +469,49 @@ Proxies all calls to the actual datasource.
 
 `GET /api/org`
 
+**Example Request**:
+
+        GET /api/org HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+
+		{
+			"id":1,
+			"name":"Main Org."
+		}
+		
+		
 ### Get all users within the actual organisation
 
 `GET /api/org/users`
+
+**Example Request**:
+
+        GET /api/org/users HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+
+		[
+			{
+			"orgId":1,
+			"userId":1,
+			"email":"admin@mygraf.com",
+			"login":"admin",
+			"role":"Admin"
+			}
+		]
 
 ### Add a new user to the actual organisation
 
@@ -246,17 +519,68 @@ Proxies all calls to the actual datasource.
 
 Adds a global user to the actual organisation.
 
+**Example Request**:
+
+        POST /api/org/users HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+		{
+			"role": "Admin", 
+			"loginOrEmail": "admin"
+		}
+		
+		
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+		
+		{"message":"User added to organization"}
+		
 ### Updates the given user
 
 `PATCH /api/org/users/:userId`
 
+**Example Request**:
+
+        PATCH /api/org/users/1 HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+		{
+			"role": "Viewer", 
+		}
+		
+		
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+		
+		{"message":"Organization user updated"}
+
+		
 ### Delete user in actual organisation
 
 `DELETE /api/org/users/:userId`
 
-### Get all Users
+**Example Request**:
 
-`GET /api/org/users`
+        DELETE /api/org/users/1 HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+		HTTP/1.1 200
+        Content-Type: application/json
+		
+		{"message":"User removed from organization"}
+
 
 ## Organisations
 
