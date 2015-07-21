@@ -322,6 +322,19 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all regex values and values require escaping', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
+        scenario.queryResult = [{text: '/root'}, {text: '/var'}, { text: '/lib'}];
+      });
+
+      it('should regex escape options', function() {
+        expect(scenario.variable.options[0].value).to.be('(\\/lib|\\/root|\\/var)');
+        expect(scenario.variable.options[1].value).to.be('\\/lib');
+        expect(scenario.variable.options[1].text).to.be('/lib');
+      });
+    });
+
   });
 
 });

@@ -223,8 +223,23 @@ function (angular, _, kbn) {
       }
 
       return _.map(_.keys(options).sort(), function(key) {
-        return { text: key, value: key };
+        var option = { text: key, value: key };
+
+        // check if values need to be regex escaped
+        if (self.shouldRegexEscape(variable)) {
+          option.value = self.regexEscape(option.value);
+        }
+
+        return option;
       });
+    };
+
+    this.shouldRegexEscape = function(variable) {
+      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
+    };
+
+    this.regexEscape = function(value) {
+      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
     };
 
     this.addAllOption = function(variable) {
@@ -237,7 +252,9 @@ function (angular, _, kbn) {
         allValue = '.*';
         break;
       case 'regex values':
-        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+        allValue = '(' + _.map(variable.options, function(option) {
+          return self.regexEscape(option.text);
+        }).join('|') + ')';
         break;
       default:
         allValue = '{';
