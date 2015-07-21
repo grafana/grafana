@@ -19,6 +19,11 @@ func GetOrgQuotas(c *middleware.Context) Response {
 func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateQuotaCmd) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = m.QuotaTarget(c.Params(":target"))
+
+	if !cmd.Target.IsValid() {
+		return ApiError(404, "Invalid quota target", nil)
+	}
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to update org quotas", err)
 	}

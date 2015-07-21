@@ -86,5 +86,29 @@ func GetQuotas(query *m.GetQuotasQuery) error {
 }
 
 func UpdateQuota(cmd *m.UpdateQuotaCmd) error {
-	return nil
+	return inTransaction2(func(sess *session) error {
+		//Check if quota is already defined in the DB
+		quota := m.Quota{
+			Target: cmd.Target,
+			OrgId:  cmd.OrgId,
+		}
+		has, err := sess.Get(quota)
+		if err != nil {
+			return err
+		}
+		quota.Limit = cmd.Limit
+		if has == false {
+			//No quota in the DB for this target, so create a new one.
+			if _, err := sess.Insert(&quota); err != nil {
+				return err
+			}
+		} else {
+			//update existing quota entry in the DB.
+			if _, err := sess.Id(quota.Id).Update(&quota); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
