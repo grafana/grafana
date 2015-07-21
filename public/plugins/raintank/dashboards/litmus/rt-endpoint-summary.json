@@ -651,7 +651,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode((sortByName(litmus.$endpoint.$collector.dns.time), 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.dns.time), 2)"
             }
           ],
           "timeFrom": null,
