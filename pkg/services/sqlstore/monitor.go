@@ -2,13 +2,14 @@ package sqlstore
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -857,12 +858,15 @@ func getCollectorIdsFromTags(orgId int64, tags []string, sess *session) ([]int64
 func UpdateMonitorState(cmd *m.UpdateMonitorStateCommand) error {
 	return inTransaction2(func(sess *session) error {
 		sess.Table("monitor")
-		rawSql := "UPDATE monitor SET state=?, state_change=? WHERE id=? AND state != ?"
+		rawSql := "UPDATE monitor SET state=?, state_change=? WHERE id=? AND state != ? AND state_change < ?"
 
-		if _, err := sess.Exec(rawSql, cmd.State, cmd.Updated, cmd.Id, cmd.State); err != nil {
+		res, err := sess.Exec(rawSql, cmd.State, cmd.Updated, cmd.Id, cmd.State, cmd.Updated)
+		if err != nil {
 			return err
 		}
 
+		aff, _ := res.RowsAffected()
+		cmd.Affected = int(aff)
 		return nil
 	})
 }

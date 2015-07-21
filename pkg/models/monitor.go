@@ -122,7 +122,6 @@ type MonitorForAlertDTO struct {
 	Offset          int64
 	Frequency       int64
 	Enabled         bool
-	State           CheckEvalResult
 	StateChange     time.Time
 	Settings        []*MonitorSettingDTO
 	HealthSettings  *MonitorHealthSettingDTO
@@ -202,9 +201,10 @@ type DeleteMonitorCommand struct {
 }
 
 type UpdateMonitorStateCommand struct {
-	Id      int64
-	State   CheckEvalResult
-	Updated time.Time
+	Id       int64
+	State    CheckEvalResult
+	Updated  time.Time
+	Affected int
 }
 
 // ---------------------

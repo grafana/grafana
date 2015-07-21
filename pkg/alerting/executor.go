@@ -150,22 +150,22 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 
 	durationExec := time.Since(preExec)
-	if job.State != res {
-		//monitor state has changed.
-		updateMonitorStateCmd := m.UpdateMonitorStateCommand{
-			Id:      job.MonitorId,
-			State:   res,
-			Updated: job.LastPointTs,
+
+	updateMonitorStateCmd := m.UpdateMonitorStateCommand{
+		Id:      job.MonitorId,
+		State:   res,
+		Updated: job.LastPointTs,
+	}
+	if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
+		//check if we failed due to deadlock.
+		if err.Error() == "Error 1213: Deadlock found when trying to get lock; try restarting transaction" {
+			err = bus.Dispatch(&updateMonitorStateCmd)
 		}
-		if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
-			//check if we failed due to deadlock.
-			if err.Error() == "Error 1213: Deadlock found when trying to get lock; try restarting transaction" {
-				err = bus.Dispatch(&updateMonitorStateCmd)
-			}
-		}
-		if err != nil {
-			return fmt.Errorf("non-fatal: failed to update monitor state: %q", err)
-		}
+	}
+	if err != nil {
+		return fmt.Errorf("non-fatal: failed to update monitor state: %q", err)
+	}
+	if updateMonitorStateCmd.Affected > 0 {
 		//emit a state change event.
 		if job.Notifications.Enabled {
 			emails := strings.Split(job.Notifications.Addresses, ",")
