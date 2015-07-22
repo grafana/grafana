@@ -231,7 +231,7 @@ func addMonitorMigration(mg *Migrator) {
 
 	// add state_check field
 	migration := NewAddColumnMigration(monitorV4, &Column{
-		Name: "state_check", Type: DB_DateTime, Nullable: false,
+		Name: "state_check", Type: DB_DateTime, Nullable: true,
 	})
 	mg.AddMigration("monitor add state_check v1", migration)
 
