@@ -45,6 +45,20 @@ type MonitorWithCollectorDTO struct {
 	Created         time.Time
 }
 
+// scrutinizeState fixes the state.  We can't just trust what the database says, we have to verify that the value actually has been updated recently.
+// this could later be made more precise by taking into account the current scheduler offset, the range it is assumed to be in (say 0 to 50 seconds)
+// and the offset of the monitor.  But for now, we simply allow 1 run and an additional minute of delay.
+func scrutinizeState(state m.CheckEvalResult, stateCheck time.Time, frequency int64) m.CheckEvalResult {
+	if state == m.EvalResultUnknown {
+		return state
+	}
+	maxDelay := time.Duration(frequency+60) * time.Second
+	if stateCheck.Before(time.Now().Add(-maxDelay)) {
+		return m.EvalResultUnknown
+	}
+	return state
+}
+
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)
@@ -132,7 +146,7 @@ WHERE monitor.id=?
 		CollectorIds:    monitorCollectorIds,
 		CollectorTags:   monitorCollectorTags,
 		Collectors:      mergedCollectors,
-		State:           result.State,
+		State:           scrutinizeState(result.State, result.StateCheck, result.Frequency),
 		StateChange:     result.StateChange,
 		StateCheck:      result.StateCheck,
 		Settings:        result.Settings,
@@ -299,7 +313,7 @@ FROM monitor
 			CollectorIds:    monitorCollectorIds,
 			CollectorTags:   monitorCollectorTags,
 			Collectors:      mergedCollectors,
-			State:           row.State,
+			State:           scrutinizeState(row.State, row.StateCheck, row.Frequency),
 			StateChange:     row.StateChange,
 			StateCheck:      row.StateCheck,
 			Settings:        row.Settings,
