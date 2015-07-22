@@ -29,7 +29,6 @@ import (
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
 var contextCache *ContextCache
-var instanceId string
 var metricsRecvd met.Count
 
 func StoreMetric(m *m.MetricDefinition) {
@@ -320,7 +319,7 @@ func (c *CollectorContext) Save() error {
 		CollectorId: c.Collector.Id,
 		SocketId:    c.Socket.Id(),
 		OrgId:       c.OrgId,
-		InstanceId:  instanceId,
+		InstanceId:  setting.InstanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		log.Info("could not write collector_sesison to DB.", err)
@@ -489,7 +488,7 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	eventId := reflect.ValueOf(event).Elem().FieldByName("Id").Int()
 	log.Info(fmt.Sprintf("emitting %s event for MonitorId %d totalSessions: %d", eventName, eventId, totalSessions))
 	pos := eventId % totalSessions
-	if q.Result[pos].InstanceId == instanceId {
+	if q.Result[pos].InstanceId == setting.InstanceId {
 		socketId := q.Result[pos].SocketId
 		contextCache.Emit(socketId, eventName, event)
 	}
