@@ -8,7 +8,6 @@
 @gray:                  #bbb;
 @grayDark:              #262626;
 @grayDarker:            #1f1f1f;
-@grayDarkest:           #161616;
 
 @grayLight:             #ADAFAE;
 @grayLighter:           #BBBFC2;
@@ -48,8 +47,7 @@
 // Scaffolding
 // -------------------------
 
-// @bodyBackground:        rgb(22,22,22);
-@bodyBackground:        @grayDarkest;
+@bodyBackground:        rgb(22,22,22);
 @textColor:             @grayLighter;
 
 
@@ -62,13 +60,13 @@
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Open Sans", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
 @baseFontWeight:		400;
-@baseFontFamily:        @sansFontFamily;
+@baseFontFamily:        @rt-sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
 
@@ -286,7 +284,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       #202020;
+@tooltipBackground:       rgb(58,57,57);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        @linkColor;
@@ -339,10 +337,11 @@
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
 
 
-
 // -------------------------
 // RAINTANK VARIABLES
 // -------------------------
+
+@rt-sansFontFamily: "Open Sans", Helvetica, Arial, sans-serif;
 
 // raintank Font Sizes
 // -------------------------

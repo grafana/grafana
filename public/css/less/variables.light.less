@@ -6,11 +6,9 @@
 // Global values
 // --------------------------------------------------
 
-
 // Grays
 // -------------------------
 @black:                 #000;
-@grayDarkest:           #161616;
 @grayDarker:            lighten(#000, 13.5%); // #222
 @grayDark:              lighten(#000, 20%);   // #333
 @gray:                  lighten(#000, 33.5%); // #555
@@ -34,9 +32,9 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: 	@grayLighter;
-@grafanaPanelBorder: 		solid 1px #ddd;
-@grafanaTriggerBorder:		solid 1px @grayLight;
+@grafanaPanelBackground: 	@white;
+@grafanaPanelBorder: 		  solid 1px #ddd;
+@grafanaTriggerBorder:		solid 1px @grayLighter;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -59,7 +57,7 @@
 
 // Scaffolding
 // -------------------------
-@bodyBackground:        #EFEFEF;
+@bodyBackground:        #EAEAEA;
 @textColor:             @gray;
 
 
@@ -67,18 +65,18 @@
 // -------------------------
 @linkColor:             @gray;
 @linkColorDisabled:     lighten(@linkColor,30%);
-@linkColorHover:        darken(@linkColor, 20%);
+@linkColorHover:        @grayDarker;
 
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Open Sans", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
 @baseFontWeight:		400;
-@baseFontFamily:        @sansFontFamily;
+@baseFontFamily:        @rt-sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
 
@@ -354,6 +352,8 @@
 // RAINTANK VARIABLES
 // -------------------------
 
+@rt-sansFontFamily: "Open Sans", Helvetica, Arial, sans-serif;
+
 // raintank Font Sizes
 // -------------------------
 @rt-fontSizeJumbo: 28px;
@@ -426,6 +426,9 @@
 @navbarBackgroundHighlight:       @grayLighter; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
 @navbarBackground:                @grayLighter; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
 
+@raintankPanelBackground: 	@grayLighter;
+@raintankPanelBorder: 		solid 1px #ddd;
+@raintankTriggerBorder:		solid 1px @grayLight;
 
 // raintank Forms
 // -------------------------
