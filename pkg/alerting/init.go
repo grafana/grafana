@@ -94,7 +94,6 @@ func Construct() {
 		return
 	} else {
 		if !setting.EnableScheduler {
-			return
 			log.Fatal(0, "Alerting in standalone mode requires a scheduler (enable_scheduler = true)")
 		}
 		if setting.Executors == 0 {
