@@ -21,13 +21,12 @@ func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
 		Target: query.Target,
 		OrgId:  query.OrgId,
 	}
-	has, err := x.Get(quota)
+	has, err := x.Get(&quota)
 	if err != nil {
 		return err
 	} else if has == false {
 		quota.Limit = m.DefaultQuotas[query.Target]
 	}
-
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(string(query.Target)))
 	resp := make([]*targetCount, 0)
