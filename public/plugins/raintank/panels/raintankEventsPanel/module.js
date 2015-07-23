@@ -38,18 +38,13 @@ function (angular, app, _, kbn, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init(this);
-      $scope.$on('refresh', $scope.render);
-      $scope.render();
-    };
-
-    $scope.render = function() {
-      $scope.range = timeSrv.timeRange();
-      if ($scope.panel.filter) {
-        $scope.refreshData();
-      }
     };
 
     $scope.refreshData = function() {
+      $scope.range = timeSrv.timeRange();
+      if (!$scope.panel.filter) {
+        return;
+      }
       if ($scope.panel.filter.indexOf(":", $scope.panel.filter.length - 1) !== -1) {
         //filter ends with a colon. elasticsearch will send a 500error for this.
         return;
