@@ -219,7 +219,7 @@ function (angular, _, kbn) {
           var segments = seriesName.split('.');
           var target = plotParams[index].alias;
           var details = "";
-          
+
           _.each(result.group_by, function(element) {
             if (element.name === "tag") {
               _.each(element.group, function(value, key) {
