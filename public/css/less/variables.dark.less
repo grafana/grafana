@@ -8,7 +8,6 @@
 @gray:                  #bbb;
 @grayDark:              #262626;
 @grayDarker:            #1f1f1f;
-@grayDarkest:           #161616;
 
 @grayLight:             #ADAFAE;
 @grayLighter:           #BBBFC2;
@@ -48,8 +47,7 @@
 // Scaffolding
 // -------------------------
 
-// @bodyBackground:        rgb(22,22,22);
-@bodyBackground:        @grayDarkest;
+@bodyBackground:        rgb(22,22,22);
 @textColor:             @grayLighter;
 
 
@@ -62,7 +60,7 @@
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Open Sans", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
@@ -286,7 +284,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       #202020;
+@tooltipBackground:       rgb(58,57,57);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        @linkColor;
@@ -337,106 +335,3 @@
 // 768px-979px
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
-
-
-
-// -------------------------
-// RAINTANK VARIABLES
-// -------------------------
-
-// raintank Font Sizes
-// -------------------------
-@rt-fontSizeJumbo: 28px;
-@rt-fontSizeLarger: 24px;
-@rt-fontSizeLarge: 20px;
-@rt-fontSizeMed-1: 16px;
-@rt-fontSizeMed-2: 14px; // Base font.
-@rt-fontSizeSmall: 0.85em; //About 12px
-@rt-fontSizeMini-2: 10px;
-
-// raintank Accent colors
-// -------------------------
-@rt-green:             	 rgb(0,166,81);
-@rt-yellow:              rgb(247,148,29);
-@rt-red:             	 rgb(237,28,36);
-@rt-dark-gray:			 rgb(102,102,102);
-@rt-light-gray:			 rgb(153,153,153);
-@rt-blue:				 rgb(19,178,212);
-
-@online:             	 rgb(0,166,81);
-@warn:              	 rgb(247,148,29);
-@critical:             	 rgb(237,28,36);
-@disabled:             	 @rt-dark-gray;
-@nodata:             	 rgb(102,102,102);
-
-@rt-primary:				@rt-blue;
-
-// raintank Variables
-// -------------------------
-@raintankPanelBackground: 	@grayDarker;
-
-@raintankPanelBorder: 		solid 1px @grayDark;
-@raintankTriggerBorder:		solid 1px #555;
-
-@rt-primary:				@rt-blue;
-@rt-emphasis:				lighten(@textColor, 10%);
-
-// Graphite Target Editor
-@raintankTargetBorder:         @black;
-@raintankTargetBackground:     @grayDark;
-@raintankTargetColor:          #c8c8c8;
-@raintankTargetColorHide:      darken(#c8c8c8, 25%);
-@raintankTargetSegmentBorder:  #050505;
-
-@raintankTargetFuncBackground: #333;
-@raintankTargetFuncHightlight: #444;
-
-@rt-navbarBackground:          @grayDark;
-
-@navbarBackgroundHighlight:       @grayDark; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
-@navbarBackground:                @grayDark; // THIS IS TO OVERWRITE THE GRAFANA NAVBAR GRADIENT
-
-@logo :						@grayLighter;
-@tabBorder: 				@white;
-
-// raintank buttons
-// -------------------------
-
-@primaryCTA: 			@rt-blue;
-@primaryCTAHighlight:   darken(@rt-blue, 10%);
-
-@secondaryCTA: 			@rt-blue;
-@secondaryCTAHighlight: @white;
-
-@tertiaryCTA: 			@rt-light-gray;
-@tertiaryCTAHighlight:  @white;
-
-@miniCTA: 			@gray;
-@miniCTAHighlight:  @white;
-
-
-
-// raintank links
-// -------------------------
-
-
-
-
-// raintank Forms
-// -------------------------
-@inputBackground:               lighten(@grayDark,5%);
-@inputBorder:                   lighten(@grayDark,7%);
-@inputBorderRadius:             @baseBorderRadius;
-@inputDisabledBackground:       #555;
-@formActionsBackground:         transparent;
-@inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-@raintankSelectBackground:		@grayDarker;
-
-// images
-@rt-checkboxImageUrl: '../img/rt-checkbox_white.png';
-@rt-modal-checkboxImageUrl: '../img/rt-checkbox_white.png';
-
-// -------------------------
-// End RAINTANK VARIABLES
-// -------------------------
-

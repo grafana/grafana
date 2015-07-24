@@ -1,0 +1,12 @@
+language: go
+go:
+    - 1.2
+    - 1.3
+    - tip
+install:
+    - go list -f '{{range .Imports}}{{.}} {{end}}' ./... | xargs go get -v
+    - go list -f '{{range .TestImports}}{{.}} {{end}}' ./... | xargs go get -v
+    - go get code.google.com/p/go.tools/cmd/cover
+    - go build -v ./...
+script:
+    - go test -v -cover ./...
