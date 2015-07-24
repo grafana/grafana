@@ -33,7 +33,6 @@ function (angular, app, _, PanelMeta) {
     };
 
     $scope.setCTA = function() {
-      console.log($scope.quotas);
       if ($scope.quotas.endpoint.used === 0) {
         $scope.cta = "addEndpoint";
         return;
