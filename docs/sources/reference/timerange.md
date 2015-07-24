@@ -4,9 +4,9 @@ page_description: Time range user guide
 page_keywords: grafana, time range, guide, documentation
 ---
 
-Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
-
 # Dashboard time picker
+
+Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
 ![](/img/v1/time_range_controls.png)
 
@@ -22,12 +22,12 @@ All of this applies to all Panels in the Dashboard (except those with Panel Time
 
 ## Customize relative time and auto auto-refresh options
 
-It's possible to customize the options displayed for relative time and the auto-refresh options. 
+It's possible to customize the options displayed for relative time and the auto-refresh options.
 
 From Dashboard settings, click the Timepicker tab. From here you can specify the relative and auto refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.  Entries are comma separated and accept a number followed by one of the following units: s (seconds), m (minutes), h (hours), d (days), w (weeks), M (months), y (years).
 
 ![](/img/v1/timepicker_editor.png)
 
-## Panel time override 
+## Panel time override
 
-In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../guides/whats-new-in-v2/) for further information
+In Grafana 2.0, it's now possible for individual Panels to override the Dashboard time picker. Please check out the [whats new in 2.0 guide](../../guides/whats-new-in-v2/) for further information
