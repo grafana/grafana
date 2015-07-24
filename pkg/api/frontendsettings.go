@@ -118,7 +118,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"dependencies": []string{"raintank/all"},
 			"panels": map[string]interface{}{
 				"raintankCallToAction": map[string]string{"path": "../plugins/raintank/panels/raintankCallToAction", "name": "Raintank Call To Action"},
-				"raintankEventsPanel":        map[string]string{"path": "../plugins/raintank/panels/raintankEventsPanel", "name": "Raintank Events"},
+				"raintankEventsPanel":  map[string]string{"path": "../plugins/raintank/panels/raintankEventsPanel", "name": "Raintank Events"},
 			},
 		},
 	}
