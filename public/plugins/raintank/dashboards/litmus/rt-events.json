@@ -26,11 +26,12 @@
           "links": [],
           "size": 50,
           "span": 12,
-          "title": "Events for $endpoint on $collector for $monitor_type (showing $severity)",
+          "title": "",
           "type": "raintankEventsPanel"
         }
       ],
-      "title": "New row"
+      "title": "Events for $endpoint on $collector for $monitor_type (showing $severity)",
+      "showTitle": true
     }
   ],
   "nav": [
