@@ -1,0 +1,196 @@
+// ==========================================================================
+// FORMS
+// ==========================================================================
+
+
+
+// Inputs
+// ==========================================================================
+
+select,
+textarea,
+input[type="text"],
+input[type="password"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="color"] {
+  &.rt-form-input {
+    display: inline-block;
+    height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 2;
+    font-size: @rt-fontSizeLarge;
+    line-height: @baseLineHeight;
+    color: @textColor;
+    border: solid 1px @inputBorder;
+    background-color: @inputBackground;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+.rt-label-override {
+  color: lighten(@textColor, 10%);
+}
+
+.rt-input-styles {
+  label {
+    color: @rt-light-gray;
+  }
+  select, 
+  textarea, 
+  input[type="text"] {
+    display: inline-block;
+    // height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 4;
+    font-size: @rt-fontSizeMed-1;
+    line-height: @baseLineHeight;
+    color: @textColor;
+    border: solid 1px @inputBorder;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+
+  input[type="number"].natural-language-form {
+  font-size: @rt-fontSizeMed-1;
+  width: 30px; 
+  height: auto; 
+  margin: -6px -5px 0 5px;
+}
+
+.rt-textarea-row {
+  width: 450px;
+  min-height: 50px;
+}
+
+.rt-flex-form-block {
+  display: -webkit-flex;
+  display: -moz-box;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-justify-content: flex-start;
+  -mox-justify-content: flex-start;
+  justify-content: flex-start;
+}
+
+.rt-flex-form-field {
+  margin-top: 15px;
+  margin-right: 25px;
+}
+
+.rt-input-long-text {
+  width: 250px;
+}
+
+.rt-input-short-text {
+  width: 50px;
+}
+
+.rt-modal-input-styles {
+  label {
+    color: @grayDark;
+  }
+
+  select, 
+  textarea, 
+  input[type="text"] {
+    display: inline-block;
+    height: 20px;
+    padding: 6px 10px;
+    margin-bottom: @baseLineHeight / 4;
+    font-size: @rt-fontSizeMed-1;
+    line-height: @baseLineHeight;
+    color: @textColor;
+    border: solid 1px @grayDark;
+    .border-radius(2px);
+    vertical-align: middle;
+  }
+}
+
+.rt-text-box-success {
+  margin-bottom: 0;
+  background-image: url(/img/rt-check-2c.svg);
+  background-repeat: no-repeat;
+  background-position: 95% center;
+  background-size: 20px 20px;
+}
+
+.new-endpoint-domain-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+
+
+// Layout
+// ==========================================================================
+
+.rt-form-row {
+  margin: 20px 0;
+  max-width: 450px;
+}
+
+.rt-form-group {
+  display: inline-block;
+}
+
+.rt-form-row-long {
+  min-width: 400px;
+  max-width: 800px;
+  min-width: 450px;
+  margin: 20px 45px 0 0;
+}
+
+
+// Labels
+// ==========================================================================
+
+.editor-option label.rt-modal {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.rt-modal {
+  display: inline-block;
+  height: 19px;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 0 0;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background: url(@rt-checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+
+
+// Checkboxes
+// ==========================================================================
+
+input[type="checkbox"].rt-modal {
+  display: none;
+}
+
+input[type="checkbox"]:checked+label {
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
+}
+
+.checkbox-check-enabled {
+  margin-bottom: 10px;
+}

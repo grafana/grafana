@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/Unknwon/macaron"
+	"github.com/macaron-contrib/toolbox"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/static"
@@ -23,6 +24,7 @@ func newMacaron() *macaron.Macaron {
 
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
+	m.Use(toolbox.Toolboxer(m))
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
@@ -33,6 +35,7 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "css", "css")
 	mapStatic(m, "img", "img")
 	mapStatic(m, "fonts", "fonts")
+	mapStatic(m, "plugins", "plugins")
 	mapStatic(m, "robots.txt", "robots.txxt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{

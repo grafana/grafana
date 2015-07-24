@@ -86,6 +86,19 @@ func DeleteDashboard(c *middleware.Context) {
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
 
+	dash := cmd.GetDashboardModel()
+	if dash.Id == 0 {
+		limitReached, err := m.QuotaReached(cmd.OrgId, m.QUOTA_DASHBOARD)
+		if err != nil {
+			c.JsonApiErr(500, "failed to get quota", err)
+			return
+		}
+		if limitReached {
+			c.JsonApiErr(403, "Quota reached", nil)
+			return
+		}
+	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
@@ -110,7 +123,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 }
 
 func GetHomeDashboard(c *middleware.Context) {
-	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
+	filePath := path.Join(setting.StaticRootPath, "plugins/raintank/dashboards/Litmus-Home.json")
 	file, err := os.Open(filePath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to load home dashboard", err)

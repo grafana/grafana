@@ -1,0 +1,64 @@
+// ==========================================================================
+// COLUMNS
+// ==========================================================================
+
+
+
+// Detail columns
+// ==========================================================================
+
+.detailContainer {
+  min-width: 400px; 
+  max-width: 1020px; 
+  margin: 20px 0;
+}
+
+.detailColumn {
+  width:  50%;
+  float:left;
+  position: relative;
+}
+
+.detailFull {
+  width: 100%;
+  position: relative;
+}
+
+.detailLeft {}
+.detailRight {}
+
+.detail-left-80-20 {
+      width: 80%;
+      padding-bottom: 75px;
+
+    }
+.detail-right-80-20 {
+      width: 20%;
+      display: inline-block;
+    }
+
+.detail-left-60-40 {
+      width: 60%;
+      padding-bottom: 35px;
+
+    }
+.detail-right-60-40 {
+      width: 40%;
+      display: inline-block;
+    }    
+
+@media screen and (max-width: 780px) {
+  .detailColumn {
+    width:  100%;
+    float:none;
+  }
+
+  .detailLeft {
+    padding-right: 0px; 
+    margin-left: 0px;
+  }
+
+  .detailRight {
+    padding-left: 0px;
+  }
+}

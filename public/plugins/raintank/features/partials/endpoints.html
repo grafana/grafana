@@ -1,0 +1,118 @@
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+</topnav>
+<div style="margin: 15px; position: relative; display: block; max-width: 1000px; min-width: 400px;">
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">Endpoints</h1>
+		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span>
+	</div>
+
+	<div ng-if="!pageReady" class="rt-loading-message-container">
+		<div class="rt-loading-message-inside">
+			<img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
+			<p class="freqMsg nodata rt-loading-msg-1">To infinity...and beyond.</p>
+			<p class="freqMsg nodata rt-loading-msg-2">This is taking longer than expected.</p>
+			<p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>
+		</div>
+	</div>
+
+	<div ng-if="pageReady">
+		<div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
+			<div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
+				<i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
+				<p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="endpoints/new">Add an endpoint now.</a></p>
+			</div>
+			<div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
+				<label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>
+				<input id="_1" type="checkbox">
+				<div class="rt-box rt-box-no-margin" style="margin-top:-10px; padding:20px">
+					<p class="rt-helper-blurb">In Litmus, an endpoint is anything you want to monitor.</p>
+					<p class="rt-helper-blurb">When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
+				</div>
+			</div>
+		</div>
+		<div ng-if="endpoints.length > 0" class="editor-row">
+			<div class="editor-option">
+				<span class="small">Filtered by:</span>
+				<div class="select-input">
+					<select ng-model="filter.tag" ng-options="t for t in endpointTags()">
+						<option value="">All Tags</option>
+					</select>
+				</div>
+
+			</div>
+			<div style="display: block; padding: 45px 0 0 0;">
+				<div style="display: inline-block" class="rt-list-status">
+					<span class="small">Showing {{(endpoints | filterByTag:filter.tag).length}}</span>
+					<span class="small"> of <span class="rt-list-links" ng-click="setTagFilter('')">{{endpoints.length}} total</a></span>
+				</div>
+				<div class="editor-option" style="float: right;">
+<!-- 					<span class="small">Sorted By:</span>
+					<div class="select-input">
+						<select ng-model="sort_field" ng-options="field for field in ['name']"></select>
+					</div> -->
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div ng-if="pageReady">
+	<div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+	<div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | orderBy:sort_field">
+		<div class="rt-list-header rt-page-box-header" style="overflow: visible; padding:5px;" ng-click="gotoEndpointURL(endpoint)">
+			<span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
+
+			<div style="display: inline-block;">
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in endpoint.tags" tag-color-from-name="tag">
+					<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-endpoint-tiny"></i></a>
+					<ul class="dropdown-menu rt-tag-dropup">
+						<li>
+							<a href="#" bs-tooltip="'Coming Soon'">
+								<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
+								Dashboard
+							</a>
+						</li>
+						<li>
+							<a ng-click="setTagFilter(tag)">
+								<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
+								Filter
+							</a>
+						</li>
+					</ul>
+				</span>
+			</div>
+ 				<div style="float: right;">
+				<div style="display: inline;">
+					<rt-endpoint-health endpoint="endpoint"></rt-endpoint-health>
+				</div>
+				<div style="display: inline; margin-left:25px;">
+					<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Endpoint Summary</br> dashboard for {{endpoint.name}}'"></i></a>
+				</div>
+				<div class="dropdown" style="float: right; margin-left: 5px;">
+					<a data-toggle="dropdown">
+						<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
+					</a>
+					<ul class="dropdown-menu" role="menu">
+						<li>
+							<a href="endpoints/summary/{{endpoint.id}}">
+								View Endpoint
+							</a>
+						</li>
+						<li>
+							<a href="endpoints/edit/{{endpoint.id}}">
+								Configure Endpoint
+							</a>
+						</li>
+						<li>
+							<a ng-click="remove(endpoint)">
+								Delete Endpoint
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	</div>
+</div>

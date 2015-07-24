@@ -1,0 +1,193 @@
+// ==========================================================================
+// BUTTONS
+// ==========================================================================
+
+
+
+// Mixins 
+// ==========================================================================
+
+.ButtonCTA(@bg: transparent, @border: transparent, @color: transparent, @highlight: transparent) {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.1em 1.2em;
+  border: 1px solid @border;
+  background: @bg;
+  color: @color;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12px;
+  border-radius: 2px;
+  transition: 0.15s;
+
+  // For dark backgrounds. 
+  &:hover,
+  &:active {
+    border: 1px solid @highlight;
+    color: @highlight;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+
+
+// Buttons 
+// ==========================================================================
+
+// Super CTA
+// ====================================
+
+.superCTA,
+.superCTA:visited { 
+  display: block;
+  padding: 1.0em 0;
+  color:#fff;
+  background-color: @primaryCTA;
+  border: 1px solid @primaryCTA;
+  border-radius: 2px;
+  text-align: center;
+  font-weight: 400;
+  font-size: 16px;
+  transition: 0.15s;
+
+  img { padding-left: 2px; }
+}
+
+.superCTA:hover,
+.superCTA:active{
+  border: 1px solid darken(@primaryCTAHighlight, 10%);
+  background: darken(@primaryCTAHighlight, 10%);
+  color: @white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+
+
+// Primary CTA
+// ====================================
+
+.primaryCTA ,
+.primaryCTA:visited{
+  .ButtonCTA(@primaryCTA, @primaryCTA, @white, @primaryCTAHighlight);
+}
+
+
+
+// Secondary CTA
+// ====================================
+
+.secondaryCTA,
+.secondaryCTA:visited {
+  .ButtonCTA(transparent, @secondaryCTA, @secondaryCTA, @secondaryCTAHighlight);
+}
+
+
+
+// Tertiary CTA
+// ====================================
+
+.tertiaryCTA,
+.tertiaryCTA:visited {
+  .ButtonCTA(transparent, @tertiaryCTA, @tertiaryCTA, @tertiaryCTAHighlight);
+}
+
+
+
+// Neutral CTA
+// ====================================
+
+.neutralCTA,
+.neutralCTA:visited {
+  .ButtonCTA(transparent, #777, #777, #999);
+}
+
+.neutralTextCTA {
+  .ButtonCTA(transparent, transparent, #777, #999);
+
+  &:hover,
+  &:active {
+    border: transparent;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+
+.ButtonTall {
+  height:32px;
+}
+
+
+// Cancel
+// ====================================
+
+.cancel-primary,
+.cancel-primary:visited {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 0.2em 1.4em;
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  transition: 0.15s;
+}
+
+.cancel-primary:hover,
+.cancel-primary:active{
+  cursor: pointer;
+  color: @rt-light-gray;
+  text-decoration: none;
+}
+
+
+
+// Mini CTA
+// ====================================
+
+.miniCTA, 
+.miniCTA:visited { 
+  color: @gray;
+}
+
+.miniCTA:hover,
+.miniCTA:active { 
+  color: @white; 
+  text-decoration: none;
+}
+
+
+
+// General
+// ====================================
+
+.rt-btn {
+  background: @rt-blue;
+  color: @white;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  font-size: 16px;
+  transition: all 0.1s ease 0s;
+  text-decoration:none;
+
+  &:hover, &:focus {
+    background: darken(@rt-blue, 10%);
+    color: @white;
+    text-decoration:none;
+  }
+ 
+  &:active {
+    background: lighten(@rt-blue, 5%);
+    color: @white;
+    text-decoration:none;
+  }
+}
+
+.modal-body .rt-btn{
+  margin: 30px 0 40px 0;
+}

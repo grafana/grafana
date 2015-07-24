@@ -1,0 +1,1445 @@
+// ==========================================================================
+// RAINTANK
+// ==========================================================================
+
+@import "base/icon-font.less";
+
+@import "layout/columns.less";
+@import "components/mini-form.less";
+@import "layout/forms.less";
+@import "layout/page.less";
+@import "layout/tables.less";
+
+@import "components/box.less";
+@import "components/buttons.less";
+@import "components/collector-footprint-dropdown";
+@import "components/dropdown.less";
+@import "components/events.less";
+@import "components/tag-dropup.less";
+@import "components/dropdown-menu.less";
+@import "components/panel.less";
+
+
+
+// Global
+// --------------------------------------------------------------------------
+
+html {
+  /* make type beautiful */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: @rt-sansFontFamily;
+  letter-spacing: -0.03em;
+}
+
+a {
+  transition: color 100ms ease;
+}
+
+a:focus {
+  text-decoration: none;
+}
+
+.modal-body {
+  overflow-y: auto;
+}
+
+div.rt-modal-override {
+  top: 10%;
+  position: absolute;
+}
+
+.modalContainer {min-width:200px; max-width:1020px;}
+
+.summary-tab {
+  padding-top: 10px;
+  padding-bottom: 35px;
+}
+
+.modalColumn {
+      width:  50%;
+      float:left;
+      position: relative;
+      transition: 0.15s;
+    }
+
+.modal-left-80-20 {
+  width: 80%;
+  padding-bottom: 75px;
+
+}
+
+.modal-right-80-20 {
+  width: 20%;
+}
+
+.modal-left-100 {
+  width: 100%;
+  padding-bottom: 75px;
+}
+
+.modal-left-equal {
+  width: 50%;
+  padding-bottom: 10px;
+}
+
+.modal-right-equal {
+  width: 50%;
+}
+
+@media screen and (max-width: 780px) {
+  .detailColumn {
+    width:  100%;
+    float:none;
+    transition: 0.15s;
+  }
+  
+.modalLeft {padding-right:0px; margin-left:0px;}
+.modalRight {padding-left:0px;}
+}
+
+/***********************************
+raintank BOX
+***********************************/
+.rt-box {
+  background-color: @raintankPanelBackground;
+  margin: 0px 10px 20px 10px;
+  position: relative;
+  border-radius: 2px;
+}
+
+.rt-box-no-margin {
+  margin: 0;
+  background-color: none;
+  padding: 0px 30px;
+}
+
+.page-container {
+  background: @raintankPanelBackground;
+  border: @raintankPanelBorder;
+}
+
+.oneCol {display:none;}
+.twoCol {display:none;}
+
+
+@media screen and (max-width: 780px) {
+  .oneCol {display:block;}
+}
+
+@media screen and (min-width: 781px) {
+  .twoCol {display:block;}
+}
+
+.clearBack {background-color:transparent;}
+
+.rt-modal-box-body {
+  padding: 20px 0 20px 0;
+  min-height: 150px;
+}
+
+ul.rt-modal-ul {
+  margin: 0 0 10px 0;
+  list-style: none;  
+}
+
+.no-padding {
+    padding: 0;
+  }
+
+.rt-box-footer {
+  overflow: hidden;
+}
+
+.rt-box-header {
+  padding: 10px;
+  font-size:16px;
+  border-bottom: 1px solid @bodyBackground;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-modal-header {
+  padding: 30px 0px;
+  font-size:16px;
+  overflow: hidden;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.public {color:@rt-blue;}
+.private {color:@gray;}
+
+.collectorStatus,
+.endpointStatus  {
+  margin-bottom: 50px;
+}
+
+.collectorCurrentStatus {
+  display:block;
+  padding: 20px;
+}
+
+.currentStatus {
+  position:relative;
+  display:block;
+  padding: 10px 15px;
+  border-bottom: 1px solid @bodyBackground;
+
+  .dashboard-icon {
+  font-size:@rt-fontSizeLarger;
+  color:@rt-light-gray;
+  margin-left:20px;
+  }
+}
+
+.currentStatus:last-child,
+.collectorCurrentStatus:last-child { 
+  padding-bottom: 30px;
+  border-bottom: none;
+  border-bottom-left-radius: 2px; 
+  border-bottom-right-radius: 2px;
+}
+
+.currentStatus .rt-event-success, 
+.currentStatus .rt-event-warning, 
+.currentStatus .rt-event-error,
+.collectorCurrentStatus .rt-event-success, 
+.collectorCurrentStatus .rt-event-warning, 
+.collectorCurrentStatus .rt-event-error {  
+  display:inline-block;
+  padding: 10px;
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.rt-health-list {
+  margin: 0 5px;
+  vertical-align: text-top;
+}
+
+.rt-inline-health-icon {
+  vertical-align: sub;
+}
+
+.statusEvents {
+  display:block; 
+  margin-left:70px; 
+}
+
+.collectorCurrentStatus .statusEvents {
+  display:block;
+  margin-left:0;
+  margin-top:20px;
+}
+
+.event {
+  display:inline-block;
+  margin-bottom:0px;
+  margin-right:20px
+  }
+
+.event:last-child {margin-right:0;}
+
+.event .rt-event-success, 
+.event .rt-event-warning, 
+.event .rt-event-error {
+  margin:0;
+}
+
+.eventType {margin-left:5px;}
+
+.monitorState {}
+
+.status, .check {
+  float:left;
+  margin-left:55px;
+}
+
+.check {
+  width:25%;
+  min-width:130px;
+  margin-bottom:13px;
+}
+
+.frequency {
+  clear: both;
+}
+
+.statusType {
+  float:left;
+  margin-right: 15px;
+  margin-bottom:8px;
+}
+
+.checkType {display:block;}
+
+
+.health {
+  width:40px; 
+  position: absolute;
+  top:12px;
+  left:15px;
+}
+
+.refresh {padding-top:15px;}
+
+.mainLink i, .mainLink i:visited{
+  color: @linkColor;  
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
+  text-decoration:none;
+  transition: 0.15s; 
+}
+
+.mainLink i:hover, .mainLink i:active {
+  color: @linkColorHover;  
+  -webkit-text-fill-color: @linkColorHover;
+  text-decoration:none;
+  transition: 0.15s; 
+}
+
+.tag-icon {  
+  font-size: 14px;
+  vertical-align: text-bottom;
+  margin-left:5px;
+}
+
+/***********************************
+raintank TYPE
+***********************************/
+.refresh a:link, 
+.refresh a:visited, 
+.refresh a:hover, 
+.refresh a:active { 
+  text-decoration: none; // was underlineing on click.
+}
+
+.checkType, .eventType {
+  font-size:16px;
+  font-weight:600;
+  color:@rt-light-gray;
+}
+
+.status {
+  font-size:14px;
+  font-weight:600;
+  .online, .warn, .critical, .nodata, .none {font-weight:900;}
+}
+
+.checkTime {color:@rt-dark-gray}
+
+.no-endpoints {
+    font-size:800%; 
+    color:@linkColor; 
+    opacity: 0.15;
+    display: block;
+    margin-bottom: 50px;
+  }
+
+.jumbo {font-weight:600;}
+
+.frequency {color:@rt-light-gray}
+.statusMsg, .freqMsg {font-size:14px; font-weight:400;}
+
+.supplemental-copy {
+    color:@rt-light-gray;
+  }
+
+.online {
+  color: @online;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.offline {
+  color: @disabled;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
+.warn {
+  color: @warn;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.disabled, .none {
+  color: @disabled;
+  font-weight: 400;
+  &:hover {
+     color: @linkColorHover;
+  }    
+}
+
+.critical {
+  color: @critical;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nodata {
+  color: @nodata;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
+
+/***********************************
+raintank POSITIONING
+***********************************/
+
+.msg {display:inline;}
+.msg span {font-weight:600;}
+
+.nudgeDown {
+  position: relative;
+  top: 15px;
+}
+
+.icon {
+  vertical-align:middle; 
+}
+
+.collector_icon {
+  vertical-align: 0;
+  padding-left:3px;
+}
+
+.collectorMap {
+  position:relative;
+  background-color:@gray; 
+  background-image: url(../img/ams_map.png);
+  background-position: top left;
+  background-repeat: repeat;
+  background-size: cover;
+  height:450px;
+  margin:-20px;
+  text-align: center;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+
+  .locationDetail {
+    background-color: rgba(255,255,255,.8);
+    color: @black;
+    position: absolute;
+    bottom:0px;
+    right: 0px;
+    width:100%;
+    text-align: right;
+    padding: 5px 0;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+
+    h3 {color:@black; margin:20px 20px 0; font-weight:600;}
+    dl {margin:0 20px 20px;}
+    dt {font-weight: normal;}
+  }
+}
+
+/************************************** 
+Crazy Helper Box
+**************************************/
+
+.helperBoxContent{ /* adds some padding to keep the box organized */
+    padding:10px 25px 25px 25px;
+    margin:15px 20px 6px 8px;
+    border-radius: 2px;
+}
+
+.helperBorder1 {
+    border: 1px solid #13b2d4;
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    padding:0em;
+    width:100%;
+    display: block;
+}
+.helperBorder2 {
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid @rt-blue;
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+.helperBorder3{
+    position: relative;
+    top:-5px;
+    right:-5px;
+    border: 1px solid @rt-blue;
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
+    border-image-slice: 1;  
+    border-radius: 2px;
+    width:100%;
+}
+
+
+
+/**************************************
+MATT STYLES
+**************************************/
+
+.rt-event {
+  border-radius: 10px;
+  text-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 6px;
+  margin: 0 0 0 6px;
+  border-width: 1px;
+  border-style: solid;
+  line-height: 12px;  
+}
+
+.statusDetail .rt-event-success, 
+.statusDetail .rt-event-warning, 
+.statusDetail .rt-event-error{  
+  display:inline-block;
+  padding: 15px 10px;
+  border-radius: 50px;
+  text-shadow: none;
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.rt-event-success {
+  .rt-event;
+  color: @rt-green;
+  background-color: fade(@rt-green, 30%);
+  border-color: fade(@rt-green, 50%);
+  box-shadow: 0 0 1px fade(@rt-green, 90%);
+}
+
+.rt-event-warning {
+  .rt-event;
+  color: @rt-yellow;
+  background-color: fade(@rt-yellow, 30%);
+  border-color: fade(@rt-yellow, 50%);
+  box-shadow: 0 0 1px fade(@rt-yellow, 90%);
+}
+
+.rt-event-error {
+  .rt-event;
+  color: @rt-red;
+  background-color: fade(@rt-red, 30%);
+  border-color: fade(@rt-red, 50%);
+  box-shadow: 0 0 1px fade(@rt-red, 90%);
+}
+
+
+.dashboard-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: text-top;
+  font-size:20px;
+  color:@gray;
+}
+
+.dashboard-icon:hover {
+    color: darken(@gray, 10%); // This is a hack. I want to control the svg color on hover eventually. (MST) DONE (TRW)
+}
+
+.filter-icon {
+  transition: all 0.1s ease 0s;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  opacity: 0.8; // This is a hack. I want to control the svg color on hover eventually. (MST)
+}
+
+
+// list status headers
+
+.rt-list-status {
+  font-size: 16px;
+  color: @rt-dark-gray;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.rt-list-status-up {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
+  &:link, &:visited {
+    .rt-list-status;  
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-green;
+    &:hover {color: lighten(@rt-green, 10%);} 
+  }
+}
+
+.rt-list-status-warning {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-yellow;
+    &:hover {color: lighten(@rt-yellow, 10%);} 
+  }
+}
+
+.rt-list-status-down {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-red;
+    &:hover {color: lighten(@rt-red, 10%);} 
+  }
+}
+
+.rt-list-status-disabled {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-light-gray;
+  &:link, &:visited {
+    .rt-list-status;
+    font-size: 20px;
+    font-weight: 600;
+    color: @rt-light-gray;
+    &:hover {color: lighten(@rt-light-gray, 10%);} 
+  }
+}
+
+.rt-list-links {
+  color: @rt-dark-gray;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover {
+    color: lighten(@rt-light-gray, 10%);
+  } 
+}
+
+// raintank override styles from gfbox.less
+
+.rt-list {
+  margin: 1px;
+  background-color: @raintankPanelBackground;
+  position: relative;
+  border: none;
+  border-radius: 2px;
+  line-height: normal;
+  padding: 3px 0;
+}
+
+.rt-list-item-title {
+    font-size: 15px;
+    a:link {
+      color: @linkColor;
+    }  
+    a:hover {
+     color: @linkColorHover;
+    }    
+  margin: 10px;
+}
+
+.rt-list-header {
+  overflow: visible;
+  padding: 10px 5px;
+  background-color: @raintankPanelBackground;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.rt-tabs { 
+  box-shadow: inset 0px -1px 0px 0px @tabBorder;
+  font-size: @rt-fontSizeMed-2; 
+  padding:3px 20px 0 20px;
+ 
+  .nonactive a:link, 
+  .nonactive a:visited {
+    color:@linkColor;
+    margin:0 5px;
+  }
+
+  .active a:link,
+  .active a:visited  {
+    display:inline-block;
+    color:@linkColorHover;
+    background:@bodyBackground;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid @tabBorder; 
+    border-right:1px solid @tabBorder;
+    border-left:1px solid @tabBorder;
+    border-bottom: none;
+    margin: 0 5px;
+    padding: 4px 10px 6px 10px;
+  }
+
+  a:hover,
+  .active a:hover,
+  .nonactive a:hover {
+    color:@linkColorHover; 
+    text-decoration: none;
+  }
+}
+
+
+.rt-modal-tabs .nav {
+  margin-bottom: 0px;
+}
+
+.rt-modal-tabs .nav-tabs { 
+  border-bottom:1px solid @raintankPanelBackground;
+  font-size: @rt-fontSizeMed-1; 
+  padding:10px 10px 0 10px;
+
+ 
+  li>a {
+    color:@grayDark;
+    margin:0 25px;
+
+    &:hover{
+    color:@raintankPanelBackground;
+    text-decoration: none;
+    border-bottom: none;
+    }
+  }
+
+  li.active>a {
+    color:@black;
+    border-top-left-radius:4px;
+    border-top-right-radius: 4px;
+    border-top:1px solid @raintankPanelBackground; 
+    border-right:1px solid @raintankPanelBackground; 
+    border-left:1px solid @raintankPanelBackground;
+    background-color: @white;
+    margin:0 5px;
+    padding:5px 15px 12px 15px;
+    border-bottom: none;
+  }
+
+  a:hover,
+  .active a:hover,
+  .nonactive a:hover {color:@raintankPanelBackground; text-decoration: none;}
+}
+
+
+// Form Additions
+
+.ng-hide-add         { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease; 
+}
+
+.ng-hide-remove      { 
+  -webkit-animation:1.5s ease; 
+  animation:1.5s ease;  
+}
+
+
+.rt-form-label-medium {
+  // color: @grayDark;
+  font-size: @rt-fontSizeMed-2;
+}
+
+.rt-sentence-form-label {
+  color: @rt-light-gray;
+  font-size: @rt-fontSizeMed-1;
+  margin-left: -15px;
+}
+
+
+
+// // Shared size and type resets
+// select,
+// textarea,
+// input[type="text"],
+// input[type="password"],
+// input[type="datetime"],
+// input[type="datetime-local"],
+// input[type="date"],
+// input[type="month"],
+// input[type="time"],
+// input[type="week"],
+// input[type="number"],
+// input[type="email"],
+// input[type="url"],
+// input[type="search"],
+// input[type="tel"],
+// input[type="color"] {
+//   &.rt-form-input {
+//   display: inline-block;
+//   height: 20px;
+//   padding: 6px 10px;
+//   margin-bottom: @baseLineHeight / 2;
+//   font-size: @rt-fontSizeMed-1;
+//   line-height: @baseLineHeight;
+//   color: @textColor;
+//   border: solid 1px @inputBorder;
+//   border-radius: @baseBorderRadius;
+//   .border-radius(2px);
+//   vertical-align: middle;
+// }
+// }
+
+input[type="checkbox"].rt-modal {
+  display: none;
+}
+
+select.rt-select-dropdown {
+  color: @linkColor;
+  font-size: 16px;
+  vertical-align: baseline; 
+  margin: 0; 
+  background: none; 
+  border: none; 
+  width: auto;
+
+  &.small {
+    font-size: @baseFontSize;
+  }
+}
+
+.editor-option label.rt-modal {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.rt-modal {
+  display: inline-block;
+  height: 19px;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 0 0;
+  padding: 0 0 0 20px;
+  vertical-align:middle;
+  background: url(@rt-checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+input[type="checkbox"]:checked+label {
+  background: url(@rt-checkboxImageUrl) 0px -21px no-repeat;
+}
+
+.checkbox-check-enabled {
+  margin-bottom: 10px;
+}
+
+.rt-form-extra-margin {
+  margin-right: 30px;
+}
+
+.rt-collector-select {
+  max-width: 600px;
+  display: inline-block;
+  height: auto;
+  padding: 6px 10px;
+  margin-top: -3px;
+  margin-bottom: @baseLineHeight / 4;
+  margin-left: 10px;
+  font-size: @rt-fontSizeMed-1;
+  line-height: @baseLineHeight;
+  color: @textColor;
+  border: solid 1px @inputBorder;
+  .border-radius(2px);
+  vertical-align: middle;
+  background-color: @inputBackground;
+  overflow: auto;
+}
+
+// Collector List Status
+
+.rt-list-collector-status-online {
+  color: @rt-green;
+  font-weight: 700;
+  font-size: .85em;
+}
+.rt-list-collector-status-offline {
+  color: @rt-light-gray;
+  font-weight: 700;
+  font-size: .85em;
+}
+
+.rt-list-collector-since {
+  color: @rt-light-gray;
+  font-weight: 400;
+  font-size: .85em;
+
+}
+
+.rt-summary-status {
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+// raintank from overrides.less
+// Labels & Badges
+.rt-label-tag {
+  background-color: @purple;
+  color: @white;
+  border-radius: 2px;
+  text-shadow: none;
+  font-size: 10px;
+  font-weight: 600px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color:  rgba(255,255,255,.2);
+  box-shadow: 0 0 1px rgba(255,255,255,.2);
+  line-height: 14px;
+
+  a {
+     color: @white;
+    }    
+
+  a:hover {
+     color: @white;
+    }    
+
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.rt-label-tag:hover {
+  // Hover will trigger the tool tip eventually. This is temporary/ 
+  background-color: rgba(255,255,255,.4);
+}
+
+.rt-detail-pages {
+  padding-bottom: 30px;
+
+.bootstrap-tagsinput {
+  padding: 4px 0;
+}
+
+.tag-add-icon {
+  margin-left: 5px;
+}
+
+.bootstrap-tagsinput input {
+  display: inline;
+  margin-top: -2px;
+  width: auto;
+  }
+
+  .bootstrap-tagsinput .tag {
+  margin-right: 5px;
+  margin-bottom: 10px;
+  }
+}
+
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+// ------------------------------------------------------
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    border-top: 0;
+    border-bottom: 4px solid @black;
+    content: "";
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 1px;
+  }
+}
+
+.more-actions-dropdown {
+  float: right;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+
+.rt-h1 {
+  font-size: @rt-fontSizeJumbo;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-h2 {
+  font-size: @rt-fontSizeLarger;
+  font-weight: 400;
+  display: inline;
+}
+
+.rt-h3 {
+  font-size: @rt-fontSizeLarge;
+  font-weight: 600;
+  display: inline;
+}
+
+.modal-body .rt-h1{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+}
+
+.modal-body .rt-h2{
+  color: #262626; // Needs to be consolidated into one of gray variables. 
+  margin: 40px 0 10px 0;
+  display: inline-block;
+}
+
+.modal-body .rt-h3 {
+  color: @rt-primary;
+}
+
+.modal-body .variable-value-link {
+  color: @rt-primary;
+  font-size: @rt-fontSizeMed-2;
+}
+
+.variable-value-link {
+  color: lighten(@textColor, 10%);
+  font-size: @rt-fontSizeMed-1;
+}
+
+.modal-collector-select {
+  color: @rt-dark-gray;
+}
+
+.rt-label-copy {
+  color: @textColor;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
+}
+
+.rt-body-copy {
+  color: @textColor;
+  font-size: @rt-fontSizeMed-2;
+
+  @media screen and (min-width: 950px) {
+    max-width: 660px;
+  }
+}
+
+.emphasis {
+  font-weight: 600;
+  color: @rt-emphasis;
+}
+
+.rt-modal-label-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-weight: 600;
+}
+
+.rt-modal-body-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-1;
+  font-style: italic;
+}
+
+.rt-modal-tiny-copy {
+  color: @rt-dark-gray;
+  font-size: @rt-fontSizeMed-2;
+  font-weight: 400;
+  float: right;
+  margin-right: 60px;
+  vertical-align: sub;
+}
+
+a.rt-modal-body-link {
+    color: @rt-primary;   
+    font-size: @rt-fontSizeMed-2;
+  &:hover {color: lighten(@rt-primary, 10%);}
+  } 
+
+.rt-body-link {
+  &:link, &:visited {
+    color: @rt-primary;   
+    font-size: @rt-fontSizeMed-2;
+  }
+  &:hover {color: lighten(@rt-primary, 10%);}
+  } 
+
+.rt-page-header-area {
+  display: block;
+  padding-top: 20px;
+}
+
+.rt-collapse{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
+}
+
+.rt-collapse-secondary{
+  color: @grayLight;
+  font-style: italic;
+}
+
+.rt-collapse:hover {
+ color: @rt-light-gray;
+}    
+
+.rt-collapse + input{
+  // display:none;
+  opacity: 0;
+}
+.rt-collapse + input + *{
+  // display:none;
+  opacity: 0;
+
+  transition: opacity 100ms ease-in-out;
+  -moz-transition: opacity 100ms ease-in-out;
+  -webkit-transition: opacity 100ms ease-in-out;
+}
+.rt-collapse+ input:checked + *{
+  // display:block;
+  opacity: 1;
+}
+
+.rt-advanced-options{
+  font-size: @rt-fontSizeMed-2;
+  margin: 10px 0 0 0;
+  display:block;
+  cursor: pointer;
+  color: @rt-primary;
+}
+.rt-advanced-options:hover{
+ color: @rt-light-gray;
+}    
+
+.rt-advanced-options + input{
+  display:none;
+  
+}
+.rt-advanced-options + input + *{
+  display:none;
+}
+
+.rt-advanced-options+ input:checked + *{
+  display:block;
+}
+
+@-moz-keyframes spinPulse {
+    0% {
+        -moz-transform: rotate(-10deg);
+        opacity: 0.5;
+    }
+
+    25% {
+        -moz-transform: rotate(125deg);
+        opacity: 1;
+    }
+  
+
+    100% {
+        -moz-transform: rotate(350deg);
+        opacity: 0.5;
+    };
+}
+
+
+@-webkit-keyframes spinPulse {
+    0% {
+        -webkit-transform: rotate(-10deg);
+        opacity: .5;
+    }
+
+    25% {
+        -webkit-transform: rotate(125deg);
+        opacity: 1;
+    }
+
+    100% {
+        -webkit-transform: rotate(350deg);
+        opacity: .5;
+    };
+}
+
+.rt-loading-message-container {
+    display: flex;flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 350px;
+}
+
+.rt-loading-message-inside {
+    text-align: center;
+    padding-top: 90px;
+    min-height: 150px; 
+    min-width: 400px;
+    margin: 0 auto;  
+  }
+
+.rt-loading-pulse {
+    opacity: 0;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+
+   -webkit-animation: loading-opacity 200ms 500ms ease-in forwards; /* Safari 4+ */
+   -moz-animation:    loading-opacity 200ms 500ms ease-in forwards;/* Fx 5+ */
+   -o-animation:      loading-opacity 200ms 500ms ease-in forwards;/* Opera 12+ */
+    animation:        loading-opacity 200ms 500ms ease-in forwards;/* IE 10+, Fx 29+ */
+}
+
+.rt-loading-msg {
+  opacity: 0;
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}
+
+.rt-loading-msg-1 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 500ms ease-in forwards, loading-clear 200ms 5s ease-in forwards; 
+}
+
+.rt-loading-msg-2 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 5.5s ease-in forwards, loading-clear 200ms 15s ease-in forwards; 
+}
+
+.rt-loading-msg-3 {
+  .rt-loading-msg;
+  animation: loading-opacity 200ms 15.5s ease-in forwards; 
+}
+
+@-webkit-keyframes loading-opacity {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes loading-opacity {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-o-keyframes loading-opacity {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes loading-opacity {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@-webkit-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes loading-clear {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+// raintank form elements
+
+.rt-radio-custom {
+    opacity: 0;
+    position: absolute;   
+}
+
+.rt-radio-layout {
+  margin-right: 20px;
+}
+
+.rt-radio-custom, .rt-radio-jumbo-label, .rt-radio-body-label {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.rt-radio-body-label {
+  .rt-modal-body-copy;
+  font-style: normal;
+  color: @rt-light-gray;
+}
+
+.rt-radio-jumbo-label {
+    position: relative;
+    color: @rt-light-gray;
+    font-size: 40px;
+    font-weight: 600;
+}
+
+.rt-radio-jumbo-sub-label {
+  font-size: @rt-fontSizeSmall;
+  color: @rt-light-gray;
+  font-weight: 400;
+  display: block;
+  margin-top: 5px;
+}
+
+.rt-radio-custom + *:before {
+    content: '';
+    background: transparent;
+    border: 2px solid @rt-dark-gray;
+    display: inline-block;
+    vertical-align: middle;
+    width: 10px;
+    height: 10px;
+    padding: 2px;
+    margin-right: 10px;
+    text-align: center;
+    transition: all 50ms linear;
+}
+
+
+.rt-radio-custom + *:before {
+    border-radius: 50%;
+}
+
+.rt-radio-custom:checked + *:before {
+    background: @rt-primary;
+    box-shadow: inset 0px 0px 0px 3px @bodyBackground;
+}
+
+// Hiding class for screen readers
+
+.rt-hide {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+}
+
+/******************************************
+RAINTANK DASHBOARD STYLES
+******************************************/
+
+.rt-dashboard-h1 {
+    font-size: 60px;
+    font-weight:900;
+    letter-spacing: -1px;
+    color: #EEE;
+    display: inline;
+    padding-top: 20px;
+}
+
+p.rt-dashboard-copy {
+    font-size:14px;
+    color: @textColor;
+}
+
+.rt-dash-flex-container {
+     display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+     display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+     display: -ms-flexbox;      /* TWEENER - IE 10 */
+     display: -webkit-flex;     /* NEW - Chrome */
+     display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
+     justify-content: center;
+     flex-direction: row;
+     margin-top: 50px;
+
+}
+
+.rt-dash-flex-item {
+    -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-flex: 1;         /* OLD - Firefox 19- */
+    width: 20%;               /* For old syntax, otherwise collapses. */
+    -webkit-flex: 1;          /* Chrome */
+    -ms-flex: 1;              /* IE 10 */
+    flex: 1 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    text-align: center;
+    margin:0 auto;
+}
+
+ @media screen and (max-width: 780px) { 
+  .rt-dash-flex-item {
+    -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-flex: 1;         /* OLD - Firefox 19- */
+    width: 100%;               /* For old syntax, otherwise collapses. */
+    -webkit-flex: 1;          /* Chrome */
+    -ms-flex: 1;              /* IE 10 */
+    flex: 0 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    text-align: center;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    margin:0 auto;
+    }
+}
+
+p.rt-helper-blurb{
+     font-size:14px;
+     color: @textColor;
+     min-height: 35px;
+}
+
+p.rt-dashboard-blurb{
+     font-size:14px;
+     color: @textColor;
+     min-height: 85px;
+}
+
+.rt-dashboard-icons {
+  color: @rt-primary;
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
+  text-decoration:none;
+  font-size: 85px;
+}
+
+.rt-logo-container {
+  padding-bottom: 20px;
+}
+
+.rt-logo {
+  line-height: 0;
+  font-size: 120px;
+}

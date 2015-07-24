@@ -18,7 +18,9 @@ dev environment.
 
 ```
 export GOPATH=`pwd`
-go get github.com/grafana/grafana
+mkdir -p $GOPATH/src/github.com/grafana
+ln -s $GOPATH/src/github.com/raintank/grafana $GOPATH/src/github.com/grafana/grafana
+go get github.com/raintank/grafana
 ```
 
 ## Building the backend

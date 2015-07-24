@@ -44,6 +44,12 @@ Then you can override that using:
 
 <hr>
 
+### instance_id
+
+Identifier used for this grafana instance (for instrumentation and collectorcontroller)
+Should be unique across all grafana instances in your infrastructure (on same or different hosts)
+Defaults to "default"
+
 ## [paths]
 
 ### data
@@ -51,6 +57,7 @@ Then you can override that using:
 Path to where Grafana stores the sqlite3 database (if used), file based
 sessions (if used), and other data.  This path is usually specified via
 command line in the init.d script or the systemd service file.
+It should be unique if you run multiple grafana processes on the same machine.
 
 ### logs
 
@@ -372,6 +379,57 @@ Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+
+<hr>
+
+## [alerting]
+
+### tickqueue_size
+
+If more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
+and grafana will skip the tick, resulting in lost job executions for that second.
+so set this to whatever value you find tolerable, and watch your database query times.
+Defaults to 20
+
+### internal_jobqueue_size
+
+this should be set to above the max amount of jobs you expect to ever be created in 1 shot
+so we can queue them all at once and then workers can process them.
+If more than this amount of jobs queue up, it means the workers can't process fast enough,
+and the jobs will be skipped. Defaults to 1000.
+
+### pre_amqp_jobqueue_size
+
+There's two things to keep in mind for this setting:
+* this should be set to above the max amount of jobs you expect to ever be created in 1 shot
+  so we can queue them all at once and then they can be loaded into your queue.
+  If more than this amount of jobs queue up, it means they aren't loaded into rabbitmq fast enough
+  and the jobs will be skipped.
+* you might want to take into account slowness or transient unavailability of your queue, and configure
+  this to cover a certain timeframe worth of new jobs created. The other side of the coin is that you
+  probably prefer your messages in your queue rather than the less safe in memory buffer.
+
+Defaults to 1000.
+
+### executor_lru_size
+
+All executors within a grafana instance share an LRU cache.
+Based on how many schedulers you have and whether they recently restarted,
+jobs might be scheduled multiple times and the executors use the cache to avoid acting on the same job twice.
+Defaults to 10000.
+
+### EnableScheduler
+
+Wether to run a scheduler. Defaults to true.
+
+### executors
+
+How many alerting executors should this instance of Grafana run?
+They have low cpu and memory overhead but may query your datastore simultaneously.  Defaults to 10.
+
+### write_individual_alert_results
+
+Whether to write the individual state metrics for each alerting rule. Defaults to false
 
 <hr>
 

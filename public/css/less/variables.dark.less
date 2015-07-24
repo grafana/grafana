@@ -1,5 +1,5 @@
 // Global values
-// --------------------------------------------------
+// ---------------------------------------------------
 
 
 // Grays
@@ -28,7 +28,7 @@
 // grafana Variables
 // -------------------------
 @grafanaPanelBackground: 	@grayDarker;
-@grafanaPanelBorder: 		  solid 1px @grayDark;
+@grafanaPanelBorder: 		solid 1px @grayDark;
 @grafanaTriggerBorder:		solid 1px #555;
 
 // Graphite Target Editor
@@ -41,10 +41,12 @@
 @grafanaTargetFuncBackground: #333;
 @grafanaTargetFuncHightlight: #444;
 
-@modalBackground: @black;
+
+@modalBackground: 			@black;
 
 // Scaffolding
 // -------------------------
+
 @bodyBackground:        rgb(22,22,22);
 @textColor:             @grayLighter;
 
@@ -63,7 +65,7 @@
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
-@baseFontWeight:		    400;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
@@ -91,7 +93,7 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  #262626;
+@grafanaListBackground:  @grayDark;
 @grafanaListAccent:      lighten(@grayDarker, 2%);
 @grafanaListBorderTop:      @grayDark;
 @grafanaListBorderBottom:   @black;
@@ -134,10 +136,10 @@
 @btnInverseBackground:              @grayDark;
 @btnInverseBackgroundHighlight:     lighten(@grayDark, 5%);
 
-@iconContainerBackground:			      @black;
+@iconContainerBackground:			@black;
 @iconContainerBackgroundHighlight:	lighten(@black, 5%);
-@iconContainerBorder:				        1px solid transparent;
-@iconContainerShadow:				        0 0 14px 2px rgba(255,255,255, 0.05);
+@iconContainerBorder:				1px solid transparent;
+@iconContainerShadow:				0 0 14px 2px rgba(255,255,255, 0.05);
 
 
 // Forms
@@ -213,8 +215,8 @@
 @navbarCollapseDesktopWidth:      @navbarCollapseWidth + 1;
 
 @navbarHeight:                    52px;
-@navbarBackgroundHighlight:       @grayDark;
-@navbarBackground:                @grayDark;
+@navbarBackgroundHighlight:       @black;
+@navbarBackground:                @black;
 @navbarBorder:                    none;
 
 @navbarText:                      @grayLight;
@@ -282,7 +284,7 @@
 // Tooltips and popovers
 // -------------------------
 @tooltipColor:            #fff;
-@tooltipBackground:       rgb(58, 57, 57);
+@tooltipBackground:       rgb(58,57,57);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        @linkColor;

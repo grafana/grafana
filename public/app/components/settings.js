@@ -13,7 +13,7 @@ function (_) {
      */
     var defaults = {
       datasources                   : {},
-      window_title_prefix           : 'Grafana - ',
+      window_title_prefix           : 'raintank - ',
       panels                        : {
         'graph':      { path: 'panels/graph',      name: 'Graph' },
         'singlestat': { path: 'panels/singlestat', name: 'Single stat' },
@@ -30,7 +30,9 @@ function (_) {
     };
 
     var settings = _.extend({}, defaults, options);
-
+    if (settings.plugins.panels) {
+      _.extend(settings.panels, settings.plugins.panels);
+    }
     // var parseBasicAuth = function(datasource) {
     //   var passwordEnd = datasource.url.indexOf('@');
     //   if (passwordEnd > 0) {

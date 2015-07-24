@@ -19,16 +19,16 @@ function (angular, _, config) {
       return this.request({ method: 'DELETE', url: url });
     };
 
-    this.post = function(url, data) {
-      return this.request({ method: 'POST', url: url, data: data });
+    this.post = function(url, data, supressSuccess) {
+      return this.request({ method: 'POST', url: url, data: data, supressSuccess: supressSuccess });
     };
 
-    this.patch = function(url, data) {
-      return this.request({ method: 'PATCH', url: url, data: data });
+    this.patch = function(url, data, supressSuccess) {
+      return this.request({ method: 'PATCH', url: url, data: data, supressSuccess: supressSuccess });
     };
 
-    this.put = function(url, data) {
-      return this.request({ method: 'PUT', url: url, data: data });
+    this.put = function(url, data, supressSuccess) {
+      return this.request({ method: 'PUT', url: url, data: data, supressSuccess: supressSuccess });
     };
 
     this._handleError = function(err) {
@@ -74,7 +74,7 @@ function (angular, _, config) {
 
       return $http(options).then(function(results) {
         if (options.method !== 'GET') {
-          if (results && results.data.message) {
+          if (results && results.data.message && !options.supressSuccess) {
             alertSrv.set(results.data.message, '', 'success', 3000);
           }
         }

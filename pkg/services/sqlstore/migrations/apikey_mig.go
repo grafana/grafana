@@ -44,6 +44,7 @@ func addApiKeyMigrations(mg *Migrator) {
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "key", Type: DB_Varchar, Length: 255, Nullable: false},
 			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "is_admin", Type: DB_Bool, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
@@ -72,4 +73,9 @@ func addApiKeyMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Drop old table api_key_v1", NewDropTableMigration("api_key_v1"))
+
+	//------ add RaintankAdmin api_key for collectors.-------------
+	mg.AddMigration("insert raintankAdmin key into api_key table", new(RawSqlMigration).
+		Sqlite("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','Editor',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").
+		Mysql("INSERT INTO `api_key` VALUES (1,1,'collector','edf918d3643c9f479021639580b07d0b58f962ab281f1e881d57d14802ef1e59c30c936e42a4e9b195bbacacafa3ad22317b','Editor',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"))
 }

@@ -1,0 +1,152 @@
+// ==========================================================================
+// BOX
+// ==========================================================================
+
+
+
+.rt-box {
+  position: relative;
+  margin: 0px 10px 20px 10px;
+  border-radius: 2px;
+  background-color: @black;
+}
+
+.rt-box-no-margin {
+  margin: 0;
+  padding: 0px 30px;
+  background-color: @white;
+}
+
+
+
+// Header 
+// ==========================================================================
+
+.rt-box-header {
+  padding: 10px;
+  font-size: 16px;
+  border-bottom: 1px solid #262626;
+  overflow: hidden;
+
+  .tabs {
+    float: left;
+  }
+
+  .nav {
+    margin: 0;
+  }
+}
+
+
+
+// Body 
+// ==========================================================================
+
+.rt-box-body {
+  min-height: 50px;
+  padding: 20px;
+}
+
+.rt-box-title {
+  padding-right: 20px;
+  padding-left: 10px;
+  float: left;
+  color: @linkColor;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 38px;
+  margin: 0;
+
+  .fa {
+    padding: 0 8px 0 5px;
+    color: @textColor;
+  }
+}
+
+.rt-page-box-header {
+  cursor: pointer;
+}
+
+.rt-box-accordian-control {
+  margin-left: 3px;
+  margin-right: 3px; 
+}
+
+.rt-box-row-info {
+  float: right;
+  display: inline;
+}
+
+
+
+// Interior 
+// ==========================================================================
+
+.rt-box-interior-header-icon {
+  display: inline-block;
+  margin-left: -40px;
+  vertical-align: top;
+}
+
+.rt-box-interior-section {
+  position: relative;
+  margin-bottom: 45px;
+  padding: 0 35px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.rt-box-interior-section-body {
+  margin-left: 10px;
+}
+
+.rt-box-interior-header {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.rt-box-interior-header.rt-h3 {
+  display: inline-block;
+}
+
+.rt-interior-update {
+  margin-top: 10px;
+  margin-left: 25px;
+}
+
+
+
+// Footer 
+// ==========================================================================
+
+.rt-box-footer {
+  overflow: hidden;
+}
+
+.rt-box-footer-config {
+  padding: 10px;
+  border-top: 1px solid @bodyBackground;
+  overflow: hidden;
+}
+
+
+
+// Close 
+// ==========================================================================
+
+.rt-box-header-close-btn {
+  float: right;
+  margin: -15px 0 0 0;
+  padding: 8px;
+  background-color: transparent;
+  border: none;
+  font-size: 150%;
+  font-weight: 100;
+  color: @textColor;
+
+  &:hover {
+    color: @white;
+  }
+}

@@ -92,7 +92,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	if defaultDatasource == "" {
-		defaultDatasource = "grafana"
+		defaultDatasource = "raintank"
+	}
+
+	// add raintank backend.
+	graphiteMeta, _ := plugins.DataSources["graphite"]
+	datasources["raintank"] = map[string]interface{}{
+		"type": "graphite",
+		"meta": graphiteMeta,
+		"url":  "/api/graphite",
 	}
 
 	jsonObj := map[string]interface{}{
@@ -104,6 +112,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,
 			"buildstamp": setting.BuildStamp,
+		},
+		//TODO: this should loaded from the config file.
+		"plugins": map[string]interface{}{
+			"dependencies": []string{"raintank/all"},
+			"panels": map[string]interface{}{
+				"raintankMonitorDescription": map[string]string{"path": "../plugins/raintank/panels/raintankMonitorDescription", "name": "Raintank Monitor Description"},
+				"raintankEventsPanel":        map[string]string{"path": "../plugins/raintank/panels/raintankEventsPanel", "name": "Raintank Events"},
+			},
 		},
 	}
 

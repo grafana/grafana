@@ -3,7 +3,8 @@
 	<ul class="sidemenu sidemenu-main">
 		<li style="margin-bottom: 15px;">
 			<a class="pointer sidemenu-top-btn" ng-click="contextSrv.toggleSideMenu()">
-				<img class="logo-icon" src="img/fav32.png"></img>
+				<!-- <img class="expanded" src="img/raintank_wordmark_white.svg"></img> -->
+				<i class="logo expanded icon-rt-raintank_wordmark" style=""></i>
 				<i class="pull-right fa fa-angle-left"></i>
 			</a>
 		</li>
@@ -20,7 +21,7 @@
 
 		<li ng-repeat="item in mainLinks">
 			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
-				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="icon-circle sidemenu-icon mainLink"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>
 		</li>
@@ -57,21 +58,21 @@
 		<li ng-if="contextSrv.isGrafanaAdmin">
 			<a href="admin/settings" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cog"></i></span>
-				<span class="sidemenu-item-text">Grafana admin</span>
+				<span class="sidemenu-item-text">Grafana Admin</span>
 	   	</a>
 		</li>
 
 		<li ng-if="contextSrv.isSignedIn">
 			<a href="logout" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
-				<span class="sidemenu-item-text">Sign out</span>
+				<span class="sidemenu-item-text">Sign Out</span>
 	   	</a>
 		</li>
 
 		<li ng-if="!contextSrv.isSignedIn">
 			<a href="login" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
-				<span class="sidemenu-item-text">Sign in</span>
+				<span class="sidemenu-item-text">Sign In</span>
 	   	</a>
 		</li>
 	</ul>
@@ -80,13 +81,13 @@
 		<li>
 			<a href="{{appSubUrl}}/" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-backward"></i></span>
-				<span class="sidemenu-item-text">Exit admin</span>
+				<span class="sidemenu-item-text">Exit Admin</span>
 	   	</a>
 		</li>
 		<li>
 			<a href="logout" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
-				<span class="sidemenu-item-text">Sign out</span>
+				<span class="sidemenu-item-text">Sign Out</span>
 	   	</a>
 		</li>
 	</ul>
