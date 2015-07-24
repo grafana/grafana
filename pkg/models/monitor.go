@@ -67,6 +67,7 @@ type Monitor struct {
 	Enabled        bool
 	State          CheckEvalResult
 	StateChange    time.Time
+	StateCheck     time.Time
 	Settings       []*MonitorSettingDTO
 	HealthSettings *MonitorHealthSettingDTO
 	Created        time.Time
@@ -123,6 +124,7 @@ type MonitorForAlertDTO struct {
 	Frequency       int64
 	Enabled         bool
 	StateChange     time.Time
+	StateCheck      time.Time
 	Settings        []*MonitorSettingDTO
 	HealthSettings  *MonitorHealthSettingDTO
 	Created         time.Time
@@ -141,6 +143,7 @@ type MonitorDTO struct {
 	Collectors      []int64                  `json:"collectors"`
 	State           CheckEvalResult          `json:"state"`
 	StateChange     time.Time                `json:"state_change"`
+	StateCheck      time.Time                `json:"state_check"`
 	Settings        []*MonitorSettingDTO     `json:"settings"`
 	HealthSettings  *MonitorHealthSettingDTO `json:"health_settings"`
 	Frequency       int64                    `json:"frequency"`
@@ -204,6 +207,7 @@ type UpdateMonitorStateCommand struct {
 	Id       int64
 	State    CheckEvalResult
 	Updated  time.Time
+	Checked  time.Time
 	Affected int
 }
 

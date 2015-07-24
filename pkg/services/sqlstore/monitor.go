@@ -35,6 +35,7 @@ type MonitorWithCollectorDTO struct {
 	TagCollectors   string
 	State           m.CheckEvalResult
 	StateChange     time.Time
+	StateCheck      time.Time
 	Settings        []*m.MonitorSettingDTO
 	HealthSettings  *m.MonitorHealthSettingDTO //map[string]int //note: wish we could use m.MonitorHealthSettingDTO directly, but xorm doesn't unmarshal to structs?
 	Frequency       int64
@@ -42,6 +43,20 @@ type MonitorWithCollectorDTO struct {
 	Offset          int64
 	Updated         time.Time
 	Created         time.Time
+}
+
+// scrutinizeState fixes the state.  We can't just trust what the database says, we have to verify that the value actually has been updated recently.
+// we can simply do this by requiring that the value has been updated since 2*frequency ago.
+func scrutinizeState(now time.Time, state m.CheckEvalResult, stateCheck time.Time, frequency int64) m.CheckEvalResult {
+	if state == m.EvalResultUnknown {
+		return state
+	}
+	freq := time.Duration(frequency) * time.Second
+	oldest := now.Add(-2 * freq)
+	if stateCheck.Before(oldest) {
+		return m.EvalResultUnknown
+	}
+	return state
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -131,8 +146,9 @@ WHERE monitor.id=?
 		CollectorIds:    monitorCollectorIds,
 		CollectorTags:   monitorCollectorTags,
 		Collectors:      mergedCollectors,
-		State:           result.State,
+		State:           scrutinizeState(time.Now(), result.State, result.StateCheck, result.Frequency),
 		StateChange:     result.StateChange,
+		StateCheck:      result.StateCheck,
 		Settings:        result.Settings,
 		HealthSettings:  result.HealthSettings,
 		Frequency:       result.Frequency,
@@ -297,8 +313,9 @@ FROM monitor
 			CollectorIds:    monitorCollectorIds,
 			CollectorTags:   monitorCollectorTags,
 			Collectors:      mergedCollectors,
-			State:           row.State,
+			State:           scrutinizeState(time.Now(), row.State, row.StateCheck, row.Frequency),
 			StateChange:     row.StateChange,
+			StateCheck:      row.StateCheck,
 			Settings:        row.Settings,
 			HealthSettings:  row.HealthSettings,
 			Frequency:       row.Frequency,
@@ -514,6 +531,7 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		Enabled:        cmd.Enabled,
 		State:          -1,
 		StateChange:    time.Now(),
+		StateCheck:     time.Now(),
 	}
 	if _, err := sess.Insert(mon); err != nil {
 		return err
@@ -581,6 +599,7 @@ func addMonitorTransaction(cmd *m.AddMonitorCommand, sess *session) error {
 		Enabled:        mon.Enabled,
 		State:          mon.State,
 		StateChange:    mon.StateChange,
+		StateCheck:     mon.StateCheck,
 		Offset:         mon.Offset,
 		Updated:        mon.Updated,
 	}
@@ -708,6 +727,7 @@ func UpdateMonitor(cmd *m.UpdateMonitorCommand) error {
 			Enabled:        cmd.Enabled,
 			State:          lastState.State,
 			StateChange:    lastState.StateChange,
+			StateCheck:     lastState.StateCheck,
 			Frequency:      cmd.Frequency,
 		}
 
@@ -866,6 +886,13 @@ func UpdateMonitorState(cmd *m.UpdateMonitorStateCommand) error {
 		}
 
 		aff, _ := res.RowsAffected()
+
+		rawSql = "UPDATE monitor SET state_check=? WHERE id=?"
+		res, err = sess.Exec(rawSql, cmd.Checked, cmd.Id)
+		if err != nil {
+			return err
+		}
+
 		cmd.Affected = int(aff)
 		return nil
 	})

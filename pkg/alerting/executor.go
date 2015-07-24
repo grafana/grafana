@@ -155,6 +155,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		Id:      job.MonitorId,
 		State:   res,
 		Updated: job.LastPointTs,
+		Checked: preExec,
 	}
 	if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
 		//check if we failed due to deadlock.
