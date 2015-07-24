@@ -222,21 +222,21 @@ function (angular, _, kbn) {
 
           _.each(result.group_by, function(element) {
             if (element.name === "tag") {
-              _.each(element.group, function(value, key) {
-                if (details != "") {
+              _.each(element.group, function(value) {
+                if (details !== "") {
                   details += ", ";
                 }
                 details += value;
               });
             }
             else if (element.name === "value") {
-              if (details != "") {
+              if (details !== "") {
                 details += ", ";
               }
               details += 'value_group=' + element.group.group_number;
             }
             else if (element.name === "time") {
-              if (details != "") {
+              if (details !== "") {
                 details += ", ";
               }
               details += 'time_group=' + element.group.group_number;
