@@ -1,0 +1,45 @@
+<grafana-panel>
+    <h4>Getting the most out of Litmus</h4>
+    <div class="rt-dash-flex-container">
+        <div class="rt-dash-flex-item" ng-if="cta === 'addEndpoint'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons"></i>
+            </div>
+            <h4>Add an endpoint</h4>
+            <p class="rt-dashboard-blurb">An endpoint is anything you want to monitor - just need a fully qualified domain name.</p>
+            <a href="endpoints/new">
+                <button class="secondaryCTA">New Endpoint</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addUser'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 100px;"></i>
+            </div>
+            <h4>Invite your team</h4>
+            <p class="rt-dashboard-blurb">Litmus is more fun with others.  Invite team members, or share an invite to the beta.</p>
+            <a href="org/users">
+                <button class="secondaryCTA">Add Users</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addDatasource'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-datasources rt-dashboard-icons"></i>
+            </div>
+            <h4>Connect data sources</h4>
+            <p class="rt-dashboard-blurb">Our data is great. Your data is great. They should be together?</p>
+            <a href="datasources/new">
+                <button class="secondaryCTA">Add Data Source</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addCollector'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-collector rt-dashboard-icons"></i>
+            </div>
+            <h4>Deploy collectors</h4>
+            <p class="rt-dashboard-blurb">Deploy private collectors worldwide.</p>
+            <a href="collectors">
+                <button class="secondaryCTA">New Collector</button>
+            </a>
+        </div>
+    </div>
+</grafana-panel>
