@@ -214,28 +214,47 @@ function (angular, _, kbn) {
       var index = 0;
       _.each(results.data.queries, function(series) {
         _.each(series.results, function(result) {
+          var seriesName = result.name;
+          var replaceRegex = /\$(\w+)/g;
+          var segments = seriesName.split('.');
           var target = plotParams[index].alias;
-          var details = " ( ";
-
+          var details = "";
+          
           _.each(result.group_by, function(element) {
             if (element.name === "tag") {
               _.each(element.group, function(value, key) {
-                details += key + "=" + value + " ";
+                if (details != "") {
+                  details += ", ";
+                }
+                details += value;
               });
             }
             else if (element.name === "value") {
-              details += 'value_group=' + element.group.group_number + " ";
+              if (details != "") {
+                details += ", ";
+              }
+              details += 'value_group=' + element.group.group_number;
             }
             else if (element.name === "time") {
-              details += 'time_group=' + element.group.group_number + " ";
+              if (details != "") {
+                details += ", ";
+              }
+              details += 'time_group=' + element.group.group_number;
             }
           });
 
-          details += ") ";
-
-          if (details !== " ( ) ") {
-            target += details;
-          }
+          target = target.replace(replaceRegex, function(match, group) {
+            if (group === 's') {
+              return seriesName;
+            } else if (group === 'g') {
+              return details;
+            }
+            var index = parseInt(group);
+            if (_.isNumber(index) && index < segments.length) {
+              return segments[index];
+            }
+            return match;
+          });
 
           var datapoints = [];
 
