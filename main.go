@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metric/helper"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -72,6 +73,7 @@ func main() {
 	}
 
 	search.Init()
+	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()

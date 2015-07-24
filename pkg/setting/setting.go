@@ -136,6 +136,10 @@ var (
 	ProfileHeapWait int
 	ProfileHeapDir  string
 
+	// LDAP
+	LdapEnabled    bool
+	LdapConfigFile string
+
 	// SMTP email settings
 	Smtp SmtpSettings
 )
@@ -458,6 +462,10 @@ func NewConfigContext(args *CommandLineArgs) {
 	ProfileHeapMB = telemetry.Key("profile_heap_MB").MustInt(0)
 	ProfileHeapWait = telemetry.Key("profile_heap_wait").MustInt(3600)
 	ProfileHeapDir = telemetry.Key("profile_heap_dir").MustString("/tmp")
+
+	ldapSec := Cfg.Section("auth.ldap")
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapConfigFile = ldapSec.Key("config_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()

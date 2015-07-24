@@ -130,6 +130,7 @@ type linuxPackageOptions struct {
 	binPath                string
 	configDir              string
 	configFilePath         string
+	ldapFilePath           string
 	etcDefaultPath         string
 	etcDefaultFilePath     string
 	initdScriptFilePath    string
@@ -179,6 +180,10 @@ func createLinuxPackages() {
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
 		upstartFilePath:        "/etc/init/grafana-server.conf",
+		ldapFilePath:           "/etc/grafana/ldap.toml",
+		etcDefaultPath:         "/etc/default",
+		etcDefaultFilePath:     "/etc/default/grafana-server",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version:                linuxPackageVersion,
 		iteration:              ubuntuIteration,
@@ -196,6 +201,10 @@ func createLinuxPackages() {
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
+		ldapFilePath:           "/etc/grafana/ldap.toml",
+		etcDefaultPath:         "/etc/sysconfig",
+		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
+		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 		version:                linuxPackageVersion,
 		iteration:              linuxPackageIteration,
@@ -237,8 +246,10 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
 	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
-	// copy sample ini file to /etc/opt/grafana
+	// copy sample ini file to /etc/grafana
 	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
+	// copy sample ldap toml config file to /etc/grafana/ldap.toml
+	runPrint("cp", "conf/ldap.toml", filepath.Join(packageRoot, options.ldapFilePath))
 
 	args := []string{
 		"-s", "dir",

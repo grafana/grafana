@@ -9,7 +9,7 @@ watch_dirs = [
 	"$WORKDIR/public/views",
 	"$WORKDIR/conf",
 ]
-watch_exts = [".go", ".ini"]
+watch_exts = [".go", "conf/*"]
 build_delay = 1500
 cmds = [
   ["godep", "go", "build", "-o", "./bin/grafana-server"],
