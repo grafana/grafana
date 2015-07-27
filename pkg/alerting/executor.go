@@ -199,7 +199,9 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	if gr, ok := gr.(*GraphiteContext); ok {
 		executorJobQueryGraphite.Value(gr.dur)
 		executorJobParseAndEval.Value(durationExec - gr.dur)
-		executorGraphiteMissingVals.Value(int64(gr.missingVals))
+		if gr.missingVals > 0 {
+			executorGraphiteMissingVals.Value(int64(gr.missingVals))
+		}
 		if gr.emptyResp != 0 {
 			executorGraphiteEmptyResponse.Inc(int64(gr.emptyResp))
 		}
