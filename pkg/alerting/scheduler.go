@@ -18,7 +18,9 @@ var tickQueue = make(chan time.Time, setting.TickQueueSize)
 func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
 	offset := time.Duration(LoadOrSetOffset()) * time.Second
-	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
+	// no need to try resuming where we left off in the past.
+	// see https://github.com/raintank/grafana/issues/266
+	lastProcessed := time.Now().Truncate(time.Second).Add(-offset)
 	cl := clock.New()
 	ticker := NewTicker(lastProcessed, offset, cl)
 	go func() {
@@ -42,7 +44,6 @@ func Dispatcher(jobQueue JobQueue) {
 			select {
 			case tickQueue <- tick:
 			default:
-				// TODO: alert when this happens
 				dispatcherTicksSkippedDueToSlowTickQueue.Inc(1)
 			}
 		}
