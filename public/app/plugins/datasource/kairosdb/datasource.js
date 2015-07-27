@@ -16,6 +16,7 @@ function (angular, _, kbn) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
+      this.patternPattern = new RegExp('^/(.*)/([gim]*)$');
     }
 
     // Called once per panel (graph)
@@ -23,32 +24,63 @@ function (angular, _, kbn) {
       var start = options.range.from;
       var end = options.range.to;
 
-      var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
-      var plotParams = _.compact(_.map(options.targets, function(target) {
-        var alias = target.alias;
-        if (typeof target.alias === 'undefined' || target.alias === "") {
-          alias = target.metric;
-        }
-
-        if (!target.hide) {
-          return { alias: alias, exouter: target.exOuter };
-        }
-        else {
-          return null;
-        }
-      }));
-
-      var handleKairosDBQueryResponseAlias = _.partial(handleKairosDBQueryResponse, plotParams);
-
-      // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries)) {
+      var targetsPromise = null;
+      var patternPattern = this.patternPattern;
+      var self = this;
+      if (_.some(options.targets, function(target) { return patternPattern.test(target.metric); })) {
+        targetsPromise = $q.all(_.map(options.targets, _.partial(matchMetricNames, self))).then(_.flatten);
+      } else {
         var d = $q.defer();
-        d.resolve({ data: [] });
-        return d.promise;
+        d.resolve(options.targets);
+        targetsPromise = d.promise;
       }
 
-      return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
+      return targetsPromise.then(function(targets) {
+        var queries = _.compact(_.map(targets, _.partial(convertTargetToQuery, options)));
+        var plotParams = _.compact(_.map(targets, function(target) {
+          var alias = target.alias;
+          if (typeof target.alias === 'undefined' || target.alias === "") {
+            alias = templateSrv.replace(target.metric);
+          }
+
+          if (!target.hide) {
+            return { alias: alias, exouter: target.exOuter };
+          }
+          else {
+            return null;
+          }
+        }));
+
+        var handleKairosDBQueryResponseAlias = _.partial(handleKairosDBQueryResponse, plotParams);
+
+        // No valid targets, return the empty result to save a round trip.
+        if (_.isEmpty(queries)) {
+          var d = $q.defer();
+          d.resolve({ data: [] });
+          return d.promise;
+        }
+
+        return self.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
+      });
     };
+
+    function matchMetricNames(self, target) {
+      var match = self.patternPattern.exec(templateSrv.replace(target.metric));
+      if (match !== null) {
+        var pattern = new RegExp(match[1], match[2]);
+        return self.performMetricSuggestQuery().then(function(names) {
+          return _.map(_.filter(names, function(name) { return pattern.test(name); }), function(name) {
+            var result = _.clone(target);
+            result.metric = name;
+            return result;
+          });
+        });
+      } else {
+        var d = $q.defer();
+        d.resolve([target]);
+        return d.promise;
+      }
+    }
 
     ///////////////////////////////////////////////////////////////////////
     /// Query methods
