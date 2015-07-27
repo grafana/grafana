@@ -50,13 +50,12 @@ func Dispatcher(jobQueue JobQueue) {
 }
 
 func dispatchJobs(jobQueue JobQueue) {
-	for t := range tickQueue {
+	for lastPointAt := range tickQueue {
 		tickQueueItems.Value(int64(len(tickQueue)))
 		tickQueueSize.Value(int64(setting.TickQueueSize))
-		lastPointAt := t.Unix()
 
 		pre := time.Now()
-		jobs, err := getJobs(lastPointAt)
+		jobs, err := getJobs(lastPointAt.Unix())
 		dispatcherNumGetSchedules.Inc(1)
 		dispatcherGetSchedules.Value(time.Since(pre))
 
@@ -67,8 +66,8 @@ func dispatchJobs(jobQueue JobQueue) {
 
 		dispatcherJobSchedulesSeen.Inc(int64(len(jobs)))
 		for _, job := range jobs {
-			job.GeneratedAt = t
-			job.LastPointTs = time.Unix(lastPointAt, 0)
+			job.GeneratedAt = time.Now()
+			job.LastPointTs = lastPointAt
 
 			jobQueue.Put(job)
 
