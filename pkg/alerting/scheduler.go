@@ -1,9 +1,9 @@
 package alerting
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -61,7 +61,7 @@ func dispatchJobs(jobQueue JobQueue) {
 		dispatcherGetSchedules.Value(time.Since(pre))
 
 		if err != nil {
-			fmt.Println("CRITICAL", err) // TODO better way to log errors
+			log.Error(0, "getJobs() failed: %q", err)
 			continue
 		}
 
