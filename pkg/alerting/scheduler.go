@@ -3,8 +3,8 @@ package alerting
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
