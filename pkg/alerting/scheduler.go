@@ -46,6 +46,8 @@ func Dispatcher(jobQueue JobQueue) {
 			default:
 				dispatcherTicksSkippedDueToSlowTickQueue.Inc(1)
 			}
+			tickQueueItems.Value(int64(len(tickQueue)))
+			tickQueueSize.Value(int64(setting.TickQueueSize))
 		}
 	}
 }

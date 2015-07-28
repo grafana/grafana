@@ -15,7 +15,7 @@ var jobQueueInternalItems met.Gauge
 var jobQueueInternalSize met.Gauge
 var jobQueuePreAMQPItems met.Gauge
 var jobQueuePreAMQPSize met.Gauge
-var tickQueueItems met.Gauge
+var tickQueueItems met.Meter
 var tickQueueSize met.Gauge
 var dispatcherJobsSkippedDueToSlowJobQueueInternal met.Count
 var dispatcherJobsSkippedDueToSlowJobQueuePreAMQP met.Count
@@ -50,7 +50,7 @@ func Init(metrics met.Backend) {
 	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.InternalJobQueueSize))
 	jobQueuePreAMQPItems = metrics.NewGauge("alert-jobqueue-preamqp.items", 0)
 	jobQueuePreAMQPSize = metrics.NewGauge("alert-jobqueue-preamqp.size", int64(setting.PreAMQPJobQueueSize))
-	tickQueueItems = metrics.NewGauge("alert-tickqueue.items", 0)
+	tickQueueItems = metrics.NewMeter("alert-tickqueue.items", 0)
 	tickQueueSize = metrics.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
 	dispatcherJobsSkippedDueToSlowJobQueueInternal = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-internal-jobqueue")
 	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-pre-amqp-jobqueue")
