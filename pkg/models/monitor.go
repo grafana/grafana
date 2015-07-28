@@ -131,6 +131,14 @@ type MonitorForAlertDTO struct {
 	Updated         time.Time
 }
 
+func (m *MonitorForAlertDTO) SettingsMap() map[string]string {
+	settings := make(map[string]string)
+	for _, s := range m.Settings {
+		settings[s.Variable] = s.Value
+	}
+	return settings
+}
+
 type MonitorDTO struct {
 	Id              int64                    `json:"id"`
 	OrgId           int64                    `json:"org_id"`
