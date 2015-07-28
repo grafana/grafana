@@ -5,7 +5,6 @@ set -e
 [ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
 
 startGrafana() {
-<<<<<<< HEAD
     if [ -x /bin/systemctl ] ; then
         /bin/systemctl daemon-reload
         /bin/systemctl start grafana.service
