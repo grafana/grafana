@@ -179,6 +179,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 					Data: map[string]interface{}{
 						"Endpoint":   job.EndpointSlug,
 						"EndpointId": job.EndpointId,
+						"Settings":   job.Settings,
 						"CheckType":  job.MonitorTypeName,
 						"State":      res.String(),
 						"Timestamp":  job.LastPointTs,

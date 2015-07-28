@@ -22,6 +22,7 @@ type Job struct {
 	MonitorId       int64
 	EndpointId      int64
 	EndpointSlug    string
+	Settings        map[string]string
 	MonitorTypeName string
 	Notifications   m.MonitorNotificationSetting
 	Freq            int64
@@ -146,6 +147,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		MonitorId:       monitor.Id,
 		EndpointId:      monitor.EndpointId,
 		EndpointSlug:    monitor.EndpointSlug,
+		Settings:        monitor.SettingsMap(),
 		MonitorTypeName: monitor.MonitorTypeName,
 		Notifications:   monitor.HealthSettings.Notifications,
 		OrgId:           monitor.OrgId,
