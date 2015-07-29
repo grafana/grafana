@@ -1,5 +1,5 @@
 // Package graphite defines structures for interacting with a Graphite server.
-package graphite // import "bosun.org/graphite"
+package graphite
 
 import (
 	"encoding/json"
@@ -8,38 +8,19 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
+
+	bgraphite "bosun.org/graphite"
 )
 
 const requestErrFmt = "graphite RequestError (%s): %s"
-
-// Request holds query objects. Currently only absolute times are supported.
-type Request struct {
-	Start   *time.Time
-	End     *time.Time
-	Targets []string
-	URL     *url.URL
-}
-
-type Response []Series
-
-type Series struct {
-	Datapoints []DataPoint
-	Target     string
-}
-
-type DataPoint []json.Number
-
-func (r *Request) CacheKey() string {
-	targets, _ := json.Marshal(r.Targets)
-	return fmt.Sprintf("graphite-%d-%d-%s", r.Start.Unix(), r.End.Unix(), targets)
-}
 
 // Query performs a request to Graphite at the given host. host specifies
 // a hostname with optional port, and may optionally begin with a scheme
 // (http, https) to specify the protocol (http is the default). header is
 // the headers to send.
-func (r *Request) Query(host string, header http.Header) (Response, error) {
+func Query(r *bgraphite.Request, host string, header http.Header) (bgraphite.Response, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": r.Targets,
@@ -82,7 +63,7 @@ func (r *Request) Query(host string, header http.Header) (Response, error) {
 		}
 		return nil, fmt.Errorf(requestErrFmt, r.URL, fmt.Sprintf("Get failed: %s\n%s", resp.Status, strings.Join(*tb, "\n")))
 	}
-	var series Response
+	var series bgraphite.Response
 	err = json.NewDecoder(resp.Body).Decode(&series)
 	if err != nil {
 		e := fmt.Errorf(requestErrFmt, r.URL, "Json decode failed: "+err.Error())
@@ -120,24 +101,38 @@ var DefaultClient = &http.Client{
 	Timeout: time.Minute,
 }
 
-// Context is the interface for querying a Graphite server.
-type Context interface {
-	Query(*Request) (Response, error)
+type GraphiteContext struct {
+	Host        string
+	Header      http.Header
+	lock        sync.Mutex
+	Dur         time.Duration
+	MissingVals int
+	EmptyResp   int
 }
 
-// Host is a simple Graphite Context with no additional features.
-type Host string
+func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, error) {
+	pre := time.Now()
+	res, err := Query(r, gc.Host, gc.Header)
+	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
+	gc.lock.Lock()
+	defer gc.lock.Unlock()
+	for _, s := range res {
+		for _, p := range s.Datapoints {
+			if p[0] == "" {
+				gc.MissingVals += 1
+			}
+		}
+	}
 
-// Query performs a request to a Graphite server.
-func (h Host) Query(r *Request) (Response, error) {
-	return r.Query(string(h), nil)
-}
-
-type HostHeader struct {
-	Host   string
-	Header http.Header
-}
-
-func (h HostHeader) Query(r *Request) (Response, error) {
-	return r.Query(h.Host, h.Header)
+	// one Context might run multiple queries, we want to add all times
+	gc.Dur += time.Since(pre)
+	if gc.MissingVals > 0 {
+		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.MissingVals)
+	}
+	// TODO: find a way to verify the entire response, or at least the number of points.
+	if len(res) == 0 {
+		gc.EmptyResp += 1
+		return res, fmt.Errorf("GraphiteContext got an empty response")
+	}
+	return res, err
 }

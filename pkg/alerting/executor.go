@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/graphite"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
@@ -19,58 +19,21 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/streadway/amqp"
 
-	"bosun.org/graphite"
+	bgraphite "bosun.org/graphite"
 )
 
-type GraphiteReturner func(org_id int64) (graphite.Context, error)
+type GraphiteReturner func(org_id int64) (bgraphite.Context, error)
 
-type GraphiteContext struct {
-	hh          graphite.HostHeader
-	lock        sync.Mutex
-	dur         time.Duration
-	missingVals int
-	emptyResp   int
-}
-
-func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
-	pre := time.Now()
-	res, err := gc.hh.Query(r)
-	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
-	gc.lock.Lock()
-	defer gc.lock.Unlock()
-	for _, s := range res {
-		for _, p := range s.Datapoints {
-			if p[0] == "" {
-				gc.missingVals += 1
-			}
-		}
-	}
-
-	// one Context might run multiple queries, we want to add all times
-	gc.dur += time.Since(pre)
-	if gc.missingVals > 0 {
-		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
-	}
-	// TODO: find a way to verify the entire response, or at least the number of points.
-	if len(res) == 0 {
-		gc.emptyResp += 1
-		return res, fmt.Errorf("GraphiteContext got an empty response")
-	}
-	return res, err
-}
-
-func GraphiteAuthContextReturner(org_id int64) (graphite.Context, error) {
+func GraphiteAuthContextReturner(org_id int64) (bgraphite.Context, error) {
 	u, err := url.Parse(setting.GraphiteUrl)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse graphiteUrl: %q", err)
 	}
 	u.Path = path.Join(u.Path, "render/")
-	ctx := GraphiteContext{
-		hh: graphite.HostHeader{
-			Host: u.String(),
-			Header: http.Header{
-				"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
-			},
+	ctx := graphite.GraphiteContext{
+		Host: u.String(),
+		Header: http.Header{
+			"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 		},
 	}
 	return &ctx, nil
@@ -201,14 +164,14 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 
 	// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 	// we want to have some individual times
-	if gr, ok := gr.(*GraphiteContext); ok {
-		executorJobQueryGraphite.Value(gr.dur)
-		executorJobParseAndEval.Value(durationExec - gr.dur)
-		if gr.missingVals > 0 {
-			executorGraphiteMissingVals.Value(int64(gr.missingVals))
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		executorJobQueryGraphite.Value(gr.Dur)
+		executorJobParseAndEval.Value(durationExec - gr.Dur)
+		if gr.MissingVals > 0 {
+			executorGraphiteMissingVals.Value(int64(gr.MissingVals))
 		}
-		if gr.emptyResp != 0 {
-			executorGraphiteEmptyResponse.Inc(int64(gr.emptyResp))
+		if gr.EmptyResp != 0 {
+			executorGraphiteEmptyResponse.Inc(int64(gr.EmptyResp))
 		}
 	}
 
