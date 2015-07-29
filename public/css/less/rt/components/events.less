@@ -4,12 +4,19 @@
 
 
 
+
+rt-event-table * {
+  box-sizing: border-box;
+}
+
 .rt-event-time,
 .rt-event-endpoint,
+.rt-event-collector,
 .rt-event-type {
   margin-left: 50px;
 
-  @media (min-width: 650px) {
+  @media (min-width: 750px) {
+    width: 25%;
     margin: 0;
   }
 }
@@ -23,7 +30,7 @@
   float: left;
   margin-right: 15px;
 
-  @media (min-width: 650px) {
+  @media (min-width: 750px) {
     width: 25px;
     float: none;
     margin: 0;
@@ -32,22 +39,29 @@
 }
 
 .rt-event-time {
-  @media (min-width: 650px) {
-    width: 220px;
+  @media (min-width: 900px) {
+    width: 185px;
   }
 }
 
-.rt-event-endpoint {
-  @media (min-width: 650px) {
+.rt-event-endpoint,
+.rt-event-collector {
+  @media  (min-width: 750px) {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 900px) {
     width: 200px;
+    padding-right: 15px;
   }
+}
 
-  @media (min-width: 875px) {
-    width: 350px;
-  }
-
-  @media (min-width: 1000px) {
-    width: 400px;
+.rt-event-type {
+  @media (min-width: 900px) {
+    width: auto;
   }
 }
 
