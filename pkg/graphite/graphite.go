@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Unknwon/log"
 
 	bgraphite "bosun.org/graphite"
 )
@@ -20,7 +23,7 @@ const requestErrFmt = "graphite RequestError (%s): %s"
 // a hostname with optional port, and may optionally begin with a scheme
 // (http, https) to specify the protocol (http is the default). header is
 // the headers to send.
-func Query(r *bgraphite.Request, host string, header http.Header) (bgraphite.Response, error) {
+func Query(r *bgraphite.Request, host string, header http.Header) ([]byte, bgraphite.Response, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": r.Targets,
@@ -46,14 +49,14 @@ func Query(r *bgraphite.Request, host string, header http.Header) (bgraphite.Res
 	}
 	req, err := http.NewRequest("GET", r.URL.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf(requestErrFmt, r.URL, "NewRequest failed: "+err.Error())
+		return nil, nil, fmt.Errorf(requestErrFmt, r.URL, "NewRequest failed: "+err.Error())
 	}
 	if header != nil {
 		req.Header = header
 	}
 	resp, err := DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf(requestErrFmt, r.URL, "Get failed: "+err.Error())
+		return nil, nil, fmt.Errorf(requestErrFmt, r.URL, "Get failed: "+err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -61,15 +64,22 @@ func Query(r *bgraphite.Request, host string, header http.Header) (bgraphite.Res
 		if err != nil {
 			tb = &[]string{"<Could not read traceback: " + err.Error() + ">"}
 		}
-		return nil, fmt.Errorf(requestErrFmt, r.URL, fmt.Sprintf("Get failed: %s\n%s", resp.Status, strings.Join(*tb, "\n")))
+		return nil, nil, fmt.Errorf(requestErrFmt, r.URL, fmt.Sprintf("Get failed: %s\n%s", resp.Status, strings.Join(*tb, "\n")))
 	}
 	var series bgraphite.Response
+	dump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		e := fmt.Errorf(requestErrFmt, r.URL, "Reading HTTP response failed: "+err.Error())
+		return nil, series, e
+	}
+
 	err = json.NewDecoder(resp.Body).Decode(&series)
+
 	if err != nil {
 		e := fmt.Errorf(requestErrFmt, r.URL, "Json decode failed: "+err.Error())
-		return series, e
+		return dump, series, e
 	}
-	return series, nil
+	return dump, series, nil
 }
 
 func readTraceback(resp *http.Response) (*[]string, error) {
@@ -108,11 +118,17 @@ type GraphiteContext struct {
 	Dur         time.Duration
 	MissingVals int
 	EmptyResp   int
+	Response    []byte
 }
 
 func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, error) {
 	pre := time.Now()
-	res, err := Query(r, gc.Host, gc.Header)
+	resp, res, err := Query(r, gc.Host, gc.Header)
+	if err != nil {
+		return res, err
+	}
+	gc.Response = resp
+	log.Debug("graphite request for %q from %s to %s yielded response: %q", r.Targets, r.Start, r.End, resp)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
 	defer gc.lock.Unlock()
