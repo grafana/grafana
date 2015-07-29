@@ -166,6 +166,7 @@ func GetMonitorsForAlerts(query *m.GetMonitorsForAlertsQuery) error {
 	rawSql := `
 SELECT
     endpoint.slug as endpoint_slug,
+    endpoint.name as endpoint_name,
     monitor_type.name as monitor_type_name,
     monitor.*
 FROM monitor

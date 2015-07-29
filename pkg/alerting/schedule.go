@@ -21,6 +21,7 @@ type Job struct {
 	OrgId           int64
 	MonitorId       int64
 	EndpointId      int64
+	EndpointName    string
 	EndpointSlug    string
 	Settings        map[string]string
 	MonitorTypeName string
@@ -146,6 +147,7 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	j := &Job{
 		MonitorId:       monitor.Id,
 		EndpointId:      monitor.EndpointId,
+		EndpointName:    monitor.EndpointName,
 		EndpointSlug:    monitor.EndpointSlug,
 		Settings:        monitor.SettingsMap(),
 		MonitorTypeName: monitor.MonitorTypeName,

@@ -118,6 +118,7 @@ type MonitorForAlertDTO struct {
 	OrgId           int64
 	EndpointId      int64
 	EndpointSlug    string
+	EndpointName    string
 	MonitorTypeId   int64
 	MonitorTypeName string
 	Offset          int64

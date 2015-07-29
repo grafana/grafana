@@ -177,12 +177,14 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 					To:       emails,
 					Template: "alerting_notification.html",
 					Data: map[string]interface{}{
-						"Endpoint":   job.EndpointSlug,
-						"EndpointId": job.EndpointId,
-						"Settings":   job.Settings,
-						"CheckType":  job.MonitorTypeName,
-						"State":      res.String(),
-						"Timestamp":  job.LastPointTs,
+						"EndpointId":   job.EndpointId,
+						"EndpointName": job.EndpointName,
+						"EndpointSlug": job.EndpointSlug,
+						"Settings":     job.Settings,
+						"CheckType":    job.MonitorTypeName,
+						"State":        res.String(),
+						"TimeLastData": job.LastPointTs, // timestamp of the most recent data used
+						"TimeExec":     preExec,         // when we executed the alerting rule and made the determination
 					},
 				}
 
