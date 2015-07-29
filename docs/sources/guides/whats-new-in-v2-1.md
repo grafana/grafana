@@ -18,13 +18,13 @@ The 2.1 release brings numerous improvements that make dashboards more dynamic t
 ### Multi-Value Template Variables
 A template variable with Multi-Value enabled allows for the selection of multiple values at the same time.
 These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of your data.
-Multi-Value variables is also enabling the new Row repeat and Panel repeat feature described below.
+Multi-Value variables is also enabling the new `row repeat` and `panel repeat` feature described below.
 
 ![Multi-Value Select](/img/v2/multi-select.gif "Multi-Value Select")
 <br/><br/>
 
 ### Repeating Rows and Panels
-It’s now possible to create a Dashboard that automatically adds (or removes) both Rows and Panels based
+It’s now possible to create a dashboard that automatically adds (or removes) both rows and panels based
 on selected variable values. Any row or any panel can be configured to repeat (duplicate itself) based
 on a multi-value template variable.</p>
 
@@ -32,12 +32,15 @@ on a multi-value template variable.</p>
 <br/><br/>
 
 ### Dashboard Links & Navigation
-To support better navigation between Dashboarads, it's now possible to create custom and dynamic links from individual
-Panels to appropriate Dashboards. You also have the ability to create flexible top-level links on any
-given Dashboard thanks to the new Dashboard navigation bar feature.
+To support better navigation between dashboards, it's now possible to create custom and dynamic links from individual
+panels to appropriate Dashboards. You also have the ability to create flexible top-level links on any
+given dashboard thanks to the new dashboard navigation bar feature.
 
-![Dashboard Links](/img/v2/panel-link.png "Dashboard Links")
-<br/><br/>
+![Dashboard Links](/img/v2/dash_links.png "Dashboard Links")
+
+Dashboard links can be added under dashboard settings. Either defined as static URLs with a custom icon or as dynamic
+dashboard links or dropdowns based on custom dashboard search query. These links appear in the same
+row under the top menu where template variables appear.
 
 ### Better local Dashboard support
 Grafana can now index Dashboards saved locally as JSON from a given directory.
@@ -69,7 +72,7 @@ You can now authenticate utilizing a header (eg. X-Authenticated-User, or X-WEBA
 
 ### New “Read-only Editor” User Role
 There is a new User role available in this version of Grafana: “Read-only Editor”. This role behaves just
-like the Viewer role does in Grafana 2.0.  That is you can edit graphs and queries but no save dashboards.
+like the Viewer role does in Grafana 2.0.  That is you can edit graphs and queries but not save dashboards.
 The Viewer role has been modified in Grafana 2.1 so that users assigned this role can no longer edit panels.
 
 - - -
