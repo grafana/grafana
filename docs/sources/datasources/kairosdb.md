@@ -36,12 +36,13 @@ KairosDB Datasource Plugin provides following functions in `Variables values que
 
 Name | Description
 ---- | ----
-`metrics(query)` | Returns a list of metric names. If nothing is given, returns a list of all metric names.
-`tag_names(query)` | Returns a list of tag names. If nothing is given, returns a list of all tag names.
-`tag_values(query)` | Returns a list of tag values. If nothing is given, returns a list of all tag values.
+`metrics(query)` | Returns a list of metric names matching `query`. If nothing is given, returns a list of all metric names.
+`tag_names(query)` | Returns a list of tag names matching `query`. If nothing is given, returns a list of all tag names.
+`tag_values(metric, tag)` | Returns a list of values for `tag` from the given `metric`.
 
 For details of `metric names`, `tag names`, and `tag values`, please refer to the KairosDB documentations.
 
 - [List Metric Names - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/ListMetricNames.html)
 - [List Tag Names - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/ListTagNames.html)
 - [List Tag Values - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/ListTagValues.html)
+- [Query Metrics - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/QueryMetrics.html).
