@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Unknwon/log"
+	"github.com/grafana/grafana/pkg/log"
 
 	bgraphite "bosun.org/graphite"
 )
