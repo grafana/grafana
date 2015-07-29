@@ -4,28 +4,37 @@ page_description: What's new in Grafana v2.1
 page_keywords: grafana, new, changes, features, documentation
 ---
 
-#What's new in Grafana v2.1
+# What's new in Grafana v2.1
 
-##More Dynamic Dashboards
-The Templating system is one of the most powerful and well-used features of Grafana. The 2.1 release brings numerous improvements that make Dashboards more dynamic than ever before.
+Grafana 2.1 brings improvements in three core areas: dashboarding, authentication, and data sources.
+As with every Grafana release, there is a whole slew of new features, enhancements, and bug fixes. To see everyting
+that's been added to Grafana 2.1 head over to the <a href="https://github.com/grafana/grafana/issues?page=4&q=milestone%3A2.1+is%3Aclosed" target="_blank">2.1 milestone issues section</a>.
 
-### Multi-Value Template Select
-Multi-Value Select allows for the selection of multiple template variables.
-These variables can be used in any Panel to make them more dynamic, and automatically show only the desired data.
-Multi-Value Select is also a basis for enabling Repeating Rows and Repeating Panels.
+
+## More Dynamic Dashboards
+The Templating system is one of the most powerful and well-used features of Grafana.
+The 2.1 release brings numerous improvements that make dashboards more dynamic than ever before.
+
+### Multi-Value Template Variables
+A template variable with Multi-Value enabled allows for the selection of multiple values selected at the
+same time. These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of
+your data. Multi-Value variables is also enabling the new Row repeat and Panel repeat feature described below.
 
 ![Multi-Value Select](/img/v2/multi-select.gif "Multi-Value Select")
 <br/><br/>
 
 ### Repeating Rows and Panels
-It’s now possible to create a Dashboard that automatically adds (and removes) both Rows and Panels based on which Template variables you have selected.
-Any Row or Any Panel can be configured to repeat (duplicate itself) based on the Multi-Value Template variables selected.
+It’s now possible to create a Dashboard that automatically adds (or removes) both Rows and Panels based
+on selected variable values. Any row or any panel can be configured to repeat (duplicate itself) based
+on a multi-value template variable.</p>
 
 ![Repeating Rows and Panels](/img/v2/panel-row-repeat.gif "Repeating Rows and Panels")
 <br/><br/>
 
-### Dashboard Links
-To support better navigation between Dashboarads, it is possible to create custom and dynamic links from individual Panels to appropriate Dashboards (1888)
+### Dashboard Links & Navigation
+To support better navigation between Dashboarads, it's now possible to create custom and dynamic links from individual
+Panels to appropriate Dashboards. You also have the ability to create flexible top-level links on any
+given Dashboard thanks to the new Dashboard navigation bar feature.
 
 ![Dashboard Links](/img/v2/panel-link.png "Dashboard Links")
 <br/><br/>
@@ -37,52 +46,62 @@ Grafana can now index Dashboards saved locally as JSON from a given directory.
 
 - - -
 
-## Improved authentication engine
-New authentication methods add numerous options to manage users, roles and organizations. Grafana 2.1 also includes a "Read-only Editor" role which disables the query editor for that user.
+## New Authentication Options
+New authentication methods add numerous options to manage users, roles and organizations.
+Grafana 2.1 also includes a "Read-only Editor" role.
 
 ### LDAP support
-This highly requested feature now allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP group memberships and Grafana Organization user roles.
+This highly requested feature now allows your Grafana users to login with their LDAP credentials.
+You can also specify mappings between LDAP group memberships and Grafana Organization user roles.
 
-### Basic Auth support
+### Basic Auth Support
 You can now authenticate against the Grafana API utilizing a simple username and password with basic HTTP authentication.
 
-> ***Note:*** This can be useful for provisioning and config management systems that need to utilize the API without having to create an API key.
+> ***Note:*** This can be useful for provisioning and config management systems that need
+> to utilize the API without having to create an API key.
 
 
-### User authentication utilizing headers
+### Auth Proxy Support
 You can now authenticate utilizing a header (eg. X-Authenticated-User, or X-WEBAUTH-USER)
 
 > ***Note:*** this can be useful in situations with reverse proxies.
 
 
 ### New “Read-only Editor” User Role
-There is a new User role available in this version of Grafana: “Read-only Editor”. This role behaves just like the Viewer role does in Grafana 2.0.
-That is you can edit graphs and queries but no save dashboards. The Viewer role has been modified in Grafana 2.1 so that users assigned this role
-can no longer edit panels.
+There is a new User role available in this version of Grafana: “Read-only Editor”. This role behaves just
+like the Viewer role does in Grafana 2.0.  That is you can edit graphs and queries but no save dashboards.
+The Viewer role has been modified in Grafana 2.1 so that users assigned this role can no longer edit panels.
 
 - - -
 
-## Improved data source support
+## Data source Improvements
 
-### Improved Data Sources
-We continue to make progress on fully supporting InfluxDB 0.9, but it has proven to be a bit of a moving target. This Grafana release brings a much improved query editor for InfluxDB 0.9
+### InfluxDB 0.9 Support
+Grafana 2.1 now comes with full support for InfluxDB 0.9. There is a new query editor designed from the start
+for the new features InfluxDB 0.9 enables.
 
 ![InfluxDB Support](/img/v2/influx-query.gif "InfluxDB Support")
 <br/><br/>
 
 
 ### OpenTSDB Data Source improvements
-Grafana now supports template variable values lookup queries, as well as limiting tags by metric
+Grafana OpenTSDB data source now supports template variable values queries. This means you can create
+template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
+The query editor is also enhanced to limiting tags by metric.
 
 > ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup api)
 
-
 ### New Data Source: KairosDB
-Experimental support for the KairosDB is now shipping in Grafana. Thank you to < > for their hard work in getting it to this point.
+The Cassandra backed time series database KairosDB is now supported in Grafana out of the box. Thank you to
+<a href="https://github.com/masaori335" target="_blank">masaori335</a> for his hard work in getting it to this point.
 
 - - -
 
 ## Panel Improvements
+
+Grafana 2.1 gives you even more flexibility customizing how individual panels render.
+Overriding the colors of specific series using regular expressions, changing how series stack,
+and allowing string values will help you better understand your data at a glance.
 
 ### Graph Panel
 Define series color using regex rule
