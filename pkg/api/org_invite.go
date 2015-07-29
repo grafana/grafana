@@ -134,6 +134,9 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	}
 
 	invite := query.Result
+	if invite.Status != m.TmpUserInvitePending {
+		return ApiError(412, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
+	}
 
 	cmd := m.CreateUserCommand{
 		Email:    completeInvite.Email,
@@ -164,6 +167,7 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	loginUserWithUser(&user, c)
 
 	metrics.M_Api_User_SignUp.Inc(1)
+	metrics.M_Api_User_SignUpInvite.Inc(1)
 
 	return ApiSuccess("User created and logged in")
 }
