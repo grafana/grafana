@@ -93,6 +93,8 @@ func ChanExecutor(fn GraphiteReturner, jobQueue JobQueue, cache *lru.Cache) {
 // if they processed succesfully or encountered a fatal error
 // (i.e. an error that we know won't recover on future retries, so no point in retrying)
 func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Cache) {
+	executorNum.Inc(1)
+	defer executorNum.Dec(1)
 	consumer.Consume(func(msg *amqp.Delivery) error {
 		job := Job{}
 		if err := json.Unmarshal(msg.Body, &job); err != nil {
