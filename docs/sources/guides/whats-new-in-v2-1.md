@@ -16,9 +16,9 @@ The Templating system is one of the most powerful and well-used features of Graf
 The 2.1 release brings numerous improvements that make dashboards more dynamic than ever before.
 
 ### Multi-Value Template Variables
-A template variable with Multi-Value enabled allows for the selection of multiple values selected at the
-same time. These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of
-your data. Multi-Value variables is also enabling the new Row repeat and Panel repeat feature described below.
+A template variable with Multi-Value enabled allows for the selection of multiple values at the same time.
+These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of your data.
+Multi-Value variables is also enabling the new Row repeat and Panel repeat feature described below.
 
 ![Multi-Value Select](/img/v2/multi-select.gif "Multi-Value Select")
 <br/><br/>
