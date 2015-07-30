@@ -40,6 +40,7 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+<<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
@@ -47,6 +48,12 @@ var dataProxyTransport = &http.Transport{
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
  * @related issues:	OWL-168, OWL-123, OWL-028, OWL-017, OWL-002
+=======
+/**
+ * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
+ * @description:	This function initializes a reverse proxy.
+ * @related issues:	OWL-168, OWL-017, OWL-002
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
  * @param:			ds *m.DataSource
  * @param:			proxyPath string
  * @param:			targetUrl *url.URL
@@ -58,6 +65,7 @@ var dataProxyTransport = &http.Transport{
  *					 in pkg/api/dataproxy.go
  */
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+	target, _ := url.Parse(ds.Url)
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host
@@ -157,9 +165,24 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
+<<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 >>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
 		} else {
 <<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+		} else if ds.Type == "openfalcon" {
+			reqQueryVals.Add("target", ds.Url)
+			req.URL.RawQuery = reqQueryVals.Encode()
+
+			ds.Url = "http://localhost"
+			var port = "4001"
+			ds.Url += ":" + port
+			proxyPath = "/"
+			target, _ := url.Parse(ds.Url)
+			req.URL.Scheme = target.Scheme
+			req.URL.Host = target.Host
+			req.Host = target.Host
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		} else {
