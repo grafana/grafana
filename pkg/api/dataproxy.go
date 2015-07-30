@@ -1,6 +1,11 @@
 package api
 
 import (
+	// "fmt"
+	// "strings"
+	// "bytes"
+	// "reflect"
+	
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -26,12 +31,35 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+<<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host
 		req.Host = targetUrl.Host
 
+=======
+
+/**
+ * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy
+ * @description:	This function initializes a reverse proxy.
+ * @related issues:	OWL-017, OWL-002
+ * @param:			*m.DataSource ds
+ * @param:			string proxyPath
+ * @return:			*httputil.ReverseProxy
+ * @author:			Don Hsieh
+ * @since:			07/17/2015
+ * @last modified: 	07/30/2015
+ * @called by:		func ProxyDataSourceRequest(c *middleware.Context)
+ *					 in pkg/api/dataproxy.go
+ */
+func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy {
+	target, _ := url.Parse(ds.Url)
+	director := func(req *http.Request) {
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.Host = target.Host		
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 		reqQueryVals := req.URL.Query()
 
 		if ds.Type == m.DS_INFLUXDB_08 {
@@ -43,14 +71,40 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 			reqQueryVals.Add("db", ds.Database)
 			req.URL.RawQuery = reqQueryVals.Encode()
+<<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
 			if !ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
+=======
+		} else if ds.Type == "openfalcon" {
+			// fmt.Printf("Welcome to %v!\n", ds.Type)
+			// fmt.Printf("NewReverseProxy req = %v\n", req)
+			// fmt.Printf("NewReverseProxy req.Method = %v\n", req.Method)
+			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
+			// fmt.Printf("NewReverseProxy req.RequestURI = %v\n", req.RequestURI)
+			reqQueryVals.Add("target", ds.Url)
+			req.URL.RawQuery = reqQueryVals.Encode()
+
+			ds.Url = "http://localhost"
+			var port = "4001"
+			ds.Url += ":" + port
+			// fmt.Printf("NewReverseProxy ds.Url = %v\n", ds.Url)
+			proxyPath = "/"
+			target, _ := url.Parse(ds.Url)
+			// fmt.Printf("NewReverseProxy target = %v\n", target)
+			req.URL.Scheme = target.Scheme
+			req.URL.Host = target.Host
+			req.Host = target.Host
+			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+			// fmt.Printf("NewReverseProxy req.URL.Path = %v\n", req.URL.Path)
+			// fmt.Printf("NewReverseProxy Now = %v\n", int32(time.Now().Unix()))
+			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
+			// fmt.Printf("NewReverseProxy req.URL.RawQuery = %v\n", req.URL.RawQuery)
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 		} else {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 		}
-
 		if ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
@@ -88,6 +142,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+<<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -104,4 +159,12 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}
+=======
+	proxyPath := c.Params("*")
+	// fmt.Printf("proxyPath = %v\n", proxyPath)
+	proxy := NewReverseProxy(&query.Result, proxyPath)
+	// fmt.Printf("proxy = %v\n", proxy)
+	proxy.Transport = dataProxyTransport
+	proxy.ServeHTTP(c.RW(), c.Req.Request)
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 }
