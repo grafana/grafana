@@ -74,7 +74,11 @@
 
       <ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
 				<li ng-repeat="segment in segments" role="menuitem">
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 					<metric-segment segment="segment" get-alt-segments="getAltSegments($index, str)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
+=======
+					<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 				</li>
 				<li ng-repeat="func in functions">
           <span graphite-func-editor class="tight-form-item tight-form-func">

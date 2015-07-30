@@ -63,14 +63,25 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       try {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         parseTargetRecursive(astNode);
       }
       catch (err) {
+=======
+        parseTargeRecursive(astNode);
+      }
+      catch (err) {
+        console.log('error parsing target:', err.message);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
         $scope.parserError = err.message;
         $scope.target.textEditor = true;
       }
 
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
       // checkOtherSegments($scope.segments.length - 1);
+=======
+      checkOtherSegments($scope.segments.length - 1);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
     }
 
     function addFunctionParameter(func, value, index, shiftBack) {
@@ -80,7 +91,11 @@ function (angular, _, config, gfunc, Parser) {
       func.params[index] = value;
     }
 
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
     function parseTargetRecursive(astNode, func, index) {
+=======
+    function parseTargeRecursive(astNode, func, index) {
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
       if (astNode === null) {
         return null;
       }
@@ -90,7 +105,11 @@ function (angular, _, config, gfunc, Parser) {
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
           parseTargetRecursive(param, innerFunc, index);
+=======
+          parseTargeRecursive(param, innerFunc, index);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
         });
 
         innerFunc.updateText();
@@ -117,6 +136,10 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+=======
+          // console.log('$scope.segments = _.map() segment =', segment);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
           return new MetricSegment(segment);
         });
       }
@@ -146,6 +169,7 @@ function (angular, _, config, gfunc, Parser) {
             }
             return;
           }
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 
           if ($scope.segments.length === fromIndex) {
             $scope.segments.push(MetricSegment.newSelectMetric());
@@ -154,6 +178,16 @@ function (angular, _, config, gfunc, Parser) {
           //   return checkOtherSegments(fromIndex + 1);
           // }
 
+=======
+          // if (segments[0].expandable) {
+            if ($scope.segments.length === fromIndex) {
+              $scope.segments.push(MetricSegment.newSelectMetric());
+            }
+            else {
+              return checkOtherSegments(fromIndex + 1);
+            }
+          // }
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
@@ -161,6 +195,10 @@ function (angular, _, config, gfunc, Parser) {
     }
 
     function setSegmentFocus(segmentIndex) {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+=======
+      console.log('function setSegmentFocus segmentIndex =', segmentIndex);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
       _.each($scope.segments, function(segment, index) {
         segment.focus = segmentIndex === index;
       });
@@ -170,8 +208,14 @@ function (angular, _, config, gfunc, Parser) {
       return func.render(target);
     }
 
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
     $scope.getAltSegments = function (index, hostname) {
       var query = index === 0 ? '*.' + hostname : getSegmentPathUpTo(index) + '.*';
+=======
+    $scope.getAltSegments = function (index) {
+      console.log('$scope.getAltSegments index =', index);
+      var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
           var altSegments = _.map(segments, function(segment) {
@@ -200,7 +244,12 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.segmentValueChanged = function (segment, segmentIndex) {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 
+=======
+      console.log('$scope.segmentValueChanged segment =', segment);
+      console.log('$scope.segmentValueChanged segmentIndex =', segmentIndex);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
       delete $scope.parserError;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
@@ -298,6 +347,22 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
 
+<<<<<<< ef701408167999d9f46bc7c3f27910985ff8e7f6
+=======
+    $scope.moveMetricQuery = function(fromIndex, toIndex) {
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+=======
+      console.log('$scope.moveMetricQuery $scope.panel.targets =', $scope.panel.targets);
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
+      _.move($scope.panel.targets, fromIndex, toIndex);
+    };
+
+    $scope.duplicate = function() {
+      var clone = angular.copy($scope.target);
+      $scope.panel.targets.push(clone);
+    };
+
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
     function MetricSegment(options) {
       if (options === '*' || options.value === '*') {
         this.value = '*';
@@ -320,4 +385,9 @@ function (angular, _, config, gfunc, Parser) {
     $scope.init();
 
   });
+<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 });
+=======
+
+});
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.

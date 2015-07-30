@@ -39,10 +39,28 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+<<<<<<< ef701408167999d9f46bc7c3f27910985ff8e7f6
 <<<<<<< c4053e22324c3bff1672d18b358c821047df4ec3
 <<<<<<< 98cbab4ab5c4a3e9cb0b7f87b2ebe2e76d292acb
 <<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
+=======
+/**
+ * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
+ * @description:	This function initializes a reverse proxy.
+ * @related issues:	OWL-168, OWL-017, OWL-002
+ * @param:			ds *m.DataSource
+ * @param:			proxyPath string
+ * @param:			targetUrl *url.URL
+ * @return:			*httputil.ReverseProxy
+ * @author:			Don Hsieh
+ * @since:			07/17/2015
+ * @last modified: 	11/09/2015
+ * @called by:		func ProxyDataSourceRequest(c *middleware.Context)
+ *					 in pkg/api/dataproxy.go
+ */
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+	target, _ := url.Parse(ds.Url)
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host
@@ -97,6 +115,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
+<<<<<<< ef701408167999d9f46bc7c3f27910985ff8e7f6
 <<<<<<< c4053e22324c3bff1672d18b358c821047df4ec3
 =======
 		} else if ds.Type == "openfalcon" {
@@ -105,6 +124,10 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			reqQueryVals.Add("target", ds.Url)
 			reqQueryVals.Add("urlDashboard", urlDashboard)
 			reqQueryVals.Add("urlQuery", urlQuery)
+=======
+		} else if ds.Type == "openfalcon" {
+			reqQueryVals.Add("target", ds.Url)
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 			req.URL.RawQuery = reqQueryVals.Encode()
 
 			ds.Url = "http://localhost"
@@ -116,6 +139,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			req.URL.Host = target.Host
 			req.Host = target.Host
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+<<<<<<< ef701408167999d9f46bc7c3f27910985ff8e7f6
 <<<<<<< aedb273f3baeaf58ed16d85efb16b4645680f121
 			// fmt.Printf("NewReverseProxy req.URL.Path = %v\n", req.URL.Path)
 			// fmt.Printf("NewReverseProxy Now = %v\n", int32(time.Now().Unix()))
@@ -132,6 +156,8 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 >>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
 =======
 >>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
+=======
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 		} else {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 		}
