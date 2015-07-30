@@ -367,6 +367,7 @@ define([
       }
 
       switch (id) {
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
       case 'true': {
         type = 'bool';
         break;
@@ -375,6 +376,8 @@ define([
         type = 'bool';
         break;
       }
+=======
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
       default:
         type = "identifier";
       }
@@ -387,7 +390,11 @@ define([
 
     },
 
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
     /*
+=======
+      /*
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
      * Extract a numeric literal out of the next sequence of
      * characters or return 'null' if its not possible. This method
      * supports all numeric literals described in section 7.8.3

@@ -88,6 +88,7 @@ function (_, $) {
   });
 
   addFuncDef({
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
     name: 'multiplySeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
@@ -95,6 +96,8 @@ function (_, $) {
   });
 
   addFuncDef({
+=======
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
     name: 'asPercent',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
@@ -249,7 +252,11 @@ function (_, $) {
       {
         name: "function",
         type: "string",
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
         options: ['sum', 'avg', 'maxSeries']
+=======
+        options: ['sum', 'avg']
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
       }
     ],
     defaultParams: [3, "sum"]
@@ -611,11 +618,14 @@ function (_, $) {
   });
 
   addFuncDef({
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
     name: 'removeEmptySeries',
     category: categories.Filter
   });
 
   addFuncDef({
+=======
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
     name: 'useSeriesAbove',
     category: categories.Filter,
     params: [

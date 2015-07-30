@@ -3,9 +3,15 @@
   "name": "Open-Falcon",
 
   "type": "openfalcon",
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
   "serviceName": "OpenfalconDatasource",
 
   "module": "app/plugins/datasource/openfalcon/datasource",
+=======
+  "serviceName": "OpenFalconDatasource",
+
+  "module": "plugins/datasource/openfalcon/datasource",
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 
   "partials": {
     "config": "app/plugins/datasource/openfalcon/partials/config.html",

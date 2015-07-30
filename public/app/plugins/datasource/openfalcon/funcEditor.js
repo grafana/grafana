@@ -8,7 +8,11 @@ function (angular, _, $) {
 
   angular
     .module('grafana.directives')
+<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
     .directive('openfalconFuncEditor', function($compile, templateSrv) {
+=======
+    .directive('graphiteFuncEditor', function($compile, templateSrv) {
+>>>>>>> [OWL-17] Add "Open-Falcon" data source.
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
