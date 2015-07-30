@@ -183,7 +183,7 @@ function (angular, app, _, $) {
         elem.click(function() {
           if (panel.links.length === 0) { return; }
           var link = panel.links[0];
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(link);
+          var linkInfo = linkSrv.getPanelLinkAnchorInfo(link, scope.panel.scopedVars);
           if (panel.links[0].targetBlank) {
             var redirectWindow = window.open(linkInfo.href, '_blank');
             redirectWindow.location;
