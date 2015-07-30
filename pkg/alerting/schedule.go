@@ -131,20 +131,18 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		"ToLower": strings.ToLower,
 	}
 
-	// graphite returns 1 series of <steps> points, each the sum of the errors of all enabled collectors
-	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
-	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
+	// note: in graphite, using the series-wise sum(), sum(1+null) = 1, and sum(null+null) gets dropped from the result!
+	// in bosun, series-wise sum() doesn't exist, you can only sum over time. (though functions like t() help)
+	// when bosun pulls in graphite results, null values are removed from the series.
+	// we get from graphite the raw (incl nulls) series, so that we can inspect and log/instrument nulls
+	// bosun does all the logic as follows: see how many collectors are errorring .Steps in a row, using streak
+	// transpose that, to get a 1/0 for each sufficiently-erroring collector, sum them together and compare to the threshold.
 
-	target := `sum(litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
-	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
+	// note: it may look like the end of the queried interval is ambiguous here, and if offset > frequency, may include "too recent" values by accident.
+	// fear not, as when we execute the alert in the executor, we set the lastPointTs as end time
 
-	// don't do summing in graphite, we want to see the individual points in the data input.
-	// instead do summing through bosun (which requires a transpose)
-	// TODO this is not equivalent yet, because i don't know how to do a series-wise sum in bosun, but that's ok, as we mainly care about debugging the graphite output.
-	if setting.AlertingInspect {
-		target = `litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
-		tpl = `sum(t(sum(graphite("` + target + `", "{{.Duration}}s", "", ""))) >= {{.NumCollectors}}) == {{.Steps}}`
-	}
+	target := `litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state`
+	tpl := `sum(t(streak(graphite("` + target + `", "{{.Duration}}s", "", "")) == {{.Steps}} , "")) >= {{.NumCollectors}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
