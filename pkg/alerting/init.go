@@ -84,9 +84,15 @@ func Construct() {
 	if err != nil {
 		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
 	}
-	sec := setting.Cfg.Section("event_publisher")
-	if sec.Key("enabled").MustBool(false) {
-		//rabbitmq is enabled, let's use it for our jobs.
+
+	if setting.AlertingHandler != "amqp" && setting.AlertingHandler != "builtin" {
+		log.Fatal(0, "alerting handler must be either 'builtin' or 'amqp'")
+	}
+	if setting.AlertingHandler == "amqp" {
+		sec := setting.Cfg.Section("event_publisher")
+		if !sec.Key("enabled").MustBool(false) {
+			log.Fatal(0, "alerting handler 'amqp' requires the event_publisher to be enabled")
+		}
 		url := sec.Key("rabbitmq_url").String()
 		if err := distributed(url, cache); err != nil {
 			log.Fatal(0, "failed to start amqp consumer.", err)

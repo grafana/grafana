@@ -86,8 +86,10 @@ func main() {
 	}
 	metricpublisher.Init(metricsBackend)
 	api.InitCollectorController(metricsBackend)
-	alerting.Init(metricsBackend)
-	alerting.Construct()
+	if setting.AlertingEnabled {
+		alerting.Init(metricsBackend)
+		alerting.Construct()
+	}
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
