@@ -318,19 +318,36 @@ automatically signed up.
 <hr>
 
 ## [auth.basic]
-### enable
-When enable is `true` (default) the http api will accept basic authentication.
+### enabled
+When enabled is `true` (default) the http api will accept basic authentication.
 
 <hr>
 
 ## [auth.ldap]
-### enable
+### enabled
 Set to `true` to enable ldap integration (default: `false`)
 
 ### config_file
 Path to the ldap specific configuration file (default: `/etc/grafana/ldap.toml`)
 
 > For detail on LDAP Configuration, go to the [Ldap Integration](ldap.md) page.
+
+<hr>
+
+## [auth.proxy]
+This feature allows you to handle authentication in a http reverse proxy.
+
+### enabled
+Defaults to `false`
+
+### header_name
+Defaults to X-WEBAUTH-USER
+
+#### header_property
+Defaults to username but can also be set to email
+
+### auto_sign_up
+Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 
 <hr>
 
