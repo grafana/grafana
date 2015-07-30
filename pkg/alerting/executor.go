@@ -48,7 +48,11 @@ func ChanExecutor(fn GraphiteReturner, jobQueue JobQueue, cache *lru.Cache) {
 	for job := range realQueue {
 		jobQueueInternalItems.Value(int64(len(realQueue)))
 		jobQueueInternalSize.Value(int64(setting.InternalJobQueueSize))
-		execute(fn, job, cache)
+		if setting.AlertingInspect {
+			inspect(fn, job, cache)
+		} else {
+			execute(fn, job, cache)
+		}
 	}
 }
 
@@ -65,7 +69,12 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			return nil
 		}
 		job.StoreMetricFunc = api.StoreMetric
-		err := execute(GraphiteAuthContextReturner, &job, cache)
+		var err error
+		if setting.AlertingInspect {
+			inspect(GraphiteAuthContextReturner, &job, cache)
+		} else {
+			err = execute(GraphiteAuthContextReturner, &job, cache)
+		}
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "fatal:") {
 				log.Error(0, err.Error()+". removing job from queue")
@@ -75,6 +84,31 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 		}
 		return err
 	})
+}
+
+func inspect(fn GraphiteReturner, job *Job, cache *lru.Cache) {
+	key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
+	if found, _ := cache.ContainsOrAdd(key, true); found {
+		log.Debug("Job %s already done", job)
+		return
+	}
+	gr, err := fn(job.OrgId)
+	if err != nil {
+		log.Debug("Job %s: FATAL: %q", job, err)
+		return
+	}
+	evaluator, err := NewGraphiteCheckEvaluator(gr, job.Definition)
+	if err != nil {
+		log.Debug("Job %s: FATAL: invalid check definition: %q", job, err)
+		return
+	}
+
+	res, err := evaluator.Eval(job.LastPointTs)
+	if err != nil {
+		log.Debug("Job %s: FATAL: eval failed: %q", job, err)
+		return
+	}
+	log.Debug("Job %s results: %v", job, res)
 }
 
 // execute executes an alerting job and returns any errors.

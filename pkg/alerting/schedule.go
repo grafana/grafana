@@ -138,6 +138,14 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	target := `sum(litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
 	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
 
+	// don't do summing in graphite, we want to see the individual points in the data input.
+	// instead do summing through bosun (which requires a transpose)
+	// TODO this is not equivalent yet, because i don't know how to do a series-wise sum in bosun, but that's ok, as we mainly care about debugging the graphite output.
+	if setting.AlertingInspect {
+		target = `litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
+		tpl = `sum(t(sum(graphite("` + target + `", "{{.Duration}}s", "", ""))) >= {{.NumCollectors}}) == {{.Steps}}`
+	}
+
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
 	err := t.Execute(&b, settings)

@@ -439,6 +439,13 @@ They have low cpu and memory overhead but may query your datastore simultaneousl
 
 Whether to write the individual state metrics for each alerting rule. Defaults to false
 
+### inspect
+`true` or `false`. Is disabled by default.
+`true` will cause job schedulers to schedule debug jobs that query Graphite for non-aggregated, raw data,
+and will cause job executors to evaluate and debug log the results of the jobs, instead of actually treating
+them as a real job (saving the results, sending notifications, instrumenting, etc)
+
+
 <hr>
 
 ## [analytics]
