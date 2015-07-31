@@ -102,6 +102,12 @@ define([
         expect(query).to.be('SHOW TAG KEYS FROM "cpu"');
       });
 
+      it('should handle regex measurement in tag keys query', function() {
+        var builder = new InfluxQueryBuilder({ measurement: '/.*/', tags: [] });
+        var query = builder.buildExploreQuery('TAG_KEYS');
+        expect(query).to.be('SHOW TAG KEYS FROM /.*/');
+      });
+
       it('should have no conditions in tags keys query given query with no measurement or tag', function() {
         var builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
         var query = builder.buildExploreQuery('TAG_KEYS');

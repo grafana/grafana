@@ -44,7 +44,10 @@ function (_) {
     }
 
     if (measurement) {
-      query += ' FROM "' + measurement + '"';
+      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+        measurement = '"' + measurement+ '"';
+      }
+      query += ' FROM ' + measurement;
     }
 
     if (withKey) {
