@@ -16,6 +16,7 @@ import (
 )
 
 const requestErrFmt = "graphite RequestError (%s): %s"
+const parseErrFmt = "graphite ParseErrors %s:\nTrace: %s"
 
 // Query performs a request to Graphite at the given host. host specifies
 // a hostname with optional port, and may optionally begin with a scheme
@@ -142,7 +143,8 @@ func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, erro
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
 	defer gc.lock.Unlock()
-	gc.Traces = append(gc.Traces, Trace{r, resp})
+	trace := Trace{r, resp}
+	gc.Traces = append(gc.Traces, trace)
 
 	start := gc.AssertStart.Unix()
 
@@ -191,7 +193,7 @@ func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, erro
 		errors = append(errors, fmt.Sprintf("expected >= %d series. got %d", gc.AssertMinSeries, len(res)))
 	}
 	if len(errors) > 0 {
-		err = fmt.Errorf("GraphiteContext errors: %s", errors)
+		err = fmt.Errorf(parseErrFmt, errors, trace)
 	}
 	return res, err
 }
