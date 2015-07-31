@@ -143,7 +143,11 @@ function (angular, _) {
     };
 
     $scope.gotoEventDashboard = function(endpoint, type) {
-      $location.path("/dashboard/file/rt-events.json").search({"var-collector": "All", "var-endpoint": endpoint.slug, "var-monitor_type": type});
+      $location.path("/dashboard/file/rt-events.json").search({
+        "var-collector": "All",
+        "var-endpoint": endpoint.slug,
+        "var-monitor_type": type
+      });
     };
 
     $scope.refresh = function() {
