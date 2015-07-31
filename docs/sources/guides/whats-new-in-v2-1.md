@@ -5,11 +5,8 @@ page_keywords: grafana, new, changes, features, documentation
 ---
 
 # What's new in Grafana v2.1
-
 Grafana 2.1 brings improvements in three core areas: dashboarding, authentication, and data sources.
-As with every Grafana release, there is a whole slew of new features, enhancements, and bug fixes. To see everyting
-that's been added to Grafana 2.1 head over to the <a href="https://github.com/grafana/grafana/issues?page=4&q=milestone%3A2.1+is%3Aclosed" target="_blank">2.1 milestone issues section</a>.
-
+As with every Grafana release, there is a whole slew of new features, enhancements, and bug fixes.
 
 ## More Dynamic Dashboards
 The Templating system is one of the most powerful and well-used features of Grafana.
@@ -89,7 +86,7 @@ for the new features InfluxDB 0.9 enables.
 
 <br/>
 
-### OpenTSDB Data Source improvements
+### OpenTSDB Improvements
 Grafana OpenTSDB data source now supports template variable values queries. This means you can create
 template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
 The query editor is also enhanced to limiting tags by metric.
@@ -126,3 +123,8 @@ the values shown in the hover tooltip.
 ### Singlestat Panel
 Now support string values. Useful for time series database like InfluxDB that supports
 string values.
+
+### Changelog
+For a detailed list and link to github issues for everything included in the 2.1 release please
+view the [CHANGELOG.md]("https://github.com/grafana/grafana/blob/master/CHANGELOG.md") file.
+
