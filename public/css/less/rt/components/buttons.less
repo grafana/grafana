@@ -156,6 +156,38 @@
   text-decoration: none;
 }
 
+// In-row Icons
+// ====================================
+.in-row-icons {
+  vertical-align: middle;
+  font-size: 22px;
+  margin-left: 10px;
+}
+
+.primary-icons-config {
+  color: @linkColor;  
+  -webkit-text-fill-color: transparent;
+  background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  -webkit-background-clip: text;
+  text-decoration:none;
+  transition: 0.15s; 
+}
+
+.primary-icon:before {
+  .primary-icons-config;
+}
+
+.primary-icon-header:before {
+  .primary-icons-config;
+  font-size: 30px;
+  margin-left: 15px;
+}
+
+.primary-copy {
+  color: @primaryCTA;
+  vertical-align: text-top;
+}
 
 
 // General
