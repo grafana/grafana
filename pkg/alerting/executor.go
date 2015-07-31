@@ -78,10 +78,10 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 		}
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "fatal:") {
-				log.Error(0, err.Error()+". removing job from queue")
+				log.Error(0, "%s: removing job from queue", err.Error())
 				return nil
 			}
-			log.Error(0, err.Error()+". not acking message. retry later")
+			log.Error(0, "%s: not acking message. retry later", err.Error())
 		}
 		return err
 	})
@@ -152,7 +152,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	res, err := evaluator.Eval(job.LastPointTs)
 	log.Debug("job results - job:%v err:%v res:%v", job, err, res)
 	if err != nil {
-		return fmt.Errorf("%s , Eval failed for job %q", err.Error(), job)
+		return fmt.Errorf("Eval failed for job %q : %s", job, err.Error())
 	}
 
 	durationExec := time.Since(preExec)

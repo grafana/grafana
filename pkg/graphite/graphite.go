@@ -133,6 +133,10 @@ type Trace struct {
 	Response []byte
 }
 
+func (t Trace) String() string {
+	return fmt.Sprintf("{Request start:%s end:%s targets:%s url:%s Response:%s}", t.Request.Start, t.Request.End, t.Request.Targets, t.Request.URL, t.Response)
+}
+
 func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, error) {
 	pre := time.Now()
 	resp, res, err := Query(r, gc.Host, gc.Header)
