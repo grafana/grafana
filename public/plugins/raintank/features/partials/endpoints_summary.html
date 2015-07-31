@@ -28,7 +28,7 @@
 
 	<!-- page title -->
 	<div class="rt-page-header-area">
-		<h1 class="rt-h1">{{endpoint.name}}</h1>
+		<h1 class="rt-h1">{{endpoint.name}}</h1><a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="primary-icon-header dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Summary </br>dashboard for this endpoint'"></i></a>
 	</div>
 	<div class="editor-row rt-detail-pages">
 		<div class="editor-option">
@@ -39,11 +39,6 @@
 	<!-- tabs -->
 	<div class="rt-tabs">
 		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
-		<div style="float: right; display: inline;">
-			<div style="display: inline;">
-				<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="small" style="vertical-align: text-top;">&nbsp;Litmus Endpoint: Summary</span></a>
-			</div>
-		</div>
 	</div>
 </div>
 
@@ -79,7 +74,7 @@
 						</div>
 
 						<div class="pull-right" ng-show="getMonitorByTypeName('Ping').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for Ping'"></i></a>					
+							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for Ping'"></i></a>					
 						</div>
 
  						<div ng-if="!pageReady" class="health">
@@ -142,7 +137,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
+							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
 						</div>
 
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
@@ -199,7 +194,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i></a>
 						</div>
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
@@ -256,7 +251,7 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i></a>
 						</div>
 
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
