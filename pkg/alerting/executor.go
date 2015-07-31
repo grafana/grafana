@@ -35,6 +35,7 @@ func GraphiteAuthContextReturner(org_id int64) (bgraphite.Context, error) {
 		Header: http.Header{
 			"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 		},
+		Traces: make([]graphite.Trace, 0),
 	}
 	return &ctx, nil
 }
@@ -164,6 +165,14 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 	if err != nil {
 		return fmt.Errorf("non-fatal: failed to update monitor state: %q", err)
+	}
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		requests := ""
+		for _, trace := range gr.Traces {
+			r := trace.Request
+			requests += fmt.Sprintf("\ntargets: %s\nfrom:%s\nto:%s\nresponse:%s\n", r.Targets, r.Start, r.End, trace.Response)
+		}
+		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
 	if updateMonitorStateCmd.Affected > 0 {
 		//emit a state change event.

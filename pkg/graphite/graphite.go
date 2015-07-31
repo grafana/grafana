@@ -12,8 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-
 	bgraphite "bosun.org/graphite"
 )
 
@@ -118,7 +116,12 @@ type GraphiteContext struct {
 	Dur         time.Duration
 	MissingVals int
 	EmptyResp   int
-	Response    []byte
+	Traces      []Trace
+}
+
+type Trace struct {
+	Request  *bgraphite.Request
+	Response []byte
 }
 
 func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, error) {
@@ -127,11 +130,11 @@ func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, erro
 	if err != nil {
 		return res, err
 	}
-	gc.Response = resp
-	log.Debug("graphite request for %q from %s to %s yielded response: %q", r.Targets, r.Start, r.End, resp)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
 	defer gc.lock.Unlock()
+	gc.Traces = append(gc.Traces, Trace{r, resp})
+
 	for _, s := range res {
 		for _, p := range s.Datapoints {
 			if p[0] == "" {
