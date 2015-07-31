@@ -107,7 +107,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('Ping').enabled">
 							<div class="frequency">
-								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('Ping').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for Ping'"><i class="frequency fa fa-fw fa-external-link"></i></a>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('Ping').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a ng-click="gotoEventDashboard(endpoint, 'ping')" bs-tooltip="'Go to Litmus: Events </br>dashboard for Ping'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('Ping')"></rt-check-health>
 						</div>
@@ -163,7 +163,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('DNS').enabled">
 							<div class="frequency">
-								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('DNS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for DNS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('DNS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a a ng-click="gotoEventDashboard(endpoint, 'dns')"  bs-tooltip="'Go to Litmus: Events </br>dashboard for DNS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('DNS')"></rt-check-health>
 						</div>
@@ -220,7 +220,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTP').enabled">
 							<div class="frequency">
-								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTP').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTP'"><i class="frequency fa fa-fw fa-external-link"></i></a>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTP').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a ng-click="gotoEventDashboard(endpoint, 'http')" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTP'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('HTTP')"></rt-check-health>
 						</div>
@@ -278,7 +278,7 @@
 
 						<div class="status" ng-show="getMonitorByTypeName('HTTPS').enabled">
 							<div class="frequency">
-								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTPS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a href="#" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTPS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
+								<span class="freqMsg"><span class="emphasis">Events - </span>&nbsp;Last check from&nbsp;</span>{{getMonitorByTypeName('HTTPS').collectors.length}}<span class="freqMsg">&nbsp;collectors&nbsp;</span><a ng-click="gotoEventDashboard(endpoint, 'https')" bs-tooltip="'Go to Litmus: Events </br>dashboard for HTTPS'"><i class="frequency fa fa-fw fa-external-link"></i></a>
 							</div>
 							<rt-check-health model="getMonitorByTypeName('HTTPS')"></rt-check-health>
 						</div>
