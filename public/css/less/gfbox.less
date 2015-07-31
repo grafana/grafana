@@ -1,8 +1,12 @@
+/***********************************
+Grafana BOX
+***********************************/
+
 .gf-box {
   margin: 15px;
   background-color: @grafanaPanelBackground;
-  position: relative;
   border: 1px solid @grafanaTargetFuncBackground;
+  position: relative; 
 }
 
 .gf-box-no-margin {
@@ -35,9 +39,9 @@
 }
 
 .gf-box-header {
+  background-color: @grafanaTargetBackground;
   border-bottom: 1px solid @grafanaTargetFuncBackground;
   overflow: hidden;
-  background-color: @grafanaTargetBackground;
   .tabs {
     float: left;
   }
@@ -98,5 +102,3 @@
     }
   }
 }
-
-

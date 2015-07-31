@@ -1,0 +1,105 @@
+{
+  "id": 2,
+  "title": "Home",
+  "originalTitle": "Home",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": false,
+  "hideControls": true,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "100px",
+      "panels": [
+        {
+          "content": "<img src=\"/img/litmus-by-grey.svg\" width=\"450\" style=\"margin-top: 25px;\">",
+          "editable": true,
+          "error": false,
+          "id": 1,
+          "links": [],
+          "mode": "html",
+          "span": 12,
+          "style": {},
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        }
+      ],
+      "title": "Header Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "200px",
+      "panels": [
+        {
+          "content": "<h4>What is Litmus?</h4>\n<div style=\"width: 85%\">\n<p class=\"rt-dashboard-copy\"> Litmus allows you to monitor the network quality of anything from anywhere.</p>\n\n<p class=\"rt-dashboard-copy\"> Whether you have a simple blog or a globally distributed application, Litmus can help you analyze its performance and availability from around the world. </p>\n\n<p class=\"rt-dashboard-copy\"> Litmus is currently in restricted alpha. Your feedback is much appreciated and helps make it better. </p><br/>\n",
+          "editable": true,
+          "error": false,
+          "id": 2,
+          "links": [],
+          "mode": "html",
+          "span": 6,
+          "style": {},
+          "title": "",
+          "type": "text"
+        },
+        {
+          "content": "<h4>Dashboards</h4>\n<div class=\"\" style=\"text-align:center;\">\nThe following Dashboards are provided to help  you get started. Feel free to customize them with data of your own by Saving them as a personal Dashboard\n</div>\n\n<div class=\"rt-dash-flex-container\">\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/file/rt-endpoint-summary.json\"><div class=\"secondaryCTA\">Summary</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/file/rt-endpoint-ping.json\"><div class=\"secondaryCTA\">Ping</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n    <a href=\"dashboard/file/rt-endpoint-dns.json\"> <div class=\"secondaryCTA\">DNS</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/file/rt-endpoint-web.json?var-protocol=http\"><div class=\"secondaryCTA\">HTTP</div></a>\n</div>\n\n<div class=\"rt-dash-flex-item\" style=\"width:auto;\">\n     <a href=\"dashboard/file/rt-endpoint-web.json?var-protocol=https\"><div class=\"secondaryCTA\">HTTPS</div></a>\n</div>\n</div>",
+          "editable": true,
+          "error": false,
+          "id": 5,
+          "links": [],
+          "mode": "html",
+          "span": 6,
+          "style": {},
+          "title": "",
+          "type": "text"
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "content": "<h4>Getting the most out of Litmus</h4>\n<div class=\"rt-dash-flex-container\">\n<div class=\"rt-dash-flex-item\">\n     <div style=\"height:100px\">\n     <i class=\"fa-fw icon-rt-endpoint rt-dashboard-icons\"></i>\n     </div>\n     <h4>Add an endpoint</h4>\n     <p class=\"rt-dashboard-blurb\">An endpoint is anything you want to monitor - just need a fully qualified domain name.</p>\n<a href=\"endpoints/new\">     <button class=\"secondaryCTA\">New Endpoint</button></a>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\">\n<i class=\"fa-fw icon-rt-users rt-dashboard-icons\" style=\"font-size: 100px;\"></i>\n</div>\n<h4>Invite your team</h4>\n<p class=\"rt-dashboard-blurb\">Litmus is more fun with others.  Invite team members, or share an invite to the beta.</p>\n<a href=\"org/users\"><button class=\"secondaryCTA\">Add Users</button></a>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\">\n<i class=\"fa-fw icon-rt-datasources rt-dashboard-icons\"></i></div>\n<h4>Connect data sources</h4>\n<p class=\"rt-dashboard-blurb\">Our data is great. Your data is great. They should be together?</p>\n<a href=\"datasources/new\"><button class=\"secondaryCTA\">Add Data Source</button></a>\n</div>\n<div class=\"rt-dash-flex-item\">\n<div style=\"height:100px\"><i class=\"fa-fw icon-rt-collector rt-dashboard-icons\"></i></div>\n<h4>Deploy collectors</h4>\n<p class=\"rt-dashboard-blurb\">Deploy private collectors worldwide.</p>\n<a href=\"collectors\"><button class=\"secondaryCTA\">New Collector</button></a>\n</div>",
+          "editable": true,
+          "error": false,
+          "id": 4,
+          "links": [],
+          "mode": "html",
+          "span": 12,
+          "style": {},
+          "title": "",
+          "transparent": false,
+          "type": "text"
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "nav": [
+    {
+      "type": "timepicker",
+      "enable": false
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "schemaVersion": 6,
+  "version": 50
+}

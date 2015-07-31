@@ -18,14 +18,23 @@ function (angular, _, $, config) {
     $scope.setupMainNav = function() {
       $scope.mainLinks.push({
         text: "Dashboards",
-        icon: "fa fa-fw fa-th-large",
+        icon: "fa-fw icon-rt-dashboard",
         href: $scope.getUrl("/"),
       });
-
+      $scope.mainLinks.push({
+        text: "Endpoints",
+        icon: "fa-fw icon-rt-endpoint",
+        href: $scope.getUrl("/endpoints"),
+      });
+      $scope.mainLinks.push({
+        text: "Collectors",
+        icon: "fa-fw icon-rt-collector",
+        href: $scope.getUrl("/collectors"),
+      });
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({
           text: "Data Sources",
-          icon: "fa fa-fw fa-database",
+          icon: "fa-fw icon-rt-datasources",
           href: $scope.getUrl("/datasources"),
         });
       }

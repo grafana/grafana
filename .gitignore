@@ -23,6 +23,7 @@ public/css/*.min.css
 
 /data/*
 /bin/*
+grafana
 
 conf/custom.ini
 fig.yml

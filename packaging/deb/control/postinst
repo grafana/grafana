@@ -5,9 +5,11 @@ set -e
 [ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
 
 startGrafana() {
-  if [ -x /bin/systemctl ]; then
-    /bin/systemctl daemon-reload
-    /bin/systemctl start grafana-server
+    if [ -x /bin/systemctl ] ; then
+        /bin/systemctl daemon-reload
+        /bin/systemctl start grafana.service
+    elif [ -f "/etc/init/grafana-server.conf" ]; then
+		start grafana-server
 	elif [ -x "/etc/init.d/grafana-server" ]; then
 		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
 			invoke-rc.d grafana-server start || true

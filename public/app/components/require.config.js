@@ -44,6 +44,10 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
+
+    'masonry':                '../vendor/masonry',
+    'wu.masonry':             '../vendor/angular/angular-monsonry',
+    'imagesloaded':           '../vendor/imagesloaded'
   },
   shim: {
 
@@ -93,6 +97,7 @@ require.config({
     'angular-route':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
     'bindonce':             ['angular'],
+    'wu.masonry':           ['jquery', 'angular', 'masonry', 'imagesloaded'],
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],

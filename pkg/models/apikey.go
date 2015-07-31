@@ -13,6 +13,7 @@ type ApiKey struct {
 	Name    string
 	Key     string
 	Role    RoleType
+	IsAdmin bool
 	Created time.Time
 	Updated time.Time
 }
@@ -20,20 +21,13 @@ type ApiKey struct {
 // ---------------------
 // COMMANDS
 type AddApiKeyCommand struct {
-	Name  string   `json:"name" binding:"Required"`
-	Role  RoleType `json:"role" binding:"Required"`
-	OrgId int64    `json:"-"`
-	Key   string   `json:"-"`
+	Name    string   `json:"name" binding:"Required"`
+	Role    RoleType `json:"role" binding:"Required"`
+	OrgId   int64    `json:"-"`
+	Key     string   `json:"-"`
+	IsAdmin bool     `json:"isAdmin"`
 
 	Result *ApiKey `json:"-"`
-}
-
-type UpdateApiKeyCommand struct {
-	Id   int64    `json:"id"`
-	Name string   `json:"name"`
-	Role RoleType `json:"role"`
-
-	OrgId int64 `json:"-"`
 }
 
 type DeleteApiKeyCommand struct {

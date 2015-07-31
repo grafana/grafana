@@ -1,30 +1,156 @@
+// .bootstrap-tagsinput {
+//   display: inline-block;
+//   padding: 4px 6px;
+//   margin-bottom: 10px;
+//   color: #555;
+//   vertical-align: middle;
+//   border-radius: 4px;
+//   max-width: 100%;
+//   line-height: 22px;
+
+//   background-color: @inputBackground;
+//   border: 1px solid @inputBorder;
+//   .box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
+//   .transition(~"border linear .2s, box-shadow linear .2s");
+
+//   input {
+//     border: none;
+//     box-shadow: none;
+//     outline: none;
+//     background-color: transparent;
+//     padding: 0;
+//     padding-left: 5px;
+//     margin: 0;
+//     width: auto !important;
+//     max-width: inherit;
+
+//     &:focus {
+//       border: none;
+//       box-shadow: none;
+//     }
+//   }
+
+//   .tag {
+//     margin-right: 2px;
+//     color: white;
+
+//     [data-role="remove"] {
+//       margin-left:8px;
+//       cursor:pointer;
+//       &:after{
+//         content: "x";
+//         padding:0px 2px;
+//       }
+//       &:hover {
+//         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+//         &:active {
+//           box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+//         }
+//       }
+//     }
+//   }
+// }
+
 .bootstrap-tagsinput {
   display: inline-block;
   padding: 0 0 0 6px;
   vertical-align: middle;
+  border-radius: 0 !important;
   max-width: 100%;
   line-height: 22px;
-  background-color: @inputBackground;
 
   input {
+    display:inline-block;
+    font-style: italic;
+    box-shadow: none;
     border: none;
-    border-right: 1px solid @grafanaTargetSegmentBorder;
-    margin: 0px;
+    outline: none;
+    background-color: transparent;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin: 20px 0 0 5px;
+    width: 100%;
+    max-width: inherit;
     border-radius: 0;
-    padding: 8px 6px;
-    height: 100%;
-    box-sizing: border-box;
+    background: url(/img/tag-add.svg) no-repeat scroll 0 4px;
+    background-size: 13px 13px;
+    padding-left: 20px;
+    cursor: pointer;
+
+     -webkit-transition: all 300ms ease;
+        -moz-transition: all 300ms ease;
+          -o-transition: all 300ms ease;
+         -ms-transition: all 300ms ease;
+             transition: all 300ms ease;
+
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+
+
+    &:hover {
+
+      -webkit-box-sizing: border-box;
+         -moz-box-sizing: border-box;
+              box-sizing: border-box;
+
+
+      &::-webkit-input-placeholder {
+        color: @grayLight;
+      }
+      &:-moz-placeholder {
+        color: @grayLight;
+      }
+      &::-moz-placeholder {
+        color: @grayLight;
+      }
+      &:-ms-input-placeholder {
+        color: @grayLight;
+      }
+
+    }
+
+    &:focus {
+      box-shadow: none;
+      outline: 0;
+      outline: thin dotted \9; /* IE6-9 */
+      cursor: text;
+      box-sizing: inherit;
+
+      box-shadow: 0 1px 0 0 @grayLight;
+
+      -webkit-box-sizing: border-box;
+         -moz-box-sizing: border-box;
+              box-sizing: border-box;
+
+      &::-webkit-input-placeholder {
+        color: @grayLight;
+      }
+      &:-moz-placeholder {
+        color: @grayLight;
+      }
+      &::-moz-placeholder {
+        color: @grayLight;
+      }
+      &:-ms-input-placeholder {
+        color: @grayLight;
+      }
+    }
   }
 
   .tag {
     margin-right: 2px;
+    margin-bottom:5px;
+    border: 1px solid rgba(255,255,255, 0.2);
     color: white;
 
     [data-role="remove"] {
       margin-left:8px;
       cursor:pointer;
       &:after{
-        content: "x";
+        content: "×";
         padding:0px 2px;
       }
       &:hover {
@@ -36,3 +162,4 @@
     }
   }
 }
+

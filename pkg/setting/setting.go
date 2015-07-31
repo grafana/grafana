@@ -37,9 +37,10 @@ const (
 
 var (
 	// App settings.
-	Env       string = DEV
-	AppUrl    string
-	AppSubUrl string
+	Env        string = DEV
+	InstanceId string
+	AppUrl     string
+	AppSubUrl  string
 
 	// build
 	BuildVersion string
@@ -109,13 +110,34 @@ var (
 	ImagesDir  string
 	PhantomDir string
 
+	//Raintank Graphite Backend
+	GraphiteUrl string
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
+	AlertingEnabled             bool
+	AlertingHandler             string
+	TickQueueSize               int
+	InternalJobQueueSize        int
+	PreAMQPJobQueueSize         int
+	ExecutorLRUSize             int
+	EnableScheduler             bool
+	Executors                   int
+	WriteIndividualAlertResults bool
+	AlertingInspect             bool
+
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
+
+	StatsdEnabled   bool
+	StatsdAddr      string
+	StatsdType      string
+	ProfileHeapMB   int
+	ProfileHeapWait int
+	ProfileHeapDir  string
 
 	// LDAP
 	LdapEnabled    bool
@@ -357,6 +379,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
+	InstanceId = Cfg.Section("").Key("instance_id").MustString("default")
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -412,9 +435,39 @@ func NewConfigContext(args *CommandLineArgs) {
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
 
+	GraphiteUrl = Cfg.Section("raintank").Key("graphite_url").MustString("http://localhost:8888/")
+	if GraphiteUrl[len(GraphiteUrl)-1] != '/' {
+		GraphiteUrl += "/"
+	}
+	// Check if has app suburl.
+	_, err := url.Parse(GraphiteUrl)
+	if err != nil {
+		log.Fatal(4, "Invalid graphite_url(%s): %s", GraphiteUrl, err)
+	}
+
+	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	AlertingHandler = alerting.Key("handler").MustString("builtin")
+	TickQueueSize = alerting.Key("tickqueue_size").MustInt(0)
+	InternalJobQueueSize = alerting.Key("internal_jobqueue_size").MustInt(0)
+	PreAMQPJobQueueSize = alerting.Key("pre_amqp_jobqueue_size").MustInt(0)
+	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
+	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
+	Executors = alerting.Key("executors").MustInt(100)
+	WriteIndividualAlertResults = alerting.Key("write_individual_alert_results").MustBool(false)
+	AlertingInspect = alerting.Key("inspect").MustBool(false)
+
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+
+	telemetry := Cfg.Section("telemetry")
+	StatsdEnabled = telemetry.Key("statsd_enabled").MustBool(false)
+	StatsdAddr = telemetry.Key("statsd_addr").String()
+	StatsdType = telemetry.Key("statsd_type").String()
+	ProfileHeapMB = telemetry.Key("profile_heap_MB").MustInt(0)
+	ProfileHeapWait = telemetry.Key("profile_heap_wait").MustInt(3600)
+	ProfileHeapDir = telemetry.Key("profile_heap_dir").MustString("/tmp")
 
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)

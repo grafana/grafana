@@ -1,0 +1,19 @@
+// ==========================================================================
+// DROPDOWN MENU
+// ==========================================================================
+
+
+
+.dropdown-menu > li > a {
+  padding: 0 8px; 
+  font-size: 14px;
+  color:@linkColor;
+
+  &:hover {
+    // Hover will trigger the tool tip eventually. This is temporary/ 
+    background-color: transparent;
+    background-image: none;
+    opacity: 0.8;
+    color: darken(@linkColorHover, 20%);
+  }
+}

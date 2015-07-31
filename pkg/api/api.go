@@ -14,6 +14,7 @@ func Register(r *macaron.Macaron) {
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
 	regOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	limitQuota := middleware.LimitQuota
 	bind := binding.Bind
 
 	// not logged in views
@@ -37,7 +38,10 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
-
+	r.Get("/collectors", reqSignedIn, Index)
+	r.Get("/collectors/*", reqSignedIn, Index)
+	r.Get("/endpoints", reqSignedIn, Index)
+	r.Get("/endpoints/*", reqSignedIn, Index)
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
@@ -85,7 +89,7 @@ func Register(r *macaron.Macaron) {
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
 			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrgCurrent))
-			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+			r.Post("/users", limitQuota(m.QUOTA_USER), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
@@ -104,6 +108,8 @@ func Register(r *macaron.Macaron) {
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
 			r.Delete("/users/:userId", wrap(RemoveOrgUser))
+			r.Get("/quotas", wrap(GetOrgQuotas))
+			r.Put("/quotas/:target", bind(m.UpdateQuotaCmd{}), wrap(UpdateOrgQuota))
 		}, reqGrafanaAdmin)
 
 		// auth api keys
@@ -116,7 +122,7 @@ func Register(r *macaron.Macaron) {
 		// Data sources
 		r.Group("/datasources", func() {
 			r.Get("/", GetDataSources)
-			r.Post("/", bind(m.AddDataSourceCommand{}), AddDataSource)
+			r.Post("/", limitQuota(m.QUOTA_DATASOURCE), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
@@ -141,6 +147,44 @@ func Register(r *macaron.Macaron) {
 
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
+
+		// collectors
+		r.Group("/collectors", func() {
+			r.Combo("/").
+				Get(bind(m.GetCollectorsQuery{}), wrap(GetCollectors)).
+				Put(reqEditorRole, limitQuota(m.QUOTA_COLLECTOR), bind(m.AddCollectorCommand{}), wrap(AddCollector)).
+				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), wrap(UpdateCollector))
+			r.Get("/:id", wrap(GetCollectorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteCollector))
+		})
+
+		// Monitors
+		r.Group("/monitors", func() {
+			r.Combo("/").
+				Get(bind(m.GetMonitorsQuery{}), wrap(GetMonitors)).
+				Put(reqEditorRole, bind(m.AddMonitorCommand{}), wrap(AddMonitor)).
+				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), wrap(UpdateMonitor))
+			r.Get("/:id", wrap(GetMonitorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteMonitor))
+		})
+		// endpoints
+		r.Group("/endpoints", func() {
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), wrap(GetEndpoints)).
+				Put(reqEditorRole, limitQuota(m.QUOTA_ENDPOINT), bind(m.AddEndpointCommand{}), wrap(AddEndpoint)).
+				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), wrap(UpdateEndpoint))
+			r.Get("/:id", wrap(GetEndpointById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteEndpoint))
+			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), wrap(DiscoverEndpoint))
+		})
+
+		r.Get("/monitor_types", wrap(GetMonitorTypes))
+
+		//Events
+		r.Get("/events", bind(m.GetEventsQuery{}), wrap(GetEvents))
+
+		//Get Graph data from Graphite.
+		r.Any("/graphite/*", GraphiteProxy)
+
 	}, reqSignedIn)
 
 	// admin api
@@ -154,6 +198,8 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.Any("/socket.io/", SocketIO)
 
 	r.NotFound(NotFoundHandler)
 }

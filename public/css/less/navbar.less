@@ -25,11 +25,12 @@
   background: @iconContainerBackground;
   display: block;
   position: relative;
+  top:2px;
   float: left;
   width: 30px;
   height: 30px;
   padding: 4px;
-  margin: 6px 6px 3px 9px;
+  margin: 6px 6px 3px 22px;
   .fa {
     color: @textColor;
     width: 30px;
@@ -41,7 +42,7 @@
     position: absolute;
     transition: opacity .20s ease-in-out;
   }
-  img {
+  img, .logo {
     width: 30px;
     position: absolute;
     opacity: 1;
@@ -51,7 +52,7 @@
     .fa {
       opacity: .7;
     }
-    img {
+    img, .logo {
       opacity: 0;
     }
   }

@@ -1,0 +1,294 @@
+<div class="modal-body rt-box-no-margin" ng-controller="EndpointConfCtrl" ng-init="editor={index:0}">
+	<div class="rt-modal-header">
+		<div class="rt-h1">
+			<img style="vertical-align: bottom;" src="img/rt-endpoint_dkgray.svg" width="25" height="25">
+			<span>New Endpoint</span>
+		</div>
+
+		<button class="rt-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="rt-modal-tabs" ng-model="editor.index" bs-tabs>
+		 <div ng-repeat="tab in ['Summary', 'Ping', 'DNS', 'HTTP', 'HTTPS']" data-title="{{tab}}"></div>
+	</div>
+
+	<form name="endpointForm">
+
+	<!-- Summary Tab  -->
+
+ 	<div class="rt-modal-box-body" ng-if="editor.index == 0">
+		<div class="modalContainer summary-tab">
+			<div class="modalColumn modal-left-equal">
+				<div class="editor-option" style="display: block; padding-bottom: 5px;">
+					<label class="rt-form-label-medium">Domain Name</label>
+					<input type="text" class="rt-form-input" ng-model="endpoint.name" required="">
+				</div>
+				<div ng-hide="discovered">
+					<button type="submit" class="secondaryCTA" ng-click="endpointForm.$valid && discover(endpoint)">Auto Discover
+					<!-- Button needs a spinner on submit -->
+					</button>
+				</div>
+				<!-- Below replaces Auto-Discover button on success -->
+				<div style="display: block; padding: 10px 25px 10px 0" ng-show="discovered">
+					<span class="rt-h3">Great Success!</span>
+					<p class="rt-modal-body-copy">We've suggested some default checks below based on what we were able to detect.</br></p>
+
+					<!-- Would like to show this ul block if any checks are enabled, but dont know how to do that -->
+					<ul class="rt-modal-ul">
+						<li>
+							<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['ping'].enabled" ng-true-value="true" ng-false-value="false">
+							<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Ping:</label>
+							<span class="rt-modal-tiny-copy">Every {{monitors['ping'].frequency}}s</span>
+						</li>
+						<li>
+							<input class="rt-modal" id="DNS-enabled" type="checkbox" ng-model="monitors['dns'].enabled" ng-true-value="true" ng-false-value="false">
+							<label for="DNS-enabled" class="rt-modal rt-modal-label-copy">DNS: </label>
+							<span class="rt-modal-tiny-copy">Every {{monitors['dns'].frequency}}s</span>
+						</li>
+						<li>
+							<input class="rt-modal" id="HTTP-enabled" type="checkbox" ng-model="monitors['http'].enabled" ng-true-value="true" ng-false-value="false">
+							<label for="HTTP-enabled" class="rt-modal rt-modal-label-copy">Web (HTTP): </label>
+							<span class="rt-modal-tiny-copy">Every {{monitors['http'].frequency}}s</span>
+						</li>
+						<li>
+							<input class="rt-modal" id="HTTPS-enabled" type="checkbox" ng-model="monitors['https'].enabled" ng-true-value="true" ng-false-value="false">
+							<label for="HTTPS-enabled" class="rt-modal rt-modal-label-copy">Web (HTTPS): </label>
+							<span class="rt-modal-tiny-copy">Every {{monitors['https'].frequency}}s</span>
+						</li>												
+					</ul>
+					<a class="rt-modal-body-link" ng-click="endpointForm.$valid && discover(endpoint)">Check again</a>
+				</div>
+				<div>
+					<button type="submit" class="rt-btn btn-modal" ng-click="addEndpoint(endpoint)">Add Endpoint</button>
+					<span class="cancel-primary" ng-click="dismiss();">Cancel</span>
+				</div>
+
+
+			</div>
+			<div class="modalColumn modal-right-equal">
+
+				<div class="editor-row">
+					<div style="display: block; margin-top: 5px;" class="editor-option">
+						<bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label label-tag" placeholder="add tags"></bootstrap-tagsinput>
+					</div>
+				</div>
+				<div style="margin-top: 20px; display: block;">
+					<input id="rt-radio-collector-1" class="rt-radio-custom" name="rt-radio-collector-group" type="radio" ng-model="collectorsOption.selection" ng-value="'all'">
+					<label for="rt-radio-collector-1" class="rt-radio-body-label">Check from all collectors</label>
+					<input id="rt-radio-collector-2" class="rt-radio-custom" name="rt-radio-collector-group" type="radio" ng-model="collectorsOption.selection" ng-value="'custom'">
+					<label for="rt-radio-collector-2" class="rt-radio-body-label">Check from certain collectors</label>
+					<div class="editor-option" style="padding-left: 40px;" ng-hide="collectorsOption.selection === 'all'">
+							<label class="small" style="display: none;">&nbsp;</label>
+							<endpoint-collector-select model="global_collectors" collectors="collectors"></endpoint-collector-select>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+ 	<!-- End Summary Tab -->
+
+	<!-- Ping Tab  -->
+
+  	<div class="rt-modal-box-body" ng-if="editor.index == 1">
+		<div class="modalContainer">
+			<div class="modalColumn modal-left-100">
+				<p class="rt-modal-body-copy">We send a burst of 10 ICMP echo ("ping") packets every check interval, from every Collector. This provides a simple and effective way to test your network connectivity in isolation from the rest of your application.</p></br>
+				<div class="checkbox-check-enabled">
+					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['ping'].enabled" ng-true-value="true" ng-false-value="false">
+					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
+				</div>
+				<div class="rt-h2" style="margin: 20px 0; display: inline-block;">Ping my endpoint every:</div>
+				<div style="display: block; margin-top: 20px;">
+					<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
+				        <div class="rt-radio-layout">
+			            	<input id="rt-ping-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="10">
+				            <label for="rt-ping-radio-1" class="rt-radio-jumbo-label">10</label>
+			            	<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-ping-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="30">
+				            <label for="rt-ping-radio-2" class="rt-radio-jumbo-label">30</label>
+							<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-ping-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="60">
+				            <label for="rt-ping-radio-3" class="rt-radio-jumbo-label">60</label>
+					            <span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				       	<div class="rt-radio-layout">
+				            <input id="rt-ping-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['ping'].frequency" ng-value="120">
+				            <label for="rt-ping-radio-4" class="rt-radio-jumbo-label">120</label>
+				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
+				        </div> 
+					</div>
+				</div>
+				<div style="margin-top: 30px;">
+						<div class="editor-option rt-modal-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['ping'].settings">
+							<raintank-setting definition="setting" target="currentSettingByVariable(monitors['ping'], setting.variable)">
+						</div>
+
+						<div class="editor-option" style="margin-top: 20px;">
+							<label class="small">&nbsp;</label>
+							<endpoint-collector-select model="monitors['ping']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- End Ping Tab -->
+
+	<!-- DNS Tab  -->
+
+	<div class="rt-modal-box-body" ng-if="editor.index == 2">
+		<div class="modalContainer">
+			<div class="modalColumn modal-left-100">
+				<p class="rt-modal-body-copy">We will do a single DNS lookup, on as many DNS servers as you specify every check interval, from every Collector. If one fails, we will move on to the other similar to the way that DNS works in the real world.</p></br>
+				<div class="checkbox-check-enabled">
+					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['dns'].enabled" ng-true-value="true" ng-false-value="false">
+					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
+				</div>
+				<div class="rt-h2" style="margin: 20px 0; display: inline-block;">DNS check frequency:</div>
+				<div style="display: block; margin-top: 20px;">
+					<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
+				        <div class="rt-radio-layout">
+				           	<input id="rt-dns-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="10">
+				            <label for="rt-dns-radio-1" class="rt-radio-jumbo-label">10</label>
+				           	<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="30">
+				            <label for="rt-dns-radio-2" class="rt-radio-jumbo-label">30</label>
+							<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="60">
+				            <label for="rt-dns-radio-3" class="rt-radio-jumbo-label">60</label>
+   				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				       	<div class="rt-radio-layout">
+				            <input id="rt-dns-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['dns'].frequency" ng-value="120">
+				            <label for="rt-dns-radio-4" class="rt-radio-jumbo-label">120</label>
+				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
+				        </div> 
+					</div>
+				</div>
+ 				<div style="margin-top: 30px;">
+						<div class="editor-option rt-modal-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['dns'].settings">
+							<raintank-setting definition="setting" target="currentSettingByVariable(monitors['dns'], setting.variable)">
+						</div>
+						<div class="editor-option" style="margin-top: 20px;">
+							<label class="small">&nbsp;</label>
+							<endpoint-collector-select model="monitors['dns']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- End DNS Tab -->
+
+	<!-- Web Tab  -->
+
+	<div class="rt-modal-box-body" ng-if="editor.index == 3">
+		<div class="modalContainer">
+			<div class="modalColumn modal-left-100">
+				<p class="rt-modal-body-copy">We do an HTTP request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p></br>
+				<div class="checkbox-check-enabled">
+					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['http'].enabled" ng-true-value="true" ng-false-value="false">
+					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
+				</div>
+				<div class="rt-h2" style="margin: 20px 0; display: inline-block;">HTTP check frequency:</div>
+				<div style="display: block; margin-top: 20px;">
+					<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
+				        <div class="rt-radio-layout">
+				           	<input id="rt-dns-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="10">
+				            <label for="rt-dns-radio-1" class="rt-radio-jumbo-label">10</label>
+				           	<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="30">
+				            <label for="rt-dns-radio-2" class="rt-radio-jumbo-label">30</label>
+							<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="60">
+				            <label for="rt-dns-radio-3" class="rt-radio-jumbo-label">60</label>
+   				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				       	<div class="rt-radio-layout">
+				            <input id="rt-dns-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['http'].frequency" ng-value="120">
+				            <label for="rt-dns-radio-4" class="rt-radio-jumbo-label">120</label>
+				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
+				        </div> 
+					</div>
+				</div>
+ 				<div style="margin-top: 30px;">
+ 						<div class="editor-option rt-modal-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['http'].settings">
+							<raintank-setting definition="setting" target="currentSettingByVariable(monitors['http'], setting.variable)">
+						</div>
+						<div class="editor-option" style="margin-top: 20px;">
+							<label class="small">&nbsp;</label>
+							<endpoint-collector-select model="monitors['http']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- End Web Tab -->
+	<!-- Web(ssl) Tab  -->
+
+	<div class="rt-modal-box-body" ng-if="editor.index == 4">
+		<div class="modalContainer">
+			<div class="modalColumn modal-left-100">
+				<p class="rt-modal-body-copy">We do an HTTPS request to your Endpoint every check interval, from every Collector. We will download content from your web server up to the limit you specify.</p></br>
+				<div class="checkbox-check-enabled">
+					<input class="rt-modal" id="ping-enabled" type="checkbox" ng-model="monitors['https'].enabled" ng-true-value="true" ng-false-value="false">
+					<label for="ping-enabled" class="rt-modal rt-modal-label-copy">Enabled</label>
+				</div>
+				<div class="rt-h2" style="margin: 20px 0; display: inline-block;">HTTPS check frequency:</div>
+				<div style="display: block; margin-top: 20px;">
+					<div style="display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex;display: flex; justify-content: space-around;">
+				        <div class="rt-radio-layout">
+				           	<input id="rt-dns-radio-1" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="10">
+				            <label for="rt-dns-radio-1" class="rt-radio-jumbo-label">10</label>
+				           	<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-2" class="rt-radio-custom"name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="30">
+				            <label for="rt-dns-radio-2" class="rt-radio-jumbo-label">30</label>
+							<span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				        <div class="rt-radio-layout">
+				            <input id="rt-dns-radio-3" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="60">
+				            <label for="rt-dns-radio-3" class="rt-radio-jumbo-label">60</label>
+   				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 45px;">Seconds</span>
+				        </div>
+				       	<div class="rt-radio-layout">
+				            <input id="rt-dns-radio-4" class="rt-radio-custom" name="rt-radio-group" type="radio" ng-model="monitors['https'].frequency" ng-value="120">
+				            <label for="rt-dns-radio-4" class="rt-radio-jumbo-label">120</label>
+				            <span class="rt-radio-jumbo-sub-label" style="padding-left: 55px;">Seconds</span>
+				        </div> 
+					</div>
+				</div>
+ 				<div style="margin-top: 30px;">
+ 						<div class="editor-option rt-modal-input-styles" style="padding-top: 15px; padding-bottom: 5px;" ng-repeat="setting in monitor_types_by_name['https'].settings">
+							<raintank-setting definition="setting" target="currentSettingByVariable(monitors['https'], setting.variable)">
+						</div>
+						<div class="editor-option" style="margin-top: 20px;">
+							<label class="small">&nbsp;</label>
+							<endpoint-collector-select model="monitors['https']" collectors="collectors" style="modal-collector-select"></endpoint-collector-select>
+						</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- End Web(ssl) Tab -->
+</form>
+</div>

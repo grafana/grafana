@@ -46,6 +46,11 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
 	}
 
 	cmd.OrgId = c.OrgId
+	if cmd.IsAdmin {
+		if !c.IsGrafanaAdmin {
+			return ApiError(400, "Only GrafanaAdmins can add admin keys", nil)
+		}
+	}
 
 	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)
 	cmd.Key = newKeyInfo.HashedKey
