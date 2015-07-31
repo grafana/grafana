@@ -37,6 +37,10 @@ var executorAlertOutcomesWarn met.Count
 var executorAlertOutcomesCrit met.Count
 var executorAlertOutcomesUnkn met.Count
 var executorGraphiteEmptyResponse met.Count
+var executorGraphiteIncompleteResponse met.Count
+var executorGraphiteBadStart met.Count
+var executorGraphiteBadStep met.Count
+var executorGraphiteBadSteps met.Count
 
 var executorJobExecDelay met.Timer
 var executorJobQueryGraphite met.Timer
@@ -72,6 +76,10 @@ func Init(metrics met.Backend) {
 	executorAlertOutcomesCrit = metrics.NewCount("alert-executor.alert-outcomes.critical")
 	executorAlertOutcomesUnkn = metrics.NewCount("alert-executor.alert-outcomes.unknown")
 	executorGraphiteEmptyResponse = metrics.NewCount("alert-executor.graphite-emptyresponse")
+	executorGraphiteIncompleteResponse = metrics.NewCount("alert-executor.graphite-incompleteresponse")
+	executorGraphiteBadStart = metrics.NewCount("alert-executor.graphite-badstart")
+	executorGraphiteBadStep = metrics.NewCount("alert-executor.graphite-badstep")
+	executorGraphiteBadSteps = metrics.NewCount("alert-executor.graphite-badsteps")
 
 	executorJobExecDelay = metrics.NewTimer("alert-executor.job_execution_delay", time.Duration(30)*time.Second)
 	executorJobQueryGraphite = metrics.NewTimer("alert-executor.job_query_graphite", 0)

@@ -32,6 +32,10 @@ type Job struct {
 	GeneratedAt     time.Time
 	LastPointTs     time.Time
 	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
+	AssertMinSeries int                         // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
+	AssertStart     time.Time                   // to verify timestamps in response
+	AssertStep      int                         // to verify step duration
+	AssertSteps     int                         // to verify during execution this many points are included
 }
 
 func (job Job) String() string {
@@ -166,6 +170,9 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
 		StoreMetricFunc: api.StoreMetric,
+		AssertMinSeries: monitor.HealthSettings.NumCollectors,
+		AssertStep:      int(monitor.Frequency),
+		AssertSteps:     monitor.HealthSettings.Steps,
 	}
 	return j
 }

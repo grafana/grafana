@@ -110,13 +110,21 @@ var DefaultClient = &http.Client{
 }
 
 type GraphiteContext struct {
-	Host        string
-	Header      http.Header
-	lock        sync.Mutex
-	Dur         time.Duration
-	MissingVals int
-	EmptyResp   int
-	Traces      []Trace
+	Host            string
+	Header          http.Header
+	lock            sync.Mutex
+	Dur             time.Duration
+	MissingVals     int
+	EmptyResp       int
+	IncompleteResp  int
+	BadStart        int
+	BadStep         int
+	BadSteps        int
+	AssertMinSeries int
+	AssertStart     time.Time
+	AssertStep      int
+	AssertSteps     int
+	Traces          []Trace
 }
 
 type Trace struct {
@@ -130,28 +138,60 @@ func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, erro
 	if err != nil {
 		return res, err
 	}
+	errors := make([]string, 0)
 	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
 	gc.lock.Lock()
 	defer gc.lock.Unlock()
 	gc.Traces = append(gc.Traces, Trace{r, resp})
 
+	start := gc.AssertStart.Unix()
+
 	for _, s := range res {
-		for _, p := range s.Datapoints {
+		if len(s.Datapoints) != gc.AssertSteps {
+			gc.BadSteps += 1
+		}
+		for i, p := range s.Datapoints {
 			if p[0] == "" {
 				gc.MissingVals += 1
+			}
+			unix, _ := p[1].Int64()
+			if i == 0 {
+				if unix != start {
+					gc.BadStart += 1
+				}
+			} else {
+				if unix != start+int64(i*gc.AssertStep) {
+					gc.BadStep += 1
+				}
 			}
 		}
 	}
 
 	// one Context might run multiple queries, we want to add all times
 	gc.Dur += time.Since(pre)
+
 	if gc.MissingVals > 0 {
-		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.MissingVals)
+		errors = append(errors, fmt.Sprintf("%d unknown values", gc.MissingVals))
 	}
-	// TODO: find a way to verify the entire response, or at least the number of points.
+	if gc.BadStart > 0 {
+		errors = append(errors, fmt.Sprintf("%d bad start ts", gc.BadStart))
+	}
+	if gc.BadStep > 0 {
+		errors = append(errors, fmt.Sprintf("%d bad step", gc.BadStep))
+	}
+	if gc.BadSteps > 0 {
+		errors = append(errors, fmt.Sprintf("%d bad num steps", gc.BadSteps))
+	}
+
 	if len(res) == 0 {
 		gc.EmptyResp += 1
-		return res, fmt.Errorf("GraphiteContext got an empty response")
+		errors = append(errors, "empty response")
+	} else if len(res) < gc.AssertMinSeries {
+		gc.IncompleteResp += 1
+		errors = append(errors, fmt.Sprintf("expected >= %d series. got %d", gc.AssertMinSeries, len(res)))
+	}
+	if len(errors) > 0 {
+		err = fmt.Errorf("GraphiteContext errors: %s", errors)
 	}
 	return res, err
 }

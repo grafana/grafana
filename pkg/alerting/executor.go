@@ -134,6 +134,12 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	if err != nil {
 		return fmt.Errorf("fatal: job %q: %q", job, err)
 	}
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		gr.AssertMinSeries = job.AssertMinSeries
+		gr.AssertStart = job.AssertStart
+		gr.AssertStep = job.AssertStep
+		gr.AssertSteps = job.AssertSteps
+	}
 
 	preExec := time.Now()
 	executorJobExecDelay.Value(preExec.Sub(job.LastPointTs))
@@ -215,6 +221,18 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		}
 		if gr.EmptyResp != 0 {
 			executorGraphiteEmptyResponse.Inc(int64(gr.EmptyResp))
+		}
+		if gr.IncompleteResp != 0 {
+			executorGraphiteIncompleteResponse.Inc(int64(gr.IncompleteResp))
+		}
+		if gr.BadStart != 0 {
+			executorGraphiteBadStart.Inc(int64(gr.BadStart))
+		}
+		if gr.BadStep != 0 {
+			executorGraphiteBadStep.Inc(int64(gr.BadStep))
+		}
+		if gr.BadSteps != 0 {
+			executorGraphiteBadSteps.Inc(int64(gr.BadSteps))
 		}
 	}
 
