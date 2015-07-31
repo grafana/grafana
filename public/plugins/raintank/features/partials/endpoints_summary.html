@@ -41,7 +41,7 @@
 		<span class="active"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="nonactive"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
 		<div style="float: right; display: inline;">
 			<div style="display: inline;">
-				<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Litmus Endpoint: Summary</span></a>
+				<a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="small" style="vertical-align: text-top;">&nbsp;Litmus Endpoint: Summary</span></a>
 			</div>
 		</div>
 	</div>
@@ -57,7 +57,7 @@
 
 						<div class="dropdown" style="float: right; margin-left: 5px;">
 							<a data-toggle="dropdown">
-								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+								<i ng-class="icon" class="icon-rt-settings miniCTA" style="vertical-align: middle; font-size: 22px; margin-left: 10px;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
 <!-- 								<li ng-show="getMonitorByTypeName('Ping').enabled">
@@ -79,7 +79,7 @@
 						</div>
 
 						<div class="pull-right" ng-show="getMonitorByTypeName('Ping').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for Ping'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'ping')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for Ping'"></i></a>					
 						</div>
 
  						<div ng-if="!pageReady" class="health">
@@ -120,7 +120,7 @@
 
 						<div class="dropdown" style="float: right; margin-left: 5px;">
 							<a data-toggle="dropdown">
-								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+								<i ng-class="icon" class="icon-rt-settings miniCTA" style="vertical-align: middle; font-size: 22px; margin-left: 10px;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
 <!-- 								<li ng-show="getMonitorByTypeName('dns').enabled">
@@ -142,8 +142,9 @@
 						</div>
 
 						<div class="pull-right">
-							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>
+							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
 						</div>
+
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
 
 						<div class="health">
@@ -176,7 +177,7 @@
 
 						<div class="dropdown" style="float: right; margin-left: 5px;">
 							<a data-toggle="dropdown">
-								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+								<i ng-class="icon" class="icon-rt-settings miniCTA" style="vertical-align: middle; font-size: 22px; margin-left: 10px;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
 <!-- 								<li ng-show="getMonitorByTypeName('HTTP').enabled">
@@ -233,7 +234,7 @@
 
 						<div class="dropdown" style="float: right; margin-left: 5px;">
 							<a data-toggle="dropdown">
-								<i ng-class="icon" class="icon-rt-bulk_action miniCTA" style="vertical-align: middle;"></i>
+								<i ng-class="icon" class="icon-rt-settings miniCTA" style="vertical-align: middle; font-size: 22px; margin-left: 10px;"></i>
 							</a>
 							<ul class="dropdown-menu" role="menu">
 <!-- 								<li ng-show="getMonitorByTypeName('HTTPS').enabled">
