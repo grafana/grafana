@@ -18,7 +18,7 @@
 @import "components/tag-dropup.less";
 @import "components/dropdown-menu.less";
 @import "components/panel.less";
-
+@import "components/raintank-bootstrap-tagsinput.less";
 
 
 // Global
@@ -42,6 +42,149 @@ a {
 a:focus {
   text-decoration: none;
 }
+
+// Navbar
+// ---------------------------------------------------------------------------
+
+.top-nav-menu-btn { // modifies attributes in navbar.less
+  top:2px;
+  margin: 6px 6px 3px 22px;
+  
+  &:hover {
+    .logo {
+      opacity: 0;
+    }
+  }
+}
+
+// Logo positioning in sidebar
+// ---------------------------------------------------------------------------
+
+.sidemenu-top-btn {
+  display: block;
+  padding: 8px 0 4px 22px;
+
+  background-color: @rt-navbarBackground;
+  border-right: 3px solid @bodyBackground;
+  /* chevron */
+
+  img {
+    border-radius: 50%;
+    background: @iconContainerBackground;
+    border: 1px solid @bodyBackground;
+    width: 30px;
+    padding: 4px;
+  }
+
+  i {
+    padding-right: 5px;
+    padding-top: 5px;
+    font-size: 170%;
+    color: @linkColor;
+  }
+   /* general */
+  i.logo {
+    padding-left: 10px;
+    position: relative;
+    top: 7px;
+    font-size: 61px;
+    color:@logo;
+    line-height: 20px;
+
+    /* open state logo */
+    &.expanded {
+     border-radius: 0;
+     border:none;
+    }
+
+    /* closed state logo */
+    &.collapsed {
+      background: @iconContainerBackground;
+      border-radius: 50%;
+      border: 1px solid @bodyBackground;
+      font-size: 30px;
+    }
+  }
+}
+
+.sidemenu {
+  font-size: 16px;
+  font-weight: @baseFontWeight;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  >li {
+    margin-bottom: 9px;
+  }
+
+  .fa-caret-down {
+    position: relative;
+    top: 2px;
+    font-size: 90%;
+  }
+
+  &.sidemenu-small {
+    font-size: 14px;
+
+    .icon-circle {
+      border-radius: 50%;
+      background: @iconContainerBackground;
+      box-shadow: @iconContainerShadow;
+      border: @iconContainerBorder;
+      width: 20px;
+      height: 20px;
+      i {
+        top: 1px;
+        left: 1px;
+        font-size: 110%;
+      }
+    }
+
+    .sidemenu-item {
+      color: @linkColor;
+      line-height: 20px;
+      padding-left: 25px;
+    }
+  }
+}
+
+.sidemenu-item {
+  color: @linkColor;
+  line-height: 40px;
+  padding: 0px 10px 0px 20px;
+  display: block;
+  white-space: nowrap;
+
+  .sidemenu-item-text {
+    padding-left: 11px;
+    transition: color 100ms ease-out;
+
+    &.no-icon {
+      padding-left: 59px;
+    }
+  }
+  img {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
+  }
+}
+
+/* closed state logo */
+i.logo.collapsed {
+  color:@logo;
+  position: relative;
+  right: 7px;
+  font-size: 2.15em;
+  line-height: 30px;
+  text-shadow: 0 0 2px rgba(187, 191, 194, 0.5);
+}
+
+
+// Modals
+// -----------------------------------------------------------------
 
 .modal-body {
   overflow-y: auto;
@@ -353,7 +496,7 @@ raintank TYPE
     margin-bottom: 50px;
   }
 
-.jumbo {font-weight:600;}
+.jumbo {font-size: 150%; font-weight: 600;}
 
 .frequency {color:@rt-light-gray}
 .statusMsg, .freqMsg {font-size:14px; font-weight:400;}

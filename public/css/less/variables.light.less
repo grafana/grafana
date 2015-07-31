@@ -6,6 +6,7 @@
 // Global values
 // --------------------------------------------------
 
+
 // Grays
 // -------------------------
 @black:                 #000;
@@ -102,7 +103,7 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  	   darken(@grayLighter,5%);
+@grafanaListBackground:  	     darken(@grayLighter,5%);
 @grafanaListAccent:            darken(@grayLighter,8%);
 @grafanaListBorderTop:         #eee;
 @grafanaListBorderBottom:      #eee;
@@ -144,13 +145,13 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              @gray;
-@btnInverseBackgroundHighlight:     darken(@gray, 10%);
+@btnInverseBackground:              @white;
+@btnInverseBackgroundHighlight:     darken(@grayLight, 15%);
 
-@iconContainerBackground:			@white;
+@iconContainerBackground:			      @white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);
-@iconContainerBorder:				1px solid rgba(0,0,0, 0.05);
-@iconContainerShadow:				0 0 14px 2px rgba(0,0,0, 0.05);
+@iconContainerBorder:				        1px solid rgba(0,0,0, 0.05);
+@iconContainerShadow:				        0 0 14px 2px rgba(0,0,0, 0.05);
 
 
 // Forms
@@ -288,18 +289,18 @@
 @successBackground:       @green;
 @successBorder:           transparent;
 
-@infoText:                lighten(@purple,10%);
+@infoText:                lighten(@purple, 10%);
 @infoBackground:          @purple;
 @infoBorder:              transparent;
 
 
 // Tooltips and popovers
 // -------------------------
-@tooltipColor:            #fff;
-@tooltipBackground:       #333;
+@tooltipColor:            @grayDark;
+@tooltipBackground:       darken(@white, 3%);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
-@tooltipLinkColor:        darken(@white,11%);
+@tooltipLinkColor:        darken(@white, 11%);
 
 @popoverBackground:       @white;
 @popoverArrowWidth:       15px;

@@ -61,18 +61,18 @@
       background: @iconContainerBackground;
       box-shadow: @iconContainerShadow;
       border: @iconContainerBorder;
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
       i {
         top: 1px;
-        left: 1px;
+        left: 4px;
         font-size: 110%;
       }
     }
 
     .sidemenu-item {
-      color: @linkColor;
-      line-height: 20px;
+      // color: @textColor;
+      line-height: 28px;
       padding-left: 25px;
     }
   }
@@ -87,42 +87,10 @@
   text-overflow: ellipsis;
 }
 
-// .sidemenu-top-btn {
-//   display: block;
-//   padding: 8px 0 4px 22px;
-//   background-color: @rt-navbarBackground;
-//   border-right: 3px solid @bodyBackground;
-//   img {
-//     border-radius: 50%;
-//     background: @iconContainerBackground;
-//     border: 1px solid @bodyBackground;
-//     width: 30px;
-//     padding: 4px;
-//   }
-//   img.expanded {
-//    border-radius: 0;
-//    border:none;
-//    background: none;
-//    width: 112px;
-//    padding: 6px 15px 10px 15px;
-//   }
-//   i {
-//     padding-right: 5px;
-//     padding-top: 5px;
-//     font-size: 170%;
-//     color: @linkColor;
-//   }
-
-
-
 .sidemenu-top-btn {
   display: block;
   padding: 8px 0 4px 22px;
-
-  background-color: @rt-navbarBackground;
-  border-right: 3px solid @bodyBackground;
-  /* chevron */
-
+  background-color: @navbarBackground;
   img {
     border-radius: 50%;
     background: @iconContainerBackground;
@@ -130,39 +98,13 @@
     width: 30px;
     padding: 4px;
   }
-
   i {
     padding-right: 5px;
     padding-top: 5px;
     font-size: 170%;
     color: @linkColor;
   }
-   /* general */
-  i.logo {
-    padding-left: 10px;
-    position: relative;
-    top: 7px;
-    font-size: 61px;
-    color:@logo;
-    line-height: 20px;
-
-    /* open state logo */
-    &.expanded {
-     border-radius: 0;
-     border:none;
-    }
-
-    /* closed state logo */
-    &.collapsed {
-      background: @iconContainerBackground;
-      border-radius: 50%;
-      border: 1px solid @bodyBackground;
-      font-size: 30px;
-    }
-  }
 }
-
-
 
 .icon-circle {
   width: 40px;
@@ -177,18 +119,6 @@
     font-size: 150%;
   }
 }
-
- /* closed state logo */
-    i.logo.collapsed {
-    color:@logo;
-    position: relative;
-    right: 7px;
-    font-size: 2.15em;
-    line-height: 30px;
-    text-shadow: 0 0 2px rgba(187, 191, 194, 0.5);
-    }
-
-
 
 .sidemenu-item {
   color: @linkColor;
@@ -207,8 +137,8 @@
   }
   img {
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
 }
