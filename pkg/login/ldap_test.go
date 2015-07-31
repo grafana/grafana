@@ -178,6 +178,25 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
+		ldapAutherScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			err := ldapAuther.syncOrgRoles(&m.User{}, &ldapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should take first match, and ignore subsequent matches", func() {
+				So(err, ShouldBeNil)
+				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+
 	})
 }
 

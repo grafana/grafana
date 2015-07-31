@@ -172,6 +172,7 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 		for _, org := range orgsQuery.Result {
 			if group.OrgId == org.OrgId {
 				match = true
+				break
 			}
 		}
 
@@ -181,6 +182,7 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 			if err := bus.Dispatch(&cmd); err != nil {
 				return err
 			}
+			break
 		}
 	}
 
