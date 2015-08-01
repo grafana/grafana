@@ -54,7 +54,9 @@ func TestLdapAuther(t *testing.T) {
 		ldapAutherScenario("Given no existing grafana user", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "cn=users", OrgRole: "Admin"},
+					{GroupDN: "cn=admin", OrgRole: "Admin"},
+					{GroupDN: "cn=editor", OrgRole: "Editor"},
+					{GroupDN: "*", OrgRole: "Viewer"},
 				},
 			})
 
@@ -63,7 +65,7 @@ func TestLdapAuther(t *testing.T) {
 			result, err := ldapAuther.getGrafanaUserFor(&ldapUserInfo{
 				Username: "torkelo",
 				Email:    "my@email.com",
-				MemberOf: []string{"cn=users"},
+				MemberOf: []string{"cn=editor"},
 			})
 
 			So(err, ShouldBeNil)

@@ -85,11 +85,12 @@ func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) 
 	for _, ldapGroup := range a.server.LdapGroups {
 		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
 			access = true
+			break
 		}
 	}
 
 	if !access {
-		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups", ldapUser.Username)
+		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups, ldapUser groups: %v", ldapUser.Username, ldapUser.MemberOf)
 		return nil, ErrInvalidCredentials
 	}
 
