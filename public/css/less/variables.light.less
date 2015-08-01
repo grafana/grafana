@@ -112,6 +112,7 @@
 @grafanaListMainLinkColor:     @textColor;
 
 
+
 // Tables
 // -------------------------
 @tableBackground:                   transparent; // overall background-color
@@ -145,8 +146,8 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              @gray;
-@btnInverseBackgroundHighlight:     darken(@gray, 10%);
+@btnInverseBackground:              @white;
+@btnInverseBackgroundHighlight:     darken(@grayLight, 15%);
 
 @iconContainerBackground:			      @white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);
@@ -296,8 +297,8 @@
 
 // Tooltips and popovers
 // -------------------------
-@tooltipColor:            #fff;
-@tooltipBackground:       #333;
+@tooltipColor:            @grayDark;
+@tooltipBackground:        darken(@white,3%);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        darken(@white,11%);
