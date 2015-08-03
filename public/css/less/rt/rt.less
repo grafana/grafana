@@ -111,6 +111,29 @@ raintank BOX
   border-radius: 2px;
 }
 
+.rt-config-box {
+  .rt-box;
+  height: 44px;
+  overflow: hidden;
+  transition: height 0.2s;
+
+  &.dns-open {
+    height: 960px;
+  }
+
+  &.ping-open {
+    height: 752px;
+  }
+
+  &.http-open {
+    height: 1036px;
+  }
+
+  &.https-open {
+    height: 1074px;
+  }
+}
+
 .rt-box-no-margin {
   margin: 0;
   background-color: none;

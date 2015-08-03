@@ -1,5 +1,5 @@
         <!-- Ping Section  -->
-        <div class="rt-box rt-page-box" id="ping">
+        <div class="rt-config-box rt-page-box" id="ping" ng-class="{ 'ping-open': showPing }">
           <div class="rt-box-header rt-page-box-header" ng-click="showPing = !showPing" ng-class="{ active: showping }">
             <div class="rt-page-box-header-checkbox checkbox-check-enabled">
               <span class="rt-h2 rt-modal">Ping</span>
@@ -17,7 +17,7 @@
               </a>
             </div>
           </div>
-          <div class="rt-box-body rt-page-box-body" ng-show="showPing">
+          <div class="rt-box-body rt-page-box-body">
             <div class="rt-box-interior-section">
               <div class="rt-box-interior-header-icon">
                 <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
@@ -96,7 +96,7 @@
             </div>
           </div>
           <div ng-show="endpoint.id">
-            <div class="rt-box-footer-config" ng-show="showPing">
+            <div class="rt-box-footer-config">
                 <div class="rt-box-interior-content rt-interior-update">
                   <div class="editor-row">
                   <button type="submit" ng-show="endpoint.id"  class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['ping'])">Update Ping Settings</button>

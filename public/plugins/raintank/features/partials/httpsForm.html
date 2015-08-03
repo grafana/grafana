@@ -1,6 +1,6 @@
 
         <!-- HTTPS Section  -->
-        <div class="rt-box rt-page-box" id="https">
+        <div class="rt-config-box rt-page-box" id="https" ng-class="{ 'https-open': showHTTPS }">
           <div class="rt-box-header rt-page-box-header" ng-click="showHTTPS = !showHTTPS" ng-class="{ active: showhttps }">
             <div class="rt-page-box-header-checkbox checkbox-check-enabled">
               <span class="rt-h2 rt-modal">HTTPS</span>
@@ -18,7 +18,7 @@
               </a>
             </div>
           </div>
-          <div class="rt-box-body rt-page-box-body" ng-show="showHTTPS">
+          <div class="rt-box-body rt-page-box-body">
             <div class="rt-box-interior-section">
               <div class="rt-box-interior-header-icon">
                 <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
@@ -128,7 +128,7 @@
             </div>
           </div>
           <div ng-show="endpoint.id">
-            <div class="rt-box-footer-config" ng-show="showHTTPS">
+            <div class="rt-box-footer-config">
                 <div class="rt-box-interior-content rt-interior-update">
                   <div class="editor-row">
                   <button type="submit" ng-show="endpoint.id" class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['https'])">Update HTTPS Settings</button>
