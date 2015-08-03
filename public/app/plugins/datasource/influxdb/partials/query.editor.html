@@ -148,7 +148,7 @@
 					Alias pattern
 				</li>
 				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-blur="get_data()">
+					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-model-onblur ng-change="get_data()">
 				</li>
 			</ul>
 			<div class="clearfix"></div>
