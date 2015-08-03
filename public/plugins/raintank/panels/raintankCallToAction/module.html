@@ -1,4 +1,19 @@
 <grafana-panel>
+    <h4 style="font-weight: 400;">Hi there. Welcome to Litmus. </h4>
+    <div class="rt-dash-flex-container">
+        <div class="rt-dash-flex-item" ng-if="cta === 'addEndpoint'">
+            <span class="rt-dashboard-blurb">To do:</span>
+            <div>
+                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
+                <a href="endpoints/new" class="rt-dashboard-blurb">Add your first endpoint.</a>
+            </div>          
+        </div>
+    </div>
+</grafana-panel>
+
+
+
+<!-- <grafana-panel>
     <h4>Getting the most out of Litmus</h4>
     <div class="rt-dash-flex-container">
         <div class="rt-dash-flex-item" ng-if="cta === 'addEndpoint'">
@@ -42,4 +57,4 @@
             </a>
         </div>
     </div>
-</grafana-panel>
+</grafana-panel> -->
