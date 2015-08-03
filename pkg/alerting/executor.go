@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/graphite"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
@@ -19,59 +19,23 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/streadway/amqp"
 
-	"bosun.org/graphite"
+	bgraphite "bosun.org/graphite"
 )
 
-type GraphiteReturner func(org_id int64) (graphite.Context, error)
+type GraphiteReturner func(org_id int64) (bgraphite.Context, error)
 
-type GraphiteContext struct {
-	hh          graphite.HostHeader
-	lock        sync.Mutex
-	dur         time.Duration
-	missingVals int
-	emptyResp   int
-}
-
-func (gc *GraphiteContext) Query(r *graphite.Request) (graphite.Response, error) {
-	pre := time.Now()
-	res, err := gc.hh.Query(r)
-	// currently I believe bosun doesn't do concurrent queries, but we should just be safe.
-	gc.lock.Lock()
-	defer gc.lock.Unlock()
-	for _, s := range res {
-		for _, p := range s.Datapoints {
-			if p[0] == "" {
-				gc.missingVals += 1
-			}
-		}
-	}
-
-	// one Context might run multiple queries, we want to add all times
-	gc.dur += time.Since(pre)
-	if gc.missingVals > 0 {
-		return res, fmt.Errorf("GraphiteContext saw %d unknown values returned from server", gc.missingVals)
-	}
-	// TODO: find a way to verify the entire response, or at least the number of points.
-	if len(res) == 0 {
-		gc.emptyResp += 1
-		return res, fmt.Errorf("GraphiteContext got an empty response")
-	}
-	return res, err
-}
-
-func GraphiteAuthContextReturner(org_id int64) (graphite.Context, error) {
+func GraphiteAuthContextReturner(org_id int64) (bgraphite.Context, error) {
 	u, err := url.Parse(setting.GraphiteUrl)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse graphiteUrl: %q", err)
 	}
 	u.Path = path.Join(u.Path, "render/")
-	ctx := GraphiteContext{
-		hh: graphite.HostHeader{
-			Host: u.String(),
-			Header: http.Header{
-				"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
-			},
+	ctx := graphite.GraphiteContext{
+		Host: u.String(),
+		Header: http.Header{
+			"X-Org-Id": []string{fmt.Sprintf("%d", org_id)},
 		},
+		Traces: make([]graphite.Trace, 0),
 	}
 	return &ctx, nil
 }
@@ -85,7 +49,11 @@ func ChanExecutor(fn GraphiteReturner, jobQueue JobQueue, cache *lru.Cache) {
 	for job := range realQueue {
 		jobQueueInternalItems.Value(int64(len(realQueue)))
 		jobQueueInternalSize.Value(int64(setting.InternalJobQueueSize))
-		execute(fn, job, cache)
+		if setting.AlertingInspect {
+			inspect(fn, job, cache)
+		} else {
+			execute(fn, job, cache)
+		}
 	}
 }
 
@@ -93,6 +61,8 @@ func ChanExecutor(fn GraphiteReturner, jobQueue JobQueue, cache *lru.Cache) {
 // if they processed succesfully or encountered a fatal error
 // (i.e. an error that we know won't recover on future retries, so no point in retrying)
 func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Cache) {
+	executorNum.Inc(1)
+	defer executorNum.Dec(1)
 	consumer.Consume(func(msg *amqp.Delivery) error {
 		job := Job{}
 		if err := json.Unmarshal(msg.Body, &job); err != nil {
@@ -100,16 +70,46 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			return nil
 		}
 		job.StoreMetricFunc = api.StoreMetric
-		err := execute(GraphiteAuthContextReturner, &job, cache)
+		var err error
+		if setting.AlertingInspect {
+			inspect(GraphiteAuthContextReturner, &job, cache)
+		} else {
+			err = execute(GraphiteAuthContextReturner, &job, cache)
+		}
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "fatal:") {
-				log.Error(0, err.Error()+". removing job from queue")
+				log.Error(0, "%s: removing job from queue", err.Error())
 				return nil
 			}
-			log.Error(0, err.Error()+". not acking message. retry later")
+			log.Error(0, "%s: not acking message. retry later", err.Error())
 		}
 		return err
 	})
+}
+
+func inspect(fn GraphiteReturner, job *Job, cache *lru.Cache) {
+	key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
+	if found, _ := cache.ContainsOrAdd(key, true); found {
+		log.Debug("Job %s already done", job)
+		return
+	}
+	gr, err := fn(job.OrgId)
+	if err != nil {
+		log.Debug("Job %s: FATAL: %q", job, err)
+		return
+	}
+	evaluator, err := NewGraphiteCheckEvaluator(gr, job.Definition)
+	if err != nil {
+		log.Debug("Job %s: FATAL: invalid check definition: %q", job, err)
+		return
+	}
+
+	res, err := evaluator.Eval(job.LastPointTs)
+	if err != nil {
+		log.Debug("Job %s: FATAL: eval failed: %q", job, err)
+		return
+	}
+	log.Debug("Job %s results: %v", job, res)
 }
 
 // execute executes an alerting job and returns any errors.
@@ -134,6 +134,12 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	if err != nil {
 		return fmt.Errorf("fatal: job %q: %q", job, err)
 	}
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		gr.AssertMinSeries = job.AssertMinSeries
+		gr.AssertStart = job.AssertStart
+		gr.AssertStep = job.AssertStep
+		gr.AssertSteps = job.AssertSteps
+	}
 
 	preExec := time.Now()
 	executorJobExecDelay.Value(preExec.Sub(job.LastPointTs))
@@ -146,7 +152,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	res, err := evaluator.Eval(job.LastPointTs)
 	log.Debug("job results - job:%v err:%v res:%v", job, err, res)
 	if err != nil {
-		return fmt.Errorf("%s , Eval failed for job %q", err.Error(), job)
+		return fmt.Errorf("Eval failed for job %q : %s", job, err.Error())
 	}
 
 	durationExec := time.Since(preExec)
@@ -155,6 +161,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		Id:      job.MonitorId,
 		State:   res,
 		Updated: job.LastPointTs,
+		Checked: preExec,
 	}
 	if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {
 		//check if we failed due to deadlock.
@@ -164,6 +171,14 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 	if err != nil {
 		return fmt.Errorf("non-fatal: failed to update monitor state: %q", err)
+	}
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		requests := ""
+		for _, trace := range gr.Traces {
+			r := trace.Request
+			requests += fmt.Sprintf("\ntargets: %s\nfrom:%s\nto:%s\nresponse:%s\n", r.Targets, r.Start, r.End, trace.Response)
+		}
+		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
 	if updateMonitorStateCmd.Affected > 0 {
 		//emit a state change event.
@@ -176,11 +191,14 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 					To:       emails,
 					Template: "alerting_notification.html",
 					Data: map[string]interface{}{
-						"Endpoint":   job.EndpointSlug,
-						"EndpointId": job.EndpointId,
-						"CheckType":  job.MonitorTypeName,
-						"State":      res.String(),
-						"Timestamp":  job.LastPointTs,
+						"EndpointId":   job.EndpointId,
+						"EndpointName": job.EndpointName,
+						"EndpointSlug": job.EndpointSlug,
+						"Settings":     job.Settings,
+						"CheckType":    job.MonitorTypeName,
+						"State":        res.String(),
+						"TimeLastData": job.LastPointTs, // timestamp of the most recent data used
+						"TimeExec":     preExec,         // when we executed the alerting rule and made the determination
 					},
 				}
 
@@ -195,12 +213,26 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 
 	// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
 	// we want to have some individual times
-	if gr, ok := gr.(*GraphiteContext); ok {
-		executorJobQueryGraphite.Value(gr.dur)
-		executorJobParseAndEval.Value(durationExec - gr.dur)
-		executorGraphiteMissingVals.Value(int64(gr.missingVals))
-		if gr.emptyResp != 0 {
-			executorGraphiteEmptyResponse.Inc(int64(gr.emptyResp))
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		executorJobQueryGraphite.Value(gr.Dur)
+		executorJobParseAndEval.Value(durationExec - gr.Dur)
+		if gr.MissingVals > 0 {
+			executorGraphiteMissingVals.Value(int64(gr.MissingVals))
+		}
+		if gr.EmptyResp != 0 {
+			executorGraphiteEmptyResponse.Inc(int64(gr.EmptyResp))
+		}
+		if gr.IncompleteResp != 0 {
+			executorGraphiteIncompleteResponse.Inc(int64(gr.IncompleteResp))
+		}
+		if gr.BadStart != 0 {
+			executorGraphiteBadStart.Inc(int64(gr.BadStart))
+		}
+		if gr.BadStep != 0 {
+			executorGraphiteBadStep.Inc(int64(gr.BadStep))
+		}
+		if gr.BadSteps != 0 {
+			executorGraphiteBadSteps.Inc(int64(gr.BadSteps))
 		}
 	}
 

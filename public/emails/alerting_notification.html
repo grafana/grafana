@@ -1,4 +1,4 @@
-{{Subject .Subject "{{.CheckType}} {{ .State }} for {{.Endpoint}}"}}
+{{Subject .Subject "{{.CheckType}} {{ .State }} for {{.EndpointName}}"}}
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
@@ -6,7 +6,7 @@
 <!-- If you delete this meta tag, Half Life 3 will never be released. -->
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>{{.CheckType}} {{ .State }} for {{.Endpoint}}"}}</title>
+    <title>{{.CheckType}} {{ .State }} for {{.EndpointName}}"}}</title>
   </head>
   <body bgcolor="#FFFFFF" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; margin: 0; padding: 0;"><style type="text/css">
 @media only screen and (max-width: 600px) {
@@ -25,11 +25,11 @@
 <!-- HEADER -->
 <table class="head-wrap" bgcolor="{{if eq .State "OK"}}#01A64F{{end}}{{if eq .State "Critical"}}#EC2128{{end}}{{if eq .State "Unknown"}}#666666{{end}}" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
         <td class="header container" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto; padding: 0;">
-                
+
                 <div class="content" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 600px; display: block; margin: 0 auto; padding: 15px;">
                 <table style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><img src="https://app.raintank.io/img/litmus-by-white.png" alt="Litmus by raintank" style="width: 200px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;" /></td>
                     </tr></table></div>
-                
+
         </td>
         <td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
     </tr></table><!-- /HEADER --><!-- BODY --><table class="body-wrap" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
@@ -37,25 +37,25 @@
 
             <div class="content" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 600px; display: block; margin: 0 auto; padding: 15px;">
             <table style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin: 0; padding: 0;"><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
-                        <h4 style="font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; color: #494949; font-weight: 500; font-size: 18px; margin: 0 0 15px; padding: 0;"><strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.CheckType}}</strong> for <strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.Endpoint}}</strong> is now</h4>
+                        <h4 style="font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; color: #494949; font-weight: 500; font-size: 18px; margin: 0 0 15px; padding: 0;"><strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.CheckType}}</strong> for <strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">{{.EndpointName}}</strong> is now</h4>
                         <h3 class="{{.State}}" style="font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; color: {{if eq .State "OK"}}#01A64F{{end}}{{if eq .State "Critical"}}#EC2128{{end}}; font-weight: 900; font-size: 24px; text-transform: uppercase; margin: 0 0 15px; padding: 0;">{{.State}}</h3>
                         <img src="https://app.raintank.io/img/{{.State}}-email.png" alt="{{.State}} heart" style="width: 150px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;" /></td>
                 </tr><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 25 0;">
                       <table border="0" cellspacing="0" cellpadding="0">
                         <tr>
-                          <td align="center" style="-webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px;" bgcolor="#13b2d4"><a href="https://app.raintank.io/dashboard/file/{{if eq .CheckType "Ping"}}rt-endpoint-ping.json?var-endpoint={{.Endpoint}}{{end}}{{if eq .CheckType "DNS"}}rt-endpoint-dns.json?var-endpoint={{.Endpoint}}{{end}}{{if eq .CheckType "HTTPS"}}rt-endpoint-web.json?var-endpoint={{.Endpoint}}&var-protocol=http{{end}}{{if eq .CheckType "HTTP"}}rt-endpoint-web.json?var-endpoint={{.Endpoint}}&var-protocol=https{{end}}" target="_blank" style="font-size: 16px; font-family: 'Open Sans', Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; color: #ffffff; text-decoration: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; padding: 12px 25px; border: 1px solid #13b2d4; display: inline-block;"><img src="https://app.raintank.io/img/rt-dashboard.png" style="width: 20px; vertical-align: sub; margin-right: 5px; text-shadow: none;" /> Go To {{.CheckType}} Dashboard</a></td>
+                          <td align="center" style="-webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px;" bgcolor="#13b2d4"><a href="https://app.raintank.io/dashboard/file/{{if eq .CheckType "Ping"}}rt-endpoint-ping.json?var-endpoint={{.EndpointSlug}}{{end}}{{if eq .CheckType "DNS"}}rt-endpoint-dns.json?var-endpoint={{.EndpointSlug}}{{end}}{{if eq .CheckType "HTTPS"}}rt-endpoint-web.json?var-endpoint={{.EndpointSlug}}&var-protocol=http{{end}}{{if eq .CheckType "HTTP"}}rt-endpoint-web.json?var-endpoint={{.EndpointSlug}}&var-protocol=https{{end}}" target="_blank" style="font-size: 16px; font-family: 'Open Sans', Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; color: #ffffff; text-decoration: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; padding: 12px 25px; border: 1px solid #13b2d4; display: inline-block;"><img src="https://app.raintank.io/img/rt-dashboard.png" style="width: 20px; vertical-align: sub; margin-right: 5px; text-shadow: none;" /> Go To {{.CheckType}} Dashboard</a></td>
                         </tr>
                       </table>
-                    </td>                    
+                    </td>
                         <!-- Callout Panel -->
                 </tr><tr style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"><td align="center" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 15px;">
                         <p class="callout" style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; color: #999; font-weight: normal; font-size: 14px; line-height: 1.6; margin: 0 0 15px;">
                             <strong style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">ProTip:</strong> Too many alerts? Not enough? You can configure health settings for each check in your endpoint configuration.
-                        </p><!-- /Callout Panel -->                 
-                                                
+                        </p><!-- /Callout Panel -->
+
                     </td>
                 </tr></table></div><!-- /content -->
-                                    
+
         </td>
         <td style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0; padding: 0;"></td>
     </tr></table><!-- /BODY -->

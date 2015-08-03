@@ -67,6 +67,7 @@ type Monitor struct {
 	Enabled        bool
 	State          CheckEvalResult
 	StateChange    time.Time
+	StateCheck     time.Time
 	Settings       []*MonitorSettingDTO
 	HealthSettings *MonitorHealthSettingDTO
 	Created        time.Time
@@ -117,16 +118,26 @@ type MonitorForAlertDTO struct {
 	OrgId           int64
 	EndpointId      int64
 	EndpointSlug    string
+	EndpointName    string
 	MonitorTypeId   int64
 	MonitorTypeName string
 	Offset          int64
 	Frequency       int64
 	Enabled         bool
 	StateChange     time.Time
+	StateCheck      time.Time
 	Settings        []*MonitorSettingDTO
 	HealthSettings  *MonitorHealthSettingDTO
 	Created         time.Time
 	Updated         time.Time
+}
+
+func (m *MonitorForAlertDTO) SettingsMap() map[string]string {
+	settings := make(map[string]string)
+	for _, s := range m.Settings {
+		settings[s.Variable] = s.Value
+	}
+	return settings
 }
 
 type MonitorDTO struct {
@@ -141,6 +152,7 @@ type MonitorDTO struct {
 	Collectors      []int64                  `json:"collectors"`
 	State           CheckEvalResult          `json:"state"`
 	StateChange     time.Time                `json:"state_change"`
+	StateCheck      time.Time                `json:"state_check"`
 	Settings        []*MonitorSettingDTO     `json:"settings"`
 	HealthSettings  *MonitorHealthSettingDTO `json:"health_settings"`
 	Frequency       int64                    `json:"frequency"`
@@ -204,6 +216,7 @@ type UpdateMonitorStateCommand struct {
 	Id       int64
 	State    CheckEvalResult
 	Updated  time.Time
+	Checked  time.Time
 	Affected int
 }
 

@@ -44,6 +44,9 @@ func DeleteEndpoint(c *middleware.Context) Response {
 
 func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) Response {
 	cmd.OrgId = c.OrgId
+	if cmd.Name == "" {
+		return ApiError(400, "Endpoint name not set.", nil)
+	}
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to add endpoint", err)
 	}
@@ -53,7 +56,9 @@ func AddEndpoint(c *middleware.Context, cmd m.AddEndpointCommand) Response {
 
 func UpdateEndpoint(c *middleware.Context, cmd m.UpdateEndpointCommand) Response {
 	cmd.OrgId = c.OrgId
-
+	if cmd.Name == "" {
+		return ApiError(400, "Endpoint name not set.", nil)
+	}
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		return ApiError(500, "Failed to update endpoint", err)

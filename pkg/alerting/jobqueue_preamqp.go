@@ -30,7 +30,7 @@ func (jq PreAMQPJobQueue) run() {
 		routingKey := fmt.Sprintf("%d", job.MonitorId)
 		msg, err := json.Marshal(job)
 		if err != nil {
-			log.Error(3, "failed to marshal job to json.", err)
+			log.Error(3, "failed to marshal job to json: %s", err)
 			continue
 		}
 		jq.publisher.Publish(routingKey, msg)

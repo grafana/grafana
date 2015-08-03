@@ -118,6 +118,8 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
+	AlertingEnabled             bool
+	AlertingHandler             string
 	TickQueueSize               int
 	InternalJobQueueSize        int
 	PreAMQPJobQueueSize         int
@@ -125,6 +127,7 @@ var (
 	EnableScheduler             bool
 	Executors                   int
 	WriteIndividualAlertResults bool
+	AlertingInspect             bool
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
@@ -443,6 +446,8 @@ func NewConfigContext(args *CommandLineArgs) {
 	}
 
 	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	AlertingHandler = alerting.Key("handler").MustString("builtin")
 	TickQueueSize = alerting.Key("tickqueue_size").MustInt(0)
 	InternalJobQueueSize = alerting.Key("internal_jobqueue_size").MustInt(0)
 	PreAMQPJobQueueSize = alerting.Key("pre_amqp_jobqueue_size").MustInt(0)
@@ -450,6 +455,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
 	Executors = alerting.Key("executors").MustInt(100)
 	WriteIndividualAlertResults = alerting.Key("write_individual_alert_results").MustBool(false)
+	AlertingInspect = alerting.Key("inspect").MustBool(false)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

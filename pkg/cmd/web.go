@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	_ "expvar"
 	"fmt"
 	"net/http"
 	"path"
@@ -25,6 +26,11 @@ func newMacaron() *macaron.Macaron {
 	m.Use(middleware.Logger())
 	m.Use(macaron.Recovery())
 	m.Use(toolbox.Toolboxer(m))
+	m.Use(func(ctx *macaron.Context) {
+		if ctx.Req.URL.Path == "/debug/vars" {
+			http.DefaultServeMux.ServeHTTP(ctx.Resp, ctx.Req.Request)
+		}
+	})
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())

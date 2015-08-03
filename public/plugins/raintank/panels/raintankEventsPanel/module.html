@@ -28,6 +28,7 @@
     </div>
 </grafana-panel> -->
 
+
 <grafana-panel>
     <div panel-scroll>
         <div ng-repeat="event in events | orderBy:'timestamp':true" class="freqMsg font-monospace">
@@ -42,7 +43,7 @@
                 <li class="rt-event-endpoint rt-table-item">
                     <span class="emphasis">{{event.endpoint}}</span>
                 </li>
-                <li class="rt-event-endpoint rt-table-item">
+                <li class="rt-event-collector rt-table-item">
                     from <span class="emphasis">{{event.collector}}</span>
                 </li>                
                 <li class="rt-event-type rt-table-item">

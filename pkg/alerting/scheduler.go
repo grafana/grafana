@@ -1,10 +1,10 @@
 package alerting
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +18,9 @@ var tickQueue = make(chan time.Time, setting.TickQueueSize)
 func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
 	offset := time.Duration(LoadOrSetOffset()) * time.Second
-	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
+	// no need to try resuming where we left off in the past.
+	// see https://github.com/raintank/grafana/issues/266
+	lastProcessed := time.Now().Truncate(time.Second).Add(-offset)
 	cl := clock.New()
 	ticker := NewTicker(lastProcessed, offset, cl)
 	go func() {
@@ -42,33 +44,34 @@ func Dispatcher(jobQueue JobQueue) {
 			select {
 			case tickQueue <- tick:
 			default:
-				// TODO: alert when this happens
 				dispatcherTicksSkippedDueToSlowTickQueue.Inc(1)
 			}
+			tickQueueItems.Value(int64(len(tickQueue)))
+			tickQueueSize.Value(int64(setting.TickQueueSize))
 		}
 	}
 }
 
 func dispatchJobs(jobQueue JobQueue) {
-	for t := range tickQueue {
+	for lastPointAt := range tickQueue {
 		tickQueueItems.Value(int64(len(tickQueue)))
 		tickQueueSize.Value(int64(setting.TickQueueSize))
-		lastPointAt := t.Unix()
 
 		pre := time.Now()
-		jobs, err := getJobs(lastPointAt)
+		jobs, err := getJobs(lastPointAt.Unix())
 		dispatcherNumGetSchedules.Inc(1)
 		dispatcherGetSchedules.Value(time.Since(pre))
 
 		if err != nil {
-			fmt.Println("CRITICAL", err) // TODO better way to log errors
+			log.Error(0, "getJobs() failed: %q", err)
 			continue
 		}
 
 		dispatcherJobSchedulesSeen.Inc(int64(len(jobs)))
 		for _, job := range jobs {
-			job.GeneratedAt = t
-			job.LastPointTs = time.Unix(lastPointAt, 0)
+			job.GeneratedAt = time.Now()
+			job.LastPointTs = lastPointAt
+			job.AssertStart = lastPointAt.Add(-time.Duration(job.Freq) * time.Second)
 
 			jobQueue.Put(job)
 

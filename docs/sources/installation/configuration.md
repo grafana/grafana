@@ -384,6 +384,14 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ## [alerting]
 
+### enabled
+`true` or `false`. Is disabled by default.
+
+### handler
+`amqp` to use the configured amqp queue, which lets you choose whether to run a scheduler and how many executors in this process (see below).
+Setting to `builtin` does everything in process and requires the scheduler to be enabled and at least using at least one executor.
+Defaults to `builtin`.
+
 ### tickqueue_size
 
 If more than the given number of dispatch timestamps (ticks) queue up, than the database is really unreasonably slow
@@ -430,6 +438,12 @@ They have low cpu and memory overhead but may query your datastore simultaneousl
 ### write_individual_alert_results
 
 Whether to write the individual state metrics for each alerting rule. Defaults to false
+
+### inspect
+`true` or `false`. Is disabled by default.
+`true` will cause job executors to evaluate and debug log the results of the jobs, instead of actually treating
+them as a real job (saving the results, sending notifications, instrumenting, etc)
+
 
 <hr>
 

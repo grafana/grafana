@@ -15,7 +15,7 @@ var jobQueueInternalItems met.Gauge
 var jobQueueInternalSize met.Gauge
 var jobQueuePreAMQPItems met.Gauge
 var jobQueuePreAMQPSize met.Gauge
-var tickQueueItems met.Gauge
+var tickQueueItems met.Meter
 var tickQueueSize met.Gauge
 var dispatcherJobsSkippedDueToSlowJobQueueInternal met.Count
 var dispatcherJobsSkippedDueToSlowJobQueuePreAMQP met.Count
@@ -37,6 +37,10 @@ var executorAlertOutcomesWarn met.Count
 var executorAlertOutcomesCrit met.Count
 var executorAlertOutcomesUnkn met.Count
 var executorGraphiteEmptyResponse met.Count
+var executorGraphiteIncompleteResponse met.Count
+var executorGraphiteBadStart met.Count
+var executorGraphiteBadStep met.Count
+var executorGraphiteBadSteps met.Count
 
 var executorJobExecDelay met.Timer
 var executorJobQueryGraphite met.Timer
@@ -50,7 +54,7 @@ func Init(metrics met.Backend) {
 	jobQueueInternalSize = metrics.NewGauge("alert-jobqueue-internal.size", int64(setting.InternalJobQueueSize))
 	jobQueuePreAMQPItems = metrics.NewGauge("alert-jobqueue-preamqp.items", 0)
 	jobQueuePreAMQPSize = metrics.NewGauge("alert-jobqueue-preamqp.size", int64(setting.PreAMQPJobQueueSize))
-	tickQueueItems = metrics.NewGauge("alert-tickqueue.items", 0)
+	tickQueueItems = metrics.NewMeter("alert-tickqueue.items", 0)
 	tickQueueSize = metrics.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
 	dispatcherJobsSkippedDueToSlowJobQueueInternal = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-internal-jobqueue")
 	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-pre-amqp-jobqueue")
@@ -72,6 +76,10 @@ func Init(metrics met.Backend) {
 	executorAlertOutcomesCrit = metrics.NewCount("alert-executor.alert-outcomes.critical")
 	executorAlertOutcomesUnkn = metrics.NewCount("alert-executor.alert-outcomes.unknown")
 	executorGraphiteEmptyResponse = metrics.NewCount("alert-executor.graphite-emptyresponse")
+	executorGraphiteIncompleteResponse = metrics.NewCount("alert-executor.graphite-incompleteresponse")
+	executorGraphiteBadStart = metrics.NewCount("alert-executor.graphite-badstart")
+	executorGraphiteBadStep = metrics.NewCount("alert-executor.graphite-badstep")
+	executorGraphiteBadSteps = metrics.NewCount("alert-executor.graphite-badsteps")
 
 	executorJobExecDelay = metrics.NewTimer("alert-executor.job_execution_delay", time.Duration(30)*time.Second)
 	executorJobQueryGraphite = metrics.NewTimer("alert-executor.job_query_graphite", 0)
@@ -84,9 +92,15 @@ func Construct() {
 	if err != nil {
 		panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
 	}
-	sec := setting.Cfg.Section("event_publisher")
-	if sec.Key("enabled").MustBool(false) {
-		//rabbitmq is enabled, let's use it for our jobs.
+
+	if setting.AlertingHandler != "amqp" && setting.AlertingHandler != "builtin" {
+		log.Fatal(0, "alerting handler must be either 'builtin' or 'amqp'")
+	}
+	if setting.AlertingHandler == "amqp" {
+		sec := setting.Cfg.Section("event_publisher")
+		if !sec.Key("enabled").MustBool(false) {
+			log.Fatal(0, "alerting handler 'amqp' requires the event_publisher to be enabled")
+		}
 		url := sec.Key("rabbitmq_url").String()
 		if err := distributed(url, cache); err != nil {
 			log.Fatal(0, "failed to start amqp consumer.", err)
