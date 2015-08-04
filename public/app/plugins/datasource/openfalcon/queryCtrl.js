@@ -135,14 +135,14 @@ function (angular, _, config, gfunc, Parser) {
             }
             return;
           }
-          // if (segments[0].expandable) {
-            if ($scope.segments.length === fromIndex) {
-              $scope.segments.push(MetricSegment.newSelectMetric());
-            }
-            else {
-              return checkOtherSegments(fromIndex + 1);
-            }
-          // }
+
+          if ($scope.segments.length === fromIndex) {
+            $scope.segments.push(MetricSegment.newSelectMetric());
+          }
+          else {
+            return checkOtherSegments(fromIndex + 1);
+          }
+
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
@@ -336,5 +336,4 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
   });
-
 });

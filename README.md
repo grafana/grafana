@@ -80,12 +80,12 @@ the latest master builds [here](http://grafana.org/download/builds)
 ### Get Code
 
 ```
-go get github.com/grafana/grafana
+go get github.com/Cepave/grafana
 ```
 
 ### Building the backend
 ```
-cd $GOPATH/src/github.com/grafana/grafana
+cd $GOPATH/src/github.com/Cepave/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
 go build .
