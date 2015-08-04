@@ -10,7 +10,7 @@ import (
 
 	"github.com/Unknwon/macaron"
 
-	"github.com/grafana/grafana/pkg/api"
+	"github.com/Cepave/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
