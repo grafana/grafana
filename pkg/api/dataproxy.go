@@ -47,7 +47,7 @@ var dataProxyTransport = &http.Transport{
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
- * @related issues:	OWL-168, OWL-017, OWL-002
+ * @related issues:	OWL-168, OWL-028, OWL-017, OWL-002
  * @param:			ds *m.DataSource
  * @param:			proxyPath string
  * @param:			targetUrl *url.URL

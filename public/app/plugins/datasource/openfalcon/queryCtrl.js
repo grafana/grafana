@@ -169,11 +169,15 @@ function (angular, _, config, gfunc, Parser) {
             }
             return;
           }
+<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+=======
+>>>>>>> OWL-28 refinements
 
           if ($scope.segments.length === fromIndex) {
             $scope.segments.push(MetricSegment.newSelectMetric());
           }
+<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
           // else {
           //   return checkOtherSegments(fromIndex + 1);
           // }
@@ -188,6 +192,12 @@ function (angular, _, config, gfunc, Parser) {
             }
           // }
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+          else {
+            return checkOtherSegments(fromIndex + 1);
+          }
+
+>>>>>>> OWL-28 refinements
         })
         .then(null, function(err) {
           $scope.parserError = err.message || 'Failed to issue metric query';
@@ -385,9 +395,13 @@ function (angular, _, config, gfunc, Parser) {
     $scope.init();
 
   });
+<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 });
 =======
 
 });
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+});
+>>>>>>> OWL-28 refinements
