@@ -174,6 +174,11 @@ function (angular, $, kbn, _, moment) {
       var newPanel = angular.copy(panel);
       newPanel.id = this.getNextPanelId();
 
+      delete newPanel.repeat;
+      delete newPanel.repeatIteration;
+      delete newPanel.repeatPanelId;
+      delete newPanel.scopedVars;
+
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
       return newPanel;
