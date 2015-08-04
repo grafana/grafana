@@ -25,32 +25,56 @@ function (angular, app, _, PanelMeta) {
       fullscreen: false
     });
     $scope.panel.title = "";
-    $scope.cta = "addEndpoint";
+
+    $scope.endpointStatus = "scopeEndpoints"; 
+    $scope.userStatus = "scopeUsers";    
+    $scope.collectorStatus = "scopeCollectors";    
+
 
     // Set and populate defaults
     $scope.init = function() {
       panelSrv.init(this);
     };
 
-    $scope.setCTA = function() {
+    $scope.setEndpointStatus = function() {
       if ($scope.quotas.endpoint.used === 0) {
-        $scope.cta = "addEndpoint";
+        $scope.endpointStatus = "noEndpoints";
         return;
       }
-      if ($scope.quotas.user.used <= 1) {
-        $scope.cta = "addUser";
+      if ($scope.quotas.endpoint.used >= 1) {
+        $scope.endpointStatus = "hasEndpoints";
         return;
-      }
-      if ($scope.quotas.collector.used === 0) {
-        $scope.cta = "addCollector";
-        return;
-      }
-      if ($scope.quotas.data_source.used === 0) {
-        $scope.cta = "addDatasource";
-        return;
-      }
+      }      
       //default.
-      $scope.cta = "addEndpoint";
+      $scope.endpointStatus = "hasEndpoints";
+      return;
+    };
+
+    $scope.setUserStatus = function() {
+      if ($scope.quotas.user.used <= 1) {
+        $scope.userStatus = "noTeam";
+        return;
+      }
+      if ($scope.quotas.user.used >= 2) {
+        $scope.userStatus = "hasTeam";
+        return;
+      }      
+      //default.
+      $scope.userStatus = "hasTeam";
+      return;
+    };
+
+    $scope.setCollectorStatus = function() {
+      if ($scope.quotas.collector.used === 0) {
+        $scope.collectorStatus = "noCollectors";
+        return;
+      }
+      if ($scope.quotas.collector.used >= 1) {
+        $scope.collectorStatus = "hasCollectors";
+        return;
+      }      
+      //default.
+      $scope.collectorStatus = "hasTeam";
       return;
     };
 
@@ -62,7 +86,9 @@ function (angular, app, _, PanelMeta) {
           quotaHash[q.target] = q;
         });
         $scope.quotas = quotaHash;
-        $scope.setCTA();
+        $scope.setEndpointStatus();        
+        $scope.setUserStatus();      
+        $scope.setCollectorStatus();        
       });
     };
 
