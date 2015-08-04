@@ -86,8 +86,8 @@ define([
         dashboard.rows = [{ panels: [panel] }];
         dashboard.duplicatePanel(panel, dashboard.rows[0]);
 
-        expect(dashboard.rows[0].panels[1].repeat).to.be(null);
-        expect(dashboard.rows[0].panels[1].scopedVars.test).to.be(undefined);
+        expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
+        expect(dashboard.rows[0].panels[1].scopedVars).to.be(undefined);
       });
 
     });
