@@ -77,7 +77,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 				"NameOrEmail": util.StringsFallback2(cmd.Name, cmd.Email),
 				"OrgName":     c.OrgName,
 				"Email":       c.Email,
-				"LinkUrl":     setting.ToAbsUrl("signup/invited/" + cmd.Code),
+				"LinkUrl":     setting.ToAbsUrl("invite/" + cmd.Code),
 				"InvitedBy":   util.StringsFallback2(c.Name, c.Email),
 			},
 		}
