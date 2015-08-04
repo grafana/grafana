@@ -1,4 +1,4 @@
-# 2.1.0 (unreleased - master branch)
+# 2.1.0 (2015-08-04)
 
 **Data sources**
 - [Issue #1525](https://github.com/grafana/grafana/issues/1525). InfluxDB: Full support for InfluxDB 0.9 with new adapted query editor
