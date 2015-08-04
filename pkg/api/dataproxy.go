@@ -52,8 +52,12 @@ var dataProxyTransport = &http.Transport{
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
+<<<<<<< 7233bfadf43890ab379f2549dc0945879b423165
  * @related issues:	OWL-168, OWL-017, OWL-002
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+ * @related issues:	OWL-168, OWL-028, OWL-017, OWL-002
+>>>>>>> OWL-28 refinements
  * @param:			ds *m.DataSource
  * @param:			proxyPath string
  * @param:			targetUrl *url.URL
