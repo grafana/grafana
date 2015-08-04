@@ -81,6 +81,15 @@ define([
         expect(dashboard.rows[0].panels[1].id).to.be(11);
       });
 
+      it('duplicate panel should remove repeat data', function() {
+        var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
+        dashboard.rows = [{ panels: [panel] }];
+        dashboard.duplicatePanel(panel, dashboard.rows[0]);
+
+        expect(dashboard.rows[0].panels[1].repeat).to.be(null);
+        expect(dashboard.rows[0].panels[1].scopedVars.test).to.be(undefined);
+      });
+
     });
 
     describe('when creating dashboard with editable false', function() {
