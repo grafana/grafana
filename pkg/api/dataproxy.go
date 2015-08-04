@@ -43,13 +43,13 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
- * @related issues:	OWL-017, OWL-002
+ * @related issues:	OWL-028, OWL-017, OWL-002
  * @param:			*m.DataSource ds
  * @param:			string proxyPath
  * @return:			*httputil.ReverseProxy
  * @author:			Don Hsieh
  * @since:			07/17/2015
- * @last modified: 	07/30/2015
+ * @last modified: 	08/04/2015
  * @called by:		func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
  */
@@ -80,7 +80,6 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		} else if ds.Type == "openfalcon" {
 			// fmt.Printf("Welcome to %v!\n", ds.Type)
 			// fmt.Printf("NewReverseProxy req = %v\n", req)
-			// fmt.Printf("NewReverseProxy req.Method = %v\n", req.Method)
 			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
 			// fmt.Printf("NewReverseProxy req.RequestURI = %v\n", req.RequestURI)
 			reqQueryVals.Add("target", ds.Url)
@@ -97,11 +96,14 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			req.URL.Host = target.Host
 			req.Host = target.Host
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+<<<<<<< aedb273f3baeaf58ed16d85efb16b4645680f121
 			// fmt.Printf("NewReverseProxy req.URL.Path = %v\n", req.URL.Path)
 			// fmt.Printf("NewReverseProxy Now = %v\n", int32(time.Now().Unix()))
 			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
 			// fmt.Printf("NewReverseProxy req.URL.RawQuery = %v\n", req.URL.RawQuery)
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> OWL-28 refinements
 		} else {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 		}
