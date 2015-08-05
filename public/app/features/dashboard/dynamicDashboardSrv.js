@@ -53,10 +53,6 @@ function (angular, _) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
           }
-          // clean up left over scoped vars
-          else if (panel.scopedVars && panel.repeatIteration !== this.iteration) {
-            delete panel.scopedVars;
-          }
         }
       }
     };
@@ -120,7 +116,6 @@ function (angular, _) {
           panel = copy.panels[i];
           panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
-          panel.repeatIteration = self.iteration;
         }
       });
     };
