@@ -53,7 +53,6 @@ function (angular, _, config, gfunc, Parser) {
         parseTargeRecursive(astNode);
       }
       catch (err) {
-        console.log('error parsing target:', err.message);
         $scope.parserError = err.message;
         $scope.target.textEditor = true;
       }
@@ -105,7 +104,6 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          // console.log('$scope.segments = _.map() segment =', segment);
           return new MetricSegment(segment);
         });
       }
@@ -150,7 +148,6 @@ function (angular, _, config, gfunc, Parser) {
     }
 
     function setSegmentFocus(segmentIndex) {
-      console.log('function setSegmentFocus segmentIndex =', segmentIndex);
       _.each($scope.segments, function(segment, index) {
         segment.focus = segmentIndex === index;
       });
@@ -160,9 +157,8 @@ function (angular, _, config, gfunc, Parser) {
       return func.render(target);
     }
 
-    $scope.getAltSegments = function (index) {
-      console.log('$scope.getAltSegments index =', index);
-      var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
+    $scope.getAltSegments = function (index, hostname) {
+      var query = index === 0 ? '*.' + hostname : getSegmentPathUpTo(index) + '.*';
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
           var altSegments = _.map(segments, function(segment) {
@@ -191,8 +187,7 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.segmentValueChanged = function (segment, segmentIndex) {
-      console.log('$scope.segmentValueChanged segment =', segment);
-      console.log('$scope.segmentValueChanged segmentIndex =', segmentIndex);
+
       delete $scope.parserError;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
@@ -291,7 +286,6 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      console.log('$scope.moveMetricQuery $scope.panel.targets =', $scope.panel.targets);
       _.move($scope.panel.targets, fromIndex, toIndex);
     };
 

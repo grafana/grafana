@@ -9,15 +9,15 @@ var request = require('request');
 /**
  * @function:		app.get('/', function(req, res))
  * @description:	This route returns list of hosts (endpoints)
- *					 if query == '*'; returns list of metrics (counters) 
+ *					 if query[0] == '*'; returns list of metrics (counters) 
  *					 otherwise.
- * @related issues:	OWL-017
+ * @related issues:	OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
- * @author:			Don Hsieh
+ * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	07/30/2015
+ * @last modified: 	08/05/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -27,9 +27,9 @@ app.get('/', function(req, res) {
 	var queryUrl = req.query['target'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
-	if (query === '*') {	// Init condition:
-							// Query hosts, i.e., endpoints.
-		url = queryUrl + '/api/endpoints?q=a&tags&limit&_r=' + Math.random();
+	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
+		query = query.replace('*.', '');
+		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				body = JSON.parse(body);
