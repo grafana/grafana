@@ -1,13 +1,13 @@
 define([
   'angular',
   'lodash',
-  'kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
+  /* jshint -W101 */
   var supportedMetrics = {
     "AWS/AutoScaling": [
       "GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"
@@ -78,6 +78,7 @@ function (angular, _, kbn) {
       "Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"
     ],
   };
+  /* jshint +W101 */
 
   var supportedDimensions = {
     "AWS/AutoScaling": [
@@ -179,15 +180,15 @@ function (angular, _, kbn) {
       $scope.panel.targets.push(clone);
     };
 
-    $scope.suggestNamespace = function(query, callback) {
+    $scope.suggestNamespace = function(query, callback) { // jshint unused:false
       return _.keys(supportedMetrics);
     };
 
-    $scope.suggestMetrics = function(query, callback) {
+    $scope.suggestMetrics = function(query, callback) { // jshint unused:false
       return supportedMetrics[$scope.target.namespace] || [];
     };
 
-    $scope.suggestDimensionKeys = function(query, callback) {
+    $scope.suggestDimensionKeys = function(query, callback) { // jshint unused:false
       return supportedDimensions[$scope.target.namespace] || [];
     };
 
