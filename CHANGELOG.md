@@ -1,3 +1,8 @@
+# 2.1.1 (unreleased)
+
+**Fixes**
+- [Issue #2443](https://github.com/grafana/grafana/issues/2443). Templating: Fix for buggy repeat row behavior when combined with with repeat panel due to recent change before 2.1 release
+
 # 2.1.0 (2015-08-04)
 
 **Data sources**
