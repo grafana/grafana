@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd"
+	"github.com/Cepave/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
