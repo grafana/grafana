@@ -187,6 +187,9 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 			if len(emails) < 1 {
 				log.Debug("no email addresses provided. OrgId: %d monitorId: %d", job.OrgId, job.MonitorId)
 			} else {
+				for _, email := range emails {
+					log.Info("sending email. addr=%s, orgId=%d, monitorId=%d, endpointSlug=%s, state=%s", email, job.OrgId, job.MonitorId, job.EndpointSlug, res.String())
+				}
 				sendCmd := m.SendEmailCommand{
 					To:       emails,
 					Template: "alerting_notification.html",
