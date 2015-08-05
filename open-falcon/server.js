@@ -292,6 +292,7 @@ function queryMetric(req, res, targets)
  * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
 =======
  * @description:	This route returns list of hosts (endpoints)
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
  *					 if query[0] == '*'; returns list of metrics (counters)
  *					 otherwise.
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
@@ -299,12 +300,21 @@ function queryMetric(req, res, targets)
 >>>>>>> OWL-29 autocomplete for hostname request
 =======
  * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
+<<<<<<< b06915469d8ea1e1c6c4bd367d422039ac92d60b
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+=======
+=======
+ *					 if query[0] == '*'; returns list of metrics (counters) 
+ *					 otherwise.
+ * @related issues:	OWL-029, OWL-017
+>>>>>>> OWL-29 autocomplete for hostname request
+>>>>>>> OWL-29 autocomplete for hostname request
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
+<<<<<<< b06915469d8ea1e1c6c4bd367d422039ac92d60b
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< a2d270ce4eb24ecb3d78b6b26f90d191e215427c
  * @last modified: 	11/11/2015
@@ -314,6 +324,13 @@ function queryMetric(req, res, targets)
 =======
  * @last modified: 	10/20/2015
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+=======
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
+ * @last modified: 	10/23/2015
+=======
+ * @last modified: 	08/05/2015
+>>>>>>> OWL-29 autocomplete for hostname request
+>>>>>>> OWL-29 autocomplete for hostname request
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -327,9 +344,14 @@ app.get('/', function(req, res) {
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 	var arrQuery = req.query;
+<<<<<<< b06915469d8ea1e1c6c4bd367d422039ac92d60b
 <<<<<<< a2d270ce4eb24ecb3d78b6b26f90d191e215427c
 	var query = arrQuery['query'].replace('undefined', '').replace('.select metric', '');
 	var limit = 'limit';
+=======
+	var query = arrQuery['query'];
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
+>>>>>>> OWL-29 autocomplete for hostname request
 
 	var host = query.split('.')[0];
 	var gotHostname = host.length > 4;
@@ -351,7 +373,15 @@ app.get('/', function(req, res) {
 >>>>>>> OWL-29 autocomplete for hostname request
 =======
 		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+<<<<<<< b06915469d8ea1e1c6c4bd367d422039ac92d60b
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+=======
+=======
+	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
+		query = query.replace('*.', '');
+		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+>>>>>>> OWL-29 autocomplete for hostname request
+>>>>>>> OWL-29 autocomplete for hostname request
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);

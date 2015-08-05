@@ -71,8 +71,11 @@ function (angular, _, config, gfunc, Parser) {
         parseTargeRecursive(astNode);
       }
       catch (err) {
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
         console.log('error parsing target:', err.message);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> OWL-29 autocomplete for hostname request
         $scope.parserError = err.message;
         $scope.target.textEditor = true;
       }
@@ -136,10 +139,13 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
           // console.log('$scope.segments = _.map() segment =', segment);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> OWL-29 autocomplete for hostname request
           return new MetricSegment(segment);
         });
       }
@@ -205,10 +211,13 @@ function (angular, _, config, gfunc, Parser) {
     }
 
     function setSegmentFocus(segmentIndex) {
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
       console.log('function setSegmentFocus segmentIndex =', segmentIndex);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> OWL-29 autocomplete for hostname request
       _.each($scope.segments, function(segment, index) {
         segment.focus = segmentIndex === index;
       });
@@ -218,6 +227,7 @@ function (angular, _, config, gfunc, Parser) {
       return func.render(target);
     }
 
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
     $scope.getAltSegments = function (index, hostname) {
       var query = index === 0 ? '*.' + hostname : getSegmentPathUpTo(index) + '.*';
@@ -226,6 +236,10 @@ function (angular, _, config, gfunc, Parser) {
       console.log('$scope.getAltSegments index =', index);
       var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+    $scope.getAltSegments = function (index, hostname) {
+      var query = index === 0 ? '*.' + hostname : getSegmentPathUpTo(index) + '.*';
+>>>>>>> OWL-29 autocomplete for hostname request
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
           var altSegments = _.map(segments, function(segment) {
@@ -254,12 +268,16 @@ function (angular, _, config, gfunc, Parser) {
     };
 
     $scope.segmentValueChanged = function (segment, segmentIndex) {
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 
 =======
       console.log('$scope.segmentValueChanged segment =', segment);
       console.log('$scope.segmentValueChanged segmentIndex =', segmentIndex);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+
+>>>>>>> OWL-29 autocomplete for hostname request
       delete $scope.parserError;
 
       if ($scope.functions.length > 0 && $scope.functions[0].def.fake) {
@@ -360,10 +378,13 @@ function (angular, _, config, gfunc, Parser) {
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 =======
     $scope.moveMetricQuery = function(fromIndex, toIndex) {
+<<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
       console.log('$scope.moveMetricQuery $scope.panel.targets =', $scope.panel.targets);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> OWL-29 autocomplete for hostname request
       _.move($scope.panel.targets, fromIndex, toIndex);
     };
 
