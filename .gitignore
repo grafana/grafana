@@ -1,5 +1,8 @@
+<<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
 cfg.json
 open-falcon/data/*.json
+=======
+>>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
 grafana
 node_modules
 coverage/

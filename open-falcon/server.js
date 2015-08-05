@@ -166,8 +166,12 @@ function queryMetric(req, res, targets)
 =======
  *					 if query[0] == '*'; returns list of metrics (counters) 
  *					 otherwise.
+<<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
  * @related issues:	OWL-029, OWL-017
 >>>>>>> OWL-29 autocomplete for hostname request
+=======
+ * @related issues:	OWL-032, OWL-029, OWL-017
+>>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
  * @param:			object req
  * @param:			object res
  * @return:			array results
@@ -189,6 +193,7 @@ app.get('/', function(req, res) {
 	var urlDashboard = req.query['urlDashboard'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
+<<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
 <<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
 
 	if (query.indexOf('*.') === 0) {	// Query hosts, i.e., endpoints.
@@ -199,6 +204,10 @@ app.get('/', function(req, res) {
 		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 =======
 	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
+=======
+
+	if (query.indexOf('*.') === 0) {	// Query hosts, i.e., endpoints.
+>>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
 		query = query.replace('*.', '');
 		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 >>>>>>> OWL-29 autocomplete for hostname request
