@@ -61,6 +61,9 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           if (!result || !result.series) { continue; }
 
           var alias = (options.targets[i] || {}).alias;
+          if (alias) {
+            alias = templateSrv.replace(alias, options.scopedVars);
+          }
           var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
           for (y = 0; y < targetSeries.length; y++) {
             seriesList.push(targetSeries[y]);
