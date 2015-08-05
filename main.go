@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Cepave/grafana/pkg/cmd"
+<<<<<<< 0638f0a96a50b401c204ce09beabfecd2073bb48
 	"github.com/Cepave/grafana/pkg/log"
 	"github.com/Cepave/grafana/pkg/login"
 	"github.com/Cepave/grafana/pkg/metrics"
@@ -22,6 +23,18 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
+=======
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/social"
+>>>>>>> [OWL-32] Replace github.com/grafana/grafana/pkg/cmd with github.com/Cepave/grafana/pkg/cmd in main.go
 )
 
 var version = "master"
