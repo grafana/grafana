@@ -158,16 +158,27 @@ function queryMetric(req, res, targets)
 
 /**
  * @function:		app.get('/', function(req, res))
+<<<<<<< a2d270ce4eb24ecb3d78b6b26f90d191e215427c
  * @description:	This route returns list of hosts (endpoints) if query[0] == '*';
  *					 returns list of metrics (counters) otherwise.
  * @related issues:	OWL-168
  * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
+=======
+ * @description:	This route returns list of hosts (endpoints)
+ *					 if query[0] == '*'; returns list of metrics (counters) 
+ *					 otherwise.
+ * @related issues:	OWL-029, OWL-017
+>>>>>>> OWL-29 autocomplete for hostname request
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
+<<<<<<< a2d270ce4eb24ecb3d78b6b26f90d191e215427c
  * @last modified: 	11/11/2015
+=======
+ * @last modified: 	08/05/2015
+>>>>>>> OWL-29 autocomplete for hostname request
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -178,6 +189,7 @@ app.get('/', function(req, res) {
 	var results = [];
 	var urlDashboard = req.query['urlDashboard'];
 	var arrQuery = req.query;
+<<<<<<< a2d270ce4eb24ecb3d78b6b26f90d191e215427c
 	var query = arrQuery['query'].replace('undefined', '').replace('.select metric', '');
 	var limit = 'limit';
 
@@ -192,6 +204,12 @@ app.get('/', function(req, res) {
 		}
 
 		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&' + limit + '&_r=' + Math.random();
+=======
+	var query = arrQuery['query'];
+	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
+		query = query.replace('*.', '');
+		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+>>>>>>> OWL-29 autocomplete for hostname request
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
