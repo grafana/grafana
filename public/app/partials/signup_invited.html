@@ -11,12 +11,11 @@
 
     <div class="invite-box">
 			<h3>
-				Hi, {{greeting}}, Welcome to Grafana party.
+				Hello {{greeting}}.
 			</h3>
 
-			<div class="modal-tagline">
-				Beer and wine in the fridge, food out back - <br>
-				but first introduce yourself.
+			<div class="long-tag modal-tagline">
+				<span class="body-copy-emphasis">{{.InvitedBy}}</span> has invited you to join the <span class="highlight-word">{{contextSrv.user.orgName}}</span> organization in Grafana.</br>Please complete the following to accept your invitation and continue:
 			</div>
 
       <form name="inviteForm" class="login-form">
