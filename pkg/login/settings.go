@@ -63,8 +63,6 @@ func loadLdapConfig() {
 
 	// set default org id
 	for _, server := range ldapCfg.Servers {
-		assertNotEmptyCfg(server.Host, "host")
-		assertNotEmptyCfg(server.BindDN, "bind_dn")
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
