@@ -105,6 +105,9 @@ func (c *Consumer) getChannel() error {
 			if err == nil {
 				break
 			}
+			if c.callback != nil {
+				c.consume()
+			}
 
 			//could not create channel, so lets close the connection
 			// and re-create.
