@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+<<<<<<< 2f77576788aec9ae56a51566fade1f08f01f1729
 <<<<<<< 072caca2c6e358edadedc76a9c996c33fd47837b
 	"github.com/Cepave/grafana/pkg/cmd"
 	"github.com/Cepave/grafana/pkg/log"
@@ -25,6 +26,9 @@ import (
 	"github.com/Cepave/grafana/pkg/social"
 =======
 	"github.com/grafana/grafana/pkg/cmd"
+=======
+	"github.com/Cepave/grafana/pkg/cmd"
+>>>>>>> [OWL-32] Replace github.com/grafana/grafana/pkg/cmd with github.com/Cepave/grafana/pkg/cmd in main.go
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
