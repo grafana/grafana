@@ -74,7 +74,7 @@
 
       <ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
 				<li ng-repeat="segment in segments" role="menuitem">
-					<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
+					<metric-segment segment="segment" get-alt-segments="getAltSegments($index, str)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
 				</li>
 				<li ng-repeat="func in functions">
           <span graphite-func-editor class="tight-form-item tight-form-func">

@@ -73,10 +73,10 @@ function (angular, app, _, $) {
           };
 
           $scope.source = function(query, callback) {
-            if (options) { return options; }
+            // if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments().then(function(altSegments) {
+              $scope.getAltSegments({_ , str: query}).then(function(altSegments) {
                 $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
