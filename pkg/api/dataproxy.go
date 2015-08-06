@@ -24,6 +24,7 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+// NewReverseProxy will return a reverse proxy based on a grafana data source.
 func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy {
 	target, _ := url.Parse(ds.Url)
 
@@ -36,19 +37,22 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 
 		if ds.Type == m.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinUrlFragments(target.Path, "db/"+ds.Database+"/"+proxyPath)
-			reqQueryVals.Add("u", ds.User)
-			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 			reqQueryVals.Add("db", ds.Database)
-			reqQueryVals.Add("u", ds.User)
-			reqQueryVals.Add("p", ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}
 
+		if ds.User != "" {
+			reqQueryVals.Add("u", ds.User)
+			if ds.Password != "" {
+				reqQueryVals.Add("p", ds.Password)
+			}
+			req.URL.RawQuery = reqQueryVals.Encode()
+		}
 		if ds.BasicAuth {
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
 		}

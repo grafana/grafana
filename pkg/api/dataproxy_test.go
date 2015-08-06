@@ -27,7 +27,7 @@ func TestDataSourceProxy(t *testing.T) {
 		})
 	})
 
-	Convey("When getting influxdb datasource proxy", t, func() {
+	Convey("When getting influxdb datasource proxy (08)", t, func() {
 		ds := m.DataSource{
 			Type:     m.DS_INFLUXDB_08,
 			Url:      "http://influxdb:8083",
@@ -51,6 +51,32 @@ func TestDataSourceProxy(t *testing.T) {
 			queryVals := req.URL.Query()
 			So(queryVals["u"][0], ShouldEqual, "user")
 			So(queryVals["p"][0], ShouldEqual, "password")
+		})
+
+	})
+
+	Convey("When getting influxdb datasource proxy", t, func() {
+		ds := m.DataSource{
+			Type:     m.DS_INFLUXDB,
+			Url:      "http://influxdb:8083",
+			Database: "site",
+		}
+
+		proxy := NewReverseProxy(&ds, "")
+
+		requestUrl, _ := url.Parse("http://grafana.com/sub")
+		req := http.Request{URL: requestUrl}
+
+		proxy.Director(&req)
+
+		Convey("Should not add db to url", func() {
+			So(req.URL.Path, ShouldEqual, "/")
+		})
+
+		Convey("Should add username and password", func() {
+			queryVals := req.URL.Query()
+			So(queryVals["u"], ShouldBeNil)
+			So(queryVals["p"], ShouldBeNil)
 		})
 
 	})
