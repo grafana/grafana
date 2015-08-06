@@ -11,7 +11,7 @@ var request = require('request');
  * @description:	This route returns list of hosts (endpoints)
  *					 if query[0] == '*'; returns list of metrics (counters) 
  *					 otherwise.
- * @related issues:	OWL-029, OWL-017
+ * @related issues:	OWL-032, OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
@@ -27,7 +27,8 @@ app.get('/', function(req, res) {
 	var queryUrl = req.query['target'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
-	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
+
+	if (query.indexOf('*.') === 0) {	// Query hosts, i.e., endpoints.
 		query = query.replace('*.', '');
 		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 		request(url, function (error, response, body) {

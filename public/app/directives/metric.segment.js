@@ -76,7 +76,7 @@ function (angular, app, _, $) {
             // if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments({_ , str: query}).then(function(altSegments) {
+              $scope.getAltSegments({obj: _ , str: query}).then(function(altSegments) {
                 $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
