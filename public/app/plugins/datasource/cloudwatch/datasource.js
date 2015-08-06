@@ -46,7 +46,7 @@ function (angular, _, kbn) {
             Value: target.dimensions[key]
           };
         });
-        query.statistics = _.keys(target.statistics);
+        query.statistics = getActivatedStatistics(target.statistics);
         query.period = target.period;
 
         var range = (end.getTime() - start.getTime()) / 1000;
@@ -130,7 +130,7 @@ function (angular, _, kbn) {
       var result = [];
 
       var dimensionPart = JSON.stringify(options.dimensions);
-      _.each(_.keys(options.statistics), function(s) {
+      _.each(getActivatedStatistics(options.statistics), function(s) {
         var metricLabel = md.Label + '_' + s + dimensionPart;
 
         var dps = _.map(md.Datapoints, function(value) {
@@ -142,6 +142,16 @@ function (angular, _, kbn) {
       });
 
       return result;
+    }
+
+    function getActivatedStatistics(statistics) {
+      var activatedStatistics = [];
+      _.each(statistics, function(v, k) {
+        if (v) {
+          activatedStatistics.push(k);
+        }
+      });
+      return activatedStatistics;
     }
 
     function convertToCloudWatchTime(date) {
