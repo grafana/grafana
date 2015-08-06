@@ -2,6 +2,7 @@
 package graphite
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -134,6 +135,9 @@ type Trace struct {
 }
 
 func (t Trace) String() string {
+	// mangle the response here as well to keep logstash from crashing on
+	// the bare json array
+	resp := bytes.Replace(t.Response, []byte("\n"), []byte("\n> "), -1)
 	return fmt.Sprintf("{Request start:%s end:%s targets:%s url:%s Response:%s}", t.Request.Start, t.Request.End, t.Request.Targets, t.Request.URL, t.Response)
 }
 
