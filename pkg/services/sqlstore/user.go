@@ -72,6 +72,10 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			return err
 		}
 
+		if cmd.Email == "" {
+			cmd.Email = cmd.Login
+		}
+
 		// create user
 		user := m.User{
 			Email:   cmd.Email,
