@@ -88,6 +88,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		} else if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 			reqQueryVals.Add("db", ds.Database)
+<<<<<<< d16bd3c036f843857e879a92c5adddaf23d0791e
 			req.URL.RawQuery = reqQueryVals.Encode()
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
 			if !ds.BasicAuth {
@@ -133,6 +134,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			req.URL.Host = target.Host
 			req.Host = target.Host
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+=======
+			req.URL.RawQuery = reqQueryVals.Encode()
+			if !ds.BasicAuth {
+				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
+			}
+>>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
 		} else {
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)

@@ -129,10 +129,17 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var self = this;
+<<<<<<< d16bd3c036f843857e879a92c5adddaf23d0791e
 
       var currentUrl = self.urls.shift();
       self.urls.push(currentUrl);
 
+=======
+
+      var currentUrl = self.urls.shift();
+      self.urls.push(currentUrl);
+
+>>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
       var params = {
         u: self.username,
         p: self.password,
@@ -161,6 +168,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
+<<<<<<< d16bd3c036f843857e879a92c5adddaf23d0791e
       return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
@@ -170,6 +178,17 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           }
           else {
             throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+=======
+      return $http(options).then(function(result) {
+        return result.data;
+      }, function(reason) {
+        if (reason.status !== 0 || reason.status >= 300) {
+          if (reason.data && reason.data.error) {
+            throw { message: 'InfluxDB Error Response: ' + reason.data.error };
+          }
+          else {
+            throw { messsage: 'InfluxDB Error: ' + reason.message };
+>>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
           }
         }
       });
