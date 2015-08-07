@@ -114,25 +114,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    function retry(deferred, callback, delay) {
-      return callback().then(undefined, function(reason) {
-        if (reason.status !== 0 || reason.status >= 300) {
-          if (reason.data && reason.data.error) {
-            reason.message = 'InfluxDB Error Response: ' + reason.data.error;
-          }
-          else {
-            reason.message = 'InfluxDB Error: ' + reason.message;
-          }
-          deferred.reject(reason);
-        }
-        else {
-          setTimeout(function() {
-            return retry(deferred, callback, Math.min(delay * 2, 30000));
-          }, delay);
-        }
-      });
-    }
-
     InfluxDatasource.prototype._seriesQuery = function(query) {
       return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
     };
@@ -145,46 +126,50 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var self = this;
-      var deferred = $q.defer();
 
-      retry(deferred, function() {
-        var currentUrl = self.urls.shift();
-        self.urls.push(currentUrl);
+      var currentUrl = self.urls.shift();
+      self.urls.push(currentUrl);
 
-        var params = {
-          u: self.username,
-          p: self.password,
-        };
+      var params = {
+        u: self.username,
+        p: self.password,
+      };
 
-        if (self.database) {
-          params.db = self.database;
+      if (self.database) {
+        params.db = self.database;
+      }
+
+      if (method === 'GET') {
+        _.extend(params, data);
+        data = null;
+      }
+
+      var options = {
+        method: method,
+        url:    currentUrl + url,
+        params: params,
+        data:   data,
+        precision: "ms",
+        inspect: { type: 'influxdb' },
+      };
+
+      options.headers = options.headers || {};
+      if (self.basicAuth) {
+        options.headers.Authorization = self.basicAuth;
+      }
+
+      return $http(options).then(function(result) {
+        return result.data;
+      }, function(reason) {
+        if (reason.status !== 0 || reason.status >= 300) {
+          if (reason.data && reason.data.error) {
+            throw { message: 'InfluxDB Error Response: ' + reason.data.error };
+          }
+          else {
+            throw { messsage: 'InfluxDB Error: ' + reason.message };
+          }
         }
-
-        if (method === 'GET') {
-          _.extend(params, data);
-          data = null;
-        }
-
-        var options = {
-          method: method,
-          url:    currentUrl + url,
-          params: params,
-          data:   data,
-          precision: "ms",
-          inspect: { type: 'influxdb' },
-        };
-
-        options.headers = options.headers || {};
-        if (self.basicAuth) {
-          options.headers.Authorization = self.basicAuth;
-        }
-
-        return $http(options).success(function (data) {
-          deferred.resolve(data);
-        });
-      }, 10);
-
-      return deferred.promise;
+      });
     };
 
     function getTimeFilter(options) {
