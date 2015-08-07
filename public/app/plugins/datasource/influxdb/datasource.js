@@ -161,6 +161,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
+<<<<<<< b321d4d39f52afce6f32ef2b78f9cd42747dd840
       return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
@@ -170,6 +171,17 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           }
           else {
             throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+=======
+      return $http(options).then(function(result) {
+        return result.data;
+      }, function(reason) {
+        if (reason.status !== 0 || reason.status >= 300) {
+          if (reason.data && reason.data.error) {
+            throw { message: 'InfluxDB Error Response: ' + reason.data.error };
+          }
+          else {
+            throw { messsage: 'InfluxDB Error: ' + reason.message };
+>>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
           }
         }
       });
