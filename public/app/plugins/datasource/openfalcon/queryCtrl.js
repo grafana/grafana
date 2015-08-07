@@ -57,7 +57,7 @@ function (angular, _, config, gfunc, Parser) {
         $scope.target.textEditor = true;
       }
 
-      checkOtherSegments($scope.segments.length - 1);
+      // checkOtherSegments($scope.segments.length - 1);
     }
 
     function addFunctionParameter(func, value, index, shiftBack) {
@@ -137,9 +137,9 @@ function (angular, _, config, gfunc, Parser) {
           if ($scope.segments.length === fromIndex) {
             $scope.segments.push(MetricSegment.newSelectMetric());
           }
-          else {
-            return checkOtherSegments(fromIndex + 1);
-          }
+          // else {
+          //   return checkOtherSegments(fromIndex + 1);
+          // }
 
         })
         .then(null, function(err) {

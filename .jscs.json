@@ -8,6 +8,5 @@
         "beforeOpeningCurlyBrace": true
     },
     "disallowSpacesInsideArrayBrackets": true,
-    "disallowSpacesInsideParentheses": true,
-    "validateIndentation": 2
+    "disallowSpacesInsideParentheses": true
 }

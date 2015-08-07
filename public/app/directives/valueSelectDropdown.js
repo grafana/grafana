@@ -11,6 +11,7 @@ function (angular, app, _) {
     .module('grafana.controllers')
     .controller('ValueSelectDropdownCtrl', function($q) {
       var vm = this;
+      vm.variable.multi = true;   // [OWL-34] 150807
 
       vm.show = function() {
         vm.oldVariableText = vm.variable.current.text;
@@ -141,6 +142,9 @@ function (angular, app, _) {
           option.selected = true;
         }
 
+        console.log('option =', option);
+        console.log('vm.variable =', vm.variable);
+        console.log('vm =', vm);
         if (option.text === 'All' || excludeOthers) {
           setAllExceptCurrentTo(false);
           commitChange = true;

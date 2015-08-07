@@ -2,6 +2,7 @@ module.exports = function(config) {
   return {
     src: [
       'Gruntfile.js',
+      '<%= baseDir %>/open-falcon/**/*.js',
       '<%= srcDir %>/app/**/*.js',
       '<%= srcDir %>/plugins/**/*.js',
       '!<%= srcDir %>/app/panels/*/{lib,leaflet}/*',
