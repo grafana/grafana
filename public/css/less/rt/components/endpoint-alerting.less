@@ -1,0 +1,36 @@
+// ==========================================================================
+// BOX
+// ==========================================================================
+
+
+
+.endpoint-alerting {
+  float: left;
+  margin: 0 0 15px 55px;
+}
+
+.endpoint-alerting-status,
+.endpoint-alerting-recipients {
+  display: inline-block;
+
+  .icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 16px;
+  }
+}
+
+
+.endpoint-alerting-status {
+  margin-right: 30px;
+  font-weight: bold;
+
+  &.not-enabled {
+    color: @rt-dark-gray;
+    font-weight: normal;
+  }
+}
+
+.endpoint-alerting-recipients {
+  color: @rt-light-gray;
+}
