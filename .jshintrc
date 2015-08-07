@@ -15,7 +15,7 @@
   "latedef": true,
   "newcap": true,
   "noarg": true,
-  "noempty": true,
+  "noempty": false,
   "undef": true,
   "boss": true,
   "trailing": true,

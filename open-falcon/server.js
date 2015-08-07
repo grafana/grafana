@@ -1,15 +1,14 @@
+"use strict";
 var express = require('express');
 var app = express();
-var url = require('url');
-var http = require('http');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 var request = require('request');
 
 /**
  * @function:		app.get('/', function(req, res))
  * @description:	This route returns list of hosts (endpoints)
- *					 if query[0] == '*'; returns list of metrics (counters) 
+ *					 if query[0] == '*'; returns list of metrics (counters)
  *					 otherwise.
  * @related issues:	OWL-032, OWL-029, OWL-017
  * @param:			object req
@@ -32,7 +31,7 @@ app.get('/', function(req, res) {
 		query = query.replace('*.', '');
 		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 		request(url, function (error, response, body) {
-			if (!error && response.statusCode == 200) {
+			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
 				var obj = {};
 				var results = [];
@@ -44,7 +43,9 @@ app.get('/', function(req, res) {
 					results.push(obj);
 				}
 				res.send(results);
-			} else res.send([]);
+			} else {
+				res.send([]);
+			}
 		});
 	} else {	// Query metrics (counters) of a specific host.
 		query = query.replace('.select metric', '').replace('.*', '').split('.');
@@ -55,7 +56,6 @@ app.get('/', function(req, res) {
 		var depth = query.length;
 		host = '["' + host + '"]';
 		var arr = [];
-		var str = '';
 		// metric_q is the metric that sent to Open-Falcon for query
 		var metric_q = query.join('.').replace('.*', '').replace('*', '');
 		arr = metric_q.split('.');
@@ -78,8 +78,9 @@ app.get('/', function(req, res) {
 		};
 
 		request(options, function (error, response, body) {
-			if (!error && response.statusCode == 200) {
+			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
+				var metric = '';
 				var metrics = [];
 				var metricRoot = '';
 				var obj = {};
@@ -96,46 +97,47 @@ app.get('/', function(req, res) {
 							obj.text = metricRoot;
 							if (metric.indexOf('.') > -1) {
 								obj.expandable = true;
-							} else obj.expandable = false;
+							} else {
+								obj.expandable = false;
+							}
 							results.push(obj);
 						}
 					}
 				} else {	// Query next level of metric
-					for (var i in body.data) {
-						arr = body.data[i];
+					for (var j in body.data) {
+						arr = body.data[j];
 						metric = arr[0];
-						if (metric.indexOf(metric_q + '.') === 0) {
-							metricRoot = metric.split('.')[depth];
-							if (metrics.indexOf(metricRoot) < 0) {
-								metrics.push(metricRoot)
-								obj = {};
-								obj.text = metricRoot;
-								if (metricRoot === metric.split('.').pop()) {
-									obj.expandable = false;
-								} else obj.expandable = true;
-								results.push(obj);
+						metricRoot = metric.split('.')[depth];
+						if (metric.indexOf(metric_q + '.') === 0 && metrics.indexOf(metricRoot) < 0) {
+							metrics.push(metricRoot);
+							obj = {};
+							obj.text = metricRoot;
+							if (metricRoot === metric.split('.').pop()) {
+								obj.expandable = false;
+							} else {
+								obj.expandable = true;
 							}
+							results.push(obj);
 						}
 					}
-				}	
+				}
 				res.send(results);
 			}
 		});
 	}
 });
 
-
 /**
  * @function:		app.post('/', function(req, res))
  * @description:	This route returns list of datapoints [timestamp, value]
  *					 for Grafana to draw diagram.
- * @related issues:	OWL-017
+ * @related issues:	OWL-034, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh
  * @since:			07/25/2015
- * @last modified: 	07/30/2015
+ * @last modified: 	08/07/2015
  * @called by:		POST http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -143,6 +145,7 @@ app.get('/', function(req, res) {
 app.post('/', function (req, res) {
 	var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
 	queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
+	console.log('queryUrl =', queryUrl);
 
 	if ('target' in req.body) {
 		var now = Math.floor(new Date() / 1000);
@@ -161,21 +164,35 @@ app.post('/', function (req, res) {
 			from = parseInt(from) * unit;
 		}
 		var metrics = [];
-		var pair = {};
-		var endpoint = '';
-		var counter = '';
 		var target = '';
 		var targets = req.body.target;
 		if (typeof(targets) === typeof('')) {
 			targets = [targets];
 		}
 
-		for (var i in targets) {
+		/*
+		 *	MODIFIED FOR TEMPLATING
+		 */
+		console.log('targets =', targets);
+		var i = 0;
+		while (i < targets.length) {	// targets.length changes dynamically
 			target = targets[i];
+			i = i + 1;
 			if (target.indexOf('.select') < 0) {
 				var query = target.split('.');
-				if (query[query.length-1].indexOf('{') > -1) {
-					query.pop();
+				if (query[0].indexOf('{') > -1) {		// check if hostname is requested by templating
+														// Could change to looping through query to see if there is any segment using templating.
+					var template_split = query[0].replace('{', '').replace('}', '').split(',');		// split the elements we get from templating
+					query.shift();		// remove the templating segment
+					var toAppend = query.join('.');		// the rest of the query used to append later
+					for(var idx in template_split){		// formatting a new target
+						var tmp = [];					// formatting a new target
+						tmp.push(template_split[idx]);
+						tmp.push(toAppend);				// append
+						var tmp_join = tmp.join('.');
+						targets.push(tmp_join);			// push to targets[]
+					}
+					continue;	// goto next target
 				} else {}
 				var host = query.shift();
 				var metric = query.join('.');
@@ -199,9 +216,8 @@ app.post('/', function (req, res) {
 					"end": now
 				}
 			};
-			// console.log('options =', options);
 			request(options, function (error, response, body) {
-				if (!error && response.statusCode == 200) {
+				if (!error && response.statusCode === 200) {
 					var results = [];
 					for (var i in body) {
 						if (body[i].Values) {	// if body[i] has Values
@@ -211,8 +227,12 @@ app.post('/', function (req, res) {
 					res.send(results);
 				}
 			});
-		} else res.send([]);
-	} else res.send([]);
+		} else {
+			res.send([]);
+		}
+	} else {
+		res.send([]);
+	}
 });
 
 // START THE SERVER

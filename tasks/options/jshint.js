@@ -2,7 +2,7 @@ module.exports = function(config) {
   return {
     source: {
       files: {
-        src: ['Gruntfile.js', '<%= srcDir %>/app/**/*.js'],
+        src: ['Gruntfile.js', '<%= srcDir %>/app/**/*.js', '<%= baseDir %>/open-falcon/**/*.js'],
       }
     },
     tests: {
