@@ -80,11 +80,15 @@ function (angular, _, config, gfunc, Parser) {
         $scope.target.textEditor = true;
       }
 
+<<<<<<< ef86a104da35b1029d85350a3a24fde35fa9b902
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
       // checkOtherSegments($scope.segments.length - 1);
 =======
       checkOtherSegments($scope.segments.length - 1);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+      // checkOtherSegments($scope.segments.length - 1);
+>>>>>>> [OWL-34] Set vm.variable.multi = true; to enable hostname selection in Grafana template
     }
 
     function addFunctionParameter(func, value, index, shiftBack) {
@@ -183,6 +187,7 @@ function (angular, _, config, gfunc, Parser) {
           if ($scope.segments.length === fromIndex) {
             $scope.segments.push(MetricSegment.newSelectMetric());
           }
+<<<<<<< ef86a104da35b1029d85350a3a24fde35fa9b902
 <<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
           // else {
           //   return checkOtherSegments(fromIndex + 1);
@@ -202,6 +207,11 @@ function (angular, _, config, gfunc, Parser) {
           else {
             return checkOtherSegments(fromIndex + 1);
           }
+=======
+          // else {
+          //   return checkOtherSegments(fromIndex + 1);
+          // }
+>>>>>>> [OWL-34] Set vm.variable.multi = true; to enable hostname selection in Grafana template
 
 >>>>>>> OWL-28 refinements
         })
