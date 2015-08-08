@@ -35,7 +35,13 @@ function (angular, _, InfluxQueryBuilder) {
           $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
         }
         $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
-        $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
+        if (tag.operator) {
+          $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
+        } else if (/^\/.*\/$/.test(tag.value)) {
+          $scope.tagSegments.push(MetricSegment.newOperator('=~'));
+        } else {
+          $scope.tagSegments.push(MetricSegment.newOperator('='));
+        }
         $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
       });
 
