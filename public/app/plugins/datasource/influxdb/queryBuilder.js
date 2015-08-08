@@ -16,7 +16,7 @@ function (_) {
     }
 
     if (tag.value && (operator === '=~' || operator === '!~') && /^\/.*\/$/.test(tag.value)) {
-       return str + '"' + tag.key + '"' + ' ' + operator + ' ' + tag.value;
+      return str + '"' + tag.key + '"' + ' ' + operator + ' ' + tag.value;
     }
 
     return str + '"' + tag.key + '" ' + operator + " '" + tag.value + "'";
@@ -129,4 +129,3 @@ function (_) {
 
   return InfluxQueryBuilder;
 });
-

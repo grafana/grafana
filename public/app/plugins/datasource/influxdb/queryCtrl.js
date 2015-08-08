@@ -251,7 +251,7 @@ function (angular, _, InfluxQueryBuilder) {
           tags[tagIndex].key = segment2.value;
         }
         else if (segment2.type === 'value') {
-          tagOperator = $scope.getTagValueOperator(segment2.value, tags[tagIndex].operator)
+          tagOperator = $scope.getTagValueOperator(segment2.value, tags[tagIndex].operator);
           if (tagOperator) {
             $scope.tagSegments[index-1] = MetricSegment.newOperator(tagOperator);
             tags[tagIndex].operator = tagOperator;
@@ -330,4 +330,3 @@ function (angular, _, InfluxQueryBuilder) {
   });
 
 });
-
