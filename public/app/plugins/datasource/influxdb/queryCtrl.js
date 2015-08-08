@@ -35,7 +35,7 @@ function (angular, _, InfluxQueryBuilder) {
           $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
         }
         $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
-        $scope.tagSegments.push(new MetricSegment.newOperator("="));
+        $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
         $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
       });
 
@@ -150,6 +150,10 @@ function (angular, _, InfluxQueryBuilder) {
         query = $scope.queryBuilder.buildExploreQuery('TAG_VALUES', $scope.tagSegments[index-2].value);
       } else if (segment.type === 'condition') {
         return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
+      } else if (segment.type === 'operator') {
+        return $q.when([MetricSegment.newOperator('='), MetricSegment.newOperator('<>'),
+                        MetricSegment.newOperator('<'), MetricSegment.newOperator('>'),
+                        MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
       }
       else  {
         return $q.when([]);
@@ -238,6 +242,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.rebuildTargetTagConditions = function() {
       var tags = [];
       var tagIndex = 0;
+      var tagOperator = "";
       _.each($scope.tagSegments, function(segment2, index) {
         if (segment2.type === 'key') {
           if (tags.length === 0) {
@@ -246,12 +251,19 @@ function (angular, _, InfluxQueryBuilder) {
           tags[tagIndex].key = segment2.value;
         }
         else if (segment2.type === 'value') {
+          tagOperator = $scope.getTagValueOperator(segment2.value, tags[tagIndex].operator)
+          if (tagOperator) {
+            $scope.tagSegments[index-1] = MetricSegment.newOperator(tagOperator);
+            tags[tagIndex].operator = tagOperator;
+          }
           tags[tagIndex].value = segment2.value;
-          $scope.tagSegments[index-1] = $scope.getTagValueOperator(segment2.value);
         }
         else if (segment2.type === 'condition') {
           tags.push({ condition: segment2.value });
           tagIndex += 1;
+        }
+        else if (segment2.type === 'operator') {
+          tags[tagIndex].operator = segment2.value;
         }
       });
 
@@ -259,12 +271,13 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.$parent.get_data();
     };
 
-    $scope.getTagValueOperator = function(tagValue) {
-      if (tagValue[0] === '/' && tagValue[tagValue.length - 1] === '/') {
-        return MetricSegment.newOperator('=~');
+    $scope.getTagValueOperator = function(tagValue, tagOperator) {
+      if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
+        return '=~';
       }
-
-      return MetricSegment.newOperator('=');
+      else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
+        return '=';
+      }
     };
 
     function MetricSegment(options) {
@@ -317,3 +330,4 @@ function (angular, _, InfluxQueryBuilder) {
   });
 
 });
+
