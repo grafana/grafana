@@ -243,7 +243,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 				a.server.Attr.Name,
 				a.server.Attr.MemberOf,
 			},
-			Filter: fmt.Sprintf(a.server.SearchFilter, username),
+			Filter: strings.Replace(a.server.SearchFilter, "%s", username, -1),
 		}
 
 		searchResult, err = a.conn.Search(&searchReq)
