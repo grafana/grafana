@@ -17,6 +17,8 @@ function (_) {
 
     if (tag.value && (operator === '=~' || operator === '!~') && /^\/.*\/$/.test(tag.value)) {
       return str + '"' + tag.key + '"' + ' ' + operator + ' ' + tag.value;
+    } else if (tag.value && /^\/.*\/$/.test(tag.value)) {
+      return str + '"' + tag.key + '"' + ' =~ ' + tag.value;
     }
 
     return str + '"' + tag.key + '" ' + operator + " '" + tag.value + "'";
