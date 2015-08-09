@@ -156,10 +156,12 @@ function (angular, _, InfluxQueryBuilder) {
         query = $scope.queryBuilder.buildExploreQuery('TAG_VALUES', $scope.tagSegments[index-2].value);
       } else if (segment.type === 'condition') {
         return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
-      } else if (segment.type === 'operator') {
+      } else if (segment.type === 'operator' && /^(?!\/.*\/$)/.test($scope.tagSegments[index+1].value)) {
         return $q.when([MetricSegment.newOperator('='), MetricSegment.newOperator('<>'),
-                        MetricSegment.newOperator('<'), MetricSegment.newOperator('>'),
-                        MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
+                        MetricSegment.newOperator('<'), MetricSegment.newOperator('>')]);
+
+      } else if (segment.type === 'operator' && /^\/.*\/$/.test($scope.tagSegments[index+1].value)) {
+        return $q.when([ MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
       }
       else  {
         return $q.when([]);
