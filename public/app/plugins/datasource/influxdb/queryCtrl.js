@@ -161,7 +161,7 @@ function (angular, _, InfluxQueryBuilder) {
                         MetricSegment.newOperator('<'), MetricSegment.newOperator('>')]);
 
       } else if (segment.type === 'operator' && /^\/.*\/$/.test($scope.tagSegments[index+1].value)) {
-        return $q.when([ MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
+        return $q.when([MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
       }
       else  {
         return $q.when([]);
