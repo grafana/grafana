@@ -9,7 +9,8 @@ dependencies:
     - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
     - go run build.go setup:
-      pwd: ${GOPATH}/src/github.com/grafana/grafana
+      pwd:
+        ${GOPATH}/src/github.com/grafana/grafana
     - godep restore:
       pwd: ${GOPATH}/src/github.com/grafana/grafana
     - go build .:
