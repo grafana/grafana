@@ -19,11 +19,11 @@ function (angular, _, kbn) {
       this.name = datasource.name;
       this.supportMetrics = true;
 
-      AWS.config.update({ region: datasource.jsonData.region });
-      this.cloudwatch = new AWS.CloudWatch({
+      this.defaultRegion = datasource.jsonData.defaultRegion;
+      this.credentials = {
         accessKeyId: datasource.jsonData.accessKeyId,
-        secretAccessKey: datasource.jsonData.secretAccessKey,
-      });
+        secretAccessKey: datasource.jsonData.secretAccessKey
+      };
     }
 
     // Called once per panel (graph)
@@ -38,6 +38,7 @@ function (angular, _, kbn) {
         }
 
         var query = {};
+        query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
         query.dimensions = _.map(_.keys(target.dimensions), function(key) {
@@ -85,6 +86,8 @@ function (angular, _, kbn) {
     };
 
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
+      var cloudwatch = this.getCloudWatchClient(query.region);
+
       var params = {
         Namespace: query.namespace,
         MetricName: query.metricName,
@@ -96,7 +99,7 @@ function (angular, _, kbn) {
       };
 
       var d = $q.defer();
-      this.cloudwatch.getMetricStatistics(params, function(err, data) {
+      cloudwatch.getMetricStatistics(params, function(err, data) {
         if (err) {
           return d.reject(err);
         }
@@ -106,10 +109,12 @@ function (angular, _, kbn) {
       return d.promise;
     };
 
-    CloudWatchDatasource.prototype.performSuggestQuery = function(params) {
+    CloudWatchDatasource.prototype.performSuggestQuery = function(region, params) {
+      var cloudwatch = this.getCloudWatchClient(region);
+
       var d = $q.defer();
 
-      this.cloudwatch.listMetrics(params, function(err, data) {
+      cloudwatch.listMetrics(params, function(err, data) {
         if (err) {
           return d.reject(err);
         }
@@ -124,6 +129,18 @@ function (angular, _, kbn) {
       return this.performSuggestQuery({}).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
+    };
+
+    CloudWatchDatasource.prototype.getCloudWatchClient = function(region) {
+      return new AWS.CloudWatch({
+        region: region,
+        accessKeyId: this.credentials.accessKeyId,
+        secretAccessKey: this.credentials.secretAccessKey
+      });
+    };
+
+    CloudWatchDatasource.prototype.getDefaultRegion = function() {
+      return this.defaultRegion;
     };
 
     function transformMetricData(md, options) {
