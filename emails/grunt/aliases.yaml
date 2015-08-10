@@ -1,0 +1,8 @@
+default:
+	- 'watch'
+
+inkify:
+    - 'clean'
+    - 'uncss'
+    - 'processhtml'
+    - 'premailer'
