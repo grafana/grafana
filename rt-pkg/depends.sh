@@ -11,6 +11,7 @@ cd ${DIR}
 mkdir -p artifacts
 bundle install
 
+echo "Linking ${GOPATH}/src/${REPO_PATH} to ${DIR}/../"
 rm -fr ${GOPATH}/src/${REPO_PATH}
 ln -s ${DIR}/../ ${GOPATH}/src/${REPO_PATH}
 
