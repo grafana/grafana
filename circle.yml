@@ -6,13 +6,24 @@ machine:
 
 dependencies:
   override:
-    - rm -rf ${GOPATH}/src/${REPO_PATH}
-    - mkdir -p ${GOPATH}/src/${ORG_PATH}
     - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
-    - npm install
+    - go run build.go setup:
+      pwd: ${GOPATH}/src/github.com/grafana/grafana
+    - godep restore:
+      pwd: ${GOPATH}/src/github.com/grafana/grafana
+    - go build .:
+      pwd: ${GOPATH}/src/github.com/grafana/grafana
+    - npm install:
+      pwd: ${GOPATH}/src/github.com/grafana/grafana
+    - npm install -g grunt-cli
+    - grunt:
+      pwd: ${GOPATH}/src/github.com/grafana/grafana
 
 test:
+  pre:
+    - go run build.go setup
+    - godep
   override:
      # FMT
      - test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
