@@ -6,6 +6,7 @@ machine:
 
 dependencies:
   override:
+    - rm -fr ${GOPATH}/src/${ORG_PATH}
     - ln -s . ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
     - go run build.go setup:
