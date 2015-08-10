@@ -68,7 +68,7 @@ function (angular, app, _, $) {
             else {
               // need to have long delay because the blur
               // happens long before the click event on the typeahead options
-              cancelBlur = setTimeout($scope.switchToLink, 50);
+              cancelBlur = setTimeout($scope.switchToLink, 100);
             }
           };
 
@@ -92,6 +92,7 @@ function (angular, app, _, $) {
 
           $scope.updater = function(value) {
             if (value === segment.value) {
+              console.log('cancel blur');
               clearTimeout(cancelBlur);
               $input.focus();
               return value;
