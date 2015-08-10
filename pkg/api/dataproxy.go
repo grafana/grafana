@@ -53,6 +53,10 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		if ds.BasicAuth {
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
 		}
+
+		// clear cookie headers
+		req.Header.Del("Cookie")
+		req.Header.Del("Set-Cookie")
 	}
 
 	return &httputil.ReverseProxy{Director: director}
