@@ -58,6 +58,7 @@ pages:
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Administration']
 - ['reference/http_api.md', 'Reference', 'HTTP API']
+- ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
 
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
