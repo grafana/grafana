@@ -6,7 +6,7 @@ machine:
 
 dependencies:
   override:
-    - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
+    - ln -s . ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
     - go run build.go setup:
         pwd:
