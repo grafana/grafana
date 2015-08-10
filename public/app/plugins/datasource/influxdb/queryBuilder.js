@@ -10,18 +10,26 @@ function (_) {
 
   function renderTagCondition (tag, index) {
     var str = "";
-    var operator = (tag.operator || '=');
+    var operator = tag.operator;
+    var value = tag.value;
     if (index > 0) {
       str = (tag.condition || 'AND') + ' ';
     }
 
-    if (tag.value && (operator === '=~' || operator === '!~') && /^\/.*\/$/.test(tag.value)) {
-      return str + '"' + tag.key + '"' + ' ' + operator + ' ' + tag.value;
-    } else if (tag.value && /^\/.*\/$/.test(tag.value)) {
-      return str + '"' + tag.key + '"' + ' =~ ' + tag.value;
+    if (!operator) {
+      if (/^\/.*\/$/.test(tag.value)) {
+        operator = '=~';
+      } else {
+        operator = '=';
+      }
     }
 
-    return str + '"' + tag.key + '" ' + operator + " '" + tag.value + "'";
+    // quote value unless regex
+    if (operator !== '=~' && operator !== '!~') {
+      value = "'" + value + "'";
+    }
+
+    return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
   var p = InfluxQueryBuilder.prototype;

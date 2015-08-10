@@ -31,17 +31,19 @@ function (angular, _, InfluxQueryBuilder) {
 
       $scope.tagSegments = [];
       _.each(target.tags, function(tag) {
+        if (!tag.operator) {
+          if (/^\/.*\/$/.test(tag.value)) {
+            tag.operator = "=~";
+          } else {
+            tag.operator = '=';
+          }
+        }
+
         if (tag.condition) {
           $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
         }
         $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
-        if (tag.operator) {
-          $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
-        } else if (/^\/.*\/$/.test(tag.value)) {
-          $scope.tagSegments.push(MetricSegment.newOperator('=~'));
-        } else {
-          $scope.tagSegments.push(MetricSegment.newOperator('='));
-        }
+        $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
         $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
       });
 

@@ -8,6 +8,9 @@
 - [Issue #2461](https://github.com/grafana/grafana/issues/2461). LDAP: Fix for ldap users with empty email address
 - [Issue #2484](https://github.com/grafana/grafana/issues/2484). Graphite: Fix bug when using series ref (#A-Z) and referenced series is hidden in query editor.
 
+**Enhancements**
+- [Issue #2477](https://github.com/grafana/grafana/issues/2477). InfluxDB: Added more condition operators (`<`, `>`, `<>`, `!~`), thx @thuck
+
 # 2.1.0 (2015-08-04)
 
 **Data sources**
