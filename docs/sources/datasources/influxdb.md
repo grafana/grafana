@@ -62,6 +62,7 @@ You can switch to raw query mode by pressing the pen icon.
 
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
+- $col = replaced with column name
 - $tag_hostname = replaced with the value of the hostname tag
 - You can also use [[tag_hostname]] pattern replacement syntax
 
