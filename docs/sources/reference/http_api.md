@@ -1270,7 +1270,10 @@ Keys:
 			"auth.proxy":{
 				"auto_sign_up":"true",
 				"enabled":"false",
-				"header_name":"X-WEBAUTH-USER",
+				"header_username":"X-WEBAUTH-USER",
+				"header_email":"X-WEBAUTH-EMAIL",
+				"header_name":"X-WEBAUTH-NAME",
+				"header_company":"X-WEBAUTH-COMPANY",
 				"header_property":"username"
 			},
 			"dashboards.json":{

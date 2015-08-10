@@ -340,8 +340,17 @@ This feature allows you to handle authentication in a http reverse proxy.
 ### enabled
 Defaults to `false`
 
-### header_name
+### header_username
 Defaults to X-WEBAUTH-USER
+
+### header_email
+Defaults to X-WEBAUTH-EMAIL
+
+### header_name
+Defaults to X-WEBAUTH-NAME
+
+### header_company
+Defaults to X-WEBAUTH-COMPANY
 
 #### header_property
 Defaults to username but can also be set to email

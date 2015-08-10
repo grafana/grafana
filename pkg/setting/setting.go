@@ -89,10 +89,14 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
+	AuthProxyEnabled            bool
+	AuthProxyHeaderProperty     string
+	AuthProxyEmailHeaderName    string
+	AuthProxyUsernameHeaderName string
+	AuthProxyNameHeaderName     string
+	AuthProxyCompanyHeaderName  string
+
+	AuthProxyAutoSignUp bool
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -401,8 +405,11 @@ func NewConfigContext(args *CommandLineArgs) {
 	// auth proxy
 	authProxy := Cfg.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
+	AuthProxyEmailHeaderName = authProxy.Key("header_email").String()
+	AuthProxyUsernameHeaderName = authProxy.Key("header_username").String()
+	AuthProxyNameHeaderName = authProxy.Key("header_name").String()
+	AuthProxyCompanyHeaderName = authProxy.Key("header_company").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 
 	authBasic := Cfg.Section("auth.basic")

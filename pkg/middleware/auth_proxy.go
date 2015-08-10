@@ -11,7 +11,19 @@ func initContextWithAuthProxy(ctx *Context) bool {
 		return false
 	}
 
-	proxyHeaderValue := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
+	if setting.AuthProxyHeaderProperty != "email" && setting.AuthProxyHeaderProperty != "username" {
+		panic("Auth proxy header property invalid")
+	}
+
+	// Populate all possible headers
+	proxyHeaders := map[string]string{
+		"email":    ctx.Req.Header.Get(setting.AuthProxyEmailHeaderName),
+		"username": ctx.Req.Header.Get(setting.AuthProxyUsernameHeaderName),
+		"name":     ctx.Req.Header.Get(setting.AuthProxyNameHeaderName),
+		"company":  ctx.Req.Header.Get(setting.AuthProxyCompanyHeaderName),
+	}
+	proxyHeaderValue := proxyHeaders[setting.AuthProxyHeaderProperty]
+
 	if len(proxyHeaderValue) == 0 {
 		return false
 	}
@@ -24,7 +36,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 		}
 
 		if setting.AuthProxyAutoSignUp {
-			cmd := getCreateUserCommandForProxyAuth(proxyHeaderValue)
+			cmd := getCreateUserCommandForProxyAuth(proxyHeaders)
 			if err := bus.Dispatch(cmd); err != nil {
 				ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
 				return true
@@ -56,16 +68,19 @@ func getSignedInUserQueryForProxyAuth(headerVal string) *m.GetSignedInUserQuery 
 	return &query
 }
 
-func getCreateUserCommandForProxyAuth(headerVal string) *m.CreateUserCommand {
+func getCreateUserCommandForProxyAuth(headers map[string]string) *m.CreateUserCommand {
 	cmd := m.CreateUserCommand{}
 	if setting.AuthProxyHeaderProperty == "username" {
-		cmd.Login = headerVal
-		cmd.Email = headerVal
+		cmd.Login = headers["username"]
+		cmd.Email = headers["email"]
 	} else if setting.AuthProxyHeaderProperty == "email" {
-		cmd.Email = headerVal
-		cmd.Login = headerVal
+		cmd.Email = headers["email"]
+		cmd.Login = headers["username"]
 	} else {
 		panic("Auth proxy header property invalid")
 	}
+	cmd.Name = headers["name"]
+	cmd.Company = headers["company"]
+
 	return &cmd
 }
