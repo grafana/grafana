@@ -12,14 +12,18 @@ dependencies:
       pwd:
         ${GOPATH}/src/github.com/grafana/grafana
     - godep restore:
-      pwd: ${GOPATH}/src/github.com/grafana/grafana
+      pwd:
+        ${GOPATH}/src/github.com/grafana/grafana
     - go build .:
-      pwd: ${GOPATH}/src/github.com/grafana/grafana
+      pwd:
+        ${GOPATH}/src/github.com/grafana/grafana
     - npm install:
-      pwd: ${GOPATH}/src/github.com/grafana/grafana
+      pwd:
+        ${GOPATH}/src/github.com/grafana/grafana
     - npm install -g grunt-cli
     - grunt:
-      pwd: ${GOPATH}/src/github.com/grafana/grafana
+      pwd:
+        ${GOPATH}/src/github.com/grafana/grafana
 
 test:
   pre:
