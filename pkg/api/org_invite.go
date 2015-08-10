@@ -78,7 +78,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 				"OrgName":     c.OrgName,
 				"Email":       c.Email,
 				"LinkUrl":     setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy":   util.StringsFallback2(c.Name, c.Email),
+				"InvitedBy":   util.StringsFallback3(c.Name, c.Email, c.Login),
 			},
 		}
 
@@ -114,13 +114,14 @@ func GetInviteInfoByCode(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get invite", err)
 	}
 
-	info := dtos.InviteInfo{
-		Email:    query.Result.Email,
-		Name:     query.Result.Name,
-		Username: query.Result.Email,
-	}
+	invite := query.Result
 
-	return Json(200, &info)
+	return Json(200, dtos.InviteInfo{
+		Email:     invite.Email,
+		Name:      invite.Name,
+		Username:  invite.Email,
+		InvitedBy: util.StringsFallback3(invite.InvitedByName, invite.InvitedByLogin, invite.InvitedByEmail),
+	})
 }
 
 func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteForm) Response {

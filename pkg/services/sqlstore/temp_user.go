@@ -56,10 +56,13 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 									tu.name           as name,
 									tu.role           as role,
 									tu.code           as code,
+									tu.status         as status,
 									tu.email_sent     as email_sent,
 									tu.email_sent_on  as email_sent_on,
 									tu.created				as created,
-									u.login						as invited_by
+									u.login						as invited_by_login,
+									u.name						as invited_by_name,
+									u.email						as invited_by_email
 	                FROM ` + dialect.Quote("temp_user") + ` as tu
 									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
 	                WHERE tu.org_id=? AND tu.status =? ORDER BY tu.created desc`
@@ -71,8 +74,26 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 }
 
 func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
-	var user m.TempUser
-	has, err := x.Table("temp_user").Where("code=?", query.Code).Get(&user)
+	var rawSql = `SELECT
+	                tu.id             as id,
+	                tu.email          as email,
+									tu.name           as name,
+									tu.role           as role,
+									tu.code           as code,
+									tu.status         as status,
+									tu.email_sent     as email_sent,
+									tu.email_sent_on  as email_sent_on,
+									tu.created				as created,
+									u.login						as invited_by_login,
+									u.name						as invited_by_name,
+									u.email						as invited_by_email
+	                FROM ` + dialect.Quote("temp_user") + ` as tu
+									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
+	                WHERE tu.code=?`
+
+	var tempUser m.TempUserDTO
+	sess := x.Sql(rawSql, query.Code)
+	has, err := sess.Get(&tempUser)
 
 	if err != nil {
 		return err
@@ -80,6 +101,6 @@ func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 		return m.ErrTempUserNotFound
 	}
 
-	query.Result = &user
+	query.Result = &tempUser
 	return err
 }
