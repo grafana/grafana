@@ -5,15 +5,20 @@ page_keywords: grafana, kairosdb, documentation
 ---
 
 # KairosDB Guide
+Grafana v2.1 brings initial support for KairosDB Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Kairos DB does have a few different options for building queries.
 
 ## Adding the data source to Grafana
-Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you
-should find a link named `Data Sources`. If this link is missing in the side menu it means that your current
-user does not have the `Admin` role for the current organization.
+![](/img/v2/add_kairosDB.jpg)
 
-<!-- ![](/img/v2/add_datasource_kairosdb.png) -->
+1. Open the side menu by clicking the the Grafana icon in the top header. 
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
 
-Now click the `Add new` link in the top header.
+    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
+
+3. Click the `Add new` link in the top header.
+4. Select `KairosDB` from the dropdown.
+
+
 
 Name | Description
 ------------ | -------------
@@ -25,20 +30,19 @@ Access | Proxy = access via Grafana backend, Direct = access directory from brow
 ## Query editor
 Open a graph in edit mode by click the title.
 
-<!-- ![](/img/v2/kairosdb_query_editor.png) -->
+![](/img/v2/kairos_query_editor.png)
 
 For details on KairosDB metric queries checkout the offical.
-
 - [Query Metrics - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/QueryMetrics.html).
 
 ## Templated queries
 KairosDB Datasource Plugin provides following functions in `Variables values query` field in Templating Editor to query `metric names`, `tag names`, and `tag values` to kairosdb server.
 
 Name | Description
----- | ----
-`metrics(query)` | Returns a list of metric names matching `query`. If nothing is given, returns a list of all metric names.
+| ------- | --------|
+`metrics(query)`  | Returns a list of metric names matching `query`. If nothing is given, returns a list of all metric names.
 `tag_names(query)` | Returns a list of tag names matching `query`. If nothing is given, returns a list of all tag names.
-`tag_values(metric, tag)` | Returns a list of values for `tag` from the given `metric`.
+`tag_values(metric,tag)` | Returns a list of values for `tag` from the given `metric`.
 
 For details of `metric names`, `tag names`, and `tag values`, please refer to the KairosDB documentations.
 
