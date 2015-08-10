@@ -26,17 +26,21 @@ Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you graphite-web or graphite-api install.
 Access | Proxy = access via Grafana backend, Direct = access directory from browser.
 
+
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the brower.
+
+Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
+
+
 ## Metric editor
 
 ### Navigate metric segments
-
 Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 ![](/img/animated_gifs/graphite_query1.gif)
 
 ### Functions
-
 Click the plus icon to the right to add a function. You can search for the function or select it from the menu. Once
 a function is selected it will be added and your focus will be in the text box of the first parameter. To later change
 a parameter just click on it and it will turn into a text box. To delete a function click the function name followed
@@ -70,3 +74,6 @@ You can also create nested variables that use other variables in their definitio
 
 ![](/img/v2/templated_variable_parameter.png)
 
+
+## Query Reference
+You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.

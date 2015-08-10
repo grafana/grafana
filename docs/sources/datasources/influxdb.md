@@ -10,6 +10,8 @@ There are currently two separate datasources for InfluxDB in Grafana: InfluxDB 0
 The API and capabilities of InfluxDB 0.9.x are completely different from InfluxDB 0.8.x which is why Grafana handles
 them as different data sources.
 
+InfluxDB 0.9 is rapidly evolving and we continue to track its API. InfluxDB 0.8 is no longer maintained by InfluxDB Inc, but we provide support as a convenience to existing users.
+
 ## Adding the data source to Grafana
 Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you
 should find a link named `Data Sources`. If this link is missing in the side menu it means that your current
@@ -29,8 +31,10 @@ Database | Name of your influxdb database
 User | Name of your database user
 Password | Database user's password
 
-> *Note* When using Proxy access mode the InfluxDB database, user and password will be hidden from the browser/frontend. When
-> using direct access mode all users will be able to see the database user & password.
+ > Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the brower.
+
+ > Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
+
 
 ## InfluxDB 0.9.x
 
