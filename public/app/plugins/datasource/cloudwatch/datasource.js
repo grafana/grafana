@@ -315,6 +315,61 @@ function (angular, _, kbn) {
       return d.promise;
     };
 
+    CloudWatchDatasource.prototype.metricFindQuery = function(query) {
+      var region;
+      var namespace;
+      var metricName;
+      var dimensions;
+
+      var transformSuggestData = function(suggestData) {
+        return _.map(suggestData, function(v) {
+          return { text: v };
+        });
+      };
+
+      var d = $q.defer();
+
+      var regionQuery = query.match(/^region\(\)/);
+      if (regionQuery) {
+        d.resolve(transformSuggestData(this.performSuggestRegion()));
+        return d.promise;
+      }
+
+      var namespaceQuery = query.match(/^namespace\(\)/);
+      if (namespaceQuery) {
+        d.resolve(transformSuggestData(this.performSuggestNamespace()));
+        return d.promise;
+      }
+
+      var metricNameQuery = query.match(/^metrics\(([^\)]+?)\)/);
+      if (metricNameQuery) {
+        namespace = metricNameQuery[1];
+        d.resolve(transformSuggestData(this.performSuggestMetrics(namespace)));
+        return d.promise;
+      }
+
+      var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
+      if (dimensionKeysQuery) {
+        namespace = dimensionKeysQuery[1];
+        d.resolve(transformSuggestData(this.performSuggestDimensionKeys(namespace)));
+        return d.promise;
+      }
+
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
+      if (dimensionValuesQuery) {
+        region = dimensionValuesQuery[1];
+        namespace = dimensionValuesQuery[2];
+        metricName = dimensionValuesQuery[3];
+        dimensions = {};
+        var targetDimensionKey = dimensionValuesQuery[4];
+
+        return this.performSuggestDimensionValues(region, namespace, metricName, dimensions, targetDimensionKey)
+        .then(transformSuggestData);
+      }
+
+      return $q.when([]);
+    };
+
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
       var region = 'us-east-1';
