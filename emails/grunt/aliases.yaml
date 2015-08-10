@@ -1,8 +1,8 @@
-default:
-	- 'watch'
 
-inkify:
+default:
     - 'clean'
+    - 'assemble'
+    - 'replace'
     - 'uncss'
     - 'processhtml'
     - 'premailer'
