@@ -5,11 +5,11 @@
 	</a>
 
 	<h3>
-		Invite New Users
+		Invite Users
 	</h3>
 
 	<div class="modal-tagline">
-		Invite new or add existing Grafana users to the organization
+		Send invite or add existing Grafana users to the organization
 		<span class="highlight-word">{{contextSrv.user.orgName}}</span>
 	</div>
 
@@ -25,8 +25,7 @@
 							Email or Username
 						</li>
 						<li>
-							<input type="email" ng-model="invite.email" required
-							class="input-large tight-form-input" placeholder="email@test.com">
+							<input type="text" ng-model="invite.loginOrEmail" required class="input-large tight-form-input" placeholder="email@test.com">
 						</li>
 						<li class="tight-form-item">
 							Name

@@ -31,12 +31,9 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	if !inviteDto.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
 	}
-	if !util.IsEmail(inviteDto.Email) {
-		return ApiError(400, "Invalid email specified", nil)
-	}
 
 	// first try get existing user
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: inviteDto.Email}
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if err != m.ErrUserNotFound {
 			return ApiError(500, "Failed to query db for existing user check", err)
@@ -46,17 +43,17 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: userQuery.Result.Id, Role: inviteDto.Role}
 		if err := bus.Dispatch(&createOrgUserCmd); err != nil {
 			if err == m.ErrOrgUserAlreadyAdded {
-				return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.Email), err)
+				return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 			}
 			return ApiError(500, "Error while trying to create org user", err)
 		} else {
-			return ApiSuccess("Existing Grafana user added to org " + c.OrgName)
+			return ApiSuccess(fmt.Sprintf("Existing Grafana user %s added to org %s", userQuery.Result.NameOrFallback(), c.OrgName))
 		}
 	}
 
 	cmd := m.CreateTempUserCommand{}
 	cmd.OrgId = c.OrgId
-	cmd.Email = inviteDto.Email
+	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
 	cmd.Status = m.TmpUserInvitePending
 	cmd.InvitedByUserId = c.UserId
@@ -69,9 +66,9 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	}
 
 	// send invite email
-	if !inviteDto.SkipEmails {
+	if !inviteDto.SkipEmails && util.IsEmail(inviteDto.LoginOrEmail) {
 		emailCmd := m.SendEmailCommand{
-			To:       []string{inviteDto.Email},
+			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
 			Data: map[string]interface{}{
 				"NameOrEmail": util.StringsFallback2(cmd.Name, cmd.Email),
@@ -85,10 +82,11 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		if err := bus.Dispatch(&emailCmd); err != nil {
 			return ApiError(500, "Failed to send email invite", err)
 		}
-		return ApiSuccess(fmt.Sprintf("Sent invite to %s", inviteDto.Email))
+
+		return ApiSuccess(fmt.Sprintf("Sent invite to %s", inviteDto.LoginOrEmail))
 	}
 
-	return ApiSuccess(fmt.Sprintf("Created invite for %s", inviteDto.Email))
+	return ApiSuccess(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
 func RevokeInvite(c *middleware.Context) Response {
