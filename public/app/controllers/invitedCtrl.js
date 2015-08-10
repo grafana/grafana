@@ -20,7 +20,8 @@ function (angular, config) {
         $scope.formModel.username = invite.email;
         $scope.formModel.inviteCode =  $routeParams.code;
 
-        $scope.greeting = invite.name || invite.email;
+        $scope.greeting = invite.name || invite.email || invite.username;
+        $scope.invitedBy = invite.invitedBy;
       });
     };
 

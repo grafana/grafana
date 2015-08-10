@@ -32,6 +32,14 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 			})
 
+			Convey("Should be able to get temp users by code", func() {
+				query := m.GetTempUserByCodeQuery{Code: "asd"}
+				err = GetTempUserByCode(&query)
+
+				So(err, ShouldBeNil)
+				So(query.Result.Name, ShouldEqual, "hello")
+			})
+
 			Convey("Should be able update status", func() {
 				cmd2 := m.UpdateTempUserStatusCommand{Code: "asd", Status: m.TmpUserRevoked}
 				err := UpdateTempUserStatus(&cmd2)

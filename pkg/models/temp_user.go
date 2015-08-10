@@ -70,18 +70,21 @@ type GetTempUsersForOrgQuery struct {
 type GetTempUserByCodeQuery struct {
 	Code string
 
-	Result *TempUser
+	Result *TempUserDTO
 }
 
 type TempUserDTO struct {
-	Id          int64     `json:"id"`
-	Name        string    `json:"name"`
-	Email       string    `json:"email"`
-	Role        string    `json:"role"`
-	InvitedBy   string    `json:"invitedBy"`
-	Code        string    `json:"code"`
-	Url         string    `json:"url"`
-	EmailSent   bool      `json:"emailSent"`
-	EmailSentOn time.Time `json:"emailSentOn"`
-	Created     time.Time `json:"createdOn"`
+	Id             int64          `json:"id"`
+	Name           string         `json:"name"`
+	Email          string         `json:"email"`
+	Role           string         `json:"role"`
+	InvitedByLogin string         `json:"invitedByLogin"`
+	InvitedByEmail string         `json:"invitedByEmail"`
+	InvitedByName  string         `json:"invitedByName"`
+	Code           string         `json:"code"`
+	Status         TempUserStatus `json:"status"`
+	Url            string         `json:"url"`
+	EmailSent      bool           `json:"emailSent"`
+	EmailSentOn    time.Time      `json:"emailSentOn"`
+	Created        time.Time      `json:"createdOn"`
 }

@@ -10,9 +10,10 @@ type AddInviteForm struct {
 }
 
 type InviteInfo struct {
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	InvitedBy string `json:"invitedBy"`
 }
 
 type CompleteInviteForm struct {

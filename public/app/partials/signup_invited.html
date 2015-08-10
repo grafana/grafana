@@ -14,8 +14,8 @@
 				Hello {{greeting}}.
 			</h3>
 
-			<div class="long-tag modal-tagline">
-				<span class="body-copy-emphasis">{{.InvitedBy}}</span> has invited you to join the <span class="highlight-word">{{contextSrv.user.orgName}}</span> organization in Grafana.</br>Please complete the following to accept your invitation and continue:
+			<div class="modal-tagline">
+				<em>{{invitedBy}}</em> has invited you to join the <span class="highlight-word">{{contextSrv.user.orgName}}</span> organization in Grafana.</br>Please complete the following to accept your invitation and continue:
 			</div>
 
       <form name="inviteForm" class="login-form">
@@ -61,17 +61,6 @@
 							</li>
 							<li>
 								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 128px">
-								Confirm Password
-							</li>
-							<li>
-								<input type="password" name="confirmPassword" class="tight-form-input last" required ng-model="formModel.confirmPassword" id="confirmPassword" style="width: 253px" placeholder="confirm password">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
