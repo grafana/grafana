@@ -11,7 +11,7 @@ cd ${DIR}
 mkdir -p artifacts
 bundle install
 
-rm -fr ${GOPATH}/src/${ORG_PATH}
-ln -s ${DIR}/../ ${GOPATH}/src/${ORG_PATH}
+rm -fr ${GOPATH}/src/${REPO_PATH}
+ln -s ${DIR}/../ ${GOPATH}/src/${REPO_PATH}
 
 go get github.com/tools/godep
