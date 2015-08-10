@@ -8,6 +8,17 @@ function (angular, _) {
   var module = angular.module('grafana.controllers');
 
   /* jshint -W101 */
+  var supportedRegion = [
+    'us-east-1',
+    'us-west-2',
+    'us-west-1',
+    'eu-west-1',
+    'eu-central-1',
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'ap-northeast-1',
+    'sa-east-1',
+  ];
   var supportedMetrics = {
     "AWS/AutoScaling": [
       "GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"
@@ -157,6 +168,7 @@ function (angular, _) {
       $scope.target.dimensions = $scope.target.dimensions || {};
       $scope.target.statistics = $scope.target.statistics || {};
       $scope.target.period = $scope.target.period || 60;
+      $scope.target.region = $scope.target.region || $scope.datasource.getDefaultRegion();
 
       $scope.target.errors = validateTarget();
     };
@@ -178,6 +190,10 @@ function (angular, _) {
     $scope.duplicate = function() {
       var clone = angular.copy($scope.target);
       $scope.panel.targets.push(clone);
+    };
+
+    $scope.suggestRegion = function(query, callback) { // jshint unused:false
+      return supportedRegion;
     };
 
     $scope.suggestNamespace = function(query, callback) { // jshint unused:false
@@ -206,7 +222,7 @@ function (angular, _) {
       }
 
       $scope.datasource
-        .performSuggestQuery(params)
+        .performSuggestQuery($scope.target.region, params)
         .then(function(result) {
           var suggestData = _.chain(result.Metrics)
           .map(function(metric) {

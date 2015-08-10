@@ -203,6 +203,20 @@
             <i class="fa fa-warning"></i>
           </a>
         </li>
+        <li class="tight-form-item">
+          Region
+        </li>
+        <li>
+          <input type="text"
+                 class="input-medium tight-form-input"
+                 ng-model="target.region"
+                 spellcheck='false'
+                 bs-typeahead="suggestRegion"
+                 placeholder="region"
+                 data-min-length=0 data-items=100
+                 ng-change="refreshMetricData()"
+                 >
+        </li>
       </ul>
 
       <div class="clearfix"></div>
