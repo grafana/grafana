@@ -103,11 +103,10 @@ func (c *Consumer) getChannel() error {
 			log.Printf("attempting to create new rabbitmq channel.")
 			err := c.getChannel()
 
-			if c.callback != nil {
-				c.consume()
-			}
-
 			if err == nil {
+				if c.callback != nil {
+					c.consume()
+				}
 				break
 			}
 
