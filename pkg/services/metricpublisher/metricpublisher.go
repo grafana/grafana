@@ -9,45 +9,33 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
-	globalPublisher        *rabbitmq.Publisher
+	globalProducer         *nsq.Producer
+	topic                  string
 	metricPublisherMetrics met.Count
 	metricPublisherMsgs    met.Count
 )
 
 func Init(metrics met.Backend) {
-	sec := setting.Cfg.Section("event_publisher")
+	sec := setting.Cfg.Section("metric_publisher")
 
 	if !sec.Key("enabled").MustBool(false) {
 		return
 	}
 
-	url := sec.Key("rabbitmq_url").String()
-	exchange := "metricResults"
-
-	exch := rabbitmq.Exchange{
-		Name:         exchange,
-		ExchangeType: "x-consistent-hash",
-		Durable:      true,
-	}
-	globalPublisher = &rabbitmq.Publisher{Url: url, Exchange: &exch}
-	err := globalPublisher.Connect()
+	addr := sec.Key("nsqd_addr").MustString("localhost:4150")
+	topic = sec.Key("topic").MustString("metrics")
+	cfg := nsq.NewConfig()
+	var err error
+	globalProducer, err = nsq.NewProducer(addr, cfg)
 	if err != nil {
-		log.Fatal(4, "Failed to connect to metricResults exchange: %v", err)
-		return
+		log.Fatal(0, "failed to initialize nsq producer.", err)
 	}
 	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
 	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
-}
-
-func Publish(routingKey string, msgString []byte) {
-	if globalPublisher != nil {
-		globalPublisher.Publish(routingKey, msgString)
-	}
 }
 
 func ProcessBuffer(c <-chan m.MetricDefinition) {
