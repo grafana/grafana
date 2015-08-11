@@ -14,6 +14,7 @@ var (
 	M_Api_Status_404 = NewComboCounterRef("api.status.404")
 
 	M_Api_User_SignUp       = NewComboCounterRef("api.user.signup")
+	M_Api_User_SignUpInvite = NewComboCounterRef("api.user.signup_invite")
 	M_Api_Dashboard_Get     = NewComboCounterRef("api.dashboard.get")
 	M_Api_Dashboard_Post    = NewComboCounterRef("api.dashboard.post")
 	M_Api_Admin_User_Create = NewComboCounterRef("api.admin.user_create")

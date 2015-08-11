@@ -33,23 +33,11 @@
   white-space: nowrap;
 }
 
-.grafana-options-list {
-  list-style: none;
-  margin: 0;
-  max-width: 450px;
-
-  li:nth-child(odd) {
-    background-color: @grafanaListAccent;
-  }
-
-  li {
-    float: left;
-    margin: 2px;
-    padding: 5px 10px;
-    border: 1px solid @grafanaListBorderBottom;
-    border: 1px solid @grafanaListBorderBottom;
-  }
-  li:first-child {
-    border: 1px solid @grafanaListBorderBottom;
-  }
+.grafana-list-item {
+  display: block;
+  padding: 1px 10px;
+  line-height: 34px;
+  background-color: @grafanaTargetBackground;
+  margin-bottom: 4px;
+  cursor: pointer;
 }
