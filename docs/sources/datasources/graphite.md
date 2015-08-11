@@ -11,13 +11,15 @@ change function parameters and much more. The editor can handle all types of gra
 queries through the use of query references.
 
 ## Adding the data source to Grafana
-Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you
-should find a link named `Data Sources`. If this link is missing in the side menu it means that your current
-user does not have the `Admin` role for the current organization.
+![](/img/v2/add_Graphite.jpg)
 
-![](/img/v2/add_datasource_graphite.png)
+1. Open the side menu by clicking the the Grafana icon in the top header. 
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
 
-Now click the `Add new` link in the top header.
+    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
+
+3. Click the `Add new` link in the top header.
+4. Select `Graphite` from the dropdown. (Graphite is selected by default)
 
 Name | Description
 ------------ | -------------
