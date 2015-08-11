@@ -90,7 +90,7 @@ function (angular, app, _, kbn) {
       });
 
       window.grafanaImportDashboard = newDashboard;
-      $location.path('/dashboard/import/' + kbn.slugifyForUrl(newDashboard.title));
+      $location.path('/dashboard-import/' + kbn.slugifyForUrl(newDashboard.title));
     }
   });
 });
