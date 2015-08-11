@@ -37,6 +37,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
+	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
+	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up
@@ -109,6 +111,7 @@ func Register(r *macaron.Macaron) {
 
 		// orgs (admin routes)
 		r.Group("/orgs/:orgId", func() {
+			r.Get("/", wrap(GetOrgById))
 			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
 			r.Get("/users", wrap(GetOrgUsers))
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))

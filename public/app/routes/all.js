@@ -80,7 +80,7 @@ define([
       })
       .when('/admin/users', {
         templateUrl: 'app/features/admin/partials/users.html',
-        controller : 'AdminUsersCtrl',
+        controller : 'AdminListUsersCtrl',
       })
       .when('/admin/users/create', {
         templateUrl: 'app/features/admin/partials/new_user.html',
@@ -92,6 +92,11 @@ define([
       })
       .when('/admin/orgs', {
         templateUrl: 'app/features/admin/partials/orgs.html',
+        controller : 'AdminListOrgsCtrl',
+      })
+      .when('/admin/orgs/edit/:id', {
+        templateUrl: 'app/features/admin/partials/edit_org.html',
+        controller : 'AdminEditOrgCtrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
