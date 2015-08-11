@@ -21,12 +21,12 @@ export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
 
-## Build the Backend
+## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup            (only needed once to install godep)
-$GOPATH/bin/godep restore        (will pull down all golang lib dependecies in your current GOPATH)
-go build .
+go run build.go setup              # (only needed once to install godep)
+$GOPATH/bin/godep restore          # (will pull down all golang lib dependecies in your current GOPATH)
+go run build.go build              # (or 'go build .')
 ```
 
 #### Building on Windows
@@ -44,13 +44,20 @@ npm install -g grunt-cli
 grunt
 ```
 
+## Recompile backend on source change
+To rebuild on source change (requires that you executed godep restore)
+```
+go get github.com/Unknwon/bra
+bra run
+```
+
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
 ```
-./grafana-server
+./bin/grafana-server # if you build the binary with 'go run build.go build'. If you built it with 'go build .', run './grafana')
 ```
 
-Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with user/pass = admin/admin.
+Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
 ## Developing for Grafana
 To add features, customize your config, etc, you'll need to rebuild on source change (requires that you executed [godep restore](#build-the-backend), as outlined above). 
@@ -74,6 +81,8 @@ You only need to add the options you want to override. Config files are applied 
 
 1. grafana.ini
 2. custom.ini
+
+Learn more about Grafana config options in the [Configuration section](/installation/configuration/)
 
 ## Create a pull requests
 Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.     
