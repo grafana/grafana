@@ -1,3 +1,5 @@
+<!-- This email is sent when user who does not already exist in Grafana is added to an organization -->
+
 [[Subject .Subject "[[.InvitedBy]] has invited you to join Grafana"]]
 
 <table class="row">
@@ -7,7 +9,7 @@
 			<table class="twelve columns">
 				<tr>
 					<td>
-						<h3>You're invited to sign up to Grafana and join [[.OrgName]]</h3>
+						<h3>You're invited to sign up to Grafana and join organization [[.OrgName]]</h3>
 					</td>
 					<td class="expander"></td>
 				</tr>
@@ -24,12 +26,12 @@
 				<tr>
 					<td class="center">
 						<table class="button radius">
-							<tbody><tr>
-									<td>
-										<a href="[[.LinkUrl]]">Complete Sign Up</a>
-									</td>
-								</tr>
-						</tbody></table>
+							<tr>
+								<td>
+									<a href="[[.LinkUrl]]">Complete Sign Up</a>
+								</td>
+							</tr>
+						</table>
 					</td>
 					<td class="expander"></td>
 				</tr>

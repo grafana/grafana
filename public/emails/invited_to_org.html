@@ -125,7 +125,9 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 					<table class="container" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: inherit; vertical-align: top; width: 580px">
 						<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 							<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
-								{{Subject .Subject "Reset your Grafana password - {{.Name}}"}}
+								
+
+{{Subject .Subject "{{.InvitedBy}} has added you to the Grafana organization {{.OrgName}}"}}
 
 <table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
 	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
@@ -134,7 +136,7 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
 				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 					<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
-						<h3 style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 32px; font-weight: normal; line-height: 1.3; margin: 0; padding: 0; text-align: left; word-break: normal" align="left">Hi {{.Name}}</h3>
+						<h3 style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 32px; font-weight: normal; line-height: 1.3; margin: 0; padding: 0; text-align: left; word-break: normal" align="left">You have been added to the Grafana organization {{.OrgName}}</h3>
 					</td>
 					<td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top"></td>
 				</tr>
@@ -150,13 +152,7 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
 				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
-						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">
-							Please click the following link to reset your password within <strong>{{.EmailCodeValidHours}} hours</strong>.
-						</p>
-						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">
-							<a href="{{.AppUrl}}user/password/reset?code={{.Code}}" style="color: #2ba6cb; text-decoration: none">{{.AppUrl}}user/password/reset?code={{.Code}}</a>
-						</p>
-						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">Not working? Try copying and pasting it to your browser.</p>
+						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">You can switch organization in the left side menu, in the dropdown below your username.</p>
 					</td>
 					<td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top"></td>
 				</tr>
