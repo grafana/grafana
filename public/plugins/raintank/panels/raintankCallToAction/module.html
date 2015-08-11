@@ -1,38 +1,54 @@
 <grafana-panel>
-    <h4 style="font-weight: 400;">Hi there. Welcome to Litmus. </h4>
+    <h4 style="font-weight: 400;">Hello, welcome to Litmus. </h4>
+    <p class="rt-dashboard-blurb">Litmus network performance monitoring continually tests, stores and alerts on the global performance and availability of your Internet applications.</p>
+
     <div class="rt-dash-flex-container">
         <div class="rt-dash-flex-item">
             <span class="rt-dashboard-blurb">To do:</span>
-            <div ng-if="endpointStatus === 'noEndpoints'">
-                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
+            <div ng-if="endpointStatus === 'noEndpoints'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
                 <a href="endpoints/new" class="rt-dashboard-blurb">Add your first endpoint.</a>
             </div>     
-            <div ng-if="userStatus === 'noTeam'">
-                <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 20px;"></i>
+            <div ng-if="userStatus === 'noTeam'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
                 <a href="endpoints/new" class="rt-dashboard-blurb">Invite a team member.</a>
             </div> 
-            <div ng-if="collectorStatus === 'noCollectors'">
-                <i class="fa-fw icon-rt-collector rt-dashboard-icons" style="font-size: 20px;"></i>
+            <div ng-if="collectorStatus === 'noCollectors'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-collector rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
                 <a href="collectors/new" class="rt-dashboard-blurb">Deploy a private collector.</a>
             </div>   
         </div>
         <div class="rt-dash-flex-item">
             <span class="rt-dashboard-blurb">Complete:</span>
-            <div>
-                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
-                <span class="rt-dashboard-blurb" style="text-decoration: line-through;">Join Early Access Program</span>
+            <div class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Join Early Access Program</span>
             </div>
-            <div  ng-if="endpointStatus === 'hasEndpoints'">
-                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
-                <span class="rt-dashboard-blurb" style="text-decoration: line-through;">Add your first endpoint.</span>
+            <div  ng-if="endpointStatus === 'hasEndpoints'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blub-success">Add your first endpoint.</span>
             </div>
-            <div ng-if="userStatus === 'hasTeam'">
-                <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 20px;"></i>
-                <span class="rt-dashboard-blurb" style="text-decoration: line-through;">Invite a team member.</span>
+            <div ng-if="userStatus === 'hasTeam'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Invite a team member.</span>
             </div>
-            <div ng-if="collectorStatus === 'hasCollectors'">
-                <i class="fa-fw icon-rt-collector rt-dashboard-icons" style="font-size: 20px;"></i>
-                <span class="rt-dashboard-blurb" style="text-decoration: line-through;">Deploy a private collector.</span>
+            <div ng-if="collectorStatus === 'hasCollectors'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Deploy a private collector</span>
             </div>            
         </div>        
     </div>

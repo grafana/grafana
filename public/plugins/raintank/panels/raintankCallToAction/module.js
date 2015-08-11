@@ -26,10 +26,9 @@ function (angular, app, _, PanelMeta) {
     });
     $scope.panel.title = "";
 
-    $scope.endpointStatus = "scopeEndpoints"; 
-    $scope.userStatus = "scopeUsers";    
-    $scope.collectorStatus = "scopeCollectors";    
-
+    $scope.endpointStatus = "scopeEndpoints";
+    $scope.userStatus = "scopeUsers";
+    $scope.collectorStatus = "scopeCollectors";
 
     // Set and populate defaults
     $scope.init = function() {
@@ -44,7 +43,7 @@ function (angular, app, _, PanelMeta) {
       if ($scope.quotas.endpoint.used >= 1) {
         $scope.endpointStatus = "hasEndpoints";
         return;
-      }      
+      }
       //default.
       $scope.endpointStatus = "hasEndpoints";
       return;
@@ -58,7 +57,7 @@ function (angular, app, _, PanelMeta) {
       if ($scope.quotas.user.used >= 2) {
         $scope.userStatus = "hasTeam";
         return;
-      }      
+      }
       //default.
       $scope.userStatus = "hasTeam";
       return;
@@ -72,7 +71,7 @@ function (angular, app, _, PanelMeta) {
       if ($scope.quotas.collector.used >= 1) {
         $scope.collectorStatus = "hasCollectors";
         return;
-      }      
+      }
       //default.
       $scope.collectorStatus = "hasTeam";
       return;
@@ -86,9 +85,9 @@ function (angular, app, _, PanelMeta) {
           quotaHash[q.target] = q;
         });
         $scope.quotas = quotaHash;
-        $scope.setEndpointStatus();        
-        $scope.setUserStatus();      
-        $scope.setCollectorStatus();        
+        $scope.setEndpointStatus();
+        $scope.setUserStatus();
+        $scope.setCollectorStatus();
       });
     };
 

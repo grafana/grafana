@@ -1551,20 +1551,18 @@ p.rt-dashboard-copy {
      display: -webkit-flex;     /* NEW - Chrome */
      display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
      justify-content: flex-start;
-     flex-direction: row;
-     margin-top: 50px;
-
+     flex-direction: column;
 }
 
 .rt-dash-flex-item {
     -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
     -moz-box-flex: 1;         /* OLD - Firefox 19- */
-    width: 20%;               /* For old syntax, otherwise collapses. */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
     flex: 1 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
-    text-align: center;
-    margin:0 auto;
+    text-align: left;
+    margin-left: 15px;
+    margin-top: 15px;
 }
 
  @media screen and (max-width: 780px) { 
@@ -1591,7 +1589,13 @@ p.rt-helper-blurb{
 p.rt-dashboard-blurb{
      font-size:14px;
      color: @textColor;
-     min-height: 85px;
+     margin: 0;
+}
+
+a.rt-dashboard-blurb{
+     font-size:14px;
+     color: @rt-primary;
+     margin: 0;
 }
 
 .rt-dashboard-icons {
@@ -1602,6 +1606,29 @@ p.rt-dashboard-blurb{
   -webkit-background-clip: text;
   text-decoration:none;
   font-size: 85px;
+  vertical-align: sub;
+}
+
+.rt-CTA-item {
+  margin: 10px 0;
+}
+
+.rt-icon-success {
+  color: @rt-green;
+  text-decoration:none;
+  vertical-align: sub; 
+}
+
+.rt-blurb-success {
+  color: @grayLight;
+  text-decoration: line-through;
+}
+
+.rt-dashboard-icons-container {
+  width: 30px;
+  display: inline-block;
+  margin-right: 5px;
+  text-align: center;
 }
 
 .rt-logo-container {
