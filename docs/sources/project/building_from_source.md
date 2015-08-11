@@ -25,7 +25,11 @@ go get github.com/grafana/grafana
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup              # (only needed once to install godep)
+<<<<<<< 1ecc85bbb31dd419d73ded43757c8f56abb5ddf0
 $GOPATH/bin/godep restore          # (will pull down all golang lib dependencies in your current GOPATH)
+=======
+$GOPATH/bin/godep restore          # (will pull down all golang lib dependecies in your current GOPATH)
+>>>>>>> Added patch from ct
 go run build.go build              # (or 'go build .')
 ```
 
@@ -54,7 +58,11 @@ bra run
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
 ```
+<<<<<<< 1ecc85bbb31dd419d73ded43757c8f56abb5ddf0
 ./bin/grafana-server 
+=======
+./bin/grafana-server # if you build the binary with 'go run build.go build'. If you built it with 'go build .', run './grafana')
+>>>>>>> Added patch from ct
 ```
 If you built the binary with `go run build.go build`, run `./bin/grafana-server`
 

@@ -6,6 +6,7 @@ page_keywords: grafana, ldap, configuration, documentation, integration
 
 # LDAP Integration
 
+<<<<<<< 1ecc85bbb31dd419d73ded43757c8f56abb5ddf0
 Grafana 2.1 ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your
 Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
@@ -13,6 +14,12 @@ group memberships and Grafana Organization user roles.
 ## Configuration
 You turn on LDAP in the [main config file](../configuration/#authldap) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
+=======
+Grafana 2.1 ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP group memberships and Grafana Organization user roles.
+
+## Configuration
+You turn on LDAP in the [main config file](configuration/#authldap) as well as specify the path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`).
+>>>>>>> Added patch from ct
 
 ### Example config
 
@@ -23,7 +30,7 @@ verbose_logging = false
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
 host = "127.0.0.1"
-# Default port is 389 or 636 if use_ssl = true
+# Default port is 389, or 636 if use_ssl = true
 port = 389
 # Set to true if ldap server supports TLS
 use_ssl = false
@@ -97,6 +104,7 @@ This allows you to not specify a bind_password in the configuration file.
 bind_dn = "cn=%s,o=users,dc=grafana,dc=org"
 ```
 
+<<<<<<< 1ecc85bbb31dd419d73ded43757c8f56abb5ddf0
 In this case you skip providing a `bind_password` and instead provide a `bind_dn` value with a `%s` somewhere. This will be replaced with the username entered in on the Grafana login page.
 The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
@@ -127,4 +135,15 @@ time the user logs in.
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML config will be used.
 
 
+=======
+In this case you skip providing a `bind_password` and instead provide a `bind_dn` value with a `%s` somewhere. This will be replaced with the username
+entered in on the Grafana login page. The search filter and search bases settings are still needed to perform the LDAP search to retreive the other LDAP
+information (like LDAP groups and email).
+
+## LDAP to Grafana Org Role Sync
+
+In the `[[servers.group_mappings]]` you can map a LDAP group to a grafana organization and role. These will be synced every time the user logs in. So
+if you change a users role in the Grafana Org. Users page, this change will be reset the next time the user logs in. Similarly if you
+can LDAP groups for a user in LDAP the change will take effect the next time the user logs in to Grafana.
+>>>>>>> Added patch from ct
 
