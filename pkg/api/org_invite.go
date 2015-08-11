@@ -178,6 +178,17 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 		Login: user.Login,
 	})
 
+	// add to org
+	addOrgUserCmd := m.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
+	if err := bus.Dispatch(&addOrgUserCmd); err != nil {
+		return ApiError(500, "Error while trying to create org user", err)
+	}
+
+	// set org to active
+	if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
+		return ApiError(500, "Failed to set org as active", err)
+	}
+
 	// update temp user status
 	updateTmpUserCmd := m.UpdateTempUserStatusCommand{Code: invite.Code, Status: m.TmpUserCompleted}
 	if err := bus.Dispatch(&updateTmpUserCmd); err != nil {

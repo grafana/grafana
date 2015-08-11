@@ -75,9 +75,10 @@ type GetTempUserByCodeQuery struct {
 
 type TempUserDTO struct {
 	Id             int64          `json:"id"`
+	OrgId          int64          `json:"orgId"`
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
-	Role           string         `json:"role"`
+	Role           RoleType       `json:"role"`
 	InvitedByLogin string         `json:"invitedByLogin"`
 	InvitedByEmail string         `json:"invitedByEmail"`
 	InvitedByName  string         `json:"invitedByName"`
