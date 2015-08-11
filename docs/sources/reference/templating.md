@@ -29,23 +29,24 @@ They can all be used to create dynamic variables that you can use throughout the
 
  > Note: The Query type is often Data Source specific. Please consult the appropriate documentation for your particular Data Source.
 
-This is the most common type of Template variable. Using the Query type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
+Query is the most common type of Template variable. Using the Query type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
 
-For example a query like prod.servers.* will fill the variable with all possible values that exists in that wildcard position (in the case of the Graphite Data Source).
+For example a query like `prod.servers.*` will fill the variable with all possible values that exists in that wildcard position (in the case of the Graphite Data Source).
 
-You can even create nested variables that use other variables in their definition. For example apps.$app.servers.* uses the variable $app in its own query definition.
+You can even create nested variables that use other variables in their definition. For example `apps.$app.servers.*` uses the variable $app in its own query definition.
 
-You can utilize the special "All" value to allow the Dashboard user to query for every single Query variable returned. Grafana will automatically translate All into the appropriate format for your Data Source.
+You can utilize the special ** All ** value to allow the Dashboard user to query for every single Query variable returned. Grafana will automatically translate ** All ** into the appropriate format for your Data Source.
 
+#### Multi-select
 As of Grafana 2.1, it is now possible to select a subset of Query Template variables (previously it was possible to select an individual value or 'All', not multiple values that were less than All). This is accomplished via the Multi-Select option. If enabled, the Dashboard user will be able to enable and disable individual variables.
 
 The Multi-Select functionality is taken a step further with the introduction of Multi-Select Tagging. This functionality allows you to group individual Template variables together under a Tag or Group name. 
 
 For example, if you were using Templating to list all 20 of your applications, you could use Multi-Select Tagging to group your applications by function or region or criticality, etc. 
 
-Multi-Select Tagging functionality is currently experimental but is part of Grafana 2.1. To enable this feature click the enable icon when editing Template options for a particular variable.
+ > Note: Multi-Select Tagging functionality is currently experimental but is part of Grafana 2.1. To enable this feature click the enable icon when editing Template options for a particular variable.
 
-[[screenshot of just the tag/group part, enabled, with the 2 queries shown]]
+![](/img/v2/tag_groups.jpg)
 
 Grafana gets the list of tags and the list of values in each tag by performing two queries on your metric namespace.
 
@@ -57,7 +58,7 @@ Note: a proof of concept shim that translates the metric query into a SQL call i
 
 Once configured, Multi-Select Tagging provides a convenient way to group and your template variables, and slice your data in the exact way you want. The Tags can be seen on the right side of the template pull-down.
 
-[[screenshot of pulldown with tags]]
+![](/img/v2/multi-select.gif)
 
 
 
