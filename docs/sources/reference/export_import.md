@@ -18,7 +18,7 @@ To export a dashboard, locate the settings menu within the desired dashboard and
 
 #### Copy JSON
 
-The raw JSON may be accessed directly from within the interface and copy/pasted into an editor of your choice to be saved later. To view this JSON, locate the settings menu within the desired dashboard and click the gear icon. The View JSON option will always be available, and will open the raw JSON in a text area. To copy the entire JSON file, click into the text area, the select all [CTRL+A (PC, Linux) or CMD+A (Mac)].
+The raw JSON may be accessed directly from within the interface and copy/pasted into an editor of your choice to be saved later. To view this JSON, locate the settings menu within the desired dashboard and click the gear icon. The View JSON option will always be available, and will open the raw JSON in a text area. To copy the entire JSON file, click into the text area, the select all `CTRL`+`A` (PC, Linux) or `⌘`+`A` (Mac).
 
 <img class="no-shadow" src="/img/v2/export-2.gif">
 
@@ -55,10 +55,11 @@ In the Import view you find the section `Migrate dashboards`. Pick the data sour
 Your dashboards should be automatically imported into the Grafana 2.0 back-end. Dashboards will no longer be stored in your previous Elasticsearch or InfluxDB databases.
 
 
-### Troubleshooting
+## Troubleshooting
 
-#### Common issues when importing/exporting from a file.
-Note: When importing a dashboard, keep an eye out for template variables that may not exist in your instance of Grafana. For example, 
+### Template variables could not be initialized.
+
+When importing a dashboard, keep an eye out for template variables in your JSON that may not exist in your instance of Grafana. For example, 
 
     "templating": {
       "list": [
