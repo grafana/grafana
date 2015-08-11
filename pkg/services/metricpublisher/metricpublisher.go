@@ -3,13 +3,14 @@ package metricpublisher
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
+	"github.com/bitly/go-nsq"
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
-	"hash/crc32"
-	"time"
 )
 
 var (
@@ -50,39 +51,73 @@ func Publish(routingKey string, msgString []byte) {
 }
 
 func ProcessBuffer(c <-chan m.MetricDefinition) {
-	buf := make(map[uint32][]m.MetricDefinition)
+	cfg := nsq.NewConfig()
+	cfg.UserAgent = fmt.Sprintf("probe-ctrl")
 
-	// flush buffer 10 times every second
-	t := time.NewTicker(time.Millisecond * 100)
+	// TODO: configurable nsqd address
+	producer, err := nsq.NewProducer("nsqd:4150", cfg)
+	if err != nil {
+		log.Fatal(0, "Failed to start producer: %q", err)
+	}
+
+	maxMpubSize := 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
+	maxMetricPerMsg := 1000        // emperically found through benchmarks (should result in 64~128k messages)
+
+	msgs := make([][]byte, 0)
+	msgsSize := 0
+	msg := make([]m.MetricDefinition, 0)
+
+	flushTicker := time.NewTicker(time.Millisecond * 100)
+
+	flush := func(msgs [][]byte) {
+		if len(msgs) == 0 {
+			return
+		}
+		metricPublisherMetrics.Inc(int64(len(msgs)))
+		metricPublisherMsgs.Inc(1)
+		go func() {
+			err := producer.MultiPublish("metricDefs", msgs)
+			if err != nil {
+				log.Error(0, "can't publish to nsqd: %s", err)
+			}
+		}()
+	}
 	for {
 		select {
 		case b := <-c:
-			if b.OrgId != 0 {
-				//get hash.
-				h := crc32.NewIEEE()
-				h.Write([]byte(b.Name))
-				hash := h.Sum32() % uint32(512)
-				if _, ok := buf[hash]; !ok {
-					buf[hash] = make([]m.MetricDefinition, 0)
-				}
-				buf[hash] = append(buf[hash], b)
+			if b.OrgId == 0 {
+				continue
 			}
-		case <-t.C:
-			//copy contents of buffer
-			for hash, metrics := range buf {
-				currentBuf := make([]m.MetricDefinition, len(metrics))
-				copy(currentBuf, metrics)
-				delete(buf, hash)
-				//log.Info(fmt.Sprintf("flushing %d items in buffer now", len(currentBuf)))
-				msgString, err := json.Marshal(currentBuf)
+			msg = append(msg, b)
+			if len(msg) == maxMetricPerMsg {
+				msgString, err := json.Marshal(msg)
 				if err != nil {
 					log.Error(0, "Failed to marshal metrics payload.", err)
 				} else {
-					metricPublisherMetrics.Inc(int64(len(currentBuf)))
-					metricPublisherMsgs.Inc(1)
-					go Publish(fmt.Sprintf("%d", hash), msgString)
+					msgs = append(msgs, msgString)
+					msgsSize += len(msgString)
+					if msgsSize > (80/100)*maxMpubSize {
+						flush(msgs)
+						msgs = make([][]byte, 0)
+						msgsSize = 0
+					}
+				}
+				msg = make([]m.MetricDefinition, 0)
+			}
+		case <-flushTicker.C:
+			if len(msg) != 0 {
+				msgString, err := json.Marshal(msg)
+				if err != nil {
+					log.Error(0, "Failed to marshal metrics payload.", err)
+				} else {
+					msgs = append(msgs, msgString)
 				}
 			}
+			flush(msgs)
+			msgs = make([][]byte, 0)
+			msgsSize = 0
+			msg = make([]m.MetricDefinition, 0)
 		}
 	}
+	//producer.Stop()
 }
