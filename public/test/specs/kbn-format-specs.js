@@ -97,6 +97,13 @@ define([
       expect(date.getTime()).to.equal(new Date(2014, 1, 3).getTime());
     });
 
+    it('should handle today', function() {
+      var date = kbn.parseDate('today');
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      expect(date.getTime()).to.equal(today.getTime());
+    });
+
     it('should handle multiple math expressions', function() {
       var date = kbn.parseDateMath('-2d-6h', new Date(2014, 1, 5));
       expect(date.toString()).to.equal(new Date(2014, 1, 2, 18).toString());

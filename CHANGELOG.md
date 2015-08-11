@@ -2,6 +2,7 @@
 
 **New Features && Enhancements**
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
+- [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 
 
 # 2.1.1 (2015-08-11)

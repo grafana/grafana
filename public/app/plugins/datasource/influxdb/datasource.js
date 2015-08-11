@@ -186,7 +186,10 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function getInfluxTime(date) {
       if (_.isString(date)) {
-        return date.replace('now', 'now()').replace('-', ' - ');
+        if (date.indexOf('now') >= 0) {
+          return date.replace('now', 'now()').replace('-', ' - ');
+        }
+        date = kbn.parseDate(date);
       }
 
       return to_utc_epoch_seconds(date);
