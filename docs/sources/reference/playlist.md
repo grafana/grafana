@@ -6,7 +6,9 @@ page_keywords: grafana, playlist, documentation
 
 ## About the Playlist
 
-The Playlist is a special type of Dashboard that rotates through a particular list of two or more Dashboards. They can be a great way to build situational awareness or just show off your metrics to your team or visitors. Since Dashboards in Grafana automatically scale to any resolution they're perfect for big screens!
+The Playlist is a special type of Dashboard that rotates through a list of Dashboards. A Playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors. 
+
+Since Grafana automatically scales Dashboards to any resolution they're perfect for big screens!
 
 ## Configuring the Playlist
 
