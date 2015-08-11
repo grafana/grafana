@@ -29,4 +29,4 @@ Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the 
 **Note**: Grafana keyboard shortcuts are the same across operating system. For example, `CTRL`+`F` will open the dashboard picker on a Mac as well, **not** `⌘`+`F`
 
 
-Have a suggestion for a new keyboard shortcut? Let us know! 
+Have a suggestion for a new keyboard shortcut? Let us know. 
