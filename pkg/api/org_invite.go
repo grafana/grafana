@@ -39,16 +39,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 			return ApiError(500, "Failed to query db for existing user check", err)
 		}
 	} else {
-		// user exists, add org role
-		createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: userQuery.Result.Id, Role: inviteDto.Role}
-		if err := bus.Dispatch(&createOrgUserCmd); err != nil {
-			if err == m.ErrOrgUserAlreadyAdded {
-				return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
-			}
-			return ApiError(500, "Error while trying to create org user", err)
-		} else {
-			return ApiSuccess(fmt.Sprintf("Existing Grafana user %s added to org %s", userQuery.Result.NameOrFallback(), c.OrgName))
-		}
+		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
 
 	cmd := m.CreateTempUserCommand{}
@@ -71,11 +62,11 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
 			Data: map[string]interface{}{
-				"NameOrEmail": util.StringsFallback2(cmd.Name, cmd.Email),
-				"OrgName":     c.OrgName,
-				"Email":       c.Email,
-				"LinkUrl":     setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy":   util.StringsFallback3(c.Name, c.Email, c.Login),
+				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
+				"OrgName":   c.OrgName,
+				"Email":     c.Email,
+				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
+				"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
 			},
 		}
 
@@ -87,6 +78,36 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	}
 
 	return ApiSuccess(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
+}
+
+func inviteExistingUserToOrg(c *middleware.Context, user *m.User, inviteDto *dtos.AddInviteForm) Response {
+	// user exists, add org role
+	createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
+	if err := bus.Dispatch(&createOrgUserCmd); err != nil {
+		if err == m.ErrOrgUserAlreadyAdded {
+			return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
+		}
+		return ApiError(500, "Error while trying to create org user", err)
+	} else {
+
+		if !inviteDto.SkipEmails && util.IsEmail(user.Email) {
+			emailCmd := m.SendEmailCommand{
+				To:       []string{user.Email},
+				Template: "invited_to_org.html",
+				Data: map[string]interface{}{
+					"Name":      user.NameOrFallback(),
+					"OrgName":   c.OrgName,
+					"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
+				},
+			}
+
+			if err := bus.Dispatch(&emailCmd); err != nil {
+				return ApiError(500, "Failed to send email invited_to_org", err)
+			}
+		}
+
+		return ApiSuccess(fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName))
+	}
 }
 
 func RevokeInvite(c *middleware.Context) Response {
