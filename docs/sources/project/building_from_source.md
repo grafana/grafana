@@ -54,8 +54,11 @@ bra run
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
 ```
-./bin/grafana-server # if you build the binary with 'go run build.go build'. If you built it with 'go build .', run './grafana')
+./bin/grafana-server 
 ```
+If you built the binary with `go run build.go build`, run `./bin/grafana-server`
+
+If you built it with `go build .`, run `./grafana`
 
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
