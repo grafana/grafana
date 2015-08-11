@@ -9,7 +9,7 @@ page_keywords: grafana, graphite, metrics, query, documentation
 This document is a “bottom up” introduction to basic concepts in Grafana, and can be used as a starting point to get familiar with core features.
 
 
-### ** Data Source 
+### ** Data Source **
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes. 
 
 The following datasources are officially supported: [Graphite](/datasources/graphite/), [InfluxDB](/datasources/influxdb/), [OpenTSDB](/datasources/opentsdb/), and [KairosDB](/datasources/kairosdb)
