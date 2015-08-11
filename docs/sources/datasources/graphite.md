@@ -19,7 +19,7 @@ queries through the use of query references.
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
 3. Click the `Add new` link in the top header.
-4. Select `Graphite` from the dropdown. (Graphite is selected by default)
+4. Select `Graphite` from the dropdown.
 
 Name | Description
 ------------ | -------------
