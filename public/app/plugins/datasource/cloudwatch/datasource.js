@@ -271,7 +271,7 @@ function (angular, _, kbn) {
       return this.supportedDimensions[namespace] || [];
     };
 
-    CloudWatchDatasource.prototype.performSuggestDimensionValues = function(region, namespace, metricName, dimensions, targetDimensionKey) {
+    CloudWatchDatasource.prototype.performSuggestDimensionValues = function(region, namespace, metricName, dimensions) {
       var cloudwatch = this.getCloudWatchClient(region);
 
       var params = {
@@ -298,15 +298,6 @@ function (angular, _, kbn) {
         .map(function(metric) {
           return metric.Dimensions;
         })
-        .flatten(true)
-        .filter(function(dimension) {
-          return dimension.Name === targetDimensionKey;
-        })
-        .map(function(metric) {
-          return metric;
-        })
-        .pluck('Value')
-        .uniq()
         .value();
 
         return d.resolve(suggestData);
@@ -319,7 +310,6 @@ function (angular, _, kbn) {
       var region;
       var namespace;
       var metricName;
-      var dimensions;
 
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
@@ -355,16 +345,28 @@ function (angular, _, kbn) {
         return d.promise;
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
         region = dimensionValuesQuery[1];
         namespace = dimensionValuesQuery[2];
         metricName = dimensionValuesQuery[3];
-        dimensions = {};
-        var targetDimensionKey = dimensionValuesQuery[4];
+        var dimensions = {};
 
-        return this.performSuggestDimensionValues(region, namespace, metricName, dimensions, targetDimensionKey)
-        .then(transformSuggestData);
+        return this.performSuggestDimensionValues(region, namespace, metricName, dimensions)
+        .then(function(suggestData) {
+          return _.map(suggestData, function(dimensions) {
+            var result = _.chain(dimensions)
+            .sortBy(function(dimension) {
+              return dimension.Name;
+            })
+            .map(function(dimension) {
+              return dimension.Name + '=' + dimension.Value;
+            })
+            .value().join(',');
+
+            return { text: result };
+          });
+        });
       }
 
       return $q.when([]);
@@ -376,9 +378,8 @@ function (angular, _, kbn) {
       var namespace = 'AWS/Billing';
       var metricName = 'EstimatedCharges';
       var dimensions = {};
-      var targetDimensionKey = 'ServiceName';
 
-      return this.performSuggestDimensionValues(region, namespace, metricName, dimensions, targetDimensionKey).then(function () {
+      return this.performSuggestDimensionValues(region, namespace, metricName, dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };

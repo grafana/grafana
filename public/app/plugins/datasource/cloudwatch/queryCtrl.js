@@ -64,11 +64,19 @@ function (angular, _) {
         $scope.target.region,
         $scope.target.namespace,
         $scope.target.metricName,
-        $scope.target.dimensions,
-        $scope.target.currentDimensionKey
+        $scope.target.dimensions
       )
       .then(function(result) {
-        callback(result);
+        var suggestData = _.chain(result)
+        .flatten(true)
+        .filter(function(dimension) {
+          return dimension.Name === $scope.target.currentDimensionKey;
+        })
+        .pluck('Value')
+        .uniq()
+        .value();
+
+        callback(suggestData);
       }, function() {
         callback([]);
       });
