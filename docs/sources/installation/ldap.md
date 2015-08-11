@@ -55,7 +55,7 @@ org_role = "Admin"
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used
 # org_id = 1
 
-[[server.ldap_group_to_org_role_mappings]]
+[[servers.ldap_group_to_org_role_mappings]]
 group_dn = "cn=users,dc=grafana,dc=org"
 org_role = "Editor"
 

@@ -79,6 +79,13 @@ define([
         expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
       });
 
+      it('should replace target placeholder for hidden series', function() {
+        var results = ctx.ds.buildGraphiteParams({
+          targets: [{target: 'series1', hide: true}, {target: 'sumSeries(#A)', hide: true}, {target: 'asPercent(#A,#B)'}]
+        });
+        expect(results[0]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
+      });
+
       it('should replace target placeholder when nesting query references', function() {
         var results = ctx.ds.buildGraphiteParams({
           targets: [{target: 'series1'}, {target: 'sumSeries(#A)'}, {target: 'asPercent(#A,#B)'}]

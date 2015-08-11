@@ -1,0 +1,7 @@
+postgrestest:
+  image: postgres:latest
+  environment:
+    POSTGRES_USER: grafana
+    POSTGRES_PASSWORD: password
+  ports:
+    - "5432:5432"

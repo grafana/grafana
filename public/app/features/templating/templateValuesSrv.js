@@ -110,11 +110,11 @@ function (angular, _, kbn) {
 
       if (_.isArray(variable.current.value)) {
         variable.current.text = variable.current.value.join(' + ');
-        this.selectOptionsForCurrentValue(variable);
+        self.selectOptionsForCurrentValue(variable);
       }
 
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
@@ -178,7 +178,7 @@ function (angular, _, kbn) {
       }
 
       if (_.isArray(variable.current.value)) {
-        this.selectOptionsForCurrentValue(variable);
+        self.selectOptionsForCurrentValue(variable);
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
