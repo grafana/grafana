@@ -61,6 +61,7 @@ pages:
 - ['reference/http_api.md', 'Reference', 'HTTP API']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
 
+- ['datasources/overview.md', 'Data Sources', 'Data Source Overview']
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
