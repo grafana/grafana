@@ -9,7 +9,7 @@ module.exports = {
         tasks: ['default'],
         options: {
             nospawn: true,
-            livereload: true,
+            livereload: false,
         }
     }
 
