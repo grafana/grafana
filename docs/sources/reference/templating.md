@@ -1,10 +1,10 @@
 ----
-page_title: Templated dashboards
-page_description: Templated dashboards
+page_title: Dashboard Templating
+page_description: Dashboard Templating
 page_keywords: grafana, templating, variables, guide,  documentation
 ---
 
-# Templated Dashboards
+# Dashboard Templating
 ![](/img/v2/templating_var_list.png)
 
 ## Overview
@@ -27,9 +27,9 @@ They can all be used to create dynamic variables that you can use throughout the
 
 ### Query
 
- > Note: The Query type is often Data Source specific. Please consult the appropriate documentation for your particular Data Source.
+ > Note: The Query type is Data Source specific. Please consult the appropriate documentation for your particular Data Source.
 
-This is the most common type of Template variable. Using the Query type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
+This is the most common type of Template variable. Use the `Query` template type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
 
 For example a query like prod.servers.* will fill the variable with all possible values that exists in that wildcard position (in the case of the Graphite Data Source).
 
@@ -57,9 +57,7 @@ Note: a proof of concept shim that translates the metric query into a SQL call i
 
 Once configured, Multi-Select Tagging provides a convenient way to group and your template variables, and slice your data in the exact way you want. The Tags can be seen on the right side of the template pull-down.
 
-[[screenshot of pulldown with tags]]
-
-
+![](/img/v2/multi-select.gif)
 
 ### Interval
 
