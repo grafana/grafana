@@ -61,13 +61,13 @@ Once configured, Multi-Select Tagging provides a convenient way to group and you
 
 ### Interval
 
-Use the Interval type to create Template variables aroundr time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.
+Use the `Interval` type to create Template variables aroundr time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.
 
 ![](/img/v2/templated_variable_parameter.png)
 
 ### Custom
 
-Use the Custom type to manually create Template variables around explicit values that are hard coded in the Dashboard and not dependent on any Data Source. You can specify multiple Custom Template values by separating them with a comma. 
+Use the `Custom` type to manually create Template variables around explicit values that are hard-coded into the Dashboard, and not dependent on any Data Source. You can specify multiple Custom Template values by separating them with a comma. 
 
 ## Utilizing Template Variables with Repeating Panels and Repeating Rows
 
