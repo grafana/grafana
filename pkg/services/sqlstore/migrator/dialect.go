@@ -16,6 +16,7 @@ type Dialect interface {
 	ShowCreateNull() bool
 	SqlType(col *Column) string
 	SupportEngine() bool
+	LikeStr() string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
@@ -56,6 +57,10 @@ func (b *BaseDialect) ShowCreateNull() bool {
 
 func (b *BaseDialect) AndStr() string {
 	return "AND"
+}
+
+func (b *BaseDialect) LikeStr() string {
+	return "LIKE"
 }
 
 func (b *BaseDialect) OrStr() string {

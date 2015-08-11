@@ -14,8 +14,9 @@ import (
 )
 
 type ldapAuther struct {
-	server *LdapServerConf
-	conn   *ldap.Conn
+	server            *LdapServerConf
+	conn              *ldap.Conn
+	requireSecondBind bool
 }
 
 func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
@@ -58,7 +59,7 @@ func (a *ldapAuther) login(query *LoginUserQuery) error {
 		}
 
 		// check if a second user bind is needed
-		if a.server.BindPassword != "" {
+		if a.requireSecondBind {
 			if err := a.secondBind(ldapUser, query.Password); err != nil {
 				return err
 			}
@@ -85,11 +86,12 @@ func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) 
 	for _, ldapGroup := range a.server.LdapGroups {
 		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
 			access = true
+			break
 		}
 	}
 
 	if !access {
-		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups", ldapUser.Username)
+		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups, ldapUser groups: %v", ldapUser.Username, ldapUser.MemberOf)
 		return nil, ErrInvalidCredentials
 	}
 
@@ -172,6 +174,7 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 		for _, org := range orgsQuery.Result {
 			if group.OrgId == org.OrgId {
 				match = true
+				break
 			}
 		}
 
@@ -181,6 +184,7 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 			if err := bus.Dispatch(&cmd); err != nil {
 				return err
 			}
+			break
 		}
 	}
 
@@ -201,8 +205,9 @@ func (a *ldapAuther) secondBind(ldapUser *ldapUserInfo, userPassword string) err
 }
 
 func (a *ldapAuther) initialBind(username, userPassword string) error {
-	if a.server.BindPassword != "" {
+	if a.server.BindPassword != "" || a.server.BindDN == "" {
 		userPassword = a.server.BindPassword
+		a.requireSecondBind = true
 	}
 
 	bindPath := a.server.BindDN
@@ -238,7 +243,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 				a.server.Attr.Name,
 				a.server.Attr.MemberOf,
 			},
-			Filter: fmt.Sprintf(a.server.SearchFilter, username),
+			Filter: strings.Replace(a.server.SearchFilter, "%s", username, -1),
 		}
 
 		searchResult, err = a.conn.Search(&searchReq)

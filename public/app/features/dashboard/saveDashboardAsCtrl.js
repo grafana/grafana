@@ -25,6 +25,12 @@ function (angular) {
       });
     }
 
+    $scope.keyDown = function (evt) {
+      if (evt.keyCode === 13) {
+        $scope.saveClone();
+      }
+    };
+
     $scope.saveClone = function() {
       saveDashboard({overwrite: false}).then(null, function(err) {
         if (err.data && err.data.status === "name-exists") {
