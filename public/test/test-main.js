@@ -22,6 +22,7 @@ require.config({
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
     angularMocks:             '../vendor/angular-mocks/angular-mocks',
     'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
+    'angular-ui':             '../vendor/angular-ui/angular-bootstrap',
     'angular-strap':          '../vendor/angular-other/angular-strap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
@@ -83,6 +84,7 @@ require.config({
 
     'angular-route':        ['angular'],
     'angular-sanitize':     ['angular'],
+    'angular-ui':           ['angular'],
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-mocks':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],

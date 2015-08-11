@@ -220,6 +220,7 @@ div.subnav {
 
 	li > a:hover,
 	li.active > a,
+	li.active > a:focus,
 	li.active > a:hover {
 	  border-color: transparent;
 	  background-color: transparent;
@@ -547,8 +548,6 @@ a:hover {
 }
 
 .modal {
- 	.border-radius(1px);
-	border-top: solid 1px lighten(@grayDark, 5%);
 	background-color: @grafanaPanelBackground;
 }
 
