@@ -18,7 +18,7 @@ function (angular, _, $) {
 
       var functionList = [
         'count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-        'derivative', 'non_negative_derivative', 'stddev', 'first', 'last', 'difference'
+        'derivative', 'non_negative_derivative', 'stddev', 'first', 'last'
       ];
 
       var functionMenu = _.map(functionList, function(func) {
