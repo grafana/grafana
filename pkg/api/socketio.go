@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,13 +26,8 @@ import (
 )
 
 var server *socketio.Server
-var bufCh chan m.MetricDefinition
 var contextCache *ContextCache
 var metricsRecvd met.Count
-
-func StoreMetric(m *m.MetricDefinition) {
-	bufCh <- *m
-}
 
 type ContextCache struct {
 	sync.RWMutex
@@ -254,8 +248,6 @@ func InitCollectorController(metrics met.Backend) {
 		bus.AddEventListener(HandleCollectorDisconnected)
 	}
 	metricsRecvd = metrics.NewCount("collector-ctrl.metrics-recv")
-	bufCh = make(chan m.MetricDefinition, runtime.NumCPU()*100)
-	go metricpublisher.ProcessBuffer(bufCh)
 }
 
 func init() {
@@ -380,8 +372,8 @@ func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
 		if !c.Collector.Public {
 			r.OrgId = c.OrgId
 		}
-		StoreMetric(r)
 	}
+	metricpublisher.Publish(results)
 }
 
 func (c *CollectorContext) Refresh() {

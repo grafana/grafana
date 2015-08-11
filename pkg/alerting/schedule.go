@@ -7,9 +7,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,11 +31,10 @@ type Job struct {
 	Definition      CheckDef
 	GeneratedAt     time.Time
 	LastPointTs     time.Time
-	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
-	AssertMinSeries int                         // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
-	AssertStart     time.Time                   // to verify timestamps in response
-	AssertStep      int                         // to verify step duration
-	AssertSteps     int                         // to verify during execution this many points are included
+	AssertMinSeries int       // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
+	AssertStart     time.Time // to verify timestamps in response
+	AssertStep      int       // to verify step duration
+	AssertSteps     int       // to verify during execution this many points are included
 }
 
 func (job Job) String() string {
@@ -43,9 +42,6 @@ func (job Job) String() string {
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
-	if job.StoreMetricFunc == nil {
-		return
-	}
 	if !setting.WriteIndividualAlertResults {
 		return
 	}
@@ -70,9 +66,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	if int(res) >= 0 {
 		metrics[int(res)].Value = 1.0
 	}
-	for _, m := range metrics {
-		job.StoreMetricFunc(m)
-	}
+	metricpublisher.Publish(metrics)
 }
 
 func getJobs(lastPointAt int64) ([]*Job, error) {
@@ -176,7 +170,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
-		StoreMetricFunc: api.StoreMetric,
 		AssertMinSeries: monitor.HealthSettings.NumCollectors,
 		AssertStep:      int(monitor.Frequency),
 		AssertSteps:     monitor.HealthSettings.Steps,

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/graphite"
 	"github.com/grafana/grafana/pkg/log"
@@ -70,7 +69,6 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			log.Error(0, "failed to unmarshal msg body.", err)
 			return nil
 		}
-		job.StoreMetricFunc = api.StoreMetric
 		var err error
 		if setting.AlertingInspect {
 			inspect(GraphiteAuthContextReturner, &job, cache)
