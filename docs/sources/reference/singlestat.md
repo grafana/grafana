@@ -8,7 +8,7 @@ page_keywords: grafana, singlestat, panel, documentation
 
 ![](/img/v1/singlestat_panel2.png)
 
-The singlestat Panel allows you to show the one main summary stat of a single series (like max, min, avg, sum). It also provides thresholds to color the stat or the Panel background.
+The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
 ### Singlestat Panel Configuration
 
@@ -37,7 +37,7 @@ The coloring options of the Singlestat Panel config allow you to dynamically cha
 
 ### Spark Lines
 
-Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional graph panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
+Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional Graph Panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
 
 <img class="no-shadow" src="/img/v1/Singlestat-Sparklines.png">
 
