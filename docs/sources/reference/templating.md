@@ -46,7 +46,7 @@ For example, if you were using Templating to list all 20 of your applications, y
 
  > Note: Multi-Select Tagging functionality is currently experimental but is part of Grafana 2.1. To enable this feature click the enable icon when editing Template options for a particular variable.
 
-![](/img/v2/template-tags-config.png)
+<img class="no-shadow" src="/img/v2/template-tags-config.png">
 
 Grafana gets the list of tags and the list of values in each tag by performing two queries on your metric namespace.
 
