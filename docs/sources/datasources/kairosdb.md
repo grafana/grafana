@@ -8,7 +8,7 @@ page_keywords: grafana, kairosdb, documentation
 Grafana v2.1 brings initial support for KairosDB Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Kairos DB does have a few different options for building queries.
 
 ## Adding the data source to Grafana
-![](/img/v2/add_kairosDB.jpg)
+![](/img/v2/add_KairosDB.jpg)
 
 1. Open the side menu by clicking the the Grafana icon in the top header. 
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
