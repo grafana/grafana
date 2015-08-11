@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -176,7 +177,10 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		requests := ""
 		for _, trace := range gr.Traces {
 			r := trace.Request
-			requests += fmt.Sprintf("\ntargets: %s\nfrom:%s\nto:%s\nresponse:%s\n", r.Targets, r.Start, r.End, trace.Response)
+			// mangle trace.Response to keep the dumped out graphite
+			// responses from crashing logstash
+			resp := bytes.Replace(trace.Response, []byte("\n"), []byte("\n> "), -1)
+			requests += fmt.Sprintf("\ntargets: %s\nfrom:%s\nto:%s\nresponse:%s\n", r.Targets, r.Start, r.End, resp)
 		}
 		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
