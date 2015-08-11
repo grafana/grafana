@@ -24,6 +24,152 @@ function (angular, _, kbn) {
         accessKeyId: datasource.jsonData.accessKeyId,
         secretAccessKey: datasource.jsonData.secretAccessKey
       };
+
+      /* jshint -W101 */
+      this.supportedRegion = [
+        'us-east-1', 'us-west-2', 'us-west-1', 'eu-west-1', 'eu-central-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1'
+      ];
+
+      this.supportedMetrics = {
+        'AWS/AutoScaling': [
+          'GroupMinSize', 'GroupMaxSize', 'GroupDesiredCapacity', 'GroupInServiceInstances', 'GroupPendingInstances', 'GroupStandbyInstances', 'GroupTerminatingInstances', 'GroupTotalInstances'
+        ],
+        'AWS/Billing': [
+          'EstimatedCharges'
+        ],
+        'AWS/CloudFront': [
+          'Requests', 'BytesDownloaded', 'BytesUploaded', 'TotalErrorRate', '4xxErrorRate', '5xxErrorRate'
+        ],
+        'AWS/CloudSearch': [
+          'SuccessfulRequests', 'SearchableDocuments', 'IndexUtilization', 'Partitions'
+        ],
+        'AWS/DynamoDB': [
+          'ConditionalCheckFailedRequests', 'ConsumedReadCapacityUnits', 'ConsumedWriteCapacityUnits', 'OnlineIndexConsumedWriteCapacity', 'OnlineIndexPercentageProgress', 'OnlineIndexThrottleEvents', 'ProvisionedReadCapacityUnits', 'ProvisionedWriteCapacityUnits', 'ReadThrottleEvents', 'ReturnedItemCount', 'SuccessfulRequestLatency', 'SystemErrors', 'ThrottledRequests', 'UserErrors', 'WriteThrottleEvents'
+        ],
+        'AWS/ElastiCache': [
+          'CPUUtilization', 'SwapUsage', 'FreeableMemory', 'NetworkBytesIn', 'NetworkBytesOut',
+          'BytesUsedForCacheItems', 'BytesReadIntoMemcached', 'BytesWrittenOutFromMemcached', 'CasBadval', 'CasHits', 'CasMisses', 'CmdFlush', 'CmdGet', 'CmdSet', 'CurrConnections', 'CurrItems', 'DecrHits', 'DecrMisses', 'DeleteHits', 'DeleteMisses', 'Evictions', 'GetHits', 'GetMisses', 'IncrHits', 'IncrMisses', 'Reclaimed',
+          'CurrConnections', 'Evictions', 'Reclaimed', 'NewConnections', 'BytesUsedForCache', 'CacheHits', 'CacheMisses', 'ReplicationLag', 'GetTypeCmds', 'SetTypeCmds', 'KeyBasedCmds', 'StringBasedCmds', 'HashBasedCmds', 'ListBasedCmds', 'SetBasedCmds', 'SortedSetBasedCmds', 'CurrItems'
+        ],
+        'AWS/EBS': [
+          'VolumeReadBytes', 'VolumeWriteBytes', 'VolumeReadOps', 'VolumeWriteOps', 'VolumeTotalReadTime', 'VolumeTotalWriteTime', 'VolumeIdleTime', 'VolumeQueueLength', 'VolumeThroughputPercentage', 'VolumeConsumedReadWriteOps'
+        ],
+        'AWS/EC2': [
+          'CPUCreditUsage', 'CPUCreditBalance', 'CPUUtilization', 'DiskReadOps', 'DiskWriteOps', 'DiskReadBytes', 'DiskWriteBytes', 'NetworkIn', 'NetworkOut', 'StatusCheckFailed', 'StatusCheckFailed_Instance', 'StatusCheckFailed_System'
+        ],
+        'AWS/ELB': [
+          'HealthyHostCount', 'UnHealthyHostCount', 'RequestCount', 'Latency', 'HTTPCode_ELB_4XX', 'HTTPCode_ELB_5XX', 'HTTPCode_Backend_2XX', 'HTTPCode_Backend_3XX', 'HTTPCode_Backend_4XX', 'HTTPCode_Backend_5XX', 'BackendConnectionErrors', 'SurgeQueueLength', 'SpilloverCount'
+        ],
+        'AWS/ElasticMapReduce': [
+          'CoreNodesPending', 'CoreNodesRunning', 'HBaseBackupFailed', 'HBaseMostRecentBackupDuration', 'HBaseTimeSinceLastSuccessfulBackup', 'HDFSBytesRead', 'HDFSBytesWritten', 'HDFSUtilization', 'IsIdle', 'JobsFailed', 'JobsRunning', 'LiveDataNodes', 'LiveTaskTrackers', 'MapSlotsOpen', 'MissingBlocks', 'ReduceSlotsOpen', 'RemainingMapTasks', 'RemainingMapTasksPerSlot', 'RemainingReduceTasks', 'RunningMapTasks', 'RunningReduceTasks', 'S3BytesRead', 'S3BytesWritten', 'TaskNodesPending', 'TaskNodesRunning', 'TotalLoad'
+        ],
+        'AWS/Kinesis': [
+          'PutRecord.Bytes', 'PutRecord.Latency', 'PutRecord.Success', 'PutRecords.Bytes', 'PutRecords.Latency', 'PutRecords.Records', 'PutRecords.Success', 'IncomingBytes', 'IncomingRecords', 'GetRecords.Bytes', 'GetRecords.IteratorAgeMilliseconds', 'GetRecords.Latency', 'GetRecords.Success'
+        ],
+        'AWS/ML': [
+          'PredictCount', 'PredictFailureCount'
+        ],
+        'AWS/OpsWorks': [
+          'cpu_idle', 'cpu_nice', 'cpu_system', 'cpu_user', 'cpu_waitio', 'load_1', 'load_5', 'load_15', 'memory_buffers', 'memory_cached', 'memory_free', 'memory_swap', 'memory_total', 'memory_used', 'procs'
+        ],
+        'AWS/Redshift': [
+          'CPUUtilization', 'DatabaseConnections', 'HealthStatus', 'MaintenanceMode', 'NetworkReceiveThroughput', 'NetworkTransmitThroughput', 'PercentageDiskSpaceUsed', 'ReadIOPS', 'ReadLatency', 'ReadThroughput', 'WriteIOPS', 'WriteLatency', 'WriteThroughput'
+        ],
+        'AWS/RDS': [
+          'BinLogDiskUsage', 'CPUUtilization', 'DatabaseConnections', 'DiskQueueDepth', 'FreeableMemory', 'FreeStorageSpace', 'ReplicaLag', 'SwapUsage', 'ReadIOPS', 'WriteIOPS', 'ReadLatency', 'WriteLatency', 'ReadThroughput', 'WriteThroughput', 'NetworkReceiveThroughput', 'NetworkTransmitThroughput'
+        ],
+        'AWS/Route53': [
+          'HealthCheckStatus', 'HealthCheckPercentageHealthy'
+        ],
+        'AWS/SNS': [
+          'NumberOfMessagesPublished', 'PublishSize', 'NumberOfNotificationsDelivered', 'NumberOfNotificationsFailed'
+        ],
+        'AWS/SQS': [
+          'NumberOfMessagesSent', 'SentMessageSize', 'NumberOfMessagesReceived', 'NumberOfEmptyReceives', 'NumberOfMessagesDeleted', 'ApproximateNumberOfMessagesDelayed', 'ApproximateNumberOfMessagesVisible', 'ApproximateNumberOfMessagesNotVisible'
+        ],
+        'AWS/S3': [
+          'BucketSizeBytes', 'NumberOfObjects'
+        ],
+        'AWS/SWF': [
+          'DecisionTaskScheduleToStartTime', 'DecisionTaskStartToCloseTime', 'DecisionTasksCompleted', 'StartedDecisionTasksTimedOutOnClose', 'WorkflowStartToCloseTime', 'WorkflowsCanceled', 'WorkflowsCompleted', 'WorkflowsContinuedAsNew', 'WorkflowsFailed', 'WorkflowsTerminated', 'WorkflowsTimedOut'
+        ],
+        'AWS/StorageGateway': [
+          'CacheHitPercent', 'CachePercentUsed', 'CachePercentDirty', 'CloudBytesDownloaded', 'CloudDownloadLatency', 'CloudBytesUploaded', 'UploadBufferFree', 'UploadBufferPercentUsed', 'UploadBufferUsed', 'QueuedWrites', 'ReadBytes', 'ReadTime', 'TotalCacheSize', 'WriteBytes', 'WriteTime', 'WorkingStorageFree', 'WorkingStoragePercentUsed', 'WorkingStorageUsed', 'CacheHitPercent', 'CachePercentUsed', 'CachePercentDirty', 'ReadBytes', 'ReadTime', 'WriteBytes', 'WriteTime', 'QueuedWrites'
+        ],
+        'AWS/WorkSpaces': [
+          'Available', 'Unhealthy', 'ConnectionAttempt', 'ConnectionSuccess', 'ConnectionFailure', 'SessionLaunchTime', 'InSessionLatency', 'SessionDisconnect'
+        ],
+      };
+
+      this.supportedDimensions = {
+        'AWS/AutoScaling': [
+          'AutoScalingGroupName'
+        ],
+        'AWS/Billing': [
+          'ServiceName', 'LinkedAccount', 'Currency'
+        ],
+        'AWS/CloudFront': [
+          'DistributionId', 'Region'
+        ],
+        'AWS/CloudSearch': [
+
+        ],
+        'AWS/DynamoDB': [
+          'TableName', 'GlobalSecondaryIndexName', 'Operation'
+        ],
+        'AWS/ElastiCache': [
+          'CacheClusterId', 'CacheNodeId'
+        ],
+        'AWS/EBS': [
+          'VolumeId'
+        ],
+        'AWS/EC2': [
+          'AutoScalingGroupName', 'ImageId', 'InstanceId', 'InstanceType'
+        ],
+        'AWS/ELB': [
+          'LoadBalancerName', 'AvailabilityZone'
+        ],
+        'AWS/ElasticMapReduce': [
+          'ClusterId', 'JobId'
+        ],
+        'AWS/Kinesis': [
+          'StreamName'
+        ],
+        'AWS/ML': [
+          'MLModelId', 'RequestMode'
+        ],
+        'AWS/OpsWorks': [
+          'StackId', 'LayerId', 'InstanceId'
+        ],
+        'AWS/Redshift': [
+          'NodeID', 'ClusterIdentifier'
+        ],
+        'AWS/RDS': [
+          'DBInstanceIdentifier', 'DatabaseClass', 'EngineName'
+        ],
+        'AWS/Route53': [
+          'HealthCheckId'
+        ],
+        'AWS/SNS': [
+          'Application', 'Platform', 'TopicName'
+        ],
+        'AWS/SQS': [
+          'QueueName'
+        ],
+        'AWS/S3': [
+          'BucketName', 'StorageType'
+        ],
+        'AWS/SWF': [
+          'Domain', 'ActivityTypeName', 'ActivityTypeVersion'
+        ],
+        'AWS/StorageGateway': [
+          'GatewayId', 'GatewayName', 'VolumeId'
+        ],
+        'AWS/WorkSpaces': [
+          'DirectoryId', 'WorkspaceId'
+        ],
+      };
+      /* jshint +W101 */
     }
 
     // Called once per panel (graph)
@@ -109,8 +255,37 @@ function (angular, _, kbn) {
       return d.promise;
     };
 
-    CloudWatchDatasource.prototype.performSuggestQuery = function(region, params) {
+    CloudWatchDatasource.prototype.performSuggestRegion = function() {
+      return this.supportedRegion;
+    };
+
+    CloudWatchDatasource.prototype.performSuggestNamespace = function() {
+      return _.keys(this.supportedMetrics);
+    };
+
+    CloudWatchDatasource.prototype.performSuggestMetrics = function(namespace) {
+      return this.supportedMetrics[namespace] || [];
+    };
+
+    CloudWatchDatasource.prototype.performSuggestDimensionKeys = function(namespace) {
+      return this.supportedDimensions[namespace] || [];
+    };
+
+    CloudWatchDatasource.prototype.performSuggestDimensionValues = function(region, namespace, metricName, dimensions, targetDimensionKey) {
       var cloudwatch = this.getCloudWatchClient(region);
+
+      var params = {
+        Namespace: namespace,
+        MetricName: metricName
+      };
+      if (!_.isEmpty(dimensions)) {
+        params.Dimensions = _.map(_.keys(dimensions), function(key) {
+          return {
+            Name: key,
+            Value: dimensions[key]
+          };
+        });
+      }
 
       var d = $q.defer();
 
@@ -119,14 +294,36 @@ function (angular, _, kbn) {
           return d.reject(err);
         }
 
-        return d.resolve(data);
+        var suggestData = _.chain(data.Metrics)
+        .map(function(metric) {
+          return metric.Dimensions;
+        })
+        .flatten(true)
+        .filter(function(dimension) {
+          return dimension.Name === targetDimensionKey;
+        })
+        .map(function(metric) {
+          return metric;
+        })
+        .pluck('Value')
+        .uniq()
+        .value();
+
+        return d.resolve(suggestData);
       });
 
       return d.promise;
     };
 
     CloudWatchDatasource.prototype.testDatasource = function() {
-      return this.performSuggestQuery({}).then(function () {
+      /* use billing metrics for test */
+      var region = 'us-east-1';
+      var namespace = 'AWS/Billing';
+      var metricName = 'EstimatedCharges';
+      var dimensions = {};
+      var targetDimensionKey = 'ServiceName';
+
+      return this.performSuggestDimensionValues(region, namespace, metricName, dimensions, targetDimensionKey).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
