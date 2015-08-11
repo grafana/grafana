@@ -6,7 +6,7 @@
 
 .endpoint-alerting {
   float: left;
-  margin: 0 0 15px 55px;
+  margin: 0 0 15px;
 }
 
 .endpoint-alerting-status,
@@ -20,17 +20,27 @@
   }
 }
 
-
 .endpoint-alerting-status {
   margin-right: 30px;
-  font-weight: bold;
+  font-weight: bold; 
 
   &.not-enabled {
     color: @rt-dark-gray;
     font-weight: normal;
   }
+
+  @media (min-width: 675px) {
+    margin-bottom: 2px;
+  }
 }
 
 .endpoint-alerting-recipients {
   color: @rt-light-gray;
+}
+
+.endpoint-alerting-status,
+.endpoint-alerting-recipients {
+  @media (min-width: 675px) {
+    display: block;
+  }
 }

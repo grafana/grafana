@@ -1,0 +1,70 @@
+// ==========================================================================
+// SUMMARY TABLE
+// ==========================================================================
+
+.summary-table {
+  overflow: auto;
+}
+
+.summary-table.currentStatus {
+  padding: 12px 0 0 70px;
+}
+
+.summary-table-actions,
+.summary-table-status {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-table-actions {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+}
+
+.summary-table-actions > li {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.summary-table-status-icon {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+}
+
+.summary-table-status {
+  @media (min-width: 675px) {
+    width: 215px;
+    float: left;
+  }
+
+  @media (min-width: 925px) {
+    width: 50%;
+  }
+}
+
+.summary-table-status > li {
+  display: block;
+  vertical-align: top;
+
+  @media (min-width: 925px) {
+    width: 50%;
+    float: left;
+  }
+
+  &:first-child {
+    margin-bottom: 15px;
+  }
+}
+
+.summary-table-info {
+  @media (min-width: 675px) {
+    float: left;
+  }
+
+  @media (min-width: 925px) {
+    width: 50%;
+  }
+}
