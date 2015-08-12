@@ -136,7 +136,7 @@
 							</ul> -->
 						</div>
 
-						<div class="pull-right">
+						<div class="pull-right" ng-show="getMonitorByTypeName('DNS').enabled">
 							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
 						</div>
 
@@ -193,7 +193,7 @@
 							</ul> -->
 						</div>
 
-						<div class="pull-right">
+						<div class="pull-right" ng-show="getMonitorByTypeName('HTTP').enabled">
 							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i></a>
 						</div>
 						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
@@ -250,7 +250,7 @@
 							</ul> -->
 						</div>
 
-						<div class="pull-right">
+						<div class="pull-right" ng-show="getMonitorByTypeName('HTTPS').enabled">
 							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i></a>
 						</div>
 
