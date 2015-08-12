@@ -1,0 +1,103 @@
+<grafana-panel>
+    <h4 style="font-weight: 400;">Hello.</h4>
+    <p class="rt-dashboard-blurb">Litmus network monitoring continually tests, stores and alerts on the global performance and availability of your Internet applications.</p>
+
+    <div class="rt-dash-flex-container">
+        <div class="rt-dash-flex-item">
+            <span class="rt-dashboard-blurb">To do:</span>
+            <div ng-if="endpointStatus === 'noEndpoints'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
+                <a href="endpoints/new" class="rt-dashboard-blurb">Add your first endpoint.</a> <i class="tooltip-subtle grafana-tip tag-tip fa fa-question-circle ng-scope" bs-tooltip="'An endpoint is any domain, IP address</br>or URL you would like to monitor.'"></i>
+            </div>     
+            <div ng-if="userStatus === 'noTeam'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
+                <a href="endpoints/new" class="rt-dashboard-blurb">Invite a team member.</a>
+            </div> 
+            <div ng-if="collectorStatus === 'noCollectors'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-collector rt-dashboard-icons" style="font-size: 20px;"></i>
+                </div>
+                <a href="collectors/new" class="rt-dashboard-blurb">Deploy a private collector.</a> <i class="tooltip-subtle grafana-tip tag-tip fa fa-question-circle ng-scope" bs-tooltip="'A private collector is an open-source probe deployed</br>on your network, reporting back to Litmus.'"></i>
+            </div>   
+        </div>
+        <div class="rt-dash-flex-item">
+            <span class="rt-dashboard-blurb">Complete:</span>
+            <div class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Join Early Access Program</span>
+            </div>
+            <div  ng-if="endpointStatus === 'hasEndpoints'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Add your first endpoint.</span>
+            </div>
+            <div ng-if="userStatus === 'hasTeam'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Invite a team member.</span>
+            </div>
+            <div ng-if="collectorStatus === 'hasCollectors'" class="rt-CTA-item">
+                <div class="rt-dashboard-icons-container">
+                    <i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 24px;"></i>
+                </div>
+                <span class="rt-dashboard-blurb rt-blurb-success">Deploy a private collector</span>
+            </div>            
+        </div>        
+    </div>
+</grafana-panel>
+
+
+
+<!-- <grafana-panel>
+    <h4>Getting the most out of Litmus</h4>
+    <div class="rt-dash-flex-container">
+        <div class="rt-dash-flex-item" ng-if="endpointStatus === 'noEndpoints'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-endpoint rt-dashboard-icons"></i>
+            </div>
+            <h4>Add an endpoint</h4>
+            <p class="rt-dashboard-blurb">An endpoint is anything you want to monitor - just need a fully qualified domain name.</p>
+            <a href="endpoints/new">
+                <button class="secondaryCTA">New Endpoint</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addUser'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-users rt-dashboard-icons" style="font-size: 100px;"></i>
+            </div>
+            <h4>Invite your team</h4>
+            <p class="rt-dashboard-blurb">Litmus is more fun with others.  Invite team members, or share an invite to the beta.</p>
+            <a href="org/users">
+                <button class="secondaryCTA">Add Users</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addDatasource'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-datasources rt-dashboard-icons"></i>
+            </div>
+            <h4>Connect data sources</h4>
+            <p class="rt-dashboard-blurb">Our data is great. Your data is great. They should be together?</p>
+            <a href="datasources/new">
+                <button class="secondaryCTA">Add Data Source</button>
+            </a>
+        </div>
+        <div class="rt-dash-flex-item" ng-if="cta === 'addCollector'">
+            <div style="height:100px">
+                <i class="fa-fw icon-rt-collector rt-dashboard-icons"></i>
+            </div>
+            <h4>Deploy collectors</h4>
+            <p class="rt-dashboard-blurb">Deploy private collectors worldwide.</p>
+            <a href="collectors">
+                <button class="secondaryCTA">New Collector</button>
+            </a>
+        </div>
+    </div>
+</grafana-panel> -->
