@@ -40,25 +40,52 @@ func Init(metrics met.Backend) {
 	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
 }
 
+func Reslice(in []*m.MetricDefinition, size int) [][]*m.MetricDefinition {
+	numSubSlices := len(in) / size
+	if len(in)%size > 0 {
+		numSubSlices += 1
+	}
+	out := make([][]*m.MetricDefinition, numSubSlices)
+	for i := 0; i < numSubSlices; i++ {
+		start := i * size
+		end := (i + 1) * size
+		if end > len(in) {
+			out[i] = in[start:]
+		} else {
+			out[i] = in[start:end]
+		}
+	}
+	return out
+}
+
 func Publish(metrics []*m.MetricDefinition) error {
 	if len(metrics) == 0 {
 		return nil
 	}
-	// TODO handle metrics too big to fit into single nsq packet
-	// TODO instrument len(metrics), msg size
+	// TODO instrument len(metrics), msg size, set alerts
+	// TODO if we panic, make sure no auto-restart until nsqd is up. make probe retry if grafana panics
 
-	msg, err := json.Marshal(metrics)
-	if err != nil {
-		return fmt.Errorf("Failed to marshal metrics payload: %s", err)
-	}
-	metricPublisherMetrics.Inc(int64(len(metrics)))
-	metricPublisherMsgs.Inc(1)
-	go func() {
-		err := globalProducer.Publish(topic, msg)
+	// typical metrics seem to be around 300B
+	// nsqd allows <= 10MiB messages.
+	// we ideally have 64kB ~ 1MiB messages (see benchmark https://gist.github.com/Dieterbe/604232d35494eae73f15)
+	// at 300B, about 3500 msg fit in 1MiB
+	// in worst case, this allows messages up to 2871B
+	// this could be made more robust of course
+
+	subslices := Reslice(metrics, 3500)
+	for _, subslice := range subslices {
+		msg, err := json.Marshal(subslice)
 		if err != nil {
-			log.Error(0, "can't publish to nsqd: %s", err)
+			return fmt.Errorf("Failed to marshal metrics payload: %s", err)
 		}
-	}()
+		metricPublisherMetrics.Inc(int64(len(subslice)))
+		metricPublisherMsgs.Inc(1)
+		err = globalProducer.Publish(topic, msg)
+		if err != nil {
+			panic(fmt.Errorf("can't publish to nsqd: %s", err))
+		}
+	}
+
 	//globalProducer.Stop()
 	return nil
 }
