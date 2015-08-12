@@ -6,11 +6,23 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+// Admin method to get quotas for any Org
 func GetOrgQuotas(c *middleware.Context) Response {
 	query := m.GetQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get org quotas", err)
+	}
+
+	return Json(200, query.Result)
+}
+
+// allow users to query the quotas of their own org.
+func GetQuotas(c *middleware.Context) Response {
+	query := m.GetQuotasQuery{OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to get quotas", err)
 	}
 
 	return Json(200, query.Result)
