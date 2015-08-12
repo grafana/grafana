@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -309,9 +308,19 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = fmt.Sprintf("DELETE FROM %s WHERE id=?", x.Dialect().Quote("user"))
-		_, err := sess.Exec(rawSql, cmd.UserId)
-		return err
+		deletes := []string{
+			"DELETE FROM star WHERE user_id = ?",
+			"DELETE FROM user WHERE id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.UserId)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 }
 
