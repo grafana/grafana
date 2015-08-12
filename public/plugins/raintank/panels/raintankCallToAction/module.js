@@ -77,6 +77,20 @@ function (angular, app, _, PanelMeta) {
       return;
     };
 
+    $scope.allDone = function() {
+      if ($scope.quotas.collector.used === 0) {
+        return false;
+      }
+      if ($scope.quotas.user.used <= 1) {
+        return false;
+      }
+      if ($scope.quotas.endpoint.used === 0) {
+        return false;
+      }
+      //default.
+      return true;
+    };
+
     $scope.refreshData = function() {
 
       backendSrv.get('/api/org/quotas').then(function(quotas) {

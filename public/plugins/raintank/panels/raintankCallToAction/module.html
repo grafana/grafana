@@ -3,7 +3,7 @@
     <p class="rt-dashboard-blurb">Litmus network monitoring continually tests, stores and alerts on the global performance and availability of your Internet applications.</p>
 
     <div class="rt-dash-flex-container">
-        <div class="rt-dash-flex-item">
+        <div class="rt-dash-flex-item" ng-if="!allDone()">
             <span class="rt-dashboard-blurb">To do:</span>
             <div ng-if="endpointStatus === 'noEndpoints'" class="rt-CTA-item">
                 <div class="rt-dashboard-icons-container">
