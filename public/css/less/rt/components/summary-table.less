@@ -2,6 +2,8 @@
 // SUMMARY TABLE
 // ==========================================================================
 
+
+
 .summary-table {
   overflow: auto;
 }
@@ -65,6 +67,52 @@
   }
 
   @media (min-width: 925px) {
+    width: 50%;
+  }
+}
+
+
+
+// Side menu open
+// ====================================
+
+.sidemenu-open .summary-table-status {
+  @media (min-width: 675px) {
+    float: none;
+  }
+
+  @media (min-width: 875px) {
+    width: 215px;
+    float: left;
+  }
+
+  @media (min-width: 1125px) {
+    width: 50%;
+  }
+}
+
+.sidemenu-open .summary-table-status > li {
+  @media (min-width: 925px) {
+    width: auto;
+    float: none;
+  }
+
+  @media (min-width: 1125px) {
+    width: 50%;
+    float: left;
+  }
+}
+
+.sidemenu-open .summary-table-info {
+  @media (min-width: 675px) {
+    float: none;
+  }
+
+  @media (min-width: 875px) {
+    float: left;
+  }
+
+  @media (min-width: 1125px) {
     width: 50%;
   }
 }
