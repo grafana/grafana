@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"time"
 
+<<<<<<< 0ed5b14584fdd088d8a6c299c9614a453cbc8e80
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/events"
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
@@ -10,6 +11,11 @@ import (
 	"github.com/Cepave/grafana/pkg/log"
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
 	m "github.com/Cepave/grafana/pkg/models"
+=======
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
+	m "github.com/grafana/grafana/pkg/models"
+>>>>>>> fix(db): remove stars and tags when removing user or dashboard, fixes #2016
 )
 
 func init() {
