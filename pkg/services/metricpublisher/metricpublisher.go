@@ -3,6 +3,7 @@ package metricpublisher
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/bitly/go-nsq"
 	"github.com/grafana/grafana/pkg/log"
@@ -38,6 +39,37 @@ func Init(metrics met.Backend) {
 	}
 	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
 	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
+	// go stresser() // enable this to send a "stress load" to test the metrics pipeline
+}
+
+func stresser() {
+	layout := "test-metric.Jan-02.03.04.05"
+	start := time.Now().Add(-time.Duration(10000) * time.Second)
+	tick := time.Tick(time.Duration(1) * time.Second)
+	for t := range tick {
+		pre := time.Now()
+		metrics := make([]*m.MetricDefinition, 0)
+		for val := start; !val.After(t); val = val.Add(time.Second) {
+			key := val.Format(layout)
+			metric := &m.MetricDefinition{
+				OrgId:      1,
+				Name:       "foo_15." + key,
+				Metric:     key,
+				Interval:   1,
+				Value:      float64(t.Unix()),
+				Unit:       "s",
+				Time:       t.Unix(),
+				TargetType: "gauge",
+				Extra: map[string]interface{}{
+					"foo_id": 15,
+				},
+			}
+			metrics = append(metrics, metric)
+		}
+		log.Info("stresser: publishing %d metrics", len(metrics))
+		Publish(metrics)
+		log.Info("stresser: loop duration %s", time.Now().Sub(pre))
+	}
 }
 
 func Reslice(in []*m.MetricDefinition, size int) [][]*m.MetricDefinition {
