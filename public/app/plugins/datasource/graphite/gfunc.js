@@ -604,6 +604,11 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'removeEmptySeries',
+    category: categories.Filter
+  });
+
+  addFuncDef({
     name: 'useSeriesAbove',
     category: categories.Filter,
     params: [

@@ -10,14 +10,26 @@ function (_) {
 
   function renderTagCondition (tag, index) {
     var str = "";
+    var operator = tag.operator;
+    var value = tag.value;
     if (index > 0) {
       str = (tag.condition || 'AND') + ' ';
     }
 
-    if (tag.value && tag.value[0] === '/' && tag.value[tag.value.length - 1] === '/') {
-      return str + '"' +tag.key + '"' + ' =~ ' + tag.value;
+    if (!operator) {
+      if (/^\/.*\/$/.test(tag.value)) {
+        operator = '=~';
+      } else {
+        operator = '=';
+      }
     }
-    return str + '"' + tag.key + '"' + " = '" + tag.value + "'";
+
+    // quote value unless regex
+    if (operator !== '=~' && operator !== '!~') {
+      value = "'" + value + "'";
+    }
+
+    return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
   var p = InfluxQueryBuilder.prototype;
@@ -44,7 +56,10 @@ function (_) {
     }
 
     if (measurement) {
-      query += ' FROM "' + measurement + '"';
+      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+        measurement = '"' + measurement+ '"';
+      }
+      query += ' FROM ' + measurement;
     }
 
     if (withKey) {

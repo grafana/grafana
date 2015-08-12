@@ -409,6 +409,7 @@ func (c *CollectorContext) Refresh() {
 			IsGrafanaAdmin: true,
 			Modulo:         int64(totalSessions),
 			ModuloOffset:   int64(pos),
+			Enabled:        "true",
 		}
 		if err := bus.Dispatch(&monQuery); err != nil {
 			log.Error(0, "failed to get list of monitors.", err)

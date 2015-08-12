@@ -146,7 +146,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	}
 
 	if len(query.Title) > 0 {
-		sql.WriteString(" AND dashboard.title LIKE ?")
+		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
 	}
 

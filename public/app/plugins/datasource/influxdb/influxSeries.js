@@ -35,7 +35,7 @@ function (_) {
         }
 
         if (self.alias) {
-          seriesName = self._getSeriesName(series);
+          seriesName = self._getSeriesName(series, j);
         } else if (series.tags) {
           seriesName = seriesName + ' {' + tags.join(', ') + '}';
         }
@@ -54,13 +54,14 @@ function (_) {
     return output;
   };
 
-  p._getSeriesName = function(series) {
+  p._getSeriesName = function(series, index) {
     var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
 
       if (group === 'm' || group === 'measurement') { return series.name; }
+      if (group === 'col') { return series.columns[index]; }
       if (group.indexOf('tag_') !== 0) { return match; }
 
       var tag = group.replace('tag_', '');
