@@ -113,6 +113,7 @@ func Register(r *macaron.Macaron) {
 		r.Group("/orgs/:orgId", func() {
 			r.Get("/", wrap(GetOrgById))
 			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
+			r.Delete("/", wrap(DeleteOrgById))
 			r.Get("/users", wrap(GetOrgUsers))
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
