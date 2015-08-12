@@ -325,12 +325,12 @@ When enabled is `true` (default) the http api will accept basic authentication.
 
 ## [auth.ldap]
 ### enabled
-Set to `true` to enable ldap integration (default: `false`)
+Set to `true` to enable LDAP integration (default: `false`)
 
 ### config_file
-Path to the ldap specific configuration file (default: `/etc/grafana/ldap.toml`)
+Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
-> For detail on LDAP Configuration, go to the [Ldap Integration](ldap.md) page.
+> For details on LDAP Configuration, go to the [LDAP Integration](ldap.md) page.
 
 <hr>
 
