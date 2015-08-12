@@ -1,6 +1,6 @@
 <grafana-panel>
-    <h4 style="font-weight: 400;">Hello, welcome to Litmus. </h4>
-    <p class="rt-dashboard-blurb">Litmus network performance monitoring continually tests, stores and alerts on the global performance and availability of your Internet applications.</p>
+    <h4 style="font-weight: 400;">Hello.</h4>
+    <p class="rt-dashboard-blurb">Litmus network monitoring continually tests, stores and alerts on the global performance and availability of your Internet applications.</p>
 
     <div class="rt-dash-flex-container">
         <div class="rt-dash-flex-item">
@@ -9,7 +9,7 @@
                 <div class="rt-dashboard-icons-container">
                     <i class="fa-fw icon-rt-endpoint rt-dashboard-icons" style="font-size: 20px;"></i>
                 </div>
-                <a href="endpoints/new" class="rt-dashboard-blurb">Add your first endpoint.</a>
+                <a href="endpoints/new" class="rt-dashboard-blurb">Add your first endpoint.</a> <i class="tooltip-subtle grafana-tip tag-tip fa fa-question-circle ng-scope" bs-tooltip="'An endpoint is any domain, IP address</br>or URL you would like to monitor.'"></i>
             </div>     
             <div ng-if="userStatus === 'noTeam'" class="rt-CTA-item">
                 <div class="rt-dashboard-icons-container">
@@ -21,7 +21,7 @@
                 <div class="rt-dashboard-icons-container">
                     <i class="fa-fw icon-rt-collector rt-dashboard-icons" style="font-size: 20px;"></i>
                 </div>
-                <a href="collectors/new" class="rt-dashboard-blurb">Deploy a private collector.</a>
+                <a href="collectors/new" class="rt-dashboard-blurb">Deploy a private collector.</a> <i class="tooltip-subtle grafana-tip tag-tip fa fa-question-circle ng-scope" bs-tooltip="'A private collector is an open-source probe deployed</br>on your network, reporting back to Litmus.'"></i>
             </div>   
         </div>
         <div class="rt-dash-flex-item">

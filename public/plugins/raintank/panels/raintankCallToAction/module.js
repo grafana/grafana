@@ -73,7 +73,7 @@ function (angular, app, _, PanelMeta) {
         return;
       }
       //default.
-      $scope.collectorStatus = "hasTeam";
+      $scope.collectorStatus = "hasCollectors";
       return;
     };
 
