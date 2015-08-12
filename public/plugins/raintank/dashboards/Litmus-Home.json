@@ -1,12 +1,12 @@
 {
   "id": 1,
-  "title": "New dashboard",
-  "originalTitle": "New dashboard",
+  "title": "Home",
+  "originalTitle": "Home",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
-  "editable": true,
-  "hideControls": false,
+  "editable": false,
+  "hideControls": true,
   "sharedCrosshair": false,
   "rows": [
     {
