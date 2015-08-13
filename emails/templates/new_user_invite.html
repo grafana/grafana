@@ -9,7 +9,7 @@
 			<table class="twelve columns">
 				<tr>
 					<td>
-						<h3>You're invited to sign up to Grafana and join organization [[.OrgName]]</h3>
+						<h3>You're invited to join [[.OrgName]]</h3>
 					</td>
 					<td class="expander"></td>
 				</tr>
@@ -25,18 +25,33 @@
 			<table class="twelve columns">
 				<tr>
 					<td class="center">
-						<table class="button radius">
+						<p>You've been invited to join the <span class="emphasis">[[.OrgName]]</span> organization by <span class="emphasis">[[.InvitedBy]]</span></p>
+						<p>To accept your invitation and join the team, please click the link below:</p>
+					</td>
+				</tr>
+				<tr>				
+					<td class="center">
+					<!-- <table class="small-button radius">
 							<tr>
 								<td>
 									<a href="[[.LinkUrl]]">Complete Sign Up</a>
 								</td>
 							</tr>
-						</table>
+						</table> -->
+	                    <table align="center" border="0" cellspacing="0" cellpadding="0">
+	                    	<tr>
+	                          <td align="center" class="better-button" style="padding-bottom: 0px; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px;" bgcolor="#ff8f2b"><a href="[[.LinkUrl]]" target="_blank">Complete Sign Up</a></td>
+	                        </tr>
+	                    </table>
 					</td>
+				</tr>
+				<tr>
+					<td class="center">
+						<p>You can also copy/paste this link into your browser directly: <a href="[[.LinkUrl]]">[[.LinkUrl]]</a></p>
+					</td>								
 					<td class="expander"></td>
 				</tr>
 			</table>
-
 		</td>
 	</tr>
 </table>

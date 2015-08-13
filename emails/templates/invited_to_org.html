@@ -1,6 +1,6 @@
 <!-- This email is sent when an existing user is added to an organization -->
 
-[[Subject .Subject "[[.InvitedBy]] has added you to the Grafana organization [[.OrgName]]"]]
+[[Subject .Subject "[[.InvitedBy]] has added you to the [[.OrgName]] organization"]]
 
 <table class="row">
 	<tr>
@@ -9,7 +9,7 @@
 			<table class="twelve columns">
 				<tr>
 					<td>
-						<h3>You have been added to the Grafana organization [[.OrgName]]</h3>
+						<h3>You have been added to [[.OrgName]]</h3>
 					</td>
 					<td class="expander"></td>
 				</tr>
@@ -25,10 +25,30 @@
 			<table class="twelve columns">
 				<tr>
 					<td class="center">
-						<p>You can switch organization in the left side menu, in the dropdown below your username.</p>
+						<p><span class="emphasis">[[.InvitedBy]]</span> has added you to the <span class="emphasis">[[.OrgName]]</span> organization in Grafana. 
+						<p>Once logged in, [[.OrgName]] will be available in the left side menu, in the dropdown below your username.</p>
 					</td>
 					<td class="expander"></td>
 				</tr>
+				<tr>				
+					<td class="center">
+<!-- 						<table class="button radius">
+							<tr>
+								<td>
+									<a href="[[.GrafanaUrl]]">Log in now</a>
+								</td>
+							</tr>
+						</table> -->
+
+	                    <table align="center" border="0" cellspacing="0" cellpadding="0">
+	                    	<tr>
+	                          <td align="center" class="better-button" style="padding-bottom: 0px; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px;" bgcolor="#ff8f2b"><a href="[[.GrafanaURL]]" target="_blank">Log in now</a></td>
+	                        </tr>
+	                    </table>
+
+
+					</td>
+				</tr>				
 			</table>
 
 		</td>
