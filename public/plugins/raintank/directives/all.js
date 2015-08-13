@@ -72,8 +72,8 @@ define([
         model: "=",
       },
       link: function(scope) {
-
         scope.$watch("model", function(monitor) {
+          scope.eventReady = false;
           if (typeof(monitor) === "object") {
             var metricsQuery = {
               range: {from: "now-"+ (monitor.frequency + 30) + 's', to: "now"},
@@ -156,6 +156,7 @@ define([
           scope.warnCount = warnCount;
           scope.errorCount = errorCount;
           scope.unknownCount = unknownCount;
+          scope.eventReady = true;
         }
       }
     };
