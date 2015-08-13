@@ -85,10 +85,14 @@
 								</div>
 							</li>
 							<li>
-								<div class="endpoint-alerting">
-									<!-- TO DO: WIRE UP ALERT STATUS -->
-									<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-									<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>2 recipients</span>
+								<div class="endpoint-alerting" ng-show="getMonitorByTypeName('Ping').enabled">
+									<div ng-if="!getMonitorByTypeName('Ping').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#ping" class="freqMsg disabled">configure now</a></span>
+									</div>
+									<div ng-if="getMonitorByTypeName('Ping').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
+										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('Ping').length}} recipients</span>
+									</div>
 								</div>								
 							</li>
 						</ul>
@@ -129,9 +133,14 @@
 								</div>
 							</li>
 							<li>
-								<div class="endpoint-alerting">
-									<!-- TO DO: WIRE UP ALERT STATUS -->
-									<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br>configure now</span>
+								<div class="endpoint-alerting" ng-show="getMonitorByTypeName('DNS').enabled">
+									<div ng-if="!getMonitorByTypeName('DNS').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#dns" class="freqMsg disabled">configure now</a></span>
+									</div>
+									<div ng-if="getMonitorByTypeName('DNS').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
+										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('DNS').length}} recipients</span>
+									</div>
 								</div>
 							</li>							
 						</ul>
@@ -174,10 +183,14 @@
         				</div>						
 							</li>
 							<li>
-								<div class="endpoint-alerting">
-									<!-- TO DO: WIRE UP ALERT STATUS -->
-									<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-									<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>2 recipients</span>
+								<div class="endpoint-alerting" ng-show="getMonitorByTypeName('HTTP').enabled">
+									<div ng-if="!getMonitorByTypeName('HTTP').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#http" class="freqMsg disabled">configure now</a></span>
+									</div>
+									<div ng-if="getMonitorByTypeName('HTTP').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
+										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTP').length}} recipients</span>
+									</div>
 								</div>
 							</li>
 						</ul>
@@ -218,10 +231,14 @@
 								</div>
 							</li>
 							<li>
-								<div class="endpoint-alerting">
-									<!-- TO DO: WIRE UP ALERT STATUS -->
-									<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-									<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>2 recipients</span>
+								<div class="endpoint-alerting" ng-show="getMonitorByTypeName('HTTPS').enabled">
+									<div ng-if="!getMonitorByTypeName('HTTPS').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#https" class="freqMsg disabled">configure now</a></span>
+									</div>
+									<div ng-if="getMonitorByTypeName('HTTPS').health_settings.notifications.enabled">
+										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
+										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTPS').length}} recipients</span>
+									</div>
 								</div>
 							</li>
 						</ul>

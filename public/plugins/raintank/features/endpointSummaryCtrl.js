@@ -150,6 +150,14 @@ function (angular, _) {
       });
     };
 
+    $scope.getNotificationEmails = function(checkType) {
+      var mon = $scope.getMonitorByTypeName(checkType);
+      if (!mon || mon.health_settings.notifications.addresses === "") {
+        return [];
+      }
+      return mon.health_settings.notifications.addresses.split(',');
+    };
+
     $scope.refresh = function() {
       $scope.pageReady = false;
       $scope.getEndpoint($scope.endpoint.id);
