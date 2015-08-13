@@ -55,6 +55,15 @@ func DeleteMonitor(c *middleware.Context) Response {
 
 func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) Response {
 	cmd.OrgId = c.OrgId
+	if cmd.EndpointId == 0 {
+		return ApiError(400, "EndpointId not set.", nil)
+	}
+	if cmd.MonitorTypeId == 0 {
+		return ApiError(400, "MonitorTypeId not set.", nil)
+	}
+	if cmd.Frequency == 0 {
+		return ApiError(400, "Frequency not set.", nil)
+	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to add monitor", err)
@@ -65,7 +74,15 @@ func AddMonitor(c *middleware.Context, cmd m.AddMonitorCommand) Response {
 
 func UpdateMonitor(c *middleware.Context, cmd m.UpdateMonitorCommand) Response {
 	cmd.OrgId = c.OrgId
-
+	if cmd.EndpointId == 0 {
+		return ApiError(400, "EndpointId not set.", nil)
+	}
+	if cmd.MonitorTypeId == 0 {
+		return ApiError(400, "MonitorTypeId not set.", nil)
+	}
+	if cmd.Frequency == 0 {
+		return ApiError(400, "Frequency not set.", nil)
+	}
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		return ApiError(500, "Failed to update monitor", err)

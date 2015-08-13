@@ -1,4 +1,4 @@
-// a metrics class that uses statsd on the backend
+// a metrics class that uses dogstatsd on the backend
 // at some point, we could/might try to unite this with the metrics package
 
 // note that on creation, we automatically send a default value so that:
@@ -13,6 +13,7 @@ package dogstatsd
 
 import (
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Backend struct {
@@ -23,7 +24,7 @@ func New(addr, prefix string) (Backend, error) {
 	client, err := statsd.New(addr)
 	if err == nil {
 		client.Namespace = prefix
-		client.Tags = append(client.Tags, "")
+		client.Tags = append(client.Tags, "instance:"+setting.InstanceId)
 	}
 	return Backend{client}, err
 }

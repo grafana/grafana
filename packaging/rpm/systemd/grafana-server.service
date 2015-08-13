@@ -12,6 +12,7 @@ Type=simple
 WorkingDirectory=/usr/share/grafana
 ExecStart=/usr/sbin/grafana-server                                \
                             --config=${CONF_FILE}                 \
+                            --pidfile=${PID_FILE}                 \
                             cfg:default.paths.logs=${LOG_DIR}     \
                             cfg:default.paths.data=${DATA_DIR}    \
 LimitNOFILE=10000

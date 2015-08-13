@@ -33,7 +33,17 @@
           "height": "",
           "id": 11,
           "interval": null,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-dns.json",
+              "dashboard": "Litmus Endpoint: |--- DNS",
+              "includeVars": true,
+              "keepTime": true,
+              "targetBlank": false,
+              "title": "Litmus Endpoint: |--- DNS",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
@@ -83,7 +93,16 @@
           "height": "",
           "id": 9,
           "interval": null,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-ping.json",
+              "dashboard": "Litmus Endpoint: |--- Ping",
+              "includeVars": true,
+              "keepTime": true,
+              "title": "Litmus Endpoint: |--- Ping",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
@@ -133,7 +152,17 @@
           "height": "",
           "id": 12,
           "interval": null,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-web.json",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "includeVars": true,
+              "keepTime": true,
+              "params": "var-protocol=http",
+              "title": "Litmus Endpoint: |--- Web",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
@@ -183,7 +212,17 @@
           "height": "",
           "id": 13,
           "interval": null,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "dashUri": "file/rt-endpoint-web.json",
+              "title": "Litmus Endpoint: |--- Web",
+              "params": "var-protocol=https",
+              "keepTime": true,
+              "includeVars": true
+            }
+          ],
           "maxDataPoints": 100,
           "nullPointMode": "connected",
           "nullText": null,
@@ -261,7 +300,16 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-dns.json",
+              "dashboard": "Litmus Endpoint: |--- DNS",
+              "includeVars": true,
+              "keepTime": true,
+              "title": "Litmus Endpoint: |--- DNS",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": "30",
           "nullPointMode": "connected",
           "percentage": true,
@@ -332,7 +380,16 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-ping.json",
+              "dashboard": "Litmus Endpoint: |--- Ping",
+              "includeVars": true,
+              "keepTime": true,
+              "title": "Litmus Endpoint: |--- Ping",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": "30",
           "nullPointMode": "connected",
           "percentage": true,
@@ -403,7 +460,17 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-endpoint-web.json",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "includeVars": true,
+              "keepTime": true,
+              "params": "var-protocol=http",
+              "title": "Litmus Endpoint: |--- Web",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": "40",
           "nullPointMode": "connected",
           "percentage": true,
@@ -473,7 +540,17 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "dashUri": "file/rt-endpoint-web.json",
+              "title": "Litmus Endpoint: |--- Web",
+              "params": "var-protocol=https",
+              "keepTime": true,
+              "includeVars": true
+            }
+          ],
           "maxDataPoints": "40",
           "nullPointMode": "connected",
           "percentage": true,
@@ -552,7 +629,16 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- DNS",
+              "dashUri": "file/rt-endpoint-dns.json",
+              "title": "Litmus Endpoint: |--- DNS",
+              "keepTime": true,
+              "includeVars": true
+            }
+          ],
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
@@ -565,7 +651,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.dns.time, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.dns.time), 2)"
             }
           ],
           "timeFrom": null,
@@ -617,7 +703,16 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- Ping",
+              "dashUri": "file/rt-endpoint-ping.json",
+              "title": "Litmus Endpoint: |--- Ping",
+              "includeVars": true,
+              "keepTime": true
+            }
+          ],
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
@@ -630,7 +725,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.ping.mean, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.ping.mean), 2)"
             }
           ],
           "timeFrom": null,
@@ -682,7 +777,17 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "dashUri": "file/rt-endpoint-web.json",
+              "title": "Litmus Endpoint: |--- Web",
+              "params": "var-protocol=http",
+              "includeVars": true,
+              "keepTime": true
+            }
+          ],
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
@@ -695,7 +800,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.http.total, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.http.total), 2)"
             }
           ],
           "timeFrom": null,
@@ -747,7 +852,17 @@
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "type": "dashboard",
+              "dashboard": "Litmus Endpoint: |--- Web",
+              "dashUri": "file/rt-endpoint-web.json",
+              "title": "Litmus Endpoint: |--- Web",
+              "params": "var-protocol=https",
+              "keepTime": true,
+              "includeVars": true
+            }
+          ],
           "maxDataPoints": "",
           "nullPointMode": "connected",
           "percentage": false,
@@ -760,7 +875,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.https.total, 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.https.total), 2)"
             }
           ],
           "timeFrom": null,
@@ -807,6 +922,7 @@
         "5m",
         "15m",
         "1h",
+        "3h",
         "6h",
         "12h",
         "24h",
@@ -818,7 +934,7 @@
     }
   ],
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "templating": {

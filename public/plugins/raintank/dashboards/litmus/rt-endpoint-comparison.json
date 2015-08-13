@@ -125,6 +125,7 @@
           "lines": false,
           "linewidth": 1,
           "links": [],
+          "minSpan": 3,          
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 1,
@@ -677,6 +678,7 @@
         "5m",
         "15m",
         "1h",
+        "3h",
         "6h",
         "12h",
         "24h",
@@ -688,43 +690,19 @@
     }
   ],
   "time": {
-    "from": "now-12h",
+    "from": "now-3h",
     "to": "now"
   },
   "templating": {
     "list": [
       {
         "allFormat": "glob",
-        "current": {
-          "tags": [],
-          "text": "google_com + monkey_id_au",
-          "value": [
-            "google_com",
-            "monkey_id_au"
-          ]
-        },
         "datasource": null,
         "includeAll": false,
         "label": "Endpoint",
         "multi": true,
         "multiFormat": "glob",
         "name": "endpoint",
-        "options": [
-          {
-            "selected": true,
-            "text": "google_com",
-            "value": "google_com"
-          },
-          {
-            "selected": true,
-            "text": "monkey_id_au",
-            "value": "monkey_id_au"
-          },
-          {
-            "text": "raintank_io",
-            "value": "raintank_io"
-          }
-        ],
         "query": "litmus.*",
         "refresh": true,
         "refresh_on_load": false,

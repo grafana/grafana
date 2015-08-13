@@ -1,6 +1,6 @@
 {
   "name": "angular-native-dragdrop",
-  "version": "1.0.8",
+  "version": "1.1.1",
   "description": "Angular HTML5 Drag and Drop directive written in pure with no dependency on JQuery.",
   "main": "draganddrop.js",
   "scripts": {

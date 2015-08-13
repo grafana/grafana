@@ -4,33 +4,32 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/googollee/go-socket.io"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
-	"github.com/grafana/grafana/pkg/services/metricpublisher"
-	"github.com/grafana/grafana/pkg/services/rabbitmq"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/satori/go.uuid"
-	"github.com/streadway/amqp"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/googollee/go-socket.io"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/log"
+	met "github.com/grafana/grafana/pkg/metric"
+	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/metricpublisher"
+	"github.com/grafana/grafana/pkg/services/rabbitmq"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/streadway/amqp"
 )
 
 var server *socketio.Server
 var bufCh chan m.MetricDefinition
 var contextCache *ContextCache
-var instanceId string
+var metricsRecvd met.Count
 
 func StoreMetric(m *m.MetricDefinition) {
 	bufCh <- *m
@@ -212,35 +211,10 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 	return nil, m.ErrInvalidApiKey
 }
 
-func InitCollectorController() {
+func InitCollectorController(metrics met.Backend) {
 	sec := setting.Cfg.Section("event_publisher")
-	// get our instance-id
-	dataPath := setting.DataPath + "/instance-id"
-	log.Info("instance-id path: " + dataPath)
-	fs, err := os.Open(dataPath)
-	if err != nil {
-		fs, err = os.Create(dataPath)
-		if err != nil {
-			log.Fatal(0, "failed to create instance-id file", err)
-		}
-		defer fs.Close()
-		instanceId = uuid.NewV4().String()
-		if _, err := fs.Write([]byte(instanceId)); err != nil {
-			log.Fatal(0, "failed to write instanceId to file", err)
-		}
-	} else {
-		defer fs.Close()
-		content, err := ioutil.ReadAll(fs)
-		if err != nil {
-			log.Fatal(0, "failed to read instanceId", err)
-		}
-		instanceId = strings.Split(string(content), "\n")[0]
-	}
-	if instanceId == "" {
-		log.Fatal(0, "invalid instanceId. check "+dataPath, nil)
-	}
 	cmd := &m.ClearCollectorSessionCommand{
-		InstanceId: instanceId,
+		InstanceId: setting.InstanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		log.Fatal(0, "failed to clear collectorSessions", err)
@@ -279,7 +253,8 @@ func InitCollectorController() {
 		bus.AddEventListener(HandleCollectorConnected)
 		bus.AddEventListener(HandleCollectorDisconnected)
 	}
-	bufCh = make(chan m.MetricDefinition, runtime.NumCPU())
+	metricsRecvd = metrics.NewCount("collector-ctrl.metrics-recv")
+	bufCh = make(chan m.MetricDefinition, runtime.NumCPU()*100)
 	go metricpublisher.ProcessBuffer(bufCh)
 }
 
@@ -344,7 +319,7 @@ func (c *CollectorContext) Save() error {
 		CollectorId: c.Collector.Id,
 		SocketId:    c.Socket.Id(),
 		OrgId:       c.OrgId,
-		InstanceId:  instanceId,
+		InstanceId:  setting.InstanceId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		log.Info("could not write collector_sesison to DB.", err)
@@ -400,6 +375,7 @@ func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
 }
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
+	metricsRecvd.Inc(int64(len(results)))
 	for _, r := range results {
 		if !c.Collector.Public {
 			r.OrgId = c.OrgId
@@ -433,6 +409,7 @@ func (c *CollectorContext) Refresh() {
 			IsGrafanaAdmin: true,
 			Modulo:         int64(totalSessions),
 			ModuloOffset:   int64(pos),
+			Enabled:        "true",
 		}
 		if err := bus.Dispatch(&monQuery); err != nil {
 			log.Error(0, "failed to get list of monitors.", err)
@@ -512,7 +489,7 @@ func EmitEvent(collectorId int64, eventName string, event interface{}) error {
 	eventId := reflect.ValueOf(event).Elem().FieldByName("Id").Int()
 	log.Info(fmt.Sprintf("emitting %s event for MonitorId %d totalSessions: %d", eventName, eventId, totalSessions))
 	pos := eventId % totalSessions
-	if q.Result[pos].InstanceId == instanceId {
+	if q.Result[pos].InstanceId == setting.InstanceId {
 		socketId := q.Result[pos].SocketId
 		contextCache.Emit(socketId, eventName, event)
 	}

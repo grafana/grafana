@@ -15,8 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metric/helper"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
@@ -71,20 +73,23 @@ func main() {
 	}
 
 	search.Init()
+	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-	metricpublisher.Init()
 	elasticstore.Init()
-	api.InitCollectorController()
+	models.InitQuotaDefaults()
 
 	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana.")
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}
-
-	alerting.Init(metricsBackend)
-	alerting.Construct()
+	metricpublisher.Init(metricsBackend)
+	api.InitCollectorController(metricsBackend)
+	if setting.AlertingEnabled {
+		alerting.Init(metricsBackend)
+		alerting.Construct()
+	}
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)

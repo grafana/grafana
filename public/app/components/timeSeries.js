@@ -13,6 +13,7 @@ function (_, kbn) {
     this.color = opts.color;
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
+    this.legend = true;
   }
 
   function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -55,6 +56,7 @@ function (_, kbn) {
       if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
       if (override.color !== void 0) { this.color = override.color; }
       if (override.transform !== void 0) { this.transform = override.transform; }
+      if (override.legend !== void 0) { this.legend = override.legend; }
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;

@@ -4,10 +4,10 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "repository": {
     "type": "git",
-    "url": "http://github.com/torkelo/grafana.git"
+    "url": "http://github.com/raintank/grafana.git"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",

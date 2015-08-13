@@ -270,7 +270,7 @@ function (angular, _, $, config, kbn, moment) {
 
       for (i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
-        if (!target.target || target.hide) {
+        if (!target.target) {
           continue;
         }
 
@@ -278,7 +278,9 @@ function (angular, _, $, config, kbn, moment) {
         targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
         targets[this._seriesRefLetters[i]] = targetValue;
 
-        clean_options.push("target=" + encodeURIComponent(targetValue));
+        if (!target.hide) {
+          clean_options.push("target=" + encodeURIComponent(targetValue));
+        }
       }
 
       _.each(options, function (value, key) {

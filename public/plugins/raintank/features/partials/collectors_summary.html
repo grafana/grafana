@@ -64,10 +64,11 @@
 					<div class="collectorCurrentStatus">
 						<div class="rt-summary-status">
 							<span class="{{collector.online?'online':'offline'}} jumbo"> {{collector.online?'online':'offline'}}</span>
-							<!--<span class="statusMsg">for 12 days</span>-->
+						  <span class="checkTime">&nbsp; {{collector.online_change | timeDuration}}</span>
 						</div>
 						<div class="collectorStatus">
 							<div class="pull-left msg">This collector is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
+						  <span class="checkTime">&nbsp; {{collector.enabled_change | timeDuration}}</span>
 							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</button>
 							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</button>
 						</div>
@@ -118,14 +119,14 @@
 				<div class="rt-box-header">Collector Events: Last 30 Days
 					<div style="float: right; display: inline;">
 						<div style="display: inline; margin-right: 15px;">
-							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Go to Litmus: Events dashboard</span></a>
+							<a ng-click="gotoEventDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Go to Litmus: Events dashboard</span></a>
 						</div>
 					</div>
 				</div>
-				<div class="rt-box-body no-padding">	
+				<div class="rt-box-body no-padding">
 					<div class="panel-iframe-container">
-						<div class="panel-iframe-container-bg">	
-						<iframe ng-src="{{getEventsDashboardLink()}}" width="100%" height="501" frameborder="0"></iframe>
+						<div class="panel-iframe-container-bg">
+							<iframe ng-src="{{getEventsDashboardLink(collector)}}" width="100%" height="501" frameborder="0"></iframe>
 					</div>
 					</div>
 				</div>

@@ -17,7 +17,8 @@ dev environment.
 ## Get Code
 
 ```
-mkdir $GOPATH/src/github.com/grafana
+export GOPATH=`pwd`
+mkdir -p $GOPATH/src/github.com/grafana
 ln -s $GOPATH/src/github.com/raintank/grafana $GOPATH/src/github.com/grafana/grafana
 go get github.com/raintank/grafana
 ```
@@ -26,11 +27,11 @@ go get github.com/raintank/grafana
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+$GOPATH/bin/godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
 go build .
 ```
 
-# Building on Windows
+## Building on Windows
 The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
 to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
@@ -76,4 +77,4 @@ You only need to add the options you want to override. Config files are applied 
 
 ## Create a pull requests
 
-Before or after your create a pull requests, sign the [contributor license agreement](/docs/contributing/cla.html).
+Before or after your create a pull requests, sign the [contributor license agreement](/project/cla.html).

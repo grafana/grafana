@@ -68,6 +68,11 @@
 			"Rev": "6f55e9b6e154104c5aefbdbb8ea37d82e1b31f4b"
 		},
 		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.1.0-21-g056c9bc",
+			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
+		{
 			"ImportPath": "github.com/Unknwon/com",
 			"Rev": "d9bcf409c8a368d06c9b347705c381e7c12d54df"
 		},
@@ -86,6 +91,15 @@
 		{
 			"ImportPath": "github.com/bitly/go-hostpool",
 			"Rev": "d0e59c22a56e8dadfed24f74f452cea5a52722d2"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "2df174808ee097f90d259e432cc04442cf60be21"
+		},
+		{
+			"ImportPath": "github.com/go-ldap/ldap",
+			"Comment": "v1-19-g83e6542",
+			"Rev": "83e65426fd1c06626e88aa8a085e5bfed0208e29"
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
@@ -181,6 +195,11 @@
 		{
 			"ImportPath": "golang.org/x/oauth2",
 			"Rev": "c58fcf0ffc1c772aa2e1ee4894bc19f2649263b2"
+		},
+		{
+			"ImportPath": "gopkg.in/asn1-ber.v1",
+			"Comment": "v1",
+			"Rev": "9eae18c3681ae3d3c677ac2b80a8fe57de45fc09"
 		},
 		{
 			"ImportPath": "gopkg.in/bufio.v1",

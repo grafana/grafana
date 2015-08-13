@@ -29,7 +29,7 @@ function (angular, _) {
       {text: 'Public on the web', value: 3},
     ];
 
-    $scope.externalUrl = 'http://snapshots-origin.raintank.io';
+    $scope.externalUrl = '//snapshots-origin.raintank.io';
     $scope.apiUrl = '/api/snapshots';
 
     $scope.createSnapshot = function(external) {

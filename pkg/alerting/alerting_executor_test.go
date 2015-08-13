@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"bosun.org/graphite"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/hashicorp/golang-lru"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -32,17 +31,16 @@ func TestExecutor(t *testing.T) {
 	listener := make(chan *graphite.Request, 100)
 	Convey("executor must do the right thing", t, func() {
 
-		fakeGraphiteReturner := func(org_id int64) graphite.Context {
+		fakeGraphiteReturner := func(org_id int64) (graphite.Context, error) {
 			return fakeGraphite{
 				resp: graphite.Response(
 					make([]graphite.Series, 0),
 				),
 				queries: listener,
-			}
+			}, nil
 		}
-		jobAt := func(ts int64) Job {
-			return Job{
-				State: m.EvalResultUnknown,
+		jobAt := func(ts int64) *Job {
+			return &Job{
 				Definition: CheckDef{
 					CritExpr: `graphite("foo", "2m", "", "")`,
 					WarnExpr: "0",
@@ -50,19 +48,19 @@ func TestExecutor(t *testing.T) {
 				LastPointTs: time.Unix(ts, 0),
 			}
 		}
-		jobQueue := make(chan Job, 10)
+		jobQueue := newInternalJobQueue(10)
 		cache, err := lru.New(1000)
 		if err != nil {
 			panic(fmt.Sprintf("Can't create LRU: %s", err.Error()))
 		}
-		go Executor(fakeGraphiteReturner, jobQueue, cache)
-		jobQueue <- jobAt(0)
-		jobQueue <- jobAt(1)
-		jobQueue <- jobAt(2)
-		jobQueue <- jobAt(2)
-		jobQueue <- jobAt(1)
-		jobQueue <- jobAt(0)
-		time.Sleep(1000 * time.Millisecond) // yes hacky, can be synchronized later
+		go ChanExecutor(fakeGraphiteReturner, jobQueue, cache)
+		jobQueue.Put(jobAt(0))
+		jobQueue.Put(jobAt(1))
+		jobQueue.Put(jobAt(2))
+		jobQueue.Put(jobAt(2))
+		jobQueue.Put(jobAt(1))
+		jobQueue.Put(jobAt(0))
+		time.Sleep(100 * time.Millisecond) // yes hacky, can be synchronized later
 		assertReq(t, listener, "expected the first job")
 		assertReq(t, listener, "expected the second job")
 		assertReq(t, listener, "expected the third job")

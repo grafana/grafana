@@ -52,7 +52,7 @@ func (t *Ticker) run() {
 		}
 		// tick is too young. try again when time is right or somebody updates offset
 		select {
-		case <-time.After(-diff):
+		case <-t.clock.After(-diff):
 		case offset := <-t.newOffset:
 			t.offset = offset
 		}

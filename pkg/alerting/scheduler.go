@@ -1,10 +1,10 @@
 package alerting
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,11 +15,21 @@ var tickQueue = make(chan time.Time, setting.TickQueueSize)
 // Dispatcher dispatches, every second, all jobs that should run for that second
 // every job has an id so that you can run multiple dispatchers (for HA) while still only processing each job once.
 // (provided jobs get consistently routed to executors)
-func Dispatcher(jobQueue chan<- Job) {
+func Dispatcher(jobQueue JobQueue) {
 	go dispatchJobs(jobQueue)
-	offset := time.Duration(30) * time.Second                      // for now, for simplicity, let's just wait 30seconds for the data to come in
-	lastProcessed := time.Now().Truncate(time.Second).Add(-offset) // TODO: track this in a database or something so we can resume properly
-	ticker := NewTicker(lastProcessed, offset, clock.New())
+	offset := time.Duration(LoadOrSetOffset()) * time.Second
+	// no need to try resuming where we left off in the past.
+	// see https://github.com/raintank/grafana/issues/266
+	lastProcessed := time.Now().Truncate(time.Second).Add(-offset)
+	cl := clock.New()
+	ticker := NewTicker(lastProcessed, offset, cl)
+	go func() {
+		offsetReadTicker := cl.Ticker(time.Duration(1) * time.Second)
+		for range offsetReadTicker.C {
+			offset := time.Duration(LoadOrSetOffset()) * time.Second
+			ticker.updateOffset(offset)
+		}
+	}()
 	for {
 		select {
 		case tick := <-ticker.C:
@@ -34,43 +44,37 @@ func Dispatcher(jobQueue chan<- Job) {
 			select {
 			case tickQueue <- tick:
 			default:
-				// TODO: alert when this happens
 				dispatcherTicksSkippedDueToSlowTickQueue.Inc(1)
 			}
+			tickQueueItems.Value(int64(len(tickQueue)))
+			tickQueueSize.Value(int64(setting.TickQueueSize))
 		}
 	}
 }
 
-func dispatchJobs(jobQueue chan<- Job) {
-	for t := range tickQueue {
+func dispatchJobs(jobQueue JobQueue) {
+	for lastPointAt := range tickQueue {
 		tickQueueItems.Value(int64(len(tickQueue)))
 		tickQueueSize.Value(int64(setting.TickQueueSize))
-		lastPointAt := t.Unix()
 
 		pre := time.Now()
-		jobs, err := getJobs(lastPointAt)
+		jobs, err := getJobs(lastPointAt.Unix())
 		dispatcherNumGetSchedules.Inc(1)
 		dispatcherGetSchedules.Value(time.Since(pre))
 
 		if err != nil {
-			fmt.Println("CRITICAL", err) // TODO better way to log errors
+			log.Error(0, "getJobs() failed: %q", err)
 			continue
 		}
 
 		dispatcherJobSchedulesSeen.Inc(int64(len(jobs)))
 		for _, job := range jobs {
-			job.GeneratedAt = t
-			job.LastPointTs = time.Unix(lastPointAt, 0)
+			job.GeneratedAt = time.Now()
+			job.LastPointTs = lastPointAt
+			job.AssertStart = lastPointAt.Add(-time.Duration(job.Freq) * time.Second)
 
-			jobQueueInternalItems.Value(int64(len(jobQueue)))
-			jobQueueInternalSize.Value(int64(setting.JobQueueSize))
+			jobQueue.Put(job)
 
-			select {
-			case jobQueue <- *job:
-			default:
-				// TODO: alert when this happens
-				dispatcherJobsSkippedDueToSlowJobQueue.Inc(1)
-			}
 			dispatcherJobsScheduled.Inc(1)
 		}
 	}

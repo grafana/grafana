@@ -50,6 +50,9 @@ function (angular, _, kbn) {
         var metricToTargetMapping = mapMetricsToTargets(response.data, options);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];
+          if (index === -1) {
+            index = 0;
+          }
           return transformMetricData(metricData, groupByTags, options.targets[index], options);
         });
         return { data: result };

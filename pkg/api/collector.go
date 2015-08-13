@@ -43,6 +43,9 @@ func DeleteCollector(c *middleware.Context) Response {
 
 func AddCollector(c *middleware.Context, cmd m.AddCollectorCommand) Response {
 	cmd.OrgId = c.OrgId
+	if cmd.Name == "" {
+		return ApiError(400, "Collector Name not set.", nil)
+	}
 
 	if cmd.Public {
 		if !c.IsGrafanaAdmin {
@@ -58,6 +61,9 @@ func AddCollector(c *middleware.Context, cmd m.AddCollectorCommand) Response {
 
 func UpdateCollector(c *middleware.Context, cmd m.UpdateCollectorCommand) Response {
 	cmd.OrgId = c.OrgId
+	if cmd.Name == "" {
+		return ApiError(400, "Collector Name not set.", nil)
+	}
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {

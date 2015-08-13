@@ -13,10 +13,9 @@ package statsd
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/Dieterbe/statsd-go"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Backend struct {
@@ -25,13 +24,7 @@ type Backend struct {
 
 // note: prefix must end on a dot
 func New(enabled bool, addr, prefix string) (Backend, error) {
-	host, err := os.Hostname()
-	if err != nil {
-		panic("Can't get hostname:" + err.Error())
-	}
-	hostClean := strings.Replace(host, ".", "_", -1)
-
-	prefix = fmt.Sprintf("%s%s.%d.", prefix, hostClean, os.Getpid())
+	prefix = fmt.Sprintf("%s%s.", prefix, setting.InstanceId)
 
 	client, err := statsd.NewClient(enabled, addr, prefix)
 	b := Backend{client}

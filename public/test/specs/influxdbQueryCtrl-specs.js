@@ -60,6 +60,10 @@ define([
         expect(ctx.scope.target.tags[0].value).to.be('server1');
       });
 
+      it('should set tag operator', function() {
+        expect(ctx.scope.target.tags[0].operator).to.be('=');
+      });
+
       it('should add plus button for another filter', function() {
         expect(ctx.scope.tagSegments[3].fake).to.be(true);
       });
@@ -74,6 +78,7 @@ define([
 
       it('should update operator', function() {
         expect(ctx.scope.tagSegments[1].value).to.be('=~');
+        expect(ctx.scope.target.tags[0].operator).to.be('=~');
       });
     });
 

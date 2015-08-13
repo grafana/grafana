@@ -1,13 +1,13 @@
         <!-- DNS Tab  -->
-        <div class="rt-box rt-page-box" id="dns">
-          <div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" ng-class="{ active: showdns }">
+        <div class="rt-config-box rt-page-box" id="dns" ng-class="{ 'dns-open': showDNS }">
+          <div class="rt-box-header rt-page-box-header" ng-click="showDNS = !showDNS" >
             <div class="rt-page-box-header-checkbox checkbox-check-enabled">
               <span class="rt-h2 rt-modal">DNS</span>
             </div>
             <div class="rt-box-row-info">
               <a href="#">
                 <!-- Monitoring -->
-                <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['dns'].enabled"></i>
+                <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;" ng-show="monitors['dns'].enabled"></i>
                 <span class="freqMsg" ng-show="monitors['dns'].enabled" > Every {{monitors['dns'].frequency}}s from {{collectorCount(monitors['dns'])}} Collectors |</span>
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="!monitors['dns'].enabled"></i>
                 <span class="freqMsg disabled" ng-show="!monitors['dns'].enabled" > Not enabled |</span>
@@ -23,7 +23,7 @@
               </a>
             </div>
           </div>
-          <div class="rt-box-body rt-page-box-body" ng-show="showDNS">
+          <div class="rt-box-body rt-page-box-body">
             <div class="rt-box-interior-section">
               <div class="rt-box-interior-header-icon">
                 <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
@@ -126,7 +126,7 @@
           </div>
 
           <div ng-show="endpoint.id">
-            <div class="rt-box-footer-config" ng-show="showDNS">
+            <div class="rt-box-footer-config">
                 <div class="rt-box-interior-content rt-interior-update">
                   <div class="editor-row">
                   <button type="submit" ng-show="endpoint.id" class="secondaryCTA ButtonTall" ng-click="updateMonitor(monitors['dns'])">Update DNS Settings</button>

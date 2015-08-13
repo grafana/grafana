@@ -37,9 +37,10 @@ const (
 
 var (
 	// App settings.
-	Env       string = DEV
-	AppUrl    string
-	AppSubUrl string
+	Env        string = DEV
+	InstanceId string
+	AppUrl     string
+	AppSubUrl  string
 
 	// build
 	BuildVersion string
@@ -117,11 +118,16 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	TickQueueSize   int
-	JobQueueSize    int
-	ExecutorLRUSize int
-	EnableScheduler bool
-	Executors       int
+	AlertingEnabled             bool
+	AlertingHandler             string
+	TickQueueSize               int
+	InternalJobQueueSize        int
+	PreAMQPJobQueueSize         int
+	ExecutorLRUSize             int
+	EnableScheduler             bool
+	Executors                   int
+	WriteIndividualAlertResults bool
+	AlertingInspect             bool
 
 	ReportingEnabled  bool
 	GoogleAnalyticsId string
@@ -132,6 +138,10 @@ var (
 	ProfileHeapMB   int
 	ProfileHeapWait int
 	ProfileHeapDir  string
+
+	// LDAP
+	LdapEnabled    bool
+	LdapConfigFile string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -285,7 +295,7 @@ func loadSpecifedConfigFile(configFile string) {
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Error(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				log.Error(3, "Unknown config key %s defined in section %s, in file %s", key.Name(), section.Name(), configFile)
 				continue
 			}
 			defaultKey.SetValue(key.Value())
@@ -369,6 +379,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
+	InstanceId = Cfg.Section("").Key("instance_id").MustString("default")
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -403,7 +414,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -435,11 +446,16 @@ func NewConfigContext(args *CommandLineArgs) {
 	}
 
 	alerting := Cfg.Section("alerting")
-	TickQueueSize = alerting.Key("queue_ticks_size").MustInt(0)
-	JobQueueSize = alerting.Key("queue_jobs_size").MustInt(0)
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	AlertingHandler = alerting.Key("handler").MustString("builtin")
+	TickQueueSize = alerting.Key("tickqueue_size").MustInt(0)
+	InternalJobQueueSize = alerting.Key("internal_jobqueue_size").MustInt(0)
+	PreAMQPJobQueueSize = alerting.Key("pre_amqp_jobqueue_size").MustInt(0)
 	ExecutorLRUSize = alerting.Key("executor_lru_size").MustInt(0)
 	EnableScheduler = alerting.Key("enable_scheduler").MustBool(true)
 	Executors = alerting.Key("executors").MustInt(100)
+	WriteIndividualAlertResults = alerting.Key("write_individual_alert_results").MustBool(false)
+	AlertingInspect = alerting.Key("inspect").MustBool(false)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -452,6 +468,10 @@ func NewConfigContext(args *CommandLineArgs) {
 	ProfileHeapMB = telemetry.Key("profile_heap_MB").MustInt(0)
 	ProfileHeapWait = telemetry.Key("profile_heap_wait").MustInt(3600)
 	ProfileHeapDir = telemetry.Key("profile_heap_dir").MustString("/tmp")
+
+	ldapSec := Cfg.Section("auth.ldap")
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapConfigFile = ldapSec.Key("config_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()

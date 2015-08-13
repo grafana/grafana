@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Job is a job for an alert execution
@@ -20,16 +21,21 @@ type Job struct {
 	OrgId           int64
 	MonitorId       int64
 	EndpointId      int64
+	EndpointName    string
 	EndpointSlug    string
+	Settings        map[string]string
 	MonitorTypeName string
 	Notifications   m.MonitorNotificationSetting
 	Freq            int64
 	Offset          int64 // offset on top of "even" minute/10s/.. intervals
-	State           m.CheckEvalResult
 	Definition      CheckDef
 	GeneratedAt     time.Time
 	LastPointTs     time.Time
 	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
+	AssertMinSeries int                         // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
+	AssertStart     time.Time                   // to verify timestamps in response
+	AssertStep      int                         // to verify step duration
+	AssertSteps     int                         // to verify during execution this many points are included
 }
 
 func (job Job) String() string {
@@ -38,6 +44,9 @@ func (job Job) String() string {
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
 	if job.StoreMetricFunc == nil {
+		return
+	}
+	if !setting.WriteIndividualAlertResults {
 		return
 	}
 	metrics := make([]*m.MetricDefinition, 3)
@@ -78,7 +87,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 
 	jobs := make([]*Job, 0)
 	for _, monitor := range query.Result {
-		job := buildJobForMonitor(monitor)
+		job := buildJobForMonitor(monitor, lastPointAt)
 		if job != nil {
 			jobs = append(jobs, job)
 		}
@@ -87,7 +96,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 	return jobs, nil
 }
 
-func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
+func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.HealthSettings == nil {
@@ -96,6 +105,13 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
 		//fmt.Printf("bad monitor definition given: %#v", monitor)
+		return nil
+	}
+
+	// let's say it takes at least warmupPeriod, after job creation, to start getting data.
+	period := int(monitor.Frequency) // what we call frequency is actually the period, like 60s
+	warmupPeriod := time.Duration((monitor.HealthSettings.Steps+1)*period) * time.Second
+	if monitor.Created.After(time.Unix(lastPointAt, 0).Add(-warmupPeriod)) {
 		return nil
 	}
 
@@ -126,34 +142,44 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 		"ToLower": strings.ToLower,
 	}
 
-	// graphite returns 1 series of <steps> points, each the sum of the errors of all enabled collectors
-	// bosun transforms each point into 1 if the sum >= numcollectors, or 0 if not
-	// we then ask bosun to sum up these points into a single number. if this value equals the number of points, it means for each point the above step was true (1).
+	// note: in graphite, using the series-wise sum(), sum(1+null) = 1, and sum(null+null) gets dropped from the result!
+	// in bosun, series-wise sum() doesn't exist, you can only sum over time. (though functions like t() help)
+	// when bosun pulls in graphite results, null values are removed from the series.
+	// we get from graphite the raw (incl nulls) series, so that we can inspect and log/instrument nulls
+	// bosun does all the logic as follows: see how many collectors are errorring .Steps in a row, using streak
+	// transpose that, to get a 1/0 for each sufficiently-erroring collector, sum them together and compare to the threshold.
 
-	target := `sum(litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state)`
-	tpl := `sum(graphite("` + target + `", "{{.Duration}}s", "", "") >= {{.NumCollectors}}) == {{.Steps}}`
+	// note: it may look like the end of the queried interval is ambiguous here, and if offset > frequency, may include "too recent" values by accident.
+	// fear not, as when we execute the alert in the executor, we set the lastPointTs as end time
+
+	target := `litmus.{{.EndpointSlug}}.*.{{.MonitorTypeName | ToLower }}.error_state`
+	tpl := `sum(t(streak(graphite("` + target + `", "{{.Duration}}s", "", "")) == {{.Steps}} , "")) >= {{.NumCollectors}}`
 
 	var t = template.Must(template.New("query").Funcs(funcMap).Parse(tpl))
 	var b bytes.Buffer
 	err := t.Execute(&b, settings)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Could not execute alert query template: %q", err))
 	}
 	j := &Job{
 		MonitorId:       monitor.Id,
 		EndpointId:      monitor.EndpointId,
+		EndpointName:    monitor.EndpointName,
 		EndpointSlug:    monitor.EndpointSlug,
+		Settings:        monitor.SettingsMap(),
 		MonitorTypeName: monitor.MonitorTypeName,
 		Notifications:   monitor.HealthSettings.Notifications,
 		OrgId:           monitor.OrgId,
 		Freq:            monitor.Frequency,
 		Offset:          monitor.Offset,
-		State:           monitor.State,
 		Definition: CheckDef{
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
 		StoreMetricFunc: api.StoreMetric,
+		AssertMinSeries: monitor.HealthSettings.NumCollectors,
+		AssertStep:      int(monitor.Frequency),
+		AssertSteps:     monitor.HealthSettings.Steps,
 	}
 	return j
 }

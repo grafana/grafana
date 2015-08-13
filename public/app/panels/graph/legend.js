@@ -130,6 +130,10 @@ function (angular, app, _, kbn, $) {
             if (panel.legend.hideEmpty && series.allIsNull) {
               continue;
             }
+            // ignore series excluded via override
+            if (!series.legend) {
+              continue;
+            }
 
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }

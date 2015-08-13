@@ -229,8 +229,14 @@ func addMonitorMigration(mg *Migrator) {
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", monitorCollectorTagV1)
 
+	// add state_check field
+	migration := NewAddColumnMigration(monitorV4, &Column{
+		Name: "state_check", Type: DB_DateTime, Nullable: true,
+	})
+	mg.AddMigration("monitor add state_check v1", migration)
+
 	// add health settings
-	migration := NewAddColumnMigration(monitorV3, &Column{
+	migration = NewAddColumnMigration(monitorV4, &Column{
 		Name: "health_settings", Type: DB_NVarchar, Length: 2048, Nullable: true, Default: "",
 	})
 	migration.OnSuccess = func(sess *xorm.Session) error {
@@ -257,4 +263,5 @@ func addMonitorMigration(mg *Migrator) {
 		return nil
 	}
 	mg.AddMigration("monitor add alerts v1", migration)
+
 }
