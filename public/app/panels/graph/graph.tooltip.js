@@ -58,6 +58,8 @@ function ($) {
         if (scope.panel.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
+          } else if (!series.stack) {
+            value = series.data[hoverIndex][1];
           } else {
             last_value += series.data[hoverIndex][1];
             value = last_value;
