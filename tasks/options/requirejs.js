@@ -64,6 +64,7 @@ module.exports = function(config,grunt) {
           'plugins/datasource/grafana/datasource',
           'plugins/datasource/graphite/datasource',
           'plugins/datasource/influxdb_08/datasource',
+          'plugins/datasource/netcrunch/datasource'
         ]
       }
     ];

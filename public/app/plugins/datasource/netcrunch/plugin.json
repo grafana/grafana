@@ -1,0 +1,18 @@
+{
+  "pluginType": "datasource",
+  "name": "NetCrunch 9 (for testing)",
+
+  "type": "netcrunch",
+  "serviceName": "NetCrunchDatasource",
+
+  "module": "plugins/datasource/netcrunch/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/netcrunch/partials/config.html",
+    "query": "app/plugins/datasource/netcrunch/partials/query.editor.html",
+    "annotations": "app/plugins/datasource/netcrunch/partials/annotations.editor.html"
+  },
+
+  "metrics": true,
+  "annotations": true
+}
