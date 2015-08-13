@@ -176,9 +176,6 @@ func (gc *GraphiteContext) Query(r *bgraphite.Request) (bgraphite.Response, erro
 	// one Context might run multiple queries, we want to add all times
 	gc.Dur += time.Since(pre)
 
-	if gc.MissingVals > 0 {
-		errors = append(errors, fmt.Sprintf("%d unknown values", gc.MissingVals))
-	}
 	if gc.BadStart > 0 {
 		errors = append(errors, fmt.Sprintf("%d bad start ts", gc.BadStart))
 	}
