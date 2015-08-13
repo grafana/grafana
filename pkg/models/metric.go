@@ -1,12 +1,5 @@
 package models
 
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/grafana/grafana/pkg/log"
-	"reflect"
-)
-
 // IndvMetric holds the information from an individual metric item coming in
 // from rabbitmq.
 type MetricDefinition struct {

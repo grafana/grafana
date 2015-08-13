@@ -57,7 +57,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 			Unit:       "state",
 			Time:       job.LastPointTs.Unix(),
 			TargetType: "gauge",
-			Extra: map[string]interface{}{
+			Tags: map[string]interface{}{
 				"endpoint_id": job.EndpointId,
 				"monitor_id":  job.MonitorId,
 			},
