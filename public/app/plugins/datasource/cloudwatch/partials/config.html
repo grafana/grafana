@@ -9,6 +9,14 @@
       <input type="text" class="tight-form-input input-large" ng-model='current.jsonData.defaultRegion' placeholder="" required></input>
     </li>
   </ul>
+  <ul class="tight-form-list">
+    <li class="tight-form-item">
+      Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
+    </li>
+    <li>
+      <select class="input-medium tight-form-input" ng-model="current.jsonData.access" ng-options="f for f in ['direct', 'proxy']" ng-init="current.jsonData.access = current.jsonData.access || 'direct'"></select>
+    </li>
+  </ul>
   <div class="clearfix"></div>
 </div>
 <div class="tight-form last">

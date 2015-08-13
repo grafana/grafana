@@ -18,6 +18,8 @@ function (angular, _, kbn) {
       this.type = 'cloudwatch';
       this.name = datasource.name;
       this.supportMetrics = true;
+      this.proxyMode = (datasource.jsonData.access === 'proxy');
+      this.proxyUrl = datasource.url;
 
       this.defaultRegion = datasource.jsonData.defaultRegion;
       this.credentials = {
@@ -194,9 +196,9 @@ function (angular, _, kbn) {
           };
         });
         query.statistics = getActivatedStatistics(target.statistics);
-        query.period = target.period;
+        query.period = parseInt(target.period, 10);
 
-        var range = (end.getTime() - start.getTime()) / 1000;
+        var range = end - start;
         // CloudWatch limit datapoints up to 1440
         if (range / query.period >= 1440) {
           query.period = Math.floor(range / 1440 / 60) * 60;
@@ -400,11 +402,42 @@ function (angular, _, kbn) {
     };
 
     CloudWatchDatasource.prototype.getCloudWatchClient = function(region) {
-      return new AWS.CloudWatch({
-        region: region,
-        accessKeyId: this.credentials.accessKeyId,
-        secretAccessKey: this.credentials.secretAccessKey
-      });
+      if (!this.proxyMode) {
+        return new AWS.CloudWatch({
+          region: region,
+          accessKeyId: this.credentials.accessKeyId,
+          secretAccessKey: this.credentials.secretAccessKey
+        });
+      } else {
+        var self = this;
+        var generateRequestProxy = function(service, action) {
+          return function(params, callback) {
+            var data = {
+              region: region,
+              service: service,
+              action: action,
+              parameters: params
+            };
+
+            var options = {
+              method: 'POST',
+              url: self.proxyUrl,
+              data: data
+            };
+
+            $http(options).then(function(response) {
+              callback(null, response.data);
+            }, function(err) {
+              callback(err, []);
+            });
+          };
+        };
+
+        return {
+          getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
+          listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
+        };
+      }
     };
 
     CloudWatchDatasource.prototype.getDefaultRegion = function() {
@@ -440,7 +473,7 @@ function (angular, _, kbn) {
     }
 
     function convertToCloudWatchTime(date) {
-      return kbn.parseDate(date);
+      return Math.round(kbn.parseDate(date).getTime() / 1000);
     }
 
     return CloudWatchDatasource;
