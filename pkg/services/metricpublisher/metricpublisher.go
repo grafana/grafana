@@ -1,6 +1,8 @@
 package metricpublisher
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,6 +12,11 @@ import (
 	met "github.com/grafana/grafana/pkg/metric"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+// identifier of message format
+const (
+	msgFormatMetricDefinitionArrayJson = iota
 )
 
 const maxMpubSize = 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
@@ -105,14 +112,26 @@ func Publish(metrics []*m.MetricDefinition) error {
 	// this could be made more robust of course
 
 	subslices := Reslice(metrics, 3500)
+
+	version := uint8(msgFormatMetricDefinitionArrayJson)
+
 	for _, subslice := range subslices {
+		buf := new(bytes.Buffer)
+		err := binary.Write(buf, binary.LittleEndian, version)
+		if err != nil {
+			log.Fatal(0, "binary.Write failed: %s", err.Error())
+		}
 		msg, err := json.Marshal(subslice)
 		if err != nil {
 			return fmt.Errorf("Failed to marshal metrics payload: %s", err)
 		}
+		_, err = buf.Write(msg)
+		if err != nil {
+			log.Fatal(0, "buf.Write failed: %s", err.Error())
+		}
 		metricPublisherMetrics.Inc(int64(len(subslice)))
 		metricPublisherMsgs.Inc(1)
-		err = globalProducer.Publish(topic, msg)
+		err = globalProducer.Publish(topic, buf.Bytes())
 		if err != nil {
 			panic(fmt.Errorf("can't publish to nsqd: %s", err))
 		}
