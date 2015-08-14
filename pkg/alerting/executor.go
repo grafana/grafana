@@ -180,6 +180,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 
 	if err != nil {
+		executorAlertOutcomesErr.Inc(1)
 		return fmt.Errorf("Eval failed for job %q : %s", job, err.Error())
 	}
 
