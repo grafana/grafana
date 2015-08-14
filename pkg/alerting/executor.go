@@ -151,12 +151,37 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 
 	res, err := evaluator.Eval(job.LastPointTs)
+	durationExec := time.Since(preExec)
 	log.Debug("job results - job:%v err:%v res:%v", job, err, res)
+
+	// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
+	// we want to have some individual times
+	if gr, ok := gr.(*graphite.GraphiteContext); ok {
+		executorJobQueryGraphite.Value(gr.Dur)
+		executorJobParseAndEval.Value(durationExec - gr.Dur)
+		if gr.MissingVals > 0 {
+			executorGraphiteMissingVals.Value(int64(gr.MissingVals))
+		}
+		if gr.EmptyResp != 0 {
+			executorGraphiteEmptyResponse.Inc(int64(gr.EmptyResp))
+		}
+		if gr.IncompleteResp != 0 {
+			executorGraphiteIncompleteResponse.Inc(int64(gr.IncompleteResp))
+		}
+		if gr.BadStart != 0 {
+			executorGraphiteBadStart.Inc(int64(gr.BadStart))
+		}
+		if gr.BadStep != 0 {
+			executorGraphiteBadStep.Inc(int64(gr.BadStep))
+		}
+		if gr.BadSteps != 0 {
+			executorGraphiteBadSteps.Inc(int64(gr.BadSteps))
+		}
+	}
+
 	if err != nil {
 		return fmt.Errorf("Eval failed for job %q : %s", job, err.Error())
 	}
-
-	durationExec := time.Since(preExec)
 
 	updateMonitorStateCmd := m.UpdateMonitorStateCommand{
 		Id:      job.MonitorId,
@@ -217,31 +242,6 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	}
 	//store the result in graphite.
 	job.StoreResult(res)
-
-	// the bosun api abstracts parsing, execution and graphite querying for us via 1 call.
-	// we want to have some individual times
-	if gr, ok := gr.(*graphite.GraphiteContext); ok {
-		executorJobQueryGraphite.Value(gr.Dur)
-		executorJobParseAndEval.Value(durationExec - gr.Dur)
-		if gr.MissingVals > 0 {
-			executorGraphiteMissingVals.Value(int64(gr.MissingVals))
-		}
-		if gr.EmptyResp != 0 {
-			executorGraphiteEmptyResponse.Inc(int64(gr.EmptyResp))
-		}
-		if gr.IncompleteResp != 0 {
-			executorGraphiteIncompleteResponse.Inc(int64(gr.IncompleteResp))
-		}
-		if gr.BadStart != 0 {
-			executorGraphiteBadStart.Inc(int64(gr.BadStart))
-		}
-		if gr.BadStep != 0 {
-			executorGraphiteBadStep.Inc(int64(gr.BadStep))
-		}
-		if gr.BadSteps != 0 {
-			executorGraphiteBadSteps.Inc(int64(gr.BadSteps))
-		}
-	}
 
 	switch res {
 	case m.EvalResultOK:
