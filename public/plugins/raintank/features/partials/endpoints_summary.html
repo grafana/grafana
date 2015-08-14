@@ -91,7 +91,7 @@
 									</div>
 									<div ng-if="getMonitorByTypeName('Ping').health_settings.notifications.enabled">
 										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('Ping').length}} recipients</span>
+										<span class="endpoint-alerting-recipients" bs-tooltip="'RECIPIENTS LIST'"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('Ping').length}} recipients</span>
 									</div>
 								</div>								
 							</li>
@@ -139,7 +139,7 @@
 									</div>
 									<div ng-if="getMonitorByTypeName('DNS').health_settings.notifications.enabled">
 										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('DNS').length}} recipients</span>
+										<span class="endpoint-alerting-recipients" bs-tooltip="'RECIPIENTS LIST'"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('DNS').length}} recipients</span>
 									</div>
 								</div>
 							</li>							
@@ -156,13 +156,13 @@
 					<div class="currentStatus summary-table">
 						<ul class="summary-table-actions">
 							<li>
-								<a href="endpoints/edit/{{endpoint.id}}#http">
-									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
+								<a ng-click="gotoDashboard(endpoint, 'http')">
+									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i>
 								</a>
 							</li>
 							<li>
-								<a ng-click="gotoDashboard(endpoint, 'http')">
-									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i>
+								<a href="endpoints/edit/{{endpoint.id}}#http">
+									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
 								</a>
 							</li>
 						</ul>
@@ -185,11 +185,13 @@
 							<li>
 								<div class="endpoint-alerting" ng-show="getMonitorByTypeName('HTTP').enabled">
 									<div ng-if="!getMonitorByTypeName('HTTP').health_settings.notifications.enabled">
-										<span class="endpoint-alerting-status not-enabled"><i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#http" class="freqMsg disabled">configure now</a></span>
+										<span class="endpoint-alerting-status not-enabled">
+											<i ng-class="icon" class="icon icon-rt-alert-disabled"></i>Not enabled,<br><a href="endpoints/edit/{{endpoint.id}}#http" class="freqMsg disabled">configure now</a>
+										</span>
 									</div>
 									<div ng-if="getMonitorByTypeName('HTTP').health_settings.notifications.enabled">
 										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTP').length}} recipients</span>
+										<span class="endpoint-alerting-recipients" bs-tooltip="'RECIPIENTS LIST'"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTP').length}} recipients</span>
 									</div>
 								</div>
 							</li>
@@ -237,7 +239,7 @@
 									</div>
 									<div ng-if="getMonitorByTypeName('HTTPS').health_settings.notifications.enabled">
 										<span class="endpoint-alerting-status"><i ng-class="icon" class="icon icon-rt-alert"></i>Enabled</span>
-										<span class="endpoint-alerting-recipients"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTPS').length}} recipients</span>
+										<span class="endpoint-alerting-recipients" bs-tooltip="'RECIPIENTS LIST'"><i ng-class="icon" class="icon icon-rt-users"></i>{{getNotificationEmails('HTTPS').length}} recipients</span>
 									</div>
 								</div>
 							</li>
