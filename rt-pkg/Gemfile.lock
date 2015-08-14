@@ -1,0 +1,53 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    arr-pm (0.0.10)
+      cabin (> 0)
+    backports (3.6.6)
+    cabin (0.7.1)
+    childprocess (0.5.6)
+      ffi (~> 1.0, >= 1.0.11)
+    clamp (0.6.5)
+    colorize (0.7.7)
+    domain_name (0.5.24)
+      unf (>= 0.0.5, < 1.0.0)
+    ffi (1.9.10)
+    fpm (1.4.0)
+      arr-pm (~> 0.0.10)
+      backports (>= 2.6.2)
+      cabin (>= 0.6.0)
+      childprocess
+      clamp (~> 0.6)
+      ffi
+      json (>= 1.7.7)
+    highline (1.7.3)
+    http-cookie (1.0.2)
+      domain_name (~> 0.5)
+    json (1.8.3)
+    json_pure (1.8.2)
+    mime-types (2.6.1)
+    netrc (0.10.3)
+    package_cloud (0.2.20)
+      colorize (~> 0.6)
+      highline (~> 1.6)
+      json_pure (~> 1.8)
+      rest-client (~> 1.6)
+      thor (~> 0.18)
+    rest-client (1.8.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 3.0)
+      netrc (~> 0.7)
+    thor (0.19.1)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.7.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  fpm (~> 1.4)
+  package_cloud (~> 0.2)
+
+BUNDLED WITH
+   1.10.5
