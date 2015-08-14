@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/Dieterbe/profiletrigger/heap"
@@ -49,11 +50,27 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
+	exit := make(chan int)
+
 	go func() {
+		code := 0
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
-		<-c
-		os.Exit(0)
+		signal.Notify(c, os.Kill)
+		signal.Notify(c, syscall.SIGTERM)
+		select {
+		case sig := <-c:
+			log.Info("received signal %s. shutting down", sig)
+		case code = <-exit:
+			switch code {
+			case 0:
+				log.Info("shutting down")
+			default:
+				log.Warn("shutting down")
+			}
+		}
+		log.Close()
+		os.Exit(code)
 	}()
 
 	flag.Parse()
@@ -100,8 +117,7 @@ func main() {
 	}
 
 	cmd.StartServer()
-
-	log.Close()
+	exit <- 0
 }
 
 func initRuntime() {
