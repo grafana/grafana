@@ -46,12 +46,12 @@ func Init(metrics met.Backend) {
 	}
 	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
 	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
-	// go stresser() // enable this to send a "stress load" to test the metrics pipeline
+	go stresser() // enable this to send a "stress load" to test the metrics pipeline
 }
 
 func stresser() {
 	layout := "test-metric.Jan-02.15.04.05"
-	start := time.Now().Add(-time.Duration(10000) * time.Second)
+	start := time.Now().Add(-time.Duration(1000) * time.Second)
 	tick := time.Tick(time.Duration(1) * time.Second)
 	for t := range tick {
 		pre := time.Now()
@@ -121,6 +121,11 @@ func Publish(metrics []*m.MetricDefinition) error {
 		if err != nil {
 			log.Fatal(0, "binary.Write failed: %s", err.Error())
 		}
+		id := time.Now().UnixNano()
+		binary.Write(buf, binary.BigEndian, id)
+		if err != nil {
+			log.Fatal(0, "binary.Write failed: %s", err.Error())
+		}
 		msg, err := json.Marshal(subslice)
 		if err != nil {
 			return fmt.Errorf("Failed to marshal metrics payload: %s", err)
@@ -135,6 +140,7 @@ func Publish(metrics []*m.MetricDefinition) error {
 		if err != nil {
 			panic(fmt.Errorf("can't publish to nsqd: %s", err))
 		}
+		log.Info("DIETERPUBLISHED %d", id)
 	}
 
 	//globalProducer.Stop()
