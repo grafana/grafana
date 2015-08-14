@@ -19,9 +19,12 @@ export GOPATH
 mkdir -p artifacts
 bundle install
 
+echo "Getting grafana/grafana first"
+go get github.com/grafana/grafana
 echo "Linking ${GOPATH}/src/${REPO_PATH} to ${CHECKOUT}"
-rm -fr ${GOPATH}/src/${REPO_PATH}
+mv ${GOPATH}/src/${REPO_PATH} ${GOPATH}/src/${REPO_PATH}-bak
 mkdir -p ${GOPATH}/src/${ORG_PATH}
 ln -s ${CHECKOUT} ${GOPATH}/src/${REPO_PATH}
+go get github.com/raintank/grafana
 
 go get github.com/tools/godep
