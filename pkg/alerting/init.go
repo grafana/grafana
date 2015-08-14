@@ -32,6 +32,7 @@ var executorConsiderJobOriginalTodo met.Timer
 
 var executorNumAlreadyDone met.Count
 var executorNumOriginalTodo met.Count
+var executorAlertOutcomesErr met.Count
 var executorAlertOutcomesOk met.Count
 var executorAlertOutcomesWarn met.Count
 var executorAlertOutcomesCrit met.Count
@@ -71,6 +72,7 @@ func Init(metrics met.Backend) {
 
 	executorNumAlreadyDone = metrics.NewCount("alert-executor.already-done")
 	executorNumOriginalTodo = metrics.NewCount("alert-executor.original-todo")
+	executorAlertOutcomesErr = metrics.NewCount("alert-executor.alert-outcomes.error")
 	executorAlertOutcomesOk = metrics.NewCount("alert-executor.alert-outcomes.ok")
 	executorAlertOutcomesWarn = metrics.NewCount("alert-executor.alert-outcomes.warning")
 	executorAlertOutcomesCrit = metrics.NewCount("alert-executor.alert-outcomes.critical")
