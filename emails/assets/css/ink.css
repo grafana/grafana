@@ -417,38 +417,6 @@ h6 a:visited {
 
 /* Buttons */
 
-.better-button td{
-  -webkit-border-radius: 2px;
-  -moz-border-radius: 2px;
-  border-radius: 2px;
-}
-
-.better-button a{
-  text-decoration: none; 
-  -webkit-border-radius: 2px; 
-  -moz-border-radius: 2px;
-  border-radius: 2px;
-
-  padding: 12px 25px;
-  border: 1px solid #ff8f2b;
-  display: inline-block;
-  color: #FFF;
-}
-
-.better-button:hover a {
-  color: #FFFFFF !important;
-  background-color: #F2821E;
-  border: 1px solid #F2821E;  
-}
-
-.better-button:visited a {
-  color: #FFFFFF !important;
-}
-
-.better-button:active a {
-  color: #FFFFFF !important;
-}
-
 table.button,
 table.tiny-button,
 table.small-button,
