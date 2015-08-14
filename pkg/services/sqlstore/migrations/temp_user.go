@@ -17,7 +17,7 @@ func addTempUserMigrations(mg *Migrator) {
 			{Name: "invited_by_user_id", Type: DB_BigInt, Nullable: true},
 			{Name: "email_sent", Type: DB_Bool},
 			{Name: "email_sent_on", Type: DB_DateTime, Nullable: true},
-			{Name: "remote_addr", Type: DB_Varchar, Nullable: true},
+			{Name: "remote_addr", Type: DB_Varchar, Length: 255, Nullable: true},
 			{Name: "created", Type: DB_DateTime},
 			{Name: "updated", Type: DB_DateTime},
 		},
