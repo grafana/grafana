@@ -17,10 +17,6 @@ function (angular, _, config) {
       $scope.query = { query: '', tag: [], starred: false };
       $scope.currentSearchId = 0;
 
-      if ($scope.dashboardViewState.fullscreen) {
-        $scope.exitFullscreen();
-      }
-
       $timeout(function() {
         $scope.giveSearchFocus = $scope.giveSearchFocus + 1;
         $scope.query.query = '';
