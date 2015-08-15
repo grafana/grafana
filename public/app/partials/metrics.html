@@ -1,5 +1,12 @@
-<div ng-include src="datasource.meta.partials.query"></div>
+<div class="editor-row">
 
+	<!-- <div ng&#45;include src="datasource.meta.partials.query"></div> -->
+
+	<query-editor-loader ng-repeat="target in panel.targets">
+	</query-editor-loader>
+
+ 	</div>
+</div>
 
 <div class="editor-row" style="margin-top: 30px">
 	<button class="btn btn-inverse pull-right" ng-click="addDataQuery(panel.target)">
