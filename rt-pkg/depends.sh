@@ -18,6 +18,7 @@ export GOPATH
 
 mkdir -p artifacts
 bundle install
+apt-get install rpm
 
 echo "Getting grafana/grafana first"
 go get github.com/grafana/grafana
