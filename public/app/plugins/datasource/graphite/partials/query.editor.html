@@ -5,16 +5,30 @@
 				<i class="fa fa-warning"></i>
 			</a>
 		</li>
+<<<<<<< 06a640d61d6c69647faf3e7b90c5dc602043001b
 		<li class="tight-form-item small" ng-show="target.datasource">
 			<em>{{target.datasource}}</em>
 		</li>
 		<li class="tight-form-item">
 			<div class="dropdown">
 				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+=======
+		<li class="tight-form-item">
+			<a class="pointer" tabindex="1" ng-click="toggleEditorMode()">
+				<i class="fa fa-pencil"></i>
+			</a>
+		</li>
+		<li class="tight-form-item">
+			<div class="dropdown">
+				<a  class="pointer dropdown-toggle"
+					data-toggle="dropdown"
+					tabindex="1">
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 					<i class="fa fa-bars"></i>
 				</a>
 				<ul class="dropdown-menu pull-right" role="menu">
 					<li role="menuitem">
+<<<<<<< 06a640d61d6c69647faf3e7b90c5dc602043001b
 						<a tabindex="1" ng-click="toggleEditorMode()">
 							Switch editor mode
 						</a>
@@ -27,6 +41,24 @@
 					</li>
 					<li role="menuitem">
 						<a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a>
+=======
+						<a  tabindex="1"
+							ng-click="duplicate()">
+							Duplicate
+						</a>
+					</li>
+					<li role="menuitem">
+						<a  tabindex="1"
+							ng-click="moveMetricQuery($index, $index-1)">
+							Move up
+						</a>
+					</li>
+					<li role="menuitem">
+						<a  tabindex="1"
+							ng-click="moveMetricQuery($index, $index+1)">
+							Move down
+						</a>
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 					</li>
 				</ul>
 			</div>
@@ -40,15 +72,25 @@
 
 	<ul class="tight-form-list">
 		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+<<<<<<< 06a640d61d6c69647faf3e7b90c5dc602043001b
 			{{target.refId}}
 		</li>
 		<li>
 			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+=======
+			{{targetLetters[$index]}}
+		</li>
+		<li>
+			<a  class="tight-form-item"
+				ng-click="target.hide = !target.hide; get_data();"
+				role="menuitem">
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 				<i class="fa fa-eye"></i>
 			</a>
 		</li>
 	</ul>
 
+<<<<<<< 06a640d61d6c69647faf3e7b90c5dc602043001b
 	<input type="text" class="tight-form-clear-input span10" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
 
 	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
@@ -63,4 +105,159 @@
 		</li>
 	</ul>
 	<div class="clearfix"></div>
+=======
+	<input  type="text" class="tight-form-clear-input span10"
+		ng-model="target.target"
+		give-focus="target.textEditor"
+		spellcheck='false'
+		ng-model-onblur ng-change="get_data()"
+		ng-show="target.textEditor" />
+
+		<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
+			<li ng-repeat="segment in segments" role="menuitem">
+				<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
+			</li>
+			<li ng-repeat="func in functions">
+				<span graphite-func-editor class="tight-form-item tight-form-func">
+				</span>
+			</li>
+			<li class="dropdown" graphite-add-func>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 </div>
+
+<!-- <section class="grafana&#45;metric&#45;options"> -->
+	<!-- 	<div class="tight&#45;form"> -->
+		<!-- 		<ul class="tight&#45;form&#45;list"> -->
+			<!-- 			<li class="tight&#45;form&#45;item tight&#45;form&#45;item&#45;icon"> -->
+				<!-- 				<i class="fa fa&#45;wrench"></i> -->
+				<!-- 			</li> -->
+			<!-- 			<li class="tight&#45;form&#45;item"> -->
+				<!-- 				Cache timeout -->
+				<!-- 			</li> -->
+			<!-- 			<li> -->
+				<!-- 				<input type="text" -->
+					<!-- 				class="input&#45;mini tight&#45;form&#45;input" -->
+					<!-- 				ng&#45;model="panel.cacheTimeout" -->
+					<!-- 				bs&#45;tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'" -->
+					<!-- 				data&#45;placement="right" -->
+					<!-- 				spellcheck='false' -->
+					<!-- 				placeholder="60"> -->
+					<!-- 			</li> -->
+				<!-- 			<li class="tight&#45;form&#45;item"> -->
+					<!-- 				Max data points -->
+					<!-- 			</li> -->
+				<!-- 			<li> -->
+					<!-- 				<input type="text" -->
+						<!-- 				class="input&#45;mini tight&#45;form&#45;input" -->
+						<!-- 				ng&#45;model="panel.maxDataPoints" -->
+						<!-- 				bs&#45;tooltip="'Override max data points, automatically set to graph width in pixels.'" -->
+						<!-- 				data&#45;placement="right" -->
+						<!-- 				ng&#45;model&#45;onblur ng&#45;change="get_data()" -->
+						<!-- 				spellcheck='false' -->
+						<!-- 				placeholder="auto"> -->
+						<!-- 			</li> -->
+					<!-- 		</ul> -->
+				<!-- 		<div class="clearfix"></div> -->
+				<!-- 	</div> -->
+			<!-- 	<div class="tight&#45;form"> -->
+				<!-- 		<ul class="tight&#45;form&#45;list"> -->
+					<!-- 			<li class="tight&#45;form&#45;item tight&#45;form&#45;item&#45;icon"> -->
+						<!-- 				<i class="fa fa&#45;info&#45;circle"></i> -->
+						<!-- 			</li> -->
+					<!-- 			<li class="tight&#45;form&#45;item"> -->
+						<!-- 				<a ng&#45;click="toggleEditorHelp(1);" bs&#45;tooltip="'click to show helpful info'" data&#45;placement="bottom"> -->
+							<!-- 					shorter legend names -->
+							<!-- 				</a> -->
+						<!-- 			</li> -->
+					<!-- 			<li class="tight&#45;form&#45;item"> -->
+						<!-- 				<a ng&#45;click="toggleEditorHelp(2);" bs&#45;tooltip="'click to show helpful info'" data&#45;placement="bottom"> -->
+							<!-- 					series as parameters -->
+							<!-- 				</a> -->
+						<!-- 			</li> -->
+					<!-- 			<li class="tight&#45;form&#45;item"> -->
+						<!-- 				<a ng&#45;click="toggleEditorHelp(3)" bs&#45;tooltip="'click to show helpful info'" data&#45;placement="bottom"> -->
+							<!-- 					stacking -->
+							<!-- 				</a> -->
+						<!-- 			</li> -->
+					<!-- 			<li class="tight&#45;form&#45;item"> -->
+						<!-- 				<a ng&#45;click="toggleEditorHelp(4)" bs&#45;tooltip="'click to show helpful info'" data&#45;placement="bottom"> -->
+							<!-- 					templating -->
+							<!-- 				</a> -->
+						<!-- 			</li> -->
+					<!-- 			<li class="tight&#45;form&#45;item"> -->
+						<!-- 				<a ng&#45;click="toggleEditorHelp(5)" bs&#45;tooltip="'click to show helpful info'" data&#45;placement="bottom"> -->
+							<!-- 					max data points -->
+							<!-- 				</a> -->
+						<!-- 			</li> -->
+					<!-- 		</ul> -->
+				<!-- 		<div class="clearfix"></div> -->
+				<!-- 	</div> -->
+			<!-- </section> -->
+		<!--  -->
+		<!-- <div class="editor&#45;row"> -->
+			<!-- 	<div class="pull&#45;left" style="margin&#45;top: 30px;"> -->
+				<!--  -->
+				<!-- 		<div class="grafana&#45;info&#45;box span8" ng&#45;if="editorHelpIndex === 1"> -->
+					<!-- 			<h5>Shorter legend names</h5> -->
+					<!-- 			<ul> -->
+						<!-- 				<li>alias() function to specify a custom series name</li> -->
+						<!-- 				<li>aliasByNode(2) to alias by a specific part of your metric path</li> -->
+						<!-- 				<li>aliasByNode(2, &#45;1) you can add multiple segment paths, and use negative index</li> -->
+						<!-- 				<li>groupByNode(2, 'sum') is useful if you have 2 wildcards in your metric path and want to sumSeries and group by</li> -->
+						<!-- 			</ul> -->
+					<!-- 		</div> -->
+				<!--  -->
+				<!-- 		<div class="grafana&#45;info&#45;box span8" ng&#45;if="editorHelpIndex === 2"> -->
+					<!-- 			<h5>Series as parameter</h5> -->
+					<!-- 			<ul> -->
+						<!-- 				<li>Some graphite functions allow you to have many series arguments</li> -->
+						<!-- 				<li>Use #[A&#45;Z] to use a graphite query as parameter to a function</li> -->
+						<!-- 				<li> -->
+							<!-- 					Examples: -->
+							<!-- 					<ul> -->
+								<!-- 						<li>asPercent(#A, #B)</li> -->
+								<!-- 						<li>prod.srv&#45;01.counters.count &#45; asPercent(#A) : percentage of count in comparison with A query</li> -->
+								<!-- 						<li>prod.srv&#45;01.counters.count &#45; sumSeries(#A) : sum count and series A </li> -->
+								<!-- 						<li>divideSeries(#A, #B)</li> -->
+								<!-- 					</ul> -->
+							<!-- 				</li> -->
+						<!-- 				<li>If a query is added only to be used as a parameter, hide it from the graph with the eye icon</li> -->
+						<!-- 			</ul> -->
+					<!-- 		</div> -->
+				<!--  -->
+				<!-- 		<div class="grafana&#45;info&#45;box span6" ng&#45;if="editorHelpIndex === 3"> -->
+					<!-- 			<h5>Stacking</h5> -->
+					<!-- 			<ul> -->
+						<!-- 				<li>You find the stacking option under Display Styles tab</li> -->
+						<!-- 				<li>When stacking is enabled make sure null point mode is set to 'null as zero'</li> -->
+						<!-- 			</ul> -->
+					<!-- 		</div> -->
+				<!--  -->
+				<!-- 		<div class="grafana&#45;info&#45;box span6" ng&#45;if="editorHelpIndex === 4"> -->
+					<!-- 			<h5>Templating</h5> -->
+					<!-- 			<ul> -->
+						<!-- 				<li>You can use a template variable in place of metric names</li> -->
+						<!-- 				<li>You can use a template variable in place of function parameters</li> -->
+						<!-- 				<li>You enable the templating feature in Dashboard settings / Feature toggles </li> -->
+						<!-- 			</ul> -->
+					<!-- 		</div> -->
+				<!--  -->
+				<!-- 		<div class="grafana&#45;info&#45;box span6" ng&#45;if="editorHelpIndex === 5"> -->
+					<!-- 			<h5>Max data points</h5> -->
+					<!-- 			<ul> -->
+						<!-- 				<li>Every graphite request is issued with a maxDataPoints parameter</li> -->
+						<!-- 				<li>Graphite uses this parameter to consolidate the real number of values down to this number</li> -->
+						<!-- 				<li>If there are more real values, then by default they will be consolidated using averages</li> -->
+						<!-- 				<li>This could hide real peaks and max values in your series</li> -->
+						<!-- 				<li>You can change how point consolidation is made using the consolidateBy graphite function</li> -->
+						<!-- 				<li>Point consolidation will effect series legend values (min,max,total,current)</li> -->
+						<!-- 				<li>If you override maxDataPoint and set a high value performance can be severely effected</li> -->
+						<!-- 			</ul> -->
+					<!-- 		</div> -->
+				<!--  -->
+				<!-- 	</div> -->
+			<!-- </div> -->
