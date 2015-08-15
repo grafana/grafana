@@ -30,6 +30,7 @@
 			</li>
 		</ul>
 
+<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 		<ul class="tight-form-list">
 			<li class="tight-form-item" style="min-width: 15px; text-align: center">
 				{{target.refId}}
@@ -40,6 +41,9 @@
 				</a>
 			</li>
 		</ul>
+=======
+			<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" give-focus="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 
 		<ul class="tight-form-list" ng-hide="target.rawQuery">
 			<li class="tight-form-item query-keyword" style="width: 75px">

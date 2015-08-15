@@ -8,6 +8,7 @@ function (angular, $, config) {
 
   var module = angular.module('grafana.directives');
 
+<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
   module.directive('panelLoader', function($compile, $parse) {
     return {
       restrict: 'E',
@@ -55,6 +56,13 @@ function (angular, $, config) {
         if (editorScope) {
           editorScope.$destroy();
           options.parentElem.empty();
+=======
+          scope.require([panelPath + "/module"], function () {
+            var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
+            elem.append(panelEl);
+            $compile(panelEl)(scope);
+          });
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
         }
 
         editorScope = options.scope.$new();

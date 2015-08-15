@@ -1,5 +1,6 @@
 <div class="editor-row">
 
+<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 	<div class="tight-form-container">
 		<query-editor-loader ng-repeat="target in panel.targets" ng-class="{'tight-form-disabled': target.hide}" >
 		</query-editor-loader>
@@ -27,6 +28,14 @@
 	</div>
 
 	<datasource-editor-view datasource="panel.datasource" name="metric-query-options"></datasource-editor-view>
+=======
+	<!-- <div ng&#45;include src="datasource.meta.partials.query"></div> -->
+
+	<query-editor-loader ng-repeat="target in panel.targets">
+	</query-editor-loader>
+
+ 	</div>
+>>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 </div>
 
 <div class="editor-row" style="margin-top: 30px">
