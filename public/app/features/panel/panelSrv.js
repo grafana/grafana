@@ -44,7 +44,11 @@ function (angular, _, config) {
       };
 
       $scope.addDataQuery = function(datasource) {
+<<<<<<< a07e6ed8cd8b3dcf9178d85421158e05a7a4518a
         $scope.dashboard.addDataQueryTo($scope.panel, datasource);
+=======
+        $scope.panel.targets.push({target: '', datasource: datasource});
+>>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
       };
 
       $scope.removeDataQuery = function (query) {

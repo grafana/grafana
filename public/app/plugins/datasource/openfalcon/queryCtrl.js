@@ -18,6 +18,12 @@ function (angular, _, config, gfunc, Parser) {
     };
   });
 
+  module.directive('metricQueryOptionsGraphite', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/graphite/partials/query.options.html',
+    };
+  });
+
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
