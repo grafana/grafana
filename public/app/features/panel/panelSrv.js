@@ -55,6 +55,19 @@ function (angular, _, config) {
       $scope.setDatasource = function(datasource) {
         $scope.panel.datasource = datasource;
         $scope.datasource = null;
+        $scope.panel.targets = _.filter($scope.panel.targets, function(target) {
+          delete target.datasource;
+          return target.datasource === void 0;
+        });
+
+        if ($scope.panel.targets.length === 0) {
+          $scope.panel.targets = [{}];
+        }
+
+        if (datasource === 'mixed') {
+          $scope.panel.targets = [];
+        }
+
         $scope.get_data();
       };
 

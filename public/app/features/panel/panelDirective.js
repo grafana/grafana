@@ -40,6 +40,8 @@ function (angular, $, config) {
     };
   });
 
+  var targetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
   module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
     return {
       restrict: 'E',
@@ -57,6 +59,7 @@ function (angular, $, config) {
 
             editorScope = scope.$new();
             editorScope.datasource = ds;
+            editorScope.targetLetters = targetLetters;
 
             var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
             elem.append(panelEl);

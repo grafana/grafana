@@ -1,4 +1,4 @@
-<div class="tight-form-container-no-item-borders" style="margin-bottom: 10px">
+<div class="tight-form-container-no-item-borders">
 	<div  class="tight-form">
 		<ul class="tight-form-list pull-right">
 			<li ng-show="parserError" class="tight-form-item">
@@ -48,6 +48,9 @@
 		</ul>
 
 		<ul class="tight-form-list">
+			<li class="tight-form-item" style="min-width: 15px; text-align: center">
+				{{targetLetters[$index]}}
+			</li>
 			<li>
 				<a  class="tight-form-item"
 					ng-click="target.hide = !target.hide; get_data();"
@@ -77,9 +80,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
+				<li class="tight-form-item" style="width: 44px"></li>
 				<li class="tight-form-item query-keyword" style="width: 75px;">
 					FROM
 				</li>
@@ -93,9 +94,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
+				<li class="tight-form-item" style="width: 44px"></li>
 
 				<li class="tight-form-item query-keyword" style="width: 75px;">
 					WHERE
@@ -110,10 +109,7 @@
 
 		<div class="tight-form">
 			<ul class="tight-form-list" ng-hide="target.rawQuery">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-
+				<li class="tight-form-item" style="width: 44px"></li>
 				<li class="tight-form-item query-keyword">
 					GROUP BY
 				</li>

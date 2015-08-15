@@ -6,12 +6,12 @@
 	</div>
 
 	<div style="margin: 20px 0 0 0">
-		<button class="btn btn-inverse" ng-click="addDataQuery(panel.target)" ng-if="datasource.meta.type !== 'grafana'">
+		<button class="btn btn-inverse" ng-click="addDataQuery(panel.target)" ng-if="datasource.meta.type !== 'mixed'">
 			<i class="fa fa-plus"></i>&nbsp;
 			Query
 		</button>
 
-		<span class="dropdown" ng-if="datasource.meta.type === 'grafana'">
+		<span class="dropdown" ng-if="datasource.meta.type === 'mixed'">
 			<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
 				<i class="fa fa-plus"></i>&nbsp;
 				Query
