@@ -44,10 +44,48 @@ function (angular, $, config) {
     return {
       restrict: 'E',
       link: function(scope, elem) {
-        datasourceSrv.get(scope.panel.datasource).then(function(ds) {
-          var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
-          elem.append(panelEl);
-          $compile(panelEl)(scope);
+        var editorScope;
+
+        scope.$watch("panel.datasource", function() {
+          var datasource = scope.target.datasource || scope.panel.datasource;
+
+          datasourceSrv.get(datasource).then(function(ds) {
+            if (editorScope) {
+              editorScope.$destroy();
+              elem.empty();
+            }
+
+            editorScope = scope.$new();
+            editorScope.datasource = ds;
+
+            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
+            elem.append(panelEl);
+            $compile(panelEl)(editorScope);
+          });
+        });
+      }
+    };
+  });
+
+  module.directive('queryOptionsLoader', function($compile, $parse, datasourceSrv) {
+    return {
+      restrict: 'E',
+      link: function(scope, elem) {
+        var editorScope;
+
+        scope.$watch("panel.datasource", function() {
+
+          datasourceSrv.get(scope.panel.datasource).then(function(ds) {
+            if (editorScope) {
+              editorScope.$destroy();
+              elem.empty();
+            }
+
+            editorScope = scope.$new();
+            var panelEl = angular.element(document.createElement('metric-query-options-' + ds.meta.type));
+            elem.append(panelEl);
+            $compile(panelEl)(editorScope);
+          });
         });
       }
     };

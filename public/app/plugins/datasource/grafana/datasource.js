@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('GrafanaDatasource', function($q, backendSrv) {
+  module.factory('GrafanaDatasource', function($q, backendSrv, datasourceSrv) {
 
     function GrafanaDatasource() {
     }
@@ -24,11 +24,16 @@ function (angular, _, kbn) {
     };
 
     GrafanaDatasource.prototype.query = function(options) {
-      // get from & to in seconds
-      var from = kbn.parseDate(options.range.from).getTime();
-      var to = kbn.parseDate(options.range.to).getTime();
-
-      return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
+      return datasourceSrv.get(options.targets[0].datasource).then(function(ds) {
+        options.targets = [options.targets[0]];
+        return ds.query(options);
+      });
+      // console.log(options.targets);
+      // // get from & to in seconds
+      // var from = kbn.parseDate(options.range.from).getTime();
+      // var to = kbn.parseDate(options.range.to).getTime();
+      //
+      // return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
     };
 
     GrafanaDatasource.prototype.metricFindQuery = function() {

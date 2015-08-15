@@ -1,31 +1,49 @@
 <div class="editor-row">
 
-	<!-- <div ng&#45;include src="datasource.meta.partials.query"></div> -->
+	<div class="tight-form-container">
+		<query-editor-loader ng-repeat="target in panel.targets">
+		</query-editor-loader>
+	</div>
 
-	<query-editor-loader ng-repeat="target in panel.targets">
-	</query-editor-loader>
+	<div style="margin: 20px 0 0 0">
+		<button class="btn btn-inverse" ng-click="addDataQuery(panel.target)" ng-if="datasource.meta.type !== 'grafana'">
+			<i class="fa fa-plus"></i>&nbsp;
+			Query
+		</button>
 
- 	</div>
+		<span class="dropdown" ng-if="datasource.meta.type === 'grafana'">
+			<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
+				<i class="fa fa-plus"></i>&nbsp;
+				Query
+			</button>
+
+			<ul class="dropdown-menu" role="menu">
+				<li ng-repeat="datasource in datasources" role="menuitem">
+					<a ng-click="addDataQuery(datasource.value);">{{datasource.name}}</a>
+				</li>
+			</ul>
+		</span>
+
+	</div>
+
+	<query-options-loader></query-options-loader>
+
 </div>
 
 <div class="editor-row" style="margin-top: 30px">
-	<button class="btn btn-inverse pull-right" ng-click="addDataQuery(panel.target)">
-		<i class="fa fa-plus"></i>&nbsp;
-		Add query
-	</button>
 
-  <div class="pull-right dropdown" style="margin-right: 10px;">
+	<div class="pull-right dropdown" style="margin-right: 10px;">
 		<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Datasource'">
 			<i class="fa fa-database"></i>&nbsp;
 			{{datasource.name}} <span class="caret"></span>
 		</button>
 
-    <ul class="dropdown-menu" role="menu">
-      <li ng-repeat="datasource in datasources" role="menuitem">
-        <a ng-click="setDatasource(datasource.value);">{{datasource.name}}</a>
-      </li>
-    </ul>
-  </div>
+		<ul class="dropdown-menu" role="menu">
+			<li ng-repeat="datasource in datasources" role="menuitem">
+				<a ng-click="setDatasource(datasource.value);">{{datasource.name}}</a>
+			</li>
+		</ul>
+	</div>
 
 	<div class="clearfix"></div>
 </div>
