@@ -3,6 +3,7 @@
 # Find the directory we exist within
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd ${DIR}
+mkdir -p ${DIR}/artifacts
 
 : ${GOPATH:="${HOME}/.go_workspace"}
 : ${GOBIN:="${DIR}/build"}
@@ -14,11 +15,5 @@ export GOPATH GOBIN
 
 cd ${GOPATH}/src/github.com/raintank/grafana
 
-go run build.go setup
-godep restore
-go run build.go build
-
-npm install
-npm install -g grunt-cli
-grunt
-
+go run build.go package
+cp dist/* ${DIR}/artifacts
