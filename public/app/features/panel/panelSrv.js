@@ -43,8 +43,8 @@ function (angular, _, config) {
         });
       };
 
-      $scope.addDataQuery = function() {
-        $scope.panel.targets.push({target: ''});
+      $scope.addDataQuery = function(datasource) {
+        $scope.panel.targets.push({target: '', datasource: datasource});
       };
 
       $scope.removeDataQuery = function (query) {
