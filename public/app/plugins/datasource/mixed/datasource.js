@@ -1,9 +1,8 @@
 define([
   'angular',
   'lodash',
-  'kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -27,12 +26,6 @@ function (angular, _, kbn) {
         return { data: _.flatten(_.pluck(results, 'data')) };
       });
 
-      // console.log(options.targets);
-      // // get from & to in seconds
-      // var from = kbn.parseDate(options.range.from).getTime();
-      // var to = kbn.parseDate(options.range.to).getTime();
-      //
-      // return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
     };
 
     return MixedDatasource;

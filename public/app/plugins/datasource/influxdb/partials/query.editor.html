@@ -80,8 +80,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 44px"></li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					FROM
 				</li>
 				<li>
@@ -94,9 +93,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 44px"></li>
-
-				<li class="tight-form-item query-keyword" style="width: 75px;">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					WHERE
 				</li>
 
@@ -109,8 +106,7 @@
 
 		<div class="tight-form">
 			<ul class="tight-form-list" ng-hide="target.rawQuery">
-				<li class="tight-form-item" style="width: 44px"></li>
-				<li class="tight-form-item query-keyword">
+				<li class="tight-form-item query-keyword tight-form-align">
 					GROUP BY
 				</li>
 
@@ -144,13 +140,14 @@
 					Alias pattern
 				</li>
 				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-model-onblur ng-change="get_data()">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-
+					<input type="text" class="input-medium tight-form-input"
+						ng-model="target.alias" spellcheck='false' placeholder="alias"
+						ng-model-onblur ng-change="get_data()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
 		</div>
-	</div>
 
+	</div>
+</div>
 

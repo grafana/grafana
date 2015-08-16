@@ -8,6 +8,13 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.controllers');
 
+  module.directive('metricQueryEditorOpentsdb', function() {
+    return {
+      controller: 'OpenTSDBQueryCtrl',
+      templateUrl: 'app/plugins/datasource/opentsdb/partials/query.editor.html',
+    };
+  });
+
   module.controller('OpenTSDBQueryCtrl', function($scope, $timeout) {
 
     $scope.init = function() {
@@ -113,6 +120,7 @@ function (angular, _, kbn) {
       return errs;
     }
 
+    $scope.init();
   });
 
 });
