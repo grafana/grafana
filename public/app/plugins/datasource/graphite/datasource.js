@@ -228,21 +228,13 @@ function (angular, _, $, config, kbn, moment) {
       return backendSrv.datasourceRequest(options);
     };
 
-    GraphiteDatasource.prototype._seriesRefLetters = [
-      '#A', '#B', '#C', '#D',
-      '#E', '#F', '#G', '#H',
-      '#I', '#J', '#K', '#L',
-      '#M', '#N', '#O', '#P',
-      '#Q', '#R', '#S', '#T',
-      '#U', '#V', '#W', '#X',
-      '#Y', '#Z'
-    ];
+    GraphiteDatasource.prototype._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(options, scopedVars) {
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
-      var regex = /(\#[A-Z])/g;
+      var regex = /\#([A-Z])/g;
       var intervalFormatFixRegex = /'(\d+)m'/gi;
 
       if (options.format !== 'png') {
@@ -259,13 +251,17 @@ function (angular, _, $, config, kbn, moment) {
           continue;
         }
 
+        if (!target.refId) {
+          target.refId = this._seriesRefLetters[i];
+        }
+
         targetValue = templateSrv.replace(target.target, scopedVars);
         targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
-        targets[this._seriesRefLetters[i]] = targetValue;
+        targets[target.refId] = targetValue;
       }
 
-      function nestedSeriesRegexReplacer(match) {
-        return targets[match];
+      function nestedSeriesRegexReplacer(match, g1) {
+        return targets[g1];
       }
 
       for (i = 0; i < options.targets.length; i++) {
@@ -274,9 +270,9 @@ function (angular, _, $, config, kbn, moment) {
           continue;
         }
 
-        targetValue = targets[this._seriesRefLetters[i]];
+        targetValue = targets[target.refId];
         targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
-        targets[this._seriesRefLetters[i]] = targetValue;
+        targets[target.refId] = targetValue;
 
         if (!target.hide) {
           clean_options.push("target=" + encodeURIComponent(targetValue));
