@@ -139,6 +139,7 @@ require([
     'specs/seriesOverridesCtrl-specs',
     'specs/shareModalCtrl-specs',
     'specs/timeSrv-specs',
+    'specs/panelSrv-specs',
     'specs/templateSrv-specs',
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',

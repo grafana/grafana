@@ -44,7 +44,20 @@ function (angular, _, config) {
       };
 
       $scope.addDataQuery = function(datasource) {
-        $scope.panel.targets.push({target: '', datasource: datasource});
+        var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var target = {};
+
+        if (datasource) {
+          target.datasource = datasource;
+        }
+
+        target.refId = _.find(letters, function(refId) {
+          return _.every($scope.panel.targets, function(other) {
+            return other.refId !== refId;
+          });
+        });
+
+        $scope.panel.targets.push(target);
       };
 
       $scope.removeDataQuery = function (query) {
