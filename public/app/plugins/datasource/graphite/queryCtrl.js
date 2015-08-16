@@ -26,8 +26,10 @@ function (angular, _, config, gfunc, Parser) {
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
-      $scope.target.target = $scope.target.target || '';
-      parseTarget();
+      if ($scope.target) {
+        $scope.target.target = $scope.target.target || '';
+        parseTarget();
+      }
     };
 
     $scope.toggleEditorMode = function() {
