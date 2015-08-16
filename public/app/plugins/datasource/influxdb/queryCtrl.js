@@ -24,6 +24,8 @@ function (angular, _, InfluxQueryBuilder) {
   module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q) {
 
     $scope.init = function() {
+      if (!$scope.target) { return; }
+
       var target = $scope.target;
       target.tags = target.tags || [];
       target.groupByTags = target.groupByTags || [];
