@@ -40,6 +40,31 @@ function (angular, $, config) {
     };
   });
 
+  module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
+    var self = this;
+
+    this.addDirective = function(options, type, editorScope) {
+      var panelEl = angular.element(document.createElement(options.name + '-' + type));
+      options.parentElem.append(panelEl);
+      $compile(panelEl)(editorScope);
+    };
+
+    this.define = function(options) {
+      var editorScope;
+      options.scope.$watch(options.datasourceProperty, function(newVal) {
+        if (editorScope) {
+          editorScope.$destroy();
+          options.parentElem.empty();
+        }
+
+        editorScope = options.scope.$new();
+        datasourceSrv.get(newVal).then(function(ds) {
+          self.addDirective(options, ds.meta.type, editorScope);
+        });
+      });
+    };
+  });
+
   module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
     return {
       restrict: 'E',
@@ -58,6 +83,10 @@ function (angular, $, config) {
             editorScope = scope.$new();
             editorScope.datasource = ds;
 
+            if (!scope.target.refId) {
+              scope.target.refId = 'A';
+            }
+
             var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
             elem.append(panelEl);
             $compile(panelEl)(editorScope);
@@ -67,25 +96,15 @@ function (angular, $, config) {
     };
   });
 
-  module.directive('queryOptionsLoader', function($compile, $parse, datasourceSrv) {
+  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
     return {
       restrict: 'E',
-      link: function(scope, elem) {
-        var editorScope;
-
-        scope.$watch("panel.datasource", function() {
-
-          datasourceSrv.get(scope.panel.datasource).then(function(ds) {
-            if (editorScope) {
-              editorScope.$destroy();
-              elem.empty();
-            }
-
-            editorScope = scope.$new();
-            var panelEl = angular.element(document.createElement('metric-query-options-' + ds.meta.type));
-            elem.append(panelEl);
-            $compile(panelEl)(editorScope);
-          });
+      link: function(scope, elem, attrs) {
+        dynamicDirectiveSrv.define({
+          datasourceProperty: attrs.datasource,
+          name: attrs.name,
+          scope: scope,
+          parentElem: elem,
         });
       }
     };
