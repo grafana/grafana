@@ -8,8 +8,7 @@
   "module": "plugins/datasource/opentsdb/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/opentsdb/partials/config.html",
-    "query": "app/plugins/datasource/opentsdb/partials/query.editor.html"
+    "config": "app/plugins/datasource/opentsdb/partials/config.html"
   },
 
   "metrics": true

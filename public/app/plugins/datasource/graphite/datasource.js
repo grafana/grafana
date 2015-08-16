@@ -5,6 +5,7 @@ define([
   'config',
   'kbn',
   'moment',
+  './directives',
   './queryCtrl',
   './funcEditor',
   './addGraphiteFunc',

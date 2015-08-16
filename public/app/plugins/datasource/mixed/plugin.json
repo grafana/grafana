@@ -1,15 +1,11 @@
 {
   "pluginType": "datasource",
   "name": "Mixed datasource",
+  "hide": true,
 
   "type": "mixed",
   "serviceName": "MixedDatasource",
 
   "module": "plugins/datasource/mixed/datasource",
-
-  "partials": {
-    "query": "app/plugins/datasource/mixed/partials/query.editor.html"
-  },
-
   "metrics": true
 }

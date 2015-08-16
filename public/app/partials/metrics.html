@@ -19,15 +19,14 @@
 
 			<ul class="dropdown-menu" role="menu">
 				<li ng-repeat="datasource in datasources" role="menuitem">
-					<a ng-click="addDataQuery(datasource.value);">{{datasource.name}}</a>
+					<a ng-click="addDataQuery(datasource.name);">{{datasource.name}}</a>
 				</li>
 			</ul>
 		</span>
 
 	</div>
 
-	<query-options-loader></query-options-loader>
-
+	<datasource-editor-view datasource="panel.datasource" name="metric-query-options"></datasource-editor-view>
 </div>
 
 <div class="editor-row" style="margin-top: 30px">

@@ -10,19 +10,6 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('grafana.controllers');
 
-  module.directive('metricQueryEditorGraphite', function() {
-    return {
-      controller: 'GraphiteQueryCtrl',
-      templateUrl: 'app/plugins/datasource/graphite/partials/query.editor.html',
-    };
-  });
-
-  module.directive('metricQueryOptionsGraphite', function() {
-    return {
-      templateUrl: 'app/plugins/datasource/graphite/partials/query.options.html',
-    };
-  });
-
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {

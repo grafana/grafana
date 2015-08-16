@@ -74,7 +74,7 @@ function (angular, _, config) {
         });
 
         if ($scope.panel.targets.length === 0) {
-          $scope.panel.targets = [{}];
+          $scope.panel.targets = [{refId: 'A'}];
         }
 
         if (datasource === 'mixed') {

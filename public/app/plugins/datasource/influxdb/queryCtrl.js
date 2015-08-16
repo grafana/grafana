@@ -8,19 +8,6 @@ function (angular, _, InfluxQueryBuilder) {
 
   var module = angular.module('grafana.controllers');
 
-  module.directive('metricQueryEditorInfluxdb', function() {
-    return {
-      controller: 'InfluxQueryCtrl',
-      templateUrl: 'app/plugins/datasource/influxdb/partials/query.editor.html',
-    };
-  });
-
-  module.directive('metricQueryOptionsInfluxdb', function() {
-    return {
-      templateUrl: 'app/plugins/datasource/influxdb/partials/query.options.html',
-    };
-  });
-
   module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q) {
 
     $scope.init = function() {
