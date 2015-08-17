@@ -16,8 +16,11 @@ function (angular) {
         }
         setTimeout(function() {
           element.focus();
-          var pos = element.val().length * 2;
-          element[0].setSelectionRange(pos, pos);
+          var domEl = element[0];
+          if (domEl.setSelectionRange) {
+            var pos = element.val().length * 2;
+            domEl.setSelectionRange(pos, pos);
+          }
         }, 200);
       },true);
     };
