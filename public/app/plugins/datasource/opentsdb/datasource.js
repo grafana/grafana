@@ -3,6 +3,7 @@ define([
   'lodash',
   'kbn',
   'moment',
+  './directives',
   './queryCtrl',
 ],
 function (angular, _, kbn) {

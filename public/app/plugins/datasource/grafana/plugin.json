@@ -1,7 +1,7 @@
 {
   "pluginType": "datasource",
-  "name": "Grafana (for testing)",
-  "hide": true,
+  "name": "Grafana",
+  "builtIn": true,
 
   "type": "grafana",
   "serviceName": "GrafanaDatasource",

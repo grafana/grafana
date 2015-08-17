@@ -8,7 +8,7 @@
   "module": "plugins/datasource/graphite/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/graphite/partials/config.html",
+    "config": "app/plugins/datasource/graphite/partials/config.html"
   },
 
   "metrics": true,

@@ -1,7 +1,8 @@
 {
   "pluginType": "datasource",
   "name": "Mixed datasource",
-  "hide": true,
+  "builtIn": true,
+  "mixed": true,
 
   "type": "mixed",
   "serviceName": "MixedDatasource",
