@@ -66,7 +66,8 @@ func stresser() {
 	for t := range asyncTicks {
 		pre := time.Now()
 		metrics := make([]*m.MetricDefinition, 0)
-		for val := start; !val.After(t); val = val.Add(time.Second) {
+		var val time.Time
+		for val = start; !val.After(t); val = val.Add(time.Second) {
 			key := val.Format(layout)
 			metric := &m.MetricDefinition{
 				OrgId:      1,
@@ -83,7 +84,7 @@ func stresser() {
 			}
 			metrics = append(metrics, metric)
 		}
-		log.Info("stresser: publishing %d metrics", len(metrics))
+		log.Info("stresser: publishing %d metrics for time %s", len(metrics), val)
 		Publish(metrics)
 		log.Info("stresser: loop duration %s", time.Now().Sub(pre))
 	}
@@ -150,7 +151,7 @@ func Publish(metrics []*m.MetricDefinition) error {
 		if err != nil {
 			panic(fmt.Errorf("can't publish to nsqd: %s", err))
 		}
-		log.Info("DIETERPUBLISHED %d", id)
+		log.Info("DIETERPUBLISHED %d size=%d", id, buf.Len())
 	}
 
 	//globalProducer.Stop()
