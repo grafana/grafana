@@ -1,6 +1,6 @@
 define([
   'angular',
-  'config',
+  'config'
 ],
 function (angular, config) {
   'use strict';
@@ -14,6 +14,8 @@ function (angular, config) {
 
     var defaults = {
       name: '',
+      url: '',
+      access: 'direct',
       type: 'netcrunch'
     };
 
