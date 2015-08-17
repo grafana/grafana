@@ -1,18 +1,41 @@
-<div ng-include="httpConfigPartialSrc"></div>
-
 <br>
-<h5>NetCrunch Elastic search details</h5>
+<h5>NetCrunch Server settings</h5>
+<div class="tight-form">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 160px">
+      Host name / IP Address
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-xlarge"
+             ng-model='current.url'
+             placeholder="192.168.1.1"
+             ng-pattern="/(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$)|(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$)/" required>
 
-<div class="tight-form last">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 80px">
-			Index name
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='current.database' placeholder="" required></input>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
+      </input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
 </div>
-
-
+<div class="tight-form last">
+  <ul class="tight-form-list">
+    <li class="tight-form-item">
+      User
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-medium" style="width: 139px"
+             ng-model='current.basicAuthUser'
+             placeholder="user" required>
+      </input>
+    </li>
+    <li class="tight-form-item" style="width: 67px">
+      Password
+    </li>
+    <li>
+      <input type="password" class="tight-form-input input-medium"
+             ng-model='current.basicAuthPassword'
+             placeholder="password" required>
+      </input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>

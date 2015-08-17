@@ -1,6 +1,6 @@
 {
   "pluginType": "datasource",
-  "name": "NetCrunch 9 (for testing)",
+  "name": "NetCrunch 9",
 
   "type": "netcrunch",
   "serviceName": "NetCrunchDatasource",
@@ -14,5 +14,5 @@
   },
 
   "metrics": true,
-  "annotations": true
+  "annotations": false
 }
