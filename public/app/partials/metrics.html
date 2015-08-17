@@ -6,12 +6,12 @@
 	</div>
 
 	<div style="margin: 20px 0 0 0">
-		<button class="btn btn-inverse" ng-click="addDataQuery()" ng-hide="datasource.meta.builtIn">
+		<button class="btn btn-inverse" ng-click="addDataQuery()" ng-hide="datasource.meta.mixed">
 			<i class="fa fa-plus"></i>&nbsp;
 			Query
 		</button>
 
-		<div class="dropdown" ng-if="datasource.meta.builtIn">
+		<div class="dropdown" ng-if="datasource.meta.mixed">
 			<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
 				<i class="fa fa-plus"></i>&nbsp;
 				Query &nbsp; <span class="caret"></span>
