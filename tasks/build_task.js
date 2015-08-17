@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-    'karma:test',
+    // 'karma:test',
     'clean:on_start',
     'less:src',
     'concat:cssDark',
