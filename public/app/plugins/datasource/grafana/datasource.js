@@ -2,6 +2,7 @@ define([
   'angular',
   'lodash',
   'kbn',
+  './directives',
 ],
 function (angular, _, kbn) {
   'use strict';
