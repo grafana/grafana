@@ -6,36 +6,26 @@
 					<i class="fa fa-warning"></i>
 				</a>
 			</li>
-			<li class="tight-form-item">
-				<a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-					<i class="fa fa-pencil"></i>
-				</a>
+			<li class="tight-form-item small" ng-show="target.datasource">
+				<em>{{target.datasource}}</em>
 			</li>
 			<li class="tight-form-item">
 				<div class="dropdown">
-					<a  class="pointer dropdown-toggle"
-						data-toggle="dropdown"
-						tabindex="1">
+					<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
 						<i class="fa fa-bars"></i>
 					</a>
 					<ul class="dropdown-menu pull-right" role="menu">
+						<a tabindex="1" ng-click="toggleEditorMode()">
+							Switch editor mode
+						</a>
 						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="duplicate()">
-								Duplicate
-							</a>
+							<a tabindex="1" ng-click="duplicate()">Duplicate</a>
 						</li>
 						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index-1)">
-								Move up
-							</a>
+							<a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up</a>
 						</li>
 						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index+1)">
-								Move down
-							</a>
+							<a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a>
 						</li>
 					</ul>
 				</div>
