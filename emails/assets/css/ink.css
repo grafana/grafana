@@ -332,9 +332,9 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {font-size: 40px;}
 h2 {font-size: 36px;}
-h3 {font-size: 32px;}
-h4 {font-size: 28px;}
-h5 {font-size: 24px;}
+h3 {font-size: 26px;}
+h4 {font-size: 24px;}
+h5 {font-size: 22px;}
 h6 {font-size: 20px;}
 body, table.body, p, td {font-size: 14px;line-height:19px;}
 
@@ -351,21 +351,25 @@ small {
   font-size: 10px;
 }
 
+.emphasis {
+  font-weight: 600;
+}
+
 a {
-  color: #2ba6cb;
+  color: #E67612;
   text-decoration: none;
 }
 
 a:hover {
-  color: #2795b6 !important;
+  color: #ff8f2b !important;
 }
 
 a:active {
-  color: #2795b6 !important;
+  color: #F2821E !important;
 }
 
 a:visited {
-  color: #2ba6cb !important;
+  color: #E67612 !important;
 }
 
 h1 a,
@@ -430,8 +434,8 @@ table.large-button td {
   display: block;
   width: auto !important;
   text-align: center;
-  background: #2ba6cb;
-  border: 1px solid #2284a1;
+  background: #ff8f2b;
+  border: 1px solid #ff8f2b;
   color: #ffffff;
   padding: 8px 0;
 }
@@ -484,7 +488,7 @@ table.large-button td a {
 table.button:hover td,
 table.button:visited td,
 table.button:active td {
-  background: #2795b6 !important;
+  background: #ff8f2b !important;
 }
 
 table.button:hover td a,
@@ -498,7 +502,7 @@ table.tiny-button:hover td,
 table.small-button:hover td,
 table.medium-button:hover td,
 table.large-button:hover td {
-  background: #2795b6 !important;
+  background: #F2821E !important;
 }
 
 table.button:hover td a,

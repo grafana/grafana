@@ -19,46 +19,34 @@ body {
 font-size: 14px; line-height: 19px;
 }
 a:hover {
-color: #2795b6 !important;
+color: #ff8f2b !important;
 }
 a:active {
-color: #2795b6 !important;
+color: #F2821E !important;
 }
 a:visited {
-color: #2ba6cb !important;
-}
-table.button:hover td {
-background: #2795b6 !important;
-}
-table.button:visited td {
-background: #2795b6 !important;
-}
-table.button:active td {
-background: #2795b6 !important;
-}
-table.button:hover td a {
-color: #fff !important;
-}
-table.button:visited td a {
-color: #fff !important;
-}
-table.button:active td a {
-color: #fff !important;
-}
-table.button:hover td {
-background: #2795b6 !important;
-}
-table.button:hover td a {
-color: #ffffff !important;
-}
-table.button:active td a {
-color: #ffffff !important;
-}
-table.button td a:visited {
-color: #ffffff !important;
+color: #E67612 !important;
 }
 body {
 font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none;
+}
+a:hover {
+color: #ff8f2b !important;
+}
+a:active {
+color: #F2821E !important;
+}
+a:visited {
+color: #E67612 !important;
+}
+.better-button:hover a {
+color: #FFFFFF !important; background-color: #F2821E; border: 1px solid #F2821E;
+}
+.better-button:visited a {
+color: #FFFFFF !important;
+}
+.better-button:active a {
+color: #FFFFFF !important;
 }
 @media only screen and (max-width: 600px) {
   table[class="body"] img {
@@ -127,7 +115,7 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 							<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
 								
 
-{{Subject .Subject "{{.InvitedBy}} has added you to the Grafana organization {{.OrgName}}"}}
+{{Subject .Subject "{{.InvitedBy}} has added you to the {{.OrgName}} organization"}}
 
 <table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
 	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
@@ -136,7 +124,7 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
 				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 					<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
-						<h3 style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 32px; font-weight: normal; line-height: 1.3; margin: 0; padding: 0; text-align: left; word-break: normal" align="left">You have been added to the Grafana organization {{.OrgName}}</h3>
+						<h3 style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: normal; line-height: 1.3; margin: 20px 0 0; padding: 0; text-align: left; word-break: normal" align="left">You have been added to {{.OrgName}}</h3>
 					</td>
 					<td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top"></td>
 				</tr>
@@ -152,10 +140,22 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
 				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
-						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">You can switch organization in the left side menu, in the dropdown below your username.</p>
+						<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left"><span class="emphasis" style="font-weight: 600">{{.InvitedBy}}</span> has added you to the <span class="emphasis" style="font-weight: 600">{{.OrgName}}</span> organization in Grafana. 
+						</p><p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: left" align="left">Once logged in, {{.OrgName}} will be available in the left side menu, in the dropdown below your username.</p>
 					</td>
 					<td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top"></td>
 				</tr>
+				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">				
+					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
+	                    <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border-spacing: 0; margin-bottom: 20px; margin-top: 10px; padding: 0; text-align: left; vertical-align: top">
+	                    	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+	                          <td align="center" class="better-button" bgcolor="#ff8f2b" style="-moz-border-radius: 2px; -moz-hyphens: auto; -webkit-border-radius: 2px; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; border-radius: 2px; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px; text-align: left; vertical-align: top; word-break: break-word" valign="top"><a href="{{.AppURL}}" target="_blank" style="-moz-border-radius: 2px; -webkit-border-radius: 2px; border-radius: 2px; border: 1px solid #ff8f2b; color: #FFF; display: inline-block; padding: 12px 25px; text-decoration: none">Log in now</a></td>
+	                        </tr>
+	                    </table>
+
+
+					</td>
+				</tr>				
 			</table>
 
 		</td>
@@ -173,7 +173,7 @@ font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-
 													<td align="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: left; vertical-align: top; word-break: break-word" valign="top">
 														<center style="min-width: 580px; width: 100%">
 															<p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: center" align="center">
-																Sent by <a href="{{.AppUrl}}" style="color: #2ba6cb; text-decoration: none">Grafana v{{.BuildVersion}}</a>
+																Sent by <a href="{{.AppUrl}}" style="color: #E67612; text-decoration: none">Grafana v{{.BuildVersion}}</a>
 															</p>
 														</center>
 													</td>
