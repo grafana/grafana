@@ -53,7 +53,7 @@ define([
         name: 'apps',
         multi: true,
         current: {text: "val1", value: "val1"},
-        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}]
+        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}, {text: 'val3', value: 'val3', selected: true}]
       };
 
       beforeEach(function() {
@@ -72,8 +72,11 @@ define([
         expect(variable.options[0].selected).to.be(true);
         expect(variable.options[1].selected).to.be(true);
       });
-    });
 
+      it('should set options that are not in value to selected false', function() {
+        expect(variable.options[2].selected).to.be(false);
+      });
+    });
 
     function describeUpdateVariable(desc, fn) {
       describe(desc, function() {
