@@ -14,9 +14,7 @@ function (angular, config) {
 
     var defaults = {
       name: '',
-      type: 'graphite',
-      url: '',
-      access: 'proxy'
+      type: 'netcrunch'
     };
 
     $scope.init = function() {
