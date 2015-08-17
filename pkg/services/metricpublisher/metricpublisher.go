@@ -50,10 +50,20 @@ func Init(metrics met.Backend) {
 }
 
 func stresser() {
+	// we rather lag behind then dropping ticks
+	// so that when we graph the metrics timeseries or analyze messages sent, there are no gaps
+	// we much rather just have the series end a bit sooner, which is trivial to spot.
+	syncTicks := time.Tick(time.Duration(1) * time.Second)
+	asyncTicks := make(chan time.Time, 1000)
+	go func() {
+		for t := range syncTicks {
+			asyncTicks <- t
+		}
+	}()
+
 	layout := "test-metric.Jan-02.15.04.05"
 	start := time.Now().Add(-time.Duration(1000) * time.Second)
-	tick := time.Tick(time.Duration(1) * time.Second)
-	for t := range tick {
+	for t := range asyncTicks {
 		pre := time.Now()
 		metrics := make([]*m.MetricDefinition, 0)
 		for val := start; !val.After(t); val = val.Add(time.Second) {
