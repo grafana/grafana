@@ -24,6 +24,9 @@
 	</ul>
 
 	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
 		<li>
 			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
 				<i class="fa fa-eye"></i>
@@ -81,10 +84,7 @@
 <div class="tight-form">
 	<!-- Raw Query mode  -->
 	<ul class="tight-form-list" ng-show="target.rawQuery">
-		<li class="tight-form-item">
-			<i class="fa fa-eye invisible"></i>
-		</li>
-		<li class="tight-form-item">
+		<li class="tight-form-item tight-form-align">
 			alias
 		</li>
 		<li>
@@ -108,10 +108,7 @@
 
 	<!-- Query editor mode -->
 	<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
-		<li class="tight-form-item">
-			<i class="fa fa-eye invisible"></i>
-		</li>
-		<li class="tight-form-item">
+		<li class="tight-form-item tight-form-align">
 			select
 		</li>
 		<li class="dropdown">
