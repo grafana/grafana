@@ -181,7 +181,9 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	// add to org
 	addOrgUserCmd := m.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
 	if err := bus.Dispatch(&addOrgUserCmd); err != nil {
-		return ApiError(500, "Error while trying to create org user", err)
+		if err != m.ErrOrgUserAlreadyAdded {
+			return ApiError(500, "Error while trying to create org user", err)
+		}
 	}
 
 	// set org to active
