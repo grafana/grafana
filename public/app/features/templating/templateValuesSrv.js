@@ -138,7 +138,11 @@ function (angular, _, kbn) {
         option.selected = false;
         if (_.isArray(variable.current.value)) {
           for (y = 0; y < variable.current.value.length; y++) {
+<<<<<<< c10fe447537d93e6d63c09ca7cf1094861ce635e
             value = variable.current.value[y];
+=======
+            value = variable.current.value[i];
+>>>>>>> fix(templating): fix for setting template variable value via url and having repeated panels or rows, fixes #2534
             if (option.value === value) {
               option.selected = true;
             }

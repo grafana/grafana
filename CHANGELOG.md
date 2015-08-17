@@ -36,6 +36,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2574](https://github.com/grafana/grafana/issues/2574). Snapshot: Fix for snapshot with expire 7 days option, 7 days option not correct, was 7 hours
 - [Issue #2568](https://github.com/grafana/grafana/issues/2568). AuthProxy: Fix for server side rendering of panel when using auth proxy
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
+<<<<<<< c10fe447537d93e6d63c09ca7cf1094861ce635e
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
@@ -72,6 +73,9 @@ Grunt & Watch tasks:
 **Fixes**
 - [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
 - [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
+=======
+panels or rows, fixes #2534
+>>>>>>> fix(templating): fix for setting template variable value via url and having repeated panels or rows, fixes #2534
 
 # 2.1.1 (2015-08-11)
 
