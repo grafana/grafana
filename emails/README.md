@@ -1,5 +1,6 @@
 
 - npm install
+- gem install premailer
 - grunt   (default task will build new inlines email templates)
 - grunt watch  (will build on source html or css change)
 
