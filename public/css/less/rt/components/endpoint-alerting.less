@@ -17,12 +17,20 @@
     display: inline-block;
     margin-right: 5px;
     font-size: 16px;
+    vertical-align: top;
+    margin-top: 2px;
+  }
+}
+
+.endpoint-alerting-recipients {
+  .icon {
+    margin-right: 10px;
   }
 }
 
 .endpoint-alerting-status {
   margin-right: 30px;
-  font-weight: bold; 
+  font-weight: 600; 
 
   &.not-enabled {
     display: inline-block;
@@ -36,12 +44,12 @@
 }
 
 .endpoint-alerting-status a {
-  display: block;
-  margin-left: 24px;
+  display: inline-block;
 }
 
 .endpoint-alerting-recipients {
   color: @rt-light-gray;
+  cursor: default;
 }
 
 .endpoint-alerting-status,
