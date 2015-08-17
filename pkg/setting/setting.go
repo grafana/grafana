@@ -456,6 +456,8 @@ var logLevels = map[string]int{
 }
 
 func initLogging(args *CommandLineArgs) {
+	//close any existing log handlers.
+	log.Close()
 	// Get and check log mode.
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
