@@ -78,6 +78,7 @@ function (_, kbn) {
     var nullAsZero = fillStyle === 'null as zero';
     var currentTime;
     var currentValue;
+    var sortedDatapoints = _.sortBy(_.map(this.datapoints, function(i) {return i[0];}));
 
     for (var i = 0; i < this.datapoints.length; i++) {
       currentValue = this.datapoints[i][0];
@@ -106,6 +107,18 @@ function (_, kbn) {
       }
 
       result.push([currentTime, currentValue]);
+    }
+
+    if (sortedDatapoints.length % 2 === 0) {
+      this.stats.median = (sortedDatapoints[((sortedDatapoints.length)/2)-1] +
+                           sortedDatapoints[((sortedDatapoints.length)/2)])/2;
+    }
+    else {
+      this.stats.median = sortedDatapoints[((sortedDatapoints.length+1)/2)-1];
+    }
+
+    if (this.stats.median === null) {
+      this.stats.median = 0;
     }
 
     if (this.datapoints.length >= 2) {
