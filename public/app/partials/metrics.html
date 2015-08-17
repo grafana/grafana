@@ -14,7 +14,7 @@
 		<span class="dropdown" ng-if="datasource.meta.type === 'mixed'">
 			<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
 				<i class="fa fa-plus"></i>&nbsp;
-				Query
+				Query &nbsp; <span class="caret"></span>
 			</button>
 
 			<ul class="dropdown-menu" role="menu">
@@ -34,12 +34,12 @@
 	<div class="pull-right dropdown" style="margin-right: 10px;">
 		<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Datasource'">
 			<i class="fa fa-database"></i>&nbsp;
-			{{datasource.name}} <span class="caret"></span>
+			{{datasource.name}} &nbsp; <span class="caret"></span>
 		</button>
 
 		<ul class="dropdown-menu" role="menu">
 			<li ng-repeat="datasource in datasources" role="menuitem">
-				<a ng-click="setDatasource(datasource.value);">{{datasource.name}}</a>
+				<a ng-click="setDatasource(datasource);">{{datasource.name}}</a>
 			</li>
 		</ul>
 	</div>
