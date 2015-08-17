@@ -6,23 +6,23 @@
 	</div>
 
 	<div style="margin: 20px 0 0 0">
-		<button class="btn btn-inverse" ng-click="addDataQuery(panel.target)" ng-if="datasource.meta.type !== 'mixed'">
+		<button class="btn btn-inverse" ng-click="addDataQuery()" ng-hide="datasource.meta.builtIn">
 			<i class="fa fa-plus"></i>&nbsp;
 			Query
 		</button>
 
-		<span class="dropdown" ng-if="datasource.meta.type === 'mixed'">
+		<div class="dropdown" ng-if="datasource.meta.builtIn">
 			<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
 				<i class="fa fa-plus"></i>&nbsp;
 				Query &nbsp; <span class="caret"></span>
 			</button>
 
 			<ul class="dropdown-menu" role="menu">
-				<li ng-repeat="datasource in datasources" role="menuitem">
-					<a ng-click="addDataQuery(datasource.name);">{{datasource.name}}</a>
+				<li ng-repeat="datasource in datasources" role="menuitem" ng-hide="datasource.meta.builtIn">
+					<a ng-click="addDataQuery(datasource);">{{datasource.name}}</a>
 				</li>
 			</ul>
-		</span>
+		</div>
 
 	</div>
 

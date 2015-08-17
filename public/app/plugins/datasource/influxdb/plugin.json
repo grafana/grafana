@@ -8,7 +8,7 @@
   "module": "plugins/datasource/influxdb/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/influxdb/partials/config.html",
+    "config": "app/plugins/datasource/influxdb/partials/config.html"
   },
 
   "metrics": true,

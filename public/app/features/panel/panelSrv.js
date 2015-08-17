@@ -48,7 +48,7 @@ function (angular, _, config) {
         var target = {};
 
         if (datasource) {
-          target.datasource = datasource;
+          target.datasource = datasource.name;
         }
 
         target.refId = _.find(letters, function(refId) {
@@ -66,21 +66,24 @@ function (angular, _, config) {
       };
 
       $scope.setDatasource = function(datasource) {
-        $scope.panel.datasource = datasource;
+        // switching to mixed
+        if (datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            target.datasource = $scope.panel.datasource;
+            if (target.datasource === null) {
+              target.datasource = config.defaultDatasource;
+            }
+          });
+        }
+        // switching from mixed
+        else if ($scope.datasource && $scope.datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            delete target.datasource;
+          });
+        }
+
+        $scope.panel.datasource = datasource.value;
         $scope.datasource = null;
-        $scope.panel.targets = _.filter($scope.panel.targets, function(target) {
-          delete target.datasource;
-          return target.datasource === void 0;
-        });
-
-        if ($scope.panel.targets.length === 0) {
-          $scope.panel.targets = [{refId: 'A'}];
-        }
-
-        if (datasource === 'mixed') {
-          $scope.panel.targets = [];
-        }
-
         $scope.get_data();
       };
 

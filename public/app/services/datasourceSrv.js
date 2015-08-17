@@ -20,12 +20,23 @@ function (angular, _, config) {
         if (value.meta && value.meta.metrics) {
           self.metricSources.push({
             value: key === config.defaultDatasource ? null : key,
-            name: key
+            name: key,
+            meta: value.meta,
           });
         }
         if (value.meta && value.meta.annotations) {
           self.annotationSources.push(value);
         }
+      });
+
+      this.metricSources.sort(function(a, b) {
+        if (a.meta.builtIn || a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
       });
     };
 

@@ -86,12 +86,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 	// add grafana backend data source
 	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["grafana"] = map[string]interface{}{
+	datasources["-- Grafana --"] = map[string]interface{}{
 		"type": "grafana",
 		"meta": grafanaDatasourceMeta,
 	}
+
 	// add mixed backend data source
-	datasources["mixed"] = map[string]interface{}{
+	datasources["-- Mixed --"] = map[string]interface{}{
 		"type": "mixed",
 		"meta": plugins.DataSources["mixed"],
 	}
