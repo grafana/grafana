@@ -1,10 +1,8 @@
 package metricpublisher
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -45,11 +43,7 @@ func TestReslice(t *testing.T) {
 			expectedLen += 1
 		}
 		if len(out) != expectedLen {
-			spew.Dump(in)
-			fmt.Println("========")
-			spew.Dump(out)
-			fmt.Println(c)
-			t.Fatalf("out array len expected %d, got %d", expectedLen, len(out))
+			t.Fatalf("case %#v: out array len expected %d, got %d", c, expectedLen, len(out))
 		}
 		for i := 0; i < fullSubSlices; i++ {
 			if len(out[i]) != c.subSize {
