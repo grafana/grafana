@@ -83,7 +83,11 @@ function (angular, config) {
         }, function(err) {
           if (err.statusText) {
             $scope.testing.message = err.statusText;
-            $scope.testing.title = "HTTP Error";
+            if (err.title == null) {
+              $scope.testing.title = "HTTP Error";
+            } else {
+              $scope.testing.title = err.title;
+            }
           } else {
             $scope.testing.message = err.message;
             $scope.testing.title = "Unknown error";
