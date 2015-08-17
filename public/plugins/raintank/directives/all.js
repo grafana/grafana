@@ -90,6 +90,8 @@ define([
             datasource.then(function(ds) {
               ds.query(metricsQuery).then(function(results) {
                 showHealth(results);
+              }, function() {
+                showHealth({data: []});
               });
             });
           }
