@@ -1,7 +1,7 @@
 <div class="editor-row">
 
 	<div class="tight-form-container">
-		<query-editor-loader ng-repeat="target in panel.targets">
+		<query-editor-loader ng-repeat="target in panel.targets" ng-class="{'tight-form-disabled': target.hide}" >
 		</query-editor-loader>
 	</div>
 
