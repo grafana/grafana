@@ -32,19 +32,25 @@
   margin-right: 30px;
   font-weight: 600; 
 
-  &.not-enabled {
+  &.not-enabled,
+  &.not-enabled a {
     display: inline-block;
     color: @rt-dark-gray;
     font-weight: normal;
+
+    &:hover {
+      color: lighten(@rt-dark-gray, 10%)
+    }
+  }
+
+  a {
+    display: inline-block;
+    color: @rt-emphasis;
   }
 
   @media (min-width: 675px) {
     margin-bottom: 2px;
   }
-}
-
-.endpoint-alerting-status a {
-  display: inline-block;
 }
 
 .endpoint-alerting-recipients {
