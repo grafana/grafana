@@ -7,6 +7,11 @@
 **Fixes**
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
 
+# 2.1.x (currently unreleased patch branch)
+
+**Fixes**
+- [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
+
 # 2.1.1 (2015-08-11)
 
 **Fixes**
