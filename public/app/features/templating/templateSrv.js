@@ -41,8 +41,13 @@ function (angular, _) {
       } else {
         if (variable.multiFormat === 'regex values') {
           return '(' + value.join('|') + ')';
+        } else if (variable.multiFormat === 'glob') {
+          return '{' + value.join(',') + '}';
+        } else if (variable.multiFormat === 'plain') {
+          return value.join(',');
+        } else {
+          return value;
         }
-        return '{' + value.join(',') + '}';
       }
     };
 

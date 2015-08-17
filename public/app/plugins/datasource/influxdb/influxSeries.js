@@ -55,7 +55,7 @@ function (_) {
   };
 
   p._getSeriesName = function(series, index) {
-    var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    var regex = /\$(\w+(?:,\w+)?)|\[\[([\s\S]+?)\]\]/g;
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
@@ -64,9 +64,14 @@ function (_) {
       if (group === 'col') { return series.columns[index]; }
       if (group.indexOf('tag_') !== 0) { return match; }
 
-      var tag = group.replace('tag_', '');
+      var alias = group.replace('tag_', '');
       if (!series.tags) { return match; }
-      return series.tags[tag];
+      var tags = alias.split(",");
+      var aliases = '';
+      for (var x in tags) {
+        aliases += series.tags[tags[x]] + " ";
+      }
+      return aliases.replace(/ $/,'');
     });
   };
 
