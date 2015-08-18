@@ -7,7 +7,7 @@ author: Torkel Ödegaard
 
 # How to integrate Hubot with Grafana
 
-Grafana 2.0 shipped with a great feature that enables it render any graph or panel to a PNG image.
+Grafana 2.0 shipped with a great feature that enables it render to any graph or panel to a PNG image.
 No matter what data source you are using, the PNG image of the Graph will look the same
 as it does in your browser.
 
