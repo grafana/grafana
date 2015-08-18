@@ -130,7 +130,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 
 	//--------- set required version of collector.------------//
 	//
-	if versionMajor < 0 || versionMinor < 1.1 {
+	if versionMajor < 0 || versionMinor < 1.3 {
 		return nil, errors.New("invalid collector version. Please upgrade.")
 	}
 	//
