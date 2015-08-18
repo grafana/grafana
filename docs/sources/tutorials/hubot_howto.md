@@ -61,7 +61,7 @@ The `hubot-grafana` plugin requires a number of environment variables to be set 
 The hubot plugin will take advantage of the Grafana server side rendering feature that can
 render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (linux only).
 
-To verify that this freature work try the `Direct link to rendered image` link in the panel share dialog.
+To verify that this freature works try the `Direct link to rendered image` link in the panel share dialog.
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.
 
 ### Grafana API Key
