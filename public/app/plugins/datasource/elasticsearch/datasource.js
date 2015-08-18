@@ -3,7 +3,8 @@ define([
   'lodash',
   'config',
   'kbn',
-  'moment'
+  'moment',
+  './directives'
 ],
 function (angular, _, config, kbn, moment) {
   'use strict';
