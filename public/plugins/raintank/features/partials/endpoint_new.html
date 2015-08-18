@@ -1,22 +1,4 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
-    <!-- <ul class="nav">
-        <li class="top-nav-title ng-binding">
-            <div>
-                <form ng-if="endpoint.id" style="margin-bottom:0px;">
-                    <li class="dropdown">
-                        <a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
-                            <span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
-                        </a>
-                        <ul class="dropdown-menu" role="menu" style="left: 65px">
-                            <li ng-repeat="endpoint in endpoints">
-                                <a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
-                            </li>
-                        </ul>
-                    </li>
-                </form>
-            </div>
-        </li>
-    </ul> -->
 </topnav>
 
 <div>
@@ -28,13 +10,14 @@
             <form name="endpointForm">
                 <div class="rt-page-section">
                     <div class="rt-mini-form new-endpoint-domain-form">
-                        <div class="rt-mini-form-col">
-                            <label class="rt-form-label-medium">Domain Name</label>
-                            <input type="text" class="rt-form-input" ng-model="endpoint.name" required="" ng-hide="showConfig" ng-class="{ 'rt-text-box-success' : discovered, 'rt-font-shrinker' : endpoint.name > 10 }">
-                            <div ng-show="showConfig" style="width: auto; min-width:228px; height: 34px; line-height: 34px; font-size: 25px; margin-right: 25px;"> {{endpoint.name }}</div>
+                        <div class="rt-mini-form-col" style="padding-right: 0px;">
+                            <label ng-hide="discovered || discoveryError || showConfig" class="rt-form-label-medium">Enter a domain name, URL or IP address:</label>
+                            <label ng-show="showConfig || discoveryError" class="rt-form-label-medium">Endpoint Name</label>
+                            <input type="text" class="rt-form-input" ng-model="endpoint.name" required="" ng-hide="discovered" ng-class="{ 'rt-text-box-success' : discovered, 'rt-font-shrinker' : endpoint.name > 10 }">
+                            <div ng-show="discovered" style="width: auto; min-width:228px; height: 34px; line-height: 34px; font-size: 25px; margin-right: 25px;"> {{endpoint.name }}</div>
                         </div>
                         <div class="rt-mini-form-col" style="margin-top: 15px;">
-                        <div ng-hide="showConfig || discoveryInProgress">
+                        <div ng-hide="showConfig || discoveryInProgress || discoveryError">
                                 <button type="submit" class="secondaryCTA ButtonTall" ng-click="endpointForm.$valid && discover(endpoint)">Auto Discover</button>
                             </div>
                             <div ng-show="discoveryInProgress">
@@ -84,7 +67,9 @@
                                 </p>
                             </div>
                             <div ng-show="discoveryError">
-                                 <p class="rt-body-copy">{{discoveryError}}</p>
+                                 <p class="rt-body-copy">
+                                     <b>Failed to discover endpoint.</b> From here, you can <a ng-click="skipDiscovery()" class="rt-modal-body-link">configure manually</a> or <a class="rt-modal-body-link" ng-click="reset()">start over</a>.
+                                 </p>
                             </div>
                             <div ng-show="!discovered && showConfig">
                                 <p class="rt-body-copy">
