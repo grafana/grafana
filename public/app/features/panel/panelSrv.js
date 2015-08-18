@@ -43,8 +43,21 @@ function (angular, _, config) {
         });
       };
 
-      $scope.addDataQuery = function() {
-        $scope.panel.targets.push({target: ''});
+      $scope.addDataQuery = function(datasource) {
+        var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var target = {};
+
+        if (datasource) {
+          target.datasource = datasource.name;
+        }
+
+        target.refId = _.find(letters, function(refId) {
+          return _.every($scope.panel.targets, function(other) {
+            return other.refId !== refId;
+          });
+        });
+
+        $scope.panel.targets.push(target);
       };
 
       $scope.removeDataQuery = function (query) {
@@ -53,7 +66,23 @@ function (angular, _, config) {
       };
 
       $scope.setDatasource = function(datasource) {
-        $scope.panel.datasource = datasource;
+        // switching to mixed
+        if (datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            target.datasource = $scope.panel.datasource;
+            if (target.datasource === null) {
+              target.datasource = config.defaultDatasource;
+            }
+          });
+        }
+        // switching from mixed
+        else if ($scope.datasource && $scope.datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            delete target.datasource;
+          });
+        }
+
+        $scope.panel.datasource = datasource.value;
         $scope.datasource = null;
         $scope.get_data();
       };

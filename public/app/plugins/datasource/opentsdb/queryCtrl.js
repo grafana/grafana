@@ -113,6 +113,7 @@ function (angular, _, kbn) {
       return errs;
     }
 
+    $scope.init();
   });
 
 });

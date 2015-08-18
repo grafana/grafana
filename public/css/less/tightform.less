@@ -22,11 +22,13 @@
 
 .tight-form-container-no-item-borders {
   border: 1px solid @grafanaTargetBorder;
+  border-bottom: none;
 
   .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
     border: none;
   }
 }
+
 
 .spaced-form {
   .tight-form {
@@ -42,11 +44,10 @@
 }
 
 .tight-form-container {
+  border-bottom: 1px solid @grafanaTargetBorder;
+
   .tight-form:last-child {
     border-bottom: none;
-  }
-  &:last-child {
-    border-bottom: 1px solid @grafanaTargetBorder;
   }
 }
 
@@ -63,7 +64,7 @@
 }
 
 .grafana-metric-options {
-  margin-top: 35px;
+  margin-top: 25px;
 }
 
 .tight-form-item {
@@ -207,5 +208,9 @@ select.tight-form-input {
   .tight-form {
     margin-left: 20px;
   }
+}
+
+.tight-form-align {
+  padding-left: 66px;
 }
 
