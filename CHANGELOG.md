@@ -1,11 +1,21 @@
 # 2.2 (unreleased)
 
-**New Features && Enhancements**
+** New Feature: Mix data sources **
+A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
+it allows you to add queries of differnet data source types & instances to the same graph/panel!
+[Issue #436](https://github.com/grafana/grafana/issues/436)
+
+** Other new Features && Enhancements**
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 
 **Fixes**
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
+
+** Breaking Changes **
+- Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
+require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
+data source api change.
 
 # 2.1.1 (2015-08-11)
 
