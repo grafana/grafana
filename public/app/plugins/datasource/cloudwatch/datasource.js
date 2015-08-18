@@ -312,6 +312,15 @@ function (angular, _, kbn) {
       return d.promise;
     };
 
+    CloudWatchDatasource.prototype.getTemplateVariableNames = function() {
+      var variables = [];
+      templateSrv.fillVariableValuesForUrl(variables);
+
+      return _.map(_.keys(variables), function(k) {
+        return k.replace(/var-/, '$');
+      });
+    };
+
     CloudWatchDatasource.prototype.metricFindQuery = function(query) {
       var region;
       var namespace;
