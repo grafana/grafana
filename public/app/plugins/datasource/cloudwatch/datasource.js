@@ -189,8 +189,8 @@ function (angular, _, kbn) {
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
         query.dimensions = _.map(_.keys(target.dimensions), function(key) {
           return {
-            Name: key,
-            Value: target.dimensions[key]
+            Name: templateSrv.replace(key, options.scopedVars),
+            Value: templateSrv.replace(target.dimensions[key], options.scopedVars)
           };
         });
         query.statistics = getActivatedStatistics(target.statistics);
@@ -264,14 +264,20 @@ function (angular, _, kbn) {
     };
 
     CloudWatchDatasource.prototype.performSuggestMetrics = function(namespace) {
+      namespace = templateSrv.replace(namespace);
       return this.supportedMetrics[namespace] || [];
     };
 
     CloudWatchDatasource.prototype.performSuggestDimensionKeys = function(namespace) {
+      namespace = templateSrv.replace(namespace);
       return this.supportedDimensions[namespace] || [];
     };
 
     CloudWatchDatasource.prototype.performSuggestDimensionValues = function(region, namespace, metricName, dimensions) {
+      region = templateSrv.replace(region);
+      namespace = templateSrv.replace(namespace);
+      metricName = templateSrv.replace(metricName);
+
       var cloudwatch = this.getCloudWatchClient(region);
 
       var params = {
@@ -281,8 +287,8 @@ function (angular, _, kbn) {
       if (!_.isEmpty(dimensions)) {
         params.Dimensions = _.map(_.keys(dimensions), function(key) {
           return {
-            Name: key,
-            Value: dimensions[key]
+            Name: templateSrv.replace(key),
+            Value: templateSrv.replace(dimensions[key])
           };
         });
       }
@@ -333,23 +339,23 @@ function (angular, _, kbn) {
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)\)/);
       if (metricNameQuery) {
-        namespace = metricNameQuery[1];
+        namespace = templateSrv.replace(metricNameQuery[1]);
         d.resolve(transformSuggestData(this.performSuggestMetrics(namespace)));
         return d.promise;
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
       if (dimensionKeysQuery) {
-        namespace = dimensionKeysQuery[1];
+        namespace = templateSrv.replace(dimensionKeysQuery[1]);
         d.resolve(transformSuggestData(this.performSuggestDimensionKeys(namespace)));
         return d.promise;
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
-        region = dimensionValuesQuery[1];
-        namespace = dimensionValuesQuery[2];
-        metricName = dimensionValuesQuery[3];
+        region = templateSrv.replace(dimensionValuesQuery[1]);
+        namespace = templateSrv.replace(dimensionValuesQuery[2]);
+        metricName = templateSrv.replace(dimensionValuesQuery[3]);
         var dimensions = {};
 
         return this.performSuggestDimensionValues(region, namespace, metricName, dimensions)
@@ -399,7 +405,7 @@ function (angular, _, kbn) {
     function transformMetricData(md, options) {
       var result = [];
 
-      var dimensionPart = JSON.stringify(options.dimensions);
+      var dimensionPart = templateSrv.replace(JSON.stringify(options.dimensions));
       _.each(getActivatedStatistics(options.statistics), function(s) {
         var metricLabel = md.Label + '_' + s + dimensionPart;
 
