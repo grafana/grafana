@@ -30,8 +30,6 @@ function (angular, _) {
         delete target.groupby_field_add;
       }
 
-      $scope.rawQuery = false;
-
       $scope.functions = [
         'count', 'mean', 'sum', 'min',
         'max', 'mode', 'distinct', 'median',
@@ -46,12 +44,8 @@ function (angular, _) {
       });
     };
 
-    $scope.showQuery = function () {
-      $scope.target.rawQuery = true;
-    };
-
-    $scope.hideQuery = function () {
-      $scope.target.rawQuery = false;
+    $scope.toggleQueryMode = function () {
+      $scope.target.rawQuery = !$scope.target.rawQuery;
     };
 
     // Cannot use typeahead and ng-change on blur at the same time
