@@ -234,7 +234,6 @@ function (angular, _) {
       $scope.discoveryInProgress = false;
       $scope.discoveryError = false;
       $scope.showConfig = false;
-      $scope.endpoint = {"name": ""};
       $scope.monitors = {};
       _.forEach($scope.monitor_types, function(type) {
         $scope.setDefaultMonitor(type);
