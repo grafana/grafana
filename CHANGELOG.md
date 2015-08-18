@@ -1,5 +1,6 @@
 # 2.5 (unreleased)
 
+<<<<<<< 1b7ba34e481f3622a64f26c0c03e83fc5fbc7115
 **New Feature: Mix data sources**
 - A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
@@ -21,6 +22,14 @@ it allows you to add queries of differnet data source types & instances to the s
 **Other new Features && Enhancements**
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
+=======
+** New Feature: Mix data sources **
+A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
+it allows you to add queries of differnet data source types & instances to the same graph/panel!
+[Issue #436](https://github.com/grafana/grafana/issues/436)
+
+** Other new Features && Enhancements**
+>>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 - [Issue #2647](https://github.com/grafana/grafana/issues/2647). InfluxDB: You can now set group by time interval on each query
@@ -76,6 +85,11 @@ Grunt & Watch tasks:
 =======
 panels or rows, fixes #2534
 >>>>>>> fix(templating): fix for setting template variable value via url and having repeated panels or rows, fixes #2534
+
+** Breaking Changes **
+- Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
+require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
+data source api change.
 
 # 2.1.1 (2015-08-11)
 
