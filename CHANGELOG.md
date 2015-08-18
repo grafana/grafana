@@ -88,7 +88,7 @@ panels or rows, fixes #2534
 
 ** Breaking Changes **
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
-require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
+require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
 
 # 2.1.1 (2015-08-11)
