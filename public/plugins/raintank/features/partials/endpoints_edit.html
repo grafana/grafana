@@ -22,7 +22,7 @@
 <div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
   <!-- page title -->
   <div class="rt-page-header-area">
-    <h1 class="rt-h1">{{endpoint.name}}</h1>
+    <h1 class="rt-h1">{{endpoint.name}}</h1><a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="primary-icon-header dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Summary </br>dashboard for this endpoint'"></i></a>
   </div>
   <div class="editor-row rt-detail-pages">
     <div class="editor-option">
@@ -33,11 +33,6 @@
   <!-- tabs -->
   <div class="rt-tabs" ng-if="endpoint.id">
     <span class="nonactive"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="active"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
-    <div style="float: right; display: inline;">
-      <div style="display: inline;">
-        <a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Litmus Endpoint: Summary</span></a>
-      </div>
-    </div>    
   </div>
 </div>
 

@@ -105,46 +105,20 @@
 							</div>
 						</div>
 					</div>
-					<div class="currentStatus">
-
-						<div style="float: right; margin-left: 5px;">
-							<a href="endpoints/edit/{{endpoint.id}}#dns">
-								<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
-							</a>
-<!-- 							<ul class="dropdown-menu" role="menu">
-								<li ng-show="getMonitorByTypeName('dns').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Disable DNS
-									</a>
-								</li>
-								<li ng-hide="getMonitorByTypeName('dns').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable DNS
-									</a>
-								</li>		
-								<li>
-									<a href="endpoints/edit/{{endpoint.id}}">
-										Configure
-									</a>
-								</li>
-							</ul> -->
-						</div>
-
-						<div class="pull-right" ng-show="getMonitorByTypeName('DNS').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
-						</div>
-
-						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
-
-						<div class="health">
-							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" style="width: 40px; height: 40px;">
-						</div>
-
-						<div class="check">
-							<span class="checkType">DNS:</span>
-							<div ng-show="getMonitorByTypeName('DNS').enabled">
-								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
-								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
+					<div class="currentStatus summary-table">
+						<ul class="summary-table-actions">
+							<li ng-show="getMonitorByTypeName('DNS').enabled">
+								<a ng-click="gotoDashboard(endpoint, 'dns')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for DNS'"></i></a>					
+							</li>
+							<li>
+								<a href="endpoints/edit/{{endpoint.id}}#dns">
+									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
+								</a>
+							</li>
+						</ul>
+						<div class="summary-table-status-icon">
+							<div class="health">
+								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
@@ -179,47 +153,22 @@
 							</div>
 						</div>
 					</div>
-
-					<div class="currentStatus">
-
-						<div style="float: right; margin-left: 5px;">
-							<a href="endpoints/edit/{{endpoint.id}}#http">
-								<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
-							</a>
-<!-- 							<ul class="dropdown-menu" role="menu">
-								<li ng-show="getMonitorByTypeName('HTTP').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Disable HTTP
-									</a>
-								</li>
-								<li ng-hide="getMonitorByTypeName('HTTP').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable HTTP
-									</a>
-								</li>								
-								<li>
-									<a href="endpoints/edit/{{endpoint.id}}">
-										Configure
-									</a>
-								</li>
-							</ul> -->
-						</div>
-
-						<div class="pull-right" ng-show="getMonitorByTypeName('HTTP').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'http')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i></a>
-						</div>
-						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
-
-						<div class="health">
-							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
-						</div>
-
-
-						<div class="check">
-							<span class="checkType">HTTP:</span>
-                					<div ng-show="getMonitorByTypeName('HTTP').enabled">
-								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
-								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
+					<div class="currentStatus summary-table">
+						<ul class="summary-table-actions">
+							<li ng-show="getMonitorByTypeName('HTTP').enabled">
+								<a ng-click="gotoDashboard(endpoint, 'http')">
+									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i>
+								</a>
+							</li>
+							<li>
+								<a href="endpoints/edit/{{endpoint.id}}#http">
+									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
+								</a>
+							</li>
+						</ul>
+						<div class="summary-table-status-icon">
+							<div class="health">
+								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
@@ -256,51 +205,22 @@
 							</div>
 						</div>
 					</div>
-
-					<div class="currentStatus">
-
-						<div style="float: right; margin-left: 5px;">
-							<a href="endpoints/edit/{{endpoint.id}}#https">
-								<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
-							</a>
-<!-- 							<ul class="dropdown-menu" role="menu">
-								<li ng-show="getMonitorByTypeName('HTTPS').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Disable HTTPS
-									</a>
-								</li>
-								<li ng-hide="getMonitorByTypeName('HTTPS').enabled">
-									<a href="endpoints/summary/{{endpoint.id}}">
-										Enable HTTPS
-									</a>
-								</li>		
-								<li>
-									<a href="endpoints/edit/{{endpoint.id}}">
-										Configure
-									</a>
-								</li>
-							</ul> -->
-						</div>
-
-						<div class="pull-right" ng-show="getMonitorByTypeName('HTTPS').enabled">
-							<a ng-click="gotoDashboard(endpoint, 'https')"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i></a>
-						</div>
-
-						<!-- <div class="pull-right tertiaryCTA">All Events</div> -->
-
-						<div class="health">
-							<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}.svg" style="width: 40px; height: 40px;">
-						</div>
-
-
-						<div class="check">
-							<span class="checkType">HTTPS:</span>
-							<div ng-show="getMonitorByTypeName('HTTPS').enabled")>
-								<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
-								<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
-							</div>
-							<div ng-show="!getMonitorByTypeName('HTTPS').enabled">
-								<a href="endpoints/edit/{{endpoint.id}}#https" class="freqMsg disabled">Not enabled, configure now.</a>
+					<div class="currentStatus summary-table">
+						<ul class="summary-table-actions">
+							<li ng-show="getMonitorByTypeName('HTTP').enabled">
+								<a ng-click="gotoDashboard(endpoint, 'http')">
+									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i>
+								</a>
+							</li>
+							<li>
+								<a href="endpoints/edit/{{endpoint.id}}#http">
+									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
+								</a>
+							</li>
+						</ul>
+						<div class="summary-table-status-icon">
+							<div class="health">
+								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">

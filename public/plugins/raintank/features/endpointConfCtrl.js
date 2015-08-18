@@ -449,10 +449,37 @@ function (angular, _) {
       return changes;
     };
 
-    $scope.gotoDashboard = function() {
-      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.endpoint.slug});
+    $scope.gotoDashboard = function(endpoint, type) {
+      if (!type) {
+        type = 'summary';
+      }
+      var search = {
+        "var-collector": "All",
+        "var-endpoint": $scope.endpoint.slug
+      };
+      switch(type) {
+        case "summary":
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
+          break;
+        case "ping":
+          $location.path("/dashboard/file/rt-endpoint-ping.json").search(search);
+          break;
+        case "dns":
+          $location.path("/dashboard/file/rt-endpoint-dns.json").search(search);
+          break;
+        case "http":
+          search['var-protocol'] = "http";
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
+          break;
+        case "https":
+          search['var-protocol'] = "https";
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
+          break;
+        default:
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
+          break;
+      }
     };
-
     $scope.init();
 
   });
