@@ -57,18 +57,6 @@ function (angular, _) {
         }, 0, false);
       });
 
-      $scope.$watch('endpoint.name', function(newVal, oldVal) {
-        $scope.discovered = false;
-        _.each($scope.monitors, function(monitor) {
-          _.each(monitor.settings, function(setting) {
-            if ((setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") &&
-                ((setting.value === "") || (setting.value === oldVal))) {
-              setting.value = newVal;
-            }
-          });
-        });
-      });
-
       if ($location.hash()) {
         switch($location.hash()) {
         case "ping":
