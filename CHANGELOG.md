@@ -1,5 +1,6 @@
 # 2.5.1 (unreleased)
 
+<<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
 ### Enhancements
 * **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
 * **Elasticsearch**: Support for dynamic daily indices for annotations, closes [#3061](https://github.com/grafana/grafana/issues/3061)
@@ -39,11 +40,14 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 =======
+=======
+>>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 ** New Feature: Mix data sources **
 A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
+<<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
 ** User Onboarding **
 =======
 >>>>>>> Fix changelog formatting
@@ -70,6 +74,9 @@ it allows you to add queries of differnet data source types & instances to the s
 >>>>>>> Update CHANGELOG.md
 =======
 >>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
+=======
+** Other new Features && Enhancements**
+>>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 <<<<<<< 4479e2ade71003c3617865b40b20a526895f33bb
@@ -213,6 +220,11 @@ Grunt & Watch tasks:
 =======
 panels or rows, fixes #2534
 >>>>>>> fix(templating): fix for setting template variable value via url and having repeated panels or rows, fixes #2534
+
+** Breaking Changes **
+- Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
+require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
+data source api change.
 
 # 2.1.1 (2015-08-11)
 
