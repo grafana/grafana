@@ -29,7 +29,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUserPermissions)
 }
 
-func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
+func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
 	var org m.Org
 
 	if setting.AutoAssignOrg {
@@ -45,7 +45,7 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 			org.Id = 1
 		}
 	} else {
-		org.Name = userEmail
+		org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
 	}
 
 	org.Created = time.Now()
@@ -66,7 +66,7 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction2(func(sess *session) error {
-		orgId, err := getOrgIdForNewUser(cmd.Email, sess)
+		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
 		}
