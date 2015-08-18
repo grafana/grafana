@@ -98,7 +98,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	if defaultDatasource == "" {
-		defaultDatasource = "grafana"
+		defaultDatasource = "-- Grafana --"
 	}
 
 	jsonObj := map[string]interface{}{
