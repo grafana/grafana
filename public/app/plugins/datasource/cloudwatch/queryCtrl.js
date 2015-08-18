@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CloudWatchQueryCtrl', function($scope) {
+  module.controller('CloudWatchQueryCtrl', function($scope, templateSrv) {
 
     $scope.init = function() {
       $scope.target.namespace = $scope.target.namespace || '';
@@ -40,19 +40,19 @@ function (angular, _) {
     };
 
     $scope.suggestRegion = function(query, callback) { // jshint unused:false
-      return $scope.datasource.performSuggestRegion();
+      return _.union($scope.datasource.performSuggestRegion(), $scope.datasource.getTemplateVariableNames());
     };
 
     $scope.suggestNamespace = function(query, callback) { // jshint unused:false
-      return $scope.datasource.performSuggestNamespace();
+      return _.union($scope.datasource.performSuggestNamespace(), $scope.datasource.getTemplateVariableNames());
     };
 
     $scope.suggestMetrics = function(query, callback) { // jshint unused:false
-      return $scope.datasource.performSuggestMetrics($scope.target.namespace);
+      return _.union($scope.datasource.performSuggestMetrics($scope.target.namespace), $scope.datasource.getTemplateVariableNames());
     };
 
     $scope.suggestDimensionKeys = function(query, callback) { // jshint unused:false
-      return $scope.datasource.performSuggestDimensionKeys($scope.target.namespace);
+      return _.union($scope.datasource.performSuggestDimensionKeys($scope.target.namespace), $scope.datasource.getTemplateVariableNames());
     };
 
     $scope.suggestDimensionValues = function(query, callback) {
@@ -70,12 +70,13 @@ function (angular, _) {
         var suggestData = _.chain(result)
         .flatten(true)
         .filter(function(dimension) {
-          return dimension.Name === $scope.target.currentDimensionKey;
+          return dimension.Name === templateSrv.replace($scope.target.currentDimensionKey);
         })
         .pluck('Value')
         .uniq()
         .value();
 
+        suggestData = _.union(suggestData, $scope.datasource.getTemplateVariableNames());
         callback(suggestData);
       }, function() {
         callback([]);
