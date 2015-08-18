@@ -56,7 +56,7 @@
 			<em>No collectors defined</em>
 		</div>
 		<div class="rt-list" ng-repeat="collector in collectors | filterByTag:filter.tag | filter:statusFilter | orderBy:sort_field">
-			<div class="rt-list-header">
+			<div class="rt-list-header" style="overflow:hidden;">
 				<span class="rt-list-item-title"><a href="collectors/summary/{{collector.id}}">{{collector.name}}</a></span>
 				<span style="vertical-align: 2px;"><img src="img/raintank_icn.svg" width="15px" height="15px" ng-if="collector.public == 1" style="margin-right: 5px;" bs-tooltip="'raintank Public Collector'"></img></span>
 				<span style="vertical-align: 2px;"><img src="img/rt-private_collector.svg" width="15px" height="15px" ng-if="collector.public == 0" style="margin-right: 5px;" bs-tooltip="'Private Collector'"></img></span>
@@ -70,60 +70,56 @@
 						</ul>
 					</span> -->
 
-					<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name="tag">
-						<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
-						<ul class="dropdown-menu rt-tag-dropup">
+				<span class="label rt-label-tag dropdown rt-list-tag-menu" ng-repeat="tag in collector.tags" tag-color-from-name="tag">
+					<a data-toggle="dropdown">{{tag}} <i ng-class="icon" class="tag-icon icon-rt-collector"></i></a>
+					<ul class="dropdown-menu rt-tag-dropup">
+						<li>
+							<a href="#" bs-tooltip="'Coming Soon'">
+								<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
+								Dashboard
+							</a>
+						</li>
+						<li>
+							<a ng-click="setCollectorFilter(tag)">
+								<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
+								Filter
+							</a>
+						</li>
+					</ul>
+				</span>
+
+
+				<div style="float: right; display: inline;">
+					<div style="display: inline; margin-right:20px;">
+						<span class="rt-list-collector-status-{{collector.online?'online':'offline'}}">{{collector.online?"ONLINE":"OFFLINE"}}</span>
+					</div>
+					<div style="display: inline; margin-left:6px;">
+						<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{collector.name}} dashboard'"></i></a>
+					</div>
+					<div class="dropdown" style="display: inline;">
+						<a data-toggle="dropdown">
+							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
+						</a>
+						<ul class="dropdown-menu" role="menu">
 							<li>
-								<a href="#" bs-tooltip="'Coming Soon'">
-									<i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i>
-									Dashboard
+								<a href="collectors/summary/{{collector.id}}">
+									View
 								</a>
 							</li>
-							<li>
-								<a ng-click="setCollectorFilter(tag)">
-									<i ng-class="icon" class="dashboard-icon icon-rt-filter"></i>
-									Filter
+							<li ng-show="collector.org_id == contextSrv.user.orgId">
+								<a href="collectors/edit/{{collector.id}}">
+									Configure
+								</a>
+							</li>
+							<li ng-show="collector.org_id == contextSrv.user.orgId">
+								<a ng-click="remove(collector)">
+									Delete
 								</a>
 							</li>
 						</ul>
-					</span>
-
-
-					<div style="float: right; display: inline;">
-						<div style="display: inline; margin-left:6px;">
-							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{collector.name}} dashboard'"></i></a>
-						</div>
-						<div class="dropdown" style="display: inline;">
-							<a data-toggle="dropdown">
-								<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
-							</a>
-							<ul class="dropdown-menu" role="menu">
-								<li>
-									<a href="collectors/summary/{{collector.id}}">
-										View
-									</a>
-								</li>
-								<li ng-show="collector.org_id == contextSrv.user.orgId">
-									<a href="collectors/edit/{{collector.id}}">
-										Configure
-									</a>
-								</li>
-								<li ng-show="collector.org_id == contextSrv.user.orgId">
-									<a ng-click="remove(collector)">
-										Delete
-									</a>
-								</li>
-							</ul>
-						</div>
 					</div>
-					<span style="float: right;">
-					</span>
-				<div style="margin-left: 10px;">
-					<p style="margin:2px 0 0 0;">
-					<span class="rt-list-collector-status-{{collector.online?'online':'offline'}}">{{collector.online?"ONLINE":"OFFLINE"}}</span>
-					<!--<span class="rt-list-collector-since">for 12 days</span>-->
-					</p>
 				</div>
+			
 		</div>
 	</div>
 </div>
