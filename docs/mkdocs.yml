@@ -69,7 +69,7 @@ pages:
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
-- ['tutorials/stack_guide_graphite.md', 'Tutorials', 'Stack setup: Grafana + Graphite + StatsD']
+- ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
 
 - ['project/building_from_source.md', 'Project', 'Building from Source']
 - ['project/cla.md', 'Project', 'Contributor License Agreement']
