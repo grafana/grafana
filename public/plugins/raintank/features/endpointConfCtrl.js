@@ -57,7 +57,6 @@ function (angular, _) {
         }, 0, false);
       });
 
-
       if ($location.hash()) {
         switch($location.hash()) {
         case "ping":
