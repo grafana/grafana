@@ -1,16 +1,16 @@
 <div class="tight-form">
 	<ul class="tight-form-list pull-right">
+		<li class="tight-form-item small" ng-show="target.datasource">
+			<em>{{target.datasource}}</em>
+		</li>
 		<li class="tight-form-item">
 			<div class="dropdown">
-				<a class="pointer dropdown-toggle"
-					data-toggle="dropdown"
-					tabindex="1">
+				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
 					<i class="fa fa-bars"></i>
 				</a>
 				<ul class="dropdown-menu pull-right" role="menu">
+					<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
 					<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="showQuery()" ng-hide="target.rawQuery">Raw query mode</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="hideQuery()" ng-show="target.rawQuery">Query editor mode</a></li>
 					<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up </a></li>
 					<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
 				</ul>
@@ -35,19 +35,13 @@
 	</ul>
 
 	<!-- Raw Query mode  -->
-	<ul class="tight-form-list" ng-show="target.rawQuery">
-		<li>
-			<input type="text"
-			class="tight-form-input span10"
-			ng-model="target.query"
-			placeholder="select ..."
-			give-focus="target.rawQuery"
-			spellcheck='false'
-			data-min-length=0 data-items=100
-			ng-model-onblur
-			ng-blur="get_data()">
-		</li>
-	</ul>
+	<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query"
+	placeholder="select ..." ng-show="target.rawQuery"
+	give-focus="target.rawQuery"
+	spellcheck='false'
+	data-min-length=0 data-items=100
+	ng-model-onblur
+	ng-blur="get_data()"></input>
 
 	<!-- Query editor mode -->
 	<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
