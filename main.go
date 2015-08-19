@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/collectoreventpublisher"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
@@ -102,6 +103,7 @@ func main() {
 		log.Error(3, "Statsd client:", err)
 	}
 	metricpublisher.Init(metricsBackend)
+	collectoreventpublisher.Init(metricsBackend)
 	api.InitCollectorController(metricsBackend)
 	if setting.AlertingEnabled {
 		alerting.Init(metricsBackend)

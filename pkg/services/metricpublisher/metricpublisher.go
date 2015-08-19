@@ -51,7 +51,7 @@ func Init(metrics met.Backend) {
 
 func stresser() {
 	layout := "test-metric.Jan-02.15.04.05"
-	start := time.Now().Add(-time.Duration(1000) * time.Second)
+	start := time.Now().Add(-time.Duration(20000) * time.Second)
 	tick := time.Tick(time.Duration(1) * time.Second)
 	for t := range tick {
 		pre := time.Now()
