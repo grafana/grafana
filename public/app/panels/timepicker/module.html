@@ -27,15 +27,16 @@
 					<i class="fa fa-caret-down"></i>
 				</a>
 
-				<ul class="dropdown-menu">
+				<!-- lacy load this -->
+				<ul class="dropdown-menu" ng-if="time_options" >
 					<li bindonce ng-repeat='option in time_options'>
 						<a ng-click="setRelativeFilter(option)" bo-text="option.text"></a>
           </li>
 
           <!-- Auto refresh submenu -->
-          <li class="dropdown-submenu">
+					<li class="dropdown-submenu">
             <a href="#">Auto-Refresh</a>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu" ng-class="{'dropdown-submenu-left': refreshMenuLeftSide}">
               <li>
                 <a ng-click="timeSrv.set_interval(false)">Off</a>
               </li>
