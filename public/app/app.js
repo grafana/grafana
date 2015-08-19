@@ -15,6 +15,8 @@ define([
   'angular-ui',
   'extend-jquery',
   'bindonce',
+  'client',
+  'remoteDataLists'
 ],
 function (angular, $, _, appLevelRequire) {
 

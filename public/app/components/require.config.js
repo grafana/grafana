@@ -12,6 +12,8 @@ require.config({
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',
+    client:                   '../vendor/adrem/client.min',
+    remoteDataLists:          '../vendor/adrem/RemoteDataLists.min',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular-route/angular-route',
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
@@ -44,7 +46,7 @@ require.config({
 
     modernizr:                '../vendor/modernizr-2.6.1',
 
-    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
+    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput'
   },
   shim: {
 
@@ -99,6 +101,6 @@ require.config({
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
 
-    'bootstrap-tagsinput':          ['jquery'],
-  },
+    'bootstrap-tagsinput':  ['jquery']
+  }
 });
