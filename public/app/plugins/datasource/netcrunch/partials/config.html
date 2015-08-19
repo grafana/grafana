@@ -7,11 +7,18 @@
     </li>
     <li>
       <input type="text" class="tight-form-input input-xlarge"
-             ng-model='current.url'
+             ng-model='current.simpleUrl'
              placeholder="192.168.1.1"
              ng-pattern="/(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$)|(^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$)/" required>
 
       </input>
+    </li>
+    <li class="tight-form-item">
+      Use SSL&nbsp;
+      <input class="cr1" id="current.isSSL" type="checkbox"
+             ng-model="current.isSSL"
+             ng-checked="current.isSSL">
+      <label for="current.isSSL" class="cr1"></label>
     </li>
   </ul>
   <div class="clearfix"></div>

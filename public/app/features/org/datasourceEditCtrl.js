@@ -49,6 +49,13 @@ function (angular, config) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
         $scope.isNew = false;
         $scope.current = ds;
+        if (ds.type === 'netcrunch') {
+          $scope.current.isSSL = false;
+          if (ds.url.indexOf('https://') === 0) {
+            $scope.current.isSSL = true;
+          }
+          $scope.current.simpleUrl = ds.url.replace('http://', '').replace('https://', '');
+        }
         $scope.typeChanged();
       });
     };
@@ -99,8 +106,13 @@ function (angular, config) {
     };
 
     $scope.saveChanges = function(test) {
+      var protocol = ($scope.current.isSSL == false) ? 'http://' : 'https://';
       if (!$scope.editForm.$valid) {
         return;
+      }
+
+      if ($scope.current.type === 'netcrunch') {
+        $scope.current.url = protocol + $scope.current.simpleUrl;
       }
 
       if ($scope.current.id) {
