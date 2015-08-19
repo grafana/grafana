@@ -112,9 +112,6 @@ func Publish(metrics []*m.MetricDefinition) error {
 	if len(metrics) == 0 {
 		return nil
 	}
-	// TODO instrument len(metrics), msg size, set alerts
-	// TODO if we panic, make sure no auto-restart until nsqd is up. make probe retry if grafana panics
-
 	// typical metrics seem to be around 300B
 	// nsqd allows <= 10MiB messages.
 	// we ideally have 64kB ~ 1MiB messages (see benchmark https://gist.github.com/Dieterbe/604232d35494eae73f15)
