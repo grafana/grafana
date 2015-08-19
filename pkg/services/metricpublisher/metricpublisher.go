@@ -151,7 +151,7 @@ func Publish(metrics []*m.MetricDefinition) error {
 		if err != nil {
 			panic(fmt.Errorf("can't publish to nsqd: %s", err))
 		}
-		log.Info("DIETERPUBLISHED %d size=%d", id, buf.Len())
+		log.Info("published metrics %d size=%d", id, buf.Len())
 	}
 
 	//globalProducer.Stop()
