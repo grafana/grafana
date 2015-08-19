@@ -86,6 +86,8 @@ function (angular, app, _, moment, kbn) {
         }
         return option;
       });
+
+      $scope.refreshMenuLeftSide = $scope.time.rangeString.length < 10;
     };
 
     $scope.customTime = function() {
