@@ -15,7 +15,7 @@ function (angular, config) {
     var defaults = {
       name: '',
       url: '',
-      access: 'direct',
+      access: 'proxy',
       type: 'netcrunch'
     };
 
