@@ -14,9 +14,7 @@ define([
   'angular-dragdrop',
   'angular-ui',
   'extend-jquery',
-  'bindonce',
-  'client',
-  'remoteDataLists'
+  'bindonce'
 ],
 function (angular, $, _, appLevelRequire) {
 
