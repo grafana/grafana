@@ -16,7 +16,7 @@ import (
 
 // identifier of message format
 const (
-	msgFormatArrayJson = iota
+	msgFormatJson = iota
 )
 
 var (
@@ -52,7 +52,7 @@ func Publish(event *m.CollectorEventDefinition) error {
 	if !enabled {
 		return nil
 	}
-	version := uint8(msgFormatArrayJson)
+	version := uint8(msgFormatJson)
 
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, version)
