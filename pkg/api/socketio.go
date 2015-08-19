@@ -18,7 +18,7 @@ import (
 	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/collectoreventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
@@ -130,7 +130,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 
 	//--------- set required version of collector.------------//
 	//
-	if versionMajor < 0 || versionMinor < 1.1 {
+	if versionMajor < 0 || versionMinor < 1.3 {
 		return nil, errors.New("invalid collector version. Please upgrade.")
 	}
 	//
@@ -352,18 +352,15 @@ func (c *CollectorContext) OnDisconnection() {
 	contextCache.Remove(c.SocketId)
 }
 
-func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
+func (c *CollectorContext) OnEvent(msg *m.CollectorEventDefinition) {
 	log.Info(fmt.Sprintf("recieved event from %s", c.Collector.Name))
 	if !c.Collector.Public {
 		msg.OrgId = c.OrgId
 	}
-	msgString, err := json.Marshal(msg)
-	if err != nil {
-		log.Error(0, "Failed to marshal event.", err)
+
+	if err := collectoreventpublisher.Publish(msg); err != nil {
+		log.Error(0, "failed to publish event.", err)
 	}
-	// send to RabbitMQ
-	routingKey := fmt.Sprintf("EVENT.%s.%s", msg.Severity, msg.EventType)
-	go eventpublisher.Publish(routingKey, msgString)
 }
 
 func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {

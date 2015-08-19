@@ -46,7 +46,7 @@ func Init(metrics met.Backend) {
 	}
 	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
 	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
-	go stresser() // enable this to send a "stress load" to test the metrics pipeline
+	//go stresser() // enable this to send a "stress load" to test the metrics pipeline
 }
 
 func stresser() {
@@ -78,8 +78,8 @@ func stresser() {
 				Unit:       "s",
 				Time:       t.Unix(),
 				TargetType: "gauge",
-				Extra: map[string]interface{}{
-					"foo_id": 15,
+				Tags: map[string]string{
+					"foo_id": "15",
 				},
 			}
 			metrics = append(metrics, metric)
