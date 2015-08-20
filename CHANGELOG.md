@@ -41,6 +41,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2928](https://github.com/grafana/grafana/issues/2928). LDAP: Support for searching for groups memberships, i.e. POSIX (no memberOf) schemas, also multiple ldap servers, and root ca cert, thanks @abligh
 
 **Fixes**
+<<<<<<< c090b41b12d3d766f06d7f482270e5f215cda12a
 - [Issue #2413](https://github.com/grafana/grafana/issues/2413). InfluxDB 0.9: Fix for handling empty series object in response from influxdb
 - [Issue #2574](https://github.com/grafana/grafana/issues/2574). Snapshot: Fix for snapshot with expire 7 days option, 7 days option not correct, was 7 hours
 - [Issue #2568](https://github.com/grafana/grafana/issues/2568). AuthProxy: Fix for server side rendering of panel when using auth proxy
@@ -85,6 +86,10 @@ Grunt & Watch tasks:
 =======
 panels or rows, fixes #2534
 >>>>>>> fix(templating): fix for setting template variable value via url and having repeated panels or rows, fixes #2534
+=======
+- [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
+- [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
+>>>>>>> fix(dragdrop): Fix for broken drag drop behavior, fixes #2558
 
 ** Breaking Changes **
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
