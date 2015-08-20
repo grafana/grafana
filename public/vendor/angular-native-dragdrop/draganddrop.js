@@ -7,7 +7,7 @@
 
     function determineEffectAllowed(e) {
         // Chrome doesn't set dropEffect, so we have to work it out ourselves
-        if (e.dataTransfer.dropEffect === 'none') {
+        if (e.dataTransfer && e.dataTransfer.dropEffect === 'none') {
             if (e.dataTransfer.effectAllowed === 'copy' ||
                 e.dataTransfer.effectAllowed === 'move') {
                 e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed;
