@@ -10,24 +10,36 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 
 Description | Download
 ------------ | -------------
+<<<<<<< be987b8397031d77c3b51a0933a6be298004cad2
 .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-2.1.3-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.3-1.x86_64.rpm)
+=======
+.RPM for Fedora / RHEL / CentOS Linux | [grafana-2.1.2-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.2-1.x86_64.rpm)
+>>>>>>> docs(): updated version in install docs
 
 ## Install from package file
 
 You can install Grafana using Yum directly.
 
+<<<<<<< be987b8397031d77c3b51a0933a6be298004cad2
     $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.3-1.x86_64.rpm
+=======
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.2-1.x86_64.rpm
+>>>>>>> docs(): updated version in install docs
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
+<<<<<<< be987b8397031d77c3b51a0933a6be298004cad2
     $ sudo rpm -Uvh grafana-2.1.3-1.x86_64.rpm
 
 #### On OpenSuse:
 
     $ sudo rpm -i --nodeps grafana-2.1.3-1.x86_64.rpm
+=======
+    $ sudo rpm -Uvh grafana-2.1.2-1.x86_64.rpm
+>>>>>>> docs(): updated version in install docs
 
 ## Install via YUM Repository
 
