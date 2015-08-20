@@ -11,13 +11,14 @@ it allows you to add queries of differnet data source types & instances to the s
 
 **Fixes**
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
+- [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
 
 **Breaking Changes**
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
 
-# 2.1.x (currently unreleased patch branch)
+# 2.1.2 (2015-08-20)
 
 **Fixes**
 - [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
