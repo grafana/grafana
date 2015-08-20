@@ -20,6 +20,7 @@ data source api change.
 # 2.1.x (currently unreleased patch branch)
 
 **Fixes**
+- [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
 - [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
 
 # 2.1.1 (2015-08-11)
