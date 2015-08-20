@@ -32,15 +32,22 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
+    var dsMap = map[string]interface{}{
+      "type": ds.Type,
+      "name": ds.Name,
+      "url":  url,
+    }
+
 		if ds.Access == m.DS_ACCESS_PROXY {
 			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
-		}
 
-		var dsMap = map[string]interface{}{
-			"type": ds.Type,
-			"name": ds.Name,
-			"url":  url,
-		}
+      if ds.Type == m.DS_NETCRUNCH {
+        dsMap["id"] = ds.Id
+        dsMap["username"] = ds.User
+        dsMap["password"] = ds.Password
+        dsMap["url"] = url
+      }
+    }
 
 		meta, exists := plugins.DataSources[ds.Type]
 		if !exists {
@@ -77,6 +84,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			}
 
       if ds.Type == m.DS_NETCRUNCH {
+        dsMap["id"] = ds.Id
         dsMap["username"] = ds.User
         dsMap["password"] = ds.Password
         dsMap["url"] = url
