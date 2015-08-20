@@ -95,6 +95,7 @@ it allows you to add queries of differnet data source types & instances to the s
 >>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
 
 **Fixes**
+<<<<<<< 9c8007789396fce71f0339932b02c78232578c7e
 <<<<<<< c090b41b12d3d766f06d7f482270e5f215cda12a
 - [Issue #2413](https://github.com/grafana/grafana/issues/2413). InfluxDB 0.9: Fix for handling empty series object in response from influxdb
 - [Issue #2574](https://github.com/grafana/grafana/issues/2574). Snapshot: Fix for snapshot with expire 7 days option, 7 days option not correct, was 7 hours
@@ -187,6 +188,10 @@ repeat panel from url), fixes #2564
 =======
 - [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
 >>>>>>> fix(): fixed problems in last commit
+=======
+- [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
+- [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
+>>>>>>> fix(dragdrop): Fix for broken drag drop behavior, fixes #2558
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
