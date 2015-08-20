@@ -143,6 +143,7 @@ Grunt & Watch tasks:
 # 2.1.2 (2015-08-20)
 
 **Fixes**
+<<<<<<< ed50e2846bc8380710f0ddcbde24a79bcbd3cce1
 <<<<<<< 350904500dc0256857920fc88984a84ee9ac44d8
 <<<<<<< 65d0d096a2b4b75b95d6288ba17fb3951389520f
 - [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
@@ -192,6 +193,11 @@ repeat panel from url), fixes #2564
 - [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
 - [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
 >>>>>>> fix(dragdrop): Fix for broken drag drop behavior, fixes #2558
+=======
+- [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
+- [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
+fixes #2565
+>>>>>>> fix(TimePicker): Fix for when you applied custom time range it did not refreh dashboard, fixes #2565
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
@@ -230,6 +236,12 @@ panels or rows, fixes #2534
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+
+# 2.1.2 (2015-08-20)
+
+**Fixes**
+- [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
+- [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
 
 # 2.1.1 (2015-08-11)
 
