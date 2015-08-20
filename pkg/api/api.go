@@ -66,6 +66,10 @@ func Register(r *macaron.Macaron) {
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", LoginApiPing)
 
+  // NetCrunch server api for remote client
+  r.Any("/ncapi/", reqSignedIn, ProxyNetCrunchServerRequest)
+  r.Any("/ncapi/*", reqSignedIn, ProxyNetCrunchServerRequest)
+
 	// authed api
 	r.Group("/api", func() {
 
