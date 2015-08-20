@@ -19,6 +19,7 @@ function (angular, config) {
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
     $scope.disableUserSignUp = config.disableUserSignUp;
+    $scope.loginHint     = config.loginHint;
 
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';
