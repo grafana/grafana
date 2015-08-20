@@ -4,7 +4,11 @@
     "company": "Cepave"
   },
   "name": "grafana",
+<<<<<<< 48de235319caae3f339553fb1ea4a455b949808c
   "version": "2.5.1-pre1",
+=======
+  "version": "2.1.2",
+>>>>>>> updated version to v2.1.2
   "repository": {
     "type": "git",
     "url": "http://github.com/Cepave/grafana.git"
