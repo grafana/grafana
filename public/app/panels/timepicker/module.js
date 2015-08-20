@@ -155,6 +155,8 @@ function (angular, app, _, moment, kbn) {
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
+
+      timeSrv.setTime(_filter);
     };
 
     $scope.setRelativeFilter = function(timespan) {
