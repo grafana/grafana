@@ -205,8 +205,13 @@ fixes #2565
 >>>>>>> fix(TimePicker): Fix for when you applied custom time range it did not refreh dashboard, fixes #2565
 =======
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
+<<<<<<< 89e21abab7e17f106e2efce7bd3655eeea284a81
 now fallbacks to html escaping title and text, fixes #2563
 >>>>>>> fix(annotations): Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text, fixes #2563
+=======
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+repeat panel from url), fixes #2564
+>>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
