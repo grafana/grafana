@@ -172,6 +172,7 @@ now fallbacks to html escaping title and text, fixes #2563
 >>>>>>> fix(annotations): Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text, fixes #2563
 =======
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+<<<<<<< 0258698fb7dde4550b2f845732223d465e93caf0
 repeat panel from url), fixes #2564
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 =======
@@ -212,6 +213,8 @@ now fallbacks to html escaping title and text, fixes #2563
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 repeat panel from url), fixes #2564
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
+=======
+>>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
@@ -250,6 +253,12 @@ panels or rows, fixes #2534
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+
+# 2.1.3 (2015-08-24)
+
+**Fixes**
+- [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 
 # 2.1.2 (2015-08-20)
 
