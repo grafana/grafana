@@ -98,7 +98,7 @@ func main() {
 	elasticstore.Init()
 	models.InitQuotaDefaults()
 
-	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana.")
+	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana", setting.InstanceId)
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}

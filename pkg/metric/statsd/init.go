@@ -11,12 +11,7 @@
 
 package statsd
 
-import (
-	"fmt"
-
-	"github.com/Dieterbe/statsd-go"
-	"github.com/grafana/grafana/pkg/setting"
-)
+import "github.com/Dieterbe/statsd-go"
 
 type Backend struct {
 	client *statsd.Client
@@ -24,8 +19,6 @@ type Backend struct {
 
 // note: prefix must end on a dot
 func New(enabled bool, addr, prefix string) (Backend, error) {
-	prefix = fmt.Sprintf("%s%s.", prefix, setting.InstanceId)
-
 	client, err := statsd.NewClient(enabled, addr, prefix)
 	b := Backend{client}
 	return b, err
