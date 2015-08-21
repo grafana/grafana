@@ -138,7 +138,7 @@ function (angular, _, kbn) {
         option.selected = false;
         if (_.isArray(variable.current.value)) {
           for (y = 0; y < variable.current.value.length; y++) {
-            value = variable.current.value[i];
+            value = variable.current.value[y];
             if (option.value === value) {
               option.selected = true;
             }
