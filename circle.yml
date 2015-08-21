@@ -25,3 +25,8 @@ test:
      - npm run coveralls
   post:
      - cd rt-pkg && /bin/sh packaging.sh 
+deployment:
+  production:
+    branch: jwb-packaging
+    commands:
+      - rt-pkg/deploy.sh
