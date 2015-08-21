@@ -114,8 +114,9 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	ReportingEnabled  bool
-	GoogleAnalyticsId string
+	ReportingEnabled   bool
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
 
 	// LDAP
 	LdapEnabled    bool
@@ -415,6 +416,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
