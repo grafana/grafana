@@ -26,6 +26,7 @@ define([
       .factory('netCrunchRemoteSession', function ($q, $rootScope, $http, netCrunchRemoteClient, adrem) {
 
         var error = {msg: ''},
+            loginInProgress = false,
             that;
 
         function getNetCrunchDatasourceById(id) {
@@ -53,12 +54,14 @@ define([
                   dataSource;
 
               dataSource = getNetCrunchDatasourceById(NETCRUNCH_DATASOURCE_ID);
-              login = (dataSource == null) ? $q.when(false) : $q.when(true);
+              login = ((dataSource == null)||(loginInProgress === true)) ? $q.when(false) : $q.when(true);
 
-              if ((dataSource != null) && (adrem.Client.status.logged === false) &&
-                  ('Session' in adrem.Client)) {
+              if ((loginInProgress === false) && (dataSource != null) &&
+                  (adrem.Client.status.logged === false) && ('Session' in adrem.Client)) {
+                loginInProgress = true;
                 login = $q(function (resolve, reject) {
                   adrem.Client.login(dataSource.username, dataSource.password, function (status) {
+                    loginInProgress = false;
                     if (status) {
                       resolve(true);
                     } else {
@@ -66,6 +69,7 @@ define([
                     }
                   });
                 });
+
               }
 
               return $q.all([login]);
