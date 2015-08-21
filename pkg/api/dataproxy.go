@@ -81,8 +81,8 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 }
 
 func ProxyNetCrunchServerRequest(c *middleware.Context) {
-  id := int64(0)         //Only one datasource for NetCrunch may occure per organization
-                         //And it id should be equal 0
+  id := int64(1)         //Only one datasource for NetCrunch may occure per organization
+                         //And it id should be equal 1
   query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId }
 
   if err := bus.Dispatch(&query); err != nil {
