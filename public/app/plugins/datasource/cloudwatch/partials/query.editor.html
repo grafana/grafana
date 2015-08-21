@@ -97,7 +97,7 @@
         <li class="tight-form-item" style="width: 100px">
           Dimensions
         </li>
-        <li ng-repeat="(key, value) in target.dimensions track by $index" class="tight-form-item">
+        <li ng-repeat="(key, value) in target.escapedDimensions track by $index" class="tight-form-item">
           {{key}}&nbsp;=&nbsp;{{value}}
           <a ng-click="removeDimension(key)">
             <i class="fa fa-remove"></i>

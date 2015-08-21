@@ -13,6 +13,7 @@ function (angular, _) {
       $scope.target.namespace = $scope.target.namespace || '';
       $scope.target.metricName = $scope.target.metricName || '';
       $scope.target.dimensions = $scope.target.dimensions || {};
+      $scope.target.escapedDimensions = this.escapeDimensions($scope.target.dimensions);
       $scope.target.statistics = $scope.target.statistics || {};
       $scope.target.period = $scope.target.period || 60;
       $scope.target.region = $scope.target.region || $scope.datasource.getDefaultRegion();
@@ -94,6 +95,7 @@ function (angular, _) {
       }
 
       $scope.target.dimensions[$scope.target.currentDimensionKey] = $scope.target.currentDimensionValue;
+      $scope.target.escapedDimensions = this.escapeDimensions($scope.target.dimensions);
       $scope.target.currentDimensionKey = '';
       $scope.target.currentDimensionValue = '';
       $scope.refreshMetricData();
@@ -102,8 +104,22 @@ function (angular, _) {
     };
 
     $scope.removeDimension = function(key) {
+      key = key.replace(/\\\$/g, '$');
       delete $scope.target.dimensions[key];
+      $scope.target.escapedDimensions = this.escapeDimensions($scope.target.dimensions);
       $scope.refreshMetricData();
+    };
+
+    $scope.escapeDimensions = function(d) {
+      var result = {};
+      _.chain(d)
+      .keys(d)
+      .each(function(k) {
+        var v = d[k];
+        result[k.replace(/\$/g, '\\$')] = v.replace(/\$/g, '\\$');
+      });
+
+      return result;
     };
 
     $scope.statisticsOptionChanged = function() {
