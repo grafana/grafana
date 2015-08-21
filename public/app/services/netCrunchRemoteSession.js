@@ -27,6 +27,7 @@ define([
 
         var error = {msg: ''},
             loginInProgress = false,
+            loginInProgressPromise,
             that;
 
         function getNetCrunchDatasourceById(id) {
@@ -54,7 +55,8 @@ define([
                   dataSource;
 
               dataSource = getNetCrunchDatasourceById(NETCRUNCH_DATASOURCE_ID);
-              login = ((dataSource == null)||(loginInProgress === true)) ? $q.when(false) : $q.when(true);
+              login = ((dataSource == null) || (adrem.Client.Session == null))
+                        ? $q.when(false) : $q.when(true);
 
               if ((loginInProgress === false) && (dataSource != null) &&
                   (adrem.Client.status.logged === false) && ('Session' in adrem.Client)) {
@@ -69,7 +71,11 @@ define([
                     }
                   });
                 });
+                loginInProgressPromise = login;
+              }
 
+              if (loginInProgress === true) {
+                login = loginInProgressPromise;
               }
 
               return $q.all([login]);
