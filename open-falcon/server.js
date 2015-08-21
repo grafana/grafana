@@ -4,6 +4,135 @@ var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 var request = require('request');
+// var _ = require('lodash');
+var fs = require('fs');
+var path = require('path');
+
+/**
+ * @function name:	function getMapData()
+ * @description:	This function gets hosts locations for map chart.
+ * @related issues:	OWL-030
+ * @param:			void
+ * @return:			array hosts
+ * @author:			Don Hsieh
+ * @since:			08/15/2015
+ * @last modified: 	08/21/2015
+ * @called by:		app.post('/')
+ *					 in open-falcon/server.js
+ */
+function getMapData()
+{
+	var dirData = path.join(__dirname, 'data');
+	var filePath = path.join(dirData, 'agent.json');
+	var hosts = [];
+	try {
+		var data = fs.readFileSync(filePath, "utf8");
+		hosts = JSON.parse(data);
+		hosts['chartType'] = 'map';
+		// console.log('hosts =', hosts);
+		return hosts;
+	} catch(e) {
+		// console.log('Exception e =', e);
+		return hosts;
+	}
+}
+
+/**
+ * @function name:	function getMapData()
+ * @description:	This function gets hosts locations for map chart.
+ * @related issues:	OWL-030
+ * @param:			void
+ * @return:			array results
+ * @author:			Don Hsieh
+ * @since:			08/15/2015
+ * @last modified: 	08/15/2015
+ * @call	ed by:		app.post('/')
+ *					 in open-falcon/server.js
+ */
+function queryMetric(req, res, targets)
+{
+	var metrics = [];
+	var target = '';
+	/*
+	 *	MODIFIED FOR TEMPLATING
+	 */
+	var i = 0;
+	while (i < targets.length) {	// targets.length changes dynamically
+		target = targets[i];
+		i = i + 1;
+		if (target.indexOf('.select') < 0) {
+			var query = target.split('.');
+			if (query[0].indexOf('{') > -1) {		// check if hostname is requested by templating
+													// Could change to looping through query to see if there is any segment using templating.
+				var template_split = query[0].replace('{', '').replace('}', '').split(',');		// split the elements we get from templating
+				query.shift();		// remove the templating segment
+				var toAppend = query.join('.');		// the rest of the query used to append later
+				for(var idx in template_split){		// formatting a new target
+					var tmp = [];					// formatting a new target
+					tmp.push(template_split[idx]);
+					tmp.push(toAppend);				// append
+					var tmp_join = tmp.join('.');
+					targets.push(tmp_join);			// push to targets[]
+				}
+				continue;	// goto next target
+			} else {}
+			var host = query.shift();
+			var metric = query.join('.');
+			if (host && metric) {
+				metrics.push({
+					"Endpoint": host,
+					"Counter": metric
+				});
+			} else {}
+		}
+	}
+
+	if (metrics.length) {
+		var now = Math.floor(new Date() / 1000);
+		var from = req.body.from;
+		var unit = 0;
+		if (from.indexOf('m') > 0) {
+			unit = 60;
+		}
+		if (from.indexOf('h') > 0) {
+			unit = 3600;
+		}
+		if (from.indexOf('d') > 0) {
+			unit = 86400;
+		}
+		if (from.indexOf('h') > 0) {
+			from = parseInt(from) * unit;
+		}
+
+		var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
+		queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
+		// console.log('queryUrl =', queryUrl);
+
+		var options = {
+			uri: queryUrl,
+			method: 'POST',
+			json: {
+				"endpoint_counters": metrics,
+				"cf": "AVERAGE",
+				"start": now + from,
+				"end": now
+			}
+		};
+		request(options, function (error, response, body) {
+			if (!error && response.statusCode === 200) {
+				var results = [];
+				for (var i in body) {
+					if (body[i].Values) {	// if body[i] has Values
+						results.push(body[i]);
+					}
+				}
+				res.send(results);
+			}
+		});
+	} else {
+		res.send([]);
+	}
+}
 
 /**
  * @function:		app.get('/', function(req, res))
@@ -121,6 +250,7 @@ app.get('/', function(req, res) {
 						}
 					}
 				}
+				console.log('results =', results);
 				res.send(results);
 			}
 		});
@@ -143,92 +273,17 @@ app.get('/', function(req, res) {
  *					 in pkg/api/dataproxy.go
  */
 app.post('/', function (req, res) {
-	var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
-	queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
-	console.log('queryUrl =', queryUrl);
-
 	if ('target' in req.body) {
-		var now = Math.floor(new Date() / 1000);
-		var from = req.body.from;
-		var unit = 0;
-		if (from.indexOf('m') > 0) {
-			unit = 60;
-		}
-		if (from.indexOf('h') > 0) {
-			unit = 3600;
-		}
-		if (from.indexOf('d') > 0) {
-			unit = 86400;
-		}
-		if (from.indexOf('h') > 0) {
-			from = parseInt(from) * unit;
-		}
-		var metrics = [];
-		var target = '';
 		var targets = req.body.target;
 		if (typeof(targets) === typeof('')) {
 			targets = [targets];
 		}
-
-		/*
-		 *	MODIFIED FOR TEMPLATING
-		 */
-		console.log('targets =', targets);
-		var i = 0;
-		while (i < targets.length) {	// targets.length changes dynamically
-			target = targets[i];
-			i = i + 1;
-			if (target.indexOf('.select') < 0) {
-				var query = target.split('.');
-				if (query[0].indexOf('{') > -1) {		// check if hostname is requested by templating
-														// Could change to looping through query to see if there is any segment using templating.
-					var template_split = query[0].replace('{', '').replace('}', '').split(',');		// split the elements we get from templating
-					query.shift();		// remove the templating segment
-					var toAppend = query.join('.');		// the rest of the query used to append later
-					for(var idx in template_split){		// formatting a new target
-						var tmp = [];					// formatting a new target
-						tmp.push(template_split[idx]);
-						tmp.push(toAppend);				// append
-						var tmp_join = tmp.join('.');
-						targets.push(tmp_join);			// push to targets[]
-					}
-					continue;	// goto next target
-				} else {}
-				var host = query.shift();
-				var metric = query.join('.');
-				if (host && metric) {
-					metrics.push({
-						"Endpoint": host,
-						"Counter": metric
-					});
-				} else {}
-			}
-		}
-
-		if (metrics.length) {
-			var options = {
-				uri: queryUrl,
-				method: 'POST',
-				json: {
-					"endpoint_counters": metrics,
-					"cf": "AVERAGE",
-					"start": now + from,
-					"end": now
-				}
-			};
-			request(options, function (error, response, body) {
-				if (!error && response.statusCode === 200) {
-					var results = [];
-					for (var i in body) {
-						if (body[i].Values) {	// if body[i] has Values
-							results.push(body[i]);
-						}
-					}
-					res.send(results);
-				}
-			});
+		if (targets.indexOf('map') > -1) {
+			var results = getMapData();
+			// console.log('results =', results);
+			res.send(results);
 		} else {
-			res.send([]);
+			queryMetric(req, res, targets);
 		}
 	} else {
 		res.send([]);

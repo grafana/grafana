@@ -1,3 +1,4 @@
+open-falcon/data/*.json
 grafana
 node_modules
 coverage/
@@ -28,4 +29,3 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
-

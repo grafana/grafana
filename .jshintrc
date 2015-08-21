@@ -17,6 +17,7 @@
   "noarg": true,
   "noempty": false,
   "undef": true,
+  "predef": ["__dirname"],
   "boss": true,
   "trailing": true,
   "laxbreak": true,

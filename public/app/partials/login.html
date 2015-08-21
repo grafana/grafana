@@ -1,12 +1,10 @@
 <div class="container">
-
 	<div class="login-box">
-
 		<div class="login-box-logo">
 			<img src="img/logo_transparent_200x75.png">
 		</div>
 
-    <div class="login-inner-box">
+		<div class="login-inner-box">
 			<div class="login-tab-header">
 				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
 					Log in
@@ -16,7 +14,7 @@
 				</button>
 			</div>
 
-      <form name="loginForm" class="login-form">
+			<form name="loginForm" class="login-form">
 				<div class="tight-from-container">
 					<div class="tight-form" ng-if="loginMode">
 						<ul class="tight-form-list">
@@ -105,7 +103,4 @@
 				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
 			</div>
 		</div>
-
 	</div>
-
-

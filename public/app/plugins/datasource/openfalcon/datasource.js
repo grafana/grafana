@@ -26,7 +26,6 @@ function (angular, _, $, config, kbn, moment) {
     }
 
     OpenFalconDatasource.prototype.query = function(options) {
-      // console.log('OpenFalconDatasource.prototype.query options =', options);
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -59,45 +58,63 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
+    /**
+     * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
+     * @description:    This function gets hosts locations for map chart.
+     * @related issues: OWL-030
+     * @param:          object result
+     * @return:         object results
+     * @author:         Don Hsieh
+     * @since:          08/20/2015
+     * @last modified:  08/21/2015
+     * @called by:      OpenFalconDatasource.prototype.query = function(options)
+     *                   in public/app/plugins/datasource/openfalcon/datasource.js
+     */
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
       // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
-      var data = [];
-      var row = [];
-      for (var i in result.data) {
-        row = result.data[i];
-        // console.log('row =', row);
-        if ('Values' in row) {
-          var values = row.Values;
-          var metric = row.counter;
-          var host = row.endpoint;
+      var obj = {};
+      if (!result.data.length) return result;
+      if ('city' in result.data[0]) {   // This is a map query
+        obj.datapoints = result.data;
+        result.data = [obj];
+        return result;
+      } else {
+        var data = [];
+        var datapoints = [];
+        var timestamp = 0;
+        var value = 0;
+        var values = [];
+        var metric = '';
+        var host = '';
+        _.forEach(result.data, function(row) {
+          if ('Values' in row) {
+            values = row.Values;
+            metric = row.counter;
+            host = row.endpoint;
 
-          var datapoints = [];
-          var arr = [];
-          var timestamp = 0;
-          var value = 0;
-          for (i in values) {
-            arr = values[i];
-            timestamp = arr['timestamp'];
-            value = arr['value'];
-            datapoints.push([value, timestamp]);
+            datapoints = [];
+            _.forEach(values, function(arr) {
+              timestamp = arr['timestamp'];
+              value = arr['value'];
+              datapoints.push([value, timestamp]);
+            });
+            // console.log('convertDataPointsToMs datapoints =', datapoints);
+            obj = {};
+            obj.datapoints = datapoints;
+            obj.target = host + '.' + metric;
+            data.push(obj);
           }
-          // console.log('convertDataPointsToMs datapoints =', datapoints);
-          var obj = {};
-          obj.datapoints = datapoints;
-          obj.target = host + '.' + metric;
-          data.push(obj);
+        });
+        result.data = data;
+        if (!result || !result.data) { return []; }
+        for (var i = 0; i < result.data.length; i++) {
+          var series = result.data[i];
+          for (var y = 0; y < series.datapoints.length; y++) {
+            series.datapoints[y][1] *= 1000;
+          }
         }
+        return result;
       }
-      result.data = data;
-      if (!result || !result.data) { return []; }
-      for (i = 0; i < result.data.length; i++) {
-        var series = result.data[i];
-        // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs series =', series);
-        for (var y = 0; y < series.datapoints.length; y++) {
-          series.datapoints[y][1] *= 1000;
-        }
-      }
-      return result;
     };
 
     OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
@@ -129,7 +146,6 @@ function (angular, _, $, config, kbn, moment) {
                 });
               }
             }
-
             return list;
           });
       }
@@ -208,7 +224,7 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.metricFindQuery = function(query) {
-      // console.log('metricFindQuery query =', query);
+      console.log('metricFindQuery query =', query);
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -220,7 +236,7 @@ function (angular, _, $, config, kbn, moment) {
       return this.doOpenFalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
         .then(function(results) {
           return _.map(results.data, function(metric) {
-            // console.log('metricFindQuery metric =', metric);
+            console.log('metricFindQuery metric =', metric);
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false
@@ -314,6 +330,10 @@ function (angular, _, $, config, kbn, moment) {
 
         clean_options.push("target=" + encodeURIComponent(targetValue));
       }
+
+      if (!clean_options.length) {
+        clean_options.push("target=map");
+      } else {}
 
       _.each(options, function (value, key) {
         if ($.inArray(key, graphite_options) === -1) { return; }
