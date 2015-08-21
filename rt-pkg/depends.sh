@@ -31,3 +31,4 @@ go get github.com/raintank/grafana
 
 go get github.com/tools/godep
 npm install
+npm install -g grunt-cli
