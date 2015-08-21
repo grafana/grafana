@@ -163,20 +163,6 @@ function($, _, moment) {
     return info.sec * info.count;
   };
 
-  kbn.getRelativeTimeInfo = function(str) {
-    var info = {value: str};
-    if (str === 'today') {
-      info.text = 'Today';
-      info.from = 'today';
-      info.to = 'now';
-    } else {
-      info.text = 'Last ' + str;
-      info.from = 'now-'+str;
-      info.to = 'now';
-    }
-    return info;
-  };
-
   /* This is a simplified version of elasticsearch's date parser */
   kbn.parseDate = function(text) {
     if(_.isDate(text)) {
@@ -219,6 +205,20 @@ function($, _, moment) {
     return kbn.parseDateMath(mathString, time);
   };
 
+  kbn.getRelativeTimeInfo = function(str) {
+    var info = {value: str};
+    if (str === 'today') {
+      info.text = 'Today';
+      info.from = 'today';
+      info.to = 'now';
+    } else {
+      info.text = 'Last ' + str;
+      info.from = 'now-'+str;
+      info.to = 'now';
+    }
+    return info;
+  };
+
   kbn._timespanRegex = /^(\d+[h,m,M,w,s,H,d])|today$/;
   kbn.isValidTimeSpan = function(str) {
     return kbn._timespanRegex.test(str);
@@ -229,8 +229,8 @@ function($, _, moment) {
     for (var i = 0; i < mathString.length;) {
       var c = mathString.charAt(i++),
         type,
-      num,
-      unit;
+        num,
+        unit;
       if (c === '/') {
         type = 0;
       } else if (c === '+') {
@@ -258,8 +258,8 @@ function($, _, moment) {
       }
       unit = mathString.charAt(i++);
       switch (unit) {
-        case 'y':
-          if (type === 0) {
+      case 'y':
+        if (type === 0) {
           roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
         } else if (type === 1) {
           dateTime.add(num, 'years');
@@ -267,8 +267,8 @@ function($, _, moment) {
           dateTime.subtract(num, 'years');
         }
         break;
-        case 'M':
-          if (type === 0) {
+      case 'M':
+        if (type === 0) {
           roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
         } else if (type === 1) {
           dateTime.add(num, 'months');
@@ -276,8 +276,8 @@ function($, _, moment) {
           dateTime.subtract(num, 'months');
         }
         break;
-        case 'w':
-          if (type === 0) {
+      case 'w':
+        if (type === 0) {
           roundUp ? dateTime.endOf('week') : dateTime.startOf('week');
         } else if (type === 1) {
           dateTime.add(num, 'weeks');
@@ -285,8 +285,8 @@ function($, _, moment) {
           dateTime.subtract(num, 'weeks');
         }
         break;
-        case 'd':
-          if (type === 0) {
+      case 'd':
+        if (type === 0) {
           roundUp ? dateTime.endOf('day') : dateTime.startOf('day');
         } else if (type === 1) {
           dateTime.add(num, 'days');
@@ -294,9 +294,9 @@ function($, _, moment) {
           dateTime.subtract(num, 'days');
         }
         break;
-        case 'h':
-          case 'H':
-          if (type === 0) {
+      case 'h':
+      case 'H':
+        if (type === 0) {
           roundUp ? dateTime.endOf('hour') : dateTime.startOf('hour');
         } else if (type === 1) {
           dateTime.add(num, 'hours');
@@ -304,8 +304,8 @@ function($, _, moment) {
           dateTime.subtract(num,'hours');
         }
         break;
-        case 'm':
-          if (type === 0) {
+      case 'm':
+        if (type === 0) {
           roundUp ? dateTime.endOf('minute') : dateTime.startOf('minute');
         } else if (type === 1) {
           dateTime.add(num, 'minutes');
@@ -313,8 +313,8 @@ function($, _, moment) {
           dateTime.subtract(num, 'minutes');
         }
         break;
-        case 's':
-          if (type === 0) {
+      case 's':
+        if (type === 0) {
           roundUp ? dateTime.endOf('second') : dateTime.startOf('second');
         } else if (type === 1) {
           dateTime.add(num, 'seconds');
@@ -322,8 +322,8 @@ function($, _, moment) {
           dateTime.subtract(num, 'seconds');
         }
         break;
-        default:
-          return false;
+      default:
+        return false;
       }
     }
     return dateTime.toDate();
@@ -523,9 +523,9 @@ function($, _, moment) {
 
   kbn.slugifyForUrl = function(str) {
     return str
-    .toLowerCase()
-    .replace(/[^\w ]+/g,'')
-    .replace(/ +/g,'-');
+      .toLowerCase()
+      .replace(/[^\w ]+/g,'')
+      .replace(/ +/g,'-');
   };
 
   kbn.exportSeriesListToCsv = function(seriesList) {
