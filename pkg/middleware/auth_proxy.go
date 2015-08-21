@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,8 +40,16 @@ func initContextWithAuthProxy(ctx *Context) bool {
 		}
 	}
 
+	// initialize session
+	if err := ctx.Session.Start(ctx); err != nil {
+		log.Error(3, "Failed to start session", err)
+		return false
+	}
+
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
+	ctx.Session.Set(SESS_KEY_USERID, ctx.UserId)
+
 	return true
 }
 
