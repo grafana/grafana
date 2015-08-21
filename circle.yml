@@ -27,6 +27,6 @@ test:
      - cd rt-pkg && /bin/sh packaging.sh 
 deployment:
   production:
-    branch: jwb-packaging
+    branch: master
     commands:
       - rt-pkg/deploy.sh
