@@ -306,6 +306,9 @@ function (angular, _, kbn) {
         .map(function(metric) {
           return metric.Dimensions;
         })
+        .reject(function(metric) {
+          return _.isEmpty(metric);
+        })
         .value();
 
         return d.resolve(suggestData);
