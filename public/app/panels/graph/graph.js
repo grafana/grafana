@@ -4,6 +4,7 @@ define([
   'kbn',
   'moment',
   'lodash',
+  'echarts',
   './graph.tooltip',
   'jquery.flot',
   'jquery.flot.events',
@@ -14,7 +15,7 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
-function (angular, $, kbn, moment, _, GraphTooltip) {
+function (angular, $, kbn, moment, _, ec, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -202,6 +203,11 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
                 radius: panel.points ? panel.pointradius : 2
                 // little points when highlight points
               },
+              map: {
+                show: panel.map,
+                fill: 1,
+                fillColor: false
+              },
               shadowSize: 1
             },
             yaxes: [],
@@ -247,9 +253,133 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
+          /**
+           * @function name:  function callPlot(incrementRenderCounter)
+           * @description:    This function executes plot.
+           * @related issues: OWL-030
+           * @param:          integer incrementRenderCounter
+           * @return:         void
+           * @author:         Don Hsieh
+           * @since:          08/20/2015
+           * @last modified:  08/20/2015
+           * @called by:
+           */
           function callPlot(incrementRenderCounter) {
             try {
-              $.plot(elem, sortedSeries, options);
+              if (options.series.map.show) {
+                var timestamp = Math.floor(Date.now() / 1000).toString();
+                var mapId = 'mapChart' + '_' + timestamp;
+                elem.attr('id', mapId);
+                var locations = sortedSeries[0].datapoints;
+                // console.log('function callPlot() locations =', locations);
+                var name = '';
+                var obj = {};
+                var data = [];
+                var geoCoord = {};
+                var values = [];
+
+                _.forEach(locations, function(location) {
+                  name = location.name + ', ' + location.city;
+                  obj = {};
+                  obj.name = name;
+                  obj.value = location.value;
+                  data.push(obj);
+                  geoCoord[name] = location.coord;
+                  values.push(location.value);
+                });
+
+                values.sort(function(a, b) {return b-a;});
+                var top5 = [];
+                _.forIn(values, function(value, key) {
+                  if (key < 5) {
+                    _.forEach(data, function(location) {
+                      if (location.value === value) {
+                        top5.push(location);
+                      }
+                    });
+                  }
+                });
+                // console.log('function callPlot() top5 =', top5);
+                var myChart = ec.init(document.getElementById(mapId));
+                var option = {
+                  tooltip : {
+                      trigger: 'item'
+                  },
+                  legend: {
+                      orient: 'vertical',
+                      x:'left',
+                      data:['CDN']
+                  },
+                  dataRange: {
+                      min : 0,
+                      max : 500,
+                      calculable : true,
+                      color: ['maroon','purple','red','orange','yellow','lightgreen']
+                  },
+                  series : [
+                      {
+                          name: 'packets',
+                          type: 'map',
+                          mapType: 'china',
+                          hoverable: false,
+                          roam:true,
+                          data : [],
+                          markPoint : {
+                              symbolSize: 5,
+                              itemStyle: {
+                                  normal: {
+                                      borderColor: '#87cefa',
+                                      borderWidth: 1,
+                                      label: {
+                                          show: false
+                                      }
+                                  },
+                                  emphasis: {
+                                      borderColor: '#1e90ff',
+                                      borderWidth: 5,
+                                      label: {
+                                          show: false
+                                      }
+                                  }
+                              },
+                              data : [
+                              ]
+                          },
+                          geoCoord: {
+                          }
+                      },
+                      {
+                          name: 'Top5',
+                          type: 'map',
+                          mapType: 'china',
+                          data:[],
+                          markPoint : {
+                              symbol:'emptyCircle',
+                              symbolSize : function (v) {
+                                  return 10 + v/100;
+                              },
+                              effect : {
+                                  show: true,
+                                  shadowBlur : 0
+                              },
+                              itemStyle:{
+                                  normal:{
+                                      label:{show:false}
+                                  }
+                              },
+                              data : [
+                              ]
+                          }
+                      }
+                  ]
+                };
+                option.series[0].markPoint.data = data;
+                option.series[0].geoCoord = geoCoord;
+                option.series[1].markPoint.data = top5;
+                myChart.setOption(option);
+              } else {
+                $.plot(elem, sortedSeries, options);
+              }
             } catch (e) {
               console.log('flotcharts error', e);
             }

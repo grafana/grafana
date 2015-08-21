@@ -1,3 +1,4 @@
+open-falcon/data/*.json
 grafana
 node_modules
 coverage/
@@ -31,5 +32,8 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
+<<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
 grafana
 .notouch
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana

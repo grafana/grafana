@@ -1,12 +1,10 @@
 <div class="container">
-
 	<div class="login-box">
-
 		<div class="login-box-logo">
 			<img src="img/logo_transparent_200x75.png">
 		</div>
 
-    <div class="login-inner-box">
+		<div class="login-inner-box">
 			<div class="login-tab-header">
 				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
 					Log in
@@ -16,8 +14,13 @@
 				</button>
 			</div>
 
+<<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
       <form name="loginForm" class="login-form" style="margin-top: 25px;">
 				<div class="tight-form-container">
+=======
+			<form name="loginForm" class="login-form">
+				<div class="tight-from-container">
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 					<div class="tight-form" ng-if="loginMode">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 78px">
@@ -90,7 +93,4 @@
 				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
 			</div>
 		</div>
-
 	</div>
-
-
