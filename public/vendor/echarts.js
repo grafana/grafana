@@ -16,11 +16,7 @@
  *
  */
 define(function (require) {
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-    var ecConfig = require('vendor/echarts/config');
-=======
-    var ecConfig = require('./config');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+    var ecConfig = require('../vendor/echarts/config');
     var zrUtil = require('zrender/tool/util');
     var zrEvent = require('zrender/tool/event');
 
@@ -233,36 +229,21 @@ define(function (require) {
 
             // 内置图表
             // 孤岛
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-            var Island = require('vendor/echarts/chart/island');
-=======
-            var Island = require('./chart/island');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+            var Island = require('../vendor/echarts/chart/island');
             this._island = new Island(this._themeConfig, this._messageCenter, _zr, {}, this);
             this.chart.island = this._island;
 
             // 内置通用组件
             // 工具箱
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-            var Toolbox = require('vendor/echarts/component/toolbox');
+            var Toolbox = require('../vendor/echarts/component/toolbox');
             this._toolbox = new Toolbox(this._themeConfig, this._messageCenter, _zr, {}, this);
             this.component.toolbox = this._toolbox;
 
-            var componentLibrary = require('vendor/echarts/component');
-            componentLibrary.define('title', require('vendor/echarts/component/title'));
-            componentLibrary.define('tooltip', require('vendor/echarts/component/tooltip'));
-            componentLibrary.define('legend', require('vendor/echarts/component/legend'));
-            componentLibrary.define('dataRange', require('vendor/echarts/component/dataRange'));
-=======
-            var Toolbox = require('./component/toolbox');
-            this._toolbox = new Toolbox(this._themeConfig, this._messageCenter, _zr, {}, this);
-            this.component.toolbox = this._toolbox;
-
-            var componentLibrary = require('./component');
-            componentLibrary.define('title', require('./component/title'));
-            componentLibrary.define('tooltip', require('./component/tooltip'));
-            componentLibrary.define('legend', require('./component/legend'));
->>>>>>> [OWL-30] Add Echarts map to Grafana
+            var componentLibrary = require('../vendor/echarts/component');
+            componentLibrary.define('title', require('../vendor/echarts/component/title'));
+            componentLibrary.define('tooltip', require('../vendor/echarts/component/tooltip'));
+            componentLibrary.define('legend', require('../vendor/echarts/component/legend'));
+            componentLibrary.define('dataRange', require('../vendor/echarts/component/dataRange'));
 
             if (_zr.getWidth() === 0 || _zr.getHeight() === 0) {
                 console.error('Dom’s width & height should be ready before init.');
@@ -610,11 +591,7 @@ define(function (require) {
          */
         _eventPackage: function (target) {
             if (target) {
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-                var ecData = require('vendor/echarts/util/ecData');
-=======
-                var ecData = require('./util/ecData');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+                var ecData = require('../vendor/echarts/util/ecData');
 
                 var seriesIndex = ecData.get(target, 'seriesIndex');
                 var dataIndex = ecData.get(target, 'dataIndex');
@@ -703,19 +680,9 @@ define(function (require) {
             this._zr.clearAnimation();
             this._chartList = [];
 
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-            var chartLibrary = require('vendor/echarts/chart');
-            chartLibrary.define('map', require('vendor/echarts/chart/bar'));
-            chartLibrary.define('map', require('vendor/echarts/chart/map'));
-            chartLibrary.define('pie', require('vendor/echarts/chart/pie'));
-            var componentLibrary = require('vendor/echarts/component');
-            componentLibrary.define('grid', require('vendor/echarts/component/grid'));
-            componentLibrary.define('dataZoom', require('vendor/echarts/component/dataZoom'));
-            componentLibrary.define('axis', require('vendor/echarts/component/axis'));
-=======
-            var chartLibrary = require('./chart');
-            var componentLibrary = require('./component');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+            var chartLibrary = require('../vendor/echarts/chart');
+            chartLibrary.define('map', require('../vendor/echarts/chart/map'));
+            var componentLibrary = require('../vendor/echarts/component');
 
             if (magicOption.xAxis || magicOption.yAxis) {
                 magicOption.grid = magicOption.grid || {};
@@ -742,10 +709,7 @@ define(function (require) {
                         ComponentClass = componentLibrary.get(
                             /^[xy]Axis$/.test(componentType) ? 'axis' : componentType
                         );
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
                         // console.log('ComponentClass =', ComponentClass);
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
                         component = new ComponentClass(
                             this._themeConfig, this._messageCenter, this._zr,
                             magicOption, this, componentType
@@ -1095,11 +1059,7 @@ define(function (require) {
          */
         _setTimelineOption: function(option) {
             this._timeline && this._timeline.dispose();
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-            var Timeline = require('vendor/echarts/component/timeline');
-=======
-            var Timeline = require('./component/timeline');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+            var Timeline = require('../vendor/echarts/component/timeline');
             var timeline = new Timeline(
                 this._themeConfig, this._messageCenter, this._zr, option, this
             );
@@ -1687,17 +1647,10 @@ define(function (require) {
                     // 默认主题
                     switch (theme) {
                         case 'macarons':
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-                            theme = require('vendor/echarts/theme/macarons');
+                            theme = require('../vendor/echarts/theme/macarons');
                             break;
                         case 'infographic':
-                            theme = require('vendor/echarts/theme/infographic');
-=======
-                            theme = require('./theme/macarons');
-                            break;
-                        case 'infographic':
-                            theme = require('./theme/infographic');
->>>>>>> [OWL-30] Add Echarts map to Grafana
+                            theme = require('../vendor/echarts/theme/infographic');
                             break;
                         default:
                             theme = {}; // require('./theme/default');

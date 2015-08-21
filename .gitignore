@@ -1,4 +1,7 @@
+<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 cfg.json
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 open-falcon/data/*.json
 grafana
 node_modules
@@ -33,6 +36,9 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
+<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 grafana
 .notouch
 .DS_Store
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana

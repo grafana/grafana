@@ -99,9 +99,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 =======
 		} else if ds.Type == "openfalcon" {
 			// fmt.Printf("Welcome to %v!\n", ds.Type)
-			// fmt.Printf("NewReverseProxy req = %v\n", req)
 			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
-			// fmt.Printf("NewReverseProxy req.RequestURI = %v\n", req.RequestURI)
 			reqQueryVals.Add("target", ds.Url)
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 			req.URL.RawQuery = reqQueryVals.Encode()
@@ -119,7 +117,6 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			// fmt.Printf("NewReverseProxy ds.Url = %v\n", ds.Url)
 			proxyPath = "/"
 			target, _ := url.Parse(ds.Url)
-			// fmt.Printf("NewReverseProxy target = %v\n", target)
 			req.URL.Scheme = target.Scheme
 			req.URL.Host = target.Host
 			req.Host = target.Host
@@ -188,7 +185,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	proxyPath := c.Params("*")
 	// fmt.Printf("proxyPath = %v\n", proxyPath)
 	proxy := NewReverseProxy(&query.Result, proxyPath)
-	// fmt.Printf("proxy = %v\n", proxy)
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.RW(), c.Req.Request)
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
