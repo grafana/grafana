@@ -6,7 +6,13 @@ define([
 function ($, _, coreModule) {
   'use strict';
 
+<<<<<<< ed375359a4037dfec094c6dd00ca5ef7c0324f48:public/app/core/directives/annotation_tooltip.js
   coreModule.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+=======
+  angular
+  .module('grafana.directives')
+  .directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+>>>>>>> fix(annotations): Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text, fixes #2563:public/app/directives/annotationTooltip.js
 
     function sanitizeString(str) {
       try {

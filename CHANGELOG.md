@@ -200,8 +200,13 @@ repeat panel from url), fixes #2564
 >>>>>>> fix(auth proxy): Fix for server side rendering of panel when using auth proxy, fixes #2568
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
+<<<<<<< ed375359a4037dfec094c6dd00ca5ef7c0324f48
 fixes #2565
 >>>>>>> fix(TimePicker): Fix for when you applied custom time range it did not refreh dashboard, fixes #2565
+=======
+- [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
+now fallbacks to html escaping title and text, fixes #2563
+>>>>>>> fix(annotations): Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text, fixes #2563
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
