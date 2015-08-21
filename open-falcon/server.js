@@ -4,20 +4,31 @@ var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 var request = require('request');
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 var _ = require('lodash');
 =======
 // var _ = require('lodash');
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 var _ = require('lodash');
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 var fs = require('fs');
 var path = require('path');
 
 /**
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  * @function name:	function getMapData(chartType)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-062, OWL-052, OWL-030
@@ -70,18 +81,27 @@ function getMapData(chartType)
 =======
  * @function name:	function getMapData()
  * @description:	This function gets hosts locations for map chart.
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
  * @related issues:	OWL-052, OWL-030
+=======
+ * @related issues:	OWL-030
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  * @param:			void
  * @return:			array hosts
  * @author:			Don Hsieh
  * @since:			08/15/2015
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
  * @last modified: 	08/27/2015
+=======
+ * @last modified: 	08/21/2015
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  * @called by:		app.post('/')
  *					 in open-falcon/server.js
  */
 function getMapData()
 {
 	var dirData = path.join(__dirname, 'data');
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 	// var filePath = path.join(dirData, 'agent.json');
 	var filePath = path.join(dirData, 'province.json');
 	var hosts = {};
@@ -126,12 +146,29 @@ function getMapData()
 =======
 		console.log('Exception e =', e);
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+	var filePath = path.join(dirData, 'agent.json');
+	var hosts = [];
+	try {
+		var data = fs.readFileSync(filePath, "utf8");
+		hosts = JSON.parse(data);
+		hosts['chartType'] = 'map';
+		// console.log('hosts =', hosts);
+		return hosts;
+	} catch(e) {
+		// console.log('Exception e =', e);
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 		return hosts;
 	}
 }
 
 /**
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  * @function name:	function function queryMetric(req, res, targets)
  * @description:	This function gets hosts locations for map chart.
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
@@ -165,22 +202,43 @@ function getMapData()
  * @last modified: 	10/20/2015
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
  * @called by:		app.post('/')
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+=======
+ * @function name:	function getMapData()
+ * @description:	This function gets hosts locations for map chart.
+ * @related issues:	OWL-030
+ * @param:			void
+ * @return:			array results
+ * @author:			Don Hsieh
+ * @since:			08/15/2015
+ * @last modified: 	08/15/2015
+ * @call	ed by:		app.post('/')
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  *					 in open-falcon/server.js
  */
 function queryMetric(req, res, targets)
 {
 	var metrics = [];
 	var target = '';
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
 	/*
 	 *	MODIFIED FOR TEMPLATING
 	 */
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 	var i = 0;
 	while (i < targets.length) {	// targets.length changes dynamically
 		target = targets[i];
@@ -246,6 +304,7 @@ function queryMetric(req, res, targets)
 			from = parseInt(from) * unit;
 		}
 
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 		var urlQuery = req.query['urlQuery'];
 		urlQuery += '/graph/history';
 		var options = {
@@ -254,7 +313,18 @@ function queryMetric(req, res, targets)
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
 			uri: urlQuery,
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+=======
+=======
+		var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
+		queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
+		// console.log('queryUrl =', queryUrl);
+
+		var options = {
+			uri: queryUrl,
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 			method: 'POST',
 			json: {
 				"endpoint_counters": metrics,
@@ -586,8 +656,13 @@ app.get('/', function(req, res) {
  *					 in pkg/api/dataproxy.go
  */
 app.post('/', function (req, res) {
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 <<<<<<< 124f395b6c30f3d71bbe95537f01a0b612dbc93d
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+<<<<<<< ef86a104da35b1029d85350a3a24fde35fa9b902
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 	if ('target' in req.body) {
 		var targets = req.body.target;
 		if (targets.indexOf('chart') === 0) {
@@ -616,7 +691,11 @@ app.post('/', function (req, res) {
 		if (typeof(targets) === typeof('')) {
 			targets = [targets];
 		}
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 
 		/*
 		 *	MODIFIED FOR TEMPLATING

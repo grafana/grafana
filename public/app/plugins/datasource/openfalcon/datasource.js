@@ -45,6 +45,7 @@ function (angular, _, $, config, kbn, moment) {
     OpenfalconDatasource.prototype.query = function(options) {
 =======
     OpenFalconDatasource.prototype.query = function(options) {
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
       // console.log('OpenFalconDatasource.prototype.query options =', options);
@@ -52,11 +53,19 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
       // console.log('OpenFalconDatasource.prototype.query options =', options);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -138,6 +147,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
@@ -147,6 +157,9 @@ function (angular, _, $, config, kbn, moment) {
      * @related issues: OWL-168, OWL-052, OWL-030
 =======
 =======
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
     /**
@@ -157,11 +170,21 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
      * @related issues: OWL-052, OWL-030
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+=======
+    /**
+     * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
+     * @description:    This function gets hosts locations for map chart.
+     * @related issues: OWL-030
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
      * @param:          object result
      * @return:         object results
      * @author:         Don Hsieh
      * @since:          08/20/2015
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
      * @last modified:  11/11/2015
@@ -224,6 +247,9 @@ function (angular, _, $, config, kbn, moment) {
 =======
      * @last modified:  08/21/2015
 =======
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
      * @last modified:  08/27/2015
 >>>>>>> [OWL-52] Add servers distribution map among provinces
      * @called by:      OpenFalconDatasource.prototype.query = function(options)
@@ -290,45 +316,57 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
 =======
+=======
+     * @last modified:  08/21/2015
+     * @called by:      OpenFalconDatasource.prototype.query = function(options)
+     *                   in public/app/plugins/datasource/openfalcon/datasource.js
+     */
+>>>>>>> [OWL-30] Add Echarts map to Grafana
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
       // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
-      var data = [];
-      var row = [];
-      for (var i in result.data) {
-        row = result.data[i];
-        // console.log('row =', row);
-        if ('Values' in row) {
-          var values = row.Values;
-          var metric = row.counter;
-          var host = row.endpoint;
+      var obj = {};
+      if (!result.data.length) return result;
+      if ('city' in result.data[0]) {   // This is a map query
+        obj.datapoints = result.data;
+        result.data = [obj];
+        return result;
+      } else {
+        var data = [];
+        var datapoints = [];
+        var timestamp = 0;
+        var value = 0;
+        var values = [];
+        var metric = '';
+        var host = '';
+        _.forEach(result.data, function(row) {
+          if ('Values' in row) {
+            values = row.Values;
+            metric = row.counter;
+            host = row.endpoint;
 
-          var datapoints = [];
-          var arr = [];
-          var timestamp = 0;
-          var value = 0;
-          for (i in values) {
-            arr = values[i];
-            timestamp = arr['timestamp'];
-            value = arr['value'];
-            datapoints.push([value, timestamp]);
+            datapoints = [];
+            _.forEach(values, function(arr) {
+              timestamp = arr['timestamp'];
+              value = arr['value'];
+              datapoints.push([value, timestamp]);
+            });
+            // console.log('convertDataPointsToMs datapoints =', datapoints);
+            obj = {};
+            obj.datapoints = datapoints;
+            obj.target = host + '.' + metric;
+            data.push(obj);
           }
-          // console.log('convertDataPointsToMs datapoints =', datapoints);
-          var obj = {};
-          obj.datapoints = datapoints;
-          obj.target = host + '.' + metric;
-          data.push(obj);
+        });
+        result.data = data;
+        if (!result || !result.data) { return []; }
+        for (var i = 0; i < result.data.length; i++) {
+          var series = result.data[i];
+          for (var y = 0; y < series.datapoints.length; y++) {
+            series.datapoints[y][1] *= 1000;
+          }
         }
+        return result;
       }
-      result.data = data;
-      if (!result || !result.data) { return []; }
-      for (i = 0; i < result.data.length; i++) {
-        var series = result.data[i];
-        // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs series =', series);
-        for (var y = 0; y < series.datapoints.length; y++) {
-          series.datapoints[y][1] *= 1000;
-        }
-      }
-      return result;
     };
 
     OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
@@ -378,6 +416,7 @@ function (angular, _, $, config, kbn, moment) {
                 });
               }
             }
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
@@ -390,6 +429,9 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
             return list;
@@ -405,6 +447,8 @@ function (angular, _, $, config, kbn, moment) {
 =======
 =======
 
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
             return list;
           });
       }
@@ -578,6 +622,7 @@ function (angular, _, $, config, kbn, moment) {
         interpolated = encodeURIComponent(templateSrv.replace(query));
 =======
     OpenFalconDatasource.prototype.metricFindQuery = function(query) {
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
       console.log('metricFindQuery query =', query);
@@ -592,12 +637,18 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> OWL-28 refinements
 =======
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
 =======
       // console.log('metricFindQuery query =', query);
+=======
+      console.log('metricFindQuery query =', query);
+>>>>>>> [OWL-30] Add Echarts map to Grafana
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -630,20 +681,27 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> OWL-28 refinements
           return _.map(results.data, function(metric) {
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
             // console.log('metricFindQuery metric =', metric);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 =======
             console.log('metricFindQuery metric =', metric);
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
             // console.log('metricFindQuery metric =', metric);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false

@@ -1,4 +1,8 @@
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 /**
  * echarts图表类：柱形图
  *

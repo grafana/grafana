@@ -56,12 +56,18 @@ require.config({
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
     echarts:                   'vendor/echarts/echarts',
     zrender:                   'vendor/zrender',
 
 =======
 >>>>>>> feat() started work on more feature rich time picker
+=======
+    echarts:                   'vendor/echarts',
+    zrender:                   'vendor/zrender',
+
+>>>>>>> [OWL-30] Add Echarts map to Grafana
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',

@@ -5,6 +5,7 @@
   'moment',
   'lodash',
   'echarts',
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
   '../../../vendor/echarts/config',
@@ -15,6 +16,12 @@
   // 'echarts/config',
   '../../../vendor/echarts/config',
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+  '../../../vendor/echarts/config',
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
   './graph.tooltip',
   // 'echarts/config',
   'jquery.flot',
@@ -26,6 +33,7 @@
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
@@ -38,6 +46,13 @@ function (angular, $, kbn, moment, _, ec, GraphTooltip) {
 =======
 function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
 // function (angular, $, kbn, moment, _, ec, GraphTooltip) {
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
+=======
+function (angular, $, kbn, moment, _, ec, GraphTooltip) {
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -243,7 +258,11 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                 fill: 1,
                 fillColor: false
               },
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
               pie: {
                 show: panel.pie,
                 fill: 1,
@@ -302,7 +321,11 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
           /**
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
            * @function name:  function drawBar(elem, sortedSeries)
            * @description:    Draw a bar chart.
            * @related issues: OWL-061
@@ -1084,18 +1107,27 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
 =======
            * @function name:  function callPlot(incrementRenderCounter)
            * @description:    This function executes plot.
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
            * @related issues: OWL-030
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
            * @related issues: OWL-052, OWL-030
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+           * @related issues: OWL-030
+>>>>>>> [OWL-30] Add Echarts map to Grafana
+>>>>>>> [OWL-30] Add Echarts map to Grafana
            * @param:          integer incrementRenderCounter
            * @return:         void
            * @author:         Don Hsieh
            * @since:          08/20/2015
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+>>>>>>> [OWL-30] Add Echarts map to Grafana
            * @last modified:  08/31/2015
            * @called by:
            */
@@ -1132,9 +1164,12 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
               }
 =======
            * @last modified:  08/20/2015
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
            * @last modified:  08/27/2015
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
            * @called by:
            */
           function callPlot(incrementRenderCounter) {
@@ -1144,6 +1179,7 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                 var mapId = 'mapChart' + '_' + timestamp;
                 elem.attr('id', mapId);
                 var locations = sortedSeries[0].datapoints;
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
                 locations = locations[0];
                 var provinces = locations.provinces;
                 var Zhejiang = locations.citiesInProvince;
@@ -1167,6 +1203,24 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                   values.push(location.value);
                 });
                 // console.log('function callPlot() geoCoord =', geoCoord);
+=======
+                // console.log('function callPlot() locations =', locations);
+                var name = '';
+                var obj = {};
+                var data = [];
+                var geoCoord = {};
+                var values = [];
+
+                _.forEach(locations, function(location) {
+                  name = location.name + ', ' + location.city;
+                  obj = {};
+                  obj.name = name;
+                  obj.value = location.value;
+                  data.push(obj);
+                  geoCoord[name] = location.coord;
+                  values.push(location.value);
+                });
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 
                 values.sort(function(a, b) {return b-a;});
                 var top5 = [];
@@ -1181,6 +1235,7 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                 });
                 // console.log('function callPlot() top5 =', top5);
                 var myChart = ec.init(document.getElementById(mapId));
+<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
                 var seriesProvinces = {
                     tooltip: {
                         trigger: 'item',
@@ -1644,6 +1699,84 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                     myChart.setOption(option, true);
                 });
                 myChart.setOption(option, true);
+=======
+                var option = {
+                  tooltip : {
+                      trigger: 'item'
+                  },
+                  legend: {
+                      orient: 'vertical',
+                      x:'left',
+                      data:['CDN']
+                  },
+                  dataRange: {
+                      min : 0,
+                      max : 500,
+                      calculable : true,
+                      color: ['maroon','purple','red','orange','yellow','lightgreen']
+                  },
+                  series : [
+                      {
+                          name: 'packets',
+                          type: 'map',
+                          mapType: 'china',
+                          hoverable: false,
+                          roam:true,
+                          data : [],
+                          markPoint : {
+                              symbolSize: 5,
+                              itemStyle: {
+                                  normal: {
+                                      borderColor: '#87cefa',
+                                      borderWidth: 1,
+                                      label: {
+                                          show: false
+                                      }
+                                  },
+                                  emphasis: {
+                                      borderColor: '#1e90ff',
+                                      borderWidth: 5,
+                                      label: {
+                                          show: false
+                                      }
+                                  }
+                              },
+                              data : [
+                              ]
+                          },
+                          geoCoord: {
+                          }
+                      },
+                      {
+                          name: 'Top5',
+                          type: 'map',
+                          mapType: 'china',
+                          data:[],
+                          markPoint : {
+                              symbol:'emptyCircle',
+                              symbolSize : function (v) {
+                                  return 10 + v/100;
+                              },
+                              effect : {
+                                  show: true,
+                                  shadowBlur : 0
+                              },
+                              itemStyle:{
+                                  normal:{
+                                      label:{show:false}
+                                  }
+                              },
+                              data : [
+                              ]
+                          }
+                      }
+                  ]
+                };
+                option.series[0].markPoint.data = data;
+                option.series[0].geoCoord = geoCoord;
+                option.series[1].markPoint.data = top5;
+                myChart.setOption(option);
+>>>>>>> [OWL-30] Add Echarts map to Grafana
               } else {
                 $.plot(elem, sortedSeries, options);
               }
