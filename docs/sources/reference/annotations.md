@@ -5,15 +5,18 @@ page_keywords: grafana, annotations, guide, documentation
 ---
 
 # Annotations
-![](/img/v1/annotated_graph1.png)
 
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get title, tags, and text information for the event.
 
+![](/img/v1/annotated_graph1.png)
+
 To add an annotation query click dashboard settings icon in top menu and select `Annotations` from the
 dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add a new annotation query.
 
-### Graphite annotations
+> Note: Annotations apply to all graphs in a given dashboard, not on a per-panel basis.
+
+## Graphite annotations
 
 Graphite supports two ways to query annotations.
 
@@ -36,5 +39,4 @@ as the name for the fields that should be used for the annotation title, tags an
 
 For InfluxDB you need to enter a query like in the above screenshot. You need to have the ```where $timeFilter``` part.
 If you only select one column you will not need to enter anything in the column mapping fields.
-If you have multiple columns you need to specify which column should be treated as title, tags and text column.
 

@@ -5,17 +5,21 @@ page_keywords: grafana, guide, documentation
 ---
 
 # Getting started
-This guide will help you get started and acquainted with the Grafana user interface. It assumes you have a working
-Grafana 2.0 instance, and have added at least one Grafana data source.
+This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana 2.x instance, and have added at least one Grafana Data Source. 
 
 ## Beginner guides
-Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2)
-to get a quick intro to the dashboard & panel editing UI.
+Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
 
-## Top header
+##Basic Concepts
+Read the [Basic Concepts](/reference/basic_concepts) document to get a crash course in key Grafana concepts. 
+
+### Top header
+
+Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard.
+
 <img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
 
-The image above shows you the top header for a dashboard.
+The image above shows you the top header for a Dashboard.
 
 1. Side menubar toggle: This toggles the side menu, allowing you to focus on the data presented in the dashboard. The side menu provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
 2. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage Dashboard playlists.
@@ -24,12 +28,21 @@ The image above shows you the top header for a dashboard.
 5. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
 6. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
-## Dashboard
-Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows.
-By adjusting the display properties of Panels and Rows, you can customize the perfect Dashboard for your exact needs.
-Each panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB).
-This allows you to create a single dashboard that unifies the data across your organization. Panels use the time range specified
-in the main Time Picker in the upper right, but they can also have relative time overrides.
+## Dashboards, Panels, Rows, the building blocks of Grafana...
+Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Gafana makes it easy to construct the right queries, and customize the display properities so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB). The [Core Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
+
+
+## Adding & Editing Graphs and Panels
+
+![](/img/v2/graph_metrics_tab_graphite.png)
+
+1. You add panels via row menu. The row menu is the green icon to the left of each row.
+2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
+3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
+
+When you click the `Metrics` tab, you are presented with a Query Editor that is specific to the Panel Data Source. Use the Query Editor to build your queries and Grafana will visualize them in real time.
+
+
 
 <img src="/img/v2/dashboard_annotated.png" class="no-shadow">
 
@@ -42,7 +55,7 @@ in the main Time Picker in the upper right, but they can also have relative time
 
 ## Drag-and-Drop panels
 
-You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location.
+You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
 ![](/img/animated_gifs/drag_drop.gif)
 

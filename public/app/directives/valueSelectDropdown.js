@@ -29,7 +29,11 @@ function (angular, app, _) {
           return tag;
         });
 
-        vm.search = {query: '', options: vm.options};
+        vm.search = {
+          query: '',
+          options: vm.options.slice(0, Math.min(vm.options.length, 1000))
+        };
+
         vm.dropdownVisible = true;
       };
 
@@ -103,10 +107,14 @@ function (angular, app, _) {
           vm.moveHighlight(-1);
         }
         if (evt.keyCode === 13) {
-          vm.optionSelected(vm.search.options[vm.highlightIndex], {}, true, false);
+          if (vm.search.options.length === 0) {
+            vm.commitChanges();
+          } else {
+            vm.selectValue(vm.search.options[vm.highlightIndex], {}, true, false);
+          }
         }
         if (evt.keyCode === 32) {
-          vm.optionSelected(vm.search.options[vm.highlightIndex], {}, false, false);
+          vm.selectValue(vm.search.options[vm.highlightIndex], {}, false, false);
         }
       };
 
@@ -185,8 +193,12 @@ function (angular, app, _) {
       };
 
       vm.commitChanges = function() {
-        // make sure one option is selected
-        if (vm.selectedValues.length === 0) {
+        // if we have a search query and no options use that
+        if (vm.search.options.length === 0 && vm.search.query.length > 0) {
+          vm.variable.current = {text: vm.search.query, value: vm.search.query};
+        }
+        else if (vm.selectedValues.length === 0) {
+          // make sure one option is selected
           vm.options[0].selected = true;
           vm.selectionsChanged(false);
         }
@@ -204,6 +216,8 @@ function (angular, app, _) {
         vm.search.options = _.filter(vm.options, function(option) {
           return option.text.toLowerCase().indexOf(vm.search.query.toLowerCase()) !== -1;
         });
+
+        vm.search.options = vm.search.options.slice(0, Math.min(vm.search.options.length, 1000));
       };
 
       vm.init = function() {

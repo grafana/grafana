@@ -14,6 +14,7 @@ function (angular) {
 
     this.showModal = function(e, options) {
       var modal = $modal({
+        modalClass: options.modalClass,
         template: options.src,
         persist: false,
         show: false,

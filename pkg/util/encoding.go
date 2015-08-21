@@ -7,8 +7,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
+	"strings"
 )
 
 // source: https://github.com/gogits/gogs/blob/9ee80e3e5426821f03a4e99fad34418f5c736413/modules/base/tool.go#L58
@@ -79,4 +81,24 @@ func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte 
 func GetBasicAuthHeader(user string, password string) string {
 	var userAndPass = user + ":" + password
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(userAndPass))
+}
+
+func DecodeBasicAuthHeader(header string) (string, string, error) {
+	var code string
+	parts := strings.SplitN(header, " ", 2)
+	if len(parts) == 2 && parts[0] == "Basic" {
+		code = parts[1]
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(code)
+	if err != nil {
+		return "", "", err
+	}
+
+	userAndPass := strings.SplitN(string(decoded), ":", 2)
+	if len(userAndPass) != 2 {
+		return "", "", errors.New("Invalid basic auth header")
+	}
+
+	return userAndPass[0], userAndPass[1], nil
 }

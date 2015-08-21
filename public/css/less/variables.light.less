@@ -33,9 +33,9 @@
 
 // grafana Variables
 // -------------------------
-@grafanaPanelBackground: 	@white;
-@grafanaPanelBorder: 		  solid 1px #ddd;
-@grafanaTriggerBorder:		solid 1px @grayLighter;
+@grafanaPanelBackground: 	@grayLighter;
+@grafanaPanelBorder: 	  	solid 1px #ddd;
+@grafanaTriggerBorder:		solid 1px @grayLight;
 
 // Submenu
 @submenuBackground:     rgb(218, 217, 217);
@@ -58,16 +58,14 @@
 
 // Scaffolding
 // -------------------------
-@bodyBackground:        #EAEAEA;
+@bodyBackground:        #EFEFEF;
 @textColor:             @gray;
-
 
 // Links
 // -------------------------
 @linkColor:             @gray;
 @linkColorDisabled:     lighten(@linkColor,30%);
-@linkColorHover:        @grayDarker;
-
+@linkColorHover:        darken(@linkColor, 20%);
 
 // Typography
 // -------------------------
@@ -76,14 +74,14 @@
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
-@baseFontWeight:		400;
+@baseFontWeight:		    400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    bold;    // instead of browser default, bold
-@headingsColor:         @grayDarker; // empty to use BS default, @textColor
+@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsColor:         @textColor; // empty to use BS default, @textColor
 
 
 // Component sizing
@@ -110,6 +108,8 @@
 @grafanaListHighlight:         darken(@grayLighter,10%);
 @grafanaListHighlightContrast: #ddd;
 @grafanaListMainLinkColor:     @textColor;
+
+@pageContainerBorderColor: darken(@grafanaTargetBackground, 5%);
 
 
 // Tables
@@ -145,8 +145,8 @@
 @btnDangerBackground:               lighten(@red, 5%);
 @btnDangerBackgroundHighlight:      darken(@red, 5%);
 
-@btnInverseBackground:              @gray;
-@btnInverseBackgroundHighlight:     darken(@gray, 10%);
+@btnInverseBackground:              @white;
+@btnInverseBackgroundHighlight:     darken(@grayLight, 15%);
 
 @iconContainerBackground:			      @white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);
@@ -296,8 +296,8 @@
 
 // Tooltips and popovers
 // -------------------------
-@tooltipColor:            #fff;
-@tooltipBackground:       #333;
+@tooltipColor:            @grayDark;
+@tooltipBackground:        darken(@white,3%);
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        darken(@white,11%);

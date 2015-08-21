@@ -27,7 +27,7 @@ function (angular, _) {
       this._texts = {};
 
       _.each(this.variables, function(variable) {
-        if (!variable.current || !variable.current.value) { return; }
+        if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
 
         this._values[variable.name] = this.renderVariableValue(variable);
         this._texts[variable.name] = variable.current.text;
@@ -115,9 +115,20 @@ function (angular, _) {
       });
     };
 
-    this.fillVariableValuesForUrl = function(params) {
+    this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        params['var-' + variable.name] = variable.current.value;
+        var current = variable.current;
+        var value = current.value;
+
+        if (current.text === 'All') {
+          value = 'All';
+        }
+
+        if (scopedVars && scopedVars[variable.name] !== void 0) {
+          value = scopedVars[variable.name].value;
+        }
+
+        params['var-' + variable.name] = value;
       });
     };
 

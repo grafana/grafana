@@ -51,13 +51,15 @@ func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
 		return results, nil
 	}
 
+	queryStr := strings.ToLower(query.Title)
+
 	for _, item := range index.items {
 		if len(results) > query.Limit {
 			break
 		}
 
 		// add results with matchig title filter
-		if strings.Contains(item.TitleLower, query.Title) {
+		if strings.Contains(item.TitleLower, queryStr) {
 			results = append(results, &Hit{
 				Type:  DashHitJson,
 				Title: item.Dashboard.Title,

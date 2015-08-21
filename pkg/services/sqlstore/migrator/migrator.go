@@ -100,6 +100,7 @@ func (mg *Migrator) Start() error {
 		}
 
 		if err := mg.exec(m); err != nil {
+			log.Error(3, "Migrator: error: \n%s:\n%s", err, sql)
 			record.Error = err.Error()
 			mg.x.Insert(&record)
 			return err

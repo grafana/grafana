@@ -57,7 +57,7 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 	if err != nil {
 		return err
 	} else if has == false {
-		return m.ErrNotFound
+		return m.ErrDashboardSnapshotNotFound
 	}
 
 	query.Result = &snapshot

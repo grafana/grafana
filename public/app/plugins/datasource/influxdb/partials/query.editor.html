@@ -1,74 +1,59 @@
-<div class="editor-row">
+<div class="tight-form-container-no-item-borders">
+	<div  class="tight-form">
+		<ul class="tight-form-list pull-right">
+			<li ng-show="parserError" class="tight-form-item">
+				<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+					<i class="fa fa-warning"></i>
+				</a>
+			</li>
+			<li class="tight-form-item small" ng-show="target.datasource">
+				<em>{{target.datasource}}</em>
+			</li>
+			<li class="tight-form-item">
+				<div class="dropdown">
+					<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+						<i class="fa fa-bars"></i>
+					</a>
+					<ul class="dropdown-menu pull-right" role="menu">
+						<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
+					</ul>
+				</div>
+			</li>
+			<li class="tight-form-item last">
+				<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</li>
+		</ul>
 
-	<div ng-repeat="target in panel.targets" ng-controller="InfluxQueryCtrl" ng-init="init()" ng-class="{'tight-form-disabled': target.hide}" class="tight-form-container-no-item-borders" style="margin-bottom: 10px">
-		<div  class="tight-form">
-			<ul class="tight-form-list pull-right">
-				<li ng-show="parserError" class="tight-form-item">
-					<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
-						<i class="fa fa-warning"></i>
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-						<i class="fa fa-pencil"></i>
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<div class="dropdown">
-						<a  class="pointer dropdown-toggle"
-							data-toggle="dropdown"
-							tabindex="1">
-							<i class="fa fa-bars"></i>
-						</a>
-						<ul class="dropdown-menu pull-right" role="menu">
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="duplicate()">
-									Duplicate
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index-1)">
-									Move up
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index+1)">
-									Move down
-								</a>
-							</li>
-						</ul>
-					</div>
-				</li>
-				<li class="tight-form-item last">
-					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-						<i class="fa fa-remove"></i>
-					</a>
-				</li>
-			</ul>
+		<ul class="tight-form-list">
+			<li class="tight-form-item" style="min-width: 15px; text-align: center">
+				{{target.refId}}
+			</li>
+			<li>
+				<a  class="tight-form-item"
+					ng-click="target.hide = !target.hide; get_data();"
+					role="menuitem">
+					<i class="fa fa-eye"></i>
+				</a>
+			</li>
+		</ul>
 
-			<ul class="tight-form-list">
-				<li>
-					<a  class="tight-form-item"
-						ng-click="target.hide = !target.hide; get_data();"
-						role="menuitem">
-						<i class="fa fa-eye"></i>
-					</a>
-				</li>
-			</ul>
-
-			<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
+		<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" give-focus="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
 
 			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
 				<li class="tight-form-item query-keyword" style="width: 75px;">
 					SELECT
 				</li>
-				<li class="dropdown tight-form-item">
-					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
-						{{target.function}}<span>(value)</span>
-					</a>
+				<li class="dropdown" ng-repeat="field in target.fields">
+					<span influxdb-func-editor field="field" get-fields="getFields()" on-change="fieldChanged(field)" class="tight-form-item">
+					</span>
+				</li>
+				<li>
+					<metric-segment segment="addFieldSegment" get-alt-segments="getFieldSegments()" on-value-changed="addField()"></metric-segment>
 				</li>
 			</ul>
 
@@ -77,10 +62,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					FROM
 				</li>
 				<li>
@@ -93,11 +75,7 @@
 
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-
-				<li class="tight-form-item query-keyword" style="width: 75px;">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					WHERE
 				</li>
 
@@ -110,12 +88,8 @@
 
 		<div class="tight-form">
 			<ul class="tight-form-list" ng-hide="target.rawQuery">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-
-				<li class="tight-form-item" >
-					<span class="query-keyword">GROUP BY</span>
+				<li class="tight-form-item query-keyword tight-form-align">
+					GROUP BY
 				</li>
 
 				<li class="tight-form-item">
@@ -136,8 +110,10 @@
 					</a>
 					<ul class="dropdown-menu">
 						<li><a ng-click="target.fill = ''">no fill</a></li>
-						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
 						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
+						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
+						<li><a ng-click="target.fill = 'none'">fill (none)</a></li>
+						<li><a ng-click="target.fill = 'previous'">fill (previous)</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -146,7 +122,9 @@
 					Alias pattern
 				</li>
 				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-blur="get_data()">
+					<input type="text" class="input-medium tight-form-input"
+						ng-model="target.alias" spellcheck='false' placeholder="alias"
+						ng-model-onblur ng-change="get_data()"></input>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -154,90 +132,4 @@
 
 	</div>
 </div>
-
-<section class="grafana-metric-options">
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-wrench"></i>
-			</li>
-			<li class="tight-form-item">
-				 Group by time interval
-			</li>
-			<li>
-				<input type="text" class="input-medium tight-form-input" ng-model="panel.interval" ng-blur="get_data();"
-				spellcheck='false' placeholder="example: >10s">
-			</li>
-			<li class="tight-form-item">
-				<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-info-circle"></i>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					alias patterns
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking &amp; and fill
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					group by time
-				</a>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-</section>
-
-<div class="editor-row">
-	<div class="pull-left" style="margin-top: 30px;">
-
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
-			<h5>Alias patterns</h5>
-			<ul>
-				<li>$m = replaced with measurement name</li>
-				<li>$measurement = replaced with measurement name</li>
-				<li>$tag_hostname = replaced with the value of the hostname tag</li>
-				<li>You can also use [[tag_hostname]] pattern replacement syntax</li>
-			</ul>
-		</div>
-
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 2">
-			<h5>Stacking and fill</h5>
-			<ul>
-				<li>When stacking is enabled it important that points align</li>
-				<li>If there are missing points for one series it can cause gaps or missing bars</li>
-				<li>You must use fill(0), and select a group by time low limit</li>
-				<li>Use the group by time option below your queries and specify for example &gt;10s if your metrics are written every 10 seconds</li>
-				<li>This will insert zeros for series that are missing measurements and will make stacking work properly</li>
-			</ul>
-		</div>
-
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
-			<h5>Group by time</h5>
-			<ul>
-				<li>Group by time is important, otherwise the query could return many thousands of datapoints that will slow down Grafana</li>
-				<li>Leave the group by time field empty for each query and it will be calculated based on time range and pixel width of the graph</li>
-				<li>If you use fill(0) or fill(null) set a low limit for the auto group by time interval</li>
-				<li>The low limit can only be set in the group by time option below your queries</li>
-				<li>You set a low limit by adding a greater sign before the interval</li>
-				<li>Example: &gt;60s if you write metrics to InfluxDB every 60 seconds</li>
-			</ul>
-		</div>
-
-
-	</div>
-</div>
-
 

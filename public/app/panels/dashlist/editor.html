@@ -7,7 +7,7 @@
 					<strong>Mode</strong>
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="panel.mode" ng-options="f for f in modes" ng-change="get_data()"></select>
+					<select class="input-small tight-form-input last" ng-model="panel.mode" ng-options="f for f in modes" ng-change="get_data()"></select>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -47,7 +47,7 @@
 					<strong>Limit number to</strong>
 				</li>
 				<li>
-					<input class="input-small tight-form-input" type="number" ng-model="panel.limit" ng-model-onblur ng-change="get_data()">
+					<input class="input-small tight-form-input last" type="number" ng-model="panel.limit" ng-model-onblur ng-change="get_data()">
 				</li>
 			</ul>
 			<div class="clearfix"></div>

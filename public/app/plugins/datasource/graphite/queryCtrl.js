@@ -9,14 +9,18 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var targetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
-      $scope.target.target = $scope.target.target || '';
-      $scope.targetLetters = targetLetters;
+      if ($scope.target) {
+        $scope.target.target = $scope.target.target || '';
+        parseTarget();
+      }
+    };
 
+    $scope.toggleEditorMode = function() {
+      $scope.target.textEditor = !$scope.target.textEditor;
       parseTarget();
     };
 
@@ -25,9 +29,11 @@ function (angular, _, config, gfunc, Parser) {
     function parseTarget() {
       $scope.functions = [];
       $scope.segments = [];
-      $scope.showTextEditor = false;
-
       delete $scope.parserError;
+
+      if ($scope.target.textEditor) {
+        return;
+      }
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
@@ -38,7 +44,7 @@ function (angular, _, config, gfunc, Parser) {
 
       if (astNode.type === 'error') {
         $scope.parserError = astNode.message + " at position: " + astNode.pos;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
         return;
       }
 
@@ -48,7 +54,7 @@ function (angular, _, config, gfunc, Parser) {
       catch (err) {
         console.log('error parsing target:', err.message);
         $scope.parserError = err.message;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
       }
 
       checkOtherSegments($scope.segments.length - 1);
@@ -306,22 +312,8 @@ function (angular, _, config, gfunc, Parser) {
       return new MetricSegment({value: 'select metric', fake: true});
     };
 
-  });
+    $scope.init();
 
-  module.directive('focusMe', function($timeout, $parse) {
-    return {
-      //scope: true,   // optionally create a child scope
-      link: function(scope, element, attrs) {
-        var model = $parse(attrs.focusMe);
-        scope.$watch(model, function(value) {
-          if(value === true) {
-            $timeout(function() {
-              element[0].focus();
-            });
-          }
-        });
-      }
-    };
   });
 
 });

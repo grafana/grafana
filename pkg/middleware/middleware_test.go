@@ -48,6 +48,32 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
+		middlewareScenario("Using basic auth", func(sc *scenarioContext) {
+
+			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
+				query.Result = &m.User{
+					Password: util.EncodePassword("myPass", "salt"),
+					Salt:     "salt",
+				}
+				return nil
+			})
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			setting.BasicAuthEnabled = true
+			authHeader := util.GetBasicAuthHeader("myUser", "myPass")
+			sc.fakeReq("GET", "/").withAuthoriziationHeader(authHeader).exec()
+
+			Convey("Should init middleware context with user", func() {
+				So(sc.context.IsSignedIn, ShouldEqual, true)
+				So(sc.context.OrgId, ShouldEqual, 2)
+				So(sc.context.UserId, ShouldEqual, 12)
+			})
+		})
+
 		middlewareScenario("Valid api key", func(sc *scenarioContext) {
 			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 
@@ -223,6 +249,7 @@ type scenarioContext struct {
 	context        *Context
 	resp           *httptest.ResponseRecorder
 	apiKey         string
+	authHeader     string
 	respJson       map[string]interface{}
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
@@ -237,6 +264,11 @@ func (sc *scenarioContext) withValidApiKey() *scenarioContext {
 
 func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
 	sc.apiKey = "nvalidhhhhds"
+	return sc
+}
+
+func (sc *scenarioContext) withAuthoriziationHeader(authHeader string) *scenarioContext {
+	sc.authHeader = authHeader
 	return sc
 }
 
@@ -264,6 +296,10 @@ func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
 func (sc *scenarioContext) exec() {
 	if sc.apiKey != "" {
 		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
+	}
+
+	if sc.authHeader != "" {
+		sc.req.Header.Add("Authorization", sc.authHeader)
 	}
 
 	sc.m.ServeHTTP(sc.resp, sc.req)

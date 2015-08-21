@@ -23,7 +23,10 @@ function (angular, _) {
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
-      $scope.datasources = datasourceSrv.getMetricSources();
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.builtIn;
+      });
+
       $scope.variables = templateSrv.variables;
       $scope.reset();
 
