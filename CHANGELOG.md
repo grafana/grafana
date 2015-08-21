@@ -50,6 +50,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+<<<<<<< ea77587ba297693ec3a2a6a24f2f9dd24da79d68
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
 - [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
@@ -110,11 +111,20 @@ now fallbacks to html escaping title and text, fixes #2563
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 repeat panel from url), fixes #2564
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
+=======
+>>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 
-** Breaking Changes **
+**Breaking Changes**
+repeat panel from url), fixes #2564
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+
+# 2.1.3 (2015-08-24)
+
+**Fixes**
+- [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 
 # 2.1.2 (2015-08-20)
 
