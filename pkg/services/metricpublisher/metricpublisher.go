@@ -47,6 +47,10 @@ func Init(metrics met.Backend) {
 	if err != nil {
 		log.Fatal(0, "failed to initialize nsq producer.", err)
 	}
+	err = globalProducer.Ping()
+	if err != nil {
+		log.Fatal(0, "can't connect to nsqd: %s", err)
+	}
 	metricsPublished = metrics.NewCount("metricpublisher.metrics-published")
 	messagesPublished = metrics.NewCount("metricpublisher.messages-published")
 	messagesSize = metrics.NewMeter("metricpublisher.message_size", 0)
@@ -156,7 +160,7 @@ func Publish(metrics []*m.MetricDefinition) error {
 		err = globalProducer.Publish(topic, buf.Bytes())
 		publishDuration.Value(time.Since(pre))
 		if err != nil {
-			panic(fmt.Errorf("can't publish to nsqd: %s", err))
+			log.Fatal(0, "can't publish to nsqd: %s", err)
 		}
 		log.Info("published metrics %d size=%d", id, buf.Len())
 	}
