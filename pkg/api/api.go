@@ -19,9 +19,10 @@ func Register(r *macaron.Macaron) {
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Get("/logout", Logout)
-	r.Post("/login", bind(dtos.LoginCommand{}), LoginPost)
+	r.Post("/login", bind(dtos.LoginCommand{}), wrap(LoginPost))
 	r.Get("/login/:name", OAuthLogin)
 	r.Get("/login", LoginView)
+	r.Get("/invite/:code", Index)
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
@@ -36,11 +37,17 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
+	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
+	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
 	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
+
+	// invited
+	r.Get("/api/user/invite/:code", wrap(GetInviteInfoByCode))
+	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), wrap(CompleteInvite))
 
 	// reset password
 	r.Get("/user/password/send-reset-email", Index)
@@ -89,6 +96,11 @@ func Register(r *macaron.Macaron) {
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
+
+			// invites
+			r.Get("/invites", wrap(GetPendingOrgInvites))
+			r.Post("/invites", bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
+			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 		}, regOrgAdmin)
 
 		// create new org
@@ -99,7 +111,9 @@ func Register(r *macaron.Macaron) {
 
 		// orgs (admin routes)
 		r.Group("/orgs/:orgId", func() {
+			r.Get("/", wrap(GetOrgById))
 			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
+			r.Delete("/", wrap(DeleteOrgById))
 			r.Get("/users", wrap(GetOrgUsers))
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))

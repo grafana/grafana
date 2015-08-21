@@ -11,11 +11,15 @@ function (angular, _) {
     var self = this;
 
     this.init = function(dashboard) {
+      if (dashboard.snapshot) { return; }
+
       this.iteration = new Date().getTime();
       this.process(dashboard);
     };
 
     this.update = function(dashboard) {
+      if (dashboard.snapshot) { return; }
+
       this.iteration = this.iteration + 1;
       this.process(dashboard);
     };
@@ -164,7 +168,7 @@ function (angular, _) {
 
       _.each(selected, function(option, index) {
         var copy = self.getPanelClone(panel, row, index);
-        copy.span = 12 / selected.length;
+        copy.span = Math.max(12 / selected.length, panel.minSpan);
         copy.scopedVars = copy.scopedVars || {};
         copy.scopedVars[variable.name] = option;
       });

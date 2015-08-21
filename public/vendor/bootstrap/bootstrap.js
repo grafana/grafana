@@ -1993,9 +1993,12 @@
 
   , highlighter: function (item) {
       var query = this.query.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&')
+      if (!query) {
+        return item;
+      }
       return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
         return '<strong>' + match + '</strong>'
-      })
+      });
     }
 
   , render: function (items) {
@@ -2069,7 +2072,7 @@
   , move: function (e) {
       if (!this.shown) return
 
-      // grafana change, shift+left paranthesis
+      // grafana change, shift+left parenthesis
       if (e.shiftKey && e.keyCode === 40) {
         return;
       }

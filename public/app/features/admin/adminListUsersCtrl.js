@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminUsersCtrl', function($scope, backendSrv) {
+  module.controller('AdminListUsersCtrl', function($scope, backendSrv) {
 
     $scope.init = function() {
       $scope.getUsers();

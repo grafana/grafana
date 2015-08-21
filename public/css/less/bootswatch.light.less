@@ -159,6 +159,7 @@ div.subnav {
 
 	li > a:hover,
 	li.active > a,
+	li.active > a:focus,
 	li.active > a:hover {
 		border-color: transparent;
 	  background-color: transparent;
@@ -529,19 +530,6 @@ a.thumbnail {
 	background-color: @grayLighter;
 	background-image: none;
 	.border-radius(0);
-}
-
-.modal {
-	.border-radius(0);
-	background-color: @bodyBackground;
-	&-header {
-		border-bottom: none;
-	}
-
-	&-footer {
-		border-top: none;
-		background-color: transparent;
-	}
 }
 
 .popover {

@@ -11,6 +11,8 @@ function (angular, _, kbn) {
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
 
+    function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
+
     $rootScope.onAppEvent('time-range-changed', function()  {
       var variable = _.findWhere(self.variables, { type: 'interval' });
       if (variable) {
@@ -80,8 +82,10 @@ function (angular, _, kbn) {
         variable.current.text = variable.current.value.join(' + ');
       }
 
+      self.selectOptionsForCurrentValue(variable);
+
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
@@ -126,6 +130,25 @@ function (angular, _, kbn) {
         .then(_.partial(this.validateVariableSelectionState, variable));
     };
 
+    this.selectOptionsForCurrentValue = function(variable) {
+      var i, y, value, option;
+
+      for (i = 0; i < variable.options.length; i++) {
+        option = variable.options[i];
+        option.selected = false;
+        if (_.isArray(variable.current.value)) {
+          for (y = 0; y < variable.current.value.length; y++) {
+            value = variable.current.value[y];
+            if (option.value === value) {
+              option.selected = true;
+            }
+          }
+        } else if (option.value === variable.current.value) {
+          option.selected = true;
+        }
+      }
+    };
+
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
@@ -133,15 +156,7 @@ function (angular, _, kbn) {
       }
 
       if (_.isArray(variable.current.value)) {
-        for (var i = 0; i < variable.current.value.length; i++) {
-          var value = variable.current.value[i];
-          for (var y = 0; y < variable.options.length; y++) {
-            var option = variable.options[y];
-            if (option.value === value) {
-              option.selected = true;
-            }
-          }
-        }
+        self.selectOptionsForCurrentValue(variable);
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
@@ -174,6 +189,9 @@ function (angular, _, kbn) {
         variable.options = self.metricNamesToVariableValues(variable, results);
         if (variable.includeAll) {
           self.addAllOption(variable);
+        }
+        if (!variable.options.length) {
+          variable.options.push(getNoneOption());
         }
         return datasource;
       });
@@ -213,8 +231,23 @@ function (angular, _, kbn) {
       }
 
       return _.map(_.keys(options).sort(), function(key) {
-        return { text: key, value: key };
+        var option = { text: key, value: key };
+
+        // check if values need to be regex escaped
+        if (self.shouldRegexEscape(variable)) {
+          option.value = self.regexEscape(option.value);
+        }
+
+        return option;
       });
+    };
+
+    this.shouldRegexEscape = function(variable) {
+      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
+    };
+
+    this.regexEscape = function(value) {
+      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
     };
 
     this.addAllOption = function(variable) {
@@ -227,7 +260,9 @@ function (angular, _, kbn) {
         allValue = '.*';
         break;
       case 'regex values':
-        allValue = '(' + _.pluck(variable.options, 'text').join('|') + ')';
+        allValue = '(' + _.map(variable.options, function(option) {
+          return self.regexEscape(option.text);
+        }).join('|') + ')';
         break;
       default:
         allValue = '{';

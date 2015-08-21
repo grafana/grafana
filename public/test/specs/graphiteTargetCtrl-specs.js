@@ -13,9 +13,7 @@ define([
     beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
 
     beforeEach(function() {
-      ctx.scope.target = {
-        target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'
-      };
+      ctx.scope.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
 
       ctx.scope.datasource = ctx.datasource;
       ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));

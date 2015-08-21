@@ -8,8 +8,7 @@
   "module": "plugins/datasource/kairosdb/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/kairosdb/partials/config.html",
-    "query": "app/plugins/datasource/kairosdb/partials/query.editor.html"
+    "config": "app/plugins/datasource/kairosdb/partials/config.html"
   },
 
   "metrics": true,

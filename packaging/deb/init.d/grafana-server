@@ -36,6 +36,8 @@ MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
 
+umask 0027
+
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
 	exit 4

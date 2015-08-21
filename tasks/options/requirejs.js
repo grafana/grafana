@@ -8,6 +8,7 @@ module.exports = function(config,grunt) {
       dir:  '<%= destDir %>',
       mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
       baseUrl: './app',
+      waitSeconds: 0,
 
       modules: [], // populated below,
 
