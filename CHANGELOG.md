@@ -98,8 +98,13 @@ panels or rows, fixes #2534
 >>>>>>> fix(auth proxy): Fix for server side rendering of panel when using auth proxy, fixes #2568
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
+<<<<<<< 9d8ec5825aa59a8d30e71063b9a3b5404f305e67
 fixes #2565
 >>>>>>> fix(TimePicker): Fix for when you applied custom time range it did not refreh dashboard, fixes #2565
+=======
+- [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
+now fallbacks to html escaping title and text, fixes #2563
+>>>>>>> fix(annotations): Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text, fixes #2563
 
 ** Breaking Changes **
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
