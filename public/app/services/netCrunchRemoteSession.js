@@ -81,7 +81,8 @@ define([
               return $q.all([login]);
             });
           },
-          error: error
+          error: error,
+          res : {}
         };
 
         return that;

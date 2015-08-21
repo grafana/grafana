@@ -66,10 +66,11 @@ function (angular, $, _, appLevelRequire) {
     'ang-drag-drop',
     'grafana',
     'pasvaz.bindonce',
-    'ui.bootstrap.tabs',
+    'ui.bootstrap.tabs'
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes',
+                      'const', 'values'];
 
   _.each(module_types, function (type) {
     var module_name = 'grafana.'+type;
@@ -80,13 +81,14 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
+    'consts/all',
     'services/all',
     'features/all',
     'controllers/all',
     'directives/all',
     'filters/all',
     'components/partials',
-    'routes/all',
+    'routes/all'
   ];
 
   app.boot = function() {
