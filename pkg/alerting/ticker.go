@@ -50,10 +50,10 @@ func (t *Ticker) run() {
 			t.last = next
 			continue
 		}
-		// tick is too young. try again when time is right or somebody updates offset
+		// tick is too young. try again when ...
 		select {
-		case <-t.clock.After(-diff):
-		case offset := <-t.newOffset:
+		case <-t.clock.After(-diff): // ...it'll definitely be old enough
+		case offset := <-t.newOffset: // ...it might be old enough
 			t.offset = offset
 		}
 	}

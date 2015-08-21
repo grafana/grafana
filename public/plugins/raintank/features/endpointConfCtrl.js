@@ -57,18 +57,6 @@ function (angular, _) {
         }, 0, false);
       });
 
-      $scope.$watch('endpoint.name', function(newVal, oldVal) {
-        $scope.discovered = false;
-        _.each($scope.monitors, function(monitor) {
-          _.each(monitor.settings, function(setting) {
-            if ((setting.variable === "host" || setting.variable === "name" || setting.variable === "hostname") &&
-                ((setting.value === "") || (setting.value === oldVal))) {
-              setting.value = newVal;
-            }
-          });
-        });
-      });
-
       if ($location.hash()) {
         switch($location.hash()) {
         case "ping":
@@ -246,6 +234,7 @@ function (angular, _) {
       $scope.discoveryInProgress = false;
       $scope.discoveryError = false;
       $scope.showConfig = false;
+      // $scope.endpoint.name = {"name": ""};
       $scope.monitors = {};
       _.forEach($scope.monitor_types, function(type) {
         $scope.setDefaultMonitor(type);
@@ -402,6 +391,7 @@ function (angular, _) {
     $scope.skipDiscovery = function() {
       $scope.discoveryInProgress = false;
       $scope.showConfig = true;
+      $scope.discoveryError = false;
     };
 
     $scope.discover = function(endpoint) {
@@ -459,10 +449,37 @@ function (angular, _) {
       return changes;
     };
 
-    $scope.gotoDashboard = function() {
-      $location.path("/dashboard/db/statusboard").search({"var-collector": "All", "var-endpoint": $scope.endpoint.slug});
+    $scope.gotoDashboard = function(endpoint, type) {
+      if (!type) {
+        type = 'summary';
+      }
+      var search = {
+        "var-collector": "All",
+        "var-endpoint": $scope.endpoint.slug
+      };
+      switch(type) {
+        case "summary":
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
+          break;
+        case "ping":
+          $location.path("/dashboard/file/rt-endpoint-ping.json").search(search);
+          break;
+        case "dns":
+          $location.path("/dashboard/file/rt-endpoint-dns.json").search(search);
+          break;
+        case "http":
+          search['var-protocol'] = "http";
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
+          break;
+        case "https":
+          search['var-protocol'] = "https";
+          $location.path("/dashboard/file/rt-endpoint-web.json").search(search);
+          break;
+        default:
+          $location.path("/dashboard/file/rt-endpoint-summary.json").search(search);
+          break;
+      }
     };
-
     $scope.init();
 
   });

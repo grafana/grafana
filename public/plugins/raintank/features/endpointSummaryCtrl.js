@@ -150,6 +150,38 @@ function (angular, _) {
       });
     };
 
+    $scope.getNotificationEmails = function(checkType) {
+      var mon = $scope.getMonitorByTypeName(checkType);
+      if (!mon || mon.health_settings.notifications.addresses === "") {
+        return [];
+      }
+      var addresses = mon.health_settings.notifications.addresses.split(',');
+      var list = [];
+      addresses.forEach(function(addr) {
+        list.push(addr.trim());
+      });
+      return list;
+    };
+
+    $scope.getNotificationEmailsAsString = function(checkType) {
+      var emails = $scope.getNotificationEmails(checkType);
+      if (emails.length < 1) {
+        return "No recipients specified";
+      }
+      var list = [];
+      emails.forEach(function(email) {
+        // if the email in the format `display name <email@address>`
+        // then just show the display name.
+        var res = email.match(/\"?(.+)\"?\s*<.*@.*>/);
+        if (res && res.length === 2) {
+          list.push(res[1]);
+        } else {
+          list.push(email);
+        }
+      });
+      return list.join(", ");
+    };
+
     $scope.refresh = function() {
       $scope.pageReady = false;
       $scope.getEndpoint($scope.endpoint.id);
