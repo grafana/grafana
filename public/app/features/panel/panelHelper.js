@@ -69,7 +69,7 @@ function (angular, _, kbn, $) {
         }
 
         if (_.isString(scope.rangeUnparsed.from)) {
-          var timeInfo = kbn.getRelativeTimeInfo(scope.panel.timeFrom)
+          var timeInfo = kbn.getRelativeTimeInfo(scope.panel.timeFrom);
           scope.panelMeta.timeInfo = timeInfo.text;
           scope.rangeUnparsed.from = timeInfo.from;
           scope.rangeUnparsed.to = timeInfo.to;
