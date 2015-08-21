@@ -1,16 +1,22 @@
 package middleware
 
 import (
+<<<<<<< 350904500dc0256857920fc88984a84ee9ac44d8
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
+=======
+>>>>>>> fix(auth proxy): Fix for server side rendering of panel when using auth proxy, fixes #2568
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+<<<<<<< 350904500dc0256857920fc88984a84ee9ac44d8
 =======
 	"github.com/Cepave/grafana/pkg/bus"
 	m "github.com/Cepave/grafana/pkg/models"
 	"github.com/Cepave/grafana/pkg/setting"
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
+=======
+>>>>>>> fix(auth proxy): Fix for server side rendering of panel when using auth proxy, fixes #2568
 )
 
 func initContextWithAuthProxy(ctx *Context) bool {
