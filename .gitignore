@@ -1,8 +1,12 @@
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 <<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
 cfg.json
 open-falcon/data/*.json
 =======
 >>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
+=======
+open-falcon/data/*.json
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 grafana
 node_modules
 coverage/

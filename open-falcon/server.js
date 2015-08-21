@@ -4,11 +4,16 @@ var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 var request = require('request');
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 var _ = require('lodash');
+=======
+// var _ = require('lodash');
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 var fs = require('fs');
 var path = require('path');
 
 /**
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
  * @function name:	function getMapData(chartType)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-062, OWL-052, OWL-030
@@ -58,11 +63,38 @@ function getMapData(chartType)
 		return [hosts];
 	} catch (e) {
 		console.log('Exception e =', e);
+=======
+ * @function name:	function getMapData()
+ * @description:	This function gets hosts locations for map chart.
+ * @related issues:	OWL-030
+ * @param:			void
+ * @return:			array hosts
+ * @author:			Don Hsieh
+ * @since:			08/15/2015
+ * @last modified: 	08/21/2015
+ * @called by:		app.post('/')
+ *					 in open-falcon/server.js
+ */
+function getMapData()
+{
+	var dirData = path.join(__dirname, 'data');
+	var filePath = path.join(dirData, 'agent.json');
+	var hosts = [];
+	try {
+		var data = fs.readFileSync(filePath, "utf8");
+		hosts = JSON.parse(data);
+		hosts['chartType'] = 'map';
+		// console.log('hosts =', hosts);
+		return hosts;
+	} catch(e) {
+		// console.log('Exception e =', e);
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 		return hosts;
 	}
 }
 
 /**
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
  * @function name:	function function queryMetric(req, res, targets)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-123, OWL-030
@@ -74,12 +106,29 @@ function getMapData(chartType)
  * @since:			08/15/2015
  * @last modified: 	10/20/2015
  * @called by:		app.post('/')
+=======
+ * @function name:	function getMapData()
+ * @description:	This function gets hosts locations for map chart.
+ * @related issues:	OWL-030
+ * @param:			void
+ * @return:			array results
+ * @author:			Don Hsieh
+ * @since:			08/15/2015
+ * @last modified: 	08/15/2015
+ * @call	ed by:		app.post('/')
+>>>>>>> [OWL-30] Add Echarts map to Grafana
  *					 in open-falcon/server.js
  */
 function queryMetric(req, res, targets)
 {
 	var metrics = [];
 	var target = '';
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+=======
+	/*
+	 *	MODIFIED FOR TEMPLATING
+	 */
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 	var i = 0;
 	while (i < targets.length) {	// targets.length changes dynamically
 		target = targets[i];
@@ -128,10 +177,19 @@ function queryMetric(req, res, targets)
 			from = parseInt(from) * unit;
 		}
 
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 		var urlQuery = req.query['urlQuery'];
 		urlQuery += '/graph/history';
 		var options = {
 			uri: urlQuery,
+=======
+		var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
+		queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
+		// console.log('queryUrl =', queryUrl);
+
+		var options = {
+			uri: queryUrl,
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 			method: 'POST',
 			json: {
 				"endpoint_counters": metrics,
@@ -387,6 +445,7 @@ app.get('/', function(req, res) {
 						}
 					}
 				}
+				console.log('results =', results);
 				res.send(results);
 			}
 		});
@@ -418,6 +477,7 @@ app.get('/', function(req, res) {
  *					 in pkg/api/dataproxy.go
  */
 app.post('/', function (req, res) {
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 <<<<<<< ef86a104da35b1029d85350a3a24fde35fa9b902
 	if ('target' in req.body) {
 		var targets = req.body.target;
@@ -431,28 +491,14 @@ app.post('/', function (req, res) {
 	queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
 	console.log('queryUrl =', queryUrl);
 
+=======
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 	if ('target' in req.body) {
-		var now = Math.floor(new Date() / 1000);
-		var from = req.body.from;
-		var unit = 0;
-		if (from.indexOf('m') > 0) {
-			unit = 60;
-		}
-		if (from.indexOf('h') > 0) {
-			unit = 3600;
-		}
-		if (from.indexOf('d') > 0) {
-			unit = 86400;
-		}
-		if (from.indexOf('h') > 0) {
-			from = parseInt(from) * unit;
-		}
-		var metrics = [];
-		var target = '';
 		var targets = req.body.target;
 		if (typeof(targets) === typeof('')) {
 			targets = [targets];
 		}
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 
 		/*
 		 *	MODIFIED FOR TEMPLATING
@@ -529,8 +575,14 @@ app.post('/', function (req, res) {
 					res.send(results);
 				}
 			});
+=======
+		if (targets.indexOf('map') > -1) {
+			var results = getMapData();
+			// console.log('results =', results);
+			res.send(results);
+>>>>>>> [OWL-30] Add Echarts map to Grafana
 		} else {
-			res.send([]);
+			queryMetric(req, res, targets);
 		}
 >>>>>>> [OWL-34] Set vm.variable.multi = true; to enable hostname selection in Grafana template
 	} else {

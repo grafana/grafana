@@ -56,6 +56,9 @@ require.config({
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
+    echarts:                   'vendor/echarts',
+    zrender:                   'vendor/zrender',
+
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
@@ -162,6 +165,6 @@ require.config({
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
 
-    'bootstrap-tagsinput':          ['jquery'],
+    'bootstrap-tagsinput':  ['jquery'],
   },
 });
