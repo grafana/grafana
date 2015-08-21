@@ -362,12 +362,23 @@ function (angular, _, kbn) {
         return d.promise;
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
       if (dimensionValuesQuery) {
         region = templateSrv.replace(dimensionValuesQuery[1]);
         namespace = templateSrv.replace(dimensionValuesQuery[2]);
         metricName = templateSrv.replace(dimensionValuesQuery[3]);
+        var dimensionPart = templateSrv.replace(dimensionValuesQuery[5]);
+
         var dimensions = {};
+        if (!_.isEmpty(dimensionPart)) {
+          _.each(dimensionPart.split(','), function(v) {
+            var t = v.split('=');
+            if (t.length !== 2) {
+              throw new Error('Invalid query format');
+            }
+            dimensions[t[0]] = t[1];
+          });
+        }
 
         return this.performSuggestDimensionValues(region, namespace, metricName, dimensions)
         .then(function(suggestData) {
