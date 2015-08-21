@@ -30,3 +30,4 @@ ln -s ${CHECKOUT} ${GOPATH}/src/${REPO_PATH}
 go get github.com/raintank/grafana
 
 go get github.com/tools/godep
+npm install
