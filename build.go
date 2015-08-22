@@ -221,6 +221,7 @@ func createPackage(options linuxPackageOptions) {
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
+		"--config-files", options.ldapFilePath,
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
