@@ -23,6 +23,12 @@ it allows you to add queries of differnet data source types & instances to the s
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
 
+ 2.1.3 (2015-08-24)
+
+**Fixes**
+- [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+
 # 2.1.2 (2015-08-20)
 
 **Fixes**
