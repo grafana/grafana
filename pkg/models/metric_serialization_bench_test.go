@@ -112,3 +112,33 @@ func BenchmarkDeSerialize3000MetricsGob(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkSerialize3000MetricsMsgp(b *testing.B) {
+	metrics := getDifferentMetrics(3000)
+	var size int
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		m := MetricsArray(metrics)
+		data, err := m.MarshalMsg(nil)
+		if err != nil {
+			panic(err)
+		}
+		size = len(data)
+	}
+	b.Log("final size:", size)
+}
+func BenchmarkDeSerialize3000MetricsMsgp(b *testing.B) {
+	metrics := getDifferentMetrics(3000)
+	m := MetricsArray(metrics)
+	data, err := m.MarshalMsg(nil)
+	if err != nil {
+	}
+	var out MetricsArray
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, err := out.UnmarshalMsg(data)
+		if err != nil {
+			panic(err)
+		}
+	}
+}

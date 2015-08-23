@@ -1,5 +1,7 @@
 package models
 
+//go:generate msgp
+
 // IndvMetric holds the information from an individual metric item coming in
 // from rabbitmq.
 type MetricDefinition struct {
