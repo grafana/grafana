@@ -19,19 +19,20 @@
   </ul>
   <div class="clearfix"></div>
 </div>
-<div class="tight-form last">
+<div class="tight-form last" ng-show="current.jsonData.access === 'direct'">
   <ul class="tight-form-list">
     <li class="tight-form-item" style="width: 80px">
       Access Key Id
     </li>
     <li>
-      <input type="text" class="tight-form-input input-large" ng-model='current.jsonData.accessKeyId' placeholder="" required></input>
+      <input type="text" class="tight-form-input input-large" ng-model='current.jsonData.accessKeyId' placeholder="" ng-required="current.jsonData.access === 'direct'"></input>
     </li>
     <li class="tight-form-item">
       Secret Access Key
+
     </li>
     <li>
-      <input type="password" class="tight-form-input input-large" ng-model='current.jsonData.secretAccessKey' placeholder="" required></input>
+      <input type="password" class="tight-form-input input-large" ng-model='current.jsonData.secretAccessKey' placeholder="" ng-required="current.jsonData.access === 'direct'"></input>
     </li>
   </ul>
   <div class="clearfix"></div>
