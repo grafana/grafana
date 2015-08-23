@@ -17,7 +17,7 @@ type Backend struct {
 	client *statsd.Client
 }
 
-// note: prefix must end on a dot
+// note: library does not auto add ending dot to prefix.
 func New(enabled bool, addr, prefix string) (Backend, error) {
 	client, err := statsd.NewClient(enabled, addr, prefix)
 	b := Backend{client}

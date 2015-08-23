@@ -17,6 +17,7 @@ type Backend struct {
 	client *statsd.Client
 }
 
+// note: library does not auto-add ending dot to prefix, specify it if you want it
 func New(addr, prefix string, tags []string) (Backend, error) {
 	client, err := statsd.New(addr)
 	if err == nil {
