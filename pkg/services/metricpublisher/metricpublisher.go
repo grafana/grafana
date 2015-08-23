@@ -17,6 +17,7 @@ import (
 // identifier of message format
 const (
 	msgFormatMetricDefinitionArrayJson = iota
+	msgFormatMetricsArrayMsgp
 )
 
 const maxMpubSize = 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
@@ -131,11 +132,11 @@ func Publish(metrics []*m.MetricDefinition) error {
 
 	subslices := Reslice(metrics, 3500)
 
-	version := uint8(msgFormatMetricDefinitionArrayJson)
-
+	//version := msgFormatMetricDefinitionArrayJson
+	version := msgFormatMetricsArrayMsgp
 	for _, subslice := range subslices {
 		buf := new(bytes.Buffer)
-		err := binary.Write(buf, binary.LittleEndian, version)
+		err := binary.Write(buf, binary.LittleEndian, uint8(version))
 		if err != nil {
 			log.Fatal(0, "binary.Write failed: %s", err.Error())
 		}
@@ -144,7 +145,14 @@ func Publish(metrics []*m.MetricDefinition) error {
 		if err != nil {
 			log.Fatal(0, "binary.Write failed: %s", err.Error())
 		}
-		msg, err := json.Marshal(subslice)
+		var msg []byte
+		switch version {
+		case msgFormatMetricDefinitionArrayJson:
+			msg, err = json.Marshal(subslice)
+		case msgFormatMetricsArrayMsgp:
+			m := m.MetricsArray(metrics)
+			msg, err = m.MarshalMsg(nil)
+		}
 		if err != nil {
 			return fmt.Errorf("Failed to marshal metrics payload: %s", err)
 		}
