@@ -176,6 +176,10 @@
 			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
 		},
 		{
+			"ImportPath": "github.com/philhofer/fwd",
+			"Rev": "4dbda5e2904d044d23cc4bef84e8360c458caf7f"
+		},
+		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "afe1e2ddf0f05b7c29d388a3f8e76cb15c2231ca"
 		},
@@ -192,6 +196,11 @@
 		{
 			"ImportPath": "github.com/streadway/amqp",
 			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
+		},
+		{
+			"ImportPath": "github.com/tinylib/msgp/msgp",
+			"Comment": "v1.0-alpha-43-gcd4fb15",
+			"Rev": "cd4fb1548c31d88af25205dc021be20935aec720"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
