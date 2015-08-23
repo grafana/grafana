@@ -18,12 +18,12 @@ func getDifferentMetrics(amount int) []*MetricDefinition {
 	}
 	intervals := []int64{1, 10, 60}
 	tags := []map[string]string{
-		map[string]string{
+		{
 			"foo":          "bar",
 			"endpoint_id":  "25",
 			"collector_id": "hi",
 		},
-		map[string]string{
+		{
 			"foo_bar":        "quux",
 			"endpoint_id":    "25",
 			"collector_id":   "hi",
