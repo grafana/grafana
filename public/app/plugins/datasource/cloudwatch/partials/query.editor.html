@@ -144,34 +144,19 @@
           Statistics
         </li>
         <li class="tight-form-item">
-          Min&nbsp;
-          <input class="cr1" id="target.statistics.Minimum" type="checkbox"
-                     ng-model="target.statistics.Minimum" ng-checked="target.statistics.Minimum" ng-change="statisticsOptionChanged()">
-          <label for="target.statistics.Minimum" class="cr1"></label>
+          <editor-checkbox text="Min" model="target.statistics.Minimum" change="statisticsOptionChanged()"></editor-checkbox>
         </li>
         <li class="tight-form-item">
-          Max&nbsp;
-          <input class="cr1" id="target.statistics.Maximum" type="checkbox"
-                     ng-model="target.statistics.Maximum" ng-checked="target.statistics.Maximum" ng-change="statisticsOptionChanged()">
-          <label for="target.statistics.Maximum" class="cr1"></label>
+          <editor-checkbox text="Max" model="target.statistics.Maximum" change="statisticsOptionChanged()"></editor-checkbox>
         </li>
         <li class="tight-form-item">
-          Avg&nbsp;
-          <input class="cr1" id="target.statistics.Average" type="checkbox"
-                     ng-model="target.statistics.Average" ng-checked="target.statistics.Average" ng-change="statisticsOptionChanged()">
-          <label for="target.statistics.Average" class="cr1"></label>
+          <editor-checkbox text="Avg" model="target.statistics.Average" change="statisticsOptionChanged()"></editor-checkbox>
         </li>
         <li class="tight-form-item">
-          Sum&nbsp;
-          <input class="cr1" id="target.statistics.Sum" type="checkbox"
-                   ng-model="target.statistics.Sum" ng-checked="target.statistics.Sum" ng-change="statisticsOptionChanged()">
-          <label for="target.statistics.Sum" class="cr1"></label>
+          <editor-checkbox text="Sum" model="target.statistics.Sum" change="statisticsOptionChanged()"></editor-checkbox>
         </li>
         <li class="tight-form-item last">
-          SampleCount&nbsp;
-          <input class="cr1" id="target.statistics.SampleCount" type="checkbox"
-                       ng-model="target.statistics.SampleCount" ng-checked="target.statistics.SampleCount" ng-change="statisticsOptionChanged()">
-          <label for="target.statistics.SampleCount" class="cr1"></label>
+          <editor-checkbox text="SampleCount" model="target.statistics.SampleCount" change="statisticsOptionChanged()"></editor-checkbox>
         </li>
       </ul>
 
