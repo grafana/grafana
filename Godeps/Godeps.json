@@ -229,6 +229,10 @@
 			"ImportPath": "gopkg.in/redis.v2",
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
-		}
+		},
+    {
+      "ImportPath": "github.com/raintank/raintank-metric/schema",
+      "Rev": "6cd7a5a22a939aed6b95113c5b30527cf62a36ea"
+    }
 	]
 }
