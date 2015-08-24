@@ -27,7 +27,7 @@ echo "Linking ${GOPATH}/src/${REPO_PATH} to ${CHECKOUT}"
 mv ${GOPATH}/src/${REPO_PATH} ${GOPATH}/src/${REPO_PATH}-bak
 mkdir -p ${GOPATH}/src/${ORG_PATH}
 ln -s ${CHECKOUT} ${GOPATH}/src/${REPO_PATH}
-go get github.com/raintank/grafana
+go get -u -f github.com/raintank/grafana
 
 go get github.com/tools/godep
 npm install
