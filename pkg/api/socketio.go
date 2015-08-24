@@ -353,7 +353,7 @@ func (c *CollectorContext) OnDisconnection() {
 	contextCache.Remove(c.SocketId)
 }
 
-func (c *CollectorContext) OnEvent(msg *m.CollectorEventDefinition) {
+func (c *CollectorContext) OnEvent(msg *schema.ProbeEvent) {
 	log.Info(fmt.Sprintf("recieved event from %s", c.Collector.Name))
 	if !c.Collector.Public {
 		msg.OrgId = c.OrgId

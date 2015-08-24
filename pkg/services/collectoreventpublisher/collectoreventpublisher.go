@@ -10,8 +10,8 @@ import (
 	"github.com/bitly/go-nsq"
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 // identifier of message format
@@ -48,7 +48,7 @@ func Init(metrics met.Backend) {
 	//go stresser() // enable this to send a "stress load" to test the metrics pipeline
 }
 
-func Publish(event *m.CollectorEventDefinition) error {
+func Publish(event *schema.ProbeEvent) error {
 	if !enabled {
 		return nil
 	}
