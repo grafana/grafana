@@ -13,7 +13,7 @@ mkdir -p ${DIR}/artifacts
 export PATH=$GOPATH/bin:$PATH
 export GOPATH GOBIN
 
-cd ${GOPATH}/src/github.com/raintank/grafana
+cd ${GOPATH}/src/github.com/grafana/grafana
 echo "---DEBUG htmlmin--"
 cat tasks/options/htmlmin.js
 echo "------------------"
