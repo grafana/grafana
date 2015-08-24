@@ -181,7 +181,7 @@ function (angular, _, kbn) {
 
       var queries = [];
       _.each(options.targets, _.bind(function(target) {
-        if (!target.namespace || !target.metricName || _.isEmpty(target.dimensions) || _.isEmpty(target.statistics)) {
+        if (!target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
         }
 
