@@ -21,13 +21,14 @@ bundle install
 sudo apt-get update
 sudo apt-get install rpm
 
-echo "Getting grafana/grafana first"
-go get github.com/grafana/grafana
+echo "CHECKOUT=${CHECKOUT}"
+
 echo "Linking ${GOPATH}/src/${REPO_PATH} to ${CHECKOUT}"
-mv ${GOPATH}/src/${REPO_PATH} ${GOPATH}/src/${REPO_PATH}-bak
 mkdir -p ${GOPATH}/src/${ORG_PATH}
+mkdir -p ${GOPATH}/src/github.com/raintank
 ln -s ${CHECKOUT} ${GOPATH}/src/${REPO_PATH}
-go get github.com/raintank/grafana
+ln -s ${CHECKOUT} ${GOPATH}/src/github.com/raintank/grafana
+
 
 go get github.com/tools/godep
 npm install

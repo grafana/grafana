@@ -3,6 +3,7 @@ define([
   'lodash',
   'kbn',
   'moment',
+  './directives',
   './queryCtrl',
 ],
 function (angular, _, kbn) {
@@ -167,7 +168,7 @@ function (angular, _, kbn) {
     };
 
     OpenTSDBDatasource.prototype.testDatasource = function() {
-      return this.performSuggestQuery('cpu', 'metrics').then(function () {
+      return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };

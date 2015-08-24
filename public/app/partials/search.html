@@ -63,11 +63,11 @@
 	</div>
 
 	<div class="search-button-row">
-		<button class="btn btn-inverse pull-left" ng-click="newDashboard()">
+		<button class="btn btn-inverse pull-left" ng-click="newDashboard()" ng-show="contextSrv.isEditor">
 			<i class="fa fa-plus"></i>
 			New
 		</button>
-		<a class="btn btn-inverse pull-left" href="import/dashboard">
+		<a class="btn btn-inverse pull-left" href="import/dashboard" ng-show="contextSrv.isEditor">
 			<i class="fa fa-download"></i>
 			Import
 		</a>

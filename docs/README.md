@@ -15,4 +15,4 @@ $ cd docs
 $ make docs
 ```
 
-Open [localhost:8100](http://localhost:8180) to view the docs.
+Open [localhost:8180](http://localhost:8180) to view the docs.

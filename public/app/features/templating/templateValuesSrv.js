@@ -110,8 +110,9 @@ function (angular, _, kbn) {
 
       if (_.isArray(variable.current.value)) {
         variable.current.text = variable.current.value.join(' + ');
-        self.selectOptionsForCurrentValue(variable);
       }
+
+      self.selectOptionsForCurrentValue(variable);
 
       templateSrv.updateTemplateData();
       return self.updateOptionsInChildVariables(variable);
@@ -160,13 +161,20 @@ function (angular, _, kbn) {
     };
 
     this.selectOptionsForCurrentValue = function(variable) {
-      for (var i = 0; i < variable.current.value.length; i++) {
-        var value = variable.current.value[i];
-        for (var y = 0; y < variable.options.length; y++) {
-          var option = variable.options[y];
-          if (option.value === value) {
-            option.selected = true;
+      var i, y, value, option;
+
+      for (i = 0; i < variable.options.length; i++) {
+        option = variable.options[i];
+        option.selected = false;
+        if (_.isArray(variable.current.value)) {
+          for (y = 0; y < variable.current.value.length; y++) {
+            value = variable.current.value[y];
+            if (option.value === value) {
+              option.selected = true;
+            }
           }
+        } else if (option.value === variable.current.value) {
+          option.selected = true;
         }
       }
     };

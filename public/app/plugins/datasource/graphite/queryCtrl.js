@@ -9,15 +9,14 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var targetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
 
     $scope.init = function() {
-      $scope.target.target = $scope.target.target || '';
-      $scope.targetLetters = targetLetters;
-
-      parseTarget();
+      if ($scope.target) {
+        $scope.target.target = $scope.target.target || '';
+        parseTarget();
+      }
     };
 
     $scope.toggleEditorMode = function() {
@@ -313,22 +312,8 @@ function (angular, _, config, gfunc, Parser) {
       return new MetricSegment({value: 'select metric', fake: true});
     };
 
-  });
+    $scope.init();
 
-  module.directive('focusMe', function($timeout, $parse) {
-    return {
-      //scope: true,   // optionally create a child scope
-      link: function(scope, element, attrs) {
-        var model = $parse(attrs.focusMe);
-        scope.$watch(model, function(value) {
-          if(value === true) {
-            $timeout(function() {
-              element[0].focus();
-            });
-          }
-        });
-      }
-    };
   });
 
 });

@@ -583,11 +583,19 @@ code, pre {
 }
 
 .dropdown-menu {
+  min-width: 140px;
   > li > a {
-    padding: 3px 10px;
+    padding: 3px 20px 3px 15px;
     i {
       padding-right: 5px;
       color: @linkColorDisabled;
     }
   }
+}
+
+.dropdown-submenu>.dropdown-menu.dropdown-submenu-left {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: -1px;
 }

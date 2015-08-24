@@ -7,7 +7,7 @@ function(angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($modal, $q, $location, $timeout, contextSrv, $window) {
+  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
 
     function Tracker(dashboard, scope) {
       var self = this;
@@ -142,17 +142,10 @@ function(angular, _) {
         tracker.scope.$emit('save-dashboard');
       };
 
-      var confirmModal = $modal({
-        template: './app/partials/unsaved-changes.html',
-        modalClass: 'confirm-modal',
-        persist: false,
-        show: false,
+      $rootScope.appEvent('show-modal', {
+        src: './app/partials/unsaved-changes.html',
+        modalClass: 'modal-no-header confirm-modal',
         scope: modalScope,
-        keyboard: false
-      });
-
-      $q.when(confirmModal).then(function(modalEl) {
-        modalEl.modal('show');
       });
     };
 

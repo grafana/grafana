@@ -72,8 +72,7 @@
 				</div>
 			</div>
 
-			<div ng-include src="currentDatasource.meta.partials.annotations">
-			</div>
+			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
 
 			<br>
 			<button ng-show="editor.index === 1" type="button" class="btn btn-success" ng-click="add()">Add</button>

@@ -12,6 +12,7 @@ define([
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
+  'angular-ui',
   'extend-jquery',
   'bindonce',
 ],
@@ -64,7 +65,8 @@ function (angular, $, _, appLevelRequire) {
     '$strap.directives',
     'ang-drag-drop',
     'grafana',
-    'pasvaz.bindonce'
+    'pasvaz.bindonce',
+    'ui.bootstrap.tabs',
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

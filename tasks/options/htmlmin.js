@@ -12,7 +12,9 @@ module.exports = function(config) {
         //'index.html',
         'app/panels/**/*.html',
         'app/partials/**/*.html',
-        'plugins/**/*.html'
+        'plugins/raintank/panels/**/*.html',
+        'plugins/raintank/features/**/*.html',
+        'plugins/raintank/directives/**/*.html'
       ],
       dest: '<%= tempDir %>'
     }

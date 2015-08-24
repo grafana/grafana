@@ -4,6 +4,7 @@ define([
   'kbn',
   './influxSeries',
   './queryBuilder',
+  './directives',
   './queryCtrl',
   './funcEditor',
 ],
