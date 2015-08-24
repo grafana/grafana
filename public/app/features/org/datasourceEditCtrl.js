@@ -16,7 +16,7 @@ function (angular, config) {
       name: '',
       url: '',
       access: 'proxy',
-      type: 'netcrunch'
+      type: 'elasticsearch'
     };
 
     $scope.init = function() {
@@ -42,6 +42,13 @@ function (angular, config) {
       return backendSrv.get('/api/datasources/plugins').then(function(plugins) {
         datasourceTypes = plugins;
         $scope.types = plugins;
+        $scope.filteredTypes = {};
+
+        Object.keys($scope.types).forEach(function(typeKey){
+          if (typeKey !== 'netcrunch') {
+            $scope.filteredTypes[typeKey] = $scope.types[typeKey];
+          }
+        });
       });
     };
 
