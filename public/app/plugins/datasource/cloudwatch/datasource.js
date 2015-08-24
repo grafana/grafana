@@ -172,6 +172,47 @@ function (angular, _, kbn) {
         ],
       };
       /* jshint +W101 */
+
+      /* load custom metrics definitions */
+      var self = this;
+      $q.all(
+        _.map(datasource.jsonData.customMetricsAttributes, function(u) {
+          return $http({ method: 'GET', url: u });
+        })
+      )
+      .then(function(allResponse) {
+        _.chain(allResponse)
+        .map(function(d) {
+          return d.data.Metrics;
+        })
+        .flatten()
+        .reject(function(metric) {
+          return metric.Namespace.indexOf('AWS/') === 0;
+        })
+        .map(function(metric) {
+          metric.Dimensions = _.chain(metric.Dimensions)
+          .map(function(d) {
+            return d.Name;
+          })
+          .value().sort();
+          return metric;
+        })
+        .uniq(function(metric) {
+          return metric.Namespace + metric.MetricName + metric.Dimensions.join('');
+        })
+        .each(function(metric) {
+          if (!_.has(self.supportedMetrics, metric.Namespace)) {
+            self.supportedMetrics[metric.Namespace] = [];
+          }
+          self.supportedMetrics[metric.Namespace].push(metric.MetricName);
+
+          if (!_.has(self.supportedDimensions, metric.Namespace)) {
+            self.supportedDimensions[metric.Namespace] = [];
+          }
+
+          self.supportedDimensions[metric.Namespace] = _.union(self.supportedDimensions[metric.Namespace], metric.Dimensions);
+        });
+      });
     }
 
     // Called once per panel (graph)

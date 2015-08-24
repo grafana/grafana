@@ -19,7 +19,7 @@
   </ul>
   <div class="clearfix"></div>
 </div>
-<div class="tight-form last" ng-show="current.jsonData.access === 'direct'">
+<div class="tight-form" ng-show="current.jsonData.access === 'direct'">
   <ul class="tight-form-list">
     <li class="tight-form-item" style="width: 80px">
       Access Key Id
@@ -33,6 +33,17 @@
     </li>
     <li>
       <input type="password" class="tight-form-input input-large" ng-model='current.jsonData.secretAccessKey' placeholder="" ng-required="current.jsonData.access === 'direct'"></input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 80px">
+      Custom Metrics Attributes
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.customMetricsAttributes[0]' ng-init="current.jsonData.customMetricsAttributes = current.jsonData.customMetricsAttributes || []" placeholder="" required></input>
     </li>
   </ul>
   <div class="clearfix"></div>
