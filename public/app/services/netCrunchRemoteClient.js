@@ -22,6 +22,7 @@ define([
         var clientReadyTask = $q.defer(),
             clientReady = clientReadyTask.promise;
 
+        adrem.useWebSockets = false;
         adrem.Client.start(netCrunchWebAppApiName, function () {
           clientReadyTask.resolve();
         });
