@@ -14,6 +14,8 @@ export PATH=$GOPATH/bin:$PATH
 export GOPATH GOBIN
 
 cd ${GOPATH}/src/github.com/raintank/grafana
-
+echo "---DEBUG htmlmin--"
+cat tatsks/options/htmlmin.js
+echo "------------------
 go run build.go package
 cp dist/* ${DIR}/artifacts
