@@ -3,7 +3,7 @@ package metricpublisher
 import (
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 type testCase struct {
@@ -32,9 +32,9 @@ func TestReslice(t *testing.T) {
 		{100, 5000},
 	}
 	for _, c := range cases {
-		in := make([]*m.MetricDefinition, c.inSize)
+		in := make([]*schema.MetricData, c.inSize)
 		for i := 0; i < c.inSize; i++ {
-			in[i] = &m.MetricDefinition{OrgId: int64(i)}
+			in[i] = &schema.MetricData{OrgId: i}
 		}
 		out := Reslice(in, c.subSize)
 		expectedLen := len(in) / c.subSize

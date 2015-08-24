@@ -11,6 +11,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 // Job is a job for an alert execution
@@ -45,14 +46,14 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	if !setting.WriteIndividualAlertResults {
 		return
 	}
-	metrics := make([]*m.MetricDefinition, 3)
+	metrics := make([]*schema.MetricData, 3)
 	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
 	for pos, state := range metricNames {
-		metrics[pos] = &m.MetricDefinition{
-			OrgId:      job.OrgId,
+		metrics[pos] = &schema.MetricData{
+			OrgId:      int(job.OrgId),
 			Name:       fmt.Sprintf("health.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
 			Metric:     fmt.Sprintf("health.%s.%s", strings.ToLower(job.MonitorTypeName), state),
-			Interval:   job.Freq,
+			Interval:   int(job.Freq),
 			Value:      0.0,
 			Unit:       "state",
 			Time:       job.LastPointTs.Unix(),

@@ -10,14 +10,14 @@ import (
 	"github.com/bitly/go-nsq"
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 // identifier of message format
 const (
 	msgFormatMetricDefinitionArrayJson = iota
-	msgFormatMetricsArrayMsgp
+	msgFormatMetricDataArrayMsgp
 )
 
 const maxMpubSize = 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
@@ -76,11 +76,11 @@ func stresser() {
 	start := time.Now().Add(-time.Duration(1000) * time.Second)
 	for t := range asyncTicks {
 		pre := time.Now()
-		metrics := make([]*m.MetricDefinition, 0)
+		metrics := make([]*schema.MetricData, 0)
 		var val time.Time
 		for val = start; !val.After(t); val = val.Add(time.Second) {
 			key := val.Format(layout)
-			metric := &m.MetricDefinition{
+			metric := &schema.MetricData{
 				OrgId:      1,
 				Name:       "foo_15." + key,
 				Metric:     key,
@@ -101,12 +101,12 @@ func stresser() {
 	}
 }
 
-func Reslice(in []*m.MetricDefinition, size int) [][]*m.MetricDefinition {
+func Reslice(in []*schema.MetricData, size int) [][]*schema.MetricData {
 	numSubSlices := len(in) / size
 	if len(in)%size > 0 {
 		numSubSlices += 1
 	}
-	out := make([][]*m.MetricDefinition, numSubSlices)
+	out := make([][]*schema.MetricData, numSubSlices)
 	for i := 0; i < numSubSlices; i++ {
 		start := i * size
 		end := (i + 1) * size
@@ -119,7 +119,7 @@ func Reslice(in []*m.MetricDefinition, size int) [][]*m.MetricDefinition {
 	return out
 }
 
-func Publish(metrics []*m.MetricDefinition) error {
+func Publish(metrics []*schema.MetricData) error {
 	if len(metrics) == 0 {
 		return nil
 	}
@@ -133,7 +133,7 @@ func Publish(metrics []*m.MetricDefinition) error {
 	subslices := Reslice(metrics, 3500)
 
 	//version := msgFormatMetricDefinitionArrayJson
-	version := msgFormatMetricsArrayMsgp
+	version := msgFormatMetricDataArrayMsgp
 	for _, subslice := range subslices {
 		buf := new(bytes.Buffer)
 		err := binary.Write(buf, binary.LittleEndian, uint8(version))
@@ -149,8 +149,8 @@ func Publish(metrics []*m.MetricDefinition) error {
 		switch version {
 		case msgFormatMetricDefinitionArrayJson:
 			msg, err = json.Marshal(subslice)
-		case msgFormatMetricsArrayMsgp:
-			m := m.MetricsArray(metrics)
+		case msgFormatMetricDataArrayMsgp:
+			m := schema.MetricDataArray(metrics)
 			msg, err = m.MarshalMsg(nil)
 		}
 		if err != nil {

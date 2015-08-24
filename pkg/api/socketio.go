@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 	"github.com/streadway/amqp"
 )
 
@@ -363,11 +364,11 @@ func (c *CollectorContext) OnEvent(msg *m.CollectorEventDefinition) {
 	}
 }
 
-func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
+func (c *CollectorContext) OnResults(results []*schema.MetricData) {
 	metricsRecvd.Inc(int64(len(results)))
 	for _, r := range results {
 		if !c.Collector.Public {
-			r.OrgId = c.OrgId
+			r.OrgId = int(c.OrgId)
 		}
 	}
 	metricpublisher.Publish(results)
