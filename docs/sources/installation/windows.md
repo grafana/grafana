@@ -10,11 +10,15 @@ page_keywords: grafana, installation, windows guide
 
 Description | Download
 ------------ | -------------
+<<<<<<< 0c279530fe5c7f81a51dbea877c967e4713b6525
 <<<<<<< 2dadab0f8478fae10bec8894bf319f00fdfe4d6b
 Zip package for Windows | [grafana.2.5.0.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-2.5.0.windows-x64.zip)
 =======
 Zip package for Windows | [grafana.2.1.2.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-2.1.2.windows-x64.zip)
 >>>>>>> docs(): updated version in install docs
+=======
+Zip package for Windows | [grafana.2.1.3.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-2.1.3.windows-x64.zip)
+>>>>>>> docs(): updated download links in docs
 
 ## Configure
 
