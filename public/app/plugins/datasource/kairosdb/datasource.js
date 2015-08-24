@@ -3,6 +3,7 @@ define([
   'lodash',
   'kbn',
   './queryCtrl',
+  './directives',
 ],
 function (angular, _, kbn) {
   'use strict';

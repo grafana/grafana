@@ -8,9 +8,7 @@
   "module": "plugins/datasource/influxdb/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/influxdb/partials/config.html",
-    "query": "app/plugins/datasource/influxdb/partials/query.editor.html",
-    "annotations": "app/plugins/datasource/influxdb/partials/annotations.editor.html"
+    "config": "app/plugins/datasource/influxdb/partials/config.html"
   },
 
   "metrics": true,

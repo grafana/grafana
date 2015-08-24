@@ -71,8 +71,8 @@
 @altFontFamily:         @serifFontFamily;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    bold;    // instead of browser default, bold
-@headingsColor:         @textColor; // empty to use BS default, @textColor
+@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsColor:         darken(@white,11%); // empty to use BS default, @textColor
 @inputText:             @black;
 
 
@@ -99,6 +99,8 @@
 @grafanaListBorderBottom:   @black;
 @grafanaListHighlight:      #333;
 @grafanaListMainLinkColor: @textColor;
+
+@pageContainerBorderColor: @grayDark;
 
 // Scrollbars
 @scrollbarBackground: #3a3a3a;

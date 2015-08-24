@@ -129,8 +129,9 @@ var (
 	WriteIndividualAlertResults bool
 	AlertingInspect             bool
 
-	ReportingEnabled  bool
-	GoogleAnalyticsId string
+	ReportingEnabled   bool
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
 
 	StatsdEnabled   bool
 	StatsdAddr      string
@@ -460,6 +461,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
 	telemetry := Cfg.Section("telemetry")
 	StatsdEnabled = telemetry.Key("statsd_enabled").MustBool(false)

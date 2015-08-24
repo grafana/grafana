@@ -193,6 +193,10 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 
 func (a *ldapAuther) secondBind(ldapUser *ldapUserInfo, userPassword string) error {
 	if err := a.conn.Bind(ldapUser.DN, userPassword); err != nil {
+		if ldapCfg.VerboseLogging {
+			log.Info("LDAP second bind failed, %v", err)
+		}
+
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials
@@ -216,6 +220,10 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	}
 
 	if err := a.conn.Bind(bindPath, userPassword); err != nil {
+		if ldapCfg.VerboseLogging {
+			log.Info("LDAP initial bind failed, %v", err)
+		}
+
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials

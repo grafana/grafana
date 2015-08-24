@@ -18,8 +18,8 @@ an error like this:
 
 ![](/img/v1/graph_timestore_error.png)
 
-For some type of errors the `View details` link will show you error
-details. But for many types of HTTP connection errors there is very
+For some types of errors, the `View details` link will show you error
+details. For many types of HTTP connection errors, however, there is very
 little information. The best way to troubleshoot these issues is use
 the [Chrome developer tools](https://developer.chrome.com/devtools/index).
 By pressing `F12` you can bring up the chrome dev tools.

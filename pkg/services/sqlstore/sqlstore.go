@@ -136,7 +136,7 @@ func getEngine() (*xorm.Engine, error) {
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
 
-	log.Info("Database: %v, ConnectionString: %v", DbCfg.Type, cnnstr)
+	log.Info("Database: %v", DbCfg.Type)
 
 	return xorm.NewEngine(DbCfg.Type, cnnstr)
 }

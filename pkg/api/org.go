@@ -77,6 +77,14 @@ func updateOrgHelper(cmd m.UpdateOrgCommand) Response {
 	return ApiSuccess("Organization updated")
 }
 
+// GET /api/orgs/:orgId
+func DeleteOrgById(c *middleware.Context) Response {
+	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+		return ApiError(500, "Failed to update organization", err)
+	}
+	return ApiSuccess("Organization deleted")
+}
+
 func SearchOrgs(c *middleware.Context) Response {
 	query := m.SearchOrgsQuery{
 		Query: c.Query("query"),

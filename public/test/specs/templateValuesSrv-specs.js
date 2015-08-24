@@ -43,7 +43,7 @@ define([
       });
 
       it('should update current value', inject(function($rootScope) {
-	$rootScope.$apply();
+        $rootScope.$apply();
         expect(variable.current.value).to.be("new");
         expect(variable.current.text).to.be("new");
       }));
@@ -54,13 +54,13 @@ define([
         name: 'apps',
         multi: true,
         current: {text: "val1", value: "val1"},
-        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}]
+        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}, {text: 'val3', value: 'val3', selected: true}]
       };
 
       beforeEach(function() {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
-        urlParams["var-apps"] = ["val1", "val2"];
+        urlParams["var-apps"] = ["val2", "val1"];
         ctx.$location.search = sinon.stub().returns(urlParams);
         ctx.service.init(dashboard);
       });
@@ -68,14 +68,18 @@ define([
       it('should update current value', inject(function($rootScope) {
         $rootScope.$apply();
         expect(variable.current.value.length).to.be(2);
-        expect(variable.current.value[0]).to.be("val1");
-        expect(variable.current.value[1]).to.be("val2");
-        expect(variable.current.text).to.be("val1 + val2");
+        expect(variable.current.value[0]).to.be("val2");
+        expect(variable.current.value[1]).to.be("val1");
+        expect(variable.current.text).to.be("val2 + val1");
         expect(variable.options[0].selected).to.be(true);
         expect(variable.options[1].selected).to.be(true);
       }));
-    });
 
+      it('should set options that are not in value to selected false', inject(function($rootScope) {
+        $rootScope.$apply();
+        expect(variable.options[2].selected).to.be(false);
+      }));
+    });
 
     function describeUpdateVariable(desc, fn) {
       describe(desc, function() {

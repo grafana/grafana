@@ -9,17 +9,28 @@ function (angular, $, _) {
   angular
   .module('grafana.directives')
   .directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+
+    function sanitizeString(str) {
+      try {
+        return $sanitize(str);
+      }
+      catch(err) {
+        console.log('Could not sanitize annotation string, html escaping instead');
+        return _.escape(str);
+      }
+    }
+
     return {
       link: function (scope, element) {
         var event = scope.event;
-        var title = $sanitize(event.title);
+        var title = sanitizeString(event.title);
         var dashboard = dashboardSrv.getCurrent();
         var time = '<i>' + dashboard.formatDate(event.min) + '</i>';
 
         var tooltip = '<div class="graph-tooltip small"><div class="graph-tooltip-time">' + title + ' ' + time + '</div> ' ;
 
         if (event.text) {
-          var text = $sanitize(event.text);
+          var text = sanitizeString(event.text);
           tooltip += text.replace(/\n/g, '<br>') + '<br>';
         }
 
