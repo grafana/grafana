@@ -12,7 +12,7 @@ cd ${DIR}
 export PATH=$GOPATH/bin:$PATH
 export GOPATH GOBIN
 
-cd ${GOPATH}/src/github.com/raintank/grafana
+cd ${GOPATH}/src/github.com/grafana/grafana
 
 go run build.go setup
 godep restore
