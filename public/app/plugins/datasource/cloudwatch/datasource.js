@@ -176,7 +176,11 @@ function (angular, _, kbn) {
       /* load custom metrics definitions */
       var self = this;
       $q.all(
-        _.map(datasource.jsonData.customMetricsAttributes, function(u) {
+        _.chain(datasource.jsonData.customMetricsAttributes)
+        .reject(function(u) {
+          return _.isEmpty(u);
+        })
+        .map(function(u) {
           return $http({ method: 'GET', url: u });
         })
       )
