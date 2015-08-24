@@ -10,6 +10,7 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
+<<<<<<< 90f5f19f594a9f2553750f254685185ccf397461
 <<<<<<< be987b8397031d77c3b51a0933a6be298004cad2
 .deb for Debian-based Linux | [grafana_2.1.3_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
 
@@ -26,13 +27,20 @@ Description | Download
 >>>>>>> Added patch from ct
 =======
 .deb for Debian-based Linux | [grafana_2.1.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.2_amd64.deb)
+=======
+.deb for Debian-based Linux | [grafana_2.1.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
+>>>>>>> docs(): updated download links in docs
 
 ## Install
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.2_amd64.deb
+    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
+<<<<<<< 90f5f19f594a9f2553750f254685185ccf397461
     $ sudo dpkg -i grafana_2.1.2_amd64.deb
 >>>>>>> docs(): updated version in install docs
+=======
+    $ sudo dpkg -i grafana_2.1.3_amd64.deb
+>>>>>>> docs(): updated download links in docs
 
 ## APT Repository
 
