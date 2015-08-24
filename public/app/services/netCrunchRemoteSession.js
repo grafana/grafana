@@ -26,6 +26,7 @@ define([
       .factory('netCrunchRemoteSession', function ($q, $rootScope, $http, netCrunchRemoteClient, adrem) {
 
         var error = {msg: ''},
+            query,
             loginInProgress = false,
             loginInProgressPromise,
             that;
@@ -81,6 +82,14 @@ define([
               return $q.all([login]);
             });
           },
+
+          queryTrendData: function () {
+            if (query == null) {
+              query = new adrem.ncSrv.ITrendQuery();
+            }
+            return netCrunchRemoteClient.callApi(query.AnalizeGetData, arguments);
+          },
+
           error: error,
           res : {}
         };
