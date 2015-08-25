@@ -21,10 +21,6 @@ function (angular, _, kbn) {
       if (!$scope.target.downsampleAggregator) {
         $scope.target.downsampleAggregator = 'avg';
       }
-
-      $scope.$on('typeahead-updated', function() {
-        $timeout($scope.targetBlur);
-      });
     };
 
     $scope.targetBlur = function() {
