@@ -2,6 +2,8 @@ define([
     'angular',
     'lodash',
     'client',
+    'ObjMapper',
+    'NCObjects',
     'remoteDataLists'
   ],
 

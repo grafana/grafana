@@ -13,6 +13,8 @@ require.config({
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',
     client:                   '../vendor/adrem/client.min',
+    ObjMapper:                '../vendor/adrem/ObjMapper',
+    NCObjects:                '../vendor/adrem/NCObjects',
     remoteDataLists:          '../vendor/adrem/RemoteDataLists.min',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular-route/angular-route',
