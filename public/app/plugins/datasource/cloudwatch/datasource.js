@@ -234,12 +234,7 @@ function (angular, _, kbn) {
         query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = _.map(_.keys(target.dimensions), function(key) {
-          return {
-            Name: templateSrv.replace(key, options.scopedVars),
-            Value: templateSrv.replace(target.dimensions[key], options.scopedVars)
-          };
-        });
+        query.dimensions = convertDimensionFormat(target.dimensions);
         query.statistics = getActivatedStatistics(target.statistics);
         query.period = parseInt(target.period, 10);
 
@@ -332,12 +327,7 @@ function (angular, _, kbn) {
         MetricName: metricName
       };
       if (!_.isEmpty(dimensions)) {
-        params.Dimensions = _.map(_.keys(dimensions), function(key) {
-          return {
-            Name: templateSrv.replace(key),
-            Value: templateSrv.replace(dimensions[key])
-          };
-        });
+        params.Dimensions = convertDimensionFormat(dimensions);
       }
 
       var d = $q.defer();
@@ -508,7 +498,27 @@ function (angular, _, kbn) {
 
       var dimensionPart = templateSrv.replace(JSON.stringify(options.dimensions));
       _.each(getActivatedStatistics(options.statistics), function(s) {
-        var metricLabel = md.Label + '_' + s + dimensionPart;
+        var originalSettings = _.templateSettings;
+        _.templateSettings = {
+          interpolate: /\{\{(.+?)\}\}/g
+        };
+        var template = _.template(options.legendFormat);
+
+        var metricLabel;
+        if (_.isEmpty(options.legendFormat)) {
+          metricLabel = md.Label + '_' + s + dimensionPart;
+        } else {
+          var d = convertDimensionFormat(options.dimensions);
+          metricLabel = template({
+            Region: templateSrv.replace(options.region),
+            Namespace: templateSrv.replace(options.namespace),
+            MetricName: templateSrv.replace(options.metricName),
+            Dimensions: d,
+            Statistics: s
+          });
+        }
+
+        _.templateSettings = originalSettings;
 
         var dps = _.map(md.Datapoints, function(value) {
           return [value[s], new Date(value.Timestamp).getTime()];
@@ -533,6 +543,15 @@ function (angular, _, kbn) {
 
     function convertToCloudWatchTime(date) {
       return Math.round(kbn.parseDate(date).getTime() / 1000);
+    }
+
+    function convertDimensionFormat(dimensions) {
+      return _.map(_.keys(dimensions), function(key) {
+        return {
+          Name: templateSrv.replace(key),
+          Value: templateSrv.replace(dimensions[key])
+        };
+      });
     }
 
     return CloudWatchDatasource;

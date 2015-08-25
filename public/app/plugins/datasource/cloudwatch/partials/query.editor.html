@@ -207,5 +207,29 @@
       <div class="clearfix"></div>
     </div>
 
+    <div class="tight-form">
+      <ul class="tight-form-list" role="menu">
+        <li class="tight-form-item">
+          <i class="fa fa-eye invisible"></i>
+        </li>
+
+        <li class="tight-form-item">
+          Legend Format
+        </li>
+        <li>
+          <input type="text"
+                 class="input-xxlarge tight-form-input"
+                 ng-model="target.legendFormat"
+                 spellcheck='false'
+                 placeholder="legend format"
+                 data-min-length=0 data-items=100
+                 ng-change="refreshMetricData()"
+                 >
+        </li>
+      </ul>
+
+      <div class="clearfix"></div>
+    </div>
+
   </div>
 </div>
