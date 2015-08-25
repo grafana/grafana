@@ -160,6 +160,7 @@ WHERE monitor.id=?
 	return nil
 }
 
+// GetMonitorsForAlerts finds monitors where ts % freq = offset.
 func GetMonitorsForAlerts(query *m.GetMonitorsForAlertsQuery) error {
 	sess := x.Table("monitor")
 	rawParams := make([]interface{}, 0)

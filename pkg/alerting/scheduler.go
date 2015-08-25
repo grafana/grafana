@@ -71,7 +71,7 @@ func dispatchJobs(jobQueue JobQueue) {
 		for _, job := range jobs {
 			job.GeneratedAt = time.Now()
 			job.LastPointTs = lastPointAt
-			job.AssertStart = lastPointAt.Add(-time.Duration(job.Freq) * time.Second)
+			job.AssertStart = lastPointAt.Add(-time.Duration(job.Freq * job.AssertStep) * time.Second)
 
 			jobQueue.Put(job)
 
