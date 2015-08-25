@@ -24,7 +24,7 @@ test:
      - ./node_modules/grunt-cli/bin/grunt test
      - npm run coveralls
   post:
-     - cd rt-pkg && /bin/sh packaging.sh 
+     - cd rt-pkg && /bin/bash packaging.sh 
 deployment:
   production:
     branch: master
