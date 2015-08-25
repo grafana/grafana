@@ -21,14 +21,10 @@ bundle install
 sudo apt-get update
 sudo apt-get install rpm
 
-echo "CHECKOUT=${CHECKOUT}"
 
 echo "Linking ${GOPATH}/src/${REPO_PATH} to ${CHECKOUT}"
 mkdir -p ${GOPATH}/src/${ORG_PATH}
-mkdir -p ${GOPATH}/src/github.com/raintank
 ln -s ${CHECKOUT} ${GOPATH}/src/${REPO_PATH}
-ln -s ${CHECKOUT} ${GOPATH}/src/github.com/raintank/grafana
-
 
 go get github.com/tools/godep
 npm install
