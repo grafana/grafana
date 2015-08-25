@@ -52,7 +52,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       // replace templated variables
       allQueries = templateSrv.replace(allQueries, options.scopedVars);
       return this._seriesQuery(allQueries).then(function(data) {
-        if (!data || !data.results || !data.results[0].series) {
+        if (!data || !data.results) {
           return [];
         }
 
