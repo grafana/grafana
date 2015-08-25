@@ -171,6 +171,12 @@ define([
           return result;
         }
 
+        function grafanaDataConverter (data) {
+          return data.domain.map(function (time, $index) {
+            return [data.values[$index], time.getTime()];
+          });
+        }
+
         return {
             PERIOD_TYPE : PERIOD_TYPE,
             calculateChartDataInterval : calculateChartDataInterval,
@@ -181,7 +187,8 @@ define([
             getCounterTrendHoursData : getCounterTrendHoursData,
             getCounterTrendDaysData : getCounterTrendDaysData,
             getCounterTrendMonthsData : getCounterTrendMonthsData,
-            getCounterData: getCounterData
+            getCounterData: getCounterData,
+            grafanaDataConverter: grafanaDataConverter
         };
       });
 });
