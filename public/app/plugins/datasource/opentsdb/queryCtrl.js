@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OpenTSDBQueryCtrl', function($scope, $timeout) {
+  module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
