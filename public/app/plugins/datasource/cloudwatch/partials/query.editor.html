@@ -66,6 +66,7 @@
                  bs-typeahead="suggestNamespace"
                  placeholder="namespace"
                  data-min-length=0 data-items=100
+                 ng-model-onblur
                  ng-change="refreshMetricData()"
                  >
         </li>
@@ -80,6 +81,7 @@
                  bs-typeahead="suggestMetrics"
                  placeholder="metric name"
                  data-min-length=0 data-items=100
+                 ng-model-onblur
                  ng-change="refreshMetricData()"
                  >
         </li>
@@ -180,6 +182,7 @@
                  spellcheck='false'
                  placeholder="period"
                  data-min-length=0 data-items=100
+                 ng-model-onblur
                  ng-change="refreshMetricData()"
                  />
           <a bs-tooltip="target.errors.period"
@@ -199,6 +202,7 @@
                  bs-typeahead="suggestRegion"
                  placeholder="region"
                  data-min-length=0 data-items=100
+                 ng-model-onblur
                  ng-change="refreshMetricData()"
                  >
         </li>
@@ -223,6 +227,7 @@
                  spellcheck='false'
                  placeholder="legend format"
                  data-min-length=0 data-items=100
+                 ng-model-onblur
                  ng-change="refreshMetricData()"
                  >
         </li>
