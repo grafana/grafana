@@ -19,6 +19,6 @@ define([
     'use strict';
 
     angular.module('grafana.const').constant('netCrunchChartDataProviderConsts', {
-      DEFAULT_MAX_SAMPLE_COUNT: 250
+      DEFAULT_MAX_SAMPLE_COUNT: 200
     })
 });
