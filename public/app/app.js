@@ -6,6 +6,7 @@ define([
   'jquery',
   'lodash',
   'require',
+  'client',
   'config',
   'bootstrap',
   'angular-route',
