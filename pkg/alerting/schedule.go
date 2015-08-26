@@ -75,6 +75,7 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 	}
 }
 
+// getJobs retrieves all jobs for which lastPointAt % their freq == their offset.
 func getJobs(lastPointAt int64) ([]*Job, error) {
 
 	query := m.GetMonitorsForAlertsQuery{
