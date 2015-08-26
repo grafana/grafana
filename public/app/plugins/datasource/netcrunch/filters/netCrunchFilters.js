@@ -22,7 +22,6 @@ define([
 
     /* global angular, console, module, netCrunchCommonFilters */
 
-
     module.filter('netCrunchNodeAddress', function(){
         return netCrunchCommonFilters.nodeAddress;
     });
