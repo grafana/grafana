@@ -16,3 +16,7 @@ export GOPATH GOBIN
 cd ${GOPATH}/src/github.com/grafana/grafana
 go run build.go package
 cp dist/* ${DIR}/artifacts
+VER=`ls dist/*ubuntu_amd64.deb | ruby -e 'STDIN.read =~ /grafana_(\d+\.\d+\.\d+-\d+)/; print $1'`
+if [ ! -z "$VER" ]; then
+	git tag pkg-$VER
+fi
