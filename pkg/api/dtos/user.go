@@ -1,5 +1,9 @@
 package dtos
 
+type SignUpForm struct {
+	Email string `json:"email" binding:"Required"`
+}
+
 type AdminCreateUserForm struct {
 	Email    string `json:"email"`
 	Login    string `json:"login"`

@@ -131,7 +131,7 @@ func userSignedUpHandler(evt *events.UserSignedUp) error {
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{
-			"Name": evt.Login,
+			"Email": evt.Email,
 		},
 	})
 }
