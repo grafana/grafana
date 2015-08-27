@@ -13,6 +13,7 @@ var (
 type TempUserStatus string
 
 const (
+	TmpUserSignUpStarted TempUserStatus = "SignUpStarted"
 	TmpUserInvitePending TempUserStatus = "InvitePending"
 	TmpUserCompleted     TempUserStatus = "Completed"
 	TmpUserEmailPending  TempUserStatus = "EmailPending"

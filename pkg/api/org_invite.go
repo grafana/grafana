@@ -171,7 +171,7 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 
 	user := cmd.Result
 
-	bus.Publish(&events.UserSignedUp{
+	bus.Publish(&events.SignUpCompleted{
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
@@ -199,7 +199,7 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 
 	loginUserWithUser(&user, c)
 
-	metrics.M_Api_User_SignUp.Inc(1)
+	metrics.M_Api_User_SignUpCompleted.Inc(1)
 	metrics.M_Api_User_SignUpInvite.Inc(1)
 
 	return ApiSuccess("User created and logged in")

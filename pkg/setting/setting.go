@@ -75,10 +75,11 @@ var (
 	EmailCodeValidMinutes int
 
 	// User settings
-	AllowUserSignUp    bool
-	AllowUserOrgCreate bool
-	AutoAssignOrg      bool
-	AutoAssignOrgRole  string
+	AllowUserSignUp        bool
+	AllowUserOrgCreate     bool
+	AutoAssignOrg          bool
+	AutoAssignOrgRole      string
+	RequireEmailValidation bool
 
 	// Http auth
 	AdminUser     string
