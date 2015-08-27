@@ -150,6 +150,7 @@ require([
     'specs/unsavedChangesSrv-specs',
     'specs/valueSelectDropdown-specs',
     'specs/opentsdbDatasource-specs',
+    'specs/opennmsDatasource-specs'
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
