@@ -22,6 +22,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/"),
       });
 
+      $scope.mainLinks.push({
+        text: "Playlists",
+        icon: "fa fa-fw fa-list",
+        href: $scope.getUrl("/playlists"),
+      });
+
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({
           text: "Data Sources",

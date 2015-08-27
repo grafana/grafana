@@ -40,6 +40,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/playlists/", reqSignedIn, Index)
+	r.Get("/playlists/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -148,6 +150,16 @@ func Register(r *macaron.Macaron) {
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
+		})
+
+		// Playlist
+		r.Group("/playlists", func() {
+			r.Get("/", SearchPlaylists)
+			r.Get("/:id", GetPlaylist)
+			r.Get("/:id/dashboards", GetPlaylistDashboards)
+			r.Delete("/:id", DeletePlaylist)
+			r.Post("/", reqEditorRole, bind(m.CreatePlaylistQuery{}), CreatePlaylist)
+			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistQuery{}), UpdatePlaylist)
 		})
 
 		// Search

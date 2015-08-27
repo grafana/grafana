@@ -17,6 +17,7 @@ func AddMigrations(mg *Migrator) {
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
+	addPlaylistMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

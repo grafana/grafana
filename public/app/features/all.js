@@ -9,4 +9,5 @@ define([
   './profile/changePasswordCtrl',
   './org/all',
   './admin/all',
+  './playlist/all',
 ], function () {});
