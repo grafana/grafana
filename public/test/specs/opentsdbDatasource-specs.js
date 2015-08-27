@@ -39,13 +39,19 @@ define([
         expect(requestOptions.params.m).to.be('cpu');
       });
 
-      it('tag_values(cpu, test) should generate looku  query', function() {
+      it('tag_values(cpu, test) should generate lookup query', function() {
         ctx.ds.metricFindQuery('tag_values(cpu, hostname)').then(function(data) { results = data; });
         ctx.$rootScope.$apply();
         expect(requestOptions.url).to.be('/api/search/lookup');
         expect(requestOptions.params.m).to.be('cpu{hostname=*}');
       });
 
+      it('tag_values_constrained(cpu, test, {tagk=tagv}) should generate lookup query', function() {
+        ctx.ds.metricFindQuery('tag_values_constrained(cpu, hostname, {tagk=tagv})').then(function(data) { results = data; });
+        ctx.$rootScope.$apply();
+        expect(requestOptions.url).to.be('/api/search/lookup');
+        expect(requestOptions.params.m).to.be('cpu{hostname=*,tagk=tagv}');
+      });
     });
   });
 });

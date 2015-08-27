@@ -86,14 +86,18 @@ function (angular, _, kbn) {
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
+    OpenTSDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key, constraints) {
       if(!metric || !key) {
         return $q.when([]);
       }
+      var m;
+      if(typeof constraints === 'undefined') {
+        m = metric + "{" + key + "=*}";
+      } else {
+        m = metric + "{" + key + "=*," + constraints + "}";
+      }
 
-      var m = metric + "{" + key + "=*}";
-
-      return this._get('/api/search/lookup', {m: m}).then(function(result) {
+      return this._get('/api/search/lookup', {m: m, limit: 1000}).then(function(result) {
         result = result.data.results;
         var tagvs = [];
         _.each(result, function(r) {
@@ -147,7 +151,8 @@ function (angular, _, kbn) {
 
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
-      var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
+      var tag_values_regex = /tag_values\((.+?),\s?(.+?)\)/;
+      var tag_values_constrained_regex = /tag_values_constrained\((.+?)\,\s?(.+?)\,\s?\{(.*)\}\)/;
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
@@ -163,7 +168,12 @@ function (angular, _, kbn) {
       if (tag_values_query) {
         return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
       }
-
+      var tag_values_constrained_query = interpolated.match(tag_values_constrained_regex);
+      if (tag_values_constrained_query) {
+        return this._performMetricKeyValueLookup(tag_values_constrained_query[1],
+                                                 tag_values_constrained_query[2],
+                                                 tag_values_constrained_query[3]).then(responseTransform);
+      }
       return $q.when([]);
     };
 
