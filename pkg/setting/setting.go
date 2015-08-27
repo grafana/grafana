@@ -77,11 +77,19 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// User settings
+<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
+=======
+	AllowUserSignUp        bool
+	AllowUserOrgCreate     bool
+	AutoAssignOrg          bool
+	AutoAssignOrgRole      string
+	RequireEmailValidation bool
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 
 	// Http auth
 	AdminUser     string

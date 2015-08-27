@@ -167,7 +167,11 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{
+<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
 			"Name": evt.Name,
+=======
+			"Email": evt.Email,
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 		},
 	})
 }
