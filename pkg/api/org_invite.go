@@ -168,7 +168,12 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	user := &cmd.Result
 
 	bus.Publish(&events.SignUpCompleted{
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 		Name:  user.NameOrFallback(),
+=======
+		Id:    user.Id,
+		Name:  user.Name,
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 		Email: user.Email,
 	})
 
@@ -208,12 +213,19 @@ func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool,
 		return false, rsp
 	}
 
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 	if setActive {
 		// set org to active
 		if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
 			return false, ApiError(500, "Failed to set org as active", err)
 		}
 	}
+=======
+	loginUserWithUser(&user, c)
+
+	metrics.M_Api_User_SignUpCompleted.Inc(1)
+	metrics.M_Api_User_SignUpInvite.Inc(1)
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 
 	return true, nil
 }

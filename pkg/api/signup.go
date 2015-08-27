@@ -1,7 +1,10 @@
 package api
 
 import (
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
+=======
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -10,6 +13,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 =======
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/events"
@@ -18,6 +22,8 @@ import (
 	m "github.com/Cepave/grafana/pkg/models"
 	"github.com/Cepave/grafana/pkg/setting"
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
+=======
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 )
 
 // GET /api/user/signup/options
@@ -36,7 +42,11 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 		return ApiError(422, "User with same email address already exists", nil)
+=======
+		return ApiError(401, "User with same email address already exists", nil)
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 	}
 
 	cmd := m.CreateTempUserCommand{}
@@ -44,13 +54,18 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 	cmd.Email = form.Email
 	cmd.Status = m.TmpUserSignUpStarted
 	cmd.InvitedByUserId = c.UserId
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 	cmd.Code = util.GetRandomString(20)
+=======
+	cmd.Code = util.GetRandomString(10)
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to create signup", err)
 	}
 
+<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 	bus.Publish(&events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
@@ -141,4 +156,17 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 	}
 
 	return true, nil
+=======
+	// user := cmd.Resu
+
+	bus.Publish(&events.UserSignedUp{Email: form.Email})
+
+	//
+	// loginUserWithUser(&user, c)
+	//
+	//
+
+	metrics.M_Api_User_SignUpStarted.Inc(1)
+	return ApiSuccess("User created and logged in")
+>>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 }
