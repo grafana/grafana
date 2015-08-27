@@ -880,9 +880,11 @@ define([
                           $timeout(function () {
                               if (ngRepeatElements.length > 2) {
                                   for (index = 1; (index < (ngRepeatElements.length - 1)); index += 1) {
+                                    if ($scope[virtualRangeIndex] != null) {
                                       modelIndex = $scope[virtualRangeIndex].firstVirtualNodeIndex + index - 1;
                                       element = angular.element(ngRepeatElements[index]);
                                       element.css('height', renderingModel[modelIndex].height + 'px');
+                                    }
                                   }
                               }
                           }, 0);
@@ -934,10 +936,12 @@ define([
                       $interval(function(){
                           if ((ngRepeatEventHandlers.length > 0) &&
                               ($scope[subSetElements].length === ngRepeatEventHandlers.length)) {
+                            if ($scope[virtualRangeIndex] != null) {
                               if (ngRepeatEventHandlers[0].tabIndex !==
                                   getModelTabIndex($scope[virtualRangeIndex].firstVirtualNodeIndex)) {
-                                  addEventHandlers();
+                                addEventHandlers();
                               }
+                            }
                           }
                       }, 1000);
 
