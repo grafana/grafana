@@ -8,12 +8,16 @@ require.config({
 >>>>>>> tech(typescript): its looking good
 
   paths: {
+<<<<<<< af318b5e1776379babdc4e00974edc2dbf5e51b8
 <<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
 =======
   baseUrl: 'public',
 
   paths: {
 >>>>>>> feat() started work on more feature rich time picker
+=======
+<<<<<<< 495ed87f9b7044005f3eae13c809c753acf41b30
+>>>>>>> [OWL-52] Add servers distribution map among provinces
     config:                   'app/components/config',
     settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
@@ -56,7 +60,7 @@ require.config({
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
-    echarts:                   'vendor/echarts',
+    echarts:                   'vendor/echarts/echarts',
     zrender:                   'vendor/zrender',
 
     modernizr:                 'vendor/modernizr-2.6.1',
