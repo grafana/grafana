@@ -25,7 +25,7 @@ func Init() error {
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
 
-	bus.AddEventListener(userSignedUpHandler)
+	bus.AddEventListener(signUpStartedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -120,7 +120,7 @@ func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
 	return nil
 }
 
-func userSignedUpHandler(evt *events.UserSignedUp) error {
+func signUpStartedHandler(evt *events.SignUpStarted) error {
 	log.Info("User signed up: %s, send_option: %s", evt.Email, setting.Smtp.SendWelcomeEmailOnSignUp)
 
 	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {

@@ -1,0 +1,113 @@
+<div class="container">
+
+	<div class="signup-page-background">
+	</div>
+
+	<div class="login-box">
+
+		<div class="login-box-logo">
+			<img src="img/logo_transparent_200x75.png">
+		</div>
+
+    <div class="invite-box">
+			<h3>
+				You're almost there.
+			</h3>
+
+			<div class="modal-tagline">
+				We just need a couple of more bits of<br> information to finish creating your account.
+			</div>
+
+			<div style="display: inline-block; margin-top: 25px; width: 300px">
+					<div class="editor-option">
+						<label class="small">Your email:</label>
+						<span class="large">{{formModel.email}}</span>
+					</div>
+			</div>
+
+			<br>
+
+			<form name="signupForm" class="login-form">
+
+				<div style="display: inline-block; margin-bottom: 25px; width: 300px">
+					<div class="editor-option">
+						<label class="small">Email verification code: <em>Sent to your email just now</em></label>
+						<input type="text" class="input input-xlarge" ng-model="formModel.code" required></input>
+					</div>
+				</div>
+
+				<div class="tight-from-container">
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Organization
+							</li>
+							<li>
+								<input type="text" name="orgName" class="tight-form-input last" ng-model='formModel.orgName' placeholder="Name your organization" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Name
+							</li>
+							<li>
+								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Username
+							</li>
+							<li>
+								<input type="text" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px" autocomplete="off">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Password
+							</li>
+							<li>
+								<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password" autocomplete="off">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div style="margin-left: 147px; width: 254px;">
+					<password-strength password="formModel.password"></password-strength>
+				</div>
+
+				<div class="login-submit-button-row">
+					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !signUpForm.$valid, 'btn-primary': signUpForm.$valid}">
+						Continue
+					</button>
+				</div>
+			</form>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="row" style="margin-top: 50px">
+			<div class="version-footer text-center small">
+				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
+				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+			</div>
+		</div>
+
+	</div>
+
+</div>
+
+
