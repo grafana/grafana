@@ -263,4 +263,8 @@ function (angular, _, kbn) {
       return OpenNMSDatasource;
     });
 
+<<<<<<< HEAD
   });
+=======
+  });
+>>>>>>> be34ccd89deb81f5ec545188cb5de7ccec4b9df4
