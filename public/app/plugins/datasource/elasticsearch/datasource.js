@@ -294,6 +294,13 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         });
     };
 
+    ElasticDatasource.prototype.testDatasource = function() {
+      var query = JSON.stringify();
+      return this._post('/_search?search_type=count', query).then(function() {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      });
+    };
+
     ElasticDatasource.prototype.query = function(options) {
       var queryBuilder = new ElasticQueryBuilder;
       var query = queryBuilder.build(options.targets);
