@@ -48,6 +48,7 @@ type CreateUserCommand struct {
 	Login    string `json:"login"`
 	Name     string `json:"name"`
 	Company  string `json:"compay"`
+	OrgName  string `json:"orgName"`
 	Password string `json:"password" binding:"Required"`
 	IsAdmin  bool   `json:"-"`
 

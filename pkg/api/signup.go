@@ -34,14 +34,10 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 		return ApiError(500, "Failed to create signup", err)
 	}
 
-	// user := cmd.Resu
-
 	bus.Publish(&events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	})
-
-	// loginUserWithUser(&user, c)
 
 	metrics.M_Api_User_SignUpStarted.Inc(1)
 
@@ -72,5 +68,33 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		return ApiError(401, "User with same email address already exists", nil)
 	}
 
+	// create user
+	createUserCmd := m.CreateUserCommand{
+		Email:    tempUser.Email,
+		Login:    form.Username,
+		Name:     form.Name,
+		Password: form.Password,
+		OrgName:  form.OrgName,
+	}
+
+	if err := bus.Dispatch(&createUserCmd); err != nil {
+		return ApiError(500, "Failed to create user", err)
+	}
+
+	user := createUserCmd.Result
+
+	bus.Publish(&events.SignUpCompleted{
+		Email: user.Email,
+		Name:  user.NameOrFallback(),
+	})
+
+	// check for pending invites
+	invitesQuery := m.GetTempUsersQuery{Email: tempUser.Email, Status: m.TmpUserInvitePending}
+	if err := bus.Dispatch(&invitesQuery); err != nil {
+		return ApiError(500, "Failed to query database for invites", err)
+	}
+
+	loginUserWithUser(&user, c)
+	metrics.M_Api_User_SignUpCompleted.Inc(1)
 	return Json(200, util.DynMap{"status": "SignUpCreated"})
 }
