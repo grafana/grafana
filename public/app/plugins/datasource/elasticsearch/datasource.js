@@ -314,11 +314,13 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     ElasticDatasource.prototype._getTimeSeries = function(results) {
       var data = [];
-      if (results && results.facets) {
-        for (var target in results.facets) {
-          if (results.facets.hasOwnProperty(target) && results.facets[target].entries) {
-            var datapoints = results.facets[target].entries.map(function(entry) {
-              return [entry.mean, entry.time];
+      if (results && results.aggregations) {
+        for (var target in results.aggregations) {
+          if (results.aggregations.hasOwnProperty(target) &&
+              results.aggregations[target].date_histogram &&
+              results.aggregations[target].date_histogram.buckets) {
+            var datapoints = results.aggregations[target].date_histogram.buckets.map(function(entry) {
+              return [entry.metric.avg, entry.key];
             });
             data.push({ target: target, datapoints: datapoints });
           }
@@ -329,5 +331,4 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     return ElasticDatasource;
   });
-
 });

@@ -35,12 +35,12 @@ function (angular, _, ElasticQueryBuilder) {
       $scope.valueFieldSegment = new MetricSegment({value: target.valueField});
 
       if (!target.termKey) {
-        target.termKey = 'service';
+        target.termKey = 'service.raw';
       }
       $scope.termKeySegment = new MetricSegment({value: target.termKey});
 
       if (!target.termValue) {
-        target.termValue = 'cpu';
+        target.termValue = 'cpu-average/cpu-user';
       }
       $scope.termValueSegment = new MetricSegment({value: target.termValue});
 

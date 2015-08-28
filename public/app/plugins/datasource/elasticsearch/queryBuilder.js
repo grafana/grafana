@@ -8,24 +8,34 @@ function () {
 
   ElasticQueryBuilder.prototype.build = function(targets) {
     var query = {
-      "facets": {},
+      "aggs": {},
       "size": "$maxDataPoints"
     };
     var self = this;
     targets.forEach(function(target) {
       if (!target.hide) {
-        query["facets"][target.termKey + "_" + target.termValue] = {
-          "date_histogram": {
-            "interval": target.interval || "$interval",
-            "key_field": target.keyField,
-            "min_doc_count": 0,
-            "value_field": target.valueField
-          },
-          "facet_filter": {
+        query["aggs"][target.termKey + "_" + target.termValue] = {
+          "filter": {
             "and": [
               self._buildRangeFilter(target),
               self._buildTermFilter(target)
             ]
+          },
+          "aggs": {
+            "date_histogram": {
+              "date_histogram": {
+                "interval": target.interval || "$interval",
+                "field": target.keyField,
+                "min_doc_count": 0,
+              },
+              "aggs": {
+                "metric": {
+                  "stats": {
+                    "field": target.valueField
+                  }
+                }
+              }
+            }
           }
         };
       }
