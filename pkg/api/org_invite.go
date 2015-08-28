@@ -14,7 +14,7 @@ import (
 )
 
 func GetPendingOrgInvites(c *middleware.Context) Response {
-	query := m.GetTempUsersForOrgQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
+	query := m.GetTempUsersQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get invites from db", err)
@@ -172,10 +172,8 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	user := cmd.Result
 
 	bus.Publish(&events.SignUpCompleted{
-		Id:    user.Id,
-		Name:  user.Name,
+		Name:  user.NameOrFallback(),
 		Email: user.Email,
-		Login: user.Login,
 	})
 
 	// add to org
