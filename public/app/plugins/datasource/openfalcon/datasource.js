@@ -61,20 +61,22 @@ function (angular, _, $, config, kbn, moment) {
     /**
      * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
      * @description:    This function gets hosts locations for map chart.
-     * @related issues: OWL-030
+     * @related issues: OWL-052, OWL-030
      * @param:          object result
      * @return:         object results
      * @author:         Don Hsieh
      * @since:          08/20/2015
-     * @last modified:  08/21/2015
+     * @last modified:  08/27/2015
      * @called by:      OpenFalconDatasource.prototype.query = function(options)
      *                   in public/app/plugins/datasource/openfalcon/datasource.js
      */
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
       // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
       var obj = {};
-      if (!result.data.length) return result;
-      if ('city' in result.data[0]) {   // This is a map query
+      if (!result.data.length) {
+        return result;
+      }
+      if ('chartType' in result.data[0]) {   // This is a map query
         obj.datapoints = result.data;
         result.data = [obj];
         return result;
@@ -98,7 +100,6 @@ function (angular, _, $, config, kbn, moment) {
               value = arr['value'];
               datapoints.push([value, timestamp]);
             });
-            // console.log('convertDataPointsToMs datapoints =', datapoints);
             obj = {};
             obj.datapoints = datapoints;
             obj.target = host + '.' + metric;
