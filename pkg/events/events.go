@@ -70,12 +70,10 @@ type UserCreated struct {
 	Email     string    `json:"email"`
 }
 
-type UserSignedUp struct {
+type SignUpStarted struct {
 	Timestamp time.Time `json:"timestamp"`
-	Id        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Login     string    `json:"login"`
 	Email     string    `json:"email"`
+	Code      string    `json:"code"`
 }
 
 type SignUpCompleted struct {

@@ -4,6 +4,14 @@ type SignUpForm struct {
 	Email string `json:"email" binding:"Required"`
 }
 
+type SignUpStep2Form struct {
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Code     string `json:"code"`
+	OrgName  string `json:"orgName"`
+}
+
 type AdminCreateUserForm struct {
 	Email    string `json:"email"`
 	Login    string `json:"login"`
