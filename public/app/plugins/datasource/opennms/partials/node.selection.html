@@ -1,0 +1,60 @@
+<div ng-controller="OpenNMSModalSelectionCtrl">
+    <div class="modal-header">
+        <ul class="tight-form-list" role="menu">
+            <li class="tight-form-item">
+                Search:
+            </li>
+            <li>
+                <input type="text"
+                       class="tight-form-input input-xxlarge"
+                       ng-model="query"
+                       placeholder="query"
+                       ng-change="searchForRows()"
+                       data-min-length=0 data-items=100
+                        >
+            </li>
+        </ul>
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="modal-body" style="display: block; height: 350px; overflow-y: scroll">
+        <div class="row-fluid">
+            <div ng-show="searching" class="text-center">
+                <i class="fa fa-spinner fa-4x fa-spin"></i>
+            </div>
+            <div ng-show="!searching">
+                <div ng-show="!rows.length">
+                    <h5 class="text-center">No results.</h5>
+                </div>
+                <table class="table table-condensed pre-scrollable" ng-show="rows.length">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Label</th>
+                        <th>Foreign Id</th>
+                        <th>sysName</th>
+                    </tr>
+                    </thead>
+                    <tbody style="height: 30px; overflow-y: scroll">
+                    <tr ng-repeat="node in rows" ng-class="{'info':$index == selectedRow}"
+                        ng-click="setClickedRow($index)">
+                        <th scope="row">{{node.id}}</th>
+                        <td>{{node.label}}</td>
+                        <td>{{node.foreignId}}</td>
+                        <td>{{node.sysName | limitTo: 48}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <p ng-show="!searching && rows.length" class="pull-left text-info">Showing <b>{{ count }}</b> of <b>{{
+            totalCount }}</b> nodes.</p>
+        <button type="button" class="btn btn-success" ng-click="cancel();dismiss()">Cancel</button>
+        <button type="button" class="btn btn-success" ng-click="ok();dismiss();" ng-disabled="selectedRow == null">
+            Select
+        </button>
+    </div>
+</div>

@@ -1,0 +1,175 @@
+<div class="tight-form">
+    <ul class="tight-form-list pull-right">
+        <li class="tight-form-item small" ng-show="target.datasource">
+            <em>{{target.datasource}}</em>
+        </li>
+        <li class="tight-form-item">
+            <a bs-tooltip="target.error"
+               style="color: rgb(229, 189, 28)"
+               ng-show="target.error">
+                <i class="fa fa-warning"></i>
+            </a>
+        </li>
+        <li class="tight-form-item">
+            <div class="dropdown">
+                <a class="pointer dropdown-toggle"
+                   data-toggle="dropdown"
+                   tabindex="1">
+                    <i class="fa fa-bars"></i>
+                </a>
+                <ul class="dropdown-menu pull-right" role="menu">
+                    <li role="menuitem">
+                        <a tabindex="1"
+                           ng-click="duplicate()">
+                            Duplicate
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="tight-form-item last">
+            <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+                <i class="fa fa-remove"></i>
+            </a>
+        </li>
+    </ul>
+
+    <ul class="tight-form-list">
+        <li class="tight-form-item" style="min-width: 15px; text-align: center">
+            {{target.refId}}
+        </li>
+        <li>
+            <a class="tight-form-item"
+               ng-click="target.hide = !target.hide; get_data();"
+               role="menuitem">
+                <i class="fa fa-eye"></i>
+            </a>
+        </li>
+    </ul>
+
+    <ul class="tight-form-list" role="menu">
+        <li class="tight-form-item">
+            Type
+        </li>
+        <li>
+            <select class="tight-form-input"
+                    ng-model="target.type"
+                    ng-blur="targetBlur()">
+                <option value="attribute">Attribute</option>
+                <option value="expression">Expression</option>
+            </select>
+        </li>
+    </ul>
+
+    <ul class="tight-form-list" role="menu" ng-show="target.type === 'expression'">
+        <li class="tight-form-item">
+            Label <i class="fa fa-font"></i>
+        </li>
+        <li>
+            <input type="text"
+                   class="tight-form-input input-medium"
+                   ng-model="target.label"
+                   spellcheck='false'
+                   placeholder="series label"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                    />
+        </li>
+        <li class="tight-form-item">
+            Expression <i class="fa fa-calculator"></i>
+        </li>
+        <li>
+            <input type="text"
+                   class="tight-form-input input-xxlarge"
+                   ng-model="target.expression"
+                   spellcheck='false'
+                   placeholder="series expression"
+                   data-min-length=0 data-items=2048
+                   ng-blur="targetBlur()"
+                    />
+        </li>
+    </ul>
+
+    <ul class="tight-form-list" role="menu" ng-show="target.type === 'attribute'">
+        <li>
+            <a class="tight-form-item"
+               ng-click="openNodeSelectionModal();"
+               role="menuitem">
+                Node <i class="fa fa-tree"></i>
+            </a>
+        </li>
+        <li>
+            <input type="text"
+                   class="tight-form-input input-large"
+                   ng-model="target.nodeId"
+                   spellcheck='false'
+
+                   placeholder="node id"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                    >
+        </li>
+        <li ng-show="target.nodeId">
+            <a class="tight-form-item"
+               ng-click="openResourceSelectionModal();"
+               role="menuitem">
+                Resource <i class="fa fa-leaf"></i>
+            </a>
+        </li>
+        <li ng-show="target.nodeId">
+            <input type="text"
+                   class="tight-form-input input-xlarge"
+                   ng-model="target.resourceId"
+                   spellcheck='false'
+                   placeholder="resource id"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                    >
+        </li>
+        <li ng-show="target.resourceId">
+            <a class="tight-form-item"
+               ng-click="openAttributeSelectionModal();"
+               role="menuitem">
+                Attribute <i class="fa fa-tag"></i>
+            </a>
+        </li>
+        <li ng-show="target.resourceId">
+            <input type="text"
+                   class="tight-form-input"
+                   ng-model="target.attribute"
+                   spellcheck='false'
+                   placeholder="attribute"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                    >
+        </li>
+        <li class="tight-form-item" ng-show="target.attribute">
+            Label <i class="fa fa-font"></i>
+        </li>
+        <li ng-show="target.attribute">
+            <input type="text"
+                   class="tight-form-input input-medium"
+                   ng-model="target.label"
+                   spellcheck='false'
+                   placeholder="series label"
+                   data-min-length=0 data-items=100
+                   ng-blur="targetBlur()"
+                    />
+        </li>
+        <li class="tight-form-item" ng-show="target.attribute">
+            Aggregation <i class="fa fa-calculator"></i>
+        </li>
+        <li ng-show="target.attribute">
+            <select class="tight-form-input"
+                    ng-model="target.aggregation"
+                    ng-blur="targetBlur()">
+                <option value="AVERAGE">Average</option>
+                <option value="MIN">Min</option>
+                <option value="MAX">Max</option>
+                <option value="LAST">Last</option>
+            </select>
+        </li>
+    </ul>
+
+    <div class="clearfix"></div>
+</div>
