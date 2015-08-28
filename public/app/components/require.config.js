@@ -88,8 +88,9 @@ require.config({
     'jquery.flot.crosshair':   '../vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
-    echarts:   '../vendor/echarts',
+    echarts:   '../vendor/echarts/echarts',
     zrender:   '../vendor/zrender',
+    // zrender:   '../vendor/zrender/zrender',
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',

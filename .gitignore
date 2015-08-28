@@ -36,9 +36,15 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 grafana
 .notouch
 .DS_Store
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+
+
+*.DS_Store
+>>>>>>> [OWL-52] Add servers distribution map among provinces

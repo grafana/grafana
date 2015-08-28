@@ -4,11 +4,15 @@ var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 var request = require('request');
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 var _ = require('lodash');
 =======
 // var _ = require('lodash');
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+var _ = require('lodash');
+>>>>>>> [OWL-52] Add servers distribution map among provinces
 var fs = require('fs');
 var path = require('path');
 
@@ -66,29 +70,62 @@ function getMapData(chartType)
 =======
  * @function name:	function getMapData()
  * @description:	This function gets hosts locations for map chart.
- * @related issues:	OWL-030
+ * @related issues:	OWL-052, OWL-030
  * @param:			void
  * @return:			array hosts
  * @author:			Don Hsieh
  * @since:			08/15/2015
- * @last modified: 	08/21/2015
+ * @last modified: 	08/27/2015
  * @called by:		app.post('/')
  *					 in open-falcon/server.js
  */
 function getMapData()
 {
 	var dirData = path.join(__dirname, 'data');
-	var filePath = path.join(dirData, 'agent.json');
-	var hosts = [];
+	// var filePath = path.join(dirData, 'agent.json');
+	var filePath = path.join(dirData, 'province.json');
+	var hosts = {};
 	try {
 		var data = fs.readFileSync(filePath, "utf8");
-		hosts = JSON.parse(data);
-		hosts['chartType'] = 'map';
-		// console.log('hosts =', hosts);
-		return hosts;
+		var provinces = JSON.parse(data);
+		filePath = path.join(dirData, 'latlng.json');
+		data = fs.readFileSync(filePath, "utf8");
+		var countries = JSON.parse(data);
+		var citiesInProvince = [];
+		var obj = {};
+		var provincesName = ['浙江', '山东', '福建', '河南', '江苏', '广东', '山西'
+			, '湖北', '湖南', '吉林', '辽宁', '四川', '江西', '广西', '河北', '陕西'
+			, '黑龙江', '云南', '安徽', '新疆', '甘肃', '内蒙古', '宁夏', '海南'];
+		_.forEach(countries, function(country) {
+			_.forEach(country, function(province, key) {
+				if (provincesName.indexOf(key) > -1) {
+				// if (key === '内蒙古') {
+					_.forEach(province, function(city, key2) {
+						// console.log(province);
+						if (key2.length && key2 !== 'lat' && key2 !== 'lng' && key2 !== 'count') {
+							obj = {};
+							obj.name = key2;
+							obj.value = city.count;
+							citiesInProvince.push(obj);
+						}
+					});
+				}
+				console.log(key);
+				console.log(province);
+			});
+		});
+		hosts.chartType = 'map';
+		hosts.provinces = provinces;
+		hosts.citiesInProvince = citiesInProvince;
+		console.log('hosts =', hosts);
+		return [hosts];
 	} catch(e) {
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 		// console.log('Exception e =', e);
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+		console.log('Exception e =', e);
+>>>>>>> [OWL-52] Add servers distribution map among provinces
 		return hosts;
 	}
 }
@@ -115,8 +152,12 @@ function getMapData()
  * @author:			Don Hsieh
  * @since:			08/15/2015
  * @last modified: 	08/15/2015
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
  * @call	ed by:		app.post('/')
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+ * @called by:		app.post('/')
+>>>>>>> [OWL-52] Add servers distribution map among provinces
  *					 in open-falcon/server.js
  */
 function queryMetric(req, res, targets)

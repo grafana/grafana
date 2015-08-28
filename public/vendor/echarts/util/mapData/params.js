@@ -161,7 +161,10 @@ define(function (require) {
                 return str + ' Z';
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         '新疆': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/xin_jiang_geo'], function (md){
@@ -169,6 +172,7 @@ define(function (require) {
                 });
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
         // '新疆': {
         //     getGeoJson: function (callback) { 
@@ -178,6 +182,8 @@ define(function (require) {
         //     }
         // },
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         // '西藏': {
         //     getGeoJson: function (callback) { 
         //         require(['./geoJson/xi_zang_geo'], function (md){
@@ -185,7 +191,10 @@ define(function (require) {
         //         });
         //     }
         // },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         '内蒙古': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/nei_meng_gu_geo'], function (md){
@@ -193,6 +202,7 @@ define(function (require) {
                 });
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
         // '内蒙古': {
         //     getGeoJson: function (callback) { 
@@ -202,6 +212,8 @@ define(function (require) {
         //     }
         // },
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         // '青海': {
         //     getGeoJson: function (callback) { 
         //         require(['./geoJson/qing_hai_geo'], function (md){
@@ -209,7 +221,10 @@ define(function (require) {
         //         });
         //     }
         // },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         '四川': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/si_chuan_geo'], function (md){
@@ -287,6 +302,7 @@ define(function (require) {
                 });
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
         // '四川': {
         //     getGeoJson: function (callback) { 
@@ -366,6 +382,8 @@ define(function (require) {
         //     }
         // },
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         // '贵州': {
         //     getGeoJson: function (callback) { 
         //         require(['./geoJson/gui_zhou_geo'], function (md){
@@ -373,7 +391,10 @@ define(function (require) {
         //         });
         //     }
         // },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         '山东': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/shan_dong_geo'], function (md){
@@ -437,6 +458,7 @@ define(function (require) {
                 });
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
         // '山东': {
         //     getGeoJson: function (callback) { 
@@ -502,6 +524,8 @@ define(function (require) {
         //     }
         // },
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         // '重庆': {
         //     getGeoJson: function (callback) { 
         //         require(['./geoJson/chong_qing_geo'], function (md){
@@ -509,7 +533,10 @@ define(function (require) {
         //         });
         //     }
         // },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         '宁夏': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/ning_xia_geo'], function (md){
@@ -524,6 +551,7 @@ define(function (require) {
                 });
             }
         },
+<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
         // '宁夏': {
         //     getGeoJson: function (callback) { 
@@ -540,6 +568,8 @@ define(function (require) {
         //     }
         // },
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         // '台湾': {
         //     getGeoJson: function (callback) { 
         //         require(['./geoJson/tai_wan_geo'], function (md){
