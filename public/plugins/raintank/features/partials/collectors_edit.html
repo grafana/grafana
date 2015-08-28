@@ -1,101 +1,169 @@
 <topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
-	<ul class="nav">
-		<li class="top-nav-title ng-binding">
-			<div>
-				<form style="margin-bottom:0px;">
-					<li class="dropdown">
-						<a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
-							<span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
-				   		</a>
-						<ul class="dropdown-menu" role="menu" style="left: 65px">
-							<li ng-repeat="collector in collectors">
-								<a class="small" href="collectors/summary/{{collector.id}}">{{collector.name}}</a>
-							</li>
-						</ul>
-					</li>
-				</form>
-			</div>
-		</li>
-	</ul>
+  <ul class="nav">
+    <li class="top-nav-title ng-binding">
+      <div>
+        <form style="margin-bottom:0px;">
+          <li class="dropdown">
+            <a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+              <span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+            </a>
+            <ul class="dropdown-menu" role="menu" style="left: 65px">
+              <li ng-repeat="collector in collectors">
+                <a class="small" href="collectors/summary/{{collector.id}}">{{collector.name}}</a>
+              </li>
+            </ul>
+          </li>
+        </form>
+      </div>
+    </li>
+  </ul>
 </topnav>
 
 <div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
-			<!-- page title -->
 
-    <div class="rt-page-header" ng-if="!collector.id">
-         <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
-         <h1 class="rt-h1">Add a new collector</h1>
+
+  <div ng-if="!collector.id">
+    <div class="rt-page-header">
+      <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
+      <h1 class="rt-h1">Add a new collector</h1>
+      <span class="form-step-count">Step 1 of 2</span>
     </div>
-
-	<div class="rt-page-header-area" ng-if="collector.id">
-
-		<h1 class="rt-h1">{{collector.name}}</h1>
-
-		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
-		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
-	</div>
-    
-	<div class="editor-row rt-detail-pages" ng-if="collector.id">
-		<div class="editor-option">
-			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
-		</div>
-	</div>
-
-	<!-- tabs -->
-	<div class="rt-tabs" ng-if="collector.id">
-		<span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>  <span class="active" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
-	</div>
-
-	<form name="collectorForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
+    <div class="rt-form">
+      <form name="collectorForm">
+        <label class="rt-form-label-medium">Collector Name:</label>
+        <input type="text" class="rt-form-input" ng-model="collector.name" required="">
+        <div class="rt-form-row">
+          <button type="submit" class="rt-btn" ng-click="add()">Next -> Install Collector</button>
+        </div>
+      </form> 
+    </div>
+  </div>
 
 
-<!-- 		<div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
-			<div class="rt-mini-form new-endpoint-domain-form">
-				<div class="rt-mini-form-col">
-					<label class="rt-form-label-medium">Collector Name</label>
-					<input type="text" class="rt-form-input" ng-model="collector.name" required="">
-				</div>
+  <div ng-if="!collector.id" style="display: none;">
+    <div class="rt-page-header">
+      <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
+      <h1 class="rt-h1">Add a new collector</h1>
+      <span class="form-step-count">Step 2 of 2</span>
+    </div>
+    <label class="rt-form-label-medium">Collector Name:</label>
+    <h2 class="collector-name">DC2 Internal</h2>
+    <p><strong>Collector record added</strong>. Please install the application or <a class="rt-dashboard-blurb" href="#">skip to collector summary</a>.</p>
+    <div class="rt-collector-config rt-config-box">
+      <div class="rt-collector-config-header rt-box-header">
+        <h2>Install the collector application</h2>
+        <span class="rt-config-setup-time">Setup time: 5-7 minutes</span>
+      </div>
+      <div class="rt-box-body">
+        <div class="rt-box-interior-section">
+          <h3>Choose your distro:</h3>
+          <ul class="rt-collector-config-distro">
+            <li>
+              <input name="distro" type="radio" id="distros-1" checked>
+              <label for="distros-1">Ubuntu, Debian, CentOS, Redhat</label>
+            </li>
+            <li>
+              <input name="distro" type="radio" id="distros-2">
+              <label for="distros-2">Other</label>
+            </li>
+          </ul>
+        </div>
+        <div class="rt-box-interior-section">
+          <div>
+            <h3>Have your API key <a href="#">Manage API keys</a></h3>
+            <button class="rt-btn">Generate New API Key</button>
+          </div>
 
-				<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
-					<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
-					<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
-				</div>
-			</div>
-			<div class="rt-mini-form-col" style="margin-top: 15px;">
-				<div>
-					<div class="editor-row">
-						<button type="submit" class="secondaryCTA" ng-click="save()" ng-show="collector.id">Update Collector</button>
-						<button type="submit" class="secondaryCTA" ng-click="add()" ng-hide="collector.id">Create Collector</button>
-					</div>
-				</div>
-			</div>
-		</div> -->
 
-        <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
-          <div class="rt-mini-form new-endpoint-domain-form">
-            <div class="rt-mini-form-col">
-              <label class="rt-form-label-medium">Collector Name</label>
-			  <input type="text" class="rt-form-input" ng-model="collector.name" required="">
-            </div>
-			<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
-				<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
-				<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
-			</div>            
-            <div class="rt-mini-form-col" style="margin-top: 15px;">
-              <div>
-				<div class="editor-row">
-					<button type="submit" class="secondaryCTA" ng-click="save()" ng-if="collector.id">Update Collector</button>
-					<button type="submit" class="secondaryCTA" ng-click="add()" ng-if="!collector.id">Create Collector</button>
-				</div>
+          <div style="display: none;">
+            <span class="helper success">New API key generated</span>
+            <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
+            <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
+          </div>
+
+
+        </div>
+        <div class="rt-box-interior-section">
+          <h3>Install the collector</h3>
+          <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
+        </div> 
+
+
+        <div style="display: none;">
+          <div class="rt-box-interior-section">
+            <h3>Clone the repository</h3>
+            <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
+          </div>
+          <div class="rt-box-interior-section">
+            <h3>Install all of the dependent node_modules</h3>
+            <pre><code>npm install</code></pre>
+          </div>
+          <div class="rt-box-interior-section">
+            <h3>Install fping. Installation depends on your linux distribution.</h3>
+            >> <a href="#">http://fping.org</a>
+          </div>
+          <div class="rt-box-interior-section">
+            <h3>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
+<pre><code>{
+"collector": {
+  "name": "<span class="h">DC2 Internal</span>"
+},
+"numCPUs": 1,
+"serverUrl": "https://app.raintank.io",
+"apiKey": "<span class="h">[Your API KEY]</span>",
+"pintServerPort": 8080
+}</code></pre>
+          </div>
+        </div>
+
+        
+        <div class="rt-box-interior-section">
+          <h3>Start the app</h3>
+          <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
+        </div>
+      </div>      
+    </div>
+    <button class="rt-btn">Verify Install</button>
+    <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a>
+  </div>
+
+
+
+  <div ng-if="collector.id">
+    <div class="rt-page-header-area">
+      <h1 class="rt-h1">{{collector.name}}</h1>
+      <span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
+      <span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
+    </div>
+    <div class="editor-row rt-detail-pages">
+      <div class="editor-option">
+        <bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
+      </div>
+    </div>
+    <div class="rt-tabs">
+      <span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
+      <span class="active" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
+    </div>
+    <form name="collectorForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
+      <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+        <div class="rt-mini-form new-endpoint-domain-form">
+          <div class="rt-mini-form-col">
+            <label class="rt-form-label-medium">Collector Name</label>
+            <input type="text" class="rt-form-input" ng-model="collector.name" required="">
+          </div>
+          <div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
+            <input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
+            <label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
+          </div>            
+          <div class="rt-mini-form-col" style="margin-top: 15px;">
+            <div>
+              <div class="editor-row">
+                <button type="submit" class="secondaryCTA" ng-click="save()">Update Collector</button>
               </div>
             </div>
           </div>
         </div>
-
-	</form>
+      </div>
+    </form>
+  </div>
 </div>
-
-<div style="padding-bottom: 100px;"></div>
-
-
-

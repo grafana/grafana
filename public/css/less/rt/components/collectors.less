@@ -1,0 +1,118 @@
+// ==========================================================================
+// COLLECTORS
+// ==========================================================================
+
+
+
+.rt-collector-config.rt-config-box {
+	height: auto;
+	margin: 0 0 1em;
+}
+
+.rt-collector-config .rt-box-interior-section {
+	padding: 0;
+}
+
+.rt-collector-config-header {
+	position: relative;
+}
+
+.rt-collector-config-header > h2 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 300;
+	line-height: normal;
+}
+
+.rt-config-setup-time {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 13px;
+}
+
+.rt-collector-config h3 {
+	margin: 0 0 1rem;
+	font-size: 16px;
+	font-weight: 300;
+	line-height: normal;
+}
+
+.rt-collector-config h3 > a {
+	float: right;
+	font-size: 12px;
+	color: @rt-blue;
+}
+
+
+
+// Helper text
+// ==========================================================================
+
+.rt-collector-config .helper {
+	font-size: 12px;
+	margin: 0;
+}
+
+.rt-collector-config .success {
+	color: @rt-green;
+}
+
+.btn-link {
+	display: inline-block;
+	margin: 0 20px;
+	color: @rt-light-gray;
+}
+
+
+// Distros
+// ==========================================================================
+
+.rt-collector-config-distro {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	> li {
+		display: inline-block;
+		margin-right: 20px;
+	}
+
+	label {
+		display: block;
+		padding: 50px 10px 10px;
+		background-color: @inputBackground;
+		border-radius: 3px;
+		box-sizing: border-box;
+	}
+
+	input[type="radio"] {
+		display: none;
+	}
+
+	input[type="radio"]:checked + label {
+		background: @inputBackground;
+		outline: 2px solid @rt-blue;
+	}
+}
+
+
+
+// Code samples
+// ==========================================================================
+
+.rt-collector-config pre {
+	margin: 0.25em 0;
+  padding: 10px;
+  background-color: @inputBackground;
+  border-radius: 3px;
+  line-height: normal;
+}
+
+.rt-collector-config pre .h {
+	color: @rt-blue;
+}
+
+.rt-collector-config code {
+	background: transparent;
+}
