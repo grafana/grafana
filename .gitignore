@@ -56,6 +56,7 @@ grafana
 <<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
 .notouch
 .DS_Store
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
@@ -71,3 +72,5 @@ tsconfig.json
 >>>>>>> tech(typescript): converted signup controller to typescript
 =======
 >>>>>>> feat() started work on more feature rich time picker
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces

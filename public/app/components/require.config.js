@@ -8,12 +8,16 @@ require.config({
 >>>>>>> tech(typescript): its looking good
 
   paths: {
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 =======
   baseUrl: 'public',
 
   paths: {
 >>>>>>> feat() started work on more feature rich time picker
+=======
+<<<<<<< 495ed87f9b7044005f3eae13c809c753acf41b30
+>>>>>>> [OWL-52] Add servers distribution map among provinces
     config:                   'app/components/config',
     settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
@@ -56,6 +60,7 @@ require.config({
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
     echarts:                   'vendor/echarts/echarts',
@@ -65,6 +70,9 @@ require.config({
 >>>>>>> feat() started work on more feature rich time picker
 =======
     echarts:                   'vendor/echarts',
+=======
+    echarts:                   'vendor/echarts/echarts',
+>>>>>>> [OWL-52] Add servers distribution map among provinces
     zrender:                   'vendor/zrender',
 
 >>>>>>> [OWL-30] Add Echarts map to Grafana

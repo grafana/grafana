@@ -154,6 +154,7 @@ define(function (require) {
         /**
          * 绘制图形
          */
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
@@ -162,6 +163,12 @@ define(function (require) {
 =======
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         /**
          * @function name:  _buildShape : function ()
          * @description:    Add try catch block for exception handling.
@@ -173,6 +180,7 @@ define(function (require) {
          * @last modified:  08/27/2015
          * @called by:
          */
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
@@ -180,9 +188,14 @@ define(function (require) {
 =======
 >>>>>>> [OWL-52] Add servers distribution map among provinces
 =======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
         _buildShape : function () {
             var series = this.series;
             this.selectedMap = {}; // 系列
@@ -320,6 +333,7 @@ define(function (require) {
                 }
 
                 this._mapDataMap[mt] = this._mapDataMap[mt] || {};
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
@@ -328,6 +342,12 @@ define(function (require) {
 =======
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
                 try {
                     if (this._mapDataMap[mt].mapData) {
                         // 已经缓存了则直接用
@@ -348,10 +368,14 @@ define(function (require) {
                     }
                 } catch (err) {
                     console.log('Error message:', err);
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+>>>>>>> [OWL-52] Add servers distribution map among provinces
 =======
 
                 if (this._mapDataMap[mt].mapData) {
@@ -369,11 +393,16 @@ define(function (require) {
                         this._mapDataCallback(mt, valueData[mt], mapSeries[mt])
                     );
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 >>>>>>> [OWL-52] Add servers distribution map among provinces
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
                 }
             }
         },
@@ -550,6 +579,7 @@ define(function (require) {
             }
 
             // 中国地图加入南海诸岛
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
@@ -558,6 +588,12 @@ define(function (require) {
 =======
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
             // if (mapType == 'china') {
             //     var leftTop = this.geo2pos(
             //         mapType,
@@ -582,10 +618,14 @@ define(function (require) {
             //     });
 
             // }
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+>>>>>>> [OWL-52] Add servers distribution map among provinces
 =======
             if (mapType == 'china') {
                 var leftTop = this.geo2pos(
@@ -612,11 +652,16 @@ define(function (require) {
 
             }
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 >>>>>>> [OWL-52] Add servers distribution map among provinces
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+=======
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
             //console.log(JSON.stringify(province));
             //console.log(JSON.stringify(this._mapDataMap[mapType].transform));
             return province;

@@ -177,13 +177,21 @@ function (angular, _, $, config, kbn, moment) {
     /**
      * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
      * @description:    This function gets hosts locations for map chart.
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
      * @related issues: OWL-030
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+=======
+     * @related issues: OWL-052, OWL-030
+>>>>>>> [OWL-52] Add servers distribution map among provinces
+>>>>>>> [OWL-52] Add servers distribution map among provinces
      * @param:          object result
      * @return:         object results
      * @author:         Don Hsieh
      * @since:          08/20/2015
+<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
@@ -248,6 +256,9 @@ function (angular, _, $, config, kbn, moment) {
      * @last modified:  08/21/2015
 =======
 =======
+=======
+<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
+>>>>>>> [OWL-52] Add servers distribution map among provinces
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
      * @last modified:  08/27/2015
@@ -318,6 +329,9 @@ function (angular, _, $, config, kbn, moment) {
 =======
 =======
      * @last modified:  08/21/2015
+=======
+     * @last modified:  08/27/2015
+>>>>>>> [OWL-52] Add servers distribution map among provinces
      * @called by:      OpenFalconDatasource.prototype.query = function(options)
      *                   in public/app/plugins/datasource/openfalcon/datasource.js
      */
@@ -325,8 +339,10 @@ function (angular, _, $, config, kbn, moment) {
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
       // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
       var obj = {};
-      if (!result.data.length) return result;
-      if ('city' in result.data[0]) {   // This is a map query
+      if (!result.data.length) {
+        return result;
+      }
+      if ('chartType' in result.data[0]) {   // This is a map query
         obj.datapoints = result.data;
         result.data = [obj];
         return result;
@@ -350,7 +366,6 @@ function (angular, _, $, config, kbn, moment) {
               value = arr['value'];
               datapoints.push([value, timestamp]);
             });
-            // console.log('convertDataPointsToMs datapoints =', datapoints);
             obj = {};
             obj.datapoints = datapoints;
             obj.target = host + '.' + metric;
