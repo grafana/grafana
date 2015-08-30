@@ -45,7 +45,10 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) 
 			org.Id = 1
 		}
 	} else {
-		org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
+		org.Name = cmd.OrgName
+		if len(org.Name) == 0 {
+			org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
+		}
 	}
 
 	org.Created = time.Now()

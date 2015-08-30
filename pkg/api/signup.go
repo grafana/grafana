@@ -81,12 +81,23 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		return ApiError(500, "Failed to create user", err)
 	}
 
-	user := createUserCmd.Result
+	// publish signup event
+	user := &createUserCmd.Result
 
 	bus.Publish(&events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})
+
+	// update tempuser
+	updateTempUserCmd := m.UpdateTempUserStatusCommand{
+		Code:   tempUser.Code,
+		Status: m.TmpUserCompleted,
+	}
+
+	if err := bus.Dispatch(&updateTempUserCmd); err != nil {
+		return ApiError(500, "Failed to update temp user", err)
+	}
 
 	// check for pending invites
 	invitesQuery := m.GetTempUsersQuery{Email: tempUser.Email, Status: m.TmpUserInvitePending}
@@ -94,7 +105,17 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		return ApiError(500, "Failed to query database for invites", err)
 	}
 
-	loginUserWithUser(&user, c)
+	apiResponse := util.DynMap{"message": "User sign up completed succesfully", "code": "redirect-to-landing-page"}
+
+	for _, invite := range invitesQuery.Result {
+		if ok, rsp := applyUserInvite(user, invite, false); !ok {
+			return rsp
+		}
+		apiResponse["code"] = "redirect-to-select-org"
+	}
+
+	loginUserWithUser(user, c)
 	metrics.M_Api_User_SignUpCompleted.Inc(1)
-	return Json(200, util.DynMap{"status": "SignUpCreated"})
+
+	return Json(200, apiResponse)
 }
