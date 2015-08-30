@@ -127,15 +127,6 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.target.rawQuery = !$scope.target.rawQuery;
     };
 
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
-
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
     $scope.getMeasurements = function () {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
       return $scope.datasource.metricFindQuery(query)
