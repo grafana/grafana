@@ -213,19 +213,25 @@ func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool,
 		return false, rsp
 	}
 
+<<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 <<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
+=======
+>>>>>>> feat(signup): progress on new signup flow, #2353
 	if setActive {
 		// set org to active
 		if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
 			return false, ApiError(500, "Failed to set org as active", err)
 		}
 	}
+<<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 =======
 	loginUserWithUser(&user, c)
 
 	metrics.M_Api_User_SignUpCompleted.Inc(1)
 	metrics.M_Api_User_SignUpInvite.Inc(1)
 >>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
+=======
+>>>>>>> feat(signup): progress on new signup flow, #2353
 
 	return true, nil
 }
