@@ -112,14 +112,29 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 
 	// publish signup event
 	user := &createUserCmd.Result
+<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
+=======
+
+>>>>>>> feat(signup): progress on new signup flow, #2353
 	bus.Publish(&events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})
 
+<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
 	// mark temp user as completed
 	if ok, rsp := updateTempUserStatus(form.Code, m.TmpUserCompleted); !ok {
 		return rsp
+=======
+	// update tempuser
+	updateTempUserCmd := m.UpdateTempUserStatusCommand{
+		Code:   tempUser.Code,
+		Status: m.TmpUserCompleted,
+	}
+
+	if err := bus.Dispatch(&updateTempUserCmd); err != nil {
+		return ApiError(500, "Failed to update temp user", err)
+>>>>>>> feat(signup): progress on new signup flow, #2353
 	}
 
 	// check for pending invites
@@ -129,6 +144,10 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed succesfully", "code": "redirect-to-landing-page"}
+<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
+=======
+
+>>>>>>> feat(signup): progress on new signup flow, #2353
 	for _, invite := range invitesQuery.Result {
 		if ok, rsp := applyUserInvite(user, invite, false); !ok {
 			return rsp
@@ -140,6 +159,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	metrics.M_Api_User_SignUpCompleted.Inc(1)
 
 	return Json(200, apiResponse)
+<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
 }
 
 func verifyUserSignUpEmail(email string, code string) (bool, Response) {
@@ -171,4 +191,6 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 	metrics.M_Api_User_SignUpStarted.Inc(1)
 	return ApiSuccess("User created and logged in")
 >>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
+=======
+>>>>>>> feat(signup): progress on new signup flow, #2353
 }

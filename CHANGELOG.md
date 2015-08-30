@@ -106,6 +106,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
 <<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 <<<<<<< ea77587ba297693ec3a2a6a24f2f9dd24da79d68
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
@@ -215,6 +216,9 @@ repeat panel from url), fixes #2564
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 =======
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
+=======
+- [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
+>>>>>>> feat(signup): progress on new signup flow, #2353
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
