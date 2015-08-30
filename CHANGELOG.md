@@ -23,6 +23,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+- The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
 
  2.1.3 (2015-08-24)
 

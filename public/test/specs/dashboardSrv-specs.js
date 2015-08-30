@@ -49,6 +49,39 @@ define([
       });
     });
 
+    describe('addDataQueryTo', function() {
+      var dashboard, panel;
+
+      beforeEach(function() {
+        panel = {targets:[]};
+        dashboard = _dashboardSrv.create({});
+        dashboard.rows.push({panels: [panel]});
+      });
+
+      it('should add target', function() {
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets.length).to.be(1);
+      });
+
+      it('should set refId', function() {
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets[0].refId).to.be('A');
+      });
+
+      it('should set refId to first available letter', function() {
+        panel.targets = [{refId: 'A'}];
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets[1].refId).to.be('B');
+      });
+
+      it('duplicate should get unique refId', function() {
+        panel.targets = [{refId: 'A'}];
+        dashboard.duplicateDataQuery(panel, panel.targets[0]);
+        expect(panel.targets[1].refId).to.be('B');
+      });
+
+    });
+
     describe('row and panel manipulation', function() {
       var dashboard;
 

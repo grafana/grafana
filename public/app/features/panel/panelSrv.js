@@ -44,25 +44,20 @@ function (angular, _, config) {
       };
 
       $scope.addDataQuery = function(datasource) {
-        var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var target = {};
-
-        if (datasource) {
-          target.datasource = datasource.name;
-        }
-
-        target.refId = _.find(letters, function(refId) {
-          return _.every($scope.panel.targets, function(other) {
-            return other.refId !== refId;
-          });
-        });
-
-        $scope.panel.targets.push(target);
+        $scope.dashboard.addDataQueryTo($scope.panel, datasource);
       };
 
       $scope.removeDataQuery = function (query) {
-        $scope.panel.targets = _.without($scope.panel.targets, query);
+        $scope.dashboard.removeDataQuery($scope.panel, query);
         $scope.get_data();
+      };
+
+      $scope.duplicateDataQuery = function(query) {
+        $scope.dashboard.duplicateDataQuery($scope.panel, query);
+      };
+
+      $scope.moveDataQuery = function(fromIndex, toIndex) {
+        $scope.dashboard.moveDataQuery($scope.panel, fromIndex, toIndex);
       };
 
       $scope.setDatasource = function(datasource) {

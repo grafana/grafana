@@ -33,24 +33,6 @@ define([
         _panelSrv.init(_panelScope);
       });
 
-      describe('addDataQuery', function() {
-        it('should add target', function() {
-          _panelScope.addDataQuery();
-          expect(_panelScope.panel.targets.length).to.be(1);
-        });
-
-        it('should set refId', function() {
-          _panelScope.addDataQuery();
-          expect(_panelScope.panel.targets[0].refId).to.be('A');
-        });
-
-        it('should set refId to first available letter', function() {
-          _panelScope.panel.targets = [{refId: 'A'}];
-          _panelScope.addDataQuery();
-          expect(_panelScope.panel.targets[1].refId).to.be('B');
-        });
-      });
-
     });
   });
 
