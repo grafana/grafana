@@ -116,7 +116,7 @@ function (angular, _) {
       .keys(d)
       .each(function(k) {
         var v = d[k];
-        result[k.replace(/\$/g, '\\$')] = v.replace(/\$/g, '\\$');
+        result[k.replace(/\$/g, '\uFF04')] = v.replace(/\$/g, '\$');
       });
 
       return result;
