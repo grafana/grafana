@@ -26,8 +26,9 @@ function (angular, config) {
         return;
       }
 
-      backendSrv.post('/api/user/signup/step2', $scope.formModel).then(function() {
-        window.location.href = config.appSubUrl + '/';
+      backendSrv.post('/api/user/signup/step2', $scope.formModel).then(function(rsp) {
+        console.log(rsp);
+        //window.location.href = config.appSubUrl + '/';
       });
     };
 
