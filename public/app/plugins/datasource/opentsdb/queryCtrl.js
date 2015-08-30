@@ -33,11 +33,6 @@ function (angular, _, kbn) {
       }
     };
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
     $scope.getTextValues = function(metricFindResult) {
       return _.map(metricFindResult, function(value) { return value.text; });
     };
