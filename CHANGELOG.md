@@ -222,6 +222,7 @@ repeat panel from url), fixes #2564
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
 - The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
+<<<<<<< a2e8a1a99c1489f6667273cb59bd2ea903857a39
 
 **Tech (Note for devs)**
 Started using Typescript (transpiled to ES5), uncompiled typescript files and less files are in public folder (in source tree)
@@ -253,6 +254,8 @@ panels or rows, fixes #2534
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require and update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+=======
+>>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId)
 
 # 2.1.3 (2015-08-24)
 
