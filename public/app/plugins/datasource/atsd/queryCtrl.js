@@ -10,7 +10,7 @@ function (angular, _, kbn) {
 
     module.controller('AtsdQueryCtrl', function($scope, $timeout) {
 
-        $scope.init = function() { //DONE
+        $scope.init = function() {
             $scope.temp = {};
 
             $scope.statistics = {
@@ -40,7 +40,7 @@ function (angular, _, kbn) {
             $scope.targetBlur();
         };
 
-        $scope.targetBlur = function() { //DONE
+        $scope.targetBlur = function() {
             $scope.errors = validateTarget($scope.target);
 
             console.log('errors: ' + JSON.stringify($scope.errors));
@@ -51,12 +51,12 @@ function (angular, _, kbn) {
             }
         };
 
-        $scope.duplicate = function() { //DONE
+        $scope.duplicate = function() {
             var clone = angular.copy($scope.target);
             $scope.panel.targets.push(clone);
         };
 
-        $scope.renewTags = function() { //DONE
+        $scope.renewTags = function() {
             $scope.datasource.getTags($scope.target.entity, $scope.target.metric).then(function(result) {
                 $scope.target.tagCombos = _.map(result, function(element) {
                     return {en : true, data : element};
@@ -66,7 +66,7 @@ function (angular, _, kbn) {
             });
         };
         
-        $scope.checkAll = function() { //DONE
+        $scope.checkAll = function() {
             if ($scope.target.tagCombos !== undefined) {
                 _.each($scope.target.tagCombos, function(tags){
                     tags.en = $scope.target.tagCombosAll;
@@ -74,29 +74,29 @@ function (angular, _, kbn) {
             }
         };
         
-        $scope.dropCache = function() { //DONE
+        $scope.dropCache = function() {
             $scope.datasource.dropCache();
         };
         
-        $scope.suggestEntites = function(query, callback) { //DONE
+        $scope.suggestEntites = function(query, callback) {
             $scope.datasource
                 .suggestEntities(query)
                 .then(callback);
         };
         
-        $scope.suggestMetrics = function(query, callback) { //DONE
+        $scope.suggestMetrics = function(query, callback) {
             $scope.datasource
                 .suggestMetrics($scope.target.entity, query)
                 .then(callback);
         };
         
-        $scope.suggestNextSegment = function(query, callback) { //DONE
+        $scope.suggestNextSegment = function(query, callback) {
             $scope.datasource
                 .suggestNextSegment($scope.target.entity, $scope.target.segments)
                 .then(callback);
         };
         
-        $scope.addSegment = function() { //DONE
+        $scope.addSegment = function() {
             $scope.target.segments = $scope.target.segments !== undefined ?
                                      $scope.target.segments :
                                      [];
@@ -107,20 +107,20 @@ function (angular, _, kbn) {
             }
         };
 
-        $scope.removeSegment = function() { //DONE
+        $scope.removeSegment = function() {
             if ($scope.target.segments !== undefined && $scope.target.segments.length !== 0) {
                 $scope.target.segments.splice($scope.target.segments.length - 1, 1);
             }
         };
 
-        $scope.metricToSegments = function() { //DONE
+        $scope.metricToSegments = function() {
             $scope.target.segments = $scope.target.metric !== undefined ?
                                      $scope.target.metric.split('.') :
                                      [];
             $scope.renewTags();
         };
 
-        $scope.segmentsToMetric = function() { //DONE
+        $scope.segmentsToMetric = function() {
             $scope.addSegment();
             $scope.temp.currentSegment = '';
 
@@ -132,7 +132,7 @@ function (angular, _, kbn) {
             }
         };
 
-        $scope.suggestTagKeys = function(query, callback) { //DONE
+        $scope.suggestTagKeys = function(query, callback) {
             $scope.datasource
                 .suggestTagKeys($scope.target.entity,
                                 $scope.target.metric,
@@ -140,7 +140,7 @@ function (angular, _, kbn) {
                 .then(callback);
         };
 
-        $scope.suggestTagValues = function(query, callback) { //DONE
+        $scope.suggestTagValues = function(query, callback) {
             $scope.datasource
                 .suggestTagValues($scope.target.entity,
                                   $scope.target.metric,
@@ -149,7 +149,7 @@ function (angular, _, kbn) {
                 .then(callback);
         };
 
-        $scope.addTag = function() { //DONE
+        $scope.addTag = function() {
             if (!$scope.addTagMode) {
                 $scope.addTagMode = true;
                 return;
@@ -166,25 +166,25 @@ function (angular, _, kbn) {
             $scope.addTagMode = false;
         };
 
-        $scope.removeTag = function(key) { //DONE
+        $scope.removeTag = function(key) {
             delete $scope.target.tags[key];
         };
         
-        function isValid(string) { //DONE
+        function isValid(string) {
             if (string !== undefined && string !== '') {
                 return true;
             }
             return false;
         }
         
-        function isDetail(statistic) { //DONE
+        function isDetail(statistic) {
             if (statistic === undefined || statistic === 'detail') {
                 return true;
             }
             return false;
         }
 
-        function validateTarget(target) { //DONE
+        function validateTarget(target) {
             var errs = [];
             
             if (!isValid(target.entity)) {

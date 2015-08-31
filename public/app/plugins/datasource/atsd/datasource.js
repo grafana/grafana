@@ -13,7 +13,7 @@ function (angular, _, kbn) {
 
     module.factory('AtsdDatasource', function($q, backendSrv, templateSrv) {
 
-        function AtsdDatasource(datasource) { //DONE
+        function AtsdDatasource(datasource) {
             this.type = 'atsd';
             
             this.url = datasource.url;
@@ -28,13 +28,13 @@ function (angular, _, kbn) {
             this.recentTags = {};
         }
         
-        AtsdDatasource.prototype.dropCache = function() { //DONE
+        AtsdDatasource.prototype.dropCache = function() {
             this.recent = {};
             this.recentTags = {};
             console.log('cache dropped');
         }
 
-        AtsdDatasource.prototype.query = function(options) { //DONE
+        AtsdDatasource.prototype.query = function(options) {
             console.log('options: ' + JSON.stringify(options));
 
             var start = _convertToAtsdTime(options.range.from);
@@ -91,7 +91,7 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype._performTimeSeriesQuery = function(queries, start, end) { //DONE
+        AtsdDatasource.prototype._performTimeSeriesQuery = function(queries, start, end) {
             var tsQueries = [];
 
             _.each(queries, function(query) {
@@ -178,7 +178,7 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype.suggestEntities = function(query) { //DONE
+        AtsdDatasource.prototype.suggestEntities = function(query) {
             var so = this;
         
             if (!('entities' in so.recent) ||
@@ -220,7 +220,7 @@ function (angular, _, kbn) {
             }
         };
 
-        AtsdDatasource.prototype.suggestMetrics = function(entity, query) { //DONE
+        AtsdDatasource.prototype.suggestMetrics = function(entity, query) {
             var so = this;
         
             entity = entity !== undefined ? entity : '';
@@ -269,7 +269,7 @@ function (angular, _, kbn) {
             }
         };
         
-        AtsdDatasource.prototype.suggestNextSegment = function(entity, segments) { //DONE
+        AtsdDatasource.prototype.suggestNextSegment = function(entity, segments) {
             segments = segments !== undefined ? segments : [];
             var query = segments.length > 0 ? segments.join('.') + '.' : '';
 
@@ -288,7 +288,7 @@ function (angular, _, kbn) {
             });
         };
         
-        AtsdDatasource.prototype._queryTags = function(entity, metric) { //DONE
+        AtsdDatasource.prototype._queryTags = function(entity, metric) {
             var so = this;
         
             entity = entity !== undefined ? entity : '';
@@ -337,7 +337,7 @@ function (angular, _, kbn) {
             }
         };
         
-        AtsdDatasource.prototype._suggestTags = function(entity, metric, tags_known) { //DONE
+        AtsdDatasource.prototype._suggestTags = function(entity, metric, tags_known) {
             tags_known = tags_known !== undefined ? tags_known : {};
             
             return this._queryTags(entity, metric).then(function(result) {
@@ -377,7 +377,7 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype.suggestTagKeys = function(entity, metric, tags_known) { //DONE
+        AtsdDatasource.prototype.suggestTagKeys = function(entity, metric, tags_known) {
             return this._suggestTags(entity, metric, tags_known).then(function(tags) {
                 var keys = _.map(tags, function(values, key) { return key; });
                 console.log('tag keys: ' + JSON.stringify(keys));
@@ -385,7 +385,7 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype.suggestTagValues = function(entity, metric, tags_known, name) { //DONE
+        AtsdDatasource.prototype.suggestTagValues = function(entity, metric, tags_known, name) {
             name = name !== undefined ? name : '';
             
             return this._suggestTags(entity, metric, tags_known).then(function(tags) {
@@ -394,7 +394,7 @@ function (angular, _, kbn) {
             });
         };
         
-        AtsdDatasource.prototype.getTags = function(entity, metric) { //DONE
+        AtsdDatasource.prototype.getTags = function(entity, metric) {
             return this._queryTags(entity, metric).then(function(result) {
                 var tags = [];
                 _.each(result.data, function(entry) {
@@ -407,7 +407,7 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype.testDatasource = function() { //DONE
+        AtsdDatasource.prototype.testDatasource = function() {
             var options = {
                 method: 'POST',
                 url: this.url + '/api/v1/series',
@@ -424,7 +424,7 @@ function (angular, _, kbn) {
             });
         };
 
-        function _transformMetricData(metricData, disconnect) { //DONE
+        function _transformMetricData(metricData, disconnect) {
             var dps;
             var ret = [];
 
@@ -462,7 +462,7 @@ function (angular, _, kbn) {
             return ret;
         }
         
-        function _parsePeriod(period) { //DONE
+        function _parsePeriod(period) {
             var count = '';
             var unit;
             
@@ -508,7 +508,7 @@ function (angular, _, kbn) {
             return { count: parseInt(count), unit: unit };
         }
         
-        function _convertToSeconds(interval) { //DONE
+        function _convertToSeconds(interval) {
             var count = interval.count;
         
             switch (interval.unit) {
@@ -539,7 +539,7 @@ function (angular, _, kbn) {
             return count;
         }
 
-        function _convertTargetToQuery(target, interval) { //DONE
+        function _convertTargetToQuery(target, interval) {
             if (!target.metric || !target.entity || target.hide) {
                 return null;
             }
@@ -563,7 +563,7 @@ function (angular, _, kbn) {
             return query;
         }
 
-        function _convertToAtsdTime(date) { //DONE
+        function _convertToAtsdTime(date) {
             date = date !== 'now' ? date : new Date();
             date = kbn.parseDate(date);
             
