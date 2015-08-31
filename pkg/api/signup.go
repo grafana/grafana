@@ -42,11 +42,15 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 <<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
 		return ApiError(422, "User with same email address already exists", nil)
 =======
 		return ApiError(401, "User with same email address already exists", nil)
 >>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
+=======
+		return ApiError(422, "User with same email address already exists", nil)
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	}
 
 	cmd := m.CreateTempUserCommand{}
@@ -89,7 +93,10 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		OrgName:  form.OrgName,
 	}
 
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 	// verify email
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	if setting.VerifyEmailEnabled {
 		if ok, rsp := verifyUserSignUpEmail(form.Email, form.Code); !ok {
 			return rsp
@@ -97,28 +104,38 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		createUserCmd.EmailVerified = true
 	}
 
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 	// check if user exists
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
 		return ApiError(401, "User with same email address already exists", nil)
 	}
 
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 	// dispatch create command
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	if err := bus.Dispatch(&createUserCmd); err != nil {
 		return ApiError(500, "Failed to create user", err)
 	}
 
 	// publish signup event
 	user := &createUserCmd.Result
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 <<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 =======
 
 >>>>>>> feat(signup): progress on new signup flow, #2353
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	bus.Publish(&events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})
 
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 <<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 	// mark temp user as completed
 	if ok, rsp := updateTempUserStatus(form.Code, m.TmpUserCompleted); !ok {
@@ -133,6 +150,11 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	if err := bus.Dispatch(&updateTempUserCmd); err != nil {
 		return ApiError(500, "Failed to update temp user", err)
 >>>>>>> feat(signup): progress on new signup flow, #2353
+=======
+	// mark temp user as completed
+	if ok, rsp := updateTempUserStatus(form.Code, m.TmpUserCompleted); !ok {
+		return rsp
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	}
 
 	// check for pending invites
@@ -142,10 +164,13 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed succesfully", "code": "redirect-to-landing-page"}
+<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 <<<<<<< 87da3e6148514d2c7aa30542ecd298b9e39815c9
 =======
 
 >>>>>>> feat(signup): progress on new signup flow, #2353
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	for _, invite := range invitesQuery.Result {
 		if ok, rsp := applyUserInvite(user, invite, false); !ok {
 			return rsp
@@ -191,4 +216,22 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 >>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 =======
 >>>>>>> feat(signup): progress on new signup flow, #2353
+}
+
+func verifyUserSignUpEmail(email string, code string) (bool, Response) {
+	query := m.GetTempUserByCodeQuery{Code: code}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrTempUserNotFound {
+			return false, ApiError(404, "Invalid email verification code", nil)
+		}
+		return false, ApiError(500, "Failed to read temp user", err)
+	}
+
+	tempUser := query.Result
+	if tempUser.Email != email {
+		return false, ApiError(404, "Email verification code does not match email", nil)
+	}
+
+	return true, nil
 }

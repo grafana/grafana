@@ -14,14 +14,23 @@ function (angular, config) {
     $scope.formModel = {};
 
     $scope.init = function() {
-      var email = $location.search().email;
-      $scope.formModel.orgName = email;
-      $scope.formModel.email = email;
-      $scope.formModel.username = email;
+      var params = $location.search();
+      $scope.formModel.orgName = params.email;
+      $scope.formModel.email = params.email;
+      $scope.formModel.username = params.email;
+      $scope.formModel.code = params.code;
+
+      $scope.verifyEmailEnabled = false;
+      $scope.autoAssignOrg = false;
+
+      backendSrv.get('/api/user/signup/options').then(function(options) {
+        $scope.verifyEmailEnabled = options.verifyEmailEnabled;
+        $scope.autoAssignOrg = options.autoAssignOrg;
+      });
     };
 
     $scope.submit = function() {
-      if (!$scope.signupForm.$valid) {
+      if (!$scope.signUpForm.$valid) {
         return;
       }
 
