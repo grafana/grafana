@@ -13,41 +13,37 @@ function (angular, _, kbn) {
 
     module.factory('AtsdDatasource', function($q, backendSrv, templateSrv) {
 
-        function AtsdDatasource(datasource) {
+        function AtsdDatasource(datasource) { //DONE
             this.type = 'atsd';
+            
             this.url = datasource.url;
+            this.basicAuth = datasource.basicAuth;
+            
             this.name = datasource.name;
             this.supportMetrics = true;
-            this.basicAuth = datasource.basicAuth;
             
             this.cache = 300000;
             
             this.recent = {};
-            this.tagRes = {};
-        }
-
-        AtsdDatasource.prototype.changeCache = function(cache) {
-            this.cache = (cache !== undefined && cache > 0) ? cache * 1000 : this.cache;
-            console.log('cache interval: ' + this.cache / 1000 + 's');
+            this.recentTags = {};
         }
         
-        AtsdDatasource.prototype.dropCache = function() {
+        AtsdDatasource.prototype.dropCache = function() { //DONE
             this.recent = {};
-            this.tagRes = {};
+            this.recentTags = {};
             console.log('cache dropped');
         }
 
-        AtsdDatasource.prototype.query = function(options) {
-            console.log('actually getting data');
-            console.log(options);
+        AtsdDatasource.prototype.query = function(options) { //DONE
+            console.log('options: ' + options);
 
-            var start = convertToAtsdTime(options.range.from);
-            var end = convertToAtsdTime(options.range.to);
+            var start = _convertToAtsdTime(options.range.from);
+            var end = _convertToAtsdTime(options.range.to);
             var qs = [];
 
             _.each(options.targets, function(target) {
                 target.disconnect = options.targets[0].disconnect;
-                qs.push(convertTargetToQuery(target, options.interval));
+                qs.push(_convertTargetToQuery(target, options.interval));
             });
 
             var queries = _.compact(qs);
@@ -59,16 +55,15 @@ function (angular, _, kbn) {
             }
 
             var groupByTags = {};
+            
             _.each(queries, function(query) {
                 _.each(query.tags, function(val, key) {
                     groupByTags[key] = true;
                 });
             });
 
-            return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+            return this._performTimeSeriesQuery(queries, start, end).then(function(response) {
             
-                console.log('status: ' + JSON.stringify(response.status));
-                
                 if (response.data === undefined) {
                     return { data: [] };
                 }
@@ -76,7 +71,7 @@ function (angular, _, kbn) {
                 var disconnect = queries[0].disconnect;
                 
                 var result = _.map(response.data, function(metricData) {
-                    return transformMetricData(metricData, disconnect);
+                    return _transformMetricData(metricData, disconnect);
                 })[0];
 
                 result.sort(function(a, b) {
@@ -96,31 +91,29 @@ function (angular, _, kbn) {
             });
         };
 
-        AtsdDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
-            var jq = [];
+        AtsdDatasource.prototype._performTimeSeriesQuery = function(queries, start, end) { //DONE
+            var tsQueries = [];
 
             _.each(queries, function(query) {
-                console.log('query: ' + JSON.stringify(query));
-                
                 if (query.entity !== '' && query.metric !== '') {
                     if (query.implicit) {
                         if (query.tagCombos !== undefined) {
                             _.each(query.tagCombos, function(group, ind) {
                                 if (group.en) {
-                                    var tg = {};
+                                    var tags = {};
                                     
                                     _.each(group.data, function(value, key){
-                                        tg[key] = [value];
+                                        tags[key] = [value];
                                     });
 
-                                    jq.push(
+                                    tsQueries.push(
                                         {
                                             startDate: start,
                                             endDate: end,
                                             limit: 10000,
                                             entity: query.entity,
                                             metric: query.metric,
-                                            tags: tg,
+                                            tags: tags,
                                             aggregate: {
                                                 type: query.statistic.toUpperCase(),
                                                 interval: {
@@ -134,20 +127,20 @@ function (angular, _, kbn) {
                             });
                         }
                     } else {
-                        var tg = {};
+                        var tags = {};
                         
                         _.each(query.tags, function(value, key){
-                            tg[key] = [value];
+                            tags[key] = [value];
                         });
 
-                        jq.push(
+                        tsQueries.push(
                             {
                                 startDate: start,
                                 endDate: end,
                                 limit: 10000,
                                 entity: query.entity,
                                 metric: query.metric,
-                                tags: tg,
+                                tags: tags,
                                 aggregate: {
                                     type: query.statistic.toUpperCase(),
                                     interval: {
@@ -161,28 +154,25 @@ function (angular, _, kbn) {
                 }
             });
             
-            if (jq.length == 0) {
+            if (tsQueries.length == 0) {
                 var d = $q.defer();
                 d.resolve({ data: undefined });
                 return d.promise;
             }
             
-            console.log(JSON.stringify({queries: jq}));
+            console.log('queries: ' + JSON.stringify(tsQueries));
 
             var options = {
                 method: 'POST',
                 url: this.url + '/api/v1/series',
                 data : {
-                    queries: jq
+                    queries: tsQueries
                 },
                 headers: {
                     Authorization: this.basicAuth
                 }
             };
             
-            var blob = new Blob([JSON.stringify(options)], {type: "text/plain;charset=utf-8"});
-            saveAs(blob, "local.log");
-
             return backendSrv.datasourceRequest(options).then(function(result){
                 return result;
             });
@@ -296,10 +286,9 @@ function (angular, _, kbn) {
 
                 return tokens;
             });
-
         };
         
-        AtsdDatasource.prototype.queryTags = function(entity, metric) {
+        AtsdDatasource.prototype._queryTags = function(entity, metric) { //DONE
             var so = this;
         
             entity = entity !== undefined ? entity : '';
@@ -311,22 +300,22 @@ function (angular, _, kbn) {
                 return d.promise;
             }
             
-            if (!(metric in so.tagRes) ||
-                !(entity in so.tagRes[metric]) ||
-                (new Date()).getTime() - so.tagRes[metric][entity].time > so.cache) {
+            if (!(metric in so.recentTags) ||
+                !(entity in so.recentTags[metric]) ||
+                (new Date()).getTime() - so.recentTags[metric][entity].time > so.cache) {
                 
-                if (!(metric in so.tagRes)) {
-                    so.tagRes[metric] = {};
+                if (!(metric in so.recentTags)) {
+                    so.recentTags[metric] = {};
                 }
                 
-                so.tagRes[metric][entity] = {
+                so.recentTags[metric][entity] = {
                     time: (new Date()).getTime(),
                     value: {}
                 };
                 
                 var options = {
                     method: 'GET',
-                    url: so.url + '/api/v1/metrics/' + metric.replace('%', '%25') + '/entity-and-tags',
+                    url: so.url + '/api/v1/metrics/' + metric + '/entity-and-tags',
                     headers: {
                         Authorization: so.basicAuth
                     }
@@ -334,25 +323,24 @@ function (angular, _, kbn) {
 
                 return backendSrv.datasourceRequest(options).then(function(result) {
                     if (result.status !== 200) {
-                        delete so.tagRes[metric][entity]; 
+                        delete so.recentTags[metric][entity]; 
                         return { data: {} };
                     }
                 
-                    so.tagRes[metric][entity].value = result;
+                    so.recentTags[metric][entity].value = result;
                     return result;
                 });
             } else {
                 var d = $q.defer();
-                d.resolve(so.tagRes[metric][entity].value);
+                d.resolve(so.recentTags[metric][entity].value);
                 return d.promise;
             }
         };
         
-        AtsdDatasource.prototype.suggestTags = function(entity, metric, tags_known) { //DONE
+        AtsdDatasource.prototype._suggestTags = function(entity, metric, tags_known) { //DONE
             tags_known = tags_known !== undefined ? tags_known : {};
             
-            return this.queryTags(entity, metric).then(function(result) {
-                console.log('tag query: ' + JSON.stringify(result));
+            return this._queryTags(entity, metric).then(function(result) {
             
                 var tags = {};
                 _.each(result.data, function(entry) {
@@ -390,7 +378,7 @@ function (angular, _, kbn) {
         };
 
         AtsdDatasource.prototype.suggestTagKeys = function(entity, metric, tags_known) { //DONE
-            return this.suggestTags(entity, metric, tags_known).then(function(tags) {
+            return this._suggestTags(entity, metric, tags_known).then(function(tags) {
                 var keys = _.map(tags, function(values, key) { return key; });
                 console.log('tag keys: ' + JSON.stringify(keys));
                 return keys;
@@ -400,14 +388,14 @@ function (angular, _, kbn) {
         AtsdDatasource.prototype.suggestTagValues = function(entity, metric, tags_known, name) { //DONE
             name = name !== undefined ? name : '';
             
-            return this.suggestTags(entity, metric, tags_known).then(function(tags) {
+            return this._suggestTags(entity, metric, tags_known).then(function(tags) {
                 console.log('tag values: ' + JSON.stringify(tags[name]));
                 return tags[name];
             });
         };
         
         AtsdDatasource.prototype.getTags = function(entity, metric) { //DONE
-            return this.queryTags(entity, metric).then(function(result) {
+            return this._queryTags(entity, metric).then(function(result) {
                 var tags = [];
                 _.each(result.data, function(entry) {
                     if (entry.entity === entity) {
@@ -436,7 +424,7 @@ function (angular, _, kbn) {
             });
         };
 
-        function transformMetricData(metricData, disconnect) {
+        function _transformMetricData(metricData, disconnect) { //DONE
             var dps;
             var ret = [];
 
@@ -474,7 +462,7 @@ function (angular, _, kbn) {
             return ret;
         }
         
-        function parsePeriod(period) {
+        function _parsePeriod(period) { //DONE
             var count = '';
             var unit;
             
@@ -520,19 +508,17 @@ function (angular, _, kbn) {
             return { count: parseInt(count), unit: unit };
         };
 
-        function convertTargetToQuery(target, interval) {
+        function _convertTargetToQuery(target, interval) { //DONE
             if (!target.metric || !target.entity || target.hide) {
                 return null;
             }
-
-            console.log(JSON.stringify(target.period));
 
             var query = {
                 entity: templateSrv.replace(target.entity),
                 metric: templateSrv.replace(target.metric),
                 
                 statistic: target.statistic !== undefined ? templateSrv.replace(target.statistic) : 'detail',
-                period: (target.period !== undefined && target.period !== '') ? parsePeriod(target.period) : { count: 1, unit: 'DAY'},
+                period: (target.period !== undefined && target.period !== '') ? _parsePeriod(target.period) : { count: 1, unit: 'DAY'},
                 
                 tags: angular.copy(target.tags),
                 tagCombos: angular.copy(target.tagCombos),
@@ -543,12 +529,10 @@ function (angular, _, kbn) {
                             0
             };
             
-            console.log(JSON.stringify(query.period));
-
             return query;
         }
 
-        function convertToAtsdTime(date) { //DONE
+        function _convertToAtsdTime(date) { //DONE
             date = date !== 'now' ? date : new Date();
             date = kbn.parseDate(date);
             
