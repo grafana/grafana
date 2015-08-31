@@ -9,7 +9,6 @@
 
   "partials": {
     "config": "app/plugins/datasource/elasticsearch/partials/config.html",
-    "query": "app/plugins/datasource/elasticsearch/partials/query.editor.html",
     "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
   },
 
