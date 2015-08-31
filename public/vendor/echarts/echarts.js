@@ -683,6 +683,7 @@ define(function (require) {
 
             var chartLibrary = require('../vendor/echarts/chart');
             chartLibrary.define('map', require('../vendor/echarts/chart/map'));
+            chartLibrary.define('pie', require('../vendor/echarts/chart/pie'));
             var componentLibrary = require('../vendor/echarts/component');
 
             if (magicOption.xAxis || magicOption.yAxis) {

@@ -225,7 +225,7 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.metricFindQuery = function(query) {
-      console.log('metricFindQuery query =', query);
+      // console.log('metricFindQuery query =', query);
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -237,7 +237,7 @@ function (angular, _, $, config, kbn, moment) {
       return this.doOpenFalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
         .then(function(results) {
           return _.map(results.data, function(metric) {
-            console.log('metricFindQuery metric =', metric);
+            // console.log('metricFindQuery metric =', metric);
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false
@@ -331,10 +331,6 @@ function (angular, _, $, config, kbn, moment) {
 
         clean_options.push("target=" + encodeURIComponent(targetValue));
       }
-
-      if (!clean_options.length) {
-        clean_options.push("target=map");
-      } else {}
 
       _.each(options, function (value, key) {
         if ($.inArray(key, graphite_options) === -1) { return; }

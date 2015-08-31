@@ -84,6 +84,17 @@ function (angular, _, kbn, $) {
           return html + '</th>';
         }
 
+        /**
+         * @function name:  function render()
+         * @description:    This function renders diagram.
+         * @related issues: OWL-062
+         * @param:          void
+         * @return:         void
+         * @author:         Don Hsieh
+         * @since:          08/28/2015
+         * @last modified:  08/28/2015
+         * @called by:
+         */
         function render() {
           if (firstRender) {
             elem.append($container);
@@ -134,34 +145,36 @@ function (angular, _, kbn, $) {
               continue;
             }
 
-            var html = '<div class="graph-legend-series';
-            if (series.yaxis === 2) { html += ' pull-right'; }
-            if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
-            html += '" data-series-index="' + i + '">';
-            html += '<div class="graph-legend-icon">';
-            html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
-            html += '</div>';
+            if (series.label) {   // show legend only if it is not undefined
+              var html = '<div class="graph-legend-series';
+              if (series.yaxis === 2) { html += ' pull-right'; }
+              if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
+              html += '" data-series-index="' + i + '">';
+              html += '<div class="graph-legend-icon">';
+              html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
+              html += '</div>';
 
-            html += '<div class="graph-legend-alias">';
-            html += '<a>' + series.label + '</a>';
-            html += '</div>';
+              html += '<div class="graph-legend-alias">';
+              html += '<a>' + series.label + '</a>';
+              html += '</div>';
 
-            if (panel.legend.values) {
-              var avg = series.formatValue(series.stats.avg);
-              var current = series.formatValue(series.stats.current);
-              var min = series.formatValue(series.stats.min);
-              var max = series.formatValue(series.stats.max);
-              var total = series.formatValue(series.stats.total);
+              if (panel.legend.values) {
+                var avg = series.formatValue(series.stats.avg);
+                var current = series.formatValue(series.stats.current);
+                var min = series.formatValue(series.stats.min);
+                var max = series.formatValue(series.stats.max);
+                var total = series.formatValue(series.stats.total);
 
-              if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
-              if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
-              if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
-              if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
+                if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
+                if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
+                if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
+                if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
+                if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
+              }
+
+              html += '</div>';
+              $container.append($(html));
             }
-
-            html += '</div>';
-            $container.append($(html));
           }
         }
       }
