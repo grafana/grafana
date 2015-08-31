@@ -182,7 +182,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		}
 		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
-	if updateMonitorStateCmd.Affected > 0 {
+	if updateMonitorStateCmd.Affected > 0 && res != m.EvalResultUnknown {
 		//emit a state change event.
 		if job.Notifications.Enabled {
 			emails := strings.Split(job.Notifications.Addresses, ",")
