@@ -11,16 +11,16 @@ var path = require('path');
 /**
  * @function name:	function getMapData()
  * @description:	This function gets hosts locations for map chart.
- * @related issues:	OWL-052, OWL-030
+ * @related issues:	OWL-062, OWL-052, OWL-030
  * @param:			void
- * @return:			array hosts
+ * @return:			string chartType
  * @author:			Don Hsieh
  * @since:			08/15/2015
- * @last modified: 	08/27/2015
+ * @last modified: 	08/28/2015
  * @called by:		app.post('/')
  *					 in open-falcon/server.js
  */
-function getMapData()
+function getMapData(chartType)
 {
 	var dirData = path.join(__dirname, 'data');
 	// var filePath = path.join(dirData, 'agent.json');
@@ -51,16 +51,14 @@ function getMapData()
 						}
 					});
 				}
-				console.log(key);
-				console.log(province);
 			});
 		});
-		hosts.chartType = 'map';
+		hosts.chartType = chartType;
 		hosts.provinces = provinces;
 		hosts.citiesInProvince = citiesInProvince;
-		console.log('hosts =', hosts);
+		// console.log('hosts =', hosts);
 		return [hosts];
-	} catch(e) {
+	} catch (e) {
 		console.log('Exception e =', e);
 		return hosts;
 	}
@@ -168,41 +166,44 @@ function queryMetric(req, res, targets)
  * @description:	This route returns list of hosts (endpoints)
  *					 if query[0] == '*'; returns list of metrics (counters)
  *					 otherwise.
- * @related issues:	OWL-032, OWL-029, OWL-017
+ * @related issues:	OWL-063, OWL-032, OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	08/05/2015
+ * @last modified: 	08/28/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
  */
 app.get('/', function(req, res) {
 	var url = '';
+	var obj = {};
+	var results = [];
 	var queryUrl = req.query['target'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
 
 	if (query.indexOf('*.') === 0) {	// Query hosts, i.e., endpoints.
 		query = query.replace('*.', '');
+		if ('chart'.indexOf(query) > -1) {
+			results.push({text: 'chart', expandable: true});
+		}
 		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
-				var obj = {};
-				var results = [];
-				for (var i in body.data) {
+				_.forEach(body.data, function(hostname) {
 					obj = {};
-					obj.text = body.data[i];
+					obj.text = hostname;
 					obj.expandable = true;	// hosts are expandable
 											// (accompanied by their metrics)
 					results.push(obj);
-				}
+				});
 				res.send(results);
 			} else {
-				res.send([]);
+				res.send(results);
 			}
 		});
 	} else {	// Query metrics (counters) of a specific host.
@@ -211,78 +212,83 @@ app.get('/', function(req, res) {
 			query.pop();
 		} else {}
 		var host = query.shift();
-		var depth = query.length;
-		host = '["' + host + '"]';
-		var arr = [];
-		// metric_q is the metric that sent to Open-Falcon for query
-		var metric_q = query.join('.').replace('.*', '').replace('*', '');
-		arr = metric_q.split('.');
-		for (var i in arr) {
-			if (arr[i].indexOf('select') > -1) {
-				arr.splice(i, 1);
-			} else {}
-		}
-		metric_q = arr.join('.');
-
-		var options = {
-			uri: queryUrl + '/api/counters',
-			method: 'POST',
-			form: {
-				"endpoints": host,
-				"q": metric_q,	// both '' and null are ok
-				"limit": '',
-				"_r": Math.random()
+		if (host === 'chart') {
+			results.push({text: 'bar', expandable: false});
+			results.push({text: 'map', expandable: false});
+			results.push({text: 'pie', expandable: false});
+			res.send(results);
+		} else {
+			var depth = query.length;
+			host = '["' + host + '"]';
+			var arr = [];
+			// metric_q is the metric that sent to Open-Falcon for query
+			var metric_q = query.join('.').replace('.*', '').replace('*', '');
+			arr = metric_q.split('.');
+			for (var i in arr) {
+				if (arr[i].indexOf('select') > -1) {
+					arr.splice(i, 1);
+				} else {}
 			}
-		};
+			metric_q = arr.join('.');
 
-		request(options, function (error, response, body) {
-			if (!error && response.statusCode === 200) {
-				body = JSON.parse(body);
-				var metric = '';
-				var metrics = [];
-				var metricRoot = '';
-				var obj = {};
-				var results = [];
-				if (!metric_q) {	// First metric query of a specific host
-					var metricRoots = [];
-					for (var i in body.data) {
-						arr = body.data[i];
-						metric = arr[0];
-						metricRoot = metric.split('.')[0];
-						if (metricRoots.indexOf(metricRoot) < 0) {
-							metricRoots.push(metricRoot);
-							obj = {};
-							obj.text = metricRoot;
-							if (metric.indexOf('.') > -1) {
-								obj.expandable = true;
-							} else {
-								obj.expandable = false;
-							}
-							results.push(obj);
-						}
-					}
-				} else {	// Query next level of metric
-					for (var j in body.data) {
-						arr = body.data[j];
-						metric = arr[0];
-						metricRoot = metric.split('.')[depth];
-						if (metric.indexOf(metric_q + '.') === 0 && metrics.indexOf(metricRoot) < 0) {
-							metrics.push(metricRoot);
-							obj = {};
-							obj.text = metricRoot;
-							if (metricRoot === metric.split('.').pop()) {
-								obj.expandable = false;
-							} else {
-								obj.expandable = true;
-							}
-							results.push(obj);
-						}
-					}
+			var options = {
+				uri: queryUrl + '/api/counters',
+				method: 'POST',
+				form: {
+					"endpoints": host,
+					"q": metric_q,	// both '' and null are ok
+					"limit": '',
+					"_r": Math.random()
 				}
-				console.log('results =', results);
-				res.send(results);
-			}
-		});
+			};
+
+			request(options, function (error, response, body) {
+				if (!error && response.statusCode === 200) {
+					body = JSON.parse(body);
+					var metric = '';
+					var metrics = [];
+					var metricRoot = '';
+					var obj = {};
+					var results = [];
+					if (!metric_q) {	// First metric query of a specific host
+						var metricRoots = [];
+						_.forEach(body.data, function(arr) {
+							metric = arr[0];
+							metricRoot = metric.split('.')[0];
+							if (metricRoots.indexOf(metricRoot) < 0) {
+								metricRoots.push(metricRoot);
+								obj = {};
+								obj.text = metricRoot;
+								if (metric.indexOf('.') > -1) {
+									obj.expandable = true;
+								} else {
+									obj.expandable = false;
+								}
+								results.push(obj);
+							}
+						});
+					} else {	// Query next level of metric
+						_.forEach(body.data, function(arr) {
+							metric = arr[0];
+							metricRoot = metric.split('.')[depth];
+							if (metric.indexOf(metric_q + '.') === 0 && metrics.indexOf(metricRoot) < 0) {
+								metrics.push(metricRoot);
+								obj = {};
+								obj.text = metricRoot;
+								if (metricRoot === metric.split('.').pop()) {
+									obj.expandable = false;
+								} else {
+									obj.expandable = true;
+								}
+								results.push(obj);
+							}
+						});
+					}
+					// console.log('results =', results);
+					res.send(results);
+				}
+			});
+		}
 	}
 });
 
@@ -290,13 +296,13 @@ app.get('/', function(req, res) {
  * @function:		app.post('/', function(req, res))
  * @description:	This route returns list of datapoints [timestamp, value]
  *					 for Grafana to draw diagram.
- * @related issues:	OWL-034, OWL-017
+ * @related issues:	OWL-062, OWL-063, OWL-034, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh
  * @since:			07/25/2015
- * @last modified: 	08/07/2015
+ * @last modified: 	08/28/2015
  * @called by:		POST http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -304,14 +310,22 @@ app.get('/', function(req, res) {
 app.post('/', function (req, res) {
 	if ('target' in req.body) {
 		var targets = req.body.target;
-		if (typeof(targets) === typeof('')) {
-			targets = [targets];
-		}
-		if (targets.indexOf('map') > -1) {
-			var results = getMapData();
-			// console.log('results =', results);
-			res.send(results);
+		if (targets.indexOf('chart') === 0) {
+			var results = [];
+			if (targets.split('.')[1] === 'map') {
+				results = getMapData('map');
+				res.send(results);
+			} else if (targets.split('.')[1] === 'pie') {
+				results = getMapData('pie');
+				// console.log('results =', results);
+				res.send(results);
+			} else {
+				res.send([]);
+			}
 		} else {
+			if (typeof(targets) === typeof('')) {
+				targets = [targets];
+			}
 			queryMetric(req, res, targets);
 		}
 	} else {
