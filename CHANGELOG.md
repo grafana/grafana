@@ -5,6 +5,11 @@ A built in data source is now available named `-- Mixed --`, When picked in the 
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
+** User Onboarding **
+- Org admin can now send email invites (or invite links) to people who are not yet Grafana users
+- Sign up flow now supports email verification (if enabled)
+- See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
+
 ** Other new Features && Enhancements**
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
