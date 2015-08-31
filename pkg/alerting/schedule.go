@@ -82,7 +82,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 
 	jobs := make([]*Job, 0)
 	for _, monitor := range query.Result {
-		job := buildJobForMonitor(monitor, lastPointAt)
+		job := buildJobForMonitor(monitor)
 		if job != nil {
 			jobs = append(jobs, job)
 		}
@@ -91,7 +91,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 	return jobs, nil
 }
 
-func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
+func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.HealthSettings == nil {
@@ -100,13 +100,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
 
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
 		//fmt.Printf("bad monitor definition given: %#v", monitor)
-		return nil
-	}
-
-	// let's say it takes at least warmupPeriod, after job creation, to start getting data.
-	period := int(monitor.Frequency) // what we call frequency is actually the period, like 60s
-	warmupPeriod := time.Duration((monitor.HealthSettings.Steps+1)*period) * time.Second
-	if monitor.Created.After(time.Unix(lastPointAt, 0).Add(-warmupPeriod)) {
 		return nil
 	}
 
