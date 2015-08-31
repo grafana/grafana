@@ -7,17 +7,20 @@
 
         <li class = "tight-form-item">
         
-            Disconnect interval (s):
+            Disconnect:
             
         </li>
 
         <li>
         
-            <input type = "number"
-                   class = "input-small tight-form-input"
-                   ng-model = "target.disconnect"
-                   data-min-length = 0
-                   data-items = 100 />
+            <input type = "text"
+			       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
+			       class = "tight-form-input input-small"
+			       placeholder = "1h"
+			       ng-model = "target.disconnect"
+			       valid-time-span />
+		
+		</li>
             
         </li>
 

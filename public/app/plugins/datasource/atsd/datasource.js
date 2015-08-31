@@ -35,7 +35,7 @@ function (angular, _, kbn) {
         }
 
         AtsdDatasource.prototype.query = function(options) { //DONE
-            console.log('options: ' + options);
+            console.log('options: ' + JSON.stringify(options));
 
             var start = _convertToAtsdTime(options.range.from);
             var end = _convertToAtsdTime(options.range.to);
@@ -506,7 +506,38 @@ function (angular, _, kbn) {
             }
             
             return { count: parseInt(count), unit: unit };
-        };
+        }
+        
+        function _convertToSeconds(interval) { //DONE
+            var count = interval.count;
+        
+            switch (interval.unit) {
+                case 'YEAR':
+                    count *= 365*24*60*60;
+                    break;
+                case 'MONTH':
+                    count *=  30*24*60*60;
+                    break;
+                case 'WEEK':
+                    count *=   7*24*60*60;
+                    break;
+                case 'DAY':
+                    count *=     24*60*60;
+                    break;
+                case 'HOUR':
+                    count *=        60*60;
+                    break;
+                case 'MINUTE':
+                    count *=           60;
+                    break;
+                case 'SECOND':
+                    break;
+                default:
+                    count = 0;
+            }
+            
+            return count;
+        }
 
         function _convertTargetToQuery(target, interval) { //DONE
             if (!target.metric || !target.entity || target.hide) {
@@ -525,8 +556,8 @@ function (angular, _, kbn) {
                 implicit: angular.copy(target.implicit),
                 
                 disconnect: (target.disconnect !== undefined && target.disconnect !== '') ?
-                            angular.copy(target.disconnect) :
-                            0
+                            _convertToSeconds(_parsePeriod(target.disconnect)) :
+                            24*60*60
             };
             
             return query;
