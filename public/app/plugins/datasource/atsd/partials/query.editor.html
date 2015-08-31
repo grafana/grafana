@@ -1,66 +1,32 @@
-<div class = "tight-form"
-     style = "margin-bottom: 10px; border-bottom: 1px solid black;"
+<div style = "margin-bottom: 10px"
      ng-hide = "$index > 0">
-
-    <ul class = "tight-form-list"
-        role = "menu">
-
-        <li class = "tight-form-item">
-        
-            Disconnect:
-            
-        </li>
-
-        <li>
-        
-            <input type = "text"
-			       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
-			       class = "tight-form-input input-small"
-			       placeholder = "1h"
-			       ng-model = "target.disconnect"
-			       valid-time-span />
-		
-		</li>
-            
-        </li>
-
-    </ul>
     
-    <ul class = "tight-form-list pull-right">
-
-        <li class = "tight-form-item last">
-
-            Drop meta-data cache
-
-        </li>
-
-        <li class = "tight-form-item last">
+    <ul class = "pull-right">
+    
+        <button class="btn btn-primary"
+                ng-click="targetBlur()"
+                style = "margin-right: 50px" >
             
-            <a class = "pointer"
-               ng-click = "dropCache();">
-               
-                <i class = "fa fa-refresh" />
-                
-            </a>
+		    <i class="fa fa-arrow-up" /> &nbsp; Submit
+		    
+	    </button>
+	    
+	    <button class="btn btn-inverse"
+                ng-click="dropCache()"
+                style = "margin-right: 50px" >
             
-        </li>
+		    <i class="fa fa-refresh" /> &nbsp; Cache
+		
+	    </button>
+    
+        Disconnect:
 
-        <li class = "tight-form-item last">
-
-            Submit
-
-        </li>
-
-        <li class = "tight-form-item last">
-            
-            <a class = "pointer"
-               ng-click = "targetBlur();">
-               
-                <i class = "fa fa-arrow-up" />
-                
-            </a>
-            
-        </li>
+        <input type = "text"
+		       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
+		       class = "tight-form-input input-small last"
+		       placeholder = "1h"
+		       ng-model = "target.disconnect"
+		       valid-time-span />
 
     </ul>
 
