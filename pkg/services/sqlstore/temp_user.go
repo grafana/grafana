@@ -10,7 +10,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", CreateTempUser)
-	bus.AddHandler("sql", GetTempUsersForOrg)
+	bus.AddHandler("sql", GetTempUsersQuery)
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
 }
@@ -49,8 +49,8 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 	})
 }
 
-func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
-	var rawSql = `SELECT
+func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
+	rawSql := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
 	                tu.email          as email,
@@ -66,10 +66,23 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 									u.email						as invited_by_email
 	                FROM ` + dialect.Quote("temp_user") + ` as tu
 									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
-	                WHERE tu.org_id=? AND tu.status =? ORDER BY tu.created desc`
+									WHERE tu.status=?`
+	params := []interface{}{string(query.Status)}
+
+	if query.OrgId > 0 {
+		rawSql += ` AND tu.org_id=?`
+		params = append(params, query.OrgId)
+	}
+
+	if query.Email != "" {
+		rawSql += ` AND tu.email=?`
+		params = append(params, query.Email)
+	}
+
+	rawSql += " ORDER BY tu.created desc"
 
 	query.Result = make([]*m.TempUserDTO, 0)
-	sess := x.Sql(rawSql, query.OrgId, string(query.Status))
+	sess := x.Sql(rawSql, params...)
 	err := sess.Find(&query.Result)
 	return err
 }
