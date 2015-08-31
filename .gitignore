@@ -33,6 +33,7 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
+<<<<<<< 35c4025f455daf582cf24f41130f26bfac9113de
 <<<<<<< 9bb9edd67d129a39e4ad327b091b5921e3edf81f
 <<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
 grafana
@@ -44,3 +45,6 @@ grafana
 
 *.DS_Store
 >>>>>>> [OWL-52] Add servers distribution map among provinces
+=======
+grafana
+>>>>>>> feat(signup): added back the welcome on signup completed email

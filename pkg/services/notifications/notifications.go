@@ -178,3 +178,17 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 		},
 	})
 }
+
+func signUpCompletedHandler(evt *events.SignUpCompleted) error {
+	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
+		return nil
+	}
+
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       []string{evt.Email},
+		Template: tmplSignUpStarted,
+		Data: map[string]interface{}{
+			"Name": evt.Name,
+		},
+	})
+}
