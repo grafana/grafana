@@ -44,6 +44,11 @@ function (angular, _, ElasticQueryBuilder) {
       }
       $scope.termValueSegment = new MetricSegment({value: target.termValue});
 
+      if (!target.groupByField) {
+        target.groupByField = 'host.raw';
+      }
+      $scope.groupByFieldSegment = new MetricSegment({value: target.groupByField});
+
       if (!target.measurement) {
         $scope.measurementSegment = MetricSegment.newSelectMeasurement();
       } else {
@@ -90,6 +95,11 @@ function (angular, _, ElasticQueryBuilder) {
 
     $scope.termKeySegmentChanged = function() {
       $scope.target.termKey = $scope.termKeySegment.value;
+      $scope.$parent.get_data();
+    };
+
+    $scope.groupByFieldChanged = function() {
+      $scope.target.groupBy = $scope.groupByFieldSegment.value;
       $scope.$parent.get_data();
     };
 

@@ -29,7 +29,7 @@ function () {
                 "min_doc_count": 0,
               },
               "aggs": {
-                "metric": {
+                "stats": {
                   "stats": {
                     "field": target.valueField
                   }
@@ -38,6 +38,16 @@ function () {
             }
           }
         };
+        if (target.groupByField) {
+          query["aggs"][target.termKey + "_" + target.termValue]["aggs"] = {
+            "terms": {
+              "terms": {
+                "field": target.groupByField
+              },
+              "aggs": query["aggs"][target.termKey + "_" + target.termValue]["aggs"]
+            }
+          };
+        }
       }
     });
     query = JSON.stringify(query);

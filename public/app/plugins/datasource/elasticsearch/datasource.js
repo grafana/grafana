@@ -313,16 +313,23 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     };
 
     ElasticDatasource.prototype._getTimeSeries = function(results) {
+      var _aggregation2timeSeries = function(aggregation) {
+        var datapoints = aggregation.date_histogram.buckets.map(function(entry) {
+          return [entry.stats.avg, entry.key];
+        });
+        return { target: aggregation.key, datapoints: datapoints };
+      };
       var data = [];
+
       if (results && results.aggregations) {
         for (var target in results.aggregations) {
-          if (results.aggregations.hasOwnProperty(target) &&
-              results.aggregations[target].date_histogram &&
-              results.aggregations[target].date_histogram.buckets) {
-            var datapoints = results.aggregations[target].date_histogram.buckets.map(function(entry) {
-              return [entry.metric.avg, entry.key];
-            });
-            data.push({ target: target, datapoints: datapoints });
+          if (!results.aggregations.hasOwnProperty(target)) {
+            continue;
+          }
+          if (results.aggregations[target].date_histogram && results.aggregations[target].date_histogram.buckets) {
+            data.push(_aggregation2timeSeries(results.aggregations[target]));
+          } else if (results.aggregations[target].terms && results.aggregations[target].terms.buckets) {
+            [].push.apply(data, results.aggregations[target].terms.buckets.map(_aggregation2timeSeries));
           }
         }
       }

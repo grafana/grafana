@@ -75,22 +75,6 @@
 			<div class="clearfix"></div>
 		</div>
 
-		<!-- <div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Measurement
-				</li>
-				<li>
-					<metric-segment segment="measurementSegment" get-alt-segments="getMeasurements()" on-value-changed="measurementChanged()"></metric-segment>
-				</li>
-			</ul>
-
-			<div class="clearfix"></div>
-		</div> -->
-
 		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
@@ -148,67 +132,21 @@
 			<div class="clearfix"></div>
 		</div>
 
-		<!-- <div class="tight-form" ng-hide="target.rawQuery">
+		<div class="tight-form" ng-hide="target.rawQuery">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
 					<i class="fa fa-eye invisible"></i>
 				</li>
-
 				<li class="tight-form-item query-keyword" style="width: 75px;">
-					WHERE
-				</li>
-
-				<li ng-repeat="segment in tagSegments">
-					<metric-segment segment="segment" get-alt-segments="getTagsOrValues(segment, $index)" on-value-changed="tagSegmentUpdated(segment, $index)"></metric-segment>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div> -->
-
-		<!-- <div class="tight-form">
-			<ul class="tight-form-list" ng-hide="target.rawQuery">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-
-				<li class="tight-form-item" >
-					<span class="query-keyword">GROUP BY</span>
-				</li>
-
-				<li class="tight-form-item">
-					time($interval)
-				</li>
-
-				<li ng-repeat="segment in groupBySegments">
-					<metric-segment segment="segment" get-alt-segments="getGroupByTagSegments(segment, 0)" on-value-changed="groupByTagUpdated(segment, $index)"></metric-segment>
-				</li>
-				<li class="dropdown">
-					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
-						<span ng-show="target.fill">
-							fill ({{target.fill}})
-						</span>
-						<span ng-show="!target.fill">
-							no fill
-						</span>
-					</a>
-					<ul class="dropdown-menu">
-						<li><a ng-click="target.fill = ''">no fill</a></li>
-						<li><a ng-click="target.fill = 'null'">fill (null)</a></li>
-						<li><a ng-click="target.fill = '0'">fill (0)</a></li>
-					</ul>
-				</li>
-			</ul>
-			<ul class="tight-form-list pull-right">
-				<li class="tight-form-item">
-					Alias pattern
+					Group By
 				</li>
 				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-blur="get_data()">
+					<metric-segment segment="groupByFieldSegment" on-value-changed="groupByFieldChanged()"></metric-segment>
 				</li>
 			</ul>
-			<div class="clearfix"></div>
-		</div> -->
 
+			<div class="clearfix"></div>
+		</div>
 	</div>
 </div>
 
