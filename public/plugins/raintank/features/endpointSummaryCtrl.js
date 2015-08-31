@@ -76,6 +76,23 @@ function (angular, _) {
         return "disabled";
       }
       if (mon.state < 0 || mon.state > 2) {
+        var sinceUpdate = new Date().getTime() - new Date(mon.updated).getTime();
+        if (sinceUpdate < (mon.frequency * 5 * 1000)) {
+          return 'pending';
+        }
+        return 'nodata';
+      }
+      var states = ["online", "warn", "critical"];
+      return states[mon.state];
+    };
+    $scope.monitorStateClass = function(mon) {
+      if (typeof(mon) !== "object") {
+        return "disabled";
+      }
+      if (!mon.enabled) {
+        return "disabled";
+      }
+      if (mon.state < 0 || mon.state > 2) {
         return 'nodata';
       }
       var states = ["online", "warn", "critical"];
