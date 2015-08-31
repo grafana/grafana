@@ -32,7 +32,7 @@ function (angular, _, kbn) {
             this.recent = {};
             this.recentTags = {};
             console.log('cache dropped');
-        }
+        };
 
         AtsdDatasource.prototype.query = function(options) {
             console.log('options: ' + JSON.stringify(options));
@@ -43,7 +43,7 @@ function (angular, _, kbn) {
 
             _.each(options.targets, function(target) {
                 target.disconnect = options.targets[0].disconnect;
-                qs.push(_convertTargetToQuery(target, options.interval));
+                qs.push(_convertTargetToQuery(target));
             });
 
             var queries = _.compact(qs);
@@ -154,7 +154,7 @@ function (angular, _, kbn) {
                 }
             });
             
-            if (tsQueries.length == 0) {
+            if (tsQueries.length === 0) {
                 var d = $q.defer();
                 d.resolve({ data: undefined });
                 return d.promise;
@@ -294,8 +294,9 @@ function (angular, _, kbn) {
             entity = entity !== undefined ? entity : '';
             metric = metric !== undefined ? metric : '';
             
+            var d;
             if (entity === '' || metric === '') {
-                var d = $q.defer();
+                d = $q.defer();
                 d.resolve({ data: {} });
                 return d.promise;
             }
@@ -331,7 +332,7 @@ function (angular, _, kbn) {
                     return result;
                 });
             } else {
-                var d = $q.defer();
+                d = $q.defer();
                 d.resolve(so.recentTags[metric][entity].value);
                 return d.promise;
             }
@@ -539,7 +540,7 @@ function (angular, _, kbn) {
             return count;
         }
 
-        function _convertTargetToQuery(target, interval) {
+        function _convertTargetToQuery(target) {
             if (!target.metric || !target.entity || target.hide) {
                 return null;
             }
