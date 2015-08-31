@@ -142,6 +142,7 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 	}
 
 	log.Info("User signup started: %s", evt.Email)
+<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
 
 	if evt.Email == "" {
 		return nil
@@ -157,6 +158,8 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 		},
 	})
 }
+=======
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 
 func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {

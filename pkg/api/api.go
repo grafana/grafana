@@ -113,9 +113,14 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
+<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
 <<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129
 	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), wrap(SignUp))
+=======
+	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
+	r.Post("/api/user/signup", bind(dtos.SignUpForm{}), wrap(SignUp))
+>>>>>>> feat(signup): almost done with new sign up flow, #2353
 	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), wrap(SignUpStep2))
 
 	// invited
