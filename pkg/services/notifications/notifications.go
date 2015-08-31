@@ -19,6 +19,7 @@ import (
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password.html"
 var tmplSignUpStarted = "signup_started.html"
+var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
 func Init() error {
 	initMailQueue()
@@ -28,6 +29,7 @@ func Init() error {
 	bus.AddHandler("email", sendEmailCommandHandler)
 
 	bus.AddEventListener(signUpStartedHandler)
+	bus.AddEventListener(signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -140,6 +142,20 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 			"Email":     evt.Email,
 			"Code":      evt.Code,
 			"SignUpUrl": setting.ToAbsUrl(fmt.Sprintf("signup/?email=%s&code=%s", url.QueryEscape(evt.Email), url.QueryEscape(evt.Code))),
+		},
+	})
+}
+
+func signUpCompletedHandler(evt *events.SignUpCompleted) error {
+	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
+		return nil
+	}
+
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       []string{evt.Email},
+		Template: tmplSignUpStarted,
+		Data: map[string]interface{}{
+			"Name": evt.Name,
 		},
 	})
 }
