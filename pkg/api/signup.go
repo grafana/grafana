@@ -11,6 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// GET /api/user/signup/options
+func GetSignUpOptions(c *middleware.Context) Response {
+	return Json(200, util.DynMap{
+		"verifyEmailEnabled": setting.VerifyEmailEnabled,
+		"autoAssignOrg":      setting.AutoAssignOrg,
+	})
+}
+
 // POST /api/user/signup
 func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 	if !setting.AllowUserSignUp {
@@ -19,7 +27,7 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
-		return ApiError(401, "User with same email address already exists", nil)
+		return ApiError(422, "User with same email address already exists", nil)
 	}
 
 	cmd := m.CreateTempUserCommand{}
@@ -49,32 +57,24 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		return ApiError(401, "User signup is disabled", nil)
 	}
 
-	query := m.GetTempUserByCodeQuery{Code: form.Code}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrTempUserNotFound {
-			return ApiError(404, "Invalid email verification code", nil)
-		}
-		return ApiError(500, "Failed to read temp user", err)
-	}
-
-	tempUser := query.Result
-	if tempUser.Email != form.Email {
-		return ApiError(404, "Email verification code does not match email", nil)
-	}
-
-	existing := m.GetUserByLoginQuery{LoginOrEmail: tempUser.Email}
-	if err := bus.Dispatch(&existing); err == nil {
-		return ApiError(401, "User with same email address already exists", nil)
-	}
-
-	// create user
 	createUserCmd := m.CreateUserCommand{
-		Email:    tempUser.Email,
+		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
 		Password: form.Password,
 		OrgName:  form.OrgName,
+	}
+
+	if setting.VerifyEmailEnabled {
+		if ok, rsp := verifyUserSignUpEmail(form.Email, form.Code); !ok {
+			return rsp
+		}
+		createUserCmd.EmailVerified = true
+	}
+
+	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	if err := bus.Dispatch(&existing); err == nil {
+		return ApiError(401, "User with same email address already exists", nil)
 	}
 
 	if err := bus.Dispatch(&createUserCmd); err != nil {
@@ -83,30 +83,23 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 
 	// publish signup event
 	user := &createUserCmd.Result
-
 	bus.Publish(&events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})
 
-	// update tempuser
-	updateTempUserCmd := m.UpdateTempUserStatusCommand{
-		Code:   tempUser.Code,
-		Status: m.TmpUserCompleted,
-	}
-
-	if err := bus.Dispatch(&updateTempUserCmd); err != nil {
-		return ApiError(500, "Failed to update temp user", err)
+	// mark temp user as completed
+	if ok, rsp := updateTempUserStatus(form.Code, m.TmpUserCompleted); !ok {
+		return rsp
 	}
 
 	// check for pending invites
-	invitesQuery := m.GetTempUsersQuery{Email: tempUser.Email, Status: m.TmpUserInvitePending}
+	invitesQuery := m.GetTempUsersQuery{Email: form.Email, Status: m.TmpUserInvitePending}
 	if err := bus.Dispatch(&invitesQuery); err != nil {
 		return ApiError(500, "Failed to query database for invites", err)
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed succesfully", "code": "redirect-to-landing-page"}
-
 	for _, invite := range invitesQuery.Result {
 		if ok, rsp := applyUserInvite(user, invite, false); !ok {
 			return rsp
@@ -118,4 +111,22 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	metrics.M_Api_User_SignUpCompleted.Inc(1)
 
 	return Json(200, apiResponse)
+}
+
+func verifyUserSignUpEmail(email string, code string) (bool, Response) {
+	query := m.GetTempUserByCodeQuery{Code: code}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrTempUserNotFound {
+			return false, ApiError(404, "Invalid email verification code", nil)
+		}
+		return false, ApiError(500, "Failed to read temp user", err)
+	}
+
+	tempUser := query.Result
+	if tempUser.Email != email {
+		return false, ApiError(404, "Email verification code does not match email", nil)
+	}
+
+	return true, nil
 }
