@@ -47,16 +47,23 @@ A built in data source is now available named `-- Mixed --`, When picked in the 
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
+<<<<<<< d08905c6a242215c331482b925f4ed5cc4f5b50f
 <<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
 ** User Onboarding **
 =======
 >>>>>>> Fix changelog formatting
+=======
+** User Onboarding **
+>>>>>>> feat(signup): updated changelog with details about #2353
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
+<<<<<<< d08905c6a242215c331482b925f4ed5cc4f5b50f
 <<<<<<< 31a27040669945f4e47872f1e01cb25495295b71
 <<<<<<< 5f1059eac9232552c927fc69f1d7fb2003e899fd
+=======
+>>>>>>> feat(signup): updated changelog with details about #2353
 ** Other new Features && Enhancements**
 <<<<<<< ec194cf65e5adad36faa3d7dc1197348cbf20bc3
 >>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
