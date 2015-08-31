@@ -80,14 +80,15 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 
 		// create user
 		user := m.User{
-			Email:   cmd.Email,
-			Name:    cmd.Name,
-			Login:   cmd.Login,
-			Company: cmd.Company,
-			IsAdmin: cmd.IsAdmin,
-			OrgId:   orgId,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Email:         cmd.Email,
+			Name:          cmd.Name,
+			Login:         cmd.Login,
+			Company:       cmd.Company,
+			IsAdmin:       cmd.IsAdmin,
+			OrgId:         orgId,
+			EmailVerified: cmd.EmailVerified,
+			Created:       time.Now(),
+			Updated:       time.Now(),
 		}
 
 		if len(cmd.Password) > 0 {

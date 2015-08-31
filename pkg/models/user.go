@@ -44,15 +44,16 @@ func (u *User) NameOrFallback() string {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email    string `json:"email" binding:"Required"`
-	Login    string `json:"login"`
-	Name     string `json:"name"`
-	Company  string `json:"compay"`
-	OrgName  string `json:"orgName"`
-	Password string `json:"password" binding:"Required"`
-	IsAdmin  bool   `json:"-"`
+	Email         string
+	Login         string
+	Name          string
+	Company       string
+	OrgName       string
+	Password      string
+	EmailVerified bool
+	IsAdmin       bool
 
-	Result User `json:"-"`
+	Result User
 }
 
 type UpdateUserCommand struct {

@@ -123,6 +123,10 @@ func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
 }
 
 func signUpStartedHandler(evt *events.SignUpStarted) error {
+	if !setting.VerifyEmailEnabled {
+		return nil
+	}
+
 	log.Info("User signup started: %s", evt.Email)
 
 	if evt.Email == "" {

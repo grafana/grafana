@@ -43,6 +43,7 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
+	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", bind(dtos.SignUpForm{}), wrap(SignUp))
 	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), wrap(SignUpStep2))
 

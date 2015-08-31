@@ -27,9 +27,9 @@
 
 			<br>
 
-			<form name="signupForm" class="login-form">
+			<form name="signUpForm" class="login-form">
 
-				<div style="display: inline-block; margin-bottom: 25px; width: 300px">
+				<div style="display: inline-block; margin-bottom: 25px; width: 300px" ng-if="verifyEmailEnabled">
 					<div class="editor-option">
 						<label class="small">Email verification code: (sent to your email)</label>
 						<input type="text" class="input input-xlarge text-center" ng-model="formModel.code" required></input>
@@ -37,7 +37,7 @@
 				</div>
 
 				<div class="tight-from-container">
-					<div class="tight-form">
+					<div class="tight-form" ng-if="!autoAssignOrg">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
 								Organization name
