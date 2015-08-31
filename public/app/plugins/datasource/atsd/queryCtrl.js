@@ -10,7 +10,7 @@ function (angular, _, kbn) {
 
     module.controller('AtsdQueryCtrl', function($scope, $timeout) {
 
-        $scope.init = function() {
+        $scope.init = function() { //DONE
             $scope.temp = {};
 
             $scope.statistics = {
@@ -34,48 +34,19 @@ function (angular, _, kbn) {
                 'Weighted time average' : 'wtavg',
                 'Standard deviation'    : 'standard_deviation'
             };
-
             $scope.statisticIds = Object.keys($scope.statistics);
 
             $scope.oldTarget = angular.copy($scope.target);
-
             $scope.targetBlur();
         };
-        
-        $scope.getTargetIndex = function() {
-            var index = -1;
-            
-            for(var i = 0; i < $scope.panel.targets.length; i++) {
-                if ($scope.panel.targets[i].refId === $scope.target.refId) {
-                    index = i;
-                    break;
-                }
-            }
-            
-            console.log('index: ' + index);
-            
-            return index;
-        }
-        
-        $scope.hideLine = function() {
-            if ($scope.getTargetIndex() === $scope.panel.targets.length - 1) {
-                return true;
-            }
-            
-            return false;
-        }
 
-        $scope.targetBlur = function() {
-            $scope.target.hideLine = $scope.hideLine();
-            console.log('hide line: ' + $scope.target.hideLine);
-        
+        $scope.targetBlur = function() { //DONE
             $scope.errors = validateTarget($scope.target);
 
-            console.log(JSON.stringify($scope.errors));
+            console.log('errors: ' + JSON.stringify($scope.errors));
 
             if (_.isEmpty($scope.errors)) {
                 $scope.oldTarget = angular.copy($scope.target);
-                console.log('getting data');
                 $scope.get_data();
             }
         };
@@ -85,7 +56,7 @@ function (angular, _, kbn) {
             $scope.panel.targets.push(clone);
         };
 
-        $scope.renewTags = function() {
+        $scope.renewTags = function() { //DONE
             $scope.datasource.getTags($scope.target.entity, $scope.target.metric).then(function(result) {
                 $scope.target.tagCombos = _.map(result, function(element) {
                     return {en : true, data : element};
@@ -95,7 +66,7 @@ function (angular, _, kbn) {
             });
         };
         
-        $scope.checkAll = function() {
+        $scope.checkAll = function() { //DONE
             if ($scope.target.tagCombos !== undefined) {
                 _.each($scope.target.tagCombos, function(tags){
                     tags.en = $scope.target.tagCombosAll;
@@ -199,21 +170,21 @@ function (angular, _, kbn) {
             delete $scope.target.tags[key];
         };
         
-        function isValid(string) {
+        function isValid(string) { //DONE
             if (string !== undefined && string !== '') {
                 return true;
             }
             return false;
         }
         
-        function isDetail(statistic) {
+        function isDetail(statistic) { //DONE
             if (statistic === undefined || statistic === 'detail') {
                 return true;
             }
             return false;
         }
 
-        function validateTarget(target) {
+        function validateTarget(target) { //DONE
             var errs = [];
             
             if (!isValid(target.entity)) {
