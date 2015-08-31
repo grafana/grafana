@@ -9,11 +9,11 @@ var fs = require('fs');
 var path = require('path');
 
 /**
- * @function name:	function getMapData()
+ * @function name:	function getMapData(chartType)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-062, OWL-052, OWL-030
- * @param:			void
- * @return:			string chartType
+ * @param:			string chartType
+ * @return:			array [hosts]
  * @author:			Don Hsieh
  * @since:			08/15/2015
  * @last modified: 	08/28/2015
@@ -65,11 +65,13 @@ function getMapData(chartType)
 }
 
 /**
- * @function name:	function getMapData()
+ * @function name:	function function queryMetric(req, res, targets)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-030
- * @param:			void
- * @return:			array results
+ * @param:			object req
+ * @param:			object res
+ * @param:			array targets
+ * @return:			void
  * @author:			Don Hsieh
  * @since:			08/15/2015
  * @last modified: 	08/15/2015
