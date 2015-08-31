@@ -13,6 +13,7 @@ function (angular, kbn) {
         link: function(scope, elem, attrs) {
           var _t = '<i class="grafana-tip fa fa-'+(attrs.icon||'question-circle')+'" bs-tooltip="\''+
             kbn.addslashes(elem.text())+'\'"></i>';
+          _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
           elem.replaceWith($compile(angular.element(_t))(scope));
         }
       };
