@@ -20,7 +20,7 @@
         {
           "editable": true,
           "error": false,
-          "filter": "tags.endpoint:$endpoint AND tags.collector:$collector AND tags.monitor_type:$monitor_type AND severity:$severity",
+          "filter": "tags:endpoint\:$endpoint AND tags:collector\:$collector AND tags:monitor_type\:$monitor_type AND severity:$severity",
           "height": "500",
           "id": 1,
           "links": [],
