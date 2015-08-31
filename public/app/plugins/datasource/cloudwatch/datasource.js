@@ -5,6 +5,7 @@ define([
   'kbn',
   'moment',
   './queryCtrl',
+  './directives',
   'aws-sdk',
 ],
 function (angular, _, kbn) {
