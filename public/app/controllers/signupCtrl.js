@@ -27,8 +27,11 @@ function (angular, config) {
       }
 
       backendSrv.post('/api/user/signup/step2', $scope.formModel).then(function(rsp) {
-        console.log(rsp);
-        //window.location.href = config.appSubUrl + '/';
+        if (rsp.code === 'redirect-to-select-org') {
+          window.location.href = config.appSubUrl + '/profile/select-org?signup=1';
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
       });
     };
 
