@@ -1,0 +1,477 @@
+<div class = "tight-form"
+     style = "margin-bottom: 10px; border-bottom: 1px solid black;"
+     ng-hide = "$index > 0">
+
+    <ul class = "tight-form-list"
+        role = "menu">
+
+        <li class = "tight-form-item">
+        
+            Disconnect interval (s):
+            
+        </li>
+
+        <li>
+        
+            <input type = "number"
+                   class = "input-small tight-form-input"
+                   ng-model = "target.disconnect"
+                   data-min-length = 0
+                   data-items = 100 />
+            
+        </li>
+
+    </ul>
+    
+    <ul class = "tight-form-list pull-right">
+
+        <li class = "tight-form-item last">
+
+            Drop meta-data cache
+
+        </li>
+
+        <li class = "tight-form-item last">
+            
+            <a class = "pointer"
+               ng-click = "dropCache();">
+               
+                <i class = "fa fa-refresh" />
+                
+            </a>
+            
+        </li>
+
+        <li class = "tight-form-item last">
+
+            Submit
+
+        </li>
+
+        <li class = "tight-form-item last">
+            
+            <a class = "pointer"
+               ng-click = "targetBlur();">
+               
+                <i class = "fa fa-arrow-up" />
+                
+            </a>
+            
+        </li>
+
+    </ul>
+
+    <div class = "clearfix" />
+
+</div>
+
+<div class = "tight-form"
+     style = "margin-top: 10px">
+
+    <ul class = "tight-form-list pull-right">
+
+        <li class = "tight-form-item">
+
+            <div class = "dropdown">
+
+                <a class = "pointer dropdown-toggle"
+                   data-toggle = "dropdown">
+                   
+                    <i class = "fa fa-bars" />
+                    
+                </a>
+
+                <ul class = "dropdown-menu pull-right"
+                    role = "menu">
+                    
+                    <li role = "menuitem">
+                    
+                        <a ng-click = "duplicate()">
+                            
+                            Duplicate
+                            
+                        </a>
+                        
+                    </li>
+                    
+                </ul>
+
+            </div>
+
+        </li>
+
+        <li class = "tight-form-item last">
+        
+            <a class = "pointer"
+               ng-click = "removeDataQuery(target)">
+               
+                <i class = "fa fa-remove" />
+                
+            </a>
+            
+        </li>
+
+    </ul>
+
+    <ul class = "tight-form-list">
+
+        <li>
+        
+            <a class = "tight-form-item"
+               ng-click = "target.hide = !target.hide; get_data();"
+               role = "menuitem">
+               
+                <i class = "fa fa-eye" />
+                
+            </a>
+            
+        </li>
+
+    </ul>
+
+    <ul class = "tight-form-list"
+        role = "menu">
+
+        <li class = "tight-form-item">
+        
+            Entity:
+            
+        </li>
+
+        <li>
+        
+            <input type = "text"
+                   class = "input-medium tight-form-input"
+                   ng-model = "target.entity"
+                   spellcheck = "false"
+                   placeholder = "entity name"
+                   bs-typeahead = "suggestEntites"
+                   data-min-length = 0
+                   data-items = 100
+                   ng-blur = "renewTags();" />
+            
+        </li>
+
+        <li class = "tight-form-item">
+        
+            Metric:
+            
+        </li>
+
+        <li>
+        
+            <input type = "text"
+                   ng-hide = "target.token"
+                   class = "input-large tight-form-input"
+                   ng-model = "target.metric"
+                   spellcheck = "false"
+                   placeholder = "metric name"
+                   bs-typeahead = "suggestMetrics"
+                   data-min-length = 0
+                   data-items = 100
+                   ng-blur = "metricToSegments();" />
+            
+        </li>
+
+        <li ng-repeat = "segment in target.segments track by $index"
+            ng-hide = "!target.token"
+            class = "tight-form-item">
+            
+            {{segment}}
+            
+        </li>
+
+        <li ng-hide = "!target.token || !target.edit || target.segments === undefined || target.segments.length === 0"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "removeSegment();">
+               
+                <i class = "fa fa-remove" />
+                
+            </a>
+            
+        </li>
+
+        <li ng-hide = "!target.token || !target.edit">
+        
+            <input type = "text"
+                   ng-model = "temp.currentSegment"
+                   class = "tight-form-input input-small"
+                   spellcheck = "false"
+                   bs-typeahead = "suggestNextSegment"
+                   data-min-length = 0
+                   data-items = 100 />
+            
+        </li>
+
+        <li ng-hide = "!target.token || !target.edit"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "addSegment();">
+               
+                <i class = "fa fa-plus" />
+                
+            </a>
+            
+        </li>
+
+        <li ng-hide = "!target.token || !target.edit"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "target.edit = false; segmentsToMetric();">
+               
+                <i class = "fa fa-check" />
+                
+            </a>
+            
+        </li>
+
+        <li ng-hide = "!target.token || target.edit"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "target.edit = true;">
+               
+                <i class = "fa fa-pencil" />
+                
+            </a>
+            
+        </li>
+
+        <li ng-hide = "!target.token"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "target.token = false;">
+               
+                as text
+                
+            </a>
+            
+        </li>
+
+        <li ng-hide = "target.token"
+            class = "tight-form-item">
+            
+            <a class = "pointer"
+               ng-click = "target.token = true;">
+               
+                as tokens
+                
+            </a>
+            
+        </li>
+
+        <li class = "tight-form-item">
+        
+            Aggregator:
+            
+        </li>
+
+        <li>
+        
+            <select ng-model = "target.statisticId"
+                    class = "tight-form-input input-medium"
+                    ng-options = "agg for agg in statisticIds"
+                    ng-change = "target.statistic = statistics[target.statisticId];" />
+            
+        </li>
+
+        <li class = "tight-form-item"
+            ng-hide = "target.statistic === undefined || target.statistic === 'detail'">
+            
+            Period:
+            
+        </li>
+        
+        <li>
+        
+			<input type = "text"
+			       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
+			       class = "tight-form-input input-small"
+			       placeholder = "1h"
+			       ng-model = "target.period"
+			       valid-time-span />
+		
+		</li>
+
+    </ul>
+
+    <div class = "clearfix" />
+
+</div>
+
+<div class = "tight-form">
+    
+    <ul class = "tight-form-list">
+    
+        <li class = "tight-form-item">
+        
+            <a class = "pointer"
+               ng-click = "target.implicit = false;"
+               ng-hide = "!target.implicit">
+               
+                Tag editor
+                
+            </a>
+            
+            <a class = "pointer"
+               ng-hide = "target.implicit">
+               
+                <b>Tag editor</b>
+                
+            </a>
+    
+        </li>
+        
+        <li class = "tight-form-item">
+    
+            <a class = "pointer"
+               ng-click = "target.implicit = true;"
+               ng-hide = "target.implicit">
+               
+                Tag selector
+                
+            </a>
+            
+            <a class = "pointer"
+               ng-hide = "!target.implicit">
+               
+                <b>Tag selector</b>
+                
+            </a>
+            
+        </li>
+        
+    </ul>
+    
+    <div class = "clearfix" />
+    
+</div>
+
+<div class = "tight-form"
+     ng-hide = "target.implicit"
+     style = "border-bottom: 1px solid black">
+
+    <ul class = "tight-form-list">
+        
+        <li ng-repeat = "(key, value) in target.tags track by $index"
+            class = "tight-form-item">
+            
+            {{key}}&nbsp; = &nbsp;{{value}}
+            
+            <a ng-click = "removeTag(key)">
+            
+                <i class = "fa fa-remove" />
+                
+            </a>
+            
+        </li>
+
+        <li class = "tight-form-item"
+            ng-hide = "addTagMode">
+            
+            <a ng-click = "addTag()">
+            
+                <i class = "fa fa-plus" />
+                
+            </a>
+            
+        </li>
+
+        <li>
+        
+            <input type = "text"
+                   ng-hide = "!addTagMode"
+                   class = "input-medium tight-form-input"
+                   bs-typeahead = "suggestTagKeys"
+                   data-min-length = 0
+                   data-items = 100
+                   ng-model = "temp.currentTagKey"
+                   placeholder = "key" />
+                   
+        </li>
+        
+        <li>
+            
+            <input type = "text"
+                   ng-hide = "!addTagMode"
+                   class = "input-medium tight-form-input"
+                   bs-typeahead = "suggestTagValues"
+                   data-min-length = 0
+                   data-items = 100
+                   ng-model = "temp.currentTagValue"
+                   placeholder = "value" />
+                   
+        </li>
+        
+        <li ng-show = "addTagMode"
+            class = "tight-form-item">
+            
+            <a ng-click = "addTag()">
+            
+                <i class = "fa fa-check" />
+                
+            </a>
+            
+        </li>
+        
+    </ul>
+    
+    <div class = "clearfix" />
+    
+</div>
+
+<div class = "tight-form"
+     ng-hide = "!target.implicit || target.tagCombos === undefined || target.tagCombos.length < 2">
+
+    <ul class = "tight-form-list">
+    
+        <li class = "tight-form-item">
+        
+            <editor-checkbox text = "All "
+                             model = "target.tagCombosAll"
+                             change = "checkAll();" />
+            
+        </li>
+        
+    </ul>
+
+    <div class = "clearfix" />
+
+</div>
+
+<div ng-repeat = "entry in target.tagCombos"
+     ng-init = "rowIndex = $index"
+     class = "tight-form"
+     ng-hide = "!target.implicit">
+
+    <ul class = "tight-form-list">
+    
+        <li class = "tight-form-item">
+        
+            <editor-checkbox text = "{{$index+1}}. "
+                             model = "target.tagCombos[rowIndex].en" />
+            
+        </li>
+        
+        <li ng-repeat = "(key, value) in entry.data"
+            ng-init = "colIndex = $index"
+            class = "tight-form-item">
+            
+            {{key}}&nbsp; = &nbsp;{{value}}
+            
+        </li>
+        
+    </ul>
+    
+    <div class = "clearfix" />
+
+</div>
+
+</div>
+
+</div>

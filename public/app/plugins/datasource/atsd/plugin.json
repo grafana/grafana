@@ -1,0 +1,15 @@
+{
+  "pluginType": "datasource",
+  "name": "Atsd",
+
+  "type": "atsd",
+  "serviceName": "AtsdDatasource",
+
+  "module": "plugins/datasource/atsd/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/atsd/partials/config.html"
+  },
+
+  "metrics": true
+}
