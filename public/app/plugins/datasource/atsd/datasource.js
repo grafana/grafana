@@ -275,8 +275,16 @@ function (angular, _, kbn) {
 
             return this.suggestMetrics(entity, query).then(function(names){
                 var tokens = [];
+                
+                var names_l = [];
+                
+                _.each(names, function(name){
+                    if (name.substr(0, query.length) === query) {
+                        names_l.push(name);
+                    }
+                });
 
-                tokens = _.map(names, function(name){
+                tokens = _.map(names_l, function(name){
                     return name.substr(query.length, name.length).split('.')[0];
                 });
 
