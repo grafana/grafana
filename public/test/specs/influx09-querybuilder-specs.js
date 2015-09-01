@@ -13,7 +13,7 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
       });
 
     });
@@ -27,14 +27,14 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
                             + ' GROUP BY time($interval)');
       });
 
       it('should switch regex operator with tag value is regex', function() {
         var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'app', value: '/e.*/'}]});
         var query = builder.build();
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
       });
     });
 
@@ -48,7 +48,7 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT sum(tx_in), mean(tx_out) FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+        expect(query).to.be('SELECT sum("tx_in"), mean("tx_out") FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
       });
     });
 
@@ -61,7 +61,7 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
                             '$timeFilter GROUP BY time($interval)');
       });
     });
@@ -75,7 +75,7 @@ define([
       var query = builder.build();
 
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
                             '$timeFilter GROUP BY time($interval)');
       });
     });
@@ -89,7 +89,7 @@ define([
         });
 
         var query = builder.build();
-        expect(query).to.be('SELECT mean(value) FROM "cpu" WHERE $timeFilter ' +
+        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
           'GROUP BY time($interval), "host"');
       });
     });

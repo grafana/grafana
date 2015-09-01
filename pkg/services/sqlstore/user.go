@@ -30,6 +30,10 @@ func init() {
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
+	if cmd.SkipOrgSetup {
+		return -1, nil
+	}
+
 	var org m.Org
 
 	if setting.AutoAssignOrg {
@@ -103,23 +107,6 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			return err
 		}
 
-		// create org user link
-		orgUser := m.OrgUser{
-			OrgId:   orgId,
-			UserId:  user.Id,
-			Role:    m.ROLE_ADMIN,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if setting.AutoAssignOrg && !user.IsAdmin {
-			orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
-		}
-
-		if _, err = sess.Insert(&orgUser); err != nil {
-			return err
-		}
-
 		sess.publishAfterCommit(&events.UserCreated{
 			Timestamp: user.Created,
 			Id:        user.Id,
@@ -129,6 +116,26 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 		})
 
 		cmd.Result = user
+
+		// create org user link
+		if !cmd.SkipOrgSetup {
+			orgUser := m.OrgUser{
+				OrgId:   orgId,
+				UserId:  user.Id,
+				Role:    m.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if setting.AutoAssignOrg && !user.IsAdmin {
+				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+			}
+
+			if _, err = sess.Insert(&orgUser); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
