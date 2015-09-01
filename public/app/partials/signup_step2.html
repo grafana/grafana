@@ -11,33 +11,51 @@
 
     <div class="invite-box">
 			<h3>
-				Hello {{greeting}}.
+				You're almost there.
 			</h3>
 
 			<div class="modal-tagline">
-				<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
+				We just need a couple of more bits of<br> information to finish creating your account.
 			</div>
 
-      <form name="inviteForm" class="login-form">
+			<div style="display: inline-block; margin-top: 25px; width: 300px">
+					<div class="editor-option">
+						<label class="small">Your email:</label>
+						<span class="large">{{formModel.email}}</span>
+					</div>
+			</div>
+
+			<br>
+
+			<form name="signUpForm" class="login-form">
+
+				<div style="display: inline-block; margin-bottom: 25px; width: 300px" ng-if="verifyEmailEnabled">
+					<div class="editor-option">
+						<label class="small">Email verification code: (sent to your email)</label>
+						<input type="text" class="input input-xlarge text-center" ng-model="formModel.code" required></input>
+					</div>
+				</div>
+
 				<div class="tight-from-container">
-					<div class="tight-form">
+					<div class="tight-form" ng-if="!autoAssignOrg">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
-								Email
+								Organization name
 							</li>
 							<li>
-								<input type="email" name="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="Email" style="width: 253px">
+								<input type="text" name="orgName" class="tight-form-input last" ng-model='formModel.orgName' placeholder="Name your organization" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
+
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
-								Name
+								Your name
 							</li>
 							<li>
-								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
+								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="(optional)" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -48,7 +66,7 @@
 								Username
 							</li>
 							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px">
+								<input type="text" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px" autocomplete="off">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -60,7 +78,7 @@
 								Password
 							</li>
 							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
+								<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password" autocomplete="off">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -72,7 +90,7 @@
 				</div>
 
 				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
+					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !signUpForm.$valid, 'btn-primary': signUpForm.$valid}">
 						Continue
 					</button>
 				</div>

@@ -80,6 +80,7 @@ var (
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
+	VerifyEmailEnabled bool
 
 	// Http auth
 	AdminUser     string
@@ -416,6 +417,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
+	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -477,6 +479,10 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	readSessionConfig()
 	readSmtpSettings()
+
+	if VerifyEmailEnabled && !Smtp.Enabled {
+		log.Warn("require_email_validation is enabled but smpt is disabled")
+	}
 }
 
 func readSessionConfig() {

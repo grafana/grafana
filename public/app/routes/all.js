@@ -74,6 +74,10 @@ define([
         templateUrl: 'app/features/profile/partials/password.html',
         controller : 'ChangePasswordCtrl',
       })
+      .when('/profile/select-org', {
+        templateUrl: 'app/features/profile/partials/select_org.html',
+        controller : 'SelectOrgCtrl',
+      })
       .when('/admin/settings', {
         templateUrl: 'app/features/admin/partials/settings.html',
         controller : 'AdminSettingsCtrl',
@@ -105,6 +109,10 @@ define([
       .when('/invite/:code', {
         templateUrl: 'app/partials/signup_invited.html',
         controller : 'InvitedCtrl',
+      })
+      .when('/signup', {
+        templateUrl: 'app/partials/signup_step2.html',
+        controller : 'SignUpCtrl',
       })
       .when('/user/password/send-reset-email', {
         templateUrl: 'app/partials/reset_password.html',

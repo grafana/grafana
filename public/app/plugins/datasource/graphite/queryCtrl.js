@@ -284,15 +284,6 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
 
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
-
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
     function MetricSegment(options) {
       if (options === '*' || options.value === '*') {
         this.value = '*';

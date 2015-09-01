@@ -184,12 +184,48 @@ function (angular, $, kbn, _, moment) {
       return newPanel;
     };
 
+    p.getNextQueryLetter = function(panel) {
+      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      return _.find(letters, function(refId) {
+        return _.every(panel.targets, function(other) {
+          return other.refId !== refId;
+        });
+      });
+    };
+
+    p.addDataQueryTo = function(panel, datasource) {
+      var target = {
+        refId: this.getNextQueryLetter(panel)
+      };
+
+      if (datasource) {
+        target.datasource = datasource.name;
+      }
+
+      panel.targets.push(target);
+    };
+
+    p.removeDataQuery = function (panel, query) {
+      panel.targets = _.without(panel.targets, query);
+    };
+
+    p.duplicateDataQuery = function(panel, query) {
+      var clone = angular.copy(query);
+      clone.refId = this.getNextQueryLetter(panel);
+      panel.targets.push(clone);
+    };
+
+    p.moveDataQuery = function(panel, fromIndex, toIndex) {
+      _.move(panel.targets, fromIndex, toIndex);
+    };
+
     p.formatDate = function(date, format) {
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
-              moment(date).format(format) :
-              moment.utc(date).format(format);
+        moment(date).format(format) :
+        moment.utc(date).format(format);
     };
 
     p._updateSchema = function(old) {

@@ -57,7 +57,7 @@
     "test": "grunt test",
     "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
-  "license": "Apache License",
+  "license": "Apache-2.0",
   "dependencies": {
     "grunt-jscs": "~1.5.x",
     "karma-sinon": "^1.0.4",

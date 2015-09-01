@@ -37,15 +37,14 @@ function (angular, _, config) {
           return;
         }
 
-        if (err.status === 422) {
-          alertSrv.set("Validation failed", "", "warning", 4000);
-          throw err.data;
-        }
-
         var data = err.data || { message: 'Unexpected error' };
-
         if (_.isString(data)) {
           data = { message: data };
+        }
+
+        if (err.status === 422) {
+          alertSrv.set("Validation failed", data.message, "warning", 4000);
+          throw data;
         }
 
         data.severity = 'error';
