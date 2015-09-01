@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/Cepave/grafana/pkg/cmd"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/Cepave/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/Cepave/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"

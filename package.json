@@ -10,7 +10,10 @@
     "url": "http://github.com/torkelo/grafana.git"
   },
   "devDependencies": {
+    "body-parser": "^1.13.3",
     "expect.js": "~0.2.0",
+    "express": "^4.13.3",
+    "fs": "0.0.2",
     "glob": "~3.2.7",
     "grunt": "~0.4.0",
     "grunt-angular-templates": "^0.5.5",
@@ -45,7 +48,10 @@
     "karma-requirejs": "0.2.2",
     "karma-script-launcher": "0.1.0",
     "load-grunt-tasks": "0.2.0",
+    "lodash": "^2.4.2",
     "mocha": "2.2.4",
+    "path": "^0.11.14",
+    "request": "^2.61.0",
     "requirejs": "2.1.17",
     "rjs-build-analysis": "0.0.3"
   },
