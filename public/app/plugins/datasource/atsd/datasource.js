@@ -391,7 +391,11 @@ function (angular, _, kbn) {
             
             return this._suggestTags(entity, metric, tags_known).then(function(tags) {
                 console.log('tag values: ' + JSON.stringify(tags[name]));
-                return tags[name];
+                if (name in tags) {
+                    return tags[name];
+                } else {
+                    return [];
+                }
             });
         };
         
