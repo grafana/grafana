@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OpenTSDBQueryCtrl', function($scope, $timeout) {
+  module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
@@ -21,10 +21,6 @@ function (angular, _, kbn) {
       if (!$scope.target.downsampleAggregator) {
         $scope.target.downsampleAggregator = 'avg';
       }
-
-      $scope.$on('typeahead-updated', function() {
-        $timeout($scope.targetBlur);
-      });
     };
 
     $scope.targetBlur = function() {
@@ -35,11 +31,6 @@ function (angular, _, kbn) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
       }
-    };
-
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
     };
 
     $scope.getTextValues = function(metricFindResult) {

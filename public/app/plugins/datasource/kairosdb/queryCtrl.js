@@ -37,15 +37,6 @@ function (angular, _) {
       $scope.get_data();
     };
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
-
     $scope.getTextValues = function(metricFindResult) {
       return _.map(metricFindResult, function(value) { return value.text; });
     };
