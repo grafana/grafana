@@ -72,7 +72,7 @@ define([
           keysMap[TAB_CODE] = doNothing;
           keysMap[ENTER_CODE] = handleEnter;
           keysMap[ESC_CODE] = handleEsc;
-          keysMap[SPACE_CODE] = true;
+          keysMap[SPACE_CODE] = null;
           keysMap[PAGE_UP_CODE] = true;
           keysMap[PAGE_DOWN_CODE] = true;
           keysMap[END_CODE] = true;
