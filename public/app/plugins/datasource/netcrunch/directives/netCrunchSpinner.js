@@ -20,7 +20,7 @@ define([
 
     var module = angular.module('grafana.directives');
 
-    module.directive('netCrunchSpinner', function($compile, $timeout){
+    module.directive('ngSpinner', function($compile, $timeout){
       return {
           restrict: 'E',
           scope : {
