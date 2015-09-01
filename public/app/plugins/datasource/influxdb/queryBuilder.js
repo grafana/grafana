@@ -102,7 +102,7 @@ function (_) {
       if (i > 0) {
         query += ', ';
       }
-      query += field.func + '(' + field.name + ')';
+      query += field.func + '("' + field.name + '")';
     }
 
     var measurement = target.measurement;
