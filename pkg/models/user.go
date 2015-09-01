@@ -52,6 +52,7 @@ type CreateUserCommand struct {
 	Password      string
 	EmailVerified bool
 	IsAdmin       bool
+	SkipOrgSetup  bool
 
 	Result User
 }

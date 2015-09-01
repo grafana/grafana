@@ -153,7 +153,7 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 
 	return sendEmailCommandHandler(&m.SendEmailCommand{
 		To:       []string{evt.Email},
-		Template: tmplSignUpStarted,
+		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{
 			"Name": evt.Name,
 		},
