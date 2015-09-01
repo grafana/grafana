@@ -180,7 +180,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.getFieldSegments = function() {
       var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
       return $scope.datasource.metricFindQuery(fieldsQuery)
-      .then($scope.transformToSegments)
+      .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
     };
 
