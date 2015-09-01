@@ -225,7 +225,11 @@ repeat panel from url), fixes #2564
 >>>>>>> fix(templating): Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url), fixes #2564
 =======
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
+<<<<<<< 0b04924ed8e24d464c8efeff1ecc1cf0b4a401a8
 >>>>>>> feat(signup): progress on new signup flow, #2353
+=======
+- [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+>>>>>>> fix(influxdb): fixes and refactorings of influxdb 0.9 editor, no longer shows template vars in keys dropdown and group by dropdownm, fixes #2636
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
