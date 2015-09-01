@@ -7,26 +7,25 @@
                 ng-click="targetBlur()"
                 style = "margin-right: 50px" >
             
-		    <i class="fa fa-arrow-up" /> &nbsp; Submit
-		    
-	    </button>
-	    
-	    <button class="btn btn-inverse"
+            <i class="fa fa-arrow-up" /> &nbsp; Submit
+            
+        </button>
+        
+        <button class="btn btn-inverse"
                 ng-click="dropCache()"
                 style = "margin-right: 50px" >
             
-		    <i class="fa fa-refresh" /> &nbsp; Cache
-		
-	    </button>
+            <i class="fa fa-refresh" /> &nbsp; Cache
+        
+        </button>
     
         Disconnect:
 
         <input type = "text"
-		       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
-		       class = "tight-form-input input-small last"
-		       placeholder = "1h"
-		       ng-model = "target.disconnect"
-		       valid-time-span />
+               class = "tight-form-input input-small last"
+               placeholder = "1h"
+               ng-model = "target.disconnect"
+               valid-time-span />
 
     </ul>
 
@@ -258,14 +257,14 @@
         
         <li>
         
-			<input type = "text"
-			       ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
-			       class = "tight-form-input input-small"
-			       placeholder = "1h"
-			       ng-model = "target.period"
-			       valid-time-span />
-		
-		</li>
+            <input type = "text"
+                   ng-hide = "target.statistic === undefined || target.statistic === 'detail'"
+                   class = "tight-form-input input-small"
+                   placeholder = "1h"
+                   ng-model = "target.period"
+                   valid-time-span />
+        
+        </li>
 
     </ul>
 
