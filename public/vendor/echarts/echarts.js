@@ -682,9 +682,13 @@ define(function (require) {
             this._chartList = [];
 
             var chartLibrary = require('../vendor/echarts/chart');
+            chartLibrary.define('map', require('../vendor/echarts/chart/bar'));
             chartLibrary.define('map', require('../vendor/echarts/chart/map'));
             chartLibrary.define('pie', require('../vendor/echarts/chart/pie'));
             var componentLibrary = require('../vendor/echarts/component');
+            componentLibrary.define('grid', require('../vendor/echarts/component/grid'));
+            componentLibrary.define('dataZoom', require('../vendor/echarts/component/dataZoom'));
+            componentLibrary.define('axis', require('../vendor/echarts/component/axis'));
 
             if (magicOption.xAxis || magicOption.yAxis) {
                 magicOption.grid = magicOption.grid || {};

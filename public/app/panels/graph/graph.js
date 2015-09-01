@@ -275,6 +275,154 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
           /**
+           * @function name:  function drawBar(elem, sortedSeries)
+           * @description:    Draw a bar chart.
+           * @related issues: OWL-061
+           * @param:          object elem
+           * @param:          object sortedSeries
+           * @return:         void
+           * @author:         WH Lin
+           * @since:          08/28/2015
+           * @last modified:  08/31/2015
+           * @called by:      function callPlot(incrementRenderCounter)
+           */
+          function drawBar(elem, sortedSeries) {
+            var timestamp = Math.floor(Date.now() / 1000).toString();
+            var barId = 'barChart' + '_' + timestamp;
+            var rand = Math.random() * 100000;
+            barId = barId + rand.toString().substring(0, 5);
+            elem.attr('id', barId);
+
+            var locations = sortedSeries[0].datapoints[0];
+            var provinces = locations.provinces;
+            var data = [];
+            var x_values = [];
+            var y_values = [];
+
+            _.forEach(provinces, function(location) {
+              data.push([location.name, location.value]);
+            });
+            data.sort(function(a, b) {return b[1] - a[1];});
+            for (var i in data) {
+              x_values.push(data[i][0]);
+              y_values.push(data[i][1]);
+            }
+
+            // build a color map as your need.
+            var colorList = [];
+
+            // bar 分區顯示不同顏色
+            /*
+            var colors = [];  // list of all colors
+            colors.push({'name': 'red', 'hex': '#ff3333'});
+            colors.push({'name': 'organge', 'hex': '#ff7333'});
+            colors.push({'name': 'yellow', 'hex': '#ffb333'});
+            colors.push({'name': 'green', 'hex': '#09aa3c'});
+
+            var colorList = [];
+
+            for (var j = 0; j < colors.length; j++) {
+              for (var k = 0; k < Math.floor(data.length/colors.length); k++) {
+                colorList.push(colors[j].hex);
+              }
+            }
+            for (var l = 0; l < data.length%colors.length; l++) {
+              colorList.push(colors[colors.length-1].hex);
+            }
+            */
+
+            // bar 顏色為漸層
+            // list of all colors for color gradient
+            var grad_colors = [];
+            // grad_colors.push({'name': 'red', 'start': '#d10000', 'end': '#ff7575'});
+            // grad_colors.push({'name': 'orange', 'start': '#db4500', 'end': '#ffa175'});
+            grad_colors.push({'name': 'yellow', 'start': '#E58200', 'end': '#FFF573'});
+            // grad_colors.push({'name': 'green', 'start': '#158f00', 'end': '#bbff99'});
+            // grad_colors.push({'name': 'blue', 'start': '#2c1ca0', 'end': '#6ecff2'});
+            // grad_colors.push({'name': 'purple', 'start': '#5c00b3', 'end': '#bc75ff'});
+
+            // choose a random color to display
+            var c_rand = Math.floor(Math.random() * grad_colors.length);
+            if (c_rand === grad_colors.length) {
+              c_rand = grad_colors.length;
+            }
+            var start = {'r': parseInt(grad_colors[c_rand].start.substring(1, 3), 16),
+                          'g': parseInt(grad_colors[c_rand].start.substring(3, 5), 16),
+                          'b': parseInt(grad_colors[c_rand].start.substring(5, 7), 16)};
+            var end = {'r': parseInt(grad_colors[c_rand].end.substring(1, 3), 16),
+                        'g': parseInt(grad_colors[c_rand].end.substring(3, 5), 16),
+                        'b': parseInt(grad_colors[c_rand].end.substring(5, 7), 16)};
+
+            for (var j = 0; j < data.length; j++) {
+              // color of the i-th bar
+              var color = {'r': (start.r + j * Math.floor((end.r - start.r)/data.length)).toString(16),
+                            'g': (start.g + j * Math.floor((end.g - start.g)/data.length)).toString(16),
+                            'b': (start.b + j * Math.floor((end.b - start.b)/data.length)).toString(16)};
+              for (var rgb in color) {
+                if (parseInt(color[rgb], 16) < 0) {
+                  color[rgb] = '00';
+                } else if (color[rgb].length < 2) {
+                  color[rgb] = '0' + color[rgb];
+                }
+              }
+              var hex = '#' + color.r + color.g + color.b;
+              colorList.push(hex);
+            }
+
+            var myChart = ec.init(document.getElementById(barId));
+            var option = {
+                tooltip: {
+                    trigger: 'item'
+                },
+                calculable: true,
+                grid: {
+                    borderWidth: 0,
+                    y: 80,
+                    y2: 60
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        show: false,
+                        data: x_values
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        show: false
+                    }
+                ],
+                series: [
+                    {
+                        name: 'servers',
+                        type: 'bar',
+                        itemStyle: {
+                            normal: {
+                                color: function(params) {
+                                    return colorList[params.dataIndex];
+                                },
+                                label: {
+                                    show: true,
+                                    position: 'top',
+                                    formatter: '{b}\n{c}'
+                                }
+                            }
+                        },
+                        data: y_values,
+                    }
+                ]
+            };
+
+            myChart.setOption(option, true);
+            var paras = document.getElementById('graph-legend-series');
+
+            if (paras) {
+              paras.parentNode.removeChild(paras);
+            }
+          }
+
+          /**
            * @function name:  function drawMap(elem, sortedSeries)
            * @description:    This function draws a map chart.
            * @related issues: OWL-062
@@ -288,7 +436,8 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
            */
           function drawMap(elem, sortedSeries) {
             var timestamp = Math.floor(Date.now() / 1000).toString();
-            var mapId = 'mapChart' + '_' + timestamp;
+            var rand = Math.random() * 100000;
+            var mapId = 'mapChart' + '_' + timestamp + rand.toString().substring(0, 5);
             elem.attr('id', mapId);
             var locations = sortedSeries[0].datapoints;
             locations = locations[0];
@@ -803,7 +952,8 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
            */
           function drawPie(elem, sortedSeries) {
             var timestamp = Math.floor(Date.now() / 1000).toString();
-            var pieId = 'pieChart' + '_' + timestamp;
+            var rand = Math.random() * 100000;
+            var pieId = 'pieChart' + '_' + timestamp + rand.toString().substring(0, 5);
             elem.attr('id', pieId);
             var locations = sortedSeries[0].datapoints;
             // console.log('function callPlot() PIE locations =', locations);
@@ -901,6 +1051,7 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
           /**
            * @function name:  function callPlot(incrementRenderCounter)
            * @description:    This function executes plot.
+           * @related issues: OWL-062, OWL-063, OWL-052, OWL-030
            * @related issues: OWL-063, OWL-052, OWL-030
            * @param:          integer incrementRenderCounter
            * @return:         void
@@ -915,11 +1066,11 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
                 if ('chartType' in sortedSeries[0].datapoints[0]) {
                   var str = 'Error: The current metric is [chart.' + sortedSeries[0].datapoints[0].chartType;
                   str += '], but the chart option in Display Styles is not ' + sortedSeries[0].datapoints[0].chartType + '.';
-                  if (sortedSeries[0].datapoints[0].chartType === 'ebar') {
+                  if (sortedSeries[0].datapoints[0].chartType === 'bar') {
                     if (!options.series.ebar.show) {
                       alert(str);
                     } else {
-                      // drawBar(elem, sortedSeries);
+                      drawBar(elem, sortedSeries);
                     }
                   } else if (sortedSeries[0].datapoints[0].chartType === 'map') {
                     if (!options.series.map.show) {
@@ -1226,5 +1377,4 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
       }
     };
   });
-
 });
