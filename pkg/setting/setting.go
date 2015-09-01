@@ -550,7 +550,7 @@ func LogConfigurationInfo() {
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for i, prop := range appliedCommandLineProperties {
+		for i, prop := range appliedEnvOverrides {
 			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
 		}
 	}
