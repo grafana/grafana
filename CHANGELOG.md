@@ -59,6 +59,7 @@ it allows you to add queries of differnet data source types & instances to the s
 <<<<<<< ea77587ba297693ec3a2a6a24f2f9dd24da79d68
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+<<<<<<< 5607ec0260725145f7500df845f7a38dc0025e6e
 - [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
 
 **Breaking Changes**
@@ -122,6 +123,8 @@ repeat panel from url), fixes #2564
 =======
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
 >>>>>>> feat(signup): progress on new signup flow, #2353
+=======
+>>>>>>> fix(influxdb): fixes and refactorings of influxdb 0.9 editor, no longer shows template vars in keys dropdown and group by dropdownm, fixes #2636
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
