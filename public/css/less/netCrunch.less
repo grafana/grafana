@@ -23,11 +23,13 @@
   left: 0;
   position: relative;
   margin-left: 1px;
+  padding-left: 2px;
   width: @tile-width + 10;
 }
 
 .counter-selection-container {
   .nodes-selection-container;
+  margin-left: 1px;
   width: @counter-width + 10;
 }
 
@@ -35,6 +37,7 @@
   .flex(1);
   .flex-column;
   margin-top: 3px;
+  margin-left: 1px;
   min-height: @nodes-ahead-max-height;
   max-height: @nodes-ahead-max-height;
   overflow-y: auto;
@@ -69,7 +72,7 @@ input[type="text"].node-input {
   .flex(1);
   background-color: @tile-background-color;
   border: none;
-  padding-left: 10px;
+  padding-left: 9px;
   height: @tile-height;
   width: @tile-width - 5;
 }
