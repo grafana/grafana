@@ -65,7 +65,7 @@
 								<img ng-src="img/heart-loading.svg" style="width: 40px; height: 40px; opacity: 0.4;">
 							</div>
 	 						<div ng-if="pageReady" class="health">
-								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('Ping'))}}.svg" style="width: 40px; height: 40px;">
+								<img ng-src="img/{{monitorStateClass(getMonitorByTypeName('Ping'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
@@ -76,7 +76,7 @@
 								</div>
 								<div ng-if="pageReady">
 									<div ng-show="getMonitorByTypeName('Ping').enabled">
-										<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
+										<span class="checkStatus {{monitorStateClass(getMonitorByTypeName('Ping'))}}">{{monitorStateTxt(getMonitorByTypeName('Ping'))}}</span>
 										<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('Ping'))}}</span>
 									</div>
 									<div ng-show="!getMonitorByTypeName('Ping').enabled">
@@ -118,14 +118,14 @@
 						</ul>
 						<div class="summary-table-status-icon">
 							<div class="health">
-								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('DNS'))}}.svg" style="width: 40px; height: 40px;">
+								<img ng-src="img/{{monitorStateClass(getMonitorByTypeName('DNS'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
 							<li>
 								<span class="checkType">DNS:</span>
 								<div ng-show="getMonitorByTypeName('DNS').enabled">
-									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
+									<span class="checkStatus {{monitorStateClass(getMonitorByTypeName('DNS'))}}">{{monitorStateTxt(getMonitorByTypeName('DNS'))}}</span>
 									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('DNS'))}}</span>
 								</div>
 								<div ng-show="!getMonitorByTypeName('DNS').enabled">
@@ -168,14 +168,14 @@
 						</ul>
 						<div class="summary-table-status-icon">
 							<div class="health">
-								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
+								<img ng-src="img/{{monitorStateClass(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
 							<li>
 								<span class="checkType">HTTP:</span>
 								<div ng-show="getMonitorByTypeName('HTTP').enabled">
-									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
+									<span class="checkStatus {{monitorStateClass(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}</span>
 									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTP'))}}</span>
 								</div>
 								<div ng-show="!getMonitorByTypeName('HTTP').enabled">
@@ -207,30 +207,30 @@
 					</div>
 					<div class="currentStatus summary-table">
 						<ul class="summary-table-actions">
-							<li ng-show="getMonitorByTypeName('HTTP').enabled">
-								<a ng-click="gotoDashboard(endpoint, 'http')">
-									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTP'"></i>
+							<li ng-show="getMonitorByTypeName('HTTPS').enabled">
+								<a ng-click="gotoDashboard(endpoint, 'https')">
+									<i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus Endpoint: </br>dashboard for HTTPS'"></i>
 								</a>
 							</li>
 							<li>
-								<a href="endpoints/edit/{{endpoint.id}}#http">
+								<a href="endpoints/edit/{{endpoint.id}}#https">
 									<i ng-class="icon" class="icon-rt-settings in-row-icons miniCTA"></i>
 								</a>
 							</li>
 						</ul>
 						<div class="summary-table-status-icon">
 							<div class="health">
-								<img ng-src="img/{{monitorStateTxt(getMonitorByTypeName('HTTP'))}}.svg" style="width: 40px; height: 40px;">
+								<img ng-src="img/{{monitorStateClass(getMonitorByTypeName('HTTPS'))}}.svg" style="width: 40px; height: 40px;">
 							</div>
 						</div>
 						<ul class="summary-table-status">
 							<li>
 								<span class="checkType">HTTPS:</span>
-								<div ng-show="getMonitorByTypeName('HTTP').enabled">
-									<span class="checkStatus {{monitorStateTxt(getMonitorByTypeName('HTTP'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
+								<div ng-show="getMonitorByTypeName('HTTPS').enabled">
+									<span class="checkStatus {{monitorStateClass(getMonitorByTypeName('HTTPS'))}}">{{monitorStateTxt(getMonitorByTypeName('HTTPS'))}}</span>
 									<span class="checkTime">{{stateChangeStr(getMonitorByTypeName('HTTPS'))}}</span>
 								</div>
-								<div ng-show="!getMonitorByTypeName('HTTP').enabled">
+								<div ng-show="!getMonitorByTypeName('HTTPS').enabled">
          					<a href="endpoints/edit/{{endpoint.id}}#https" class="freqMsg disabled">Not enabled, configure now.</a>
         				</div>						
 							</li>

@@ -187,7 +187,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	updateMonitorStateCmd := m.UpdateMonitorStateCommand{
 		Id:      job.MonitorId,
 		State:   res,
-		Updated: job.LastPointTs,
+		Updated: job.LastPointTs, // this protects against jobs running out of order.
 		Checked: preExec,
 	}
 	if err := bus.Dispatch(&updateMonitorStateCmd); err != nil {

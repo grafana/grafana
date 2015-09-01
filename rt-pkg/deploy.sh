@@ -10,3 +10,4 @@ fi
 
 # Only do the ubuntu pkg for now.
 package_cloud push ${PACKAGECLOUD_REPO}/ubuntu/trusty ${DIR}/artifacts/*ubuntu*.deb
+git push --tags

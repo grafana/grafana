@@ -25,8 +25,16 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get temp users by org id", func() {
-				query := m.GetTempUsersForOrgQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
-				err = GetTempUsersForOrg(&query)
+				query := m.GetTempUsersQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
+				err = GetTempUsersQuery(&query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+
+			Convey("Should be able to get temp users by email", func() {
+				query := m.GetTempUsersQuery{Email: "e@as.co", Status: m.TmpUserInvitePending}
+				err = GetTempUsersQuery(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)

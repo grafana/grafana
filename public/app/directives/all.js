@@ -2,7 +2,6 @@ define([
   './arrayJoin',
   './dashUpload',
   './grafanaSimplePanel',
-  './ngBlur',
   './dashEditLink',
   './ngModelOnBlur',
   './misc',

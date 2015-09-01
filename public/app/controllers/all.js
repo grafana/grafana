@@ -7,6 +7,7 @@ define([
   './jsonEditorCtrl',
   './loginCtrl',
   './invitedCtrl',
+  './signupCtrl',
   './resetPasswordCtrl',
   './sidemenuCtrl',
   './errorCtrl',
