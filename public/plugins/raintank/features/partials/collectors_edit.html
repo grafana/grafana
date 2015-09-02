@@ -54,46 +54,46 @@
           <h3>Choose your distro:</h3>
           <ul class="rt-collector-config-distro">
             <li>
-              <input name="distro" type="radio" id="distros-1" checked>
-              <label for="distros-1" ng-click="defaultDistro()">Ubuntu, Debian, CentOS, Redhat</label>
+              <input name="distro" type="radio" id="distros-1">
+              <label for="distros-1" ng-click="configInfo(); defaultDistro()">Ubuntu, Debian, CentOS, Redhat</label>
             </li>
             <li>
               <input name="distro" type="radio" id="distros-2">
-              <label for="distros-2" ng-click="otherDistro()">Other</label>
+              <label for="distros-2" ng-click="configInfo(); otherDistro()">Other</label>
             </li>
           </ul>
         </div>
-        <div class="rt-box-interior-section">
-          <h3>Have your API key <a href="#">Manage API keys</a></h3>
-          <div ng-hide="showApiKey">
-            <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
-          </div>
-
-          <div ng-hide="!showApiKey">
-            <span class="helper success">New API key generated</span>
-            <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
-            <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
-          </div>
-        </div>
-        <div class="rt-box-interior-section">
-          <h3>Install the collector</h3>
-          <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
-        </div> 
-        <div class="rt-collector-other-distro rt-box-interior-section" ng-class="{ 'open': showDistroConfig }">
+        <div class="rt-collector-config-info" ng-hide="!showConfigInfo">
           <div class="rt-box-interior-section">
-            <h3>Clone the repository</h3>
-            <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
+            <h3>Have your API key <a href="#">Manage API keys</a></h3>
+            <div ng-hide="showApiKey">
+              <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
+            </div>
+            <div ng-hide="!showApiKey">
+              <span class="helper success">New API key generated</span>
+              <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
+              <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
+            </div>
           </div>
           <div class="rt-box-interior-section">
-            <h3>Install all of the dependent node_modules</h3>
-            <pre><code>npm install</code></pre>
-          </div>
-          <div class="rt-box-interior-section">
-            <h3>Install fping. Installation depends on your linux distribution.</h3>
-            >> <a href="#">http://fping.org</a>
-          </div>
-          <div class="rt-box-interior-section">
-            <h3>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
+            <h3>Install the collector</h3>
+            <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
+          </div> 
+          <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
+            <div class="rt-box-interior-section">
+              <h3>Clone the repository</h3>
+              <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3>Install all of the dependent node_modules</h3>
+              <pre><code>npm install</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3>Install fping. Installation depends on your linux distribution.</h3>
+              >> <a href="#">http://fping.org</a>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
 <pre><code>{
 "collector": {
   "name": "<span class="h">DC2 Internal</span>"
@@ -103,11 +103,12 @@
 "apiKey": "<span class="h">[Your API KEY]</span>",
 "pintServerPort": 8080
 }</code></pre>
+            </div>
           </div>
-        </div>
-        <div class="rt-box-interior-section">
-          <h3>Start the app</h3>
-          <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
+          <div class="rt-box-interior-section">
+            <h3>Start the app</h3>
+            <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
+          </div>
         </div>
       </div>      
     </div>

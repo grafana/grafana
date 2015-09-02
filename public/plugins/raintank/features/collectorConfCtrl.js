@@ -118,6 +118,10 @@ function (angular, _) {
       });
     };
 
+    $scope.configInfo = function() {
+      $scope.showConfigInfo = true;
+    };
+
     $scope.defaultDistro = function() {
       $scope.showDistroConfig = false;
     };
