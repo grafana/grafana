@@ -229,7 +229,11 @@ repeat panel from url), fixes #2564
 >>>>>>> feat(signup): progress on new signup flow, #2353
 =======
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+<<<<<<< 00d34abd1310392a655c51777f90965406452073
 >>>>>>> fix(influxdb): fixes and refactorings of influxdb 0.9 editor, no longer shows template vars in keys dropdown and group by dropdownm, fixes #2636
+=======
+- [Issue #2651](https://github.com/grafana/grafana/issues/2651). InfluxDB: Fixed issue when using the eye to disable queries in the query editor and when applying aliases
+>>>>>>> fix(influxdb): Fixed issue when using the eye to disable queries in the query editor and when applying aliases, #2651
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
