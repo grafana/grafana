@@ -118,6 +118,18 @@ function (angular, _) {
       });
     };
 
+    $scope.defaultDistro = function() {
+      $scope.showDistroConfig = false;
+    };
+
+    $scope.otherDistro = function() {
+      $scope.showDistroConfig = true;
+    };
+
+    $scope.apiKey = function() {
+      $scope.showApiKey = true;
+    };
+
     $scope.init();
 
   });

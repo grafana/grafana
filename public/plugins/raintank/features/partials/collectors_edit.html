@@ -18,11 +18,8 @@
     </li>
   </ul>
 </topnav>
-
 <div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
-
-
-  <div ng-if="!collector.id">
+  <div ng-if="!collector.id" style="display: none;">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
       <h1 class="rt-h1">Add a new collector</h1>
@@ -38,9 +35,7 @@
       </form> 
     </div>
   </div>
-
-
-  <div ng-if="!collector.id" style="display: none;">
+  <div ng-if="!collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
       <h1 class="rt-h1">Add a new collector</h1>
@@ -60,36 +55,31 @@
           <ul class="rt-collector-config-distro">
             <li>
               <input name="distro" type="radio" id="distros-1" checked>
-              <label for="distros-1">Ubuntu, Debian, CentOS, Redhat</label>
+              <label for="distros-1" ng-click="defaultDistro()">Ubuntu, Debian, CentOS, Redhat</label>
             </li>
             <li>
               <input name="distro" type="radio" id="distros-2">
-              <label for="distros-2">Other</label>
+              <label for="distros-2" ng-click="otherDistro()">Other</label>
             </li>
           </ul>
         </div>
         <div class="rt-box-interior-section">
-          <div>
-            <h3>Have your API key <a href="#">Manage API keys</a></h3>
-            <button class="rt-btn">Generate New API Key</button>
+          <h3>Have your API key <a href="#">Manage API keys</a></h3>
+          <div ng-hide="showApiKey">
+            <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
           </div>
 
-
-          <div style="display: none;">
+          <div ng-hide="!showApiKey">
             <span class="helper success">New API key generated</span>
             <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
             <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
           </div>
-
-
         </div>
         <div class="rt-box-interior-section">
           <h3>Install the collector</h3>
           <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
         </div> 
-
-
-        <div style="display: none;">
+        <div ng-hide="!showDistroConfig">
           <div class="rt-box-interior-section">
             <h3>Clone the repository</h3>
             <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
@@ -115,8 +105,6 @@
 }</code></pre>
           </div>
         </div>
-
-        
         <div class="rt-box-interior-section">
           <h3>Start the app</h3>
           <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
