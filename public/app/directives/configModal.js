@@ -24,9 +24,9 @@ function (angular, _, $) {
 
             var panelModal = $modal({
               template: partial,
-              persist: true,
+              persist: false,
               show: false,
-              scope: scope,
+              scope: scope.$new(),
               keyboard: false
             });
 
