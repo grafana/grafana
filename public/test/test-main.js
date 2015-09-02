@@ -48,6 +48,7 @@ require.config({
     'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
+    'aws-sdk':                '../vendor/aws-sdk/dist/aws-sdk.min',
   },
 
   shim: {
@@ -150,6 +151,7 @@ require([
     'specs/unsavedChangesSrv-specs',
     'specs/valueSelectDropdown-specs',
     'specs/opentsdbDatasource-specs',
+    'specs/cloudwatch-datasource-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
