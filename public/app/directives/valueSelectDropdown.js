@@ -141,7 +141,7 @@ function (angular, app, _) {
           option.selected = true;
         }
 
-        if (option.text === 'All' || excludeOthers) {
+        if (option.text === 'All' || option.text === 'Aggr' || excludeOthers) {
           setAllExceptCurrentTo(false);
           commitChange = true;
         }
@@ -160,7 +160,7 @@ function (angular, app, _) {
         vm.selectedValues = _.filter(vm.options, {selected: true});
 
         if (vm.selectedValues.length > 1 && vm.selectedValues.length !== vm.options.length) {
-          if (vm.selectedValues[0].text === 'All') {
+          if (vm.selectedValues[0].text === 'All' || vm.selectedValues[0].text === 'Aggr') {
             vm.selectedValues[0].selected = false;
             vm.selectedValues = vm.selectedValues.slice(1, vm.selectedValues.length);
           }

@@ -190,6 +190,9 @@ function (angular, _, kbn) {
         if (variable.includeAll) {
           self.addAllOption(variable);
         }
+        if (variable.includeAggr) {
+          self.addAggrOption(variable);
+        }
         if (!variable.options.length) {
           variable.options.push(getNoneOption());
         }
@@ -271,6 +274,10 @@ function (angular, _, kbn) {
       }
 
       variable.options.unshift({text: 'All', value: allValue});
+    };
+
+    this.addAggrOption = function(variable) {
+      variable.options.unshift({text: 'Aggr', value: 'AGGR'});
     };
 
   });

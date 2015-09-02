@@ -29,7 +29,7 @@ function (angular) {
         dynamicDashboardSrv.update($scope.dashboard);
         $rootScope.$emit('template-variable-value-updated');
         $rootScope.$broadcast('refresh');
-      });
+      })
     };
 
     $scope.init();

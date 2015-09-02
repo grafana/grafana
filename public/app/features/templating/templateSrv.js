@@ -41,6 +41,8 @@ function (angular, _) {
       } else {
         if (variable.multiFormat === 'regex values') {
           return '(' + value.join('|') + ')';
+        }else if (variable.multiFormat === 'pipe delimited') {
+          return value.join('|');
         }
         return '{' + value.join(',') + '}';
       }

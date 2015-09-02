@@ -1,0 +1,15 @@
+{
+  "pluginType": "datasource",
+  "name": "Bosun",
+
+  "type": "bosun",
+  "serviceName": "BosunDatasource",
+
+  "module": "plugins/datasource/bosun/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/bosun/partials/config.html"
+  },
+
+  "metrics": true
+}

@@ -177,6 +177,16 @@
 
 						<div class="tight-form last">
 							<ul class="tight-form-list">
+								<li class="tight-form-item">
+									<editor-checkbox text="Aggregate option" model="current.includeAggr"></editor-checkbox>
+									<tip>Check if you want an additional option Aggr used to omit the value so it can be aggregated on.</tip>
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+
+						<div class="tight-form last">
+							<ul class="tight-form-list">
 								<li class="tight-form-item last">
 									<editor-checkbox text="Refresh on load" model="current.refresh"></editor-checkbox>
 									<tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time</tip>
@@ -184,6 +194,7 @@
 							</ul>
 							<div class="clearfix"></div>
 						</div>
+
 					</div>
 				</div>
 			</div>
@@ -200,7 +211,7 @@
 								Multi format
 							</li>
 							<li ng-show="current.multi">
-								<select class="input-small tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values']"></select>
+								<select class="input-small tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values', 'pipe delimited']"></select>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
