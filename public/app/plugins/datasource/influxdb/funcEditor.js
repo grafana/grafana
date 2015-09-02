@@ -103,7 +103,7 @@ function (angular, _, $) {
                 });
               },
               minLength: 0,
-              items: 20,
+              items: 1000,
               updater: function (value) {
                 setTimeout(function() {
                   inputBlur.call($input[0]);
