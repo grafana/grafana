@@ -79,7 +79,7 @@
           <h3>Install the collector</h3>
           <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
         </div> 
-        <div ng-hide="!showDistroConfig">
+        <div class="rt-collector-other-distro rt-box-interior-section" ng-class="{ 'open': showDistroConfig }">
           <div class="rt-box-interior-section">
             <h3>Clone the repository</h3>
             <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>

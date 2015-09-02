@@ -65,6 +65,7 @@
 }
 
 
+
 // Distros
 // ==========================================================================
 
@@ -94,6 +95,21 @@
 		background: @inputBackground;
 		outline: 2px solid @rt-blue;
 	}
+}
+
+.rt-collector-other-distro {
+	height: 0;
+	overflow: hidden;
+	margin-bottom: 0;
+	transition: 0.2s;
+  -o-transition: 0.2s;
+  -moz-transition: 0.2s;
+  -webkit-transition: 0.2s;
+
+  &.open {
+  	height: 550px;
+  	margin-bottom: 45px;
+  }
 }
 
 
