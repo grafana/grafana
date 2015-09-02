@@ -72,8 +72,12 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	proxyPath := c.Params("*")
-	proxy := NewReverseProxy(&query.Result, proxyPath)
-	proxy.Transport = dataProxyTransport
-	proxy.ServeHTTP(c.RW(), c.Req.Request)
+	if query.Result.Type == m.DS_CLOUDWATCH {
+		ProxyCloudWatchDataSourceRequest(c)
+	} else {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(&query.Result, proxyPath)
+		proxy.Transport = dataProxyTransport
+		proxy.ServeHTTP(c.RW(), c.Req.Request)
+	}
 }
