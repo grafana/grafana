@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CloudWatchQueryCtrl', function($scope, templateSrv) {
+  module.controller('CloudWatchQueryCtrl', function($scope, templateSrv, uiSegmentSrv) {
 
     $scope.init = function() {
       $scope.target.namespace = $scope.target.namespace || '';
@@ -17,8 +17,65 @@ function (angular, _) {
       $scope.target.statistics = $scope.target.statistics || {};
       $scope.target.period = $scope.target.period || 60;
       $scope.target.region = $scope.target.region || $scope.datasource.getDefaultRegion();
-
       $scope.target.errors = validateTarget();
+
+      $scope.regionSegment = $scope.getSegmentForValue($scope.target.region, 'select region');
+      $scope.namespaceSegment = $scope.getSegmentForValue($scope.target.namespace, 'select namespace');
+      $scope.metricSegment = $scope.getSegmentForValue($scope.target.metricName, 'select metric');
+    };
+
+    $scope.getSegmentForValue = function(value, fallbackText) {
+      if (value) {
+        return uiSegmentSrv.newSegment(value);
+      } else {
+        return uiSegmentSrv.newSegment({value: fallbackText, fake: true});
+      }
+    };
+
+    $scope.getRegions = function() {
+      return $scope.datasource.metricFindQuery('region()')
+        .then($scope.transformToSegments(true));
+    };
+
+    $scope.getNamespaces = function() {
+      return $scope.datasource.metricFindQuery('namespace()')
+        .then($scope.transformToSegments(true));
+    };
+
+    $scope.getMetrics = function() {
+      return $scope.datasource.metricFindQuery('metrics(' + $scope.target.namespace + ')')
+        .then($scope.transformToSegments(true));
+    };
+
+    $scope.regionChanged = function() {
+      $scope.target.region = $scope.regionSegment.value;
+      $scope.get_data();
+    };
+
+    $scope.namespaceChanged = function() {
+      $scope.target.namespace = $scope.namespaceSegment.value;
+      $scope.get_data();
+    };
+
+    $scope.metricChanged = function() {
+      $scope.target.metricName = $scope.metricSegment.value;
+      $scope.get_data();
+    };
+
+    $scope.transformToSegments = function(addTemplateVars) {
+      return function(results) {
+        var segments = _.map(results, function(segment) {
+          return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+        });
+
+        if (addTemplateVars) {
+          _.each(templateSrv.variables, function(variable) {
+            segments.unshift(uiSegmentSrv.newSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
+          });
+        }
+
+        return segments;
+      };
     };
 
     $scope.refreshMetricData = function() {
@@ -29,27 +86,6 @@ function (angular, _) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
       }
-    };
-
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
-
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
-    $scope.suggestRegion = function(query, callback) { // jshint unused:false
-      return _.union($scope.datasource.performSuggestRegion(), $scope.datasource.getTemplateVariableNames());
-    };
-
-    $scope.suggestNamespace = function(query, callback) { // jshint unused:false
-      return _.union($scope.datasource.performSuggestNamespace(), $scope.datasource.getTemplateVariableNames());
-    };
-
-    $scope.suggestMetrics = function(query, callback) { // jshint unused:false
-      return _.union($scope.datasource.performSuggestMetrics($scope.target.namespace), $scope.datasource.getTemplateVariableNames());
     };
 
     $scope.suggestDimensionKeys = function(query, callback) { // jshint unused:false
@@ -136,6 +172,8 @@ function (angular, _) {
 
       return errs;
     }
+
+    $scope.init();
 
   });
 
