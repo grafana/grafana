@@ -37,12 +37,24 @@
 	</ul>
 
 	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
 		<li>
-			<a class="tight-form-item"
+			<a  class="tight-form-item"
 				ng-click="target.hide = !target.hide; get_data();"
 				role="menuitem">
 				<i class="fa fa-eye"></i>
 			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item" style="width: 100px">
+			From region
+		</li>
+		<li>
+			<metric-segment segment="region" get-alt-segments="getRegions()" on-value-changed="regionChanged()"></metric-segment>
 		</li>
 	</ul>
 

@@ -1,6 +1,7 @@
 define([
   'helpers',
-  'plugins/datasource/influxdb/queryCtrl'
+  'plugins/datasource/influxdb/queryCtrl',
+  'services/uiSegmentSrv'
 ], function(helpers) {
   'use strict';
 
@@ -8,6 +9,7 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('InfluxQueryCtrl'));
 

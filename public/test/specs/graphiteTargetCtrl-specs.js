@@ -1,7 +1,8 @@
 define([
   'helpers',
   'plugins/datasource/graphite/gfunc',
-  'plugins/datasource/graphite/queryCtrl'
+  'plugins/datasource/graphite/queryCtrl',
+  'services/uiSegmentSrv'
 ], function(helpers, gfunc) {
   'use strict';
 
@@ -9,6 +10,7 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
 
