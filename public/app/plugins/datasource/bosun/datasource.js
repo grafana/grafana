@@ -91,7 +91,7 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      return this._get('/api/tagv/' + key + "/" + metric ).then(function(result) {
+      return this._get('/api/tagv/' + key + "/" + metric).then(function(result) {
         /*var tagvs = [];
         _.each(result.data, function(r) {
           tagvs.push(r.tags[key]);
@@ -105,14 +105,16 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      var subtags_list = subtags.split(",")
-      var valid_subtags = subtags_list.filter(function (s) { return s.split("=")[1] != "*"
-                                                                 && s.split("=")[1] != "AGGR"
-                                                                 && s.split("=")[1].charAt(0) != "$"
-                                                                 && s.split("=")[1] != "" })
+      var subtags_list = subtags.split(",");
+      var valid_subtags = subtags_list.filter(function (s) {
+        return s.split("=")[1] !== "*"
+          && s.split("=")[1] !== "AGGR"
+          && s.split("=")[1].charAt(0) !== "$"
+          && s.split("=")[1] !== "";
+      });
       var params = valid_subtags.length > 0 ? "?" + valid_subtags.join("&") : "";
 
-      return this._get('/api/tagv/' + key + "/" + metric + params ).then(function(result) {
+      return this._get('/api/tagv/' + key + "/" + metric + params).then(function(result) {
         return result.data;
       });
     };
@@ -123,7 +125,7 @@ function (angular, _, kbn) {
       return this._get('/api/tagk/' + metric).then(function(result) {
         return result.data;
       });
-    }
+    };
 
     BosunDatasource.prototype._get = function(relativeUrl, params) {
       return backendSrv.datasourceRequest({
@@ -266,12 +268,12 @@ function (angular, _, kbn) {
       }
 
       var tags = angular.copy(target.tags);
-      query.tags = {}
+      query.tags = {};
       if(tags){
         for(var key in tags){
-          var tagv = templateSrv.replace(tags[key], options.scopedVars)
-          if (tagv.charAt(0) != "$" && tagv != "AGGR" ) {
-            query.tags[key] = tagv
+          var tagv = templateSrv.replace(tags[key], options.scopedVars);
+          if (tagv.charAt(0) !== "$" && tagv !== "AGGR") {
+            query.tags[key] = tagv;
           }
         }
       }

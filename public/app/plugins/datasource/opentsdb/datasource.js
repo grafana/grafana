@@ -125,16 +125,18 @@ function (angular, _, kbn) {
         return $q.when([]);
       }
 
-      var subtags_list = subtags.split(",")
-      var valid_subtags = subtags_list.filter(function (s) { return s.split("=")[1] != "*"
-                                                                 && s.split("=")[1] != "AGGR"
-                                                                 && s.split("=")[1].charAt(0) != "$"
-                                                                 && s.split("=")[1] != "" });
-    
-     var params = "" 
-     if (valid_subtags.length > 0){
-       params = " AND (" + valid_subtags.join(" AND ") + ")"
-     }
+      var subtags_list = subtags.split(",");
+      var valid_subtags = subtags_list.filter(function (s) {
+        return s.split("=")[1] !== "*"
+          && s.split("=")[1] !== "AGGR"
+          && s.split("=")[1].charAt(0) !== "$"
+          && s.split("=")[1] !== "";
+      });
+
+      var params = ""
+      if (valid_subtags.length > 0){
+        params = " AND (" + valid_subtags.join(" AND ") + ")";
+      }
 
       return this._get('/api/search/lookup' + key + params).then(function(result) {
         return result.data;
@@ -147,7 +149,7 @@ function (angular, _, kbn) {
       return this._get('/api/tagk/' + metric).then(function(result) {
         return result.data;
       });
-    }
+    };
 
     OpenTSDBDatasource.prototype._get = function(relativeUrl, params) {
       return backendSrv.datasourceRequest({
@@ -290,12 +292,12 @@ function (angular, _, kbn) {
       }
 
       var tags = angular.copy(target.tags);
-      query.tags = {}
+      query.tags = {};
       if(tags){
         for(var key in tags){
-          var tagv = templateSrv.replace(tags[key], options.scopedVars)
-          if (tagv.charAt(0) != "$" && tagv != "AGGR" ) {
-            query.tags[key] = tagv
+          var tagv = templateSrv.replace(tags[key], options.scopedVars);
+          if (tagv.charAt(0) !== "$" && tagv !== "AGGR") {
+            query.tags[key] = tagv;
           }
         }
       }
