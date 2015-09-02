@@ -1,151 +1,129 @@
-<div class="editor-row">
+<div  class="tight-form">
+	<ul class="tight-form-list pull-right">
+		<li ng-show="parserError" class="tight-form-item">
+			<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+				<i class="fa fa-warning"></i>
+			</a>
+		</li>
+		<li class="tight-form-item">
+			<div class="dropdown">
+				<a  class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+					<i class="fa fa-bars"></i>
+				</a>
+				<ul class="dropdown-menu pull-right" role="menu">
+					<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+				</ul>
+			</div>
+		</li>
 
-	<div ng-repeat="target in panel.targets" ng-controller="ElasticQueryCtrl" ng-init="init()" ng-class="{'tight-form-disabled': target.hide}" class="tight-form-container-no-item-borders" style="margin-bottom: 10px">
-		<div  class="tight-form">
-			<ul class="tight-form-list pull-right">
-				<li ng-show="parserError" class="tight-form-item">
-					<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
-						<i class="fa fa-warning"></i>
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-						<i class="fa fa-pencil"></i>
-					</a>
-				</li>
-				<li class="tight-form-item">
-					<div class="dropdown">
-						<a  class="pointer dropdown-toggle"
-							data-toggle="dropdown"
-							tabindex="1">
-							<i class="fa fa-bars"></i>
-						</a>
-						<ul class="dropdown-menu pull-right" role="menu">
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="duplicate()">
-									Duplicate
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index-1)">
-									Move up
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index+1)">
-									Move down
-								</a>
-							</li>
-						</ul>
-					</div>
-				</li>
-				<li class="tight-form-item last">
-					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-						<i class="fa fa-remove"></i>
-					</a>
-				</li>
-			</ul>
+		<li class="tight-form-item last">
+			<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+				<i class="fa fa-remove"></i>
+			</a>
+		</li>
+	</ul>
 
-			<ul class="tight-form-list">
-				<li>
-					<a  class="tight-form-item"
-						ng-click="target.hide = !target.hide; get_data();"
-						role="menuitem">
-						<i class="fa fa-eye"></i>
-					</a>
-				</li>
-			</ul>
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
+		<li>
+			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
+		</li>
+	</ul>
 
-			<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
+	<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" focus-me="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
 
-			<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Function
-				</li>
-				<li class="dropdown tight-form-item">
-					<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
-						{{target.function}}<span>(value)</span>
-					</a>
-				</li>
-			</ul>
+	<ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
+		<li class="tight-form-item query-keyword" style="width: 75px;">
+			Function
+		</li>
+		<li class="dropdown tight-form-item">
+			<a gf-dropdown="functionMenu" class="dropdown-toggle" data-toggle="dropdown">
+				{{target.function}}<span>(value)</span>
+			</a>
+		</li>
+	</ul>
 
-			<div class="clearfix"></div>
-		</div>
+	<div class="clearfix"></div>
+</div>
 
-		<div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Key Field
-				</li>
-				<li>
-					<metric-segment segment="keyFieldSegment" on-value-changed="keyFieldChanged()"></metric-segment>
-				</li>
-			</ul>
+<div class="tight-form" ng-hide="target.rawQuery">
+	<ul class="tight-form-list">
+		<li class="tight-form-item">
+			<i class="fa fa-eye invisible"></i>
+		</li>
+		<li class="tight-form-item query-keyword" style="width: 75px;">
+			Key Field
+		</li>
+		<li>
+			<metric-segment segment="keyFieldSegment" on-value-changed="keyFieldChanged()"></metric-segment>
+		</li>
+	</ul>
 
-			<div class="clearfix"></div>
-		</div>
+	<div class="clearfix"></div>
+</div>
 
-		<div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Value Field
-				</li>
-				<li>
-					<metric-segment segment="valueFieldSegment" on-value-changed="valueFieldChanged()"></metric-segment>
-				</li>
-			</ul>
+<div class="tight-form" ng-hide="target.rawQuery">
+	<ul class="tight-form-list">
+		<li class="tight-form-item">
+			<i class="fa fa-eye invisible"></i>
+		</li>
+		<li class="tight-form-item query-keyword" style="width: 75px;">
+			Value Field
+		</li>
+		<li>
+			<metric-segment segment="valueFieldSegment" on-value-changed="valueFieldChanged()"></metric-segment>
+		</li>
+	</ul>
 
-			<div class="clearfix"></div>
-		</div>
+	<div class="clearfix"></div>
+</div>
 
-		<div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
+<div class="tight-form" ng-hide="target.rawQuery">
+	<ul class="tight-form-list">
+		<li class="tight-form-item">
+			<i class="fa fa-eye invisible"></i>
+		</li>
 
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Term
-				</li>
+		<li class="tight-form-item query-keyword" style="width: 75px;">
+			Term
+		</li>
 
-				<li>
-					<metric-segment segment="termKeySegment" on-value-changed="termKeySegmentChanged()"></metric-segment>
-				</li>
+		<li>
+			<metric-segment segment="termKeySegment" on-value-changed="termKeySegmentChanged()"></metric-segment>
+		</li>
 
-				<li>
-					<span class="tight-form-item">:</span>
-				</li>
+		<li>
+			<span class="tight-form-item">:</span>
+		</li>
 
-				<li>
-					<metric-segment segment="termValueSegment" on-value-changed="termValueSegmentChanged()"></metric-segment>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
+		<li>
+			<metric-segment segment="termValueSegment" on-value-changed="termValueSegmentChanged()"></metric-segment>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
 
-		<div class="tight-form" ng-hide="target.rawQuery">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<i class="fa fa-eye invisible"></i>
-				</li>
-				<li class="tight-form-item query-keyword" style="width: 75px;">
-					Group By
-				</li>
-				<li>
-					<metric-segment segment="groupByFieldSegment" on-value-changed="groupByFieldChanged()"></metric-segment>
-				</li>
-			</ul>
+<div class="tight-form" ng-hide="target.rawQuery">
+	<ul class="tight-form-list">
+		<li class="tight-form-item">
+			<i class="fa fa-eye invisible"></i>
+		</li>
+		<li class="tight-form-item query-keyword" style="width: 75px;">
+			Group By
+		</li>
+		<li>
+			<metric-segment segment="groupByFieldSegment" on-value-changed="groupByFieldChanged()"></metric-segment>
+		</li>
+	</ul>
 
-			<div class="clearfix"></div>
-		</div>
+	<div class="clearfix"></div>
+</div>
 	</div>
 </div>
