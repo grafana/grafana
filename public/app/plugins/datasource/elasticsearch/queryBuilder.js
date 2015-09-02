@@ -3,52 +3,55 @@ define([
 function () {
   'use strict';
 
-  function ElasticQueryBuilder() {
-  }
+  function ElasticQueryBuilder() { }
 
   ElasticQueryBuilder.prototype.build = function(targets) {
     var query = {
       "aggs": {},
       "size": "$maxDataPoints"
     };
+
     var self = this;
-    targets.forEach(function(target) {
-      if (!target.hide) {
-        query["aggs"][target.termKey + "_" + target.termValue] = {
-          "filter": {
-            "and": [
-              self._buildRangeFilter(target),
-              self._buildTermFilter(target)
-            ]
-          },
-          "aggs": {
+    targets.forEach(function(target, index) {
+      if (target.hide) {
+        return;
+      }
+
+      var esQuery = {
+        "filter": {
+          "and": [
+            self._buildRangeFilter(target)
+          ]
+        },
+        "aggs": {
+          "date_histogram": {
             "date_histogram": {
-              "date_histogram": {
-                "interval": target.interval || "$interval",
-                "field": target.keyField,
-                "min_doc_count": 0,
-              },
-              "aggs": {
+              "interval": target.interval || "$interval",
+              "field": target.timestampField,
+              "min_doc_count": 0,
+            },
+            "aggs": {
+              "stats": {
                 "stats": {
-                  "stats": {
-                    "field": target.valueField
-                  }
+                  "field": target.valueField
                 }
               }
             }
           }
-        };
-        if (target.groupByField) {
-          query["aggs"][target.termKey + "_" + target.termValue]["aggs"] = {
-            "terms": {
-              "terms": {
-                "field": target.groupByField
-              },
-              "aggs": query["aggs"][target.termKey + "_" + target.termValue]["aggs"]
-            }
-          };
         }
+      };
+      if (target.groupByField) {
+        query["aggs"][target.termKey + "_" + target.termValue]["aggs"] = {
+          "terms": {
+            "terms": {
+              "field": target.groupByField
+            },
+            "aggs": query["aggs"][target.termKey + "_" + target.termValue]["aggs"]
+          }
+        };
       }
+
+      query["aggs"]['query:' + index] = esQuery;
     });
     query = JSON.stringify(query);
     return query;
@@ -56,7 +59,7 @@ function () {
 
   ElasticQueryBuilder.prototype._buildRangeFilter = function(target) {
     var filter = {"range":{}};
-    filter["range"][target.keyField] = {
+    filter["range"][target.timestampField] = {
       "gte": "$rangeFrom",
       "lte": "$rangeTo"
     };

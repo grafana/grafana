@@ -19,17 +19,9 @@ function (angular, _) {
       $scope.target.region = $scope.target.region || $scope.datasource.getDefaultRegion();
       $scope.target.errors = validateTarget();
 
-      $scope.regionSegment = $scope.getSegmentForValue($scope.target.region, 'select region');
-      $scope.namespaceSegment = $scope.getSegmentForValue($scope.target.namespace, 'select namespace');
-      $scope.metricSegment = $scope.getSegmentForValue($scope.target.metricName, 'select metric');
-    };
-
-    $scope.getSegmentForValue = function(value, fallbackText) {
-      if (value) {
-        return uiSegmentSrv.newSegment(value);
-      } else {
-        return uiSegmentSrv.newSegment({value: fallbackText, fake: true});
-      }
+      $scope.regionSegment =  uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
+      $scope.namespaceSegment = uiSegmentSrv.getSegmentForValue($scope.target.namespace, 'select namespace');
+      $scope.metricSegment = uiSegmentSrv.getSegmentForValue($scope.target.metricName, 'select metric');
     };
 
     $scope.getRegions = function() {
