@@ -33,10 +33,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
+      var queryTargets = [];
       var i, y;
 
       var allQueries = _.map(options.targets, function(target) {
         if (target.hide) { return []; }
+
+        queryTargets.push(target);
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
@@ -61,7 +64,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           var result = data.results[i];
           if (!result || !result.series) { continue; }
 
-          var alias = (options.targets[i] || {}).alias;
+          var alias = (queryTargets[i] || {}).alias;
           if (alias) {
             alias = templateSrv.replace(alias, options.scopedVars);
           }
