@@ -12,5 +12,6 @@
     "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
   },
 
-  "annotations": true
+  "annotations": true,
+  "metrics": true
 }
