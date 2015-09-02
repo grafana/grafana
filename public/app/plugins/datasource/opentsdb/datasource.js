@@ -133,7 +133,7 @@ function (angular, _, kbn) {
           && s.split("=")[1] !== "";
       });
 
-      var params = ""
+      var params = "";
       if (valid_subtags.length > 0){
         params = " AND (" + valid_subtags.join(" AND ") + ")";
       }
