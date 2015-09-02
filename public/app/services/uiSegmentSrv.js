@@ -32,6 +32,14 @@ function (angular, _) {
       this.html = options.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
     }
 
+    this.getSegmentForValue = function(value, fallbackText) {
+      if (value) {
+        return this.newSegment(value);
+      } else {
+        return this.newSegment({value: fallbackText, fake: true});
+      }
+    };
+
     this.newSelectMeasurement = function() {
       return new MetricSegment({value: 'select measurement', fake: true});
     };

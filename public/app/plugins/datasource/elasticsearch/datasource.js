@@ -138,11 +138,19 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       var queryBuilder = new ElasticQueryBuilder;
       var query = queryBuilder.build(options.targets);
       query = query.replace(/\$interval/g, options.interval);
-      query = query.replace(/\$rangeFrom/g, options.range.from);
-      query = query.replace(/\$rangeTo/g, options.range.to);
+      query = query.replace(/\$rangeFrom/g, this.translateTime(options.range.from));
+      query = query.replace(/\$rangeTo/g, this.translateTime(options.range.to));
       query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
       query = templateSrv.replace(query, options.scopedVars);
       return this._post('/_search?search_type=count', query).then(this._getTimeSeries);
+    };
+
+    ElasticDatasource.prototype.translateTime = function(date) {
+      if (_.isString(date)) {
+        return date;
+      }
+
+      return date.toJSON();
     };
 
     ElasticDatasource.prototype._getTimeSeries = function(results) {
@@ -167,6 +175,26 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         }
       }
       return { data: data };
+    };
+
+    ElasticDatasource.prototype.metricFindQuery = function(query) {
+      var region;
+      var namespace;
+      var metricName;
+
+      var transformSuggestData = function(suggestData) {
+        return _.map(suggestData, function(v) {
+          return { text: v };
+        });
+      };
+
+      var d = $q.defer();
+
+      var regionQuery = query.match(/^region\(\)/);
+      if (regionQuery) {
+        d.resolve(transformSuggestData(this.performSuggestRegion()));
+        return d.promise;
+      }
     };
 
     return ElasticDatasource;
