@@ -209,7 +209,7 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`.
+options are `Read Only Editor`, `Editor` and `Admin`.
 
 <hr>
 
@@ -228,7 +228,7 @@ to be updated to match the new name.
 ### org_role
 
 Specify role for anonymous users. Defaults to `Viewer`, other valid
-options are `Editor` and `Admin`.
+options are `Read Only Editor`, `Editor` and `Admin`.
 
 ## [auth.github]
 
