@@ -136,7 +136,7 @@ function (angular, _, InfluxQueryBuilder) {
 
         if (addTemplateVars) {
           _.each(templateSrv.variables, function(variable) {
-            segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '/', expandable: true }));
+            segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
           });
         }
 
