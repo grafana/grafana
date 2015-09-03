@@ -126,10 +126,12 @@ define([
                       left,
                       top;
 
-                  positionPointerOffset = $(positionPointer).offset();
-                  left = positionPointerOffset.left;
-                  top = positionPointerOffset.top;
-                  $($element).offset({top : top, left : left});
+                  positionPointerOffset = positionPointer.offset();
+                  if (positionPointerOffset != null) {
+                    left = positionPointerOffset.left;
+                    top = positionPointerOffset.top;
+                    $($element).offset({top : top, left : left});
+                  }
                 }, 0);
               }
             });
