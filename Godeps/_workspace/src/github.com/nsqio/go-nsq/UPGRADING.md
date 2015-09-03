@@ -10,9 +10,9 @@ We've learned a lot over the last 2 years and we wanted `go-nsq` to reflect the 
 had working with the library as well as the general Go conventions and best practices we picked up
 along the way.
 
-The diff can be seen via: https://github.com/bitly/go-nsq/compare/v0.3.7...HEAD
+The diff can be seen via: https://github.com/nsqio/go-nsq/compare/v0.3.7...HEAD
 
-The bulk of the refactoring came via: https://github.com/bitly/go-nsq/pull/30
+The bulk of the refactoring came via: https://github.com/nsqio/go-nsq/pull/30
 
 #### Naming
 

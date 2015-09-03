@@ -47,7 +47,7 @@ release no longer compiles with Go `1.0.x`.
  * #91 - add consumer `DisconnectFrom*`
  * #87 - allow `heartbeat_interval` and `output_buffer_timeout` to be disabled
  * #86 - pluggable `nsqlookupd` behaviors
- * #83 - send `RDY` before `FIN`/`REQ` (forwards compatibility with bitly/nsq#404)
+ * #83 - send `RDY` before `FIN`/`REQ` (forwards compatibility with nsqio/nsq#404)
  * #82 - fix panic when conn isn't assigned
  * #75/#76 - minor config related bug fixes
  * #75/#77/#78 - add `tls-cert` and `tls-key` config options

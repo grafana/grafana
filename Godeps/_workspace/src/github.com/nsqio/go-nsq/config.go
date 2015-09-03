@@ -45,9 +45,6 @@ type ExponentialStrategy struct {
 func (s *ExponentialStrategy) Calculate(attempt int) time.Duration {
 	backoffDuration := s.cfg.BackoffMultiplier *
 		time.Duration(math.Pow(2, float64(attempt)))
-	if backoffDuration > s.cfg.MaxBackoffDuration {
-		backoffDuration = s.cfg.MaxBackoffDuration
-	}
 	return backoffDuration
 }
 
@@ -75,9 +72,6 @@ func (s *FullJitterStrategy) Calculate(attempt int) time.Duration {
 
 	backoffDuration := s.cfg.BackoffMultiplier *
 		time.Duration(math.Pow(2, float64(attempt)))
-	if backoffDuration > s.cfg.MaxBackoffDuration {
-		backoffDuration = s.cfg.MaxBackoffDuration
-	}
 	return time.Duration(s.rng.Intn(int(backoffDuration)))
 }
 
@@ -544,7 +538,7 @@ func coerce(v interface{}, typ reflect.Type) (reflect.Value, error) {
 		v, err = coerceBackoffStrategy(v)
 	default:
 		v = nil
-		err = errors.New(fmt.Sprintf("invalid type %s", typ.String()))
+		err = fmt.Errorf("invalid type %s", typ.String())
 	}
 	return valueTypeCoerce(v, typ), err
 }
@@ -576,10 +570,8 @@ func coerceString(v interface{}) (string, error) {
 		return fmt.Sprintf("%d", v), nil
 	case float32, float64:
 		return fmt.Sprintf("%f", v), nil
-	default:
-		return fmt.Sprintf("%s", v), nil
 	}
-	return "", errors.New("invalid value type")
+	return fmt.Sprintf("%s", v), nil
 }
 
 func coerceDuration(v interface{}) (time.Duration, error) {

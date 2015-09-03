@@ -465,7 +465,8 @@ func (c *Conn) auth(secret string) error {
 		return err
 	}
 
-	c.log(LogLevelInfo, "Auth accepted. Identity: %q %s Permissions: %d", resp.Identity, resp.IdentityUrl, resp.PermissionCount)
+	c.log(LogLevelInfo, "Auth accepted. Identity: %q %s Permissions: %d",
+		resp.Identity, resp.IdentityUrl, resp.PermissionCount)
 
 	return nil
 }

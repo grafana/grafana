@@ -1,4 +1,4 @@
-// nsq is the official Go package for NSQ (http://nsq.io/)
+// Package nsq is the official Go package for NSQ (http://nsq.io/)
 //
 // It provides high-level Consumer and Producer types as well as low-level
 // functions to communicate over the NSQ protocol

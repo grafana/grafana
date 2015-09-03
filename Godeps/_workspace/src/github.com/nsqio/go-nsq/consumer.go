@@ -335,7 +335,7 @@ func (r *Consumer) ConnectToNSQLookupd(addr string) error {
 	return nil
 }
 
-// ConnectToNSQLookupd adds multiple nsqlookupd address to the list for this Consumer instance.
+// ConnectToNSQLookupds adds multiple nsqlookupd address to the list for this Consumer instance.
 //
 // If adding the first address it initiates an HTTP request to discover nsqd
 // producers for the configured topic.
@@ -462,7 +462,7 @@ func (r *Consumer) queryLookupd() {
 		return
 	}
 
-	nsqdAddrs := make([]string, 0)
+	var nsqdAddrs []string
 	for _, producer := range data.Producers {
 		broadcastAddress := producer.BroadcastAddress
 		port := producer.TCPPort
@@ -482,7 +482,7 @@ func (r *Consumer) queryLookupd() {
 	}
 }
 
-// ConnectToNSQD takes multiple nsqd addresses to connect directly to.
+// ConnectToNSQDs takes multiple nsqd addresses to connect directly to.
 //
 // It is recommended to use ConnectToNSQLookupd so that topics are discovered
 // automatically.  This method is useful when you want to connect to local instance.
@@ -622,7 +622,7 @@ func (r *Consumer) DisconnectFromNSQLookupd(addr string) error {
 	}
 
 	if len(r.lookupdHTTPAddrs) == 1 {
-		return errors.New(fmt.Sprintf("cannot disconnect from only remaining nsqlookupd HTTP address %s", addr))
+		return fmt.Errorf("cannot disconnect from only remaining nsqlookupd HTTP address %s", addr)
 	}
 
 	r.lookupdHTTPAddrs = append(r.lookupdHTTPAddrs[:idx], r.lookupdHTTPAddrs[idx+1:]...)
@@ -732,7 +732,7 @@ func (r *Consumer) onConnClose(c *Conn) {
 		// try to reconnect after a bit
 		go func(addr string) {
 			for {
-				r.log(LogLevelInfo, "(%s) re-connecting in %.04f seconds...", addr, r.config.LookupdPollInterval)
+				r.log(LogLevelInfo, "(%s) re-connecting in %s", addr, r.config.LookupdPollInterval)
 				time.Sleep(r.config.LookupdPollInterval)
 				if atomic.LoadInt32(&r.stopFlag) == 1 {
 					break
@@ -794,6 +794,10 @@ func (r *Consumer) startStopContinueBackoff(conn *Conn, signal backoffSignal) {
 	} else if r.backoffCounter > 0 {
 		// start or continue backoff
 		backoffDuration := r.config.BackoffStrategy.Calculate(int(backoffCounter))
+
+		if backoffDuration > r.config.MaxBackoffDuration {
+			backoffDuration = r.config.MaxBackoffDuration
+		}
 
 		r.log(LogLevelWarning, "backing off for %.04f seconds (backoff level %d), setting all to RDY 0",
 			backoffDuration.Seconds(), backoffCounter)

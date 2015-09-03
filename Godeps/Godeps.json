@@ -172,16 +172,27 @@
 			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
 		},
 		{
-			"ImportPath": "github.com/rainycape/unidecode",
-			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
+			"ImportPath": "github.com/mreiferson/go-snappystream",
+			"Comment": "v0.2.3",
+			"Rev": "028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504"
+		},
+		{
+			"ImportPath": "github.com/nsqio/go-nsq",
+			"Comment": "v1.0.4-16-g04ffac3",
+			"Rev": "04ffac3a59c9cb94c3eed73ec965d87762bcebe9"
 		},
 		{
 			"ImportPath": "github.com/philhofer/fwd",
 			"Rev": "4dbda5e2904d044d23cc4bef84e8360c458caf7f"
 		},
 		{
-			"ImportPath": "github.com/satori/go.uuid",
-			"Rev": "afe1e2ddf0f05b7c29d388a3f8e76cb15c2231ca"
+			"ImportPath": "github.com/raintank/raintank-metric/schema",
+			"Comment": "pkg-0.1.0-1440571003ubuntu1-50-g10c2352",
+			"Rev": "10c2352c3d15f9c11e52ed70d8618d2032dbf7f8"
+		},
+		{
+			"ImportPath": "github.com/rainycape/unidecode",
+			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/assertions",
@@ -229,10 +240,6 @@
 			"ImportPath": "gopkg.in/redis.v2",
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
-		},
-    {
-      "ImportPath": "github.com/raintank/raintank-metric/schema",
-      "Rev": "7f7af323099450763616b602b7ee900a62736332"
-    }
+		}
 	]
 }
