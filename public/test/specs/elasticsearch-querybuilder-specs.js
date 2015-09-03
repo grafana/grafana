@@ -28,7 +28,6 @@ define([
       var aggs = query.aggs.histogram;
     });
 
-
   });
 
 });

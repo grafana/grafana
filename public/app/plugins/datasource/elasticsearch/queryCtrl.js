@@ -109,7 +109,7 @@ function (angular, _, ElasticQueryBuilder) {
       if (segment.type === 'agg')  {
         var nextSegment = $scope.selectSegments[index + 1];
 
-        if (!segment.reqField && nextSegment && nextSegment.type === 'field') {
+        if (segment.value === 'count' && nextSegment && nextSegment.type === 'field') {
           $scope.selectSegments.splice(index + 1, 1);
         } else if (!nextSegment || nextSegment.type !== 'field') {
           $scope.selectSegments.splice(index + 1, 0, uiSegmentSrv.newSegment({value: 'select field', fake: true, type: 'field'}));
