@@ -72,20 +72,6 @@ function () {
     return query;
   };
 
-  ElasticQueryBuilder.prototype._buildRangeFilter = function(target) {
-    var filter = {"range":{}};
-    filter["range"][target.timestampField] = {
-      "gte": "$rangeFrom",
-      "lte": "$rangeTo"
-    };
-    return filter;
-  };
-
-  ElasticQueryBuilder.prototype._buildTermFilter = function(target) {
-    var filter = {"term":{}};
-    filter["term"][target.termKey] = target.termValue;
-    return filter;
-  };
-
   return ElasticQueryBuilder;
+
 });
