@@ -17,12 +17,13 @@ define([
 
     describe('When processing es response', function() {
 
-      describe('simple query', function() {
+      describe('simple query and count', function() {
         var result;
 
         beforeEach(function() {
           result = ctx.ds._processTimeSeries([{
             refId: 'A',
+            select: [{agg: 'count'}],
             groupByFields: [],
           }], {
             responses: [{
@@ -53,11 +54,58 @@ define([
 
       });
 
+      describe('simple query count & avg aggregation', function() {
+        var result;
+
+        beforeEach(function() {
+          result = ctx.ds._processTimeSeries([{
+            refId: 'A',
+            select: [{agg: 'count'}, {agg: 'avg', field: 'value'}],
+            groupByFields: [],
+          }], {
+            responses: [{
+              aggregations: {
+                histogram: {
+                  buckets: [
+                    {
+                      value: {value: 88},
+                      doc_count: 10,
+                      key: 1000
+                    },
+                    {
+                      value: {value: 99},
+                      doc_count: 15,
+                      key: 2000
+                    }
+                  ]
+                }
+              }
+            }]
+          })
+        });
+
+        it('should return 2 series', function() {
+          expect(result.data.length).to.be(2);
+          expect(result.data[0].datapoints.length).to.be(2);
+          expect(result.data[0].datapoints[0][0]).to.be(10);
+          expect(result.data[0].datapoints[0][1]).to.be(1000);
+
+          expect(result.data[1].target).to.be("A value");
+          expect(result.data[1].datapoints[0][0]).to.be(88);
+          expect(result.data[1].datapoints[1][0]).to.be(99);
+        });
+
+      });
+
       describe('single group by query', function() {
         var result;
 
         beforeEach(function() {
-          result = ctx.ds._processTimeSeries([{refId: 'A', groupByFields: [{field: 'host' }]}], {
+          result = ctx.ds._processTimeSeries([{
+            refId: 'A',
+            select: [{agg: 'count'}],
+            groupByFields: [{field: 'host' }]
+          }], {
             responses: [{
               aggregations: {
                 histogram: {
@@ -92,8 +140,8 @@ define([
         it('should return 2 series', function() {
           expect(result.data.length).to.be(2);
           expect(result.data[0].datapoints.length).to.be(2);
-          expect(result.data[0].target).to.be('server1');
-          expect(result.data[1].target).to.be('server2');
+          expect(result.data[0].target).to.be('A server1 count');
+          expect(result.data[1].target).to.be('A server2 count');
         });
       });
 
@@ -101,7 +149,11 @@ define([
         var result;
 
         beforeEach(function() {
-          result = ctx.ds._processTimeSeries([{refId: 'A', groupByFields: [{field: 'host'}, {field: 'site'}]}], {
+          result = ctx.ds._processTimeSeries([{
+              refId: 'A',
+              select: [{agg: 'count'}],
+              groupByFields: [{field: 'host'}, {field: 'site'}]
+            }], {
             responses: [{
               aggregations: {
                 histogram: {
@@ -170,10 +222,10 @@ define([
         it('should return 2 series', function() {
           expect(result.data.length).to.be(4);
           expect(result.data[0].datapoints.length).to.be(2);
-          expect(result.data[0].target).to.be('server1 backend');
-          expect(result.data[1].target).to.be('server1 frontend');
-          expect(result.data[2].target).to.be('server2 backend');
-          expect(result.data[3].target).to.be('server2 frontend');
+          expect(result.data[0].target).to.be('A server1 backend count');
+          expect(result.data[1].target).to.be('A server1 frontend count');
+          expect(result.data[2].target).to.be('A server2 backend count');
+          expect(result.data[3].target).to.be('A server2 frontend count');
         });
       });
 

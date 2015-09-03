@@ -25,7 +25,7 @@ define([
         groupByFields: [],
       }, 100, 1000);
 
-      expect(query.query.filtered.filter.bool.must[0].range["@timestamp"].gte).to.be(100);
+      var aggs = query.aggs.histogram;
     });
 
 

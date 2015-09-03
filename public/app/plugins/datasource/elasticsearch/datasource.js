@@ -174,29 +174,41 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
-    ElasticDatasource.prototype._processBuckets = function(buckets, groupByFields, series, level, parentName, parentTime) {
+    ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName, parentTime) {
       var points = [];
-      var groupBy = groupByFields[level];
+      var groupBy = target.groupByFields[level];
 
       for (var i = 0; i < buckets.length; i++) {
         var bucket = buckets[i];
 
         if (groupBy) {
-          var seriesName = level > 0 ? bucket.key : '';
+          var seriesName = level > 0 ? parentName + ' ' + bucket.key : parentName;
           var time = parentTime || bucket.key;
-          this._processBuckets(bucket[groupBy.field].buckets, groupByFields, series, level+1, seriesName, time)
+          this._processBuckets(bucket[groupBy.field].buckets, target, series, level+1, seriesName, time)
         } else {
-          var seriesName = parentName;
 
-          if (level > 0) {
-            if (seriesName) { seriesName += " "; }
-            seriesName += bucket.key;
-          } else {
-            parentTime = bucket.key;
+          for (var y = 0; y < target.select.length; y++) {
+            var select = target.select[y];
+            var seriesName = parentName;
+            var value;
+
+            if (level > 0) {
+              seriesName +=  ' ' + bucket.key;
+            } else {
+              parentTime = bucket.key;
+            }
+
+            if (select.field) {
+              seriesName += ' ' + select.field;
+              value = bucket[select.field].value;
+            } else {
+              seriesName += ' count';
+              value = bucket.doc_count;
+            }
+
+            var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
+            serie.datapoints.push([value, parentTime]);
           }
-
-          var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
-          serie.datapoints.push([bucket.doc_count, parentTime]);
         }
       }
     };
@@ -215,7 +227,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         var points = [];
         var querySeries = {}
 
-        this._processBuckets(buckets, target.groupByFields, querySeries, 0);
+        this._processBuckets(buckets, target, querySeries, 0, target.refId);
 
         _.each(querySeries, function(value) {
           series.push(value);
