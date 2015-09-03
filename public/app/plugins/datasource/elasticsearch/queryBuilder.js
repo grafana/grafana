@@ -5,54 +5,56 @@ function () {
 
   function ElasticQueryBuilder() { }
 
-  ElasticQueryBuilder.prototype.build = function(targets) {
+  ElasticQueryBuilder.prototype.build = function(target, timeFrom, timeTo) {
+    if (target.rawQuery) {
+      return angular.fromJson(target.rawJson);
+    }
+
     var query = {
-      "aggs": {},
-      "size": "$maxDataPoints"
-    };
-
-    var self = this;
-    targets.forEach(function(target, index) {
-      if (target.hide) {
-        return;
-      }
-
-      var esQuery = {
-        "filter": {
-          "and": [
-            self._buildRangeFilter(target)
-          ]
-        },
-        "aggs": {
-          "date_histogram": {
-            "date_histogram": {
-              "interval": target.interval || "$interval",
-              "field": target.timestampField,
-              "min_doc_count": 0,
-            },
-            "aggs": {
-              "stats": {
-                "stats": {
-                  "field": target.valueField
+      "size": 0,
+      "query": {
+        "filtered": {
+          "query": {
+            "query_string": {
+              "analyze_wildcard": true,
+              "query": target.query || '*' ,
+            }
+          },
+          "filter": {
+            "bool": {
+              "must": [
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": timeFrom,
+                      "lte": timeTo
+                    }
+                  }
                 }
-              }
+              ],
+              "must_not": [
+
+              ]
             }
           }
         }
-      };
-      if (target.groupByField) {
-        query["aggs"][target.termKey + "_" + target.termValue]["aggs"] = {
-          "terms": {
-            "terms": {
-              "field": target.groupByField
-            },
-            "aggs": query["aggs"][target.termKey + "_" + target.termValue]["aggs"]
-          }
-        };
       }
+    };
 
-      query["aggs"]['query:' + index] = esQuery;
-    });
+    query.aggs = {
+      "date_histogram": {
+        "date_histogram": {
+          "interval": target.interval || "$interval",
+          "field": target.timeField,
+          "min_doc_count": 0,
+          "extended_bounds": {
+            "min": timeFrom,
+            "max": timeTo
+          }
+        }
+      }
+    };
+
     query = JSON.stringify(query);
     return query;
   };
