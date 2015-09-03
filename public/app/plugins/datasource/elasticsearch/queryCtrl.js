@@ -23,18 +23,25 @@ function (angular, _, ElasticQueryBuilder) {
       target.function = target.function || 'mean';
       target.timeField = target.timeField || '@timestamp';
       target.select = target.select || [{ agg: 'count' }];
+      target.groupByFields = target.groupByFields || [];
 
       $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
-      $scope.groupByFieldSegment = uiSegmentSrv.getSegmentForValue(target.groupByField, 'add group by');
+
+      $scope.groupBySegments = _.map(target.groupByFields, function(group) {
+        return uiSegmentSrv.newSegment(group.field);
+      });
 
       $scope.selectSegments = _.map(target.select, function(select) {
         return uiSegmentSrv.newSegment(select.agg);
       });
+
+      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
+      $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
+      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
     };
 
     $scope.getFields = function() {
-      return $scope.datasource.metricFindQuery('fields()')
-        .then($scope.transformToSegments(true));
+      return $scope.datasource.metricFindQuery('fields()').then($scope.transformToSegments(true));
     };
 
     $scope.transformToSegments = function(addTemplateVars) {
@@ -51,6 +58,36 @@ function (angular, _, ElasticQueryBuilder) {
 
         return segments;
       };
+    };
+
+    $scope.getGroupByFields = function(segment) {
+      return $scope.datasource.metricFindQuery('fields()').then($scope.transformToSegments(false))
+      .then(function(results) {
+        if (segment.type !== 'plus-button') {
+          results.splice(0, 0, angular.copy($scope.removeGroupBySegment));
+        }
+        return results;
+      })
+      .then(null, $scope.handleQueryError);
+    };
+
+    $scope.groupByChanged = function(segment, index) {
+      if (segment.value === $scope.removeGroupBySegment.value) {
+        $scope.target.groupByFields.splice(index, 1);
+        $scope.groupBySegments.splice(index, 1);
+        $scope.$parent.get_data();
+        return;
+      }
+
+      if (index === $scope.groupBySegments.length-1) {
+        $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
+      }
+
+      segment.type = 'group-by-key';
+      segment.fake = false;
+
+      $scope.target.groupByFields[index] = {field: segment.value};
+      $scope.$parent.get_data();
     };
 
     $scope.valueFieldChanged = function() {
@@ -86,19 +123,6 @@ function (angular, _, ElasticQueryBuilder) {
     $scope.handleQueryError = function(err) {
       $scope.parserError = err.message || 'Failed to issue metric query';
       return [];
-    };
-
-    $scope.transformToSegments = function(results) {
-      return _.map(results, function(segment) {
-        return new MetricSegment({ value: segment.text, expandable: segment.expandable });
-      });
-    };
-
-    $scope.addTemplateVariableSegments = function(segments) {
-      _.each(templateSrv.variables, function(variable) {
-        segments.unshift(new MetricSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
-      });
-      return segments;
     };
 
     $scope.toggleQueryMode = function () {
