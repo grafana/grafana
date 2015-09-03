@@ -58,9 +58,9 @@ func (job Job) StoreResult(res m.CheckEvalResult) {
 			Unit:       "state",
 			Time:       job.LastPointTs.Unix(),
 			TargetType: "gauge",
-			Tags: map[string]string{
-				"endpoint_id": fmt.Sprintf("%d", job.EndpointId),
-				"monitor_id":  fmt.Sprintf("%d", job.MonitorId),
+			Tags: []string{
+				fmt.Sprintf("endpoint_id:%d", job.EndpointId),
+				fmt.Sprintf("monitor_id:%d", job.MonitorId),
 			},
 		}
 	}
