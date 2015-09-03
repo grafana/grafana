@@ -147,7 +147,11 @@ function (angular, _, InfluxQueryBuilder) {
 
         if (addTemplateVars) {
           _.each(templateSrv.variables, function(variable) {
+<<<<<<< 069619ee14f2f3f8425dedb43ef12001c70c7eed
             segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '/', expandable: true }));
+=======
+            segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+>>>>>>> fix(influxdb): fixed influxdb template var filter suggestion, fixes #2666
           });
         }
 
