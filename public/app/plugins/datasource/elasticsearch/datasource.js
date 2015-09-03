@@ -172,6 +172,8 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       return date.getTime();
     };
 
+    // this is quite complex
+    // neeed to recurise down the nested buckets to build series
     ElasticDatasource.prototype._processBuckets = function(buckets, groupByFields, series, level, parentName, parentTime) {
       var points = [];
       var groupBy = groupByFields[level];
@@ -180,13 +182,14 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         var bucket = buckets[i];
 
         if (groupBy) {
-          var seriesName = "";
+          var seriesName = level > 0 ? bucket.key : '';
           var time = parentTime || bucket.key;
           this._processBuckets(bucket[groupBy.field].buckets, groupByFields, series, level+1, seriesName, time)
         } else {
           var seriesName = parentName;
 
           if (level > 0) {
+            if (seriesName) { seriesName += " "; }
             seriesName += bucket.key;
           } else {
             parentTime = bucket.key;
@@ -202,12 +205,17 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       var series = [];
 
       for (var i = 0; i < results.responses.length; i++) {
-        var buckets = results.responses[i].aggregations.histogram.buckets;
+        var response = results.responses[i];
+        if (response.error) {
+          throw { message: response.error };
+        }
+
+        var buckets = response.aggregations.histogram.buckets;
         var target = targets[i];
         var points = [];
         var querySeries = {}
 
-        this._processBuckets(buckets, target.groupByFields, querySeries, 0, target.refId);
+        this._processBuckets(buckets, target.groupByFields, querySeries, 0);
 
         _.each(querySeries, function(value) {
           series.push(value);

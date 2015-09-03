@@ -57,14 +57,7 @@ define([
         var result;
 
         beforeEach(function() {
-          result = ctx.ds._processTimeSeries([
-            {
-              refId: 'A',
-              groupByFields: [
-                {field: 'host' }
-              ]
-            }
-          ], {
+          result = ctx.ds._processTimeSeries([{refId: 'A', groupByFields: [{field: 'host' }]}], {
             responses: [{
               aggregations: {
                 histogram: {
@@ -103,6 +96,87 @@ define([
           expect(result.data[1].target).to.be('server2');
         });
       });
+
+      describe('two group by query', function() {
+        var result;
+
+        beforeEach(function() {
+          result = ctx.ds._processTimeSeries([{refId: 'A', groupByFields: [{field: 'host'}, {field: 'site'}]}], {
+            responses: [{
+              aggregations: {
+                histogram: {
+                  buckets: [
+                    {
+                      host: {
+                        buckets: [
+                           {
+                             site: {
+                               buckets: [
+                                 {doc_count: 3, key: 'backend'},
+                                 {doc_count: 1, key: 'frontend'},
+                               ],
+                             },
+                             doc_count: 4, key: 'server1'
+                           },
+                           {
+                             site: {
+                               buckets: [
+                                 {doc_count: 3, key: 'backend'},
+                                 {doc_count: 1, key: 'frontend'},
+                               ],
+                             },
+                             doc_count: 6, key: 'server2'
+                           },
+                        ]
+                      },
+                      doc_count: 10,
+                      key: 1000
+                    },
+                    {
+                      host: {
+                        buckets: [
+                          {
+                            site: {
+                               buckets: [
+                                 {doc_count: 3, key: 'backend'},
+                                 {doc_count: 1, key: 'frontend'},
+                               ],
+                            },
+                            doc_count: 4,
+                            key: 'server1'
+                          },
+                          {
+                            site: {
+                               buckets: [
+                                 {doc_count: 3, key: 'backend'},
+                                 {doc_count: 1, key: 'frontend'},
+                               ],
+                            },
+                            doc_count: 6,
+                            key: 'server2'
+                          },
+                        ]
+                      },
+                      doc_count: 15,
+                      key: 2000
+                    }
+                  ]
+                }
+              }
+            }]
+          })
+        });
+
+        it('should return 2 series', function() {
+          expect(result.data.length).to.be(4);
+          expect(result.data[0].datapoints.length).to.be(2);
+          expect(result.data[0].target).to.be('server1 backend');
+          expect(result.data[1].target).to.be('server1 frontend');
+          expect(result.data[2].target).to.be('server2 backend');
+          expect(result.data[3].target).to.be('server2 frontend');
+        });
+      });
+
     });
   });
 });
