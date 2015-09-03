@@ -52,23 +52,23 @@ function () {
             "max": timeTo
           }
         }
-      }
+      },
     };
 
-    var nestedAggs = {};
+    var nestedAggs = query.aggs.histogram;
 
-    if (target.groupByFields && target.groupByFields.length > 0) {
-      var field = target.groupByFields[0].field;
-      nestedAggs[field] = {
-        terms:  {
-          field: field,
-        }
-      }
+    for (var i = 0; i < target.groupByFields.length; i++) {
+      var field = target.groupByFields[i].field;
+      var aggs = {terms: {field: field}};
+
+      nestedAggs.aggs = {};
+      nestedAggs.aggs[field] = aggs;
+      nestedAggs = aggs;
     }
 
-    query.aggs.histogram.aggs = nestedAggs;
+    console.log(angular.toJson(query, true));
 
-    query = JSON.stringify(query);
+    query = angular.toJson(query);
     return query;
   };
 
