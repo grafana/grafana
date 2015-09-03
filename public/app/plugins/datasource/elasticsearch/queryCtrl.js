@@ -22,7 +22,7 @@ function (angular, _, ElasticQueryBuilder) {
       var target = $scope.target;
       target.function = target.function || 'mean';
       target.timeField = target.timeField || '@timestamp';
-      target.select = target.select || [{ agg: 'Count' }];
+      target.select = target.select || [{ agg: 'count' }];
       target.groupByFields = target.groupByFields || [];
 
       $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
@@ -31,8 +31,16 @@ function (angular, _, ElasticQueryBuilder) {
         return uiSegmentSrv.newSegment(group.field);
       });
 
+      $scope.initSelectSegments();
+      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
+      $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
+      $scope.resetSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- reset --'});
+      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
+    };
+
+    $scope.initSelectSegments = function() {
       $scope.selectSegments = [];
-      _.each(target.select, function(select) {
+      _.each($scope.target.select, function(select) {
         if ($scope.selectSegments.length > 0) {
           $scope.selectSegments.push(uiSegmentSrv.newCondition(" and "));
         }
@@ -44,10 +52,7 @@ function (angular, _, ElasticQueryBuilder) {
         }
       });
 
-      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
       $scope.selectSegments.push(uiSegmentSrv.newPlusButton());
-      $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
-      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
     };
 
     $scope.getSelectSegments = function(segment, index) {
@@ -55,11 +60,14 @@ function (angular, _, ElasticQueryBuilder) {
         var options = [
           uiSegmentSrv.newSegment({value: 'count', type: 'agg'}),
           uiSegmentSrv.newSegment({value: 'min',   type: 'agg', reqField: true}),
-          uiSegmentSrv.newSegment({value: 'count', type: 'agg', reqField: true}),
+          uiSegmentSrv.newSegment({value: 'max',   type: 'agg', reqField: true}),
           uiSegmentSrv.newSegment({value: 'avg',   type: 'agg', reqField: true}),
         ];
-        if (index > 0) {
+        if (segment.type !== 'plus-button' && $scope.selectSegments.length > 3) {
           options.splice(0, 0, angular.copy($scope.removeSelectSegment));
+        }
+        if (index === 0 && $scope.selectSegments.length > 2) {
+          options.splice(0, 0, angular.copy($scope.resetSelectSegment));
         }
         return $q.when(options);
       }
@@ -70,17 +78,28 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.selectChanged = function(segment, index) {
+      // reset
+      if (segment.value === $scope.resetSelectSegment.value) {
+        $scope.target.select = [{ agg: 'count' }];
+        $scope.initSelectSegments();
+        $scope.get_data();
+        return;
+      }
+
+      // remove this select field
       if (segment.value === $scope.removeSelectSegment.value) {
         var nextSegment = $scope.selectSegments[index + 1];
         var remove = 2;
         if (nextSegment && nextSegment.type === 'field') {
           remove += 1;
         }
-        $scope.selectSegments.splice(index-1, remove);
+        $scope.selectSegments.splice(Math.max(index-1, 0), remove);
         $scope.rebuildTargetSelects();
+        $scope.get_data();
         return;
       }
 
+      // add new
       if (segment.type === 'plus-button' && index > 0) {
         $scope.selectSegments.splice(index, 0, uiSegmentSrv.newCondition(' And '));
         segment.type = 'agg';
@@ -102,6 +121,7 @@ function (angular, _, ElasticQueryBuilder) {
       }
 
       $scope.rebuildTargetSelects();
+      $scope.get_data();
     };
 
     $scope.rebuildTargetSelects = function() {
@@ -110,13 +130,14 @@ function (angular, _, ElasticQueryBuilder) {
         var segment = $scope.selectSegments[i];
         var select = {agg: segment.value };
 
-        if (segment.type === 'agg' && segment.reqField) {
+        if (segment.type === 'agg' && segment.value !== 'count') {
           select.field = $scope.selectSegments[i+1].value;
           i += 2;
         } else {
           i += 1;
         }
 
+        if (select.field === 'select field') { continue; }
         $scope.target.select.push(select);
       };
     };
