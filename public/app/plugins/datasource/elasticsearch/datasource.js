@@ -149,7 +149,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
         var esQuery = queryBuilder.build(target, timeFrom, timeTo);
         payload += header + '\n';
-        payload += esQuery + '\n';
+        payload += angular.toJson(esQuery) + '\n';
 
         sentTargets.push(target);
       });
@@ -172,7 +172,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       return date.getTime();
     };
 
-    // this is quite complex
+    // This is quite complex
     // neeed to recurise down the nested buckets to build series
     ElasticDatasource.prototype._processBuckets = function(buckets, groupByFields, series, level, parentName, parentTime) {
       var points = [];

@@ -153,6 +153,7 @@ require([
     'specs/opentsdbDatasource-specs',
     'specs/cloudwatch-datasource-specs',
     'specs/elasticsearch-specs',
+    'specs/elasticsearch-querybuilder-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

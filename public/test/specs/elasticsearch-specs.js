@@ -97,7 +97,7 @@ define([
         });
       });
 
-      describe('two group by query', function() {
+      describe('group by query 2 fields', function() {
         var result;
 
         beforeEach(function() {
