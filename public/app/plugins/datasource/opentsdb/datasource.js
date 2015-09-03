@@ -146,8 +146,17 @@ function (angular, _, kbn) {
     OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/tagk/' + metric).then(function(result) {
-        return result.data;
+      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
+        result = result.data.results;
+        var tagks = [];
+        _.each(result, function(r) {
+          _.each(r.tags, function(tagv, tagk) {
+            if(tagks.indexOf(tagk) === -1) {
+              tagks.push(tagk);
+            }
+          });
+        });
+        return tagks;
       });
     };
 
