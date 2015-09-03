@@ -7,10 +7,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 // Job is a job for an alert execution
@@ -31,11 +32,10 @@ type Job struct {
 	Definition      CheckDef
 	GeneratedAt     time.Time
 	LastPointTs     time.Time
-	StoreMetricFunc func(m *m.MetricDefinition) `json:"-"`
-	AssertMinSeries int                         // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
-	AssertStart     time.Time                   // to verify timestamps in response
-	AssertStep      int                         // to verify step duration
-	AssertSteps     int                         // to verify during execution this many points are included
+	AssertMinSeries int       // to verify during execution at least this many series are returned (would be nice at some point to include actual number of collectors)
+	AssertStart     time.Time // to verify timestamps in response
+	AssertStep      int       // to verify step duration
+	AssertSteps     int       // to verify during execution this many points are included
 }
 
 func (job Job) String() string {
@@ -43,36 +43,31 @@ func (job Job) String() string {
 }
 
 func (job Job) StoreResult(res m.CheckEvalResult) {
-	if job.StoreMetricFunc == nil {
-		return
-	}
 	if !setting.WriteIndividualAlertResults {
 		return
 	}
-	metrics := make([]*m.MetricDefinition, 3)
+	metrics := make([]*schema.MetricData, 3)
 	metricNames := [3]string{"ok_state", "warn_state", "error_state"}
 	for pos, state := range metricNames {
-		metrics[pos] = &m.MetricDefinition{
-			OrgId:      job.OrgId,
+		metrics[pos] = &schema.MetricData{
+			OrgId:      int(job.OrgId),
 			Name:       fmt.Sprintf("health.%s.%s.%s", job.EndpointSlug, strings.ToLower(job.MonitorTypeName), state),
 			Metric:     fmt.Sprintf("health.%s.%s", strings.ToLower(job.MonitorTypeName), state),
-			Interval:   job.Freq,
+			Interval:   int(job.Freq),
 			Value:      0.0,
 			Unit:       "state",
 			Time:       job.LastPointTs.Unix(),
 			TargetType: "gauge",
-			Extra: map[string]interface{}{
-				"endpoint_id": job.EndpointId,
-				"monitor_id":  job.MonitorId,
+			Tags: []string{
+				fmt.Sprintf("endpoint_id:%d", job.EndpointId),
+				fmt.Sprintf("monitor_id:%d", job.MonitorId),
 			},
 		}
 	}
 	if int(res) >= 0 {
 		metrics[int(res)].Value = 1.0
 	}
-	for _, m := range metrics {
-		job.StoreMetricFunc(m)
-	}
+	metricpublisher.Publish(metrics)
 }
 
 // getJobs retrieves all jobs for which lastPointAt % their freq == their offset.
@@ -88,7 +83,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 
 	jobs := make([]*Job, 0)
 	for _, monitor := range query.Result {
-		job := buildJobForMonitor(monitor, lastPointAt)
+		job := buildJobForMonitor(monitor)
 		if job != nil {
 			jobs = append(jobs, job)
 		}
@@ -97,7 +92,7 @@ func getJobs(lastPointAt int64) ([]*Job, error) {
 	return jobs, nil
 }
 
-func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
+func buildJobForMonitor(monitor *m.MonitorForAlertDTO) *Job {
 	//state could in theory be ok, warn, error, but we only use ok vs error for now
 
 	if monitor.HealthSettings == nil {
@@ -106,13 +101,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
 
 	if monitor.Frequency == 0 || monitor.HealthSettings.Steps == 0 || monitor.HealthSettings.NumCollectors == 0 {
 		//fmt.Printf("bad monitor definition given: %#v", monitor)
-		return nil
-	}
-
-	// let's say it takes at least warmupPeriod, after job creation, to start getting data.
-	period := int(monitor.Frequency) // what we call frequency is actually the period, like 60s
-	warmupPeriod := time.Duration((monitor.HealthSettings.Steps+1)*period) * time.Second
-	if monitor.Created.After(time.Unix(lastPointAt, 0).Add(-warmupPeriod)) {
 		return nil
 	}
 
@@ -177,7 +165,6 @@ func buildJobForMonitor(monitor *m.MonitorForAlertDTO, lastPointAt int64) *Job {
 			CritExpr: b.String(),
 			WarnExpr: "0", // for now we have only good or bad. so only crit is needed
 		},
-		StoreMetricFunc: api.StoreMetric,
 		AssertMinSeries: monitor.HealthSettings.NumCollectors,
 		AssertStep:      int(monitor.Frequency),
 		AssertSteps:     monitor.HealthSettings.Steps,

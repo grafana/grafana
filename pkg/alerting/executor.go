@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/graphite"
 	"github.com/grafana/grafana/pkg/log"
@@ -70,7 +69,6 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			log.Error(0, "failed to unmarshal msg body.", err)
 			return nil
 		}
-		job.StoreMetricFunc = api.StoreMetric
 		var err error
 		if setting.AlertingInspect {
 			inspect(GraphiteAuthContextReturner, &job, cache)
@@ -210,7 +208,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		}
 		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
-	if updateMonitorStateCmd.Affected > 0 {
+	if updateMonitorStateCmd.Affected > 0 && res != m.EvalResultUnknown {
 		//emit a state change event.
 		if job.Notifications.Enabled {
 			emails := strings.Split(job.Notifications.Addresses, ",")

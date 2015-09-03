@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/collectoreventpublisher"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
@@ -76,11 +77,12 @@ func main() {
 	elasticstore.Init()
 	models.InitQuotaDefaults()
 
-	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana.")
+	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana", setting.InstanceId)
 	if err != nil {
 		log.Error(3, "Statsd client:", err)
 	}
 	metricpublisher.Init(metricsBackend)
+	collectoreventpublisher.Init(metricsBackend)
 	api.InitCollectorController(metricsBackend)
 	if setting.AlertingEnabled {
 		alerting.Init(metricsBackend)

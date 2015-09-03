@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,21 +18,17 @@ import (
 	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
+	"github.com/grafana/grafana/pkg/services/collectoreventpublisher"
 	"github.com/grafana/grafana/pkg/services/metricpublisher"
 	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/raintank/raintank-metric/schema"
 	"github.com/streadway/amqp"
 )
 
 var server *socketio.Server
-var bufCh chan m.MetricDefinition
 var contextCache *ContextCache
 var metricsRecvd met.Count
-
-func StoreMetric(m *m.MetricDefinition) {
-	bufCh <- *m
-}
 
 type ContextCache struct {
 	sync.RWMutex
@@ -136,7 +131,7 @@ func register(so socketio.Socket) (*CollectorContext, error) {
 
 	//--------- set required version of collector.------------//
 	//
-	if versionMajor < 0 || versionMinor < 1.1 {
+	if versionMajor < 0 || versionMinor < 1.3 {
 		return nil, errors.New("invalid collector version. Please upgrade.")
 	}
 	//
@@ -254,8 +249,6 @@ func InitCollectorController(metrics met.Backend) {
 		bus.AddEventListener(HandleCollectorDisconnected)
 	}
 	metricsRecvd = metrics.NewCount("collector-ctrl.metrics-recv")
-	bufCh = make(chan m.MetricDefinition, runtime.NumCPU()*100)
-	go metricpublisher.ProcessBuffer(bufCh)
 }
 
 func init() {
@@ -360,28 +353,25 @@ func (c *CollectorContext) OnDisconnection() {
 	contextCache.Remove(c.SocketId)
 }
 
-func (c *CollectorContext) OnEvent(msg *m.EventDefinition) {
+func (c *CollectorContext) OnEvent(msg *schema.ProbeEvent) {
 	log.Info(fmt.Sprintf("recieved event from %s", c.Collector.Name))
 	if !c.Collector.Public {
 		msg.OrgId = c.OrgId
 	}
-	msgString, err := json.Marshal(msg)
-	if err != nil {
-		log.Error(0, "Failed to marshal event.", err)
+
+	if err := collectoreventpublisher.Publish(msg); err != nil {
+		log.Error(0, "failed to publish event.", err)
 	}
-	// send to RabbitMQ
-	routingKey := fmt.Sprintf("EVENT.%s.%s", msg.Severity, msg.EventType)
-	go eventpublisher.Publish(routingKey, msgString)
 }
 
-func (c *CollectorContext) OnResults(results []*m.MetricDefinition) {
+func (c *CollectorContext) OnResults(results []*schema.MetricData) {
 	metricsRecvd.Inc(int64(len(results)))
 	for _, r := range results {
 		if !c.Collector.Public {
-			r.OrgId = c.OrgId
+			r.OrgId = int(c.OrgId)
 		}
-		StoreMetric(r)
 	}
+	metricpublisher.Publish(results)
 }
 
 func (c *CollectorContext) Refresh() {

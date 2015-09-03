@@ -11,20 +11,18 @@
 
 package dogstatsd
 
-import (
-	"github.com/DataDog/datadog-go/statsd"
-	"github.com/grafana/grafana/pkg/setting"
-)
+import "github.com/DataDog/datadog-go/statsd"
 
 type Backend struct {
 	client *statsd.Client
 }
 
-func New(addr, prefix string) (Backend, error) {
+// note: library does not auto-add ending dot to prefix, specify it if you want it
+func New(addr, prefix string, tags []string) (Backend, error) {
 	client, err := statsd.New(addr)
 	if err == nil {
 		client.Namespace = prefix
-		client.Tags = append(client.Tags, "instance:"+setting.InstanceId)
+		client.Tags = tags
 	}
 	return Backend{client}, err
 }

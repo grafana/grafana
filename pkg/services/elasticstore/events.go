@@ -2,8 +2,10 @@ package elasticstore
 
 import (
 	"encoding/json"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/raintank/raintank-metric/schema"
 )
 
 func init() {
@@ -11,7 +13,7 @@ func init() {
 }
 
 func GetEventsQuery(query *m.GetEventsQuery) error {
-	query.Result = make([]*m.EventDefinition, 0)
+	query.Result = make([]*schema.ProbeEvent, 0)
 	esQuery := map[string]interface{}{
 		"query": map[string]interface{}{
 			"filtered": map[string]interface{}{
@@ -45,7 +47,7 @@ func GetEventsQuery(query *m.GetEventsQuery) error {
 		return err
 	}
 	for _, hit := range out.Hits.Hits {
-		var source m.EventDefinition
+		var source schema.ProbeEvent
 		err = json.Unmarshal(*hit.Source, &source)
 		if err != nil {
 			return err

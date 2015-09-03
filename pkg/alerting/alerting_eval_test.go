@@ -18,7 +18,7 @@ type fakeGraphite struct {
 }
 
 func init() {
-	backend, _ := helper.New(false, "", "standard", "")
+	backend, _ := helper.New(false, "", "standard", "", "")
 	Init(backend)
 }
 
