@@ -89,8 +89,8 @@ func stresser() {
 				Unit:       "s",
 				Time:       t.Unix(),
 				TargetType: "gauge",
-				Tags: map[string]string{
-					"foo_id": "15",
+				Tags: []string{
+					"foo_id:15",
 				},
 			}
 			metrics = append(metrics, metric)
