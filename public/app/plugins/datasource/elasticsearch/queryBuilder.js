@@ -67,12 +67,15 @@ function () {
       nestedAggs = aggs;
     }
 
+    nestedAggs.aggs = {};
+
     for (var i = 0; i < target.select.length; i++) {
       var select = target.select[i];
       if (select.field) {
-        nestedAggs.aggs = {};
-        nestedAggs.aggs[select.field] = {};
-        nestedAggs.aggs[select.field][select.agg] = {field: select.field};
+        var aggField = {};
+        aggField[select.agg] = {field: select.field};
+
+        nestedAggs.aggs[i.toString()] = aggField;
       }
     }
 

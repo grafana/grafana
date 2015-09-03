@@ -68,12 +68,12 @@ define([
                 histogram: {
                   buckets: [
                     {
-                      value: {value: 88},
+                      "1": {value: 88},
                       doc_count: 10,
                       key: 1000
                     },
                     {
-                      value: {value: 99},
+                      "1": {value: 99},
                       doc_count: 15,
                       key: 2000
                     }
@@ -90,7 +90,7 @@ define([
           expect(result.data[0].datapoints[0][0]).to.be(10);
           expect(result.data[0].datapoints[0][1]).to.be(1000);
 
-          expect(result.data[1].target).to.be("A value");
+          expect(result.data[1].target).to.be("A value avg");
           expect(result.data[1].datapoints[0][0]).to.be(88);
           expect(result.data[1].datapoints[1][0]).to.be(99);
         });

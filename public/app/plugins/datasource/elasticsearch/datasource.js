@@ -199,8 +199,8 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
             }
 
             if (select.field) {
-              seriesName += ' ' + select.field;
-              value = bucket[select.field].value;
+              seriesName += ' ' + select.field + ' ' + select.agg;
+              value = bucket[y.toString()].value;
             } else {
               seriesName += ' count';
               value = bucket.doc_count;
