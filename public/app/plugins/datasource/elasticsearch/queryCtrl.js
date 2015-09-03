@@ -36,7 +36,7 @@ function (angular, _, ElasticQueryBuilder) {
         if ($scope.selectSegments.length > 0) {
           $scope.selectSegments.push(uiSegmentSrv.newCondition(" and "));
         }
-        if (select.agg === 'Count') {
+        if (select.agg === 'count') {
           $scope.selectSegments.push(uiSegmentSrv.newSegment({value: select.agg, type: 'agg'}));
         } else {
           $scope.selectSegments.push(uiSegmentSrv.newSegment({value: select.agg, type: 'agg'}));
@@ -53,10 +53,10 @@ function (angular, _, ElasticQueryBuilder) {
     $scope.getSelectSegments = function(segment, index) {
       if (segment.type === 'agg' || segment.type === 'plus-button') {
         var options = [
-          uiSegmentSrv.newSegment({value: 'Count', type: 'agg'}),
-          uiSegmentSrv.newSegment({value: 'Min', type: 'agg'}),
-          uiSegmentSrv.newSegment({value: 'Max', type: 'agg'}),
-          uiSegmentSrv.newSegment({value: 'Avg', type: 'agg'}),
+          uiSegmentSrv.newSegment({value: 'count', type: 'agg'}),
+          uiSegmentSrv.newSegment({value: 'min',   type: 'agg', reqField: true}),
+          uiSegmentSrv.newSegment({value: 'count', type: 'agg', reqField: true}),
+          uiSegmentSrv.newSegment({value: 'avg',   type: 'agg', reqField: true}),
         ];
         if (index > 0) {
           options.splice(0, 0, angular.copy($scope.removeSelectSegment));
@@ -90,10 +90,8 @@ function (angular, _, ElasticQueryBuilder) {
       if (segment.type === 'agg')  {
         var nextSegment = $scope.selectSegments[index + 1];
 
-        if (segment.value === 'Count') {
-          if (nextSegment && nextSegment.type === 'field') {
-            $scope.selectSegments.splice(index + 1, 1);
-          }
+        if (!segment.reqField && nextSegment && nextSegment.type === 'field') {
+          $scope.selectSegments.splice(index + 1, 1);
         } else if (!nextSegment || nextSegment.type !== 'field') {
           $scope.selectSegments.splice(index + 1, 0, uiSegmentSrv.newSegment({value: 'select field', fake: true, type: 'field'}));
         }
@@ -112,7 +110,7 @@ function (angular, _, ElasticQueryBuilder) {
         var segment = $scope.selectSegments[i];
         var select = {agg: segment.value };
 
-        if (segment.type === 'agg' && segment.value !== 'Count') {
+        if (segment.type === 'agg' && segment.reqField) {
           select.field = $scope.selectSegments[i+1].value;
           i += 2;
         } else {

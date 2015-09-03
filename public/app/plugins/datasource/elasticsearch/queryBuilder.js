@@ -56,6 +56,7 @@ function () {
     };
 
     var nestedAggs = query.aggs.histogram;
+    target.groupByFields = target.groupByFields || [];
 
     for (var i = 0; i < target.groupByFields.length; i++) {
       var field = target.groupByFields[i].field;
@@ -66,9 +67,16 @@ function () {
       nestedAggs = aggs;
     }
 
-    console.log(angular.toJson(query, true));
+    for (var i = 0; i < target.select.length; i++) {
+      var select = target.select[i];
+      if (select.field) {
+        nestedAggs.aggs = {};
+        nestedAggs.aggs[select.field] = {};
+        nestedAggs.aggs[select.field][select.agg] = {field: select.field};
+      }
+    }
 
-    query = angular.toJson(query);
+    console.log(angular.toJson(query, true));
     return query;
   };
 
