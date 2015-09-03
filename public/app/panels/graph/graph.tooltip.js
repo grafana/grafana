@@ -55,7 +55,7 @@ function ($) {
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
 
-        if (scope.panel.stack) {
+        if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
           } else if (!series.stack) {
