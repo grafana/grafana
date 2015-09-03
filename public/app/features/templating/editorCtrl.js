@@ -16,6 +16,7 @@ function (angular, _) {
       name: '',
       options: [],
       includeAll: false,
+      includeAggr: false,
       allFormat: 'glob',
       multi: false,
       multiFormat: 'glob',
