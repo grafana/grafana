@@ -154,10 +154,11 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	}
 
 	cmd := m.CreateUserCommand{
-		Email:    completeInvite.Email,
-		Name:     completeInvite.Name,
-		Login:    completeInvite.Username,
-		Password: completeInvite.Password,
+		Email:        completeInvite.Email,
+		Name:         completeInvite.Name,
+		Login:        completeInvite.Username,
+		Password:     completeInvite.Password,
+		SkipOrgSetup: true,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {

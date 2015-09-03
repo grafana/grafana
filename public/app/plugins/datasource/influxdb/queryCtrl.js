@@ -119,8 +119,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.getMeasurements = function () {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
       return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments)
-      .then($scope.addTemplateVariableSegments)
+      .then($scope.transformToSegments(true))
       .then(null, $scope.handleQueryError);
     };
 
@@ -129,42 +128,46 @@ function (angular, _, InfluxQueryBuilder) {
       return [];
     };
 
-    $scope.transformToSegments = function(results) {
-      return _.map(results, function(segment) {
-        return new MetricSegment({ value: segment.text, expandable: segment.expandable });
-      });
-    };
+    $scope.transformToSegments = function(addTemplateVars) {
+      return function(results) {
+        var segments = _.map(results, function(segment) {
+          return new MetricSegment({ value: segment.text, expandable: segment.expandable });
+        });
 
-    $scope.addTemplateVariableSegments = function(segments) {
-      _.each(templateSrv.variables, function(variable) {
-        segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '/', expandable: true }));
-      });
-      return segments;
+        if (addTemplateVars) {
+          _.each(templateSrv.variables, function(variable) {
+            segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '/', expandable: true }));
+          });
+        }
+
+        return segments;
+      };
     };
 
     $scope.getTagsOrValues = function(segment, index) {
-      var query;
+      if (segment.type === 'condition') {
+        return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
+      }
+      if (segment.type === 'operator') {
+        var nextValue = $scope.tagSegments[index+1].value;
+        if (/^\/.*\/$/.test(nextValue)) {
+          return $q.when(MetricSegment.newOperators(['=~', '!~']));
+        } else {
+          return $q.when(MetricSegment.newOperators(['=', '<>', '<', '>']));
+        }
+      }
 
+      var query, addTemplateVars;
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
+        addTemplateVars = false;
       } else if (segment.type === 'value')  {
         query = $scope.queryBuilder.buildExploreQuery('TAG_VALUES', $scope.tagSegments[index-2].value);
-      } else if (segment.type === 'condition') {
-        return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
-      } else if (segment.type === 'operator' && /^(?!\/.*\/$)/.test($scope.tagSegments[index+1].value)) {
-        return $q.when([MetricSegment.newOperator('='), MetricSegment.newOperator('<>'),
-                        MetricSegment.newOperator('<'), MetricSegment.newOperator('>')]);
-
-      } else if (segment.type === 'operator' && /^\/.*\/$/.test($scope.tagSegments[index+1].value)) {
-        return $q.when([MetricSegment.newOperator('=~'), MetricSegment.newOperator('!~')]);
-      }
-      else  {
-        return $q.when([]);
+        addTemplateVars = true;
       }
 
       return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments)
-      .then($scope.addTemplateVariableSegments)
+      .then($scope.transformToSegments(addTemplateVars))
       .then(function(results) {
         if (segment.type === 'key') {
           results.splice(0, 0, angular.copy($scope.removeTagFilterSegment));
@@ -177,8 +180,8 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.getFieldSegments = function() {
       var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
       return $scope.datasource.metricFindQuery(fieldsQuery)
-        .then($scope.transformToSegments)
-        .then(null, $scope.handleQueryError);
+      .then($scope.transformToSegments(false))
+      .then(null, $scope.handleQueryError);
     };
 
     $scope.addField = function() {
@@ -197,8 +200,7 @@ function (angular, _, InfluxQueryBuilder) {
       var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
 
       return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments)
-      .then($scope.addTemplateVariableSegments)
+      .then($scope.transformToSegments(false))
       .then(function(results) {
         if (segment.type !== 'plus-button') {
           results.splice(0, 0, angular.copy($scope.removeGroupBySegment));
@@ -320,6 +322,12 @@ function (angular, _, InfluxQueryBuilder) {
 
     MetricSegment.newOperator = function(op) {
       return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
+    };
+
+    MetricSegment.newOperators = function(ops) {
+      return _.map(ops, function(op) {
+        return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
+      });
     };
 
     MetricSegment.newPlusButton = function() {

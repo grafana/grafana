@@ -65,6 +65,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		OrgName:  form.OrgName,
 	}
 
+	// verify email
 	if setting.VerifyEmailEnabled {
 		if ok, rsp := verifyUserSignUpEmail(form.Email, form.Code); !ok {
 			return rsp
@@ -72,11 +73,13 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		createUserCmd.EmailVerified = true
 	}
 
+	// check if user exists
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
 		return ApiError(401, "User with same email address already exists", nil)
 	}
 
+	// dispatch create command
 	if err := bus.Dispatch(&createUserCmd); err != nil {
 		return ApiError(500, "Failed to create user", err)
 	}

@@ -33,10 +33,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
+      var queryTargets = [];
       var i, y;
 
       var allQueries = _.map(options.targets, function(target) {
         if (target.hide) { return []; }
+
+        queryTargets.push(target);
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
@@ -61,7 +64,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
           var result = data.results[i];
           if (!result || !result.series) { continue; }
 
-          var alias = (options.targets[i] || {}).alias;
+          var alias = (queryTargets[i] || {}).alias;
           if (alias) {
             alias = templateSrv.replace(alias, options.scopedVars);
           }
@@ -161,13 +164,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
       return $http(options).then(function(result) {
         return result.data;
-      }, function(reason) {
-        if (reason.status !== 0 || reason.status >= 300) {
-          if (reason.data && reason.data.error) {
-            throw { message: 'InfluxDB Error Response: ' + reason.data.error };
+      }, function(err) {
+        if (err.status !== 0 || err.status >= 300) {
+          if (err.data && err.data.error) {
+            throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
           }
           else {
-            throw { messsage: 'InfluxDB Error: ' + reason.message };
+            throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
           }
         }
       });

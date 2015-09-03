@@ -1,8 +1,9 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  'jquery',
 ],
-function (angular, _) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -30,7 +31,11 @@ function (angular, _) {
       }
 
       if (_.isString(model.error.data)) {
-        $scope.response = model.error.data;
+        $scope.response = $("<div>" + model.error.data + "</div>").text();
+      } else if (model.error.data) {
+        $scope.response = angular.toJson(model.error.data, true);
+      } else if (model.error.message) {
+        $scope.message = model.error.message;
       }
 
       if (model.error.config && model.error.config.params) {
@@ -44,43 +49,20 @@ function (angular, _) {
         $scope.stack_trace = model.error.stack;
         $scope.message = model.error.message;
       }
-      else if (model.error.config && model.error.config.data) {
+
+      if (model.error.config && model.error.config.data) {
         $scope.editor.index = 1;
 
-        $scope.request_parameters = getParametersFromQueryString(model.error.config.data);
-
-        if (model.error.data.indexOf('DOCTYPE') !== -1) {
-          $scope.response_html = model.error.data;
+        if (_.isString(model.error.config.data)) {
+          $scope.request_parameters = getParametersFromQueryString(model.error.config.data);
+        } else  {
+          $scope.request_parameters = _.map(model.error.config.data, function(value, key) {
+            return {key: key, value: angular.toJson(value, true)};
+          });
         }
       }
     };
 
   });
-
-  angular
-    .module('grafana.directives')
-    .directive('iframeContent', function($parse) {
-      return {
-        restrict: 'A',
-        link: function($scope, elem, attrs) {
-          var getter = $parse(attrs.iframeContent), value = getter($scope);
-
-          $scope.$on("$destroy",function() {
-            elem.remove();
-          });
-
-          var iframe = document.createElement('iframe');
-          iframe.width = '100%';
-          iframe.height = '400px';
-          iframe.style.border = 'none';
-          iframe.src = 'about:blank';
-          elem.append(iframe);
-
-          iframe.contentWindow.document.open('text/html', 'replace');
-          iframe.contentWindow.document.write(value);
-          iframe.contentWindow.document.close();
-        }
-      };
-    });
 
 });

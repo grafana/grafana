@@ -24,6 +24,8 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
 - [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
+- [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+- [Issue #2651](https://github.com/grafana/grafana/issues/2651). InfluxDB: Fixed issue when using the eye to disable queries in the query editor and when applying aliases
 
 **Breaking Changes**
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that

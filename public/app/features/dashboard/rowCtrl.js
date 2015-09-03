@@ -46,7 +46,7 @@ function (angular, app, _, config) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
-        yesText: 'delete',
+        yesText: 'Delete',
         onConfirm: function() {
           $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
         }
