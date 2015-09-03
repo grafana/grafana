@@ -65,7 +65,7 @@
 			Select
 		</li>
 		<li ng-repeat="segment in selectSegments">
-			<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectSegmentChanged()"></metric-segment>
+			<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectChanged(segment, $index)"></metric-segment>
 		</li>
 	</ul>
 
