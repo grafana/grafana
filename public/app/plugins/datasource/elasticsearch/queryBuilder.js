@@ -42,7 +42,7 @@ function () {
     };
 
     query.aggs = {
-      "date_histogram": {
+      "histogram": {
         "date_histogram": {
           "interval": target.interval || "$interval",
           "field": target.timeField,
@@ -54,6 +54,19 @@ function () {
         }
       }
     };
+
+    var nestedAggs = {};
+
+    if (target.groupByFields && target.groupByFields.length > 0) {
+      var field = target.groupByFields[0].field;
+      nestedAggs[field] = {
+        terms:  {
+          field: field,
+        }
+      }
+    }
+
+    query.aggs.histogram.aggs = nestedAggs;
 
     query = JSON.stringify(query);
     return query;

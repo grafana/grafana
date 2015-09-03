@@ -77,11 +77,10 @@
 		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 			Group By
 		</li>
-		<li>
-			<metric-segment segment="groupByFieldSegment" on-value-changed="groupByFieldChanged()"></metric-segment>
+		<li ng-repeat="segment in groupBySegments">
+			<metric-segment segment="segment" get-alt-segments="getGroupByFields(segment, $index)" on-value-changed="groupByChanged(segment, $index)"></metric-segment>
 		</li>
 	</ul>
-
 	<div class="clearfix"></div>
 </div>
 

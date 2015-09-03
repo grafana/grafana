@@ -13,7 +13,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -160,7 +160,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      var processTimeSeries = _.partial(this._processTimeSeries, sentTargets);
+      var processTimeSeries = _.bind(this._processTimeSeries, this, sentTargets);
       return this._post('/_msearch?search_type=count', payload).then(processTimeSeries);
     };
 
@@ -172,54 +172,109 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       return date.getTime();
     };
 
-    ElasticDatasource._aggToSeries = function(agg) {
-      var datapoints = agg.date_histogram.buckets.map(function(entry) {
-        return [entry.stats.avg, entry.key];
-      });
-      return { target: agg.key, datapoints: datapoints };
-    };
+    ElasticDatasource.prototype._processBuckets = function(buckets, groupByFields, series, level, parentName, parentTime) {
+      var points = [];
+      var groupBy = groupByFields[level];
 
+      for (var i = 0; i < buckets.length; i++) {
+        var bucket = buckets[i];
+
+        if (groupBy) {
+          var seriesName = "";
+          var time = parentTime || bucket.key;
+          this._processBuckets(bucket[groupBy.field].buckets, groupByFields, series, level+1, seriesName, time)
+        } else {
+          var seriesName = parentName;
+
+          if (level > 0) {
+            seriesName += bucket.key;
+          } else {
+            parentTime = bucket.key;
+          }
+
+          var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
+          serie.datapoints.push([bucket.doc_count, parentTime]);
+        }
+      }
+    };
 
     ElasticDatasource.prototype._processTimeSeries = function(targets, results) {
       var series = [];
 
-      _.each(results.responses, function(response, index) {
-        var buckets = response.aggregations.date_histogram.buckets;
-        var target = targets[index];
+      for (var i = 0; i < results.responses.length; i++) {
+        var buckets = results.responses[i].aggregations.histogram.buckets;
+        var target = targets[i];
         var points = [];
+        var querySeries = {}
 
-        for (var i = 0; i < buckets.length; i++) {
-          var bucket = buckets[i];
-          points[i] = [bucket.doc_count, bucket.key];
-        }
+        this._processBuckets(buckets, target.groupByFields, querySeries, 0, target.refId);
 
-        series.push({target: 'name', datapoints: points})
-        console.log('Nr DataPoints: ' + points.length);
-      });
-
-      console.log(series);
+        _.each(querySeries, function(value) {
+          series.push(value);
+        });
+      };
 
       return { data: series };
     };
 
     ElasticDatasource.prototype.metricFindQuery = function(query) {
-      var region;
-      var namespace;
-      var metricName;
+      var timeFrom = this.translateTime(timeSrv.time.from);
+      var timeTo = this.translateTime(timeSrv.time.to);
 
-      var transformSuggestData = function(suggestData) {
-        return _.map(suggestData, function(v) {
-          return { text: v };
-        });
+      var query = {
+        size: 10,
+        "query": {
+          "filtered": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "range": {
+                      "@timestamp": {
+                        "gte": timeFrom,
+                        "lte": timeTo
+                      }
+                    }
+                  }
+                ],
+              }
+            }
+          }
+        }
       };
 
-      var d = $q.defer();
+      return this._post('/_search?', query).then(function(res) {
+        var fields = {};
 
-      var regionQuery = query.match(/^region\(\)/);
-      if (regionQuery) {
-        d.resolve(transformSuggestData(this.performSuggestRegion()));
-        return d.promise;
-      }
+        for (var i = 0; i < res.hits.hits.length; i++) {
+          var hit = res.hits.hits[i];
+          for (var field in hit) {
+            if (hit.hasOwnProperty(field) && field[0] !== '_') {
+              fields[field] = 1;
+            }
+          }
+
+          if (hit._source) {
+            for (var field in hit._source) {
+              if (hit._source.hasOwnProperty(field)) {
+                fields[field] = 1;
+              }
+            }
+          }
+        }
+
+        fields = _.map(_.keys(fields), function(field) {
+          return {text: field};
+        })
+        console.log('metricFindQuery:',  fields);
+        return fields;
+      });
+      // var d = $q.defer();
+      //
+      // var fieldsQuery = query.match(/^fields\(\)/);
+      // if (fieldsQuery) {
+      //   return d.promise;
+      // }
     };
 
     return ElasticDatasource;
