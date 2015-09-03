@@ -21,15 +21,15 @@ function (angular, _, ElasticQueryBuilder) {
 
       var target = $scope.target;
       target.function = target.function || 'mean';
-      target.timestampField = target.timestampField || '@timestamp';
-      target.valueField = target.valueField || 'value' ;
+      target.timeField = target.timeField || '@timestamp';
+      target.select = target.select || [{ agg: 'count' }];
 
-      $scope.timestampSegment = uiSegmentSrv.newSegment(target.timestampField);
-      $scope.valueFieldSegment = uiSegmentSrv.newSegment(target.valueField);
-
-      $scope.termKeySegment = uiSegmentSrv.getSegmentForValue(target.termKey, 'select term field');
-      $scope.termValueSegment = uiSegmentSrv.getSegmentForValue(target.termValue, 'select term value');
+      $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
       $scope.groupByFieldSegment = uiSegmentSrv.getSegmentForValue(target.groupByField, 'add group by');
+
+      $scope.selectSegments = _.map(target.select, function(select) {
+        return uiSegmentSrv.newSegment(select.agg);
+      });
     };
 
     $scope.getFields = function() {
@@ -99,6 +99,10 @@ function (angular, _, ElasticQueryBuilder) {
         segments.unshift(new MetricSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
       });
       return segments;
+    };
+
+    $scope.toggleQueryMode = function () {
+      $scope.target.rawQuery = !$scope.target.rawQuery;
     };
 
     $scope.init();

@@ -37,12 +37,35 @@
 		</li>
 	</ul>
 
-	<ul class="tight-form-list">
+	<ul class="tight-form-list" ng-hide="target.rawQuery">
+		<li class="tight-form-item query-keyword" style="width: 75px">
+			Query
+		</li>
+		<li>
+			<input type="text" class="input-xlarge tight-form-input" ng-model="target.query" spellcheck='false' placeholder="Lucence query" ng-blur="get_data()">
+		</li>
 		<li class="tight-form-item query-keyword">
-			Timestamp field
+			Time field
 		</li>
 		<li>
-			<metric-segment segment="timestampSegment" get-alt-segments="getFields()" on-value-changed="timestampChanged()"></metric-segment>
+			<metric-segment segment="timeSegment" get-alt-segments="getFields()" on-value-changed="timestampChanged()"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+
+	<div style="padding: 10px" ng-if="target.rawQuery">
+		<textarea ng-model="target.rawJson" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;"></textarea>
+	</div>
+</div>
+
+<div class="tight-form" ng-hide="target.rawQuery">
+	<ul class="tight-form-list">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+			Select
+		</li>
+		<li ng-repeat="segment in selectSegments">
+			<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectSegmentChanged()"></metric-segment>
 		</li>
 	</ul>
 
@@ -52,43 +75,6 @@
 <div class="tight-form" ng-hide="target.rawQuery">
 	<ul class="tight-form-list">
 		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-			Value field
-		</li>
-		<li>
-			<metric-segment segment="valueFieldSegment" get-alt-segments="getFields()"  on-value-changed="valueFieldChanged()"></metric-segment>
-		</li>
-	</ul>
-
-	<div class="clearfix"></div>
-</div>
-
-<div class="tight-form" ng-hide="target.rawQuery">
-	<ul class="tight-form-list">
-		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-			Term
-		</li>
-
-		<li>
-			<metric-segment segment="termKeySegment" on-value-changed="termKeySegmentChanged()"></metric-segment>
-		</li>
-
-		<li>
-			<span class="tight-form-item">:</span>
-		</li>
-
-		<li>
-			<metric-segment segment="termValueSegment" on-value-changed="termValueSegmentChanged()"></metric-segment>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
-</div>
-
-<div class="tight-form" ng-hide="target.rawQuery">
-	<ul class="tight-form-list">
-		<li class="tight-form-item">
-			<i class="fa fa-eye invisible"></i>
-		</li>
-		<li class="tight-form-item query-keyword" style="width: 75px;">
 			Group By
 		</li>
 		<li>
@@ -98,5 +84,4 @@
 
 	<div class="clearfix"></div>
 </div>
-	</div>
-</div>
+

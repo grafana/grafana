@@ -135,14 +135,33 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     };
 
     ElasticDatasource.prototype.query = function(options) {
-      var queryBuilder = new ElasticQueryBuilder;
-      var query = queryBuilder.build(options.targets);
-      query = query.replace(/\$interval/g, options.interval);
-      query = query.replace(/\$rangeFrom/g, this.translateTime(options.range.from));
-      query = query.replace(/\$rangeTo/g, this.translateTime(options.range.to));
-      query = query.replace(/\$maxDataPoints/g, options.maxDataPoints);
-      query = templateSrv.replace(query, options.scopedVars);
-      return this._post('/_search?search_type=count', query).then(this._getTimeSeries);
+      var queryBuilder = new ElasticQueryBuilder();
+      var header = '{"index":"' + this.index + '","search_type":"count","ignore_unavailable":true}'
+      var payload = ""
+      var sentTargets = [];
+      var timeFrom = this.translateTime(options.range.from);
+      var timeTo = this.translateTime(options.range.to);
+
+      _.each(options.targets, function(target) {
+        if (target.hide) {
+          return;
+        }
+
+        var esQuery = queryBuilder.build(target, timeFrom, timeTo);
+        payload += header + '\n';
+        payload += esQuery + '\n';
+
+        sentTargets.push(target);
+      });
+
+      payload = payload.replace(/\$interval/g, options.interval);
+      payload = payload.replace(/\$rangeFrom/g, this.translateTime(options.range.from));
+      payload = payload.replace(/\$rangeTo/g, this.translateTime(options.range.to));
+      payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
+      payload = templateSrv.replace(payload, options.scopedVars);
+
+      var processTimeSeries = _.partial(this._processTimeSeries, sentTargets);
+      return this._post('/_msearch?search_type=count', payload).then(processTimeSeries);
     };
 
     ElasticDatasource.prototype.translateTime = function(date) {
@@ -150,31 +169,37 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
         return date;
       }
 
-      return date.toJSON();
+      return date.getTime();
     };
 
-    ElasticDatasource.prototype._getTimeSeries = function(results) {
-      var _aggregation2timeSeries = function(aggregation) {
-        var datapoints = aggregation.date_histogram.buckets.map(function(entry) {
-          return [entry.stats.avg, entry.key];
-        });
-        return { target: aggregation.key, datapoints: datapoints };
-      };
-      var data = [];
+    ElasticDatasource._aggToSeries = function(agg) {
+      var datapoints = agg.date_histogram.buckets.map(function(entry) {
+        return [entry.stats.avg, entry.key];
+      });
+      return { target: agg.key, datapoints: datapoints };
+    };
 
-      if (results && results.aggregations) {
-        for (var target in results.aggregations) {
-          if (!results.aggregations.hasOwnProperty(target)) {
-            continue;
-          }
-          if (results.aggregations[target].date_histogram && results.aggregations[target].date_histogram.buckets) {
-            data.push(_aggregation2timeSeries(results.aggregations[target]));
-          } else if (results.aggregations[target].terms && results.aggregations[target].terms.buckets) {
-            [].push.apply(data, results.aggregations[target].terms.buckets.map(_aggregation2timeSeries));
-          }
+
+    ElasticDatasource.prototype._processTimeSeries = function(targets, results) {
+      var series = [];
+
+      _.each(results.responses, function(response, index) {
+        var buckets = response.aggregations.date_histogram.buckets;
+        var target = targets[index];
+        var points = [];
+
+        for (var i = 0; i < buckets.length; i++) {
+          var bucket = buckets[i];
+          points[i] = [bucket.doc_count, bucket.key];
         }
-      }
-      return { data: data };
+
+        series.push({target: 'name', datapoints: points})
+        console.log('Nr DataPoints: ' + points.length);
+      });
+
+      console.log(series);
+
+      return { data: series };
     };
 
     ElasticDatasource.prototype.metricFindQuery = function(query) {
