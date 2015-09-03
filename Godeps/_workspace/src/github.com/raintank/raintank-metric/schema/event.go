@@ -6,14 +6,14 @@ import (
 )
 
 type ProbeEvent struct {
-	Id        string            `json:"id"`
-	EventType string            `json:"event_type"`
-	OrgId     int64             `json:"org_id"`
-	Severity  string            `json:"severity"` // enum "INFO" "WARN" "ERROR" "OK"
-	Source    string            `json:"source"`
-	Timestamp int64             `json:"timestamp"`
-	Message   string            `json:"message"`
-	Tags      map[string]string `json:"tags"`
+	Id        string   `json:"id"`
+	EventType string   `json:"event_type"`
+	OrgId     int64    `json:"org_id"`
+	Severity  string   `json:"severity"` // enum "INFO" "WARN" "ERROR" "OK"
+	Source    string   `json:"source"`
+	Timestamp int64    `json:"timestamp"`
+	Message   string   `json:"message"`
+	Tags      []string `json:"tags" elastic:"type:string,index:not_analyzed"`
 }
 
 func (e *ProbeEvent) Validate() error {

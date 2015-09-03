@@ -17,17 +17,17 @@ func getDifferentMetrics(amount int) []*MetricData {
 		"hi.alerting.state",
 	}
 	intervals := []int{1, 10, 60}
-	tags := []map[string]string{
+	tags := [][]string{
 		{
-			"foo":          "bar",
-			"endpoint_id":  "25",
-			"collector_id": "hi",
+			"foo:bar",
+			"endpoint_id:25",
+			"collector_id:hi",
 		},
 		{
-			"foo_bar":        "quux",
-			"endpoint_id":    "25",
-			"collector_id":   "hi",
-			"some_other_tag": "ok",
+			"foo_bar:quux",
+			"endpoint_id:25",
+			"collector_id:hi",
+			"some_other_tag:ok",
 		},
 	}
 	r := rand.New(rand.NewSource(438))

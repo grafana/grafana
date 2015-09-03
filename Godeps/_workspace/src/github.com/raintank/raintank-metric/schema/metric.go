@@ -13,15 +13,15 @@ import (
 
 // MetricData contains all metric metadata and a datapoint
 type MetricData struct {
-	OrgId      int               `json:"org_id"`
-	Name       string            `json:"name"`
-	Metric     string            `json:"metric"`
-	Interval   int               `json:"interval"`
-	Value      float64           `json:"value"`
-	Unit       string            `json:"unit"`
-	Time       int64             `json:"time"`
-	TargetType string            `json:"target_type"`
-	Tags       map[string]string `json:"tags"`
+	OrgId      int      `json:"org_id"`
+	Name       string   `json:"name"`
+	Metric     string   `json:"metric"`
+	Interval   int      `json:"interval"`
+	Value      float64  `json:"value"`
+	Unit       string   `json:"unit"`
+	Time       int64    `json:"time"`
+	TargetType string   `json:"target_type"`
+	Tags       []string `json:"tags" elastic:"type:string,index:not_analyzed"`
 }
 
 // returns a id (hash key) in the format OrgId.md5Sum
@@ -30,34 +30,28 @@ type MetricData struct {
 func (m *MetricData) Id() string {
 	var buffer bytes.Buffer
 	buffer.WriteString(m.Name)
-	keys := make([]string, 0)
-	for k, _ := range m.Tags {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		buffer.WriteString(fmt.Sprintf(":%s=%s", k, m.Tags[k]))
+	sort.Strings(m.Tags)
+	for _, k := range m.Tags {
+		buffer.WriteString(fmt.Sprintf(";%s", k))
 	}
 
 	return fmt.Sprintf("%d.%x", m.OrgId, md5.Sum(buffer.Bytes()))
 }
-
-// for ES: Id         string            `json:"id"`
 
 // can be used by some encoders, such as msgp
 type MetricDataArray []*MetricData
 
 // for ES
 type MetricDefinition struct {
-	Id         string            `json:"id"`
-	OrgId      int               `json:"org_id"`
-	Name       string            `json:"name" elastic:"type:string,index:not_analyzed"`
-	Metric     string            `json:"metric"`
-	Interval   int               `json:"interval"` // minimum 10
-	Unit       string            `json:"unit"`
-	TargetType string            `json:"target_type"` // an emum ["derive","gauge"] in nodejs
-	Tags       map[string]string `json:"tags"`
-	LastUpdate int64             `json:"lastUpdate"` // unix epoch time, per the nodejs definition
+	Id         string   `json:"id"`
+	OrgId      int      `json:"org_id"`
+	Name       string   `json:"name" elastic:"type:string,index:not_analyzed"`
+	Metric     string   `json:"metric"`
+	Interval   int      `json:"interval"` // minimum 10
+	Unit       string   `json:"unit"`
+	TargetType string   `json:"target_type"` // an emum ["derive","gauge"] in nodejs
+	Tags       []string `json:"tags" elastic:"type:string,index:not_analyzed"`
+	LastUpdate int64    `json:"lastUpdate"` // unix epoch time, per the nodejs definition
 }
 
 func (m *MetricDefinition) Validate() error {
@@ -74,7 +68,6 @@ func MetricDefinitionFromJSON(b []byte) (*MetricDefinition, error) {
 	if err := json.Unmarshal(b, &def); err != nil {
 		return nil, err
 	}
-	def.Id = fmt.Sprintf("%d.%s", def.OrgId, def.Name)
 	return def, nil
 }
 
