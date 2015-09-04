@@ -33,7 +33,7 @@ define([
       describe('initSelectSegments with 2 selects', function() {
 
         it('init selectSegments', function() {
-          ctx.scope.target.select = [
+          ctx.scope.target.metrics = [
             {agg: 'count'},
             {agg: 'avg', field: 'value'},
           ];

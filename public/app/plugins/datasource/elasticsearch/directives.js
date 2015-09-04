@@ -1,5 +1,6 @@
 define([
   'angular',
+  './queryComponent',
 ],
 function (angular) {
   'use strict';

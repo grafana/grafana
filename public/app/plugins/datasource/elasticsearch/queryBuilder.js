@@ -17,6 +17,7 @@ function (angular) {
       return angular.fromJson(target.rawQuery);
     }
 
+    var i, nestedAggs;
     var query = {
       "size": 0,
       "query": {
@@ -36,43 +37,42 @@ function (angular) {
       }
     };
 
-    query.aggs = {
-      "histogram": {
-        "date_histogram": {
-          "interval": target.interval || "$interval",
-          "field": target.timeField,
-          "min_doc_count": 0,
-          "extended_bounds": {
-            "min": "$timeFrom",
-            "max": "$timeTo"
-          }
+    nestedAggs = query;
+
+    for (i = 0; i < target.bucketAggs.length; i++) {
+      var aggDef = target.bucketAggs[i];
+      var esAgg = {};
+
+      switch(aggDef.type) {
+        case 'date_histogram': {
+          esAgg["date_histogram"] = {
+            "interval": target.interval || "$interval",
+            "field": aggDef.field,
+            "min_doc_count": 0,
+            "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
+          };
+          break;
         }
-      },
-    };
-
-    var nestedAggs = query.aggs.histogram;
-    var i;
-
-    target.groupByFields = target.groupByFields || [];
-
-    for (i = 0; i < target.groupByFields.length; i++) {
-      var field = target.groupByFields[i].field;
-      var aggs = {terms: {field: field}};
+        case 'terms': {
+          esAgg["terms"] = { "field": aggDef.field };
+          break;
+        }
+      }
 
       nestedAggs.aggs = {};
-      nestedAggs.aggs[field] = aggs;
-      nestedAggs = aggs;
+      nestedAggs.aggs['b' + i] = esAgg;
+      nestedAggs = esAgg;
     }
 
     nestedAggs.aggs = {};
 
-    for (i = 0; i < target.select.length; i++) {
-      var select = target.select[i];
-      if (select.field) {
+    for (i = 0; i < target.metrics.length; i++) {
+      var metric = target.metrics[i];
+      if (metric.field) {
         var aggField = {};
-        aggField[select.agg] = {field: select.field};
+        aggField[metric.agg] = {field: metric.field};
 
-        nestedAggs.aggs[i.toString()] = aggField;
+        nestedAggs.aggs['m' + i] = aggField;
       }
     }
 

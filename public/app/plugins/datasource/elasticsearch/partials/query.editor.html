@@ -51,7 +51,7 @@
 			Time field
 		</li>
 		<li>
-			<metric-segment segment="timeSegment" get-alt-segments="getTimeFields()" on-value-changed="timeFieldChanged()"></metric-segment>
+			<metric-segment segment="timeSegment" get-alt-segments="getFields()" on-value-changed="timeFieldChanged()"></metric-segment>
 		</li>
 	</ul>
 
@@ -62,28 +62,39 @@
 	</div>
 </div>
 
-<div class="tight-form" ng-hide="target.rawQuery">
-	<ul class="tight-form-list">
-		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-			Select
-		</li>
-		<li ng-repeat="segment in selectSegments">
-			<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectChanged(segment, $index)"></metric-segment>
-		</li>
-	</ul>
+<div ng-hide="target.rawQuery">
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+				Metrics
+			</li>
+			<li ng-repeat="segment in selectSegments">
+				<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectChanged(segment, $index)"></metric-segment>
+			</li>
+		</ul>
 
-	<div class="clearfix"></div>
+		<div class="clearfix"></div>
+	</div>
+
+	<div class="tight-form" ng-repeat="agg in target.bucketAggs">
+		<ul class="tight-form-list">
+			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+				<span ng-show="$first">Group by</span>
+				<span ng-show="!$first">Then by</span>
+			</li>
+			<li>
+				<elastic-query-component model="agg" get-fields="getFields()" on-change="queryUpdated()"></elastic-query-component>
+			</li>
+		</ul>
+
+		<ul class="tight-form-list pull-right">
+			<li class="tight-form-item" ng-if="$index === 0">
+				<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
+			</li>
+			<li class="tight-form-item" ng-if="!$last">
+				<a class="pointer" ng-click="removeBucketAgg(agg, $index)"><i class="fa fa-minus"></i></a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
 </div>
-
-<div class="tight-form" ng-hide="target.rawQuery">
-	<ul class="tight-form-list">
-		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-			Group by
-		</li>
-		<li ng-repeat="segment in groupBySegments">
-			<metric-segment segment="segment" get-alt-segments="getGroupByFields(segment, $index)" on-value-changed="groupByChanged(segment, $index)"></metric-segment>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
-</div>
-
