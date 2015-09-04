@@ -11,17 +11,17 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('BosunDatasource', function($q, backendSrv, templateSrv) {
 
-    function OpenTSDBDatasource(datasource) {
-      this.type = 'opentsdb';
+    function BosunDatasource(datasource) {
+      this.type = 'bosun';
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
     }
 
     // Called once per panel (graph)
-    OpenTSDBDatasource.prototype.query = function(options) {
+    BosunDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.range.from);
       var end = convertToTSDBTime(options.range.to);
       var qs = [];
@@ -60,7 +60,7 @@ function (angular, _, kbn) {
       });
     };
 
-    OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
+    BosunDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         start: start,
         queries: queries
@@ -80,47 +80,27 @@ function (angular, _, kbn) {
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype._performSuggestQuery = function(query) {
+    BosunDatasource.prototype._performSuggestQuery = function(query) {
       return this._get('/api/suggest', {type: 'metrics', q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
+    BosunDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
       if(!metric || !key) {
         return $q.when([]);
       }
 
-      var m = metric + "{" + key + "=*}";
-
-      return this._get('/api/search/lookup', {m: m}).then(function(result) {
-        result = result.data.results;
-        var tagvs = [];
-        _.each(result, function(r) {
+      return this._get('/api/tagv/' + key + "/" + metric).then(function(result) {
+        /*var tagvs = [];
+        _.each(result.data, function(r) {
           tagvs.push(r.tags[key]);
-        });
-        return tagvs;
+        });*/
+        return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
-      if(!metric) { return $q.when([]); }
-
-      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
-        result = result.data.results;
-        var tagks = [];
-        _.each(result, function(r) {
-          _.each(r.tags, function(tagv, tagk) {
-            if(tagks.indexOf(tagk) === -1) {
-              tagks.push(tagk);
-            }
-          });
-        });
-        return tagks;
-      });
-    };
-
-    OpenTSDBDatasource.prototype._performMetricKeyValueWithSubtagsLookup = function(metric, key, subtags) {
+    BosunDatasource.prototype._performMetricKeyValueWithSubtagsLookup = function(metric, key, subtags) {
       if(!metric || !key || !subtags) {
         return $q.when([]);
       }
@@ -132,35 +112,22 @@ function (angular, _, kbn) {
           && s.split("=")[1].charAt(0) !== "$"
           && s.split("=")[1] !== "";
       });
+      var params = valid_subtags.length > 0 ? "?" + valid_subtags.join("&") : "";
 
-      var params = "";
-      if (valid_subtags.length > 0){
-        params = " AND (" + valid_subtags.join(" AND ") + ")";
-      }
-
-      return this._get('/api/search/lookup' + key + params).then(function(result) {
+      return this._get('/api/tagv/' + key + "/" + metric + params).then(function(result) {
         return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
+    BosunDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
-        result = result.data.results;
-        var tagks = [];
-        _.each(result, function(r) {
-          _.each(r.tags, function(tagv, tagk) {
-            if(tagks.indexOf(tagk) === -1) {
-              tagks.push(tagk);
-            }
-          });
-        });
-        return tagks;
+      return this._get('/api/tagk/' + metric).then(function(result) {
+        return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._get = function(relativeUrl, params) {
+    BosunDatasource.prototype._get = function(relativeUrl, params) {
       return backendSrv.datasourceRequest({
         method: 'GET',
         url: this.url + relativeUrl,
@@ -168,7 +135,7 @@ function (angular, _, kbn) {
       });
     };
 
-    OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
+    BosunDatasource.prototype.metricFindQuery = function(query) {
       if (!query) { return $q.when([]); }
 
       var interpolated;
@@ -215,7 +182,7 @@ function (angular, _, kbn) {
       return $q.when([]);
     };
 
-    OpenTSDBDatasource.prototype.testDatasource = function() {
+    BosunDatasource.prototype.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
@@ -337,7 +304,7 @@ function (angular, _, kbn) {
       return date.getTime();
     }
 
-    return OpenTSDBDatasource;
+    return BosunDatasource;
   });
 
 });

@@ -71,6 +71,17 @@ define([
         expect(result).to.be('(test|test2)');
       });
 
+      it('multi value and pipe delimited format should render regex string', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'pipe delimited',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('test|test2');
+      });
+
+
     });
 
     describe('can check if variable exists', function() {

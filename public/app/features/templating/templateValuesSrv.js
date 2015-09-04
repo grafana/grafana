@@ -187,6 +187,9 @@ function (angular, _, kbn) {
     this.updateOptionsFromMetricFindQuery = function(variable, datasource) {
       return datasource.metricFindQuery(variable.query).then(function (results) {
         variable.options = self.metricNamesToVariableValues(variable, results);
+        if (variable.includeAggr) {
+          self.addAggrOption(variable);
+        }
         if (variable.includeAll) {
           self.addAllOption(variable);
         }
@@ -252,6 +255,12 @@ function (angular, _, kbn) {
 
     this.addAllOption = function(variable) {
       var allValue = '';
+
+      var cleanVariable = variable.options
+        .filter(function (s) {
+          return s.text !== "Aggr";
+        });
+
       switch(variable.allFormat) {
       case 'wildcard':
         allValue = '*';
@@ -260,17 +269,21 @@ function (angular, _, kbn) {
         allValue = '.*';
         break;
       case 'regex values':
-        allValue = '(' + _.map(variable.options, function(option) {
+        allValue = '(' + _.map(cleanVariable, function(option) {
           return self.regexEscape(option.text);
         }).join('|') + ')';
         break;
       default:
         allValue = '{';
-        allValue += _.pluck(variable.options, 'text').join(',');
+        allValue += _.pluck(cleanVariable, 'text').join(',');
         allValue += '}';
       }
 
       variable.options.unshift({text: 'All', value: allValue});
+    };
+
+    this.addAggrOption = function(variable) {
+      variable.options.unshift({text: 'Aggr', value: 'AGGR'});
     };
 
   });
