@@ -10,17 +10,10 @@ function (angular, _, ElasticQueryBuilder) {
 
   module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv, $q) {
 
-    $scope.functionList = ['count', 'min', 'max', 'total', 'mean'];
-
-    $scope.functionMenu = _.map($scope.functionList, function(func) {
-      return { text: func, click: "changeFunction('" + func + "');" };
-    });
-
     $scope.init = function() {
-      $scope.queryBuilder = new ElasticQueryBuilder(target);
-
       var target = $scope.target;
-      target.function = target.function || 'mean';
+      if (!target) { return; }
+
       target.timeField = target.timeField || '@timestamp';
       target.select = target.select || [{ agg: 'count' }];
       target.groupByFields = target.groupByFields || [];
@@ -36,6 +29,9 @@ function (angular, _, ElasticQueryBuilder) {
       $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
       $scope.resetSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- reset --'});
       $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
+
+      $scope.queryBuilder = new ElasticQueryBuilder(target);
+      $scope.rawQueryOld = angular.toJson($scope.queryBuilder.build($scope.target), true);
     };
 
     $scope.initSelectSegments = function() {
@@ -63,9 +59,11 @@ function (angular, _, ElasticQueryBuilder) {
           uiSegmentSrv.newSegment({value: 'max',   type: 'agg', reqField: true}),
           uiSegmentSrv.newSegment({value: 'avg',   type: 'agg', reqField: true}),
         ];
+        // if we have other selects and this is not a plus button add remove option
         if (segment.type !== 'plus-button' && $scope.selectSegments.length > 3) {
           options.splice(0, 0, angular.copy($scope.removeSelectSegment));
         }
+        // revert option is to reset the selectSegments if they become fucked
         if (index === 0 && $scope.selectSegments.length > 2) {
           options.splice(0, 0, angular.copy($scope.resetSelectSegment));
         }
@@ -82,20 +80,22 @@ function (angular, _, ElasticQueryBuilder) {
       if (segment.value === $scope.resetSelectSegment.value) {
         $scope.target.select = [{ agg: 'count' }];
         $scope.initSelectSegments();
-        $scope.get_data();
+        $scope.queryUpdated();
         return;
       }
 
+      var nextSegment, removeCount;
+
       // remove this select field
       if (segment.value === $scope.removeSelectSegment.value) {
-        var nextSegment = $scope.selectSegments[index + 1];
-        var remove = 2;
+        nextSegment = $scope.selectSegments[index + 1];
+        removeCount = 2;
         if (nextSegment && nextSegment.type === 'field') {
-          remove += 1;
+          removeCount += 1;
         }
-        $scope.selectSegments.splice(Math.max(index-1, 0), remove);
+        $scope.selectSegments.splice(Math.max(index-1, 0), removeCount);
         $scope.rebuildTargetSelects();
-        $scope.get_data();
+        $scope.queryUpdated();
         return;
       }
 
@@ -107,7 +107,7 @@ function (angular, _, ElasticQueryBuilder) {
       }
 
       if (segment.type === 'agg')  {
-        var nextSegment = $scope.selectSegments[index + 1];
+        nextSegment = $scope.selectSegments[index + 1];
 
         if (segment.value === 'count' && nextSegment && nextSegment.type === 'field') {
           $scope.selectSegments.splice(index + 1, 1);
@@ -121,7 +121,7 @@ function (angular, _, ElasticQueryBuilder) {
       }
 
       $scope.rebuildTargetSelects();
-      $scope.get_data();
+      $scope.queryUpdated();
     };
 
     $scope.rebuildTargetSelects = function() {
@@ -139,7 +139,7 @@ function (angular, _, ElasticQueryBuilder) {
 
         if (select.field === 'select field') { continue; }
         $scope.target.select.push(select);
-      };
+      }
     };
 
     $scope.getGroupByFields = function(segment) {
@@ -157,7 +157,7 @@ function (angular, _, ElasticQueryBuilder) {
       if (segment.value === $scope.removeGroupBySegment.value) {
         $scope.target.groupByFields.splice(index, 1);
         $scope.groupBySegments.splice(index, 1);
-        $scope.$parent.get_data();
+        $scope.queryUpdated();
         return;
       }
 
@@ -169,7 +169,15 @@ function (angular, _, ElasticQueryBuilder) {
       segment.fake = false;
 
       $scope.target.groupByFields[index] = {field: segment.value};
-      $scope.$parent.get_data();
+      $scope.queryUpdated();
+    };
+
+    $scope.queryUpdated = function() {
+      var newJson = angular.toJson($scope.queryBuilder.build($scope.target), true);
+      if (newJson !== $scope.oldQueryRaw) {
+        $scope.rawQueryOld = newJson;
+        $scope.get_data();
+      }
     };
 
     $scope.transformToSegments = function(addTemplateVars) {
@@ -194,7 +202,11 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.toggleQueryMode = function () {
-      $scope.target.rawQuery = !$scope.target.rawQuery;
+      if ($scope.target.rawQuery) {
+        delete $scope.target.rawQuery;
+      } else {
+        $scope.target.rawQuery = $scope.rawQueryOld;
+      }
     };
 
     $scope.init();
