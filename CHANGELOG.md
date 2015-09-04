@@ -86,6 +86,7 @@ it allows you to add queries of differnet data source types & instances to the s
 >>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
+<<<<<<< 9e73171717d0846fdbbb9ebf5c1e1e1d4377aaaf
 <<<<<<< 4479e2ade71003c3617865b40b20a526895f33bb
 <<<<<<< d104f4300a7fa4055bd18b83f31793eaf059416e
 =======
@@ -97,6 +98,9 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #1646](https://github.com/grafana/grafana/issues/1646). OpenTSDB: Fetch list of aggregators from OpenTSDB
 - [Issue #2955](https://github.com/grafana/grafana/issues/2955). Graph: More axis units (Length, Volume, Temperature, Pressure, etc), thanks @greglook
 - [Issue #2928](https://github.com/grafana/grafana/issues/2928). LDAP: Support for searching for groups memberships, i.e. POSIX (no memberOf) schemas, also multiple ldap servers, and root ca cert, thanks @abligh
+=======
+- [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
+>>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
 =======
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 >>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
@@ -229,11 +233,15 @@ repeat panel from url), fixes #2564
 >>>>>>> feat(signup): progress on new signup flow, #2353
 =======
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+<<<<<<< 9e73171717d0846fdbbb9ebf5c1e1e1d4377aaaf
 <<<<<<< 00d34abd1310392a655c51777f90965406452073
 >>>>>>> fix(influxdb): fixes and refactorings of influxdb 0.9 editor, no longer shows template vars in keys dropdown and group by dropdownm, fixes #2636
 =======
 - [Issue #2651](https://github.com/grafana/grafana/issues/2651). InfluxDB: Fixed issue when using the eye to disable queries in the query editor and when applying aliases
 >>>>>>> fix(influxdb): Fixed issue when using the eye to disable queries in the query editor and when applying aliases, #2651
+=======
+- [Issue #2599](https://github.com/grafana/grafana/issues/2599). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
+>>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
