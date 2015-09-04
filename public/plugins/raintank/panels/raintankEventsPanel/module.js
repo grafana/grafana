@@ -66,8 +66,8 @@ function (angular, app, _, kbn, PanelMeta) {
     $scope.tagValueByName = function(event, tag) {
       var value = "";
       event.tags.forEach(function(t) {
-        var parts = t.split(":", 2)
-        if (parts.length != 2) {
+        var parts = t.split(":", 2);
+        if (parts.length !== 2) {
           return;
         }
         if (parts[0] === tag) {
