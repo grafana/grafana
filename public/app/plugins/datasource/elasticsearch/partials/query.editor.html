@@ -47,12 +47,6 @@
 		<li>
 			<input type="text" class="input-xlarge tight-form-input" ng-model="target.query" spellcheck='false' placeholder="Lucence query" ng-blur="get_data()">
 		</li>
-		<li class="tight-form-item query-keyword">
-			Time field
-		</li>
-		<li>
-			<metric-segment segment="timeSegment" get-alt-segments="getFields()" on-value-changed="timeFieldChanged()"></metric-segment>
-		</li>
 	</ul>
 
 	<div class="clearfix"></div>
@@ -73,28 +67,82 @@
 			</li>
 		</ul>
 
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form" ng-repeat="agg in target.bucketAggs">
-		<ul class="tight-form-list">
-			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-				<span ng-show="$first">Group by</span>
-				<span ng-show="!$first">Then by</span>
-			</li>
-			<li>
-				<elastic-query-component model="agg" get-fields="getFields()" on-change="queryUpdated()"></elastic-query-component>
-			</li>
-		</ul>
-
 		<ul class="tight-form-list pull-right">
 			<li class="tight-form-item" ng-if="$index === 0">
-				<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
+				<a class="pointer" ng-click="addMetric()"><i class="fa fa-plus"></i></a>
 			</li>
 			<li class="tight-form-item" ng-if="!$last">
-				<a class="pointer" ng-click="removeBucketAgg(agg, $index)"><i class="fa fa-minus"></i></a>
+				<a class="pointer" ng-click="removeMetric($index)"><i class="fa fa-minus"></i></a>
 			</li>
 		</ul>
 		<div class="clearfix"></div>
 	</div>
+
+	<div ng-repeat="agg in target.bucketAggs">
+		<elastic-bucket-agg
+			target="target" index="$index"
+			get-fields="getFields()"
+			on-change="queryUpdated()">
+		</elastic-bucket-agg>
+	</div>
+
+	<!-- 	<div class="tight&#45;form"> -->
+	<!-- 	<ul class="tight&#45;form&#45;list"> -->
+	<!-- 		<li class="tight&#45;form&#45;item query&#45;keyword tight&#45;form&#45;align" style="width: 75px;"> -->
+	<!-- 			<span ng&#45;show="$first">Group by</span> -->
+	<!-- 			<span ng&#45;show="!$first">Then by</span> -->
+	<!-- 		</li> -->
+	<!-- 		<li> -->
+	<!-- 			<elastic&#45;query&#45;component model="agg" get&#45;fields="getFields()" on&#45;change="queryUpdated()"></elastic&#45;query&#45;component> -->
+	<!-- 		</li> -->
+	<!-- 	</ul> -->
+  <!--  -->
+	<!-- 	<ul class="tight&#45;form&#45;list pull&#45;right"> -->
+	<!-- 		<li class="tight&#45;form&#45;item" ng&#45;if="$index === 0"> -->
+	<!-- 			<a class="pointer" ng&#45;click="addBucketAgg()"><i class="fa fa&#45;plus"></i></a> -->
+	<!-- 		</li> -->
+	<!-- 		<li class="tight&#45;form&#45;item" ng&#45;if="!$last"> -->
+	<!-- 			<a class="pointer" ng&#45;click="removeBucketAgg($index)"><i class="fa fa&#45;minus"></i></a> -->
+	<!-- 		</li> -->
+	<!-- 	</ul> -->
+	<!-- 	<div class="clearfix"></div> -->
+	<!-- </div> -->
+  <!--  -->
+	<!-- <div class="tight&#45;form" ng&#45;if="agg.showOptions"> -->
+	<!-- 	<div style="margin: 20px 0 20px 148px;display: inline&#45;block"> -->
+	<!-- 		<div class="tight&#45;form"> -->
+	<!-- 			<ul class="tight&#45;form&#45;list"> -->
+	<!-- 				<li class="tight&#45;form&#45;item" style="width: 60px"> -->
+	<!-- 					Order -->
+	<!-- 				</li> -->
+	<!-- 				<li> -->
+	<!-- 					<metric&#45;segment segment="" get&#45;alt&#45;segments="getFields()" on&#45;value&#45;changed="timeFieldChanged()"></metric&#45;segment> -->
+	<!-- 				</li> -->
+	<!-- 			</ul> -->
+	<!-- 			<div class="clearfix"></div> -->
+	<!-- 		</div> -->
+	<!-- 		<div class="tight&#45;form"> -->
+	<!-- 			<ul class="tight&#45;form&#45;list"> -->
+	<!-- 				<li class="tight&#45;form&#45;item" style="width: 60px"> -->
+	<!-- 					Size -->
+	<!-- 				</li> -->
+	<!-- 				<li> -->
+	<!-- 					<input type="text" class="input&#45;mini tight&#45;form&#45;input" ng&#45;model="agg.options.size" spellcheck='false' placeholder="0" ng&#45;blur="get_data()"> -->
+	<!-- 				</li> -->
+	<!-- 			</ul> -->
+	<!-- 			<div class="clearfix"></div> -->
+	<!-- 		</div> -->
+	<!-- 		<div class="tight&#45;form last"> -->
+	<!-- 			<ul class="tight&#45;form&#45;list"> -->
+	<!-- 				<li class="tight&#45;form&#45;item" style="width: 60px"> -->
+	<!-- 					Order by -->
+	<!-- 				</li> -->
+	<!-- 				<li> -->
+	<!-- 					<metric&#45;segment segment="timeSegment" get&#45;alt&#45;segments="getFields()" on&#45;value&#45;changed="timeFieldChanged()"></metric&#45;segment> -->
+	<!-- 				</li> -->
+	<!-- 			</ul> -->
+	<!-- 			<div class="clearfix"></div> -->
+	<!-- 		</div> -->
+	<!-- 	</div> -->
+
 </div>
