@@ -160,8 +160,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     ElasticDatasource.prototype.query = function(options) {
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
       var payload = "";
       var target;
+=======
+      var queryBuilder = new ElasticQueryBuilder();
+      var header = '{"index":"' + this.index + '","search_type":"count","ignore_unavailable":true}';
+      var payload = "";
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
       var sentTargets = [];
 
       var header = this.getQueryHeader(options.range.from, options.range.to);
@@ -181,8 +187,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       payload = payload.replace(/\$interval/g, options.interval);
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
+=======
+      payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
+      payload = payload.replace(/\$timeTo/g, this.translateTime(options.range.to));
+      payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
       payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('/_msearch?search_type=count', payload).then(function(res) {
@@ -190,6 +202,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
     ElasticDatasource.prototype.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
         var fields = {};
@@ -201,6 +214,32 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'date': 'date',
           'string': 'string',
         };
+=======
+    // This is quite complex
+    // neeed to recurise down the nested buckets to build series
+    ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName, parentTime) {
+      var groupBy = target.groupByFields[level];
+      var seriesName, time, value, select, i, y, bucket;
+
+      for (i = 0; i < buckets.length; i++) {
+        bucket = buckets[i];
+
+        if (groupBy) {
+          seriesName = level > 0 ? parentName + ' ' + bucket.key : parentName;
+          time = parentTime || bucket.key;
+          this._processBuckets(bucket[groupBy.field].buckets, target, series, level+1, seriesName, time);
+        } else {
+
+          for (y = 0; y < target.select.length; y++) {
+            select = target.select[y];
+            seriesName = parentName;
+
+            if (level > 0) {
+              seriesName +=  ' ' + bucket.key;
+            } else {
+              parentTime = bucket.key;
+            }
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
 
         for (var indexName in res) {
           var index = res[indexName];
@@ -227,16 +266,23 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
     ElasticDatasource.prototype.getTerms = function(queryDef) {
       var range = timeSrv.timeRange();
       var header = this.getQueryHeader(range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+=======
+        var buckets = response.aggregations.histogram.buckets;
+        var target = targets[i];
+        var querySeries = {};
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
 
       esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
       return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
@@ -251,6 +297,21 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       if (!query) {
         return $q.when([]);
       }
+=======
+        for (var prop in querySeries) {
+          if (querySeries.hasOwnProperty(prop)) {
+            series.push(querySeries[prop]);
+          }
+        }
+      }
+
+      return { data: series };
+    };
+
+    ElasticDatasource.prototype.metricFindQuery = function() {
+      var timeFrom = this.translateTime(timeSrv.time.from);
+      var timeTo = this.translateTime(timeSrv.time.to);
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
 
       if (query.find === 'fields') {
         return this.getFields(query);
@@ -283,6 +344,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         var resultsHits = results.hits.hits;
         var displayHits = { dashboards: [] };
 
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
         for (var i = 0, len = resultsHits.length; i < len; i++) {
           var hit = resultsHits[i];
           displayHits.dashboards.push({
@@ -294,6 +356,24 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         return displayHits;
       });
+=======
+          if (hit._source) {
+            for (var fieldProp in hit._source) {
+              if (hit._source.hasOwnProperty(fieldProp)) {
+                fields[fieldProp] = 1;
+              }
+            }
+          }
+        }
+
+        fields = _.map(_.keys(fields), function(field) {
+          return {text: field};
+        });
+
+        return fields;
+      });
+
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
     };
 
     return ElasticDatasource;

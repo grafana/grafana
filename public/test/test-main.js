@@ -125,7 +125,53 @@ require([
   angular.module('grafana.filters', []);
   angular.module('grafana.routes', ['ngRoute']);
 
+<<<<<<< 0e995754c685014a8a543af1c9f7e254ae4c01b6
   require(specs, function() {
+=======
+  var specs = [
+    'specs/lexer-specs',
+    'specs/parser-specs',
+    'specs/gfunc-specs',
+    'specs/timeSeries-specs',
+    'specs/row-ctrl-specs',
+    'specs/graphiteTargetCtrl-specs',
+    'specs/graphiteDatasource-specs',
+    'specs/influxSeries-specs',
+    'specs/influxSeries08-specs',
+    'specs/influxQueryBuilder-specs',
+    'specs/influx09-querybuilder-specs',
+    'specs/influxdb-datasource-specs',
+    'specs/influxdbQueryCtrl-specs',
+    'specs/kairosdb-datasource-specs',
+    'specs/graph-ctrl-specs',
+    'specs/graph-specs',
+    'specs/graph-tooltip-specs',
+    'specs/seriesOverridesCtrl-specs',
+    'specs/shareModalCtrl-specs',
+    'specs/timeSrv-specs',
+    'specs/panelSrv-specs',
+    'specs/templateSrv-specs',
+    'specs/templateValuesSrv-specs',
+    'specs/kbn-format-specs',
+    'specs/dashboardSrv-specs',
+    'specs/dashboardViewStateSrv-specs',
+    'specs/singlestat-specs',
+    'specs/dynamicDashboardSrv-specs',
+    'specs/unsavedChangesSrv-specs',
+    'specs/valueSelectDropdown-specs',
+    'specs/opentsdbDatasource-specs',
+    'specs/cloudwatch-datasource-specs',
+    'specs/elasticsearch-specs',
+    'specs/elasticsearch-querybuilder-specs',
+    'specs/elasticsearch-queryctrl-specs',
+  ];
+
+  var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
+    return '../plugins/' + spec;
+  });
+
+  require(specs.concat(pluginSpecs), function () {
+>>>>>>> feat(elasticsearch): raw queries work, more unit tests and polish, #1034
     window.__karma__.start();
   });
 
