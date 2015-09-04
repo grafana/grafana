@@ -2,11 +2,17 @@
      ng-controller="netCrunchQueryCtrl as ctrl"
      ng-init="init()">
 
-  <div class="tight-form"
+  <div class="tight-form net-crunch-tight-form"
        ng-class="{'tight-form-disabled': target.hide}"
        ng-repeat="target in panel.targets">
 
     <ul class="tight-form-list pull-right">
+      <li ng-show = "target.localVars.counterError" class = "tight-form-item">
+        <a bs-tooltip = "target.localVars.counterErrorMessage"
+           style = "color: rgb(229, 189, 28)" role = "menuitem">
+          <i class = "fa fa-warning"></i>
+        </a>
+      </li>
       <li class="tight-form-item">
         <div class="dropdown">
           <a class="pointer dropdown-toggle"
@@ -52,210 +58,133 @@
       </li>
     </ul>
 
-    <!------------------------>
-
-    <input type="text" class="tight-form-clear-input span3"
-           placeholder="select node"
-           ng-model="target.nodeName"
-           focus-me="target.nodeEditor"
-           spellcheck='false'
-           ng-model-onblur ng-change="nodeChange(target.nodeName)">
-
-    <ul class="tight-form-list" role="menu" ng-hide="target.nodeEditor">
-      <li ng-repeat="node in nodes" role="menuitem">
-        <!--<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>-->
+    <ul class="tight-form-list">
+      <li class="tight-form-item tile spinner"
+          ng-show="target.localVars.nodeSpinner"
+          tabindex="1">
+        <ng-spinner spinner-show-trigger = "target.localVars.processingNode"
+                    spinner-state = "target.localVars.nodeSpinner"
+                    spinner-delay = "350">
+          <img src = "img/load_big.gif">
+        </ng-spinner>
       </li>
-      <!--<li ng-repeat="func in functions">-->
-          <!--<span graphite-func-editor class="tight-form-item tight-form-func">-->
-          <!--</span>-->
-      <!--</li>-->
-      <li class="dropdown" graphite-add-func>
+      <li class="tight-form-item tile"
+          node-type-ahead={{$index}}
+          ng-focus-me="target.localVars.nodeFocus"
+          ng-hide="target.localVars.nodeSpinner"
+          ng-enter-click
+          ng-down-arrow-click
+          ng-click="nodeSelectionTypeAhead($index)"
+          tabindex="1">
+        <div class="node-icon">
+          <img ng-src={{target.localVars.nodeIcon}}>
+        </div>
+        <div class="tile-description">
+          <div class="node-name">{{target.localVars.nodeName}}</div>
+          <div class="node-address">{{target.localVars.nodeAddress}}</div>
+        </div>
+      </li>
+
+      <li class="tight-form-item counter spinner"
+          ng-show="target.localVars.counterSpinner"
+          tabindex="1">
+        <ng-spinner
+          spinner-show-trigger = "target.localVars.processingCounter"
+          spinner-state = "target.localVars.counterSpinner"
+          spinner-delay = "350">
+          <img src = "img/load_big.gif">
+        </ng-spinner>
+      </li>
+      <li class="tight-form-item counter"
+          counter-type-ahead={{$index}}
+          ng-focus-me="target.localVars.counterFocus"
+          ng-hide="target.localVars.counterSpinner"
+          ng-enter-click
+          ng-down-arrow-click
+          ng-click="counterSelectionTypeAhead($index)"
+          tabindex="1">
+        {{target.localVars.counterDisplayName}}
       </li>
     </ul>
-
-<!--
-    <input type="text" class="tight-form-clear-input span5"
-           placeholder="select counter"
-           ng-model="target.counterName"
-           spellcheck='false'
-           ng-change="counterChange(target.counterName)">
--->
-
-<!--
-    <ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
-      <li ng-repeat="segment in segments" role="menuitem">
-        <metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
-      </li>
-      <li ng-repeat="func in functions">
-          <span graphite-func-editor class="tight-form-item tight-form-func">
-          </span>
-      </li>
-      <li class="dropdown" graphite-add-func>
-      </li>
-    </ul>
-
-		<input  type="text" class="tight-form-clear-input span10"
-              ng-model="target.target"
-              focus-me="target.textEditor"
-              spellcheck='false'
-              ng-model-onblur ng-change="get_data()"
-              ng-show="target.textEditor" />
-
-      <ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
-				<li ng-repeat="segment in segments" role="menuitem">
-					<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
-				</li>
-				<li ng-repeat="func in functions">
-          <span graphite-func-editor class="tight-form-item tight-form-func">
-          </span>
-        </li>
-        <li class="dropdown" graphite-add-func>
-        </li>
-      </ul>
-
--->
 
     <div class="clearfix"></div>
   </div>
+  <div class="tight-form"></div>
+  <ng-type-ahead class="nodes-selection-container"
+                 type-ahead-name = "node-type-ahead"
+                 type-ahead-position = "nodeSelectionPosition"
+                 input-element="#node-input"
+                 content-element="#nodes-list"
+                 on-esc = "closeNodeSelectionTypeAhead()"
+                 ng-show="nodeSelectionShow">
+    <input type="text"
+           class="tight-form-clear-input node-input"
+           ng-focus-me="nodeSelectionFocus"
+           spellcheck="false"
+           ng-model="nodeNamePattern"
+           tabindex="1"
+           id="node-input">
+    <div class="nodes-ahead dropdown-menu" id="nodes-panel">
+      <ng-spinner class = "net-crunch-container spinner"
+                  spinner-show-trigger = "processingNodes"
+                  spinner-state = "nodesSpinner"
+                  spinner-delay = "350">
+        <img src = "img/load_big.gif">
+      </ng-spinner>
+      <div class="net-crunch-container" id="nodes-list"
+           ng-virtual-scroll-list
+           ng-virtual-scroll-list-parent="#nodes-panel"
+           ng-hide="nodesSpinner">
+        <div class="tile"
+             ng-repeat="node in nodes | netCrunchNodes : nodeNamePattern track by node.values.Id"
+             ng-virtual-scroll-list-element-height="40"
+             tabindex="{{node.local.tabIndex}}"
+             ng-click="selectNode(node)">
+          <div class="node-icon">
+            <img ng-src={{node.local.iconUrl}}>
+          </div>
+          <div class="tile-description">
+            <div class="node-name">{{node.values.Name}}</div>
+            <div class="node-address">{{node.values.Address}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-type-ahead>
+  <ng-type-ahead class="counter-selection-container"
+                 type-ahead-name = "counter-type-ahead"
+                 type-ahead-position = "counterSelectionPosition"
+                 input-element="#counter-input"
+                 content-element="#counters-list"
+                 on-esc = "closeCounterSelectionTypeAhead()"
+                 ng-show = "counterSelectionShow">
+    <input type="text"
+           class="tight-form-clear-input counter-input"
+           ng-focus-me="counterSelectionFocus"
+           spellcheck="false"
+           ng-model="counterNamePattern"
+           tabindex="1"
+           id="counter-input">
+    <div class="counters-ahead dropdown-menu" id="counters-panel">
+      <ng-spinner class = "net-crunch-container spinner"
+                          spinner-show-trigger = "processingCounters"
+                          spinner-state = "countersSpinner"
+                          spinner-delay = "350">
+        <img src = "img/load_big.gif">
+      </ng-spinner>
+      <div class="counters-levels" id="counters-list"
+           ng-hide="countersSpinner"
+           ng-tree="counter in counters | netCrunchCounter : counterNamePattern"
+           ng-tree-class="counter-level"
+           ng-tree-scroll-parent="counters-panel"
+           ng-tree-config="counterListConfig">
+
+          <div ng-tree-inner-level="counter.innerLevel"
+               ng-click="selectCounter(counter)"
+               tabindex="{{counter.tabIndex}}">
+            {{counter.displayName}}
+          </div>
+      </div>
+    </div>
+  </ng-type-ahead>
 </div>
-
-
-<!--</div>-->
-
-<!--<section class="grafana-metric-options">-->
-  <!--<div class="tight-form">-->
-    <!--<ul class="tight-form-list">-->
-      <!--<li class="tight-form-item tight-form-item-icon">-->
-        <!--<i class="fa fa-wrench"></i>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--Cache timeout-->
-      <!--</li>-->
-      <!--<li>-->
-        <!--<input type="text"-->
-               <!--class="input-mini tight-form-input"-->
-               <!--ng-model="panel.cacheTimeout"-->
-               <!--bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"-->
-               <!--data-placement="right"-->
-               <!--spellcheck='false'-->
-               <!--placeholder="60">-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--Max data points-->
-      <!--</li>-->
-      <!--<li>-->
-        <!--<input type="text"-->
-               <!--class="input-mini tight-form-input"-->
-               <!--ng-model="panel.maxDataPoints"-->
-               <!--bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"-->
-               <!--data-placement="right"-->
-               <!--ng-model-onblur ng-change="get_data()"-->
-               <!--spellcheck='false'-->
-               <!--placeholder="auto">-->
-      <!--</li>-->
-    <!--</ul>-->
-    <!--<div class="clearfix"></div>-->
-  <!--</div>-->
-  <!--<div class="tight-form">-->
-    <!--<ul class="tight-form-list">-->
-      <!--<li class="tight-form-item tight-form-item-icon">-->
-        <!--<i class="fa fa-info-circle"></i>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">-->
-          <!--shorter legend names-->
-        <!--</a>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">-->
-          <!--series as parameters-->
-        <!--</a>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">-->
-          <!--stacking-->
-        <!--</a>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">-->
-          <!--templating-->
-        <!--</a>-->
-      <!--</li>-->
-      <!--<li class="tight-form-item">-->
-        <!--<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">-->
-          <!--max data points-->
-        <!--</a>-->
-      <!--</li>-->
-    <!--</ul>-->
-    <!--<div class="clearfix"></div>-->
-  <!--</div>-->
-<!--</section>-->
-
-<!--<div class="editor-row">-->
-  <!--<div class="pull-left" style="margin-top: 30px;">-->
-
-    <!--<div class="grafana-info-box span8" ng-if="editorHelpIndex === 1">-->
-      <!--<h5>Shorter legend names</h5>-->
-      <!--<ul>-->
-        <!--<li>alias() function to specify a custom series name</li>-->
-        <!--<li>aliasByNode(2) to alias by a specific part of your metric path</li>-->
-        <!--<li>aliasByNode(2, -1) you can add multiple segment paths, and use negative index</li>-->
-        <!--<li>groupByNode(2, 'sum') is useful if you have 2 wildcards in your metric path and want to sumSeries and group by</li>-->
-      <!--</ul>-->
-    <!--</div>-->
-
-    <!--<div class="grafana-info-box span8" ng-if="editorHelpIndex === 2">-->
-      <!--<h5>Series as parameter</h5>-->
-      <!--<ul>-->
-        <!--<li>Some graphite functions allow you to have many series arguments</li>-->
-        <!--<li>Use #[A-Z] to use a graphite query as parameter to a function</li>-->
-        <!--<li>-->
-          <!--Examples:-->
-          <!--<ul>-->
-            <!--<li>asPercent(#A, #B)</li>-->
-            <!--<li>prod.srv-01.counters.count - asPercent(#A) : percentage of count in comparison with A query</li>-->
-            <!--<li>prod.srv-01.counters.count - sumSeries(#A) : sum count and series A </li>-->
-            <!--<li>divideSeries(#A, #B)</li>-->
-          <!--</ul>-->
-        <!--</li>-->
-        <!--<li>If a query is added only to be used as a parameter, hide it from the graph with the eye icon</li>-->
-      <!--</ul>-->
-    <!--</div>-->
-
-    <!--<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">-->
-      <!--<h5>Stacking</h5>-->
-      <!--<ul>-->
-        <!--<li>You find the stacking option under Display Styles tab</li>-->
-        <!--<li>When stacking is enabled make sure null point mode is set to 'null as zero'</li>-->
-      <!--</ul>-->
-    <!--</div>-->
-
-    <!--<div class="grafana-info-box span6" ng-if="editorHelpIndex === 4">-->
-      <!--<h5>Templating</h5>-->
-      <!--<ul>-->
-        <!--<li>You can use a template variable in place of metric names</li>-->
-        <!--<li>You can use a template variable in place of function parameters</li>-->
-        <!--<li>You enable the templating feature in Dashboard settings / Feature toggles </li>-->
-      <!--</ul>-->
-    <!--</div>-->
-
-    <!--<div class="grafana-info-box span6" ng-if="editorHelpIndex === 5">-->
-      <!--<h5>Max data points</h5>-->
-      <!--<ul>-->
-        <!--<li>Every graphite request is issued with a maxDataPoints parameter</li>-->
-        <!--<li>Graphite uses this parameter to consolidate the real number of values down to this number</li>-->
-        <!--<li>If there are more real values, then by default they will be consolidated using averages</li>-->
-        <!--<li>This could hide real peaks and max values in your series</li>-->
-        <!--<li>You can change how point consolidation is made using the consolidateBy graphite function</li>-->
-        <!--<li>Point consolidation will effect series legend values (min,max,total,current)</li>-->
-        <!--<li>If you override maxDataPoint and set a high value performance can be severely effected</li>-->
-      <!--</ul>-->
-    <!--</div>-->
-
-  <!--</div>-->
-
-  <!--<li ng-show="parserError" class="tight-form-item">-->
-  <!--<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">-->
-  <!--<i class="fa fa-warning"></i>-->
-  <!--</a>-->
-  <!--</li>-->
