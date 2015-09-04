@@ -233,6 +233,7 @@ repeat panel from url), fixes #2564
 >>>>>>> feat(signup): progress on new signup flow, #2353
 =======
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+<<<<<<< 102cf94a9067d823c71ed6f91004e744fc87bbf4
 <<<<<<< 9e73171717d0846fdbbb9ebf5c1e1e1d4377aaaf
 <<<<<<< 00d34abd1310392a655c51777f90965406452073
 >>>>>>> fix(influxdb): fixes and refactorings of influxdb 0.9 editor, no longer shows template vars in keys dropdown and group by dropdownm, fixes #2636
@@ -242,6 +243,9 @@ repeat panel from url), fixes #2564
 =======
 - [Issue #2599](https://github.com/grafana/grafana/issues/2599). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
 >>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
+=======
+- [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
+>>>>>>> fix(): fixed problems in last commit
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
