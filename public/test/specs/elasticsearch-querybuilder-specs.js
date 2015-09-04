@@ -9,6 +9,7 @@ define([
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
+        timeField: '@timestamp',
         select: [{agg: 'Count'}],
         groupByFields: [],
       });

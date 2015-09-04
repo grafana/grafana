@@ -6,6 +6,12 @@ function (angular) {
 
   function ElasticQueryBuilder() { }
 
+  ElasticQueryBuilder.prototype.getRangeFilter = function(timeField) {
+    var filter = {};
+    filter[timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
+    return filter;
+  };
+
   ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
       return angular.fromJson(target.rawQuery);
@@ -23,19 +29,7 @@ function (angular) {
           },
           "filter": {
             "bool": {
-              "must": [
-                {
-                  "range": {
-                    "@timestamp": {
-                      "gte": "$timeFrom",
-                      "lte": "$timeTo"
-                    }
-                  }
-                }
-              ],
-              "must_not": [
-
-              ]
+              "must": [{"range": this.getRangeFilter(target.timeField)}]
             }
           }
         }

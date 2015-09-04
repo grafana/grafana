@@ -143,7 +143,8 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.getGroupByFields = function(segment) {
-      return $scope.datasource.metricFindQuery('fields()').then($scope.transformToSegments(false))
+      return $scope.datasource.metricFindQuery('fields()')
+      .then($scope.transformToSegments(false))
       .then(function(results) {
         if (segment.type !== 'plus-button') {
           results.splice(0, 0, angular.copy($scope.removeGroupBySegment));
@@ -151,6 +152,17 @@ function (angular, _, ElasticQueryBuilder) {
         return results;
       })
       .then(null, $scope.handleQueryError);
+    };
+
+    $scope.getTimeFields = function() {
+      return $scope.datasource.metricFindQuery('fields()')
+      .then($scope.transformToSegments(false))
+      .then(null, $scope.handleQueryError);
+    };
+
+    $scope.timeFieldChanged = function() {
+      $scope.target.timeField = $scope.timeSegment.value;
+      $scope.queryUpdated();
     };
 
     $scope.groupByChanged = function(segment, index) {
