@@ -5,6 +5,9 @@
 				<i class="fa fa-warning"></i>
 			</a>
 		</li>
+		<li class="tight-form-item small" ng-show="target.datasource">
+			<em>{{target.datasource}}</em>
+		</li>
 		<li class="tight-form-item">
 			<div class="dropdown">
 				<a  class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
@@ -48,7 +51,7 @@
 			Time field
 		</li>
 		<li>
-			<metric-segment segment="timeSegment" get-alt-segments="getFields()" on-value-changed="timestampChanged()"></metric-segment>
+			<metric-segment segment="timeSegment" get-alt-segments="getTimeFields()" on-value-changed="timeFieldChanged()"></metric-segment>
 		</li>
 	</ul>
 
