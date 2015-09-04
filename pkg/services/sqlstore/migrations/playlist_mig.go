@@ -10,6 +10,7 @@ func addPlaylistMigrations(mg *Migrator) {
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "timespan", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 		},
 	}
 

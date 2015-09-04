@@ -6,6 +6,22 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+func ValidateOrgPlaylist(c *middleware.Context) {
+	id := c.ParamsInt64(":id")
+	query := m.GetPlaylistByIdQuery{Id: id}
+	err := bus.Dispatch(&query)
+
+	if err != nil {
+		c.JsonApiErr(404, "Playlist not found", err)
+		return
+	}
+
+	if query.Result.OrgId != c.OrgId {
+		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
+		return
+	}
+}
+
 func SearchPlaylists(c *middleware.Context) {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
@@ -17,6 +33,7 @@ func SearchPlaylists(c *middleware.Context) {
 	searchQuery := m.PlaylistQuery{
 		Title: query,
 		Limit: limit,
+		OrgId: c.OrgId,
 	}
 
 	err := bus.Dispatch(&searchQuery)
@@ -65,6 +82,7 @@ func DeletePlaylist(c *middleware.Context) {
 }
 
 func CreatePlaylist(c *middleware.Context, query m.CreatePlaylistQuery) {
+	query.OrgId = c.OrgId
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to create playlist", err)

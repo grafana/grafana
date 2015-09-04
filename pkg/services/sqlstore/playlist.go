@@ -23,6 +23,7 @@ func CreatePlaylist(query *m.CreatePlaylistQuery) error {
 		Title:    query.Title,
 		Data:     query.Data,
 		Timespan: query.Timespan,
+		OrgId:    query.OrgId,
 	}
 
 	_, err = x.Insert(&playlist)
@@ -86,6 +87,7 @@ func SearchPlaylists(query *m.PlaylistQuery) error {
 		sess.Where("title LIKE ?", query.Title)
 	}
 
+	sess.Where("org_id = ?", query.OrgId)
 	err := sess.Find(&playlists)
 	query.Result = playlists
 

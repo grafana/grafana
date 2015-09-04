@@ -16,6 +16,7 @@ type Playlist struct {
 	Title    string `json:"title"`
 	Timespan string `json:"timespan"`
 	Data     []int  `json:"data"`
+	OrgId    int64  `json:"-"`
 }
 
 type PlaylistDashboard struct {
@@ -37,6 +38,7 @@ type PlaylistDashboards []*PlaylistDashboard
 type PlaylistQuery struct {
 	Title string
 	Limit int
+	OrgId int64
 
 	Result Playlists
 }
@@ -54,6 +56,7 @@ type CreatePlaylistQuery struct {
 	Title    string
 	Timespan string
 	Data     []int
+	OrgId    int64
 
 	Result *Playlist
 }
