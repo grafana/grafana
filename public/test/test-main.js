@@ -154,6 +154,7 @@ require([
     'specs/cloudwatch-datasource-specs',
     'specs/elasticsearch-specs',
     'specs/elasticsearch-querybuilder-specs',
+    'specs/elasticsearch-queryctrl-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

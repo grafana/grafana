@@ -153,8 +153,6 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         return;
       }
 
-      console.log('graph data', results);
-
       $scope.datapointsWarning = false;
       $scope.datapointsCount = 0;
       $scope.datapointsOutside = false;

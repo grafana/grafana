@@ -42,7 +42,7 @@ define([
                 }
               }
             }]
-          })
+          });
         });
 
         it('should return 1 series', function() {
@@ -81,7 +81,7 @@ define([
                 }
               }
             }]
-          })
+          });
         });
 
         it('should return 2 series', function() {
@@ -134,7 +134,7 @@ define([
                 }
               }
             }]
-          })
+          });
         });
 
         it('should return 2 series', function() {
@@ -216,7 +216,7 @@ define([
                 }
               }
             }]
-          })
+          });
         });
 
         it('should return 2 series', function() {

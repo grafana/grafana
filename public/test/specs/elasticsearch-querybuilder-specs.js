@@ -11,22 +11,24 @@ define([
       var query = builder.build({
         select: [{agg: 'Count'}],
         groupByFields: [],
-      }, 100, 1000);
+      });
 
-      expect(query.query.filtered.filter.bool.must[0].range["@timestamp"].gte).to.be(100);
-      expect(query.aggs.histogram.date_histogram.extended_bounds.min).to.be(100);
+      expect(query.query.filtered.filter.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+      expect(query.aggs.histogram.date_histogram.extended_bounds.min).to.be("$timeFrom");
     });
 
     it('with select field', function() {
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
-        select: [{agg: 'Avg', field: '@value'}],
+        select: [{agg: 'avg', field: '@value'}],
         groupByFields: [],
       }, 100, 1000);
 
-      var aggs = query.aggs.histogram;
+      var aggs = query.aggs.histogram.aggs;
+      expect(aggs["0"].avg.field).to.be("@value");
     });
+
 
   });
 

@@ -136,8 +136,8 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     ElasticDatasource.prototype.query = function(options) {
       var queryBuilder = new ElasticQueryBuilder();
-      var header = '{"index":"' + this.index + '","search_type":"count","ignore_unavailable":true}'
-      var payload = ""
+      var header = '{"index":"' + this.index + '","search_type":"count","ignore_unavailable":true}';
+      var payload = "";
       var sentTargets = [];
       var timeFrom = this.translateTime(options.range.from);
       var timeTo = this.translateTime(options.range.to);
@@ -155,8 +155,8 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       });
 
       payload = payload.replace(/\$interval/g, options.interval);
-      payload = payload.replace(/\$rangeFrom/g, this.translateTime(options.range.from));
-      payload = payload.replace(/\$rangeTo/g, this.translateTime(options.range.to));
+      payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
+      payload = payload.replace(/\$timeTo/g, this.translateTime(options.range.to));
       payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
       payload = templateSrv.replace(payload, options.scopedVars);
 
@@ -175,22 +175,21 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
     ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName, parentTime) {
-      var points = [];
       var groupBy = target.groupByFields[level];
+      var seriesName, time, value, select, i, y, bucket;
 
-      for (var i = 0; i < buckets.length; i++) {
-        var bucket = buckets[i];
+      for (i = 0; i < buckets.length; i++) {
+        bucket = buckets[i];
 
         if (groupBy) {
-          var seriesName = level > 0 ? parentName + ' ' + bucket.key : parentName;
-          var time = parentTime || bucket.key;
-          this._processBuckets(bucket[groupBy.field].buckets, target, series, level+1, seriesName, time)
+          seriesName = level > 0 ? parentName + ' ' + bucket.key : parentName;
+          time = parentTime || bucket.key;
+          this._processBuckets(bucket[groupBy.field].buckets, target, series, level+1, seriesName, time);
         } else {
 
-          for (var y = 0; y < target.select.length; y++) {
-            var select = target.select[y];
-            var seriesName = parentName;
-            var value;
+          for (y = 0; y < target.select.length; y++) {
+            select = target.select[y];
+            seriesName = parentName;
 
             if (level > 0) {
               seriesName +=  ' ' + bucket.key;
@@ -224,20 +223,21 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
         var buckets = response.aggregations.histogram.buckets;
         var target = targets[i];
-        var points = [];
-        var querySeries = {}
+        var querySeries = {};
 
         this._processBuckets(buckets, target, querySeries, 0, target.refId);
 
-        _.each(querySeries, function(value) {
-          series.push(value);
-        });
-      };
+        for (var prop in querySeries) {
+          if (querySeries.hasOwnProperty(prop)) {
+            series.push(querySeries[prop]);
+          }
+        }
+      }
 
       return { data: series };
     };
 
-    ElasticDatasource.prototype.metricFindQuery = function(query) {
+    ElasticDatasource.prototype.metricFindQuery = function() {
       var timeFrom = this.translateTime(timeSrv.time.from);
       var timeTo = this.translateTime(timeSrv.time.to);
 
@@ -275,9 +275,9 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
           }
 
           if (hit._source) {
-            for (var field in hit._source) {
-              if (hit._source.hasOwnProperty(field)) {
-                fields[field] = 1;
+            for (var fieldProp in hit._source) {
+              if (hit._source.hasOwnProperty(fieldProp)) {
+                fields[fieldProp] = 1;
               }
             }
           }
@@ -285,16 +285,11 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
         fields = _.map(_.keys(fields), function(field) {
           return {text: field};
-        })
-        console.log('metricFindQuery:',  fields);
+        });
+
         return fields;
       });
-      // var d = $q.defer();
-      //
-      // var fieldsQuery = query.match(/^fields\(\)/);
-      // if (fieldsQuery) {
-      //   return d.promise;
-      // }
+
     };
 
     return ElasticDatasource;

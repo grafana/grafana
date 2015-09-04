@@ -1,13 +1,14 @@
 define([
+  "angular"
 ],
-function () {
+function (angular) {
   'use strict';
 
   function ElasticQueryBuilder() { }
 
-  ElasticQueryBuilder.prototype.build = function(target, timeFrom, timeTo) {
+  ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
-      return angular.fromJson(target.rawJson);
+      return angular.fromJson(target.rawQuery);
     }
 
     var query = {
@@ -26,8 +27,8 @@ function () {
                 {
                   "range": {
                     "@timestamp": {
-                      "gte": timeFrom,
-                      "lte": timeTo
+                      "gte": "$timeFrom",
+                      "lte": "$timeTo"
                     }
                   }
                 }
@@ -48,17 +49,19 @@ function () {
           "field": target.timeField,
           "min_doc_count": 0,
           "extended_bounds": {
-            "min": timeFrom,
-            "max": timeTo
+            "min": "$timeFrom",
+            "max": "$timeTo"
           }
         }
       },
     };
 
     var nestedAggs = query.aggs.histogram;
+    var i;
+
     target.groupByFields = target.groupByFields || [];
 
-    for (var i = 0; i < target.groupByFields.length; i++) {
+    for (i = 0; i < target.groupByFields.length; i++) {
       var field = target.groupByFields[i].field;
       var aggs = {terms: {field: field}};
 
@@ -69,7 +72,7 @@ function () {
 
     nestedAggs.aggs = {};
 
-    for (var i = 0; i < target.select.length; i++) {
+    for (i = 0; i < target.select.length; i++) {
       var select = target.select[i];
       if (select.field) {
         var aggField = {};
@@ -79,7 +82,6 @@ function () {
       }
     }
 
-    console.log(angular.toJson(query, true));
     return query;
   };
 

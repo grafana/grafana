@@ -55,7 +55,7 @@
 	<div class="clearfix"></div>
 
 	<div style="padding: 10px" ng-if="target.rawQuery">
-		<textarea ng-model="target.rawJson" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;"></textarea>
+		<textarea ng-model="target.rawQuery" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="queryUpdated()"></textarea>
 	</div>
 </div>
 
