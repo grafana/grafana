@@ -174,39 +174,32 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
-    ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName, parentTime) {
-      var groupBy = target.groupByFields[level];
-      var seriesName, time, value, select, i, y, bucket;
+    ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName) {
+      var seriesName, value, metric, i, y, bucket, childBucket;
 
       for (i = 0; i < buckets.length; i++) {
         bucket = buckets[i];
+        childBucket = bucket['b' + level];
 
-        if (groupBy) {
-          seriesName = level > 0 ? parentName + ' ' + bucket.key : parentName;
-          time = parentTime || bucket.key;
-          this._processBuckets(bucket[groupBy.field].buckets, target, series, level+1, seriesName, time);
+        if (childBucket && childBucket.buckets) {
+          seriesName = parentName + ' ' + bucket.key;
+          this._processBuckets(childBucket.buckets, target, series, level+1, seriesName);
         } else {
 
-          for (y = 0; y < target.select.length; y++) {
-            select = target.select[y];
+          for (y = 0; y < target.metrics.length; y++) {
+            metric = target.metrics[y];
             seriesName = parentName;
 
-            if (level > 0) {
-              seriesName +=  ' ' + bucket.key;
-            } else {
-              parentTime = bucket.key;
-            }
-
-            if (select.field) {
-              seriesName += ' ' + select.field + ' ' + select.agg;
-              value = bucket[y.toString()].value;
+            if (metric.field) {
+              seriesName += ' ' + metric.field + ' ' + metric.agg;
+              value = bucket['m' + y.toString()].value;
             } else {
               seriesName += ' count';
               value = bucket.doc_count;
             }
 
             var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
-            serie.datapoints.push([value, parentTime]);
+            serie.datapoints.push([value, bucket.key]);
           }
         }
       }
@@ -221,11 +214,11 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
           throw { message: response.error };
         }
 
-        var buckets = response.aggregations.histogram.buckets;
+        var buckets = response.aggregations["b0"].buckets;
         var target = targets[i];
         var querySeries = {};
 
-        this._processBuckets(buckets, target, querySeries, 0, target.refId);
+        this._processBuckets(buckets, target, querySeries, 1, target.refId);
 
         for (var prop in querySeries) {
           if (querySeries.hasOwnProperty(prop)) {

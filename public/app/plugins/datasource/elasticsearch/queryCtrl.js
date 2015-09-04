@@ -15,17 +15,22 @@ function (angular, _, ElasticQueryBuilder) {
       if (!target) { return; }
 
       target.timeField = target.timeField || '@timestamp';
-      target.select = target.select || [{ agg: 'count' }];
-      target.groupByFields = target.groupByFields || [];
+      target.metrics = target.metrics || [{ agg: 'count' }];
+      target.bucketAggs = target.bucketAggs || [];
+      target.bucketAggs = [
+        {
+          type: 'terms',
+          field: '@hostname'
+        },
+        {
+          type: 'date_histogram',
+          field: '@timestamp'
+        },
+      ];
 
       $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
 
-      $scope.groupBySegments = _.map(target.groupByFields, function(group) {
-        return uiSegmentSrv.newSegment(group.field);
-      });
-
       $scope.initSelectSegments();
-      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
       $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
       $scope.resetSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- reset --'});
       $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
@@ -36,7 +41,7 @@ function (angular, _, ElasticQueryBuilder) {
 
     $scope.initSelectSegments = function() {
       $scope.selectSegments = [];
-      _.each($scope.target.select, function(select) {
+      _.each($scope.target.metrics, function(select) {
         if ($scope.selectSegments.length > 0) {
           $scope.selectSegments.push(uiSegmentSrv.newCondition(" and "));
         }
@@ -55,9 +60,10 @@ function (angular, _, ElasticQueryBuilder) {
       if (segment.type === 'agg' || segment.type === 'plus-button') {
         var options = [
           uiSegmentSrv.newSegment({value: 'count', type: 'agg'}),
+          uiSegmentSrv.newSegment({value: 'avg',   type: 'agg', reqField: true}),
+          uiSegmentSrv.newSegment({value: 'sum',   type: 'agg', reqField: true}),
           uiSegmentSrv.newSegment({value: 'min',   type: 'agg', reqField: true}),
           uiSegmentSrv.newSegment({value: 'max',   type: 'agg', reqField: true}),
-          uiSegmentSrv.newSegment({value: 'avg',   type: 'agg', reqField: true}),
         ];
         // if we have other selects and this is not a plus button add remove option
         if (segment.type !== 'plus-button' && $scope.selectSegments.length > 3) {
@@ -78,7 +84,7 @@ function (angular, _, ElasticQueryBuilder) {
     $scope.selectChanged = function(segment, index) {
       // reset
       if (segment.value === $scope.resetSelectSegment.value) {
-        $scope.target.select = [{ agg: 'count' }];
+        $scope.target.metrics = [{ agg: 'count' }];
         $scope.initSelectSegments();
         $scope.queryUpdated();
         return;
@@ -125,7 +131,7 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.rebuildTargetSelects = function() {
-      $scope.target.select = [];
+      $scope.target.metrics = [];
       for (var i = 0; i < $scope.selectSegments.length; i++) {
         var segment = $scope.selectSegments[i];
         var select = {agg: segment.value };
@@ -138,7 +144,7 @@ function (angular, _, ElasticQueryBuilder) {
         }
 
         if (select.field === 'select field') { continue; }
-        $scope.target.select.push(select);
+        $scope.target.metrics.push(select);
       }
     };
 
@@ -154,7 +160,7 @@ function (angular, _, ElasticQueryBuilder) {
       .then(null, $scope.handleQueryError);
     };
 
-    $scope.getTimeFields = function() {
+    $scope.getFields = function() {
       return $scope.datasource.metricFindQuery('fields()')
       .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
@@ -165,22 +171,20 @@ function (angular, _, ElasticQueryBuilder) {
       $scope.queryUpdated();
     };
 
-    $scope.groupByChanged = function(segment, index) {
-      if (segment.value === $scope.removeGroupBySegment.value) {
-        $scope.target.groupByFields.splice(index, 1);
-        $scope.groupBySegments.splice(index, 1);
-        $scope.queryUpdated();
-        return;
+    $scope.addBucketAgg = function() {
+      // if last is date histogram add it before
+      var lastBucket = $scope.target.bucketAggs[$scope.target.bucketAggs.length - 1];
+      var addIndex = $scope.target.bucketAggs.length - 1;
+
+      if (lastBucket && lastBucket.type === 'date_histogram') {
+        addIndex - 1;
       }
 
-      if (index === $scope.groupBySegments.length-1) {
-        $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
-      }
+      $scope.target.bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field" });
+    };
 
-      segment.type = 'group-by-key';
-      segment.fake = false;
-
-      $scope.target.groupByFields[index] = {field: segment.value};
+    $scope.removeBucketAgg = function(index) {
+      $scope.target.bucketAggs.splice(index, 1);
       $scope.queryUpdated();
     };
 
