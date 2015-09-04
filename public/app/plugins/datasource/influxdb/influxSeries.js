@@ -60,7 +60,7 @@ function (_) {
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
-      var segIndex = parseInt(group, 10)
+      var segIndex = parseInt(group, 10);
 
       if (group === 'm' || group === 'measurement') { return series.name; }
       if (group === 'col') { return series.columns[index]; }
