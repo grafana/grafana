@@ -1,6 +1,6 @@
 define([
   'angular',
-  './queryComponent',
+  './bucketAgg',
 ],
 function (angular) {
   'use strict';

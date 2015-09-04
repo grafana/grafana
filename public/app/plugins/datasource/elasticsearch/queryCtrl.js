@@ -33,7 +33,6 @@ function (angular, _, ElasticQueryBuilder) {
       $scope.initSelectSegments();
       $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
       $scope.resetSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- reset --'});
-      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
 
       $scope.queryBuilder = new ElasticQueryBuilder(target);
       $scope.rawQueryOld = angular.toJson($scope.queryBuilder.build($scope.target), true);
@@ -52,8 +51,6 @@ function (angular, _, ElasticQueryBuilder) {
           $scope.selectSegments.push(uiSegmentSrv.newSegment({value: select.field, type: 'field' }));
         }
       });
-
-      $scope.selectSegments.push(uiSegmentSrv.newPlusButton());
     };
 
     $scope.getSelectSegments = function(segment, index) {
@@ -168,23 +165,6 @@ function (angular, _, ElasticQueryBuilder) {
 
     $scope.timeFieldChanged = function() {
       $scope.target.timeField = $scope.timeSegment.value;
-      $scope.queryUpdated();
-    };
-
-    $scope.addBucketAgg = function() {
-      // if last is date histogram add it before
-      var lastBucket = $scope.target.bucketAggs[$scope.target.bucketAggs.length - 1];
-      var addIndex = $scope.target.bucketAggs.length - 1;
-
-      if (lastBucket && lastBucket.type === 'date_histogram') {
-        addIndex - 1;
-      }
-
-      $scope.target.bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field" });
-    };
-
-    $scope.removeBucketAgg = function(index) {
-      $scope.target.bucketAggs.splice(index, 1);
       $scope.queryUpdated();
     };
 
