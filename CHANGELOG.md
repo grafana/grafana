@@ -63,6 +63,7 @@ it allows you to add queries of differnet data source types & instances to the s
 <<<<<<< ea77587ba297693ec3a2a6a24f2f9dd24da79d68
 - [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
 - [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+<<<<<<< a5d6ff308a8abf031604f8c4d746dc083d967405
 <<<<<<< d104f4300a7fa4055bd18b83f31793eaf059416e
 <<<<<<< ac35be77e28c74f9dbd5978d04b194c19356dfb8
 <<<<<<< 5607ec0260725145f7500df845f7a38dc0025e6e
@@ -137,6 +138,9 @@ repeat panel from url), fixes #2564
 =======
 - [Issue #2599](https://github.com/grafana/grafana/issues/2599). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
 >>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599
+=======
+- [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
+>>>>>>> fix(): fixed problems in last commit
 
 **Breaking Changes**
 repeat panel from url), fixes #2564
