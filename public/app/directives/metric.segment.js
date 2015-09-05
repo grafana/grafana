@@ -20,8 +20,14 @@ function (angular, app, _, $) {
       return {
         scope: {
           segment: "=",
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
           getAltSegments: "&",
           onValueChanged: "&"
+=======
+          noCustom: "=",
+          getOptions: "&",
+          onChange: "&",
+>>>>>>> feat(editor): thing are starting to work again
         },
 
         link: function($scope, elem) {
@@ -47,13 +53,22 @@ function (angular, app, _, $) {
                 segment.fake = false;
                 segment.expandable = selected.expandable;
               }
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
               else {
+=======
+              else if ($scope.noCustom === false) {
+>>>>>>> feat(editor): thing are starting to work again
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
                 segment.fake = false;
               }
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
               $scope.onValueChanged();
+=======
+
+              $scope.onChange();
+>>>>>>> feat(editor): thing are starting to work again
             });
           };
 
@@ -76,13 +91,20 @@ function (angular, app, _, $) {
             // if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments({obj: _ , str: query}).then(function(altSegments) {
+              $scope.getOptions().then(function(altSegments) {
                 $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
                 if (!segment.fake && _.indexOf(options, segment.value) === -1) {
                   options.unshift(segment.value);
+=======
+                if ($scope.noCustom === false) {
+                  if (!segment.fake && _.indexOf(options, segment.value) === -1) {
+                    options.unshift(segment.value);
+                  }
+>>>>>>> feat(editor): thing are starting to work again
                 }
 
                 callback(options);
@@ -152,4 +174,61 @@ function (angular, app, _, $) {
         }
       };
     });
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
+=======
+
+  angular
+    .module('grafana.directives')
+    .directive('metricSegmentModel', function(uiSegmentSrv, $q) {
+      return {
+        template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()" no-custom="true"></metric-segment>',
+        restrict: 'E',
+        scope: {
+          property: "=",
+          options: "=",
+          getOptions: "&",
+          onChange: "&",
+        },
+        link: {
+          pre: function postLink($scope, elem) {
+
+            $scope.valueToSegment = function(value) {
+              var option = _.findWhere($scope.options, {value: value});
+              if (option) {
+                return uiSegmentSrv.newSegment({value: option.text});
+              } else {
+                return uiSegmentSrv.newSegment({value: value});
+              }
+            };
+
+            $scope.getOptionsInternal = function() {
+              if ($scope.options) {
+                var optionSegments = _.map($scope.options, function(option) {
+                  return uiSegmentSrv.newSegment({value: option.text});
+                });
+                return $q.when(optionSegments);
+              } else {
+                return $scope.getOptions();
+              }
+            };
+
+            $scope.onSegmentChange = function() {
+              if ($scope.options) {
+                var option = _.findWhere($scope.options, {text: $scope.segment.value});
+                if (option && option.value !== $scope.property) {
+                  $scope.property = option.value;
+                  $scope.onChange();
+                }
+              } else {
+                $scope.property = $scope.segment.value;
+                $scope.onChange();
+              }
+            };
+
+            $scope.segment = $scope.valueToSegment($scope.property);
+          }
+        }
+      };
+    });
+>>>>>>> feat(editor): thing are starting to work again
 });

@@ -62,10 +62,18 @@
 </div>
 
 <div ng-hide="target.rawQuery">
+<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
 	<div ng-repeat="agg in target.metrics">
 		<elastic-metric-agg
 			target="target" index="$index"
 			get-fields="getFields($fieldType)"
+=======
+
+	<div ng-repeat="agg in target.metrics">
+		<elastic-metric-agg
+			target="target" index="$index"
+			get-fields="getFields()"
+>>>>>>> feat(editor): thing are starting to work again
 			on-change="queryUpdated()">
 		</elastic-metric-agg>
 	</div>
