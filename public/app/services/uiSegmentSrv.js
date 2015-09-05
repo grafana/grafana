@@ -24,6 +24,7 @@ function (angular, _) {
       }
 
       this.cssClass = options.cssClass;
+      this.custom = options.custom;
       this.type = options.type;
       this.fake = options.fake;
       this.value = options.value;

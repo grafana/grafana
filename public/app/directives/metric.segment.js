@@ -20,7 +20,6 @@ function (angular, app, _, $) {
       return {
         scope: {
           segment: "=",
-          noCustom: "=",
           getOptions: "&",
           onChange: "&",
         },
@@ -48,7 +47,7 @@ function (angular, app, _, $) {
                 segment.fake = false;
                 segment.expandable = selected.expandable;
               }
-              else if ($scope.noCustom === false) {
+              else if (segment.custom !== 'false') {
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
@@ -83,7 +82,7 @@ function (angular, app, _, $) {
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
-                if ($scope.noCustom === false) {
+                if (segment.custom !== 'false') {
                   if (!segment.fake && _.indexOf(options, segment.value) === -1) {
                     options.unshift(segment.value);
                   }
@@ -161,7 +160,7 @@ function (angular, app, _, $) {
     .module('grafana.directives')
     .directive('metricSegmentModel', function(uiSegmentSrv, $q) {
       return {
-        template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()" no-custom="true"></metric-segment>',
+        template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()"></metric-segment>',
         restrict: 'E',
         scope: {
           property: "=",
@@ -175,9 +174,9 @@ function (angular, app, _, $) {
             $scope.valueToSegment = function(value) {
               var option = _.findWhere($scope.options, {value: value});
               if (option) {
-                return uiSegmentSrv.newSegment({value: option.text, cssClass: attrs.cssClass});
+                return uiSegmentSrv.newSegment({value: option.text, cssClass: attrs.cssClass, custom: attrs.custom});
               } else {
-                return uiSegmentSrv.newSegment({value: value, cssClass: attrs.cssClass});
+                return uiSegmentSrv.newSegment({value: value, cssClass: attrs.cssClass, custom: attrs.custom});
               }
             };
 

@@ -5,7 +5,7 @@
 			<span ng-hide="isFirst">Then by</span>
 		</li>
 		<li>
-			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChangeInternal()"></metric-segment-model>
+			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChangeInternal()" custom="false"></metric-segment-model>
 			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChangeInternal()"></metric-segment>
 		</li>
 		<li class="tight-form-item tight-form-align" ng-if="settingsLinkText">
