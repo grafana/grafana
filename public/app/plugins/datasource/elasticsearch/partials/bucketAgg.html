@@ -5,8 +5,8 @@
 			<span ng-hide="isFirst">Then by</span>
 		</li>
 		<li>
-			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="typeChanged()"></metric-segment-model>
-      <metric-segment segment="fieldSegment" get-alt-segments="getFields()" on-value-changed="fieldChanged()"></metric-segment>
+			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChange()"></metric-segment-model>
+			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()"></metric-segment>
 		</li>
 		<li class="tight-form-item tight-form-align" ng-if="aggOptionsString">
 			<a ng-click="toggleOptions()">{{aggOptionsString}}</a>
@@ -18,7 +18,7 @@
 			<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
 		</li>
 		<li class="tight-form-item last" ng-if="!isLast">
-			<a class="pointer" ng-click="removeBucketAgg($index)"><i class="fa fa-minus"></i></a>
+			<a class="pointer" ng-click="removeBucketAgg()"><i class="fa fa-minus"></i></a>
 		</li>
 	</ul>
 	<div class="clearfix"></div>

@@ -27,8 +27,6 @@ function (angular, _, $) {
         $scope.aggOptionsString = "Top 5, Order by: sum @value";
       }
 
-      $scope.fieldSegment = uiSegmentSrv.newSegment($scope.agg.field);
-
       $scope.toggleOptions = function() {
         $scope.showOptions = !$scope.showOptions;
       }
@@ -45,21 +43,11 @@ function (angular, _, $) {
         bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field" });
       };
 
-      $scope.removeBucketAgg = function(index) {
-        bucketAggs.splice(index, 1);
+      $scope.removeBucketAgg = function() {
+        bucketAggs.splice($scope.index, 1);
         $scope.onChange();
       };
 
-      $scope.fieldChanged = function() {
-        $scope.agg.showOptions = true;
-        $scope.agg.field = $scope.fieldSegment.value;
-        $scope.onChange();
-      };
-
-      $scope.bucketAggTypeChanged = function() {
-        $scope.agg.type = $scope.typeSegment.value;
-        $scope.onChange();
-      };
     });
 
     module.directive('elasticBucketAgg', function() {
