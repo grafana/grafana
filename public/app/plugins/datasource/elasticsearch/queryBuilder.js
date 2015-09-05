@@ -70,7 +70,7 @@ function (angular) {
       var metric = target.metrics[i];
       if (metric.field) {
         var aggField = {};
-        aggField[metric.agg] = {field: metric.field};
+        aggField[metric.type] = {field: metric.field};
 
         nestedAggs.aggs['m' + i] = aggField;
       }
