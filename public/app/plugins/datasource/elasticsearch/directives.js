@@ -20,4 +20,32 @@ function (angular) {
     return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
   });
 
+  module.directive('elasticMetricAgg', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/metricAgg.html',
+      controller: 'ElasticMetricAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+      }
+    };
+  });
+
+  module.directive('elasticBucketAgg', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/bucketAgg.html',
+      controller: 'ElasticBucketAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+      }
+    };
+  });
+
 });
