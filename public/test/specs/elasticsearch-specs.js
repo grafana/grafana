@@ -145,6 +145,48 @@ define([
         });
       });
 
+      describe('with percentiles ', function() {
+        var result;
+
+        beforeEach(function() {
+          result = ctx.ds._processTimeSeries([{
+            refId: 'A',
+            metrics: [{type: 'percentiles', settings: {percents: [75, 90]},  id: '1'}],
+            bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
+          }], {
+            responses: [{
+              aggregations: {
+                "3": {
+                  buckets: [
+                    {
+                      "1": {values: {"75": 3.3, "90": 5.5}},
+                      doc_count: 10,
+                      key: 1000
+                    },
+                    {
+                      "1": {values: {"75": 2.3, "90": 4.5}},
+                      doc_count: 15,
+                      key: 2000
+                    }
+                  ]
+                }
+              }
+            }]
+          });
+        });
+
+        it('should return 2 series', function() {
+          expect(result.data.length).to.be(2);
+          expect(result.data[0].datapoints.length).to.be(2);
+          expect(result.data[0].target).to.be('A 75');
+          expect(result.data[1].target).to.be('A 90');
+          expect(result.data[0].datapoints[0][0]).to.be(3.3);
+          expect(result.data[0].datapoints[0][1]).to.be(1000);
+          expect(result.data[1].datapoints[1][0]).to.be(4.5);
+        });
+      });
+
+
     });
   });
 });

@@ -175,9 +175,17 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
     ElasticDatasource.prototype._processBuckets = function(aggs, target, series, level, parentName) {
-      var seriesName, value, metric, i, y, bucket, childBucket, aggDef, esAgg;
+      var seriesName, value, metric, i, y, z, bucket, childBucket, aggDef, esAgg;
       var buckets;
       var dataFound = 0;
+
+      function addMetricPoint(seriesName, value, time) {
+        var current = series[seriesName];
+        if (!current) {
+          current = series[seriesName] = {target: seriesName, datapoints: []};
+        }
+        current.datapoints.push([value, time]);
+      }
 
       aggDef = target.bucketAggs[level];
       esAgg = aggs[aggDef.id];
@@ -191,16 +199,27 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
             metric = target.metrics[y];
             seriesName = parentName;
 
-            if (metric.type === 'count') {
-              seriesName += ' count';
-              value = bucket.doc_count;
-            } else {
-              seriesName += ' ' + metric.field + ' ' + metric.type;
-              value = bucket[metric.id].value;
+            switch(metric.type) {
+              case 'count': {
+                seriesName += ' count';
+                value = bucket.doc_count;
+                addMetricPoint(seriesName, value, bucket.key);
+                break;
+              }
+              case 'percentiles': {
+                var values = bucket[metric.id].values;
+                for (var prop in values) {
+                  addMetricPoint(seriesName + ' ' + prop, values[prop], bucket.key)
+                }
+                break;
+              }
+              default: {
+                seriesName += ' ' + metric.field + ' ' + metric.type;
+                value = bucket[metric.id].value;
+                addMetricPoint(seriesName, value, bucket.key);
+                break;
+              }
             }
-
-            var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
-            serie.datapoints.push([value, bucket.key]);
           }
         }
         else {

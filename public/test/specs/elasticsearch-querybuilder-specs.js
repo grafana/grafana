@@ -65,6 +65,31 @@ define([
       expect(secondLevel.aggs["5"].avg.field).to.be("@value");
     });
 
+    it('with metric percentiles', function() {
+      var builder = new ElasticQueryBuilder();
+
+      var query = builder.build({
+        metrics: [
+          {
+            id: '1',
+            type: 'percentiles',
+            field: '@load_time',
+            settings: {
+              percents: [1,2,3,4]
+            }
+          }
+        ],
+        bucketAggs: [
+          {type: 'date_histogram', field: '@timestamp', id: '3'}
+        ],
+      }, 100, 1000);
+
+      var firstLevel = query.aggs["3"];
+
+      expect(firstLevel.aggs["1"].percentiles.field).to.be("@load_time");
+      expect(firstLevel.aggs["1"].percentiles.percents).to.eql([1,2,3,4]);
+    });
+
   });
 
 });

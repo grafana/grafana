@@ -8,27 +8,43 @@ function (angular, _, queryDef) {
 
   var module = angular.module('grafana.directives');
 
-  module.controller('ElasticMetricAggCtrl', function($scope, uiSegmentSrv, $q) {
+  module.controller('ElasticMetricAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var metricAggs = $scope.target.metrics;
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
+      $scope.validateModel();
+    }
+
+    $rootScope.onAppEvent('elastic-query-updated', function() {
+      $scope.index = _.indexOf(metricAggs, $scope.agg);
+
+      $scope.isFirst = $scope.index === 0;
+      $scope.isSingle = metricAggs.length === 1;
+      $scope.validateModel();
+    });
+
+    $scope.validateModel = function() {
       if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
-    }
 
-    $scope.$watchCollection("target.metrics", function() {
-      $scope.isFirst = $scope.index === 0;
-      $scope.isLast = $scope.index === metricAggs.length - 1;
-      $scope.isSingle = metricAggs.length === 1;
-    });
+      if ($scope.agg.type === 'percentiles') {
+        $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
+        $scope.settingsLinkText = 'values: ' + $scope.agg.settings.percents.join(',');
+      }
+    }
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
-    }
+    };
+
+    $scope.onTypeChange = function() {
+      $scope.agg.settings = {};
+      $scope.onChange();
+    };
 
     $scope.addMetricAgg = function() {
       var addIndex = metricAggs.length;
