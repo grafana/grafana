@@ -54,13 +54,19 @@ function (angular) {
           break;
         }
         case 'terms': {
-          esAgg["terms"] = { "field": aggDef.field };
+          esAgg.terms = { "field": aggDef.field };
+          var size = parseInt(aggDef.size, 10);
+          if (size > 0) { esAgg.terms.size = size; }
+          if (aggDef.orderBy) {
+            esAgg.terms.order = {};
+            esAgg.terms.order[aggDef.orderBy] = aggDef.order;
+          }
           break;
         }
       }
 
       nestedAggs.aggs = {};
-      nestedAggs.aggs['b' + i] = esAgg;
+      nestedAggs.aggs[aggDef.id] = esAgg;
       nestedAggs = esAgg;
     }
 
@@ -74,7 +80,7 @@ function (angular) {
 
       var aggField = {};
       aggField[metric.type] = {field: metric.field};
-      nestedAggs.aggs['m' + i] = aggField;
+      nestedAggs.aggs[metric.id] = aggField;
     }
 
     return query;

@@ -26,27 +26,6 @@ define([
         ctx.scope.init();
       });
 
-      it('should init selectSegments', function() {
-        expect(ctx.scope.selectSegments.length).to.be(2);
-      });
-
-      describe('initSelectSegments with 2 selects', function() {
-
-        it('init selectSegments', function() {
-          ctx.scope.target.metrics = [
-            {agg: 'count'},
-            {agg: 'avg', field: 'value'},
-          ];
-          ctx.scope.initSelectSegments();
-
-          expect(ctx.scope.selectSegments.length).to.be(5);
-          expect(ctx.scope.selectSegments[0].value).to.be('count');
-          expect(ctx.scope.selectSegments[1].value).to.be(' and ');
-          expect(ctx.scope.selectSegments[2].value).to.be('avg');
-          expect(ctx.scope.selectSegments[3].value).to.be('value');
-        });
-      });
-
     });
 
   });

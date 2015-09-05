@@ -39,7 +39,12 @@ function (angular, _, $) {
 
       $scope.addMetricAgg = function() {
         var addIndex = metricAggs.length;
-        metricAggs.splice(addIndex, 0, {type: "count", field: "select field" });
+
+        var id = _.reduce($scope.target.bucketAggs.concat($scope.target.metrics), function(max, val) {
+          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        }, 0);
+
+        metricAggs.splice(addIndex, 0, {type: "count", field: "select field", id: (id+1).toString()});
       };
 
       $scope.removeMetricAgg = function() {

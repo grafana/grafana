@@ -23,12 +23,12 @@ define([
         beforeEach(function() {
           result = ctx.ds._processTimeSeries([{
             refId: 'A',
-            metrics: [{agg: 'count'}],
-            bucketAggs: [{type: 'date_histogram', field: '@timestamp'}],
+            metrics: [{type: 'count', id: '1'}],
+            bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '2'}],
           }], {
             responses: [{
               aggregations: {
-                "b0": {
+                "2": {
                   buckets: [
                     {
                       doc_count: 10,
@@ -60,20 +60,20 @@ define([
         beforeEach(function() {
           result = ctx.ds._processTimeSeries([{
             refId: 'A',
-            metrics: [{agg: 'count'}, {agg: 'avg', field: 'value'}],
-            bucketAggs: [{type: 'date_histogram', field: '@timestamp'}],
+            metrics: [{type: 'count', id: '1'}, {type: 'avg', field: 'value', id: '2'}],
+            bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
           }], {
             responses: [{
               aggregations: {
-                "b0": {
+                "3": {
                   buckets: [
                     {
-                      "m1": {value: 88},
+                      "2": {value: 88},
                       doc_count: 10,
                       key: 1000
                     },
                     {
-                      "m1": {value: 99},
+                      "2": {value: 99},
                       doc_count: 15,
                       key: 2000
                     }
@@ -103,15 +103,15 @@ define([
         beforeEach(function() {
           result = ctx.ds._processTimeSeries([{
             refId: 'A',
-            metrics: [{agg: 'count'}],
-            bucketAggs: [{type: 'terms', field: 'host'}, {type: 'date_histogram', field: '@timestamp'}],
+            metrics: [{type: 'count', id: '1'}],
+            bucketAggs: [{type: 'terms', field: 'host', id: '2'}, {type: 'date_histogram', field: '@timestamp', id: '3'}],
           }], {
             responses: [{
               aggregations: {
-                "b0": {
+                "2": {
                   buckets: [
                     {
-                      "b1": {
+                      "3": {
                         buckets: [
                           {doc_count: 1, key: 1000},
                           {doc_count: 3, key: 2000}
@@ -121,7 +121,7 @@ define([
                       key: 'server1',
                     },
                     {
-                      "b1": {
+                      "3": {
                         buckets: [
                           {doc_count: 2, key: 1000},
                           {doc_count: 8, key: 2000}

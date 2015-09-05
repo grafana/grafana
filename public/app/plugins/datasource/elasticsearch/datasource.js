@@ -174,18 +174,19 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
 
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
-    ElasticDatasource.prototype._processBuckets = function(buckets, target, series, level, parentName) {
-      var seriesName, value, metric, i, y, bucket, childBucket;
+    ElasticDatasource.prototype._processBuckets = function(aggs, target, series, level, parentName) {
+      var seriesName, value, metric, i, y, bucket, childBucket, aggDef, esAgg;
+      var buckets;
+      var dataFound = 0;
 
-      for (i = 0; i < buckets.length; i++) {
-        bucket = buckets[i];
-        childBucket = bucket['b' + level];
+      aggDef = target.bucketAggs[level];
+      esAgg = aggs[aggDef.id];
 
-        if (childBucket && childBucket.buckets) {
-          seriesName = parentName + ' ' + bucket.key;
-          this._processBuckets(childBucket.buckets, target, series, level+1, seriesName);
-        } else {
+      for (i = 0; i < esAgg.buckets.length; i++) {
+        bucket = esAgg.buckets[i];
 
+        // if last agg collect series
+        if (level === target.bucketAggs.length - 1) {
           for (y = 0; y < target.metrics.length; y++) {
             metric = target.metrics[y];
             seriesName = parentName;
@@ -195,12 +196,15 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
               value = bucket.doc_count;
             } else {
               seriesName += ' ' + metric.field + ' ' + metric.type;
-              value = bucket['m' + y.toString()].value;
+              value = bucket[metric.id].value;
             }
 
             var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};
             serie.datapoints.push([value, bucket.key]);
           }
+        }
+        else {
+          this._processBuckets(bucket, target, series, level+1, parentName + ' ' + bucket.key);
         }
       }
     };
@@ -214,11 +218,11 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
           throw { message: response.error };
         }
 
-        var buckets = response.aggregations["b0"].buckets;
+        var aggregations = response.aggregations;
         var target = targets[i];
         var querySeries = {};
 
-        this._processBuckets(buckets, target, querySeries, 1, target.refId);
+        this._processBuckets(aggregations, target, querySeries, 0, target.refId);
 
         for (var prop in querySeries) {
           if (querySeries.hasOwnProperty(prop)) {
