@@ -10,6 +10,12 @@ function (angular, _, ElasticQueryBuilder) {
 
   module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv, $q) {
 
+    $scope.metricAggregations = {
+      "Count": { value: 'count' },
+      "Average of": { value: 'avg' },
+      "Max of": { value: 'max' },
+    };
+
     $scope.init = function() {
       var target = $scope.target;
       if (!target) { return; }

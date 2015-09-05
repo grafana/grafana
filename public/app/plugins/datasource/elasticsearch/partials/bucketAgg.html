@@ -5,7 +5,7 @@
 			<span ng-hide="isFirst">Then by</span>
 		</li>
 		<li>
-      <metric-segment segment="typeSegment" get-alt-segments="getBucketAggTypes()" on-value-changed="bucketAggTypeChanged()"></metric-segment>
+			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="typeChanged()"></metric-segment-model>
       <metric-segment segment="fieldSegment" get-alt-segments="getFields()" on-value-changed="fieldChanged()"></metric-segment>
 		</li>
 		<li class="tight-form-item tight-form-align" ng-if="aggOptionsString">
@@ -32,7 +32,7 @@
 					Order
 				</li>
 				<li>
-					<metric-segment segment="orderSegment" get-alt-segments="getOrders()" on-value-changed="orderSegmentChanged()"></metric-segment>
+					<metric-segment-model property="agg.order" options="['Top', 'Bottom']"></metric-segment-model>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

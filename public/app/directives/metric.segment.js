@@ -20,8 +20,9 @@ function (angular, app, _, $) {
       return {
         scope: {
           segment: "=",
+          disableCustom: "=",
           getAltSegments: "&",
-          onValueChanged: "&"
+          onValueChanged: "&",
         },
 
         link: function($scope, elem) {
@@ -47,12 +48,13 @@ function (angular, app, _, $) {
                 segment.fake = false;
                 segment.expandable = selected.expandable;
               }
-              else {
+              else if ($scope.disableCustom === false) {
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
                 segment.fake = false;
               }
+
               $scope.onValueChanged();
             });
           };
@@ -81,8 +83,10 @@ function (angular, app, _, $) {
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
-                if (!segment.fake && _.indexOf(options, segment.value) === -1) {
-                  options.unshift(segment.value);
+                if ($scope.disableCustom === false) {
+                  if (!segment.fake && _.indexOf(options, segment.value) === -1) {
+                    options.unshift(segment.value);
+                  }
                 }
 
                 callback(options);
@@ -92,7 +96,6 @@ function (angular, app, _, $) {
 
           $scope.updater = function(value) {
             if (value === segment.value) {
-              console.log('cancel blur');
               clearTimeout(cancelBlur);
               $input.focus();
               return value;
@@ -150,6 +153,50 @@ function (angular, app, _, $) {
           $input.blur($scope.switchToLink);
 
           $compile(elem.contents())($scope);
+        }
+      };
+    });
+
+  angular
+    .module('grafana.directives')
+    .directive('metricSegmentModel', function(uiSegmentSrv, $q) {
+      return {
+        template: '<metric-segment segment="segment" get-alt-segments="getOptions()" on-value-changed="onSegmentChange()" disable-custom="true"></metric-segment>',
+        restrict: 'E',
+        scope: {
+          property: "=",
+          options: "=",
+          onChange: "&",
+        },
+        link: {
+          pre: function postLink($scope, elem) {
+
+            $scope.valueToSegment = function(value) {
+              var option = _.findWhere($scope.options, {value: value});
+              if (option) {
+                return uiSegmentSrv.newSegment({value: option.text});
+              } else {
+                return uiSegmentSrv.newSegment({value: value});
+              }
+            };
+
+            $scope.getOptions = function() {
+              var optionSegments = _.map($scope.options, function(option) {
+                return uiSegmentSrv.newSegment({value: option.text});
+              });
+              return $q.when(optionSegments);
+            };
+
+            $scope.onSegmentChange = function() {
+              var option = _.findWhere($scope.options, {text: $scope.segment.value});
+              if (option && option.value !== $scope.property) {
+                $scope.property = option.value;
+                $scope.onChange();
+              }
+            };
+
+            $scope.segment = $scope.valueToSegment($scope.property);
+          }
         }
       };
     });

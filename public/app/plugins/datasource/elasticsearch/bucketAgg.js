@@ -13,6 +13,11 @@ function (angular, _, $) {
 
       $scope.agg = bucketAggs[$scope.index];
 
+      $scope.bucketAggTypes = [
+        {text: "Terms",           value: 'terms' },
+        {text: "Date Histogram",  value: 'date_histogram' },
+      ];
+
       $scope.$watch("index", function() {
         $scope.isFirst = $scope.index === 0;
         $scope.isLast = $scope.index === bucketAggs.length - 1;
@@ -22,18 +27,10 @@ function (angular, _, $) {
         $scope.aggOptionsString = "Top 5, Order by: sum @value";
       }
 
-      $scope.typeSegment = uiSegmentSrv.newSegment($scope.agg.type);
       $scope.fieldSegment = uiSegmentSrv.newSegment($scope.agg.field);
 
-      $scope.getBucketAggTypes = function() {
-        return $q.when([
-          uiSegmentSrv.newSegment({value: 'terms'}),
-          uiSegmentSrv.newSegment({value: 'date_histogram'}),
-        ]);
-      };
-
       $scope.toggleOptions = function() {
-        $scope.showOptions = $scope.showOptions;
+        $scope.showOptions = !$scope.showOptions;
       }
 
       $scope.addBucketAgg = function() {
