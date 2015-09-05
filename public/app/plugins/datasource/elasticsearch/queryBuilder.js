@@ -48,7 +48,7 @@ function (angular) {
           esAgg["date_histogram"] = {
             "interval": target.interval || "$interval",
             "field": aggDef.field,
-            "min_doc_count": 0,
+            "min_doc_count": 1,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
           break;
@@ -92,8 +92,15 @@ function (angular) {
         continue;
       }
 
+      var metricAgg = {field: metric.field};
+      for (var prop in metric.settings) {
+        if (metric.settings.hasOwnProperty(prop)) {
+          metricAgg[prop] = metric.settings[prop];
+        }
+      }
+
       var aggField = {};
-      aggField[metric.type] = {field: metric.field};
+      aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
     }
 

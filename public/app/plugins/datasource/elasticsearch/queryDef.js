@@ -12,6 +12,7 @@ function (_) {
       {text: "Max of",  value: 'max' },
       {text: "Min of",  value: 'min' },
       {text: "Standard Deviations",  value: 'std_dev' },
+      {text: "Percentiles",  value: 'percentiles' },
     ],
 
     bucketAggTypes: [

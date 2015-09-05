@@ -33,24 +33,26 @@ function (angular, _, queryDef) {
     };
 
     $scope.validateModel = function() {
+      $scope.index = _.indexOf(bucketAggs, $scope.agg);
+
       $scope.isFirst = $scope.index === 0;
       $scope.isLast = $scope.index === bucketAggs.length - 1;
-      $scope.aggOptionsString = "";
+      $scope.settingsLinkText = "";
 
       if ($scope.agg.type === "terms") {
         $scope.agg.order = $scope.agg.order || "desc";
         $scope.agg.size = $scope.agg.size || "0";
-        $scope.agg.orderBy = $scope.agg.orderBy || "_count";
+        $scope.agg.orderBy = $scope.agg.orderBy || "_term";
 
         if ($scope.agg.size === '0') {
-          $scope.aggOptionsString = "";
+          $scope.settingsLinkText = "";
         } else {
-          $scope.aggOptionsString = queryDef.describeOrder($scope.agg.order) + ' ' + $scope.agg.size + ', '
+          $scope.settingsLinkText = queryDef.describeOrder($scope.agg.order) + ' ' + $scope.agg.size + ', '
         }
-        $scope.aggOptionsString += 'Order by: ' + queryDef.describeOrderBy($scope.agg.orderBy, $scope.target);
+        $scope.settingsLinkText += 'Order by: ' + queryDef.describeOrderBy($scope.agg.orderBy, $scope.target);
 
         if ($scope.agg.size === '0') {
-          $scope.aggOptionsString += ' (' + $scope.agg.order + ')';
+          $scope.settingsLinkText += ' (' + $scope.agg.order + ')';
         }
       }
 
