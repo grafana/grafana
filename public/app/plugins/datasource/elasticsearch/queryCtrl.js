@@ -16,24 +16,7 @@ function (angular, _, ElasticQueryBuilder) {
 
       target.timeField = target.timeField || '@timestamp';
       target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-      target.bucketAggs = target.bucketAggs || [];
-      target.bucketAggs = [
-        {
-          type: 'terms',
-          field: '@hostname',
-          id: '2'
-        },
-        {
-          type: 'date_histogram',
-          field: '@timestamp',
-          id: '3'
-        },
-      ];
-
-      $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
-
-      $scope.removeSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove select --'});
-      $scope.resetSelectSegment = uiSegmentSrv.newSegment({fake: true, value: '-- reset --'});
+      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', field: '@timestmap', id: '2'}];
 
       $scope.queryBuilder = new ElasticQueryBuilder(target);
       $scope.rawQueryOld = angular.toJson($scope.queryBuilder.build($scope.target), true);
@@ -46,12 +29,13 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.queryUpdated = function() {
-      console.log('qery updated');
       var newJson = angular.toJson($scope.queryBuilder.build($scope.target), true);
       if (newJson !== $scope.oldQueryRaw) {
         $scope.rawQueryOld = newJson;
         $scope.get_data();
       }
+
+      $scope.appEvent('elastic-query-updated');
     };
 
     $scope.transformToSegments = function(addTemplateVars) {
@@ -65,7 +49,6 @@ function (angular, _, ElasticQueryBuilder) {
             segments.unshift(uiSegmentSrv.newSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
           });
         }
-
         return segments;
       };
     };
