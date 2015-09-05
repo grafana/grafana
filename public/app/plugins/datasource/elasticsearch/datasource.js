@@ -257,43 +257,19 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       var timeFrom = this.translateTime(timeSrv.time.from);
       var timeTo = this.translateTime(timeSrv.time.to);
 
-      var query = {
-        size: 10,
-        "query": {
-          "filtered": {
-            "filter": {
-              "bool": {
-                "must": [
-                  {
-                    "range": {
-                      "@timestamp": {
-                        "gte": timeFrom,
-                        "lte": timeTo
-                      }
-                    }
-                  }
-                ],
-              }
-            }
-          }
-        }
-      };
-
-      return this._post('/_search?', query).then(function(res) {
+      return this._get('/_mapping').then(function(res) {
         var fields = {};
 
-        for (var i = 0; i < res.hits.hits.length; i++) {
-          var hit = res.hits.hits[i];
-          for (var field in hit) {
-            if (hit.hasOwnProperty(field) && field[0] !== '_') {
-              fields[field] = 1;
-            }
-          }
-
-          if (hit._source) {
-            for (var fieldProp in hit._source) {
-              if (hit._source.hasOwnProperty(fieldProp)) {
-                fields[fieldProp] = 1;
+        for (var indexName in res) {
+          var index = res[indexName];
+          var mappings = index.mappings;
+          if (!mappings) { continue; }
+          for (var typeName in mappings) {
+            var properties = mappings[typeName].properties;
+            for (var field in properties) {
+              var prop = properties[field];
+              if (prop.type && field[0] !== '_') {
+                fields[field] = prop;
               }
             }
           }

@@ -27,6 +27,8 @@ function (angular, _, queryDef) {
     });
 
     $scope.validateModel = function() {
+      $scope.settingsLinkText = '';
+
       if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
@@ -43,6 +45,7 @@ function (angular, _, queryDef) {
 
     $scope.onTypeChange = function() {
       $scope.agg.settings = {};
+      $scope.validateModel();
       $scope.onChange();
     };
 

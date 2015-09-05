@@ -4,7 +4,7 @@
 			Metric
 		</li>
 		<li>
-			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()"></metric-segment-model>
+			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false"></metric-segment-model>
 		</li>
 		<li ng-if="agg.type !== 'count'">
 			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()"></metric-segment>
