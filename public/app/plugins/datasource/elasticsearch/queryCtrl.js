@@ -15,16 +15,18 @@ function (angular, _, ElasticQueryBuilder) {
       if (!target) { return; }
 
       target.timeField = target.timeField || '@timestamp';
-      target.metrics = target.metrics || [{ type: 'count' }];
+      target.metrics = target.metrics || [{ type: 'count', id: '1' }];
       target.bucketAggs = target.bucketAggs || [];
       target.bucketAggs = [
         {
           type: 'terms',
-          field: '@hostname'
+          field: '@hostname',
+          id: '2'
         },
         {
           type: 'date_histogram',
-          field: '@timestamp'
+          field: '@timestamp',
+          id: '3'
         },
       ];
 

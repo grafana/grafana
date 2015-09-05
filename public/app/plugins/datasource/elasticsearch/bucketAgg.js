@@ -65,7 +65,7 @@ function (angular, _, $) {
         $scope.orderByOptions = [
           {text: "Doc Count", value: '_count' },
           {text: "Term name", value: '_term' },
-          {text: "Average of @value", value: '0' },
+          {text: "Average of @value", value: 'm0' },
         ];
       }
 
@@ -78,7 +78,11 @@ function (angular, _, $) {
           addIndex - 1;
         }
 
-        bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field" });
+        var id = _.reduce($scope.target.bucketAggs.concat($scope.target.metrics), function(max, val) {
+          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        }, 0);
+
+        bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString()});
       };
 
       $scope.removeBucketAgg = function() {
