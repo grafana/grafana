@@ -191,7 +191,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
             seriesName = parentName;
 
             if (metric.field) {
-              seriesName += ' ' + metric.field + ' ' + metric.agg;
+              seriesName += ' ' + metric.field + ' ' + metric.type;
               value = bucket['m' + y.toString()].value;
             } else {
               seriesName += ' count';

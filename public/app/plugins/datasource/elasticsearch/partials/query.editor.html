@@ -57,25 +57,13 @@
 </div>
 
 <div ng-hide="target.rawQuery">
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-				Metrics
-			</li>
-			<li ng-repeat="segment in selectSegments">
-				<metric-segment segment="segment" get-alt-segments="getSelectSegments(segment, $index)"  on-value-changed="selectChanged(segment, $index)"></metric-segment>
-			</li>
-		</ul>
 
-		<ul class="tight-form-list pull-right">
-			<li class="tight-form-item" ng-if="$index === 0">
-				<a class="pointer" ng-click="addMetric()"><i class="fa fa-plus"></i></a>
-			</li>
-			<li class="tight-form-item" ng-if="!$last">
-				<a class="pointer" ng-click="removeMetric($index)"><i class="fa fa-minus"></i></a>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
+	<div ng-repeat="agg in target.metrics">
+		<elastic-metric-agg
+			target="target" index="$index"
+			get-fields="getFields()"
+			on-change="queryUpdated()">
+		</elastic-metric-agg>
 	</div>
 
 	<div ng-repeat="agg in target.bucketAggs">

@@ -9,7 +9,7 @@ define([
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
-        metrics: [{agg: 'Count'}],
+        metrics: [{type: 'Count'}],
         timeField: '@timestamp',
         bucketAggs: [{type: 'date_histogram', field: '@timestamp'}],
       });
@@ -22,7 +22,7 @@ define([
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
-        metrics: [{agg: 'Count'}],
+        metrics: [{type: 'Count'}],
         timeField: '@timestamp',
         bucketAggs: [
           {type: 'terms', field: '@host'},
@@ -39,7 +39,7 @@ define([
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
-        metrics: [{agg: 'avg', field: '@value'}],
+        metrics: [{type: 'avg', field: '@value'}],
         bucketAggs: [{type: 'date_histogram', field: '@timestamp'}],
       }, 100, 1000);
 

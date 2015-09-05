@@ -1,6 +1,7 @@
 define([
   'angular',
   './bucketAgg',
+  './metricAgg',
 ],
 function (angular) {
   'use strict';

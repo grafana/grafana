@@ -20,9 +20,9 @@ function (angular, app, _, $) {
       return {
         scope: {
           segment: "=",
-          disableCustom: "=",
-          getAltSegments: "&",
-          onValueChanged: "&",
+          noCustom: "=",
+          getOptions: "&",
+          onChange: "&",
         },
 
         link: function($scope, elem) {
@@ -48,14 +48,14 @@ function (angular, app, _, $) {
                 segment.fake = false;
                 segment.expandable = selected.expandable;
               }
-              else if ($scope.disableCustom === false) {
+              else if ($scope.noCustom === false) {
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
                 segment.fake = false;
               }
 
-              $scope.onValueChanged();
+              $scope.onChange();
             });
           };
 
@@ -78,12 +78,12 @@ function (angular, app, _, $) {
             if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments().then(function(altSegments) {
+              $scope.getOptions().then(function(altSegments) {
                 $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
-                if ($scope.disableCustom === false) {
+                if ($scope.noCustom === false) {
                   if (!segment.fake && _.indexOf(options, segment.value) === -1) {
                     options.unshift(segment.value);
                   }
@@ -161,11 +161,12 @@ function (angular, app, _, $) {
     .module('grafana.directives')
     .directive('metricSegmentModel', function(uiSegmentSrv, $q) {
       return {
-        template: '<metric-segment segment="segment" get-alt-segments="getOptions()" on-value-changed="onSegmentChange()" disable-custom="true"></metric-segment>',
+        template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()" no-custom="true"></metric-segment>',
         restrict: 'E',
         scope: {
           property: "=",
           options: "=",
+          getOptions: "&",
           onChange: "&",
         },
         link: {
@@ -180,17 +181,26 @@ function (angular, app, _, $) {
               }
             };
 
-            $scope.getOptions = function() {
-              var optionSegments = _.map($scope.options, function(option) {
-                return uiSegmentSrv.newSegment({value: option.text});
-              });
-              return $q.when(optionSegments);
+            $scope.getOptionsInternal = function() {
+              if ($scope.options) {
+                var optionSegments = _.map($scope.options, function(option) {
+                  return uiSegmentSrv.newSegment({value: option.text});
+                });
+                return $q.when(optionSegments);
+              } else {
+                return $scope.getOptions();
+              }
             };
 
             $scope.onSegmentChange = function() {
-              var option = _.findWhere($scope.options, {text: $scope.segment.value});
-              if (option && option.value !== $scope.property) {
-                $scope.property = option.value;
+              if ($scope.options) {
+                var option = _.findWhere($scope.options, {text: $scope.segment.value});
+                if (option && option.value !== $scope.property) {
+                  $scope.property = option.value;
+                  $scope.onChange();
+                }
+              } else {
+                $scope.property = $scope.segment.value;
                 $scope.onChange();
               }
             };

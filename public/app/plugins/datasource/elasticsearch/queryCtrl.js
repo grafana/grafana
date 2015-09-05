@@ -10,18 +10,12 @@ function (angular, _, ElasticQueryBuilder) {
 
   module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv, $q) {
 
-    $scope.metricAggregations = {
-      "Count": { value: 'count' },
-      "Average of": { value: 'avg' },
-      "Max of": { value: 'max' },
-    };
-
     $scope.init = function() {
       var target = $scope.target;
       if (!target) { return; }
 
       target.timeField = target.timeField || '@timestamp';
-      target.metrics = target.metrics || [{ agg: 'count' }];
+      target.metrics = target.metrics || [{ type: 'count' }];
       target.bucketAggs = target.bucketAggs || [];
       target.bucketAggs = [
         {
