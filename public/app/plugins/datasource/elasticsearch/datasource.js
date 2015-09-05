@@ -234,8 +234,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             select = target.select[y];
             seriesName = parentName;
 
+<<<<<<< 0af4a2236a22e275e123953662a275a68ddb51ad
             if (level > 0) {
               seriesName +=  ' ' + bucket.key;
+=======
+            if (metric.field) {
+              seriesName += ' ' + metric.field + ' ' + metric.type;
+              value = bucket['m' + y.toString()].value;
+>>>>>>> feat(editor): thing are starting to work again
             } else {
               parentTime = bucket.key;
             }

@@ -76,7 +76,11 @@ function (angular) {
       var select = target.select[i];
       if (select.field) {
         var aggField = {};
+<<<<<<< 0af4a2236a22e275e123953662a275a68ddb51ad
         aggField[select.agg] = {field: select.field};
+=======
+        aggField[metric.type] = {field: metric.field};
+>>>>>>> feat(editor): thing are starting to work again
 
         nestedAggs.aggs[i.toString()] = aggField;
       }

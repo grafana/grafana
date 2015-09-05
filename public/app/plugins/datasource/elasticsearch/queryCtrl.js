@@ -15,8 +15,23 @@ function (angular, _, ElasticQueryBuilder) {
       if (!target) { return; }
 
       target.timeField = target.timeField || '@timestamp';
+<<<<<<< 0af4a2236a22e275e123953662a275a68ddb51ad
       target.select = target.select || [{ agg: 'count' }];
       target.groupByFields = target.groupByFields || [];
+=======
+      target.metrics = target.metrics || [{ type: 'count' }];
+      target.bucketAggs = target.bucketAggs || [];
+      target.bucketAggs = [
+        {
+          type: 'terms',
+          field: '@hostname'
+        },
+        {
+          type: 'date_histogram',
+          field: '@timestamp'
+        },
+      ];
+>>>>>>> feat(editor): thing are starting to work again
 
       $scope.timeSegment = uiSegmentSrv.newSegment(target.timeField);
 
