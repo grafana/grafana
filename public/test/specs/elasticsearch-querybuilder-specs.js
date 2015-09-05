@@ -51,9 +51,9 @@ define([
       var builder = new ElasticQueryBuilder();
 
       var query = builder.build({
-        metrics: [{type: 'avg', field: '@value', id: '1'}],
+        metrics: [{type: 'count', id: '1'}, {type: 'avg', field: '@value', id: '5'}],
         bucketAggs: [
-          {type: 'term', size: 5, order: 'asc', orderBy: 'm0', id: '2' },
+          {type: 'terms', field: '@host', size: 5, order: 'asc', orderBy: '5', id: '2' },
           {type: 'date_histogram', field: '@timestamp', id: '3'}
         ],
       }, 100, 1000);
@@ -61,8 +61,8 @@ define([
       var firstLevel = query.aggs["2"];
       var secondLevel = firstLevel.aggs["3"];
 
-      // expect(firstLevel.aggs["m0"].avg.field).to.be("@value");
-      expect(secondLevel.aggs["1"].avg.field).to.be("@value");
+      expect(firstLevel.aggs["5"].avg.field).to.be("@value");
+      expect(secondLevel.aggs["5"].avg.field).to.be("@value");
     });
 
   });

@@ -65,7 +65,7 @@ function (angular, _, $) {
         $scope.orderByOptions = [
           {text: "Doc Count", value: '_count' },
           {text: "Term name", value: '_term' },
-          {text: "Average of @value", value: 'm0' },
+          {text: "Average of @value", value: '1' },
         ];
       }
 
