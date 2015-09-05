@@ -42,8 +42,8 @@ function (angular, _, $) {
         metricAggs.splice(addIndex, 0, {type: "count", field: "select field" });
       };
 
-      $scope.removeMetricAgg = function(index) {
-        metricAggs.splice(index, 1);
+      $scope.removeMetricAgg = function() {
+        metricAggs.splice($scope.index, 1);
         $scope.onChange();
       };
 

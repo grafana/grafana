@@ -197,12 +197,16 @@ function (angular, app, _, $) {
                 var option = _.findWhere($scope.options, {text: $scope.segment.value});
                 if (option && option.value !== $scope.property) {
                   $scope.property = option.value;
-                  $scope.onChange();
                 }
               } else {
                 $scope.property = $scope.segment.value;
-                $scope.onChange();
               }
+
+              // needs to call this after digest so
+              // property is synced with outerscope
+              $scope.$$postDigest(function() {
+                $scope.onChange();
+              });
             };
 
             $scope.segment = $scope.valueToSegment($scope.property);

@@ -190,12 +190,12 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
             metric = target.metrics[y];
             seriesName = parentName;
 
-            if (metric.field) {
-              seriesName += ' ' + metric.field + ' ' + metric.type;
-              value = bucket['m' + y.toString()].value;
-            } else {
+            if (metric.type === 'count') {
               seriesName += ' count';
               value = bucket.doc_count;
+            } else {
+              seriesName += ' ' + metric.field + ' ' + metric.type;
+              value = bucket['m' + y.toString()].value;
             }
 
             var serie = series[seriesName] = series[seriesName] || {target: seriesName, datapoints: []};

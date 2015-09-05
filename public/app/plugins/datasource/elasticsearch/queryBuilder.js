@@ -68,12 +68,13 @@ function (angular) {
 
     for (i = 0; i < target.metrics.length; i++) {
       var metric = target.metrics[i];
-      if (metric.field) {
-        var aggField = {};
-        aggField[metric.type] = {field: metric.field};
-
-        nestedAggs.aggs['m' + i] = aggField;
+      if (metric.type === 'count') {
+        continue;
       }
+
+      var aggField = {};
+      aggField[metric.type] = {field: metric.field};
+      nestedAggs.aggs['m' + i] = aggField;
     }
 
     return query;
