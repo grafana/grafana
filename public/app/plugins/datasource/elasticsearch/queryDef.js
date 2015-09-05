@@ -11,7 +11,7 @@ function (_) {
       {text: "Sum of",  value: 'sum' },
       {text: "Max of",  value: 'max' },
       {text: "Min of",  value: 'min' },
-      {text: "Standard Deviations",  value: 'std_dev' },
+      {text: "Extended Stats",  value: 'extended_stats' },
       {text: "Percentiles",  value: 'percentiles' },
     ],
 

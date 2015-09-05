@@ -213,6 +213,15 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
                 }
                 break;
               }
+              case 'extended_stats': {
+                var stats = bucket[metric.id];
+
+                for (var statIndex in metric.stats) {
+                  var statName = metric.stats[statIndex];
+                  addMetricPoint(seriesName + ' ' + statName, stats[statName], bucket.key)
+                }
+                break;
+              }
               default: {
                 seriesName += ' ' + metric.field + ' ' + metric.type;
                 value = bucket[metric.id].value;
