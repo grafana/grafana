@@ -17,7 +17,7 @@ function (angular) {
       return angular.fromJson(target.rawQuery);
     }
 
-    var i, nestedAggs;
+    var i, y, nestedAggs, metric, metricRef;
     var query = {
       "size": 0,
       "query": {
@@ -57,15 +57,29 @@ function (angular) {
           esAgg.terms = { "field": aggDef.field };
           var size = parseInt(aggDef.size, 10);
           if (size > 0) { esAgg.terms.size = size; }
-          if (aggDef.orderBy) {
+          if (aggDef.orderBy != void 0) {
             esAgg.terms.order = {};
             esAgg.terms.order[aggDef.orderBy] = aggDef.order;
+
+            // if metric ref, look it up and add it to this agg level
+            metricRef = parseInt(aggDef.orderBy, 10);
+            if (!isNaN(metricRef)) {
+              for (y = 0; y < target.metrics.length; y++) {
+                metric = target.metrics[y];
+                if (metric.id === aggDef.orderBy) {
+                  esAgg.aggs = {};
+                  esAgg.aggs[metric.id] = {}
+                  esAgg.aggs[metric.id][metric.type] = {field: metric.field};
+                  break;
+                }
+              }
+            }
           }
           break;
         }
       }
 
-      nestedAggs.aggs = {};
+      nestedAggs.aggs = nestedAggs.aggs || {};
       nestedAggs.aggs[aggDef.id] = esAgg;
       nestedAggs = esAgg;
     }
@@ -73,7 +87,7 @@ function (angular) {
     nestedAggs.aggs = {};
 
     for (i = 0; i < target.metrics.length; i++) {
-      var metric = target.metrics[i];
+      metric = target.metrics[i];
       if (metric.type === 'count') {
         continue;
       }
