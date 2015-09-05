@@ -170,14 +170,14 @@ function (angular, app, _, $) {
           onChange: "&",
         },
         link: {
-          pre: function postLink($scope, elem) {
+          pre: function postLink($scope, elem, attrs) {
 
             $scope.valueToSegment = function(value) {
               var option = _.findWhere($scope.options, {value: value});
               if (option) {
-                return uiSegmentSrv.newSegment({value: option.text});
+                return uiSegmentSrv.newSegment({value: option.text, cssClass: attrs.cssClass});
               } else {
-                return uiSegmentSrv.newSegment({value: value});
+                return uiSegmentSrv.newSegment({value: value, cssClass: attrs.cssClass});
               }
             };
 

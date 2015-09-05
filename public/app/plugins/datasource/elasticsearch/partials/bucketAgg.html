@@ -5,8 +5,8 @@
 			<span ng-hide="isFirst">Then by</span>
 		</li>
 		<li>
-			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChange()"></metric-segment-model>
-			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()"></metric-segment>
+			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChangeInternal()"></metric-segment-model>
+			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChangeInternal()"></metric-segment>
 		</li>
 		<li class="tight-form-item tight-form-align" ng-if="aggOptionsString">
 			<a ng-click="toggleOptions()">{{aggOptionsString}}</a>
@@ -32,7 +32,7 @@
 					Order
 				</li>
 				<li>
-					<metric-segment-model property="agg.order" options="['Top', 'Bottom']"></metric-segment-model>
+					<metric-segment-model property="agg.order" options="orderOptions" on-change="onChangeInternal()" css-class="last"></metric-segment-model>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -43,7 +43,7 @@
 					Size
 				</li>
 				<li>
-					<input type="text" class="input-mini tight-form-input" ng-model="agg.options.size" spellcheck='false' placeholder="0" ng-blur="get_data()">
+					<metric-segment-model property="agg.size" options="sizeOptions" on-change="onChangeInternal()" css-class="last"></metric-segment-model>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -51,10 +51,10 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 60px">
-					Order by
+					By
 				</li>
 				<li>
-					<metric-segment segment="timeSegment" get-alt-segments="getFields()" on-value-changed="timeFieldChanged()"></metric-segment>
+					<metric-segment-model property="agg.orderBy" options="orderByOptions" on-change="onChangeInternal()" css-class="last"></metric-segment-model>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
