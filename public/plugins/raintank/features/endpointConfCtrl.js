@@ -370,8 +370,8 @@ function (angular, _) {
         enabled: true,
         frequency: 10,
         health_settings: {
-          steps: 2,
-          num_collectors: 1,
+          steps: 3,
+          num_collectors: 3,
           notifications: {
             enabled: false,
             addresses: ""
