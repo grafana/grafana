@@ -8,7 +8,7 @@ function (_, moment) {
   function IndexPattern(pattern, interval) {
     this.pattern = pattern;
     this.interval = interval;
-  };
+  }
 
   IndexPattern.prototype.getIndexForToday = function() {
     if (this.interval) {
@@ -18,11 +18,8 @@ function (_, moment) {
     }
   };
 
-
   IndexPattern.prototype.getIndexList = function(from, to) {
-
   };
 
-
   return IndexPattern;
-})
+});

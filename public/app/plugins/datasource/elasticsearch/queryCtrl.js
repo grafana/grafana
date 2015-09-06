@@ -8,7 +8,7 @@ function (angular, _, ElasticQueryBuilder) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv, $q) {
+  module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv) {
 
     $scope.init = function() {
       var target = $scope.target;

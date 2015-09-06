@@ -16,7 +16,7 @@ function (angular, _, queryDef) {
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
-    }
+    };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
@@ -44,7 +44,7 @@ function (angular, _, queryDef) {
           $scope.settingsLinkText = 'stats: ' + $scope.agg.stats.join(',');
         }
       }
-    }
+    };
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;

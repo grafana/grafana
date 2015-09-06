@@ -44,11 +44,10 @@ function (angular, _, queryDef) {
         $scope.agg.size = $scope.agg.size || "0";
         $scope.agg.orderBy = $scope.agg.orderBy || "_term";
 
-        if ($scope.agg.size === '0') {
-          $scope.settingsLinkText = "";
-        } else {
-          $scope.settingsLinkText = queryDef.describeOrder($scope.agg.order) + ' ' + $scope.agg.size + ', '
+        if ($scope.agg.size !== '0') {
+          $scope.settingsLinkText = queryDef.describeOrder($scope.agg.order) + ' ' + $scope.agg.size + ', ';
         }
+
         $scope.settingsLinkText += 'Order by: ' + queryDef.describeOrderBy($scope.agg.orderBy, $scope.target);
 
         if ($scope.agg.size === '0') {

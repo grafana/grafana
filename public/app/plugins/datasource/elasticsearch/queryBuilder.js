@@ -12,12 +12,41 @@ function (angular) {
     return filter;
   };
 
+  ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
+    var metricRef, metric, size, y;
+
+    queryNode.terms = { "field": aggDef.field };
+    size = parseInt(aggDef.size, 10);
+
+    if (size > 0) { queryNode.terms.size = size; }
+    if (aggDef.orderBy !== void 0) {
+      queryNode.terms.order = {};
+      queryNode.terms.order[aggDef.orderBy] = aggDef.order;
+
+      // if metric ref, look it up and add it to this agg level
+      metricRef = parseInt(aggDef.orderBy, 10);
+      if (!isNaN(metricRef)) {
+        for (y = 0; y < target.metrics.length; y++) {
+          metric = target.metrics[y];
+          if (metric.id === aggDef.orderBy) {
+            queryNode.aggs = {};
+            queryNode.aggs[metric.id] = {};
+            queryNode.aggs[metric.id][metric.type] = {field: metric.field};
+            break;
+          }
+        }
+      }
+    }
+
+    return queryNode;
+  };
+
   ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
       return angular.fromJson(target.rawQuery);
     }
 
-    var i, y, nestedAggs, metric, metricRef;
+    var i, nestedAggs, metric;
     var query = {
       "size": 0,
       "query": {
@@ -54,27 +83,7 @@ function (angular) {
           break;
         }
         case 'terms': {
-          esAgg.terms = { "field": aggDef.field };
-          var size = parseInt(aggDef.size, 10);
-          if (size > 0) { esAgg.terms.size = size; }
-          if (aggDef.orderBy != void 0) {
-            esAgg.terms.order = {};
-            esAgg.terms.order[aggDef.orderBy] = aggDef.order;
-
-            // if metric ref, look it up and add it to this agg level
-            metricRef = parseInt(aggDef.orderBy, 10);
-            if (!isNaN(metricRef)) {
-              for (y = 0; y < target.metrics.length; y++) {
-                metric = target.metrics[y];
-                if (metric.id === aggDef.orderBy) {
-                  esAgg.aggs = {};
-                  esAgg.aggs[metric.id] = {}
-                  esAgg.aggs[metric.id][metric.type] = {field: metric.field};
-                  break;
-                }
-              }
-            }
-          }
+          this.buildTermsAgg(aggDef, esAgg, target);
           break;
         }
       }
