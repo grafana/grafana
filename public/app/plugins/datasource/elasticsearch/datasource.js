@@ -2,12 +2,13 @@ define([
   'angular',
   'lodash',
   'moment',
+  'kbn',
   './queryBuilder',
   './indexPattern',
   './queryCtrl',
   './directives'
 ],
-function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
+function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -23,9 +24,9 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
       this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
     }
 
-    ElasticDatasource.prototype._request = function(method, url, index, data) {
+    ElasticDatasource.prototype._request = function(method, url, data) {
       var options = {
-        url: this.url + "/" + index + url,
+        url: this.url + "/" + url,
         method: method,
         data: data
       };
@@ -41,14 +42,14 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
     };
 
     ElasticDatasource.prototype._get = function(url) {
-      return this._request('GET', url, this.indexPattern.getIndexForToday())
+      return this._request('GET', this.indexPattern.getIndexForToday() + url)
         .then(function(results) {
           return results.data;
         });
     };
 
     ElasticDatasource.prototype._post = function(url, data) {
-      return this._request('POST', url, this.index, data)
+      return this._request('POST', url, data)
         .then(function(results) {
           return results.data;
         });
@@ -76,7 +77,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
         "size": 10000
       };
 
-      return this._request('POST', '/_search', annotation.index, data).then(function(results) {
+      return this._request('POST', annotation.index + '/_search', data).then(function(results) {
         var list = [];
         var hits = results.data.hits.hits;
 
@@ -135,11 +136,20 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
       });
     };
 
+    ElasticDatasource.prototype.getQueryHeader = function(timeRange) {
+      var header = {search_type: "count", "ignore_unavailable": true};
+      var from = kbn.parseDate(timeRange.from);
+      var to = kbn.parseDate(timeRange.to);
+      header.index = this.indexPattern.getIndexList(from, to);
+      return angular.toJson(header);
+    };
+
     ElasticDatasource.prototype.query = function(options) {
       var queryBuilder = new ElasticQueryBuilder();
-      var header = '{"index":"' + this.index + '","search_type":"count","ignore_unavailable":true}';
       var payload = "";
       var sentTargets = [];
+
+      var header = this.getQueryHeader(options.range);
       var timeFrom = this.translateTime(options.range.from);
       var timeTo = this.translateTime(options.range.to);
 

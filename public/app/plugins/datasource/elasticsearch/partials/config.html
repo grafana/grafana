@@ -15,8 +15,7 @@
 			Pattern
 		</li>
 		<li>
-			<select class="input-medium tight-form-input" ng-model="current.jsonData.interval"
-				ng-options="f.value as f.name for f in [{name: 'No pattern', value: undefined}, {name: 'Hourly', value: 'hourly'}, {name: 'Daily', value: 'daily'}]" ></select>
+			<select class="input-medium tight-form-input" ng-model="current.jsonData.interval" ng-options="f.value as f.name for f in indexPatternTypes" ng-change="indexPatternTypeChanged()" ></select>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
