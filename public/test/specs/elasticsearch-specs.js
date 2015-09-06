@@ -1,18 +1,44 @@
 define([
   'helpers',
+  'moment',
   'plugins/datasource/elasticsearch/datasource',
   'aws-sdk',
-], function(helpers) {
+], function(helpers, moment) {
   'use strict';
 
   describe('ElasticDatasource', function() {
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['templateSrv']));
+    beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
     beforeEach(ctx.createService('ElasticDatasource'));
     beforeEach(function() {
-      ctx.ds = new ctx.service({});
+      ctx.ds = new ctx.service({jsonData: {}});
+    });
+
+    describe('When testing datasource with index pattern', function() {
+      beforeEach(function(){
+        ctx.ds = new ctx.service({
+          url: 'http://es.com',
+          index: '[asd-]YYYY.MM.DD',
+          jsonData: { interval: 'daily' }
+        });
+      })
+
+      it('should translate index pattern to current day', function() {
+        var requestOptions;
+        ctx.backendSrv.datasourceRequest = function(options) {
+          requestOptions = options;
+          return ctx.$q.when({});
+        };
+
+        ctx.ds.testDatasource();
+        ctx.$rootScope.$apply();
+
+        var today = moment().format("YYYY.MM.DD");
+        expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      });
+
     });
 
     describe('When processing es response', function() {

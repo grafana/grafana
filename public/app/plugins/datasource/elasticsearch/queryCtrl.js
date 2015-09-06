@@ -16,7 +16,7 @@ function (angular, _, ElasticQueryBuilder) {
 
       target.timeField = target.timeField || '@timestamp';
       target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', field: '@timestmap', id: '2'}];
+      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', field: '@timestamp', id: '2'}];
 
       $scope.queryBuilder = new ElasticQueryBuilder(target);
       $scope.rawQueryOld = angular.toJson($scope.queryBuilder.build($scope.target), true);
