@@ -1,14 +1,13 @@
 define([
   'angular',
   'lodash',
-  'config',
-  'kbn',
   'moment',
   './queryBuilder',
+  './indexPattern',
   './queryCtrl',
   './directives'
 ],
-function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
+function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,10 +20,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
-      this.searchMaxResults = config.search.max_results || 20;
-
-      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
-      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
+      this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval)
     }
 
     ElasticDatasource.prototype._request = function(method, url, index, data) {
@@ -45,7 +41,7 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     };
 
     ElasticDatasource.prototype._get = function(url) {
-      return this._request('GET', url, this.index)
+      return this._request('GET', url, this.indexPattern.getIndexForToday())
         .then(function(results) {
           return results.data;
         });
@@ -128,9 +124,14 @@ function (angular, _, config, kbn, moment, ElasticQueryBuilder) {
     };
 
     ElasticDatasource.prototype.testDatasource = function() {
-      var query = JSON.stringify();
-      return this._post('/_search?search_type=count', query).then(function() {
+      return this._get('/_stats').then(function() {
         return { status: "success", message: "Data source is working", title: "Success" };
+      }, function(err) {
+        if (err.data && err.data.error) {
+          return { status: "error", message: err.data.error, title: "Error" };
+        } else {
+          return { status: "error", message: err.status, title: "Error" };
+        }
       });
     };
 

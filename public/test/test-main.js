@@ -155,6 +155,7 @@ require([
     'specs/elasticsearch-specs',
     'specs/elasticsearch-querybuilder-specs',
     'specs/elasticsearch-queryctrl-specs',
+    'specs/elasticsearch-indexPattern-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
