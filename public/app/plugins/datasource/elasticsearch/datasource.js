@@ -12,7 +12,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -20,7 +20,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
-      this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval)
+      this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
     }
 
     ElasticDatasource.prototype._request = function(method, url, index, data) {
@@ -176,9 +176,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
     // This is quite complex
     // neeed to recurise down the nested buckets to build series
     ElasticDatasource.prototype._processBuckets = function(aggs, target, series, level, parentName) {
-      var seriesName, value, metric, i, y, z, bucket, childBucket, aggDef, esAgg;
-      var buckets;
-      var dataFound = 0;
+      var seriesName, value, metric, i, y, bucket, aggDef, esAgg;
 
       function addMetricPoint(seriesName, value, time) {
         var current = series[seriesName];
@@ -210,7 +208,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
               case 'percentiles': {
                 var values = bucket[metric.id].values;
                 for (var prop in values) {
-                  addMetricPoint(seriesName + ' ' + prop, values[prop], bucket.key)
+                  addMetricPoint(seriesName + ' ' + prop, values[prop], bucket.key);
                 }
                 break;
               }
@@ -219,7 +217,7 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
 
                 for (var statIndex in metric.stats) {
                   var statName = metric.stats[statIndex];
-                  addMetricPoint(seriesName + ' ' + statName, stats[statName], bucket.key)
+                  addMetricPoint(seriesName + ' ' + statName, stats[statName], bucket.key);
                 }
                 break;
               }
@@ -264,9 +262,6 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
     };
 
     ElasticDatasource.prototype.metricFindQuery = function() {
-      var timeFrom = this.translateTime(timeSrv.time.from);
-      var timeTo = this.translateTime(timeSrv.time.to);
-
       return this._get('/_mapping').then(function(res) {
         var fields = {};
 
@@ -291,7 +286,6 @@ function (angular, _, moment, ElasticQueryBuilder, IndexPattern) {
 
         return fields;
       });
-
     };
 
     return ElasticDatasource;
