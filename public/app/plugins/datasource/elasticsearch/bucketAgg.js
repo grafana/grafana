@@ -40,7 +40,7 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = "";
 
       if ($scope.agg.type === "terms") {
-        $scope.agg.order = $scope.agg.order || "desc";
+        $scope.agg.order = $scope.agg.order || "asc";
         $scope.agg.size = $scope.agg.size || "0";
         $scope.agg.orderBy = $scope.agg.orderBy || "_term";
 
