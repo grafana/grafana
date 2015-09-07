@@ -16,21 +16,24 @@ function (angular) {
 
   ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
     var metricRef, metric, size, y;
-
     queryNode.terms = { "field": aggDef.field };
-    size = parseInt(aggDef.size, 10);
 
+    if (!aggDef.settings) {
+      return queryNode;
+    }
+
+    size = parseInt(aggDef.settings.size, 10);
     if (size > 0) { queryNode.terms.size = size; }
-    if (aggDef.orderBy !== void 0) {
+    if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      queryNode.terms.order[aggDef.orderBy] = aggDef.order;
+      queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
 
       // if metric ref, look it up and add it to this agg level
-      metricRef = parseInt(aggDef.orderBy, 10);
+      metricRef = parseInt(aggDef.settings.orderBy, 10);
       if (!isNaN(metricRef)) {
         for (y = 0; y < target.metrics.length; y++) {
           metric = target.metrics[y];
-          if (metric.id === aggDef.orderBy) {
+          if (metric.id === aggDef.settings.orderBy) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
             queryNode.aggs[metric.id][metric.type] = {field: metric.field};
@@ -41,6 +44,14 @@ function (angular) {
     }
 
     return queryNode;
+  };
+
+  ElasticQueryBuilder.prototype.getInterval = function(agg) {
+    if (agg.settings && agg.settings.interval !== 'auto') {
+      return agg.settings.interval;
+    } else {
+      return '$interval';
+    }
   };
 
   ElasticQueryBuilder.prototype.build = function(target) {
@@ -77,7 +88,7 @@ function (angular) {
       switch(aggDef.type) {
         case 'date_histogram': {
           esAgg["date_histogram"] = {
-            "interval": target.interval || "$interval",
+            "interval": this.getInterval(aggDef),
             "field": this.timeField,
             "min_doc_count": 1,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }

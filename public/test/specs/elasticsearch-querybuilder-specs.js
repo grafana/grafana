@@ -48,9 +48,12 @@ define([
 
     it('with term agg and order by metric agg', function() {
       var query = builder.build({
-        metrics: [{type: 'count', id: '1'}, {type: 'avg', field: '@value', id: '5'}],
+        metrics: [
+          {type: 'count', id: '1'},
+          {type: 'avg', field: '@value', id: '5'}
+        ],
         bucketAggs: [
-          {type: 'terms', field: '@host', size: 5, order: 'asc', orderBy: '5', id: '2' },
+          {type: 'terms', field: '@host', settings: {size: 5, order: 'asc', orderBy: '5'}, id: '2' },
           {type: 'date_histogram', field: '@timestamp', id: '3'}
         ],
       }, 100, 1000);

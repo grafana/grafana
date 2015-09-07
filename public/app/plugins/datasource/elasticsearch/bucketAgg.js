@@ -15,6 +15,7 @@ function (angular, _, queryDef) {
     $scope.bucketAggTypes = queryDef.bucketAggTypes;
     $scope.orderOptions = queryDef.orderOptions;
     $scope.sizeOptions = queryDef.sizeOptions;
+    $scope.intervalOptions = queryDef.intervalOptions;
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
@@ -27,36 +28,52 @@ function (angular, _, queryDef) {
     };
 
     $scope.onChangeInternal = function() {
-      if ($scope.validateModel()) {
-        $scope.onChange();
-      }
+      $scope.onChange();
+    };
+
+    $scope.onTypeChanged = function() {
+      $scope.agg.settings = {};
+      $scope.showOptions = false;
+
+      $scope.validateModel();
+      $scope.onChange();
     };
 
     $scope.validateModel = function() {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
-
       $scope.isFirst = $scope.index === 0;
       $scope.isLast = $scope.index === bucketAggs.length - 1;
-      $scope.settingsLinkText = "";
 
-      if ($scope.agg.type === "terms") {
-        $scope.agg.order = $scope.agg.order || "asc";
-        $scope.agg.size = $scope.agg.size || "0";
-        $scope.agg.orderBy = $scope.agg.orderBy || "_term";
+      var settingsLinkText = "";
+      var settings = $scope.agg.settings || {};
 
-        if ($scope.agg.size !== '0') {
-          $scope.settingsLinkText = queryDef.describeOrder($scope.agg.order) + ' ' + $scope.agg.size + ', ';
+      switch($scope.agg.type) {
+        case 'terms': {
+          settings.order = settings.order || "asc";
+          settings.size = settings.size || "0";
+          settings.orderBy = settings.orderBy || "_term";
+
+          if (settings.size !== '0') {
+            settingsLinkText = queryDef.describeOrder(settings.order) + ' ' + settings.size + ', ';
+          }
+
+          settingsLinkText += 'Order by: ' + queryDef.describeOrderBy(settings.orderBy, $scope.target);
+
+          if (settings.size === '0') {
+            settingsLinkText += ' (' + settings.order + ')';
+          }
+
+          break;
         }
-
-        $scope.settingsLinkText += 'Order by: ' + queryDef.describeOrderBy($scope.agg.orderBy, $scope.target);
-
-        if ($scope.agg.size === '0') {
-          $scope.settingsLinkText += ' (' + $scope.agg.order + ')';
+        case 'date_histogram': {
+          settings.interval = settings.interval || 'auto';
+          $scope.agg.field = $scope.target.timeField;
+          settingsLinkText = 'Interval: ' + settings.interval;
         }
-      } else if ($scope.agg.type === 'date_histogram') {
-        $scope.agg.field = $scope.target.timeField;
       }
 
+      $scope.settingsLinkText = settingsLinkText;
+      $scope.agg.settings = settings;
       return true;
     };
 

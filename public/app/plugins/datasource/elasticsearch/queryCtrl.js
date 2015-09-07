@@ -14,7 +14,7 @@ function (angular, _) {
       if (!target) { return; }
 
       target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2'}];
+      target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
       target.timeField =  $scope.datasource.timeField;
     };
 
