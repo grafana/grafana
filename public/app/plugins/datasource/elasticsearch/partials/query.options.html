@@ -1,24 +1,5 @@
 <section class="grafana-metric-options">
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-wrench"></i>
-			</li>
-			<li class="tight-form-item">
-				 Group by time interval
-			</li>
-			<li>
-				<input type="text" class="input-medium tight-form-input" ng-model="panel.interval" ng-blur="get_data();"
-				spellcheck='false' placeholder="example: >10s">
-			</li>
-			<li class="tight-form-item">
-				<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form">
+	<div class="tight-form last">
 		<ul class="tight-form-list">
 			<li class="tight-form-item tight-form-item-icon">
 				<i class="fa fa-info-circle"></i>
@@ -26,16 +7,6 @@
 			<li class="tight-form-item">
 				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 					alias patterns
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking &amp; and fill
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					group by time
 				</a>
 			</li>
 		</ul>
@@ -55,30 +26,6 @@
 				<li>You can also use [[tag_hostname]] pattern replacement syntax</li>
 			</ul>
 		</div>
-
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 2">
-			<h5>Stacking and fill</h5>
-			<ul>
-				<li>When stacking is enabled it important that points align</li>
-				<li>If there are missing points for one series it can cause gaps or missing bars</li>
-				<li>You must use fill(0), and select a group by time low limit</li>
-				<li>Use the group by time option below your queries and specify for example &gt;10s if your metrics are written every 10 seconds</li>
-				<li>This will insert zeros for series that are missing measurements and will make stacking work properly</li>
-			</ul>
-		</div>
-
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
-			<h5>Group by time</h5>
-			<ul>
-				<li>Group by time is important, otherwise the query could return many thousands of datapoints that will slow down Grafana</li>
-				<li>Leave the group by time field empty for each query and it will be calculated based on time range and pixel width of the graph</li>
-				<li>If you use fill(0) or fill(null) set a low limit for the auto group by time interval</li>
-				<li>The low limit can only be set in the group by time option below your queries</li>
-				<li>You set a low limit by adding a greater sign before the interval</li>
-				<li>Example: &gt;60s if you write metrics to ElasticDB every 60 seconds</li>
-			</ul>
-		</div>
-
 
 	</div>
 </div>
