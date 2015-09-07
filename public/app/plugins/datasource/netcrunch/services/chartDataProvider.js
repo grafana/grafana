@@ -26,11 +26,20 @@ define([
                                               netCrunchChartDataProviderConsts) {
 
         var PERIOD_TYPE = {
-            tpMinutes : 0,
-            tpHours : 1,
-            tpDays : 2,
-            tpMonths : 3
-        };
+              tpMinutes : 0,
+              tpHours : 1,
+              tpDays : 2,
+              tpMonths : 3
+            },
+            QUERY_RESULT_MASKS = {
+              min : {ResultMask : [['tqrMin']]},
+              avg : {ResultMask : [['tqrAvg']]},
+              max : {ResultMask : [['tqrMax']]},
+              avail : {ResultMask : [['tqrAvail']]},
+              delta : {ResultMask : [['tqrDelta']]},
+              equal : {ResultMask : [['tqrEqual']]},
+              distr : {ResultMask : [['tqrDistr']]}
+            };
 
         function calculateChartDataInterval ( dateStart, dateEnd, maxSampleCount ) {
           var min = 60 * 1000,
@@ -83,7 +92,7 @@ define([
           };
         }
 
-        function calculateTimeDomain (dateTo, periodType, periodInterval, intervalCount) {
+        function calculateTimeDomain (dateFrom, periodType, periodInterval, intervalCount) {
           var timeDomain = [],
               timeCalculator = Object.create(null),
               timeDomainElement,
@@ -94,12 +103,13 @@ define([
           timeCalculator[PERIOD_TYPE.tpDays] = 'days';
           timeCalculator[PERIOD_TYPE.tpMonths] = 'months';
 
+          dateFrom = moment(dateFrom).startOf('minute');
           for (I=0; I < intervalCount; I += 1) {
-            timeDomainElement = moment(dateTo).subtract(I * periodInterval, timeCalculator[periodType]);
+            timeDomainElement = moment(dateFrom).add(I * periodInterval, timeCalculator[periodType]);
             timeDomain.push(timeDomainElement.toDate());
           }
 
-          return timeDomain.reverse();
+          return timeDomain;
         }
 
         function getCounterTrendData (nodeID, counter, dateFrom, dateTo, periodType,
@@ -123,7 +133,7 @@ define([
                                                        null) // value for equal checking
             .then(function (data) {
               return {
-                domain : calculateTimeDomain(dateTo, periodType, periodInterval, data.trend.length),
+                domain : calculateTimeDomain(dateFrom, periodType, periodInterval, data.trend.length),
                 values : data.trend };
             });
         }
@@ -179,6 +189,7 @@ define([
 
         return {
             PERIOD_TYPE : PERIOD_TYPE,
+            QUERY_RESULT_MASKS : QUERY_RESULT_MASKS,
             calculateChartDataInterval : calculateChartDataInterval,
             calculateTimeDomain : calculateTimeDomain,
             getCounterTrendData : getCounterTrendData,
