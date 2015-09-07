@@ -89,7 +89,7 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 func inspect(fn GraphiteReturner, job *Job, cache *lru.Cache) {
 	key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
 	if found, _ := cache.ContainsOrAdd(key, true); found {
-		log.Debug("Job %s already done", job)
+		//log.Debug("Job %s already done", job)
 		return
 	}
 	gr, err := fn(job.OrgId)
@@ -120,13 +120,13 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	preConsider := time.Now()
 
 	if found, _ := cache.ContainsOrAdd(key, true); found {
-		log.Debug("T %s already done", key)
+		//log.Debug("T %s already done", key)
 		executorNumAlreadyDone.Inc(1)
 		executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 		return nil
 	}
 
-	log.Debug("T %s doing", key)
+	//log.Debug("T %s doing", key)
 	executorNumOriginalTodo.Inc(1)
 	executorConsiderJobOriginalTodo.Value(time.Since(preConsider))
 	gr, err := fn(job.OrgId)
