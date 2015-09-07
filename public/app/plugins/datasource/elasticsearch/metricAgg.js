@@ -27,7 +27,6 @@ function (angular, _, queryDef) {
     $scope.validateModel = function() {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
-
       $scope.settingsLinkText = '';
 
       if (!$scope.agg.field) {

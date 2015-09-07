@@ -11,8 +11,8 @@ function (_) {
 
   // This is quite complex
   // neeed to recurise down the nested buckets to build series
-  ElasticResponse.prototype.processBuckets = function(aggs, target, series, level) {
-    var value, metric, i, y, bucket, aggDef, esAgg, nestedSeries;
+  ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, level, props) {
+    var value, metric, i, y, bucket, aggDef, esAgg, newSeries;
 
     aggDef = target.bucketAggs[level];
     esAgg = aggs[aggDef.id];
@@ -20,9 +20,9 @@ function (_) {
     if (level < target.bucketAggs.length - 1) {
       for (i = 0; i < esAgg.buckets.length; i++) {
         bucket = esAgg.buckets[i];
-        nestedSeries = {prop: {key: bucket.key, field: aggDef.field}, series: []};
-        series.push(nestedSeries);
-        this.processBuckets(bucket, target, nestedSeries.series, level+1);
+        props = _.clone(props);
+        props[aggDef.field] = bucket.key;
+        this.processBuckets(bucket, target, seriesList, level+1, props);
       }
       return;
     }
@@ -32,54 +32,86 @@ function (_) {
 
       switch(metric.type) {
         case 'count': {
-          var countSeries = { datapoints: [], metric: 'count'};
+          newSeries = { datapoints: [], metric: 'count', props: props};
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
-            countSeries.datapoints.push([value, bucket.key]);
+            newSeries.datapoints.push([value, bucket.key]);
           }
-          series.push(countSeries);
+          seriesList.push(newSeries);
           break;
         }
         case 'percentiles': {
-          // for (i = 0; i < esAgg.buckets.length; i++) {
-          //   bucket = esAgg.buckets[i];
-          //   var values = bucket[metric.id].values;
-          //   for (var prop in values) {
-          //     addMetricPoint(seriesName + ' ' + prop, values[prop], bucket.key);
-          //   }
-          // }
+          if (esAgg.buckets.length === 0) {
+            break;
+          }
+
+          var firstBucket = esAgg.buckets[0];
+          var percentiles = firstBucket[metric.id].values;
+
+          for (var percentileName in percentiles) {
+            newSeries = {datapoints: [], metric: 'p' + percentileName, props: props};
+
+            for (i = 0; i < esAgg.buckets.length; i++) {
+              bucket = esAgg.buckets[i];
+              var values = bucket[metric.id].values;
+              newSeries.datapoints.push([values[percentileName], bucket.key]);
+            }
+            seriesList.push(newSeries);
+          }
+
           break;
         }
         case 'extended_stats': {
-          // var stats = bucket[metric.id];
-          // stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
-          // stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
-          //
-          // for (var statName in metric.meta) {
-          //   if (metric.meta[statName]) {
-          //     addMetricPoint(seriesName + ' ' + statName, stats[statName], bucket.key);
-          //   }
-          // }
+          for (var statName in metric.meta) {
+            if (!metric.meta[statName]) {
+              continue;
+            }
+
+            newSeries = {datapoints: [], metric: statName, props: props};
+
+            for (i = 0; i < esAgg.buckets.length; i++) {
+              bucket = esAgg.buckets[i];
+              var stats = bucket[metric.id];
+
+              // add stats that are in nested obj to top level obj
+              stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
+              stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
+
+              newSeries.datapoints.push([stats[statName], bucket.key]);
+            }
+
+            seriesList.push(newSeries);
+          }
+
           break;
         }
         default: {
-          var newSeries = { datapoints: [], metric: metric.type + ' ' + metric.field };
+          newSeries = { datapoints: [], metric: metric.type + ' ' + metric.field, props: props};
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket[metric.id].value;
             newSeries.datapoints.push([value, bucket.key]);
           }
-          series.push(newSeries);
+          seriesList.push(newSeries);
           break;
         }
       }
     }
   };
 
-  ElasticResponse.prototype._getSeriesName = function(props, metric, alias) {
-    if (alias) {
-      return alias;
+  ElasticResponse.prototype._getSeriesName = function(props, metric, target, metricTypeCount) {
+    if (target.alias) {
+      var regex = /\{\{([\s\S]+?)\}\}/g;
+
+      return target.alias.replace(regex, function(match, g1, g2) {
+        var group = g1 || g2;
+
+        if (props[group]) { return props[group]; }
+        if (group === 'metric') { return metric; }
+
+        return match;
+      });
     }
 
     var propKeys = _.keys(props);
@@ -92,31 +124,15 @@ function (_) {
       name += props[propName] + ' ';
     }
 
-    if (propKeys.length === 1) {
+    if (metricTypeCount === 1) {
       return name.trim();
     }
 
     return name.trim() + ' ' + metric;
   };
 
-  ElasticResponse.prototype._collectSeriesFromTree = function(seriesTree, props, seriesList, alias) {
-    console.log('props: ', props);
-
-    for (var i = 0; i < seriesTree.length; i++) {
-      var series = seriesTree[i];
-      if (series.datapoints) {
-        series.target = this._getSeriesName(props, series.metric, alias);
-        seriesList.push(series);
-      } else {
-        props = _.clone(props);
-        props[series.prop.field] = series.prop.key;
-        this._collectSeriesFromTree(series.series, props, seriesList);
-      }
-    }
-  };
-
   ElasticResponse.prototype.getTimeSeries = function() {
-    var series = [];
+    var seriesList = [];
 
     for (var i = 0; i < this.response.responses.length; i++) {
       var response = this.response.responses[i];
@@ -126,13 +142,20 @@ function (_) {
 
       var aggregations = response.aggregations;
       var target = this.targets[i];
-      var seriesTree = [];
+      var tmpSeriesList = [];
 
-      this.processBuckets(aggregations, target, seriesTree, 0, '');
-      this._collectSeriesFromTree(seriesTree, {}, series, '');
+      this.processBuckets(aggregations, target, tmpSeriesList, 0, {});
+
+      var metricTypeCount = _.uniq(_.pluck(tmpSeriesList, 'metric')).length;
+
+      for (var y = 0; y < tmpSeriesList.length; y++) {
+        var series= tmpSeriesList[y];
+        series.target = this._getSeriesName(series.props, series.metric, target, metricTypeCount);
+        seriesList.push(series);
+      }
     }
 
-    return { data: series };
+    return { data: seriesList };
   };
 
   return ElasticResponse;
