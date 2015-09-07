@@ -54,7 +54,7 @@ function (angular, _, queryDef) {
           $scope.settingsLinkText += ' (' + $scope.agg.order + ')';
         }
       } else if ($scope.agg.type === 'date_histogram') {
-        delete $scope.agg.field;
+        $scope.agg.field = $scope.target.timeField;
       }
 
       return true;
