@@ -15,6 +15,7 @@ function (angular, _) {
 
       target.metrics = target.metrics || [{ type: 'count', id: '1' }];
       target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2'}];
+      target.timeField =  $scope.datasource.timeField;
     };
 
     $scope.getFields = function() {

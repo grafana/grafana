@@ -173,11 +173,12 @@ function (angular, app, _, $) {
 
             $scope.valueToSegment = function(value) {
               var option = _.findWhere($scope.options, {value: value});
-              if (option) {
-                return uiSegmentSrv.newSegment({value: option.text, cssClass: attrs.cssClass, custom: attrs.custom});
-              } else {
-                return uiSegmentSrv.newSegment({value: value, cssClass: attrs.cssClass, custom: attrs.custom});
-              }
+              var segment = {
+                cssClass: attrs.cssClass,
+                custom: attrs.custom,
+                value: option ? option.text : value,
+              };
+              return uiSegmentSrv.newSegment(segment);
             };
 
             $scope.getOptionsInternal = function() {

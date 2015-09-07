@@ -7,10 +7,10 @@
 		<li>
 			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onChangeInternal()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
 		</li>
-		<li ng-if="agg.field">
+		<li>
 			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChangeInternal()" css-class="tight-form-item-xxlarge"></metric-segment>
 		</li>
-		<li class="tight-form-item tight-form-align" ng-if="settingsLinkText">
+		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
 		</li>
 	</ul>
@@ -27,7 +27,7 @@
 </div>
 
 <div class="tight-form" ng-if="showOptions">
-	<div style="margin: 20px 0 20px 148px;display: inline-block">
+	<div style="tight-form-inner-box" ng-if="agg.type === 'terms'">
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 60px">
