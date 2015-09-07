@@ -35,7 +35,6 @@ define([
       expect(query.aggs["2"].aggs["3"].date_histogram.field).to.be("@timestamp");
     });
 
-
     it('with select field', function() {
       var query = builder.build({
         metrics: [{type: 'avg', field: '@value', id: '1'}],
