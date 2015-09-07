@@ -53,6 +53,8 @@ function (angular, _, queryDef) {
         if ($scope.agg.size === '0') {
           $scope.settingsLinkText += ' (' + $scope.agg.order + ')';
         }
+      } else if ($scope.agg.type === 'date_histogram') {
+        delete $scope.agg.field;
       }
 
       return true;

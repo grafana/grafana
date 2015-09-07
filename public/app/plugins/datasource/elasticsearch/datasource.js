@@ -21,7 +21,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
+      this.timeField = datasource.jsonData.timeField;
       this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
+      this.queryBuilder = new ElasticQueryBuilder({
+        timeField: this.timeField
+      });
     }
 
     ElasticDatasource.prototype._request = function(method, url, data) {
@@ -145,25 +149,24 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern) {
     };
 
     ElasticDatasource.prototype.query = function(options) {
-      var queryBuilder = new ElasticQueryBuilder();
       var payload = "";
+      var target;
       var sentTargets = [];
 
       var header = this.getQueryHeader(options.range);
       var timeFrom = this.translateTime(options.range.from);
       var timeTo = this.translateTime(options.range.to);
 
-      _.each(options.targets, function(target) {
-        if (target.hide) {
-          return;
-        }
+      for (var i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        if (target.hide) {return;}
 
-        var esQuery = queryBuilder.build(target, timeFrom, timeTo);
+        var esQuery = this.queryBuilder.build(target, timeFrom, timeTo);
         payload += header + '\n';
         payload += angular.toJson(esQuery) + '\n';
 
         sentTargets.push(target);
-      });
+      }
 
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
