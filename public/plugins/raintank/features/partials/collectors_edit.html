@@ -65,7 +65,7 @@
         </div>
         <div class="rt-collector-config-info" ng-hide="!showConfigInfo">
           <div class="rt-box-interior-section">
-            <h3>Have your API key <a href="#">Manage API keys</a></h3>
+            <h3>Have your API key <a href="/org/apikeys">Manage API keys</a></h3>
             <div ng-hide="showApiKey">
               <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
             </div>
@@ -75,7 +75,7 @@
               <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
             </div>
           </div>
-          <div class="rt-box-interior-section">
+          <div class="rt-box-interior-section" ng-hide="showDistroConfig">
             <h3>Install the collector</h3>
             <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
           </div> 
@@ -85,18 +85,27 @@
               <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Install all of the dependent node_modules</h3>
-              <pre><code>npm install</code></pre>
+              <h3>Install Go.</h3>
+              <p>>> <a href="https://golang.org/doc/install">https://golang.org/doc/install</a>.</p>
+              <p>Once you've installed Go, you'll need to configure your workspace like so: <a href="https://golang.org/doc/code.html#Workspaces">https://golang.org/doc/code.html#Workspaces</a></p>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Install fping. Installation depends on your linux distribution.</h3>
-              >> <a href="#">http://fping.org</a>
+              <h3>Install raintank_probe.</h3>
+              <pre><code>go get github.com/raintank/raintank-probe</code></pre>
             </div>
+            <div class="rt-box-interior-section">
+              <h3>Copy raintank-probe to raintank-collector's directory.</h3>
+              <pre><code>cp $(which raintank-probe)</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3>Install all of the dependent node_modules.</h3>
+              <pre><code>npm install</code></pre>
+            </div>            
             <div class="rt-box-interior-section">
               <h3>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
 <pre><code>{
 "collector": {
-  "name": "<span class="h">DC2 Internal</span>"
+  "name": "<span class="h">[Your collector]</span>"
 },
 "numCPUs": 1,
 "serverUrl": "https://app.raintank.io",
