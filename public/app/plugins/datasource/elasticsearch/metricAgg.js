@@ -12,6 +12,7 @@ function (angular, _, queryDef) {
     var metricAggs = $scope.target.metrics;
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
+    $scope.extendedStats = queryDef.extendedStats;
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
@@ -40,8 +41,14 @@ function (angular, _, queryDef) {
           break;
         }
         case 'extended_stats': {
-          $scope.agg.stats = $scope.agg.stats || ['std_deviation'];
-          $scope.settingsLinkText = 'Stats: ' + $scope.agg.stats.join(',');
+          var stats = _.reduce($scope.agg.meta, function(memo, val, key) {
+            if (val) {
+              var def = _.findWhere($scope.extendedStats, {value: key});
+              memo.push(def.text);
+            }
+            return memo;
+          }, []);
+          $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
         }
       }
     };
@@ -52,6 +59,9 @@ function (angular, _, queryDef) {
 
     $scope.onTypeChange = function() {
       $scope.agg.settings = {};
+      $scope.agg.meta = {};
+      $scope.showOptions = false;
+
       $scope.validateModel();
       $scope.onChange();
     };

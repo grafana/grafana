@@ -105,7 +105,7 @@ function (angular) {
 
       var metricAgg = {field: metric.field};
       for (var prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop)) {
+        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
       }
