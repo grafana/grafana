@@ -47,8 +47,13 @@
 		<li>
 			<input type="text" class="tight-form-input" style="width: 345px;" ng-model="target.query" spellcheck='false' placeholder="Lucence query" ng-blur="get_data()">
 		</li>
+		<li class="tight-form-item query-keyword">
+			Alias
+		</li>
+		<li>
+			<input type="text" class="tight-form-input" style="width: 245px;" ng-model="target.alias" spellcheck='false' placeholder="alias patterns (empty = auto)" ng-blur="get_data()">
+		</li>
 	</ul>
-
 	<div class="clearfix"></div>
 
 	<div style="padding: 10px" ng-if="target.rawQuery">
@@ -57,7 +62,6 @@
 </div>
 
 <div ng-hide="target.rawQuery">
-
 	<div ng-repeat="agg in target.metrics">
 		<elastic-metric-agg
 			target="target" index="$index"

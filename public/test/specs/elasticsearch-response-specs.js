@@ -94,7 +94,7 @@ define([
 
     });
 
-    describe('single group by query', function() {
+    describe('single group by query one metric', function() {
       var result;
 
       beforeEach(function() {
@@ -145,7 +145,60 @@ define([
       });
     });
 
-    describe.skip('with percentiles ', function() {
+    describe('single group by query two metrics', function() {
+      var result;
+
+      beforeEach(function() {
+        targets = [{
+          refId: 'A',
+          metrics: [{type: 'count', id: '1'}, {type: 'avg', field: '@value', id: '4'}],
+          bucketAggs: [{type: 'terms', field: 'host', id: '2'}, {type: 'date_histogram', field: '@timestamp', id: '3'}],
+        }];
+        response =  {
+          responses: [{
+            aggregations: {
+              "2": {
+                buckets: [
+                  {
+                    "3": {
+                      buckets: [
+                        { "4": {value: 10}, doc_count: 1, key: 1000},
+                        { "4": {value: 12}, doc_count: 3, key: 2000}
+                      ]
+                    },
+                    doc_count: 4,
+                    key: 'server1',
+                  },
+                  {
+                    "3": {
+                      buckets: [
+                        { "4": {value: 20}, doc_count: 1, key: 1000},
+                        { "4": {value: 32}, doc_count: 3, key: 2000}
+                      ]
+                    },
+                    doc_count: 10,
+                    key: 'server2',
+                  },
+                ]
+              }
+            }
+          }]
+        };
+
+        result = new ElasticResponse(targets, response).getTimeSeries();
+      });
+
+      it('should return 2 series', function() {
+        expect(result.data.length).to.be(4);
+        expect(result.data[0].datapoints.length).to.be(2);
+        expect(result.data[0].target).to.be('server1 count');
+        expect(result.data[1].target).to.be('server1 avg @value');
+        expect(result.data[2].target).to.be('server2 count');
+        expect(result.data[3].target).to.be('server2 avg @value');
+      });
+    });
+
+    describe('with percentiles ', function() {
       var result;
 
       beforeEach(function() {
@@ -181,22 +234,22 @@ define([
       it('should return 2 series', function() {
         expect(result.data.length).to.be(2);
         expect(result.data[0].datapoints.length).to.be(2);
-        expect(result.data[0].target).to.be('75');
-        expect(result.data[1].target).to.be('90');
+        expect(result.data[0].target).to.be('p75');
+        expect(result.data[1].target).to.be('p90');
         expect(result.data[0].datapoints[0][0]).to.be(3.3);
         expect(result.data[0].datapoints[0][1]).to.be(1000);
         expect(result.data[1].datapoints[1][0]).to.be(4.5);
       });
     });
 
-    describe.skip('with extended_stats ', function() {
+    describe('with extended_stats', function() {
       var result;
 
       beforeEach(function() {
         targets = [{
           refId: 'A',
           metrics: [{type: 'extended_stats', meta: {max: true, std_deviation_bounds_upper: true},  id: '1'}],
-          bucketAggs: [{type: 'date_histogram', id: '3'}],
+          bucketAggs: [{type: 'terms', field: 'host', id: '3'}, {type: 'date_histogram', id: '4'}],
         }];
         response = {
           responses: [{
@@ -204,15 +257,25 @@ define([
               "3": {
                 buckets: [
                   {
-                    "1": {max: 10.2, min: 5.5, std_deviation_bounds: {upper: 3, lower: -2}},
-                    doc_count: 10,
-                    key: 1000
+                    key: 'server1',
+                    "4": {
+                      buckets: [{
+                        "1": {max: 10.2, min: 5.5, std_deviation_bounds: {upper: 3, lower: -2}},
+                        doc_count: 10,
+                        key: 1000
+                      }]
+                    }
                   },
                   {
-                    "1": {max: 7.2, min: 3.5, std_deviation_bounds: {upper: 4, lower: -1}},
-                    doc_count: 15,
-                    key: 2000
-                  }
+                    key: 'server2',
+                    "4": {
+                      buckets: [{
+                        "1": {max: 10.2, min: 5.5, std_deviation_bounds: {upper: 3, lower: -2}},
+                        doc_count: 10,
+                        key: 1000
+                      }]
+                    }
+                  },
                 ]
               }
             }
@@ -222,28 +285,25 @@ define([
         result = new ElasticResponse(targets, response).getTimeSeries();
       });
 
-      it('should return 2 series', function() {
-        expect(result.data.length).to.be(2);
-        expect(result.data[0].datapoints.length).to.be(2);
-        expect(result.data[0].target).to.be('max');
-        expect(result.data[1].target).to.be('std_deviation_bounds_upper');
+      it('should return 4 series', function() {
+        expect(result.data.length).to.be(4);
+        expect(result.data[0].datapoints.length).to.be(1);
+        expect(result.data[0].target).to.be('server1 max');
+        expect(result.data[1].target).to.be('server1 std_deviation_bounds_upper');
 
         expect(result.data[0].datapoints[0][0]).to.be(10.2);
-        expect(result.data[0].datapoints[1][0]).to.be(7.2);
-
         expect(result.data[1].datapoints[0][0]).to.be(3);
-        expect(result.data[1].datapoints[1][0]).to.be(4);
       });
     });
 
-    describe.skip('single group by with alias pattern', function() {
+    describe('single group by with alias pattern', function() {
       var result;
 
       beforeEach(function() {
         targets = [{
           refId: 'A',
           metrics: [{type: 'count', id: '1'}],
-          alias: '[[_@host]] $_metric and!',
+          alias: '{{@host}} {{metric}} and!',
           bucketAggs: [
             {type: 'terms', field: '@host', id: '2'},
             {type: 'date_histogram', field: '@timestamp', id: '3'}
