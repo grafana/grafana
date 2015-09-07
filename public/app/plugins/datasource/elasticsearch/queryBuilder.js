@@ -4,11 +4,13 @@ define([
 function (angular) {
   'use strict';
 
-  function ElasticQueryBuilder() { }
+  function ElasticQueryBuilder(options) {
+    this.timeField = options.timeField;
+  }
 
-  ElasticQueryBuilder.prototype.getRangeFilter = function(timeField) {
+  ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
-    filter[timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
+    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
     return filter;
   };
 
@@ -59,7 +61,7 @@ function (angular) {
           },
           "filter": {
             "bool": {
-              "must": [{"range": this.getRangeFilter(target.timeField)}]
+              "must": [{"range": this.getRangeFilter()}]
             }
           }
         }
@@ -76,7 +78,7 @@ function (angular) {
         case 'date_histogram': {
           esAgg["date_histogram"] = {
             "interval": target.interval || "$interval",
-            "field": aggDef.field,
+            "field": this.timeField,
             "min_doc_count": 1,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };

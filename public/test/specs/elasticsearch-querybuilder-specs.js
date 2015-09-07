@@ -4,10 +4,13 @@ define([
   'use strict';
 
   describe('ElasticQueryBuilder', function() {
+    var builder;
+
+    beforeEach(function() {
+      builder = new ElasticQueryBuilder({timeField: '@timestamp'});
+    });
 
     it('with defaults', function() {
-      var builder = new ElasticQueryBuilder();
-
       var query = builder.build({
         metrics: [{type: 'Count', id: '0'}],
         timeField: '@timestamp',
@@ -19,8 +22,6 @@ define([
     });
 
     it('with multiple bucket aggs', function() {
-      var builder = new ElasticQueryBuilder();
-
       var query = builder.build({
         metrics: [{type: 'count', id: '1'}],
         timeField: '@timestamp',
@@ -36,8 +37,6 @@ define([
 
 
     it('with select field', function() {
-      var builder = new ElasticQueryBuilder();
-
       var query = builder.build({
         metrics: [{type: 'avg', field: '@value', id: '1'}],
         bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '2'}],
@@ -48,8 +47,6 @@ define([
     });
 
     it('with term agg and order by metric agg', function() {
-      var builder = new ElasticQueryBuilder();
-
       var query = builder.build({
         metrics: [{type: 'count', id: '1'}, {type: 'avg', field: '@value', id: '5'}],
         bucketAggs: [
@@ -66,8 +63,6 @@ define([
     });
 
     it('with metric percentiles', function() {
-      var builder = new ElasticQueryBuilder();
-
       var query = builder.build({
         metrics: [
           {

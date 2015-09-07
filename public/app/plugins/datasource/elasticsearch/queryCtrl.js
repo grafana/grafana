@@ -1,9 +1,8 @@
 define([
   'angular',
   'lodash',
-  './queryBuilder',
 ],
-function (angular, _, ElasticQueryBuilder) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -14,12 +13,8 @@ function (angular, _, ElasticQueryBuilder) {
       var target = $scope.target;
       if (!target) { return; }
 
-      target.timeField = target.timeField || '@timestamp';
       target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', field: '@timestamp', id: '2'}];
-
-      $scope.queryBuilder = new ElasticQueryBuilder(target);
-      $scope.rawQueryOld = angular.toJson($scope.queryBuilder.build($scope.target), true);
+      target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2'}];
     };
 
     $scope.getFields = function() {
@@ -29,7 +24,7 @@ function (angular, _, ElasticQueryBuilder) {
     };
 
     $scope.queryUpdated = function() {
-      var newJson = angular.toJson($scope.queryBuilder.build($scope.target), true);
+      var newJson = angular.toJson($scope.datasource.queryBuilder.build($scope.target), true);
       if (newJson !== $scope.oldQueryRaw) {
         $scope.rawQueryOld = newJson;
         $scope.get_data();

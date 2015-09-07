@@ -41,7 +41,7 @@ function (angular, _, queryDef) {
         }
         case 'extended_stats': {
           $scope.agg.stats = $scope.agg.stats || ['std_deviation'];
-          $scope.settingsLinkText = 'stats: ' + $scope.agg.stats.join(',');
+          $scope.settingsLinkText = 'Stats: ' + $scope.agg.stats.join(',');
         }
       }
     };

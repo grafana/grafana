@@ -1,8 +1,9 @@
 define([
   'angular',
   'config',
+  'lodash',
 ],
-function (angular, config) {
+function (angular, config, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
