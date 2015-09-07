@@ -56,7 +56,7 @@ type AddEndpointCommand struct {
 	Name     string               `json:"name"`
 	Tags     []string             `json:"tags"`
 	Monitors []*AddMonitorCommand `json:"monitors"`
-	Result   *EndpointDTO
+	Result   *EndpointDTO         `json:"-"`
 }
 
 type UpdateEndpointCommand struct {
