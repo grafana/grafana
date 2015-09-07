@@ -13,6 +13,7 @@ function (_) {
       {text: "Min of",  value: 'min' },
       {text: "Extended Stats",  value: 'extended_stats' },
       {text: "Percentiles",  value: 'percentiles' },
+      {text: "Unique Count", value: "cardinality" }
     ],
 
     bucketAggTypes: [
@@ -39,6 +40,17 @@ function (_) {
       {text: "10", value: '10' },
       {text: "15", value: '15' },
       {text: "20", value: '20' },
+    ],
+
+    extendedStats: [
+      {text: 'Avg', value: 'avg'},
+      {text: 'Min', value: 'min'},
+      {text: 'Max', value: 'max'},
+      {text: 'Sum', value: 'sum'},
+      {text: 'Count', value: 'count'},
+      {text: 'Std Dev', value: 'std_deviation'},
+      {text: 'Std Dev Upper', value: 'std_deviation_bounds_upper'},
+      {text: 'Std Dev Lower', value: 'std_deviation_bounds_lower'},
     ],
 
     getOrderByOptions: function(target) {

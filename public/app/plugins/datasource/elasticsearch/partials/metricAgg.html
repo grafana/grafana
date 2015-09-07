@@ -26,7 +26,7 @@
 </div>
 
 <div class="tight-form" ng-if="showOptions">
-	<div style="margin: 20px 0 20px 148px;display: inline-block">
+	<div class="tight-form-inner-box">
 		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
@@ -34,6 +34,30 @@
 				</li>
 				<li>
 					<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div ng-if="agg.type === 'extended_stats'">
+			<div class="tight-form" ng-repeat="stat in extendedStats">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						{{stat.text}}
+					</li>
+					<li class="tight-form-item last">
+						<editor-checkbox text="" model="agg.meta.{{stat.value}}" change="onChange()"></editor-checkbox>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="tight-form last" ng-if="agg.type === 'extended_stats'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px">
+					Sigma
+				</li>
+				<li>
+					<input type="number" class="input-mini tight-form-input last" placeholder="3" ng-model="agg.settings.sigma" ng-blur="onChange()"></input>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
