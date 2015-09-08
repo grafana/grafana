@@ -58,7 +58,7 @@ function (angular, _) {
       if ($scope.target.rawQuery) {
         delete $scope.target.rawQuery;
       } else {
-        $scope.target.rawQuery = $scope.rawQueryOld;
+        $scope.target.rawQuery = angular.toJson($scope.datasource.queryBuilder.build($scope.target), true);
       }
     };
 
