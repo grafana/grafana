@@ -10,6 +10,7 @@
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
+  "hideTimeOptions": false,
   "rows": [
     {
       "title": "Row1",

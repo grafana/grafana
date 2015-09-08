@@ -29,6 +29,7 @@ function (angular, $, kbn, _, moment) {
       this.timezone = data.timezone || 'browser';
       this.editable = data.editable === false ? false : true;
       this.hideControls = data.hideControls || false;
+      this.hideTimeOptions = data.hideTimeOptions || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
       this.nav = data.nav || [];
