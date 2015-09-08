@@ -41,11 +41,14 @@ func getOrgHelper(orgId int64) Response {
 // POST /api/orgs
 func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
-		return ApiError(401, "Access denied", nil)
+		return ApiError(403, "Access denied", nil)
 	}
 
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrOrgNameTaken {
+			return ApiError(400, "Organization name taken", err)
+		}
 		return ApiError(500, "Failed to create organization", err)
 	}
 
@@ -71,6 +74,9 @@ func UpdateOrg(c *middleware.Context, cmd m.UpdateOrgCommand) Response {
 
 func updateOrgHelper(cmd m.UpdateOrgCommand) Response {
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrOrgNameTaken {
+			return ApiError(400, "Organization name taken", err)
+		}
 		return ApiError(500, "Failed to update organization", err)
 	}
 
