@@ -19,11 +19,10 @@
 
 		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
 			<h5>Alias patterns</h5>
-			<ul>
-				<li>$m = replaced with measurement name</li>
-				<li>$measurement = replaced with measurement name</li>
-				<li>$tag_hostname = replaced with the value of the hostname tag</li>
-				<li>You can also use [[tag_hostname]] pattern replacement syntax</li>
+			<ul ng-non-bindable>
+				<li>{{term fieldname}} = replaced with value of term group by</li>
+				<li>{{metric}} = replaced with metric name (ex. Average, Min, Max)</li>
+				<li>{{field}} = replaced with the metric field name</li>
 			</ul>
 		</div>
 
