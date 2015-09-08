@@ -51,7 +51,7 @@ function (_, queryDef) {
           var percentiles = firstBucket[metric.id].values;
 
           for (var percentileName in percentiles) {
-            newSeries = {datapoints: [], metric: 'p' + percentileName, props: props};
+            newSeries = {datapoints: [], metric: 'p' + percentileName, props: props, field: metric.field};
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
@@ -69,7 +69,7 @@ function (_, queryDef) {
               continue;
             }
 
-            newSeries = {datapoints: [], metric: statName, props: props};
+            newSeries = {datapoints: [], metric: statName, props: props, field: metric.field};
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
