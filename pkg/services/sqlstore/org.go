@@ -62,8 +62,30 @@ func GetOrgByName(query *m.GetOrgByNameQuery) error {
 	return nil
 }
 
+func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) {
+	// check if org name is taken
+	var org m.Org
+	exists, err := sess.Where("name=?", name).Get(&org)
+
+	if err != nil {
+		return false, nil
+	}
+
+	if exists && existingId != org.Id {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func CreateOrg(cmd *m.CreateOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
+
+		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return m.ErrOrgNameTaken
+		}
 
 		org := m.Org{
 			Name:    cmd.Name,
@@ -98,6 +120,12 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
+
+		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return m.ErrOrgNameTaken
+		}
 
 		org := m.Org{
 			Name:    cmd.Name,

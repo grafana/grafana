@@ -7,7 +7,8 @@ import (
 
 // Typed errors
 var (
-	ErrOrgNotFound = errors.New("Organization not found")
+	ErrOrgNotFound  = errors.New("Organization not found")
+	ErrOrgNameTaken = errors.New("Organization name is taken")
 )
 
 type Org struct {
