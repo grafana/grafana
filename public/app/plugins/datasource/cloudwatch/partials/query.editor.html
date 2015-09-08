@@ -1,0 +1,153 @@
+<div class="tight-form">
+	<ul class="tight-form-list pull-right">
+		<li class="tight-form-item">
+			<div class="dropdown">
+				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+					<i class="fa fa-bars"></i>
+				</a>
+				<ul class="dropdown-menu pull-right" role="menu">
+					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+				</ul>
+			</div>
+		</li>
+		<li class="tight-form-item last">
+			<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+				<i class="fa fa-remove"></i>
+			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
+		<li>
+			<a  class="tight-form-item"
+				ng-click="target.hide = !target.hide; get_data();"
+				role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item" style="width: 100px">
+			Metric
+		</li>
+		<li>
+			<metric-segment segment="regionSegment" get-alt-segments="getRegions()" on-value-changed="regionChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="namespaceSegment" get-alt-segments="getNamespaces()" on-value-changed="namespaceChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="metricSegment" get-alt-segments="getMetrics()" on-value-changed="metricChanged()"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item tight-form-align" style="width: 100px">
+			Dimensions
+		</li>
+		<li ng-repeat="(key, value) in target.escapedDimensions track by $index" class="tight-form-item">
+			{{key}}&nbsp;=&nbsp;{{value}}
+			<a ng-click="removeDimension(key)">
+				<i class="fa fa-remove"></i>
+			</a>
+		</li>
+
+		<li class="tight-form-item" ng-hide="addDimensionMode">
+			<a ng-click="addDimension()">
+				<i class="fa fa-plus"></i>
+			</a>
+		</li>
+
+		<li ng-show="addDimensionMode">
+			<input type="text"
+			class="input-small tight-form-input"
+			spellcheck='false'
+			bs-typeahead="suggestDimensionKeys"
+			data-min-length=0 data-items=100
+			ng-model="target.currentDimensionKey"
+			placeholder="key">
+			<input type="text"
+			class="input-small tight-form-input"
+			spellcheck='false'
+			bs-typeahead="suggestDimensionValues"
+			data-min-length=0 data-items=100
+			ng-model="target.currentDimensionValue"
+			placeholder="value">
+			<a ng-click="addDimension()">
+				add dimension
+			</a>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item tight-form-align" style="width: 100px">
+			Statistics
+		</li>
+		<li class="tight-form-item">
+			<editor-checkbox text="Min" model="target.statistics.Minimum" change="statisticsOptionChanged()"></editor-checkbox>
+			<editor-checkbox text="Max" model="target.statistics.Maximum" change="statisticsOptionChanged()"></editor-checkbox>
+			<editor-checkbox text="Avg" model="target.statistics.Average" change="statisticsOptionChanged()"></editor-checkbox>
+			<editor-checkbox text="Sum" model="target.statistics.Sum" change="statisticsOptionChanged()"></editor-checkbox>
+			<editor-checkbox text="SampleCount" model="target.statistics.SampleCount" change="statisticsOptionChanged()"></editor-checkbox>
+		</li>
+		<li class="tight-form-item">
+			Period
+		</li>
+		<li>
+			<input type="text"
+			class="input-mini tight-form-input"
+			ng-model="target.period"
+			data-placement="right"
+			spellcheck='false'
+			placeholder="period"
+			data-min-length=0 data-items=100
+			ng-model-onblur
+			ng-change="refreshMetricData()"
+			/>
+			<a bs-tooltip="target.errors.period"
+				style="color: rgb(229, 189, 28)"
+				ng-show="target.errors.period">
+				<i class="fa fa-warning"></i>
+			</a>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item tight-form-align" style="width: 100px">
+			Alias Pattern
+		</li>
+		<li>
+			<input type="text"
+			class="input-xxlarge tight-form-input"
+			ng-model="target.legendFormat"
+			spellcheck='false'
+			placeholder="Syntax: {{Region}} {{Namespace}} {{MetricName}} {{Statistics}} {{Dimensions[N].Name}} {{Dimensions[N].Value}}"
+			data-min-length=0 data-items=100
+			ng-model-onblur
+			ng-change="refreshMetricData()"
+			>
+			<tip>Syntax: {{Region}} {{Namespace}} {{MetricName}} {{Statistics}} {{Dimensions[N].Name}} {{Dimensions[N].Value}}</tip>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+

@@ -49,24 +49,18 @@
 		</li>
 	</ul>
 
-	<input  type="text" class="tight-form-clear-input span10"
-		ng-model="target.target"
-		give-focus="target.textEditor"
-		spellcheck='false'
-		ng-model-onblur ng-change="get_data()"
-		ng-show="target.textEditor" />
+	<input type="text" class="tight-form-clear-input span10" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
 
-		<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
-			<li ng-repeat="segment in segments" role="menuitem">
-				<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
-			</li>
-			<li ng-repeat="func in functions">
-				<span graphite-func-editor class="tight-form-item tight-form-func">
-				</span>
-			</li>
-			<li class="dropdown" graphite-add-func>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
+	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
+		<li ng-repeat="segment in segments" role="menuitem">
+			<metric-segment segment="segment" get-options="getAltSegments($index)" on-change="segmentValueChanged(segment, $index)"></metric-segment>
+		</li>
+		<li ng-repeat="func in functions">
+			<span graphite-func-editor class="tight-form-item tight-form-func">
+			</span>
+		</li>
+		<li class="dropdown" graphite-add-func>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
 </div>

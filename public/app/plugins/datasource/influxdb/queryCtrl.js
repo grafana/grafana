@@ -8,7 +8,7 @@ function (angular, _, InfluxQueryBuilder) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q) {
+  module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
       if (!$scope.target) { return; }
@@ -24,12 +24,12 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
       if (!target.measurement) {
-        $scope.measurementSegment = MetricSegment.newSelectMeasurement();
+        $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();
       } else {
-        $scope.measurementSegment = new MetricSegment(target.measurement);
+        $scope.measurementSegment = uiSegmentSrv.newSegment(target.measurement);
       }
 
-      $scope.addFieldSegment = MetricSegment.newPlusButton();
+      $scope.addFieldSegment = uiSegmentSrv.newPlusButton();
 
       $scope.tagSegments = [];
       _.each(target.tags, function(tag) {
@@ -42,24 +42,25 @@ function (angular, _, InfluxQueryBuilder) {
         }
 
         if (tag.condition) {
-          $scope.tagSegments.push(MetricSegment.newCondition(tag.condition));
+          $scope.tagSegments.push(uiSegmentSrv.newCondition(tag.condition));
         }
-        $scope.tagSegments.push(new MetricSegment({value: tag.key, type: 'key', cssClass: 'query-segment-key' }));
-        $scope.tagSegments.push(MetricSegment.newOperator(tag.operator));
-        $scope.tagSegments.push(new MetricSegment({value: tag.value, type: 'value', cssClass: 'query-segment-value'}));
+
+        $scope.tagSegments.push(uiSegmentSrv.newKey(tag.Key));
+        $scope.tagSegments.push(uiSegmentSrv.newOperator(tag.operator));
+        $scope.tagSegments.push(uiSegmentSrv.newKeyValue(tag.value));
       });
 
       $scope.fixTagSegments();
 
       $scope.groupBySegments = [];
       _.each(target.groupByTags, function(tag) {
-        $scope.groupBySegments.push(new MetricSegment(tag));
+        $scope.groupBySegments.push(uiSegmentSrv.newSegment(tag));
       });
 
-      $scope.groupBySegments.push(MetricSegment.newPlusButton());
+      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
 
-      $scope.removeTagFilterSegment = new MetricSegment({fake: true, value: '-- remove tag filter --'});
-      $scope.removeGroupBySegment = new MetricSegment({fake: true, value: '-- remove group by --'});
+      $scope.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
+      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
     };
 
     $scope.fixTagSegments = function() {
@@ -67,7 +68,7 @@ function (angular, _, InfluxQueryBuilder) {
       var lastSegment = $scope.tagSegments[Math.max(count-1, 0)];
 
       if (!lastSegment || lastSegment.type !== 'plus-button') {
-        $scope.tagSegments.push(MetricSegment.newPlusButton());
+        $scope.tagSegments.push(uiSegmentSrv.newPlusButton());
       }
     };
 
@@ -80,7 +81,7 @@ function (angular, _, InfluxQueryBuilder) {
       }
 
       if (index === $scope.groupBySegments.length-1) {
-        $scope.groupBySegments.push(MetricSegment.newPlusButton());
+        $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
       }
 
       segment.type = 'group-by-key';
@@ -131,12 +132,12 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.transformToSegments = function(addTemplateVars) {
       return function(results) {
         var segments = _.map(results, function(segment) {
-          return new MetricSegment({ value: segment.text, expandable: segment.expandable });
+          return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
         });
 
         if (addTemplateVars) {
           _.each(templateSrv.variables, function(variable) {
-            segments.unshift(new MetricSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+            segments.unshift(uiSegmentSrv.newSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
           });
         }
 
@@ -146,14 +147,14 @@ function (angular, _, InfluxQueryBuilder) {
 
     $scope.getTagsOrValues = function(segment, index) {
       if (segment.type === 'condition') {
-        return $q.when([new MetricSegment('AND'), new MetricSegment('OR')]);
+        return $q.when([uiSegmentSrv.newSegment('AND'), uiSegmentSrv.newSegment('OR')]);
       }
       if (segment.type === 'operator') {
         var nextValue = $scope.tagSegments[index+1].value;
         if (/^\/.*\/$/.test(nextValue)) {
-          return $q.when(MetricSegment.newOperators(['=~', '!~']));
+          return $q.when(uiSegmentSrv.newOperators(['=~', '!~']));
         } else {
-          return $q.when(MetricSegment.newOperators(['=', '<>', '<', '>']));
+          return $q.when(uiSegmentSrv.newOperators(['=', '<>', '<', '>']));
         }
       }
 
@@ -186,7 +187,7 @@ function (angular, _, InfluxQueryBuilder) {
 
     $scope.addField = function() {
       $scope.target.fields.push({name: $scope.addFieldSegment.value, func: 'mean'});
-      _.extend($scope.addFieldSegment, MetricSegment.newPlusButton());
+      _.extend($scope.addFieldSegment, uiSegmentSrv.newPlusButton());
     };
 
     $scope.fieldChanged = function(field) {
@@ -217,27 +218,27 @@ function (angular, _, InfluxQueryBuilder) {
       if (segment.value === $scope.removeTagFilterSegment.value) {
         $scope.tagSegments.splice(index, 3);
         if ($scope.tagSegments.length === 0) {
-          $scope.tagSegments.push(MetricSegment.newPlusButton());
+          $scope.tagSegments.push(uiSegmentSrv.newPlusButton());
         } else if ($scope.tagSegments.length > 2) {
           $scope.tagSegments.splice(Math.max(index-1, 0), 1);
           if ($scope.tagSegments[$scope.tagSegments.length-1].type !== 'plus-button') {
-            $scope.tagSegments.push(MetricSegment.newPlusButton());
+            $scope.tagSegments.push(uiSegmentSrv.newPlusButton());
           }
         }
       }
       else {
         if (segment.type === 'plus-button') {
           if (index > 2) {
-            $scope.tagSegments.splice(index, 0, MetricSegment.newCondition('AND'));
+            $scope.tagSegments.splice(index, 0, uiSegmentSrv.newCondition('AND'));
           }
-          $scope.tagSegments.push(MetricSegment.newOperator('='));
-          $scope.tagSegments.push(MetricSegment.newFake('select tag value', 'value', 'query-segment-value'));
+          $scope.tagSegments.push(uiSegmentSrv.newOperator('='));
+          $scope.tagSegments.push(uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
           segment.type = 'key';
           segment.cssClass = 'query-segment-key';
         }
 
         if ((index+1) === $scope.tagSegments.length) {
-          $scope.tagSegments.push(MetricSegment.newPlusButton());
+          $scope.tagSegments.push(uiSegmentSrv.newPlusButton());
         }
       }
 
@@ -258,7 +259,7 @@ function (angular, _, InfluxQueryBuilder) {
         else if (segment2.type === 'value') {
           tagOperator = $scope.getTagValueOperator(segment2.value, tags[tagIndex].operator);
           if (tagOperator) {
-            $scope.tagSegments[index-1] = MetricSegment.newOperator(tagOperator);
+            $scope.tagSegments[index-1] = uiSegmentSrv.newOperator(tagOperator);
             tags[tagIndex].operator = tagOperator;
           }
           tags[tagIndex].value = segment2.value;
@@ -283,59 +284,6 @@ function (angular, _, InfluxQueryBuilder) {
       else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
         return '=';
       }
-    };
-
-    function MetricSegment(options) {
-      if (options === '*' || options.value === '*') {
-        this.value = '*';
-        this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
-        this.expandable = true;
-        return;
-      }
-
-      if (_.isString(options)) {
-        this.value = options;
-        this.html = $sce.trustAsHtml(this.value);
-        return;
-      }
-
-      this.cssClass = options.cssClass;
-      this.type = options.type;
-      this.fake = options.fake;
-      this.value = options.value;
-      this.type = options.type;
-      this.expandable = options.expandable;
-      this.html = options.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
-    }
-
-    MetricSegment.newSelectMeasurement = function() {
-      return new MetricSegment({value: 'select measurement', fake: true});
-    };
-
-    MetricSegment.newFake = function(text, type, cssClass) {
-      return new MetricSegment({value: text, fake: true, type: type, cssClass: cssClass});
-    };
-
-    MetricSegment.newCondition = function(condition) {
-      return new MetricSegment({value: condition, type: 'condition', cssClass: 'query-keyword' });
-    };
-
-    MetricSegment.newOperator = function(op) {
-      return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
-    };
-
-    MetricSegment.newOperators = function(ops) {
-      return _.map(ops, function(op) {
-        return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
-      });
-    };
-
-    MetricSegment.newPlusButton = function() {
-      return new MetricSegment({fake: true, html: '<i class="fa fa-plus "></i>', type: 'plus-button' });
-    };
-
-    MetricSegment.newSelectTagValue = function() {
-      return new MetricSegment({value: 'select tag value', fake: true});
     };
 
     $scope.init();

@@ -13,6 +13,7 @@ function (angular, kbn) {
         link: function(scope, elem, attrs) {
           var _t = '<i class="grafana-tip fa fa-'+(attrs.icon||'question-circle')+'" bs-tooltip="\''+
             kbn.addslashes(elem.text())+'\'"></i>';
+          _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
           elem.replaceWith($compile(angular.element(_t))(scope));
         }
       };
@@ -62,15 +63,16 @@ function (angular, kbn) {
         restrict: 'E',
         link: function(scope, elem, attrs) {
           var text = $interpolate(attrs.text)(scope);
+          var model = $interpolate(attrs.model)(scope);
           var ngchange = attrs.change ? (' ng-change="' + attrs.change + '"') : '';
           var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
-          var label = '<label for="' + scope.$id + attrs.model + '" class="checkbox-label">' +
+          var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' +
                            text + tip + '</label>';
 
-          var template = '<input class="cr1" id="' + scope.$id + attrs.model + '" type="checkbox" ' +
-                          '       ng-model="' + attrs.model + '"' + ngchange +
-                          '       ng-checked="' + attrs.model + '"></input>' +
-                          ' <label for="' + scope.$id + attrs.model + '" class="cr1"></label>';
+          var template = '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
+                          '       ng-model="' + model + '"' + ngchange +
+                          '       ng-checked="' + model + '"></input>' +
+                          ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
           template = label + template;
           elem.replaceWith($compile(angular.element(template))(scope));
