@@ -48,6 +48,11 @@ function (angular, _, queryDef) {
             return memo;
           }, []);
           $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
+
+          if (stats.length === 0)  {
+            $scope.agg.meta.std_deviation_bounds_lower = true;
+            $scope.agg.meta.std_deviation_bounds_upper = true;
+          }
         }
       }
     };

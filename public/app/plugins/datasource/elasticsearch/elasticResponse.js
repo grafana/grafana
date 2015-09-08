@@ -1,7 +1,8 @@
 define([
-  "lodash"
+  "lodash",
+  "./queryDef"
 ],
-function (_) {
+function (_, queryDef) {
   'use strict';
 
   function ElasticResponse(targets, response) {
@@ -87,7 +88,7 @@ function (_) {
           break;
         }
         default: {
-          newSeries = { datapoints: [], metric: metric.type + ' ' + metric.field, props: props};
+          newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket[metric.id].value;
@@ -100,35 +101,62 @@ function (_) {
     }
   };
 
-  ElasticResponse.prototype._getSeriesName = function(props, metric, target, metricTypeCount) {
+  ElasticResponse.prototype._getMetricName = function(metric) {
+    var metricDef = _.findWhere(queryDef.metricAggTypes, {value: metric});
+    if (!metricDef)  {
+      metricDef = _.findWhere(queryDef.extendedStats, {value: metric});
+    }
+
+    return metricDef ? metricDef.text : metric;
+  };
+
+  ElasticResponse.prototype._getSeriesName = function(series, target, metricTypeCount) {
+    var metricName = this._getMetricName(series.metric);
+
     if (target.alias) {
       var regex = /\{\{([\s\S]+?)\}\}/g;
 
       return target.alias.replace(regex, function(match, g1, g2) {
         var group = g1 || g2;
 
-        if (props[group]) { return props[group]; }
-        if (group === 'metric') { return metric; }
+        if (group.indexOf('term ') === 0) { return series.props[group.substring(5)]; }
+        if (series.props[group]) { return series.props[group]; }
+        if (group === 'metric') { return metricName; }
+        if (group === 'field') { return series.field; }
 
         return match;
       });
     }
 
-    var propKeys = _.keys(props);
+    if (series.field) {
+      metricName += ' ' + series.field;
+    }
+
+    var propKeys = _.keys(series.props);
     if (propKeys.length === 0) {
-      return metric;
+      return metricName;
     }
 
     var name = '';
-    for (var propName in props) {
-      name += props[propName] + ' ';
+    for (var propName in series.props) {
+      name += series.props[propName] + ' ';
     }
 
     if (metricTypeCount === 1) {
       return name.trim();
     }
 
-    return name.trim() + ' ' + metric;
+    return name.trim() + ' ' + metricName;
+  };
+
+  ElasticResponse.prototype.nameSeries = function(seriesList, target) {
+    var metricTypeCount = _.uniq(_.pluck(seriesList, 'metric')).length;
+    var fieldNameCount = _.uniq(_.pluck(seriesList, 'field')).length;
+
+    for (var i = 0; i < seriesList.length; i++) {
+      var series = seriesList[i];
+      series.target = this._getSeriesName(series, target, metricTypeCount, fieldNameCount);
+    }
   };
 
   ElasticResponse.prototype.getTimeSeries = function() {
@@ -145,13 +173,10 @@ function (_) {
       var tmpSeriesList = [];
 
       this.processBuckets(aggregations, target, tmpSeriesList, 0, {});
-
-      var metricTypeCount = _.uniq(_.pluck(tmpSeriesList, 'metric')).length;
+      this.nameSeries(tmpSeriesList, target);
 
       for (var y = 0; y < tmpSeriesList.length; y++) {
-        var series= tmpSeriesList[y];
-        series.target = this._getSeriesName(series.props, series.metric, target, metricTypeCount);
-        seriesList.push(series);
+        seriesList.push(tmpSeriesList[y]);
       }
     }
 

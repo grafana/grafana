@@ -40,7 +40,7 @@ define([
 
       it('should return 1 series', function() {
         expect(result.data.length).to.be(1);
-        expect(result.data[0].target).to.be('count');
+        expect(result.data[0].target).to.be('Count');
         expect(result.data[0].datapoints.length).to.be(2);
         expect(result.data[0].datapoints[0][0]).to.be(10);
         expect(result.data[0].datapoints[0][1]).to.be(1000);
@@ -87,7 +87,7 @@ define([
         expect(result.data[0].datapoints[0][0]).to.be(10);
         expect(result.data[0].datapoints[0][1]).to.be(1000);
 
-        expect(result.data[1].target).to.be("avg value");
+        expect(result.data[1].target).to.be("Average value");
         expect(result.data[1].datapoints[0][0]).to.be(88);
         expect(result.data[1].datapoints[1][0]).to.be(99);
       });
@@ -191,10 +191,10 @@ define([
       it('should return 2 series', function() {
         expect(result.data.length).to.be(4);
         expect(result.data[0].datapoints.length).to.be(2);
-        expect(result.data[0].target).to.be('server1 count');
-        expect(result.data[1].target).to.be('server1 avg @value');
-        expect(result.data[2].target).to.be('server2 count');
-        expect(result.data[3].target).to.be('server2 avg @value');
+        expect(result.data[0].target).to.be('server1 Count');
+        expect(result.data[1].target).to.be('server1 Average @value');
+        expect(result.data[2].target).to.be('server2 Count');
+        expect(result.data[3].target).to.be('server2 Average @value');
       });
     });
 
@@ -288,8 +288,8 @@ define([
       it('should return 4 series', function() {
         expect(result.data.length).to.be(4);
         expect(result.data[0].datapoints.length).to.be(1);
-        expect(result.data[0].target).to.be('server1 max');
-        expect(result.data[1].target).to.be('server1 std_deviation_bounds_upper');
+        expect(result.data[0].target).to.be('server1 Max');
+        expect(result.data[1].target).to.be('server1 Std Dev Upper');
 
         expect(result.data[0].datapoints[0][0]).to.be(10.2);
         expect(result.data[1].datapoints[0][0]).to.be(3);
@@ -303,7 +303,7 @@ define([
         targets = [{
           refId: 'A',
           metrics: [{type: 'count', id: '1'}],
-          alias: '{{@host}} {{metric}} and!',
+          alias: '{{term @host}} {{metric}} and!',
           bucketAggs: [
             {type: 'terms', field: '@host', id: '2'},
             {type: 'date_histogram', field: '@timestamp', id: '3'}
@@ -346,8 +346,8 @@ define([
       it('should return 2 series', function() {
         expect(result.data.length).to.be(2);
         expect(result.data[0].datapoints.length).to.be(2);
-        expect(result.data[0].target).to.be('server1 count and!');
-        expect(result.data[1].target).to.be('server2 count and!');
+        expect(result.data[0].target).to.be('server1 Count and!');
+        expect(result.data[1].target).to.be('server2 Count and!');
       });
     });
 

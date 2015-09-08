@@ -7,10 +7,10 @@ function (_) {
   return {
     metricAggTypes: [
       {text: "Count",   value: 'count' },
-      {text: "Average of",  value: 'avg' },
-      {text: "Sum of",  value: 'sum' },
-      {text: "Max of",  value: 'max' },
-      {text: "Min of",  value: 'min' },
+      {text: "Average",  value: 'avg' },
+      {text: "Sum",  value: 'sum' },
+      {text: "Max",  value: 'max' },
+      {text: "Min",  value: 'min' },
       {text: "Extended Stats",  value: 'extended_stats' },
       {text: "Percentiles",  value: 'percentiles' },
       {text: "Unique Count", value: "cardinality" }
