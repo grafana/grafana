@@ -173,6 +173,7 @@ func Register(r *macaron.Macaron) {
 		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
+<<<<<<< b35a158ee7a28a445c38102e0f8a056ff35e010f
 			r.Get("/quotas", wrap(GetOrgQuotas))
 		})
 
@@ -181,6 +182,11 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			r.Post("/users", quota("user"), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+=======
+			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
+			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
+			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
+>>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
