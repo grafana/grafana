@@ -43,4 +43,4 @@ Example:
 ```
 
 Below there should be an interactive Grafana graph embedded in an iframe:
-<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/IQ7iZF00sHalq0Ffjv6OyclJSA1YHYV1?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshot.raintank.io/dashboard/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d" width="650" height="300" frameborder="0"></iframe>
