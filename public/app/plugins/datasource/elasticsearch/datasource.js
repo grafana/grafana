@@ -1,12 +1,15 @@
 define([
   'angular',
   'lodash',
-  'config',
-  'kbn',
   'moment',
+  'kbn',
+  './queryBuilder',
+  './indexPattern',
+  './elasticResponse',
+  './queryCtrl',
   './directives'
 ],
-function (angular, _, config, kbn, moment) {
+function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticResponse) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -19,15 +22,16 @@ function (angular, _, config, kbn, moment) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
-      this.searchMaxResults = config.search.max_results || 20;
-
-      this.saveTemp = _.isUndefined(datasource.save_temp) ? true : datasource.save_temp;
-      this.saveTempTTL = _.isUndefined(datasource.save_temp_ttl) ? '30d' : datasource.save_temp_ttl;
+      this.timeField = datasource.jsonData.timeField;
+      this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
+      this.queryBuilder = new ElasticQueryBuilder({
+        timeField: this.timeField
+      });
     }
 
-    ElasticDatasource.prototype._request = function(method, url, index, data) {
+    ElasticDatasource.prototype._request = function(method, url, data) {
       var options = {
-        url: this.url + "/" + index + url,
+        url: this.url + "/" + url,
         method: method,
         data: data
       };
@@ -43,14 +47,14 @@ function (angular, _, config, kbn, moment) {
     };
 
     ElasticDatasource.prototype._get = function(url) {
-      return this._request('GET', url, this.index)
+      return this._request('GET', this.indexPattern.getIndexForToday() + url)
         .then(function(results) {
           return results.data;
         });
     };
 
     ElasticDatasource.prototype._post = function(url, data) {
-      return this._request('POST', url, this.index, data)
+      return this._request('POST', url, data)
         .then(function(results) {
           return results.data;
         });
@@ -78,7 +82,7 @@ function (angular, _, config, kbn, moment) {
         "size": 10000
       };
 
-      return this._request('POST', '/_search', annotation.index, data).then(function(results) {
+      return this._request('POST', annotation.index + '/_search', data).then(function(results) {
         var list = [];
         var hits = results.data.hits.hits;
 
@@ -125,175 +129,92 @@ function (angular, _, config, kbn, moment) {
       });
     };
 
-    ElasticDatasource.prototype._getDashboardWithSlug = function(id) {
-      return this._get('/dashboard/' + kbn.slugifyForUrl(id))
-        .then(function(result) {
-          return angular.fromJson(result._source.dashboard);
-        }, function() {
-          throw "Dashboard not found";
-        });
-    };
-
-    ElasticDatasource.prototype.getDashboard = function(id, isTemp) {
-      var url = '/dashboard/' + id;
-      if (isTemp) { url = '/temp/' + id; }
-
-      var self = this;
-      return this._get(url)
-        .then(function(result) {
-          return angular.fromJson(result._source.dashboard);
-        }, function(data) {
-          if(data.status === 0) {
-            throw "Could not contact Elasticsearch. Please ensure that Elasticsearch is reachable from your browser.";
-          } else {
-            // backward compatible fallback
-            return self._getDashboardWithSlug(id);
-          }
-        });
-    };
-
-    ElasticDatasource.prototype.saveDashboard = function(dashboard) {
-      var title = dashboard.title;
-      var temp = dashboard.temp;
-      if (temp) { delete dashboard.temp; }
-
-      var data = {
-        user: 'guest',
-        group: 'guest',
-        title: title,
-        tags: dashboard.tags,
-        dashboard: angular.toJson(dashboard)
-      };
-
-      if (temp) {
-        return this._saveTempDashboard(data);
-      }
-      else {
-
-        var id = encodeURIComponent(kbn.slugifyForUrl(title));
-        var self = this;
-
-        return this._request('PUT', '/dashboard/' + id, this.index, data)
-          .then(function(results) {
-            self._removeUnslugifiedDashboard(results, title, id);
-            return { title: title, url: '/dashboard/db/' + id };
-          }, function() {
-            throw 'Failed to save to elasticsearch';
-          });
-      }
-    };
-
-    ElasticDatasource.prototype._removeUnslugifiedDashboard = function(saveResult, title, id) {
-      if (saveResult.statusText !== 'Created') { return; }
-      if (title === id) { return; }
-
-      var self = this;
-      this._get('/dashboard/' + title).then(function() {
-        self.deleteDashboard(title);
+    ElasticDatasource.prototype.testDatasource = function() {
+      return this._get('/_stats').then(function() {
+        return { status: "success", message: "Data source is working", title: "Success" };
+      }, function(err) {
+        if (err.data && err.data.error) {
+          return { status: "error", message: err.data.error, title: "Error" };
+        } else {
+          return { status: "error", message: err.status, title: "Error" };
+        }
       });
     };
 
-    ElasticDatasource.prototype._saveTempDashboard = function(data) {
-      return this._request('POST', '/temp/?ttl=' + this.saveTempTTL, this.index, data)
-        .then(function(result) {
-
-          var baseUrl = window.location.href.replace(window.location.hash,'');
-          var url = baseUrl + "#dashboard/temp/" + result.data._id;
-
-          return { title: data.title, url: url };
-
-        }, function(err) {
-          throw "Failed to save to temp dashboard to elasticsearch " + err.data;
-        });
+    ElasticDatasource.prototype.getQueryHeader = function(timeRange) {
+      var header = {search_type: "count", "ignore_unavailable": true};
+      var from = kbn.parseDate(timeRange.from);
+      var to = kbn.parseDate(timeRange.to);
+      header.index = this.indexPattern.getIndexList(from, to);
+      return angular.toJson(header);
     };
 
-    ElasticDatasource.prototype.deleteDashboard = function(id) {
-      return this._request('DELETE', '/dashboard/' + id, this.index)
-        .then(function(result) {
-          return result.data._id;
-        }, function(err) {
-          throw err.data;
-        });
+    ElasticDatasource.prototype.query = function(options) {
+      var payload = "";
+      var target;
+      var sentTargets = [];
+
+      var header = this.getQueryHeader(options.range);
+      var timeFrom = this.translateTime(options.range.from);
+      var timeTo = this.translateTime(options.range.to);
+
+      for (var i = 0; i < options.targets.length; i++) {
+        target = options.targets[i];
+        if (target.hide) {return;}
+
+        var esQuery = this.queryBuilder.build(target, timeFrom, timeTo);
+        payload += header + '\n';
+        payload += angular.toJson(esQuery) + '\n';
+
+        sentTargets.push(target);
+      }
+
+      payload = payload.replace(/\$interval/g, options.interval);
+      payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
+      payload = payload.replace(/\$timeTo/g, this.translateTime(options.range.to));
+      payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
+      payload = templateSrv.replace(payload, options.scopedVars);
+
+      return this._post('/_msearch?search_type=count', payload).then(function(res) {
+        return new ElasticResponse(sentTargets, res).getTimeSeries();
+      });
     };
 
-    ElasticDatasource.prototype.searchDashboards = function(queryString) {
-      var endsInOpen = function(string, opener, closer) {
-        var character;
-        var count = 0;
-        for (var i = 0, len = string.length; i < len; i++) {
-          character = string[i];
-
-          if (character === opener) {
-            count++;
-          } else if (character === closer) {
-            count--;
-          }
-        }
-
-        return count > 0;
-      };
-
-      var tagsOnly = queryString.indexOf('tags!:') === 0;
-      if (tagsOnly) {
-        var tagsQuery = queryString.substring(6, queryString.length);
-        queryString = 'tags:' + tagsQuery + '*';
-      }
-      else {
-        if (queryString.length === 0) {
-          queryString = 'title:';
-        }
-
-        // make this a partial search if we're not in some reserved portion of the language,  comments on conditionals, in order:
-        // 1. ends in reserved character, boosting, boolean operator ( -foo)
-        // 2. typing a reserved word like AND, OR, NOT
-        // 3. open parens (groupiing)
-        // 4. open " (term phrase)
-        // 5. open [ (range)
-        // 6. open { (range)
-        // see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax
-        if (!queryString.match(/(\*|\]|}|~|\)|"|^\d+|\s[\-+]\w+)$/) &&
-            !queryString.match(/[A-Z]$/) &&
-            !endsInOpen(queryString, '(', ')') &&
-            !endsInOpen(queryString, '"', '"') &&
-            !endsInOpen(queryString, '[', ']') && !endsInOpen(queryString, '[', '}') &&
-            !endsInOpen(queryString, '{', ']') && !endsInOpen(queryString, '{', '}')
-        ){
-          queryString += '*';
-        }
+    ElasticDatasource.prototype.translateTime = function(date) {
+      if (_.isString(date)) {
+        return date;
       }
 
-      var query = {
-        query: { query_string: { query: queryString } },
-        facets: { tags: { terms: { field: "tags", order: "term", size: 50 } } },
-        size: 10000,
-        sort: ["_uid"],
-      };
+      return date.getTime();
+    };
 
-      return this._post('/dashboard/_search', query)
-        .then(function(results) {
-          if(_.isUndefined(results.hits)) {
-            return { dashboards: [], tags: [] };
+    ElasticDatasource.prototype.metricFindQuery = function() {
+      return this._get('/_mapping').then(function(res) {
+        var fields = {};
+
+        for (var indexName in res) {
+          var index = res[indexName];
+          var mappings = index.mappings;
+          if (!mappings) { continue; }
+          for (var typeName in mappings) {
+            var properties = mappings[typeName].properties;
+            for (var field in properties) {
+              var prop = properties[field];
+              if (prop.type && field[0] !== '_') {
+                fields[field] = prop;
+              }
+            }
           }
+        }
 
-          var resultsHits = results.hits.hits;
-          var displayHits = { dashboards: [], tags: results.facets.tags.terms || [] };
-
-          for (var i = 0, len = resultsHits.length; i < len; i++) {
-            var hit = resultsHits[i];
-            displayHits.dashboards.push({
-              id: hit._id,
-              title: hit._source.title,
-              tags: hit._source.tags
-            });
-          }
-
-          displayHits.tagsOnly = tagsOnly;
-          return displayHits;
+        fields = _.map(_.keys(fields), function(field) {
+          return {text: field};
         });
+
+        return fields;
+      });
     };
 
     return ElasticDatasource;
-
   });
-
 });

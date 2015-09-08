@@ -108,25 +108,5 @@ function (_) {
     return list;
   };
 
-  p.createNameForSeries = function(seriesName, groupByColValue) {
-    var regex = /\$(\w+)/g;
-    var segments = seriesName.split('.');
-
-    return this.alias.replace(regex, function(match, group) {
-      if (group === 's') {
-        return seriesName;
-      }
-      else if (group === 'g') {
-        return groupByColValue;
-      }
-      var index = parseInt(group);
-      if (_.isNumber(index) && index < segments.length) {
-        return segments[index];
-      }
-      return match;
-    });
-
-  };
-
   return InfluxSeries;
 });
