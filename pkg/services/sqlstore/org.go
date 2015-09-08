@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/Unknwon/log"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -150,8 +149,6 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 
 func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 	return inTransaction2(func(sess *session) error {
-		log.Info("address %s", cmd.Address1)
-
 		org := m.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
