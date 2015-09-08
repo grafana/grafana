@@ -3,8 +3,12 @@ package sqlstore
 import (
 	"time"
 
+<<<<<<< e2285cd2f7587627184066b7ce726332efeaf269
 <<<<<<< 3232b587943d9269f58feee6c369eac6380ad058
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
+=======
+	"github.com/Unknwon/log"
+>>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -162,6 +166,11 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 
 func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 	return inTransaction2(func(sess *session) error {
+<<<<<<< e2285cd2f7587627184066b7ce726332efeaf269
+=======
+		log.Info("address %s", cmd.Address1)
+
+>>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 		org := m.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
