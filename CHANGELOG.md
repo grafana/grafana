@@ -5,6 +5,10 @@ A built in data source is now available named `-- Mixed --`, When picked in the 
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
+** New Feature: Elasticsearch Metrics Query Editor and Viz Support **
+- Feature rich query editor and processing features enables you to issues all kind of metric queries to Elasticsearch
+- See [Issue #1034](https://github.com/grafana/grafana/issues/1034) for more info.
+
 ** User Onboarding **
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
