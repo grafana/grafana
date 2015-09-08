@@ -30,8 +30,8 @@ define([
 
         it('should return correct index list', function() {
           var pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
-          var from = new Date(2015, 4, 30, 1, 2, 3);
-          var to = new Date(2015, 5, 1, 12, 5 , 6);
+          var from = new Date(1432940523000);
+          var to = new Date(1433153106000);
 
           var expected =  [
             'asd-2015.05.29',
