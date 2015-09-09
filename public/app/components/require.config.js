@@ -1,6 +1,6 @@
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
-  baseUrl: 'public/app',
+  baseUrl: 'public/app_gen',
 
   paths: {
     config:                   'components/config',
