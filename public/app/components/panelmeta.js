@@ -33,6 +33,10 @@ function () {
     this.menu.push({text: text, icon: icon, click: click, role: role});
   };
 
+  PanelMeta.prototype.getName = function() {
+    return "javascript";
+  };
+
   PanelMeta.prototype.addExtendedMenuItem = function(text, icon, click, role) {
     this.extendedMenu.push({text: text, icon: icon, click: click, role: role});
   };

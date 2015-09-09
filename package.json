@@ -32,6 +32,7 @@
     "grunt-karma": "~0.8.3",
     "grunt-ng-annotate": "^0.9.2",
     "grunt-string-replace": "~0.2.4",
+    "grunt-typescript": "^0.7.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
     "karma": "~0.12.31",
