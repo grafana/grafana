@@ -1,0 +1,1 @@
+{"version":3,"file":"fileSearcher.js","sourceRoot":"","sources":["fileSearcher.ts"],"names":["FileSearcher","FileSearcher.constructor","FileSearcher.getFiles"],"mappings":"AAAA,+CAA+C;;IAE/C;QAEIA;QACAC,CAACA;QAEMD,+BAAQA,GAAfA;YACEE,MAAMA,CAACA,CAACA,KAAKA,CAACA,CAACA;QACjBA,CAACA;QACLF,mBAACA;IAADA,CAACA,AARD,IAQC;IAEqB,AAAtB,OAAS,YAAY,CAAC"}

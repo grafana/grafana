@@ -1,10 +1,11 @@
 ///<reference path="../headers/require.d.ts" />
-define(["require", "exports", "../components/panelmeta"], function (require, exports) {
+define(["require", "exports", './fileSearcher', "../components/panelmeta"], function (require, exports, FileSearcher) {
     var Base = (function () {
         function Base() {
+            var test = new FileSearcher();
+            test.getFiles();
         }
         Base.prototype.getName = function () {
-            debugger;
             return "asd";
         };
         return Base;
