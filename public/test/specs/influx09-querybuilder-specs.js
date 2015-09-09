@@ -6,76 +6,96 @@ define([
   describe('InfluxQueryBuilder', function() {
 
     describe('series with mesurement only', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
-      });
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          groupBy: [{type: 'time', interval: 'auto'}]
+        });
 
+        var query = builder.build();
+
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+      });
+    });
+
+    describe('series with math expr and as expr', function() {
+      it('should generate correct query', function() {
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          fields: [{name: 'test', func: 'max', mathExpr: '*2', asExpr: 'new_name'}],
+          groupBy: [{type: 'time', interval: 'auto'}]
+        });
+
+        var query = builder.build();
+
+        expect(query).to.be('SELECT max("test")*2 AS "new_name" FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+      });
     });
 
     describe('series with single tag only', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-        tags: [{key: 'hostname', value: 'server1'}]
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          groupBy: [{type: 'time', interval: 'auto'}],
+          tags: [{key: 'hostname', value: 'server1'}]
+        });
+
+        var query = builder.build();
+
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
                             + ' GROUP BY time($interval)');
       });
 
       it('should switch regex operator with tag value is regex', function() {
-        var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'app', value: '/e.*/'}]});
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          groupBy: [{type: 'time', interval: 'auto'}],
+          tags: [{key: 'app', value: '/e.*/'}]
+        });
+
         var query = builder.build();
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
       });
     });
 
     describe('series with multiple fields', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-        tags: [],
-        fields: [{ name: 'tx_in', func: 'sum' }, { name: 'tx_out', func: 'mean' }]
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT sum("tx_in"), mean("tx_out") FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          tags: [],
+          groupBy: [{type: 'time', interval: 'auto'}],
+          fields: [{ name: 'tx_in', func: 'sum' }, { name: 'tx_out', func: 'mean' }]
+        });
+
+        var query = builder.build();
+        expect(query).to.be('SELECT sum("tx_in") AS "tx_in", mean("tx_out") AS "tx_out" FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
       });
     });
 
     describe('series with multiple tags only', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-        tags: [{key: 'hostname', value: 'server1'}, {key: 'app', value: 'email', condition: "AND"}]
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          groupBy: [{type: 'time', interval: 'auto'}],
+          tags: [{key: 'hostname', value: 'server1'}, {key: 'app', value: 'email', condition: "AND"}]
+        });
+
+        var query = builder.build();
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
                             '$timeFilter GROUP BY time($interval)');
       });
     });
 
     describe('series with tags OR condition', function() {
-      var builder = new InfluxQueryBuilder({
-        measurement: 'cpu',
-        tags: [{key: 'hostname', value: 'server1'}, {key: 'hostname', value: 'server2', condition: "OR"}]
-      });
-
-      var query = builder.build();
-
       it('should generate correct query', function() {
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          groupBy: [{type: 'time', interval: 'auto'}],
+          tags: [{key: 'hostname', value: 'server1'}, {key: 'hostname', value: 'server2', condition: "OR"}]
+        });
+
+        var query = builder.build();
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
                             '$timeFilter GROUP BY time($interval)');
       });
     });
@@ -85,12 +105,12 @@ define([
         var builder = new InfluxQueryBuilder({
           measurement: 'cpu',
           tags: [],
-          groupByTags: ["host"]
+          groupBy: [{type: 'time', interval: 'auto'}, {type: 'tag', key: 'host'}],
         });
 
         var query = builder.build();
-        expect(query).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
-          'GROUP BY time($interval), "host"');
+        expect(query).to.be('SELECT mean("value") AS "value" FROM "cpu" WHERE $timeFilter ' +
+                            'GROUP BY time($interval), "host"');
       });
     });
 
@@ -103,7 +123,10 @@ define([
       });
 
       it('should handle regex measurement in tag keys query', function() {
-        var builder = new InfluxQueryBuilder({ measurement: '/.*/', tags: [] });
+        var builder = new InfluxQueryBuilder({
+          measurement: '/.*/',
+          tags: []
+        });
         var query = builder.buildExploreQuery('TAG_KEYS');
         expect(query).to.be('SHOW TAG KEYS FROM /.*/');
       });

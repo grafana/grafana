@@ -6,7 +6,6 @@ define([
   './queryBuilder',
   './directives',
   './queryCtrl',
-  './funcEditor',
 ],
 function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   'use strict';

@@ -29,8 +29,6 @@ function (angular, _, InfluxQueryBuilder) {
         $scope.measurementSegment = uiSegmentSrv.newSegment(target.measurement);
       }
 
-      $scope.addFieldSegment = uiSegmentSrv.newPlusButton();
-
       $scope.tagSegments = [];
       _.each(target.tags, function(tag) {
         if (!tag.operator) {
@@ -73,23 +71,13 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.get_data();
     };
 
-    $scope.groupByTagUpdated = function(segment, index) {
-      if (segment.value === $scope.removeGroupBySegment.value) {
-        $scope.target.groupByTags.splice(index, 1);
-        $scope.groupBySegments.splice(index, 1);
-        $scope.$parent.get_data();
-        return;
-      }
+    $scope.addSelect = function() {
+      $scope.target.fields.push({name: "select field", func: 'mean'});
+    };
 
-      if (index === $scope.groupBySegments.length-1) {
-        $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
-      }
-
-      segment.type = 'group-by-key';
-      segment.fake = false;
-
-      $scope.target.groupByTags[index] = segment.value;
-      $scope.$parent.get_data();
+    $scope.removeSelect = function(index) {
+      $scope.target.fields.splice(index, 1);
+      $scope.get_data();
     };
 
     $scope.changeFunction = function(func) {
@@ -105,13 +93,7 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.getFields = function() {
       var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
       return $scope.datasource.metricFindQuery(fieldsQuery)
-      .then(function(results) {
-        var values = _.pluck(results, 'text');
-        if ($scope.target.fields.length > 1) {
-          values.splice(0, 0, "-- remove from select --");
-        }
-        return values;
-      });
+      .then($scope.transformToSegments(false), $scope.handleQueryError);
     };
 
     $scope.toggleQueryMode = function () {
@@ -121,8 +103,16 @@ function (angular, _, InfluxQueryBuilder) {
     $scope.getMeasurements = function () {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
       return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments(true))
-      .then(null, $scope.handleQueryError);
+      .then($scope.transformToSegments(true), $scope.handleQueryError);
+    };
+
+    $scope.getFunctions = function () {
+      var functionList = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
+        'derivative', 'non_negative_derivative', 'stddev', 'first', 'last'
+      ];
+      return $q.when(_.map(functionList, function(func) {
+        return uiSegmentSrv.newSegment(func);
+      }));
     };
 
     $scope.handleQueryError = function(err) {
