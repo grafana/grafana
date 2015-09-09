@@ -68,7 +68,8 @@ define([
         });
 
         var query = builder.build();
-        expect(query).to.be('SELECT sum("tx_in") AS "tx_in", mean("tx_out") AS "tx_out" FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+        expect(query).to.be('SELECT sum("tx_in") AS "tx_in", mean("tx_out") AS "tx_out" ' +
+                            'FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
       });
     });
 

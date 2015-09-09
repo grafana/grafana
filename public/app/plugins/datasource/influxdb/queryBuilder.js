@@ -6,6 +6,14 @@ function (_) {
 
   function InfluxQueryBuilder(target) {
     this.target = target;
+
+    if (target.groupByTags) {
+      target.groupBy = [{type: 'time', interval: 'auto'}];
+      for (var i in target.groupByTags) {
+        target.groupBy.push({type: 'tag', key: target.groupByTags[i]});
+      }
+      delete target.groupByTags;
+    }
   }
 
   function renderTagCondition (tag, index) {
@@ -83,7 +91,6 @@ function (_) {
 
     return query;
   };
-
 
   p._getGroupByTimeInterval = function(interval) {
     if (interval === 'auto') {
