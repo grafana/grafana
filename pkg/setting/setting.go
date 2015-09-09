@@ -73,6 +73,7 @@ var (
 	CookieRememberName    string
 	DisableGravatar       bool
 	EmailCodeValidMinutes int
+	DataProxyWhiteList    map[string]bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -378,12 +379,19 @@ func NewConfigContext(args *CommandLineArgs) {
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 
+	// read security settings
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
+	//  read data source proxy white list
+	DataProxyWhiteList = make(map[string]bool)
+	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
+		DataProxyWhiteList[hostAndIp] = true
+	}
 
 	// admin
 	AdminUser = security.Key("admin_user").String()
