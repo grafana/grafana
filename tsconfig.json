@@ -2,7 +2,7 @@
     "compilerOptions": {
         "sourceMap": true,
         "declaration": true,
-        "outDir": "public/app_gen",
+        "outDir": "public/.app_gen",
         "target": "ES5",
         "rootDir": "public/app",
         "module": "amd",

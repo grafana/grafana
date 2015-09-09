@@ -12,7 +12,7 @@ module.exports = function(config) {
       cwd: '<%= srcDir %>/app',
       expand: true,
       src: ['**/*.js', '**/*.html'],
-      dest: '<%= srcDir %>/app_gen'
+      dest: '<%= srcDir %>/.app_gen'
     }
 
   };
