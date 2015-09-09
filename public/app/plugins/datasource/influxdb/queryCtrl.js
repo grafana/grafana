@@ -115,6 +115,13 @@ function (angular, _, InfluxQueryBuilder) {
       }));
     };
 
+    $scope.getGroupByTimeIntervals = function () {
+      var times = ['auto', '1s', '10s', '1m', '2m', '5m', '10m', '30m', '1h', '1d'];
+      return $q.when(_.map(times, function(func) {
+        return uiSegmentSrv.newSegment(func);
+      }));
+    };
+
     $scope.handleQueryError = function(err) {
       $scope.parserError = err.message || 'Failed to issue metric query';
       return [];
