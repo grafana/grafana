@@ -57,48 +57,6 @@ func Init(metrics met.Backend) {
 	messagesSize = metrics.NewMeter("metricpublisher.message_size", 0)
 	metricsPerMessage = metrics.NewMeter("metricpublisher.metrics_per_message", 0)
 	publishDuration = metrics.NewTimer("metricpublisher.publish_duration", 0)
-	//go stresser() // enable this to send a "stress load" to test the metrics pipeline
-}
-
-func stresser() {
-	// we rather lag behind then dropping ticks
-	// so that when we graph the metrics timeseries or analyze messages sent, there are no gaps
-	// we much rather just have the series end a bit sooner, which is trivial to spot.
-	syncTicks := time.Tick(time.Duration(1) * time.Second)
-	asyncTicks := make(chan time.Time, 1000)
-	go func() {
-		for t := range syncTicks {
-			asyncTicks <- t
-		}
-	}()
-
-	layout := "test-metric.Jan-02.15.04.05"
-	start := time.Now().Add(-time.Duration(1000) * time.Second)
-	for t := range asyncTicks {
-		pre := time.Now()
-		metrics := make([]*schema.MetricData, 0)
-		var val time.Time
-		for val = start; !val.After(t); val = val.Add(time.Second) {
-			key := val.Format(layout)
-			metric := &schema.MetricData{
-				OrgId:      1,
-				Name:       "foo_15." + key,
-				Metric:     key,
-				Interval:   1,
-				Value:      float64(t.Unix()),
-				Unit:       "s",
-				Time:       t.Unix(),
-				TargetType: "gauge",
-				Tags: []string{
-					"foo_id:15",
-				},
-			}
-			metrics = append(metrics, metric)
-		}
-		log.Info("stresser: publishing %d metrics for time %s", len(metrics), val)
-		Publish(metrics)
-		log.Info("stresser: loop duration %s", time.Now().Sub(pre))
-	}
 }
 
 func Reslice(in []*schema.MetricData, size int) [][]*schema.MetricData {

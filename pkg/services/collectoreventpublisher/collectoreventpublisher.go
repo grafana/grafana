@@ -45,7 +45,6 @@ func Init(metrics met.Backend) {
 		log.Fatal(0, "failed to initialize nsq producer.", err)
 	}
 	collectorEventPublisherMsgs = metrics.NewCount("collectoreventpublisher.events-published")
-	//go stresser() // enable this to send a "stress load" to test the metrics pipeline
 }
 
 func Publish(event *schema.ProbeEvent) error {
