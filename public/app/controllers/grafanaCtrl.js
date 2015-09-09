@@ -4,9 +4,12 @@ define([
   'lodash',
   'jquery',
   'store',
+  './testCtrl',
 ],
-function (angular, config, _, $, store) {
+function (angular, config, _, $, store, TestCtrl) {
   "use strict";
+
+  console.log(new TestCtrl().getName());
 
   var module = angular.module('grafana.controllers');
 
