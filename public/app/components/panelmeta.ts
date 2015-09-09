@@ -1,9 +1,13 @@
-define([
-],
-function () {
-  "use strict";
+class PanelMeta {
+  description: any
+  fullscreen: any
+  editIcon: any
+  panelName: any
+  menu: any
+  editorTabs: any
+  extendedMenu: any
 
-  function PanelMeta(options) {
+  constructor(options : any) {
     this.description = options.description;
     this.fullscreen = options.fullscreen;
     this.editIcon = options.editIcon;
@@ -29,22 +33,17 @@ function () {
     this.addExtendedMenuItem('Panel JSON', '', 'editPanelJson(); dismiss();');
   }
 
-  PanelMeta.prototype.addMenuItem = function(text, icon, click, role) {
+  addMenuItem (text, icon, click, role?) {
     this.menu.push({text: text, icon: icon, click: click, role: role});
-  };
+  }
 
-  PanelMeta.prototype.getName = function() {
-    return "javascript";
-  };
-
-  PanelMeta.prototype.addExtendedMenuItem = function(text, icon, click, role) {
+  addExtendedMenuItem (text, icon, click, role?) {
     this.extendedMenu.push({text: text, icon: icon, click: click, role: role});
-  };
+  }
 
-  PanelMeta.prototype.addEditorTab = function(title, src) {
+  addEditorTab (title, src) {
     this.editorTabs.push({title: title, src: src});
-  };
+  }
+}
 
-  return PanelMeta;
-
-});
+export = PanelMeta;
