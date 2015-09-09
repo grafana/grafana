@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	// "github.com/Cepave/grafana/pkg/api/cloudwatch"
 	"github.com/Cepave/grafana/pkg/bus"
@@ -20,6 +21,13 @@ import (
 	m "github.com/Cepave/grafana/pkg/models"
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"github.com/Cepave/grafana/pkg/util"
+=======
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 )
 
 var dataProxyTransport = &http.Transport{
@@ -32,6 +40,7 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
 /**
@@ -78,6 +87,14 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 		req.URL.Host = target.Host
 		req.Host = target.Host		
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+	director := func(req *http.Request) {
+		req.URL.Scheme = targetUrl.Scheme
+		req.URL.Host = targetUrl.Host
+		req.Host = targetUrl.Host
+
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 		reqQueryVals := req.URL.Query()
 
 		if ds.Type == m.DS_INFLUXDB_08 {
@@ -141,9 +158,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			}
 >>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
 		} else {
+<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		} else {
+=======
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 		}
 		if ds.BasicAuth {
@@ -183,7 +203,11 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
+=======
+	ds := query.Result
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -192,11 +216,19 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
+<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 	if ds.Type == m.DS_CLOUDWATCH {
 		// cloudwatch.HandleRequest(c)
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+=======
+	if query.Result.Type == m.DS_CLOUDWATCH {
+		ProxyCloudWatchDataSourceRequest(c)
+	} else {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(&ds, proxyPath, targetUrl)
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}
