@@ -118,9 +118,14 @@ function (_) {
     query += conditions.join(' ');
     query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
 
-    query += ' GROUP BY time($interval)';
-    if  (target.groupByTags && target.groupByTags.length > 0) {
-      query += ', "' + target.groupByTags.join('", "') + '"';
+    query += ' GROUP BY';
+    for (i = 0; i < target.groupBy.length; i++) {
+      var group = target.groupBy[i];
+      if (group.type === 'time') {
+        query += ' time(10s)';
+      } else {
+        query += ', ' + group.key;
+      }
     }
 
     if (target.fill) {
