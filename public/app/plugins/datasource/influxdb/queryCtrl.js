@@ -45,7 +45,7 @@ function (angular, _, InfluxQueryBuilder) {
           $scope.tagSegments.push(uiSegmentSrv.newCondition(tag.condition));
         }
 
-        $scope.tagSegments.push(uiSegmentSrv.newKey(tag.Key));
+        $scope.tagSegments.push(uiSegmentSrv.newKey(tag.key));
         $scope.tagSegments.push(uiSegmentSrv.newOperator(tag.operator));
         $scope.tagSegments.push(uiSegmentSrv.newKeyValue(tag.value));
       });
