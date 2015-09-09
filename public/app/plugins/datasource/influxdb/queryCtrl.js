@@ -15,7 +15,7 @@ function (angular, _, InfluxQueryBuilder) {
 
       var target = $scope.target;
       target.tags = target.tags || [];
-      target.groupByTags = target.groupByTags || [];
+      target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
       target.fields = target.fields || [{
         name: 'value',
         func: target.function || 'mean'
@@ -52,15 +52,7 @@ function (angular, _, InfluxQueryBuilder) {
 
       $scope.fixTagSegments();
 
-      $scope.groupBySegments = [];
-      _.each(target.groupByTags, function(tag) {
-        $scope.groupBySegments.push(uiSegmentSrv.newSegment(tag));
-      });
-
-      $scope.groupBySegments.push(uiSegmentSrv.newPlusButton());
-
       $scope.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
-      $scope.removeGroupBySegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove group by --'});
     };
 
     $scope.fixTagSegments = function() {
@@ -70,6 +62,15 @@ function (angular, _, InfluxQueryBuilder) {
       if (!lastSegment || lastSegment.type !== 'plus-button') {
         $scope.tagSegments.push(uiSegmentSrv.newPlusButton());
       }
+    };
+
+    $scope.addGroupBy = function() {
+      $scope.target.groupBy.push({type: 'tag', key: "select tag"});
+    };
+
+    $scope.removeGroupBy = function(index) {
+      $scope.target.groupBy.splice(index, 1);
+      $scope.get_data();
     };
 
     $scope.groupByTagUpdated = function(segment, index) {
@@ -197,17 +198,11 @@ function (angular, _, InfluxQueryBuilder) {
       $scope.get_data();
     };
 
-    $scope.getGroupByTagSegments = function(segment) {
+    $scope.getTagOptions = function() {
       var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
 
       return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments(false))
-      .then(function(results) {
-        if (segment.type !== 'plus-button') {
-          results.splice(0, 0, angular.copy($scope.removeGroupBySegment));
-        }
-        return results;
-      })
       .then(null, $scope.handleQueryError);
     };
 
