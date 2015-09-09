@@ -416,10 +416,13 @@ func NewConfigContext(args *CommandLineArgs) error {
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 
+<<<<<<< c4053e22324c3bff1672d18b358c821047df4ec3
 	if err := validateStaticRootPath(); err != nil {
 		return err
 	}
 
+=======
+>>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 	// read security settings
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()
