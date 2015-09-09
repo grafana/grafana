@@ -75,10 +75,10 @@
 					<span ng-show="$index === 0">SELECT</span>
 				</li>
 				<li>
-					<metric-segment-model property="field.func" get-options="getFunctions()" on-change="get_data()"></metric-segment>
+					<metric-segment-model property="field.func" get-options="getFunctions()" on-change="get_data()" css-class="tight-form-item-xlarge"></metric-segment>
 				</li>
 				<li>
-					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()"></metric-segment>
+					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()" css-class="tight-form-item-large"></metric-segment>
 				</li>
 				<li>
 					<input type="text" class="tight-form-clear-input text-center" style="width: 70px;" ng-model="field.mathExpr" spellcheck='false' placeholder="math expr" ng-blur="get_data()">
@@ -102,16 +102,17 @@
 			<div class="clearfix"></div>
 		</div>
 
-		<div class="tight-form" ng-repeat="tag in target.groupBy">
+		<div class="tight-form" ng-repeat="groupBy in target.groupBy">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					<span ng-show="$index === 0">GROUP BY</span>
 				</li>
-				<li class="tight-form-item" ng-if="tag.type === 'time'">
-					time($interval)
+				<li ng-if="groupBy.type === 'time'">
+					<span class="tight-form-item">time</span>
+					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()"></metric-segment>
 				</li>
-				<li ng-if="tag.type === 'tag'">
-					<metric-segment-model property="tag.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
+				<li ng-if="groupBy.type === 'tag'">
+					<metric-segment-model property="groupBy.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
 				</li>
 			</ul>
 
