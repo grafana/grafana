@@ -4,7 +4,7 @@ coverage/
 awsconfig
 /dist
 /emails/dist
-/public/app_gen
+/public/.app_gen
 /tmp
 
 docs/AWS_S3_BUCKET

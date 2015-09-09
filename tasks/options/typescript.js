@@ -4,7 +4,7 @@ module.exports = function() {
   return {
     build: {
       src: ['public/app/**/*.ts'],
-      dest: 'public/app_gen',
+      dest: 'public/.app_gen',
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3
@@ -16,7 +16,7 @@ module.exports = function() {
     },
     watch: {
       src: ['public/app/**/*.ts'],
-      dest: 'public/app_gen',
+      dest: 'public/.app_gen',
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3
