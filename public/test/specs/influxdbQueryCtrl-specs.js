@@ -184,39 +184,5 @@ define([
       });
     });
 
-    describe('when adding group by', function() {
-      beforeEach(function() {
-        ctx.scope.init();
-        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
-      });
-
-      it('should add group by', function() {
-        expect(ctx.scope.target.groupByTags.length).to.be(1);
-        expect(ctx.scope.target.groupByTags[0]).to.be('host');
-      });
-
-      it('should add another plus button segment', function() {
-        expect(ctx.scope.groupBySegments[1].type).to.be('plus-button');
-      });
-    });
-
-    describe('when removing group by', function() {
-      beforeEach(function() {
-        ctx.scope.init();
-        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
-        ctx.scope.groupByTagUpdated(ctx.scope.removeGroupBySegment, 0);
-      });
-
-      it('should add group by', function() {
-        expect(ctx.scope.target.groupByTags.length).to.be(0);
-      });
-
-      it('should remove segment', function() {
-        expect(ctx.scope.groupBySegments.length).to.be(1);
-        expect(ctx.scope.groupBySegments[0].type).to.be('plus-button');
-      });
-    });
-
-
   });
 });

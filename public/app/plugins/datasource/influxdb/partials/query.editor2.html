@@ -69,6 +69,39 @@
 			<div class="clearfix"></div>
 		</div>
 
+		<div class="tight-form" ng-repeat="field in target.fields">
+			<ul class="tight-form-list">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+					<span ng-show="$index === 0">SELECT</span>
+				</li>
+				<li>
+					<metric-segment-model property="field.func" get-options="getFunctions()" on-change="get_data()"></metric-segment>
+				</li>
+				<li>
+					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()"></metric-segment>
+				</li>
+				<li>
+					<input type="text" class="tight-form-clear-input text-center" style="width: 70px;" ng-model="field.mathExpr" spellcheck='false' placeholder="math expr" ng-blur="get_data()">
+				</li>
+				<li class="tight-form-item query-keyword">
+					AS
+				</li>
+				<li>
+					<input type="text" class="tight-form-clear-input" style="width: 180px;" ng-model="field.asExpr" spellcheck='false' placeholder="as expr" ng-blur="get_data()">
+				</li>
+			</ul>
+
+			<ul class="tight-form-list pull-right">
+				<li class="tight-form-item last" ng-show="$index === 0">
+					<a class="pointer" ng-click="addSelect()"><i class="fa fa-plus"></i></a>
+				</li>
+				<li class="tight-form-item last" ng-show="target.fields.length > 1">
+					<a class="pointer" ng-click="removeSelect($index)"><i class="fa fa-minus"></i></a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
 		<div class="tight-form" ng-repeat="tag in target.groupBy">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
@@ -96,14 +129,10 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-					SELECT
-				</li>
-				<li class="dropdown" ng-repeat="field in target.fields">
-					<span influxdb-func-editor field="field" get-fields="getFields()" on-change="fieldChanged(field)" class="tight-form-item">
-					</span>
+					ALIAS BY
 				</li>
 				<li>
-					<metric-segment segment="addFieldSegment" get-options="getFieldSegments()" on-change="addField()"></metric-segment>
+					<input type="text" class="tight-form-clear-input input-xlarge" ng-model="target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="get_data()">
 				</li>
 			</ul>
 			<div class="clearfix"></div>

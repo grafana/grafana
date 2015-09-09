@@ -84,6 +84,14 @@ function (_) {
     return query;
   };
 
+
+  p._getGroupByTimeInterval = function(interval) {
+    if (interval === 'auto') {
+      return '$interval';
+    }
+    return interval;
+  };
+
   p._buildQuery = function() {
     var target = this.target;
 
@@ -103,6 +111,14 @@ function (_) {
         query += ', ';
       }
       query += field.func + '("' + field.name + '")';
+      if (field.mathExpr) {
+        query += field.mathExpr;
+      }
+      if (field.asExpr) {
+        query += ' AS "' + field.asExpr + '"';
+      } else {
+        query += ' AS "' + field.name + '"';
+      }
     }
 
     var measurement = target.measurement;
@@ -122,9 +138,9 @@ function (_) {
     for (i = 0; i < target.groupBy.length; i++) {
       var group = target.groupBy[i];
       if (group.type === 'time') {
-        query += ' time(10s)';
+        query += ' time(' + this._getGroupByTimeInterval(group.interval) + ')';
       } else {
-        query += ', ' + group.key;
+        query += ', "' + group.key + '"';
       }
     }
 
