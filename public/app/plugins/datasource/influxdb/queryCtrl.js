@@ -16,10 +16,7 @@ function (angular, _, InfluxQueryBuilder) {
       var target = $scope.target;
       target.tags = target.tags || [];
       target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
-      target.fields = target.fields || [{
-        name: 'value',
-        func: target.function || 'mean'
-      }];
+      target.fields = target.fields || [{name: 'value', func: target.function || 'mean'}];
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
@@ -49,7 +46,6 @@ function (angular, _, InfluxQueryBuilder) {
       });
 
       $scope.fixTagSegments();
-
       $scope.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
     };
 

@@ -109,7 +109,8 @@
 				</li>
 				<li ng-if="groupBy.type === 'time'">
 					<span class="tight-form-item">time</span>
-					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()"></metric-segment>
+					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()">
+					</metric-segment>
 				</li>
 				<li ng-if="groupBy.type === 'tag'">
 					<metric-segment-model property="groupBy.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
