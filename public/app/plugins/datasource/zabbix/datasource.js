@@ -171,8 +171,12 @@ function (angular, _, kbn) {
                 items = _.flatten(items);
 
                 // Use alias only for single metric, otherwise use item names
-                var alias = target.item.name === 'All' || itemnames.length > 1 ? undefined : templateSrv.replace(target.alias, options.scopedVars);
-
+                var alias = '';
+                if (target.item.name === 'All' || itemnames.length > 1) {
+                  alias = undefined;
+                } else {
+                  alias = templateSrv.replace(target.alias, options.scopedVars);
+                }
                 if ((from < useTrendsFrom) && self.trends) {
                   return self.zabbixAPI.getTrends(items, from, to)
                     .then(_.bind(zabbixHelperSrv.handleTrendResponse, zabbixHelperSrv, items, alias, target.scale));
