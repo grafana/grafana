@@ -43,27 +43,27 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('build-post-process', function() {
-    grunt.config('copy.public_gen_to_dest', {
+    grunt.config('copy.public_gen_to_temp', {
       expand: true,
       cwd: '<%= genDir %>',
       src: '**/*',
-      dest: '<%= destDir %>/public/',
+      dest: '<%= tempDir %>/public/',
     });
     grunt.config('copy.backend_bin', {
       cwd: 'bin',
       expand: true,
       src: ['*'],
       options: { mode: true},
-      dest: '<%= destDir %>/bin/'
+      dest: '<%= tempDir %>/bin/'
     });
     grunt.config('copy.backend_files', {
       expand: true,
       src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/**/*', 'scripts/*'],
       options: { mode: true},
-      dest: '<%= destDir %>'
+      dest: '<%= tempDir %>'
     });
 
-    grunt.task.run('copy:public_gen_to_dest');
+    grunt.task.run('copy:public_gen_to_temp');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
   });
