@@ -27,11 +27,11 @@ module.exports = function(config) {
 
     js: {
       src: [
-        '<%= destDir %>/vendor/requirejs/require.js',
-        '<%= destDir %>/app/components/require.config.js',
-        '<%= destDir %>/app/app.js',
+        '<%= tempDir %>/vendor/requirejs/require.js',
+        '<%= tempDir %>/app/components/require.config.js',
+        '<%= tempDir %>/app/app.js',
       ],
-      dest: '<%= destDir %>/app/app.js'
+      dest: '<%= genDir %>/app/app.js'
     },
   };
 };

@@ -7,7 +7,7 @@ module.exports = function(grunt) {
     'jscs',
     'jshint',
     'clean:gen',
-    'copy:everything_but_ts_and_less',
+    'copy:public_to_gen',
     'css',
     'typescript:build'
   ]);

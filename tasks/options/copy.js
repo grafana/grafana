@@ -8,7 +8,7 @@ module.exports = function(config) {
       dest: '<%= tempDir %>'
     },
 
-    everything_but_less: {
+    public_to_gen: {
       cwd: '<%= srcDir %>',
       expand: true,
       src: ['**/*', '!**/*.less'],

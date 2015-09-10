@@ -4,10 +4,10 @@ module.exports = function(config,grunt) {
   function buildRequireJsOptions() {
 
     var options = {
-      appDir: '<%= tempDir %>',
-      dir:  '<%= destDir %>',
-      mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-      baseUrl: 'app_gen',
+      appDir: '<%= genDir %>',
+      dir:  '<%= tempDir %>',
+      mainConfigFile: '<%= genDir %>/app/components/require.config.js',
+      baseUrl: 'app',
       waitSeconds: 0,
 
       modules: [], // populated below,
@@ -74,7 +74,7 @@ module.exports = function(config,grunt) {
     ];
 
     var fs = require('fs');
-    var panelPath = config.srcDir+'/app/panels';
+    var panelPath = config.genDir+'/app/panels';
 
     // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {

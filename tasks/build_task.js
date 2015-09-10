@@ -6,18 +6,18 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-    'clean:on_start',
-    'copy:app_gen_build',
+    'clean:release',
+    'copy:public_to_gen',
     'typescript:build',
     'karma:test',
     'css',
-    'copy:everything_but_less_to_temp',
     'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
     'requirejs:build',
     'concat:js',
+    'clean:temp',
     'filerev',
     'remapFilerev',
     'usemin',
@@ -26,14 +26,13 @@ module.exports = function(grunt) {
   ]);
 
   // task to add [[.AppSubUrl]] to reved path
-  grunt.registerTask('remapFilerev', function(){
-    var root = grunt.config().destDir;
+  grunt.registerTask('remapFilerev', function() {
+    var root = grunt.config().genDir;
     var summary = grunt.filerev.summary;
     var fixed = {};
 
     for(var key in summary){
       if(summary.hasOwnProperty(key)){
-
         var orig = key.replace(root, root+'/[[.AppSubUrl]]');
         var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]');
         fixed[orig] = revved;
@@ -44,29 +43,27 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('build-post-process', function() {
-    grunt.config('copy.dist_to_tmp', {
+    grunt.config('copy.public_gen_to_dest', {
       expand: true,
-      cwd: '<%= destDir %>',
+      cwd: '<%= genDir %>',
       src: '**/*',
-      dest: '<%= tempDir %>/public/',
+      dest: '<%= destDir %>/public/',
     });
-    grunt.config('clean.dest_dir', ['<%= destDir %>']);
     grunt.config('copy.backend_bin', {
       cwd: 'bin',
       expand: true,
       src: ['*'],
       options: { mode: true},
-      dest: '<%= tempDir %>/bin/'
+      dest: '<%= destDir %>/bin/'
     });
     grunt.config('copy.backend_files', {
       expand: true,
       src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/**/*', 'scripts/*'],
       options: { mode: true},
-      dest: '<%= tempDir %>'
+      dest: '<%= destDir %>'
     });
 
-    grunt.task.run('copy:dist_to_tmp');
-    grunt.task.run('clean:dest_dir');
+    grunt.task.run('copy:public_gen_to_dest');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
   });
