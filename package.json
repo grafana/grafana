@@ -61,6 +61,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "grunt-jscs": "~1.5.x",
+    "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
     "sinon": "1.10.3"

@@ -2,7 +2,7 @@
     "compilerOptions": {
         "sourceMap": true,
         "declaration": true,
-        "outDir": "public/.app_gen",
+        "outDir": "public_gen/app",
         "target": "ES5",
         "rootDir": "public/app",
         "module": "amd",
@@ -12,6 +12,10 @@
         "public/app/components/panelmeta.ts",
         "public/app/controllers/fileSearcher.ts",
         "public/app/controllers/testCtrl.ts",
+        "public/app/core/core.ts",
+        "public/app/core/directives/cool_dir.ts",
+        "public/app/core/routes/module_loader.ts",
+        "public/app/core/time_series.ts",
         "public/app/headers/require.d.ts"
     ]
 }

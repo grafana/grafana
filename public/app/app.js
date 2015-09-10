@@ -104,8 +104,8 @@ function (angular, $, _, appLevelRequire) {
               _.each(pre_boot_modules, function (module) {
                 _.extend(module, register_fns);
               });
-              pre_boot_modules = false;
 
+              pre_boot_modules = false;
               $rootScope.requireContext = appLevelRequire;
               $rootScope.require = function (deps, fn) {
                 var $scope = this;

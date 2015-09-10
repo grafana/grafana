@@ -9,7 +9,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'public/test/test-main.js',
-      {pattern: 'public/app/**/*.js', included: false},
+      {pattern: 'public/.app_gen/**/*.js', included: false},
       {pattern: 'public/vendor/**/*.js', included: false},
       {pattern: 'public/test/**/*.js', included: false},
       {pattern: 'public/**/*.js', included: false}

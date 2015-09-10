@@ -4,7 +4,7 @@ module.exports = function() {
   return {
     build: {
       src: ['public/app/**/*.ts'],
-      dest: 'public/.app_gen',
+      dest: 'public_gen/app',
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3
@@ -14,9 +14,20 @@ module.exports = function() {
         generateTsConfig: true,
       }
     },
+
+    // build2: {
+    //   src: ['public/app/alerting#<{(||)}>#*.ts'],
+    //   dest: 'public/.app_gen/alerting/all.js',
+    //   options: {
+    //     target: 'es5', //or es3
+    //     declaration: true,
+    //     sourceMap: true,
+    //   }
+    // },
+
     watch: {
       src: ['public/app/**/*.ts'],
-      dest: 'public/.app_gen',
+      dest: 'public/app_gen',
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3
