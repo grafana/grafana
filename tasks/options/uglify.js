@@ -1,6 +1,6 @@
 module.exports = function(config) {
   return {
-    dest: {
+    genDir: {
       expand: true,
       src: ['**/*.js', '!dashboards/*.js', '!vendor/**/*.js'],
       dest: '<%= genDir %>',
