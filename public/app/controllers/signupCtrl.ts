@@ -1,7 +1,17 @@
+<<<<<<< 8b37b131c51c65a4c2ac87c935f95a55bf99256f
 ///<reference path="../headers/common.d.ts" />
 
 import angular = require('angular');
 import config = require('config');
+=======
+///<reference path="../headers/require/require.d.ts" />
+///<reference path="../headers/angularjs/angularjs.d.ts" />
+///<amd-dependency path="angular"/>
+///<amd-dependency path="config"/>
+
+var angular = require('angular');
+var config = require('config');
+>>>>>>> tech(typescript): converted signup controller to typescript
 
 var module = angular.module('grafana.controllers');
 

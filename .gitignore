@@ -37,6 +37,7 @@ profile.cov
 <<<<<<< 9bb9edd67d129a39e4ad327b091b5921e3edf81f
 <<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
 grafana
+<<<<<<< 8b37b131c51c65a4c2ac87c935f95a55bf99256f
 .notouch
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
@@ -48,3 +49,6 @@ grafana
 =======
 grafana
 >>>>>>> feat(signup): added back the welcome on signup completed email
+=======
+tsconfig.json
+>>>>>>> tech(typescript): converted signup controller to typescript
