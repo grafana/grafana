@@ -1,0 +1,26 @@
+{
+  "pluginType": "datasource",
+  "name": "Zabbix",
+
+  "type": "zabbix",
+  "serviceName": "ZabbixAPIDatasource",
+
+  "module": "plugins/datasource/zabbix/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/zabbix/partials/config.html",
+    "query": "app/plugins/datasource/zabbix/partials/query.editor.html",
+    "annotations": "app/plugins/datasource/zabbix/partials/annotations.editor.html"
+  },
+
+  "username": "admin",
+  "password": "emc9E7GnYPWk23O",
+
+  "trends": false,
+  "trendsFrom": "7d",
+
+  "limitmetrics": 1000,
+
+  "metrics": true,
+  "annotations": true
+}
