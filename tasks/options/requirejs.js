@@ -74,7 +74,7 @@ module.exports = function(config,grunt) {
     ];
 
     var fs = require('fs');
-    var panelPath = config.genDir+'/app/panels';
+    var panelPath = config.srcDir + '/app/panels';
 
     // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {
