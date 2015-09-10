@@ -37,6 +37,9 @@
   &.total:before {
     content: "Total: "
   }
+  &.last:before {
+    content: "Last: "
+  }
   &.avg:before {
     content: "Avg: "
   }
@@ -105,7 +108,7 @@
   }
 
   .graph-legend-value {
-    &.current, &.max, &.min, &.total, &.avg {
+    &.current, &.max, &.min, &.last, &.total, &.avg {
       &:before {
         content: '';
       }

@@ -87,6 +87,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
         min: false,
         max: false,
         current: false,
+        last: false,
         total: false,
         avg: false
       },
@@ -283,7 +284,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
     $scope.legendValuesOptionChanged = function() {
       var legend = $scope.panel.legend;
-      legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+      legend.values = legend.min || legend.max || legend.avg || legend.current || legend.last || legend.total;
       $scope.render();
     };
 

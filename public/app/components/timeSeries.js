@@ -72,6 +72,7 @@ function (_, kbn) {
     this.stats.min = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
+    this.stats.last = null;
     this.allIsNull = true;
 
     var ignoreNulls = fillStyle === 'connected';
@@ -92,6 +93,7 @@ function (_, kbn) {
 
       if (currentValue !== null) {
         if (_.isNumber(currentValue)) {
+          this.stats.last = currentValue;
           this.stats.total += currentValue;
           this.allIsNull = false;
         }

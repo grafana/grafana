@@ -108,6 +108,7 @@ function (angular, app, _, kbn, $) {
               header += getTableHeaderHtml('max');
               header += getTableHeaderHtml('avg');
               header += getTableHeaderHtml('current');
+              header += getTableHeaderHtml('last');
               header += getTableHeaderHtml('total');
             }
             header += '</tr>';
@@ -152,12 +153,14 @@ function (angular, app, _, kbn, $) {
               var current = series.formatValue(series.stats.current);
               var min = series.formatValue(series.stats.min);
               var max = series.formatValue(series.stats.max);
+              var last = series.formatValue(series.stats.last);
               var total = series.formatValue(series.stats.total);
 
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
               if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
               if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
+              if (panel.legend.last) { html += '<div class="graph-legend-value last">' + last + '</div>'; }
               if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
             }
 
