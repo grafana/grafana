@@ -80,11 +80,11 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
+    'core/core',
     'services/all',
     'features/all',
     'controllers/all',
     'directives/all',
-    'filters/all',
     'components/partials',
     'routes/all',
   ];

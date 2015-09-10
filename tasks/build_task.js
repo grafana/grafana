@@ -15,14 +15,14 @@ module.exports = function(grunt) {
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
-    // 'requirejs:build',
-    // 'concat:js',
-    // 'clean:temp',
-    // 'filerev',
-    // 'remapFilerev',
-    // 'usemin',
-    // 'clean:temp',
-    // 'uglify:genDir'
+    'requirejs:build',
+    'concat:js',
+    'clean:temp',
+    'filerev',
+    'remapFilerev',
+    'usemin',
+    'clean:temp',
+    'uglify:genDir'
   ]);
 
   // task to add [[.AppSubUrl]] to reved path
