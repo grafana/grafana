@@ -1,16 +1,16 @@
 module.exports = function(config) {
   return {
     css: {
-      files: [ '<%= srcDir %>/css/**/*.less' ],
+      files: [ '<%= srcDir %>/less/**/*.less' ],
       tasks: ['css'],
       options: {
         spawn: false
       }
     },
 
-    app_gen: {
-      files: ['<%= srcDir %>/app/**/*.js', '<%= srcDir %>/app/**/*.html'],
-      tasks: ['copy:app_gen_build'],
+    copy_to_gen: {
+      files: ['<%= srcDir %>/**/*', '!<%= srcDir %>/**/*.less'],
+      tasks: ['copy:everything_but_less'],
       options: {
         spawn: false
       }

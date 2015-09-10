@@ -4,25 +4,25 @@ module.exports = function(config) {
   return {
     cssDark: {
       src: [
-        '<%= srcDir %>/vendor/css/normalize.min.css',
-        '<%= srcDir %>/vendor/css/timepicker.css',
-        '<%= srcDir %>/vendor/css/spectrum.css',
-        '<%= srcDir %>/css/bootstrap.dark.min.css',
-        '<%= srcDir %>/css/bootstrap-responsive.min.css',
-        '<%= srcDir %>/vendor/css/font-awesome.min.css'
+        '<%= genDir %>/vendor/css/normalize.min.css',
+        '<%= genDir %>/vendor/css/timepicker.css',
+        '<%= genDir %>/vendor/css/spectrum.css',
+        '<%= genDir %>/css/bootstrap.dark.min.css',
+        '<%= genDir %>/css/bootstrap-responsive.min.css',
+        '<%= genDir %>/vendor/css/font-awesome.min.css'
       ],
-      dest: '<%= srcDir %>/css/grafana.dark.min.css'
+      dest: '<%= genDir %>/css/grafana.dark.min.css'
     },
     cssLight: {
       src: [
-        '<%= srcDir %>/vendor/css/normalize.min.css',
-        '<%= srcDir %>/vendor/css/timepicker.css',
-        '<%= srcDir %>/vendor/css/spectrum.css',
-        '<%= srcDir %>/css/bootstrap.light.min.css',
-        '<%= srcDir %>/css/bootstrap-responsive.min.css',
-        '<%= srcDir %>/vendor/css/font-awesome.min.css'
+        '<%= genDir %>/vendor/css/normalize.min.css',
+        '<%= genDir %>/vendor/css/timepicker.css',
+        '<%= genDir %>/vendor/css/spectrum.css',
+        '<%= genDir %>/css/bootstrap.light.min.css',
+        '<%= genDir %>/css/bootstrap-responsive.min.css',
+        '<%= genDir %>/vendor/css/font-awesome.min.css'
       ],
-      dest: '<%= srcDir %>/css/grafana.light.min.css'
+      dest: '<%= genDir %>/css/grafana.light.min.css'
     },
 
     js: {

@@ -8,11 +8,11 @@ module.exports = function(config) {
       dest: '<%= tempDir %>'
     },
 
-    app_gen_build: {
-      cwd: '<%= srcDir %>/app',
+    everything_but_less: {
+      cwd: '<%= srcDir %>',
       expand: true,
-      src: ['**/*.js', '**/*.html'],
-      dest: '<%= srcDir %>/.app_gen'
+      src: ['**/*', '!**/*.less'],
+      dest: '<%= genDir %>'
     }
 
   };

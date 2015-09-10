@@ -6,11 +6,11 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-    'karma:test',
     'clean:on_start',
-    'less:src',
-    'concat:cssDark',
-    'concat:cssLight',
+    'copy:app_gen_build',
+    'typescript:build',
+    'karma:test',
+    'css',
     'copy:everything_but_less_to_temp',
     'htmlmin:build',
     'ngtemplates',
@@ -24,7 +24,6 @@ module.exports = function(grunt) {
     'clean:temp',
     'uglify:dest'
   ]);
-
 
   // task to add [[.AppSubUrl]] to reved path
   grunt.registerTask('remapFilerev', function(){

@@ -7,7 +7,7 @@ module.exports = function(config,grunt) {
       appDir: '<%= tempDir %>',
       dir:  '<%= destDir %>',
       mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-      baseUrl: './app',
+      baseUrl: 'app_gen',
       waitSeconds: 0,
 
       modules: [], // populated below,
@@ -37,9 +37,9 @@ module.exports = function(config,grunt) {
 
     // setup the modules require will build
     var requireModules = options.modules = [
-    {
-      // main/common module
-      name: 'app',
+      {
+        // main/common module
+        name: 'app',
         include: [
           'kbn',
           'text',
@@ -66,7 +66,11 @@ module.exports = function(config,grunt) {
           'plugins/datasource/graphite/datasource',
           'plugins/datasource/influxdb_08/datasource',
         ]
-      }
+      },
+      // {
+      //   name: 'features/org/all',
+      //   exclude: ['app'],
+      // }
     ];
 
     var fs = require('fs');
