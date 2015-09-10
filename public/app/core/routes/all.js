@@ -1,9 +1,15 @@
 define([
   'angular',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
   '../core_module',
   './bundle_loader',
   './dashboard_loaders',
 ], function(angular, coreModule, BundleLoader) {
+=======
+  '../core/core',
+  './dashLoadControllers',
+], function(angular, core) {
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
   "use strict";
 
   coreModule.config(function($routeProvider, $locationProvider) {
@@ -43,37 +49,65 @@ define([
       .when('/datasources', {
         templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/datasources/edit/:id', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/datasources/new', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/org/new', {
         templateUrl: 'app/features/org/partials/newOrg.html',
         controller : 'NewOrgCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/org/users', {
         templateUrl: 'app/features/org/partials/orgUsers.html',
         controller : 'OrgUsersCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/org/apikeys', {
         templateUrl: 'app/features/org/partials/orgApiKeys.html',
         controller : 'OrgApiKeysCtrl',
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
+=======
+        resolve: new core.ModuleLoader("features/org/all"),
+>>>>>>> tech(typescript): its looking good:public/app/routes/all.js
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',

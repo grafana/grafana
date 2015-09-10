@@ -1,6 +1,10 @@
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
   baseUrl: 'public',
+=======
+  baseUrl: 'public/app',
+>>>>>>> tech(typescript): its looking good
 
   paths: {
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf

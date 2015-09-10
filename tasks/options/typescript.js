@@ -3,8 +3,13 @@ module.exports = function() {
 
   return {
     build: {
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
       src: ['public/**/*.ts', 'public/test/**/*.ts'],
       dest: 'public_gen/',
+=======
+      src: ['public/app/**/*.ts'],
+      dest: 'public_gen/app',
+>>>>>>> tech(typescript): its looking good
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3

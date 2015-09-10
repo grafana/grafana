@@ -4,10 +4,17 @@ module.exports = function(config,grunt) {
   function buildRequireJsOptions() {
 
     var options = {
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
       appDir: '<%= genDir %>',
       dir:  '<%= tempDir %>',
       mainConfigFile: '<%= genDir %>/app/components/require.config.js',
       baseUrl: './',
+=======
+      appDir: '<%= tempDir %>',
+      dir:  '<%= destDir %>',
+      mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
+      baseUrl: 'app_gen',
+>>>>>>> tech(typescript): its looking good
       waitSeconds: 0,
 
       modules: [], // populated below,
@@ -39,7 +46,11 @@ module.exports = function(config,grunt) {
     var requireModules = options.modules = [
       {
         // main/common module
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
         name: 'app/app',
+=======
+        name: 'app',
+>>>>>>> tech(typescript): its looking good
         include: [
           'kbn',
           'text',
@@ -65,6 +76,13 @@ module.exports = function(config,grunt) {
           'app/plugins/datasource/influxdb/datasource',
         ]
       },
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
+=======
+      // {
+      //   name: 'features/org/all',
+      //   exclude: ['app'],
+      // }
+>>>>>>> tech(typescript): its looking good
     ];
 
     var fs = require('fs');

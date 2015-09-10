@@ -8,10 +8,18 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+<<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:karma.conf.js
       'test/test-main.js',
       {pattern: 'app/**/*.js', included: false},
       {pattern: 'vendor/**/*.js', included: false},
       {pattern: 'test/**/*.js', included: false}
+=======
+      'public/test/test-main.js',
+      {pattern: 'public/.app_gen/**/*.js', included: false},
+      {pattern: 'public/vendor/**/*.js', included: false},
+      {pattern: 'public/test/**/*.js', included: false},
+      {pattern: 'public/**/*.js', included: false}
+>>>>>>> tech(typescript): its looking good:public/test/karma.conf.js
     ],
 
     // list of files to exclude
