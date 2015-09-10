@@ -55,9 +55,8 @@ function (_) {
   };
 
   p._getSeriesName = function(series, index) {
-    var regex = /\$(\w+(?:,\w+)?)|\[\[([\s\S]+?)\]\]/g;
+    var regex = /\$(\w+(?:\S+)?)|\[\[([\s\S]+?)\]\]/g;
     var segments = series.name.split('.');
-
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
