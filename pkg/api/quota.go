@@ -4,9 +4,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func GetOrgQuotas(c *middleware.Context) Response {
+	if !setting.Quota.Enabled {
+		return ApiError(404, "Quotas not enabled", nil)
+	}
 	query := m.GetQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -18,6 +22,9 @@ func GetOrgQuotas(c *middleware.Context) Response {
 
 // allow users to query the quotas of their own org.
 func GetQuotas(c *middleware.Context) Response {
+	if !setting.Quota.Enabled {
+		return ApiError(404, "Quotas not enabled", nil)
+	}
 	query := m.GetQuotasQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -28,6 +35,9 @@ func GetQuotas(c *middleware.Context) Response {
 }
 
 func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateQuotaCmd) Response {
+	if !setting.Quota.Enabled {
+		return ApiError(404, "Quotas not enabled", nil)
+	}
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = m.QuotaTarget(c.Params(":target"))
 
