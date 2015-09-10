@@ -55,7 +55,7 @@ function ($) {
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
 
-        if (scope.panel.stack) {
+        if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
           } else if (!series.stack) {
@@ -69,7 +69,7 @@ function ($) {
         }
 
         // Highlighting multiple Points depending on the plot type
-        if (scope.panel.steppedLine || (scope.panel.stack && scope.panel.nullPointMode == "null")) {
+        if (scope.panel.steppedLine || scope.panel.stack) {
           // stacked and steppedLine plots can have series with different length.
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.

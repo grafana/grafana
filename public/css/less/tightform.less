@@ -4,7 +4,7 @@
   border-right: 1px solid @grafanaTargetBorder;
   background: @grafanaTargetBackground;
 
-  &:last-child, &.last {
+  &.last {
     border-bottom: 1px solid @grafanaTargetBorder;
   }
 
@@ -22,11 +22,13 @@
 
 .tight-form-container-no-item-borders {
   border: 1px solid @grafanaTargetBorder;
+  border-bottom: none;
 
   .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
     border: none;
   }
 }
+
 
 .spaced-form {
   .tight-form {
@@ -42,12 +44,7 @@
 }
 
 .tight-form-container {
-  .tight-form:last-child {
-    border-bottom: none;
-  }
-  &:last-child {
-    border-bottom: 1px solid @grafanaTargetBorder;
-  }
+  border-bottom: 1px solid @grafanaTargetBorder;
 }
 
 .tight-form-btn {
@@ -63,7 +60,7 @@
 }
 
 .grafana-metric-options {
-  margin-top: 35px;
+  margin-top: 25px;
 }
 
 .tight-form-item {
@@ -209,3 +206,15 @@ select.tight-form-input {
   }
 }
 
+.tight-form-align {
+  padding-left: 66px;
+}
+
+.tight-form-item-large { width: 115px; }
+.tight-form-item-xlarge { width: 150px; }
+.tight-form-item-xxlarge { width: 200px; }
+
+.tight-form-inner-box {
+  margin: 20px 0 20px 148px;
+  display: inline-block;
+}

@@ -43,7 +43,9 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
-	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
+	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
+	r.Post("/api/user/signup", bind(dtos.SignUpForm{}), wrap(SignUp))
+	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), wrap(SignUpStep2))
 
 	// invited
 	r.Get("/api/user/invite/:code", wrap(GetInviteInfoByCode))
@@ -91,7 +93,8 @@ func Register(r *macaron.Macaron) {
 		// current org
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
-			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrgCurrent))
+			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
+			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
@@ -112,7 +115,8 @@ func Register(r *macaron.Macaron) {
 		// orgs (admin routes)
 		r.Group("/orgs/:orgId", func() {
 			r.Get("/", wrap(GetOrgById))
-			r.Put("/", bind(m.UpdateOrgCommand{}), wrap(UpdateOrg))
+			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrg))
+			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddress))
 			r.Delete("/", wrap(DeleteOrgById))
 			r.Get("/users", wrap(GetOrgUsers))
 			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUser))

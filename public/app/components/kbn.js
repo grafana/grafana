@@ -205,7 +205,21 @@ function($, _, moment) {
     return kbn.parseDateMath(mathString, time);
   };
 
-  kbn._timespanRegex = /^\d+[h,m,M,w,s,H,d]$/;
+  kbn.getRelativeTimeInfo = function(str) {
+    var info = {value: str};
+    if (str === 'today') {
+      info.text = 'Today';
+      info.from = 'today';
+      info.to = 'now';
+    } else {
+      info.text = 'Last ' + str;
+      info.from = 'now-'+str;
+      info.to = 'now';
+    }
+    return info;
+  };
+
+  kbn._timespanRegex = /^(\d+[h,m,M,w,s,H,d])|today$/;
   kbn.isValidTimeSpan = function(str) {
     return kbn._timespanRegex.test(str);
   };

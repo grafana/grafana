@@ -3,6 +3,7 @@ define([
   'lodash',
   'kbn',
   'moment',
+  './directives',
   './queryCtrl',
 ],
 function (angular, _, kbn) {
@@ -105,7 +106,7 @@ function (angular, _, kbn) {
     OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/search/lookup', {m: metric}).then(function(result) {
+      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
         result = result.data.results;
         var tagks = [];
         _.each(result, function(r) {

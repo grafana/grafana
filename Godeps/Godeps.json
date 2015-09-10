@@ -19,6 +19,41 @@
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "2df174808ee097f90d259e432cc04442cf60be21"
 		},
@@ -78,6 +113,10 @@
 		{
 			"ImportPath": "github.com/streadway/amqp",
 			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

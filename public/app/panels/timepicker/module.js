@@ -74,18 +74,10 @@ function (angular, app, _, moment, kbn) {
 
     $scope.loadTimeOptions = function() {
       $scope.time_options = _.map($scope.panel.time_options, function(str) {
-        var option = {value: str};
-        if (str === 'today') {
-          option.text = 'Today';
-          option.from = 'today';
-          option.to = 'now';
-        } else {
-          option.text = 'Last ' + str;
-          option.from = 'now-'+str;
-          option.to = 'now';
-        }
-        return option;
+        return kbn.getRelativeTimeInfo(str);
       });
+
+      $scope.refreshMenuLeftSide = $scope.time.rangeString.length < 10;
     };
 
     $scope.customTime = function() {
@@ -153,6 +145,8 @@ function (angular, app, _, moment, kbn) {
 
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
+
+      timeSrv.setTime(_filter);
     };
 
     $scope.setRelativeFilter = function(timespan) {

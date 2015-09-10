@@ -48,6 +48,7 @@ require.config({
     'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
+    'aws-sdk':                '../vendor/aws-sdk/dist/aws-sdk.min',
   },
 
   shim: {
@@ -139,6 +140,7 @@ require([
     'specs/seriesOverridesCtrl-specs',
     'specs/shareModalCtrl-specs',
     'specs/timeSrv-specs',
+    'specs/panelSrv-specs',
     'specs/templateSrv-specs',
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
@@ -149,6 +151,12 @@ require([
     'specs/unsavedChangesSrv-specs',
     'specs/valueSelectDropdown-specs',
     'specs/opentsdbDatasource-specs',
+    'specs/cloudwatch-datasource-specs',
+    'specs/elasticsearch-specs',
+    'specs/elasticsearch-querybuilder-specs',
+    'specs/elasticsearch-queryctrl-specs',
+    'specs/elasticsearch-indexPattern-specs',
+    'specs/elasticsearch-response-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

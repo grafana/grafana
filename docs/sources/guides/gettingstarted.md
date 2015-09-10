@@ -11,7 +11,7 @@ This guide will help you get started and acquainted with Grafana. It assumes you
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
 
 ##Basic Concepts
-Read the [Basic Concepts](/reference/basic_concepts) document to get a crash course in key Grafana concepts. 
+Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course in key Grafana concepts.
 
 ### Top header
 

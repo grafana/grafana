@@ -3,13 +3,14 @@ define([
   'lodash',
   'kbn',
   './queryCtrl',
+  './directives',
 ],
 function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('KairosDBDatasource', function($q, $http, templateSrv) {
+  module.factory('KairosDBDatasource', function($q, backendSrv, templateSrv) {
 
     function KairosDBDatasource(datasource) {
       this.type = datasource.type;
@@ -50,10 +51,6 @@ function (angular, _, kbn) {
       return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
     };
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Query methods
-    ///////////////////////////////////////////////////////////////////////
-
     KairosDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         metrics: queries,
@@ -69,7 +66,7 @@ function (angular, _, kbn) {
         data: reqBody
       };
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     /**
@@ -82,7 +79,7 @@ function (angular, _, kbn) {
         method: 'GET'
       };
 
-      return $http(options).then(function(response) {
+      return backendSrv.datasourceRequest(options).then(function(response) {
         if (!response.data) {
           return $q.when([]);
         }
@@ -109,7 +106,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         if (!result.data) {
           return $q.when([]);
         }
@@ -138,7 +135,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         if (!result.data) {
           return $q.when([]);
         }
@@ -157,7 +154,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(response) {
+      return backendSrv.datasourceRequest(options).then(function(response) {
         if (!response.data) {
           return [];
         }

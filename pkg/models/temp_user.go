@@ -13,9 +13,9 @@ var (
 type TempUserStatus string
 
 const (
+	TmpUserSignUpStarted TempUserStatus = "SignUpStarted"
 	TmpUserInvitePending TempUserStatus = "InvitePending"
 	TmpUserCompleted     TempUserStatus = "Completed"
-	TmpUserEmailPending  TempUserStatus = "EmailPending"
 	TmpUserRevoked       TempUserStatus = "Revoked"
 )
 
@@ -60,8 +60,9 @@ type UpdateTempUserStatusCommand struct {
 	Status TempUserStatus
 }
 
-type GetTempUsersForOrgQuery struct {
+type GetTempUsersQuery struct {
 	OrgId  int64
+	Email  string
 	Status TempUserStatus
 
 	Result []*TempUserDTO

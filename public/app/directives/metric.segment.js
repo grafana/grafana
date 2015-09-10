@@ -15,13 +15,13 @@ function (angular, app, _, $) {
                             ' spellcheck="false" style="display:none"></input>';
 
       var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
-        'tabindex="1" focus-me="segment.focus" ng-bind-html="segment.html"></a>';
+        'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
       return {
         scope: {
           segment: "=",
-          getAltSegments: "&",
-          onValueChanged: "&"
+          getOptions: "&",
+          onChange: "&",
         },
 
         link: function($scope, elem) {
@@ -47,13 +47,14 @@ function (angular, app, _, $) {
                 segment.fake = false;
                 segment.expandable = selected.expandable;
               }
-              else {
+              else if (segment.custom !== 'false') {
                 segment.value = value;
                 segment.html = $sce.trustAsHtml(value);
                 segment.expandable = true;
                 segment.fake = false;
               }
-              $scope.onValueChanged();
+
+              $scope.onChange();
             });
           };
 
@@ -76,13 +77,15 @@ function (angular, app, _, $) {
             if (options) { return options; }
 
             $scope.$apply(function() {
-              $scope.getAltSegments().then(function(altSegments) {
+              $scope.getOptions().then(function(altSegments) {
                 $scope.altSegments = altSegments;
                 options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
                 // add custom values
-                if (!segment.fake && _.indexOf(options, segment.value) === -1) {
-                  options.unshift(segment.value);
+                if (segment.custom !== 'false') {
+                  if (!segment.fake && _.indexOf(options, segment.value) === -1) {
+                    options.unshift(segment.value);
+                  }
                 }
 
                 callback(options);
@@ -92,7 +95,6 @@ function (angular, app, _, $) {
 
           $scope.updater = function(value) {
             if (value === segment.value) {
-              console.log('cancel blur');
               clearTimeout(cancelBlur);
               $input.focus();
               return value;
@@ -150,6 +152,65 @@ function (angular, app, _, $) {
           $input.blur($scope.switchToLink);
 
           $compile(elem.contents())($scope);
+        }
+      };
+    });
+
+  angular
+    .module('grafana.directives')
+    .directive('metricSegmentModel', function(uiSegmentSrv, $q) {
+      return {
+        template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()"></metric-segment>',
+        restrict: 'E',
+        scope: {
+          property: "=",
+          options: "=",
+          getOptions: "&",
+          onChange: "&",
+        },
+        link: {
+          pre: function postLink($scope, elem, attrs) {
+
+            $scope.valueToSegment = function(value) {
+              var option = _.findWhere($scope.options, {value: value});
+              var segment = {
+                cssClass: attrs.cssClass,
+                custom: attrs.custom,
+                value: option ? option.text : value,
+              };
+              return uiSegmentSrv.newSegment(segment);
+            };
+
+            $scope.getOptionsInternal = function() {
+              if ($scope.options) {
+                var optionSegments = _.map($scope.options, function(option) {
+                  return uiSegmentSrv.newSegment({value: option.text});
+                });
+                return $q.when(optionSegments);
+              } else {
+                return $scope.getOptions();
+              }
+            };
+
+            $scope.onSegmentChange = function() {
+              if ($scope.options) {
+                var option = _.findWhere($scope.options, {text: $scope.segment.value});
+                if (option && option.value !== $scope.property) {
+                  $scope.property = option.value;
+                }
+              } else {
+                $scope.property = $scope.segment.value;
+              }
+
+              // needs to call this after digest so
+              // property is synced with outerscope
+              $scope.$$postDigest(function() {
+                $scope.onChange();
+              });
+            };
+
+            $scope.segment = $scope.valueToSegment($scope.property);
+          }
         }
       };
     });

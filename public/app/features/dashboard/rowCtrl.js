@@ -46,7 +46,7 @@ function (angular, app, _, config) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
-        yesText: 'delete',
+        yesText: 'Delete',
         onConfirm: function() {
           $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
         }
@@ -98,7 +98,7 @@ function (angular, app, _, config) {
     };
 
     $scope.updatePanelSpan = function(panel, span) {
-      panel.span = Math.min(Math.max(panel.span + span, 1), 12);
+      panel.span = Math.min(Math.max(Math.floor(panel.span + span), 1), 12);
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {
@@ -121,7 +121,7 @@ function (angular, app, _, config) {
   module.directive('rowHeight', function() {
     return function(scope, element) {
       scope.$watchGroup(['row.collapse', 'row.height'], function() {
-        element[0].style.minHeight = scope.row.collapse ? '5px' : scope.row.height;
+        element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
       });
     };
   });

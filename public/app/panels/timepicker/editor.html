@@ -1,49 +1,55 @@
   <div class="editor-row">
 		<div class="section">
 			<div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 148px">
-						<strong>Relative time options</strong></small>
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input"
-							ng-model="panel.time_options" array-join>
-				  </li>
-					<li class="tight-form-item">
-						Until
-					</li>
-					<li class="tight-form-item">
-					 now-
-					</li>
-					<li>
-						<input type="text" class="input-mini tight-form-input last"
-						  ng-model="panel.nowDelay" placeholder="0m"
-						  valid-time-span
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 118px">
+							Relative times
+						</li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="panel.time_options" array-join>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 118px">
+							Auto-refresh
+						</li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="panel.refresh_intervals" array-join>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 118px">
+							Now delay
+						</li>
+						<li class="tight-form-item">
+							now-
+						</li>
+						<li>
+							<input type="text" class="input-mini tight-form-input last"
+							ng-model="panel.nowDelay" placeholder="0m"
+							valid-time-span
 							bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
 							data-placement="right">
-				  </li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 148px">
-						<strong>Auto-refresh options</strong>
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input"
-							ng-model="panel.refresh_intervals" array-join>
-				  </li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+						</li>
+
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
 			</div>
 
 			<p>
-			<br>
-			<i class="fa fa-info-circle"></i>
-			For these changes to fully take effect save and reload the dashboard.
-		</i>
+				<br>
+				<i class="fa fa-info-circle"></i>
+				For these changes to fully take effect save and reload the dashboard.
+			</i>
+		</div>
 	</div>
-</div>

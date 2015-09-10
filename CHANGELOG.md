@@ -1,11 +1,57 @@
-# 2.2 (unreleased)
+# 2.5 (unreleased)
 
-**New Features && Enhancements**
+** New Feature: Mix data sources **
+A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
+it allows you to add queries of differnet data source types & instances to the same graph/panel!
+[Issue #436](https://github.com/grafana/grafana/issues/436)
+
+** New Feature: Elasticsearch Metrics Query Editor and Viz Support **
+- Feature rich query editor and processing features enables you to issues all kind of metric queries to Elasticsearch
+- See [Issue #1034](https://github.com/grafana/grafana/issues/1034) for more info.
+
+** User Onboarding **
+- Org admin can now send email invites (or invite links) to people who are not yet Grafana users
+- Sign up flow now supports email verification (if enabled)
+- See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
+
+** Other new Features && Enhancements**
+- [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
+- [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
+- [Issue #2647](https://github.com/grafana/grafana/issues/2647). InfluxDB: You can now set group by time interval on each query
+- [Issue #2599](https://github.com/grafana/grafana/issues/2599). InfluxDB: Improved alias support, you can now use the `AS` clause for each select statement
+- [Issue #2708](https://github.com/grafana/grafana/issues/2708). InfluxDB: You can now set math expression for select clauses.
 
 **Fixes**
+- [Issue #2413](https://github.com/grafana/grafana/issues/2413). InfluxDB 0.9: Fix for handling empty series object in response from influxdb
+- [Issue #2574](https://github.com/grafana/grafana/issues/2574). Snapshot: Fix for snapshot with expire 7 days option, 7 days option not correct, was 7 hours
+- [Issue #2568](https://github.com/grafana/grafana/issues/2568). AuthProxy: Fix for server side rendering of panel when using auth proxy
 - [Issue #2490](https://github.com/grafana/grafana/issues/2490). Graphite: Dashboard import was broken in 2.1 and 2.1.1, working now
+- [Issue #2565](https://github.com/grafana/grafana/issues/2565). TimePicker: Fix for when you applied custom time range it did not refreh dashboard
+- [Issue #2563](https://github.com/grafana/grafana/issues/2563). Annotations: Fixed issue when html sanitizer failes for title to annotation body, now fallbacks to html escaping title and text
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+- [Issue #2620](https://github.com/grafana/grafana/issues/2620). Graph: multi series tooltip did no highlight correct point when stacking was enabled and series were of different resolution
+- [Issue #2636](https://github.com/grafana/grafana/issues/2636). InfluxDB: Do no show template vars in dropdown for tag keys and group by keys
+- [Issue #2604](https://github.com/grafana/grafana/issues/2604). InfluxDB: More alias options, can now use `$[0-9]` syntax to reference part of a measurement name (seperated by dots)
+
+**Breaking Changes**
+- Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
+require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
+data source api change.
+- The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
+
+ 2.1.3 (2015-08-24)
+
+**Fixes**
+- [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
+- [Issue #2564](https://github.com/grafana/grafana/issues/2564). Templating: Another atempt at fixing #2534 (Init multi value template var used in repeat panel from url)
+
+# 2.1.2 (2015-08-20)
+
+**Fixes**
+- [Issue #2558](https://github.com/grafana/grafana/issues/2558). DragDrop: Fix for broken drag drop behavior
+- [Issue #2534](https://github.com/grafana/grafana/issues/2534). Templating: fix for setting template variable value via url and having repeated panels or rows
 
 # 2.1.1 (2015-08-11)
 

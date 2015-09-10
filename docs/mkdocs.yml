@@ -49,7 +49,6 @@ pages:
 - ['reference/graph.md', 'Reference', 'Graph Panel']
 - ['reference/singlestat.md', 'Reference', 'Singlestat Panel']
 - ['reference/dashlist.md', 'Reference', 'Dashboard List Panel']
-- ['reference/text.md', 'Reference', 'Text Panel']
 - ['reference/sharing.md', 'Reference', 'Sharing']
 - ['reference/annotations.md', 'Reference', 'Annotations']
 - ['reference/timerange.md', 'Reference', 'Time Range Controls']
@@ -69,7 +68,7 @@ pages:
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
-- ['tutorials/stack_guide_graphite.md', 'Tutorials', 'Stack setup: Grafana + Graphite + StatsD']
+- ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
 
 - ['project/building_from_source.md', 'Project', 'Building from Source']
 - ['project/cla.md', 'Project', 'Contributor License Agreement']
