@@ -1,11 +1,11 @@
 class PanelMeta {
-  description: any
-  fullscreen: any
-  editIcon: any
-  panelName: any
-  menu: any
-  editorTabs: any
-  extendedMenu: any
+  description: any;
+  fullscreen: any;
+  editIcon: any;
+  panelName: any;
+  menu: any;
+  editorTabs: any;
+  extendedMenu: any;
 
   constructor(options : any) {
     this.description = options.description;
