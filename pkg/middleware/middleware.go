@@ -256,7 +256,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 func LimitQuota(target m.QuotaTarget) macaron.Handler {
 	return func(c *Context) {
-		limitReached, err := m.QuotaReached(c.OrgId, target)
+		limitReached, err := QuotaReached(c.OrgId, target)
 		if err != nil {
 			c.JsonApiErr(500, "failed to get quota", err)
 			return
@@ -266,4 +266,21 @@ func LimitQuota(target m.QuotaTarget) macaron.Handler {
 			return
 		}
 	}
+}
+
+func QuotaReached(org_id int64, target m.QuotaTarget) (bool, error) {
+	if !setting.Quota.Enabled {
+		return false, nil
+	}
+	if !target.IsValid() {
+		return true, m.ErrInvalidQuotaTarget
+	}
+	query := m.GetQuotaByTargetQuery{OrgId: org_id, Target: target}
+	if err := bus.Dispatch(&query); err != nil {
+		return true, err
+	}
+	if query.Result.Used >= query.Result.Limit {
+		return true, nil
+	}
+	return false, nil
 }
