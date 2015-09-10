@@ -91,9 +91,14 @@ func Register(r *macaron.Macaron) {
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 		}, reqGrafanaAdmin)
 
-		// current org
+		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
+			r.Get("/quotas", wrap(GetQuotas))
+		})
+
+		// current org
+		r.Group("/org", func() {
 			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			r.Post("/users", limitQuota(m.QUOTA_USER), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
