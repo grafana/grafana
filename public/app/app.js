@@ -92,9 +92,13 @@ function (angular, $, _, appLevelRequire) {
               _.each(preBootModules, function (module) {
                 _.extend(module, register_fns);
               });
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
 
               preBootModules = null;
+=======
+>>>>>>> tech(typescript): its looking good
 
+              pre_boot_modules = false;
               $rootScope.requireContext = appLevelRequire;
               $rootScope.require = function (deps, fn) {
                 var $scope = this;

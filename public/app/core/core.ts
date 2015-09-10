@@ -1,3 +1,4 @@
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
 ///<amd-dependency path="./directives/annotation_tooltip" />
 ///<amd-dependency path="./directives/body_class" />
 ///<amd-dependency path="./directives/config_modal" />
@@ -19,5 +20,11 @@
 export * from './directives/array_join'
 export * from './directives/give_focus'
 export * from './filters/filters'
+=======
+
+export * from './time_series'
+export * from './directives/cool_dir'
+export * from './routes/module_loader'
+>>>>>>> tech(typescript): its looking good
 
 

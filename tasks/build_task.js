@@ -6,6 +6,7 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
 <<<<<<< 715feb1cc233716c1a7eb4a10a87d86e2ca2af24
     'tslint',
     'clean:release',
@@ -16,10 +17,13 @@ module.exports = function(grunt) {
     'css',
 =======
     // 'karma:test',
+=======
+>>>>>>> tech(typescript): its looking good
     'clean:on_start',
-    'less:src',
-    'concat:cssDark',
-    'concat:cssLight',
+    'copy:app_gen_build',
+    'typescript:build',
+    'karma:test',
+    'css',
     'copy:everything_but_less_to_temp',
 >>>>>>> [OWL-47] Reduce page load time of Grafana
     'htmlmin:build',

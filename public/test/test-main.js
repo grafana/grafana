@@ -1,5 +1,9 @@
 require.config({
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
   baseUrl: 'http://localhost:9876/base/',
+=======
+  baseUrl: 'http://localhost:9876/base/public/app_gen',
+>>>>>>> tech(typescript): its looking good
 
   paths: {
     config:                'app/components/config',

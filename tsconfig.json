@@ -10,6 +10,7 @@
     },
     "files": [
         "public/app/components/panelmeta.ts",
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
         "public/app/controllers/signupCtrl.ts",
         "public/app/core/core.ts",
         "public/app/core/core_module.ts",
@@ -27,5 +28,14 @@
         "public/app/headers/moment/moment-node.d.ts",
         "public/app/headers/moment/moment.d.ts",
         "public/app/headers/require/require.d.ts"
+=======
+        "public/app/controllers/fileSearcher.ts",
+        "public/app/controllers/testCtrl.ts",
+        "public/app/core/core.ts",
+        "public/app/core/directives/cool_dir.ts",
+        "public/app/core/routes/module_loader.ts",
+        "public/app/core/time_series.ts",
+        "public/app/headers/require.d.ts"
+>>>>>>> tech(typescript): its looking good
     ]
 }

@@ -8,7 +8,11 @@ module.exports = function(config) {
       dest: '<%= tempDir %>'
     },
 
+<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
     public_to_gen: {
+=======
+    everything_but_less: {
+>>>>>>> tech(typescript): its looking good
       cwd: '<%= srcDir %>',
       expand: true,
       src: ['**/*', '!**/*.less'],
