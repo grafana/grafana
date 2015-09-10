@@ -1,7 +1,7 @@
-///<reference path="../../headers/require.d.ts" />
+///<reference path="../../../vendor/headers/require.d.ts" />
 
 export class ModuleLoader {
-  lazy: any
+  lazy: any;
 
   constructor(moduleName) {
 
