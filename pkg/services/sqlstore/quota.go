@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -25,7 +26,7 @@ func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
 	if err != nil {
 		return err
 	} else if has == false {
-		quota.Limit = m.DefaultQuotas[query.Target]
+		quota.Limit = setting.Quota.Default[string(query.Target)]
 	}
 
 	//get quota used.
@@ -57,11 +58,11 @@ func GetQuotas(query *m.GetQuotasQuery) error {
 		seenTargets[q.Target] = true
 	}
 
-	for t, v := range m.DefaultQuotas {
-		if _, ok := seenTargets[t]; !ok {
+	for t, v := range setting.Quota.Default {
+		if _, ok := seenTargets[m.QuotaTarget(t)]; !ok {
 			quotas = append(quotas, &m.Quota{
 				OrgId:  query.OrgId,
-				Target: t,
+				Target: m.QuotaTarget(t),
 				Limit:  v,
 			})
 		}

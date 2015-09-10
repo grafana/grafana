@@ -126,6 +126,9 @@ var (
 
 	// SMTP email settings
 	Smtp SmtpSettings
+
+	// QUOTA
+	Quota QuotaSettings
 )
 
 type CommandLineArgs struct {
@@ -434,6 +437,7 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	readSessionConfig()
 	readSmtpSettings()
+	readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")

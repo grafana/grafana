@@ -16,6 +16,17 @@ func GetOrgQuotas(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
+// allow users to query the quotas of their own org.
+func GetQuotas(c *middleware.Context) Response {
+	query := m.GetQuotasQuery{OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to get quotas", err)
+	}
+
+	return Json(200, query.Result)
+}
+
 func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateQuotaCmd) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = m.QuotaTarget(c.Params(":target"))
