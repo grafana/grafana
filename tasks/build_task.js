@@ -30,6 +30,7 @@ module.exports = function(grunt) {
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
+<<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
     'requirejs:build',
     'concat:js',
     'clean:temp',
@@ -37,6 +38,16 @@ module.exports = function(grunt) {
     'remapFilerev',
     'usemin',
     'uglify:genDir'
+=======
+    // 'requirejs:build',
+    // 'concat:js',
+    // 'clean:temp',
+    // 'filerev',
+    // 'remapFilerev',
+    // 'usemin',
+    // 'clean:temp',
+    // 'uglify:genDir'
+>>>>>>> tech(typescript): converted signup controller to typescript
   ]);
 
   // task to add [[.AppSubUrl]] to reved path

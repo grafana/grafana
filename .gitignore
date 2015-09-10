@@ -40,6 +40,7 @@ profile.cov
 <<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 grafana
+<<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
 .notouch
 .DS_Store
 =======
@@ -52,3 +53,6 @@ grafana
 =======
 grafana
 >>>>>>> feat(signup): added back the welcome on signup completed email
+=======
+tsconfig.json
+>>>>>>> tech(typescript): converted signup controller to typescript
