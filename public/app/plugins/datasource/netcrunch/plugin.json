@@ -9,8 +9,7 @@
 
   "partials": {
     "config": "app/plugins/datasource/netcrunch/partials/config.html",
-    "query": "app/plugins/datasource/netcrunch/partials/query.editor.html",
-    "annotations": "app/plugins/datasource/netcrunch/partials/annotations.editor.html"
+    "query": "app/plugins/datasource/netcrunch/partials/query.editor.html"
   },
 
   "metrics": true,
