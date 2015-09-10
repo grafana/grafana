@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: 'http://localhost:9876/base/public/app_gen',
+  baseUrl: 'http://localhost:9876/base/public_gen/app',
 
   paths: {
     specs:                 '../test/specs',

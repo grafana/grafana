@@ -9,7 +9,7 @@ module.exports = function(config) {
       files : [
         {
           expand: true,
-          cwd: '<%= tempDir %>',
+          cwd: '<%= destDir %>',
           src: ['**/*'],
           dest: '<%= pkg.name %>-<%= pkg.version %>/',
         },

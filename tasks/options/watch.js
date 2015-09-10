@@ -10,7 +10,7 @@ module.exports = function(config) {
 
     copy_to_gen: {
       files: ['<%= srcDir %>/**/*', '!<%= srcDir %>/**/*.less'],
-      tasks: ['copy:everything_but_less'],
+      tasks: ['copy:public_to_gen'],
       options: {
         spawn: false
       }

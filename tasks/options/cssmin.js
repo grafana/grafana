@@ -2,9 +2,9 @@ module.exports = function(config) {
   return {
     build: {
       expand: true,
-      cwd: '<%= tempDir %>',
+      cwd: '<%= genDir %>',
       src: '**/*.css',
-      dest: '<%= tempDir %>'
+      dest: '<%= genDir %>'
     }
   };
 };
