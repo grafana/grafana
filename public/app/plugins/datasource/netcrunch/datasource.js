@@ -232,7 +232,7 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.validateSeriesTypes = function(series){
-      series.min = (series.min == null) ? false : series.max;
+      series.min = (series.min == null) ? false : series.min;
       series.avg = (series.avg == null) ? true : series.avg;
       series.max = (series.max == null) ? false : series.max;
       series.avail = (series.avail == null) ? false : series.avail;
