@@ -88,6 +88,10 @@ func Publish(metrics []*schema.MetricData) error {
 	// in worst case, this allows messages up to 2871B
 	// this could be made more robust of course
 
+	// real world findings in dev-stack with env-load:
+	// 159569B msg /795  metrics per msg = 200B per msg
+	// so peak message size is about 3500*200 = 700k (seen 711k)
+
 	subslices := Reslice(metrics, 3500)
 
 	//version := msgFormatMetricDefinitionArrayJson
@@ -108,7 +112,7 @@ func Publish(metrics []*schema.MetricData) error {
 		case msgFormatMetricDefinitionArrayJson:
 			msg, err = json.Marshal(subslice)
 		case msgFormatMetricDataArrayMsgp:
-			m := schema.MetricDataArray(metrics)
+			m := schema.MetricDataArray(subslice)
 			msg, err = m.MarshalMsg(nil)
 		}
 		if err != nil {
