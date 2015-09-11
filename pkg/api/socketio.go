@@ -354,7 +354,7 @@ func (c *CollectorContext) OnDisconnection() {
 }
 
 func (c *CollectorContext) OnEvent(msg *schema.ProbeEvent) {
-	log.Info(fmt.Sprintf("recieved event from %s", c.Collector.Name))
+	log.Info(fmt.Sprintf("received event from %s", c.Collector.Name))
 	if !c.Collector.Public {
 		msg.OrgId = c.OrgId
 	}
