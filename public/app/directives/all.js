@@ -1,5 +1,4 @@
 define([
-  './arrayJoin',
   './dashUpload',
   './grafanaSimplePanel',
   './dashEditLink',
