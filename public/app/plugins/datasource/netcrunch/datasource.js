@@ -19,6 +19,7 @@ define([
   './services/trendDataProvider',
   './services/processingDataWorker',
   './controllers/netCrunchQueryCtrl',
+  './controllers/netCrunchOptionsCtrl',
   './filters/netCrunchFilters'
 ],
 
