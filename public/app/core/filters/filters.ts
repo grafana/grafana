@@ -1,14 +1,9 @@
-///<reference path="../../headers/require/require.d.ts" />
-///<reference path="../../headers/angularjs/angularjs.d.ts" />
-///<amd-dependency path="angular"/>
-///<amd-dependency path="config"/>
-///<amd-dependency path="moment"/>
-///<amd-dependency path="lodash"/>
-
-var angular = require('angular');
-var jquery = require('jquery');
-var moment = require('moment');
-var _ = require('lodash');
+///<reference path="../../headers/common.d.ts" />
+//
+import angular = require('angular');
+import jquery = require('jquery');
+import moment = require('moment');
+import _ = require('lodash');
 
 var module = angular.module('grafana.filters');
 
