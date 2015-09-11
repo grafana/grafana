@@ -15,7 +15,7 @@ module.filter('stringSort', function() {
 
 module.filter('slice', function() {
   return function(arr, start, end) {
-    if(!_.isUndefined(arr)) {
+    if (!_.isUndefined(arr)) {
       return arr.slice(start, end);
     }
   };
@@ -23,7 +23,7 @@ module.filter('slice', function() {
 
 module.filter('stringify', function() {
   return function(arr) {
-    if(_.isObject(arr) && !_.isArray(arr)) {
+    if (_.isObject(arr) && !_.isArray(arr)) {
       return angular.toJson(arr);
     } else {
       return _.isNull(arr) ? null : arr.toString();
@@ -32,8 +32,8 @@ module.filter('stringify', function() {
 });
 
 module.filter('moment', function() {
-  return function(date,mode) {
-    switch(mode) {
+  return function(date, mode) {
+    switch (mode) {
       case 'ago':
         return moment(date).fromNow();
     }
@@ -66,11 +66,12 @@ module.filter('interpolateTemplateVars', function(templateSrv) {
     } else {
       return templateSrv.replaceWithText(text, scope.row.scopedVars);
     }
-  }
+  };
 
   interpolateTemplateVars.$stateful = true;
 
   return interpolateTemplateVars;
 });
 
-export function filters() {}
+// dummy export
+export {};

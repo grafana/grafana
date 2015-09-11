@@ -6,6 +6,7 @@ module.exports = function(grunt) {
   grunt.registerTask('default', [
     'jscs',
     'jshint',
+    'tslint',
     'clean:gen',
     'copy:public_to_gen',
     'css',
