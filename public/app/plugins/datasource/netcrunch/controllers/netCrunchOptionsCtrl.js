@@ -19,7 +19,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('netCrunchOptionsCtrl', function($scope) {
+    module.controller('netCrunchOptionsCtrl', function($scope, netCrunchTrendDataProviderConsts) {
 
       function updatePanel(panel){
         var scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
@@ -36,5 +36,7 @@ define([
       $scope.metricOptionsChange = function (options){
         $scope.get_data();
       };
+
+      $scope.defaultMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT;
     });
 });
