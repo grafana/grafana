@@ -1,5 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
-//
+
 import angular = require('angular');
 import jquery = require('jquery');
 import moment = require('moment');

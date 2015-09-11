@@ -69,11 +69,15 @@ func main() {
 }
 
 func initRuntime() {
-	setting.NewConfigContext(&setting.CommandLineArgs{
+	err := setting.NewConfigContext(&setting.CommandLineArgs{
 		Config:   *configFile,
 		HomePath: *homePath,
 		Args:     flag.Args(),
 	})
+
+	if err != nil {
+		log.Fatal(3, err.Error())
+	}
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))

@@ -6,6 +6,7 @@ package setting
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -355,24 +356,26 @@ func setHomePath(args *CommandLineArgs) {
 	}
 }
 
-func getStaticRootPath(configValue string) string {
-	if configValue != "public" {
-		return configValue
+var skipStaticRootValidation bool = false
+
+func validateStaticRootPath() error {
+	if skipStaticRootValidation {
+		return nil
 	}
 
-	if _, err := os.Stat(path.Join(HomePath, configValue, "css")); err == nil {
-		return configValue
+	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
+		return nil
 	}
 
-	if _, err := os.Stat(path.Join(HomePath, "public_gen", "css")); err == nil {
-		return "public_gen"
+	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
+		StaticRootPath = StaticRootPath + "_gen"
+		return nil
 	}
 
-	log.Fatal(3, "Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", configValue)
-	return ""
+	return errors.New("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?")
 }
 
-func NewConfigContext(args *CommandLineArgs) {
+func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)
 
@@ -391,10 +394,14 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-	StaticRootPath = makeAbsolute(getStaticRootPath(server.Key("static_root_path").String()), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
+
+	if err := validateStaticRootPath(); err != nil {
+		return err
+	}
 
 	// read security settings
 	security := Cfg.Section("security")
@@ -455,6 +462,8 @@ func NewConfigContext(args *CommandLineArgs) {
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
+
+	return nil
 }
 
 func readSessionConfig() {
