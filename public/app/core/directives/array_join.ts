@@ -3,8 +3,9 @@
 import angular = require('angular');
 import _ = require('lodash');
 
-export function ArrayJoin()
-{
+export function ArrayJoin() {
+  'use strict';
+
   return {
     restrict: 'A',
     require: 'ngModel',
@@ -15,7 +16,7 @@ export function ArrayJoin()
       }
 
       function join_array(text) {
-        if(_.isArray(text)) {
+        if (_.isArray(text)) {
           return (text || '').join(',');
         } else {
           return text;
