@@ -6,13 +6,13 @@ module.exports = function(config) {
         collapseWhitespace: true
       },
       expand: true,
-      cwd: '<%= tempDir %>',
+      cwd: '<%= genDir %>',
       src: [
         //'index.html',
         'app/panels/**/*.html',
         'app/partials/**/*.html'
       ],
-      dest: '<%= tempDir %>'
+      dest: '<%= genDir %>'
     }
   };
 };

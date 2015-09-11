@@ -2,7 +2,7 @@ module.exports = function(config) {
   return {
     build: {
       expand: true,
-      cwd:'<%= tempDir %>',
+      cwd:'<%= genDir %>',
       src: [
         'app/controllers/**/*.js',
         'app/plugins/**/*.js',
@@ -15,7 +15,7 @@ module.exports = function(config) {
         'app/app.js',
         'vendor/angular/**/*.js',
       ],
-      dest: '<%= tempDir %>'
+      dest: '<%= genDir %>'
     }
   };
 };

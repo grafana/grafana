@@ -9,10 +9,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'public/test/test-main.js',
-      {pattern: 'public/app/**/*.js', included: false},
-      {pattern: 'public/vendor/**/*.js', included: false},
-      {pattern: 'public/test/**/*.js', included: false},
-      {pattern: 'public/**/*.js', included: false}
+      {pattern: 'public_gen/**/*.js', included: false}
     ],
 
     // list of files to exclude
@@ -28,4 +25,5 @@ module.exports = function(config) {
     singleRun: true,
 
   });
+
 };

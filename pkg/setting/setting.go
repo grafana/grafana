@@ -355,6 +355,23 @@ func setHomePath(args *CommandLineArgs) {
 	}
 }
 
+func getStaticRootPath(configValue string) string {
+	if configValue != "public" {
+		return configValue
+	}
+
+	if _, err := os.Stat(path.Join(HomePath, configValue, "css")); err == nil {
+		return configValue
+	}
+
+	if _, err := os.Stat(path.Join(HomePath, "public_gen", "css")); err == nil {
+		return "public_gen"
+	}
+
+	log.Fatal(3, "Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", configValue)
+	return ""
+}
+
 func NewConfigContext(args *CommandLineArgs) {
 	setHomePath(args)
 	loadConfiguration(args)
@@ -374,7 +391,7 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
+	StaticRootPath = makeAbsolute(getStaticRootPath(server.Key("static_root_path").String()), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
