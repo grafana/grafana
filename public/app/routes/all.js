@@ -1,7 +1,8 @@
 define([
   'angular',
+  '../core/core',
   './dashLoadControllers',
-], function(angular) {
+], function(angular, core) {
   "use strict";
 
   var module = angular.module('grafana.routes');
@@ -41,30 +42,37 @@ define([
       .when('/datasources', {
         templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/datasources/edit/:id', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/datasources/new', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/org/new', {
         templateUrl: 'app/features/org/partials/newOrg.html',
         controller : 'NewOrgCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/org/users', {
         templateUrl: 'app/features/org/partials/orgUsers.html',
         controller : 'OrgUsersCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/org/apikeys', {
         templateUrl: 'app/features/org/partials/orgApiKeys.html',
         controller : 'OrgApiKeysCtrl',
+        resolve: new core.ModuleLoader("features/org/all"),
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',
