@@ -22,8 +22,8 @@ define([
     /* global angular, console */
 
     module
-      .factory('chartDataProvider', function ($http, $q, netCrunchRemoteSession,
-                                              netCrunchChartDataProviderConsts) {
+      .factory('trendDataProvider', function ($http, $q, netCrunchRemoteSession,
+                                              netCrunchTrendDataProviderConsts) {
 
         var PERIOD_TYPE = {
               tpMinutes : 0,
@@ -40,7 +40,9 @@ define([
               delta : 'tqrDelta',
               equal : 'tqrEqual',
               distr : 'tqrDistr'
-            };
+            },
+
+            QUERY_RESULT_ORDER = ['avg', 'min', 'max', 'avail', 'delta', 'equal'];
 
         function calculateChartDataInterval ( dateStart, dateEnd, maxSampleCount ) {
           var min = 60 * 1000,
@@ -127,6 +129,35 @@ define([
           return { ResultMask: [resultMask] };
         }
 
+        function convertResultData(result, resultType) {
+          var resultSeries,
+              convertedData = Object.create(null);
+
+          resultType = resultType.ResultMask[0];
+          resultSeries = QUERY_RESULT_ORDER.filter(function(seriesType){
+            return (resultType.indexOf(QUERY_RESULT_MASKS[seriesType]) >= 0);
+          });
+          resultSeries.forEach(function(seriesName){
+            convertedData[seriesName] = [];
+          });
+
+          result.trend.forEach(function(data){
+            if (Array.isArray(data) === true) {
+              data.forEach(function(value, $index){
+                convertedData[resultSeries[$index]].push(value);
+              });
+            } else {
+              convertedData[resultSeries[0]].push(data);
+            }
+          });
+
+          if (result.distr != null) {
+            convertedData.distr = result.distr;
+          }
+
+          return convertedData;
+        }
+
         function getCounterTrendData (nodeID, counter, dateFrom, dateTo, periodType,
                                       periodInterval, resultType) {
 
@@ -154,7 +185,7 @@ define([
             .then(function (data) {
               return {
                 domain : calculateTimeDomain(dateFrom, periodType, periodInterval, data.trend.length),
-                values : data};
+                values : convertResultData(data, resultType)};
             });
         }
 
@@ -192,7 +223,7 @@ define([
               result = Object.create(null);
 
           dateEnd = dateEnd || moment();
-          maxSampleCount = maxSampleCount || netCrunchChartDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT;
+          maxSampleCount = maxSampleCount || netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT;
           period = period || calculateChartDataInterval(dateStart, dateEnd, maxSampleCount);
 
           counterTrends[PERIOD_TYPE.tpMinutes] = getCounterTrendMinutesData;
