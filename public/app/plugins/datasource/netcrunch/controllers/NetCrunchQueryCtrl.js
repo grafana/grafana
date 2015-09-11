@@ -115,7 +115,7 @@ function (angular, _) {
       function updateCountersList(nodeID) {
         if (nodeID != null) {
           $scope.processingCounters = true;
-          $scope.datasource.getCounters(nodeID).then(function(counters){
+          $scope.datasource.getCountersFromCache(nodeID).then(function(counters){
             $scope.counters = prepareCounterList(counters);
             $scope.processingCounters = false;
           });
@@ -208,7 +208,7 @@ function (angular, _) {
         if (target.nodeID != null) {
           $scope.datasource.getNodeById(target.nodeID).then(function(node) {
             if (node != null) {
-              $scope.datasource.getCounters(target.nodeID).then(function(counters) {
+              $scope.datasource.getCountersFromCache(target.nodeID).then(function(counters) {
                 var counter = $scope.datasource.findCounterByName(counters, target.counterName);
 
                 if (counter != null) {
@@ -259,6 +259,8 @@ function (angular, _) {
 
       function updateTarget (target) {
         resetTargetLocalVars(target);
+        target.series = (target.series == null) ? Object.create(null) : target.series;
+        target.series = $scope.datasource.validateSeriesTypes(target.series);
         return $q.all([updateNode(target), updateCounter(target)]).then(function(){
           updateStatus(target);
         });
@@ -334,6 +336,10 @@ function (angular, _) {
 
       $scope.moveCounterQuery = function (indexFrom, indexTo) {
         _.move($scope.panel.targets, indexFrom, indexTo);
+      };
+
+      $scope.seriesChange = function(target){
+        $scope.get_data();
       };
 
       $scope.nodeSelectionTypeAhead = function(targetIndex) {
