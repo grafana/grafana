@@ -266,14 +266,6 @@ function (angular, _) {
         });
       }
 
-      function updatePanel(panel){
-        var scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
-            rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData;
-
-        panel.scopedVars = scopedVars;
-        panel.scopedVars.rawData = rawData;
-      }
-
       function nodeSelectionTypeAheadShow() {
         $scope.nodeSelectionShow = true;
         $scope.nodeNamePattern = '';
@@ -315,7 +307,7 @@ function (angular, _) {
         var panelTargets = $scope.panel.targets,
             updateTargets = [];
 
-        updatePanel($scope.panel);
+        $scope.panel = $scope.datasource.updatePanel($scope.panel);
         $scope.counterLetters = COUNTER_LETTERS;
         $scope.datasource.nodes.then(function(nodes){
           $scope.nodes = nodes.map(function(node, $index){

@@ -21,16 +21,8 @@ define([
 
     module.controller('netCrunchOptionsCtrl', function($scope, netCrunchTrendDataProviderConsts) {
 
-      function updatePanel(panel){
-        var scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
-          rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData;
-
-        panel.scopedVars = scopedVars;
-        panel.scopedVars.rawData = rawData;
-      }
-
       $scope.init = function(){
-        updatePanel($scope.panel);
+        $scope.panel = $scope.datasource.updatePanel($scope.panel);
       };
 
       $scope.metricOptionsChange = function (options){

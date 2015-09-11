@@ -249,6 +249,21 @@ function (angular, _, moment, config, $, kbn) {
       });
     };
 
+    NetCrunchDatasource.prototype.updatePanel = function(panel){
+      var MAX_SAMPLE_COUNT = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT,
+          scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
+          rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData,
+          setMaxDataPoints = (scopedVars.setMaxDataPoints == null) ? false : scopedVars.setMaxDataPoints,
+          maxDataPoints = (scopedVars.maxDataPoints == null) ? MAX_SAMPLE_COUNT :
+                           scopedVars.maxDataPoints;
+
+      panel.scopedVars = scopedVars;
+      panel.scopedVars.rawData = rawData;
+      panel.scopedVars.setMaxDataPoints = setMaxDataPoints;
+      panel.scopedVars.maxDataPoints = maxDataPoints;
+      return panel;
+    };
+
     NetCrunchDatasource.prototype.query = function(options) {
       var self = this;
 
