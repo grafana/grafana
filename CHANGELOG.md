@@ -41,6 +41,17 @@ require an update to custom data sources for them to work in 2.2. [Read this doc
 data source api change.
 - The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
 
+**Tech (Note for devs)**
+Started using Typescript (transpiled to ES5), uncompiled typescript files and less files are in public folder (in source tree)
+This folder is never modified by build steps. Compiled css and javascript files are put in public_gen, all other files
+that do not undergo transformation are just copied from public to public_gen, it is public_gen that is used by grafana-server
+if it is found.
+
+Grunt & Watch tasks:
+- `grunt` : default task, will remove public_gen, copy over all files from public, do less & typescript compilation
+- `grunt watch`: will watch for changes to less, and typescript files and compile them to public_gen, and for other files it will just copy them to public_gen
+
+
  2.1.3 (2015-08-24)
 
 **Fixes**
