@@ -1,10 +1,8 @@
-///<reference path="../headers/require/require.d.ts" />
-///<reference path="../headers/angularjs/angularjs.d.ts" />
-///<amd-dependency path="angular"/>
-///<amd-dependency path="config"/>
+///<reference path="../headers/common.d.ts" />
+///<amd-dependency path="config" name="config" />
 
-var angular = require('angular');
-var config = require('config');
+import angular = require('angular');
+declare var config : any;
 
 var module = angular.module('grafana.controllers');
 
