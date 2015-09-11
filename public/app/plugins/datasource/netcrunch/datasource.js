@@ -242,6 +242,12 @@ function (angular, _, moment, config, $, kbn) {
       return series;
     };
 
+    NetCrunchDatasource.prototype.seriesTypesSelected = function(series) {
+      return Object.keys(series).some(function(seriesKey){
+        return (series[seriesKey] == true);
+      });
+    };
+
     NetCrunchDatasource.prototype.query = function(options) {
       var self = this;
 
@@ -331,6 +337,11 @@ function (angular, _, moment, config, $, kbn) {
       }
 
       function prepareSeriesDataQuery (target, range, series){
+
+        if (self.seriesTypesSelected(series) === false) {
+          return $q.when([]);
+        }
+
         return trendDataProvider.getCounterTrendData(target.nodeID, target.counterName, range.from,
                                                      range.to, range.periodType, range.periodInterval,
                                                      series)

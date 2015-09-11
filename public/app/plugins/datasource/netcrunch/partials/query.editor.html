@@ -105,6 +105,27 @@
           tabindex="1">
         {{target.localVars.counterDisplayName}}
       </li>
+
+      <li class="tight-form-item">
+        <input class="cr1" id="min{{$index}}" type="checkbox"
+               ng-model="target.series.min"
+               ng-change="seriesChange(target)">
+        <label for="min{{$index}}" class="cr1">Min</label>
+      </li>
+
+      <li class="tight-form-item">
+        <input class="cr1" id="avg{{$index}}" type="checkbox"
+               ng-model="target.series.avg"
+               ng-change="seriesChange(target)">
+        <label for="avg{{$index}}" class="cr1">Avg</label>
+      </li>
+
+      <li class="tight-form-item">
+        <input class="cr1" id="max{{$index}}" type="checkbox"
+               ng-model="target.series.max"
+               ng-change="seriesChange(target)">
+        <label for="max{{$index}}" class="cr1">Max</label>
+      </li>
     </ul>
 
     <div class="clearfix"></div>
