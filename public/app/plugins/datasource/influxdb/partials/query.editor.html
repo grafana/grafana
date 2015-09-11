@@ -112,6 +112,23 @@
 					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()">
 					</metric-segment>
 				</li>
+				<li class="dropdown" ng-if="groupBy.type === 'time'">
+					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
+						<span ng-show="target.fill">
+							fill ({{target.fill}})
+						</span>
+						<span ng-show="!target.fill">
+							no fill
+						</span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a ng-click="setFill('')">no fill</a></li>
+						<li><a ng-click="setFill('0')">fill (0)</a></li>
+						<li><a ng-click="setFill('null')">fill (null)</a></li>
+						<li><a ng-click="setFill('none')">fill (none)</a></li>
+						<li><a ng-click="setFill('previous')">fill (previous)</a></li>
+					</ul>
+				</li>
 				<li ng-if="groupBy.type === 'tag'">
 					<metric-segment-model property="groupBy.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
 				</li>
