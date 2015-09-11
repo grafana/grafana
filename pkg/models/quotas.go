@@ -3,53 +3,152 @@ package models
 import (
 	"errors"
 	"github.com/grafana/grafana/pkg/setting"
+	"reflect"
 	"time"
-)
-
-type QuotaTarget string
-
-const (
-	QUOTA_USER       QuotaTarget = "user" //SQL table to query. ie. "select count(*) from user where org_id=?"
-	QUOTA_DATASOURCE QuotaTarget = "data_source"
-	QUOTA_DASHBOARD  QuotaTarget = "dashboard"
 )
 
 var ErrInvalidQuotaTarget = errors.New("Invalid quota target")
 
-func (q QuotaTarget) IsValid() bool {
-	_, ok := setting.Quota.Default[string(q)]
-	return ok
-}
-
 type Quota struct {
 	Id      int64
 	OrgId   int64
-	Target  QuotaTarget
+	UserId  int64
+	Target  string
 	Limit   int64
 	Created time.Time
 	Updated time.Time
 }
 
-type QuotaDTO struct {
-	OrgId  int64       `json:"org_id"`
-	Target QuotaTarget `json:"target"`
-	Limit  int64       `json:"limit"`
-	Used   int64       `json:"used"`
+type QuotaScope struct {
+	Name         string
+	Target       string
+	DefaultLimit int64
 }
 
-type GetQuotaByTargetQuery struct {
-	Target QuotaTarget
+type OrgQuotaDTO struct {
+	OrgId  int64  `json:"org_id"`
+	Target string `json:"target"`
+	Limit  int64  `json:"limit"`
+	Used   int64  `json:"used"`
+}
+
+type UserQuotaDTO struct {
+	UserId int64  `json:"user_id"`
+	Target string `json:"target"`
+	Limit  int64  `json:"limit"`
+	Used   int64  `json:"used"`
+}
+
+type GlobalQuotaDTO struct {
+	Target string `json:"target"`
+	Limit  int64  `json:"limit"`
+	Used   int64  `json:"used"`
+}
+
+type GetOrgQuotaByTargetQuery struct {
+	Target  string
+	OrgId   int64
+	Default int64
+	Result  *OrgQuotaDTO
+}
+
+type GetOrgQuotasQuery struct {
 	OrgId  int64
-	Result *QuotaDTO
+	Result []*OrgQuotaDTO
 }
 
-type GetQuotasQuery struct {
-	OrgId  int64
-	Result []*QuotaDTO
+type GetUserQuotaByTargetQuery struct {
+	Target  string
+	UserId  int64
+	Default int64
+	Result  *UserQuotaDTO
 }
 
-type UpdateQuotaCmd struct {
-	Target QuotaTarget `json:"target"`
-	Limit  int64       `json:"limit"`
-	OrgId  int64       `json:"-"`
+type GetUserQuotasQuery struct {
+	UserId int64
+	Result []*UserQuotaDTO
+}
+
+type GetGlobalQuotaByTargetQuery struct {
+	Target  string
+	Default int64
+	Result  *GlobalQuotaDTO
+}
+
+type UpdateOrgQuotaCmd struct {
+	Target string `json:"target"`
+	Limit  int64  `json:"limit"`
+	OrgId  int64  `json:"-"`
+}
+
+type UpdateUserQuotaCmd struct {
+	Target string `json:"target"`
+	Limit  int64  `json:"limit"`
+	UserId int64  `json:"-"`
+}
+
+func GetQuotaScopes(target string) ([]QuotaScope, error) {
+	scopes := make([]QuotaScope, 0)
+	switch target {
+	case "user":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.User},
+			QuotaScope{Name: "org", Target: "org_user", DefaultLimit: setting.Quota.Org.User},
+		)
+		return scopes, nil
+	case "org":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Org},
+			QuotaScope{Name: "user", Target: "org_user", DefaultLimit: setting.Quota.User.Org},
+		)
+		return scopes, nil
+	case "dashboard":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Dashboard},
+			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.Dashboard},
+		)
+		return scopes, nil
+	case "data_source":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.DataSource},
+			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.DataSource},
+		)
+		return scopes, nil
+	case "api_key":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.ApiKey},
+			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.ApiKey},
+		)
+		return scopes, nil
+	case "session":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Session},
+		)
+		return scopes, nil
+	default:
+		return scopes, ErrInvalidQuotaTarget
+	}
+}
+
+func QuotaToMap(q interface{}) map[string]int64 {
+	qMap := make(map[string]int64)
+	typ := reflect.TypeOf(q)
+	val := reflect.ValueOf(q)
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+		val = val.Elem()
+	}
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		name := field.Tag.Get("target")
+		if name == "" {
+			name = field.Name
+		}
+		if name == "-" {
+			continue
+		}
+		value := val.Field(i)
+		qMap[name] = value.Int()
+	}
+	return qMap
 }
