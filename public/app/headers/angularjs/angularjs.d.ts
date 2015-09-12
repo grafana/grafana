@@ -6,7 +6,6 @@
 
 /// <reference path="../jquery/jquery.d.ts" />
 
-declare var angular: angular.IAngularStatic;
 
 // Support for painless dependency injection
 interface Function {
@@ -17,6 +16,7 @@ interface Function {
 import ng = angular;
 // Support AMD require
 declare module 'angular' {
+    var angular: angular.IAngularStatic;
     export = angular;
 }
 

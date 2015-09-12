@@ -18,7 +18,7 @@ module.exports = function(config) {
 
     typescript: {
       files: ['<%= srcDir %>/app/**/*.ts'],
-      tasks: ['typescript:build'],
+      tasks: ['tslint', 'typescript:build'],
       options: {
         spawn: false
       }
