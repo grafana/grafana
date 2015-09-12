@@ -19,7 +19,7 @@
 
 		<li class="dropdown">
 
-			<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="loadTimeOptions();">
+			<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="ctrl.loadTimeOptions();">
 				<i class="fa fa-clock-o"></i>
 				<span ng-bind="time.rangeString"></span>
 				<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
@@ -29,7 +29,7 @@
 			<!-- lacy load this -->
 			<ul class="dropdown-menu" ng-if="time_options" >
 				<li bindonce ng-repeat='option in time_options'>
-					<a ng-click="setRelativeFilter(option)" bo-text="option.text"></a>
+					<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.text"></a>
 				</li>
 
 				<!-- Auto refresh submenu -->
@@ -44,7 +44,7 @@
 						</li>
 					</ul>
 				</li>
-				<li><a ng-click="customTime()">Custom</a></li>
+				<li><a ng-click="ctrl.customTime()">Custom</a></li>
 			</ul>
 
 		</li>

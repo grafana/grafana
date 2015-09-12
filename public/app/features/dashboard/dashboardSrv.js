@@ -31,8 +31,8 @@ function (angular, $, kbn, _, moment) {
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
-      this.timepicker = data.timepicker || {};
       this.time = data.time || { from: 'now-6h', to: 'now' };
+      this.timepicker = data.timepicker || {};
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;

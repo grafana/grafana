@@ -1,6 +1,5 @@
 define([
   './dashUpload',
-  './grafanaSimplePanel',
   './dashEditLink',
   './ngModelOnBlur',
   './misc',
