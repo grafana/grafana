@@ -31,7 +31,6 @@ define([
       it('should have default properties', function() {
         expect(model.rows.length).to.be(0);
       });
-
     });
 
     describe('when getting next panel id', function() {
