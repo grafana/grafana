@@ -15,7 +15,7 @@ module.exports = function(config) {
           "interface-name": true,
           "semicolon": true,
           "use-strict": [true, "check-module", "check-function" ],
-          "whitespace": [true, "check-branch", "check-decl", "check-operator", "check-separator", "check-type"],
+          "whitespace": [true, "check-branch", "check-decl", "check-type"],
         }
       }
     }

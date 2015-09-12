@@ -3,7 +3,7 @@
 import angular = require('angular');
 import _ = require('lodash');
 
-export function ArrayJoin() {
+export function arrayJoin() {
   'use strict';
 
   return {
@@ -29,5 +29,5 @@ export function ArrayJoin() {
   };
 }
 
-angular.module('grafana.directives').directive('arrayJoin', ArrayJoin);
+angular.module('grafana.directives').directive('arrayJoin', arrayJoin);
 

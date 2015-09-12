@@ -31,7 +31,7 @@ function (angular, $, kbn, _, moment) {
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
-      this.nav = data.nav || [];
+      this.timepicker = data.timepicker || {};
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
@@ -40,11 +40,6 @@ function (angular, $, kbn, _, moment) {
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
       this.links = data.links || [];
-
-      if (this.nav.length === 0) {
-        this.nav.push({ type: 'timepicker' });
-      }
-
       this._updateSchema(data);
       this._initMeta(meta);
     }
@@ -232,9 +227,9 @@ function (angular, $, kbn, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 6;
+      this.schemaVersion = 7;
 
-      if (oldVersion === 6) {
+      if (oldVersion === 7) {
         return;
       }
 
@@ -327,6 +322,11 @@ function (angular, $, kbn, _, moment) {
           if (variable.type === void 0) { variable.type = 'query'; }
           if (variable.allFormat === void 0) { variable.allFormat = 'glob'; }
         }
+      }
+
+      if (oldVersion < 7 && old.nav && old.nav.length) {
+        this.timepicker = old.nav[0];
+        delete this.nav;
       }
 
       if (panelUpgrades.length === 0) {
