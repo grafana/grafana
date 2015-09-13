@@ -202,8 +202,6 @@ export function settingsDirective() {
     templateUrl: 'app/features/dashboard/timepicker/settings.html',
     controller: TimePickerCtrl,
     scope: true,
-    link: function() {
-    }
   };
 }
 
