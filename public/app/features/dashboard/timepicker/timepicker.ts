@@ -341,11 +341,15 @@ export function settingsDirective() {
     restrict: 'E',
     templateUrl: 'app/features/dashboard/timepicker/settings.html',
     controller: TimePickerCtrl,
+<<<<<<< 2a1ba0a6384c43d30e68745edf312ba52be6aeef
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
       dashboard: "="
     }
+=======
+    scope: true,
+>>>>>>> tech(nodejs upgrade): upgraded to nodejs 4.0 for grunt build
   };
 }
 
