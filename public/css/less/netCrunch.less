@@ -46,12 +46,13 @@
 
 .counters-ahead {
   .nodes-ahead;
+  .align-items(flex-start);
   height: 300px;
-  width: @counter-width + 10;
+  margin-left: 0px;
+  width: @counter-width + 12;
 }
 
 .net-crunch-container {
-  .flex(1);
   .flex-column;
   .flex-wrap(wrap);
   .align-content(flex-start);
@@ -69,20 +70,20 @@
 }
 
 input[type="text"].node-input {
-  .flex(1);
   background-color: @tile-background-color;
   border: none;
   padding-left: 9px;
   height: @tile-height;
+  line-height: @tile-height;
   width: @tile-width - 5;
 }
 
 input[type="text"].counter-input {
-  .flex(1);
   background-color: @tile-background-color;
   border: none;
   padding-left: 10px;
   height: @tile-height;
+  line-height: @tile-height;
   width: @counter-width - 5;
 }
 
@@ -110,9 +111,9 @@ input[type="text"].counter-input {
   background-color: @tile-background-color;
   border-bottom : 1px solid lighten(@tile-background-color, 3);
   cursor : pointer;
-  margin-bottom: 1px;
+  margin-bottom: 0;
   margin-right: 1px;
-  width: @tile-width;
+  width: @tile-width - 10;
   height: @tile-height;
   overflow : hidden;
 
@@ -145,6 +146,7 @@ input[type="text"].counter-input {
 .counters-levels {
   .net-crunch-container;
   .flex-wrap(nowrap);
+  display: block;
   position: absolute;
   padding-left: 10px;
   margin-bottom: 10px;
@@ -190,8 +192,10 @@ input[type="text"].counter-input {
 
   .tile {
     border-bottom: none;
-    padding-top: 10px;
-    padding-bottom: 5px;
+    margin-right: 0;
+    padding-top: 9px;
+    padding-bottom: 7px;
+    width: @tile-width;
 
     &.spinner {
       padding-top: 8px;
@@ -208,6 +212,7 @@ input[type="text"].counter-input {
     font-size: 12px;
     padding-top: 16px;
     padding-bottom: 14px;
+    height: @tile-height - 14;
     width: @counter-width;
 
     &:hover {
@@ -223,4 +228,8 @@ input[type="text"].counter-input {
       .justify-content(center);
     }
   }
+}
+
+input[type="text"].net-crunch-tight-input {
+  height: 36px;
 }
