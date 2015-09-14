@@ -10,8 +10,7 @@
 /* global angular, console */
 
 define([
-    'angular',
-    'lodash'
+    'angular'
   ],
 
   function (angular) {
@@ -19,6 +18,8 @@ define([
     'use strict';
 
     angular.module('grafana.const').constant('netCrunchTrendDataProviderConsts', {
-      DEFAULT_MAX_SAMPLE_COUNT: 200
+      DEFAULT_MIN_MAX_SAMPLE_COUNT: 10,
+      DEFAULT_MAX_SAMPLE_COUNT: 200,
+      DEFAULT_MAX_MAX_SAMPLE_COUNT: 5000
     })
-});
+  });

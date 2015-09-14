@@ -234,14 +234,17 @@
         <label for="setMaxDataPoints" class="cr1">Max data points</label>
       </li>
 
-      <li ng-show="panel.scopedVars.setMaxDataPoints && !panel.scopedVars.rawData">
+      <li ng-show="panel.scopedVars.setMaxDataPoints && !panel.scopedVars.rawData"
+          bs-tooltip="'Value should be from {{defaultMinMaxDataPoints}} to
+                                            {{defaultMaxMaxDataPoints}}.'">
         <input type="text"
                class="input-mini tight-form-input"
                ng-model="panel.scopedVars.maxDataPoints"
+               ng-pattern = "maxDataPointsPattern" required
                data-placement = "right"
                ng-model-onblur ng-change="metricOptionsChange(panel.scopedVars)"
                spellcheck = 'false'
-               placeholder="auto">
+               placeholder="200">
       </li>
     </ul>
     <div class="clearfix"></div>

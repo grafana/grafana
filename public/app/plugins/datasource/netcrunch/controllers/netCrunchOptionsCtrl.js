@@ -21,14 +21,21 @@ define([
 
     module.controller('netCrunchOptionsCtrl', function($scope, netCrunchTrendDataProviderConsts) {
 
-      $scope.init = function(){
+      function prepareMaxDataPointsPattern() {
+        return /^0*([1-9][0-9]|[1-9][0-9][0-9]?|[1-4][0-9][0-9][0-9]|5000)$/
+      }
+
+      $scope.init = function() {
         $scope.panel = $scope.datasource.updatePanel($scope.panel);
       };
 
-      $scope.metricOptionsChange = function (options){
+      $scope.metricOptionsChange = function (options) {
         $scope.get_data();
       };
 
+      $scope.defaultMinMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MIN_MAX_SAMPLE_COUNT;
       $scope.defaultMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT;
+      $scope.defaultMaxMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MAX_MAX_SAMPLE_COUNT;
+      $scope.maxDataPointsPattern = prepareMaxDataPointsPattern();
     });
-});
+  });

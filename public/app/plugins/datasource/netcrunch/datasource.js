@@ -62,7 +62,7 @@ function (angular, _, moment, config, $, kbn) {
       this.cache.counters = Object.create(null);
     }
 
-    QueryCache.prototype.getCounters = function (nodeId){
+    QueryCache.prototype.getCounters = function (nodeId) {
       var countersCache = this.cache.counters,
           cachedNodeCounters = countersCache[nodeId],
           countersQuery;
@@ -100,13 +100,13 @@ function (angular, _, moment, config, $, kbn) {
         var LOGIN_STATUS_ID = 0;
 
         if (status[LOGIN_STATUS_ID] === true) {
-          networkDataProvider.init().then(function(){
+          networkDataProvider.init().then(function() {
 
             $rootScope.$on('host-data-changed', function() {
               var nodes = atlasTree.nodes;
 
               nodes.table = [];
-              Object.keys(nodes).forEach(function(nodeId){
+              Object.keys(nodes).forEach(function(nodeId) {
                 nodes.table.push(nodes[nodeId]);
               });
 
@@ -155,9 +155,9 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.getCounters = function (nodeId) {
-      return this.ready.then(function(){
-        return countersDataProvider.getCounters(nodeId).then(function(counters){
-          return countersDataProvider.prepareCountersForMonitors(counters).then(function(counters){
+      return this.ready.then(function() {
+        return countersDataProvider.getCounters(nodeId).then(function(counters) {
+          return countersDataProvider.prepareCountersForMonitors(counters).then(function(counters) {
 
             counters.table = [];
             Object.keys(counters).forEach(function(monitorID) {
@@ -174,14 +174,14 @@ function (angular, _, moment, config, $, kbn) {
       });
     };
 
-    NetCrunchDatasource.prototype.getCountersFromCache = function(nodeId){
+    NetCrunchDatasource.prototype.getCountersFromCache = function(nodeId) {
       return this.cache.getCounters(nodeId);
     };
 
-    NetCrunchDatasource.prototype.findCounterByName = function(counters, counterName){
+    NetCrunchDatasource.prototype.findCounterByName = function(counters, counterName) {
       var existingCounter = null;
 
-      counters.table.some(function(counter){
+      counters.table.some(function(counter) {
         if (counter.name === counterName) {
           existingCounter = counter;
           return true;
@@ -213,7 +213,7 @@ function (angular, _, moment, config, $, kbn) {
           newNodeList = netCrunchNodesFilter(newNodeList, pattern);
           result = $q.when(newNodeList);
         } else {
-          return processingDataWorker.filterAndOrderMapNodes(nodes, null).then(function(result){
+          return processingDataWorker.filterAndOrderMapNodes(nodes, null).then(function(result) {
             return netCrunchNodesFilter(result, pattern);
           });
         }
@@ -223,16 +223,16 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.updateNodeList = function(nodes) {
-      return this.filterNodeList(nodes, '').then(function(updated){
+      return this.filterNodeList(nodes, '').then(function(updated) {
         updated.nodesMap = Object.create(null);
-        updated.forEach(function(node){
+        updated.forEach(function(node) {
           updated.nodesMap[node.values.Id] = node;
         });
         return updated;
       });
     };
 
-    NetCrunchDatasource.prototype.validateSeriesTypes = function(series){
+    NetCrunchDatasource.prototype.validateSeriesTypes = function(series) {
       series.min = (series.min == null) ? false : series.min;
       series.avg = (series.avg == null) ? true : series.avg;
       series.max = (series.max == null) ? false : series.max;
@@ -244,12 +244,12 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.seriesTypesSelected = function(series) {
-      return Object.keys(series).some(function(seriesKey){
+      return Object.keys(series).some(function(seriesKey) {
         return (series[seriesKey] == true);
       });
     };
 
-    NetCrunchDatasource.prototype.updatePanel = function(panel){
+    NetCrunchDatasource.prototype.updatePanel = function(panel) {
       var MAX_SAMPLE_COUNT = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT,
           scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
           rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData,
@@ -291,21 +291,40 @@ function (angular, _, moment, config, $, kbn) {
         }
       }
 
-      function calculateTimeRange(rangeFrom, rangeTo) {
-        var maxSampleCount = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT,
-            period = trendDataProvider.calculateChartDataInterval(rangeFrom, rangeTo, maxSampleCount);
+      function calculateTimeRange(rangeFrom, rangeTo, maxDataPoints) {
+        var period = trendDataProvider.calculateChartDataInterval(rangeFrom, rangeTo, maxDataPoints);
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
       function calculateRAWTimeRange(rangeFrom, rangeTo) {
         var period = {
-              periodInterval : 1,
-              periodType : trendDataProvider.PERIOD_TYPE.tpMinutes
+          periodInterval : 1,
+          periodType : trendDataProvider.PERIOD_TYPE.tpMinutes
         };
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
-      function prepareTimeRange (rangeFrom, rangeTo, rawData) {
+      function calculateMaxDataPoints (setMaxDataPoints, maxDataPoints) {
+        var maxDataPointsInt,
+            minMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MIN_MAX_SAMPLE_COUNT,
+            maxMaxDataPoints = netCrunchTrendDataProviderConsts.DEFAULT_MAX_MAX_SAMPLE_COUNT,
+            result = netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT;
+
+        function isNumber(value) {
+          return !isNaN(parseFloat(value)) && isFinite(value);
+        }
+
+        if ((setMaxDataPoints === true) && (isNumber(maxDataPoints) === true)) {
+          maxDataPointsInt = Math.round(parseFloat(maxDataPoints));
+          if ((maxDataPointsInt >= minMaxDataPoints) && (maxDataPointsInt <= maxMaxDataPoints)) {
+            result = maxDataPointsInt;
+          }
+        }
+
+        return result;
+      }
+
+      function prepareTimeRange (rangeFrom, rangeTo, rawData, maxDataPoints) {
         var range = null;
 
         if (rawData === true) {
@@ -317,7 +336,7 @@ function (angular, _, moment, config, $, kbn) {
                          RAW_TIME_RANGE_EXCEEDED_WARNING_TEXT, 'warning');
           }
         } else {
-          range = calculateTimeRange(rangeFrom, rangeTo);
+          range = calculateTimeRange(rangeFrom, rangeTo, maxDataPoints);
         }
 
         return range;
@@ -327,17 +346,17 @@ function (angular, _, moment, config, $, kbn) {
         var nodeName,
             counterDisplayName;
 
-        nodeName = self.nodes.then(function(nodesData){
+        nodeName = self.nodes.then(function(nodesData) {
           var nodeData = nodesData.nodesMap[target.nodeID];
           return (nodeData != null) ? nodeData.values.Name : null;
         });
 
-        counterDisplayName = self.getCountersFromCache(target.nodeID).then(function(counters){
+        counterDisplayName = self.getCountersFromCache(target.nodeID).then(function(counters) {
           var counterData = self.findCounterByName(counters, target.counterName);
           return (counterData != null) ? counterData.displayName : null;
         });
 
-        return $q.all([nodeName, counterDisplayName]).then(function(counterData){
+        return $q.all([nodeName, counterDisplayName]).then(function(counterData) {
           var nodeName = counterData[0],
               counterDisplayName = counterData[1];
 
@@ -382,7 +401,7 @@ function (angular, _, moment, config, $, kbn) {
         var targetDataQuery = null;
 
         if ((target.hide !== true) && (target.counterDataComplete === true)) {
-          targetDataQuery = validateCounterData(target).then(function(counterData){
+          targetDataQuery = validateCounterData(target).then(function(counterData) {
             var query = null,
                 seriesDataQuery,
                 seriesTypes;
@@ -427,8 +446,8 @@ function (angular, _, moment, config, $, kbn) {
                   counterName = baseCounterName;
                 }
                 counterSeries.data.push({
-                    target: counterName,
-                    datapoints: trendDataProvider.grafanaDataConverter(serie.dataPoints)
+                  target: counterName,
+                  datapoints: trendDataProvider.grafanaDataConverter(serie.dataPoints)
                 });
               });
             }
@@ -443,9 +462,15 @@ function (angular, _, moment, config, $, kbn) {
           var targets = options.targets || [],
               scopedVars = (options.scopedVars == null) ? {} : options.scopedVars,
               rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData,
+              setMaxDataPoints = (scopedVars.setMaxDataPoints == null) ? false :
+                                  scopedVars.setMaxDataPoints,
+              maxDataPoints = (scopedVars.maxDataPoints == null) ?
+                               netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT :
+                               scopedVars.maxDataPoints,
               rangeFrom = moment(kbn.parseDate(options.range.from)).startOf('minute'),
               rangeTo = moment(kbn.parseDate(options.range.to)).startOf('minute'),
-              range = prepareTimeRange(rangeFrom, rangeTo, rawData),
+              rangeMaxDataPoints = calculateMaxDataPoints(setMaxDataPoints, maxDataPoints),
+              range = prepareTimeRange(rangeFrom, rangeTo, rawData, rangeMaxDataPoints),
               dataQueries = [];
 
           if (range != null) {
@@ -479,9 +504,9 @@ function (angular, _, moment, config, $, kbn) {
       return $q.when([]);
     };
 
-    $rootScope.$on('netCrunch-datasource-hosts-changed', function(){});
+    $rootScope.$on('netCrunch-datasource-hosts-changed', function() {});
 
-    $rootScope.$on('netCrunch-datasource-network-atlas-changed', function(){});
+    $rootScope.$on('netCrunch-datasource-network-atlas-changed', function() {});
 
     return NetCrunchDatasource;
   });
