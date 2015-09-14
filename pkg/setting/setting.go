@@ -363,7 +363,7 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(StaticRootPath + "css"); err == nil {
+	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
 		return nil
 	}
 
