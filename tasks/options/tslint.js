@@ -9,7 +9,7 @@ module.exports = function(config) {
       configuration: {
         rules: {
           curly: true,
-          align: [true, "parameters", "arguments", "statements"],
+          align: [true, "parameters", "statements"],
           indent: [true, "spaces"],
           "class-name": true,
           "interface-name": true,
