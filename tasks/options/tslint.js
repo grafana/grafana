@@ -14,7 +14,7 @@ module.exports = function(config) {
           "class-name": true,
           "interface-name": true,
           "semicolon": true,
-          "use-strict": [true, "check-module", "check-function" ],
+          "use-strict": [false, "check-module", "check-function"],
           "whitespace": [true, "check-branch", "check-decl", "check-type"],
         }
       }

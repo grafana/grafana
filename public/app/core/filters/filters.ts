@@ -1,4 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
+'use strict';
 
 import angular = require('angular');
 import jquery = require('jquery');
@@ -59,8 +60,8 @@ module.filter('noXml', function() {
   };
 });
 
-module.filter('interpolateTemplateVars', function(templateSrv) {
-  var interpolateTemplateVars : any = function (text, scope) {
+module.filter('interpolateTemplateVars', function (templateSrv) {
+  var filterFunc : any = function (text, scope) {
     if (scope.panel) {
       return templateSrv.replaceWithText(text, scope.panel.scopedVars);
     } else {
@@ -68,10 +69,8 @@ module.filter('interpolateTemplateVars', function(templateSrv) {
     }
   };
 
-  interpolateTemplateVars.$stateful = true;
-
-  return interpolateTemplateVars;
+  filterFunc.$stateful = true;
+  return filterFunc;
 });
 
-// dummy export
 export {};
