@@ -363,6 +363,10 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
+	if _, err := os.Stat(StaticRootPath + "css"); err == nil {
+		return nil
+	}
+
 	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
 		StaticRootPath = StaticRootPath + "_gen"
 		return nil
