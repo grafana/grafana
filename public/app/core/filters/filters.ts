@@ -1,20 +1,18 @@
 ///<reference path="../../headers/common.d.ts" />
-'use strict';
 
 import angular = require('angular');
 import jquery = require('jquery');
 import moment = require('moment');
 import _ = require('lodash');
+import coreModule from '../core_module';
 
-var module = angular.module('grafana.filters');
-
-module.filter('stringSort', function() {
+coreModule.filter('stringSort', function() {
   return function(input) {
     return input.sort();
   };
 });
 
-module.filter('slice', function() {
+coreModule.filter('slice', function() {
   return function(arr, start, end) {
     if (!_.isUndefined(arr)) {
       return arr.slice(start, end);
@@ -22,7 +20,7 @@ module.filter('slice', function() {
   };
 });
 
-module.filter('stringify', function() {
+coreModule.filter('stringify', function() {
   return function(arr) {
     if (_.isObject(arr) && !_.isArray(arr)) {
       return angular.toJson(arr);
@@ -32,7 +30,7 @@ module.filter('stringify', function() {
   };
 });
 
-module.filter('moment', function() {
+coreModule.filter('moment', function() {
   return function(date, mode) {
     switch (mode) {
       case 'ago':
@@ -42,7 +40,7 @@ module.filter('moment', function() {
   };
 });
 
-module.filter('noXml', function() {
+coreModule.filter('noXml', function() {
   var noXml = function(text) {
   return _.isString(text)
     ? text
@@ -60,7 +58,7 @@ module.filter('noXml', function() {
   };
 });
 
-module.filter('interpolateTemplateVars', function (templateSrv) {
+coreModule.filter('interpolateTemplateVars', function (templateSrv) {
   var filterFunc : any = function (text, scope) {
     if (scope.panel) {
       return templateSrv.replaceWithText(text, scope.panel.scopedVars);

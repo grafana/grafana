@@ -1,6 +1,5 @@
 define([
   'angular',
-  'app',
   'jquery',
   'lodash',
   'kbn',
@@ -11,7 +10,7 @@ define([
   './graph',
   './legend',
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');

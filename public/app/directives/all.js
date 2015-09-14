@@ -13,7 +13,6 @@ define([
   './grafanaVersionCheck',
   './dropdown.typeahead',
   './topnav',
-  './giveFocus',
   './annotationTooltip',
   './passwordStrenght',
 ], function () {});
