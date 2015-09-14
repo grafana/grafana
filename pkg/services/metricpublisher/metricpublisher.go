@@ -1,9 +1,6 @@
 package metricpublisher
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,13 +8,8 @@ import (
 	met "github.com/grafana/grafana/pkg/metric"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/nsqio/go-nsq"
+	msg "github.com/raintank/raintank-metric/msg"
 	"github.com/raintank/raintank-metric/schema"
-)
-
-// identifier of message format
-const (
-	msgFormatMetricDefinitionArrayJson = iota
-	msgFormatMetricDataArrayMsgp
 )
 
 const maxMpubSize = 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
@@ -94,45 +86,23 @@ func Publish(metrics []*schema.MetricData) error {
 
 	subslices := Reslice(metrics, 3500)
 
-	//version := msgFormatMetricDefinitionArrayJson
-	version := msgFormatMetricDataArrayMsgp
 	for _, subslice := range subslices {
-		buf := new(bytes.Buffer)
-		err := binary.Write(buf, binary.LittleEndian, uint8(version))
-		if err != nil {
-			log.Fatal(0, "binary.Write failed: %s", err.Error())
-		}
 		id := time.Now().UnixNano()
-		binary.Write(buf, binary.BigEndian, id)
+		data, err := msg.CreateMsg(subslice, id, msg.FormatMetricDataArrayMsgp)
 		if err != nil {
-			log.Fatal(0, "binary.Write failed: %s", err.Error())
-		}
-		var msg []byte
-		switch version {
-		case msgFormatMetricDefinitionArrayJson:
-			msg, err = json.Marshal(subslice)
-		case msgFormatMetricDataArrayMsgp:
-			m := schema.MetricDataArray(subslice)
-			msg, err = m.MarshalMsg(nil)
-		}
-		if err != nil {
-			return fmt.Errorf("Failed to marshal metrics payload: %s", err)
-		}
-		_, err = buf.Write(msg)
-		if err != nil {
-			log.Fatal(0, "buf.Write failed: %s", err.Error())
+			log.Fatal(0, "Fatal error creating metric message: %s", err)
 		}
 		metricsPublished.Inc(int64(len(subslice)))
 		messagesPublished.Inc(1)
-		messagesSize.Value(int64(buf.Len()))
+		messagesSize.Value(int64(len(data)))
 		metricsPerMessage.Value(int64(len(subslice)))
 		pre := time.Now()
-		err = globalProducer.Publish(topic, buf.Bytes())
+		err = globalProducer.Publish(topic, data)
 		publishDuration.Value(time.Since(pre))
 		if err != nil {
 			log.Fatal(0, "can't publish to nsqd: %s", err)
 		}
-		log.Info("published metrics %d size=%d", id, buf.Len())
+		log.Info("published metrics %d size=%d", id, len(data))
 	}
 
 	//globalProducer.Stop()
