@@ -134,6 +134,7 @@ define([
           compile: function($element){
 
               var ngTree = $element.eq(0),
+                  ngTreeID = $element.attr('id'),
                   ngTreeExpression = ngTree.attr('ng-tree'),
                   expressionMatches = /^\s*(\S+)\s+in\s+([\S\s]+?)?$/.exec(ngTreeExpression),
                   ngTreeItem = expressionMatches[1],
@@ -1169,6 +1170,14 @@ define([
                           }
                       }
 
+                      function registerEventListeners() {
+                        if ((ngTreeID != null) && (ngTreeID !== '')){
+                          $scope.$on('ngTreeRedraw(' + ngTreeID + ')', function() {
+                            updateHandler();
+                          });
+                        }
+                      }
+
                       scrollParent = checkScrollParent(scrollParent);
                       scrollParentContainer = scrollParent[0];
                       treeConfig = getTreeConfig(ngTree, $scope);
@@ -1216,6 +1225,8 @@ define([
                       $scope.$on('$destroy', function(){
                           $window.removeEventListener('resize', updateHandler, true);
                       });
+
+                      registerEventListeners();
                   }
               };
           }
