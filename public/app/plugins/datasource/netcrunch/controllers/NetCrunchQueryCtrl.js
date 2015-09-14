@@ -280,10 +280,9 @@ function (angular, _) {
     }
 
     function counterSelectionTypeAheadShow() {
-      $scope.counterNamePattern = 'X';
       $scope.counterSelectionShow = true;
       $timeout(function() {
-        $scope.counterNamePattern = '';
+        $scope.$broadcast('ngTreeRedraw(counters-list)');
       }, 0);
       $scope.counterSelectionFocus = true;
     }
