@@ -69,12 +69,12 @@
           <div class="rt-box-interior-section">
             <h3><span class="emphasis">1. </span> Have your API key <a href="/org/apikeys">Manage API keys</a></h3>
             <div ng-hide="showApiKey">
-              <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
+              <a class="rt-btn" ng-click="apiKey()">Generate New API Key</a>
             </div>
             <div ng-hide="!showApiKey">
               <span class="helper success">New API key generated</span>
               <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
-              <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
+              <span class="helper">You will only be able to view this key here <span class="emphasis">once</span>, so be sure to copy it and keep it safe.</span>
             </div>
           </div>
           <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
