@@ -1,13 +1,10 @@
 define([
-  'angular',
-  'kbn'
+  '../core_module',
 ],
-function (angular) {
+function (coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.directives');
-
-  module.directive('confirmClick', function() {
+  coreModule.directive('confirmClick', function() {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {

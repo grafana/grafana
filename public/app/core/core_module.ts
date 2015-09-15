@@ -2,4 +2,4 @@
 
 import angular = require('angular');
 
-export default angular.module('grafana.core', []);
+export = angular.module('grafana.core', []);
