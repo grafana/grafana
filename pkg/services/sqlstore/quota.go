@@ -57,7 +57,7 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 		return err
 	}
 
-	defaultQuotas := m.QuotaToMap(setting.Quota.Org)
+	defaultQuotas := setting.Quota.Org.ToMap()
 
 	seenTargets := make(map[string]bool)
 	for _, q := range quotas {
@@ -157,7 +157,7 @@ func GetUserQuotas(query *m.GetUserQuotasQuery) error {
 		return err
 	}
 
-	defaultQuotas := m.QuotaToMap(setting.Quota.User)
+	defaultQuotas := setting.Quota.User.ToMap()
 
 	seenTargets := make(map[string]bool)
 	for _, q := range quotas {
