@@ -1,14 +1,12 @@
 define([
-  'angular',
   'jquery',
-  'lodash'
+  'lodash',
+  '../core_module',
 ],
-function (angular, $, _) {
+function ($, _, coreModule) {
   'use strict';
 
-  angular
-  .module('grafana.directives')
-  .directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+  coreModule.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
 
     function sanitizeString(str) {
       try {

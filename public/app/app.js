@@ -73,7 +73,6 @@ function (angular, $, _, appLevelRequire) {
     'services/all',
     'features/all',
     'controllers/all',
-    'directives/all',
     'components/partials',
     'routes/all',
   ];

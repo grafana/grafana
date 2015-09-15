@@ -1,9 +1,8 @@
 define([
-  'directives/valueSelectDropdown',
+  'core/directives/value_select_dropdown',
 ],
 function () {
   'use strict';
-
 
   describe("SelectDropdownCtrl", function() {
     var scope;
@@ -11,7 +10,7 @@ function () {
     var tagValuesMap = {};
     var rootScope;
 
-    beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.core'));
     beforeEach(inject(function($controller, $rootScope, $q) {
       rootScope = $rootScope;
       scope = $rootScope.$new();

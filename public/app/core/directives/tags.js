@@ -1,9 +1,10 @@
 define([
   'angular',
   'jquery',
-  'bootstrap-tagsinput'
+  '../core_module',
+  'bootstrap-tagsinput',
 ],
-function (angular, $) {
+function (angular, $, coreModule) {
   'use strict';
 
   function djb2(str) {
@@ -38,9 +39,7 @@ function (angular, $) {
     element.css("border-color", borderColor);
   }
 
-  angular
-  .module('grafana.directives')
-  .directive('tagColorFromName', function() {
+  coreModule.directive('tagColorFromName', function() {
     return {
       scope: { tagColorFromName: "=" },
       link: function (scope, element) {
@@ -49,9 +48,7 @@ function (angular, $) {
     };
   });
 
-  angular
-  .module('grafana.directives')
-  .directive('bootstrapTagsinput', function() {
+  coreModule.directive('bootstrapTagsinput', function() {
 
     function getItemProperty(scope, property) {
       if (!property) {

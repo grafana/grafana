@@ -1,13 +1,11 @@
 define([
-  'angular',
-  'kbn'
+  'kbn',
+  '../core_module',
 ],
-function (angular, kbn) {
+function (kbn, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.directives');
-
-  module.directive('dashUpload', function(timer, alertSrv, $location) {
+  coreModule.directive('dashUpload', function(timer, alertSrv, $location) {
     return {
       restrict: 'A',
       link: function(scope) {

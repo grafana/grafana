@@ -4,7 +4,7 @@ import angular = require('angular');
 import jquery = require('jquery');
 import moment = require('moment');
 import _ = require('lodash');
-import coreModule from '../core_module';
+import coreModule = require('../core_module');
 
 coreModule.filter('stringSort', function() {
   return function(input) {
