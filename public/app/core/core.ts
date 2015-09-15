@@ -1,4 +1,7 @@
+<<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92
 <<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
+=======
+>>>>>>> refactor: improving structure, moving things into a core module
 ///<amd-dependency path="./directives/annotation_tooltip" />
 ///<amd-dependency path="./directives/body_class" />
 ///<amd-dependency path="./directives/config_modal" />
@@ -15,12 +18,18 @@
 ///<amd-dependency path="./directives/tags" />
 ///<amd-dependency path="./directives/topnav" />
 ///<amd-dependency path="./directives/value_select_dropdown" />
+<<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92
 ///<amd-dependency path="./routes/all" />
 
 export * from './directives/array_join'
 export * from './directives/give_focus'
 export * from './filters/filters'
 =======
+=======
+
+export * from './directives/array_join'
+export * from './directives/give_focus'
+>>>>>>> refactor: improving structure, moving things into a core module
 
 export * from './directives/cool_dir'
 export * from './routes/module_loader'

@@ -1,9 +1,15 @@
 define([
   'kbn',
+<<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92
   'app/core/core_module',
   'app/core/utils/rangeutil',
 ],
 function (kbn, coreModule, rangeUtil) {
+=======
+  '../core_module',
+],
+function (kbn, coreModule) {
+>>>>>>> refactor: improving structure, moving things into a core module
   'use strict';
 
   coreModule.directive('ngModelOnblur', function() {
@@ -47,8 +53,12 @@ function (kbn, coreModule, rangeUtil) {
           if (ctrl.$isEmpty(modelValue)) {
             return true;
           }
+<<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92
           var info = rangeUtil.describeTextRange(viewValue);
           return info.invalid !== true;
+=======
+          return kbn.isValidTimeSpan(viewValue);
+>>>>>>> refactor: improving structure, moving things into a core module
         };
       }
     };

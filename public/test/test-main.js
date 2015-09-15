@@ -162,7 +162,7 @@ require([
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',
-    'specs/valueSelectDropdown-specs',
+    'specs/value_select_dropdown_specs',
     'specs/opentsdbDatasource-specs',
     'specs/cloudwatch-datasource-specs',
     'specs/elasticsearch-specs',
