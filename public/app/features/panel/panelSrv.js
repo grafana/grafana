@@ -45,10 +45,12 @@ function (angular, _, config) {
 
       $scope.addDataQuery = function() {
         $scope.panel.targets.push({target: ''});
+        $scope.$broadcast('addDataQuery', {targetID: $scope.panel.targets.length - 1});
       };
 
       $scope.removeDataQuery = function (query) {
         $scope.panel.targets = _.without($scope.panel.targets, query);
+        $scope.$broadcast('removeDataQuery');
         $scope.get_data();
       };
 
