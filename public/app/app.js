@@ -74,7 +74,6 @@ function (angular, $, _, appLevelRequire) {
     'features/all',
     'controllers/all',
     'components/partials',
-    'routes/all',
   ];
 
   app.boot = function() {
