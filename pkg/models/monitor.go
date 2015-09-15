@@ -190,7 +190,7 @@ type AddMonitorCommand struct {
 	Frequency      int64                    `json:"frequency"`
 	Enabled        bool                     `json:"enabled"`
 	Offset         int64                    `json:"-"`
-	Result         *MonitorDTO
+	Result         *MonitorDTO              `json:"-"`
 }
 
 type UpdateMonitorCommand struct {

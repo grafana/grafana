@@ -19,7 +19,8 @@
   </ul>
 </topnav>
 <div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
-  <div ng-if="!collector.id" style="display: none;">
+  <!-- Step 1 Accept, check for collector duplicates and add collector record. -->
+  <div ng-if="!collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
       <h1 class="rt-h1">Add a new collector</h1>
@@ -30,11 +31,12 @@
         <label class="rt-form-label-medium">Collector Name:</label>
         <input type="text" class="rt-form-input" ng-model="collector.name" required="">
         <div class="rt-form-row">
-          <button type="submit" class="rt-btn" ng-click="add()">Next -> Install Collector</button>
+          <a type="submit" class="rt-btn" ng-click="add()">Next -> Install Collector</a>
         </div>
       </form> 
     </div>
   </div>
+  <!-- Step 2 - Show after collector record has been added. -->
   <div ng-if="!collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
@@ -50,7 +52,7 @@
         <span class="rt-config-setup-time">Setup time: 5-7 minutes</span>
       </div>
       <div class="rt-box-body">
-        <div class="rt-box-interior-section">
+<!--         <div class="rt-box-interior-section">
           <h3>Choose your distro:</h3>
           <ul class="rt-collector-config-distro">
             <li>
@@ -62,10 +64,10 @@
               <label for="distros-2" ng-click="configInfo(); otherDistro()">Other</label>
             </li>
           </ul>
-        </div>
-        <div class="rt-collector-config-info" ng-hide="!showConfigInfo">
+        </div> -->
+        <div class="rt-collector-config-info" ng-hide="showConfigInfo">
           <div class="rt-box-interior-section">
-            <h3>Have your API key <a href="/org/apikeys">Manage API keys</a></h3>
+            <h3><span class="emphasis">1. </span> Have your API key <a href="/org/apikeys">Manage API keys</a></h3>
             <div ng-hide="showApiKey">
               <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
             </div>
@@ -75,34 +77,34 @@
               <span class="helper">You will only be able to view this key here once, so be sure to copy it and keep it safe.</span>
             </div>
           </div>
-          <div class="rt-box-interior-section" ng-hide="showDistroConfig">
+          <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
             <h3>Install the collector</h3>
             <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
           </div> 
-          <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
+          <div class="rt-box-interior-section" ng-hide="showDistroConfig">
             <div class="rt-box-interior-section">
-              <h3>Clone the repository</h3>
+              <h3><span class="emphasis">2. </span>Clone the repository</h3>
               <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Install Go.</h3>
+              <h3><span class="emphasis">3. </span>Install Go.</h3>
               <p>>> <a href="https://golang.org/doc/install">https://golang.org/doc/install</a>.</p>
               <p>Once you've installed Go, you'll need to configure your workspace like so: <a href="https://golang.org/doc/code.html#Workspaces">https://golang.org/doc/code.html#Workspaces</a></p>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Install raintank_probe.</h3>
+              <h3><span class="emphasis">4. </span>Install raintank_probe.</h3>
               <pre><code>go get github.com/raintank/raintank-probe</code></pre>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Copy raintank-probe to raintank-collector's directory.</h3>
+              <h3><span class="emphasis">5. </span>Copy raintank-probe to raintank-collector's directory.</h3>
               <pre><code>cp $(which raintank-probe)</code></pre>
             </div>
             <div class="rt-box-interior-section">
-              <h3>Install all of the dependent node_modules.</h3>
+              <h3><span class="emphasis">6. </span>Install all of the dependent node_modules.</h3>
               <pre><code>npm install</code></pre>
             </div>            
             <div class="rt-box-interior-section">
-              <h3>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
+              <h3><span class="emphasis">7. </span>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
 <pre><code>{
 "collector": {
   "name": "<span class="h">[Your collector]</span>"
@@ -115,7 +117,7 @@
             </div>
           </div>
           <div class="rt-box-interior-section">
-            <h3>Start the app</h3>
+            <h3><span class="emphasis">8. </span>Start the app</h3>
             <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
           </div>
         </div>

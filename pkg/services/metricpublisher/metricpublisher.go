@@ -1,88 +1,110 @@
 package metricpublisher
 
 import (
-	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/grafana/grafana/pkg/log"
 	met "github.com/grafana/grafana/pkg/metric"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/rabbitmq"
 	"github.com/grafana/grafana/pkg/setting"
-	"hash/crc32"
-	"time"
+	"github.com/nsqio/go-nsq"
+	msg "github.com/raintank/raintank-metric/msg"
+	"github.com/raintank/raintank-metric/schema"
 )
 
+const maxMpubSize = 5 * 1024 * 1024 // nsq errors if more. not sure if can be changed
+const maxMetricPerMsg = 1000        // emperically found through benchmarks (should result in 64~128k messages)
 var (
-	globalPublisher        *rabbitmq.Publisher
-	metricPublisherMetrics met.Count
-	metricPublisherMsgs    met.Count
+	globalProducer    *nsq.Producer
+	topic             string
+	metricsPublished  met.Count
+	messagesPublished met.Count
+	messagesSize      met.Meter
+	metricsPerMessage met.Meter
+	publishDuration   met.Timer
 )
 
 func Init(metrics met.Backend) {
-	sec := setting.Cfg.Section("event_publisher")
+	sec := setting.Cfg.Section("metric_publisher")
 
 	if !sec.Key("enabled").MustBool(false) {
 		return
 	}
 
-	url := sec.Key("rabbitmq_url").String()
-	exchange := "metricResults"
-
-	exch := rabbitmq.Exchange{
-		Name:         exchange,
-		ExchangeType: "x-consistent-hash",
-		Durable:      true,
-	}
-	globalPublisher = &rabbitmq.Publisher{Url: url, Exchange: &exch}
-	err := globalPublisher.Connect()
+	addr := sec.Key("nsqd_addr").MustString("localhost:4150")
+	topic = sec.Key("topic").MustString("metrics")
+	cfg := nsq.NewConfig()
+	cfg.UserAgent = fmt.Sprintf("probe-ctrl")
+	var err error
+	globalProducer, err = nsq.NewProducer(addr, cfg)
 	if err != nil {
-		log.Fatal(4, "Failed to connect to metricResults exchange: %v", err)
-		return
+		log.Fatal(0, "failed to initialize nsq producer.", err)
 	}
-	metricPublisherMetrics = metrics.NewCount("metricpublisher.metrics-published")
-	metricPublisherMsgs = metrics.NewCount("metricpublisher.messages-published")
+	err = globalProducer.Ping()
+	if err != nil {
+		log.Fatal(0, "can't connect to nsqd: %s", err)
+	}
+	metricsPublished = metrics.NewCount("metricpublisher.metrics-published")
+	messagesPublished = metrics.NewCount("metricpublisher.messages-published")
+	messagesSize = metrics.NewMeter("metricpublisher.message_size", 0)
+	metricsPerMessage = metrics.NewMeter("metricpublisher.metrics_per_message", 0)
+	publishDuration = metrics.NewTimer("metricpublisher.publish_duration", 0)
 }
 
-func Publish(routingKey string, msgString []byte) {
-	if globalPublisher != nil {
-		globalPublisher.Publish(routingKey, msgString)
+func Reslice(in []*schema.MetricData, size int) [][]*schema.MetricData {
+	numSubSlices := len(in) / size
+	if len(in)%size > 0 {
+		numSubSlices += 1
 	}
-}
-
-func ProcessBuffer(c <-chan m.MetricDefinition) {
-	buf := make(map[uint32][]m.MetricDefinition)
-
-	// flush buffer 10 times every second
-	t := time.NewTicker(time.Millisecond * 100)
-	for {
-		select {
-		case b := <-c:
-			if b.OrgId != 0 {
-				//get hash.
-				h := crc32.NewIEEE()
-				h.Write([]byte(b.Name))
-				hash := h.Sum32() % uint32(512)
-				if _, ok := buf[hash]; !ok {
-					buf[hash] = make([]m.MetricDefinition, 0)
-				}
-				buf[hash] = append(buf[hash], b)
-			}
-		case <-t.C:
-			//copy contents of buffer
-			for hash, metrics := range buf {
-				currentBuf := make([]m.MetricDefinition, len(metrics))
-				copy(currentBuf, metrics)
-				delete(buf, hash)
-				//log.Info(fmt.Sprintf("flushing %d items in buffer now", len(currentBuf)))
-				msgString, err := json.Marshal(currentBuf)
-				if err != nil {
-					log.Error(0, "Failed to marshal metrics payload.", err)
-				} else {
-					metricPublisherMetrics.Inc(int64(len(currentBuf)))
-					metricPublisherMsgs.Inc(1)
-					go Publish(fmt.Sprintf("%d", hash), msgString)
-				}
-			}
+	out := make([][]*schema.MetricData, numSubSlices)
+	for i := 0; i < numSubSlices; i++ {
+		start := i * size
+		end := (i + 1) * size
+		if end > len(in) {
+			out[i] = in[start:]
+		} else {
+			out[i] = in[start:end]
 		}
 	}
+	return out
+}
+
+func Publish(metrics []*schema.MetricData) error {
+	if len(metrics) == 0 {
+		return nil
+	}
+	// typical metrics seem to be around 300B
+	// nsqd allows <= 10MiB messages.
+	// we ideally have 64kB ~ 1MiB messages (see benchmark https://gist.github.com/Dieterbe/604232d35494eae73f15)
+	// at 300B, about 3500 msg fit in 1MiB
+	// in worst case, this allows messages up to 2871B
+	// this could be made more robust of course
+
+	// real world findings in dev-stack with env-load:
+	// 159569B msg /795  metrics per msg = 200B per msg
+	// so peak message size is about 3500*200 = 700k (seen 711k)
+
+	subslices := Reslice(metrics, 3500)
+
+	for _, subslice := range subslices {
+		id := time.Now().UnixNano()
+		data, err := msg.CreateMsg(subslice, id, msg.FormatMetricDataArrayMsgp)
+		if err != nil {
+			log.Fatal(0, "Fatal error creating metric message: %s", err)
+		}
+		metricsPublished.Inc(int64(len(subslice)))
+		messagesPublished.Inc(1)
+		messagesSize.Value(int64(len(data)))
+		metricsPerMessage.Value(int64(len(subslice)))
+		pre := time.Now()
+		err = globalProducer.Publish(topic, data)
+		publishDuration.Value(time.Since(pre))
+		if err != nil {
+			log.Fatal(0, "can't publish to nsqd: %s", err)
+		}
+		log.Info("published metrics %d size=%d", id, len(data))
+	}
+
+	//globalProducer.Stop()
+	return nil
 }

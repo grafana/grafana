@@ -491,3 +491,27 @@ Grafana backend index those json dashboards which will make them appear in regul
 
 ### path
 The full path to a directory containing your json dashboards.
+
+## [metric_publisher]
+
+### enabled
+`true` or `false`. Is enabled by default.
+
+### nsq_addr
+defaults to `localhost:4150`
+
+### topic
+
+defaults to `metrics`
+
+## [collector_event_publisher]
+
+### enabled
+`true` or `false`. Is enabled by default.
+
+### nsq_addr
+defaults to `localhost:4150`
+
+### topic
+
+defaults to `probe_events`

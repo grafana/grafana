@@ -41,13 +41,13 @@
                     {{event.timestamp | date:'MMM d, h:mm:ss a'}}
                 </li>
                 <li class="rt-event-endpoint rt-table-item">
-                    <span class="emphasis">{{event.endpoint}}</span>
+                    <span class="emphasis">{{tagValueByName(event, "endpoint")}}</span>
                 </li>
                 <li class="rt-event-collector rt-table-item">
-                    from <span class="emphasis">{{event.collector}}</span>
+                    from <span class="emphasis">{{tagValueByName(event, "collector")}}</span>
                 </li>                
                 <li class="rt-event-type rt-table-item">
-                    <span class="emphasis">{{event.monitor_type}}</span> 
+                    <span class="emphasis">{{tagValueByName(event, "monitor_type")}}</span> 
                     <p class="rt-event-message">{{event.severity}}: {{event.message}}</p>
                 </li>
             </ul>

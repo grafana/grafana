@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/graphite"
 	"github.com/grafana/grafana/pkg/log"
@@ -70,7 +69,6 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 			log.Error(0, "failed to unmarshal msg body.", err)
 			return nil
 		}
-		job.StoreMetricFunc = api.StoreMetric
 		var err error
 		if setting.AlertingInspect {
 			inspect(GraphiteAuthContextReturner, &job, cache)
@@ -91,7 +89,7 @@ func AmqpExecutor(fn GraphiteReturner, consumer rabbitmq.Consumer, cache *lru.Ca
 func inspect(fn GraphiteReturner, job *Job, cache *lru.Cache) {
 	key := fmt.Sprintf("%d-%d", job.MonitorId, job.LastPointTs.Unix())
 	if found, _ := cache.ContainsOrAdd(key, true); found {
-		log.Debug("Job %s already done", job)
+		//log.Debug("Job %s already done", job)
 		return
 	}
 	gr, err := fn(job.OrgId)
@@ -122,13 +120,13 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 	preConsider := time.Now()
 
 	if found, _ := cache.ContainsOrAdd(key, true); found {
-		log.Debug("T %s already done", key)
+		//log.Debug("T %s already done", key)
 		executorNumAlreadyDone.Inc(1)
 		executorConsiderJobAlreadyDone.Value(time.Since(preConsider))
 		return nil
 	}
 
-	log.Debug("T %s doing", key)
+	//log.Debug("T %s doing", key)
 	executorNumOriginalTodo.Inc(1)
 	executorConsiderJobOriginalTodo.Value(time.Since(preConsider))
 	gr, err := fn(job.OrgId)
@@ -210,7 +208,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 		}
 		log.Debug("Job %s state_change=%t request traces: %s", job, updateMonitorStateCmd.Affected > 0, requests)
 	}
-	if updateMonitorStateCmd.Affected > 0 {
+	if updateMonitorStateCmd.Affected > 0 && res != m.EvalResultUnknown {
 		//emit a state change event.
 		if job.Notifications.Enabled {
 			emails := strings.Split(job.Notifications.Addresses, ",")
@@ -236,7 +234,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 				}
 
 				if err := bus.Dispatch(&sendCmd); err != nil {
-					log.Info("failed to send email to %s. OrgId: %d monitorId: %d", emails, job.OrgId, job.MonitorId, err)
+					log.Error(0, "failed to send email to %s. OrgId: %d monitorId: %d due to: %s", emails, job.OrgId, job.MonitorId, err)
 				}
 			}
 		}

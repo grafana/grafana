@@ -1,0 +1,28 @@
+language: go
+go:
+  - 1.4.2
+env:
+  - NSQ_DOWNLOAD=nsq-0.2.30.linux-amd64.go1.3 GOARCH=amd64
+  - NSQ_DOWNLOAD=nsq-0.2.30.linux-amd64.go1.3 GOARCH=386
+  - NSQ_DOWNLOAD=nsq-0.2.31.linux-amd64.go1.3.1 GOARCH=amd64
+  - NSQ_DOWNLOAD=nsq-0.2.31.linux-amd64.go1.3.1 GOARCH=386
+  - NSQ_DOWNLOAD=nsq-0.3.0.linux-amd64.go1.3.3 GOARCH=amd64
+  - NSQ_DOWNLOAD=nsq-0.3.0.linux-amd64.go1.3.3 GOARCH=386
+  - NSQ_DOWNLOAD=nsq-0.3.1.linux-amd64.go1.4.1 GOARCH=amd64
+  - NSQ_DOWNLOAD=nsq-0.3.1.linux-amd64.go1.4.1 GOARCH=386
+  - NSQ_DOWNLOAD=nsq-0.3.2.linux-amd64.go1.4.1 GOARCH=amd64
+  - NSQ_DOWNLOAD=nsq-0.3.2.linux-amd64.go1.4.1 GOARCH=386
+install:
+  - go get github.com/bitly/go-simplejson
+  - go get github.com/mreiferson/go-snappystream
+script:
+  - wget http://bitly-downloads.s3.amazonaws.com/nsq/$NSQ_DOWNLOAD.tar.gz
+  - tar zxvf $NSQ_DOWNLOAD.tar.gz
+  - export PATH=$NSQ_DOWNLOAD/bin:$PATH
+  - pushd $TRAVIS_BUILD_DIR
+  - ./test.sh
+  - popd
+notifications:
+  email: false
+
+sudo: false
