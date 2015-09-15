@@ -1,21 +1,31 @@
 define([
   'angular',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
+=======
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
   '../core_module',
   './bundle_loader',
   './dashboard_loaders',
 ], function(angular, coreModule, BundleLoader) {
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 =======
   '../core/core',
   './dashLoadControllers',
 ], function(angular, core) {
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
   "use strict";
 
   coreModule.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
 
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+=======
+    var loadOrgBundle = new BundleLoader.BundleLoader('features/org/all');
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
 
     $routeProvider
       .when('/', {
@@ -49,65 +59,93 @@ define([
       .when('/datasources', {
         templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/datasources/edit/:id', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/datasources/new', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/org/new', {
         templateUrl: 'app/features/org/partials/newOrg.html',
         controller : 'NewOrgCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/org/users', {
         templateUrl: 'app/features/org/partials/orgUsers.html',
         controller : 'OrgUsersCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/org/apikeys', {
         templateUrl: 'app/features/org/partials/orgApiKeys.html',
         controller : 'OrgApiKeysCtrl',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386:public/app/core/routes/all.js
         resolve: loadOrgBundle,
 =======
         resolve: new core.ModuleLoader("features/org/all"),
 >>>>>>> tech(typescript): its looking good:public/app/routes/all.js
+=======
+        resolve: loadOrgBundle,
+>>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',

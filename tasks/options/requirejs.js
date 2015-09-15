@@ -65,11 +65,19 @@ module.exports = function(config,grunt) {
           'jquery.flot',
           'angular-strap',
           'angular-dragdrop',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635
           'app/core/core',
           'app/services/all',
           'app/features/all',
           'app/controllers/all',
           'app/components/partials',
+=======
+          'core/core',
+          'services/all',
+          'features/all',
+          'controllers/all',
+          'components/partials',
+>>>>>>> refactor: moving routes into core, improved bundle loader
           // bundle the datasources
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',

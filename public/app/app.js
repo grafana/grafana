@@ -81,8 +81,11 @@ function (angular, $, _, appLevelRequire) {
     'features/all',
     'controllers/all',
     'components/partials',
+<<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635
     'routes/all',
 >>>>>>> refactor: improving structure, moving things into a core module
+=======
+>>>>>>> refactor: moving routes into core, improved bundle loader
   ];
 
   app.boot = function() {
