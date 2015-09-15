@@ -281,6 +281,7 @@ function (angular, _) {
 
     function counterSelectionTypeAheadShow() {
       $scope.counterSelectionShow = true;
+      $scope.counterNamePattern = '';
       $timeout(function() {
         $scope.$broadcast('ngTreeRedraw(counters-list)');
       }, 0);
@@ -292,6 +293,11 @@ function (angular, _) {
       if (setCounterFocus === true) {
         counterFocus(currentTargetIndex);
       }
+    }
+
+    function typeAheadsHide() {
+      nodeSelectionTypeAheadHide(false);
+      counterSelectionTypeAheadHide(false);
     }
 
     function nodeFocus (targetIndex) {
@@ -331,10 +337,12 @@ function (angular, _) {
 
     $scope.duplicateCounterQuery = function (index) {
       var clone = angular.copy($scope.panel.targets[index]);
+      typeAheadsHide();
       $scope.panel.targets.push(clone);
     };
 
     $scope.moveCounterQuery = function (indexFrom, indexTo) {
+      typeAheadsHide();
       _.move($scope.panel.targets, indexFrom, indexTo);
     };
 
@@ -403,6 +411,17 @@ function (angular, _) {
     $scope.$watch('currentNodeId', function() {
       resetCountersList();
       updateCountersList($scope.currentNodeId);
+    });
+
+    $scope.$on('addDataQuery', function(event, args) {
+      var addedTarget = $scope.panel.targets[args.targetID];
+      typeAheadsHide();
+      updateTarget(addedTarget);
+      addedTarget.localVars.nodeFocus = true;
+    });
+
+    $scope.$on('removeDataQuery', function() {
+      typeAheadsHide();
     });
 
   });
