@@ -86,6 +86,19 @@ func DeleteDashboard(c *middleware.Context) {
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
 
+	dash := cmd.GetDashboardModel()
+	if dash.Id == 0 {
+		limitReached, err := middleware.QuotaReached(c, "dashboard")
+		if err != nil {
+			c.JsonApiErr(500, "failed to get quota", err)
+			return
+		}
+		if limitReached {
+			c.JsonApiErr(403, "Quota reached", nil)
+			return
+		}
+	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
