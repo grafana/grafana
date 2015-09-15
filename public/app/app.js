@@ -71,10 +71,18 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
+<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
     'app/services/all',
     'app/features/all',
     'app/controllers/all',
     'app/components/partials',
+=======
+    'services/all',
+    'features/all',
+    'controllers/all',
+    'components/partials',
+    'routes/all',
+>>>>>>> refactor: improving structure, moving things into a core module
   ];
 
   app.boot = function() {

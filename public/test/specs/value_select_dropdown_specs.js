@@ -1,5 +1,9 @@
 define([
+<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294:public/test/specs/value_select_dropdown_specs.js
   'app/core/directives/value_select_dropdown',
+=======
+  'core/directives/value_select_dropdown',
+>>>>>>> refactor: improving structure, moving things into a core module:public/test/specs/value_select_dropdown_specs.js
 ],
 function () {
   'use strict';
