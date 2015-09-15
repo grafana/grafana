@@ -54,7 +54,13 @@ function (angular, _, moment, config, $, kbn) {
           delta : 'Delta',
           equal : 'Equal',
           distr : 'Distr'
-        };
+        },
+        PERIODS = Object.create(null);
+
+    PERIODS[trendDataProvider.PERIOD_TYPE.tpMinutes] = 'minutes';
+    PERIODS[trendDataProvider.PERIOD_TYPE.tpHours] = 'hours';
+    PERIODS[trendDataProvider.PERIOD_TYPE.tpDays] = 'days';
+    PERIODS[trendDataProvider.PERIOD_TYPE.tpMonths] = 'months';
 
     function QueryCache(datasource) {
       this.datasource = datasource;
@@ -267,24 +273,42 @@ function (angular, _, moment, config, $, kbn) {
     NetCrunchDatasource.prototype.query = function(options) {
       var self = this;
 
+      function floorTime(time, period) {
+        var MINUTES_SLOT = 5,
+            minuteRemains,
+            floorMethod = Object.create(null);
+
+        floorMethod['minutes'] = function (time) {
+          minuteRemains = time.minute() % MINUTES_SLOT;
+          return time.subtract(minuteRemains, 'minutes');
+        };
+
+        floorMethod['hours'] = function (time) {
+          return time.startOf('hour');
+        };
+
+        floorMethod['days'] = function (time) {
+          return time.startOf('day');
+        };
+
+        floorMethod['months'] = function (time) {
+          return time.startOf('month');
+        };
+
+        return floorMethod[period](time).startOf('minute');
+      }
+
       function addMarginsToTimeRange (rangeFrom, rangeTo, period) {
-        var periodTypes = trendDataProvider.PERIOD_TYPE,
-            periods = Object.create(null);
 
-        periods[periodTypes.tpMinutes] = 'minutes';
-        periods[periodTypes.tpHours] = 'hours';
-        periods[periodTypes.tpDays] = 'days';
-        periods[periodTypes.tpMonths] = 'months';
-
-        rangeFrom = moment(rangeFrom).subtract(period.periodInterval, periods[period.periodType]);
-        rangeTo = moment(rangeTo).add(period.periodInterval, periods[period.periodType]);
+        rangeFrom = moment(rangeFrom).subtract(period.periodInterval, PERIODS[period.periodType]);
+        rangeTo = moment(rangeTo).add(period.periodInterval, PERIODS[period.periodType]);
 
         if (rangeTo > moment()) {
           rangeTo = moment();
         }
 
         return {
-          from : rangeFrom,
+          from : floorTime(rangeFrom, PERIODS[period.periodType]),
           to : rangeTo,
           periodInterval : period.periodInterval,
           periodType : period.periodType
