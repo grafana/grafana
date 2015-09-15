@@ -57,7 +57,6 @@ module.exports = function(config,grunt) {
           'core/core',
           'services/all',
           'features/all',
-          'directives/all',
           'controllers/all',
           'routes/all',
           'components/partials',
