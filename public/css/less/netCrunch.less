@@ -40,6 +40,7 @@
   margin-left: 1px;
   min-height: @nodes-ahead-max-height;
   max-height: @nodes-ahead-max-height;
+  height: @nodes-ahead-max-height;
   overflow-y: auto;
   width: @tile-width + 10;
 }
@@ -47,8 +48,7 @@
 .counters-ahead {
   .nodes-ahead;
   .align-items(flex-start);
-  height: 300px;
-  margin-left: 0px;
+  margin-left: 0;
   width: @counter-width + 12;
 }
 
@@ -64,9 +64,13 @@
 }
 
 .spinner {
+  .flex-column;
+  .flex(1);
   .align-content(center);
   .align-items(center);
   .justify-content(center);
+
+  width: 100%;
 }
 
 input[type="text"].node-input {
@@ -147,7 +151,6 @@ input[type="text"].counter-input {
   .net-crunch-container;
   .flex-wrap(nowrap);
   display: block;
-  position: absolute;
   padding-left: 10px;
   margin-bottom: 10px;
 }
