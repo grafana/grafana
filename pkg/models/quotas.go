@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"github.com/grafana/grafana/pkg/setting"
-	"reflect"
 	"time"
 )
 
@@ -128,27 +127,4 @@ func GetQuotaScopes(target string) ([]QuotaScope, error) {
 	default:
 		return scopes, ErrInvalidQuotaTarget
 	}
-}
-
-func QuotaToMap(q interface{}) map[string]int64 {
-	qMap := make(map[string]int64)
-	typ := reflect.TypeOf(q)
-	val := reflect.ValueOf(q)
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-		val = val.Elem()
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		name := field.Tag.Get("target")
-		if name == "" {
-			name = field.Name
-		}
-		if name == "-" {
-			continue
-		}
-		value := val.Field(i)
-		qMap[name] = value.Int()
-	}
-	return qMap
 }
