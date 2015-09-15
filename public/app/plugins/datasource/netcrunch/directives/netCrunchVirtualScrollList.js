@@ -693,7 +693,7 @@ define([
                                       tabIndex,
                                       eventHandler;
 
-                                  if (Number(ngRepeatElementKey) >= 0) {
+                                  if (ngRepeatElements[ngRepeatElementKey] != null) {
                                       ngRepeatElement = angular.element(ngRepeatElements[ngRepeatElementKey]);
                                       tabIndex = ngRepeatElement.attr('tabindex');
 
