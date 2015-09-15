@@ -54,6 +54,13 @@ func (a *ldapAuther) login(query *LoginUserQuery) error {
 	if ldapUser, err := a.searchForUser(query.Username); err != nil {
 		return err
 	} else {
+
+		for _, ldapGroup := range a.server.LdapGroups {
+			if err := a.searchUserInGroup(ldapUser, ldapGroup.GroupDN); err != nil {
+				return err
+			}
+		}
+
 		if ldapCfg.VerboseLogging {
 			log.Info("Ldap User Info: %s", spew.Sdump(ldapUser))
 		}
@@ -300,6 +307,34 @@ func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
 		}
 	}
 	return []string{}
+}
+
+func (a *ldapAuther) searchUserInGroup(ldapUser *ldapUserInfo, ldapGroupDN string) error {
+	var searchResult *ldap.SearchResult
+	var err error
+
+	searchReq := ldap.SearchRequest{
+		BaseDN:       ldapGroupDN,
+		Scope:        ldap.ScopeWholeSubtree,
+		DerefAliases: ldap.NeverDerefAliases,
+		Filter:       fmt.Sprintf("(member=%s)", ldapUser.DN),
+	}
+
+	if searchResult, err = a.conn.Search(&searchReq); err != nil {
+		if ldapErr, ok := err.(*ldap.Error); ok {
+			if ldapCfg.VerboseLogging {
+				log.Warn("Ldap Auth: error while search user %s in LDAP group %s. %s", ldapUser.DN, ldapGroupDN, ldapErr.Error())
+			}
+		}
+	}
+
+	for _, group := range searchResult.Entries {
+		if !ldapUser.isMemberOf(group.DN) {
+			ldapUser.MemberOf = append(ldapUser.MemberOf, group.DN)
+		}
+	}
+
+	return nil
 }
 
 func createUserFromLdapInfo() error {
