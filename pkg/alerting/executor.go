@@ -234,7 +234,7 @@ func execute(fn GraphiteReturner, job *Job, cache *lru.Cache) error {
 				}
 
 				if err := bus.Dispatch(&sendCmd); err != nil {
-					log.Info("failed to send email to %s. OrgId: %d monitorId: %d", emails, job.OrgId, job.MonitorId, err)
+					log.Error(0, "failed to send email to %s. OrgId: %d monitorId: %d due to: %s", emails, job.OrgId, job.MonitorId, err)
 				}
 			}
 		}
