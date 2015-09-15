@@ -1,16 +1,10 @@
 define([
-  'angular',
-  'lodash',
-  'kbn',
-  'moment',
-  'jquery',
+  '../core_module',
 ],
-function (angular) {
+function (coreModule) {
   "use strict";
 
-  var module = angular.module('grafana.routes');
-
-  module.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv) {
+  coreModule.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv) {
 
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
@@ -27,7 +21,7 @@ function (angular) {
 
   });
 
-  module.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
+  coreModule.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
     if (!window.grafanaImportDashboard) {
       alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
       $location.path('');
@@ -39,7 +33,7 @@ function (angular) {
     }, $scope);
   });
 
-  module.controller('NewDashboardCtrl', function($scope) {
+  coreModule.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false },
       dashboard: {

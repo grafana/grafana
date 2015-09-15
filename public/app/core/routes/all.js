@@ -1,14 +1,15 @@
 define([
   'angular',
-  '../core/core',
-  './dashLoadControllers',
-], function(angular, core) {
+  '../core_module',
+  './bundle_loader',
+  './dashboard_loaders',
+], function(angular, coreModule, BundleLoader) {
   "use strict";
 
-  var module = angular.module('grafana.routes');
-
-  module.config(function($routeProvider, $locationProvider) {
+  coreModule.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
+
+    var loadOrgBundle = new BundleLoader.BundleLoader('features/org/all');
 
     $routeProvider
       .when('/', {
@@ -42,37 +43,37 @@ define([
       .when('/datasources', {
         templateUrl: 'app/features/org/partials/datasources.html',
         controller : 'DataSourcesCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/datasources/edit/:id', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/datasources/new', {
         templateUrl: 'app/features/org/partials/datasourceEdit.html',
         controller : 'DataSourceEditCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/org/new', {
         templateUrl: 'app/features/org/partials/newOrg.html',
         controller : 'NewOrgCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/org/users', {
         templateUrl: 'app/features/org/partials/orgUsers.html',
         controller : 'OrgUsersCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/org/apikeys', {
         templateUrl: 'app/features/org/partials/orgApiKeys.html',
         controller : 'OrgApiKeysCtrl',
-        resolve: new core.ModuleLoader("features/org/all"),
+        resolve: loadOrgBundle,
       })
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',

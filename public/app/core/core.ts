@@ -14,11 +14,12 @@
 ///<amd-dependency path="./directives/tags" />
 ///<amd-dependency path="./directives/topnav" />
 ///<amd-dependency path="./directives/value_select_dropdown" />
+///<amd-dependency path="./routes/all" />
 
 export * from './directives/array_join'
 export * from './directives/give_focus'
 
-export * from './routes/module_loader'
+export * from './routes/bundle_loader'
 export * from './filters/filters'
 
 
