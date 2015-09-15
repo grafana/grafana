@@ -27,7 +27,7 @@ func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateOrgQuotaCmd) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.Target = c.Params(":target")
 
-	if _, ok := m.QuotaToMap(setting.Quota.Org)[cmd.Target]; !ok {
+	if _, ok := setting.Quota.Org.ToMap()[cmd.Target]; !ok {
 		return ApiError(404, "Invalid quota target", nil)
 	}
 
@@ -57,7 +57,7 @@ func UpdateUserQuota(c *middleware.Context, cmd m.UpdateUserQuotaCmd) Response {
 	cmd.UserId = c.ParamsInt64(":id")
 	cmd.Target = c.Params(":target")
 
-	if _, ok := m.QuotaToMap(setting.Quota.User)[cmd.Target]; !ok {
+	if _, ok := setting.Quota.User.ToMap()[cmd.Target]; !ok {
 		return ApiError(404, "Invalid quota target", nil)
 	}
 
