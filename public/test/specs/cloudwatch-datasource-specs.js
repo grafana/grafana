@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/cloudwatch/datasource',
+  './helpers',
+  'app/plugins/datasource/cloudwatch/datasource',
   'aws-sdk',
 ], function(helpers) {
   'use strict';
@@ -9,6 +9,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
+    beforeEach(module('grafana.controllers'));
     beforeEach(ctx.providePhase(['templateSrv']));
     beforeEach(ctx.createService('CloudWatchDatasource'));
     beforeEach(function() {

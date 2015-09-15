@@ -1,6 +1,6 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'jquery',
   'jquery.flot',

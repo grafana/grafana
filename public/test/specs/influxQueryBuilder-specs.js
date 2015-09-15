@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/influxdb_08/queryBuilder'
+  'app/plugins/datasource/influxdb_08/queryBuilder'
 ], function(InfluxQueryBuilder) {
   'use strict';
 

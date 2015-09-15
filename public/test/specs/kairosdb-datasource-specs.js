@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/kairosdb/datasource'
+  './helpers',
+  'app/plugins/datasource/kairosdb/datasource'
 ], function(helpers) {
   'use strict';
 

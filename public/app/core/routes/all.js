@@ -9,7 +9,7 @@ define([
   coreModule.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
 
-    var loadOrgBundle = new BundleLoader.BundleLoader('features/org/all');
+    var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
 
     $routeProvider
       .when('/', {

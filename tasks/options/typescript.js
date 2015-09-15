@@ -3,15 +3,18 @@ module.exports = function() {
 
   return {
     build: {
-      src: ['public/app/**/*.ts'],
-      dest: 'public_gen/app',
+      src: ['public/**/*.ts', 'public/test/**/*.ts'],
+      dest: 'public_gen/',
       options: {
         module: 'amd', //or commonjs
         target: 'es5', //or es3
-        rootDir: 'public/app',
+        rootDir: 'public/',
+        sourceRoot: 'public/',
         declaration: true,
+        emitDecoratorMetadata: true,
+        experimentalDecorators: true,
         sourceMap: true,
-        generateTsConfig: true,
+        noImplicitAny: false,
       }
     },
 
@@ -35,7 +38,6 @@ module.exports = function() {
         declaration: true,
         sourceMap: true,
         watch: true,
-        generateTsConfig: true,
       }
     }
   };

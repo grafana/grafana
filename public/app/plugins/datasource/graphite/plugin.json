@@ -5,7 +5,7 @@
   "type": "graphite",
   "serviceName": "GraphiteDatasource",
 
-  "module": "plugins/datasource/graphite/datasource",
+  "module": "app/plugins/datasource/graphite/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/graphite/partials/config.html"

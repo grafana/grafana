@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/elasticsearch/queryBuilder'
+  'app/plugins/datasource/elasticsearch/queryBuilder'
 ], function(ElasticQueryBuilder) {
   'use strict';
 

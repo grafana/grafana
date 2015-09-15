@@ -1,7 +1,7 @@
 define([
-  'helpers',
-  'features/dashboard/shareModalCtrl',
-  'features/panellinks/linkSrv',
+  './helpers',
+  'app/features/dashboard/shareModalCtrl',
+  'app/features/panellinks/linkSrv',
 ], function(helpers) {
   'use strict';
 

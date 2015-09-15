@@ -5,7 +5,7 @@
   "type": "elasticsearch",
   "serviceName": "ElasticDatasource",
 
-  "module": "plugins/datasource/elasticsearch/datasource",
+  "module": "app/plugins/datasource/elasticsearch/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/elasticsearch/partials/config.html",

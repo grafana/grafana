@@ -1,8 +1,8 @@
 define([
-  'helpers',
-  'plugins/datasource/influxdb_08/datasource',
-  'services/backendSrv',
-  'services/alertSrv'
+  './helpers',
+  'app/plugins/datasource/influxdb_08/datasource',
+  'app/services/backendSrv',
+  'app/services/alertSrv'
 ], function(helpers) {
   'use strict';
 

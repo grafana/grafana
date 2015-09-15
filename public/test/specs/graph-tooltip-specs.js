@@ -1,6 +1,6 @@
 define([
   'jquery',
-  'panels/graph/graph.tooltip'
+  'app/panels/graph/graph.tooltip'
 ], function($, GraphTooltip) {
   'use strict';
 

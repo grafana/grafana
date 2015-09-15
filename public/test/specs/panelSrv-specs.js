@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'features/panel/panelSrv',
+  './helpers',
+  'app/features/panel/panelSrv',
 ], function() {
   'use strict';
 
