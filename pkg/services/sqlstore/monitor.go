@@ -420,11 +420,6 @@ func DeleteMonitorTransaction(cmd *m.DeleteMonitorCommand, sess *session) error 
 	if err != nil {
 		return err
 	}
-	rawSql = "DELETE FROM monitor_collector_state WHERE monitor_id=?"
-	_, err = sess.Exec(rawSql, cmd.Id)
-	if err != nil {
-		return err
-	}
 
 	sess.publishAfterCommit(&events.MonitorRemoved{
 		Timestamp:     time.Now(),
