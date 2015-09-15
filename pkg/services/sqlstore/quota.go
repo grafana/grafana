@@ -26,7 +26,7 @@ func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
 		Target: query.Target,
 		OrgId:  query.OrgId,
 	}
-	has, err := x.Get(quota)
+	has, err := x.Get(&quota)
 	if err != nil {
 		return err
 	} else if has == false {
@@ -100,7 +100,7 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 			Target: cmd.Target,
 			OrgId:  cmd.OrgId,
 		}
-		has, err := sess.Get(quota)
+		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
 		Target: query.Target,
 		UserId: query.UserId,
 	}
-	has, err := x.Get(quota)
+	has, err := x.Get(&quota)
 	if err != nil {
 		return err
 	} else if has == false {
@@ -200,7 +200,7 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 			Target: cmd.Target,
 			UserId: cmd.UserId,
 		}
-		has, err := sess.Get(quota)
+		has, err := sess.Get(&quota)
 		if err != nil {
 			return err
 		}
