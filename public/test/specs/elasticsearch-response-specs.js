@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/elasticsearch/elasticResponse',
+  'app/plugins/datasource/elasticsearch/elasticResponse',
 ], function(ElasticResponse) {
   'use strict';
 

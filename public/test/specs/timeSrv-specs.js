@@ -1,9 +1,9 @@
 define([
-  'mocks/dashboard-mock',
-  'helpers',
+  '../mocks/dashboard-mock',
+  './helpers',
   'lodash',
-  'services/timer',
-  'features/dashboard/timeSrv'
+  'app/services/timer',
+  'app/features/dashboard/timeSrv'
 ], function(dashboardMock, helpers, _) {
   'use strict';
 

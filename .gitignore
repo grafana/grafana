@@ -30,4 +30,3 @@ conf/custom.ini
 fig.yml
 profile.cov
 grafana
-tsconfig.json

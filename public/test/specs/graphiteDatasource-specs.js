@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/graphite/datasource'
+  './helpers',
+  'app/plugins/datasource/graphite/datasource'
 ], function(helpers) {
   'use strict';
 

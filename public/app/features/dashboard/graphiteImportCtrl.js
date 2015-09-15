@@ -1,10 +1,9 @@
 define([
   'angular',
-  'app',
   'lodash',
   'kbn'
 ],
-function (angular, app, _, kbn) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.controllers');

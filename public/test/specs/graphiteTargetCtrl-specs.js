@@ -1,8 +1,8 @@
 define([
-  'helpers',
-  'plugins/datasource/graphite/gfunc',
-  'plugins/datasource/graphite/queryCtrl',
-  'services/uiSegmentSrv'
+  './helpers',
+  'app/plugins/datasource/graphite/gfunc',
+  'app/plugins/datasource/graphite/queryCtrl',
+  'app/services/uiSegmentSrv'
 ], function(helpers, gfunc) {
   'use strict';
 

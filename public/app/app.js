@@ -12,7 +12,7 @@ define([
   'angular-ui',
   'extend-jquery',
   'bindonce',
-  './core/core',
+  'app/core/core',
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
@@ -70,10 +70,10 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-    'services/all',
-    'features/all',
-    'controllers/all',
-    'components/partials',
+    'app/services/all',
+    'app/features/all',
+    'app/controllers/all',
+    'app/components/partials',
   ];
 
   app.boot = function() {

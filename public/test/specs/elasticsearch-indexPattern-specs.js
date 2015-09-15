@@ -1,6 +1,6 @@
 define([
   'moment',
-  'plugins/datasource/elasticsearch/indexPattern'
+  'app/plugins/datasource/elasticsearch/indexPattern'
 ], function(moment, IndexPattern) {
   'use strict';
 

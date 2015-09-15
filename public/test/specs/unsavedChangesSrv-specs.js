@@ -1,6 +1,6 @@
 define([
-  'features/dashboard/unsavedChangesSrv',
-  'features/dashboard/dashboardSrv'
+  'app/features/dashboard/unsavedChangesSrv',
+  'app/features/dashboard/dashboardSrv'
 ], function() {
   'use strict';
 

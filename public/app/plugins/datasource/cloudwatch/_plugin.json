@@ -5,7 +5,7 @@
   "type": "cloudwatch",
   "serviceName": "CloudWatchDatasource",
 
-  "module": "plugins/datasource/cloudwatch/datasource",
+  "module": "app/plugins/datasource/cloudwatch/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/cloudwatch/partials/config.html",

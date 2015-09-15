@@ -2,14 +2,16 @@ module.exports = function(config) {
   'use strict';
 
   config.set({
-    basePath: '../../',
+    basePath: __dirname + '/public_gen',
 
     frameworks: ['mocha', 'requirejs', 'expect', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
-      'public/test/test-main.js',
-      {pattern: 'public_gen/**/*.js', included: false}
+      'test/test-main.js',
+      {pattern: 'app/**/*.js', included: false},
+      {pattern: 'vendor/**/*.js', included: false},
+      {pattern: 'test/**/*.js', included: false}
     ],
 
     // list of files to exclude

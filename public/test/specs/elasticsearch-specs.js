@@ -1,8 +1,8 @@
 define([
-  'helpers',
+  './helpers',
   'moment',
   'angular',
-  'plugins/datasource/elasticsearch/datasource',
+  'app/plugins/datasource/elasticsearch/datasource',
 ], function(helpers, moment, angular) {
   'use strict';
 

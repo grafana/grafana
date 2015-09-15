@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/opentsdb/datasource'
+  './helpers',
+  'app/plugins/datasource/opentsdb/datasource'
 ], function(helpers) {
   'use strict';
 

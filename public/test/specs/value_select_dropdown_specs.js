@@ -1,5 +1,5 @@
 define([
-  'core/directives/value_select_dropdown',
+  'app/core/directives/value_select_dropdown',
 ],
 function () {
   'use strict';
