@@ -5,11 +5,15 @@ import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
 import kbn = require('kbn');
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
 import dateMath = require('app/core/utils/datemath');
 import rangeUtil = require('app/core/utils/rangeutil');
 
 <<<<<<< 6e6200173affee36da5b148c4da2e935e892fb9e
 declare var inputDate: any;
+=======
+import {TimeRange} from './timerange';
+>>>>>>> feat() started work on more feature rich time picker
 
 export class TimePickerCtrl {
 
@@ -218,12 +222,7 @@ export class TimePickerCtrl {
 
     if (this.timeSrv.time) {
       if (this.$scope.panel.now) {
-        if (this.timeSrv.time.from === 'today') {
-          model.rangeString = 'Today';
-        } else {
-          model.rangeString = moment(model.from.date).fromNow() + ' to ' +
-            moment(model.to.date).fromNow();
-        }
+        model.rangeString = TimeRange.describeRelativeTime(this.timeSrv.time);
       }
       else {
         model.rangeString = this.$scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +
@@ -235,10 +234,7 @@ export class TimePickerCtrl {
   }
 
   loadTimeOptions() {
-    this.$scope.time_options = _.map(this.$scope.panel.time_options, function(str) {
-      return kbn.getRelativeTimeInfo(str);
-    });
-
+    this.$scope.timeOptions = TimeRange.getRelativeTimesList(this.$scope.panel);
     this.$scope.refreshMenuLeftSide = this.$scope.time.rangeString.length < 10;
   }
 

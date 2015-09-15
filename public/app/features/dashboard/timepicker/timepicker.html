@@ -40,9 +40,9 @@
 			</a>
 
 			<!-- lacy load this -->
-			<ul class="dropdown-menu" ng-if="time_options" >
-				<li bindonce ng-repeat='option in time_options'>
-					<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.text"></a>
+			<ul class="dropdown-menu" ng-if="timeOptions" >
+				<li bindonce ng-repeat='option in timeOptions'>
+					<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
 				</li>
 
 				<!-- Auto refresh submenu -->

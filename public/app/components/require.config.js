@@ -1,5 +1,6 @@
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
 <<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
   baseUrl: 'public',
 =======
@@ -8,6 +9,11 @@ require.config({
 
   paths: {
 <<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
+=======
+  baseUrl: 'public',
+
+  paths: {
+>>>>>>> feat() started work on more feature rich time picker
     config:                   'app/components/config',
     settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
@@ -24,7 +30,11 @@ require.config({
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          'vendor/angular-other/angular-strap',
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
+=======
+    'angular-ui':             'vendor/angular-ui/tabs',
+>>>>>>> feat() started work on more feature rich time picker
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
     bindonce:                 'vendor/angular-bindonce/bindonce',
@@ -50,6 +60,7 @@ require.config({
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
     'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
 =======
     config:                   'components/config',
     settings:                 'components/settings',
@@ -96,6 +107,8 @@ require.config({
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> feat() started work on more feature rich time picker
   },
   shim: {
 

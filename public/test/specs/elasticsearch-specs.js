@@ -1,8 +1,16 @@
 define([
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
   'helpers',
   'plugins/datasource/elasticsearch/datasource',
   'aws-sdk',
 ], function(helpers) {
+=======
+  './helpers',
+  'moment',
+  'angular',
+  'app/plugins/datasource/elasticsearch/datasource',
+], function(helpers, moment, angular) {
+>>>>>>> feat() started work on more feature rich time picker
   'use strict';
 
   describe('ElasticDatasource', function() {

@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
         "sourceMap": true,
         "declaration": true,
         "outDir": "public_gen/app",
@@ -39,3 +40,25 @@
 >>>>>>> tech(typescript): its looking good
     ]
 }
+=======
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": true,
+        "declaration": true,
+        "noImplicitAny": false,
+        "removeComments": true,
+        "noLib": true,
+        "outDir": "public_gen/app",
+        "target": "ES5",
+        "rootDir": "public/app",
+        "sourceRoot": "public/app",
+        "module": "amd",
+        "noEmitOnError": true
+    },
+    "fileGlobs": [
+        "./public/app/**/*.ts",
+        "!./node_modules/**",
+        "!./public_gen/**",
+    ]
+}
+>>>>>>> feat() started work on more feature rich time picker

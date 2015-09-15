@@ -1,9 +1,13 @@
 define([
+<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
 <<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92:public/test/specs/value_select_dropdown_specs.js
   'app/core/directives/value_select_dropdown',
 =======
   'core/directives/value_select_dropdown',
 >>>>>>> refactor: improving structure, moving things into a core module:public/test/specs/value_select_dropdown_specs.js
+=======
+  'app/core/directives/value_select_dropdown',
+>>>>>>> feat() started work on more feature rich time picker
 ],
 function () {
   'use strict';
