@@ -116,12 +116,12 @@ define([
           });
 
           $timeout(function() {
-            $scope.$watch('typeAheadPosition', function(position){
+            $scope.$watch('typeAheadPosition', function(position) {
               var positionPointerName = '[' + $scope.typeAheadName + '="' + position + '"]',
                   positionPointer = $(positionPointerName);
 
               if (positionPointer != null) {
-                $timeout(function(){
+                $timeout(function() {
                   var positionPointerOffset,
                       left,
                       top;
@@ -139,4 +139,4 @@ define([
         }
       };
     });
-});
+  });

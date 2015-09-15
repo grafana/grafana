@@ -32,7 +32,7 @@ define([
         link : function ($scope, $element) {
           $scope.$watch('focusTrigger', function (value) {
             if (value === true) {
-              $timeout(function(){
+              $timeout(function() {
                 $element[0].focus();
                 $scope.focusTrigger = false;
               }, 0);
