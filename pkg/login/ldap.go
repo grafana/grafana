@@ -56,6 +56,10 @@ func (a *ldapAuther) login(query *LoginUserQuery) error {
 	} else {
 
 		for _, ldapGroup := range a.server.LdapGroups {
+			// skip obviously incorrect group for search user
+			if ldapGroup.GroupDN == "*" {
+				continue
+			}
 			if err := a.searchUserInGroup(ldapUser, ldapGroup.GroupDN); err != nil {
 				return err
 			}
