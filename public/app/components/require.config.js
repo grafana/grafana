@@ -1,5 +1,6 @@
 require.config({
   urlArgs: 'bust=' + (new Date().getTime()),
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 <<<<<<< dda08978836d7bcaa3f0bf6cde71161a86895386
   baseUrl: 'public',
 =======
@@ -8,6 +9,11 @@ require.config({
 
   paths: {
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
+=======
+  baseUrl: 'public',
+
+  paths: {
+>>>>>>> feat() started work on more feature rich time picker
     config:                   'app/components/config',
     settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
@@ -24,7 +30,11 @@ require.config({
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          'vendor/angular-other/angular-strap',
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
+=======
+    'angular-ui':             'vendor/angular-ui/tabs',
+>>>>>>> feat() started work on more feature rich time picker
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
     bindonce:                 'vendor/angular-bindonce/bindonce',
@@ -46,13 +56,17 @@ require.config({
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
     echarts:                   'vendor/echarts/echarts',
     zrender:                   'vendor/zrender',
 
+=======
+>>>>>>> feat() started work on more feature rich time picker
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
     'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 =======
     config:                   'components/config',
     settings:                 'components/settings',
@@ -99,6 +113,8 @@ require.config({
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> feat() started work on more feature rich time picker
   },
   shim: {
 

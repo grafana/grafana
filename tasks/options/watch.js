@@ -41,6 +41,7 @@ module.exports = function(config) {
       }
     },
 
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
     // typescript: {
     //   files: ['<%= srcDir %>/app#<{(||)}>#*.ts', '<%= srcDir %>/test#<{(||)}>#*.ts'],
     //   tasks: ['tslint', 'typescript:build'],
@@ -48,6 +49,15 @@ module.exports = function(config) {
     //     spawn: false
     //   }
     // }
+=======
+    typescript: {
+      files: ['<%= srcDir %>/app/**/*.ts', '<%= srcDir %>/test/**/*.ts'],
+      tasks: ['tslint', 'typescript:build'],
+      options: {
+        spawn: false
+      }
+    }
+>>>>>>> feat() started work on more feature rich time picker
 
   };
 };

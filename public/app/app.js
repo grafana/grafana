@@ -71,11 +71,15 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 <<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
+=======
+>>>>>>> feat() started work on more feature rich time picker
     'app/services/all',
     'app/features/all',
     'app/controllers/all',
     'app/components/partials',
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 =======
     'services/all',
     'features/all',
@@ -86,6 +90,8 @@ function (angular, $, _, appLevelRequire) {
 >>>>>>> refactor: improving structure, moving things into a core module
 =======
 >>>>>>> refactor: moving routes into core, improved bundle loader
+=======
+>>>>>>> feat() started work on more feature rich time picker
   ];
 
   app.boot = function() {

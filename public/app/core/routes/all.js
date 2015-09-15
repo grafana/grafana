@@ -21,11 +21,15 @@ define([
   coreModule.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
 
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 <<<<<<< 3c76f043751a6481dee83531ee8d7c5c4980c635:public/app/core/routes/all.js
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
 =======
     var loadOrgBundle = new BundleLoader.BundleLoader('features/org/all');
 >>>>>>> refactor: moving routes into core, improved bundle loader:public/app/core/routes/all.js
+=======
+    var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+>>>>>>> feat() started work on more feature rich time picker
 
     $routeProvider
       .when('/', {

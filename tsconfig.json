@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 <<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
         "sourceMap": true,
         "declaration": true,
@@ -41,6 +42,8 @@
     ]
 }
 =======
+=======
+>>>>>>> feat() started work on more feature rich time picker
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "sourceMap": true,
@@ -61,4 +64,7 @@
         "!./public_gen/**",
     ]
 }
+<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
+>>>>>>> feat() started work on more feature rich time picker
+=======
 >>>>>>> feat() started work on more feature rich time picker
