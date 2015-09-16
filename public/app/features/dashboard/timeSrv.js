@@ -3,8 +3,9 @@ define([
   'lodash',
   'config',
   'kbn',
-  'moment'
-], function (angular, _, config, kbn, moment) {
+  'moment',
+  'app/core/utils/datemath'
+], function (angular, _, config, kbn, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -131,8 +132,8 @@ define([
         var _to = _t.to || new Date();
 
         return {
-          from: kbn.parseDate(_from),
-          to: kbn.parseDate(_to)
+          from: dateMath.parse(_from, false),
+          to: dateMath.parse(_to, true)
         };
       }
     };
