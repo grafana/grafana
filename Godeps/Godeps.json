@@ -56,6 +56,11 @@
 			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.1.0-21-g056c9bc",
+			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
+		{
 			"ImportPath": "github.com/DataDog/datadog-go/statsd",
 			"Rev": "a27810dd518c69be741a7fd5d0e39f674f615be8"
 		},
@@ -66,11 +71,6 @@
 		{
 			"ImportPath": "github.com/Dieterbe/statsd-go",
 			"Rev": "6f55e9b6e154104c5aefbdbb8ea37d82e1b31f4b"
-		},
-		{
-			"ImportPath": "github.com/BurntSushi/toml",
-			"Comment": "v0.1.0-21-g056c9bc",
-			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -186,9 +186,14 @@
 			"Rev": "4dbda5e2904d044d23cc4bef84e8360c458caf7f"
 		},
 		{
+			"ImportPath": "github.com/raintank/raintank-metric/msg",
+			"Comment": "pkg-0.1.0-1442246038ubuntu1",
+			"Rev": "cda26b60379bd2d8fbb4cc5e6c34b155e1615b1c"
+		},
+		{
 			"ImportPath": "github.com/raintank/raintank-metric/schema",
-			"Comment": "pkg-0.1.0-1440571003ubuntu1-50-g10c2352",
-			"Rev": "10c2352c3d15f9c11e52ed70d8618d2032dbf7f8"
+			"Comment": "pkg-0.1.0-1442246038ubuntu1",
+			"Rev": "cda26b60379bd2d8fbb4cc5e6c34b155e1615b1c"
 		},
 		{
 			"ImportPath": "github.com/rainycape/unidecode",
