@@ -103,29 +103,21 @@ function file2moduleName(filePath) {
 }
 
 require([
+  'lodash',
   'angular',
   'angularMocks',
   'app/app',
-], function(angular) {
+], function(_, angular) {
   'use strict';
 
   var specs = [];
 
   for (var file in window.__karma__.files) {
     if (/base\/test\/specs.*/.test(file)) {
-      console.log(file);
       file = file2moduleName(file);
-      console.log(file);
       specs.push(file);
-      //file = file.replace(/^\/base\/test/, '');
-      //specs.push(file);
-      //window.tests.push();
     }
   }
-
-  require(specs, function() {
-    window.__karma__.start();
-  });
 
   angular.module('grafana', ['ngRoute']);
   angular.module('grafana.services', ['ngRoute', '$strap.directives']);
@@ -133,49 +125,8 @@ require([
   angular.module('grafana.filters', []);
   angular.module('grafana.routes', ['ngRoute']);
 
-  // var specs = [
-  //   'specs/lexer-specs',
-  //   'specs/parser-specs',
-  //   'specs/gfunc-specs',
-  //   'specs/timeSeries-specs',
-  //   'specs/row-ctrl-specs',
-  //   'specs/graphiteTargetCtrl-specs',
-  //   'specs/graphiteDatasource-specs',
-  //   'specs/influxSeries-specs',
-  //   'specs/influxSeries08-specs',
-  //   'specs/influxQueryBuilder-specs',
-  //   'specs/influx09-querybuilder-specs',
-  //   // 'specs/influxdb-datasource-specs',
-  //   'specs/influxdbQueryCtrl-specs',
-  //   // 'specs/kairosdb-datasource-specs',
-  //   'specs/graph-ctrl-specs',
-  //   'specs/graph-specs',
-  //   'specs/graph-tooltip-specs',
-  //   'specs/seriesOverridesCtrl-specs',
-  //   'specs/shareModalCtrl-specs',
-  //   'specs/timeSrv-specs',
-  //   'specs/panelSrv-specs',
-  //   'specs/templateSrv-specs',
-  //   'specs/templateValuesSrv-specs',
-  //   'specs/kbn-format-specs',
-  //   'specs/dashboardSrv-specs',
-  //   'specs/dashboardViewStateSrv-specs',
-  //   'specs/singlestat-specs',
-  //   'specs/dynamicDashboardSrv-specs',
-  //   'specs/unsavedChangesSrv-specs',
-  //   'specs/value_select_dropdown_specs',
-  //   'specs/opentsdbDatasource-specs',
-  //   'specs/cloudwatch-datasource-specs',
-  //   'specs/elasticsearch-specs',
-  //   'specs/elasticsearch-querybuilder-specs',
-  //   'specs/elasticsearch-queryctrl-specs',
-  //   'specs/elasticsearch-indexPattern-specs',
-  //   'specs/elasticsearch-response-specs',
-  //   'specs/core/utils/datemath_specs',
-  // ];
-  //
-  // var pluginSpecs = (config.plugins.specs || []).map(function (spec) {
-  //   return '../plugins/' + spec;
-  // });
+  require(specs, function() {
+    window.__karma__.start();
+  });
 
 });

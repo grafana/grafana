@@ -11,7 +11,7 @@ var unitsDesc = unitsAsc.reverse();
 
 export class DateMath {
 
-  static parse(text, roundUp) {
+  static parse(text, roundUp?) {
     if (!text) { return undefined; }
     if (moment.isMoment(text)) { return text; }
     if (_.isDate(text)) { return moment(text); }
@@ -44,7 +44,7 @@ export class DateMath {
     return DateMath.parseDateMath(mathString, time, roundUp);
   }
 
-  static parseDateMath(mathString, time, roundUp) {
+  static parseDateMath(mathString, time, roundUp?) {
     var dateTime = time;
     var i = 0;
     var len = mathString.length;
