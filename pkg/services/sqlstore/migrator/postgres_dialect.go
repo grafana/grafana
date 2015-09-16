@@ -28,6 +28,10 @@ func (db *Postgres) QuoteStr() string {
 	return "\""
 }
 
+func (b *Postgres) LikeStr() string {
+	return "ILIKE"
+}
+
 func (db *Postgres) AutoIncrStr() string {
 	return ""
 }

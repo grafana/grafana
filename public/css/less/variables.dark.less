@@ -69,8 +69,8 @@
 @altFontFamily:         @serifFontFamily;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    bold;    // instead of browser default, bold
-@headingsColor:         @textColor; // empty to use BS default, @textColor
+@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsColor:         darken(@white,11%); // empty to use BS default, @textColor
 @inputText:             @black;
 
 
@@ -97,6 +97,8 @@
 @grafanaListBorderBottom:   @black;
 @grafanaListHighlight:      #333;
 @grafanaListMainLinkColor: @textColor;
+
+@pageContainerBorderColor: @grayDark;
 
 // Scrollbars
 @scrollbarBackground: #3a3a3a;
@@ -333,3 +335,13 @@
 // 768px-979px
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
+
+//NetCrunch
+@tile-width : 225px;
+@tile-height : 34px;
+@tile-background-color: @dropdownBackground;
+@tile-selection-color : @dropdownLinkBackgroundHover;
+@nodes-ahead-max-height : 300px;
+@counter-width : 635px;
+@counter-level-selection-color : @dropdownLinkBackgroundHover;
+@counter-group-background-color : lighten(@dropdownBackground, 4);

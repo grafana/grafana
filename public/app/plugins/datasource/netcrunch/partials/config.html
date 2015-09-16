@@ -1,0 +1,47 @@
+<br>
+<h5>NetCrunch Server settings</h5>
+<div class="tight-form">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 160px">
+      Host name / IP Address
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-xlarge"
+             ng-model='current.simpleUrl'
+             placeholder="192.168.1.1"
+             ng-pattern="/^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3})$|^((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))([:]?\d{1,5}))$/" required>
+      </input>
+    </li>
+    <li class="tight-form-item">
+      Use SSL&nbsp;
+      <input class="cr1" id="current.isSSL" type="checkbox"
+             ng-model="current.isSSL"
+             ng-checked="current.isSSL">
+      <label for="current.isSSL" class="cr1"></label>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+  <ul class="tight-form-list">
+    <li class="tight-form-item">
+      User
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-medium" style="width: 139px"
+             ng-model='current.user'
+             placeholder="user" required>
+      </input>
+    </li>
+    <li class="tight-form-item" style="width: 67px">
+      Password
+    </li>
+    <li>
+      <input type="password" class="tight-form-input input-medium"
+             ng-model='current.password'
+             placeholder="password" required>
+      </input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>

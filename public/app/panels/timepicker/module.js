@@ -72,6 +72,22 @@ function (angular, app, _, moment, kbn) {
       });
     };
 
+    $scope.loadTimeOptions = function() {
+      $scope.time_options = _.map($scope.panel.time_options, function(str) {
+        var option = {value: str};
+        if (str === 'today') {
+          option.text = 'Today';
+          option.from = 'today';
+          option.to = 'now';
+        } else {
+          option.text = 'Last ' + str;
+          option.from = 'now-'+str;
+          option.to = 'now';
+        }
+        return option;
+      });
+    };
+
     $scope.customTime = function() {
       // Assume the form is valid since we're setting it to something valid
       $scope.input.$setValidity("dummy", true);
@@ -135,9 +151,6 @@ function (angular, app, _, moment, kbn) {
         _filter.to = "now";
       }
 
-      // Set the filter
-      $scope.panel.filter_id = timeSrv.setTime(_filter);
-
       // Update our representation
       $scope.time = getScopeTimeObj(time.from,time.to);
     };
@@ -145,18 +158,15 @@ function (angular, app, _, moment, kbn) {
     $scope.setRelativeFilter = function(timespan) {
       $scope.panel.now = true;
 
-      var _filter = {
-        from : "now-"+timespan,
-        to: "now"
-      };
+      var range = {from: timespan.from, to: timespan.to};
 
       if ($scope.panel.nowDelay) {
-        _filter.to = 'now-' + $scope.panel.nowDelay;
+        range.to = 'now-' + $scope.panel.nowDelay;
       }
 
-      timeSrv.setTime(_filter);
+      timeSrv.setTime(range);
 
-      $scope.time = getScopeTimeObj(kbn.parseDate(_filter.from),new Date());
+      $scope.time = getScopeTimeObj(kbn.parseDate(range.from),new Date());
     };
 
     var pad = function(n, width, z) {
@@ -177,7 +187,7 @@ function (angular, app, _, moment, kbn) {
     };
 
     var getScopeTimeObj = function(from,to) {
-      var model = { from: getTimeObj(from), to: getTimeObj(to), };
+      var model = {from: getTimeObj(from), to: getTimeObj(to)};
 
       if (model.from.date) {
         model.tooltip = $scope.dashboard.formatDate(model.from.date) + ' <br>to<br>';
@@ -189,8 +199,12 @@ function (angular, app, _, moment, kbn) {
 
       if (timeSrv.time) {
         if ($scope.panel.now) {
-          model.rangeString = moment(model.from.date).fromNow() + ' to ' +
-            moment(model.to.date).fromNow();
+          if (timeSrv.time.from === 'today') {
+            model.rangeString = 'Today';
+          } else {
+            model.rangeString = moment(model.from.date).fromNow() + ' to ' +
+              moment(model.to.date).fromNow();
+          }
         }
         else {
           model.rangeString = $scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +

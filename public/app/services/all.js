@@ -8,5 +8,8 @@ define([
   './analytics',
   './popoverSrv',
   './backendSrv',
+  './netCrunchRemoteClient',
+  './netCrunchRemoteSession',
+  './netCrunchCounters'
 ],
 function () {});

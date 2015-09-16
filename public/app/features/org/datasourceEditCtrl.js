@@ -1,6 +1,6 @@
 define([
   'angular',
-  'config',
+  'config'
 ],
 function (angular, config) {
   'use strict';
@@ -14,9 +14,9 @@ function (angular, config) {
 
     var defaults = {
       name: '',
-      type: 'graphite',
       url: '',
-      access: 'proxy'
+      access: 'proxy',
+      type: 'elasticsearch'
     };
 
     $scope.init = function() {
@@ -42,13 +42,29 @@ function (angular, config) {
       return backendSrv.get('/api/datasources/plugins').then(function(plugins) {
         datasourceTypes = plugins;
         $scope.types = plugins;
+        $scope.filteredTypes = {};
+
+        Object.keys($scope.types).forEach(function(typeKey){
+          if (typeKey !== 'netcrunch') {
+            $scope.filteredTypes[typeKey] = $scope.types[typeKey];
+          }
+        });
       });
     };
 
     $scope.getDatasourceById = function(id) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
+        var simpleUrlRegexp = /^[h][t][t][p][s]?[:][\/][\/](.[^\/]+).*$/,
+            simpleUrl;
         $scope.isNew = false;
         $scope.current = ds;
+        if (ds.type === 'netcrunch') {
+          $scope.current.isSSL = false;
+          $scope.current.isSSL = (ds.url.indexOf('https://') === 0);
+          simpleUrl = simpleUrlRegexp.exec(ds.url);
+          $scope.current.simpleUrl = ((simpleUrl != null) && (simpleUrl.length > 1)) ? simpleUrl[1] :
+                                     'localhost';
+        }
         $scope.typeChanged();
       });
     };
@@ -83,7 +99,11 @@ function (angular, config) {
         }, function(err) {
           if (err.statusText) {
             $scope.testing.message = err.statusText;
-            $scope.testing.title = "HTTP Error";
+            if (err.title == null) {
+              $scope.testing.title = "HTTP Error";
+            } else {
+              $scope.testing.title = err.title;
+            }
           } else {
             $scope.testing.message = err.message;
             $scope.testing.title = "Unknown error";
@@ -95,8 +115,14 @@ function (angular, config) {
     };
 
     $scope.saveChanges = function(test) {
+      var protocol = ($scope.current.isSSL == false) ? 'http://' : 'https://';
+
       if (!$scope.editForm.$valid) {
         return;
+      }
+
+      if ($scope.current.type === 'netcrunch') {
+        $scope.current.url = protocol + $scope.current.simpleUrl + '/ncapi/';
       }
 
       if ($scope.current.id) {

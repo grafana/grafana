@@ -12,7 +12,8 @@
 		<h2 ng-show="!isNew">Edit data source</h2>
 
 		<form name="editForm">
-			<div class="tight-form">
+			<div class="tight-form"
+           ng-class = "{last : (current.type == 'netcrunch')}" >
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 80px">
 						Name
@@ -22,7 +23,7 @@
 							<input type="text" class="input-xlarge tight-form-input" ng-model="current.name" placeholder="my data source name" required>
 						</li>
 					</li>
-					<li class="tight-form-item">
+					<li class="tight-form-item" ng-hide = "true">
 						Default&nbsp;
 						<input class="cr1" id="current.isDefault" type="checkbox" ng-model="current.isDefault" ng-checked="current.isDefault">
 						<label for="current.isDefault" class="cr1"></label>
@@ -30,13 +31,16 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-			<div class="tight-form last">
+			<div class="tight-form last" ng-hide = "(current.type == 'netcrunch')">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 80px">
 						Type
 					</li>
 					<li>
-						<select class="input-xlarge tight-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+						<select class="input-xlarge tight-form-input"
+                    ng-model="current.type"
+                    ng-options="k as v.name for (k, v) in filteredTypes"
+                    ng-change="typeChanged()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>

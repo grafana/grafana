@@ -1,3 +1,4 @@
+@import "type.less";
 @import "login.less";
 @import "submenu.less";
 @import "graph.less";
@@ -15,6 +16,9 @@
 @import "admin.less";
 @import "validation.less";
 @import "fonts.less";
+@import "tabs.less";
+@import "netCrunchUtils";
+@import "netCrunch";
 
 .row-control-inner {
   padding:0px;
@@ -257,17 +261,27 @@
   td:first-child { text-align: right; }
 }
 
-.confirm-modal {
+.modal-no-header {
   border: 1px solid @grafanaTargetFuncBackground;
-  max-width: 500px;
-  background-color: @grafanaPanelBackground;
   text-align: center;
+
+  h3 {
+    margin-top: 30px;
+  }
 
   .modal-close {
     float: right;
     font-size: 140%;
     padding: 10px;
   }
+
+  .modal-tagline {
+    font-size: 16px;
+  }
+}
+
+.confirm-modal {
+  max-width: 500px;
 
   .confirm-modal-icon {
     padding-top: 41px;
@@ -280,10 +294,6 @@
     font-size: 18px;
     color: @linkColor;
     margin-bottom: 15px;
-  }
-
-  .confirm-modal-text {
-    font-size: 16px;
   }
 
   .confirm-modal-buttons {
@@ -354,5 +364,27 @@
   color: @orange;
 }
 
+.highlight-word {
+  color: @orange;
+}
 
+.body-copy-emphasis {
+  color: @headingsColor;
+}
 
+.signup-page-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  background-image: url(/img/background_tease.jpg);
+
+  .signup-logo-container {
+    width: 150px;
+    margin: 0 auto;
+    padding: 80px 0;
+  }
+}

@@ -5,13 +5,16 @@ page_keywords: grafana, annotations, guide, documentation
 ---
 
 # Annotations
-![](/img/v1/annotated_graph1.png)
 
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get title, tags, and text information for the event.
 
+![](/img/v1/annotated_graph1.png)
+
 To add an annotation query click dashboard settings icon in top menu and select `Annotations` from the
 dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add a new annotation query.
+
+> Note: Annotations apply to all graphs in a given dashboard, not on a per-panel basis.
 
 ## Graphite annotations
 

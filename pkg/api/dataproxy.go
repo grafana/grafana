@@ -46,7 +46,9 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			if !ds.BasicAuth {
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
-		} else {
+		} else if ds.Type == m.DS_NETCRUNCH {
+      req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+    } else {
 			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
 		}
 
@@ -72,8 +74,24 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	proxyPath := c.Params("*")
+  proxyPath := c.Params("*")
 	proxy := NewReverseProxy(&query.Result, proxyPath)
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.RW(), c.Req.Request)
+}
+
+func ProxyNetCrunchServerRequest(c *middleware.Context) {
+  id := int64(1)         //Only one datasource for NetCrunch may occure per organization
+                         //And it id should be equal 1
+  query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId }
+
+  if err := bus.Dispatch(&query); err != nil {
+    c.JsonApiErr(500, "Unable to load datasource meta data", err)
+    return
+  }
+
+  proxyPath := c.Params("*")
+  proxy := NewReverseProxy(&query.Result, proxyPath)
+  proxy.Transport = dataProxyTransport
+  proxy.ServeHTTP(c.RW(), c.Req.Request)
 }

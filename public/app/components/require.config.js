@@ -12,11 +12,16 @@ require.config({
     moment:                   '../vendor/moment',
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',
+    client:                   '../vendor/adrem/client.min',
+    ObjMapper:                '../vendor/adrem/ObjMapper',
+    NCObjects:                '../vendor/adrem/NCObjects',
+    remoteDataLists:          '../vendor/adrem/RemoteDataLists.min',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular-route/angular-route',
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          '../vendor/angular-other/angular-strap',
+    'angular-ui':             '../vendor/angular-ui/angular-bootstrap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
     bindonce:                 '../vendor/angular-bindonce/bindonce',
@@ -43,7 +48,7 @@ require.config({
 
     modernizr:                '../vendor/modernizr-2.6.1',
 
-    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
+    'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput'
   },
   shim: {
 
@@ -90,6 +95,7 @@ require.config({
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-mocks':        ['angular'],
     'angular-sanitize':     ['angular'],
+    'angular-ui':           ['angular'],
     'angular-route':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
     'bindonce':             ['angular'],
@@ -97,6 +103,6 @@ require.config({
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
 
-    'bootstrap-tagsinput':          ['jquery'],
-  },
+    'bootstrap-tagsinput':  ['jquery']
+  }
 });

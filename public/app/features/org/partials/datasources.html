@@ -27,7 +27,8 @@
 					{{ds.name}}
 				</td>
 				<td style="width:90%">
-					{{ds.url}}
+					<span ng-if = "ds.type != 'netcrunch'">{{ds.url}}</span>
+          <span ng-if = "ds.type == 'netcrunch'">{{ds.url}}</span>
 				</td>
 				<td style="width:2%" class="text-center">
 					<span ng-if="ds.isDefault">
@@ -41,7 +42,9 @@
 					</a>
 				</td>
 				<td style="width: 1%">
-					<a ng-click="remove(ds)" class="btn btn-danger btn-mini">
+					<a ng-click="remove(ds)"
+             ng-hide="ds.type == 'netcrunch'"
+             class="btn btn-danger btn-mini">
 						<i class="fa fa-remove"></i>
 					</a>
 				</td>

@@ -1,5 +1,3 @@
-# 2.2 (unreleased)
-
 ** New Feature: Mix data sources **
 A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
@@ -43,6 +41,7 @@ data source api change.
 - [Issue #2460](https://github.com/grafana/grafana/issues/2460). SinglestatPanel: Fix to handle series with no data points
 - [Issue #2461](https://github.com/grafana/grafana/issues/2461). LDAP: Fix for ldap users with empty email address
 - [Issue #2484](https://github.com/grafana/grafana/issues/2484). Graphite: Fix bug when using series ref (#A-Z) and referenced series is hidden in query editor.
+- [Issue #1896](https://github.com/grafana/grafana/issues/1896). Postgres: Dashboard search is now case insensitive when using Postgres
 
 **Enhancements**
 - [Issue #2477](https://github.com/grafana/grafana/issues/2477). InfluxDB(0.9): Added more condition operators (`<`, `>`, `<>`, `!~`), thx @thuck

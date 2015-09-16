@@ -1,0 +1,238 @@
+@import "netCrunchUtils";
+
+.flex-line {
+  .flex-display();
+  .flex-flow(row);
+  .align-items(center);
+}
+
+.flex-column {
+  .flex-display();
+  .flex-flow(column);
+  .align-items(center);
+}
+
+.no-wrap-text{
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.nodes-selection-container {
+  .flex-column;
+  left: 0;
+  position: relative;
+  margin-left: 1px;
+  padding-left: 2px;
+  width: @tile-width + 10;
+}
+
+.counter-selection-container {
+  .nodes-selection-container;
+  margin-left: 1px;
+  width: @counter-width + 10;
+}
+
+.nodes-ahead {
+  .flex(1);
+  .flex-column;
+  margin-top: 3px;
+  margin-left: 1px;
+  min-height: @nodes-ahead-max-height;
+  max-height: @nodes-ahead-max-height;
+  height: @nodes-ahead-max-height;
+  overflow-y: auto;
+  width: @tile-width + 10;
+}
+
+.counters-ahead {
+  .nodes-ahead;
+  .align-items(flex-start);
+  margin-left: 0;
+  width: @counter-width + 12;
+}
+
+.net-crunch-container {
+  .flex-column;
+  .flex-wrap(wrap);
+  .align-content(flex-start);
+  .align-items(flex-start);
+
+  padding: 0;
+  margin: 0;
+  top: 0;
+}
+
+.spinner {
+  .flex-column;
+  .flex(1);
+  .align-content(center);
+  .align-items(center);
+  .justify-content(center);
+
+  width: 100%;
+}
+
+input[type="text"].node-input {
+  background-color: @tile-background-color;
+  border: none;
+  padding-left: 9px;
+  height: @tile-height;
+  line-height: @tile-height;
+  width: @tile-width - 5;
+}
+
+input[type="text"].counter-input {
+  background-color: @tile-background-color;
+  border: none;
+  padding-left: 10px;
+  height: @tile-height;
+  line-height: @tile-height;
+  width: @counter-width - 5;
+}
+
+.node-icon {
+  padding-left : 5px;
+  padding-right : 3px;
+}
+
+.node-name {
+  .no-wrap-text;
+  line-height: 1.1;
+}
+
+.node-address {
+  .no-wrap-text;
+  color : darkgray;
+  line-height: 1.2;
+}
+
+.tile {
+  .flex-line;
+  .align-items(center);
+  .justify-content(center);
+
+  background-color: @tile-background-color;
+  border-bottom : 1px solid lighten(@tile-background-color, 3);
+  cursor : pointer;
+  margin-bottom: 0;
+  margin-right: 1px;
+  width: @tile-width - 10;
+  height: @tile-height;
+  overflow : hidden;
+
+  &:hover {
+    background-color : @tile-selection-color;
+  }
+
+  &:focus {
+    outline: none;
+    background-color : @tile-selection-color;
+  }
+}
+
+.tile-selected {
+  background-color : @tile-selection-color;
+}
+
+.tile-description {
+  .flex(1);
+  padding: 2px;
+  height: 100%;
+
+  .flex-column;
+  .justify-content(center);
+  .align-content(center);
+  .align-items(stretch);
+  font-size: 12px;
+}
+
+.counters-levels {
+  .net-crunch-container;
+  .flex-wrap(nowrap);
+  display: block;
+  padding-left: 10px;
+  margin-bottom: 10px;
+}
+
+.counter-level-common {
+  .flex(1);
+  .no-wrap-text;
+}
+
+.counter-level-selection {
+  cursor: pointer;
+
+  &:hover {
+    background-color: @counter-level-selection-color;
+  }
+  &:focus {
+    outline: none;
+    background-color: @counter-level-selection-color;
+  }
+}
+
+.counter-level-1 {
+  .counter-level-common;
+  background-color: @counter-group-background-color;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 2.0;
+}
+
+.counter-level-2 {
+  .counter-level-common;
+  font-size: 12px;
+  line-height: 1.85;
+  .counter-level-selection;
+}
+
+.net-crunch-tight-form {
+  .tight-form-item {
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+
+  .tile {
+    border-bottom: none;
+    margin-right: 0;
+    padding-top: 9px;
+    padding-bottom: 7px;
+    width: @tile-width;
+
+    &.spinner {
+      padding-top: 8px;
+      padding-bottom: 7px;
+    }
+  }
+
+  .counter {
+    .flex-line;
+    .align-items(center);
+    .justify-content(flex-start);
+
+    cursor: pointer;
+    font-size: 12px;
+    padding-top: 16px;
+    padding-bottom: 14px;
+    height: @tile-height - 14;
+    width: @counter-width;
+
+    &:hover {
+      background-color: @counter-level-selection-color;
+    }
+
+    &:focus {
+      outline: none;
+      background-color: @counter-level-selection-color;
+    }
+
+    &.spinner {
+      .justify-content(center);
+    }
+  }
+}
+
+input[type="text"].net-crunch-tight-input {
+  height: 36px;
+}
