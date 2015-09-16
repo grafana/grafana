@@ -17,8 +17,6 @@ define([
 
     'use strict';
 
-    /* global angular, adrem, console */
-
     var module = angular.module('grafana.services');
 
     // This factory begin session with NetCrunch Web App Server
@@ -35,7 +33,7 @@ define([
           var dataSources = config.datasources,
               dataSourceName;
 
-          dataSourceName = Object.keys(dataSources).filter(function(dataSourceName){
+          dataSourceName = Object.keys(dataSources).filter(function(dataSourceName) {
             return ((dataSources[dataSourceName].type === 'netcrunch') &&
                     (dataSources[dataSourceName].id === id));
           });
@@ -96,4 +94,4 @@ define([
 
         return that;
       });
-    });
+  });

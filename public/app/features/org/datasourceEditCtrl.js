@@ -44,7 +44,7 @@ function (angular, config) {
         $scope.types = plugins;
         $scope.filteredTypes = {};
 
-        Object.keys($scope.types).forEach(function(typeKey){
+        Object.keys($scope.types).forEach(function(typeKey) {
           if (typeKey !== 'netcrunch') {
             $scope.filteredTypes[typeKey] = $scope.types[typeKey];
           }
@@ -115,7 +115,7 @@ function (angular, config) {
     };
 
     $scope.saveChanges = function(test) {
-      var protocol = ($scope.current.isSSL == false) ? 'http://' : 'https://';
+      var protocol = ($scope.current.isSSL === false) ? 'http://' : 'https://';
 
       if (!$scope.editForm.$valid) {
         return;
