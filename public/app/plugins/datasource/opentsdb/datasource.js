@@ -97,7 +97,9 @@ function (angular, _, kbn) {
         result = result.data.results;
         var tagvs = [];
         _.each(result, function(r) {
-          tagvs.push(r.tags[key]);
+          if (tagvs.indexOf(r.tags[key]) === -1) {
+            tagvs.push(r.tags[key]);
+          }
         });
         return tagvs;
       });
