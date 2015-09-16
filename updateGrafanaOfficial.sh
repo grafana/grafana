@@ -8,5 +8,7 @@ if !(git remote | grep official > /dev/null); then
   git remote add official git@github.com:grafana/grafana.git
 fi
 
+git checkout grafana-official
 git pull official master:grafana-official
 git push origin grafana-official:grafana-official
+git checkout develop
