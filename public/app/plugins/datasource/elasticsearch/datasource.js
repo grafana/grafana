@@ -215,6 +215,42 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
+    ElasticDatasource.prototype.getDashboard = function(id) {
+      return this._get('/dashboard/' + id)
+      .then(function(result) {
+        return angular.fromJson(result._source.dashboard);
+      });
+    };
+
+    ElasticDatasource.prototype.searchDashboards = function() {
+      var query = {
+        query: { query_string: { query: '*' } },
+        size: 10000,
+        sort: ["_uid"],
+      };
+
+      return this._post(this.index + '/dashboard/_search', query)
+      .then(function(results) {
+        if(_.isUndefined(results.hits)) {
+          return { dashboards: [], tags: [] };
+        }
+
+        var resultsHits = results.hits.hits;
+        var displayHits = { dashboards: [] };
+
+        for (var i = 0, len = resultsHits.length; i < len; i++) {
+          var hit = resultsHits[i];
+          displayHits.dashboards.push({
+            id: hit._id,
+            title: hit._source.title,
+            tags: hit._source.tags
+          });
+        }
+
+        return displayHits;
+      });
+    };
+
     return ElasticDatasource;
   });
 });
