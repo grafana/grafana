@@ -7,8 +7,6 @@
  *
  *****************************************************************/
 
-/* global angular, console */
-
 define([
     'angular'
   ],
@@ -21,5 +19,5 @@ define([
       DEFAULT_MIN_MAX_SAMPLE_COUNT: 10,
       DEFAULT_MAX_SAMPLE_COUNT: 200,
       DEFAULT_MAX_MAX_SAMPLE_COUNT: 5000
-    })
+    });
   });

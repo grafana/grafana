@@ -7,8 +7,6 @@
  *
  *****************************************************************/
 
-/* global angular, console */
-
 define([
     'angular'
   ],
@@ -22,14 +20,14 @@ define([
     module.controller('netCrunchOptionsCtrl', function($scope, netCrunchTrendDataProviderConsts) {
 
       function prepareMaxDataPointsPattern() {
-        return /^0*([1-9][0-9]|[1-9][0-9][0-9]?|[1-4][0-9][0-9][0-9]|5000)$/
+        return /^0*([1-9][0-9]|[1-9][0-9][0-9]?|[1-4][0-9][0-9][0-9]|5000)$/;
       }
 
       $scope.init = function() {
         $scope.panel = $scope.datasource.updatePanel($scope.panel);
       };
 
-      $scope.metricOptionsChange = function (options) {
+      $scope.metricOptionsChange = function () {
         $scope.get_data();
       };
 

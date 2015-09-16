@@ -7,8 +7,6 @@
  *
  *****************************************************************/
 
-/* global angular, console */
-
 define([
     'angular',
     'lodash',
@@ -346,7 +344,7 @@ function (angular, _) {
       _.move($scope.panel.targets, indexFrom, indexTo);
     };
 
-    $scope.seriesChange = function(target) {
+    $scope.seriesChange = function() {
       $scope.get_data();
     };
 

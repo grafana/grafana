@@ -7,6 +7,8 @@
  *
  ****************************************************************/
 
+//jshint ignore: start
+
 'use strict';
 
 var netCrunchCommonFilters = function () {

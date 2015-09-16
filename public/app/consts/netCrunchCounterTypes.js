@@ -7,14 +7,11 @@
  *
  *****************************************************************/
 
-/* global angular, console */
-
 define([
-    'angular',
-    'lodash'
+    'angular'
   ],
 
-  function (angular, _) {
+  function (angular) {
 
     'use strict';
 

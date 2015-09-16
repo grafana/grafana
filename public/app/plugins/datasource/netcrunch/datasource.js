@@ -251,7 +251,7 @@ function (angular, _, moment, config, $, kbn) {
 
     NetCrunchDatasource.prototype.seriesTypesSelected = function(series) {
       return Object.keys(series).some(function(seriesKey) {
-        return (series[seriesKey] == true);
+        return (series[seriesKey] === true);
       });
     };
 
@@ -312,7 +312,7 @@ function (angular, _, moment, config, $, kbn) {
           to : rangeTo,
           periodInterval : period.periodInterval,
           periodType : period.periodType
-        }
+        };
       }
 
       function calculateTimeRange(rangeFrom, rangeTo, maxDataPoints) {
@@ -523,7 +523,7 @@ function (angular, _, moment, config, $, kbn) {
       }
     };
 
-    NetCrunchDatasource.prototype.metricFindQuery = function(query) {
+    NetCrunchDatasource.prototype.metricFindQuery = function() {
       alertSrv.set(TEMPLATES_NOT_SUPPORTED_INFO);
       return $q.when([]);
     };

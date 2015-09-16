@@ -1,17 +1,16 @@
 define([
     'angular',
-    'lodash',
     'client',
     'ObjMapper',
     'NCObjects',
     'remoteDataLists'
   ],
 
-  function (angular, _) {
+  function (angular) {
 
     'use strict';
 
-    /* global angular, adrem, console */
+    /* global adrem */
 
     var module = angular.module('grafana.services');
 
