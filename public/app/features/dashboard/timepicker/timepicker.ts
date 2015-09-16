@@ -4,6 +4,7 @@ import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
 import kbn = require('kbn');
+import dateMath = require('app/core/utils/datemath');
 import {TimeRange} from './timerange';
 
 export class TimePickerCtrl {
@@ -59,11 +60,11 @@ export class TimePickerCtrl {
 
   getTimeObj(date): any {
     return {
-      date: new Date(date),
-      hour: this.pad(date.getHours(), 2),
-      minute: this.pad(date.getMinutes(), 2),
-      second: this.pad(date.getSeconds(), 2),
-      millisecond: this.pad(date.getMilliseconds(), 3)
+      date: date,
+      hour: this.pad(date.hours(), 2),
+      minute: this.pad(date.minutes(), 2),
+      second: this.pad(date.seconds(), 2),
+      millisecond: this.pad(date.milliseconds(), 3)
     };
   };
 
@@ -154,7 +155,7 @@ export class TimePickerCtrl {
 
     this.timeSrv.setTime(range);
 
-    this.$scope.time = this.getScopeTimeObj(kbn.parseDate(range.from), new Date());
+    this.$scope.time = this.getScopeTimeObj(dateMath.parse(range.from), moment());
   }
 
   validate(time): any {

@@ -1,10 +1,10 @@
-import {DateMath} from 'app/core/utils/datemath'
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
+import dateMath = require('app/core/utils/datemath')
 import _  = require('lodash')
 import moment  = require('moment')
 
-describe.only("DateMath", () => {
+describe("DateMath", () => {
   var spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
   var anchor =  '2014-01-01T06:06:06.666Z';
   var unix = moment(anchor).valueOf();
@@ -13,25 +13,25 @@ describe.only("DateMath", () => {
 
   describe('errors', () => {
     it('should return undefined if passed something falsy', () => {
-      expect(DateMath.parse(false)).to.be(undefined);
+      expect(dateMath.parse(false)).to.be(undefined);
     });
 
     it('should return undefined if I pass an operator besides [+-/]', () => {
-      expect(DateMath.parse('now&1d')).to.be(undefined);
+      expect(dateMath.parse('now&1d')).to.be(undefined);
     });
 
     it('should return undefined if I pass a unit besides' + spans.toString(), () => {
-      expect(DateMath.parse('now+5f')).to.be(undefined);
+      expect(dateMath.parse('now+5f')).to.be(undefined);
     });
 
     it('should return undefined if rounding unit is not 1', () => {
-      expect(DateMath.parse('now/2y')).to.be(undefined);
-      expect(DateMath.parse('now/0.5y')).to.be(undefined);
+      expect(dateMath.parse('now/2y')).to.be(undefined);
+      expect(dateMath.parse('now/0.5y')).to.be(undefined);
     });
 
     it('should not go into an infinite loop when missing a unit', () => {
-      expect(DateMath.parse('now-0')).to.be(undefined);
-      expect(DateMath.parse('now-00')).to.be(undefined);
+      expect(dateMath.parse('now-0')).to.be(undefined);
+      expect(dateMath.parse('now-00')).to.be(undefined);
     });
   });
 
@@ -42,7 +42,7 @@ describe.only("DateMath", () => {
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    var startOfDay = DateMath.parse('now/d', false).valueOf()
+    var startOfDay = dateMath.parse('now/d', false).valueOf()
     expect(startOfDay).to.be(expected.getTime());
   });
 
@@ -61,16 +61,16 @@ describe.only("DateMath", () => {
       var thenEx =  anchor + '||-5' + span;
 
       it('should return 5' + span + ' ago', () => {
-        expect(DateMath.parse(nowEx).format(format)).to.eql(now.subtract(5, span).format(format));
+        expect(dateMath.parse(nowEx).format(format)).to.eql(now.subtract(5, span).format(format));
       });
 
       it('should return 5' + span + ' before ' + anchor, () => {
-        expect(DateMath.parse(thenEx).format(format)).to.eql(anchored.subtract(5, span).format(format));
+        expect(dateMath.parse(thenEx).format(format)).to.eql(anchored.subtract(5, span).format(format));
       });
     });
   });
 
-  describe('rounding', () => {
+  describe.only('rounding', () => {
     var now;
     var anchored;
 
@@ -82,11 +82,11 @@ describe.only("DateMath", () => {
 
     _.each(spans, (span) => {
       it('should round now to the beginning of the ' + span, function () {
-        expect(DateMath.parse('now/' + span).format(format)).to.eql(now.startOf(span).format(format));
+        expect(dateMath.parse('now/' + span).format(format)).to.eql(now.startOf(span).format(format));
       });
 
       it('should round now to the end of the ' + span, function () {
-        expect(DateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
+        expect(dateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
       });
     });
 

@@ -3,14 +3,14 @@ define([
   'lodash',
   'jquery',
   'config',
-  'kbn',
+  'app/core/utils/datemath',
   'moment',
   './directives',
   './queryCtrl',
   './funcEditor',
   './addGraphiteFunc',
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, $, config, dateMath, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -29,8 +29,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, 'round-down'),
-          until: this.translateTime(options.range.to, 'round-up'),
+          from: this.translateTime(options.range.from, false),
+          until: this.translateTime(options.range.to, true),
           targets: options.targets,
           format: options.format,
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -135,7 +135,7 @@ function (angular, _, $, config, kbn, moment) {
 
         return this.doGraphiteRequest({
           method: 'GET',
-          url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
+          url: '/events/get_data?from=' + this.translateTime(options.range.from, false) + '&until=' + this.translateTime(options.range.to, true) + tags,
         });
       }
       catch(err) {
@@ -143,28 +143,30 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
+    GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') >= 0) {
+        else if (date.indexOf('now-') >= 0) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
           return date;
         }
-        date = kbn.parseDate(date);
+        console.log('date: ' + date + ' round up: ' + roundUp);
+        date = dateMath.parse(date, roundUp);
+        console.log('date: ' + date + ' round up: ' + roundUp + ' '  + date.format('YYYY-MM-DD:HH:mm'));
       }
 
       date = moment.utc(date);
 
-      if (rounding === 'round-up') {
+      if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
-      else if (rounding === 'round-down') {
+      else if (roundUp === false) {
         // graphite' s from filter is exclusive
         // here we step back one minute in order
         // to guarantee that we get all the data that
