@@ -66,6 +66,6 @@
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
-    "sinon": "1.10.3"
+    "sinon": "1.16.1"
   }
 }
