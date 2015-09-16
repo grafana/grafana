@@ -7,36 +7,36 @@
  *
  ****************************************************************/
 
-/* global console, postMessage, importScripts, netCrunchCommonFilters */
+/* global postMessage, importScripts, netCrunchCommonFilters */
 
 (function () {
 
-    'use strict';
+  'use strict';
 
-    importScripts('../filters/netCrunchCommonFilters.js');
+  importScripts('../filters/netCrunchCommonFilters.js');
 
-    function filterAndOrderMapNodes(nodeList, selectedMap) {
-        var resultNodeList;
+  function filterAndOrderMapNodes(nodeList, selectedMap) {
+    var resultNodeList;
 
-        resultNodeList = netCrunchCommonFilters.mapNodes(nodeList, selectedMap);
-        if (resultNodeList != null) {
-            return netCrunchCommonFilters.orderNodes(resultNodeList);
-        } else {
-            return [];
-        }
+    resultNodeList = netCrunchCommonFilters.mapNodes(nodeList, selectedMap);
+    if (resultNodeList != null) {
+      return netCrunchCommonFilters.orderNodes(resultNodeList);
+    } else {
+      return [];
     }
+  }
 
-    function executeFilterAndOrderMapNodes(nodeList, selectedMap) {
-        postMessage({
-            result : filterAndOrderMapNodes(nodeList, selectedMap)
-        });
+  function executeFilterAndOrderMapNodes(nodeList, selectedMap) {
+    postMessage({
+      result : filterAndOrderMapNodes(nodeList, selectedMap)
+    });
+  }
+
+  addEventListener('message', function(event) {
+    switch (event.data.method) {
+      case 'filterAndOrderMapNodes' :
+        executeFilterAndOrderMapNodes(event.data.nodeList, event.data.selectedMap);
+        break;
     }
-
-    addEventListener('message', function(event) {
-        switch (event.data.method) {
-            case 'filterAndOrderMapNodes' :
-                executeFilterAndOrderMapNodes(event.data.nodeList, event.data.selectedMap);
-                break;
-        }
-    }, false);
+  }, false);
 })();

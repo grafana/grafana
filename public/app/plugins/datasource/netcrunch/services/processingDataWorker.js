@@ -7,11 +7,8 @@
  *
  *****************************************************************/
 
-/* global angular, console */
-
 define([
-    'angular',
-    'lodash'
+    'angular'
   ],
 
   function (angular) {
@@ -25,7 +22,7 @@ define([
           workerFile = 'public/app/plugins/datasource/netcrunch/workers/netCrunchProcessingDataWorker.js',
           webWorker = new Worker(workerFile);
 
-      webWorker.addEventListener('message', function(event){
+      webWorker.addEventListener('message', function(event) {
         if (defer != null) {
           defer.resolve(event.data.result);
           defer = null;
@@ -51,4 +48,4 @@ define([
       };
     });
 
-});
+  });

@@ -19,8 +19,6 @@ define([
 
     var module = angular.module('grafana.services');
 
-    /* global angular, console */
-
     module
       .factory('trendDataProvider', function ($http, $q, netCrunchRemoteSession,
                                               netCrunchTrendDataProviderConsts) {
@@ -44,7 +42,7 @@ define([
 
             QUERY_RESULT_ORDER = ['avg', 'min', 'max', 'avail', 'delta', 'equal'];
 
-        function calculateChartDataInterval ( dateStart, dateEnd, maxSampleCount ) {
+        function calculateChartDataInterval (dateStart, dateEnd, maxSampleCount) {
           var min = 60 * 1000,
               hour = 60 * min,
               day = 24 * hour,
@@ -80,18 +78,18 @@ define([
 
           periodIndex=0;
 
-          periods.some(function ( period, index ) {
-           if ((period.length * maxSampleCount) > dateRange) {
-             periodIndex=index;
-             return true;
-           } else {
-             return false;
-           }
+          periods.some(function (period, index) {
+            if ((period.length * maxSampleCount) > dateRange) {
+              periodIndex=index;
+              return true;
+            } else {
+              return false;
+            }
           });
 
           return {
-           periodType: periods[periodIndex].type,
-           periodInterval: periods[periodIndex].interval
+            periodType: periods[periodIndex].type,
+            periodInterval: periods[periodIndex].interval
           };
         }
 
@@ -134,16 +132,16 @@ define([
               convertedData = Object.create(null);
 
           resultType = resultType.ResultMask[0];
-          resultSeries = QUERY_RESULT_ORDER.filter(function(seriesType){
+          resultSeries = QUERY_RESULT_ORDER.filter(function(seriesType) {
             return (resultType.indexOf(QUERY_RESULT_MASKS[seriesType]) >= 0);
           });
-          resultSeries.forEach(function(seriesName){
+          resultSeries.forEach(function(seriesName) {
             convertedData[seriesName] = [];
           });
 
-          result.trend.forEach(function(data){
+          result.trend.forEach(function(data) {
             if (Array.isArray(data) === true) {
-              data.forEach(function(value, $index){
+              data.forEach(function(value, $index) {
                 convertedData[resultSeries[$index]].push(value);
               });
             } else {
@@ -166,7 +164,7 @@ define([
           //Default tqrAvg is used : {ResultMask : [['tqrAvg']]}
 
           if ((nodeID == null) || (counter == null)) {
-              return $q.when(null);
+            return $q.when(null);
           }
           if (periodType == null) { periodType = PERIOD_TYPE.tpHours; }
           if (periodInterval == null) { periodInterval = 1; }
@@ -190,31 +188,31 @@ define([
         }
 
         function getCounterTrendRAWData (nodeID, counter, dateFrom, dateTo, resultType){
-            return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMinutes, 1,
-                                       resultType);
+          return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMinutes, 1,
+                                     resultType);
         }
 
         function getCounterTrendMinutesData (nodeID, counter, dateFrom, dateTo, periodInterval,
                                              resultType){
-            return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMinutes,
-                                       periodInterval, resultType);
+          return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMinutes,
+                                     periodInterval, resultType);
         }
 
         function getCounterTrendHoursData (nodeID, counter, dateFrom, dateTo, periodInterval,
                                            resultType){
-            return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpHours,
-                                       periodInterval, resultType);
+          return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpHours,
+                                     periodInterval, resultType);
         }
 
         function getCounterTrendDaysData (nodeID, counter, dateFrom, dateTo, periodInterval, resultType){
-            return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpDays,
-                                       periodInterval, resultType);
+          return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpDays,
+                                     periodInterval, resultType);
         }
 
         function getCounterTrendMonthsData (nodeID, counter, dateFrom, dateTo, periodInterval,
                                             resultType){
-            return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMonths,
-                                       periodInterval, resultType);
+          return getCounterTrendData(nodeID, counter, dateFrom, dateTo, PERIOD_TYPE.tpMonths,
+                                     periodInterval, resultType);
         }
 
         function getCounterData (nodeID, counterName, dateStart, dateEnd, maxSampleCount, resultType,
@@ -244,19 +242,19 @@ define([
         }
 
         return {
-            PERIOD_TYPE : PERIOD_TYPE,
-            QUERY_RESULT_MASKS : QUERY_RESULT_MASKS,
-            calculateChartDataInterval : calculateChartDataInterval,
-            calculateTimeDomain : calculateTimeDomain,
-            prepareResultMask : prepareResultMask,
-            getCounterTrendData : getCounterTrendData,
-            getCounterTrendRAWData : getCounterTrendRAWData,
-            getCounterTrendMinutesData : getCounterTrendMinutesData,
-            getCounterTrendHoursData : getCounterTrendHoursData,
-            getCounterTrendDaysData : getCounterTrendDaysData,
-            getCounterTrendMonthsData : getCounterTrendMonthsData,
-            getCounterData: getCounterData,
-            grafanaDataConverter: grafanaDataConverter
+          PERIOD_TYPE : PERIOD_TYPE,
+          QUERY_RESULT_MASKS : QUERY_RESULT_MASKS,
+          calculateChartDataInterval : calculateChartDataInterval,
+          calculateTimeDomain : calculateTimeDomain,
+          prepareResultMask : prepareResultMask,
+          getCounterTrendData : getCounterTrendData,
+          getCounterTrendRAWData : getCounterTrendRAWData,
+          getCounterTrendMinutesData : getCounterTrendMinutesData,
+          getCounterTrendHoursData : getCounterTrendHoursData,
+          getCounterTrendDaysData : getCounterTrendDaysData,
+          getCounterTrendMonthsData : getCounterTrendMonthsData,
+          getCounterData: getCounterData,
+          grafanaDataConverter: grafanaDataConverter
         };
       });
-});
+  });
