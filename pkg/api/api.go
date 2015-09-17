@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/macaron-contrib/binding"
+  "github.com/grafana/grafana/pkg/netcrunch"
 )
 
 // Register adds http routes
@@ -66,9 +67,12 @@ func Register(r *macaron.Macaron) {
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", LoginApiPing)
 
+  // NetCrunch api for Grafana client
+  r.Get("/api/netcrunch", reqSignedIn, GetNetCrunchServerSettings)
+
   // NetCrunch server api for remote client
-  r.Any("/ncapi/", reqSignedIn, ProxyNetCrunchServerRequest)
-  r.Any("/ncapi/*", reqSignedIn, ProxyNetCrunchServerRequest)
+  r.Any("/" + netcrunch.NetCrunchServerSettings.Api + "/", reqSignedIn, ProxyNetCrunchServerRequest)
+  r.Any("/" + netcrunch.NetCrunchServerSettings.Api + "/*", reqSignedIn, ProxyNetCrunchServerRequest)
 
 	// authed api
 	r.Group("/api", func() {

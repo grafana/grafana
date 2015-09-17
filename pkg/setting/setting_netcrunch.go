@@ -1,13 +1,13 @@
 package setting
 
 type NetCrunchSettings struct {
-  Host        string
-  Port        string
-  Protocol    string
-  Api         string
+  Host        string  `json:"host"`
+  Port        string  `json:"port"`
+  Protocol    string  `json:"protocol"`
+  Api         string  `json:"api"`
 
-  User        string
-  Password    string
+  User        string  `json:"user"`
+  Password    string  `json:"password"`
 }
 
 func readNetCrunchSettings() {

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+  "github.com/grafana/grafana/pkg/netcrunch"
 )
 
 var version = "master"
@@ -59,6 +60,7 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
+  netcrunch.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
