@@ -123,6 +123,9 @@ var (
 
 	// SMTP email settings
 	Smtp SmtpSettings
+
+  // NetCrunch Server settings
+  NetCrunch NetCrunchSettings
 )
 
 type CommandLineArgs struct {
@@ -422,6 +425,7 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	readSessionConfig()
 	readSmtpSettings()
+  readNetCrunchSettings()
 }
 
 func readSessionConfig() {
