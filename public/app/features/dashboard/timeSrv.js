@@ -30,10 +30,10 @@ define([
     this._parseTime = function() {
       // when absolute time is saved in json it is turned to a string
       if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-        this.time.from = new Date(this.time.from);
+        this.time.from = moment(this.time.from);
       }
       if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-        this.time.to = new Date(this.time.to);
+        this.time.to = moment(this.time.to);
       }
     };
 
@@ -113,8 +113,8 @@ define([
         range = this.timeRange();
       }
 
-      if (_.isDate(range.from)) { range.from = range.from.getTime(); }
-      if (_.isDate(range.to)) { range.to = range.to.getTime(); }
+      if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
+      if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
 
       return range;
     };
