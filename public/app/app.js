@@ -56,7 +56,8 @@ function (angular, $, _, appLevelRequire) {
     'ang-drag-drop',
     'grafana',
     'pasvaz.bindonce',
-    'ui.bootstrap.tabs',
+    'ui.bootstrap',
+    'ui.bootstrap.tpls',
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

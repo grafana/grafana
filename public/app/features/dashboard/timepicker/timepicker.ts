@@ -1,4 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
+///<amd-dependency path="./input_date" name="inputDate" />
 
 import angular = require('angular');
 import _ = require('lodash');
@@ -6,6 +7,8 @@ import moment = require('moment');
 import kbn = require('kbn');
 import dateMath = require('app/core/utils/datemath');
 import rangeUtil = require('app/core/utils/rangeutil');
+
+declare var inputDate: any;
 
 export class TimePickerCtrl {
 
@@ -44,57 +47,30 @@ export class TimePickerCtrl {
 
     if (_.isString(timeRaw.to) && timeRaw.to.indexOf('now') === 0) {
       this.$scope.panel.now = true;
+      this.$scope.rangeString = rangeUtil.describeTimeRange(timeRaw);
+    } else {
+      let format =  'MMM D, YYYY HH:mm:ss';
+      this.$scope.rangeString = this.$scope.dashboard.formatDate(time.from, format) + ' to ' +
+        this.$scope.dashboard.formatDate(time.to, format);
     }
 
-    this.$scope.time = this.getScopeTimeObj(time.from, time.to);
-
+    this.$scope.timeRaw = timeRaw;
+    this.$scope.absolute =  {form: time.from.toDate(), to: time.to.toDate()};
     this.$scope.onAppEvent('zoom-out', function() {
       this.$scope.zoom(2);
     });
-  }
 
-  pad(n: number, width: number, z = 0): string {
-    var str = n.toString();
-    return str.length >= width ? str : new Array(width - str.length + 1).join(z.toString()) + str;
-  }
-
-  getTimeObj(date): any {
-    return {
-      date: date,
-      hour: this.pad(date.hours(), 2),
-      minute: this.pad(date.minutes(), 2),
-      second: this.pad(date.seconds(), 2),
-      millisecond: this.pad(date.milliseconds(), 3)
-    };
-  };
-
-  getScopeTimeObj(from, to) {
-    var model : any = {from: this.getTimeObj(from), to: this.getTimeObj(to)};
-
-    if (model.from.date) {
-      model.tooltip = this.$scope.dashboard.formatDate(model.from.date) + ' <br>to<br>';
-      model.tooltip += this.$scope.dashboard.formatDate(model.to.date);
-    }
-    else {
-      model.tooltip = 'Click to set time filter';
-    }
-
-    if (this.timeSrv.time) {
-      if (this.$scope.panel.now) {
-        model.rangeString = rangeUtil.describeTimeRange(this.timeSrv.time);
-      }
-      else {
-        model.rangeString = this.$scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +
-          this.$scope.dashboard.formatDate(model.to.date, 'MMM D, YYYY HH:mm:ss');
-      }
-    }
-
-    return model;
+    this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from.date) + ' <br>to<br>';
+    this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to.date);
   }
 
   loadTimeOptions() {
-    this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel);
-    this.$scope.refreshMenuLeftSide = this.$scope.time.rangeString.length < 10;
+    this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel, this.$scope.rangeString);
+    this.$scope.appEvent('show-dash-editor', {
+      src: 'app/features/dashboard/timepicker/dropdown.html',
+      scope: this.$scope,
+      cssClass: 'gf-timepicker-dropdown',
+    });
   }
 
   customTime() {
@@ -118,10 +94,6 @@ export class TimePickerCtrl {
     });
   }
 
-  setNow() {
-    this.$scope.time.to = this.getTimeObj(new Date());
-  }
-
   setAbsoluteTimeFilter(time) {
     // Create filter object
     var _filter = _.clone(time);
@@ -130,8 +102,6 @@ export class TimePickerCtrl {
       _filter.to = "now";
     }
 
-    // Update our representation
-    this.$scope.time = this.getScopeTimeObj(time.from, time.to);
     this.timeSrv.setTime(_filter);
   }
 
@@ -145,8 +115,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(range);
-
-    this.$scope.time = this.getScopeTimeObj(dateMath.parse(range.from), moment());
+    this.$scope.appEvent('hide-dash-editor');
   }
 
   validate(time): any {

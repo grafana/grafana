@@ -1,0 +1,104 @@
+.timepicker-to-column {
+  margin-top: 10px;
+}
+
+.timepicker-input input {
+  outline: 0 !important;
+  border: 0px !important;
+  -webkit-box-shadow: 0;
+  -moz-box-shadow: 0;
+  box-shadow: 0;
+  position: relative;
+}
+
+.timepicker-input input::-webkit-outer-spin-button,
+.timepicker-input input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input.timepicker-date {
+  width: 90px;
+}
+
+input.timepicker-hms {
+  width: 20px;
+}
+
+input.timepicker-ms {
+  width: 25px;
+}
+
+div.timepicker-now {
+  float: right;
+}
+
+.timepicker-timestring {
+  font-weight: normal;
+}
+
+.gf-timepicker-dropdown {
+  margin: 15px;
+  padding: 10px 20px;
+  float: right;
+  background-color: @grafanaPanelBackground;
+  border: 1px solid @grafanaTargetFuncBackground;
+}
+
+.gf-timepicker-absolute-section {
+  width: 300px;
+  float: left;
+  padding: 0 20px 0 20px;
+}
+
+.gf-timepicker-relative-section {
+  border-right: @grafanaTriggerBorder;
+  padding: 0 20px 0 20px;
+  min-height: 258px;
+  float: left;
+  ul {
+    float: left;
+    margin: 0 20px 10px 25px;
+    li.active {
+      border-left: 1px solid @blue;
+      padding: 2px 0;
+    }
+  }
+}
+
+.gf-timepicker-component {
+  button.btn-sm {
+    .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight);
+    background-image: none;
+    border: none;
+    padding: 6px 9px;
+    color: @textColor;
+    &.active .text-info {
+      color: @orange;
+      font-weight: bold;
+    }
+  }
+}
+
+.faMixin {
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  font-size: inherit;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glyphicon-chevron-right:before {
+  .faMixin;
+  content: "\f054";
+}
+
+.glyphicon-chevron-left:before {
+  .faMixin;
+  content: "\f053";
+}
+
+.input-datetime-format {
+  color: @linkColorDisabled
+}

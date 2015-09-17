@@ -2,6 +2,7 @@
 .nav-tabs-alt {
   border-bottom: @grafanaTriggerBorder;
   padding-left: 10px;
+  margin: 0;
 
 	& > li > a {
 	  color: darken(@linkColor, 20%);
@@ -29,5 +30,10 @@
 		background-color: #060606;
 		border-color: transparent;
 	}
+}
+
+.tab-content {
+  padding: 10px;
+  background-color: @grafanaPanelBackground;
 }
 
