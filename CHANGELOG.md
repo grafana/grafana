@@ -15,6 +15,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
 ** Other new Features && Enhancements**
+- [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
