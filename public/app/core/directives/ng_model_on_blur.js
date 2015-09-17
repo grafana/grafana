@@ -2,9 +2,8 @@ define([
   'kbn',
   'app/core/core_module',
   'app/core/utils/rangeutil',
-  'moment',
 ],
-function (kbn, coreModule, rangeUtil, moment) {
+function (kbn, coreModule, rangeUtil) {
   'use strict';
 
   coreModule.directive('ngModelOnblur', function() {

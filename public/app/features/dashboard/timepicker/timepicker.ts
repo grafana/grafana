@@ -35,14 +35,14 @@ export class TimePickerCtrl {
 
   init() {
     this.$scope.panel = this.$scope.dashboard.timepicker;
+    this.$scope.panel.now = false;
 
     _.defaults(this.$scope.panel, TimePickerCtrl.defaults);
 
-    var time = this.timeSrv.timeRange(true);
-    this.$scope.panel.now = false;
+    var time = this.timeSrv.timeRange();
+    var timeRaw = this.timeSrv.timeRange(false);
 
-    var unparsed = this.timeSrv.timeRange(false);
-    if (_.isString(unparsed.to) && unparsed.to.indexOf('now') === 0) {
+    if (_.isString(timeRaw.to) && timeRaw.to.indexOf('now') === 0) {
       this.$scope.panel.now = true;
     }
 
@@ -97,23 +97,14 @@ export class TimePickerCtrl {
     this.$scope.refreshMenuLeftSide = this.$scope.time.rangeString.length < 10;
   }
 
-  cloneTime(time) {
-    var _n = { from: _.clone(time.from), to: _.clone(time.to) };
-
-    // Create new dates as _.clone is shallow.
-    _n.from.date = new Date(_n.from.date);
-    _n.to.date = new Date(_n.to.date);
-    return _n;
-  }
-
   customTime() {
     // Assume the form is valid since we're setting it to something valid
     this.$scope.input.$setValidity("dummy", true);
-    this.$scope.temptime = this.cloneTime(this.$scope.time);
+    this.$scope.temptime = angular.copy(this.$scope.time);
     this.$scope.temptime.now = this.$scope.panel.now;
 
-    this.$scope.temptime.from.date.setHours(0, 0, 0, 0);
-    this.$scope.temptime.to.date.setHours(0, 0, 0, 0);
+    // this.$scope.temptime.from.date.setHours(0, 0, 0, 0);
+    // this.$scope.temptime.to.date.setHours(0, 0, 0, 0);
 
     // Date picker needs the date to be at the start of the day
     if (new Date().getTimezoneOffset() < 0) {

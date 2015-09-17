@@ -152,13 +152,13 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var target;
       var sentTargets = [];
 
-      var header = this.getQueryHeader(options.timeFrom, options.timeTo);
+      var header = this.getQueryHeader(options.range.from, options.range.to);
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {return;}
 
-        var esQuery = this.queryBuilder.build(target, options.timeFrom, options.timeTo);
+        var esQuery = this.queryBuilder.build(target);
         payload += header + '\n';
         payload += angular.toJson(esQuery) + '\n';
 
@@ -166,8 +166,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       payload = payload.replace(/\$interval/g, options.interval);
-      payload = payload.replace(/\$timeFrom/g, options.timeFrom);
-      payload = payload.replace(/\$timeTo/g, options.timeTo);
+      payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
+      payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
       payload = templateSrv.replace(payload, options.scopedVars);
 

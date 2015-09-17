@@ -21,7 +21,7 @@ define([
       var urlExpected = "/series?p=mupp&q=select+mean(value)+from+%22test%22"+
                         "+where+time+%3E+now()-1h+group+by+time(1s)+order+asc";
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ series: 'test', column: 'value', function: 'mean' }],
         interval: '1s'
       };
@@ -54,7 +54,7 @@ define([
       var urlExpected = "/series?p=mupp&q=select+value+from+series"+
                         "+where+time+%3E+now()-1h";
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ query: "select value from series where $timeFilter", rawQuery: true }]
       };
 
@@ -97,6 +97,5 @@ define([
     });
 
   });
-
 });
 

@@ -116,6 +116,7 @@ describe("DateMath", () => {
       expect(date).to.equal(undefined);
     });
   });
+
 });
 
 export = {};
