@@ -275,7 +275,7 @@ function (angular, _, dateMath) {
     };
 
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
-      var cloudwatch = this.getCloudWatchClient(query.region);
+      var cloudwatch = this.getAwsClient(query.region, 'CloudWatch');
 
       var params = {
         Namespace: query.namespace,
@@ -321,7 +321,7 @@ function (angular, _, dateMath) {
       namespace = templateSrv.replace(namespace);
       metricName = templateSrv.replace(metricName);
 
-      var cloudwatch = this.getCloudWatchClient(region);
+      var cloudwatch = this.getAwsClient(region, 'CloudWatch');
 
       var params = {
         Namespace: namespace,
@@ -436,6 +436,33 @@ function (angular, _, dateMath) {
         });
       }
 
+      var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
+      if (ebsVolumeIdsQuery) {
+        region = templateSrv.replace(ebsVolumeIdsQuery[1]);
+        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
+
+        var ec2 = this.getAwsClient(region, 'EC2');
+
+        var params = {
+          InstanceIds: [
+            instanceId
+          ]
+        };
+        ec2.describeInstances(params, function(err, data) {
+          if (err) {
+            throw err;
+          }
+
+          var volumeIds = _.map(data.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
+            return mapping.EBS.VolumeID;
+          });
+
+          d.resolve(transformSuggestData(volumeIds));
+        });
+
+        return d.promise;
+      }
+
       return $q.when([]);
     };
 
@@ -451,9 +478,9 @@ function (angular, _, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.getCloudWatchClient = function(region) {
+    CloudWatchDatasource.prototype.getAwsClient = function(region, service) {
       if (!this.proxyMode) {
-        return new AWS.CloudWatch({
+        return new AWS[service]({
           region: region,
           accessKeyId: this.credentials.accessKeyId,
           secretAccessKey: this.credentials.secretAccessKey
@@ -483,10 +510,22 @@ function (angular, _, dateMath) {
           };
         };
 
-        return {
-          getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
-          listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
-        };
+        var proxy;
+        switch (service) {
+        case 'CloudWatch':
+          proxy = {
+            getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
+            listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
+          };
+          break;
+        case 'EC2':
+          proxy = {
+            describeInstances: generateRequestProxy('EC2', 'DescribeInstances')
+          };
+          break;
+        }
+
+        return proxy;
       }
     };
 
