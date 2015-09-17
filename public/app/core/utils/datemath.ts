@@ -43,6 +43,19 @@ function parse(text, roundUp?) {
   return parseDateMath(mathString, time, roundUp);
 }
 
+function isValid(text) {
+  var date = parse(text);
+  if (!date) {
+    return false;
+  }
+
+  if (moment.isMoment(date)) {
+    return date.isValid();
+  }
+
+  return false;
+}
+
 function parseDateMath(mathString, time, roundUp?) {
   var dateTime = time;
   var i = 0;
@@ -107,5 +120,6 @@ function parseDateMath(mathString, time, roundUp?) {
 
 export = {
   parse: parse,
-  parseDateMath: parseDateMath
+  parseDateMath: parseDateMath,
+  isValid: isValid
 };

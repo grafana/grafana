@@ -1,8 +1,10 @@
 define([
   'kbn',
-  '../core_module',
+  'app/core/core_module',
+  'app/core/utils/rangeutil',
+  'moment',
 ],
-function (kbn, coreModule) {
+function (kbn, coreModule, rangeUtil, moment) {
   'use strict';
 
   coreModule.directive('ngModelOnblur', function() {
@@ -46,7 +48,8 @@ function (kbn, coreModule) {
           if (ctrl.$isEmpty(modelValue)) {
             return true;
           }
-          return kbn.isValidTimeSpan(viewValue);
+          var info = rangeUtil.describeTextRange(viewValue);
+          return info.invalid !== true;
         };
       }
     };

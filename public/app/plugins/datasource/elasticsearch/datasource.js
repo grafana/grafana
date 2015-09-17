@@ -141,11 +141,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.getQueryHeader = function(timeRange) {
+    ElasticDatasource.prototype.getQueryHeader = function(timeFrom, timeTo) {
       var header = {search_type: "count", "ignore_unavailable": true};
-      var from = kbn.parseDate(timeRange.from);
-      var to = kbn.parseDate(timeRange.to);
-      header.index = this.indexPattern.getIndexList(from, to);
+      header.index = this.indexPattern.getIndexList(timeFrom, timeTo);
       return angular.toJson(header);
     };
 
@@ -154,15 +152,13 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var target;
       var sentTargets = [];
 
-      var header = this.getQueryHeader(options.range);
-      var timeFrom = this.translateTime(options.range.from);
-      var timeTo = this.translateTime(options.range.to);
+      var header = this.getQueryHeader(options.timeFrom, options.timeTo);
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {return;}
 
-        var esQuery = this.queryBuilder.build(target, timeFrom, timeTo);
+        var esQuery = this.queryBuilder.build(target, options.timeFrom, options.timeTo);
         payload += header + '\n';
         payload += angular.toJson(esQuery) + '\n';
 
@@ -170,22 +166,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       payload = payload.replace(/\$interval/g, options.interval);
-      payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
-      payload = payload.replace(/\$timeTo/g, this.translateTime(options.range.to));
+      payload = payload.replace(/\$timeFrom/g, options.timeFrom);
+      payload = payload.replace(/\$timeTo/g, options.timeTo);
       payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
       payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('/_msearch?search_type=count', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
-    };
-
-    ElasticDatasource.prototype.translateTime = function(date) {
-      if (_.isString(date)) {
-        return date;
-      }
-
-      return date.getTime();
     };
 
     ElasticDatasource.prototype.metricFindQuery = function() {

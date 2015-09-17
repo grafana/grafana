@@ -1,10 +1,12 @@
 define([
   'angular',
+  'app/core/utils/datemath',
+  'app/core/utils/rangeutil',
   'lodash',
   'kbn',
   'jquery',
 ],
-function (angular, _, kbn, $) {
+function (angular, dateMath, rangeUtil, _, kbn, $) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -63,30 +65,32 @@ function (angular, _, kbn, $) {
 
       // check panel time overrrides
       if (scope.panel.timeFrom) {
-        if (!kbn.isValidTimeSpan(scope.panel.timeFrom)) {
-          scope.panelMeta.timeInfo = 'invalid time override';
+        var timeFromInfo = rangeUtil.describeTextRange(scope.panel.timeFrom);
+        if (timeFromInfo.invalid) {
+          scope.panelMeta.timeFromInfo = 'invalid time override';
           return;
         }
 
         if (_.isString(scope.rangeUnparsed.from)) {
-          var timeInfo = kbn.getRelativeTimeInfo(scope.panel.timeFrom);
-          scope.panelMeta.timeInfo = timeInfo.text;
-          scope.rangeUnparsed.from = timeInfo.from;
-          scope.rangeUnparsed.to = timeInfo.to;
-          scope.range.from = kbn.parseDate(scope.rangeUnparsed.from);
+          var timeFromDate = dateMath.parse(timeFromInfo.from);
+          scope.panelMeta.timeInfo = timeFromInfo.display;
+          scope.rangeUnparsed.from = timeFromInfo.from;
+          scope.rangeUnparsed.to = timeFromInfo.to;
+          scope.range.from = timeFromDate;
         }
       }
 
       if (scope.panel.timeShift) {
-        if (!kbn.isValidTimeSpan(scope.panel.timeShift)) {
+        var timeShiftInfo = rangeUtil.describeTextRange(scope.panel.timeFrom);
+        if (timeShiftInfo.invalid) {
           scope.panelMeta.timeInfo = 'invalid timeshift';
           return;
         }
 
         var timeShift = '-' + scope.panel.timeShift;
         scope.panelMeta.timeInfo += ' timeshift ' + timeShift;
-        scope.range.from = kbn.parseDateMath(timeShift, scope.range.from);
-        scope.range.to = kbn.parseDateMath(timeShift, scope.range.to);
+        scope.range.from = dateMath.parseDateMath(timeShift, scope.range.from, false);
+        scope.range.to = dateMath.parseDateMath(timeShift, scope.range.to, true);
 
         scope.rangeUnparsed = scope.range;
       }
@@ -99,6 +103,8 @@ function (angular, _, kbn, $) {
     this.issueMetricQuery = function(scope, datasource) {
       var metricsQuery = {
         range: scope.rangeUnparsed,
+        timeFrom: scope.range.valueOf(),
+        timeTo: scope.range.valueOf(),
         interval: scope.interval,
         targets: scope.panel.targets,
         format: scope.panel.renderer === 'png' ? 'png' : 'json',
@@ -118,6 +124,5 @@ function (angular, _, kbn, $) {
         return results;
       });
     };
-
   });
 });
