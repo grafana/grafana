@@ -1,56 +1,24 @@
-<style>
-	.timepicker-timestring {
-		font-weight: normal;
-	}
+<ul class="nav timepicker-dropdown">
 
-	.timepicker-dropdown {
-		margin: 0px !important;
-		border: 0px !important;
-	}
-</style>
-<form name="input" style="margin:0">
-	<ul class="nav timepicker-dropdown">
+	<li class="grafana-menu-zoom-out">
+		<a class='small' ng-click='zoom(2)'>
+			Zoom Out
+		</a>
+	</li>
 
-		<li class="grafana-menu-zoom-out">
-			<a class='small' ng-click='zoom(2)'>
-				Zoom Out
-			</a>
-		</li>
+	<li>
+		<a class="timepicker-dropdown" bs-tooltip="tooltip" data-placement="bottom" ng-click="ctrl.loadTimeOptions()">
+			<i class="fa fa-clock-o"></i>
+			<span ng-bind="rangeString"></span>
+			<i class="fa fa-caret-down"></i>
+		</a>
+	</li>
 
-		<li class="dropdown">
+	<li class="grafana-menu-refresh">
+		<a ng-click="timeSrv.refreshDashboard()">
+			<i class="fa fa-refresh"></i>
+			<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
+		</a>
+	</li>
 
-			<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="ctrl.loadTimeOptions();">
-				<i class="fa fa-clock-o"></i>
-				<span ng-bind="time.rangeString"></span>
-				<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
-				<i class="fa fa-caret-down"></i>
-			</a>
-
-			<!-- lacy load this -->
-			<ul class="dropdown-menu" ng-if="timeOptions" >
-				<li bindonce ng-repeat='option in timeOptions'>
-					<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
-				</li>
-
-				<!-- Auto refresh submenu -->
-				<li class="dropdown-submenu">
-					<a href="#">Auto-Refresh</a>
-					<ul class="dropdown-menu" ng-class="{'dropdown-submenu-left': refreshMenuLeftSide}">
-						<li>
-							<a ng-click="timeSrv.set_interval(false)">Off</a>
-						</li>
-						<li bindonce ng-repeat="interval in panel.refresh_intervals track by $index">
-							<a ng-click="timeSrv.set_interval(interval)" bo-text="'Every ' + interval"></a>
-						</li>
-					</ul>
-				</li>
-				<li><a ng-click="ctrl.customTime()">Custom</a></li>
-			</ul>
-
-		</li>
-		<li ng-show="!dashboard.refresh" class="grafana-menu-refresh">
-			<a ng-click="timeSrv.refreshDashboard()"><i class="fa fa-refresh"></i></a>
-		</li>
-	</ul>
-</form>
-</div>
+</ul>

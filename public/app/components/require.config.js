@@ -19,7 +19,7 @@ require.config({
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          'vendor/angular-other/angular-strap',
-    'angular-ui':             'vendor/angular-ui/tabs',
+    'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
     bindonce:                 'vendor/angular-bindonce/bindonce',
