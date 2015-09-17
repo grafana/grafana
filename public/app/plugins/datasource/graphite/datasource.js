@@ -154,9 +154,7 @@ function (angular, _, $, config, dateMath, moment) {
           date = date.replace('M', 'mon');
           return date;
         }
-        console.log('date: ' + date + ' round up: ' + roundUp);
         date = dateMath.parse(date, roundUp);
-        console.log('date: ' + date + ' round up: ' + roundUp + ' '  + date.format('YYYY-MM-DD:HH:mm'));
       }
 
       date = moment.utc(date);
