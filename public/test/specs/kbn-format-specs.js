@@ -1,6 +1,7 @@
 define([
-  'kbn'
-], function(kbn) {
+  'kbn',
+  'app/core/utils/datemath'
+], function(kbn, dateMath) {
   'use strict';
 
   function describeValueFormat(desc, value, tickSize, tickDecimals, result) {
@@ -60,60 +61,33 @@ define([
 
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {
-      var range = { from: kbn.parseDate('now-1h'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-1h'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 100, null);
       expect(str).to.be('30s');
     });
 
     it('10m 1600 resolution', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, null);
       expect(str).to.be('100ms');
     });
 
     it('fixed user interval', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, '10s');
       expect(str).to.be('10s');
     });
 
     it('short time range and user low limit', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, '>10s');
       expect(str).to.be('10s');
     });
 
     it('large time range and user low limit', function() {
-      var range = { from: kbn.parseDate('now-14d'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-14d'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1000, '>10s');
       expect(str).to.be('30m');
     });
-
   });
-
-  describe('relative time to date parsing', function() {
-    it('should handle negative time', function() {
-      var date = kbn.parseDateMath('-2d', new Date(2014,1,5));
-      expect(date.getTime()).to.equal(new Date(2014, 1, 3).getTime());
-    });
-
-    it('should handle today', function() {
-      var date = kbn.parseDate('today');
-      var today = new Date();
-      today.setHours(0,0,0,0);
-      expect(date.getTime()).to.equal(today.getTime());
-    });
-
-    it('should handle multiple math expressions', function() {
-      var date = kbn.parseDateMath('-2d-6h', new Date(2014, 1, 5));
-      expect(date.toString()).to.equal(new Date(2014, 1, 2, 18).toString());
-    });
-
-    it('should return false when invalid expression', function() {
-      var date = kbn.parseDateMath('2', new Date(2014, 1, 5));
-      expect(date).to.equal(false);
-    });
-
-  });
-
 });

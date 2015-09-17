@@ -75,7 +75,7 @@ _.each(rangeOptions, function (frame) {
       return opt;
     }
 
-    opt = {from: 'now-' + expr, to: 'now', display: 'Parse error'};
+    opt = {from: 'now-' + expr, to: 'now'};
 
     if (/^\d+\w$/.test(expr)) {
       let unit = expr[expr.length - 1];
@@ -87,6 +87,9 @@ _.each(rangeOptions, function (frame) {
           opt.display += 's';
         }
       }
+    } else {
+      opt.display = 'parse error';
+      opt.invalid = true;
     }
 
     return opt;

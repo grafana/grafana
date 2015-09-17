@@ -42,14 +42,14 @@ define([
         return value;
       }
       if (value.length === 8) {
-        return moment.utc(value, 'YYYYMMDD').toDate();
+        return moment.utc(value, 'YYYYMMDD');
       }
       if (value.length === 15) {
-        return moment.utc(value, 'YYYYMMDDTHHmmss').toDate();
+        return moment.utc(value, 'YYYYMMDDTHHmmss');
       }
       var epoch = parseInt(value);
       if (!_.isNaN(epoch)) {
-        return new Date(epoch);
+        return moment(epoch);
       }
 
       return null;

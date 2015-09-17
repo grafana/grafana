@@ -57,10 +57,8 @@ define([
         };
 
         ctx.ds.query({
-          range: {
-            from: new Date(2015, 4, 30, 10),
-            to: new Date(2015, 5, 1, 10)
-          },
+          timeFrom: moment(new Date(2015, 4, 30, 10)),
+          timeTo: moment(new Date(2015, 5, 1, 10)),
           targets: [{ bucketAggs: [], metrics: [] }]
         });
 

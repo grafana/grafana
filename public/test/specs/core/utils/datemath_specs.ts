@@ -89,7 +89,32 @@ describe("DateMath", () => {
         expect(dateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
       });
     });
+  });
 
+  describe('isValid', () => {
+    it('should return false when invalid date text', () => {
+      expect(dateMath.isValid('asd')).to.be(false);
+    });
+    it('should return true when valid date text', () => {
+      expect(dateMath.isValid('now-1h')).to.be(true);
+    });
+  });
+
+  describe('relative time to date parsing', function() {
+    it('should handle negative time', function() {
+      var date = dateMath.parseDateMath('-2d', moment([2014, 1, 5]));
+      expect(date.valueOf()).to.equal(moment([2014, 1, 3]).valueOf());
+    });
+
+    it('should handle multiple math expressions', function() {
+      var date = dateMath.parseDateMath('-2d-6h', moment([2014, 1, 5]));
+      expect(date.valueOf()).to.equal(moment([2014, 1, 2, 18]).valueOf());
+    });
+
+    it('should return false when invalid expression', function() {
+      var date = dateMath.parseDateMath('2', moment([2014, 1, 5]));
+      expect(date).to.equal(undefined);
+    });
   });
 });
 
