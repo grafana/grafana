@@ -123,13 +123,10 @@ define([
       var _t = this.time;
 
       if(parse === false) {
-        return {
-          from: _t.from,
-          to: _t.to
-        };
+        return { from: _t.from, to: _t.to };
       } else {
         var _from = _t.from;
-        var _to = _t.to || new Date();
+        var _to = _t.to || moment();
 
         return {
           from: dateMath.parse(_from, false),

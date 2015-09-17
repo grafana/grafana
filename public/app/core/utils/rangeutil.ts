@@ -65,21 +65,21 @@ _.each(rangeOptions, function (frame) {
   // now/d
   // if no to <expr> then to now is assumed
   function describeTextRange(expr: string) {
-    let rangeExpr = 'now-' + expr + ' to now';
-    if (expr.indexOf('now') === 0) {
-      rangeExpr = expr + ' to now';
+    if (expr.indexOf('now') === -1) {
+      expr = 'now-' + expr;
     }
 
-    let opt = rangeIndex[rangeExpr];
+    let opt = rangeIndex[expr + ' to now'];
     if (opt) {
       return opt;
     }
 
-    opt = {from: 'now-' + expr, to: 'now'};
+    opt = {from: expr, to: 'now'};
 
-    if (/^\d+\w$/.test(expr)) {
-      let unit = expr[expr.length - 1];
-      let amount = parseInt(expr.substring(0, expr.length - 1));
+    let parts = /^now-(\d+)(\w)/.exec(expr);
+    if (parts) {
+      let unit = parts[2];
+      let amount = parseInt(parts[1]);
       let span = spans[unit];
       if (span) {
         opt.display = 'Last ' + amount + ' ' + span.display;
@@ -100,6 +100,10 @@ _.each(rangeOptions, function (frame) {
     if (option) {
       return option.display;
     }
+    if (range.to === 'now') {
+      return describeTextRange(range.from).display;
+    }
+
     return "NA";
   }
 

@@ -29,8 +29,8 @@ function (angular, _, $, config, dateMath, moment) {
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, false),
-          until: this.translateTime(options.range.to, true),
+          from: this.translateTime(options.rangeRaw.from, false),
+          until: this.translateTime(options.rangeRaw.to, true),
           targets: options.targets,
           format: options.format,
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -135,7 +135,8 @@ function (angular, _, $, config, dateMath, moment) {
 
         return this.doGraphiteRequest({
           method: 'GET',
-          url: '/events/get_data?from=' + this.translateTime(options.range.from, false) + '&until=' + this.translateTime(options.range.to, true) + tags,
+          url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
+            '&until=' + this.translateTime(options.range.to, true) + tags,
         });
       }
       catch(err) {
@@ -159,16 +160,16 @@ function (angular, _, $, config, dateMath, moment) {
 
       date = moment.utc(date);
 
+      // graphite' s from filter is exclusive
+      // here we step back one minute in order
+      // to guarantee that we get all the data that
+      // exists for the specified range
       if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
       else if (roundUp === false) {
-        // graphite' s from filter is exclusive
-        // here we step back one minute in order
-        // to guarantee that we get all the data that
-        // exists for the specified range
         if (date.get('s')) {
           date.subtract(1, 'm');
         }
@@ -187,14 +188,14 @@ function (angular, _, $, config, dateMath, moment) {
       }
 
       return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-        .then(function(results) {
-          return _.map(results.data, function(metric) {
-            return {
-              text: metric.text,
-              expandable: metric.expandable ? true : false
-            };
-          });
+      .then(function(results) {
+        return _.map(results.data, function(metric) {
+          return {
+            text: metric.text,
+            expandable: metric.expandable ? true : false
+          };
         });
+      });
     };
 
     GraphiteDatasource.prototype.testDatasource = function() {
@@ -205,9 +206,9 @@ function (angular, _, $, config, dateMath, moment) {
 
     GraphiteDatasource.prototype.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
-        .then(function(results) {
-          return results.data.dashboards;
-        });
+      .then(function(results) {
+        return results.data.dashboards;
+      });
     };
 
     GraphiteDatasource.prototype.loadDashboard = function(dashName) {

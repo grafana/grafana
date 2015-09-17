@@ -1,9 +1,8 @@
 define([
   'jquery',
   'lodash',
-  'moment'
 ],
-function($, _, moment) {
+function($, _) {
   'use strict';
 
   var kbn = {};

@@ -48,7 +48,8 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
 
     this.updateTimeRange = function(scope) {
       scope.range = timeSrv.timeRange();
-      scope.rangeUnparsed = timeSrv.timeRange(false);
+      scope.rangeRaw = timeSrv.timeRange(false);
+
       this.applyPanelTimeOverrides(scope);
 
       if (scope.panel.maxDataPoints) {
@@ -57,6 +58,7 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
       else {
         scope.resolution = Math.ceil($(window).width() * (scope.panel.span / 12));
       }
+
       scope.interval = kbn.calculateInterval(scope.range, scope.resolution, scope.panel.interval);
     };
 
@@ -71,11 +73,11 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
           return;
         }
 
-        if (_.isString(scope.rangeUnparsed.from)) {
+        if (_.isString(scope.rangeRaw.from)) {
           var timeFromDate = dateMath.parse(timeFromInfo.from);
           scope.panelMeta.timeInfo = timeFromInfo.display;
-          scope.rangeUnparsed.from = timeFromInfo.from;
-          scope.rangeUnparsed.to = timeFromInfo.to;
+          scope.rangeRaw.from = timeFromInfo.from;
+          scope.rangeRaw.to = timeFromInfo.to;
           scope.range.from = timeFromDate;
         }
       }
@@ -92,7 +94,7 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
         scope.range.from = dateMath.parseDateMath(timeShift, scope.range.from, false);
         scope.range.to = dateMath.parseDateMath(timeShift, scope.range.to, true);
 
-        scope.rangeUnparsed = scope.range;
+        scope.rangeRaw = scope.range;
       }
 
       if (scope.panel.hideTimeOverride) {
@@ -102,9 +104,8 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
 
     this.issueMetricQuery = function(scope, datasource) {
       var metricsQuery = {
-        range: scope.rangeUnparsed,
-        timeFrom: scope.range.valueOf(),
-        timeTo: scope.range.valueOf(),
+        range: scope.range,
+        rangeRaw: scope.rangeRaw,
         interval: scope.interval,
         targets: scope.panel.targets,
         format: scope.panel.renderer === 'png' ? 'png' : 'json',
