@@ -34,7 +34,15 @@ it allows you to add queries of differnet data source types & instances to the s
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
 ** Other new Features && Enhancements**
+<<<<<<< ec194cf65e5adad36faa3d7dc1197348cbf20bc3
 >>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
+=======
+<<<<<<< 837588f1a3d775ba83edd14154141add863da630
+=======
+- [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
+- [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
+>>>>>>> Update CHANGELOG.md
+>>>>>>> Update CHANGELOG.md
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 <<<<<<< d104f4300a7fa4055bd18b83f31793eaf059416e
