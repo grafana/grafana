@@ -79,19 +79,3 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.RW(), c.Req.Request)
 }
-
-func ProxyNetCrunchServerRequest(c *middleware.Context) {
-  id := int64(1)         //Only one datasource for NetCrunch may occure per organization
-                         //And it id should be equal 1
-  query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId }
-
-  if err := bus.Dispatch(&query); err != nil {
-    c.JsonApiErr(500, "Unable to load datasource meta data", err)
-    return
-  }
-
-  proxyPath := c.Params("*")
-  proxy := NewReverseProxy(&query.Result, proxyPath)
-  proxy.Transport = dataProxyTransport
-  proxy.ServeHTTP(c.RW(), c.Req.Request)
-}

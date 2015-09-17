@@ -143,6 +143,7 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)
+      r.Get("/netcrunch", GetNetCrunchDatasource)
 		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
