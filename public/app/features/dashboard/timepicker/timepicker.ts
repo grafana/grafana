@@ -5,13 +5,13 @@ import _ = require('lodash');
 import moment = require('moment');
 import kbn = require('kbn');
 import dateMath = require('app/core/utils/datemath');
-import {TimeRange} from './timerange';
+import rangeUtil = require('app/core/utils/rangeutil');
 
 export class TimePickerCtrl {
 
   static defaults = {
     status        : "Stable",
-    time_options  : ['5m','15m','1h','6h','12h','24h','today', '2d','7d','30d'],
+    time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
     refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
   };
 
@@ -81,7 +81,7 @@ export class TimePickerCtrl {
 
     if (this.timeSrv.time) {
       if (this.$scope.panel.now) {
-        model.rangeString = TimeRange.describeRelativeTime(this.timeSrv.time);
+        model.rangeString = rangeUtil.describeTimeRange(this.timeSrv.time);
       }
       else {
         model.rangeString = this.$scope.dashboard.formatDate(model.from.date, 'MMM D, YYYY HH:mm:ss') + ' to ' +
@@ -93,7 +93,7 @@ export class TimePickerCtrl {
   }
 
   loadTimeOptions() {
-    this.$scope.timeOptions = TimeRange.getRelativeTimesList(this.$scope.panel);
+    this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel);
     this.$scope.refreshMenuLeftSide = this.$scope.time.rangeString.length < 10;
   }
 

@@ -70,7 +70,7 @@ describe("DateMath", () => {
     });
   });
 
-  describe.only('rounding', () => {
+  describe('rounding', () => {
     var now;
     var anchored;
 
