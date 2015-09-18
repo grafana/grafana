@@ -102,39 +102,45 @@ function (angular, _, moment, config, $, kbn) {
       this.networkAtlas = networkAtlasReady.promise;
       this.cache = this.createQueryCache();
 
-      netCrunchRemoteSession.init().then(function(status) {
-        var LOGIN_STATUS_ID = 0;
+      netCrunchRemoteSession.init().then(
 
-        if (status[LOGIN_STATUS_ID] === true) {
-          networkDataProvider.init().then(function() {
+        function(status) {
+          var LOGIN_STATUS_ID = 0;
 
-            $rootScope.$on('host-data-changed', function() {
-              var nodes = atlasTree.nodes;
+          if (status[LOGIN_STATUS_ID] === true) {
+            networkDataProvider.init().then(function() {
 
-              nodes.table = [];
-              Object.keys(nodes).forEach(function(nodeId) {
-                nodes.table.push(nodes[nodeId]);
+              $rootScope.$on('host-data-changed', function() {
+                var nodes = atlasTree.nodes;
+
+                nodes.table = [];
+                Object.keys(nodes).forEach(function(nodeId) {
+                  nodes.table.push(nodes[nodeId]);
+                });
+
+                self.updateNodeList(nodes.table).then(function(updated) {
+                  nodesReady.resolve(updated);
+                  $rootScope.$broadcast('netCrunch-datasource-hosts-changed');
+                });
               });
 
-              self.updateNodeList(nodes.table).then(function(updated) {
-                nodesReady.resolve(updated);
-                $rootScope.$broadcast('netCrunch-datasource-hosts-changed');
+              $rootScope.$on('network-data-changed', function() {
+                networkAtlasReady.resolve(atlasTree.tree);
+                $rootScope.$broadcast('netCrunch-datasource-network-atlas-changed');
               });
-            });
 
-            $rootScope.$on('network-data-changed', function() {
-              networkAtlasReady.resolve(atlasTree.tree);
-              $rootScope.$broadcast('netCrunch-datasource-network-atlas-changed');
+              initTask.resolve();
             });
+          } else {
+            console.log('NetCrunch datasource: login failed');
+            alertSrv.set('NetCrunch datasource' ,'Can\'t connect to the server', 'error');
+            initTask.reject();
+          }
+        },
 
-            initTask.resolve();
-          });
-        } else {
-          console.log('NetCrunch datasource: login failed');
-          alertSrv.set('NetCrunch datasource' ,'Can\'t connect to the server', 'error');
+        function() {
           initTask.reject();
-        }
-      });
+        });
     }
 
     NetCrunchDatasource.prototype.createQueryCache = function() {

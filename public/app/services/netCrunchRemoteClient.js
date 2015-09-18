@@ -10,24 +10,36 @@ define([
 
     /* global adrem */
 
-    var module = angular.module('grafana.services');
+    var module = angular.module('grafana.services'),
+        NETCRUNCH_SERVER_CONNECTION_DISABLED_INFO = 'NetCrunch server connection was disabled';
 
     // This factory establish connection with NetCrunch Web App Server
     module
       .value('adrem', adrem)
-      .value('netCrunchWebAppApiName', '///ncapi/')
-      .factory('netCrunchRemoteClient', function ($q, $rootScope, $http, $timeout, adrem,
-                                                  netCrunchWebAppApiName) {
+      .factory('netCrunchRemoteClient', function ($q, $rootScope, $http, $timeout, adrem, backendSrv, alertSrv) {
         var clientReadyTask = $q.defer(),
-            clientReady = clientReadyTask.promise;
+            clientReady = clientReadyTask.promise,
+            netCrunchServerSettings;
 
-        adrem.useWebSockets = false;
-        adrem.Client.start(netCrunchWebAppApiName, function () {
-          clientReadyTask.resolve();
+        netCrunchServerSettings = backendSrv.get('api/netcrunch').then(function(settings) {
+          var netCrunchWebAppApiName = '///' + settings.api + '/';
+
+          if (settings.enable === true) {
+            adrem.useWebSockets = false;
+            adrem.Client.start(netCrunchWebAppApiName, function () {
+              clientReadyTask.resolve();
+            });
+          } else {
+            alertSrv.set('NetCrunch datasource', NETCRUNCH_SERVER_CONNECTION_DISABLED_INFO, 'info');
+            clientReadyTask.reject();
+          }
+
+          return settings;
         });
 
         return {
           ready: clientReady,
+          serverSettings: netCrunchServerSettings,
           callApi: function (apiCall, args, acceptEmpty) {
             var def = $q.defer();
             acceptEmpty = (acceptEmpty === undefined) ? true : acceptEmpty;

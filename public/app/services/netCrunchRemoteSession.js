@@ -48,6 +48,8 @@ define([
 
         that = {
           init: function () {
+
+
             return netCrunchRemoteClient.ready.then(function () {
               var NETCRUNCH_DATASOURCE_ID = 1,  //Support is only for one NetCrunch datasource with ID=1
                   login,
@@ -78,8 +80,9 @@ define([
               }
 
               return $q.all([login]);
-            });
+            }, function() { return $q.reject(); });
           },
+
 
           queryTrendData: function () {
             if (query == null) {
