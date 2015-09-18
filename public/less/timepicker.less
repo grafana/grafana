@@ -1,36 +1,5 @@
-.timepicker-to-column {
-  margin-top: 10px;
-}
-
-.timepicker-input input {
-  outline: 0 !important;
-  border: 0px !important;
-  -webkit-box-shadow: 0;
-  -moz-box-shadow: 0;
-  box-shadow: 0;
-  position: relative;
-}
-
-.timepicker-input input::-webkit-outer-spin-button,
-.timepicker-input input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input.timepicker-date {
-  width: 90px;
-}
-
-input.timepicker-hms {
-  width: 20px;
-}
-
-input.timepicker-ms {
-  width: 25px;
-}
-
-div.timepicker-now {
-  float: right;
+.nav.gf-timepicker-nav {
+  margin-right: 0;
 }
 
 .timepicker-timestring {
@@ -38,7 +7,7 @@ div.timepicker-now {
 }
 
 .gf-timepicker-dropdown {
-  margin: 0px;
+  margin: 0px 0 15px 0;
   padding: 10px 20px;
   float: right;
   background-color: @grafanaPanelBackground;
@@ -49,11 +18,19 @@ div.timepicker-now {
   width: 300px;
   float: left;
   border-right: @grafanaTriggerBorder;
-  padding: 0 20px 0 20px;
+  padding: 0 0 0 20px;
+  select {
+    width: 183px;
+    margin-bottom: 0;
+  }
+}
+
+.gf-timepicker-btn-apply {
+  margin: 0 0 0 15px;
 }
 
 .gf-timepicker-relative-section {
-  padding: 0 20px 0 20px;
+  padding: 0 20px 0 25px;
   min-height: 258px;
   float: left;
   ul {

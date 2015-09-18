@@ -22,9 +22,10 @@
 		</div>
 
 		<label class="small">Refreshing every:</label>
-		<select ng-model="currentRefresh" class='input-large' ng-options="f for f in refreshOptions"></select>
+		<select ng-model="refresh.value" class='input-medium' ng-options="f.value as f.text for f in refresh.options">
+		</select>
 
-		<button class="btn btn-inverse pull-right" type="button" ng-click="applyCustomTimeRange()">
+		<button class="btn btn-inverse gf-timepicker-btn-apply" type="button" ng-click="ctrl.applyCustom()">
 			Apply
 		</button>
 	</div>
@@ -41,55 +42,3 @@
 </div>
 <div class="clearfix"></div>
 
-<!-- <tabset> -->
-<!-- <tab heading="Relative"> -->
-<!--  -->
-<!-- <div style="float:right; width: 200px" ng&#45;repeat="group in timeOptions"> -->
-	<!-- 	<ul> -->
-		<!-- 		<li bindonce ng&#45;repeat='option in group'> -->
-			<!-- 			<a ng&#45;click="ctrl.setRelativeFilter(option)" bo&#45;text="option.display"></a> -->
-			<!-- 		</li> -->
-		<!-- 	</ul> -->
-	<!-- </div> -->
-<!--  -->
-<!-- </tab> -->
-<!-- <tab heading="Absolute"> -->
-<!--  -->
-<!-- <form name="timeForm" style="margin: 0 20px 20px 20px"> -->
-	<!-- 	<div class="gf&#45;timepicker&#45;section"> -->
-		<!-- 		<div> -->
-			<!-- 			<div class="tight&#45;form last"> -->
-				<!-- 			</div> -->
-			<!-- 			<label class="small">From:</label> -->
-			<!-- 			<input type="text" required class="input&#45;large" ng&#45;model="absolute.from" input&#45;datetime="MMMM Do YYYY, HH:mm:ss.SSS"> -->
-			<!-- 			<br> -->
-			<!-- 		</div> -->
-		<!-- 		<datepicker ng&#45;model="absolute.from" class="gf&#45;timepicker&#45;component" show&#45;weeks="false"></datepicker> -->
-		<!-- 	</div> -->
-	<!-- 	<div class="gf&#45;timepicker&#45;section"> -->
-		<!-- 		<div> -->
-			<!-- 			<label class="small">To:</label> -->
-			<!-- 			<input type="text" required class="input&#45;large" ng&#45;model="absolute.to" input&#45;datetime="MMMM Do YYYY, HH:mm:ss.SSS"> -->
-			<!-- 			<br> -->
-			<!-- 		</div> -->
-		<!-- 		<datepicker ng&#45;model="absolute.to" class="gf&#45;timepicker&#45;component" show&#45;weeks="false"></datepicker> -->
-		<!-- 	</div> -->
-	<!-- 	<div class="clearfix"></div> -->
-	<!-- </form> -->
-<!-- </tab> -->
-<!-- </tabset> -->
-<!--  -->
-<!-- <!&#45;&#45; <!&#38;#45;&#38;#45; Auto refresh submenu &#38;#45;&#38;#45;> &#45;&#45;> -->
-<!-- <li class="dropdown&#45;submenu"> -->
-	<!-- 	<a href="#">Auto&#45;Refresh</a> -->
-	<!-- 	<ul class="dropdown&#45;menu" ng&#45;class="{'dropdown&#45;submenu&#45;left': refreshMenuLeftSide}"> -->
-		<!-- 		<li> -->
-			<!-- 			<a ng&#45;click="timeSrv.set_interval(false)">Off</a> -->
-			<!-- 		</li> -->
-		<!-- 		<li bindonce ng&#45;repeat="interval in panel.refresh_intervals track by $index"> -->
-			<!-- 			<a ng&#45;click="timeSrv.set_interval(interval)" bo&#45;text="'Every ' + interval"></a> -->
-			<!-- 		</li> -->
-		<!-- 	</ul> -->
-	<!-- </li> -->
-<!-- <li><a ng&#45;click="ctrl.customTime()">Custom</a></li> -->
-<!-- </div> -->

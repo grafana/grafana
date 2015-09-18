@@ -54,7 +54,7 @@ export class TimePickerCtrl {
         this.$scope.dashboard.formatDate(time.to, format);
     }
 
-    this.$scope.absolute =  {form: time.from.toDate(), to: time.to.toDate()};
+    this.$scope.absoluteJs =  {form: time.from.toDate(), to: time.to.toDate()};
     this.$scope.timeRaw = timeRaw;
     this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to);
@@ -66,9 +66,14 @@ export class TimePickerCtrl {
 
   openDropdown() {
     this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel, this.$scope.rangeString);
-    this.$scope.currentRefresh = this.$scope.dashboard.refresh || 'off';
-    this.$scope.refreshOptions = this.$scope.panel.refresh_intervals;
-    this.$scope.refreshOptions.unshift('off');
+    this.$scope.refresh = {
+      value: this.$scope.dashboard.refresh,
+      options: _.map(this.$scope.panel.refresh_intervals, (interval: any) => {
+        return {text: interval, value: interval};
+      })
+    };
+
+    this.$scope.refresh.options.unshift({text: 'off'});
 
     this.$scope.appEvent('show-dash-editor', {
       src: 'app/features/dashboard/timepicker/dropdown.html',
@@ -77,36 +82,14 @@ export class TimePickerCtrl {
     });
   }
 
-  customTime() {
-    // Assume the form is valid since we're setting it to something valid
-    this.$scope.input.$setValidity("dummy", true);
-    this.$scope.temptime = angular.copy(this.$scope.time);
-    this.$scope.temptime.now = this.$scope.panel.now;
-
-    // this.$scope.temptime.from.date.setHours(0, 0, 0, 0);
-    // this.$scope.temptime.to.date.setHours(0, 0, 0, 0);
-
-    // Date picker needs the date to be at the start of the day
-    if (new Date().getTimezoneOffset() < 0) {
-      this.$scope.temptime.from.date = moment(this.$scope.temptime.from.date).add(1, 'days').toDate();
-      this.$scope.temptime.to.date = moment(this.$scope.temptime.to.date).add(1, 'days').toDate();
+  applyCustom() {
+    console.log(this.$scope.refresh.value);
+    if (this.$scope.refresh.value !== this.$scope.dashboard.refresh) {
+      this.timeSrv.setAutoRefresh(this.$scope.refresh.value);
     }
 
-    this.$scope.appEvent('show-dash-editor', {
-      src: 'app/features/dashboard/timepicker/custom.html',
-      scope: this.$scope
-    });
-  }
-
-  setAbsoluteTimeFilter(time) {
-    // Create filter object
-    var _filter = _.clone(time);
-
-    if (time.now) {
-      _filter.to = "now";
-    }
-
-    this.timeSrv.setTime(_filter);
+    this.timeSrv.setTime(this.$scope.timeRaw);
+    this.$scope.appEvent('hide-dash-editor');
   }
 
   setRelativeFilter(timespan) {
@@ -120,35 +103,6 @@ export class TimePickerCtrl {
 
     this.timeSrv.setTime(range);
     this.$scope.appEvent('hide-dash-editor');
-  }
-
-  validate(time): any {
-    // Assume the form is valid. There is a hidden dummy input for invalidating it programatically.
-    this.$scope.input.$setValidity("dummy", true);
-
-    var _from = this.datepickerToLocal(time.from.date);
-    var _to = this.datepickerToLocal(time.to.date);
-    var _t = time;
-
-    if (this.$scope.input.$valid) {
-      _from.setHours(_t.from.hour, _t.from.minute, _t.from.second, _t.from.millisecond);
-      _to.setHours(_t.to.hour, _t.to.minute, _t.to.second, _t.to.millisecond);
-
-      // Check that the objects are valid and to is after from
-      if (isNaN(_from.getTime()) || isNaN(_to.getTime()) || _from.getTime() >= _to.getTime()) {
-        this.$scope.input.$setValidity("dummy", false);
-        return false;
-      }
-    } else {
-      return false;
-    }
-
-    return { from: _from, to: _to, now: time.now };
-  }
-
-  datepickerToLocal(date) {
-    date = moment(date).clone().toDate();
-    return moment(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).toDate();
   }
 
 }
