@@ -12,70 +12,67 @@ declare var inputDate: any;
 
 export class TimePickerCtrl {
 
+  static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
   static defaults = {
-    status        : "Stable",
     time_options  : ['5m','15m','1h','6h','12h','24h','2d','7d','30d'],
     refresh_intervals : ['5s','10s','30s','1m','5m','15m','30m','1h','2h','1d'],
   };
 
-  static patterns = {
-      date: /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/,
-      hour: /^([01]?[0-9]|2[0-3])$/,
-      minute: /^[0-5][0-9]$/,
-      second: /^[0-5][0-9]$/,
-      millisecond: /^[0-9]*$/
-  };
+  dashboard: any;
+  panel: any;
+  absolute: any;
+  timeRaw: any;
+  tooltip: string;
+  rangeString: string;
+  timeOptions: any;
+  refresh: any;
 
-  constructor(private $scope : any, private $rootScope, private timeSrv) {
-    $scope.patterns = TimePickerCtrl.patterns;
-    $scope.timeSrv = timeSrv;
+  constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
-    $scope.$on('refresh', () => this.init());
-
+    $rootScope.onAppEvent('refresh', () => this.init(), $scope);
+    $rootScope.onAppEvent('zoom-out', () => this.zoomOut(), $scope);
     this.init();
   }
 
   init() {
-    this.$scope.panel = this.$scope.dashboard.timepicker;
-    this.$scope.panel.now = false;
+    this.panel = this.dashboard.timepicker;
+    this.panel.now = false;
 
-    _.defaults(this.$scope.panel, TimePickerCtrl.defaults);
+    _.defaults(this.panel, TimePickerCtrl.defaults);
 
     var time = this.timeSrv.timeRange();
     var timeRaw = this.timeSrv.timeRange(false);
 
     if (_.isString(timeRaw.to) && timeRaw.to.indexOf('now') === 0) {
-      this.$scope.panel.now = true;
-      this.$scope.rangeString = rangeUtil.describeTimeRange(timeRaw);
+      this.panel.now = true;
+      this.rangeString = rangeUtil.describeTimeRange(timeRaw);
     } else {
-      let format =  'MMM D, YYYY HH:mm:ss';
-      this.$scope.rangeString = this.$scope.dashboard.formatDate(time.from, format) + ' to ' +
-        this.$scope.dashboard.formatDate(time.to, format);
+      this.rangeString = this.dashboard.formatDate(time.from, TimePickerCtrl.tooltipFormat) + ' to ' +
+        this.dashboard.formatDate(time.to, TimePickerCtrl.tooltipFormat);
     }
 
-    this.$scope.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
-    this.$scope.timeRaw = timeRaw;
-    this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from) + ' <br>to<br>';
-    this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to);
+    this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
+    this.timeRaw = timeRaw;
+    this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
+    this.tooltip += this.dashboard.formatDate(time.to);
+  }
 
-    this.$scope.onAppEvent('zoom-out', function() {
-      this.$scope.zoom(2);
-    });
+  zoomOut() {
   }
 
   openDropdown() {
-    this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel, this.$scope.rangeString);
-    this.$scope.refresh = {
-      value: this.$scope.dashboard.refresh,
-      options: _.map(this.$scope.panel.refresh_intervals, (interval: any) => {
+    this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
+    this.refresh = {
+      value: this.dashboard.refresh,
+      options: _.map(this.panel.refresh_intervals, (interval: any) => {
         return {text: interval, value: interval};
       })
     };
 
-    this.$scope.refresh.options.unshift({text: 'off'});
+    this.refresh.options.unshift({text: 'off'});
 
-    this.$scope.appEvent('show-dash-editor', {
+    this.$rootScope.appEvent('show-dash-editor', {
       src: 'app/features/dashboard/timepicker/dropdown.html',
       scope: this.$scope,
       cssClass: 'gf-timepicker-dropdown',
@@ -83,34 +80,33 @@ export class TimePickerCtrl {
   }
 
   applyCustom() {
-    console.log(this.$scope.refresh.value);
-    if (this.$scope.refresh.value !== this.$scope.dashboard.refresh) {
-      this.timeSrv.setAutoRefresh(this.$scope.refresh.value);
+    if (this.refresh.value !== this.dashboard.refresh) {
+      this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    this.timeSrv.setTime(this.$scope.timeRaw);
-    this.$scope.appEvent('hide-dash-editor');
+    this.timeSrv.setTime(this.timeRaw);
+    this.$rootScope.appEvent('hide-dash-editor');
   }
 
   absoluteFromChanged() {
-    this.$scope.timeRaw.from = moment(this.$scope.absolute.fromJs);
+    this.timeRaw.from = moment(this.absolute.fromJs);
   }
 
   absoluteToChanged() {
-    this.$scope.timeRaw.to = moment(this.$scope.absolute.toJs);
+    this.timeRaw.to = moment(this.absolute.toJs);
   }
 
   setRelativeFilter(timespan) {
-    this.$scope.panel.now = true;
+    this.panel.now = true;
 
     var range = {from: timespan.from, to: timespan.to};
 
-    if (this.$scope.panel.nowDelay) {
-      range.to = 'now-' + this.$scope.panel.nowDelay;
+    if (this.panel.nowDelay) {
+      range.to = 'now-' + this.panel.nowDelay;
     }
 
     this.timeSrv.setTime(range);
-    this.$scope.appEvent('hide-dash-editor');
+    this.$rootScope.appEvent('hide-dash-editor');
   }
 
 }
@@ -131,7 +127,11 @@ export function timePickerDirective() {
     restrict: 'E',
     templateUrl: 'app/features/dashboard/timepicker/timepicker.html',
     controller: TimePickerCtrl,
-    scope: true
+    bindToController: true,
+    controllerAs: 'ctrl',
+    scope: {
+      dashboard: "="
+    }
   };
 }
 
