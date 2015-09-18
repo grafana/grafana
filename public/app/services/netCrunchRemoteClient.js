@@ -1,7 +1,5 @@
 define([
     'angular',
-    'client',
-    'ObjMapper',
     'NCObjects',
     'remoteDataLists'
   ],

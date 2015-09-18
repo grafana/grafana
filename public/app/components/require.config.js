@@ -13,8 +13,8 @@ require.config({
     filesaver:                '../vendor/filesaver',
     ZeroClipboard:            '../vendor/ZeroClipboard',
     client:                   '../vendor/adrem/client.min',
-    ObjMapper:                '../vendor/adrem/ObjMapper',
-    NCObjects:                '../vendor/adrem/NCObjects',
+    ObjMapper:                '../vendor/adrem/ObjMapper.min',
+    NCObjects:                '../vendor/adrem/NCObjects.min',
     remoteDataLists:          '../vendor/adrem/RemoteDataLists.min',
     angular:                  '../vendor/angular/angular',
     'angular-route':          '../vendor/angular-route/angular-route',
@@ -80,6 +80,11 @@ require.config({
     jquery: {
       exports: 'jQuery'
     },
+
+    // Adrem Software dependency declaration
+    ObjMapper:              ['client'],
+    NCObjects:              ['ObjMapper'],
+    remoteDataLists:        ['client'],
 
     // simple dependency declaration
     //
