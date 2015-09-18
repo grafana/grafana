@@ -22,7 +22,7 @@ function (angular, _, queryDef) {
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
       $scope.validateModel();
-    });
+    }, $scope);
 
     $scope.validateModel = function() {
       $scope.isFirst = $scope.index === 0;

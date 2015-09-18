@@ -18,7 +18,7 @@ function (angular, _, kbn) {
       if (variable) {
         self.updateAutoInterval(variable);
       }
-    });
+    }, $rootScope);
 
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;

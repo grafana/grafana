@@ -13,8 +13,8 @@ define([
     var self = this;
 
     this.init = function() {
-      $rootScope.onAppEvent('refresh', this.clearCache);
-      $rootScope.onAppEvent('setup-dashboard', this.clearCache);
+      $rootScope.onAppEvent('refresh', this.clearCache, $rootScope);
+      $rootScope.onAppEvent('setup-dashboard', this.clearCache, $rootScope);
     };
 
     this.clearCache = function() {
