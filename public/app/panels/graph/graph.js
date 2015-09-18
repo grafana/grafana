@@ -530,8 +530,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
             timeSrv.setTime({
-              from  : moment.utc(ranges.xaxis.from).toDate(),
-              to    : moment.utc(ranges.xaxis.to).toDate(),
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
             });
           });
         });

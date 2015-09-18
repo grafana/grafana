@@ -254,8 +254,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
     }
 
     function getTimeFilter(options) {
-      var from = getInfluxTime(options.rangeRaw.from);
-      var until = getInfluxTime(options.rangeRaw.to);
+      var from = getInfluxTime(options.rangeRaw.from, false);
+      var until = getInfluxTime(options.rangeRaw.to, true);
       var fromIsAbsolute = from[from.length-1] === 's';
 
       if (until === 'now()' && !fromIsAbsolute) {
@@ -265,15 +265,15 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
       return 'time > ' + from + ' and time < ' + until;
     }
 
-    function getInfluxTime(date) {
-      if (_.isString(date)) {
+    function getInfluxTime(date, roundUp) {
+      if (_.isString(date) && date.indexOf('/') === -1) {
         if (date === 'now') {
           return 'now()';
         }
         if (date.indexOf('now-') >= 0) {
           return date.replace('now', 'now()');
         }
-        date = dateMath.parse(date);
+        date = dateMath.parse(date, roundUp);
       }
       return (date.valueOf() / 1000).toFixed(0) + 's';
     }

@@ -2,7 +2,7 @@
 
 import moment = require('moment');
 import _ = require('lodash');
-import dateMath = require('./datemath');
+import dateMath = require('app/core/utils/datemath');
 import angular = require('angular');
 
 var spans = {
@@ -110,6 +110,10 @@ _.each(rangeOptions, function (frame) {
     var option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
     if (option) {
       return option.display;
+    }
+
+    if (moment.isMoment(range.from) && moment.isMoment(range.to)) {
+      return formatDate(range.from) + ' to ' + formatDate(range.to);
     }
 
     if (moment.isMoment(range.from)) {

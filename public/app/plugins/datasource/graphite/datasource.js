@@ -4,13 +4,12 @@ define([
   'jquery',
   'config',
   'app/core/utils/datemath',
-  'moment',
   './directives',
   './queryCtrl',
   './funcEditor',
   './addGraphiteFunc',
 ],
-function (angular, _, $, config, dateMath, moment) {
+function (angular, _, $, config, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -145,11 +144,11 @@ function (angular, _, $, config, dateMath, moment) {
     };
 
     GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
-      if (_.isString(date) && date.indexOf('/') === 0) {
+      if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now-') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
@@ -157,8 +156,6 @@ function (angular, _, $, config, dateMath, moment) {
         }
         date = dateMath.parse(date, roundUp);
       }
-
-      date = moment.utc(date);
 
       // graphite' s from filter is exclusive
       // here we step back one minute in order

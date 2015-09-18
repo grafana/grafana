@@ -83,7 +83,7 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
       }
 
       if (scope.panel.timeShift) {
-        var timeShiftInfo = rangeUtil.describeTextRange(scope.panel.timeFrom);
+        var timeShiftInfo = rangeUtil.describeTextRange(scope.panel.timeShift);
         if (timeShiftInfo.invalid) {
           scope.panelMeta.timeInfo = 'invalid timeshift';
           return;
