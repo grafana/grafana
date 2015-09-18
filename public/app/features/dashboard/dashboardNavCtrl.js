@@ -51,6 +51,10 @@ function (angular, _) {
       $scope.exitFullscreen();
     };
 
+    $scope.removeToolTip = function() {
+        $('.tooltip').not(this).hide();
+    };
+
     $scope.saveDashboard = function(options) {
       if ($scope.dashboardMeta.canSave === false) {
         return;
