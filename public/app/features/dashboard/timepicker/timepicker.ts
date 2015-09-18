@@ -54,18 +54,22 @@ export class TimePickerCtrl {
         this.$scope.dashboard.formatDate(time.to, format);
     }
 
-    this.$scope.timeRaw = timeRaw;
     this.$scope.absolute =  {form: time.from.toDate(), to: time.to.toDate()};
+    this.$scope.timeRaw = timeRaw;
+    this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from) + ' <br>to<br>';
+    this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to);
+
     this.$scope.onAppEvent('zoom-out', function() {
       this.$scope.zoom(2);
     });
-
-    this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from.date) + ' <br>to<br>';
-    this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to.date);
   }
 
-  loadTimeOptions() {
+  openDropdown() {
     this.$scope.timeOptions = rangeUtil.getRelativeTimesList(this.$scope.panel, this.$scope.rangeString);
+    this.$scope.currentRefresh = this.$scope.dashboard.refresh || 'off';
+    this.$scope.refreshOptions = this.$scope.panel.refresh_intervals;
+    this.$scope.refreshOptions.unshift('off');
+
     this.$scope.appEvent('show-dash-editor', {
       src: 'app/features/dashboard/timepicker/dropdown.html',
       scope: this.$scope,
