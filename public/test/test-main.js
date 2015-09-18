@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: 'http://localhost:9876/base/public/app',
+  baseUrl: 'http://localhost:9876/base/public_gen/app',
 
   paths: {
     specs:                 '../test/specs',
@@ -22,6 +22,7 @@ require.config({
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
     angularMocks:             '../vendor/angular-mocks/angular-mocks',
     'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
+    'angular-ui':             '../vendor/angular-ui/angular-bootstrap',
     'angular-strap':          '../vendor/angular-other/angular-strap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
@@ -47,6 +48,7 @@ require.config({
     'jquery.flot.fillbelow':   '../vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                '../vendor/modernizr-2.6.1',
+    'aws-sdk':                '../vendor/aws-sdk/dist/aws-sdk.min',
   },
 
   shim: {
@@ -83,6 +85,7 @@ require.config({
 
     'angular-route':        ['angular'],
     'angular-sanitize':     ['angular'],
+    'angular-ui':           ['angular'],
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-mocks':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
@@ -137,6 +140,7 @@ require([
     'specs/seriesOverridesCtrl-specs',
     'specs/shareModalCtrl-specs',
     'specs/timeSrv-specs',
+    'specs/panelSrv-specs',
     'specs/templateSrv-specs',
     'specs/templateValuesSrv-specs',
     'specs/kbn-format-specs',
@@ -145,8 +149,14 @@ require([
     'specs/singlestat-specs',
     'specs/dynamicDashboardSrv-specs',
     'specs/unsavedChangesSrv-specs',
-    'specs/valueSelectDropdown-specs',
+    'specs/value_select_dropdown_specs',
     'specs/opentsdbDatasource-specs',
+    'specs/cloudwatch-datasource-specs',
+    'specs/elasticsearch-specs',
+    'specs/elasticsearch-querybuilder-specs',
+    'specs/elasticsearch-queryctrl-specs',
+    'specs/elasticsearch-indexPattern-specs',
+    'specs/elasticsearch-response-specs',
   ];
 
   var pluginSpecs = (config.plugins.specs || []).map(function (spec) {

@@ -4,8 +4,8 @@ define([
   'kbn',
   './influxSeries',
   './queryBuilder',
+  './directives',
   './queryCtrl',
-  './funcEditor',
 ],
 function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
@@ -32,10 +32,13 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype.query = function(options) {
       var timeFilter = getTimeFilter(options);
+      var queryTargets = [];
       var i, y;
 
       var allQueries = _.map(options.targets, function(target) {
         if (target.hide) { return []; }
+
+        queryTargets.push(target);
 
         // build query
         var queryBuilder = new InfluxQueryBuilder(target);
@@ -51,13 +54,19 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       // replace templated variables
       allQueries = templateSrv.replace(allQueries, options.scopedVars);
       return this._seriesQuery(allQueries).then(function(data) {
-        if (!data || !data.results || !data.results[0].series) {
+        if (!data || !data.results) {
           return [];
         }
 
         var seriesList = [];
         for (i = 0; i < data.results.length; i++) {
-          var alias = (options.targets[i] || {}).alias;
+          var result = data.results[i];
+          if (!result || !result.series) { continue; }
+
+          var alias = (queryTargets[i] || {}).alias;
+          if (alias) {
+            alias = templateSrv.replace(alias, options.scopedVars);
+          }
           var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
           for (y = 0; y < targetSeries.length; y++) {
             seriesList.push(targetSeries[y]);
@@ -108,25 +117,6 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    function retry(deferred, callback, delay) {
-      return callback().then(undefined, function(reason) {
-        if (reason.status !== 0 || reason.status >= 300) {
-          if (reason.data && reason.data.error) {
-            reason.message = 'InfluxDB Error Response: ' + reason.data.error;
-          }
-          else {
-            reason.message = 'InfluxDB Error: ' + reason.message;
-          }
-          deferred.reject(reason);
-        }
-        else {
-          setTimeout(function() {
-            return retry(deferred, callback, Math.min(delay * 2, 30000));
-          }, delay);
-        }
-      });
-    }
-
     InfluxDatasource.prototype._seriesQuery = function(query) {
       return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
     };
@@ -139,46 +129,50 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     InfluxDatasource.prototype._influxRequest = function(method, url, data) {
       var self = this;
-      var deferred = $q.defer();
 
-      retry(deferred, function() {
-        var currentUrl = self.urls.shift();
-        self.urls.push(currentUrl);
+      var currentUrl = self.urls.shift();
+      self.urls.push(currentUrl);
 
-        var params = {
-          u: self.username,
-          p: self.password,
-        };
+      var params = {
+        u: self.username,
+        p: self.password,
+      };
 
-        if (self.database) {
-          params.db = self.database;
+      if (self.database) {
+        params.db = self.database;
+      }
+
+      if (method === 'GET') {
+        _.extend(params, data);
+        data = null;
+      }
+
+      var options = {
+        method: method,
+        url:    currentUrl + url,
+        params: params,
+        data:   data,
+        precision: "ms",
+        inspect: { type: 'influxdb' },
+      };
+
+      options.headers = options.headers || {};
+      if (self.basicAuth) {
+        options.headers.Authorization = self.basicAuth;
+      }
+
+      return $http(options).then(function(result) {
+        return result.data;
+      }, function(err) {
+        if (err.status !== 0 || err.status >= 300) {
+          if (err.data && err.data.error) {
+            throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
+          }
+          else {
+            throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+          }
         }
-
-        if (method === 'GET') {
-          _.extend(params, data);
-          data = null;
-        }
-
-        var options = {
-          method: method,
-          url:    currentUrl + url,
-          params: params,
-          data:   data,
-          precision: "ms",
-          inspect: { type: 'influxdb' },
-        };
-
-        options.headers = options.headers || {};
-        if (self.basicAuth) {
-          options.headers.Authorization = self.basicAuth;
-        }
-
-        return $http(options).success(function (data) {
-          deferred.resolve(data);
-        });
-      }, 10);
-
-      return deferred.promise;
+      });
     };
 
     function getTimeFilter(options) {
@@ -195,7 +189,10 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
     function getInfluxTime(date) {
       if (_.isString(date)) {
-        return date.replace('now', 'now()').replace('-', ' - ');
+        if (date.indexOf('now') >= 0) {
+          return date.replace('now', 'now()').replace('-', ' - ');
+        }
+        date = kbn.parseDate(date);
       }
 
       return to_utc_epoch_seconds(date);

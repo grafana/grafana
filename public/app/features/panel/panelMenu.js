@@ -56,7 +56,7 @@ function (angular, $, _) {
 
         if ($scope.panel.links) {
           _.each($scope.panel.links, function(link) {
-            var info = linkSrv.getPanelLinkAnchorInfo(link);
+            var info = linkSrv.getPanelLinkAnchorInfo(link, $scope.panel.scopedVars);
             menu.push({text: info.title, href: info.href, target: info.target });
           });
         }

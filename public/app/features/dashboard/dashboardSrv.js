@@ -31,8 +31,8 @@ function (angular, $, kbn, _, moment) {
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
-      this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
+      this.timepicker = data.timepicker || {};
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
@@ -40,11 +40,6 @@ function (angular, $, kbn, _, moment) {
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
       this.links = data.links || [];
-
-      if (this.nav.length === 0) {
-        this.nav.push({ type: 'timepicker' });
-      }
-
       this._updateSchema(data);
       this._initMeta(meta);
     }
@@ -174,26 +169,67 @@ function (angular, $, kbn, _, moment) {
       var newPanel = angular.copy(panel);
       newPanel.id = this.getNextPanelId();
 
+      delete newPanel.repeat;
+      delete newPanel.repeatIteration;
+      delete newPanel.repeatPanelId;
+      delete newPanel.scopedVars;
+
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
       return newPanel;
+    };
+
+    p.getNextQueryLetter = function(panel) {
+      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      return _.find(letters, function(refId) {
+        return _.every(panel.targets, function(other) {
+          return other.refId !== refId;
+        });
+      });
+    };
+
+    p.addDataQueryTo = function(panel, datasource) {
+      var target = {
+        refId: this.getNextQueryLetter(panel)
+      };
+
+      if (datasource) {
+        target.datasource = datasource.name;
+      }
+
+      panel.targets.push(target);
+    };
+
+    p.removeDataQuery = function (panel, query) {
+      panel.targets = _.without(panel.targets, query);
+    };
+
+    p.duplicateDataQuery = function(panel, query) {
+      var clone = angular.copy(query);
+      clone.refId = this.getNextQueryLetter(panel);
+      panel.targets.push(clone);
+    };
+
+    p.moveDataQuery = function(panel, fromIndex, toIndex) {
+      _.move(panel.targets, fromIndex, toIndex);
     };
 
     p.formatDate = function(date, format) {
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
-              moment(date).format(format) :
-              moment.utc(date).format(format);
+        moment(date).format(format) :
+        moment.utc(date).format(format);
     };
 
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 6;
+      this.schemaVersion = 7;
 
-      if (oldVersion === 6) {
+      if (oldVersion === 7) {
         return;
       }
 
@@ -286,6 +322,11 @@ function (angular, $, kbn, _, moment) {
           if (variable.type === void 0) { variable.type = 'query'; }
           if (variable.allFormat === void 0) { variable.allFormat = 'glob'; }
         }
+      }
+
+      if (oldVersion < 7 && old.nav && old.nav.length) {
+        this.timepicker = old.nav[0];
+        delete this.nav;
       }
 
       if (panelUpgrades.length === 0) {

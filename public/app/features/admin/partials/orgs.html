@@ -1,6 +1,6 @@
 <topnav icon="fa fa-fw fa-users" title="Global Orgs" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="admin/users">Overview</a></li>
+		<li class="active"><a href="admin/orgs">List</a></li>
 	</ul>
 </topnav>
 
@@ -10,6 +10,26 @@
 			Organizations
 		</h2>
 
-		View not implemented yet...
+		<table class="grafana-options-table">
+			<tr>
+				<th style="text-align:left">Id</th>
+				<th>Name</th>
+				<th></th>
+			</tr>
+			<tr ng-repeat="org in orgs">
+				<td>{{org.name}}</td>
+				<td style="width: 1%">
+					<a href="admin/orgs/edit/{{org.id}}" class="btn btn-inverse btn-small">
+						<i class="fa fa-edit"></i>
+						Edit
+					</a>
+					&nbsp;&nbsp;
+					<a ng-click="deleteOrg(org)" class="btn btn-danger btn-small">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
+
 	</div>
 </div>

@@ -1,6 +1,5 @@
 define([
   'angular',
-  'app',
   'jquery',
   'lodash',
   'kbn',
@@ -11,7 +10,7 @@ define([
   './graph',
   './legend',
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -175,7 +174,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
+      var colorIndex = index % $rootScope.colors.length;
+      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[colorIndex];
 
       var series = new TimeSeries({
         datapoints: datapoints,

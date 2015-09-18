@@ -18,7 +18,7 @@ specified in a `.ini` configuration file or specified using environment variable
 > **Note.** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `-config` file parameter.
+> init.d script using `--config` file parameter.
 
 ## Using environment variables
 
@@ -37,12 +37,12 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
     client_secret = 0ldS3cretKey
 
 
-Then you can override that using:
+Then you can override them using:
 
     export GF_SECURITY_ADMIN_USER=true
     export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
-<hr>
+<hr />
 
 ## [paths]
 
@@ -63,7 +63,7 @@ file.
 
 ### http_addr
 
-The IP address to bind to, if empty will bind to all interfaces
+The IP address to bind to. If empty will bind to all interfaces
 
 ### http_port
 
@@ -116,9 +116,9 @@ Path to the certificate file (if `protocol` is set to `https`).
 
 Path to the certificate key file (if `protocol` is set to `https`).
 
-<hr>
+<hr />
 
-<hr>
+<hr />
 
 ## [database]
 
@@ -158,7 +158,7 @@ The database user's password (not applicable for `sqlite3`).
 
 For `postgres` only, either `disable`, `require` or `verify-full`.
 
-<hr>
+<hr />
 
 ## [security]
 
@@ -184,7 +184,7 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
-<hr>
+<hr />
 
 ## [users]
 
@@ -280,6 +280,8 @@ Grafana instance. For example:
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
 
+<hr>
+
 ## [auth.google]
 
 You need to create a Google project. You can do this in the [Google
@@ -312,6 +314,40 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+<hr>
+
+## [auth.basic]
+### enabled
+When enabled is `true` (default) the http api will accept basic authentication.
+
+<hr>
+
+## [auth.ldap]
+### enabled
+Set to `true` to enable LDAP integration (default: `false`)
+
+### config_file
+Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+
+> For details on LDAP Configuration, go to the [LDAP Integration](ldap.md) page.
+
+<hr>
+
+## [auth.proxy]
+This feature allows you to handle authentication in a http reverse proxy.
+
+### enabled
+Defaults to `false`
+
+### header_name
+Defaults to X-WEBAUTH-USER
+
+#### header_property
+Defaults to username but can also be set to email
+
+### auto_sign_up
+Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 
 <hr>
 
@@ -348,25 +384,30 @@ The name of the Grafana session cookie.
 
 ### cookie_secure
 
-Set to true if you host Grafana behind HTTPs only. Defaults to `false`.
+Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
+<hr />
+
 ## [analytics]
 
 ### reporting_enabled
 
-When enabled Grafana will send anonymous usage statistics to `stats.grafana.org`.
-No IP addresses are being tracked, only simple counters to track running instances,
-versions, dashboard & error counts. It is very helpful to us, please leave this
-enabled. Counters are sent every 24 hours. Default value is `true`.
+When enabled Grafana will send anonymous usage statistics to 
+`stats.grafana.org`. No IP addresses are being tracked, only simple counters to
+track running instances, versions, dashboard & error counts. It is very helpful
+to us, so please leave this enabled. Counters are sent every 24 hours. Default 
+value is `true`.
 
 ### google_analytics_ua_id
 
-If you want to track Grafana usage via Google analytics specify *your* Universal Analytics ID
-here. By default this feature is disabled.
+If you want to track Grafana usage via Google analytics specify *your* Universal
+Analytics ID here. By default this feature is disabled.
+
+<hr />
 
 ## [dashboards.json]
 

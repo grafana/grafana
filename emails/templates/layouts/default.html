@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width"/>
+   <!-- build:css css/tidy.css -->
+  <link inline rel="stylesheet" href="../assets/css/ink.css">
+  <link inline rel="stylesheet" href="../assets/css/style.css">
+  <!-- /build -->
+</head>
+<body>
+	<table class="body">
+		<tr>
+			<td class="center" align="center" valign="top">
+        <center>
+
+          <table class="row header">
+            <tr>
+              <td class="center" align="center">
+                <center>
+
+                  <table class="container">
+                    <tr>
+                      <td class="wrapper last">
+
+                        <table class="twelve columns">
+                          <tr>
+                            <td class="six sub-columns center">
+															<img src="http://docs.grafana.org/img/logo_transparent_200x75.png" style="width: 150px; float: none; display: inline">
+                            </td>
+														<td class="expander"></td>
+                          </tr>
+                        </table>
+
+                      </td>
+                    </tr>
+                  </table>
+
+                </center>
+              </td>
+            </tr>
+          </table>
+
+					<table class="container">
+						<tr>
+							<td>
+								{{> body }}
+								<!-- footer -->
+								<table class="row footer">
+									<tr>
+										<td class="wrapper last">
+											<table class="twelve columns">
+												<tr>
+													<td align="center">
+														<center>
+															<p style="text-align:center;">
+																Sent by <a href="[[.AppUrl]]">Grafana v[[.BuildVersion]]</a>
+															</p>
+														</center>
+													</td>
+													<td class="expander"></td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+								</table>
+
+								<!-- container end below -->
+							</td>
+						</tr>
+
+					</table>
+				</center>
+			</td>
+		</tr>
+
+	</table>
+</body>
+</html>

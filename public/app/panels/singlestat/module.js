@@ -37,6 +37,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     // Set and populate defaults
     var _d = {
       links: [],
+      datasource: null,
       maxDataPoints: 100,
       interval: null,
       targets: [{}],
@@ -186,7 +187,9 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
       data.flotpairs = [];
 
       if ($scope.series && $scope.series.length > 0) {
-        var lastValue = _.last($scope.series[0].datapoints)[0];
+        var lastPoint = _.last($scope.series[0].datapoints);
+        var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+
         if (_.isString(lastValue)) {
           data.value = 0;
           data.valueFormated = lastValue;

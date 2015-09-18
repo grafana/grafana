@@ -1,5 +1,5 @@
 /**
- * @license AngularJS v1.4.0
+ * @license AngularJS v1.4.3
  * (c) 2010-2015 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -233,7 +233,7 @@ var uriAttrs = makeMap("background,cite,href,longdesc,src,usemap,xlink:href");
 var htmlAttrs = makeMap('abbr,align,alt,axis,bgcolor,border,cellpadding,cellspacing,class,clear,' +
     'color,cols,colspan,compact,coords,dir,face,headers,height,hreflang,hspace,' +
     'ismap,lang,language,nohref,nowrap,rel,rev,rows,rowspan,rules,' +
-    'scope,scrolling,shape,size,span,start,summary,target,title,type,' +
+    'scope,scrolling,shape,size,span,start,summary,tabindex,target,title,type,' +
     'valign,value,vspace,width');
 
 // SVG attributes (without "id" and "name" attributes)
@@ -631,8 +631,8 @@ angular.module('ngSanitize', []).provider('$sanitize', $SanitizeProvider);
  */
 angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
   var LINKY_URL_REGEXP =
-        /((ftp|https?):\/\/|(www\.)|(mailto:)?[A-Za-z0-9._%+-]+@)\S*[^\s.;,(){}<>"”’]/,
-      MAILTO_REGEXP = /^mailto:/;
+        /((ftp|https?):\/\/|(www\.)|(mailto:)?[A-Za-z0-9._%+-]+@)\S*[^\s.;,(){}<>"”’]/i,
+      MAILTO_REGEXP = /^mailto:/i;
 
   return function(text, target) {
     if (!text) return text;

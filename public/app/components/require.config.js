@@ -17,6 +17,7 @@ require.config({
     'angular-sanitize':       '../vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       '../vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          '../vendor/angular-other/angular-strap',
+    'angular-ui':             '../vendor/angular-ui/angular-bootstrap',
     timepicker:               '../vendor/angular-other/timepicker',
     datepicker:               '../vendor/angular-other/datepicker',
     bindonce:                 '../vendor/angular-bindonce/bindonce',
@@ -44,6 +45,7 @@ require.config({
     modernizr:                '../vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    '../vendor/tagsinput/bootstrap-tagsinput',
+    'aws-sdk':                '../vendor/aws-sdk/dist/aws-sdk.min',
   },
   shim: {
 
@@ -90,6 +92,7 @@ require.config({
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-mocks':        ['angular'],
     'angular-sanitize':     ['angular'],
+    'angular-ui':           ['angular'],
     'angular-route':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
     'bindonce':             ['angular'],

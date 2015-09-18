@@ -1,6 +1,6 @@
 {
   "name": "angular-native-dragdrop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "homepage": "http://angular-dragdrop.github.io/angular-dragdrop",
   "authors": [
     "ganarajpr"
@@ -14,7 +14,7 @@
     "html5"
   ],
   "dependencies": {
-    "angular": "~1.3"
+    "angular": "^1.3"
   },
   "license": "MIT",
   "ignore": [
@@ -24,14 +24,13 @@
     "test",
     "tests"
   ],
-  "_release": "1.1.0",
+  "_release": "1.1.1",
   "_resolution": {
     "type": "version",
-    "tag": "1.1.0",
-    "commit": "737981e86bd32a5432fa9edf09059ca3c0f22049"
+    "tag": "v1.1.1",
+    "commit": "4ff89cb0aa61070508e935729fb816fd46a58f60"
   },
   "_source": "git://github.com/angular-dragdrop/angular-dragdrop.git",
-  "_target": "~1.1.0",
-  "_originalSource": "angular-native-dragdrop",
-  "_direct": true
+  "_target": "~1.1.1",
+  "_originalSource": "angular-native-dragdrop"
 }

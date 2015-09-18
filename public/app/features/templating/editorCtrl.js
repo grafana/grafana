@@ -22,13 +22,17 @@ function (angular, _) {
     };
 
     $scope.init = function() {
-      $scope.editor = { index: 0 };
-      $scope.datasources = datasourceSrv.getMetricSources();
+      $scope.mode = 'list';
+
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.builtIn;
+      });
+
       $scope.variables = templateSrv.variables;
       $scope.reset();
 
-      $scope.$watch('editor.index', function(index) {
-        if ($scope.currentIsNew === false && index === 1) {
+      $scope.$watch('mode', function(val) {
+        if (val === 'new') {
           $scope.reset();
         }
       });
@@ -72,7 +76,7 @@ function (angular, _) {
     $scope.edit = function(variable) {
       $scope.current = variable;
       $scope.currentIsNew = false;
-      $scope.editor.index = 2;
+      $scope.mode = 'edit';
 
       if ($scope.current.datasource === void 0) {
         $scope.current.datasource = null;
@@ -85,7 +89,7 @@ function (angular, _) {
       if ($scope.isValid()) {
         $scope.runQuery().then(function() {
           $scope.reset();
-          $scope.editor.index = 0;
+          $scope.mode = 'list';
         });
       }
     };

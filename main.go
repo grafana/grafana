@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
@@ -29,6 +31,7 @@ var buildstamp string
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
+var exitChan = make(chan int)
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -41,19 +44,14 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		<-c
-		os.Exit(0)
-	}()
+	go listenToSystemSignels()
 
 	flag.Parse()
-
 	writePIDFile()
 	initRuntime()
 
 	search.Init()
+	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
@@ -67,16 +65,19 @@ func main() {
 	}
 
 	cmd.StartServer()
-
-	log.Close()
+	exitChan <- 0
 }
 
 func initRuntime() {
-	setting.NewConfigContext(&setting.CommandLineArgs{
+	err := setting.NewConfigContext(&setting.CommandLineArgs{
 		Config:   *configFile,
 		HomePath: *homePath,
 		Args:     flag.Args(),
 	})
+
+	if err != nil {
+		log.Fatal(3, err.Error())
+	}
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
@@ -102,4 +103,28 @@ func writePIDFile() {
 	if err := ioutil.WriteFile(*pidFile, []byte(pid), 0644); err != nil {
 		log.Fatal(3, "Failed to write pidfile", err)
 	}
+}
+
+func listenToSystemSignels() {
+	signalChan := make(chan os.Signal, 1)
+	code := 0
+
+	signal.Notify(signalChan, os.Interrupt)
+	signal.Notify(signalChan, os.Kill)
+	signal.Notify(signalChan, syscall.SIGTERM)
+
+	select {
+	case sig := <-signalChan:
+		log.Info("Received signal %s. shutting down", sig)
+	case code = <-exitChan:
+		switch code {
+		case 0:
+			log.Info("Shutting down")
+		default:
+			log.Warn("Shutting down")
+		}
+	}
+
+	log.Close()
+	os.Exit(code)
 }

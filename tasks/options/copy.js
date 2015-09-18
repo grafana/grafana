@@ -4,8 +4,16 @@ module.exports = function(config) {
     everything_but_less_to_temp: {
       cwd: '<%= srcDir %>',
       expand: true,
-      src: ['**/*', '!**/*.less', '!config.js'],
+      src: ['**/*', '!**/*.less'],
       dest: '<%= tempDir %>'
+    },
+
+    public_to_gen: {
+      cwd: '<%= srcDir %>',
+      expand: true,
+      src: ['**/*', '!**/*.less'],
+      dest: '<%= genDir %>'
     }
+
   };
 };
