@@ -52,7 +52,7 @@ function (angular, _) {
     };
 
     $scope.removeToolTip = function() {
-        $('.tooltip').not(this).hide();
+      $('.tooltip').not(this).hide();
     };
 
     $scope.saveDashboard = function(options) {
