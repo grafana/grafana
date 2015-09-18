@@ -93,11 +93,13 @@ function (angular, _, kbn) {
 
       var m = metric + "{" + key + "=*}";
 
-      return this._get('/api/search/lookup', {m: m}).then(function(result) {
+      return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
         var tagvs = [];
         _.each(result, function(r) {
-          tagvs.push(r.tags[key]);
+          if (tagvs.indexOf(r.tags[key]) === -1) {
+            tagvs.push(r.tags[key]);
+          }
         });
         return tagvs;
       });

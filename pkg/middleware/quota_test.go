@@ -1,16 +1,22 @@
 package middleware
 
 import (
+	"testing"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
 
 	Convey("Given the grafana quota middleware", t, func() {
+		getSessionCount = func() int {
+			return 4
+		}
+
+		setting.AnonymousEnabled = false
 		setting.Quota = setting.QuotaSettings{
 			Enabled: true,
 			Org: &setting.OrgQuota{
