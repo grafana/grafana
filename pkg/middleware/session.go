@@ -18,11 +18,15 @@ const (
 var sessionManager *session.Manager
 var sessionOptions *session.Options
 var startSessionGC func()
+var getSessionCount func() int
 
 func init() {
 	startSessionGC = func() {
 		sessionManager.GC()
 		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+	}
+	getSessionCount = func() int {
+		return sessionManager.Count()
 	}
 }
 

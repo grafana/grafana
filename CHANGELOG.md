@@ -15,6 +15,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
 ** Other new Features && Enhancements**
+- [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
@@ -183,6 +184,10 @@ Grunt & Watch tasks:
 - [Issue #1673](https://github.com/grafana/grafana/issues/1673). Basic auth: Fixed issue when using basic auth proxy infront of Grafana
 
 # 2.0.0-Beta1 (2015-03-30)
+
+**Important Note**
+
+Grafana 2.x is fundamentally different from 1.x; it now ships with an integrated backend server. Please read the [Documentation](http://docs.grafana.org) for more detailed about this SIGNIFCANT change to Grafana
 
 **New features**
 - [Issue #1623](https://github.com/grafana/grafana/issues/1623). Share Dashboard: Dashboard snapshot sharing (dash and data snapshot), save to local or save to public snapshot dashboard snapshots.raintank.io site
