@@ -51,8 +51,9 @@ function (angular, _) {
       $scope.exitFullscreen();
     };
 
-    $scope.removeToolTip = function() {
+    $scope.manageButtonClickAction = function() {
       $('.tooltip').not(this).hide();
+      $scope.appEvent('hide-dash-search');
     };
 
     $scope.saveDashboard = function(options) {
