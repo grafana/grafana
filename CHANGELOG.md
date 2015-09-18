@@ -94,9 +94,12 @@ it allows you to add queries of differnet data source types & instances to the s
 >>>>>>> Update CHANGELOG.md
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
+<<<<<<< 7cae31a94e5c74ce8430bffe0d2365589f937a47
 <<<<<<< 9e73171717d0846fdbbb9ebf5c1e1e1d4377aaaf
 <<<<<<< 4479e2ade71003c3617865b40b20a526895f33bb
 <<<<<<< d104f4300a7fa4055bd18b83f31793eaf059416e
+=======
+>>>>>>> Fix changelog (double issue entry and missing version headline)
 =======
 >>>>>>> Fix changelog (double issue entry and missing version headline)
 - [Issue #2647](https://github.com/grafana/grafana/issues/2647). InfluxDB: You can now set group by time interval on each query
@@ -275,6 +278,7 @@ Grunt & Watch tasks:
 
 
 # 2.1.3 (2015-08-24)
+<<<<<<< 7cae31a94e5c74ce8430bffe0d2365589f937a47
 
 **Fixes**
 - [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
@@ -297,6 +301,8 @@ data source api change.
 >>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId)
 
 # 2.1.3 (2015-08-24)
+=======
+>>>>>>> Fix changelog (double issue entry and missing version headline)
 
 **Fixes**
 - [Issue #2580](https://github.com/grafana/grafana/issues/2580). Packaging: ldap.toml was not marked as config file and could be overwritten in upgrade
