@@ -31,7 +31,7 @@ export class TimePickerCtrl {
     $scope.ctrl = this;
 
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
-    $rootScope.onAppEvent('zoom-out', () => this.zoomOut(), $scope);
+    $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
     this.init();
   }
 
@@ -50,7 +50,22 @@ export class TimePickerCtrl {
     this.tooltip += this.dashboard.formatDate(time.to);
   }
 
-  zoomOut() {
+  zoom(factor) {
+    var range = this.timeSrv.timeRange();
+
+    var timespan = (range.to.valueOf() - range.from.valueOf());
+    var center = range.to.valueOf() - timespan/2;
+
+    var to = (center + (timespan*factor)/2);
+    var from = (center - (timespan*factor)/2);
+
+    if (to > Date.now() && range.to <= Date.now()) {
+      var offset = to - Date.now();
+      from = from - offset;
+      to = Date.now();
+    }
+
+    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
   }
 
   openDropdown() {
