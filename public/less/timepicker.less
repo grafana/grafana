@@ -14,6 +14,11 @@
   .box-shadow(@navbarDropdownShadow);
 }
 
+li.gf-timepicker-open a {
+  background-color: @grafanaPanelBackground;
+  .box-shadow(0px 10px 0px @grafanaPanelBackground);
+}
+
 .gf-timepicker-absolute-section {
   width: 300px;
   float: left;
@@ -29,16 +34,31 @@
   margin: 0 0 0 15px;
 }
 
+.gf-timepicker-utc {
+  background-color: @blueDark;
+  color: @white;
+  font-size: 75%;
+  padding: 3px;
+  border-radius: 2px;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
 .gf-timepicker-relative-section {
-  padding: 0 20px 0 25px;
+  padding: 0 20px 0 30px;
   min-height: 258px;
   float: left;
   ul {
+    list-style: none;
     float: left;
-    margin: 0 20px 10px 25px;
+    margin: 0 30px 10px 0px;
+    li {
+      line-height: 22px;
+    }
     li.active {
       border-bottom: 1px solid @blue;
       margin: 3px 0;
+      font-weight: bold;
     }
   }
 }

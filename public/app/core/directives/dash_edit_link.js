@@ -35,7 +35,10 @@ function ($, coreModule) {
         var lastEditor;
 
         function hideEditorPane() {
-          if (editorScope) { editorScope.dismiss(); }
+          if (editorScope) {
+            scope.appEvent('dash-editor-hidden', lastEditor);
+            editorScope.dismiss();
+          }
         }
 
         function showEditorPane(evt, payload, editview) {
