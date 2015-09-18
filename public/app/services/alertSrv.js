@@ -13,14 +13,14 @@ function (angular, _) {
     this.init = function() {
       $rootScope.onAppEvent('alert-error', function(e, alert) {
         self.set(alert[0], alert[1], 'error');
-      });
+      }, $rootScope);
       $rootScope.onAppEvent('alert-warning', function(e, alert) {
         self.set(alert[0], alert[1], 'warning', 5000);
-      });
+      }, $rootScope);
       $rootScope.onAppEvent('alert-success', function(e, alert) {
         self.set(alert[0], alert[1], 'success', 3000);
-      });
-      $rootScope.onAppEvent('confirm-modal', this.showConfirmModal);
+      }, $rootScope);
+      $rootScope.onAppEvent('confirm-modal', this.showConfirmModal, $rootScope);
     };
 
     // List of all alert objects

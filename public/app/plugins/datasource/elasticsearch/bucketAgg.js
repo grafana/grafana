@@ -20,7 +20,7 @@ function (angular, _, queryDef) {
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
       $scope.updateOrderByOptions();
-    });
+    }, $scope);
 
     $scope.init = function() {
       $scope.agg = bucketAggs[$scope.index];
