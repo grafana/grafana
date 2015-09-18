@@ -38,21 +38,21 @@ div.timepicker-now {
 }
 
 .gf-timepicker-dropdown {
-  margin: 15px;
+  margin: 0px;
   padding: 10px 20px;
   float: right;
   background-color: @grafanaPanelBackground;
-  border: 1px solid @grafanaTargetFuncBackground;
+  .box-shadow(@navbarDropdownShadow);
 }
 
 .gf-timepicker-absolute-section {
   width: 300px;
   float: left;
+  border-right: @grafanaTriggerBorder;
   padding: 0 20px 0 20px;
 }
 
 .gf-timepicker-relative-section {
-  border-right: @grafanaTriggerBorder;
   padding: 0 20px 0 20px;
   min-height: 258px;
   float: left;
@@ -60,8 +60,8 @@ div.timepicker-now {
     float: left;
     margin: 0 20px 10px 25px;
     li.active {
-      border-left: 1px solid @blue;
-      padding: 2px 0;
+      border-bottom: 1px solid @blue;
+      margin: 3px 0;
     }
   }
 }

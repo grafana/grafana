@@ -1,13 +1,4 @@
 <div class="row pull-right">
-	<div class="gf-timepicker-relative-section">
-		<h3>Quick ranges</h3>
-		<ul ng-repeat="group in timeOptions">
-			<li bindonce ng-repeat='option in group' ng-class="{active: option.active}">
-				<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
-			</li>
-		</ul>
-	</div>
-
 	<div class="gf-timepicker-absolute-section">
 		<h3>Time range</h3>
 		<label class="small">From:</label>
@@ -31,8 +22,22 @@
 		</div>
 
 		<label class="small">Refreshing every:</label>
-		<select ng-model="dashboard.refresh" class='input-large' ng-options="f for f in ['5m','10m']"></select>
+		<select ng-model="currentRefresh" class='input-large' ng-options="f for f in refreshOptions"></select>
+
+		<button class="btn btn-inverse pull-right" type="button" ng-click="applyCustomTimeRange()">
+			Apply
+		</button>
 	</div>
+
+	<div class="gf-timepicker-relative-section">
+		<h3>Quick ranges</h3>
+		<ul ng-repeat="group in timeOptions">
+			<li bindonce ng-repeat='option in group' ng-class="{active: option.active}">
+				<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
+			</li>
+		</ul>
+	</div>
+
 </div>
 <div class="clearfix"></div>
 
