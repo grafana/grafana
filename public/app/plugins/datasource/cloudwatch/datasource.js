@@ -353,6 +353,30 @@ function (angular, _, dateMath) {
       return d.promise;
     };
 
+    CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
+      var ec2 = this.getAwsClient(region, 'EC2');
+
+      var params = {};
+      if (filters.length > 0) {
+        params.Filters = filters;
+      }
+      if (instanceIds.length > 0) {
+        params.InstanceIds = instanceIds;
+      }
+
+      var d = $q.defer();
+
+      ec2.describeInstances(params, function(err, data) {
+        if (err) {
+          return d.reject(err);
+        }
+
+        return d.resolve(data);
+      });
+
+      return d.promise;
+    };
+
     CloudWatchDatasource.prototype.getTemplateVariableNames = function() {
       var variables = [];
       templateSrv.fillVariableValuesForUrl(variables);
@@ -440,27 +464,18 @@ function (angular, _, dateMath) {
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
         var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
+        var instanceIds = [
+          instanceId
+        ];
 
-        var ec2 = this.getAwsClient(region, 'EC2');
-
-        var params = {
-          InstanceIds: [
-            instanceId
-          ]
-        };
-        ec2.describeInstances(params, function(err, data) {
-          if (err) {
-            throw err;
-          }
-
-          var volumeIds = _.map(data.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
+        return this.performEC2DescribeInstances(region, [], instanceIds)
+        .then(function(result) {
+          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
             return mapping.EBS.VolumeID;
           });
 
-          d.resolve(transformSuggestData(volumeIds));
+          return transformSuggestData(volumeIds);
         });
-
-        return d.promise;
       }
 
       return $q.when([]);
