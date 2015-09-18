@@ -23,7 +23,7 @@ define([
       this._parseTime();
 
       if(this.dashboard.refresh) {
-        this.set_interval(this.dashboard.refresh);
+        this.setAutoRefresh(this.dashboard.refresh);
       }
     };
 
@@ -64,7 +64,7 @@ define([
       }
     };
 
-    this.set_interval = function (interval) {
+    this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
@@ -96,10 +96,10 @@ define([
       // disable refresh if we have an absolute time
       if (_.isString(time.to) && time.to.indexOf('now') === -1) {
         this.old_refresh = this.dashboard.refresh || this.old_refresh;
-        this.set_interval(false);
+        this.setAutoRefresh(false);
       }
       else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
-        this.set_interval(this.old_refresh);
+        this.setAutoRefresh(this.old_refresh);
         this.old_refresh = null;
       }
 
