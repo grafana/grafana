@@ -3,30 +3,30 @@
 		<h3>Time range</h3>
 		<label class="small">From:</label>
 		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="timeRaw.from" input-datetime>
+			<input type="text" class="input-large" ng-model="ctrl.timeRaw.from" input-datetime>
 			<button class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
 				<i class="fa fa-calendar"></i>
 			</button>
 		</div>
 
 		<div ng-if="openFromPicker">
-			<datepicker ng-model="absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
+			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
 		<label class="small">To:</label>
 		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="timeRaw.to" input-datetime>
+			<input type="text" class="input-large" ng-model="ctrl.timeRaw.to" input-datetime>
 			<button class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
 				<i class="fa fa-calendar"></i>
 			</button>
 		</div>
 
 		<div ng-if="openToPicker">
-			<datepicker ng-model="absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
+			<datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
 		</div>
 
 		<label class="small">Refreshing every:</label>
-		<select ng-model="refresh.value" class='input-medium' ng-options="f.value as f.text for f in refresh.options">
+		<select ng-model="ctrl.refresh.value" class='input-medium' ng-options="f.value as f.text for f in ctrl.refresh.options">
 		</select>
 
 		<button class="btn btn-inverse gf-timepicker-btn-apply" type="button" ng-click="ctrl.applyCustom()">
@@ -36,7 +36,7 @@
 
 	<div class="gf-timepicker-relative-section">
 		<h3>Quick ranges</h3>
-		<ul ng-repeat="group in timeOptions">
+		<ul ng-repeat="group in ctrl.timeOptions">
 			<li bindonce ng-repeat='option in group' ng-class="{active: option.active}">
 				<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
 			</li>
