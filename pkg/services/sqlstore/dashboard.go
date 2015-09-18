@@ -146,7 +146,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	}
 
 	if len(query.Title) > 0 {
-		sql.WriteString(" AND dashboard.title LIKE ?")
+		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
 	}
 
@@ -198,11 +198,28 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 }
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
-	sess := x.NewSession()
-	defer sess.Close()
+	return inTransaction2(func(sess *session) error {
+		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
+		has, err := x.Get(&dashboard)
+		if err != nil {
+			return err
+		} else if has == false {
+			return m.ErrDashboardNotFound
+		}
 
-	rawSql := "DELETE FROM dashboard WHERE org_id=? and slug=?"
-	_, err := sess.Exec(rawSql, cmd.OrgId, cmd.Slug)
+		deletes := []string{
+			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
+			"DELETE FROM star WHERE dashboard_id = ? ",
+			"DELETE FROM dashboard WHERE id = ?",
+		}
 
-	return err
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, dashboard.Id)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

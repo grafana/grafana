@@ -9,14 +9,18 @@ function (angular, _, config, gfunc, Parser) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var targetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-  module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
+  module.controller('GraphiteQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
 
     $scope.init = function() {
-      $scope.target.target = $scope.target.target || '';
-      $scope.targetLetters = targetLetters;
+      if ($scope.target) {
+        $scope.target.target = $scope.target.target || '';
+        parseTarget();
+      }
+    };
 
+    $scope.toggleEditorMode = function() {
+      $scope.target.textEditor = !$scope.target.textEditor;
       parseTarget();
     };
 
@@ -25,9 +29,11 @@ function (angular, _, config, gfunc, Parser) {
     function parseTarget() {
       $scope.functions = [];
       $scope.segments = [];
-      $scope.showTextEditor = false;
-
       delete $scope.parserError;
+
+      if ($scope.target.textEditor) {
+        return;
+      }
 
       var parser = new Parser($scope.target.target);
       var astNode = parser.getAst();
@@ -38,7 +44,7 @@ function (angular, _, config, gfunc, Parser) {
 
       if (astNode.type === 'error') {
         $scope.parserError = astNode.message + " at position: " + astNode.pos;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
         return;
       }
 
@@ -48,7 +54,7 @@ function (angular, _, config, gfunc, Parser) {
       catch (err) {
         console.log('error parsing target:', err.message);
         $scope.parserError = err.message;
-        $scope.showTextEditor = true;
+        $scope.target.textEditor = true;
       }
 
       checkOtherSegments($scope.segments.length - 1);
@@ -98,7 +104,7 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          return new MetricSegment(segment);
+          return uiSegmentSrv.newSegment(segment);
         });
       }
     }
@@ -113,7 +119,7 @@ function (angular, _, config, gfunc, Parser) {
 
     function checkOtherSegments(fromIndex) {
       if (fromIndex === 0) {
-        $scope.segments.push(MetricSegment.newSelectMetric());
+        $scope.segments.push(uiSegmentSrv.newSelectMetric());
         return;
       }
 
@@ -123,13 +129,13 @@ function (angular, _, config, gfunc, Parser) {
           if (segments.length === 0) {
             if (path !== '') {
               $scope.segments = $scope.segments.splice(0, fromIndex);
-              $scope.segments.push(MetricSegment.newSelectMetric());
+              $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
             return;
           }
           if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
-              $scope.segments.push(MetricSegment.newSelectMetric());
+              $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
             else {
               return checkOtherSegments(fromIndex + 1);
@@ -156,14 +162,14 @@ function (angular, _, config, gfunc, Parser) {
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
           var altSegments = _.map(segments, function(segment) {
-            return new MetricSegment({ value: segment.text, expandable: segment.expandable });
+            return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
           });
 
           if (altSegments.length === 0) { return altSegments; }
 
           // add template variables
           _.each(templateSrv.variables, function(variable) {
-            altSegments.unshift(new MetricSegment({
+            altSegments.unshift(uiSegmentSrv.newSegment({
               type: 'template',
               value: '$' + variable.name,
               expandable: true,
@@ -171,7 +177,7 @@ function (angular, _, config, gfunc, Parser) {
           });
 
           // add wildcard option
-          altSegments.unshift(new MetricSegment('*'));
+          altSegments.unshift(uiSegmentSrv.newSegment('*'));
           return altSegments;
         })
         .then(null, function(err) {
@@ -278,50 +284,8 @@ function (angular, _, config, gfunc, Parser) {
       }
     };
 
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
+    $scope.init();
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
-    function MetricSegment(options) {
-      if (options === '*' || options.value === '*') {
-        this.value = '*';
-        this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
-        this.expandable = true;
-        return;
-      }
-
-      this.fake = options.fake;
-      this.value = options.value;
-      this.type = options.type;
-      this.expandable = options.expandable;
-      this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
-    }
-
-    MetricSegment.newSelectMetric = function() {
-      return new MetricSegment({value: 'select metric', fake: true});
-    };
-
-  });
-
-  module.directive('focusMe', function($timeout, $parse) {
-    return {
-      //scope: true,   // optionally create a child scope
-      link: function(scope, element, attrs) {
-        var model = $parse(attrs.focusMe);
-        scope.$watch(model, function(value) {
-          if(value === true) {
-            $timeout(function() {
-              element[0].focus();
-            });
-          }
-        });
-      }
-    };
   });
 
 });

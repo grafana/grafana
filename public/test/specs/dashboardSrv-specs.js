@@ -30,9 +30,7 @@ define([
 
       it('should have default properties', function() {
         expect(model.rows.length).to.be(0);
-        expect(model.nav.length).to.be(1);
       });
-
     });
 
     describe('when getting next panel id', function() {
@@ -47,6 +45,39 @@ define([
       it('should return max id + 1', function() {
         expect(model.getNextPanelId()).to.be(6);
       });
+    });
+
+    describe('addDataQueryTo', function() {
+      var dashboard, panel;
+
+      beforeEach(function() {
+        panel = {targets:[]};
+        dashboard = _dashboardSrv.create({});
+        dashboard.rows.push({panels: [panel]});
+      });
+
+      it('should add target', function() {
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets.length).to.be(1);
+      });
+
+      it('should set refId', function() {
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets[0].refId).to.be('A');
+      });
+
+      it('should set refId to first available letter', function() {
+        panel.targets = [{refId: 'A'}];
+        dashboard.addDataQueryTo(panel);
+        expect(panel.targets[1].refId).to.be('B');
+      });
+
+      it('duplicate should get unique refId', function() {
+        panel.targets = [{refId: 'A'}];
+        dashboard.duplicateDataQuery(panel, panel.targets[0]);
+        expect(panel.targets[1].refId).to.be('B');
+      });
+
     });
 
     describe('row and panel manipulation', function() {
@@ -79,6 +110,15 @@ define([
         expect(dashboard.rows[0].panels[1].span).to.be(4);
         expect(dashboard.rows[0].panels[1].attr).to.be('123');
         expect(dashboard.rows[0].panels[1].id).to.be(11);
+      });
+
+      it('duplicate panel should remove repeat data', function() {
+        var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
+        dashboard.rows = [{ panels: [panel] }];
+        dashboard.duplicatePanel(panel, dashboard.rows[0]);
+
+        expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
+        expect(dashboard.rows[0].panels[1].scopedVars).to.be(undefined);
       });
 
     });
@@ -157,7 +197,7 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(6);
+        expect(model.schemaVersion).to.be(7);
       });
 
     });

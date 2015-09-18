@@ -69,8 +69,10 @@ function (angular, _, kbn, $) {
         }
 
         if (_.isString(scope.rangeUnparsed.from)) {
-          scope.panelMeta.timeInfo = "last " + scope.panel.timeFrom;
-          scope.rangeUnparsed.from = 'now-' + scope.panel.timeFrom;
+          var timeInfo = kbn.getRelativeTimeInfo(scope.panel.timeFrom);
+          scope.panelMeta.timeInfo = timeInfo.text;
+          scope.rangeUnparsed.from = timeInfo.from;
+          scope.rangeUnparsed.to = timeInfo.to;
           scope.range.from = kbn.parseDate(scope.rangeUnparsed.from);
         }
       }

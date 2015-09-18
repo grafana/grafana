@@ -1,6 +1,7 @@
 define([
   'helpers',
-  'plugins/datasource/influxdb/queryCtrl'
+  'plugins/datasource/influxdb/queryCtrl',
+  'services/uiSegmentSrv'
 ], function(helpers) {
   'use strict';
 
@@ -8,6 +9,7 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('InfluxQueryCtrl'));
 
@@ -60,6 +62,10 @@ define([
         expect(ctx.scope.target.tags[0].value).to.be('server1');
       });
 
+      it('should set tag operator', function() {
+        expect(ctx.scope.target.tags[0].operator).to.be('=');
+      });
+
       it('should add plus button for another filter', function() {
         expect(ctx.scope.tagSegments[3].fake).to.be(true);
       });
@@ -74,6 +80,7 @@ define([
 
       it('should update operator', function() {
         expect(ctx.scope.tagSegments[1].value).to.be('=~');
+        expect(ctx.scope.target.tags[0].operator).to.be('=~');
       });
     });
 
@@ -176,40 +183,6 @@ define([
         expect(ctx.scope.tagSegments[3].type).to.be('plus-button');
       });
     });
-
-    describe('when adding group by', function() {
-      beforeEach(function() {
-        ctx.scope.init();
-        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
-      });
-
-      it('should add group by', function() {
-        expect(ctx.scope.target.groupByTags.length).to.be(1);
-        expect(ctx.scope.target.groupByTags[0]).to.be('host');
-      });
-
-      it('should add another plus button segment', function() {
-        expect(ctx.scope.groupBySegments[1].type).to.be('plus-button');
-      });
-    });
-
-    describe('when removing group by', function() {
-      beforeEach(function() {
-        ctx.scope.init();
-        ctx.scope.groupByTagUpdated({value: 'host', type: 'plus-button' }, 0);
-        ctx.scope.groupByTagUpdated(ctx.scope.removeGroupBySegment, 0);
-      });
-
-      it('should add group by', function() {
-        expect(ctx.scope.target.groupByTags.length).to.be(0);
-      });
-
-      it('should remove segment', function() {
-        expect(ctx.scope.groupBySegments.length).to.be(1);
-        expect(ctx.scope.groupBySegments[0].type).to.be('plus-button');
-      });
-    });
-
 
   });
 });

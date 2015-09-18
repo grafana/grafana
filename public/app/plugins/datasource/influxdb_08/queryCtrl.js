@@ -1,8 +1,7 @@
 define([
   'angular',
-  'lodash'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -30,8 +29,6 @@ function (angular, _) {
         delete target.groupby_field_add;
       }
 
-      $scope.rawQuery = false;
-
       $scope.functions = [
         'count', 'mean', 'sum', 'min',
         'max', 'mode', 'distinct', 'median',
@@ -46,12 +43,8 @@ function (angular, _) {
       });
     };
 
-    $scope.showQuery = function () {
-      $scope.target.rawQuery = true;
-    };
-
-    $scope.hideQuery = function () {
-      $scope.target.rawQuery = false;
+    $scope.toggleQueryMode = function () {
+      $scope.target.rawQuery = !$scope.target.rawQuery;
     };
 
     // Cannot use typeahead and ng-change on blur at the same time
@@ -94,15 +87,6 @@ function (angular, _) {
       else {
         return seriesList;
       }
-    };
-
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
-    };
-
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
     };
 
   });

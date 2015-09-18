@@ -7,6 +7,6 @@ define([
   './panel/all',
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
-  './org/all',
+  './profile/selectOrgCtrl',
   './admin/all',
 ], function () {});

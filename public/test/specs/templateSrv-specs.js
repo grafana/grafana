@@ -109,7 +109,6 @@ define([
     describe('when checking if a string contains a variable', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
-        _templateSrv.updateTemplateData();
       });
 
       it('should find it with $var syntax', function() {
@@ -127,12 +126,35 @@ define([
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
-        _templateSrv.updateTemplateData();
       });
 
       it('should set current value and update template data', function() {
         var target = _templateSrv.replace('this.[[test]].filters');
         expect(target).to.be('this.muuuu.filters');
+      });
+    });
+
+    describe('fillVariableValuesForUrl with multi value', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+      });
+
+      it('should set multiple url params', function() {
+        var params = {};
+        _templateSrv.fillVariableValuesForUrl(params);
+        expect(params['var-test']).to.eql(['val1', 'val2']);
+      });
+    });
+
+    describe('fillVariableValuesForUrl with multi value and scopedVars', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+      });
+
+      it('should set multiple url params', function() {
+        var params = {};
+        _templateSrv.fillVariableValuesForUrl(params, {'test': {value: 'val1'}});
+        expect(params['var-test']).to.eql('val1');
       });
     });
 

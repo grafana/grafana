@@ -3,7 +3,9 @@ package notifications
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"html/template"
+	"net/url"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,6 +18,7 @@ import (
 
 var mailTemplates *template.Template
 var tmplResetPassword = "reset_password.html"
+var tmplSignUpStarted = "signup_started.html"
 var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
 func Init() error {
@@ -25,7 +28,8 @@ func Init() error {
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
 
-	bus.AddEventListener(userSignedUpHandler)
+	bus.AddEventListener(signUpStartedHandler)
+	bus.AddEventListener(signUpCompletedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -60,16 +64,28 @@ func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
 	}
 
 	var buffer bytes.Buffer
+	var err error
+	var subjectText interface{}
+
 	data := cmd.Data
 	if data == nil {
 		data = make(map[string]interface{}, 10)
 	}
 
 	setDefaultTemplateData(data, nil)
-	mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	if err != nil {
+		return err
+	}
 
-	subjectTmplText := data["Subject"].(map[string]interface{})["value"].(string)
-	subjectTmpl, err := template.New("subject").Parse(subjectTmplText)
+	subjectData := data["Subject"].(map[string]interface{})
+	subjectText, hasSubject := subjectData["value"]
+
+	if !hasSubject {
+		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+	}
+
+	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
 	if err != nil {
 		return err
 	}
@@ -120,9 +136,29 @@ func validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
 	return nil
 }
 
-func userSignedUpHandler(evt *events.UserSignedUp) error {
-	log.Info("User signed up: %s, send_option: %s", evt.Email, setting.Smtp.SendWelcomeEmailOnSignUp)
+func signUpStartedHandler(evt *events.SignUpStarted) error {
+	if !setting.VerifyEmailEnabled {
+		return nil
+	}
 
+	log.Info("User signup started: %s", evt.Email)
+
+	if evt.Email == "" {
+		return nil
+	}
+
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       []string{evt.Email},
+		Template: tmplSignUpStarted,
+		Data: map[string]interface{}{
+			"Email":     evt.Email,
+			"Code":      evt.Code,
+			"SignUpUrl": setting.ToAbsUrl(fmt.Sprintf("signup/?email=%s&code=%s", url.QueryEscape(evt.Email), url.QueryEscape(evt.Code))),
+		},
+	})
+}
+
+func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
 		return nil
 	}
@@ -131,7 +167,7 @@ func userSignedUpHandler(evt *events.UserSignedUp) error {
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{
-			"Name": evt.Login,
+			"Name": evt.Name,
 		},
 	})
 }

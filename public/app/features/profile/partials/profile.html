@@ -8,63 +8,59 @@
 <div class="page-container">
 	<div class="page">
 
-		<h2>Profile details</h2>
+		<h2>Profile</h2>
 
 		<form name="userForm">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							Name
-						</li>
-						<li>
-							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							Email
-						</li>
-						<li>
-							<input type="email" required ng-model="user.email" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							Username
-						</li>
-						<li>
-							<input type="text" required ng-model="user.login" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							UI Theme
-						</li>
-						<li>
-							<select class="input-small tight-form-input" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Name
+					</li>
+					<li>
+						<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Email
+					</li>
+					<li>
+						<input type="email" required ng-model="user.email" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Username
+					</li>
+					<li>
+						<input type="text" required ng-model="user.login" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
 			</div>
 
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						UI Theme
+					</li>
+					<li>
+						<select class="input-small tight-form-input" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
 			<br>
 			<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
 		</form>
 
-		<h2>Organizations</h2>
+		<h3>Organizations</h3>
 
 		<table class="grafana-options-table">
 			<tr ng-repeat="org in orgs">

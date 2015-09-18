@@ -1,0 +1,37 @@
+<section class="grafana-metric-options" ng-controller="KairosDBQueryCtrl">
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-wrench"></i>
+			</li>
+
+			<li class="tight-form-item">
+				Downsampling with
+			</li>
+			<li>
+				<select class="input-medium tight-form-input" ng-change="panelBlur()" ng-model="panel.downsampling" ng-options="f for f in ['(NONE)','avg', 'sum', 'min', 'max', 'dev']" ></select>
+			</li>
+
+			<!-- SAMPLING RATE -->
+			<li ng-hide="panel.downsampling=='(NONE)'" class="tight-form-item">
+				every
+			</li>
+			<li>
+				<input type="text"
+				ng-hide="panel.downsampling=='(NONE)'"
+				class="input-mini tight-form-input"
+				ng-model="panel.sampling"
+				placeholder="{{interval}}"
+				bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+				spellcheck='false'
+				ng-blur="panelBlur()" >
+				<a bs-tooltip="target.errors.sampling"
+					style="color: rgb(229, 189, 28)"
+					ng-show="target.errors.sampling">
+					<i class="fa fa-warning"></i>
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+</section>

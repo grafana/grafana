@@ -6,18 +6,38 @@ function (_) {
 
   function InfluxQueryBuilder(target) {
     this.target = target;
+
+    if (target.groupByTags) {
+      target.groupBy = [{type: 'time', interval: 'auto'}];
+      for (var i in target.groupByTags) {
+        target.groupBy.push({type: 'tag', key: target.groupByTags[i]});
+      }
+      delete target.groupByTags;
+    }
   }
 
   function renderTagCondition (tag, index) {
     var str = "";
+    var operator = tag.operator;
+    var value = tag.value;
     if (index > 0) {
       str = (tag.condition || 'AND') + ' ';
     }
 
-    if (tag.value && tag.value[0] === '/' && tag.value[tag.value.length - 1] === '/') {
-      return str + '"' +tag.key + '"' + ' =~ ' + tag.value;
+    if (!operator) {
+      if (/^\/.*\/$/.test(tag.value)) {
+        operator = '=~';
+      } else {
+        operator = '=';
+      }
     }
-    return str + '"' + tag.key + '"' + " = '" + tag.value + "'";
+
+    // quote value unless regex
+    if (operator !== '=~' && operator !== '!~') {
+      value = "'" + value + "'";
+    }
+
+    return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
   var p = InfluxQueryBuilder.prototype;
@@ -44,7 +64,10 @@ function (_) {
     }
 
     if (measurement) {
-      query += ' FROM "' + measurement + '"';
+      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+        measurement = '"' + measurement+ '"';
+      }
+      query += ' FROM ' + measurement;
     }
 
     if (withKey) {
@@ -69,6 +92,13 @@ function (_) {
     return query;
   };
 
+  p._getGroupByTimeInterval = function(interval) {
+    if (interval === 'auto') {
+      return '$interval';
+    }
+    return interval;
+  };
+
   p._buildQuery = function() {
     var target = this.target;
 
@@ -87,7 +117,15 @@ function (_) {
       if (i > 0) {
         query += ', ';
       }
-      query += field.func + '(' + field.name + ')';
+      query += field.func + '("' + field.name + '")';
+      if (field.mathExpr) {
+        query += field.mathExpr;
+      }
+      if (field.asExpr) {
+        query += ' AS "' + field.asExpr + '"';
+      } else {
+        query += ' AS "' + field.name + '"';
+      }
     }
 
     var measurement = target.measurement;
@@ -103,16 +141,20 @@ function (_) {
     query += conditions.join(' ');
     query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
 
-    query += ' GROUP BY time($interval)';
-    if  (target.groupByTags && target.groupByTags.length > 0) {
-      query += ', "' + target.groupByTags.join('", "') + '"';
+    query += ' GROUP BY';
+    for (i = 0; i < target.groupBy.length; i++) {
+      var group = target.groupBy[i];
+      if (group.type === 'time') {
+        query += ' time(' + this._getGroupByTimeInterval(group.interval) + ')';
+      } else {
+        query += ', "' + group.key + '"';
+      }
     }
 
     if (target.fill) {
       query += ' fill(' + target.fill + ')';
     }
 
-    query += " ORDER BY asc";
     target.query = query;
 
     return query;

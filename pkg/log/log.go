@@ -82,7 +82,11 @@ func Fatal(skip int, format string, v ...interface{}) {
 func Close() {
 	for _, l := range loggers {
 		l.Close()
+		// delete the logger.
+		l = nil
 	}
+	// clear the loggers slice.
+	loggers = nil
 }
 
 // .___        __                 _____
