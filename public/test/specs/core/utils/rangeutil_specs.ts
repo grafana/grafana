@@ -4,7 +4,7 @@ import rangeUtil = require('app/core/utils/rangeutil')
 import _  = require('lodash')
 import moment  = require('moment')
 
-describe.only("rangeUtil", () => {
+describe("rangeUtil", () => {
 
   describe("Can get range text described", () => {
     it('should handle simple old expression with only amount and unit', () => {

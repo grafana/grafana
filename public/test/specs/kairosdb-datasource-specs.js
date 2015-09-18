@@ -27,7 +27,7 @@ define([
       };
 
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ metric: 'test', downsampling: '(NONE)'}]
       };
 
