@@ -145,7 +145,7 @@ function (angular, _, $, config, dateMath, moment) {
     };
 
     GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
-      if (_.isString(date)) {
+      if (_.isString(date) && date.indexOf('/') === 0) {
         if (date === 'now') {
           return 'now';
         }

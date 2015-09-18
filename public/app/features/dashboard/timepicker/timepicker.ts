@@ -37,21 +37,13 @@ export class TimePickerCtrl {
 
   init() {
     this.panel = this.dashboard.timepicker;
-    this.panel.now = false;
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
 
     var time = this.timeSrv.timeRange();
     var timeRaw = this.timeSrv.timeRange(false);
 
-    if (_.isString(timeRaw.to) && timeRaw.to.indexOf('now') === 0) {
-      this.panel.now = true;
-      this.rangeString = rangeUtil.describeTimeRange(timeRaw);
-    } else {
-      this.rangeString = this.dashboard.formatDate(time.from, TimePickerCtrl.tooltipFormat) + ' to ' +
-        this.dashboard.formatDate(time.to, TimePickerCtrl.tooltipFormat);
-    }
-
+    this.rangeString = rangeUtil.describeTimeRange(timeRaw);
     this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
     this.timeRaw = timeRaw;
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';

@@ -2,6 +2,7 @@
 
 import moment = require('moment');
 import _ = require('lodash');
+import dateMath = require('./datemath');
 import angular = require('angular');
 
 var spans = {
@@ -47,6 +48,8 @@ var rangeOptions = [
   { from: 'now-5y',   to: 'now',      display: 'Last 5 years',          section: 0 },
 ];
 
+var absoluteFormat = 'MMM D, YYYY HH:mm:ss';
+
 var rangeIndex = {};
 _.each(rangeOptions, function (frame) {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
@@ -62,13 +65,17 @@ _.each(rangeOptions, function (frame) {
     // });
   }
 
+  function formatDate(date) {
+    return date.format(absoluteFormat);
+  }
+
   // handles expressions like
   // 5m
   // 5m to now/d
   // now/d to now
   // now/d
   // if no to <expr> then to now is assumed
-  function describeTextRange(expr: string) {
+  function describeTextRange(expr: any) {
     if (expr.indexOf('now') === -1) {
       expr = 'now-' + expr;
     }
@@ -104,11 +111,19 @@ _.each(rangeOptions, function (frame) {
     if (option) {
       return option.display;
     }
-    if (range.to === 'now') {
-      return describeTextRange(range.from).display;
+
+    if (moment.isMoment(range.from)) {
+      var toMoment = dateMath.parse(range.to, true);
+      return formatDate(range.from) + ' to ' + toMoment.fromNow();
     }
 
-    return "NA";
+    if (moment.isMoment(range.to)) {
+      var from = dateMath.parse(range.from, false);
+      return from.fromNow() + ' to ' + formatDate(range.to);
+    }
+
+    var res = describeTextRange(range.from);
+    return res.display;
   }
 
 export = {

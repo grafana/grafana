@@ -11,17 +11,17 @@
 			<i class="fa fa-clock-o"></i>
 			<span ng-bind="ctrl.rangeString"></span>
 
-			<span ng-show="dashboard.refresh" class="text-warning">
+			<span ng-show="ctrl.dashboard.refresh" class="text-warning">
 				&nbsp;
 				&nbsp;
 				<i class="fa fa-refresh"></i>
-				refreshed every {{dashboard.refresh}}
+				Refreshed every {{ctrl.dashboard.refresh}}
 			</span>
 		</a>
 	</li>
 
-	<li class="grafana-menu-refresh" ng-show="!dashboard.refresh">
-		<a ng-click="timeSrv.refreshDashboard()">
+	<li class="grafana-menu-refresh" ng-show="!ctrl.dashboard.refresh">
+		<a ng-click="ctrl.timeSrv.refreshDashboard()">
 			<i class="fa fa-refresh"></i>
 		</a>
 	</li>
