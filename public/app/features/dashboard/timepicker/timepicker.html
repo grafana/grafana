@@ -6,10 +6,13 @@
 		</a>
 	</li>
 
-	<li>
-		<a bs-tooltip="tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()">
+	<li ng-class="{'gf-timepicker-open': ctrl.isOpen}">
+		<a bs-tooltip="ctrl.tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()">
 			<i class="fa fa-clock-o"></i>
 			<span ng-bind="ctrl.rangeString"></span>
+			<span ng-show="ctrl.isUtc" class="gf-timepicker-utc">
+				UTC
+			</span>
 
 			<span ng-show="ctrl.dashboard.refresh" class="text-warning">
 				&nbsp;

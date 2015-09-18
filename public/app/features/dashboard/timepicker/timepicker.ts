@@ -26,12 +26,18 @@ export class TimePickerCtrl {
   rangeString: string;
   timeOptions: any;
   refresh: any;
+  isOpen: boolean;
+  isUtc: boolean;
 
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
+    $rootScope.onAppEvent('dash-editor-hidden', () => {
+      this.isOpen = false;
+    }, $scope);
+
     this.init();
   }
 
@@ -40,8 +46,21 @@ export class TimePickerCtrl {
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
 
-    var time = this.timeSrv.timeRange();
-    var timeRaw = this.timeSrv.timeRange(false);
+    var time = angular.copy(this.timeSrv.timeRange());
+    var timeRaw = angular.copy(this.timeSrv.timeRange(false));
+
+    if (this.dashboard.timezone === 'browser') {
+      time.from.local();
+      time.to.local();
+      if (moment.isMoment(timeRaw.from)) {
+        timeRaw.from.local();
+      }
+      if (moment.isMoment(timeRaw.to)) {
+        timeRaw.to.local();
+      }
+    } else {
+      this.isUtc = true;
+    }
 
     this.rangeString = rangeUtil.describeTimeRange(timeRaw);
     this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
@@ -69,6 +88,7 @@ export class TimePickerCtrl {
   }
 
   openDropdown() {
+    this.isOpen = true;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {
       value: this.dashboard.refresh,
@@ -91,16 +111,21 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
+    debugger;
     this.timeSrv.setTime(this.timeRaw);
     this.$rootScope.appEvent('hide-dash-editor');
   }
 
   absoluteFromChanged() {
-    this.timeRaw.from = moment(this.absolute.fromJs);
+    this.timeRaw.from = this.getAbsoluteMomentForTimezone(this.absolute.fromJs);
   }
 
   absoluteToChanged() {
-    this.timeRaw.to = moment(this.absolute.toJs);
+    this.timeRaw.to = this.getAbsoluteMomentForTimezone(this.absolute.toJs);
+  }
+
+  getAbsoluteMomentForTimezone(jsDate) {
+    return this.dashboard.timezone === 'browser' ? moment(jsDate) : moment(jsDate).utc();
   }
 
   setRelativeFilter(timespan) {

@@ -30,10 +30,10 @@ define([
     this._parseTime = function() {
       // when absolute time is saved in json it is turned to a string
       if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-        this.time.from = moment(this.time.from);
+        this.time.from = moment(this.time.from).utc();
       }
       if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-        this.time.to = moment(this.time.to);
+        this.time.to = moment(this.time.to).utc();
       }
     };
 
@@ -120,19 +120,16 @@ define([
     };
 
     this.timeRange = function(parse) {
-      var _t = this.time;
+      // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
+      var from = moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from ;
+      var to = moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to ;
 
-      if(parse === false) {
-        return { from: _t.from, to: _t.to };
-      } else {
-        var _from = _t.from;
-        var _to = _t.to || moment();
-
-        return {
-          from: dateMath.parse(_from, false),
-          to: dateMath.parse(_to, true)
-        };
+      if (parse !== false) {
+        from = dateMath.parse(from, false);
+        to = dateMath.parse(to, true);
       }
+
+      return {from: from, to: to};
     };
 
   });
