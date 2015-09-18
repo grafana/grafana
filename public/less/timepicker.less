@@ -44,13 +44,18 @@
 }
 
 .gf-timepicker-component {
+  margin-bottom: 10px;
   button.btn-sm {
     .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight);
     background-image: none;
     border: none;
     padding: 6px 9px;
     color: @textColor;
-    &.active .text-info {
+    &.active span {
+      color: @blue;
+      font-weight: bold;
+    }
+    .text-info {
       color: @orange;
       font-weight: bold;
     }

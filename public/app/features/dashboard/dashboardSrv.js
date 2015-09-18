@@ -217,7 +217,7 @@ function (angular, $, kbn, _, moment) {
 
     p.formatDate = function(date, format) {
       if (!moment.isMoment(date)) {
-        date = moment(date)
+        date = moment(date);
       }
 
       format = format || 'YYYY-MM-DD HH:mm:ss';
