@@ -30,6 +30,7 @@
     "define": true,
     "require": true,
     "Chromath": false,
-    "setImmediate": true
+    "setImmediate": true,
+    "$": false
   }
 }
