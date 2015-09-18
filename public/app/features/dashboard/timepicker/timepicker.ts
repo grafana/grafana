@@ -54,7 +54,7 @@ export class TimePickerCtrl {
         this.$scope.dashboard.formatDate(time.to, format);
     }
 
-    this.$scope.absoluteJs =  {form: time.from.toDate(), to: time.to.toDate()};
+    this.$scope.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
     this.$scope.timeRaw = timeRaw;
     this.$scope.tooltip = this.$scope.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.$scope.tooltip += this.$scope.dashboard.formatDate(time.to);
@@ -90,6 +90,14 @@ export class TimePickerCtrl {
 
     this.timeSrv.setTime(this.$scope.timeRaw);
     this.$scope.appEvent('hide-dash-editor');
+  }
+
+  absoluteFromChanged() {
+    this.$scope.timeRaw.from = moment(this.$scope.absolute.fromJs);
+  }
+
+  absoluteToChanged() {
+    this.$scope.timeRaw.to = moment(this.$scope.absolute.toJs);
   }
 
   setRelativeFilter(timespan) {

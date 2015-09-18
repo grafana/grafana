@@ -10,7 +10,7 @@
 		</div>
 
 		<div ng-if="openFromPicker">
-			<datepicker ng-model="absolute.to" class="gf-timepicker-component" show-weeks="false"></datepicker>
+			<datepicker ng-model="absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
 		<label class="small">To:</label>
@@ -19,6 +19,10 @@
 			<button class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
 				<i class="fa fa-calendar"></i>
 			</button>
+		</div>
+
+		<div ng-if="openToPicker">
+			<datepicker ng-model="absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
 		</div>
 
 		<label class="small">Refreshing every:</label>
