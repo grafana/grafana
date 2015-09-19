@@ -9,6 +9,10 @@ it allows you to add queries of differnet data source types & instances to the s
 - Feature rich query editor and processing features enables you to issues all kind of metric queries to Elasticsearch
 - See [Issue #1034](https://github.com/grafana/grafana/issues/1034) for more info.
 
+** New Feature: New and much improved time picker**
+- Support for quick ranges like `Today`, `This day last week`, `This week`, `The day so far`, etc.
+- Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
+
 ** User Onboarding **
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
@@ -40,6 +44,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
 require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
 data source api change.
+- Data source api changes, [PLUGIN_CHANGES.md](https://github.com/grafana/grafana/blob/master/public/app/plugins/PLUGIN_CHANGES.md)
 - The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
 
 **Tech (Note for devs)**
