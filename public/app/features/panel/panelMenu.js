@@ -12,10 +12,22 @@ function (angular, $, _) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-links-icon"></span>' +
+            '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
           '</span>';
 
+      function createExternalLinkMenu($scope) {
+        var template = '<div class="panel-menu small">';
+        template += '<div class="panel-menu-row">';
+
+        if ($scope.panel.links) {
+          _.each($scope.panel.links, function(link) {
+            var info = linkSrv.getPanelLinkAnchorInfo(link, $scope.panel.scopedVars);
+            template += '<a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a>';
+          });
+        }
+        return template;
+      }
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
 
@@ -68,6 +80,7 @@ function (angular, $, _) {
         restrict: 'A',
         link: function($scope, elem) {
           var $link = $(linkTemplate);
+          var $panelLinksBtn = $link.find(".panel-links-btn");
           var $panelContainer = elem.parents(".panel-container");
           var menuScope = null;
           var timeout = null;
@@ -77,7 +90,7 @@ function (angular, $, _) {
 
           $scope.$watchCollection('panel.links', function(newValue) {
             var showIcon = (newValue ? newValue.length > 0 : false) && $scope.panel.title !== '';
-            $link.toggleClass('has-panel-links', showIcon);
+            $panelLinksBtn.toggle(showIcon);
           });
 
           function dismiss(time, force) {
@@ -118,7 +131,13 @@ function (angular, $, _) {
               return;
             }
 
-            var menuTemplate = createMenuTemplate($scope);
+            var menuTemplate;
+            if ($(e.target).hasClass('fa-external-link')) {
+              menuTemplate = createExternalLinkMenu($scope);
+            } else {
+              menuTemplate = createMenuTemplate($scope);
+            }
+
             $menu = $(menuTemplate);
             $menu.mouseleave(function() {
               dismiss(1000);
