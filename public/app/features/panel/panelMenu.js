@@ -65,14 +65,6 @@ function (angular, $, _) {
 
       function getExtendedMenu($scope) {
         var menu = angular.copy($scope.panelMeta.extendedMenu);
-
-        if ($scope.panel.links) {
-          _.each($scope.panel.links, function(link) {
-            var info = linkSrv.getPanelLinkAnchorInfo(link, $scope.panel.scopedVars);
-            menu.push({text: info.title, href: info.href, target: info.target });
-          });
-        }
-
         return menu;
       }
 
