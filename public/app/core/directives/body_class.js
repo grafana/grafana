@@ -17,14 +17,6 @@ function (_, $, coreModule) {
           $("#tooltip, .tooltip").remove();
         });
 
-        $scope.$watch('submenuEnabled', function() {
-          if (!$scope.dashboard) {
-            return;
-          }
-
-          elem.toggleClass('submenu-controls-visible', $scope.submenuEnabled);
-        });
-
         $scope.$watch('dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;
