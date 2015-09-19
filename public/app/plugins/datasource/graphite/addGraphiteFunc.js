@@ -15,8 +15,8 @@ function (angular, _, $, gfunc) {
                             ' spellcheck="false" style="display:none"></input>';
 
       var buttonTemplate = '<a  class="tight-form-item tight-form-func dropdown-toggle"' +
-                              ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown"' +
-                              ' data-placement="top"><i class="fa fa-plus"></i></a>';
+                              ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
+                              '<i class="fa fa-plus"></i></a>';
 
       return {
         link: function($scope, elem) {
