@@ -54,8 +54,6 @@ function ($, coreModule) {
 
           hideEditorPane();
 
-          scope.exitFullscreen();
-
           lastEditor = payload.src;
           editorScope = payload.scope ? payload.scope.$new() : scope.$new();
 
