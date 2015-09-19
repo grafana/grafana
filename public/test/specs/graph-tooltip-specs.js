@@ -41,8 +41,8 @@ define([
   describeSharedTooltip("steppedLine false, stack false", function(ctx) {
     ctx.setup(function() {
       ctx.data = [
-        { data: [[10, 15], [12, 20]], },
-        { data: [[10, 2], [12, 3]], }
+        { data: [[10, 15], [12, 20]], lines: {} },
+        { data: [[10, 2], [12, 3]], lines: {} }
       ];
       ctx.pos = { x: 11 };
     });
@@ -75,6 +75,7 @@ define([
       ctx.data = [
         {
           data: [[10, 15], [12, 20]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10,15], [12,20]],
@@ -83,6 +84,7 @@ define([
         },
         {
           data: [[10, 2], [12, 3]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10, 2], [12, 3]],
@@ -104,6 +106,7 @@ define([
       ctx.data = [
         {
           data: [[10, 15], [12, 20]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10, 15], [12, 20]],
@@ -112,6 +115,7 @@ define([
         },
         {
           data: [[10, 2], [12, 3]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10, 2], [12, 3]],
@@ -134,6 +138,7 @@ define([
       ctx.data = [
         {
           data: [[10, 15], [12, 20]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10, 15], [12, 20]],
@@ -142,6 +147,7 @@ define([
         },
         {
           data: [[10, 2], [12, 3]],
+          lines: {},
           datapoints: {
             pointsize: 2,
             points: [[10, 2], [12, 3]],
