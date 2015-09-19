@@ -1,24 +1,24 @@
 <div class="editor-row">
 	<div class="section">
 		<div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 118px">
-						Relative times
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="panel.time_options" array-join>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+			<!-- <div class="tight&#45;form"> -->
+			<!-- 	<ul class="tight&#45;form&#45;list"> -->
+			<!-- 		<li class="tight&#45;form&#45;item" style="width: 118px"> -->
+			<!-- 			Relative times -->
+			<!-- 		</li> -->
+			<!-- 		<li> -->
+			<!-- 			<input type="text" class="input&#45;xlarge tight&#45;form&#45;input last" style="width: 450px" ng&#45;model="ctrl.panel.time_options" array&#45;join> -->
+			<!-- 		</li> -->
+			<!-- 	</ul> -->
+			<!-- 	<div class="clearfix"></div> -->
+			<!-- </div> -->
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 118px">
 						Auto-refresh
 					</li>
 					<li>
-						<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="panel.refresh_intervals" array-join>
+						<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="ctrl.panel.refresh_intervals" array-join>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -34,7 +34,7 @@
 					</li>
 					<li>
 						<input type="text" class="input-mini tight-form-input last"
-						ng-model="panel.nowDelay" placeholder="0m"
+						ng-model="ctrl.panel.nowDelay" placeholder="0m"
 						valid-time-span
 						bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
 						data-placement="right">
@@ -43,13 +43,6 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-
 		</div>
-
-		<p>
-			<br>
-			<i class="fa fa-info-circle"></i>
-			For these changes to fully take effect save and reload the dashboard.
-		</i>
 	</div>
 </div>
