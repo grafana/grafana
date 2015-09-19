@@ -154,6 +154,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 =======
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !ds.BasicAuth {
+				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
 >>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
