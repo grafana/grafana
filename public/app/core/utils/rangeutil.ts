@@ -56,13 +56,19 @@ _.each(rangeOptions, function (frame) {
 });
 
   function getRelativeTimesList(timepickerSettings, currentDisplay) {
-    return _.groupBy(rangeOptions, (option: any) => {
+    var groups = _.groupBy(rangeOptions, (option: any) => {
       option.active = option.display === currentDisplay;
       return option.section;
     });
-    // return _.map(timepickerSettings.time_options, function(duration: string) {
-    //   return describeTextRange(duration);
+
+    // _.each(timepickerSettings.time_options, (duration: string) => {
+    //   let info = describeTextRange(duration);
+    //   if (info.section) {
+    //     groups[info.section].push(info);
+    //   }
     // });
+
+    return groups;
   }
 
   function formatDate(date) {
@@ -94,6 +100,7 @@ _.each(rangeOptions, function (frame) {
       let span = spans[unit];
       if (span) {
         opt.display = 'Last ' + amount + ' ' + span.display;
+        opt.section = span.section;
         if (amount > 1) {
           opt.display += 's';
         }

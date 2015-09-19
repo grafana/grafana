@@ -111,7 +111,6 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    debugger;
     this.timeSrv.setTime(this.timeRaw);
     this.$rootScope.appEvent('hide-dash-editor');
   }
@@ -133,7 +132,7 @@ export class TimePickerCtrl {
 
     var range = {from: timespan.from, to: timespan.to};
 
-    if (this.panel.nowDelay) {
+    if (this.panel.nowDelay && range.to === 'now') {
       range.to = 'now-' + this.panel.nowDelay;
     }
 
@@ -149,7 +148,11 @@ export function settingsDirective() {
     restrict: 'E',
     templateUrl: 'app/features/dashboard/timepicker/settings.html',
     controller: TimePickerCtrl,
-    scope: true,
+    bindToController: true,
+    controllerAs: 'ctrl',
+    scope: {
+      dashboard: "="
+    }
   };
 }
 
