@@ -43,6 +43,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			reqQueryVals.Add("db", ds.Database)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !ds.BasicAuth {
+				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
 		} else {
@@ -50,6 +51,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		}
 
 		if ds.BasicAuth {
+			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
 		}
 
