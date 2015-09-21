@@ -68,6 +68,10 @@ func (a *ldapAuther) login(query *LoginUserQuery) error {
 		if grafanaUser, err := a.getGrafanaUserFor(ldapUser); err != nil {
 			return err
 		} else {
+			// sync user details
+			if err := a.syncUserInfo(grafanaUser, ldapUser); err != nil {
+				return err
+			}
 			// sync org roles
 			if err := a.syncOrgRoles(grafanaUser, ldapUser); err != nil {
 				return err
@@ -120,6 +124,21 @@ func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) 
 	}
 
 	return &cmd.Result, nil
+}
+
+func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *ldapUserInfo) error {
+	var name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
+	if user.Email == ldapUser.Email && user.Name == name {
+		return nil
+	}
+
+	log.Info("Ldap: Syncing user info %s", ldapUser.Username)
+	updateCmd := m.UpdateUserCommand{}
+	updateCmd.UserId = user.Id
+	updateCmd.Login = user.Login
+	updateCmd.Email = ldapUser.Email
+	updateCmd.Name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
+	return bus.Dispatch(&updateCmd)
 }
 
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
