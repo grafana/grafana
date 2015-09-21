@@ -51,6 +51,11 @@ function (angular, _) {
       $scope.exitFullscreen();
     };
 
+    $scope.manageButtonClickAction = function() {
+      angular.element('#manageDashboardButton').tooltip('hide');
+      $scope.appEvent('hide-dash-search');
+    };
+
     $scope.saveDashboard = function(options) {
       if ($scope.dashboardMeta.canSave === false) {
         return;
