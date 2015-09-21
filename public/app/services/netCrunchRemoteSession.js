@@ -8,12 +8,10 @@
  ****************************************************************/
 
 define([
-    'angular',
-    'lodash',
-    'config'
+    'angular'
   ],
 
-  function (angular, _, config) {
+  function (angular) {
 
     'use strict';
 
@@ -24,74 +22,63 @@ define([
       .factory('netCrunchRemoteSession', function ($q, $rootScope, $http, netCrunchRemoteClient, adrem) {
 
         var error = {msg: ''},
-            query,
+            trendQuery,
             loginInProgress = false,
             loginInProgressPromise,
             that;
 
-        function getNetCrunchDatasourceById(id) {
-          var dataSources = config.datasources,
-              dataSourceName;
-
-          dataSourceName = Object.keys(dataSources).filter(function(dataSourceName) {
-            return ((dataSources[dataSourceName].type === 'netcrunch') &&
-                    (dataSources[dataSourceName].id === id));
-          });
-          return (dataSourceName != null) ? dataSources[dataSourceName] : null;
-        }
-
         adrem.Client.on('exception', function (e) {
-          error.msg = "Server Error. Please click on Refresh button in browser to restart application. "
-                      + "(" + e.message + ")";
+          error.msg = "Server Error. Please click on Refresh button in browser to restart application. " +
+                      "(" + e.message + ")";
           $rootScope.$apply();
         });
 
         that = {
           init: function () {
+            return netCrunchRemoteClient.ready.then(
+              function () {
+                var loginProcess = $q.defer(),
+                    login,
+                    user,
+                    password;
 
+                login = (adrem.Client.Session == null) ? $q.when(false) : $q.when(true);
 
-            return netCrunchRemoteClient.ready.then(function () {
-              var NETCRUNCH_DATASOURCE_ID = 1,  //Support is only for one NetCrunch datasource with ID=1
-                  login,
-                  dataSource;
+                if ((loginInProgress === false) && (adrem.Client.status.logged === false) &&
+                    ('Session' in adrem.Client)) {
+                  loginInProgress = true;
+                  login = loginProcess.promise;
+                  loginInProgressPromise = login;
 
-              dataSource = getNetCrunchDatasourceById(NETCRUNCH_DATASOURCE_ID);
-              login = ((dataSource == null) || (adrem.Client.Session == null))
-                        ? $q.when(false) : $q.when(true);
-
-              if ((loginInProgress === false) && (dataSource != null) &&
-                  (adrem.Client.status.logged === false) && ('Session' in adrem.Client)) {
-                loginInProgress = true;
-                login = $q(function (resolve, reject) {
-                  adrem.Client.login(dataSource.username, dataSource.password, function (status) {
-                    loginInProgress = false;
-                    if (status) {
-                      resolve(true);
-                    } else {
-                      reject(false);
-                    }
+                  netCrunchRemoteClient.serverSettings.then(function(settings) {
+                    user = settings.user;
+                    password = settings.password;
+                    adrem.Client.login(user, password, function (status) {
+                      loginInProgress = false;
+                      loginProcess.resolve(status);
+                    });
                   });
-                });
-                loginInProgressPromise = login;
-              }
+                }
 
-              if (loginInProgress === true) {
-                login = loginInProgressPromise;
-              }
+                if (loginInProgress === true) {
+                  login = loginInProgressPromise;
+                }
 
-              return $q.all([login]);
-            }, function() { return $q.reject(); });
+                return $q.all([login]);
+              },
+              function() {
+                return $q.reject(false);
+              });
           },
-
 
           queryTrendData: function () {
-            if (query == null) {
-              query = new adrem.ncSrv.ITrendQuery();
+            if (trendQuery == null) {
+              trendQuery = new adrem.ncSrv.ITrendQuery();
             }
-            return netCrunchRemoteClient.callApi(query.AnalizeGetData, arguments);
+            return netCrunchRemoteClient.callApi(trendQuery.AnalizeGetData, arguments);
           },
 
-          error: error,
+          error : error,
           res : {}
         };
 
