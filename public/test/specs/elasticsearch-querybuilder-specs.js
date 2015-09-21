@@ -21,6 +21,14 @@ define([
       expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
     });
 
+    it('with raw query', function() {
+      var query = builder.build({
+        rawQuery: '{"query": "$lucene_query"}',
+      });
+
+      expect(query.query).to.be("$lucene_query");
+    });
+
     it('with multiple bucket aggs', function() {
       var query = builder.build({
         metrics: [{type: 'count', id: '1'}],
