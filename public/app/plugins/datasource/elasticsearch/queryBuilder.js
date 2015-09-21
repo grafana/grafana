@@ -54,12 +54,34 @@ function (angular) {
     }
   };
 
+  ElasticQueryBuilder.prototype.getFiltersAgg = function(target) {
+    var filterObj = {};
+
+    for (var i = 0; i < target.bucketAggs.length; i++) {
+      var aggDef = target.bucketAggs[i];
+      if (aggDef.type !== 'filters') {
+        continue;
+      }
+
+      filterObj[aggDef.query] = {
+        query: {
+          query_string: {
+            query: aggDef.query,
+            analyze_wildcard: true
+          }
+        }
+      };
+    }
+
+    return filterObj;
+  };
+
   ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
       return angular.fromJson(target.rawQuery);
     }
 
-    var i, nestedAggs, metric;
+    var i, nestedAggs, metric, filtersHandled;
     var query = {
       "size": 0,
       "query": {
@@ -93,6 +115,15 @@ function (angular) {
             "min_doc_count": 1,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
+          break;
+        }
+        case 'filters': {
+          // skip filters if we already processed them
+          if (filtersHandled) {
+            continue;
+          }
+          esAgg["filters"] = {filters: this.getFiltersAgg(target)};
+          filtersHandled = true;
           break;
         }
         case 'terms': {

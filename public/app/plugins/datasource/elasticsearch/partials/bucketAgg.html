@@ -7,8 +7,11 @@
 		<li>
 			<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onTypeChanged()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
 		</li>
-		<li>
+		<li ng-if="agg.type !== 'filters'">
 			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment>
+		</li>
+		<li ng-if="agg.type === 'filters'">
+			<input type="text" class="tight-form-input tight-form-item-xxlarge" ng-model="agg.query" spellcheck='false' placeholder="Lucence query" ng-blur="onChange()">
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
