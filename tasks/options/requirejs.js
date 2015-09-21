@@ -7,7 +7,7 @@ module.exports = function(config,grunt) {
       appDir: '<%= genDir %>',
       dir:  '<%= tempDir %>',
       mainConfigFile: '<%= genDir %>/app/components/require.config.js',
-      baseUrl: 'app',
+      baseUrl: './',
       waitSeconds: 0,
 
       modules: [], // populated below,
@@ -39,7 +39,7 @@ module.exports = function(config,grunt) {
     var requireModules = options.modules = [
       {
         // main/common module
-        name: 'app',
+        name: 'app/app',
         include: [
           'kbn',
           'text',
@@ -54,21 +54,17 @@ module.exports = function(config,grunt) {
           'jquery.flot',
           'angular-strap',
           'angular-dragdrop',
-          'core/core',
-          'services/all',
-          'features/all',
-          'controllers/all',
-          'components/partials',
+          'app/core/core',
+          'app/services/all',
+          'app/features/all',
+          'app/controllers/all',
+          'app/components/partials',
           // bundle the datasources
-          'plugins/datasource/grafana/datasource',
-          'plugins/datasource/graphite/datasource',
-          'plugins/datasource/influxdb_08/datasource',
+          'app/plugins/datasource/grafana/datasource',
+          'app/plugins/datasource/graphite/datasource',
+          'app/plugins/datasource/influxdb/datasource',
         ]
       },
-      // {
-      //   name: 'features/org/all',
-      //   exclude: ['app'],
-      // }
     ];
 
     var fs = require('fs');
@@ -76,7 +72,7 @@ module.exports = function(config,grunt) {
 
     // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {
-      requireModules[0].include.push('panels/'+panelName+'/module');
+      requireModules[0].include.push('app/panels/'+panelName+'/module');
     });
 
     return { options: options };
