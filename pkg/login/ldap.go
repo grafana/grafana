@@ -151,9 +151,12 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 		return err
 	}
 
+	handledOrgIds := map[int64]bool{}
+
 	// update or remove org roles
 	for _, org := range orgsQuery.Result {
 		match := false
+		handledOrgIds[org.OrgId] = true
 
 		for _, group := range a.server.LdapGroups {
 			if org.OrgId != group.OrgId {
@@ -189,22 +192,18 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 			continue
 		}
 
-		match := false
-		for _, org := range orgsQuery.Result {
-			if group.OrgId == org.OrgId {
-				match = true
-				break
-			}
+		if _, exists := handledOrgIds[group.OrgId]; exists {
+			continue
 		}
 
-		if !match {
-			// add role
-			cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-			if err := bus.Dispatch(&cmd); err != nil {
-				return err
-			}
-			break
+		// add role
+		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
+		if err := bus.Dispatch(&cmd); err != nil {
+			return err
 		}
+
+		// mark this group has handled so we do not process it again
+		handledOrgIds[group.OrgId] = true
 	}
 
 	return nil
