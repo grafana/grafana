@@ -46,13 +46,8 @@ function (angular, _) {
       $scope.appEvent('show-dash-search');
     };
 
-    $scope.dashboardTitleAction = function() {
-      $scope.appEvent('hide-dash-editor');
-      $scope.exitFullscreen();
-    };
-
-    $scope.manageButtonClickAction = function() {
-      angular.element('#manageDashboardButton').tooltip('hide');
+    $scope.hideTooltip = function(evt) {
+      angular.element(evt.currentTarget).tooltip('hide');
       $scope.appEvent('hide-dash-search');
     };
 
