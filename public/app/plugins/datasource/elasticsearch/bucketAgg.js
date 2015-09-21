@@ -35,6 +35,20 @@ function (angular, _, queryDef) {
       $scope.agg.settings = {};
       $scope.showOptions = false;
 
+      switch($scope.agg.type) {
+        case 'date_histogram':
+        case 'terms':  {
+          delete $scope.agg.query;
+          $scope.agg.type = 'select field';
+          break;
+        }
+        case 'filters': {
+          delete $scope.agg.field;
+          $scope.agg.query = '*';
+          break;
+        }
+      }
+
       $scope.validateModel();
       $scope.onChange();
     };
@@ -63,6 +77,9 @@ function (angular, _, queryDef) {
             settingsLinkText += ' (' + settings.order + ')';
           }
 
+          break;
+        }
+        case 'filters': {
           break;
         }
         case 'date_histogram': {
