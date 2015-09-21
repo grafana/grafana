@@ -100,8 +100,16 @@ define([
         metrics: [{type: 'count', id: '1'}],
         timeField: '@timestamp',
         bucketAggs: [
-          {type: 'filters', query:  '@metric:cpu', id: '2'},
-          {type: 'filters', query:  '@metric:logins.count', id: '3' },
+          {
+            id: '2',
+            type: 'filters',
+            settings: {
+              filters: [
+                {query: '@metric:cpu' },
+                {query: '@metric:logins.count' },
+              ]
+            }
+          },
           {type: 'date_histogram', field: '@timestamp', id: '4'}
         ],
       });

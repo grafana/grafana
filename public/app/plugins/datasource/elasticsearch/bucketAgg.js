@@ -80,6 +80,15 @@ function (angular, _, queryDef) {
           break;
         }
         case 'filters': {
+          settings.filters = settings.filters || [{query: '*'}];
+          settingsLinkText = _.reduce(settings.filters, function(memo, value, index) {
+            memo += 'Q' + (index + 1) + '  = ' + value.query + ' ';
+            return memo;
+          }, '');
+          if (settingsLinkText.length > 50) {
+            settingsLinkText = settingsLinkText.substr(0, 50) + "...";
+          }
+          settingsLinkText = 'Filter Queries (' + settings.filters.length + ')';
           break;
         }
         case 'date_histogram': {
@@ -92,6 +101,14 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = settingsLinkText;
       $scope.agg.settings = settings;
       return true;
+    };
+
+    $scope.addFiltersQuery = function() {
+      $scope.agg.settings.filters.push({query: '*'});
+    };
+
+    $scope.removeFiltersQuery = function(filter) {
+      $scope.agg.settings.filters = _.without($scope.agg.settings.filters, filter);
     };
 
     $scope.toggleOptions = function() {

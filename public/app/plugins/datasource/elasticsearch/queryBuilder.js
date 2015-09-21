@@ -54,19 +54,15 @@ function (angular) {
     }
   };
 
-  ElasticQueryBuilder.prototype.getFiltersAgg = function(target) {
+  ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
     var filterObj = {};
 
-    for (var i = 0; i < target.bucketAggs.length; i++) {
-      var aggDef = target.bucketAggs[i];
-      if (aggDef.type !== 'filters') {
-        continue;
-      }
-
-      filterObj[aggDef.query] = {
+    for (var i = 0; i < aggDef.settings.filters.length; i++) {
+      var query = aggDef.settings.filters[i].query;
+      filterObj[query] = {
         query: {
           query_string: {
-            query: aggDef.query,
+            query: query,
             analyze_wildcard: true
           }
         }
@@ -81,7 +77,7 @@ function (angular) {
       return angular.fromJson(target.rawQuery);
     }
 
-    var i, nestedAggs, metric, filtersHandled;
+    var i, nestedAggs, metric;
     var query = {
       "size": 0,
       "query": {
@@ -118,12 +114,7 @@ function (angular) {
           break;
         }
         case 'filters': {
-          // skip filters if we already processed them
-          if (filtersHandled) {
-            continue;
-          }
-          esAgg["filters"] = {filters: this.getFiltersAgg(target)};
-          filtersHandled = true;
+          esAgg["filters"] = {filters: this.getFiltersAgg(aggDef)};
           break;
         }
         case 'terms': {
