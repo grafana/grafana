@@ -67,7 +67,7 @@ function (angular) {
           "query": {
             "query_string": {
               "analyze_wildcard": true,
-              "query": target.query || '*' ,
+              "query": '$lucene_query',
             }
           },
           "filter": {
