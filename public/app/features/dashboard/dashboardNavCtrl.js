@@ -52,7 +52,7 @@ function (angular, _) {
     };
 
     $scope.manageButtonClickAction = function() {
-      $('.tooltip').not(this).hide();
+      angular.element('#manageDashboardButton').tooltip('hide');
       $scope.appEvent('hide-dash-search');
     };
 
