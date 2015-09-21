@@ -10,7 +10,7 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
-.deb for Debian-based Linux | [grafana_2.1.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
+.deb for Debian-based Linux | [grafana_2.1.3_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
 
 ## Install
 
