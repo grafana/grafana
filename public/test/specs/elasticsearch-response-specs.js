@@ -359,8 +359,16 @@ define([
           refId: 'A',
           metrics: [{type: 'count', id: '1'}],
           bucketAggs: [
-            {type: 'filters', query: '@metric:cpu', id: '2'},
-            {type: 'filters', query: '@metric:logins.count', id: '5'},
+            {
+              id: '2',
+              type: 'filters',
+              settings: {
+                filters: [
+                  {query: '@metric:cpu' },
+                  {query: '@metric:logins.count' },
+                ]
+              }
+            },
             {type: 'date_histogram', field: '@timestamp', id: '3'}
           ],
         }];
