@@ -1,9 +1,7 @@
 define([
-  'angular',
-  'lodash',
-  './directives',
+  'angular'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.services');
