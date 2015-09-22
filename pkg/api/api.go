@@ -41,6 +41,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 	r.Get("/collectors", reqSignedIn, Index)
 	r.Get("/collectors/*", reqSignedIn, Index)
 	r.Get("/endpoints", reqSignedIn, Index)
