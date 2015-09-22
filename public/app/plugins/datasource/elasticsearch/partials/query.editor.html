@@ -65,7 +65,7 @@
 	<div ng-repeat="agg in target.metrics">
 		<elastic-metric-agg
 			target="target" index="$index"
-			get-fields="getFields()"
+			get-fields="getFields($fieldType)"
 			on-change="queryUpdated()">
 		</elastic-metric-agg>
 	</div>
@@ -73,7 +73,7 @@
 	<div ng-repeat="agg in target.bucketAggs">
 		<elastic-bucket-agg
 			target="target" index="$index"
-			get-fields="getFields()"
+			get-fields="getFields($fieldType)"
 			on-change="queryUpdated()">
 		</elastic-bucket-agg>
 	</div>

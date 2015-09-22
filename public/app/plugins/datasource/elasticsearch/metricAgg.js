@@ -70,6 +70,10 @@ function (angular, _, queryDef) {
       $scope.onChange();
     };
 
+    $scope.getFieldsInternal = function() {
+      return $scope.getFields({$fieldType: 'number'});
+    };
+
     $scope.addMetricAgg = function() {
       var addIndex = metricAggs.length;
 
