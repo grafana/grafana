@@ -67,7 +67,7 @@ type CollectorDTO struct {
 
 type AddCollectorCommand struct {
 	OrgId     int64    `json:"-"`
-	Name      string   `json:"name"`
+	Name      string   `json:"name" binding:"Required"`
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
 	Online    bool     `json:"online"`
@@ -78,9 +78,9 @@ type AddCollectorCommand struct {
 }
 
 type UpdateCollectorCommand struct {
-	Id        int64    `json:"id" binding:"required"`
+	Id        int64    `json:"id" binding:"Required"`
 	OrgId     int64    `json:"-"`
-	Name      string   `json:"name"`
+	Name      string   `json:"name" binding:"Required"`
 	Tags      []string `json:"tags"`
 	Public    bool     `json:"public"`
 	Enabled   bool     `json:"enabled"`
@@ -89,7 +89,7 @@ type UpdateCollectorCommand struct {
 }
 
 type DeleteCollectorCommand struct {
-	Id    int64 `json:"id" binding:"required"`
+	Id    int64 `json:"id" binding:"Required"`
 	OrgId int64 `json:"-"`
 }
 
