@@ -44,8 +44,8 @@
       <span class="form-step-count">Step 2 of 2</span>
     </div>
     <label class="rt-form-label-medium">Collector Name:</label>
-    <h2 class="collector-name">DC2 Internal</h2>
-    <p><strong>Collector record added</strong>. Please install the application or <a class="rt-dashboard-blurb" href="#">skip to collector summary</a>.</p>
+    <h2 class="collector-name">{{collector.name}}</h2>
+    <p><strong>Collector record added</strong>. Please install the application or <a class="rt-dashboard-blurb" ng-href="/collectors/summary/{{collector.id}}">skip to collector summary</a>.</p>
     <div class="rt-collector-config rt-config-box">
       <div class="rt-collector-config-header rt-box-header">
         <h2>Install the collector application</h2>
