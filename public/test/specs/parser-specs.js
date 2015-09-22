@@ -165,6 +165,15 @@ define([
       expect(rootNode.params[1].value).to.be('#B');
     });
 
+    it('series parameters, issue 2788', function() {
+      var parser = new Parser("summarize(diffSeries(#A, #B), '10m', 'sum', false)");
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('function');
+      expect(rootNode.params[0].type).to.be('function');
+      expect(rootNode.params[1].value).to.be('10m');
+      expect(rootNode.params[3].type).to.be('bool');
+    });
+
     it('should parse metric expression with ip number segments', function() {
       var parser = new Parser('5.10.123.5');
       var rootNode = parser.getAst();
