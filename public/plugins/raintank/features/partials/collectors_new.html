@@ -27,17 +27,17 @@
       <span class="form-step-count">Step 1 of 2</span>
     </div>
     <div class="rt-form">
-      <form name="collectorForm">
+      <form name="collectorNameForm">
         <label class="rt-form-label-medium">Collector Name:</label>
-        <input type="text" class="rt-form-input" ng-model="collector.name" required="">
+        <input type="text" class="rt-form-input" ng-model="collector.name" required="required">
         <div class="rt-form-row">
-          <a type="submit" class="rt-btn" ng-click="add()">Next -> Install Collector</a>
+          <a type="submit" class="rt-btn" ng-click="collectorNameForm.$valid && add()">Next -> Install Collector</a>
         </div>
       </form> 
     </div>
   </div>
   <!-- Step 2 - Show after collector record has been added. -->
-  <div ng-if="!collector.id">
+  <div ng-if="collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
       <h1 class="rt-h1">Add a new collector</h1>
@@ -73,13 +73,13 @@
             </div>
             <div ng-hide="!showApiKey">
               <span class="helper success">New API key generated</span>
-              <pre><code>asdfasdf7897asdfljadskjads889-90a8sdfadfahdsjkhlajksdhfljasdfsdaf6758765adsfdasflhjkafsdhlj</code></pre>
+              <pre><code>{{ apiKey }}</code></pre>
               <span class="helper">You will only be able to view this key here <span class="emphasis">once</span>, so be sure to copy it and keep it safe.</span>
             </div>
           </div>
           <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
             <h3>Install the collector</h3>
-            <pre><code>curl -X PUT -H 'Authorization: Bearer' sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>"  -d '{"name": "newCollector"}' https://app.raintank.io/api/collectors</code></pre>
+            <pre><code>curl https://app.raintank.io/scripts/collector_install.sh | sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>" bash</code></pre>
           </div> 
           <div class="rt-box-interior-section" ng-hide="showDistroConfig">
             <div class="rt-box-interior-section">
@@ -97,7 +97,7 @@
             </div>
             <div class="rt-box-interior-section">
               <h3><span class="emphasis">5. </span>Copy raintank-probe to raintank-collector's directory.</h3>
-              <pre><code>cp $(which raintank-probe)</code></pre>
+              <pre><code>cd raintank-collector &amp;&amp; cp $(which raintank-probe) .</code></pre>
             </div>
             <div class="rt-box-interior-section">
               <h3><span class="emphasis">6. </span>Install all of the dependent node_modules.</h3>
@@ -107,12 +107,12 @@
               <h3><span class="emphasis">7. </span>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
 <pre><code>{
 "collector": {
-  "name": "<span class="h">[Your collector]</span>"
+  "name": "<span class="h">{{collector.name}}</span>"
 },
 "numCPUs": 1,
-"serverUrl": "https://app.raintank.io",
-"apiKey": "<span class="h">[Your API KEY]</span>",
-"pintServerPort": 8080
+"serverUrl": "https://controller.raintank.io",
+"apiKey": "<span class="h">{{apiKey}}</span>",
+"probeServerPort": 8284
 }</code></pre>
             </div>
           </div>
@@ -123,47 +123,18 @@
         </div>
       </div>      
     </div>
-    <button class="rt-btn">Verify Install</button>
-    <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a>
-  </div>
-
-
-
-  <div ng-if="collector.id">
-    <div class="rt-page-header-area">
-      <h1 class="rt-h1">{{collector.name}}</h1>
-      <span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public == 1" bs-tooltip="'This is a public collector'"></i></span>
-      <span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="collector.public == 0" bs-tooltip="'This is a private collector'"></i></span>
+    <div ng-if="!verifyOnline">
+      <button class="rt-btn" ng-click="checkIfOnline()">Verify Install</button>
+      <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a>
     </div>
-    <div class="editor-row rt-detail-pages">
-      <div class="editor-option">
-        <bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
+    <div ng-if="verifyOnline">
+      <div ng-show="collector.online">
+        {{collector.name}} is now online. Yay!!!
+      </div>
+      <div ng-show="!collector.online">
+        waiting for {{collector.name}} to connect.....
       </div>
     </div>
-    <div class="rt-tabs">
-      <span class="nonactive"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
-      <span class="active" ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Configuration</a></span>
-    </div>
-    <form name="collectorForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
-      <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
-        <div class="rt-mini-form new-endpoint-domain-form">
-          <div class="rt-mini-form-col">
-            <label class="rt-form-label-medium">Collector Name</label>
-            <input type="text" class="rt-form-input" ng-model="collector.name" required="">
-          </div>
-          <div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin">
-            <input class="rt-modal" id="collector-public"type="checkbox" ng-model="collector.public">
-            <label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
-          </div>            
-          <div class="rt-mini-form-col" style="margin-top: 15px;">
-            <div>
-              <div class="editor-row">
-                <button type="submit" class="secondaryCTA" ng-click="save()">Update Collector</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
   </div>
+
 </div>

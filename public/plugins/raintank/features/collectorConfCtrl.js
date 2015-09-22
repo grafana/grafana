@@ -7,11 +7,13 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CollectorConfCtrl', function($scope, $q, $location, $routeParams, $http, backendSrv, contextSrv) {
+  module.controller('CollectorConfCtrl', function($scope, $q, $location, $timeout, $routeParams, $http, backendSrv, contextSrv) {
 
     var defaults = {
       name: '',
     };
+
+    $scope.apiKey = "";
 
     $scope.init = function() {
       $scope.collectors = [];
@@ -86,14 +88,9 @@ function (angular, _) {
     };
 
     $scope.add = function() {
-      if (!$scope.collectorForm.$valid) {
-        console.log("form invalid");
-        return;
-      }
-
       backendSrv.put('/api/collectors', $scope.collector)
         .then(function(resp) {
-          $location.path('/collectors/edit/'+resp.id);
+          $scope.collector = resp;
         });
     };
 
@@ -134,7 +131,30 @@ function (angular, _) {
     };
 
     $scope.apiKey = function() {
-      $scope.showApiKey = true;
+      var token = {
+        role: 'Editor',
+        name: "collector:" + $scope.collector.name
+      };
+      backendSrv.post('/api/auth/keys', token).then(function(result) {
+        $scope.apiKey = result.key;
+        $scope.showApiKey = true;
+      });
+    };
+
+    $scope.checkIfOnline = function() {
+      $scope.verifyOnline = true;
+      $scope.$on("$destroy", function() {
+        $timeout.cancel($scope.poller);
+      });
+
+      backendSrv.get('/api/collectors/'+$scope.collector.id).then(function(res) {
+        $scope.collector = res;
+        if (!res.online) {
+          $scope.poller = $timeout(function() {
+            $scope.checkIfOnline();
+          }, 1000);
+        }
+      });
     };
 
     $scope.init();
