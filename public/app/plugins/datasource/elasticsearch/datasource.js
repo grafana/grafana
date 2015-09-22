@@ -14,7 +14,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -168,7 +168,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
-      payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
       payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('/_msearch?search_type=count', payload).then(function(res) {
@@ -176,9 +175,17 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.metricFindQuery = function() {
+    ElasticDatasource.prototype.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
         var fields = {};
+        var typeMap = {
+          'float': 'number',
+          'double': 'number',
+          'integer': 'number',
+          'long': 'number',
+          'date': 'date',
+          'string': 'string',
+        };
 
         for (var indexName in res) {
           var index = res[indexName];
@@ -188,19 +195,51 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             var properties = mappings[typeName].properties;
             for (var field in properties) {
               var prop = properties[field];
+              if (query.type && typeMap[prop.type] !== query.type) {
+                continue;
+              }
               if (prop.type && field[0] !== '_') {
-                fields[field] = prop;
+                fields[field] = {text: field, type: prop.type};
               }
             }
           }
         }
 
-        fields = _.map(_.keys(fields), function(field) {
-          return {text: field};
+        // transform to array
+        return _.map(fields, function(value) {
+          return value;
         });
-
-        return fields;
       });
+    };
+
+    ElasticDatasource.prototype.getTerms = function(queryDef) {
+      var range = timeSrv.timeRange();
+      var header = this.getQueryHeader(range.from, range.to);
+      var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+
+      esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
+      esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
+      esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+      esQuery = header + '\n' + esQuery + '\n';
+
+      return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
+        var buckets = res.responses[0].aggregations["1"].buckets;
+        return _.map(buckets, function(bucket) {
+          return {text: bucket.key, value: bucket.key};
+        });
+      });
+    };
+
+    ElasticDatasource.prototype.metricFindQuery = function(query) {
+      query = templateSrv.replace(query);
+      query = angular.fromJson(query);
+
+      if (query.find === 'fields') {
+        return this.getFields(query);
+      }
+      if (query.find === 'terms') {
+        return this.getTerms(query);
+      }
     };
 
     ElasticDatasource.prototype.getDashboard = function(id) {

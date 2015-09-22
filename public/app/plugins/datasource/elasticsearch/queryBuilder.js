@@ -151,6 +151,39 @@ function (angular) {
     return query;
   };
 
+  ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
+    var query = {
+      "size": 0,
+      "query": {
+        "filtered": {
+          "query": {
+            "query_string": {
+              "analyze_wildcard": true,
+              "query": '$lucene_query',
+            }
+          },
+          "filter": {
+            "bool": {
+              "must": [{"range": this.getRangeFilter()}]
+            }
+          }
+        }
+      }
+    };
+    query.aggs =  {
+      "1": {
+        "terms": {
+          "field": queryDef.field,
+          "order": {
+            "_term": "asc"
+          }
+        },
+      }
+    };
+
+    return query;
+  };
+
   return ElasticQueryBuilder;
 
 });

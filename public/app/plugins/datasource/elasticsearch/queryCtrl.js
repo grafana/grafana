@@ -18,8 +18,9 @@ function (angular, _) {
       target.timeField =  $scope.datasource.timeField;
     };
 
-    $scope.getFields = function() {
-      return $scope.datasource.metricFindQuery('fields()')
+    $scope.getFields = function(type) {
+      var jsonStr = angular.toJson({find: 'fields', type: type});
+      return $scope.datasource.metricFindQuery(jsonStr)
       .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
     };

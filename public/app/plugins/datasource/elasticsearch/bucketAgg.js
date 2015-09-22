@@ -39,7 +39,7 @@ function (angular, _, queryDef) {
         case 'date_histogram':
         case 'terms':  {
           delete $scope.agg.query;
-          $scope.agg.type = 'select field';
+          $scope.agg.field = 'select field';
           break;
         }
         case 'filters': {
@@ -120,6 +120,14 @@ function (angular, _, queryDef) {
       $scope.orderByOptions = queryDef.getOrderByOptions($scope.target);
     };
 
+    $scope.getFieldsInternal = function() {
+      if ($scope.agg.type === 'date_histogram') {
+        return $scope.getFields({$fieldType: 'date'});
+      } else {
+        return $scope.getFields();
+      }
+    };
+
     $scope.addBucketAgg = function() {
       // if last is date histogram add it before
       var lastBucket = bucketAggs[bucketAggs.length - 1];
@@ -133,7 +141,7 @@ function (angular, _, queryDef) {
         return parseInt(val.id) > max ? parseInt(val.id) : max;
       }, 0);
 
-      bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString()});
+      bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString(), fake: true});
       $scope.onChange();
     };
 

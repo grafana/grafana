@@ -7,7 +7,7 @@
 			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
 		</li>
 		<li ng-if="agg.type !== 'count'">
-			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment>
+			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment>
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
