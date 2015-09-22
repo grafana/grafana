@@ -93,11 +93,6 @@
 			"Rev": "d0e59c22a56e8dadfed24f74f452cea5a52722d2"
 		},
 		{
-			"ImportPath": "github.com/bitly/go-nsq",
-			"Comment": "v1.0.4-6-g4271cd1",
-			"Rev": "4271cd1529a78175e327570894988cc2cb21228f"
-		},
-		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "2df174808ee097f90d259e432cc04442cf60be21"
 		},
@@ -152,7 +147,7 @@
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/binding",
-			"Rev": "0fbe4b9707e6eb556ef843e5471592f55ce0a5e7"
+			"Rev": "1935a991f230c27bd52423888e6e4b80f8cd5ab4"
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/session",

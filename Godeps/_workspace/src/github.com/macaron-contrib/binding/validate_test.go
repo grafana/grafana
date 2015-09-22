@@ -222,6 +222,8 @@ var validationTestCases = []validationTestCase{
 			SadForm{
 				AlphaDash:    ",",
 				AlphaDashDot: ",",
+				Size:         "123",
+				SizeSlice:    []string{"1", "2", "3"},
 				MinSize:      ",",
 				MinSizeSlice: []string{",", ","},
 				MaxSize:      ",,",
@@ -246,6 +248,16 @@ var validationTestCases = []validationTestCase{
 				FieldNames:     []string{"AlphaDashDot"},
 				Classification: "AlphaDashDot",
 				Message:        "AlphaDashDot",
+			},
+			Error{
+				FieldNames:     []string{"Size"},
+				Classification: "Size",
+				Message:        "Size",
+			},
+			Error{
+				FieldNames:     []string{"Size"},
+				Classification: "Size",
+				Message:        "Size",
 			},
 			Error{
 				FieldNames:     []string{"MinSize"},
@@ -315,6 +327,8 @@ var validationTestCases = []validationTestCase{
 			SadForm{
 				AlphaDash:    "123-456",
 				AlphaDashDot: "123.456",
+				Size:         "1",
+				SizeSlice:    []string{"1"},
 				MinSize:      "12345",
 				MinSizeSlice: []string{"1", "2", "3", "4", "5"},
 				MaxSize:      "1",
@@ -325,6 +339,34 @@ var validationTestCases = []validationTestCase{
 				Email:        "123@456.com",
 				Url:          "http://123.456",
 				Include:      "abc",
+			},
+		},
+	},
+	{
+		description: "slice of structs Validation",
+		data: Group{
+			Name: "group1",
+			People: []Person{
+				Person{Name: "anthony"},
+				Person{Name: "awoods"},
+			},
+		},
+		expectedErrors: Errors{},
+	},
+	{
+		description: "slice of structs Validation failer",
+		data: Group{
+			Name: "group1",
+			People: []Person{
+				Person{Name: "anthony"},
+				Person{Name: ""},
+			},
+		},
+		expectedErrors: Errors{
+			Error{
+				FieldNames:     []string{"name"},
+				Classification: ERR_REQUIRED,
+				Message:        "Required",
 			},
 		},
 	},

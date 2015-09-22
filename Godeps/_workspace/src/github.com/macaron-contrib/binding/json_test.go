@@ -116,6 +116,13 @@ var jsonTestCases = []jsonTestCase{
 		contentType:         _JSON_CONTENT_TYPE,
 		expected:            []Post{Post{Title: "First Post"}, Post{Title: "Second Post"}},
 	},
+	{
+		description:         "Slice of structs",
+		shouldSucceedOnJson: true,
+		payload:             `{"name": "group1", "people": [{"name":"awoods"}, {"name": "anthony"}]}`,
+		contentType:         _JSON_CONTENT_TYPE,
+		expected:            Group{Name: "group1", People: []Person{Person{Name: "awoods"}, Person{Name: "anthony"}}},
+	},
 }
 
 func Test_Json(t *testing.T) {
@@ -176,6 +183,17 @@ func performJsonTest(t *testing.T, binder handlerFunc, testCase jsonTestCase) {
 			})
 		} else {
 			m.Post(testRoute, binder(BlogPost{}), func(actual BlogPost, errs Errors) {
+				jsonTestHandler(actual, errs)
+			})
+		}
+	case Group:
+		if testCase.withInterface {
+			m.Post(testRoute, binder(Group{}, (*modeler)(nil)), func(actual Group, iface modeler, errs Errors) {
+				So(actual.Name, ShouldEqual, iface.Model())
+				jsonTestHandler(actual, errs)
+			})
+		} else {
+			m.Post(testRoute, binder(Group{}), func(actual Group, errs Errors) {
 				jsonTestHandler(actual, errs)
 			})
 		}

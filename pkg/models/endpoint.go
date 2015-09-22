@@ -53,22 +53,22 @@ type EndpointDiscoveryCommand struct {
 
 type AddEndpointCommand struct {
 	OrgId    int64                `json:"-"`
-	Name     string               `json:"name"`
+	Name     string               `json:"name" binding:"Required"`
 	Tags     []string             `json:"tags"`
 	Monitors []*AddMonitorCommand `json:"monitors"`
 	Result   *EndpointDTO         `json:"-"`
 }
 
 type UpdateEndpointCommand struct {
-	Id     int64    `json:"id" binding:"required"`
+	Id     int64    `json:"id" binding:"Required"`
 	OrgId  int64    `json:"-"`
-	Name   string   `json:"name"`
+	Name   string   `json:"name" binding:"Required"`
 	Tags   []string `json:"tags"`
 	Result *EndpointDTO
 }
 
 type DeleteEndpointCommand struct {
-	Id    int64 `json:"id" binding:"required"`
+	Id    int64 `json:"id" binding:"Required"`
 	OrgId int64 `json:"-"`
 }
 

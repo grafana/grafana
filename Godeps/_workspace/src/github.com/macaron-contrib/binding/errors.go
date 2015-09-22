@@ -27,6 +27,7 @@ const (
 	ERR_REQUIRED       = "RequiredError"
 	ERR_ALPHA_DASH     = "AlphaDashError"
 	ERR_ALPHA_DASH_DOT = "AlphaDashDotError"
+	ERR_SIZE           = "SizeError"
 	ERR_MIN_SIZE       = "MinSizeError"
 	ERR_MAX_SIZE       = "MaxSizeError"
 	ERR_RANGE          = "RangeError"

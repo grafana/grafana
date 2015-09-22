@@ -424,9 +424,8 @@ function (angular, _) {
       var payload = $scope.endpoint;
       payload.monitors = [];
       _.forEach($scope.monitors, function(monitor) {
-        if (monitor.enabled) {
-          payload.monitors.push(monitor);
-        }
+        monitor.endpoint_id = -1;
+        payload.monitors.push(monitor);
       });
       backendSrv.put('/api/endpoints', payload).then(function(resp) {
         $scope.endpoint = resp;
