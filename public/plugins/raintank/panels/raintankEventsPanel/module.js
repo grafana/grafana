@@ -59,6 +59,9 @@ function (angular, app, _, kbn, PanelMeta) {
 
       backendSrv.get('/api/events', params).then(function(events) {
         $scope.events = events;
+        if (!('scopedVars' in $scope.panel)) {
+          $scope.panel.scopedVars = {};
+        }
         $scope.panel.scopedVars['eventCount'] = {selected: true, text: events.length, value: events.length};
       });
     };
