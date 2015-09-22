@@ -12,6 +12,7 @@
     "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
   },
 
+  "defaultMatchFormat": "lucene",
   "annotations": true,
   "metrics": true
 }

@@ -11,6 +11,7 @@
     "config": "app/plugins/datasource/influxdb/partials/config.html"
   },
 
+  "defaultMatchFormat": "regex values",
   "metrics": true,
   "annotations": true
 }

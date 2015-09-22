@@ -233,6 +233,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     ElasticDatasource.prototype.metricFindQuery = function(query) {
       query = templateSrv.replace(query);
       query = angular.fromJson(query);
+      if (!query) {
+        return $q.when([]);
+      }
 
       if (query.find === 'fields') {
         return this.getFields(query);

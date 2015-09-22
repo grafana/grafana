@@ -36,6 +36,17 @@ function (angular, _) {
           $scope.reset();
         }
       });
+
+      $scope.$watch('current.datasource', function(val) {
+        if ($scope.mode === 'new') {
+          datasourceSrv.get(val).then(function(ds) {
+            if (ds.meta.defaultMatchFormat) {
+              $scope.current.allFormat = ds.meta.defaultMatchFormat;
+              $scope.current.multiFormat = ds.meta.defaultMatchFormat;
+            }
+          });
+        }
+      });
     };
 
     $scope.add = function() {
