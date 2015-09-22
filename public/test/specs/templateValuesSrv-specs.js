@@ -314,6 +314,17 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all lucene and values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'lucene' };
+        scenario.queryResult = [{text: 'backend1'}, { text: 'backend2'}];
+      });
+
+      it('should add lucene glob', function() {
+        expect(scenario.variable.options[0].value).to.be('(backend1 OR backend2)');
+      });
+    });
+
     describeUpdateVariable('with include all regex all values', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
