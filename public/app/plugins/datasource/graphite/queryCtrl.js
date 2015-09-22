@@ -87,6 +87,7 @@ function (angular, _, config, gfunc, Parser) {
       case 'series-ref':
         addFunctionParameter(func, astNode.value, index, $scope.segments.length > 0);
         break;
+      case 'bool':
       case 'string':
       case 'number':
         if ((index-1) >= func.def.params.length) {

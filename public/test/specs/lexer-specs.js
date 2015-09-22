@@ -109,6 +109,14 @@ define([
       expect(tokens[4].value).to.be('0.002');
     });
 
+    it('should handle bool parameters', function() {
+      var lexer = new Lexer("alias(metric, true, false)");
+      var tokens = lexer.tokenize();
+      expect(tokens[4].type).to.be('bool');
+      expect(tokens[4].value).to.be('true');
+      expect(tokens[6].type).to.be('bool');
+    });
+
   });
 
 });
