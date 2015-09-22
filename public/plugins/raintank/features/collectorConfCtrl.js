@@ -11,6 +11,7 @@ function (angular, _) {
 
     var defaults = {
       name: '',
+      enabled: true,
     };
 
     $scope.apiKey = "";
