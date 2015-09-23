@@ -175,6 +175,16 @@ function (angular, _, dateMath) {
       });
     };
 
+    OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
+      return this._get('/api/aggregators', {}).then(function(result) {
+        if (result.data instanceof Array) {
+          return result.data.sort();
+        } else {
+          return result.data;
+        }
+      });
+    };
+
     function transformMetricData(md, groupByTags, target, options) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
       var dps = [];
