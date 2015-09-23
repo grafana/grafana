@@ -8,7 +8,7 @@
     </div>
 </div>
 <div ng-if="pageReady">
-    <div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block; max-width: 1000px;">
+    <div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block;">
     <div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | orderBy:sort_field">
         <div class="rt-list-header rt-page-box-header" style="overflow: visible; padding:5px;" ng-click="gotoEndpointURL(endpoint)">
             <span class="rt-list-item-title"><a href="/endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a></span>
