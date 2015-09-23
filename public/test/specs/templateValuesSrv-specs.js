@@ -1,8 +1,8 @@
 define([
-  'mocks/dashboard-mock',
-  'helpers',
+  '../mocks/dashboard-mock',
+  './helpers',
   'moment',
-  'features/templating/templateValuesSrv'
+  'app/features/templating/templateValuesSrv'
 ], function(dashboardMock, helpers, moment) {
   'use strict';
 
@@ -311,6 +311,17 @@ define([
 
       it('should add empty glob', function() {
         expect(scenario.variable.options[0].value).to.be('{}');
+      });
+    });
+
+    describeUpdateVariable('with include all lucene and values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'lucene' };
+        scenario.queryResult = [{text: 'backend1'}, { text: 'backend2'}];
+      });
+
+      it('should add lucene glob', function() {
+        expect(scenario.variable.options[0].value).to.be('(backend1 OR backend2)');
       });
     });
 

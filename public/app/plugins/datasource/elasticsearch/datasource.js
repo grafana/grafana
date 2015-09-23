@@ -14,7 +14,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -141,11 +141,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.getQueryHeader = function(timeRange) {
+    ElasticDatasource.prototype.getQueryHeader = function(timeFrom, timeTo) {
       var header = {search_type: "count", "ignore_unavailable": true};
-      var from = kbn.parseDate(timeRange.from);
-      var to = kbn.parseDate(timeRange.to);
-      header.index = this.indexPattern.getIndexList(from, to);
+      header.index = this.indexPattern.getIndexList(timeFrom, timeTo);
       return angular.toJson(header);
     };
 
@@ -154,25 +152,22 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var target;
       var sentTargets = [];
 
-      var header = this.getQueryHeader(options.range);
-      var timeFrom = this.translateTime(options.range.from);
-      var timeTo = this.translateTime(options.range.to);
+      var header = this.getQueryHeader(options.range.from, options.range.to);
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {return;}
 
-        var esQuery = this.queryBuilder.build(target, timeFrom, timeTo);
-        payload += header + '\n';
-        payload += angular.toJson(esQuery) + '\n';
+        var esQuery = angular.toJson(this.queryBuilder.build(target));
+        esQuery = esQuery.replace("$lucene_query", target.query || '*');
 
+        payload += header + '\n' + esQuery + '\n';
         sentTargets.push(target);
       }
 
       payload = payload.replace(/\$interval/g, options.interval);
-      payload = payload.replace(/\$timeFrom/g, this.translateTime(options.range.from));
-      payload = payload.replace(/\$timeTo/g, this.translateTime(options.range.to));
-      payload = payload.replace(/\$maxDataPoints/g, options.maxDataPoints);
+      payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
+      payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('/_msearch?search_type=count', payload).then(function(res) {
@@ -180,17 +175,17 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.translateTime = function(date) {
-      if (_.isString(date)) {
-        return date;
-      }
-
-      return date.getTime();
-    };
-
-    ElasticDatasource.prototype.metricFindQuery = function() {
+    ElasticDatasource.prototype.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
         var fields = {};
+        var typeMap = {
+          'float': 'number',
+          'double': 'number',
+          'integer': 'number',
+          'long': 'number',
+          'date': 'date',
+          'string': 'string',
+        };
 
         for (var indexName in res) {
           var index = res[indexName];
@@ -200,18 +195,89 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             var properties = mappings[typeName].properties;
             for (var field in properties) {
               var prop = properties[field];
+              if (query.type && typeMap[prop.type] !== query.type) {
+                continue;
+              }
               if (prop.type && field[0] !== '_') {
-                fields[field] = prop;
+                fields[field] = {text: field, type: prop.type};
               }
             }
           }
         }
 
-        fields = _.map(_.keys(fields), function(field) {
-          return {text: field};
+        // transform to array
+        return _.map(fields, function(value) {
+          return value;
         });
+      });
+    };
 
-        return fields;
+    ElasticDatasource.prototype.getTerms = function(queryDef) {
+      var range = timeSrv.timeRange();
+      var header = this.getQueryHeader(range.from, range.to);
+      var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+
+      esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
+      esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
+      esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+      esQuery = header + '\n' + esQuery + '\n';
+
+      return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
+        var buckets = res.responses[0].aggregations["1"].buckets;
+        return _.map(buckets, function(bucket) {
+          return {text: bucket.key, value: bucket.key};
+        });
+      });
+    };
+
+    ElasticDatasource.prototype.metricFindQuery = function(query) {
+      query = templateSrv.replace(query);
+      query = angular.fromJson(query);
+      if (!query) {
+        return $q.when([]);
+      }
+
+      if (query.find === 'fields') {
+        return this.getFields(query);
+      }
+      if (query.find === 'terms') {
+        return this.getTerms(query);
+      }
+    };
+
+    ElasticDatasource.prototype.getDashboard = function(id) {
+      return this._get('/dashboard/' + id)
+      .then(function(result) {
+        return angular.fromJson(result._source.dashboard);
+      });
+    };
+
+    ElasticDatasource.prototype.searchDashboards = function() {
+      var query = {
+        query: { query_string: { query: '*' } },
+        size: 10000,
+        sort: ["_uid"],
+      };
+
+      return this._post(this.index + '/dashboard/_search', query)
+      .then(function(results) {
+        if(_.isUndefined(results.hits)) {
+          return { dashboards: [], tags: [] };
+        }
+
+        var resultsHits = results.hits.hits;
+        var displayHits = { dashboards: [] };
+
+        for (var i = 0, len = resultsHits.length; i < len; i++) {
+          var hit = resultsHits[i];
+          displayHits.dashboards.push({
+            id: hit._id,
+            title: hit._source.title,
+            tags: hit._source.tags
+          });
+        }
+
+        return displayHits;
       });
     };
 

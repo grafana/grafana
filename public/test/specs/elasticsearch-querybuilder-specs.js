@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/elasticsearch/queryBuilder'
+  'app/plugins/datasource/elasticsearch/queryBuilder'
 ], function(ElasticQueryBuilder) {
   'use strict';
 
@@ -19,6 +19,14 @@ define([
 
       expect(query.query.filtered.filter.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
       expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
+    });
+
+    it('with raw query', function() {
+      var query = builder.build({
+        rawQuery: '{"query": "$lucene_query"}',
+      });
+
+      expect(query.query).to.be("$lucene_query");
     });
 
     it('with multiple bucket aggs', function() {
@@ -85,6 +93,30 @@ define([
 
       expect(firstLevel.aggs["1"].percentiles.field).to.be("@load_time");
       expect(firstLevel.aggs["1"].percentiles.percents).to.eql([1,2,3,4]);
+    });
+
+    it('with filters aggs', function() {
+      var query = builder.build({
+        metrics: [{type: 'count', id: '1'}],
+        timeField: '@timestamp',
+        bucketAggs: [
+          {
+            id: '2',
+            type: 'filters',
+            settings: {
+              filters: [
+                {query: '@metric:cpu' },
+                {query: '@metric:logins.count' },
+              ]
+            }
+          },
+          {type: 'date_histogram', field: '@timestamp', id: '4'}
+        ],
+      });
+
+      expect(query.aggs["2"].filters.filters["@metric:cpu"].query.query_string.query).to.be("@metric:cpu");
+      expect(query.aggs["2"].filters.filters["@metric:logins.count"].query.query_string.query).to.be("@metric:logins.count");
+      expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
     });
 
   });

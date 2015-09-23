@@ -1,8 +1,8 @@
 define([
-  'helpers',
+  './helpers',
   'moment',
   'angular',
-  'plugins/datasource/elasticsearch/datasource',
+  'app/plugins/datasource/elasticsearch/datasource',
 ], function(helpers, moment, angular) {
   'use strict';
 
@@ -58,8 +58,8 @@ define([
 
         ctx.ds.query({
           range: {
-            from: new Date(2015, 4, 30, 10),
-            to: new Date(2015, 5, 1, 10)
+            from: moment([2015, 4, 30, 10]),
+            to: moment([2015, 5, 1, 10])
           },
           targets: [{ bucketAggs: [], metrics: [] }]
         });

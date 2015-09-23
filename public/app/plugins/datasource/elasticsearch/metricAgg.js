@@ -22,7 +22,7 @@ function (angular, _, queryDef) {
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
       $scope.validateModel();
-    });
+    }, $scope);
 
     $scope.validateModel = function() {
       $scope.isFirst = $scope.index === 0;
@@ -68,6 +68,10 @@ function (angular, _, queryDef) {
 
       $scope.validateModel();
       $scope.onChange();
+    };
+
+    $scope.getFieldsInternal = function() {
+      return $scope.getFields({$fieldType: 'number'});
     };
 
     $scope.addMetricAgg = function() {

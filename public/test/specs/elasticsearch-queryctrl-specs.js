@@ -1,7 +1,7 @@
 define([
-  'helpers',
-  'plugins/datasource/elasticsearch/queryCtrl',
-  'services/uiSegmentSrv'
+  './helpers',
+  'app/plugins/datasource/elasticsearch/queryCtrl',
+  'app/services/uiSegmentSrv'
 ], function(helpers) {
   'use strict';
 

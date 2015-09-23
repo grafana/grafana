@@ -199,6 +199,11 @@ function (angular, _, InfluxQueryBuilder) {
       .then(null, $scope.handleQueryError);
     };
 
+    $scope.setFill = function(fill) {
+      $scope.target.fill = fill;
+      $scope.get_data();
+    };
+
     $scope.tagSegmentUpdated = function(segment, index) {
       $scope.tagSegments[index] = segment;
 

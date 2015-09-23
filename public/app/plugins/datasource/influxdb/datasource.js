@@ -1,13 +1,13 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   './influxSeries',
   './queryBuilder',
   './directives',
   './queryCtrl',
 ],
-function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
+function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -176,8 +176,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     function getTimeFilter(options) {
-      var from = getInfluxTime(options.range.from);
-      var until = getInfluxTime(options.range.to);
+      var from = getInfluxTime(options.rangeRaw.from, false);
+      var until = getInfluxTime(options.rangeRaw.to, true);
       var fromIsAbsolute = from[from.length-1] === 's';
 
       if (until === 'now()' && !fromIsAbsolute) {
@@ -187,19 +187,17 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return 'time > ' + from + ' and time < ' + until;
     }
 
-    function getInfluxTime(date) {
+    function getInfluxTime(date, roundUp) {
       if (_.isString(date)) {
-        if (date.indexOf('now') >= 0) {
+        if (date === 'now') {
+          return 'now()';
+        }
+        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           return date.replace('now', 'now()').replace('-', ' - ');
         }
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, roundUp);
       }
-
-      return to_utc_epoch_seconds(date);
-    }
-
-    function to_utc_epoch_seconds(date) {
-      return (date.getTime() / 1000).toFixed(0) + 's';
+      return (date.valueOf() / 1000).toFixed(0) + 's';
     }
 
     return InfluxDatasource;

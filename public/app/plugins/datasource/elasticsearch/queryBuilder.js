@@ -54,6 +54,24 @@ function (angular) {
     }
   };
 
+  ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
+    var filterObj = {};
+
+    for (var i = 0; i < aggDef.settings.filters.length; i++) {
+      var query = aggDef.settings.filters[i].query;
+      filterObj[query] = {
+        query: {
+          query_string: {
+            query: query,
+            analyze_wildcard: true
+          }
+        }
+      };
+    }
+
+    return filterObj;
+  };
+
   ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
       return angular.fromJson(target.rawQuery);
@@ -67,7 +85,7 @@ function (angular) {
           "query": {
             "query_string": {
               "analyze_wildcard": true,
-              "query": target.query || '*' ,
+              "query": '$lucene_query',
             }
           },
           "filter": {
@@ -93,6 +111,10 @@ function (angular) {
             "min_doc_count": 1,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
+          break;
+        }
+        case 'filters': {
+          esAgg["filters"] = {filters: this.getFiltersAgg(aggDef)};
           break;
         }
         case 'terms': {
@@ -125,6 +147,39 @@ function (angular) {
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
     }
+
+    return query;
+  };
+
+  ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
+    var query = {
+      "size": 0,
+      "query": {
+        "filtered": {
+          "query": {
+            "query_string": {
+              "analyze_wildcard": true,
+              "query": '$lucene_query',
+            }
+          },
+          "filter": {
+            "bool": {
+              "must": [{"range": this.getRangeFilter()}]
+            }
+          }
+        }
+      }
+    };
+    query.aggs =  {
+      "1": {
+        "terms": {
+          "field": queryDef.field,
+          "order": {
+            "_term": "asc"
+          }
+        },
+      }
+    };
 
     return query;
   };

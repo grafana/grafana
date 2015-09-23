@@ -1,7 +1,7 @@
 define([
-  'helpers',
-  'plugins/datasource/influxdb/queryCtrl',
-  'services/uiSegmentSrv'
+  './helpers',
+  'app/plugins/datasource/influxdb/queryCtrl',
+  'app/services/uiSegmentSrv'
 ], function(helpers) {
   'use strict';
 

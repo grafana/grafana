@@ -69,7 +69,7 @@ function ($) {
         }
 
         // Highlighting multiple Points depending on the plot type
-        if (scope.panel.steppedLine || scope.panel.stack) {
+        if (series.lines.steps || series.stack) {
           // stacked and steppedLine plots can have series with different length.
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.

@@ -18,6 +18,7 @@ function (_) {
 
     bucketAggTypes: [
       {text: "Terms",           value: 'terms' },
+      {text: "Filters",         value: 'filters' },
       {text: "Date Histogram",  value: 'date_histogram' },
     ],
 

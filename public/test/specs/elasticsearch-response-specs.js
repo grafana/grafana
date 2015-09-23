@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/elasticsearch/elasticResponse',
+  'app/plugins/datasource/elasticsearch/elasticResponse',
 ], function(ElasticResponse) {
   'use strict';
 
@@ -348,6 +348,65 @@ define([
         expect(result.data[0].datapoints.length).to.be(2);
         expect(result.data[0].target).to.be('server1 Count and!');
         expect(result.data[1].target).to.be('server2 Count and!');
+      });
+    });
+
+    describe('with two filters agg', function() {
+      var result;
+
+      beforeEach(function() {
+        targets = [{
+          refId: 'A',
+          metrics: [{type: 'count', id: '1'}],
+          bucketAggs: [
+            {
+              id: '2',
+              type: 'filters',
+              settings: {
+                filters: [
+                  {query: '@metric:cpu' },
+                  {query: '@metric:logins.count' },
+                ]
+              }
+            },
+            {type: 'date_histogram', field: '@timestamp', id: '3'}
+          ],
+        }];
+        response =  {
+          responses: [{
+            aggregations: {
+              "2": {
+                buckets: {
+                  "@metric:cpu": {
+                    "3": {
+                      buckets: [
+                        {doc_count: 1, key: 1000},
+                        {doc_count: 3, key: 2000}
+                      ]
+                    },
+                  },
+                  "@metric:logins.count": {
+                    "3": {
+                      buckets: [
+                        {doc_count: 2, key: 1000},
+                        {doc_count: 8, key: 2000}
+                      ]
+                    },
+                  },
+                }
+              }
+            }
+          }]
+        };
+
+        result = new ElasticResponse(targets, response).getTimeSeries();
+      });
+
+      it('should return 2 series', function() {
+        expect(result.data.length).to.be(2);
+        expect(result.data[0].datapoints.length).to.be(2);
+        expect(result.data[0].target).to.be('@metric:cpu');
+        expect(result.data[1].target).to.be('@metric:logins.count');
       });
     });
 

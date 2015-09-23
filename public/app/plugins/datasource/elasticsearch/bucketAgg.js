@@ -20,7 +20,7 @@ function (angular, _, queryDef) {
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
       $scope.updateOrderByOptions();
-    });
+    }, $scope);
 
     $scope.init = function() {
       $scope.agg = bucketAggs[$scope.index];
@@ -34,6 +34,20 @@ function (angular, _, queryDef) {
     $scope.onTypeChanged = function() {
       $scope.agg.settings = {};
       $scope.showOptions = false;
+
+      switch($scope.agg.type) {
+        case 'date_histogram':
+        case 'terms':  {
+          delete $scope.agg.query;
+          $scope.agg.field = 'select field';
+          break;
+        }
+        case 'filters': {
+          delete $scope.agg.field;
+          $scope.agg.query = '*';
+          break;
+        }
+      }
 
       $scope.validateModel();
       $scope.onChange();
@@ -65,6 +79,18 @@ function (angular, _, queryDef) {
 
           break;
         }
+        case 'filters': {
+          settings.filters = settings.filters || [{query: '*'}];
+          settingsLinkText = _.reduce(settings.filters, function(memo, value, index) {
+            memo += 'Q' + (index + 1) + '  = ' + value.query + ' ';
+            return memo;
+          }, '');
+          if (settingsLinkText.length > 50) {
+            settingsLinkText = settingsLinkText.substr(0, 50) + "...";
+          }
+          settingsLinkText = 'Filter Queries (' + settings.filters.length + ')';
+          break;
+        }
         case 'date_histogram': {
           settings.interval = settings.interval || 'auto';
           $scope.agg.field = $scope.target.timeField;
@@ -77,6 +103,14 @@ function (angular, _, queryDef) {
       return true;
     };
 
+    $scope.addFiltersQuery = function() {
+      $scope.agg.settings.filters.push({query: '*'});
+    };
+
+    $scope.removeFiltersQuery = function(filter) {
+      $scope.agg.settings.filters = _.without($scope.agg.settings.filters, filter);
+    };
+
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
       $scope.updateOrderByOptions();
@@ -84,6 +118,14 @@ function (angular, _, queryDef) {
 
     $scope.updateOrderByOptions = function() {
       $scope.orderByOptions = queryDef.getOrderByOptions($scope.target);
+    };
+
+    $scope.getFieldsInternal = function() {
+      if ($scope.agg.type === 'date_histogram') {
+        return $scope.getFields({$fieldType: 'date'});
+      } else {
+        return $scope.getFields();
+      }
     };
 
     $scope.addBucketAgg = function() {
@@ -99,7 +141,7 @@ function (angular, _, queryDef) {
         return parseInt(val.id) > max ? parseInt(val.id) : max;
       }, 0);
 
-      bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString()});
+      bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString(), fake: true});
       $scope.onChange();
     };
 

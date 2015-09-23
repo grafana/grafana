@@ -1,7 +1,7 @@
 define([
-  'mocks/dashboard-mock',
+  '../mocks/dashboard-mock',
   'lodash',
-  'features/templating/templateSrv'
+  'app/features/templating/templateSrv'
 ], function(dashboardMock) {
   'use strict';
 
@@ -59,6 +59,16 @@ define([
           }
         });
         expect(result).to.be('{test,test2}');
+      });
+
+      it('multi value and lucene should render as lucene expr', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'lucene',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('(test OR test2)');
       });
 
       it('multi value and regex format should render regex string', function() {

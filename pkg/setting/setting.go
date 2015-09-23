@@ -6,6 +6,7 @@ package setting
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -126,6 +127,9 @@ var (
 
 	// SMTP email settings
 	Smtp SmtpSettings
+
+	// QUOTA
+	Quota QuotaSettings
 )
 
 type CommandLineArgs struct {
@@ -355,7 +359,26 @@ func setHomePath(args *CommandLineArgs) {
 	}
 }
 
-func NewConfigContext(args *CommandLineArgs) {
+var skipStaticRootValidation bool = false
+
+func validateStaticRootPath() error {
+	if skipStaticRootValidation {
+		return nil
+	}
+
+	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
+		return nil
+	}
+
+	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
+		StaticRootPath = StaticRootPath + "_gen"
+		return nil
+	}
+
+	return errors.New("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?")
+}
+
+func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)
 
@@ -374,10 +397,14 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
+
+	if err := validateStaticRootPath(); err != nil {
+		return err
+	}
 
 	// read security settings
 	security := Cfg.Section("security")
@@ -434,10 +461,13 @@ func NewConfigContext(args *CommandLineArgs) {
 
 	readSessionConfig()
 	readSmtpSettings()
+	readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
+
+	return nil
 }
 
 func readSessionConfig() {

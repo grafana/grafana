@@ -10,23 +10,8 @@ function (_, queryDef) {
     this.response = response;
   }
 
-  // This is quite complex
-  // neeed to recurise down the nested buckets to build series
-  ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, level, props) {
-    var value, metric, i, y, bucket, aggDef, esAgg, newSeries;
-
-    aggDef = target.bucketAggs[level];
-    esAgg = aggs[aggDef.id];
-
-    if (level < target.bucketAggs.length - 1) {
-      for (i = 0; i < esAgg.buckets.length; i++) {
-        bucket = esAgg.buckets[i];
-        props = _.clone(props);
-        props[aggDef.field] = bucket.key;
-        this.processBuckets(bucket, target, seriesList, level+1, props);
-      }
-      return;
-    }
+  ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, props) {
+    var metric, y, i, newSeries, bucket, value;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -96,6 +81,35 @@ function (_, queryDef) {
           }
           seriesList.push(newSeries);
           break;
+        }
+      }
+    }
+  };
+
+  // This is quite complex
+  // neeed to recurise down the nested buckets to build series
+  ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, props) {
+    var bucket, aggDef, esAgg, aggId;
+
+    for (aggId in aggs) {
+      aggDef = _.findWhere(target.bucketAggs, {id: aggId});
+      esAgg = aggs[aggId];
+      if (!aggDef) {
+        continue;
+      }
+
+      if (aggDef.type === 'date_histogram') {
+        this.processMetrics(esAgg, target, seriesList, props);
+      } else {
+        for (var nameIndex in esAgg.buckets) {
+          bucket = esAgg.buckets[nameIndex];
+          props = _.clone(props);
+          if (bucket.key) {
+            props[aggDef.field] = bucket.key;
+          } else {
+            props["filter"] = nameIndex;
+          }
+          this.processBuckets(bucket, target, seriesList, props);
         }
       }
     }
@@ -172,7 +186,7 @@ function (_, queryDef) {
       var target = this.targets[i];
       var tmpSeriesList = [];
 
-      this.processBuckets(aggregations, target, tmpSeriesList, 0, {});
+      this.processBuckets(aggregations, target, tmpSeriesList, {});
       this.nameSeries(tmpSeriesList, target);
 
       for (var y = 0; y < tmpSeriesList.length; y++) {

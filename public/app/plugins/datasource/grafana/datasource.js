@@ -1,10 +1,7 @@
 define([
-  'angular',
-  'lodash',
-  'kbn',
-  './directives',
+  'angular'
 ],
-function (angular, _, kbn) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -15,11 +12,11 @@ function (angular, _, kbn) {
     }
 
     GrafanaDatasource.prototype.query = function(options) {
-      // get from & to in seconds
-      var from = kbn.parseDate(options.range.from).getTime();
-      var to = kbn.parseDate(options.range.to).getTime();
-
-      return backendSrv.get('/api/metrics/test', { from: from, to: to, maxDataPoints: options.maxDataPoints });
+      return backendSrv.get('/api/metrics/test', {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        maxDataPoints: options.maxDataPoints
+      });
     };
 
     GrafanaDatasource.prototype.metricFindQuery = function() {

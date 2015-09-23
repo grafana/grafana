@@ -1,5 +1,5 @@
 define([
-  'features/dashboard/dashboardSrv'
+  'app/features/dashboard/dashboardSrv'
 ], function() {
   'use strict';
 
@@ -30,9 +30,7 @@ define([
 
       it('should have default properties', function() {
         expect(model.rows.length).to.be(0);
-        expect(model.nav.length).to.be(1);
       });
-
     });
 
     describe('when getting next panel id', function() {
@@ -199,7 +197,7 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(6);
+        expect(model.schemaVersion).to.be(7);
       });
 
     });

@@ -1,10 +1,9 @@
 define([
   'angular',
-  'app',
   'lodash',
   'config'
 ],
-function (angular, app, _, config) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -123,6 +122,17 @@ function (angular, app, _, config) {
       scope.$watchGroup(['row.collapse', 'row.height'], function() {
         element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
       });
+
+      scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+        var hasPanel = _.findWhere(scope.row.panels, {id: info.panelId});
+        if (!hasPanel) {
+          element.hide();
+        }
+      });
+
+      scope.onAppEvent('panel-fullscreen-exit', function() {
+        element.show();
+      });
     };
   });
 
@@ -131,6 +141,22 @@ function (angular, app, _, config) {
       function updateWidth() {
         element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
       }
+
+      scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+        if (scope.panel.id !== info.panelId) {
+          element.hide();
+        } else {
+          element[0].style.width = '100%';
+        }
+      });
+
+      scope.onAppEvent('panel-fullscreen-exit', function(evt, info) {
+        if (scope.panel.id !== info.panelId) {
+          element.show();
+        } else {
+          updateWidth();
+        }
+      });
 
       scope.$watch('panel.span', updateWidth);
     };
