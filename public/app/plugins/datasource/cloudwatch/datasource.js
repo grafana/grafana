@@ -2,13 +2,13 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   'moment',
   './queryCtrl',
   './directives',
   'aws-sdk',
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -543,7 +543,7 @@ function (angular, _, kbn) {
     }
 
     function convertToCloudWatchTime(date) {
-      return Math.round(kbn.parseDate(date).getTime() / 1000);
+      return date.valueOf() / 1000;
     }
 
     function convertDimensionFormat(dimensions) {
