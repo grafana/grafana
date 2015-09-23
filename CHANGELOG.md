@@ -1,6 +1,9 @@
 # 2.5 (unreleased)
 
+<<<<<<< f0efbe4a9386646dfe4e47b4a1226d4cdb19e63f
 <<<<<<< 1b7ba34e481f3622a64f26c0c03e83fc5fbc7115
+=======
+>>>>>>> Fix changelog formatting
 **New Feature: Mix data sources**
 - A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
@@ -15,6 +18,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
 
 **User Onboarding**
+<<<<<<< f0efbe4a9386646dfe4e47b4a1226d4cdb19e63f
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2353) for more info.
@@ -29,16 +33,22 @@ it allows you to add queries of differnet data source types & instances to the s
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
 ** User Onboarding **
+=======
+>>>>>>> Fix changelog formatting
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
+<<<<<<< 5f1059eac9232552c927fc69f1d7fb2003e899fd
 ** Other new Features && Enhancements**
 <<<<<<< ec194cf65e5adad36faa3d7dc1197348cbf20bc3
 >>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 =======
 <<<<<<< 837588f1a3d775ba83edd14154141add863da630
 =======
+=======
+**Other new Features && Enhancements**
+>>>>>>> Fix changelog formatting
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 >>>>>>> Update CHANGELOG.md
