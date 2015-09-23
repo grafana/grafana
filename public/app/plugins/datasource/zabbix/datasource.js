@@ -1,13 +1,13 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   './directives',
   './zabbixAPIWrapper',
   './helperFunctions',
   './queryCtrl'
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -94,9 +94,9 @@ function (angular, _, kbn) {
     ZabbixAPIDatasource.prototype.query = function(options) {
 
       // get from & to in seconds
-      var from = Math.ceil(kbn.parseDate(options.range.from).getTime() / 1000);
-      var to = Math.ceil(kbn.parseDate(options.range.to).getTime() / 1000);
-      var useTrendsFrom = Math.ceil(kbn.parseDate('now-' + this.trendsFrom).getTime() / 1000);
+      var from = Math.ceil(dateMath.parse(options.range.from) / 1000);
+      var to = Math.ceil(dateMath.parse(options.range.to) / 1000);
+      var useTrendsFrom = Math.ceil(dateMath.parse('now-' + this.trendsFrom) / 1000);
 
       // Create request for each target
       var promises = _.map(options.targets, function(target) {
@@ -337,8 +337,8 @@ function (angular, _, kbn) {
     /////////////////
 
     ZabbixAPIDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var from = Math.ceil(kbn.parseDate(rangeUnparsed.from).getTime() / 1000);
-      var to = Math.ceil(kbn.parseDate(rangeUnparsed.to).getTime() / 1000);
+      var from = Math.ceil(dateMath.parse(rangeUnparsed.from) / 1000);
+      var to = Math.ceil(dateMath.parse(rangeUnparsed.to) / 1000);
       var self = this;
 
       var params = {

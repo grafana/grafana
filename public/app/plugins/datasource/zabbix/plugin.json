@@ -5,7 +5,7 @@
   "type": "zabbix",
   "serviceName": "ZabbixAPIDatasource",
 
-  "module": "plugins/datasource/zabbix/datasource",
+  "module": "app/plugins/datasource/zabbix/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/zabbix/partials/config.html",
