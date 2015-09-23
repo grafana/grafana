@@ -2,6 +2,7 @@ define([
   'angular',
   'lodash',
   'kbn',
+  './directives',
   './zabbixAPIWrapper',
   './helperFunctions',
   './queryCtrl'
@@ -72,6 +73,12 @@ function (angular, _, kbn) {
             };
           }
         });
+      }, function(error) {
+        return {
+          status: "error",
+          title: "Connection failed",
+          message: "Could not connect to " + error.config.url
+        };
       });
     };
 
@@ -94,7 +101,7 @@ function (angular, _, kbn) {
       // Create request for each target
       var promises = _.map(options.targets, function(target) {
 
-        if (!target.ITService) {
+        if (target.mode !== 1) {
           // Don't show undefined and hidden targets
           if (target.hide || !target.group || !target.host
             || !target.application || !target.item) {
@@ -119,70 +126,115 @@ function (angular, _, kbn) {
           var delete_hostname_pattern = /(?:\[[\w\.]+]:\s)/g;
           var itemnames = zabbixHelperSrv.splitMetrics(itemname.replace(delete_hostname_pattern, ''));
 
-          // Find items by item names and perform queries
           var self = this;
-          return this.zabbixAPI.itemFindQuery(groups, hosts, apps)
-            .then(function (items) {
 
-              // Filter hosts by regex
-              if (target.host.visible_name === 'All') {
-                if (target.hostFilter && _.every(items, _.identity.hosts)) {
+          // Query numeric data
+          if (!target.mode) {
 
-                  // Use templated variables in filter
-                  var host_pattern = new RegExp(templateSrv.replace(target.hostFilter, options.scopedVars));
-                  items = _.filter(items, function (item) {
-                    return _.some(item.hosts, function (host) {
-                      return host_pattern.test(host.name);
+            // Find items by item names and perform queries
+            return this.zabbixAPI.itemFindQuery(groups, hosts, apps)
+              .then(function (items) {
+
+                // Filter hosts by regex
+                if (target.host.visible_name === 'All') {
+                  if (target.hostFilter && _.every(items, _.identity.hosts)) {
+
+                    // Use templated variables in filter
+                    var host_pattern = new RegExp(templateSrv.replace(target.hostFilter, options.scopedVars));
+                    items = _.filter(items, function (item) {
+                      return _.some(item.hosts, function (host) {
+                        return host_pattern.test(host.name);
+                      });
                     });
-                  });
+                  }
                 }
-              }
 
-              if (itemnames[0] === 'All') {
+                if (itemnames[0] === 'All') {
 
-                // Filter items by regex
-                if (target.itemFilter) {
+                  // Filter items by regex
+                  if (target.itemFilter) {
 
-                  // Use templated variables in filter
-                  var item_pattern = new RegExp(templateSrv.replace(target.itemFilter, options.scopedVars));
-                  return _.filter(items, function (item) {
-                    return item_pattern.test(zabbixHelperSrv.expandItemName(item));
-                  });
+                    // Use templated variables in filter
+                    var item_pattern = new RegExp(templateSrv.replace(target.itemFilter, options.scopedVars));
+                    return _.filter(items, function (item) {
+                      return item_pattern.test(zabbixHelperSrv.expandItemName(item));
+                    });
+                  } else {
+                    return items;
+                  }
                 } else {
-                  return items;
-                }
-              } else {
 
-                // Filtering items
-                return _.filter(items, function (item) {
+                  // Filtering items
+                  return _.filter(items, function (item) {
+                    return _.contains(itemnames, zabbixHelperSrv.expandItemName(item));
+                  });
+                }
+              }).then(function (items) {
+
+                // Don't perform query for high number of items
+                // to prevent Grafana slowdown
+                if (items.length > self.limitmetrics) {
+                  var message = "Try to increase limitmetrics parameter in datasource config.<br>"
+                    + "Current limitmetrics value is " + self.limitmetrics;
+                  alertSrv.set("Metrics limit exceeded", message, "warning", 10000);
+                  return [];
+                } else {
+                  items = _.flatten(items);
+
+                  // Use alias only for single metric, otherwise use item names
+                  var alias = target.item.name === 'All' || itemnames.length > 1 ?
+                                undefined : templateSrv.replace(target.alias, options.scopedVars);
+
+                  var history;
+                  if ((from < useTrendsFrom) && self.trends) {
+                    var points = target.downsampleFunction ? target.downsampleFunction.value : "avg";
+                    history = self.zabbixAPI.getTrends(items, from, to)
+                      .then(_.bind(zabbixHelperSrv.handleTrendResponse, zabbixHelperSrv, items, alias, target.scale, points));
+                  } else {
+                    history = self.zabbixAPI.getHistory(items, from, to)
+                      .then(_.bind(zabbixHelperSrv.handleHistoryResponse, zabbixHelperSrv, items, alias, target.scale));
+                  }
+
+                  return history.then(function (timeseries) {
+                      var timeseries_data = _.flatten(timeseries);
+                      return _.map(timeseries_data, function (timeseries) {
+
+                        // Series downsampling
+                        if (timeseries.datapoints.length > options.maxDataPoints) {
+                          var ms_interval = Math.floor((to - from) / options.maxDataPoints) * 1000;
+                          var downsampleFunc = target.downsampleFunction ? target.downsampleFunction.value : "avg";
+                          timeseries.datapoints = zabbixHelperSrv.downsampleSeries(timeseries.datapoints, to, ms_interval, downsampleFunc);
+                        }
+                        return timeseries;
+                      });
+                    });
+                }
+              });
+          }
+
+          // Query text data
+          else if (target.mode === 2) {
+
+            // Find items by item names and perform queries
+            return this.zabbixAPI.itemFindQuery(groups, hosts, apps, "text")
+              .then(function (items) {
+                items = _.filter(items, function (item) {
                   return _.contains(itemnames, zabbixHelperSrv.expandItemName(item));
                 });
-              }
-            }).then(function (items) {
+                return self.zabbixAPI.getHistory(items, from, to).then(function(history) {
+                  return {
+                    target: target.item.name,
+                    datapoints: _.map(history, function (p) {
+                      return [p.value, p.clock * 1000];
+                    })
+                  };
+                });
+              });
+          }
+        }
 
-              // Don't perform query for high number of items
-              // to prevent Grafana slowdown
-              if (items.length > self.limitmetrics) {
-                var message = "Try to increase limitmetrics parameter in datasource config.<br>"
-                  + "Current limitmetrics value is " + self.limitmetrics;
-                alertSrv.set("Metrics limit exceeded", message, "warning", 10000);
-                return [];
-              } else {
-                items = _.flatten(items);
-
-                // Use alias only for single metric, otherwise use item names
-                var alias = target.item.name === 'All' || itemnames.length > 1 ? undefined : templateSrv.replace(target.alias, options.scopedVars);
-
-                if ((from < useTrendsFrom) && self.trends) {
-                  return self.zabbixAPI.getTrends(items, from, to)
-                    .then(_.bind(zabbixHelperSrv.handleTrendResponse, zabbixHelperSrv, items, alias, target.scale));
-                } else {
-                  return self.zabbixAPI.getHistory(items, from, to)
-                    .then(_.bind(zabbixHelperSrv.handleHistoryResponse, zabbixHelperSrv, items, alias, target.scale));
-                }
-              }
-            });
-        } else {
+        // IT services mode
+        else if (target.mode === 1) {
           // Don't show undefined and hidden targets
           if (target.hide || !target.itservice || !target.slaProperty) {
             return [];
@@ -195,16 +247,7 @@ function (angular, _, kbn) {
 
       return $q.all(_.flatten(promises)).then(function (results) {
         var timeseries_data = _.flatten(results);
-        var data = _.map(timeseries_data, function (timeseries) {
-
-          // Series downsampling
-          if (timeseries.datapoints.length > options.maxDataPoints) {
-            var ms_interval = Math.floor((to - from) / options.maxDataPoints) * 1000;
-            timeseries.datapoints = zabbixHelperSrv.downsampleSeries(timeseries.datapoints, to, ms_interval);
-          }
-          return timeseries;
-        });
-        return { data: data };
+        return { data: timeseries_data };
       });
     };
 
@@ -301,11 +344,17 @@ function (angular, _, kbn) {
       var params = {
         output: ['triggerid', 'description'],
         search: {
-          'description': annotation.query
+          'description': annotation.trigger
         },
         searchWildcardsEnabled: true,
         expandDescription: true
       };
+      if (annotation.host) {
+        params.host = templateSrv.replace(annotation.host);
+      }
+      else if (annotation.group) {
+        params.group = templateSrv.replace(annotation.group);
+      }
 
       return this.zabbixAPI.performZabbixAPIRequest('trigger.get', params)
         .then(function (result) {

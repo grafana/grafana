@@ -1,0 +1,83 @@
+<section class="grafana-metric-options">
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item tight-form-item-icon">
+        <i class="fa fa-wrench"></i>
+      </li>
+      <li class="tight-form-item">
+        Max data points
+      </li>
+      <li>
+        <input type="text"
+               class="input-mini tight-form-input"
+               ng-model="panel.maxDataPoints"
+               bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
+               data-placement="right"
+               ng-model-onblur ng-change="get_data()"
+               spellcheck='false'
+               placeholder="auto">
+      </li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item tight-form-item-icon">
+        <i class="fa fa-info-circle"></i>
+      </li>
+      <li class="tight-form-item">
+        <a ng-click="toggleEditorHelp(1)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+          Max data points
+        </a>
+      </li>
+      <li class="tight-form-item">
+        <a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+          IT services
+        </a>
+      </li>
+      <li class="tight-form-item">
+        <a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+          IT service property
+        </a>
+      </li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+</section>
+
+<div class="editor-row">
+  <div class="pull-left" style="margin-top: 30px;">
+
+    <div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+      <h5>Max data points</h5>
+      <ul>
+        <li>Grafana-Zabbix plugin uses maxDataPoints parameter to consolidate the real number of values down to this
+          number
+        </li>
+        <li>If there are more real values, then by default they will be consolidated using averages</li>
+        <li>This could hide real peaks and max values in your series</li>
+        <li>Point consolidation will effect series legend values (min,max,total,current)</li>
+        <li>If you override maxDataPoint and set a high value performance can be severely effected</li>
+      </ul>
+    </div>
+
+    <div class="grafana-info-box span6" ng-if="editorHelpIndex === 2">
+      <h5>IT services</h5>
+      <p>
+        Select "IT services" in targets menu to activate IT services mode.
+      </p>
+    </div>
+
+    <div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
+      <h5>IT service property</h5>
+      <ul>
+        <li>Zabbix returns the following availability information about IT service</li>
+        <li>Status - current status of the IT service</li>
+        <li>SLA - SLA for the given time interval</li>
+        <li>OK time - time the service was in OK state, in seconds</li>
+        <li>Problem time - time the service was in problem state, in seconds</li>
+        <li>Down time - time the service was in scheduled downtime, in seconds</li>
+      </ul>
+    </div>
+  </div>
+</div>
