@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  '../graphite/gfunc',
   './queryBuilder',
 ],
-function (angular, _, gfunc, InfluxQueryBuilder) {
+function (angular, _, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -18,10 +17,6 @@ function (angular, _, gfunc, InfluxQueryBuilder) {
       target.tags = target.tags || [];
       target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
       target.fields = target.fields || [{name: 'value', func: target.function || 'mean'}];
-      target.fields[0].functions = [
-        gfunc.createFuncInstance('scaleToSeconds', { withDefaultParams: true }),
-        gfunc.createFuncInstance('movingAverage', { withDefaultParams: true }),
-      ];
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
