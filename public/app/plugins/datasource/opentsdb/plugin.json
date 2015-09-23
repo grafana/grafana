@@ -11,5 +11,6 @@
     "config": "app/plugins/datasource/opentsdb/partials/config.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "defaultMatchFormat": "pipe"
 }
