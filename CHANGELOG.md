@@ -1,5 +1,6 @@
 # 2.5.1 (unreleased)
 
+<<<<<<< b0ad384a6707e1bfece743747ad93f0ad41a3b83
 <<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
 ### Enhancements
 * **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
@@ -15,6 +16,8 @@
 
 <<<<<<< f0efbe4a9386646dfe4e47b4a1226d4cdb19e63f
 <<<<<<< 1b7ba34e481f3622a64f26c0c03e83fc5fbc7115
+=======
+>>>>>>> Fix changelog formatting
 =======
 >>>>>>> Fix changelog formatting
 **New Feature: Mix data sources**
@@ -47,6 +50,7 @@ A built in data source is now available named `-- Mixed --`, When picked in the 
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
+<<<<<<< b0ad384a6707e1bfece743747ad93f0ad41a3b83
 <<<<<<< d08905c6a242215c331482b925f4ed5cc4f5b50f
 <<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
 ** User Onboarding **
@@ -55,10 +59,14 @@ it allows you to add queries of differnet data source types & instances to the s
 =======
 ** User Onboarding **
 >>>>>>> feat(signup): updated changelog with details about #2353
+=======
+**User Onboarding**
+>>>>>>> Fix changelog formatting
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
+<<<<<<< b0ad384a6707e1bfece743747ad93f0ad41a3b83
 <<<<<<< d08905c6a242215c331482b925f4ed5cc4f5b50f
 <<<<<<< 31a27040669945f4e47872f1e01cb25495295b71
 <<<<<<< 5f1059eac9232552c927fc69f1d7fb2003e899fd
@@ -83,11 +91,17 @@ it allows you to add queries of differnet data source types & instances to the s
 =======
 >>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
 =======
+=======
+<<<<<<< 5f1059eac9232552c927fc69f1d7fb2003e899fd
+>>>>>>> Fix changelog formatting
 ** Other new Features && Enhancements**
 >>>>>>> feat(mixed datasources): feature ready to merge to master, closes #436
 =======
 <<<<<<< 837588f1a3d775ba83edd14154141add863da630
 =======
+=======
+**Other new Features && Enhancements**
+>>>>>>> Fix changelog formatting
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 >>>>>>> Update CHANGELOG.md
