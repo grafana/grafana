@@ -46,6 +46,9 @@ function (angular, _) {
           case "lucene": {
             return '(' + value.join(' OR ') + ')';
           }
+          case "pipe": {
+            return value.join('|');
+          }
           default:  {
             return '{' + value.join(',') + '}';
           }
