@@ -99,7 +99,6 @@ function (angular, _) {
     $scope.duplicate = function(variable) {
       $scope.current = angular.copy(variable);
       $scope.variables.push($scope.current);
-      $scope.current = $scope.variables[$scope.variables.length - 1];
       $scope.current.name = 'copy_of_'+variable.name;
       $scope.updateSubmenuVisibility();
     };
