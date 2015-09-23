@@ -104,7 +104,7 @@ function (angular, _, InfluxQueryBuilder) {
 
     $scope.getFunctions = function () {
       var functionList = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-        'derivative', 'non_negative_derivative', 'stddev', 'first', 'last'
+        'stddev', 'first', 'last'
       ];
       return $q.when(_.map(functionList, function(func) {
         return uiSegmentSrv.newSegment(func);
