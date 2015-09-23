@@ -175,14 +175,17 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
-      return this._get('/api/aggregators', {}).then(function(result) {
-        if (result.data instanceof Array) {
+    var aggregatorsPromise = null;
+    OpenTSDBDatasource.prototype.getAggregators = function() {
+      if (aggregatorsPromise) { return aggregatorsPromise; }
+
+      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+        if (result.data && _.isArray(result.data)) {
           return result.data.sort();
-        } else {
-          return result.data;
         }
+        return [];
       });
+      return aggregatorsPromise;
     };
 
     function transformMetricData(md, groupByTags, target, options) {
