@@ -271,6 +271,10 @@ function (angular, _, kbn) {
           }).join('|') + ')';
           break;
         }
+        case 'pipe': {
+          allValue = _.pluck(variable.options, 'text').join('|');
+          break;
+        }
         default: {
           allValue = '{';
           allValue += _.pluck(variable.options, 'text').join(',');
