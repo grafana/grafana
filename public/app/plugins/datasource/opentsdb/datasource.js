@@ -187,13 +187,17 @@ function (angular, _, dateMath) {
       });
     };
 
+<<<<<<< 3b9ac10dcd4c3595e67a9afe64452c86742987c8
 <<<<<<< 0b1d467284f6956db8cbdcad1164a64603efee74
+=======
+>>>>>>> refactor: polishing OpenTSDB related PR #1646, added caching of aggregators request so only one call is made
     var aggregatorsPromise = null;
     OpenTSDBDatasource.prototype.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
 
       aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
         if (result.data && _.isArray(result.data)) {
+<<<<<<< 3b9ac10dcd4c3595e67a9afe64452c86742987c8
           return result.data.sort();
         }
         return [];
@@ -211,11 +215,13 @@ function (angular, _, dateMath) {
       };
       return $http(options).then(function(result) {
         if (result.data instanceof Array) {
+=======
+>>>>>>> refactor: polishing OpenTSDB related PR #1646, added caching of aggregators request so only one call is made
           return result.data.sort();
-        } else {
-          return result.data;
         }
+        return [];
       });
+      return aggregatorsPromise;
     };
 
     OpenTSDBDatasource.prototype.performAggregatorsQuery = function() {
