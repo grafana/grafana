@@ -275,6 +275,10 @@ function (angular, _, kbn) {
           allValue = _.pluck(variable.options, 'text').join('|');
           break;
         }
+        case 'native': {
+          allValue = variable.options.map(function(o) { return o.text; });
+          break;
+        }
         default: {
           allValue = '{';
           allValue += _.pluck(variable.options, 'text').join(',');
