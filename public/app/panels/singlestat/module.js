@@ -171,6 +171,12 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     $scope.render = function() {
       var data = {};
 
+      if($scope.series.length > 1) {
+        $scope.appEvent('alert-warning', ['Multiple Series Error', 'Metric query returns ' +
+        $scope.series.length + ' series. Single Stat Panel expects a single series.']);
+        $scope.series = [];
+      }
+
       $scope.setValues(data);
 
       data.thresholds = $scope.panel.thresholds.split(',').map(function(strVale) {
@@ -185,7 +191,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
 
     $scope.setValues = function(data) {
       data.flotpairs = [];
-
       if ($scope.series && $scope.series.length > 0) {
         var lastPoint = _.last($scope.series[0].datapoints);
         var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
