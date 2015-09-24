@@ -89,6 +89,8 @@ function (_) {
       }
     }
 
+    query += 'LIMIT 50';
+
     return query;
   };
 
