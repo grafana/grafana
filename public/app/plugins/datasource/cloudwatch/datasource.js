@@ -2,13 +2,12 @@
 define([
   'angular',
   'lodash',
-  'app/core/utils/datemath',
   'moment',
   './queryCtrl',
   './directives',
   'aws-sdk',
 ],
-function (angular, _, dateMath) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
