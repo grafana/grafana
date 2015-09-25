@@ -25,9 +25,8 @@ module.exports = function(grunt) {
     'uglify:dest'
   ]);
 
-
   // task to add [[.AppSubUrl]] to reved path
-  grunt.registerTask('remapFilerev', function(){
+  grunt.registerTask('remapFilerev', function() {
     var root = grunt.config().destDir;
     var summary = grunt.filerev.summary;
     var fixed = {};
@@ -49,7 +48,7 @@ module.exports = function(grunt) {
       expand: true,
       cwd: '<%= destDir %>',
       src: '**/*',
-      dest: '<%= tempDir %>/public/',
+      dest: '<%= tempDir %>/public/'
     });
     grunt.config('clean.dest_dir', ['<%= destDir %>']);
     grunt.config('copy.backend_bin', {
@@ -65,11 +64,18 @@ module.exports = function(grunt) {
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
+    grunt.config('copy.netcrunch_filters', {
+      expand: true,
+      src: ['public/app/plugins/datasource/netcrunch/filters/netCrunchCommonFilters.js'],
+      options: { mode: true},
+      dest: '<%= tempDir %>'
+    });
 
     grunt.task.run('copy:dist_to_tmp');
     grunt.task.run('clean:dest_dir');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
+    grunt.task.run('copy:netcrunch_filters');
   });
 
 };
