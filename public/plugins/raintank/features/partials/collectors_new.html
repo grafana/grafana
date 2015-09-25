@@ -13,7 +13,7 @@
     </li>
   </ul>
 </topnav>
-<div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
+<div style="margin: 10px 10px 50px; position: relative; display: block; min-width:400px; max-width: 1000px;">
   <!-- Step 1 Accept, check for collector duplicates and add collector record. -->
   <div ng-if="!collector.id">
     <div class="rt-page-header">
@@ -118,18 +118,10 @@
         </div>
       </div>
     </div>
-    <div ng-if="!verifyOnline">
-      <button class="rt-btn" ng-click="checkIfOnline()">Verify Install</button>
-      <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a>
-    </div>
-    <div ng-if="verifyOnline">
-      <div ng-show="collector.online">
-        {{collector.name}} is now online. Yay!!!
-      </div>
-      <div ng-show="!collector.online">
-        waiting for {{collector.name}} to connect.....
-      </div>
+    <div>
+      <a href="/collectors/summary/{{collector.id}}"><button class="rt-btn">Continue to Summary and Verify</button></a>
+<!--       <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a> -->
     </div>
   </div>
-
+  <div style="margin-bottom: 50px;"></div>
 </div>

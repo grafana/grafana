@@ -80,10 +80,10 @@
 					</div>
 					<div ng-show="!collector.online" class="collectorCurrentStatus">
 						<div class="rt-summary-status">
-							<img src="img/CollectorAstronomer.gif" style="margin-bottom: 10px;">
+<!-- 							<img src="img/CollectorAstronomer.gif" style="margin-bottom: 10px;"> -->
 							<h3>LOOKING FOR SIGNS OF LIFE...</h3>
 							<p>We're checking, but we havent seen this collector appear online yet.</p>
-							<p>Need to install it? <a href="/collectors/init/{{collector.id}}" class="text-link">Read the installation instructions</a></p>
+							<p>Need to install it? <a href="/collectors/init/{{collector.id}}" class="rt-dashboard-blurb">Read the installation instructions</a></p>
 						</div>
 						<div class="statusEvents" >
 							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
