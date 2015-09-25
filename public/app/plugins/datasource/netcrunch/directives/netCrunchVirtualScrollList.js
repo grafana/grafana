@@ -221,20 +221,29 @@ define([
                   return getElementAttribute(element, ngRepeatTabIndex);
                 }
 
-                elements.forEach(function(element) {
+                if (ngVirtualScrollListKeyMode === true) {
+                  renderingModel.tabIndexMap = Object.create(null);
+                }
+
+                elements.forEach(function(element, $index) {
+                  var modelItem = Object.create(null);
+
                   currentHeight = getElementHeight(element);
-                  renderingModel.push({ top: currentTop, height: currentHeight });
+                  modelItem.top = currentTop;
+                  modelItem.height = currentHeight;
+
+                  if (ngVirtualScrollListKeyMode === true) {
+                    modelItem.tabindex = getElementTabIndex(element);
+                    renderingModel.tabIndexMap[modelItem.tabindex] = $index;
+                  }
+
+                  renderingModel.push(modelItem);
                   currentTop += currentHeight;
                 });
 
                 if (renderingModel.length > 0) {
                   lastModelIndex = renderingModel.length - 1;
-                  renderingModel.totalHeight =
-                    renderingModel[lastModelIndex].top + renderingModel[lastModelIndex].height;
-
-                  if (ngVirtualScrollListKeyMode === true) {
-                    renderingModel.firstTabIndex = getElementTabIndex(elements[0]);
-                  }
+                  renderingModel.totalHeight = renderingModel[lastModelIndex].top + renderingModel[lastModelIndex].height;
                 }
                 return renderingModel;
               }
@@ -452,7 +461,7 @@ define([
 
               function getModelTabIndex(index) {
                 if ((index >= 0) && (index < allElements.length)) {
-                  return renderingModel.firstTabIndex + index;
+                  return renderingModel[index].tabindex;
                 } else {
                   return null;
                 }
@@ -878,7 +887,7 @@ define([
               }
 
               function calculateItemIndex(tabIndex) {
-                return tabIndex - renderingModel.firstTabIndex;
+                return renderingModel.tabIndexMap[tabIndex];
               }
 
               function moveVirtualViewToItemIndex(itemIndex, position) {
