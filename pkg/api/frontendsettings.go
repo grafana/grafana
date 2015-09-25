@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+  "github.com/grafana/grafana/pkg/netcrunch"
 )
 
 func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
@@ -104,6 +105,17 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"type": "grafana",
 		"meta": grafanaDatasourceMeta,
 	}
+
+  // add NetCrunch backend data source
+  if (netcrunch.NetCrunchServerSettings.Enable == true) {
+    netcrunchDatasourceMeta, _ := plugins.DataSources["netcrunch"]
+    datasources["NetCrunch"] = map[string]interface{}{
+      "type" : "netcrunch",
+      "meta" : netcrunchDatasourceMeta,
+    }
+
+    defaultDatasource = "NetCrunch"
+  }
 
 	if defaultDatasource == "" {
 		defaultDatasource = "grafana"
