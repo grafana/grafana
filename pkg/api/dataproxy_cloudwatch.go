@@ -31,34 +31,22 @@ func ProxyCloudWatchDataSourceRequest(c *middleware.Context) {
 		case "GetMetricStatistics":
 			reqParam := &struct {
 				Parameters struct {
-					Namespace  string              `json:"Namespace"`
-					MetricName string              `json:"MetricName"`
-					Dimensions []map[string]string `json:"Dimensions"`
-					Statistics []string            `json:"Statistics"`
-					StartTime  int64               `json:"StartTime"`
-					EndTime    int64               `json:"EndTime"`
-					Period     int64               `json:"Period"`
+					Namespace  string                  `json:"Namespace"`
+					MetricName string                  `json:"MetricName"`
+					Dimensions []*cloudwatch.Dimension `json:"Dimensions"`
+					Statistics []*string               `json:"Statistics"`
+					StartTime  int64                   `json:"StartTime"`
+					EndTime    int64                   `json:"EndTime"`
+					Period     int64                   `json:"Period"`
 				} `json:"parameters"`
 			}{}
 			json.Unmarshal([]byte(body), reqParam)
 
-			statistics := make([]*string, 0)
-			for k := range reqParam.Parameters.Statistics {
-				statistics = append(statistics, &reqParam.Parameters.Statistics[k])
-			}
-			dimensions := make([]*cloudwatch.Dimension, 0)
-			for _, d := range reqParam.Parameters.Dimensions {
-				dimensions = append(dimensions, &cloudwatch.Dimension{
-					Name:  aws.String(d["Name"]),
-					Value: aws.String(d["Value"]),
-				})
-			}
-
 			params := &cloudwatch.GetMetricStatisticsInput{
 				Namespace:  aws.String(reqParam.Parameters.Namespace),
 				MetricName: aws.String(reqParam.Parameters.MetricName),
-				Dimensions: dimensions,
-				Statistics: statistics,
+				Dimensions: reqParam.Parameters.Dimensions,
+				Statistics: reqParam.Parameters.Statistics,
 				StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
 				EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
 				Period:     aws.Int64(reqParam.Parameters.Period),
@@ -75,25 +63,17 @@ func ProxyCloudWatchDataSourceRequest(c *middleware.Context) {
 		case "ListMetrics":
 			reqParam := &struct {
 				Parameters struct {
-					Namespace  string              `json:"Namespace"`
-					MetricName string              `json:"MetricName"`
-					Dimensions []map[string]string `json:"Dimensions"`
+					Namespace  string                        `json:"Namespace"`
+					MetricName string                        `json:"MetricName"`
+					Dimensions []*cloudwatch.DimensionFilter `json:"Dimensions"`
 				} `json:"parameters"`
 			}{}
 			json.Unmarshal([]byte(body), reqParam)
 
-			dimensions := make([]*cloudwatch.DimensionFilter, 0)
-			for _, d := range reqParam.Parameters.Dimensions {
-				dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-					Name:  aws.String(d["Name"]),
-					Value: aws.String(d["Value"]),
-				})
-			}
-
 			params := &cloudwatch.ListMetricsInput{
 				Namespace:  aws.String(reqParam.Parameters.Namespace),
 				MetricName: aws.String(reqParam.Parameters.MetricName),
-				Dimensions: dimensions,
+				Dimensions: reqParam.Parameters.Dimensions,
 			}
 
 			resp, err := svc.ListMetrics(params)
