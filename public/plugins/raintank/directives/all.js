@@ -65,7 +65,7 @@ define([
     };
   });
 
-  module.directive("rtCheckHealth", function($compile, datasourceSrv) {
+  module.directive("rtCheckHealth", function($compile, datasourceSrv, timeSrv) {
     return {
       templateUrl: 'plugins/raintank/directives/partials/checkHealth.html',
       scope: {
@@ -75,8 +75,12 @@ define([
         scope.$watch("model", function(monitor) {
           scope.eventReady = false;
           if (typeof(monitor) === "object") {
+            timeSrv.init({
+              time: {from: "now-"+(monitor.frequency + 30)+ 's', to: "now"}
+            });
             var metricsQuery = {
-              range: {from: "now-"+ (monitor.frequency + 30) + 's', to: "now"},
+              range: timeSrv.timeRange(),
+              rangeRaw: timeSrv.timeRange(true),
               interval: monitor.frequency + 's',
               targets: [
                 {target: "litmus."+monitor.endpoint_slug + ".*." +
