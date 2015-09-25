@@ -98,7 +98,7 @@ func Register(r *macaron.Macaron) {
 		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
-			r.Get("/quotas", wrap(GetOrgQuotas))
+			r.Get("/quotas", wrap(GetOwnOrgQuotas))
 		})
 
 		// current org
