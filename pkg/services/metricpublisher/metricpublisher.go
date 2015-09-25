@@ -42,7 +42,7 @@ func Init(metrics met.Backend) {
 	}
 	err = globalProducer.Ping()
 	if err != nil {
-		log.Fatal(0, "can't connect to nsqd: %s", err)
+		log.Error(0, "can't connect to nsqd: %s", err)
 	}
 	metricsPublished = metrics.NewCount("metricpublisher.metrics-published")
 	messagesPublished = metrics.NewCount("metricpublisher.messages-published")

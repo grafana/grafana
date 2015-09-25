@@ -22,6 +22,9 @@ function (angular, _) {
       if ("id" in $routeParams) {
         $scope.getCollectors().then(function() {
           $scope.getCollector($routeParams.id);
+          if (!$scope.collector.online) {
+            $scope.checkIfOnline();
+          };
         });
       } else {
         $scope.reset();
@@ -92,6 +95,7 @@ function (angular, _) {
       backendSrv.put('/api/collectors', $scope.collector)
         .then(function(resp) {
           $scope.collector = resp;
+          $location.path('/collectors/init/'+resp.id);          
         });
     };
 
