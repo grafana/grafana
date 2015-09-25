@@ -87,7 +87,6 @@ function (angular, _) {
 
     $scope.add = function() {
       if (!$scope.collectorForm.$valid) {
-        console.log("form invalid");
         return;
       }
 

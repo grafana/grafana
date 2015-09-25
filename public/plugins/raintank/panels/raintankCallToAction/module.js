@@ -111,7 +111,6 @@ function (angular, app, _, PanelMeta) {
           quotaHash[q.target] = q;
         });
         $scope.quotas = quotaHash;
-        console.log($scope.quotas);
         $scope.setEndpointStatus();
         $scope.setUserStatus();
         $scope.setCollectorStatus();
