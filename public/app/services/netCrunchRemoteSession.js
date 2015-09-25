@@ -75,7 +75,7 @@ define([
             if (trendQuery == null) {
               trendQuery = new adrem.ncSrv.ITrendQuery();
             }
-            return netCrunchRemoteClient.callApi(trendQuery.AnalizeGetData, arguments);
+            return netCrunchRemoteClient.callApi(trendQuery.AnalyzeGetData, arguments);
           },
 
           error : error,
