@@ -21,18 +21,18 @@ define([
                                                       $document) {
 
       var TAB_CODE = 9,
-          SPACE_CODE = 32,
-          PAGE_UP_CODE = 33,
-          PAGE_DOWN_CODE = 34,
-          END_CODE = 35,
-          HOME_CODE = 36,
-          LEFT_ARROW_CODE = 37,
-          UP_ARROW_CODE = 38,
-          RIGHT_ARROW_CODE = 39,
-          DOWN_ARROW_CODE = 40,
-          keyboardDelayTime = 30;
+        SPACE_CODE = 32,
+        PAGE_UP_CODE = 33,
+        PAGE_DOWN_CODE = 34,
+        END_CODE = 35,
+        HOME_CODE = 36,
+        LEFT_ARROW_CODE = 37,
+        UP_ARROW_CODE = 38,
+        RIGHT_ARROW_CODE = 39,
+        DOWN_ARROW_CODE = 40,
+        keyboardDelayTime = 30;
 
-      function parseAttribute (attribute) {
+      function parseAttribute(attribute) {
         if (attribute != null) {
           return attribute.replace(/(\{\{)|(}})/g, ' ').trim();
         } else {
@@ -40,58 +40,75 @@ define([
         }
       }
 
-      function getUniqueID (length) {
-        var id = String.fromCharCode(Math.floor((Math.random()*25)+65)),
-            asciiCode;
-
-        while (id.length < length) {
-          asciiCode = Math.floor((Math.random()*42)+48);
-          if ((asciiCode < 58) || (asciiCode > 64)) {
-            id += String.fromCharCode(asciiCode);
-          }
+      function checkEqualityObjectProperties(firstObject, secondObject, propertiesList) {
+        if (Array.isArray(propertiesList) === true) {
+          return !propertiesList.some(function(property) {
+            return (firstObject[property] !== secondObject[property]);
+          });
         }
-        return id;
+        return false;
+      }
+
+      function getNgRepeatType(ngRepeatHtmlTemplate) {
+        var types = Object.create(null),
+          result = 'div';
+
+        types.div = /^<div\s/;
+        types.li = /^<li\s/;
+        types.td = /^<td\s/;
+
+        Object.keys(types).some(function(key) {
+          if (ngRepeatHtmlTemplate.match(types[key]) != null) {
+            result = key;
+            return true;
+          } else {
+            return false;
+          }
+        });
+
+        return result;
       }
 
       return {
         restrict: 'A',
         scope: true,
 
-        compile: function ($element) {
+        compile: function($element) {
           var ngVirtualScrollListID = $element.attr('ng-virtual-scroll-list'),
-              ngRepeatChild = $element.children().eq(0),
-              ngRepeatExpression = ngRepeatChild.attr('ng-repeat'),
-              ngRepeatHtmlTemplate = ngRepeatChild[0].outerHTML,
-              ngRepeatTabIndex = parseAttribute(ngRepeatChild.attr('tabindex')),
-              expressionMatches = /^\s*(\S+)\s+in\s+([\S\s]+?)(track\s+by\s+\S+)?$/.exec(ngRepeatExpression),
-              ngRepeatItem = expressionMatches[1],
-              ngRepeatStatement = expressionMatches[2],
-              ngRepeatTrackBy = expressionMatches[3],
-              ngRepeatItemHeight = ngRepeatChild.attr('ng-virtual-scroll-list-element-height'),
-              ngVirtualScrollListKeyMode = (ngRepeatTabIndex != null),
-
-              closestElement = angular.element.prototype.closest,
-              isHorizontal,
-              subSetElements = '$ngVirtualScrollListSubSetElements' + getUniqueID(10),
-              virtualRangeIndex = '$ngVirtualScrollListVirtualRangeIndex' + getUniqueID(10),
-              allElements = [],
-              renderingModel;
+            ngVirtualScrollListState = $element.attr('ng-virtual-scroll-list-state'),
+            ngRepeatChild = $element.children().eq(0),
+            ngRepeatExpression = ngRepeatChild.attr('ng-repeat'),
+            ngRepeatHtmlTemplate = ngRepeatChild[0].outerHTML,
+            ngRepeatHtmlType = getNgRepeatType(ngRepeatHtmlTemplate),
+            ngRepeatTabIndex = parseAttribute(ngRepeatChild.attr('tabindex')),
+            expressionMatches = /^\s*(\S+)\s+in\s+([\S\s]+?)(track\s+by\s+\S+)?$/.exec(ngRepeatExpression),
+            ngRepeatItem = expressionMatches[1],
+            ngRepeatStatement = expressionMatches[2],
+            ngRepeatTrackBy = expressionMatches[3],
+            ngRepeatItemHeight = ngRepeatChild.attr('ng-virtual-scroll-list-element-height'),
+            ngVirtualScrollListKeyMode = (ngRepeatTabIndex != null),
+            closestElement = angular.element.prototype.closest,
+            isHorizontal,
+            subSetElements = '$ngVirtualScrollListSubSetElements',
+            virtualRangeIndex = '$ngVirtualScrollListVirtualRangeIndex',
+            allElements = [],
+            renderingModel;
 
           function checkScrollParent(scrollParent) {
             if (scrollParent.length === 0) {
-              throw 'Specified scroll parent selector did not match any element';
+              throw 'Specified scroll parent selector does not match any element';
             }
             return scrollParent;
           }
 
           function getScrollBoxSize(container) {
             return {
-              height : container.clientHeight,
-              width : container.clientWidth
+              height: container.clientHeight,
+              width: container.clientWidth
             };
           }
 
-          function calculateScrollBoxSize (container) {
+          function calculateScrollBoxSize(container) {
             var scrollBoxSize = getScrollBoxSize(container);
             return (isHorizontal === true) ? scrollBoxSize.width : scrollBoxSize.height;
           }
@@ -110,9 +127,9 @@ define([
 
             function binarySearch(model, value, indexStart, indexEnd) {
               var midIndex = indexStart + Math.floor((indexEnd - indexStart) / 2),
-                  nodeModel = model[midIndex],
-                  nodeTop = nodeModel.top,
-                  nodeBottom = nodeTop + nodeModel.height;
+                nodeModel = model[midIndex],
+                nodeTop = nodeModel.top,
+                nodeBottom = nodeTop + nodeModel.height;
 
               if ((nodeTop <= value) && (value <= nodeBottom)) {
                 return midIndex;
@@ -126,8 +143,7 @@ define([
               }
             }
 
-            YPosition = (YPosition > renderingModel.totalHeight) ?
-                         renderingModel.totalHeight : YPosition;
+            YPosition = (YPosition > renderingModel.totalHeight) ? renderingModel.totalHeight : YPosition;
             return binarySearch(renderingModel, YPosition, 0, renderingModel.length - 1);
           }
 
@@ -136,25 +152,34 @@ define([
           return {
             pre: function($scope, $element, $attributes) {
               var ngRepeatElement = angular.element(ngRepeatHtmlTemplate),
-                  scrollParent = closestElement.call($element,
-                                                     $attributes.ngVirtualScrollListParent) || $element,
-                  scrollParentContainer,
-                  invisibleSpaces = {
-                    leadingSpace : null,
-                    followingSpace : null
-                  };
+                scrollParent = closestElement.call($element, $attributes.ngVirtualScrollListParent)
+                               || $element,
+                scrollParentContainer,
+                invisibleSpaces = {
+                  leadingSpace: null,
+                  followingSpace: null
+                };
 
-              function createFillElement(size, horizontal){
-                var fillElement = angular.element('<div></div>'),
-                    minHeight = (horizontal === true) ? '' : '100%',
-                    minWidth = (horizontal === true) ? '100%' : '',
-                    height = (horizontal === true) ? size : '',
-                    width = (horizontal === true) ? '' : size;
+              function createFillElement(size, horizontal, htmlContainerType) {
+                var htmlContainers = Object.create(null),
+                  elementContainer,
+                  fillElement,
+                  minHeight = (horizontal === true) ? '' : '100%',
+                  minWidth = (horizontal === true) ? '100%' : '',
+                  height = (horizontal === true) ? size : '',
+                  width = (horizontal === true) ? '' : size;
+
+                htmlContainers.div = '<div></div>';
+                htmlContainers.li = '<li></li>';
+                htmlContainers.td = '<td></td>';
+                elementContainer = htmlContainers[htmlContainerType];
+                fillElement = angular.element(elementContainer);
 
                 fillElement.css({
                   'background-color': 'transparent',
                   'border': '0px solid transparent',
                   'cursor': 'default',
+                  'padding': '0',
                   'margin': '0',
                   'min-height': minHeight,
                   'min-width': minWidth,
@@ -165,37 +190,51 @@ define([
                 return fillElement;
               }
 
-              function createRenderingModel (elements) {
+              function createRenderingModel(elements) {
                 var renderingModel = [],
-                    currentHeight,
-                    currentTop = 0,
-                    lastModelIndex;
+                  currentHeight,
+                  currentTop = 0,
+                  lastModelIndex;
 
-                function getElementHeight (element) {
+                function getElementAttribute(element, attribute) {
                   var elementScope,
-                      elementHeight;
+                    result;
 
-                  elementScope = $scope.$new();
+                  elementScope = $scope.$new(true);
                   elementScope[ngRepeatItem] = element;
-                  elementHeight = elementScope.$eval(ngRepeatItemHeight);
+                  result = elementScope.$eval(attribute);
+                  elementScope.$destroy();
+                  return result;
+                }
+
+                function getElementHeight(element) {
+                  var elementHeight;
+
+                  elementHeight = getElementAttribute(element, ngRepeatItemHeight);
                   if ((elementHeight == null) || (typeof elementHeight !== 'number')) {
                     elementHeight = 0;
                   }
-                  elementScope.$destroy();
-
                   return elementHeight;
+                }
+
+                function getElementTabIndex(element) {
+                  return getElementAttribute(element, ngRepeatTabIndex);
                 }
 
                 elements.forEach(function(element) {
                   currentHeight = getElementHeight(element);
-                  renderingModel.push({top : currentTop, height : currentHeight});
+                  renderingModel.push({ top: currentTop, height: currentHeight });
                   currentTop += currentHeight;
                 });
 
                 if (renderingModel.length > 0) {
                   lastModelIndex = renderingModel.length - 1;
-                  renderingModel.totalHeight = renderingModel[lastModelIndex].top +
-                                               renderingModel[lastModelIndex].height;
+                  renderingModel.totalHeight =
+                    renderingModel[lastModelIndex].top + renderingModel[lastModelIndex].height;
+
+                  if (ngVirtualScrollListKeyMode === true) {
+                    renderingModel.firstTabIndex = getElementTabIndex(elements[0]);
+                  }
                 }
                 return renderingModel;
               }
@@ -203,30 +242,28 @@ define([
               function calculateVisibleRangeIndex(container) {
 
                 var scrollTopPosition = getContainerScrollPosition(container),
-                    scrollBoxHeight = getScrollBoxSize(container).height,
-                    scrollBottomPosition = scrollTopPosition + scrollBoxHeight,
-                    firstVirtualNodeIndex,
-                    lastVirtualNodeIndex,
-                    invisibleLeadingElementHeight,
-                    invisibleFollowingElementHeight;
+                  scrollBoxHeight = getScrollBoxSize(container).height,
+                  scrollBottomPosition = scrollTopPosition + scrollBoxHeight,
+                  firstVirtualNodeIndex,
+                  lastVirtualNodeIndex,
+                  invisibleLeadingElementHeight,
+                  invisibleFollowingElementHeight;
 
                 if (scrollTopPosition === 0) {
                   firstVirtualNodeIndex = 0;
                   invisibleLeadingElementHeight = 0;
                 } else {
-                  firstVirtualNodeIndex = findNodeIndexForPosition(renderingModel,
-                                                                   scrollTopPosition);
+                  firstVirtualNodeIndex = findNodeIndexForPosition(renderingModel, scrollTopPosition);
                   invisibleLeadingElementHeight = renderingModel[firstVirtualNodeIndex].top;
                 }
                 if (scrollBottomPosition >= renderingModel.totalHeight) {
                   lastVirtualNodeIndex = renderingModel.length - 1;
                   invisibleFollowingElementHeight = 0;
                 } else {
-                  lastVirtualNodeIndex = findNodeIndexForPosition(renderingModel,
-                                                                  scrollBottomPosition);
+                  lastVirtualNodeIndex = findNodeIndexForPosition(renderingModel, scrollBottomPosition);
                   invisibleFollowingElementHeight = renderingModel.totalHeight -
-                      (renderingModel[lastVirtualNodeIndex].top +
-                       renderingModel[lastVirtualNodeIndex].height);
+                                                    (renderingModel[lastVirtualNodeIndex].top
+                                                     + renderingModel[lastVirtualNodeIndex].height);
                 }
 
                 return {
@@ -239,22 +276,24 @@ define([
 
               function createInvisibleSpaces() {
                 return {
-                  leadingSpace : createFillElement(0, !isHorizontal),
-                  followingSpace : createFillElement(0, !isHorizontal)
+                  leadingSpace: createFillElement(0, !isHorizontal, ngRepeatHtmlType),
+                  followingSpace: createFillElement(0, !isHorizontal, ngRepeatHtmlType)
                 };
               }
 
               function updateSubSetElements() {
                 var calculatedRangeIndex,
-                    currentRangeIndex = $scope[virtualRangeIndex],
-                    calculatedRI,
-                    currentRI = currentRangeIndex,
-                    emptyRangeIndex = {
-                      invisibleLeadingElementHeight: 0,
-                      firstVirtualNodeIndex: -1,
-                      lastVirtualNodeIndex: -1,
-                      invisibleFollowingElementHeight: 0
-                    };
+                  currentRangeIndex = $scope[virtualRangeIndex],
+                  calculatedRI,
+                  currentRI = currentRangeIndex,
+                  emptyRangeIndex = {
+                    invisibleLeadingElementHeight: 0,
+                    firstVirtualNodeIndex: -1,
+                    lastVirtualNodeIndex: -1,
+                    invisibleFollowingElementHeight: 0
+                  },
+                  rangeIndexPropertyList = ['invisibleLeadingElementHeight', 'firstVirtualNodeIndex',
+                                            'lastVirtualNodeIndex', 'invisibleFollowingElementHeight'];
 
                 if ((renderingModel != null) && (renderingModel.length > 0)) {
                   calculatedRangeIndex = calculateVisibleRangeIndex(scrollParentContainer);
@@ -263,23 +302,16 @@ define([
                   if (currentRangeIndex == null) {
                     $scope[virtualRangeIndex] = calculatedRangeIndex;
                     $scope[subSetElements] = allElements.slice(
-                        $scope[virtualRangeIndex].firstVirtualNodeIndex,
-                        $scope[virtualRangeIndex].lastVirtualNodeIndex + 1);
+                      $scope[virtualRangeIndex].firstVirtualNodeIndex,
+                      $scope[virtualRangeIndex].lastVirtualNodeIndex + 1);
                     return true;
                   } else {
-                    if ((currentRI.invisibleLeadingElementHeight !==
-                         calculatedRI.invisibleLeadingElementHeight) ||
-                        (currentRI.firstVirtualNodeIndex !==
-                         calculatedRI.firstVirtualNodeIndex) ||
-                        (currentRI.lastVirtualNodeIndex !==
-                         calculatedRI.lastVirtualNodeIndex) ||
-                        (currentRI.invisibleFollowingElementHeight !==
-                         calculatedRI.invisibleFollowingElementHeight)) {
-
+                    if (checkEqualityObjectProperties(currentRI, calculatedRI, rangeIndexPropertyList)
+                        === false) {
                       $scope[virtualRangeIndex] = calculatedRI;
                       $scope[subSetElements] = allElements.slice(
-                          $scope[virtualRangeIndex].firstVirtualNodeIndex,
-                          $scope[virtualRangeIndex].lastVirtualNodeIndex + 1);
+                        $scope[virtualRangeIndex].firstVirtualNodeIndex,
+                        $scope[virtualRangeIndex].lastVirtualNodeIndex + 1);
                       return true;
                     } else {
                       return false;
@@ -307,7 +339,7 @@ define([
                   updateInvisibleElementSize(invisibleSpaces.leadingSpace,
                                              VRI.invisibleLeadingElementHeight);
                   ngRepeatElement.attr('ng-repeat', ngRepeatItem + ' in ' + subSetElements +
-                                                   (ngRepeatTrackBy ? ' ' + ngRepeatTrackBy : ''));
+                                                    (ngRepeatTrackBy ? ' ' + ngRepeatTrackBy : ''));
                   $compile(ngRepeatElement)($scope);
                   ngRepeatElement.insertBefore(invisibleSpaces.followingSpace);
                   updateInvisibleElementSize(invisibleSpaces.followingSpace,
@@ -316,8 +348,27 @@ define([
               }
 
               function updateHandler() {
+                var scrollPositionBefore,
+                  scrollPositionAfter;
+
                 if (updateSubSetElements() === true) {
+                  scrollPositionBefore = getContainerScrollPosition(scrollParentContainer);
                   $scope.$apply();
+                  scrollPositionAfter = getContainerScrollPosition(scrollParentContainer);
+                  if (scrollPositionBefore !== scrollPositionAfter) {
+                    $timeout(function() {
+                      setContainerScrollPosition(scrollParentContainer, scrollPositionBefore);
+                    }, 0);
+                  }
+                }
+              }
+
+              function registerEventListeners() {
+                if ((ngVirtualScrollListID != null) && (ngVirtualScrollListID !== '')) {
+                  $scope.$on('ngVirtualScrollListRefresh(' + ngVirtualScrollListID + ')',
+                             function() {
+                               updateHandler();
+                             });
                 }
               }
 
@@ -343,9 +394,9 @@ define([
               });
 
               $scope.$watch(
-                function () {
-                  return (isHorizontal === true) ? scrollParentContainer.clientHeight :
-                                                   scrollParentContainer.clientWidth;
+                function() {
+                  return (isHorizontal === true) ? scrollParentContainer.clientHeight
+                    : scrollParentContainer.clientWidth;
                 },
                 function() {
                   updateSubSetElements();
@@ -360,6 +411,8 @@ define([
 
               $window.addEventListener('resize', updateHandler, true);
 
+              registerEventListeners();
+
               $scope.$on('$destroy', function() {
                 $window.removeEventListener('resize', updateHandler, true);
               });
@@ -367,14 +420,16 @@ define([
 
             post: function($scope, $element) {
               var ngRepeatElements = $element[0].children,
-                  ngRepeatEventHandlers = [],
-                  ngVirtualScrollListFocusedElement = null,
-                  hasComponentFocus = '$ngVirtualScrollListHasComponentFocus' + getUniqueID(10),
-                  waitForFocusElement = false,
-                  keyboardTimer = false,
-                  keyboardEnable = true;
+                ngRepeatEventHandlers = [],
+                ngVirtualScrollListFocusedElement = null,
+                hasComponentFocus = '$ngVirtualScrollListHasComponentFocus',
+                virtualScrollListState,
+                waitForFocusElement = false,
+                keyboardTimer = false,
+                keyboardEnable = true,
+                intervalHandler;
 
-              function keyboardDelay (delay) {
+              function keyboardDelay(delay) {
                 keyboardEnable = false;
 
                 if ((keyboardEnable === false) && (keyboardTimer === false)) {
@@ -395,16 +450,9 @@ define([
                 return $scope[hasComponentFocus];
               }
 
-              function getModelTabIndex (index) {
-                var localScope,
-                    tabIndex;
-
+              function getModelTabIndex(index) {
                 if ((index >= 0) && (index < allElements.length)) {
-                  localScope = $scope.$new(true);
-                  localScope[ngRepeatItem] = allElements[index];
-                  tabIndex = localScope.$eval(ngRepeatTabIndex);
-                  localScope.$destroy();
-                  return tabIndex;
+                  return renderingModel.firstTabIndex + index;
                 } else {
                   return null;
                 }
@@ -419,7 +467,7 @@ define([
               }
 
               function getPrevItemsTabIndex(count) {
-                return function (currentTabIndex) {
+                return function(currentTabIndex) {
                   var itemIndex = calculateItemIndex(currentTabIndex);
 
                   if (itemIndex != null) {
@@ -437,9 +485,9 @@ define([
               }
 
               function getNextItemsTabIndex(count) {
-                return function (currentTabIndex) {
+                return function(currentTabIndex) {
                   var itemIndex = calculateItemIndex(currentTabIndex),
-                      lastItemIndex = allElements.length - 1;
+                    lastItemIndex = allElements.length - 1;
 
                   if ((itemIndex != null) && (lastItemIndex >= 0)) {
                     itemIndex += count;
@@ -463,7 +511,7 @@ define([
                 return getModelTabIndex($scope[virtualRangeIndex].lastVirtualNodeIndex);
               }
 
-              function ngRepeatElementClickHandler (tabIndex) {
+              function ngRepeatElementClickHandler(tabIndex) {
                 return function() {
                   if (ngVirtualScrollListFocusedElement !== tabIndex) {
                     ngVirtualScrollListFocusedElement = tabIndex;
@@ -486,29 +534,29 @@ define([
                 };
               }
 
-              function ngRepeatElementKeyboardHandler (tabIndex) {
+              function ngRepeatElementKeyboardHandler(tabIndex) {
 
                 return function(event) {
                   var keyMapper = Object.create(null);
 
-                  keyMapper[TAB_CODE] = function (event) {
+                  keyMapper[TAB_CODE] = function(event) {
                     var tabIndexItems,
-                        firstVirtualTabIndex,
-                        lastVirtualTabIndex,
-                        firstTabIndexPointer,
-                        lastTabIndexPointer,
-                        calculatedTabIndex,
-                        changeFocus = true;
+                      firstVirtualTabIndex,
+                      lastVirtualTabIndex,
+                      firstTabIndexPointer,
+                      lastTabIndexPointer,
+                      calculatedTabIndex,
+                      changeFocus = true;
 
-                    function sortTabIndexes (indexTabA, indexTabB) {
+                    function sortTabIndexes(indexTabA, indexTabB) {
                       return indexTabA - indexTabB;
                     }
 
                     function prepareTabIndexItems() {
                       var visibleDOMItems,
-                          item,
-                          tabIndex,
-                          tabIndexItems = Object.create(null);
+                        item,
+                        tabIndex,
+                        tabIndexItems = Object.create(null);
 
                       visibleDOMItems = $document.find('*').filter(':visible');
                       tabIndexItems.index = [];
@@ -542,8 +590,7 @@ define([
                             calculatedTabIndex = tabIndexItems.index[firstTabIndexPointer - 1];
                           } else {
                             if (lastTabIndexPointer < tabIndexItems.index.length - 1) {
-                              calculatedTabIndex = tabIndexItems.
-                                                          index[tabIndexItems.index.length - 1];
+                              calculatedTabIndex = tabIndexItems.index[tabIndexItems.index.length - 1];
                             } else {
                               changeFocus = false;
                             }
@@ -569,19 +616,19 @@ define([
                     }
                   };
 
-                  keyMapper[SPACE_CODE] = function (event) {
+                  keyMapper[SPACE_CODE] = function(event) {
                     angular.element(event.target).trigger('click');
                     event.preventDefault();
                   };
 
-                  keyMapper[HOME_CODE] = function (event) {
+                  keyMapper[HOME_CODE] = function(event) {
                     ngVirtualScrollListFocusedElement = getFirstModelTabIndex();
                     moveVirtualViewToItemIndex(0, 'start');
                     focusElement(ngVirtualScrollListFocusedElement);
                     event.preventDefault();
                   };
 
-                  keyMapper[END_CODE] = function (event) {
+                  keyMapper[END_CODE] = function(event) {
                     var itemIndex;
 
                     ngVirtualScrollListFocusedElement = getLastModelTabIndex();
@@ -591,7 +638,7 @@ define([
                     event.preventDefault();
                   };
 
-                  keyMapper[UP_ARROW_CODE] = function (event) {
+                  keyMapper[UP_ARROW_CODE] = function(event) {
                     var itemIndex;
 
                     if (tabIndex > getFirstModelTabIndex()) {
@@ -610,12 +657,12 @@ define([
 
                   keyMapper[PAGE_UP_CODE] = function(event) {
                     var scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
-                        currentItemIndex,
-                        newItemPosition,
-                        newItemIndex;
+                      currentItemIndex,
+                      newItemPosition,
+                      newItemIndex;
 
                     currentItemIndex = calculateItemIndex(ngVirtualScrollListFocusedElement);
-                    newItemPosition = renderingModel[currentItemIndex].top  +
+                    newItemPosition = renderingModel[currentItemIndex].top +
                                       renderingModel[currentItemIndex].height - scrollBoxSize;
                     newItemPosition = (newItemPosition < 0) ? 0 : newItemPosition;
                     newItemIndex = findNodeIndexForPosition(renderingModel, newItemPosition);
@@ -625,7 +672,7 @@ define([
                     event.preventDefault();
                   };
 
-                  keyMapper[DOWN_ARROW_CODE] = function (event) {
+                  keyMapper[DOWN_ARROW_CODE] = function(event) {
                     var itemIndex;
 
                     if (tabIndex < getLastModelTabIndex()) {
@@ -642,11 +689,11 @@ define([
                     event.preventDefault();
                   };
 
-                  keyMapper[PAGE_DOWN_CODE] = function (event) {
+                  keyMapper[PAGE_DOWN_CODE] = function(event) {
                     var scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
-                        currentItemIndex,
-                        newItemPosition,
-                        newItemIndex;
+                      currentItemIndex,
+                      newItemPosition,
+                      newItemIndex;
 
                     currentItemIndex = calculateItemIndex(ngVirtualScrollListFocusedElement);
                     newItemPosition = renderingModel[currentItemIndex].top + scrollBoxSize;
@@ -685,8 +732,8 @@ define([
 
                   Object.keys(ngRepeatElements).forEach(function(ngRepeatElementKey) {
                     var ngRepeatElement,
-                        tabIndex,
-                        eventHandler;
+                      tabIndex,
+                      eventHandler;
 
                     if (ngRepeatElements[ngRepeatElementKey] != null) {
                       ngRepeatElement = angular.element(ngRepeatElements[ngRepeatElementKey]);
@@ -712,28 +759,134 @@ define([
                 }, 0);
               }
 
-              function calculateItemIndex(tabIndex) {
-                var itemIndex = null;
+              function updateVirtualScrollListState(mode) {
+                var scrollState;
 
-                allElements.some(function(item, index) {
-                  if (getModelTabIndex(index) === Number(tabIndex)) {
-                    itemIndex = index;
-                    return true;
+                function findCompleteDisplayedElement(beginIndex, endIndex, mode) {
+                  var index,
+                    result;
+
+                  if (mode === 'last') {
+                    for (index = endIndex; index >= beginIndex; index -= 1) {
+                      if (isItemCutByIndex(index) === 0) {
+                        result = index;
+                        break;
+                      }
+                    }
                   } else {
-                    return false;
+                    for (index = beginIndex; index <= endIndex; index += 1) {
+                      if (isItemCutByIndex(index) === 0) {
+                        result = index;
+                        break;
+                      }
+                    }
                   }
-                });
 
-                return itemIndex;
+                  return result;
+                }
+
+                function isLastElementVisible(scrollState) {
+                  return (scrollState.lastVisibleElementIndex === (renderingModel.length - 1));
+                }
+
+                function emitEvents(scrollState) {
+                  var eventName;
+
+                  if ((ngVirtualScrollListID != null) && (ngVirtualScrollListID !== '')) {
+                    eventName = ngVirtualScrollListID + '-on-change';
+                    $scope.$emit(eventName, scrollState);
+
+                    if (isLastElementVisible(scrollState) === true) {
+                      eventName = ngVirtualScrollListID + '-on-last';
+                      $scope.$emit(eventName, scrollState);
+                    }
+                  }
+                }
+
+                function updateState(scrollState) {
+                  var VRI = $scope[virtualRangeIndex],
+                    firstVirtualElementIndex,
+                    lastVirtualElementIndex;
+
+                  scrollState.timestamp = new Date().getTime();
+                  firstVirtualElementIndex = VRI.firstVirtualNodeIndex;
+                  lastVirtualElementIndex = VRI.lastVirtualNodeIndex;
+                  scrollState.firstVirtualElementIndex = firstVirtualElementIndex;
+                  scrollState.firstVisibleElementIndex =
+                    findCompleteDisplayedElement(firstVirtualElementIndex, lastVirtualElementIndex,
+                                                 'first');
+                  scrollState.lastVirtualElementIndex = lastVirtualElementIndex;
+                  scrollState.lastVisibleElementIndex =
+                    findCompleteDisplayedElement(firstVirtualElementIndex, lastVirtualElementIndex,
+                                                 'last');
+                  scrollState.invisibleLeadingElementHeight = VRI.invisibleLeadingElementHeight;
+                  scrollState.invisibleFollowingElementHeight = VRI.invisibleFollowingElementHeight;
+                  scrollState.model = renderingModel;
+                  return scrollState;
+                }
+
+                function updateStateAfterScroll(scrollState) {
+                  var firstVirtualElementIndex,
+                    lastVirtualElementIndex,
+                    firstVisibleElementIndex,
+                    lastVisibleElementIndex;
+
+                  if (scrollState != null) {
+                    firstVirtualElementIndex = scrollState.firstVirtualElementIndex;
+                    lastVirtualElementIndex = scrollState.lastVirtualElementIndex;
+                    firstVisibleElementIndex = findCompleteDisplayedElement(firstVirtualElementIndex,
+                                                                            lastVirtualElementIndex,
+                                                                            'first');
+                    lastVisibleElementIndex = findCompleteDisplayedElement(firstVirtualElementIndex,
+                                                                           lastVirtualElementIndex,
+                                                                           'last');
+
+                    if ((scrollState.firstVisibleElementIndex !== firstVisibleElementIndex) ||
+                        (scrollState.lastVisibleElementIndex !== lastVisibleElementIndex)) {
+                      scrollState.firstVisibleElementIndex = firstVisibleElementIndex;
+                      scrollState.lastVisibleElementIndex = lastVisibleElementIndex;
+                      scrollState.timestamp = new Date().getTime();
+
+                      if ((ngVirtualScrollListState != null) && (ngVirtualScrollListState !== '')) {
+                        $scope.$parent[ngVirtualScrollListState] = scrollState;
+                      }
+
+                      virtualScrollListState = scrollState;
+                      emitEvents(scrollState);
+                    }
+                  }
+                }
+
+                if (allElements.length > 0) {
+                  scrollState = virtualScrollListState || Object.create(null);
+
+                  if (mode === 'VirtualRangeIndex') {
+                    scrollState = updateState(scrollState);
+
+                    if ((ngVirtualScrollListState != null) && (ngVirtualScrollListState !== '')) {
+                      $scope.$parent[ngVirtualScrollListState] = scrollState;
+                    }
+
+                    virtualScrollListState = scrollState;
+                    emitEvents(scrollState);
+                  }
+
+                  if (mode === 'Scroll') {
+                    updateStateAfterScroll(scrollState);
+                  }
+                }
+              }
+
+              function calculateItemIndex(tabIndex) {
+                return tabIndex - renderingModel.firstTabIndex;
               }
 
               function moveVirtualViewToItemIndex(itemIndex, position) {
                 var calculatedScrollPosition = 0,
-                    scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
-                    maxScrollPosition = renderingModel.totalHeight;
+                  scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
+                  maxScrollPosition = renderingModel.totalHeight;
 
-                if ((itemIndex >= 0) && (itemIndex < allElements.length) &&
-                    (allElements.length > 0)) {
+                if ((itemIndex >= 0) && (itemIndex < allElements.length) && (allElements.length > 0)) {
 
                   calculatedScrollPosition = renderingModel[itemIndex].top;
 
@@ -742,8 +895,8 @@ define([
                                                (renderingModel[itemIndex].height / 2);
                   }
                   if (position === 'end') {
-                    calculatedScrollPosition = calculatedScrollPosition +
-                                               renderingModel[itemIndex].height - scrollBoxSize;
+                    calculatedScrollPosition =
+                      calculatedScrollPosition + renderingModel[itemIndex].height - scrollBoxSize + 1;
                   }
 
                   if (calculatedScrollPosition < 0) {
@@ -754,8 +907,7 @@ define([
                   }
 
                   calculatedScrollPosition = Math.round(calculatedScrollPosition);
-                  setContainerScrollPosition($scope.scrollParentContainer,
-                                                    calculatedScrollPosition);
+                  setContainerScrollPosition($scope.scrollParentContainer, calculatedScrollPosition);
                 }
               }
 
@@ -764,29 +916,29 @@ define([
 
                 $timeout(function() {
                   ngRepeatEventHandlers.some(function(eventHandler) {
-                    if (eventHandler.tabIndex === tabIndex){
+                    if (eventHandler.tabIndex === tabIndex) {
                       eventHandler.element[0].focus();
                       return true;
                     }
                     return false;
                   });
 
-                  $timeout(function() { waitForFocusElement = false; }, 15);
+                  $timeout(function() {
+                    waitForFocusElement = false;
+                  }, 15);
                 }, 0);
               }
 
-              function isItemCut(tabIndex) {
-                var itemIndex = calculateItemIndex(tabIndex),
-                    itemBottomPosition,
-                    scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
-                    startScrollPosition = getContainerScrollPosition($scope.scrollParentContainer),
-                    endScrollPosition = startScrollPosition + scrollBoxSize + 1;
+              function isItemCutByIndex(itemIndex) {
+                var itemBottomPosition,
+                  scrollBoxSize = calculateScrollBoxSize($scope.scrollParentContainer),
+                  startScrollPosition = getContainerScrollPosition($scope.scrollParentContainer),
+                  endScrollPosition = startScrollPosition + scrollBoxSize + 1;
 
                 if (renderingModel[itemIndex].top < startScrollPosition) {
                   return -1;
                 }
-                itemBottomPosition = renderingModel[itemIndex].top +
-                                     renderingModel[itemIndex].height;
+                itemBottomPosition = renderingModel[itemIndex].top + renderingModel[itemIndex].height;
                 if (itemBottomPosition > endScrollPosition) {
                   return 1;
                 }
@@ -794,9 +946,14 @@ define([
                 return 0;
               }
 
+              function isItemCut(tabIndex) {
+                var itemIndex = calculateItemIndex(tabIndex);
+                return isItemCutByIndex(itemIndex);
+              }
+
               function virtualViewReposition(tabIndex) {
                 var itemIndex = calculateItemIndex(tabIndex),
-                    itemCutStatus;
+                  itemCutStatus;
 
                 if ((ngVirtualScrollListFocusedElement < getFirstVirtualTabIndex()) ||
                     (ngVirtualScrollListFocusedElement > getLastVirtualTabIndex())) {
@@ -817,17 +974,13 @@ define([
                 return false;
               }
 
-              function checkVirtualViewNeedReposition (event) {
+              function checkVirtualViewNeedReposition(event) {
                 var repositionButtons = Object.create(null);
 
-                repositionButtons[LEFT_ARROW_CODE] = true;
-                repositionButtons[RIGHT_ARROW_CODE] = true;
-                repositionButtons[UP_ARROW_CODE] = true;
-                repositionButtons[DOWN_ARROW_CODE] = true;
-                repositionButtons[HOME_CODE] = true;
-                repositionButtons[END_CODE] = true;
-                repositionButtons[PAGE_UP_CODE] = true;
-                repositionButtons[PAGE_DOWN_CODE] = true;
+                [LEFT_ARROW_CODE, RIGHT_ARROW_CODE, UP_ARROW_CODE, DOWN_ARROW_CODE, HOME_CODE, END_CODE,
+                 PAGE_UP_CODE, PAGE_DOWN_CODE].forEach(function(key) {
+                                                         repositionButtons[key] = true;
+                                                       });
 
                 if ((ngVirtualScrollListKeyMode === true) && (getComponentFocus() === true) &&
                     (repositionButtons[event.keyCode] === true)) {
@@ -838,19 +991,19 @@ define([
                 }
               }
 
-              function checkComponentLoseFocus (event) {
+              function checkComponentLoseFocus(event) {
                 var itemTabIndex = Number(angular.element(event.target).attr('tabindex')),
-                    firstComponentTabIndex,
-                    lastComponentTabIndex;
+                  firstComponentTabIndex,
+                  lastComponentTabIndex;
 
                 if (allElements.length > 0) {
                   firstComponentTabIndex = getFirstModelTabIndex();
                   lastComponentTabIndex = getLastModelTabIndex();
 
-                  if ((itemTabIndex != null) && (firstComponentTabIndex != null) &&
-                      (lastComponentTabIndex != null)) {
-                    if ((itemTabIndex < firstComponentTabIndex) ||
-                        (itemTabIndex > lastComponentTabIndex)) {
+                  if ((itemTabIndex != null) && (firstComponentTabIndex != null) && (lastComponentTabIndex
+                                                                                     != null)) {
+                    if ((itemTabIndex < firstComponentTabIndex) || (itemTabIndex
+                                                                    > lastComponentTabIndex)) {
                       setComponentFocus(false);
                     }
                   } else {
@@ -861,12 +1014,12 @@ define([
                 }
               }
 
-              function setFocus () {
+              function setFocus() {
                 var firstVirtualTabIndex,
-                    lastVirtualTabIndex;
+                  lastVirtualTabIndex;
 
-                if ((ngVirtualScrollListKeyMode === true) && (getComponentFocus() === true) &&
-                    (allElements.length > 0)) {
+                if ((ngVirtualScrollListKeyMode === true) && (getComponentFocus() === true)
+                    && (allElements.length > 0)) {
                   firstVirtualTabIndex = getFirstVirtualTabIndex();
                   lastVirtualTabIndex = getLastVirtualTabIndex();
 
@@ -879,10 +1032,10 @@ define([
 
               function setUpElementsSize() {
                 var element,
-                    index,
-                    modelIndex;
+                  index,
+                  modelIndex;
 
-                $timeout(function () {
+                $timeout(function() {
                   if (ngRepeatElements.length > 2) {
                     for (index = 1; (index < (ngRepeatElements.length - 1)); index += 1) {
                       modelIndex = $scope[virtualRangeIndex].firstVirtualNodeIndex + index - 1;
@@ -894,27 +1047,27 @@ define([
               }
 
               function registerEventListeners() {
-                if ((ngVirtualScrollListID != null) && (ngVirtualScrollListID !== '')){
+                if ((ngVirtualScrollListID != null) && (ngVirtualScrollListID !== '')) {
                   $scope.$on('ngVirtualScrollListTrigger(' + ngVirtualScrollListID + ')',
-                    function(event, args) {
-                      var itemIndex = args.scrollIndex,
-                          position = args.scrollIndexPosition,
-                          positions = {
-                            top : 'start',
-                            bottom : 'end',
-                            center : 'center'
-                          };
+                             function(event, args) {
+                               var itemIndex = args.scrollIndex,
+                                 position = args.scrollIndexPosition,
+                                 positions = {
+                                   top: 'start',
+                                   bottom: 'end',
+                                   center: 'center'
+                                 };
 
-                      if ((itemIndex != null) && (itemIndex >= 0) &&
-                        (itemIndex < allElements.length)) {
-                        if (positions[position] != null) {
-                          position = positions[position];
-                        } else {
-                          position = positions.top;
-                        }
-                        moveVirtualViewToItemIndex(itemIndex, position);
-                      }
-                    });
+                               if ((itemIndex != null) && (itemIndex >= 0) && (itemIndex
+                                                                               < allElements.length)) {
+                                 if (positions[position] != null) {
+                                   position = positions[position];
+                                 } else {
+                                   position = positions.top;
+                                 }
+                                 moveVirtualViewToItemIndex(itemIndex, position);
+                               }
+                             });
                 }
               }
 
@@ -924,7 +1077,11 @@ define([
                 event.preventDefault();
               });
 
-              $window.document.addEventListener("focus", checkComponentLoseFocus, true);
+              $scope.scrollParent.on('scroll', function() {
+                updateVirtualScrollListState('Scroll');
+              });
+
+              $window.document.addEventListener('focus', checkComponentLoseFocus, true);
 
               $window.addEventListener('keydown', checkVirtualViewNeedReposition, true);
 
@@ -934,19 +1091,26 @@ define([
                   addEventHandlers();
                   setFocus();
                 }
+                updateVirtualScrollListState('VirtualRangeIndex');
               });
 
-              $interval(function() {
+              intervalHandler = $interval(function() {
                 if ((ngRepeatEventHandlers.length > 0) &&
                     ($scope[subSetElements].length === ngRepeatEventHandlers.length)) {
-                  if (ngRepeatEventHandlers[0].tabIndex !==
-                      getModelTabIndex($scope[virtualRangeIndex].firstVirtualNodeIndex)) {
+                  if (ngRepeatEventHandlers[0].tabIndex
+                      !== getModelTabIndex($scope[virtualRangeIndex].firstVirtualNodeIndex)) {
                     addEventHandlers();
                   }
                 }
               }, 1000);
 
               registerEventListeners();
+
+              $scope.$on('$destroy', function() {
+                $interval.cancel(intervalHandler);
+                $window.document.removeEventListener('focus', checkComponentLoseFocus, true);
+                $window.removeEventListener('keydown', checkVirtualViewNeedReposition, true);
+              });
             }
           };
         }
