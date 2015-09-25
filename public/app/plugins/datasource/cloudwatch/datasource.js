@@ -596,7 +596,7 @@ function (angular, _) {
     }
 
     function convertToCloudWatchTime(date) {
-      return date.valueOf() / 1000;
+      return Math.round(date.valueOf() / 1000);
     }
 
     function convertDimensionFormat(dimensions) {
