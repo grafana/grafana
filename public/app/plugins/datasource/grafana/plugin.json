@@ -6,6 +6,6 @@
   "type": "grafana",
   "serviceName": "GrafanaDatasource",
 
-  "module": "plugins/datasource/grafana/datasource",
+  "module": "app/plugins/datasource/grafana/datasource",
   "metrics": true
 }

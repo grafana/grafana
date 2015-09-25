@@ -1,13 +1,13 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
-  'components/timeSeries',
   'kbn',
-  'components/panelmeta',
+  'app/components/timeSeries',
+  'app/components/panelmeta',
   './singleStatPanel',
 ],
-function (angular, app, _, TimeSeries, kbn, PanelMeta) {
+function (angular, app, _, kbn, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat');

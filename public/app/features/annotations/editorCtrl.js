@@ -20,15 +20,13 @@ function (angular, _, $) {
     };
 
     $scope.init = function() {
-      $scope.editor = { index: 0 };
+      $scope.mode = 'list';
       $scope.datasources = datasourceSrv.getAnnotationSources();
       $scope.annotations = $scope.dashboard.annotations.list;
       $scope.reset();
 
-      $scope.$watch('editor.index', function(newVal) {
-        if (newVal !== 2) {
-          $scope.reset();
-        }
+      $scope.$watch('mode', function(newVal) {
+        if (newVal === 'new') { $scope.reset(); }
       });
     };
 
@@ -43,8 +41,8 @@ function (angular, _, $) {
       $scope.currentAnnotation = annotation;
       $scope.currentIsNew = false;
       $scope.datasourceChanged();
+      $scope.mode = 'edit';
 
-      $scope.editor.index = 2;
       $(".tooltip.in").remove();
     };
 
@@ -57,14 +55,14 @@ function (angular, _, $) {
 
     $scope.update = function() {
       $scope.reset();
-      $scope.editor.index = 0;
+      $scope.mode = 'list';
       $scope.broadcastRefresh();
     };
 
     $scope.add = function() {
       $scope.annotations.push($scope.currentAnnotation);
       $scope.reset();
-      $scope.editor.index = 0;
+      $scope.mode = 'list';
       $scope.updateSubmenuVisibility();
       $scope.broadcastRefresh();
     };

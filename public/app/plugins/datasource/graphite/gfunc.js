@@ -242,7 +242,7 @@ function (_, $) {
       {
         name: "function",
         type: "string",
-        options: ['sum', 'avg']
+        options: ['sum', 'avg', 'maxSeries']
       }
     ],
     defaultParams: [3, "sum"]

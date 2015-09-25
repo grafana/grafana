@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/influxdb/influxSeries'
+  'app/plugins/datasource/influxdb/influxSeries'
 ], function(InfluxSeries) {
   'use strict';
 
@@ -157,6 +157,24 @@ define([
 
     });
 
+    describe('given measurement with dots', function() {
+      var options = { series: [
+        {
+          name: 'app.prod.server1.count',
+          tags:  {},
+          columns: ['time', 'mean'],
+          values: [[1431946625000, 10], [1431946626000, 12]]
+        }
+      ]};
+
+      it('should replace patterns', function() {
+          options.alias = 'alias: $1 -> [[3]]';
+          var series = new InfluxSeries(options);
+          var result = series.getTimeSeries();
+
+          expect(result[0].target).to.be('alias: prod -> count');
+      });
+    });
   });
 
 });

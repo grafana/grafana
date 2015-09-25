@@ -1,12 +1,12 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   'moment',
   './directives',
   './queryCtrl',
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -22,8 +22,8 @@ function (angular, _, kbn) {
 
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
-      var start = convertToTSDBTime(options.range.from);
-      var end = convertToTSDBTime(options.range.to);
+      var start = convertToTSDBTime(options.rangeRaw.from, false);
+      var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
 
       _.each(options.targets, function(target) {
@@ -93,11 +93,13 @@ function (angular, _, kbn) {
 
       var m = metric + "{" + key + "=*}";
 
-      return this._get('/api/search/lookup', {m: m}).then(function(result) {
+      return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
         var tagvs = [];
         _.each(result, function(r) {
-          tagvs.push(r.tags[key]);
+          if (tagvs.indexOf(r.tags[key]) === -1) {
+            tagvs.push(r.tags[key]);
+          }
         });
         return tagvs;
       });
@@ -171,6 +173,19 @@ function (angular, _, kbn) {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
+    };
+
+    var aggregatorsPromise = null;
+    OpenTSDBDatasource.prototype.getAggregators = function() {
+      if (aggregatorsPromise) { return aggregatorsPromise; }
+
+      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+        if (result.data && _.isArray(result.data)) {
+          return result.data.sort();
+        }
+        return [];
+      });
+      return aggregatorsPromise;
     };
 
     function transformMetricData(md, groupByTags, target, options) {
@@ -275,14 +290,13 @@ function (angular, _, kbn) {
       });
     }
 
-    function convertToTSDBTime(date) {
+    function convertToTSDBTime(date, roundUp) {
       if (date === 'now') {
         return null;
       }
 
-      date = kbn.parseDate(date);
-
-      return date.getTime();
+      date = dateMath.parse(date, roundUp);
+      return date.valueOf();
     }
 
     return OpenTSDBDatasource;

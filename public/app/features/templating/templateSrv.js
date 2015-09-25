@@ -39,10 +39,20 @@ function (angular, _) {
       if (_.isString(value)) {
         return value;
       } else {
-        if (variable.multiFormat === 'regex values') {
-          return '(' + value.join('|') + ')';
+        switch(variable.multiFormat) {
+          case "regex values": {
+            return '(' + value.join('|') + ')';
+          }
+          case "lucene": {
+            return '(' + value.join(' OR ') + ')';
+          }
+          case "pipe": {
+            return value.join('|');
+          }
+          default:  {
+            return '{' + value.join(',') + '}';
+          }
         }
-        return '{' + value.join(',') + '}';
       }
     };
 

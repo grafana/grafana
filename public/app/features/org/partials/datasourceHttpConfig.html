@@ -9,7 +9,7 @@
 			<input type="text" class="tight-form-input input-xlarge" ng-model='current.url' placeholder="http://my.server.com:8080" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
 		</li>
 		<li class="tight-form-item">
-			Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
+			Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</tip>
 	  </li>
 		<li>
 			<select class="input-medium tight-form-input" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
@@ -23,9 +23,7 @@
 			Basic Auth
 		</li>
 		<li class="tight-form-item">
-			Enable&nbsp;
-			<input class="cr1" id="current.basicAuth" type="checkbox" ng-model="current.basicAuth" ng-checked="current.basicAuth">
-			<label for="current.basicAuth" class="cr1"></label>
+			<editor-checkbox text="Enable" model="current.basicAuth"></editor-checkbox>
 		</li>
 		<li class="tight-form-item" ng-if="current.basicAuth">
 			User

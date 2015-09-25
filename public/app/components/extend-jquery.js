@@ -2,9 +2,6 @@ define(['jquery', 'angular', 'lodash'],
 function ($, angular, _) {
   'use strict';
 
-  /**
-   * jQuery extensions
-   */
   var $win = $(window);
 
   $.fn.place_tt = (function () {

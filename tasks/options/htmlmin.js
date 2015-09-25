@@ -7,7 +7,7 @@ module.exports = function(config) {
         keepClosingSlash: true
       },
       expand: true,
-      cwd: '<%= tempDir %>',
+      cwd: '<%= genDir %>',
       src: [
         //'index.html',
         'app/panels/**/*.html',
@@ -16,7 +16,7 @@ module.exports = function(config) {
         'plugins/raintank/features/**/*.html',
         'plugins/raintank/directives/**/*.html'
       ],
-      dest: '<%= tempDir %>'
+      dest: '<%= genDir %>'
     }
   };
 };

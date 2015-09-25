@@ -1,6 +1,6 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'jquery',
   'jquery.flot',
@@ -15,7 +15,7 @@ function (angular, app, _, $) {
 
     return {
       link: function(scope, elem) {
-        var data, panel;
+        var data, panel, linkInfo;
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
@@ -122,8 +122,8 @@ function (angular, app, _, $) {
             xaxis: {
               show: false,
               mode: "time",
-              min: scope.range.from.getTime(),
-              max: scope.range.to.getTime(),
+              min: scope.range.from.valueOf(),
+              max: scope.range.to.valueOf(),
             },
             grid: { hoverable: false, show: false },
           };
@@ -170,10 +170,16 @@ function (angular, app, _, $) {
           }
 
           elem.toggleClass('pointer', panel.links.length > 0);
+
+          if (panel.links.length > 0) {
+            linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], scope.panel.scopedVars);
+          } else {
+            linkInfo = null;
+          }
         }
 
         // drilldown link tooltip
-        var drilldownTooltip = $('<div id="tooltip" class="">gello</div>"');
+        var drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
 
         elem.mouseleave(function() {
           if (panel.links.length === 0) { return;}
@@ -181,10 +187,9 @@ function (angular, app, _, $) {
         });
 
         elem.click(function() {
-          if (panel.links.length === 0) { return; }
-          var link = panel.links[0];
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(link, scope.panel.scopedVars);
-          if (panel.links[0].targetBlank) {
+          if (!linkInfo) { return; }
+
+          if (linkInfo.target === '_blank') {
             var redirectWindow = window.open(linkInfo.href, '_blank');
             redirectWindow.location;
             return;
@@ -202,9 +207,9 @@ function (angular, app, _, $) {
         });
 
         elem.mousemove(function(e) {
-          if (panel.links.length === 0) { return;}
+          if (!linkInfo) { return;}
 
-          drilldownTooltip.text('click to go to: ' + panel.links[0].title);
+          drilldownTooltip.text('click to go to: ' + linkInfo.title);
 
           drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
         });

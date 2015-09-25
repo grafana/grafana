@@ -1,8 +1,9 @@
 define([
   'angular',
   'config',
+  'lodash',
 ],
-function (angular, config) {
+function (angular, config, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -12,12 +13,16 @@ function (angular, config) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {
-      name: '',
-      type: 'graphite',
-      url: '',
-      access: 'proxy'
-    };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+
+    $scope.indexPatternTypes = [
+      {name: 'No pattern',  value: undefined},
+      {name: 'Hourly',      value: 'Hourly',  example: '[logstash-]YYYY.MM.DD.HH'},
+      {name: 'Daily',       value: 'Daily',   example: '[logstash-]YYYY.MM.DD'},
+      {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
+      {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
+      {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
 
     $scope.init = function() {
       $scope.isNew = true;
@@ -115,6 +120,11 @@ function (angular, config) {
           $location.path('datasources/edit/' + result.id);
         });
       }
+    };
+
+    $scope.indexPatternTypeChanged = function() {
+      var def = _.findWhere($scope.indexPatternTypes, {value: $scope.current.jsonData.interval});
+      $scope.current.database = def.example || 'es-index-name';
     };
 
     $scope.init();

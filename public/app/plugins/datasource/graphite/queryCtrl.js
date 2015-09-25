@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GraphiteQueryCtrl', function($scope, $sce, templateSrv) {
+  module.controller('GraphiteQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
 
     $scope.init = function() {
       if ($scope.target) {
@@ -87,6 +87,7 @@ function (angular, _, config, gfunc, Parser) {
       case 'series-ref':
         addFunctionParameter(func, astNode.value, index, $scope.segments.length > 0);
         break;
+      case 'bool':
       case 'string':
       case 'number':
         if ((index-1) >= func.def.params.length) {
@@ -104,7 +105,7 @@ function (angular, _, config, gfunc, Parser) {
         }
 
         $scope.segments = _.map(astNode.segments, function(segment) {
-          return new MetricSegment(segment);
+          return uiSegmentSrv.newSegment(segment);
         });
       }
     }
@@ -119,7 +120,7 @@ function (angular, _, config, gfunc, Parser) {
 
     function checkOtherSegments(fromIndex) {
       if (fromIndex === 0) {
-        $scope.segments.push(MetricSegment.newSelectMetric());
+        $scope.segments.push(uiSegmentSrv.newSelectMetric());
         return;
       }
 
@@ -129,13 +130,13 @@ function (angular, _, config, gfunc, Parser) {
           if (segments.length === 0) {
             if (path !== '') {
               $scope.segments = $scope.segments.splice(0, fromIndex);
-              $scope.segments.push(MetricSegment.newSelectMetric());
+              $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
             return;
           }
           if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
-              $scope.segments.push(MetricSegment.newSelectMetric());
+              $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
             else {
               return checkOtherSegments(fromIndex + 1);
@@ -162,14 +163,14 @@ function (angular, _, config, gfunc, Parser) {
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
           var altSegments = _.map(segments, function(segment) {
-            return new MetricSegment({ value: segment.text, expandable: segment.expandable });
+            return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
           });
 
           if (altSegments.length === 0) { return altSegments; }
 
           // add template variables
           _.each(templateSrv.variables, function(variable) {
-            altSegments.unshift(new MetricSegment({
+            altSegments.unshift(uiSegmentSrv.newSegment({
               type: 'template',
               value: '$' + variable.name,
               expandable: true,
@@ -177,7 +178,7 @@ function (angular, _, config, gfunc, Parser) {
           });
 
           // add wildcard option
-          altSegments.unshift(new MetricSegment('*'));
+          altSegments.unshift(uiSegmentSrv.newSegment('*'));
           return altSegments;
         })
         .then(null, function(err) {
@@ -282,25 +283,6 @@ function (angular, _, config, gfunc, Parser) {
       if (!$scope.panel.metricOptionsEnabled) {
         delete $scope.panel.cacheTimeout;
       }
-    };
-
-    function MetricSegment(options) {
-      if (options === '*' || options.value === '*') {
-        this.value = '*';
-        this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
-        this.expandable = true;
-        return;
-      }
-
-      this.fake = options.fake;
-      this.value = options.value;
-      this.type = options.type;
-      this.expandable = options.expandable;
-      this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
-    }
-
-    MetricSegment.newSelectMetric = function() {
-      return new MetricSegment({value: 'select metric', fake: true});
     };
 
     $scope.init();

@@ -7,6 +7,6 @@
   "type": "mixed",
   "serviceName": "MixedDatasource",
 
-  "module": "plugins/datasource/mixed/datasource",
+  "module": "app/plugins/datasource/mixed/datasource",
   "metrics": true
 }

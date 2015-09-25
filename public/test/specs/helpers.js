@@ -1,7 +1,8 @@
 define([
  'kbn',
- 'lodash'
-], function(kbn, _) {
+ 'lodash',
+ 'app/core/utils/datemath',
+], function(kbn, _, dateMath) {
   'use strict';
 
   function ControllerTestContext() {
@@ -107,8 +108,8 @@ define([
         return this.time;
       }
       return {
-        from : kbn.parseDate(this.time.from),
-        to : kbn.parseDate(this.time.to)
+        from : dateMath.parse(this.time.from, false),
+        to : dateMath.parse(this.time.to, true)
       };
     };
 

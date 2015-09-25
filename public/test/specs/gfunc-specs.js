@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/graphite/gfunc'
+  'app/plugins/datasource/graphite/gfunc'
 ], function(gfunc) {
   'use strict';
 

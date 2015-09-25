@@ -1,0 +1,385 @@
+@import "type.less";
+@import "login.less";
+@import "submenu.less";
+@import "graph.less";
+@import "bootstrap-tagsinput.less";
+@import "tables_lists.less";
+@import "search.less";
+@import "panel.less";
+@import "forms.less";
+@import "singlestat.less";
+@import "tightform.less";
+@import "sidemenu.less";
+@import "navbar.less";
+@import "gfbox.less";
+@import "dashlist.less";
+@import "admin.less";
+@import "validation.less";
+@import "fonts.less";
+@import "tabs.less";
+@import "timepicker.less";
+
+// Raintank
+@import "rt/rt.less";
+
+.row-control-inner {
+  padding:0px;
+  margin:0px;
+  position:relative;
+}
+
+.hide-controls {
+  padding: 0;
+  .row-tab {
+    display: none;
+  }
+  .add-row-panel-hint {
+    display: none;
+  }
+}
+
+.playlist-active {
+  .grafana-menu-zoom-out,
+  .add-row-panel-hint,
+  .grafana-menu-refresh,
+  .top-nav-dash-actions {
+    display:none;
+  }
+
+  .grafana-menu-stop-playlist {
+    display: list-item;
+  }
+}
+
+.row-button {
+  width: 24px;
+}
+
+.modal {
+  max-width: 800px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  top: 20%;
+}
+
+.histogram-chart {
+  position:relative;
+}
+
+.scrollable {
+  max-height: 300px;
+  overflow: auto;
+}
+
+
+//
+// Srollbars
+//
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar:hover {
+  height: 8px;
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment { display: none;  }
+::-webkit-scrollbar-button:horizontal:decrement {  display: none; }
+::-webkit-scrollbar-button:horizontal:increment {  display: none; }
+::-webkit-scrollbar-button:vertical:decrement { display: none; }
+::-webkit-scrollbar-button:vertical:increment { display: none; }
+::-webkit-scrollbar-button:horizontal:decrement:active { background-image: none; }
+::-webkit-scrollbar-button:horizontal:increment:active { background-image: none; }
+::-webkit-scrollbar-button:vertical:decrement:active { background-image: none; }
+::-webkit-scrollbar-button:vertical:increment:active {background-image: none; }
+::-webkit-scrollbar-track-piece { background-color: transparent; }
+
+::-webkit-scrollbar-thumb:vertical {
+  height: 50px;
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
+  border: 1px solid @scrollbarBorder;
+  border-top: 1px solid @scrollbarBorder;
+  border-left: 1px solid @scrollbarBorder;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  width: 50px;
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
+  border: 1px solid @scrollbarBorder;
+  border-top: 1px solid @scrollbarBorder;
+  border-left: 1px solid @scrollbarBorder;
+}
+
+
+// SPECTRUM CSS overrides
+
+.sp-replacer {
+  background: inherit;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+.sp-replacer:hover, .sp-replacer.sp-active {
+  border-color: inherit;
+  color: inherit;
+}
+
+.sp-container {
+  border-radius: 0;
+  background-color: @heroUnitBackground;
+  border: none;
+  padding: 0;
+}
+
+.sp-palette-container, .sp-picker-container {
+  border: none;
+}
+
+.sp-dd {
+  display: none;
+}
+
+.sp-preview {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border: none;
+  margin-right: 5px;
+  float: left;
+  z-index: 0;
+}
+
+.datapoints-warning {
+  pointer: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  margin-top: -50px;
+  margin-left: -100px;
+  width: 200px;
+  text-align: center;
+  cursor: auto;
+  padding: 10px;
+}
+
+.metrics-editor-help:hover {
+  .hide {
+    display: block;
+  }
+}
+
+.grafana-tooltip {
+  position : absolute;
+  top: -1000;
+  left: 0;
+  color: @tooltipColor;
+  padding: 10px;
+  font-size: 11pt;
+  font-weight : 200;
+  background-color: @tooltipBackground;
+  border-radius: 5px;
+  z-index: 9999;
+  max-width: 800px;
+  max-height: 600px;
+  overflow: hidden;
+  line-height: 14px;
+  a {
+    color: @tooltipLinkColor;
+  }
+}
+
+.grafana-tooltip hr {
+ padding: 2px;
+ color: #c8c8c8;
+ margin: 0px;
+ border-bottom:0px solid #c8c8c8;
+}
+
+.tooltip.in {
+  .opacity(100);
+}
+.tooltip-inner {
+  max-width: 400px;
+}
+
+.grafana-version-info {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  font-size: 80%;
+  color: darken(@gray, 25%);
+  a { color: darken(@gray, 25%); }
+}
+
+.template-variable {
+  color: @variable;
+}
+
+.grafana-info-box:before {
+  content: "\f05a";
+  font-family:'FontAwesome';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 20px;
+  color: @blue;
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: 5px 15px;
+  background-color: @grafanaTargetBackground;
+  border: 1px solid @grafanaTargetBorder;
+  h5 {
+    margin-top: 5px;
+  }
+}
+
+.grafana-tip {
+  padding-left: 5px;
+}
+
+.shortcut-table {
+  td { padding: 3px; }
+  th:last-child { text-align: left; }
+  td:first-child { text-align: right; }
+}
+
+.modal-no-header {
+  border: 1px solid @grafanaTargetFuncBackground;
+  text-align: center;
+
+  h3 {
+    margin-top: 30px;
+  }
+
+  .modal-close {
+    float: right;
+    font-size: 140%;
+    padding: 10px;
+  }
+
+  .modal-tagline {
+    font-size: 16px;
+  }
+}
+
+.confirm-modal {
+  max-width: 500px;
+
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: @green;
+    padding-bottom: 20px;
+  }
+
+  .confirm-modal-title {
+    font-size: 18px;
+    color: @linkColor;
+    margin-bottom: 15px;
+  }
+
+  .confirm-modal-buttons {
+    margin-top: 35px;
+    margin-bottom: 35px;
+    button {
+      margin-right: 5px
+    }
+  }
+}
+
+.share-modal-body {
+  text-align: center;
+  padding: 10px 0;
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-modal-options {
+    margin: 11px 20px 33px 20px;
+  }
+
+  .share-modal-big-icon {
+    .fa, .gf-icon {
+      font-size: 70px;
+    }
+  }
+
+  .share-snapshot-info-text {
+    margin: 10px 105px;
+    strong {
+      color: @headingsColor;
+      font-weight: 500;
+    }
+  }
+
+  .share-snapshot-header {
+    margin: 20px 0 22px 0;
+  }
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-snapshot-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+  }
+}
+
+.query-keyword {
+  font-weight: bold;
+  color: @blue;
+}
+
+.query-segment-key {
+  border-right: none;
+  padding-right: 1px;
+}
+
+.query-segment-operator {
+  padding-right: 1px;
+  border-right: none;
+  color: @orange;
+}
+
+.highlight-word {
+  color: @orange;
+}
+
+.body-copy-emphasis {
+  color: @headingsColor;
+}
+
+.signup-page-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  background-image: url(/img/background_tease.jpg);
+
+  .signup-logo-container {
+    width: 150px;
+    margin: 0 auto;
+    padding: 80px 0;
+  }
+}
+
+.typeahead strong {
+  color: @yellow;
+}

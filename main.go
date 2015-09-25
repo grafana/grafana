@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metric/helper"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/collectoreventpublisher"
 	"github.com/grafana/grafana/pkg/services/elasticstore"
@@ -75,7 +74,6 @@ func main() {
 	eventpublisher.Init()
 	plugins.Init()
 	elasticstore.Init()
-	models.InitQuotaDefaults()
 
 	metricsBackend, err := helper.New(setting.StatsdEnabled, setting.StatsdAddr, setting.StatsdType, "grafana", setting.InstanceId)
 	if err != nil {
@@ -102,11 +100,15 @@ func main() {
 }
 
 func initRuntime() {
-	setting.NewConfigContext(&setting.CommandLineArgs{
+	err := setting.NewConfigContext(&setting.CommandLineArgs{
 		Config:   *configFile,
 		HomePath: *homePath,
 		Args:     flag.Args(),
 	})
+
+	if err != nil {
+		log.Fatal(3, err.Error())
+	}
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
