@@ -174,6 +174,7 @@ function (angular) {
       "1": {
         "terms": {
           "field": queryDef.field,
+          "size": 0,
           "order": {
             "_term": "asc"
           }
