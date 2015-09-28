@@ -250,6 +250,10 @@ function (angular, app, _, moment, kbn) {
         to = Date.now();
       }
 
+      if (from < moment('1900-01-01')) {
+        from = moment('1900-01-01');
+      }
+
       timeSrv.setTime({
         from: moment.utc(from).toDate(),
         to: moment.utc(to).toDate(),
