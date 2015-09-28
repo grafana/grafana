@@ -1,6 +1,6 @@
 define([
   "lodash",
-  "./queryDef"
+  "./query_def"
 ],
 function (_, queryDef) {
   'use strict';

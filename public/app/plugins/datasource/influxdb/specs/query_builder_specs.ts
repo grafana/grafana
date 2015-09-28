@@ -1,5 +1,5 @@
 ///<amd-dependency path="app/plugins/datasource/influxdb/query_builder" name="InfluxQueryBuilder"/>
-//
+
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 declare var InfluxQueryBuilder: any;

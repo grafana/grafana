@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  './queryDef',
+  './query_def',
 ],
 function (angular, _, queryDef) {
   'use strict';
