@@ -33,9 +33,16 @@ function (angular, config, _, $, store) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
-    $rootScope.onAppEvent = function(name, callback) {
+    $rootScope.onAppEvent = function(name, callback, localScope) {
       var unbind = $rootScope.$on(name, callback);
-      this.$on('$destroy', unbind);
+      var callerScope = this;
+      if (callerScope.$id === 1 && !localScope) {
+        console.log('warning rootScope onAppEvent called without localscope');
+      }
+      if (localScope) {
+        callerScope = localScope;
+      }
+      callerScope.$on('$destroy', unbind);
     };
 
     $rootScope.appEvent = function(name, payload) {

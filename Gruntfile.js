@@ -6,6 +6,7 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON('package.json'),
     baseDir: '.',
     srcDir: 'public',
+    genDir: 'public_gen',
     destDir: 'dist',
     tempDir: 'tmp',
     arch: os.arch(),

@@ -1,11 +1,12 @@
 define([
   'angular',
   'lodash',
+  'app/core/utils/datemath',
   'kbn',
   './queryCtrl',
   './directives',
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,8 +22,8 @@ function (angular, _, kbn) {
 
     // Called once per panel (graph)
     KairosDBDatasource.prototype.query = function(options) {
-      var start = options.range.from;
-      var end = options.range.to;
+      var start = options.rangeRaw.from;
+      var end = options.rangeRaw.to;
 
       var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
       var plotParams = _.compact(_.map(options.targets, function(target) {
@@ -394,7 +395,7 @@ function (angular, _, kbn) {
         if (date === 'now') {
           return;
         }
-        else if (date.indexOf('now-') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(4);
           name = start_stop_name + "_relative";
           var re_date = /(\d+)\s*(\D+)/;
@@ -414,16 +415,11 @@ function (angular, _, kbn) {
           return;
         }
 
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, start_stop_name === 'end');
       }
 
-      if (_.isDate(date)) {
-        name = start_stop_name + "_absolute";
-        response_obj[name] = date.getTime();
-        return;
-      }
-
-      console.log("Date is neither string nor date");
+      name = start_stop_name + "_absolute";
+      response_obj[name] = date.valueOf();
     }
 
     function convertToKairosDBTimeUnit(unit) {

@@ -367,6 +367,14 @@ define([
       }
 
       switch (id) {
+      case 'true': {
+        type = 'bool';
+        break;
+      }
+      case 'false': {
+        type = 'bool';
+        break;
+      }
       default:
         type = "identifier";
       }
@@ -379,7 +387,7 @@ define([
 
     },
 
-      /*
+    /*
      * Extract a numeric literal out of the next sequence of
      * characters or return 'null' if its not possible. This method
      * supports all numeric literals described in section 7.8.3

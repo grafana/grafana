@@ -9,7 +9,7 @@ function (angular) {
   module.service('utilSrv', function($rootScope, $modal, $q) {
 
     this.init = function() {
-      $rootScope.onAppEvent('show-modal', this.showModal);
+      $rootScope.onAppEvent('show-modal', this.showModal, $rootScope);
     };
 
     this.showModal = function(e, options) {

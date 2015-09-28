@@ -5,12 +5,13 @@
   "type": "influxdb",
   "serviceName": "InfluxDatasource",
 
-  "module": "plugins/datasource/influxdb/datasource",
+  "module": "app/plugins/datasource/influxdb/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/influxdb/partials/config.html"
   },
 
+  "defaultMatchFormat": "regex values",
   "metrics": true,
   "annotations": true
 }

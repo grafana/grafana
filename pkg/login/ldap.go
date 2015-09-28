@@ -68,6 +68,10 @@ func (a *ldapAuther) login(query *LoginUserQuery) error {
 		if grafanaUser, err := a.getGrafanaUserFor(ldapUser); err != nil {
 			return err
 		} else {
+			// sync user details
+			if err := a.syncUserInfo(grafanaUser, ldapUser); err != nil {
+				return err
+			}
 			// sync org roles
 			if err := a.syncOrgRoles(grafanaUser, ldapUser); err != nil {
 				return err
@@ -122,6 +126,21 @@ func (a *ldapAuther) createGrafanaUser(ldapUser *ldapUserInfo) (*m.User, error) 
 	return &cmd.Result, nil
 }
 
+func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *ldapUserInfo) error {
+	var name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
+	if user.Email == ldapUser.Email && user.Name == name {
+		return nil
+	}
+
+	log.Info("Ldap: Syncing user info %s", ldapUser.Username)
+	updateCmd := m.UpdateUserCommand{}
+	updateCmd.UserId = user.Id
+	updateCmd.Login = user.Login
+	updateCmd.Email = ldapUser.Email
+	updateCmd.Name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
+	return bus.Dispatch(&updateCmd)
+}
+
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	if len(a.server.LdapGroups) == 0 {
 		return nil
@@ -132,9 +151,12 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 		return err
 	}
 
+	handledOrgIds := map[int64]bool{}
+
 	// update or remove org roles
 	for _, org := range orgsQuery.Result {
 		match := false
+		handledOrgIds[org.OrgId] = true
 
 		for _, group := range a.server.LdapGroups {
 			if org.OrgId != group.OrgId {
@@ -170,22 +192,18 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 			continue
 		}
 
-		match := false
-		for _, org := range orgsQuery.Result {
-			if group.OrgId == org.OrgId {
-				match = true
-				break
-			}
+		if _, exists := handledOrgIds[group.OrgId]; exists {
+			continue
 		}
 
-		if !match {
-			// add role
-			cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-			if err := bus.Dispatch(&cmd); err != nil {
-				return err
-			}
-			break
+		// add role
+		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
+		if err := bus.Dispatch(&cmd); err != nil {
+			return err
 		}
+
+		// mark this group has handled so we do not process it again
+		handledOrgIds[group.OrgId] = true
 	}
 
 	return nil

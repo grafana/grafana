@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/graphite/datasource'
+  './helpers',
+  'app/plugins/datasource/graphite/datasource'
 ], function(helpers) {
   'use strict';
 
@@ -17,7 +17,7 @@ define([
 
     describe('When querying influxdb with one target using query editor target spec', function() {
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
         maxDataPoints: 500,
       };

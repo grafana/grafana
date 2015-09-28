@@ -41,7 +41,6 @@ function (angular, _) {
           $scope.monitor_types[type.id] = type;
           $scope.monitor_types_by_name[type.name] = type;
         });
-        console.log("monitor_types ready");
       });
     };
 

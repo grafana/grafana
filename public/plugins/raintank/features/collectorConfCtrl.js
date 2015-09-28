@@ -87,7 +87,6 @@ function (angular, _) {
 
     $scope.add = function() {
       if (!$scope.collectorForm.$valid) {
-        console.log("form invalid");
         return;
       }
 
@@ -106,6 +105,9 @@ function (angular, _) {
     };
 
     $scope.getEventsDashboardLink = function() {
+      if (!$scope.collector) {
+        return "";
+      }
       var path = "/dashboard-solo/file/rt-events.json";
       var qstring = "?panelId=1&fullscreen&from=now-30d&to=now&var-collector="+$scope.collector.slug;
       return path + qstring;

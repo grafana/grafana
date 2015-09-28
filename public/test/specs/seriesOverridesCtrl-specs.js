@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'panels/graph/seriesOverridesCtrl'
+  './helpers',
+  'app/panels/graph/seriesOverridesCtrl'
 ], function(helpers) {
   'use strict';
 

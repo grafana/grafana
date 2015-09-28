@@ -1,7 +1,7 @@
 define([
   'angular',
   'jquery',
-  'app',
+  'app/app',
   'lodash',
 ], function(angular, jquery, app, _) {
   'use strict';

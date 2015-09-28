@@ -3,14 +3,13 @@ define([
   'lodash',
   'jquery',
   'config',
-  'kbn',
-  'moment',
+  'app/core/utils/datemath',
   './directives',
   './queryCtrl',
   './funcEditor',
   './addGraphiteFunc',
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, $, config, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -29,8 +28,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, 'round-down'),
-          until: this.translateTime(options.range.to, 'round-up'),
+          from: this.translateTime(options.rangeRaw.from, false),
+          until: this.translateTime(options.rangeRaw.to, true),
           targets: options.targets,
           format: options.format,
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -135,7 +134,8 @@ function (angular, _, $, config, kbn, moment) {
 
         return this.doGraphiteRequest({
           method: 'GET',
-          url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
+          url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
+            '&until=' + this.translateTime(options.range.to, true) + tags,
         });
       }
       catch(err) {
@@ -143,32 +143,30 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
+    GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
           return date;
         }
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, roundUp);
       }
 
-      date = moment.utc(date);
-
-      if (rounding === 'round-up') {
+      // graphite' s from filter is exclusive
+      // here we step back one minute in order
+      // to guarantee that we get all the data that
+      // exists for the specified range
+      if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
-      else if (rounding === 'round-down') {
-        // graphite' s from filter is exclusive
-        // here we step back one minute in order
-        // to guarantee that we get all the data that
-        // exists for the specified range
+      else if (roundUp === false) {
         if (date.get('s')) {
           date.subtract(1, 'm');
         }
@@ -187,14 +185,14 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-        .then(function(results) {
-          return _.map(results.data, function(metric) {
-            return {
-              text: metric.text,
-              expandable: metric.expandable ? true : false
-            };
-          });
+      .then(function(results) {
+        return _.map(results.data, function(metric) {
+          return {
+            text: metric.text,
+            expandable: metric.expandable ? true : false
+          };
         });
+      });
     };
 
     GraphiteDatasource.prototype.testDatasource = function() {
@@ -205,9 +203,9 @@ function (angular, _, $, config, kbn, moment) {
 
     GraphiteDatasource.prototype.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
-        .then(function(results) {
-          return results.data.dashboards;
-        });
+      .then(function(results) {
+        return results.data.dashboards;
+      });
     };
 
     GraphiteDatasource.prototype.loadDashboard = function(dashName) {

@@ -5,7 +5,7 @@
   "type": "kairosdb",
   "serviceName": "KairosDBDatasource",
 
-  "module": "plugins/datasource/kairosdb/datasource",
+  "module": "app/plugins/datasource/kairosdb/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/kairosdb/partials/config.html"

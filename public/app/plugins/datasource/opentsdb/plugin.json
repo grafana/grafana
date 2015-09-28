@@ -5,11 +5,12 @@
   "type": "opentsdb",
   "serviceName": "OpenTSDBDatasource",
 
-  "module": "plugins/datasource/opentsdb/datasource",
+  "module": "app/plugins/datasource/opentsdb/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/opentsdb/partials/config.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "defaultMatchFormat": "pipe"
 }

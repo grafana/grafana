@@ -64,16 +64,28 @@ func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
 	}
 
 	var buffer bytes.Buffer
+	var err error
+	var subjectText interface{}
+
 	data := cmd.Data
 	if data == nil {
 		data = make(map[string]interface{}, 10)
 	}
 
 	setDefaultTemplateData(data, nil)
-	mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	if err != nil {
+		return err
+	}
 
-	subjectTmplText := data["Subject"].(map[string]interface{})["value"].(string)
-	subjectTmpl, err := template.New("subject").Parse(subjectTmplText)
+	subjectData := data["Subject"].(map[string]interface{})
+	subjectText, hasSubject := subjectData["value"]
+
+	if !hasSubject {
+		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+	}
+
+	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
 	if err != nil {
 		return err
 	}

@@ -156,6 +156,17 @@ define([
       return node;
     },
 
+    boolExpression: function() {
+      if (!this.match('bool')) {
+        return null;
+      }
+
+      return {
+        type: 'bool',
+        value: this.consumeToken().value === 'true',
+      };
+    },
+
     functionParameters: function () {
       if (this.match(')') || this.match('')) {
         return [];
@@ -165,6 +176,7 @@ define([
         this.functionCall() ||
         this.numericLiteral() ||
         this.seriesRefExpression() ||
+        this.boolExpression() ||
         this.metricExpression() ||
         this.stringLiteral();
 
