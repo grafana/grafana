@@ -1,0 +1,320 @@
+// ==========================================================================
+// COLLECTORS
+// ==========================================================================
+
+
+
+.rt-collector-config.rt-config-box {
+	height: auto;
+	margin: 3em 0 1em;
+}
+
+.rt-collector-config .rt-box-interior-section {
+	padding: 0;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.rt-collector-config-header {
+	position: relative;
+}
+
+.rt-collector-config-header > h2 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 300;
+	line-height: normal;
+}
+
+.rt-config-setup-time {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 13px;
+}
+
+.rt-collector-config h3 {
+	margin: 0 0 1rem;
+	font-size: 16px;
+	font-weight: 300;
+	line-height: normal;
+}
+
+.collectorCurrentStatus h3 {
+	font-size: 16px;
+	font-weight: 400;
+	line-height: normal;
+	color:@rt-light-gray;
+}
+
+.rt-collector-config h3 > a {
+	float: right;
+	font-size: 12px;
+	color: @rt-blue;
+}
+
+
+
+// Helper text
+// ==========================================================================
+
+.rt-collector-config .helper {
+	font-size: 12px;
+	margin: 0;
+}
+
+.rt-collector-config .success {
+	color: @rt-green;
+}
+
+.btn-link {
+	display: inline-block;
+	margin: 0 20px;
+	color: @rt-light-gray;
+}
+
+
+
+// Distros
+// ==========================================================================
+
+.rt-collector-config-distro {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	> li {
+		display: inline-block;
+		margin-right: 20px;
+	}
+
+	label {
+		display: block;
+		padding: 50px 10px 10px;
+		background-color: @inputBackground;
+		border-radius: 3px;
+		box-sizing: border-box;
+	}
+
+	input[type="radio"] {
+		display: none;
+	}
+
+	input[type="radio"]:checked + label {
+		background: @inputBackground;
+		outline: 2px solid @rt-blue;
+	}
+}
+
+// Animations
+// ==========================================================================
+
+.ascii-ellipses-layout {
+  opacity: 0;
+  position: absolute;
+  margin-left: 230px;
+  margin-right: auto;
+  margin-top: 0px;
+  left: 0;
+  right: 0;
+  color: @rt-light-gray;
+  font-weight: 600;
+}
+
+.ascii-ellipses-container {
+  position: relative;
+  display: inline-block;
+}
+
+.ascii-ellipses-1 {
+  .ascii-ellipses-layout;
+  animation:          loading-1 3250ms ease-in infinite;
+  -webkit-animation:  loading-1 3250ms ease-in infinite;
+  -moz-animation:     loading-1 3250ms ease-in infinite;
+  -o-animation:       loading-1 3250ms ease-in infinite;  
+}
+
+.ascii-ellipses-2 {
+  .ascii-ellipses-layout;
+  -webkit-animation:  loading-2 3250ms ease-in infinite;
+  -moz-animation:     loading-2 3250ms ease-in infinite;
+  -o-animation:       loading-2 3250ms ease-in infinite;  
+  animation:          loading-2 3250ms ease-in infinite;
+}
+
+.ascii-ellipses-3 {
+  .ascii-ellipses-layout;
+  -webkit-animation:  loading-3 3250ms ease-in infinite;
+  -moz-animation:     loading-3 3250ms ease-in infinite;
+  -o-animation:       loading-3 3250ms ease-in infinite;
+  animation:          loading-3 3250ms ease-in infinite;  
+}
+
+.ascii-ellipses-4 {
+  .ascii-ellipses-layout;
+  -webkit-animation:  loading-4 3250ms ease-in infinite;
+  -moz-animation:     loading-4 3250ms ease-in infinite;
+  -o-animation:       loading-4 3250ms ease-in infinite;
+  animation:          loading-4 3250ms ease-in infinite;  
+}
+
+@-webkit-keyframes loading-1 {
+  0% { opacity: 0; }
+  1% { opacity: .75; }
+  11% { opacity: .75; }
+  12% { opacity: 0; }  
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-1 {
+  0% { opacity: 0; }
+  1% { opacity: .75; }
+  11% { opacity: .75; }
+  12% { opacity: 0; }  
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-1 {
+  0% { opacity: 0; }
+  1% { opacity: .75; }
+  11% { opacity: .75; }
+  12% { opacity: 0; }  
+  100% { opacity: 0; }
+}
+
+@keyframes loading-1 {
+  0% { opacity: 0; }
+  1% { opacity: .75; }
+  11% { opacity: .75; }
+  12% { opacity: 0; }  
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes loading-2 {
+  0% { opacity: 0; }
+  10% { opacity: 0; }
+  11% { opacity: .75; }
+  22% { opacity: .75; }  
+  23% { opacity: 0; }    
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-2 {
+  0% { opacity: 0; }
+  10% { opacity: 0; }
+  11% { opacity: .75; }
+  22% { opacity: .75; }  
+  23% { opacity: 0; }    
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-2 {
+  0% { opacity: 0; }
+  10% { opacity: 0; }
+  11% { opacity: .75; }
+  22% { opacity: .75; }  
+  23% { opacity: 0; }    
+  100% { opacity: 0; }
+}
+
+@keyframes loading-2 {
+  0% { opacity: 0; }
+  10% { opacity: 0; }
+  11% { opacity: .75; }
+  22% { opacity: .75; }  
+  23% { opacity: 0; }    
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes loading-3 {
+  0% { opacity: 0; }
+  21% { opacity: 0; }
+  22% { opacity: .75; }
+  33% { opacity: .75; }    
+  34% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-3 {
+  0% { opacity: 0; }
+  21% { opacity: 0; }
+  22% { opacity: .75; }
+  33% { opacity: .75; }  
+  34% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-3 {
+  0% { opacity: 0; }
+  21% { opacity: 0; }
+  22% { opacity: .75; }
+  33% { opacity: .75; }  
+  34% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@keyframes loading-3 {
+  0% { opacity: 0; }
+  21% { opacity: 0; }
+  22% { opacity: .75; }
+  33% { opacity: .75; }  
+  34% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes loading-4 {
+  0% { opacity: 0; }
+  34% { opacity: 0; }
+  35% { opacity: .75; }
+  46% { opacity: .75; }    
+  47% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@-moz-keyframes loading-4 {
+  0% { opacity: 0; }
+  34% { opacity: 0; }
+  35% { opacity: .75; }
+  46% { opacity: .75; }  
+  47% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@-o-keyframes loading-4 {
+  0% { opacity: 0; }
+  34% { opacity: 0; }
+  35% { opacity: .75; }
+  46% { opacity: .75; }  
+  47% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+@keyframes loading-4 {
+  0% { opacity: 0; }
+  34% { opacity: 0; }
+  35% { opacity: .75; }
+  46% { opacity: .75; }  
+  47% { opacity: 0; }      
+  100% { opacity: 0; }
+}
+
+// Code samples
+// ==========================================================================
+
+.rt-collector-config pre {
+	margin: 0.25em 0;
+  padding: 10px;
+  background-color: @inputBackground;
+  border-radius: 3px;
+  line-height: normal;
+}
+
+.rt-collector-config pre .h {
+	color: @rt-blue;
+}
+
+.rt-collector-config code {
+	background: transparent;
+}

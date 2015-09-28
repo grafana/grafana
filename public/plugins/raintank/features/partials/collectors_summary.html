@@ -54,14 +54,14 @@
 			</div>
 			<div class="rt-box">
 				<div class="rt-box-header">Collector Details
-					<div style="float: right; display: inline;">
+					<div ng-show="collector.online" style="float: right; display: inline;">
 						<div style="display: inline; margin-left:6px;">
 							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: {{collector.name}} dashboard'"></i></a>
 						</div>
 					</div>
 				</div>
 				<div class="rt-box-body no-padding" style="min-height: 50px">
-					<div class="collectorCurrentStatus">
+					<div ng-show="collector.online" class="collectorCurrentStatus">
 						<div class="rt-summary-status">
 							<span class="{{collector.online?'online':'offline'}} jumbo"> {{collector.online?'online':'offline'}}</span>
 						  <span class="checkTime">&nbsp; {{collector.online_change | timeDuration}}</span>
@@ -78,6 +78,23 @@
 						<!-- <button type="submit" class="secondaryCTA">View All Errors</button> -->
 						<div class="clearfix"></div>
 					</div>
+					<div ng-show="!collector.online" class="collectorCurrentStatus">
+						<div class="rt-summary-status">
+<!-- 							<img src="img/CollectorAstronomer.gif" style="margin-bottom: 10px;"> -->
+							<h3>LOOKING FOR SIGNS OF LIFE
+							<span class="ascii-ellipses-1"></span>
+    <span class="ascii-ellipses-2">.&nbsp;</span>
+    <span class="ascii-ellipses-3">&nbsp;.</span>
+    <span class="ascii-ellipses-4">&nbsp;&nbsp;.</span>
+							</h3>
+							<p>We're checking, but we havent seen this collector appear online yet.</p>
+							<p>Need to install it? <a href="/collectors/init/{{collector.id}}" class="rt-dashboard-blurb">Read the installation instructions</a></p>
+						</div>
+						<div class="statusEvents" >
+							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
+						</div>
+						<div class="clearfix"></div>
+					</div>					
 				</div>
 			</div>
 
@@ -113,7 +130,7 @@
 
 		</div>
 	</div>
-	<div class="detailContainer">
+	<div class="detailContainer" ng-show="collector.online">
 		<div class="detailColumn detailFull">
 			<div class="rt-box">
 				<div class="rt-box-header">Collector Events: Last 30 Days

@@ -7,11 +7,14 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CollectorConfCtrl', function($scope, $q, $location, $routeParams, $http, backendSrv, contextSrv) {
+  module.controller('CollectorConfCtrl', function($scope, $q, $location, $timeout, $routeParams, $http, backendSrv, contextSrv) {
 
     var defaults = {
       name: '',
+      enabled: true,
     };
+
+    $scope.apiKey = "";
 
     $scope.init = function() {
       $scope.collectors = [];
@@ -19,6 +22,9 @@ function (angular, _) {
       if ("id" in $routeParams) {
         $scope.getCollectors().then(function() {
           $scope.getCollector($routeParams.id);
+          if (!$scope.collector.online) {
+            $scope.checkIfOnline();
+          }
         });
       } else {
         $scope.reset();
@@ -92,7 +98,8 @@ function (angular, _) {
 
       backendSrv.put('/api/collectors', $scope.collector)
         .then(function(resp) {
-          $location.path('/collectors/edit/'+resp.id);
+          $scope.collector = resp;
+          $location.path('/collectors/init/'+resp.id);
         });
     };
 
@@ -117,6 +124,45 @@ function (angular, _) {
       $scope.collector.enabled = newState;
       $scope.save().then(function() {
         $scope.collector.enabled_change = new Date();
+      });
+    };
+
+    $scope.configInfo = function() {
+      $scope.showConfigInfo = true;
+    };
+
+    $scope.defaultDistro = function() {
+      $scope.showDistroConfig = false;
+    };
+
+    $scope.otherDistro = function() {
+      $scope.showDistroConfig = true;
+    };
+
+    $scope.apiKey = function() {
+      var token = {
+        role: 'Editor',
+        name: "collector:" + $scope.collector.name
+      };
+      backendSrv.post('/api/auth/keys', token).then(function(result) {
+        $scope.apiKey = result.key;
+        $scope.showApiKey = true;
+      });
+    };
+
+    $scope.checkIfOnline = function() {
+      $scope.verifyOnline = true;
+      $scope.$on("$destroy", function() {
+        $timeout.cancel($scope.poller);
+      });
+
+      backendSrv.get('/api/collectors/'+$scope.collector.id).then(function(res) {
+        $scope.collector = res;
+        if (!res.online) {
+          $scope.poller = $timeout(function() {
+            $scope.checkIfOnline();
+          }, 1000);
+        }
       });
     };
 

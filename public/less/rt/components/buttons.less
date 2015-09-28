@@ -4,7 +4,7 @@
 
 
 
-// Mixins 
+// Mixins
 // ==========================================================================
 
 .ButtonCTA(@bg: transparent, @border: transparent, @color: transparent, @highlight: transparent) {
@@ -20,7 +20,7 @@
   border-radius: 2px;
   transition: 0.15s;
 
-  // For dark backgrounds. 
+  // For dark backgrounds.
   &:hover,
   &:active {
     border: 1px solid @highlight;
@@ -32,14 +32,14 @@
 
 
 
-// Buttons 
+// Buttons
 // ==========================================================================
 
 // Super CTA
 // ====================================
 
 .superCTA,
-.superCTA:visited { 
+.superCTA:visited {
   display: block;
   padding: 1.0em 0;
   color:#fff;
@@ -145,14 +145,14 @@
 // Mini CTA
 // ====================================
 
-.miniCTA, 
-.miniCTA:visited { 
+.miniCTA,
+.miniCTA:visited {
   color: @gray;
 }
 
 .miniCTA:hover,
-.miniCTA:active { 
-  color: @white; 
+.miniCTA:active {
+  color: @white;
   text-decoration: none;
 }
 
@@ -165,13 +165,13 @@
 }
 
 .primary-icons-config {
-  color: @linkColor;  
+  color: @linkColor;
   -webkit-text-fill-color: transparent;
   background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
-  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;
   -webkit-background-clip: text;
   text-decoration:none;
-  transition: 0.15s; 
+  transition: 0.15s;
 }
 
 .primary-icon:before {
@@ -212,7 +212,7 @@
     color: @white;
     text-decoration:none;
   }
- 
+
   &:active {
     background: lighten(@rt-blue, 5%);
     color: @white;
@@ -222,4 +222,9 @@
 
 .modal-body .rt-btn{
   margin: 30px 0 40px 0;
+}
+
+button.rt-btn {
+  display: inline-block;
+  font-family: @rt-sansFontFamily;
 }

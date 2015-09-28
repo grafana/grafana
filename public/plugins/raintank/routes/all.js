@@ -16,12 +16,12 @@ function (angular) {
         templateUrl: 'plugins/raintank/features/partials/collectors_summary.html',
         controller : 'CollectorConfCtrl',
       })
-      .when('/collectors/edit/:id', {
-        templateUrl: 'plugins/raintank/features/partials/collectors_edit.html',
+      .when('/collectors/init/:id', {
+        templateUrl: 'plugins/raintank/features/partials/collectors_new.html',
         controller : 'CollectorConfCtrl',
       })
       .when('/collectors/new', {
-        templateUrl: 'plugins/raintank/features/partials/collectors_edit.html',
+        templateUrl: 'plugins/raintank/features/partials/collectors_new.html',
         controller : 'CollectorConfCtrl',
       })
       .when('/endpoints', {
