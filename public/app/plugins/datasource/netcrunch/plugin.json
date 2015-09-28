@@ -5,11 +5,10 @@
   "type": "netcrunch",
   "serviceName": "NetCrunchDatasource",
 
-  "module": "plugins/datasource/netcrunch/datasource",
+  "module": "app/plugins/datasource/netcrunch/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/netcrunch/partials/config.html",
-    "query": "app/plugins/datasource/netcrunch/partials/query.editor.html"
+    "config": "app/plugins/datasource/netcrunch/partials/config.html"
   },
 
   "metrics": true,

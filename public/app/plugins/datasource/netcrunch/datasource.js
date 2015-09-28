@@ -23,7 +23,7 @@ define([
   './filters/netCrunchFilters'
 ],
 
-function (angular, _, moment, config, $, kbn) {
+function (angular, _, moment) {
 
   'use strict';
 
@@ -497,8 +497,8 @@ function (angular, _, moment, config, $, kbn) {
               maxDataPoints = (scopedVars.maxDataPoints == null) ?
                                netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT :
                                scopedVars.maxDataPoints,
-              rangeFrom = moment(kbn.parseDate(options.range.from)).startOf('minute'),
-              rangeTo = moment(kbn.parseDate(options.range.to)).startOf('minute'),
+              rangeFrom = options.range.from.startOf('minute'),
+              rangeTo = options.range.to.startOf('minute'),
               rangeMaxDataPoints = calculateMaxDataPoints(setMaxDataPoints, maxDataPoints),
               range = prepareTimeRange(rangeFrom, rangeTo, rawData, rangeMaxDataPoints),
               dataQueries = [];
