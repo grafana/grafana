@@ -47,9 +47,9 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
 		} else if ds.Type == m.DS_NETCRUNCH {
-      req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+      req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
     } else {
-			req.URL.Path = util.JoinUrlFragments(target.Path, proxyPath)
+			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 		}
 
 		if ds.BasicAuth {

@@ -72,7 +72,7 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-    'consts/all',
+    'app/consts/all',
     'app/services/all',
     'app/features/all',
     'app/controllers/all',
