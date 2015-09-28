@@ -1,8 +1,9 @@
 define([
   'angular',
-  'config'
+  'config',
+  'lodash',
 ],
-function (angular, config) {
+function (angular, config, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -12,12 +13,16 @@ function (angular, config) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {
-      name: '',
-      url: '',
-      access: 'proxy',
-      type: 'elasticsearch'
-    };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+
+    $scope.indexPatternTypes = [
+      {name: 'No pattern',  value: undefined},
+      {name: 'Hourly',      value: 'Hourly',  example: '[logstash-]YYYY.MM.DD.HH'},
+      {name: 'Daily',       value: 'Daily',   example: '[logstash-]YYYY.MM.DD'},
+      {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
+      {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
+      {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
 
     $scope.init = function() {
       $scope.isNew = true;
@@ -42,29 +47,13 @@ function (angular, config) {
       return backendSrv.get('/api/datasources/plugins').then(function(plugins) {
         datasourceTypes = plugins;
         $scope.types = plugins;
-        $scope.filteredTypes = {};
-
-        Object.keys($scope.types).forEach(function(typeKey) {
-          if (typeKey !== 'netcrunch') {
-            $scope.filteredTypes[typeKey] = $scope.types[typeKey];
-          }
-        });
       });
     };
 
     $scope.getDatasourceById = function(id) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
-        var simpleUrlRegexp = /^[h][t][t][p][s]?[:][\/][\/](.[^\/]+).*$/,
-            simpleUrl;
         $scope.isNew = false;
         $scope.current = ds;
-        if (ds.type === 'netcrunch') {
-          $scope.current.isSSL = false;
-          $scope.current.isSSL = (ds.url.indexOf('https://') === 0);
-          simpleUrl = simpleUrlRegexp.exec(ds.url);
-          $scope.current.simpleUrl = ((simpleUrl != null) && (simpleUrl.length > 1)) ? simpleUrl[1] :
-                                     'localhost';
-        }
         $scope.typeChanged();
       });
     };
@@ -99,11 +88,7 @@ function (angular, config) {
         }, function(err) {
           if (err.statusText) {
             $scope.testing.message = err.statusText;
-            if (err.title == null) {
-              $scope.testing.title = "HTTP Error";
-            } else {
-              $scope.testing.title = err.title;
-            }
+            $scope.testing.title = "HTTP Error";
           } else {
             $scope.testing.message = err.message;
             $scope.testing.title = "Unknown error";
@@ -115,14 +100,8 @@ function (angular, config) {
     };
 
     $scope.saveChanges = function(test) {
-      var protocol = ($scope.current.isSSL === false) ? 'http://' : 'https://';
-
       if (!$scope.editForm.$valid) {
         return;
-      }
-
-      if ($scope.current.type === 'netcrunch') {
-        $scope.current.url = protocol + $scope.current.simpleUrl + '/ncapi/';
       }
 
       if ($scope.current.id) {
@@ -141,6 +120,11 @@ function (angular, config) {
           $location.path('datasources/edit/' + result.id);
         });
       }
+    };
+
+    $scope.indexPatternTypeChanged = function() {
+      var def = _.findWhere($scope.indexPatternTypes, {value: $scope.current.jsonData.interval});
+      $scope.current.database = def.example || 'es-index-name';
     };
 
     $scope.init();

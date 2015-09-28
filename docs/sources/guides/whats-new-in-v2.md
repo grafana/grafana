@@ -72,17 +72,17 @@ When you zoom or change the Dashboard time to a custom absolute time range, all 
 The `Hide time override info` option allows you to hide the the override info text that is by default shown in the
 upper right of a panel when overridden time range options.
 
-Currently you can only override the dashboard time with relative time ranges, not absolute time ranges. 
+Currently you can only override the dashboard time with relative time ranges, not absolute time ranges.
 
 ## Panel iframe embedding
 
-You can embed a single panel on another web page or your own application using the panel share dialog. 
+You can embed a single panel on another web page or your own application using the panel share dialog.
 
-Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io). 
+Below you should see an iframe with a graph panel (taken from a Dashboard snapshot at [snapshot.raintank.io](http://snapshot.raintank.io).
 
 Try hovering or zooming on the panel below!
 
-<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/IQ7iZF00sHalq0Ffjv6OyclJSA1YHYV1?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
 
 This feature makes it easy to include interactive visualizations from your Grafana instance anywhere you want.
 
@@ -130,7 +130,7 @@ latency, network traffic, and storage)
 
 ![](/img/v2/dashlist_starred.png)
 
-The dashlist is a new panel in Grafana v2.0. It allows you to show your personal starred dashboards, as well as do custom searches based on search strings or tags. 
+The dashlist is a new panel in Grafana v2.0. It allows you to show your personal starred dashboards, as well as do custom searches based on search strings or tags.
 
 dashlist is used on the new Grafana Home screen. It is included as a reference Panel and is useful to provide basic linking between Dashboards.
 
@@ -138,7 +138,7 @@ dashlist is used on the new Grafana Home screen. It is included as a reference P
 
 Data sources in Grafana v2.0 are no longer defined in a config file. Instead, they are added through the UI or the HTTP API.
 
-The backend can now proxy data from Data Sources, which means that it is a lot easier to get started using Grafana with Graphite or OpenTSDB without having to spend time with CORS (Cross origin resource sharing) work-arounds. 
+The backend can now proxy data from Data Sources, which means that it is a lot easier to get started using Grafana with Graphite or OpenTSDB without having to spend time with CORS (Cross origin resource sharing) work-arounds.
 
 In addition, connections to Data Sources can be better controlled and secured, and authentication information no longer needs to be exposed to the browser.
 
@@ -146,14 +146,14 @@ In addition, connections to Data Sources can be better controlled and secured, a
 
 A commonly reported problem has been graphs dipping to zero at the the end, because metric data for the last interval has yet to be written to the Data Source. These graphs then "self correct" once the data comes in, but can look deceiving or alarming at times.
 
-You can avoid this problem by adding a `now delay` in `Dashboard Settings` > `Time Picker` tab. This new feature will cause Grafana to ignore the most recent data up to the set delay. 
+You can avoid this problem by adding a `now delay` in `Dashboard Settings` > `Time Picker` tab. This new feature will cause Grafana to ignore the most recent data up to the set delay.
 ![](/img/v2/timepicker_now_delay.jpg)
 
 The delay that may be necessary depends on how much latency you have in your collection pipeline.
 
 ## Dashboard overwrite protection
 
-Grafana v2.0 protects Users from accidentally overwriting each others Dashboard changes. Similar protections are in place if you try to create a new Dashboard with the same name as an existing one. 
+Grafana v2.0 protects Users from accidentally overwriting each others Dashboard changes. Similar protections are in place if you try to create a new Dashboard with the same name as an existing one.
 
 ![](/img/v2/overwrite_protection.jpg)
 

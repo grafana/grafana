@@ -69,7 +69,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package your self, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
 the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies

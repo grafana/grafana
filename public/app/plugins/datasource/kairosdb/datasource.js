@@ -1,15 +1,17 @@
 define([
   'angular',
   'lodash',
+  'app/core/utils/datemath',
   'kbn',
   './queryCtrl',
+  './directives',
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('KairosDBDatasource', function($q, $http, templateSrv) {
+  module.factory('KairosDBDatasource', function($q, backendSrv, templateSrv) {
 
     function KairosDBDatasource(datasource) {
       this.type = datasource.type;
@@ -20,8 +22,8 @@ function (angular, _, kbn) {
 
     // Called once per panel (graph)
     KairosDBDatasource.prototype.query = function(options) {
-      var start = options.range.from;
-      var end = options.range.to;
+      var start = options.rangeRaw.from;
+      var end = options.rangeRaw.to;
 
       var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
       var plotParams = _.compact(_.map(options.targets, function(target) {
@@ -50,10 +52,6 @@ function (angular, _, kbn) {
       return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
     };
 
-    ///////////////////////////////////////////////////////////////////////
-    /// Query methods
-    ///////////////////////////////////////////////////////////////////////
-
     KairosDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         metrics: queries,
@@ -69,7 +67,7 @@ function (angular, _, kbn) {
         data: reqBody
       };
 
-      return $http(options);
+      return backendSrv.datasourceRequest(options);
     };
 
     /**
@@ -82,7 +80,7 @@ function (angular, _, kbn) {
         method: 'GET'
       };
 
-      return $http(options).then(function(response) {
+      return backendSrv.datasourceRequest(options).then(function(response) {
         if (!response.data) {
           return $q.when([]);
         }
@@ -109,7 +107,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         if (!result.data) {
           return $q.when([]);
         }
@@ -138,7 +136,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         if (!result.data) {
           return $q.when([]);
         }
@@ -157,7 +155,7 @@ function (angular, _, kbn) {
         }
       };
 
-      return $http(options).then(function(response) {
+      return backendSrv.datasourceRequest(options).then(function(response) {
         if (!response.data) {
           return [];
         }
@@ -397,7 +395,7 @@ function (angular, _, kbn) {
         if (date === 'now') {
           return;
         }
-        else if (date.indexOf('now-') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(4);
           name = start_stop_name + "_relative";
           var re_date = /(\d+)\s*(\D+)/;
@@ -417,16 +415,11 @@ function (angular, _, kbn) {
           return;
         }
 
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, start_stop_name === 'end');
       }
 
-      if (_.isDate(date)) {
-        name = start_stop_name + "_absolute";
-        response_obj[name] = date.getTime();
-        return;
-      }
-
-      console.log("Date is neither string nor date");
+      name = start_stop_name + "_absolute";
+      response_obj[name] = date.valueOf();
     }
 
     function convertToKairosDBTimeUnit(unit) {

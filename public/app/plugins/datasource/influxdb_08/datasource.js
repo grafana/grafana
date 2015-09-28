@@ -1,13 +1,14 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   './influxSeries',
   './queryBuilder',
+  './directives',
   './queryCtrl',
   './funcEditor',
 ],
-function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
+function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -57,7 +58,7 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ range: rangeUnparsed });
+      var timeFilter = getTimeFilter({ rangeRaw: rangeUnparsed });
       var query = annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
@@ -186,12 +187,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return deferred.promise;
     };
 
-    InfluxDatasource.prototype._getDashboardInternal = function(id, isTemp) {
+    InfluxDatasource.prototype._getDashboardInternal = function(id) {
       var queryString = 'select dashboard from "grafana.dashboard_' + btoa(id) + '"';
-
-      if (isTemp) {
-        queryString = 'select dashboard from "grafana.temp_dashboard_' + btoa(id) + '"';
-      }
 
       return this._seriesQuery(queryString).then(function(results) {
         if (!results || !results.length) {
@@ -207,55 +204,19 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.getDashboard = function(id, isTemp) {
-      var self = this;
-      return this._getDashboardInternal(id, isTemp).then(function(dashboard) {
+    InfluxDatasource.prototype.getDashboard = function(id) {
+      return this._getDashboardInternal(id).then(function(dashboard) {
         if (dashboard !== null)  {
           return dashboard;
         }
-
-        // backward compatible load for unslugified ids
-        var slug = kbn.slugifyForUrl(id);
-        if (slug !== id) {
-          return self.getDashboard(slug, isTemp);
-        }
-
         throw "Dashboard not found";
       }, function(err) {
         throw  "Could not load dashboard, " + err.data;
       });
     };
 
-    InfluxDatasource.prototype.deleteDashboard = function(id) {
-      return this._seriesQuery('drop series "grafana.dashboard_' + btoa(id) + '"').then(function(results) {
-        if (!results) {
-          throw "Could not delete dashboard";
-        }
-        return id;
-      }, function(err) {
-        throw "Could not delete dashboard, " + err.data;
-      });
-    };
-
-    InfluxDatasource.prototype.searchDashboards = function(queryString) {
-      var influxQuery = 'select * from /grafana.dashboard_.*/ where ';
-
-      var tagsOnly = queryString.indexOf('tags!:') === 0;
-      if (tagsOnly) {
-        var tagsQuery = queryString.substring(6, queryString.length);
-        influxQuery = influxQuery + 'tags =~ /.*' + tagsQuery + '.*/i';
-      }
-      else {
-        var titleOnly = queryString.indexOf('title:') === 0;
-        if (titleOnly) {
-          var titleQuery = queryString.substring(6, queryString.length);
-          influxQuery = influxQuery + ' title =~ /.*' + titleQuery + '.*/i';
-        }
-        else {
-          influxQuery = influxQuery + '(tags =~ /.*' + queryString + '.*/i or title =~ /.*' + queryString + '.*/i)';
-        }
-      }
-
+    InfluxDatasource.prototype.searchDashboards = function() {
+      var influxQuery = 'select * from /grafana.dashboard_.*/ ';
       return this._seriesQuery(influxQuery).then(function(results) {
         var hits = { dashboards: [], tags: [], tagsOnly: false };
 
@@ -265,20 +226,17 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
 
         for (var i = 0; i < results.length; i++) {
           var dashCol = _.indexOf(results[i].columns, 'title');
-          var tagsCol = _.indexOf(results[i].columns, 'tags');
           var idCol = _.indexOf(results[i].columns, 'id');
 
           var hit =  {
             id: results[i].points[0][dashCol],
             title: results[i].points[0][dashCol],
-            tags: results[i].points[0][tagsCol].split(",")
           };
 
           if (idCol !== -1) {
             hit.id = results[i].points[0][idCol];
           }
 
-          hit.tags = hit.tags[0] ? hit.tags : [];
           hits.dashboards.push(hit);
         }
         return hits;
@@ -296,8 +254,8 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
     }
 
     function getTimeFilter(options) {
-      var from = getInfluxTime(options.range.from);
-      var until = getInfluxTime(options.range.to);
+      var from = getInfluxTime(options.rangeRaw.from, false);
+      var until = getInfluxTime(options.rangeRaw.to, true);
       var fromIsAbsolute = from[from.length-1] === 's';
 
       if (until === 'now()' && !fromIsAbsolute) {
@@ -307,20 +265,19 @@ function (angular, _, kbn, InfluxSeries, InfluxQueryBuilder) {
       return 'time > ' + from + ' and time < ' + until;
     }
 
-    function getInfluxTime(date) {
-      if (_.isString(date)) {
-        return date.replace('now', 'now()');
+    function getInfluxTime(date, roundUp) {
+      if (_.isString(date) && date.indexOf('/') === -1) {
+        if (date === 'now') {
+          return 'now()';
+        }
+        if (date.indexOf('now-') >= 0) {
+          return date.replace('now', 'now()');
+        }
+        date = dateMath.parse(date, roundUp);
       }
-
-      return to_utc_epoch_seconds(date);
-    }
-
-    function to_utc_epoch_seconds(date) {
-      return (date.getTime() / 1000).toFixed(0) + 's';
+      return (date.valueOf() / 1000).toFixed(0) + 's';
     }
 
     return InfluxDatasource;
-
   });
-
 });

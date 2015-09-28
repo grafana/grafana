@@ -4,10 +4,11 @@ module.exports = function(config,grunt) {
   function buildRequireJsOptions() {
 
     var options = {
-      appDir: '<%= tempDir %>',
-      dir:  '<%= destDir %>',
-      mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-      baseUrl: './app',
+      appDir: '<%= genDir %>',
+      dir:  '<%= tempDir %>',
+      mainConfigFile: '<%= genDir %>/app/components/require.config.js',
+      baseUrl: './',
+      waitSeconds: 0,
 
       modules: [], // populated below,
 
@@ -36,9 +37,9 @@ module.exports = function(config,grunt) {
 
     // setup the modules require will build
     var requireModules = options.modules = [
-    {
-      // main/common module
-      name: 'app',
+      {
+        // main/common module
+        name: 'app/app',
         include: [
           'kbn',
           'text',
@@ -53,28 +54,26 @@ module.exports = function(config,grunt) {
           'jquery.flot',
           'angular-strap',
           'angular-dragdrop',
-          'services/all',
-          'features/all',
-          'directives/all',
-          'filters/all',
-          'controllers/all',
-          'routes/all',
-          'components/partials',
+          'app/core/core',
+          'app/services/all',
+          'app/features/all',
+          'app/controllers/all',
+          'app/components/partials',
           // bundle the datasources
-          'plugins/datasource/grafana/datasource',
-          'plugins/datasource/graphite/datasource',
-          'plugins/datasource/influxdb_08/datasource',
-          'plugins/datasource/netcrunch/datasource'
+          'app/plugins/datasource/grafana/datasource',
+          'app/plugins/datasource/graphite/datasource',
+          'app/plugins/datasource/influxdb/datasource',
+          'app/plugins/datasource/netcrunch/datasource'
         ]
-      }
+      },
     ];
 
     var fs = require('fs');
-    var panelPath = config.srcDir+'/app/panels';
+    var panelPath = config.srcDir + '/app/panels';
 
     // create a module for each directory in public/app/panels/
     fs.readdirSync(panelPath).forEach(function (panelName) {
-      requireModules[0].include.push('panels/'+panelName+'/module');
+      requireModules[0].include.push('app/panels/'+panelName+'/module');
     });
 
     return { options: options };

@@ -1,10 +1,11 @@
 define([
-  'mocks/dashboard-mock',
-  'helpers',
+  '../mocks/dashboard-mock',
+  './helpers',
   'lodash',
-  'services/timer',
-  'features/dashboard/timeSrv'
-], function(dashboardMock, helpers, _) {
+  'moment',
+  'app/services/timer',
+  'app/features/dashboard/timeSrv'
+], function(dashboardMock, helpers, _, moment) {
   'use strict';
 
   describe('timeSrv', function() {
@@ -31,8 +32,8 @@ define([
       it('should return parsed when parse is true', function() {
         ctx.service.setTime({from: 'now', to: 'now-1h' });
         var time = ctx.service.timeRange(true);
-        expect(_.isDate(time.from)).to.be(true);
-        expect(_.isDate(time.to)).to.be(true);
+        expect(moment.isMoment(time.from)).to.be(true);
+        expect(moment.isMoment(time.to)).to.be(true);
       });
     });
 
@@ -51,8 +52,8 @@ define([
         ctx.$routeParams.to = '20140520T031022';
         ctx.service.init(_dashboard);
         var time = ctx.service.timeRange(true);
-        expect(time.from.getTime()).to.equal(new Date("2014-04-10T05:20:10Z").getTime());
-        expect(time.to.getTime()).to.equal(new Date("2014-05-20T03:10:22Z").getTime());
+        expect(time.from.valueOf()).to.equal(new Date("2014-04-10T05:20:10Z").getTime());
+        expect(time.to.valueOf()).to.equal(new Date("2014-05-20T03:10:22Z").getTime());
       });
 
       it('should handle formated dates without time', function() {
@@ -60,8 +61,8 @@ define([
         ctx.$routeParams.to = '20140520';
         ctx.service.init(_dashboard);
         var time = ctx.service.timeRange(true);
-        expect(time.from.getTime()).to.equal(new Date("2014-04-10T00:00:00Z").getTime());
-        expect(time.to.getTime()).to.equal(new Date("2014-05-20T00:00:00Z").getTime());
+        expect(time.from.valueOf()).to.equal(new Date("2014-04-10T00:00:00Z").getTime());
+        expect(time.to.valueOf()).to.equal(new Date("2014-05-20T00:00:00Z").getTime());
       });
 
       it('should handle epochs', function() {
@@ -69,8 +70,8 @@ define([
         ctx.$routeParams.to = '1410337665699';
         ctx.service.init(_dashboard);
         var time = ctx.service.timeRange(true);
-        expect(time.from.getTime()).to.equal(1410337646373);
-        expect(time.to.getTime()).to.equal(1410337665699);
+        expect(time.from.valueOf()).to.equal(1410337646373);
+        expect(time.to.valueOf()).to.equal(1410337665699);
       });
 
     });

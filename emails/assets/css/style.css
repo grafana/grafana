@@ -5,6 +5,37 @@ body, table.body, h1, h2, h3, h4, h5, h6, p, td {
   -webkit-text-size-adjust: none;
 }
 
+h1 {font-size: 40px;}
+h2 {font-size: 36px;}
+h3 {
+  font-size: 22px;
+  margin-top: 20px;
+}
+h4 {font-size: 20px;}
+h5 {font-size: 18px;}
+h6 {font-size: 16px;}
+
+.emphasis {
+  font-weight: 600;
+}
+
+a {
+  color: #E67612;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ff8f2b !important;
+}
+
+a:active {
+  color: #F2821E !important;
+}
+
+a:visited {
+  color: #E67612 !important;
+}
+
 table.facebook td {
   background: #3b5998;
   border-color: #2d4473;
@@ -65,3 +96,49 @@ table.google-plus:hover td {
   }
 }
 
+table.better-button {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+table.columns td.better-button {
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  padding-bottom: 0px;
+}
+
+.better-button a {
+  text-decoration: none;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+
+  padding: 12px 25px;
+  border: 1px solid #ff8f2b;
+  display: inline-block;
+  color: #FFF;
+}
+
+.better-button:hover a {
+  color: #FFFFFF !important;
+  background-color: #F2821E;
+  border: 1px solid #F2821E;
+}
+
+.better-button:visited a {
+  color: #FFFFFF !important;
+}
+
+.better-button:active a {
+  color: #FFFFFF !important;
+}
+
+.verification-code {
+  background-color: #EEEEEE;
+  padding: 3px;
+  margin: 8px;
+  display: inline-block;
+  font-weight: bold;
+  font-size: 20px;
+}

@@ -1,7 +1,8 @@
 define([
-  'helpers',
-  'plugins/datasource/graphite/gfunc',
-  'plugins/datasource/graphite/queryCtrl'
+  './helpers',
+  'app/plugins/datasource/graphite/gfunc',
+  'app/plugins/datasource/graphite/queryCtrl',
+  'app/services/uiSegmentSrv'
 ], function(helpers, gfunc) {
   'use strict';
 
@@ -9,13 +10,12 @@ define([
     var ctx = new helpers.ControllerTestContext();
 
     beforeEach(module('grafana.controllers'));
+    beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase());
     beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
 
     beforeEach(function() {
-      ctx.scope.target = {
-        target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'
-      };
+      ctx.scope.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
 
       ctx.scope.datasource = ctx.datasource;
       ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));

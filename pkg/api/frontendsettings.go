@@ -33,22 +33,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-    var dsMap = map[string]interface{}{
-      "type": ds.Type,
-      "name": ds.Name,
-      "url":  url,
-    }
-
 		if ds.Access == m.DS_ACCESS_PROXY {
 			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+		}
 
-      if ds.Type == m.DS_NETCRUNCH {
-        dsMap["id"] = ds.Id
-        dsMap["username"] = ds.User
-        dsMap["password"] = ds.Password
-        dsMap["url"] = url
-      }
-    }
+		var dsMap = map[string]interface{}{
+			"type": ds.Type,
+			"name": ds.Name,
+			"url":  url,
+		}
 
 		meta, exists := plugins.DataSources[ds.Type]
 		if !exists {
@@ -101,7 +94,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 	// add grafana backend data source
 	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["grafana"] = map[string]interface{}{
+	datasources["-- Grafana --"] = map[string]interface{}{
 		"type": "grafana",
 		"meta": grafanaDatasourceMeta,
 	}
@@ -117,8 +110,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
     defaultDatasource = "NetCrunch"
   }
 
+	// add mixed backend data source
+	datasources["-- Mixed --"] = map[string]interface{}{
+		"type": "mixed",
+		"meta": plugins.DataSources["mixed"],
+	}
+
 	if defaultDatasource == "" {
-		defaultDatasource = "grafana"
+		defaultDatasource = "-- Grafana --"
 	}
 
 	jsonObj := map[string]interface{}{

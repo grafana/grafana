@@ -56,12 +56,15 @@ function (_) {
 
   p._getSeriesName = function(series, index) {
     var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    var segments = series.name.split('.');
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
+      var segIndex = parseInt(group, 10);
 
       if (group === 'm' || group === 'measurement') { return series.name; }
       if (group === 'col') { return series.columns[index]; }
+      if (!isNaN(segIndex)) { return segments[segIndex]; }
       if (group.indexOf('tag_') !== 0) { return match; }
 
       var tag = group.replace('tag_', '');
@@ -103,26 +106,6 @@ function (_) {
     });
 
     return list;
-  };
-
-  p.createNameForSeries = function(seriesName, groupByColValue) {
-    var regex = /\$(\w+)/g;
-    var segments = seriesName.split('.');
-
-    return this.alias.replace(regex, function(match, group) {
-      if (group === 's') {
-        return seriesName;
-      }
-      else if (group === 'g') {
-        return groupByColValue;
-      }
-      var index = parseInt(group);
-      if (_.isNumber(index) && index < segments.length) {
-        return segments[index];
-      }
-      return match;
-    });
-
   };
 
   return InfluxSeries;

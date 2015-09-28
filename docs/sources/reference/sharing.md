@@ -30,7 +30,8 @@ after a certain time period.
 ## Share Panel
 Click a panel title to open the panel menu, then click share in the panel menu to open the Share Panel dialog. Here you
 have access to a link that will take you to exactly this panel with the current time range and selected template variables.
-You also get a link to service side rendered PNG of the panel. Useful if you want to shara image of the panel.
+You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel.
+Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `vendor/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig) are available.
 
 ### Embed Panel
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
@@ -42,4 +43,4 @@ Example:
 ```
 
 Below there should be an interactive Grafana graph embedded in an iframe:
-<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/IQ7iZF00sHalq0Ffjv6OyclJSA1YHYV1?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>

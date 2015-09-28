@@ -159,7 +159,7 @@ function (angular, _) {
     };
 
     updateDashLinks();
-    $rootScope.onAppEvent('dash-links-updated', updateDashLinks);
+    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $rootScope);
   });
 
   module.controller('DashLinkEditorCtrl', function($scope, $rootScope) {

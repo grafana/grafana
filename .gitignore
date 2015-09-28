@@ -4,6 +4,7 @@ coverage/
 awsconfig
 /dist
 /emails/dist
+/public_gen
 /tmp
 
 docs/AWS_S3_BUCKET
@@ -28,4 +29,4 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
-
+grafana

@@ -24,14 +24,13 @@ that is not really the case, or, at least, that it is a lot better than you expe
 
 ## Installation - Ubuntu
 
-This guides will require you to install 4 components.
+To begin with we are going to install the 3 main components that define our metric stack. Later in the guide we will
+install StatsD, but that is optional.
 
 - Carbon is the graphite ingestion deamon responsible for
 receiving metrics and storing them.
 - Graphite-api is light weight version of graphite-web with only the HTTP api and is
 responsible for executing metric queries.
-- StatsD is a metrics aggregation daemon that makes it easy for apps on
-many machines to send measurements like timings and counters and have them aggregated or percentiles calculated.
 - Grafana as the frontend to visualize metrics and the tool to help you build metric
 queries that will make the most out of your collected metrics.
 
@@ -258,8 +257,7 @@ frameworks and numerous integrations.
 
 There are hundreds of tools and instrumentation frameworks that can send metrics using this protocol.
 
-## Installing StatsD
+### Installing StatsD
+StatsD is a metrics aggregation daemon that makes it easy for apps on many machines to send measurements like timings and counters and have them aggregated or percentiles calculated.
 
-StatsD is To make it easier for applications to send metrics and timings
-
-### Inserting metrics
+### Sending metrics to StatsD

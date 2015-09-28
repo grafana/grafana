@@ -51,7 +51,7 @@ the tag key and select `--remove tag filter--`.
 
 ### Regex matching
 You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
-will automaticallay adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
+will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
 ### Editor group by
 To group by a tag click the plus icon after the `GROUP BY ($interval)` text. Pick a tag from the dropdown that appears.
