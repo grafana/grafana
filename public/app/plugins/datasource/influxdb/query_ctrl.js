@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  './queryBuilder',
+  './query_builder',
 ],
 function (angular, _, InfluxQueryBuilder) {
   'use strict';
