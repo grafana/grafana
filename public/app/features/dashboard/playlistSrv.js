@@ -16,18 +16,18 @@ function (angular, _, kbn) {
       $timeout.cancel(self.cancelPromise);
 
       angular.element(window).unbind('resize');
-      var dash = self.dashboards[self.index % self.dashboards.length];
+      var playlistVar = self.playlistVars[self.index % self.playlistVars.length];
 
-      if(self.playlistType === "dashboard") {
-        $location.url('dashboard/' + dash.uri);
-      } else if(self.playlistType === "templateVariable") {
+      if(self.playlistType === "dashboards") {
+        $location.url('dashboard/' + playlistVar.uri);
+      } else if(self.playlistType === "templateVariables") {
         var urlParameters = "";
-        for(var i=0; i<dash.variableCombinations.length; i++) {
-          urlParameters += 'var-' + dash.variableCombinations[i].tagName + "=" + dash.variableCombinations[i].tagValue + "&";
+        for(var i=0; i<playlistVar.varCombinations.length; i++) {
+          urlParameters += 'var-' + playlistVar.varCombinations[i].tagName + "=" + playlistVar.varCombinations[i].tagValue + "&";
         }
         urlParameters = urlParameters.substring(0, urlParameters.length - 1);
         console.log(urlParameters);
-        $location.url('dashboard/db/' + dash.dashboardSlug + '?' + urlParameters);
+        $location.url('dashboard/db/' + playlistVar.dashboardSlug + '?' + urlParameters);
         $route.reload();
       }
 
@@ -40,7 +40,7 @@ function (angular, _, kbn) {
       self.next();
     };
 
-    this.start = function(playlistType, dashboards, timespan) {
+    this.start = function(playlistType, playlistVars, timespan) {
       self.stop();
 
       self.index = 0;
@@ -48,7 +48,7 @@ function (angular, _, kbn) {
 
       self.playlistType = playlistType;
 
-      self.dashboards = dashboards;
+      self.playlistVars = playlistVars;
 
       $rootScope.playlistSrv = this;
 

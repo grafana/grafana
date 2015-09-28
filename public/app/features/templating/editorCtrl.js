@@ -36,6 +36,11 @@ function (angular, _, config) {
         if (val === 'new') {
           $scope.reset();
         }
+        if (val === 'playlist') {
+          $scope.playlist = [];
+          $scope.timespan = config.playlist_timespan;
+          $scope.loadVariableList();
+        }
       });
 
       $scope.$watch('current.datasource', function(val) {
@@ -49,9 +54,9 @@ function (angular, _, config) {
         }
       });
 
-      $scope.playlist = [];
-      $scope.timespan = config.playlist_timespan;
-      $scope.loadVariableList();
+      //$scope.playlist = [];
+      //$scope.timespan = config.playlist_timespan;
+      //$scope.loadVariableList();
     };
 
     $scope.add = function() {
@@ -141,26 +146,26 @@ function (angular, _, config) {
       $scope.filterList();
     };
 
-    $scope.addVariableToFilterList = function(variable) {
+    $scope.addVariableToPlaylist = function(variable) {
       $scope.playlist.push(variable);
       $scope.filterList();
     };
 
-    $scope.removeVariableFromFilterList = function(variable) {
+    $scope.removeVariableFromPlaylist = function(variable) {
       $scope.playlist = _.without($scope.playlist, variable);
       $scope.filterList();
     };
 
     $scope.start = function() {
       $scope.playlistCombinations = $scope.computeCombinations($scope.playlist);
-      playlistSrv.start("templateVariable",$scope.playlistCombinations, $scope.timespan);
+      playlistSrv.start("templateVariables",$scope.playlistCombinations, $scope.timespan);
     };
 
     $scope.computeCombinations = function(playlist) {
       var playlistCombinations = [];
       for(var i=0; i<playlist[0].options.length; i++) {
         playlistCombinations.push({dashboardSlug: $scope.dashboard.meta.slug,
-        variableCombinations: [{tagName: playlist[0].name, tagValue: playlist[0].options[i].text}]});
+        varCombinations: [{tagName: playlist[0].name, tagValue: playlist[0].options[i].text}]});
       }
       for(var j=1; j<playlist.length; j++) {
         playlistCombinations = $scope.combineVariables(playlistCombinations, playlist[j]);
@@ -172,9 +177,9 @@ function (angular, _, config) {
       var tempCombinations = [];
       for(var k=0,i=0; i<playlistCombinations.length; i++) {
         for(var j=0; j<nextVariable.options.length; j++,k++) {
-          var temp = { dashboardSlug: playlistCombinations[i].dashboardSlug, variableCombinations:
+          var temp = { dashboardSlug: playlistCombinations[i].dashboardSlug, varCombinations:
           [{tagName: nextVariable.name, tagValue: nextVariable.options[j].text}]};
-          temp.variableCombinations = temp.variableCombinations.concat(playlistCombinations[i].variableCombinations);
+          temp.varCombinations = temp.varCombinations.concat(playlistCombinations[i].varCombinations);
           tempCombinations.push(temp);
         }
       }

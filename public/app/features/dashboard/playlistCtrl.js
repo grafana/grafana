@@ -47,7 +47,7 @@ function (angular, _, config) {
     };
 
     $scope.start = function() {
-      playlistSrv.start("dashboard", $scope.playlist, $scope.timespan);
+      playlistSrv.start("dashboards", $scope.playlist, $scope.timespan);
     };
 
   });
