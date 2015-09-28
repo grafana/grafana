@@ -1,8 +1,8 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
-  'components/panelmeta',
+  'app/components/panelmeta',
 ],
 function (angular, app, _, PanelMeta) {
   'use strict';
@@ -36,6 +36,9 @@ function (angular, app, _, PanelMeta) {
     };
 
     $scope.setEndpointStatus = function() {
+      if (! $scope.quotas) {
+        return;
+      }
       if ($scope.quotas.endpoint.used === 0) {
         $scope.endpointStatus = "noEndpoints";
         return;
@@ -50,7 +53,10 @@ function (angular, app, _, PanelMeta) {
     };
 
     $scope.setUserStatus = function() {
-      if ($scope.quotas.user.used <= 1) {
+      if (! $scope.quotas) {
+        return;
+      }
+      if ($scope.quotas.org_user.used <= 1) {
         $scope.userStatus = "noTeam";
         return;
       }
@@ -64,6 +70,9 @@ function (angular, app, _, PanelMeta) {
     };
 
     $scope.setCollectorStatus = function() {
+      if (! $scope.quotas) {
+        return;
+      }
       if ($scope.quotas.collector.used === 0) {
         $scope.collectorStatus = "noCollectors";
         return;
@@ -78,10 +87,13 @@ function (angular, app, _, PanelMeta) {
     };
 
     $scope.allDone = function() {
+      if (! $scope.quotas) {
+        return false;
+      }
       if ($scope.quotas.collector.used === 0) {
         return false;
       }
-      if ($scope.quotas.user.used <= 1) {
+      if ($scope.quotas.org_user.used <= 1) {
         return false;
       }
       if ($scope.quotas.endpoint.used === 0) {

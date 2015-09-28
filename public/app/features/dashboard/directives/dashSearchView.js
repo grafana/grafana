@@ -54,7 +54,14 @@ function (angular, $) {
             hookUpHideWhenClickedOutside();
           }
 
+          function hideSearch() {
+            if (editorScope) {
+              editorScope.dismiss();
+            }
+          }
+
           scope.onAppEvent('show-dash-search', showSearch);
+          scope.onAppEvent('hide-dash-search', hideSearch);
         }
       };
     });

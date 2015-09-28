@@ -56,6 +56,11 @@
 			"Rev": "f1a105a8d1aa900650203dd8791b43634e6a0888"
 		},
 		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.1.0-21-g056c9bc",
+			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
+		{
 			"ImportPath": "github.com/DataDog/datadog-go/statsd",
 			"Rev": "a27810dd518c69be741a7fd5d0e39f674f615be8"
 		},
@@ -66,11 +71,6 @@
 		{
 			"ImportPath": "github.com/Dieterbe/statsd-go",
 			"Rev": "6f55e9b6e154104c5aefbdbb8ea37d82e1b31f4b"
-		},
-		{
-			"ImportPath": "github.com/BurntSushi/toml",
-			"Comment": "v0.1.0-21-g056c9bc",
-			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
 		},
 		{
 			"ImportPath": "github.com/Unknwon/com",
@@ -93,9 +93,39 @@
 			"Rev": "d0e59c22a56e8dadfed24f74f452cea5a52722d2"
 		},
 		{
-			"ImportPath": "github.com/bitly/go-nsq",
-			"Comment": "v1.0.4-6-g4271cd1",
-			"Rev": "4271cd1529a78175e327570894988cc2cb21228f"
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -152,7 +182,7 @@
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/binding",
-			"Rev": "0fbe4b9707e6eb556ef843e5471592f55ce0a5e7"
+			"Rev": "1935a991f230c27bd52423888e6e4b80f8cd5ab4"
 		},
 		{
 			"ImportPath": "github.com/macaron-contrib/session",
@@ -186,9 +216,14 @@
 			"Rev": "4dbda5e2904d044d23cc4bef84e8360c458caf7f"
 		},
 		{
+			"ImportPath": "github.com/raintank/raintank-metric/msg",
+			"Comment": "pkg-0.1.0-1442246038ubuntu1",
+			"Rev": "cda26b60379bd2d8fbb4cc5e6c34b155e1615b1c"
+		},
+		{
 			"ImportPath": "github.com/raintank/raintank-metric/schema",
-			"Comment": "pkg-0.1.0-1440571003ubuntu1-50-g10c2352",
-			"Rev": "10c2352c3d15f9c11e52ed70d8618d2032dbf7f8"
+			"Comment": "pkg-0.1.0-1442246038ubuntu1",
+			"Rev": "cda26b60379bd2d8fbb4cc5e6c34b155e1615b1c"
 		},
 		{
 			"ImportPath": "github.com/rainycape/unidecode",
@@ -209,9 +244,14 @@
 			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
 		},
 		{
+<<<<<<< HEAD
 			"ImportPath": "github.com/tinylib/msgp/msgp",
 			"Comment": "v1.0-alpha-43-gcd4fb15",
 			"Rev": "cd4fb1548c31d88af25205dc021be20935aec720"
+=======
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+>>>>>>> 9da5ef3cbfb480d164fca13382241a44b92fc809
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

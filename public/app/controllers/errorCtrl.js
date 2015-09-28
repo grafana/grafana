@@ -1,6 +1,5 @@
 define([
   'angular',
-  'app',
   'lodash'
 ],
 function (angular) {

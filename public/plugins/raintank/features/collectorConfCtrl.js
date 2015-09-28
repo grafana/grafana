@@ -92,6 +92,10 @@ function (angular, _) {
     };
 
     $scope.add = function() {
+      if (!$scope.collectorForm.$valid) {
+        return;
+      }
+
       backendSrv.put('/api/collectors', $scope.collector)
         .then(function(resp) {
           $scope.collector = resp;

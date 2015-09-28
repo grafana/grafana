@@ -6,16 +6,16 @@ module.exports = function(config) {
       length: 8,
     },
     cssDark: {
-      src: '<%= destDir %>/css/grafana.dark.min.css',
-      dest: '<%= destDir %>/css'
+      src: '<%= genDir %>/css/grafana.dark.min.css',
+      dest: '<%= genDir %>/css'
     },
     cssLight: {
-      src: '<%= destDir %>/css/grafana.light.min.css',
-      dest: '<%= destDir %>/css'
+      src: '<%= genDir %>/css/grafana.light.min.css',
+      dest: '<%= genDir %>/css'
     },
     js: {
-      src: '<%= destDir %>/app/app.js',
-      dest: '<%= destDir %>/app'
+      src: '<%= genDir %>/app/app.js',
+      dest: '<%= genDir %>/app'
     }
   };
 };

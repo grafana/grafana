@@ -1,0 +1,30 @@
+<section class="grafana-metric-options">
+	<div class="tight-form last">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-info-circle"></i>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					alias patterns
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+</section>
+
+<div class="editor-row">
+	<div class="pull-left" style="margin-top: 30px;">
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+			<h5>Alias patterns</h5>
+			<ul ng-non-bindable>
+				<li>{{term fieldname}} = replaced with value of term group by</li>
+				<li>{{metric}} = replaced with metric name (ex. Average, Min, Max)</li>
+				<li>{{field}} = replaced with the metric field name</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+

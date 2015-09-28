@@ -1,9 +1,9 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'kbn',
-  'components/panelmeta',
+  'app/components/panelmeta',
 ],
 function (angular, app, _, kbn, PanelMeta) {
   'use strict';
@@ -19,13 +19,15 @@ function (angular, app, _, kbn, PanelMeta) {
     };
   });
 
-  module.controller('raintankEventsPanel', function($scope, panelSrv, timeSrv, backendSrv, templateSrv) {
+  module.controller('raintankEventsPanel', function($scope, panelSrv, backendSrv, templateSrv, panelHelper) {
     $scope.panelMeta = new PanelMeta({
       panelName: 'Raintank Events',
       description : "Events",
+      editIcon:  "fa fa-dashboard",
       fullscreen: true
     });
     $scope.panelMeta.addEditorTab('Filter', 'plugins/raintank/panels/raintankEventsPanel/editor.html');
+    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     // Set and populate defaults
     var _d = {
@@ -41,7 +43,7 @@ function (angular, app, _, kbn, PanelMeta) {
     };
 
     $scope.refreshData = function() {
-      $scope.range = timeSrv.timeRange();
+      panelHelper.updateTimeRange($scope);
       if (!$scope.panel.filter) {
         return;
       }
@@ -52,8 +54,8 @@ function (angular, app, _, kbn, PanelMeta) {
 
       var params = {
         query: templateSrv.replace($scope.panel.filter, $scope.panel.scopedVars),
-        start: $scope.range.from.getTime(),
-        end:  $scope.range.to.getTime(),
+        start: $scope.range.from.valueOf(),
+        end:  $scope.range.to.valueOf(),
         size: $scope.panel.size,
       };
 

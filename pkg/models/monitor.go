@@ -89,13 +89,13 @@ type MonitorCollectorTag struct {
 // DTOs
 
 type MonitorSettingDTO struct {
-	Variable string `json:"variable"`
+	Variable string `json:"variable" binding:"Required"`
 	Value    string `json:"value"`
 }
 
 type MonitorHealthSettingDTO struct {
-	NumCollectors int                        `json:"num_collectors"`
-	Steps         int                        `json:"steps"`
+	NumCollectors int                        `json:"num_collectors" binding:"Required"`
+	Steps         int                        `json:"steps" binding:"Required"`
 	Notifications MonitorNotificationSetting `json:"notifications"`
 }
 
@@ -143,9 +143,9 @@ func (m *MonitorForAlertDTO) SettingsMap() map[string]string {
 type MonitorDTO struct {
 	Id              int64                    `json:"id"`
 	OrgId           int64                    `json:"org_id"`
-	EndpointId      int64                    `json:"endpoint_id"`
+	EndpointId      int64                    `json:"endpoint_id" `
 	EndpointSlug    string                   `json:"endpoint_slug"`
-	MonitorTypeId   int64                    `json:"monitor_type_id" binding:"required"`
+	MonitorTypeId   int64                    `json:"monitor_type_id"`
 	MonitorTypeName string                   `json:"monitor_type_name"`
 	CollectorIds    []int64                  `json:"collector_ids"`
 	CollectorTags   []string                 `json:"collector_tags"`
@@ -181,34 +181,34 @@ type MonitorTypeDTO struct {
 
 type AddMonitorCommand struct {
 	OrgId          int64                    `json:"-"`
-	EndpointId     int64                    `json:"endpoint_id" binding:"required"`
-	MonitorTypeId  int64                    `json:"monitor_type_id" binding:"required"`
+	EndpointId     int64                    `json:"endpoint_id" binding:"Required"`
+	MonitorTypeId  int64                    `json:"monitor_type_id" binding:"Required"`
 	CollectorIds   []int64                  `json:"collector_ids"`
 	CollectorTags  []string                 `json:"collector_tags"`
 	Settings       []*MonitorSettingDTO     `json:"settings"`
 	HealthSettings *MonitorHealthSettingDTO `json:"health_settings"`
-	Frequency      int64                    `json:"frequency"`
+	Frequency      int64                    `json:"frequency" binding:"Required;Range(10,600)"`
 	Enabled        bool                     `json:"enabled"`
 	Offset         int64                    `json:"-"`
 	Result         *MonitorDTO              `json:"-"`
 }
 
 type UpdateMonitorCommand struct {
-	Id             int64                    `json:"id" binding:"required"`
-	EndpointId     int64                    `json:"endpoint_id" binding:"required"`
+	Id             int64                    `json:"id" binding:"Required"`
+	EndpointId     int64                    `json:"endpoint_id" binding:"Required"`
 	OrgId          int64                    `json:"-"`
-	MonitorTypeId  int64                    `json:"monitor_type_id" binding:"required"`
+	MonitorTypeId  int64                    `json:"monitor_type_id" binding:"Required"`
 	CollectorIds   []int64                  `json:"collector_ids"`
 	CollectorTags  []string                 `json:"collector_tags"`
 	Settings       []*MonitorSettingDTO     `json:"settings"`
 	HealthSettings *MonitorHealthSettingDTO `json:"health_settings"`
-	Frequency      int64                    `json:"frequency"`
+	Frequency      int64                    `json:"frequency" binding:"Required;Range(10,600)"`
 	Enabled        bool                     `json:"enabled"`
 	Offset         int64                    `json:"-"`
 }
 
 type DeleteMonitorCommand struct {
-	Id    int64 `json:"id" binding:"required"`
+	Id    int64 `json:"id" binding:"Required"`
 	OrgId int64 `json:"-"`
 }
 

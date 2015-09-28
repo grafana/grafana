@@ -1,5 +1,5 @@
 define([
-  'features/dashboard/viewStateSrv'
+  'app/features/dashboard/viewStateSrv'
 ], function() {
   'use strict';
 

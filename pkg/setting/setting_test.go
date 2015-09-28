@@ -11,9 +11,11 @@ import (
 func TestLoadingSettings(t *testing.T) {
 
 	Convey("Testing loading settings from ini file", t, func() {
+		skipStaticRootValidation = true
 
 		Convey("Given the default ini files", func() {
-			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
+			err := NewConfigContext(&CommandLineArgs{HomePath: "../../"})
+			So(err, ShouldBeNil)
 
 			So(AdminUser, ShouldEqual, "admin")
 		})

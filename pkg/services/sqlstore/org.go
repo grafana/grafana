@@ -12,6 +12,7 @@ func init() {
 	bus.AddHandler("sql", GetOrgById)
 	bus.AddHandler("sql", CreateOrg)
 	bus.AddHandler("sql", UpdateOrg)
+	bus.AddHandler("sql", UpdateOrgAddress)
 	bus.AddHandler("sql", GetOrgByName)
 	bus.AddHandler("sql", SearchOrgs)
 	bus.AddHandler("sql", DeleteOrg)
@@ -62,8 +63,30 @@ func GetOrgByName(query *m.GetOrgByNameQuery) error {
 	return nil
 }
 
+func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) {
+	// check if org name is taken
+	var org m.Org
+	exists, err := sess.Where("name=?", name).Get(&org)
+
+	if err != nil {
+		return false, nil
+	}
+
+	if exists && existingId != org.Id {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func CreateOrg(cmd *m.CreateOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
+
+		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return m.ErrOrgNameTaken
+		}
 
 		org := m.Org{
 			Name:    cmd.Name,
@@ -104,8 +127,41 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
 
+		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return m.ErrOrgNameTaken
+		}
+
 		org := m.Org{
 			Name:    cmd.Name,
+			Updated: time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.OrgId).Update(&org); err != nil {
+			return err
+		}
+
+		sess.publishAfterCommit(&events.OrgUpdated{
+			Timestamp: org.Updated,
+			Id:        org.Id,
+			Name:      org.Name,
+		})
+
+		return nil
+	})
+}
+
+func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
+	return inTransaction2(func(sess *session) error {
+		org := m.Org{
+			Address1: cmd.Address1,
+			Address2: cmd.Address2,
+			City:     cmd.City,
+			ZipCode:  cmd.ZipCode,
+			State:    cmd.State,
+			Country:  cmd.Country,
+
 			Updated: time.Now(),
 		}
 

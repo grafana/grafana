@@ -5,7 +5,7 @@
   "type": "generic_sql",
   "serviceName": "SqlDatasource",
 
-  "module": "plugins/datasource/sql/datasource",
+  "module": "app/plugins/datasource/sql/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/sql/partials/config.html",
