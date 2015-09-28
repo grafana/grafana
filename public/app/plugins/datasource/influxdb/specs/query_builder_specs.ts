@@ -1,5 +1,9 @@
 ///<amd-dependency path="app/plugins/datasource/influxdb/query_builder" name="InfluxQueryBuilder"/>
+<<<<<<< 9e715cd3a224734b14bcbc755498d2aa70d96046
 
+=======
+//
+>>>>>>> refactor: moved influxdb specs to plugins folder
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 declare var InfluxQueryBuilder: any;
