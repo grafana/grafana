@@ -4,7 +4,7 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Left Y</strong>
+					Left Y
 				</li>
 				<li class="tight-form-item">
 					Unit
@@ -46,10 +46,10 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Right Y</strong>
+					Right Y
 				</li>
 				<li class="tight-form-item">
 					Unit
@@ -97,7 +97,7 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Show Axis</strong>
+					Show Axis
 				</li>
 				<li class="tight-form-item">
 					X-Axis&nbsp;
@@ -114,10 +114,10 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Thresholds</strong>
+					Thresholds
 				</li>
 				<li class="tight-form-item">
 					Level 1
@@ -140,11 +140,7 @@
 					<spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
 				</li>
 				<li class="tight-form-item last">
-					Line mode&nbsp;
-					<input class="cr1" id="panel.grid.thresholdLine" type="checkbox"
-					ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render()">
-					<label for="panel.grid.thresholdLine" class="cr1"></label>
-
+					<editor-checkbox text="Line mode" model="panel.grid.thresholdLine" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -157,31 +153,19 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 110px">
-					<strong>Legend</strong>
+					Legend
 				</li>
 				<li class="tight-form-item">
-					Show&nbsp;
-					<input class="cr1" id="panel.legend.show" type="checkbox"
-					ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="get_data()">
-					<label for="panel.legend.show" class="cr1"></label>
+					<editor-checkbox text="Show" model="panel.legend.show" change="get_data()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Table&nbsp;
-					<input class="cr1" id="panel.legend.alignAsTable" type="checkbox"
-					ng-model="panel.legend.alignAsTable" ng-checked="panel.legend.alignAsTable" ng-change="render()">
-					<label for="panel.legend.alignAsTable" class="cr1"></label>
+					<editor-checkbox text="Table" model="panel.legend.alignAsTable" change="render()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Right side&nbsp;
-					<input class="cr1" id="panel.legend.rightSide" type="checkbox"
-					ng-model="panel.legend.rightSide" ng-checked="panel.legend.rightSide" ng-change="render()">
-					<label for="panel.legend.rightSide" class="cr1"></label>
+					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item last">
-					<span bs-tooltip="'Hides series with only null values'">Hide empty&nbsp;<span>
-					<input class="cr1" id="panel.legend.hideEmpty" type="checkbox"
-							ng-model="panel.legend.hideEmpty" ng-checked="panel.legend.hideEmpty" ng-change="render()">
-					<label for="panel.legend.hideEmpty" class="cr1"></label>
+					<editor-checkbox text="Hide empty" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -191,37 +175,22 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 105px">
-					<strong>Legend values</strong>
+					Legend values
 				</li>
 				<li class="tight-form-item">
-					Min&nbsp;
-					<input class="cr1" id="panel.legend.min" type="checkbox"
-					ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.min" class="cr1"></label>
+					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Max&nbsp;
-					<input class="cr1" id="panel.legend.max" type="checkbox"
-					ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.max" class="cr1"></label>
+					<editor-checkbox text="Max" model="panel.legend.max" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Avg&nbsp;
-					<input class="cr1" id="panel.legend.avg" type="checkbox"
-					ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.avg" class="cr1"></label>
+					<editor-checkbox text="Avg" model="panel.legend.avg" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Current&nbsp;
-					<input class="cr1" id="panel.legend.current" type="checkbox"
-					ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.current" class="cr1"></label>
+					<editor-checkbox text="Current" model="panel.legend.current" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item last">
-					Total&nbsp;
-					<input class="cr1" id="panel.legend.total" type="checkbox"
-					ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.total" class="cr1"></label>
+					<editor-checkbox text="Total" model="panel.legend.total" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
