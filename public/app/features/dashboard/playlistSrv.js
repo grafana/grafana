@@ -9,7 +9,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('playlistSrv', function($location, $rootScope, $timeout) {
+  module.service('playlistSrv', function($route, $location, $rootScope, $timeout) {
     var self = this;
 
     this.next = function() {
@@ -18,7 +18,13 @@ function (angular, _, kbn) {
       angular.element(window).unbind('resize');
       var dash = self.dashboards[self.index % self.dashboards.length];
 
-      $location.url('dashboard/' + dash.uri);
+      if(self.playlistType === "dashboard") {
+        $location.url('dashboard/' + dash.uri);
+      }
+      if(self.playlistType === "templateVariable") {
+        $location.url('dashboard/db/' + dash.dashboardSlug + '?var-' + dash.tagName + '=' + dash.tagValue);
+        $route.reload();
+      }
 
       self.index++;
       self.cancelPromise = $timeout(self.next, self.interval);
@@ -29,13 +35,16 @@ function (angular, _, kbn) {
       self.next();
     };
 
-    this.start = function(dashboards, timespan) {
+    this.start = function(playlistType, dashboards, timespan) {
       self.stop();
 
       self.index = 0;
       self.interval = kbn.interval_to_ms(timespan);
 
+      self.playlistType = playlistType;
+
       self.dashboards = dashboards;
+
       $rootScope.playlistSrv = this;
 
       self.cancelPromise = $timeout(self.next, self.interval);

@@ -1,13 +1,14 @@
 define([
   'angular',
   'lodash',
+  'config'
 ],
-function (angular, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv, playlistSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -47,6 +48,10 @@ function (angular, _) {
           });
         }
       });
+
+      $scope.playlist = [];
+      $scope.timespan = config.playlist_timespan;
+      $scope.loadVariableList();
     };
 
     $scope.add = function() {
@@ -123,6 +128,43 @@ function (angular, _) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
       $scope.updateSubmenuVisibility();
+    };
+
+    $scope.filterList = function() {
+      $scope.filteredList = _.reject($scope.variableList, function(variable) {
+        return _.findWhere($scope.playlist, {name: variable.name});
+      });
+    };
+
+    $scope.loadVariableList = function() {
+      $scope.variableList = $scope.variables;
+      $scope.filterList();
+    };
+
+    $scope.addVariableToFilterList = function(variable) {
+      $scope.playlist.push(variable);
+      $scope.filterList();
+    };
+
+    $scope.removeVariableFromFilterList = function(variable) {
+      $scope.playlist = _.without($scope.playlist, variable);
+      $scope.filterList();
+    };
+
+    $scope.start = function() {
+      $scope.playlistCombinations = $scope.computeCombinations($scope.playlist);
+      playlistSrv.start("templateVariable",$scope.playlistCombinations, $scope.timespan);
+    };
+
+    $scope.computeCombinations = function(playlist) {
+      var playlistCombinations = [];
+      if (playlist.length === 1) {
+        for(var i=0; i<playlist[0].options.length; i++) {
+          playlistCombinations.push({dashboardSlug: $scope.dashboard.meta.slug,
+          tagName: playlist[0].name, tagValue: playlist[0].options[i].text});
+        }
+        return playlistCombinations;
+      }
     };
 
   });
