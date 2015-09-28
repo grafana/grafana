@@ -321,7 +321,7 @@ define([
       });
 
       it('should add lucene glob', function() {
-        expect(scenario.variable.options[0].value).to.be('(backend1 OR backend2)');
+        expect(scenario.variable.options[0].value).to.be('(\\\"backend1\\\" OR \\\"backend2\\\")');
       });
     });
 

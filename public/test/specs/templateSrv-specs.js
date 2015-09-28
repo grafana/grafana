@@ -68,7 +68,7 @@ define([
             value: ['test','test2'],
           }
         });
-        expect(result).to.be('(test OR test2)');
+        expect(result).to.be('(\\\"test\\\" OR \\\"test2\\\")');
       });
 
       it('multi value and regex format should render regex string', function() {
