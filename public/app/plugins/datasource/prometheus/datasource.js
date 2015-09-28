@@ -1,16 +1,17 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
   'app/core/utils/datemath',
   './directives',
   './queryCtrl',
 ],
-function (angular, _, kbn, dateMath) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
+  var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
   module.factory('PrometheusDatasource', function($q, backendSrv, templateSrv) {
 
@@ -183,13 +184,14 @@ function (angular, _, kbn, dateMath) {
     };
 
     PrometheusDatasource.prototype.calculateInterval = function(interval, intervalFactor) {
-      var sec = kbn.interval_to_seconds(interval);
-
+      var m = interval.match(durationSplitRegexp);
+      var dur = moment.duration(parseInt(m[1]), m[2]);
+      var sec = dur.asSeconds();
       if (sec < 1) {
         sec = 1;
       }
 
-      return sec * intervalFactor;
+      return Math.floor(sec * intervalFactor) + 's';
     };
 
     function transformMetricData(md, options) {
