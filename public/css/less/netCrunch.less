@@ -97,6 +97,10 @@ input[type="text"].node-input {
   height: @tile-height;
   line-height: @tile-height;
   width: @tile-width - 5;
+
+  &::-ms-clear {
+    display: none;
+  }
 }
 
 input[type="text"].counter-input {
@@ -106,6 +110,10 @@ input[type="text"].counter-input {
   height: @tile-height;
   line-height: @tile-height;
   width: @counter-width - 5;
+
+  &::-ms-clear {
+    display: none;
+  }
 }
 
 .node-icon {
