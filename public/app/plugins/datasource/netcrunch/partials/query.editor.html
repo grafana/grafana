@@ -145,6 +145,10 @@
            ng-model="nodeNamePattern"
            tabindex="1"
            id="node-input">
+    <div class="close-type-ahead-button"
+         ng-click="closeNodeSelectionTypeAhead()">
+      <i class="fa fa-remove"></i>
+    </div>
     <div class="nodes-ahead dropdown-menu" id="nodes-panel">
       <ng-spinner class = "net-crunch-container spinner"
                   spinner-show-trigger = "processingNodes"
@@ -186,6 +190,10 @@
            ng-model="counterNamePattern"
            tabindex="1"
            id="counter-input">
+    <div class="close-type-ahead-button"
+         ng-click="closeCounterSelectionTypeAhead()">
+      <i class="fa fa-remove"></i>
+    </div>
     <div class="counters-ahead dropdown-menu" id="counters-panel">
       <ng-spinner class = "net-crunch-container spinner"
                           spinner-show-trigger = "processingCounters"

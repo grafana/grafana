@@ -33,6 +33,23 @@
   width: @counter-width + 10;
 }
 
+.close-type-ahead-button {
+  .flex-line;
+  .align-items(center);
+  .justify-content(center);
+
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  background-color: @tile-background-color;
+  cursor: pointer;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  height: @tile-height;
+  width: 20px;
+}
+
 .nodes-ahead {
   .flex(1);
   .flex-column;
