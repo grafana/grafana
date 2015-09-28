@@ -20,9 +20,14 @@ function (angular, _, kbn) {
 
       if(self.playlistType === "dashboard") {
         $location.url('dashboard/' + dash.uri);
-      }
-      if(self.playlistType === "templateVariable") {
-        $location.url('dashboard/db/' + dash.dashboardSlug + '?var-' + dash.tagName + '=' + dash.tagValue);
+      } else if(self.playlistType === "templateVariable") {
+        var urlParameters = "";
+        for(var i=0; i<dash.variableCombinations.length; i++) {
+          urlParameters += 'var-' + dash.variableCombinations[i].tagName + "=" + dash.variableCombinations[i].tagValue + "&";
+        }
+        urlParameters = urlParameters.substring(0, urlParameters.length - 1);
+        console.log(urlParameters);
+        $location.url('dashboard/db/' + dash.dashboardSlug + '?' + urlParameters);
         $route.reload();
       }
 

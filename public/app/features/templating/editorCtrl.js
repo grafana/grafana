@@ -158,13 +158,27 @@ function (angular, _, config) {
 
     $scope.computeCombinations = function(playlist) {
       var playlistCombinations = [];
-      if (playlist.length === 1) {
-        for(var i=0; i<playlist[0].options.length; i++) {
-          playlistCombinations.push({dashboardSlug: $scope.dashboard.meta.slug,
-          tagName: playlist[0].name, tagValue: playlist[0].options[i].text});
-        }
-        return playlistCombinations;
+      for(var i=0; i<playlist[0].options.length; i++) {
+        playlistCombinations.push({dashboardSlug: $scope.dashboard.meta.slug,
+        variableCombinations: [{tagName: playlist[0].name, tagValue: playlist[0].options[i].text}]});
       }
+      for(var j=1; j<playlist.length; j++) {
+        playlistCombinations = $scope.combineVariables(playlistCombinations, playlist[j]);
+      }
+      return playlistCombinations;
+    };
+
+    $scope.combineVariables = function(playlistCombinations, nextVariable) {
+      var tempCombinations = [];
+      for(var k=0,i=0; i<playlistCombinations.length; i++) {
+        for(var j=0; j<nextVariable.options.length; j++,k++) {
+          var temp = { dashboardSlug: playlistCombinations[i].dashboardSlug, variableCombinations:
+          [{tagName: nextVariable.name, tagValue: nextVariable.options[j].text}]};
+          temp.variableCombinations = temp.variableCombinations.concat(playlistCombinations[i].variableCombinations);
+          tempCombinations.push(temp);
+        }
+      }
+      return tempCombinations;
     };
 
   });
