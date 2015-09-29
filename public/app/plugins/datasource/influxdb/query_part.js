@@ -26,6 +26,13 @@ function (_, $) {
   }
 
   addFuncDef({
+    name: 'field',
+    category: categories.Transform,
+    params: [{type: 'field'}],
+    defaultParams: ['value'],
+  });
+
+  addFuncDef({
     name: 'mean',
     category: categories.Transform,
     params: [],
