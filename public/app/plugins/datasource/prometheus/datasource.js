@@ -130,8 +130,16 @@ function (angular, _, moment, dateMath) {
     PrometheusDatasource.prototype.metricFindQuery = function(query) {
       var url;
 
-      var metricsQuery = query.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
-      var labelValuesQuery = query.match(/^label_values\((.+)\)/);
+      var interpolated;
+      try {
+        interpolated = templateSrv.replace(query);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      var metricsQuery = interpolated.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
+      var labelValuesQuery = interpolated.match(/^label_values\((.+)\)/);
 
       if (labelValuesQuery) {
         // return label values
@@ -163,11 +171,12 @@ function (angular, _, moment, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        url = '/api/v1/query?query=' + encodeURIComponent(query);
+        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
+              '&time=' + (moment().valueOf() / 1000);
 
         return this._request('GET', url)
           .then(function(result) {
-            return _.map(result.data.result, function(metricData) {
+            return _.map(result.data.data.result, function(metricData) {
               return {
                 text: getOriginalMetricName(metricData.metric),
                 expandable: true
