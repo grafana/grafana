@@ -1,0 +1,40 @@
+<section class="grafana-metric-options"
+         ng-controller="netCrunchOptionsCtrl as ctrl"
+         ng-init="init()">
+  <div class="tight-form last">
+    <ul class="tight-form-list">
+      <li class="tight-form-item tight-form-item-icon">
+        <i class="fa fa-wrench"></i>
+      </li>
+
+      <li class="tight-form-item">
+        <input class="cr1" id="rawData" type="checkbox"
+               ng-model="panel.scopedVars.rawData"
+               ng-change="metricOptionsChange(panel.scopedVars)">
+        <label for="rawData" class="cr1">RAW data</label>
+      </li>
+
+      <li class="tight-form-item" ng-hide="panel.scopedVars.rawData"
+          bs-tooltip="'Override max data points. Default value is {{defaultMaxDataPoints}}.'">
+        <input class="cr1" id="setMaxDataPoints" type="checkbox"
+               ng-model="panel.scopedVars.setMaxDataPoints"
+               ng-change="metricOptionsChange(panel.scopedVars)">
+        <label for="setMaxDataPoints" class="cr1">Max data points</label>
+      </li>
+
+      <li ng-show="panel.scopedVars.setMaxDataPoints && !panel.scopedVars.rawData"
+          bs-tooltip="'Value should be from {{defaultMinMaxDataPoints}} to
+                                            {{defaultMaxMaxDataPoints}}.'">
+        <input type="text"
+               class="input-mini tight-form-input net-crunch-tight-input"
+               ng-model="panel.scopedVars.maxDataPoints"
+               ng-pattern = "maxDataPointsPattern" required
+               data-placement = "right"
+               ng-model-onblur ng-change="metricOptionsChange(panel.scopedVars)"
+               spellcheck = 'false'
+               placeholder="200">
+      </li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+</section>
