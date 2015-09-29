@@ -2,8 +2,10 @@ define([
   'angular',
   'lodash',
   './query_builder',
+  './query_part',
+  './query_part_editor',
 ],
-function (angular, _, InfluxQueryBuilder) {
+function (angular, _, InfluxQueryBuilder, queryPart) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -17,6 +19,14 @@ function (angular, _, InfluxQueryBuilder) {
       target.tags = target.tags || [];
       target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
       target.fields = target.fields || [{name: 'value', func: target.function || 'mean'}];
+      target.fields[0].parts = [
+        queryPart.create('mean', { withDefaultParams: true }),
+        queryPart.create('derivate', { withDefaultParams: true }),
+        queryPart.create('math', { withDefaultParams: true }),
+        queryPart.create('alias', { withDefaultParams: true }),
+      ];
+
+      $scope.func = queryPart.create('time', { withDefaultParams: true });
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
