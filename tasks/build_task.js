@@ -70,12 +70,20 @@ module.exports = function(grunt) {
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
+    grunt.config('copy.windows_installer', {
+      cwd: '<%= tempDir %>',
+      expand: true,
+      src: ['**/*'],
+      options: { mode: true},
+      dest: '<%= windowsDestDir %>'
+    });
 
     grunt.task.run('copy:dist_to_tmp');
     grunt.task.run('clean:dest_dir');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
     grunt.task.run('copy:netcrunch_filters');
+    grunt.task.run('copy:windows_installer');
   });
 
 };

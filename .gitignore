@@ -3,6 +3,7 @@ coverage/
 .aws-config.json
 awsconfig
 /dist
+/packaging/windows/dest
 /emails/dist
 /tmp
 
