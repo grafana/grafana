@@ -9,18 +9,12 @@
 
 define([
     'angular',
-    'lodash',
-    'config',
-    '../filters/netCrunchFilters',
-    '../directives/netCrunchSpinner',
-    '../directives/netCrunchTree',
-    '../directives/netCrunchVirtualScrollList',
-    '../directives/netCrunchTypeAhead',
-    '../directives/netCrunchFocusMe',
-    '../directives/netCrunchKeyClick'
+    '../directives/netCrunchSpinner'
 ],
 
-function (angular, _) {
+//TODO: netCrunchQueryCtrl.js and query.editor.html must be deeply refactored to new datasource plugin architecture.
+
+function (angular) {
 
   'use strict';
 
@@ -333,20 +327,20 @@ function (angular, _) {
       });
     };
 
-    $scope.duplicateCounterQuery = function (index) {
-      var clone = angular.copy($scope.panel.targets[index]);
-      typeAheadsHide();
-      $scope.panel.targets.push(clone);
-    };
-
-    $scope.moveCounterQuery = function (indexFrom, indexTo) {
-      typeAheadsHide();
-      _.move($scope.panel.targets, indexFrom, indexTo);
-    };
-
-    $scope.seriesChange = function() {
-      $scope.get_data();
-    };
+    //$scope.duplicateCounterQuery = function (index) {
+    //  var clone = angular.copy($scope.panel.targets[index]);
+    //  typeAheadsHide();
+    //  $scope.panel.targets.push(clone);
+    //};
+    //
+    //$scope.moveCounterQuery = function (indexFrom, indexTo) {
+    //  typeAheadsHide();
+    //  _.move($scope.panel.targets, indexFrom, indexTo);
+    //};
+    //
+    //$scope.seriesChange = function() {
+    //  $scope.get_data();
+    //};
 
     $scope.nodeSelectionTypeAhead = function(targetIndex) {
       ctrlReady.then(function() {
@@ -422,5 +416,9 @@ function (angular, _) {
       typeAheadsHide();
     });
 
+    console.log('netcrunch query ctrl init');
+    console.log($scope);
+
+    $scope.init();
   });
 });
