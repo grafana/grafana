@@ -53,19 +53,17 @@ define([
       };
 
       beforeEach(function() {
-        ctx.ds.getCloudWatchClient = function() {
+        ctx.ds.getAwsClient = function() {
           return {
             getMetricStatistics: function(params, callback) {
-              setTimeout(function() {
-                requestParams = params;
-                callback(null, response);
-              }, 0);
+              requestParams = params;
+              callback(null, response);
             }
           };
         };
       });
 
-      it('should generate the correct query', function() {
+      it('should generate the correct query', function(done) {
         ctx.ds.query(query).then(function() {
           expect(requestParams.Namespace).to.be(query.targets[0].namespace);
           expect(requestParams.MetricName).to.be(query.targets[0].metricName);
@@ -73,15 +71,19 @@ define([
           expect(requestParams.Dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
           expect(requestParams.Statistics).to.eql(Object.keys(query.targets[0].statistics));
           expect(requestParams.Period).to.be(query.targets[0].period);
+          done();
         });
+        ctx.$rootScope.$apply();
       });
 
-      it('should return series list', function() {
+      it('should return series list', function(done) {
         ctx.ds.query(query).then(function(result) {
           var s = Object.keys(query.targets[0].statistics)[0];
-          expect(result.data[0].target).to.be(response.Label + s);
+          expect(result.data[0].target).to.be(response.Label + '_' + s + JSON.stringify(query.targets[0].dimensions));
           expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0][s]);
+          done();
         });
+        ctx.$rootScope.$apply();
       });
     });
 
@@ -104,51 +106,64 @@ define([
       };
 
       beforeEach(function() {
-        ctx.ds.getCloudWatchClient = function() {
+        ctx.ds.getAwsClient = function() {
           return {
             listMetrics: function(params, callback) {
-              setTimeout(function() {
-                requestParams = params;
-                callback(null, response);
-              }, 0);
+              requestParams = params;
+              callback(null, response);
             }
           };
         };
       });
 
-      it('should return suggest list for region()', function() {
+      it('should return suggest list for region()', function(done) {
         var query = 'region()';
         ctx.ds.metricFindQuery(query).then(function(result) {
+          result = result.map(function(v) { return v.text; });
           expect(result).to.contain('us-east-1');
+          done();
         });
+        ctx.$rootScope.$apply();
       });
 
-      it('should return suggest list for namespace()', function() {
+      it('should return suggest list for namespace()', function(done) {
         var query = 'namespace()';
         ctx.ds.metricFindQuery(query).then(function(result) {
+          result = result.map(function(v) { return v.text; });
           expect(result).to.contain('AWS/EC2');
+          done();
         });
+        ctx.$rootScope.$apply();
       });
 
-      it('should return suggest list for metrics()', function() {
+      it('should return suggest list for metrics()', function(done) {
         var query = 'metrics(AWS/EC2)';
         ctx.ds.metricFindQuery(query).then(function(result) {
+          result = result.map(function(v) { return v.text; });
           expect(result).to.contain('CPUUtilization');
+          done();
         });
+        ctx.$rootScope.$apply();
       });
 
-      it('should return suggest list for dimension_keys()', function() {
+      it('should return suggest list for dimension_keys()', function(done) {
         var query = 'dimension_keys(AWS/EC2)';
         ctx.ds.metricFindQuery(query).then(function(result) {
+          result = result.map(function(v) { return v.text; });
           expect(result).to.contain('InstanceId');
+          done();
         });
+        ctx.$rootScope.$apply();
       });
 
-      it('should return suggest list for dimension_values()', function() {
+      it('should return suggest list for dimension_values()', function(done) {
         var query = 'dimension_values(us-east-1,AWS/EC2,CPUUtilization)';
         ctx.ds.metricFindQuery(query).then(function(result) {
-          expect(result).to.contain('InstanceId');
+          result = result.map(function(v) { return v.text; });
+          expect(result).to.eql([ 'InstanceId=i-12345678' ]);
+          done();
         });
+        ctx.$rootScope.$apply();
       });
     });
   });
