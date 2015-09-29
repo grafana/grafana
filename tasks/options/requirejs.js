@@ -63,6 +63,7 @@ module.exports = function(config,grunt) {
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',
           'app/plugins/datasource/influxdb/datasource',
+          'app/plugins/datasource/prometheus/datasource',
         ]
       },
     ];
