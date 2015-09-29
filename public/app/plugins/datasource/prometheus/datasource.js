@@ -1,16 +1,17 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
   'app/core/utils/datemath',
   './directives',
   './queryCtrl',
 ],
-function (angular, _, kbn, dateMath) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
+  var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
   module.factory('PrometheusDatasource', function($q, backendSrv, templateSrv) {
 
@@ -129,8 +130,16 @@ function (angular, _, kbn, dateMath) {
     PrometheusDatasource.prototype.metricFindQuery = function(query) {
       var url;
 
-      var metricsQuery = query.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
-      var labelValuesQuery = query.match(/^label_values\((.+)\)/);
+      var interpolated;
+      try {
+        interpolated = templateSrv.replace(query);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      var metricsQuery = interpolated.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
+      var labelValuesQuery = interpolated.match(/^label_values\((.+)\)/);
 
       if (labelValuesQuery) {
         // return label values
@@ -162,11 +171,12 @@ function (angular, _, kbn, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        url = '/api/v1/query?query=' + encodeURIComponent(query);
+        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
+              '&time=' + (moment().valueOf() / 1000);
 
         return this._request('GET', url)
           .then(function(result) {
-            return _.map(result.data.result, function(metricData) {
+            return _.map(result.data.data.result, function(metricData) {
               return {
                 text: getOriginalMetricName(metricData.metric),
                 expandable: true
@@ -183,13 +193,14 @@ function (angular, _, kbn, dateMath) {
     };
 
     PrometheusDatasource.prototype.calculateInterval = function(interval, intervalFactor) {
-      var sec = kbn.interval_to_seconds(interval);
-
+      var m = interval.match(durationSplitRegexp);
+      var dur = moment.duration(parseInt(m[1]), m[2]);
+      var sec = dur.asSeconds();
       if (sec < 1) {
         sec = 1;
       }
 
-      return sec * intervalFactor;
+      return Math.floor(sec * intervalFactor) + 's';
     };
 
     function transformMetricData(md, options) {
