@@ -12,6 +12,7 @@ function (angular, _, config) {
 
     $scope.init = function() {
       $scope.playlist = [];
+      $scope.playlistType = 'dashboards'; //default option is playlist of dashboards.
       $scope.timespan = config.playlist_timespan;
       $scope.search();
     };
@@ -31,23 +32,23 @@ function (angular, _, config) {
     };
 
     $scope.filterHits = function() {
-      $scope.filteredHits = _.reject($scope.searchHits, function(dash) {
-        return _.findWhere($scope.playlist, {uri: dash.uri});
+      $scope.filteredHits = _.reject($scope.searchHits, function(element) {
+        return _.findWhere($scope.playlist, {uri: element.uri});
       });
     };
 
-    $scope.addDashboard = function(dashboard) {
-      $scope.playlist.push(dashboard);
+    $scope.addElement = function(element) {
+      $scope.playlist.push(element);
       $scope.filterHits();
     };
 
-    $scope.removeDashboard = function(dashboard) {
-      $scope.playlist = _.without($scope.playlist, dashboard);
+    $scope.removeElement = function(element) {
+      $scope.playlist = _.without($scope.playlist, element);
       $scope.filterHits();
     };
 
     $scope.start = function() {
-      playlistSrv.start("dashboards", $scope.playlist, $scope.timespan);
+      playlistSrv.start($scope.playlistType, $scope.playlist, $scope.timespan);
     };
 
   });

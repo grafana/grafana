@@ -2,7 +2,7 @@
 	<div class="gf-box-header">
 		<div class="gf-box-title">
 			<i class="fa fa-play"></i>
-			Start dashboard playlist
+			Start playlist
 		</div>
 
 		<button class="gf-box-header-close-btn" ng-click="dismiss();">
@@ -12,6 +12,24 @@
 	</div>
 
 	<div class="gf-box-body">
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="span6">
+        <div style="display: inline-block">
+          <div class="tight-form">
+            <ul class="tight-form-list">
+              <li class="tight-form-item">
+                Playlist type:
+              </li>
+              <li>
+                <select class="input-medium tight-form-input last" ng-model="playlistType" ng-change="changeOptions()" ng-options="f for f in ['dashboards', 'variables']"></select>            
+              </li>
+            </ul>
+            <div class="clearfix"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 		<div class="row" style="margin-bottom: 10px;">
 			<div class="span6">
 				<div style="display: inline-block">
@@ -29,19 +47,23 @@
 				</div>
 			</div>
 			<div class="span6">
-				<h5>Playlist dashboards</h5>
+        <h5>
+          <div ng-if="playlistType === 'dashboards'">
+            Playlist dashboards
+          </div>
+        </h5>
 			</div>
 		</div>
 
 		<div class="row">
 			<div class="span6">
 				<table class="grafana-options-table">
-					<tr ng-repeat="dashboard in filteredHits">
+					<tr ng-repeat="element in filteredHits">
 						<td style="white-space: nowrap;">
-							{{dashboard.title}}
+							{{element.title}}
 						</td>
 						<td style="text-align: center">
-							<button class="btn btn-inverse btn-mini pull-right" ng-click="addDashboard(dashboard)">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="addElement(element)">
 								<i class="fa fa-plus"></i>
 								Add to playlist
 							</button>
@@ -49,19 +71,22 @@
 					</tr>
 					<tr ng-hide="searchHits.length">
 						<td colspan="2">
-							<i class="fa fa-warning"></i> No dashboards found
+              <div ng-if="playlistType === 'dashboards'">
+							  <i class="fa fa-warning"></i> 
+                No dashboards found
+              </div>
 						</td>
 					</tr>
 				</table>
 			</div>
 			<div class="span6">
 				<table class="grafana-options-table">
-					<tr ng-repeat="dashboard in playlist">
+					<tr ng-repeat="element in playlist">
 						<td style="white-space: nowrap;">
-							{{dashboard.title}}
+							{{element.title}}
 						</td>
 						<td style="text-align: center">
-							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeElement(element)">
 								<i class="fa fa-remove"></i>
 							</button>
 						</td>
