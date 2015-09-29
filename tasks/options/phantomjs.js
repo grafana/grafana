@@ -10,7 +10,7 @@ module.exports = function(config,grunt) {
 
       var m=grunt.file.read(confDir+"location.js")
       var src=/= \"([^\"]*)\"/.exec(m)[1];
-      
+
       if (!grunt.file.isPathAbsolute(src)) {
         src = confDir+src;
       }
@@ -18,16 +18,19 @@ module.exports = function(config,grunt) {
       var exec = require('child_process').execFileSync;
 
       try {
-        var ph=exec(src,['-v'], { stdio: 'ignore' });
-        grunt.verbose.writeln('Using '+ src);
-        grunt.file.copy(src, dest, { encoding: null });
+        grunt.config('copy.phantom_bin', {
+          src: src,
+          dest: dest,
+          options: { mode: true},
+        });
+        grunt.task.run('copy:phantom_bin');
       } catch (err) {
         grunt.verbose.writeln(err);
         grunt.fail.warn('No working Phantomjs binary available')
       }
-      
+
     } else {
-       grunt.log.writeln('Phantomjs already imported from node');
+      grunt.log.writeln('Phantomjs already imported from node');
     }
   });
 };
