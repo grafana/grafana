@@ -117,7 +117,7 @@ function (angular, _, kbn, dateMath) {
     $scope.calculateInterval = function() {
       var interval = $scope.target.interval || $scope.interval;
       var calculatedInterval = $scope.datasource.calculateInterval(interval, $scope.target.intervalFactor);
-      $scope.target.calculatedInterval = kbn.secondsToHms(calculatedInterval);
+      $scope.target.calculatedInterval = calculatedInterval;
     };
 
     // TODO: validate target
