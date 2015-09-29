@@ -18,13 +18,24 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
       var target = $scope.target;
       target.tags = target.tags || [];
       target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
-      target.fields = target.fields || [{name: 'value', func: target.function || 'mean'}];
-      target.fields[0].parts = [
-        queryPart.create('mean', { withDefaultParams: true }),
-        queryPart.create('derivate', { withDefaultParams: true }),
-        queryPart.create('math', { withDefaultParams: true }),
-        queryPart.create('alias', { withDefaultParams: true }),
+      target.fields = target.fields || [{name: 'value'}];
+      target.select = target.select || [[{type: 'field', params: ['value']}]];
+      target.select[0] = [
+        {type: 'field', params: ['value']},
+        {type: 'mean', params: []},
+        {type: 'derivate', params: ['10s']},
+        {type: 'math', params: ['/ 100']},
+        {type: 'alias', params: ['google']},
       ];
+
+      $scope.select = _.map(target.select, function(parts) {
+        return _.map(parts, function(part) {
+          var partModel = queryPart.create(part.type);
+          partModel.params = part.params;
+          partModel.updateText();
+          return partModel;
+        });
+      });
 
       $scope.func = queryPart.create('time', { withDefaultParams: true });
 

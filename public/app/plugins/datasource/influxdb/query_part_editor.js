@@ -16,10 +16,8 @@ function (angular, _, $) {
 
       var funcControlsTemplate =
          '<div class="tight-form-func-controls">' +
-           '<span class="pointer fa fa-arrow-left"></span>' +
            '<span class="pointer fa fa-question-circle"></span>' +
            '<span class="pointer fa fa-remove" ></span>' +
-           '<span class="pointer fa fa-arrow-right"></span>' +
          '</div>';
 
       return {
