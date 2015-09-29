@@ -4,6 +4,7 @@ coverage/
 awsconfig
 /dist
 /packaging/windows/dest
+/packaging/windows/release
 /emails/dist
 /tmp
 
