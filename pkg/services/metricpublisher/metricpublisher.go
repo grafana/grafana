@@ -70,6 +70,9 @@ func Reslice(in []*schema.MetricData, size int) [][]*schema.MetricData {
 }
 
 func Publish(metrics []*schema.MetricData) error {
+	if globalProducer == nil {
+		return nil
+	}
 	if len(metrics) == 0 {
 		return nil
 	}
