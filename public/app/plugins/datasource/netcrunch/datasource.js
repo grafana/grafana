@@ -14,6 +14,7 @@ define([
   'config',
   'jquery',
   'kbn',
+  './directives/netCrunchMetricQuery',
   './services/networkDataProvider',
   './services/countersDataProvider',
   './services/trendDataProvider',
