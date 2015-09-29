@@ -1,4 +1,4 @@
-<div class="tight-form-container-no-item-borders">
+<div class="">
 	<div  class="tight-form">
 		<ul class="tight-form-list pull-right">
 			<li ng-show="parserError" class="tight-form-item">
@@ -48,26 +48,22 @@
 			<li>
 				<metric-segment segment="measurementSegment" get-options="getMeasurements()" on-change="measurementChanged()"></metric-segment>
 			</li>
+			<li class="tight-form-item query-keyword" style="padding-left: 15px; padding-right: 15px;">
+				WHERE
+			</li>
+			<li ng-repeat="segment in tagSegments">
+				<metric-segment segment="segment" get-options="getTagsOrValues(segment, $index)" on-change="tagSegmentUpdated(segment, $index)"></metric-segment>
+			</li>
 		</ul>
 		<div class="clearfix"></div>
 
 		<div style="padding: 10px" ng-if="target.rawQuery">
 			<textarea ng-model="target.query" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="get_data()"></textarea>
 		</div>
+
 	</div>
 
 	<div ng-hide="target.rawQuery">
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-					WHERE
-				</li>
-				<li ng-repeat="segment in tagSegments">
-					<metric-segment segment="segment" get-options="getTagsOrValues(segment, $index)" on-change="tagSegmentUpdated(segment, $index)"></metric-segment>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
 
 		<div class="tight-form" ng-repeat="field in target.fields">
 			<ul class="tight-form-list">
@@ -75,19 +71,11 @@
 					<span ng-show="$index === 0">SELECT</span>
 				</li>
 				<li>
-					<metric-segment-model property="field.func" get-options="getFunctions()" on-change="get_data()" css-class="tight-form-item-xlarge"></metric-segment>
+					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()"></metric-segment>
 				</li>
-				<li>
-					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()" css-class="tight-form-item-large"></metric-segment>
-				</li>
-				<li>
-					<input type="text" class="tight-form-clear-input text-center" style="width: 70px;" ng-model="field.mathExpr" spellcheck='false' placeholder="math expr" ng-blur="get_data()">
-				</li>
-				<li class="tight-form-item query-keyword">
-					AS
-				</li>
-				<li>
-					<input type="text" class="tight-form-clear-input" style="width: 180px;" ng-model="field.asExpr" spellcheck='false' placeholder="as expr" ng-blur="get_data()">
+				<li ng-repeat="func in field.parts">
+					<span influx-query-part-editor class="tight-form-item tight-form-func">
+					</span>
 				</li>
 			</ul>
 
@@ -108,30 +96,29 @@
 					<span ng-show="$index === 0">GROUP BY</span>
 				</li>
 				<li ng-if="groupBy.type === 'time'">
-					<span class="tight-form-item">time</span>
-					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()">
-					</metric-segment>
+					<span influx-query-part-editor class="tight-form-item tight-form-func">
+					</span>
 				</li>
-				<li class="dropdown" ng-if="groupBy.type === 'time'">
-					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
-						<span ng-show="target.fill">
-							fill ({{target.fill}})
-						</span>
-						<span ng-show="!target.fill">
-							no fill
-						</span>
-					</a>
-					<ul class="dropdown-menu">
-						<li><a ng-click="setFill('')">no fill</a></li>
-						<li><a ng-click="setFill('0')">fill (0)</a></li>
-						<li><a ng-click="setFill('null')">fill (null)</a></li>
-						<li><a ng-click="setFill('none')">fill (none)</a></li>
-						<li><a ng-click="setFill('previous')">fill (previous)</a></li>
-					</ul>
-				</li>
-				<li ng-if="groupBy.type === 'tag'">
-					<metric-segment-model property="groupBy.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
-				</li>
+				<!-- <li class="dropdown" ng&#45;if="groupBy.type === 'time'"> -->
+					<!-- 	<a class="tight&#45;form&#45;item pointer" data&#45;toggle="dropdown" bs&#45;tooltip="'Insert missing values, important when stacking'" data&#45;placement="right"> -->
+						<!-- 		<span ng&#45;show="target.fill"> -->
+							<!-- 			fill ({{target.fill}}) -->
+							<!-- 		</span> -->
+						<!-- 		<span ng&#45;show="!target.fill"> -->
+							<!-- 			no fill -->
+							<!-- 		</span> -->
+						<!-- 	</a> -->
+					<!-- 	<ul class="dropdown&#45;menu"> -->
+						<!-- 		<li><a ng&#45;click="setFill('')">no fill</a></li> -->
+						<!-- 		<li><a ng&#45;click="setFill('0')">fill (0)</a></li> -->
+						<!-- 		<li><a ng&#45;click="setFill('null')">fill (null)</a></li> -->
+						<!-- 		<li><a ng&#45;click="setFill('none')">fill (none)</a></li> -->
+						<!-- 		<li><a ng&#45;click="setFill('previous')">fill (previous)</a></li> -->
+						<!-- 	</ul> -->
+					<!-- </li> -->
+				<!-- <li ng&#45;if="groupBy.type === 'tag'"> -->
+					<!-- 	<metric&#45;segment&#45;model property="groupBy.key" get&#45;options="getTagOptions()" on&#45;change="get_data()"></metric&#45;segment> -->
+					<!-- </li> -->
 			</ul>
 
 			<ul class="tight-form-list pull-right">
@@ -145,6 +132,8 @@
 			<div class="clearfix"></div>
 		</div>
 	</div>
+
+
 
 	<div class="tight-form">
 		<ul class="tight-form-list">
