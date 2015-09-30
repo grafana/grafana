@@ -10,33 +10,26 @@ function (angular, _, $) {
     .module('grafana.directives')
     .directive('influxQueryPartEditor', function($compile, templateSrv) {
 
-      var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
                           ' class="input-mini tight-form-func-param"></input>';
-
-      var funcControlsTemplate =
-         '<div class="tight-form-func-controls">' +
-           '<span class="pointer fa fa-question-circle"></span>' +
-           '<span class="pointer fa fa-remove" ></span>' +
-         '</div>';
-
       return {
-        restrict: 'A',
+        restrict: 'E',
+        templateUrl: 'app/plugins/datasource/influxdb/partials/query_part.html',
+        scope: {
+          part: "="
+        },
         link: function postLink($scope, elem) {
-          var $funcLink = $(funcSpanTemplate);
-          var $funcControls = $(funcControlsTemplate);
-          var func = $scope.func;
-          var funcDef = func.def;
-          var scheduledRelink = false;
-          var paramCountAtLink = 0;
+          var part = $scope.part;
+          var partDef = part.def;
+          var $paramsContainer = elem.find('.query-part-parameters');
+          var $controlsContainer = elem.find('.tight-form-func-controls');
 
           function clickFuncParam(paramIndex) {
             /*jshint validthis:true */
-
             var $link = $(this);
             var $input = $link.next();
 
-            $input.val(func.params[paramIndex]);
+            $input.val(part.params[paramIndex]);
             $input.css('width', ($link.width() + 16) + 'px');
 
             $link.hide();
@@ -51,32 +44,16 @@ function (angular, _, $) {
             }
           }
 
-          function scheduledRelinkIfNeeded() {
-            if (paramCountAtLink === func.params.length) {
-              return;
-            }
-
-            if (!scheduledRelink) {
-              scheduledRelink = true;
-              setTimeout(function() {
-                relink();
-                scheduledRelink = false;
-              }, 200);
-            }
-          }
-
           function inputBlur(paramIndex) {
             /*jshint validthis:true */
             var $input = $(this);
             var $link = $input.prev();
             var newValue = $input.val();
 
-            if (newValue !== '' || func.def.params[paramIndex].optional) {
+            if (newValue !== '' || part.def.params[paramIndex].optional) {
               $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
-              func.updateParam($input.val(), paramIndex);
-              scheduledRelinkIfNeeded();
-
+              part.updateParam($input.val(), paramIndex);
               $scope.$apply($scope.targetChanged);
             }
 
@@ -99,8 +76,8 @@ function (angular, _, $) {
           function addTypeahead($input, paramIndex) {
             $input.attr('data-provide', 'typeahead');
 
-            var options = funcDef.params[paramIndex].options;
-            if (funcDef.params[paramIndex].type === 'int') {
+            var options = partDef.params[paramIndex].options;
+            if (partDef.params[paramIndex].type === 'int') {
               options = _.map(options, function(val) { return val.toString(); });
             }
 
@@ -123,114 +100,52 @@ function (angular, _, $) {
             };
           }
 
-          function toggleFuncControls() {
+          $scope.toggleControls = function() {
             var targetDiv = elem.closest('.tight-form');
 
             if (elem.hasClass('show-function-controls')) {
               elem.removeClass('show-function-controls');
               targetDiv.removeClass('has-open-function');
-              $funcControls.hide();
+              $controlsContainer.hide();
               return;
             }
 
             elem.addClass('show-function-controls');
             targetDiv.addClass('has-open-function');
-
-            $funcControls.show();
-          }
+            $controlsContainer.show();
+          };
 
           function addElementsAndCompile() {
-            $funcControls.appendTo(elem);
-            $funcLink.appendTo(elem);
-
-            _.each(funcDef.params, function(param, index) {
-              if (param.optional && func.params.length <= index) {
+            _.each(partDef.params, function(param, index) {
+              if (param.optional && part.params.length <= index) {
                 return;
               }
 
               if (index > 0) {
-                $('<span>, </span>').appendTo(elem);
+                $('<span>, </span>').appendTo($paramsContainer);
               }
 
-              var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
-              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + paramValue + '</a>');
+              var paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
+              var $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
               var $input = $(paramTemplate);
 
-              paramCountAtLink++;
-
-              $paramLink.appendTo(elem);
-              $input.appendTo(elem);
+              $paramLink.appendTo($paramsContainer);
+              $input.appendTo($paramsContainer);
 
               $input.blur(_.partial(inputBlur, index));
               $input.keyup(inputKeyDown);
               $input.keypress(_.partial(inputKeyPress, index));
               $paramLink.click(_.partial(clickFuncParam, index));
 
-              if (funcDef.params[index].options) {
+              if (partDef.params[index].options) {
                 addTypeahead($input, index);
-              }
-
-            });
-
-            $('<span>)</span>').appendTo(elem);
-
-            $compile(elem.contents())($scope);
-          }
-
-          function ifJustAddedFocusFistParam() {
-            if ($scope.func.added) {
-              $scope.func.added = false;
-              setTimeout(function() {
-                elem.find('.graphite-func-param-link').first().click();
-              }, 10);
-            }
-          }
-
-          function registerFuncControlsToggle() {
-            $funcLink.click(toggleFuncControls);
-          }
-
-          function registerFuncControlsActions() {
-            $funcControls.click(function(e) {
-              var $target = $(e.target);
-              if ($target.hasClass('fa-remove')) {
-                toggleFuncControls();
-                $scope.$apply(function() {
-                  $scope.removeFunction($scope.func);
-                });
-                return;
-              }
-
-              if ($target.hasClass('fa-arrow-left')) {
-                $scope.$apply(function() {
-                  _.move($scope.functions, $scope.$index, $scope.$index - 1);
-                  $scope.targetChanged();
-                });
-                return;
-              }
-
-              if ($target.hasClass('fa-arrow-right')) {
-                $scope.$apply(function() {
-                  _.move($scope.functions, $scope.$index, $scope.$index + 1);
-                  $scope.targetChanged();
-                });
-                return;
-              }
-
-              if ($target.hasClass('fa-question-circle')) {
-                window.open("http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + funcDef.name,'_blank');
-                return;
               }
             });
           }
 
           function relink() {
-            elem.children().remove();
-
+            $paramsContainer.empty();
             addElementsAndCompile();
-            ifJustAddedFocusFistParam();
-            registerFuncControlsToggle();
-            registerFuncControlsActions();
           }
 
           relink();
