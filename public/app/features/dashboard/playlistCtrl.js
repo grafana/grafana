@@ -39,13 +39,13 @@ function (angular, _, config) {
     };
 
     $scope.addDashboard = function(dashboard) {
-      $scope.playlist.push(dashboard);
       if ($scope.playlistType === 'dashboards') {
+        $scope.playlist.push(dashboard);
         $scope.filterHits();
       }
       else if ($scope.playlistType === 'variables') {
         $scope.playlist = [];
-        $scope.playlist[0] = dashboard;
+        $scope.playlist.push(dashboard);
         $scope.filteredHits = [];
         $scope.variableList = [];
         var uriSplit = dashboard.uri.split("/");
@@ -56,7 +56,7 @@ function (angular, _, config) {
       }
     };
 
-    $scope.removeElement = function(dashboard) {
+    $scope.removeDashboard = function(dashboard) {
       $scope.playlist = _.without($scope.playlist, dashboard);
       $scope.filterHits();
     };
