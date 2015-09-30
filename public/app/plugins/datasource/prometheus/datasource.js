@@ -128,7 +128,7 @@ function (angular, _, moment, dateMath) {
     };
 
     PrometheusDatasource.prototype.metricFindQuery = function(query) {
-      var url;
+      if (!query) { return $q.when([]); }
 
       var interpolated;
       try {
@@ -138,27 +138,51 @@ function (angular, _, moment, dateMath) {
         return $q.reject(err);
       }
 
-      var metricsQuery = interpolated.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
-      var labelValuesQuery = interpolated.match(/^label_values\((.+)\)/);
+      var label_values_regex = /^label_values\(([^,]+)(?:,\s*(.+))?\)$/;
+      var metric_names_regex = /^metrics\((.+)\)$/;
 
-      if (labelValuesQuery) {
-        // return label values
-        url = '/api/v1/label/' + labelValuesQuery[1] + '/values';
+      var label_values_query = interpolated.match(label_values_regex);
+      if (label_values_query) {
+        if (!label_values_query[2]) {
+          // return label values globally
+          var url = '/api/v1/label/' + label_values_query[1] + '/values';
 
-        return this._request('GET', url).then(function(result) {
-          return _.map(result.data.data, function(value) {
-            return {text: value};
+          return this._request('GET', url).then(function(result) {
+            return _.map(result.data.data, function(value) {
+              return {text: value};
+            });
           });
-        });
-      } else if (metricsQuery != null && metricsQuery[0].indexOf('*') >= 0) {
-        // if query has wildcard character, return metric name list
-        url = '/api/v1/label/__name__/values';
+        } else {
+          var metric_query = 'count(' + label_values_query[1] + ') by (' +
+                             label_values_query[2]  + ')';
+          var url = '/api/v1/query?query=' + encodeURIComponent(metric_query) +
+                    '&time=' + (moment().valueOf() / 1000);
+
+          return this._request('GET', url)
+            .then(function(result) {
+              if (result.data.data.result.length === 0 ||
+                  _.keys(result.data.data.result[0].metric).length === 0) {
+                return [];
+              }
+              return _.map(result.data.data.result, function(metricValue) {
+                return {
+                  text: metricValue.metric[label_values_query[2]],
+                  expandable: true
+                };
+              });
+            });
+        }
+      }
+
+      var metric_names_query = interpolated.match(metric_names_regex);
+      if (metric_names_query) {
+        var url = '/api/v1/label/__name__/values';
 
         return this._request('GET', url)
           .then(function(result) {
             return _.chain(result.data.data)
               .filter(function(metricName) {
-                var r = new RegExp(metricsQuery[0].replace(/\*/g, '.*'));
+                var r = new RegExp(metric_names_query[1]);
                 return r.test(metricName);
               })
               .map(function(matchedMetricName) {
@@ -171,7 +195,7 @@ function (angular, _, moment, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
+        var url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
               '&time=' + (moment().valueOf() / 1000);
 
         return this._request('GET', url)
