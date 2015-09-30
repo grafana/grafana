@@ -212,7 +212,7 @@ function (angular, _, moment, dateMath) {
     };
 
     PrometheusDatasource.prototype.testDatasource = function() {
-      return this.metricFindQuery('*').then(function() {
+      return this.metricFindQuery('metrics(.*)').then(function() {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
