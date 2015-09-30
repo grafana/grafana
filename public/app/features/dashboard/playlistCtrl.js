@@ -12,7 +12,7 @@ function (angular, _, config) {
 
     $scope.init = function() {
       $scope.playlist = [];
-      $scope.variables = [];
+      $scope.variables = [];  // for storing the playlist variables.
       $scope.playlistType = 'dashboards'; //default option is playlist of dashboards.
       $scope.timespan = config.playlist_timespan;
       $scope.search();
