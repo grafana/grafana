@@ -8,7 +8,11 @@ page_keywords: grafana, prometheus, metrics, query, documentation
 Grafana includes support for Prometheus Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Prometheus does have a few different options for building queries.
 
 ## Adding the data source to Grafana
+<<<<<<< f7900e42bd14e9cb9a09796caf87f3ddbcf0e103
 ![](/img/v2/add_Prometheus.png)
+=======
+![](/img/v2/add_Prometheus.jpg)
+>>>>>>> Add prometheus docs
 
 1. Open the side menu by clicking the the Grafana icon in the top header. 
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
@@ -28,7 +32,11 @@ Basic Auth | Enable basic authentication to the Prometheus datasource.
 User | Name of your Prometheus user
 Password | Database user's password
 
+<<<<<<< f7900e42bd14e9cb9a09796caf87f3ddbcf0e103
  > Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+=======
+ > Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the brower.
+>>>>>>> Add prometheus docs
 
  > Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
 
