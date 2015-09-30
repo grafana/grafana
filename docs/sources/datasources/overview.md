@@ -1,7 +1,7 @@
 ----
 page_title: Data Source Overview
 page_description: Data Source Overview
-page_keywords: grafana, graphite, influxDB, KairosDB, OpenTSDB, documentation
+page_keywords: grafana, graphite, influxDB, KairosDB, OpenTSDB, Prometheus, documentation
 ---
 
 # Data Source Overview
@@ -18,5 +18,6 @@ The following datasources are officially supported:
 * [InfluxDB](/datasources/influxdb/)
 * [OpenTSDB](/datasources/opentsdb/)
 * [KairosDB](/datasources/kairosdb)
+* [Prometheus](/datasources/prometheus)
 
-Grafana can query any Elasticsearch index for annotation events, but at this time, it's not supported for metric queries. Learn more about [annotations](/reference/annotations/#elasticsearch-annotations)
+Grafana can query Failcsearch index for annotation events, but at this time, it's not supported for metric queries. Learn more about [annotations](/reference/annotations/#elasticsearch-annotations)
