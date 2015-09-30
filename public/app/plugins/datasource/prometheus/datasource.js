@@ -141,11 +141,12 @@ function (angular, _, moment, dateMath) {
       var label_values_regex = /^label_values\(([^,]+)(?:,\s*(.+))?\)$/;
       var metric_names_regex = /^metrics\((.+)\)$/;
 
+      var url;
       var label_values_query = interpolated.match(label_values_regex);
       if (label_values_query) {
         if (!label_values_query[2]) {
           // return label values globally
-          var url = '/api/v1/label/' + label_values_query[1] + '/values';
+          url = '/api/v1/label/' + label_values_query[1] + '/values';
 
           return this._request('GET', url).then(function(result) {
             return _.map(result.data.data, function(value) {
@@ -155,7 +156,7 @@ function (angular, _, moment, dateMath) {
         } else {
           var metric_query = 'count(' + label_values_query[1] + ') by (' +
                              label_values_query[2]  + ')';
-          var url = '/api/v1/query?query=' + encodeURIComponent(metric_query) +
+          url = '/api/v1/query?query=' + encodeURIComponent(metric_query) +
                     '&time=' + (moment().valueOf() / 1000);
 
           return this._request('GET', url)
@@ -176,7 +177,7 @@ function (angular, _, moment, dateMath) {
 
       var metric_names_query = interpolated.match(metric_names_regex);
       if (metric_names_query) {
-        var url = '/api/v1/label/__name__/values';
+        url = '/api/v1/label/__name__/values';
 
         return this._request('GET', url)
           .then(function(result) {
@@ -195,7 +196,7 @@ function (angular, _, moment, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        var url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
+        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
               '&time=' + (moment().valueOf() / 1000);
 
         return this._request('GET', url)
