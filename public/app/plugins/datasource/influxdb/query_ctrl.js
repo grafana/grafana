@@ -2,10 +2,10 @@ define([
   'angular',
   'lodash',
   './query_builder',
-  './query_part',
+  './influx_query',
   './query_part_editor',
 ],
-function (angular, _, InfluxQueryBuilder, queryPart) {
+function (angular, _, InfluxQueryBuilder, InfluxQuery) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -15,29 +15,18 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
     $scope.init = function() {
       if (!$scope.target) { return; }
 
-      var target = $scope.target;
-      target.tags = target.tags || [];
-      target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
-      target.fields = target.fields || [{name: 'value'}];
-      target.select = target.select || [[
-        {name: 'field', params: ['value']},
-        {name: 'mean', params: []},
-      ]];
+      $scope.target = $scope.target;
+      $scope.queryModel = new InfluxQuery($scope.target);
+      $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
 
-      $scope.updateSelectParts();
-
-      $scope.groupByParts = queryPart.create({name: 'time', params:['$interval']});
-
-      $scope.queryBuilder = new InfluxQueryBuilder(target);
-
-      if (!target.measurement) {
+      if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();
       } else {
-        $scope.measurementSegment = uiSegmentSrv.newSegment(target.measurement);
+        $scope.measurementSegment = uiSegmentSrv.newSegment($scope.target.measurement);
       }
 
       $scope.tagSegments = [];
-      _.each(target.tags, function(tag) {
+      _.each($scope.target.tags, function(tag) {
         if (!tag.operator) {
           if (/^\/.*\/$/.test(tag.value)) {
             tag.operator = "=~";
@@ -78,30 +67,12 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
     };
 
     $scope.addSelect = function() {
-      $scope.target.select.push([
-        {name: 'field', params: ['value']},
-        {name: 'mean', params: []},
-      ]);
-      $scope.updateSelectParts();
+      $scope.queryModel.addSelect();
     };
 
     $scope.removeSelect = function(index) {
-      $scope.target.select.splice(index, 1);
-      $scope.updateSelectParts();
+      $scope.queryModel.removeSelect(index);
       $scope.get_data();
-    };
-
-    $scope.updateSelectParts = function() {
-      $scope.selectParts = _.map($scope.target.select, function(parts) {
-        return _.map(parts, function(part) {
-          return queryPart.create(part);
-        });
-      });
-    };
-
-    $scope.changeFunction = function(func) {
-      $scope.target.function = func;
-      $scope.$parent.get_data();
     };
 
     $scope.measurementChanged = function() {
@@ -123,22 +94,6 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
       return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments(true), $scope.handleQueryError);
-    };
-
-    $scope.getFunctions = function () {
-      var functionList = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-        'stddev', 'first', 'last'
-      ];
-      return $q.when(_.map(functionList, function(func) {
-        return uiSegmentSrv.newSegment(func);
-      }));
-    };
-
-    $scope.getGroupByTimeIntervals = function () {
-      var times = ['auto', '1s', '10s', '1m', '2m', '5m', '10m', '30m', '1h', '1d'];
-      return $q.when(_.map(times, function(func) {
-        return uiSegmentSrv.newSegment(func);
-      }));
     };
 
     $scope.handleQueryError = function(err) {
@@ -200,18 +155,6 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
       return $scope.datasource.metricFindQuery(fieldsQuery)
       .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
-    };
-
-    $scope.addField = function() {
-      $scope.target.fields.push({name: $scope.addFieldSegment.value, func: 'mean'});
-      _.extend($scope.addFieldSegment, uiSegmentSrv.newPlusButton());
-    };
-
-    $scope.fieldChanged = function(field) {
-      if (field.name === '-- remove from select --') {
-        $scope.target.fields = _.without($scope.target.fields, field);
-      }
-      $scope.get_data();
     };
 
     $scope.getTagOptions = function() {
