@@ -30,32 +30,30 @@
       </div>
     </div>
 
-		<div class="row" style="margin-bottom: 10px;">
-			<div class="span6">
-				<div style="display: inline-block">
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item">
-								Search
-							</li>
-							<li>
-								<input type="text" class="tight-form-input input-xlarge last" ng-model="searchQuery" placeholder="query or empty for starred" ng-change="search()">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-				</div>
-			</div>
-			<div class="span6">
-        <h5>
-          <div ng-if="playlistType === 'dashboards'">
-            Playlist dashboards
+    <div class="row" style="margin-bottom: 10px;">
+      <div class="span6">
+        <div style="display: inline-block">
+          <div class="tight-form">
+            <ul class="tight-form-list">
+              <li class="tight-form-item">
+                Search
+              </li>
+              <li>
+                <input type="text" class="tight-form-input input-xlarge last" ng-model="searchQuery" placeholder="query or empty for starred" ng-change="search()">
+              </li>
+            </ul>
+            <div class="clearfix"></div>
           </div>
+        </div>
+      </div>
+      <div class="span6">
+        <h5>
+            Playlist dashboards
         </h5>
-			</div>
-		</div>
-
-		<div class="row">
+      </div>  
+    </div>
+		
+    <div class="row" style="margin-bottom: 10px;">
 			<div class="span6">
 				<table class="grafana-options-table">
 					<tr ng-repeat="element in filteredHits">
@@ -64,17 +62,20 @@
 						</td>
 						<td style="text-align: center">
 							<button class="btn btn-inverse btn-mini pull-right" ng-click="addElement(element)">
-								<i class="fa fa-plus"></i>
-								Add to playlist
+								<div ng-if="playlistType === 'dashboards'">
+                  <i class="fa fa-plus"></i>
+								  Add to playlist
+                </div>
+                <div ng-if="playlistType === 'variables'">
+                  Select
+                </div>
 							</button>
 						</td>
 					</tr>
 					<tr ng-hide="searchHits.length">
 						<td colspan="2">
-              <div ng-if="playlistType === 'dashboards'">
-							  <i class="fa fa-warning"></i> 
-                No dashboards found
-              </div>
+						 <i class="fa fa-warning"></i> 
+             No dashboards found
 						</td>
 					</tr>
 				</table>
@@ -99,6 +100,60 @@
 				</table>
 			</div>
 		</div>
+
+    <div class="row" style="margin-bottom: 10px;" ng-if="playlistType === 'variables' && playlist.length > 0">
+      <div class="tight-form">
+        <div class="span6">
+          <h5>Variables list</h5>
+        </div>
+      </div>
+      <div class="span6">
+        <h5>Playlist variables</h5>
+      </div>
+    </div>
+
+    <div class="row" style="margin-bottom: 10px;" ng-if="playlistType === 'variables' && playlist.length > 0">
+      <div class="span6">
+        <table class="grafana-options-table">
+          <tr ng-repeat="variable in filteredList">
+            <td style="white-space: nowrap;">
+              {{variable.name}}
+            </td>
+            <td style="text-align: center">
+              <button class="btn btn-inverse btn-mini pull-right" ng-click="addVariableToPlaylist(variable)">
+                <i class="fa fa-plus"></i>
+                Add to playlist
+              </button>
+            </td>
+          </tr>
+          <tr ng-hide="filteredList.length">
+            <td colspan="2">
+             <i class="fa fa-warning"></i>
+             No template variables found
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="span6">
+        <table class="grafana-options-table">
+          <tr ng-repeat="variable in variables">
+            <td style="white-space: nowrap;">
+              {{variable.name}}
+            </td>
+            <td style="text-align: center">
+              <button class="btn btn-inverse btn-mini pull-right" ng-click="removeVariableFromPlaylist(variable)">
+                <i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+          <tr ng-hide="playlist.length">
+            <td colspan="2">
+              Playlist empty
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
 
 		<br>
 		<br>

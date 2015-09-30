@@ -20,14 +20,14 @@ function (angular, _, kbn) {
 
       if(self.playlistType === "dashboards") {
         $location.url('dashboard/' + playlistVar.uri);
-      } else if(self.playlistType === "templateVariables") {
+      } else if(self.playlistType === "variables") {
         var urlParameters = "";
         for(var i=0; i<playlistVar.varCombinations.length; i++) {
           urlParameters += 'var-' + playlistVar.varCombinations[i].tagName + "=" + playlistVar.varCombinations[i].tagValue + "&";
         }
         urlParameters = urlParameters.substring(0, urlParameters.length - 1);
         console.log(urlParameters);
-        $location.url('dashboard/db/' + playlistVar.dashboardSlug + '?' + urlParameters);
+        $location.url('dashboard/' + playlistVar.dashboardSlug + '?' + urlParameters);
         $route.reload();
       }
 
