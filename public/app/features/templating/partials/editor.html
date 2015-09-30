@@ -25,13 +25,6 @@
 						New
 					</a>
 				</li>
-
-        <li ng-class="{active: mode === 'playlist'}">
-          <a ng-click="mode = 'playlist'">
-            <i class="fa fa-play"></i>
-            Playlist
-          </a>
-        </li>
 			</ul>
 		</div>
 
@@ -78,87 +71,6 @@
 				</div>
 			</div>
 		</div>
-
-    <div ng-if="mode === 'playlist'">
-
-      <div ng-if="variables.length === 0">
-        <div class="row" style="margin-bottom: 10px;">
-          <div class="span6">
-            <em>No template variables defined</em>
-          </div>
-        </div>
-      </div>
-
-      <div ng-if="variables.length > 0">
-        <div class="row" style="margin-bottom: 10px;">
-          <div class="tight-form">
-            <div class="span6">
-              <h5>Variables list</h5>
-            </div>
-          </div>
-          <div class="span6">
-            <h5>Playlist variables</h5>
-          </div>
-        </div>
-              
-        <div class="row">
-          <div class="span6">
-            <table class="grafana-options-table">
-              <tr ng-repeat="variable in filteredList">
-                <td style="white-space: nowrap;">
-                  {{variable.name}}
-                </td>
-                <td style="text-align: center">
-                  <button class="btn btn-inverse btn-mini pull-right" ng-click="addVariableToPlaylist(variable)">
-                    <i class="fa fa-plus"></i>
-                    Add to playlist
-                  </button>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="span6">
-            <table class="grafana-options-table">
-              <tr ng-repeat="variable in playlist">
-                <td style="white-space: nowrap;">
-                  {{variable.name}}
-                </td>
-                <td style="text-align: center">
-                  <button class="btn btn-inverse btn-mini pull-right" ng-click="removeVariableFromPlaylist(variable)">
-                    <i class="fa fa-remove"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr ng-hide="playlist.length">
-                <td colspan="2">
-                  Playlist empty
-                </td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <br>
-        <br>
-        <div class="pull-left">
-          <div class="tight-form">
-            <ul class="tight-form-list">
-              <li class="tight-form-item">
-                Timespan between dashboard change
-              </li>
-              <li>
-                <input type="text" class="tight-form-input input-small" ng-model="timespan" />
-              </li>
-              <li>
-                <button class="btn btn-success tight-form-btn" ng-click="start();dismiss();"><i class="fa fa-play"></i> Start</button>
-              </li>
-            </ul>
-            <div class="clearfix"></div>
-          </div>
-        </div>
-        <div class="clearfix"></div>
-      </div>
-    </div>
 
 		<div ng-if="mode === 'edit' || mode === 'new'">
 			<div class="editor-row">

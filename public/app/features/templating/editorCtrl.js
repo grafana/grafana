@@ -1,14 +1,13 @@
 define([
   'angular',
-  'lodash',
-  'config'
+  'lodash'
 ],
 function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv, playlistSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -36,11 +35,6 @@ function (angular, _, config) {
         if (val === 'new') {
           $scope.reset();
         }
-        if (val === 'playlist') {
-          $scope.playlist = [];
-          $scope.timespan = config.playlist_timespan;
-          $scope.loadVariableList();
-        }
       });
 
       $scope.$watch('current.datasource', function(val) {
@@ -53,10 +47,6 @@ function (angular, _, config) {
           });
         }
       });
-
-      //$scope.playlist = [];
-      //$scope.timespan = config.playlist_timespan;
-      //$scope.loadVariableList();
     };
 
     $scope.add = function() {
@@ -133,57 +123,6 @@ function (angular, _, config) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
       $scope.updateSubmenuVisibility();
-    };
-
-    $scope.filterList = function() {
-      $scope.filteredList = _.reject($scope.variableList, function(variable) {
-        return _.findWhere($scope.playlist, {name: variable.name});
-      });
-    };
-
-    $scope.loadVariableList = function() {
-      $scope.variableList = $scope.variables;
-      $scope.filterList();
-    };
-
-    $scope.addVariableToPlaylist = function(variable) {
-      $scope.playlist.push(variable);
-      $scope.filterList();
-    };
-
-    $scope.removeVariableFromPlaylist = function(variable) {
-      $scope.playlist = _.without($scope.playlist, variable);
-      $scope.filterList();
-    };
-
-    $scope.start = function() {
-      $scope.playlistCombinations = $scope.computeCombinations($scope.playlist);
-      playlistSrv.start("templateVariables",$scope.playlistCombinations, $scope.timespan);
-    };
-
-    $scope.computeCombinations = function(playlist) {
-      var playlistCombinations = [];
-      for(var i=0; i<playlist[0].options.length; i++) {
-        playlistCombinations.push({dashboardSlug: $scope.dashboard.meta.slug,
-        varCombinations: [{tagName: playlist[0].name, tagValue: playlist[0].options[i].text}]});
-      }
-      for(var j=1; j<playlist.length; j++) {
-        playlistCombinations = $scope.combineVariables(playlistCombinations, playlist[j]);
-      }
-      return playlistCombinations;
-    };
-
-    $scope.combineVariables = function(playlistCombinations, nextVariable) {
-      var tempCombinations = [];
-      for(var k=0,i=0; i<playlistCombinations.length; i++) {
-        for(var j=0; j<nextVariable.options.length; j++,k++) {
-          var temp = { dashboardSlug: playlistCombinations[i].dashboardSlug, varCombinations:
-          [{tagName: nextVariable.name, tagValue: nextVariable.options[j].text}]};
-          temp.varCombinations = temp.varCombinations.concat(playlistCombinations[i].varCombinations);
-          tempCombinations.push(temp);
-        }
-      }
-      return tempCombinations;
     };
 
   });
