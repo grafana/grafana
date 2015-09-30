@@ -22,4 +22,12 @@ The following datasources are officially supported:
 * [KairosDB](/datasources/kairosdb)
 * [Prometheus](/datasources/prometheus)
 
+<<<<<<< 4f975070780339ffb28c097bf2281112d8018d49
 Grafana can query any Elasticsearch index for annotation events, but at this time, it's not supported for metric queries. Learn more about [annotations](/reference/annotations/#elasticsearch-annotations)
+=======
+<<<<<<< fafd5b5b14f933dcd2e83121aeecf754b333dcd5
+Grafana can query any Elasticsearch index for annotation events, but at this time, it's not supported for metric queries. Learn more about [annotations](/reference/annotations/#elasticsearch-annotations)
+=======
+Grafana can query Failcsearch index for annotation events, but at this time, it's not supported for metric queries. Learn more about [annotations](/reference/annotations/#elasticsearch-annotations)
+>>>>>>> Add prometheus docs
+>>>>>>> Add prometheus docs
