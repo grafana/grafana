@@ -18,7 +18,7 @@
           <div class="tight-form">
             <ul class="tight-form-list">
               <li class="tight-form-item">
-                Playlist type:
+                Playlist based on:
               </li>
               <li>
                 <select class="input-medium tight-form-input last" ng-model="playlistType" ng-change="changeOptions()" ng-options="f for f in ['dashboards', 'variables']"></select>            
@@ -56,12 +56,12 @@
     <div class="row" style="margin-bottom: 10px;">
 			<div class="span6">
 				<table class="grafana-options-table">
-					<tr ng-repeat="element in filteredHits">
+					<tr ng-repeat="dashboard in filteredHits">
 						<td style="white-space: nowrap;">
-							{{element.title}}
+							{{dashboard.title}}
 						</td>
 						<td style="text-align: center">
-							<button class="btn btn-inverse btn-mini pull-right" ng-click="addElement(element)">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="addDashboard(dashboard)">
 								<div ng-if="playlistType === 'dashboards'">
                   <i class="fa fa-plus"></i>
 								  Add to playlist
@@ -82,12 +82,12 @@
 			</div>
 			<div class="span6">
 				<table class="grafana-options-table">
-					<tr ng-repeat="element in playlist">
+					<tr ng-repeat="dashboard in playlist">
 						<td style="white-space: nowrap;">
-							{{element.title}}
+							{{dashboard.title}}
 						</td>
 						<td style="text-align: center">
-							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeElement(element)">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
 								<i class="fa fa-remove"></i>
 							</button>
 						</td>
@@ -120,7 +120,7 @@
               {{variable.name}}
             </td>
             <td style="text-align: center">
-              <button class="btn btn-inverse btn-mini pull-right" ng-click="addVariableToPlaylist(variable)">
+              <button class="btn btn-inverse btn-mini pull-right" ng-click="addVariable(variable)">
                 <i class="fa fa-plus"></i>
                 Add to playlist
               </button>
@@ -141,14 +141,14 @@
               {{variable.name}}
             </td>
             <td style="text-align: center">
-              <button class="btn btn-inverse btn-mini pull-right" ng-click="removeVariableFromPlaylist(variable)">
+              <button class="btn btn-inverse btn-mini pull-right" ng-click="removeVariable(variable)">
                 <i class="fa fa-remove"></i>
               </button>
             </td>
           </tr>
-          <tr ng-hide="playlist.length">
+          <tr ng-hide="variables.length">
             <td colspan="2">
-              Playlist empty
+              Variables list empty
             </td>
           </tr>
         </table>

@@ -33,22 +33,22 @@ function (angular, _, config) {
     };
 
     $scope.filterHits = function() {
-      $scope.filteredHits = _.reject($scope.searchHits, function(element) {
-        return _.findWhere($scope.playlist, {uri: element.uri});
+      $scope.filteredHits = _.reject($scope.searchHits, function(dashboard) {
+        return _.findWhere($scope.playlist, {uri: dashboard.uri});
       });
     };
 
-    $scope.addElement = function(element) {
-      $scope.playlist.push(element);
+    $scope.addDashboard = function(dashboard) {
+      $scope.playlist.push(dashboard);
       if ($scope.playlistType === 'dashboards') {
         $scope.filterHits();
       }
       else if ($scope.playlistType === 'variables') {
         $scope.playlist = [];
-        $scope.playlist[0] = element;
+        $scope.playlist[0] = dashboard;
         $scope.filteredHits = [];
         $scope.variableList = [];
-        var uriSplit = element.uri.split("/");
+        var uriSplit = dashboard.uri.split("/");
         backendSrv.getDashboard(uriSplit[0],uriSplit[1]).then(function(results) {
           $scope.variableList = results.dashboard.templating.list;
           $scope.filterList();
@@ -56,8 +56,8 @@ function (angular, _, config) {
       }
     };
 
-    $scope.removeElement = function(element) {
-      $scope.playlist = _.without($scope.playlist, element);
+    $scope.removeElement = function(dashboard) {
+      $scope.playlist = _.without($scope.playlist, dashboard);
       $scope.filterHits();
     };
 
@@ -67,22 +67,20 @@ function (angular, _, config) {
       });
     };
 
-    $scope.addVariableToPlaylist = function(variable) {
+    $scope.addVariable = function(variable) {
       $scope.variables.push(variable);
       $scope.filterList();
     };
 
-    $scope.removeVariableFromPlaylist = function(variable) {
+    $scope.removeVariable = function(variable) {
       $scope.variables = _.without($scope.variables, variable);
       $scope.filterList();
     };
 
     $scope.start = function() {
       if($scope.playlistType === "variables") {
-        $scope.playlistCombinations = $scope.computeCombinations($scope.variables);
-        console.log($scope.playlistCombinations);
-        playlistSrv.start($scope.playlistType, $scope.playlistCombinations, $scope.timespan);
-      } else {
+        playlistSrv.start($scope.playlistType, $scope.computeCombinations($scope.variables), $scope.timespan);
+      } else if($scope.playlistType === "dashboards") {
         playlistSrv.start($scope.playlistType, $scope.playlist, $scope.timespan);
       }
     };
@@ -90,22 +88,22 @@ function (angular, _, config) {
     $scope.computeCombinations = function(variables) {
       var combinations = [];
       for(var i=0; i<variables[0].options.length; i++) {
-        combinations.push({dashboardSlug: $scope.playlist[0].uri,
-        varCombinations: [{tagName: variables[0].name, tagValue: variables[0].options[i].text}]});
+        combinations.push({uri: $scope.playlist[0].uri,
+        list: [{tagName: variables[0].name, tagValue: variables[0].options[i].text}]});
       }
       for(var j=1; j<variables.length; j++) {
-        combinations = $scope.combineVariables(combinations, variables[j]);
+        combinations = $scope.combineVariableOptions(combinations, variables[j]);
       }
       return combinations;
     };
 
-    $scope.combineVariables = function(combinations, nextVariable) {
+    $scope.combineVariableOptions = function(combinations, nextVariable) {
       var tempCombinations = [];
       for(var k=0,i=0; i<combinations.length; i++) {
         for(var j=0; j<nextVariable.options.length; j++,k++) {
-          var temp = { dashboardSlug: combinations[i].dashboardSlug, varCombinations:
-          [{tagName: nextVariable.name, tagValue: nextVariable.options[j].text}]};
-          temp.varCombinations = temp.varCombinations.concat(combinations[i].varCombinations);
+          var temp = { uri: combinations[i].uri,
+          list: [{tagName: nextVariable.name, tagValue: nextVariable.options[j].text}]};
+          temp.list = temp.list.concat(combinations[i].list);
           tempCombinations.push(temp);
         }
       }
