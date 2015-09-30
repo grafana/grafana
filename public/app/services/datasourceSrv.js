@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('datasourceSrv', function($q, $injector, $rootScope) {
+  module.service('datasourceSrv', function($q, $injector, $rootScope, templateSrv) {
     var self = this;
 
     this.init = function() {
@@ -44,6 +44,8 @@ function (angular, _, config) {
       if (!name) {
         return this.get(config.defaultDatasource);
       }
+
+      name = templateSrv.replaceWithText(name);
 
       if (this.datasources[name]) {
         return $q.when(this.datasources[name]);
