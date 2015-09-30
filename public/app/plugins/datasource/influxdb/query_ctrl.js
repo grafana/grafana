@@ -10,7 +10,7 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q, uiSegmentSrv) {
+  module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
       if (!$scope.target) { return; }
@@ -19,25 +19,14 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
       target.tags = target.tags || [];
       target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
       target.fields = target.fields || [{name: 'value'}];
-      target.select = target.select || [[{type: 'field', params: ['value']}]];
-      target.select[0] = [
-        {type: 'field', params: ['value']},
-        {type: 'mean', params: []},
-        {type: 'derivate', params: ['10s']},
-        {type: 'math', params: ['/ 100']},
-        {type: 'alias', params: ['google']},
-      ];
+      target.select = target.select || [[
+        {name: 'field', params: ['value']},
+        {name: 'mean', params: []},
+      ]];
 
-      $scope.select = _.map(target.select, function(parts) {
-        return _.map(parts, function(part) {
-          var partModel = queryPart.create(part.type);
-          partModel.params = part.params;
-          partModel.updateText();
-          return partModel;
-        });
-      });
+      $scope.updateSelectParts();
 
-      $scope.func = queryPart.create('time', { withDefaultParams: true });
+      $scope.groupByParts = queryPart.create({name: 'time', params:['$interval']});
 
       $scope.queryBuilder = new InfluxQueryBuilder(target);
 
@@ -89,12 +78,25 @@ function (angular, _, InfluxQueryBuilder, queryPart) {
     };
 
     $scope.addSelect = function() {
-      $scope.target.fields.push({name: "select field", func: 'mean'});
+      $scope.target.select.push([
+        {name: 'field', params: ['value']},
+        {name: 'mean', params: []},
+      ]);
+      $scope.updateSelectParts();
     };
 
     $scope.removeSelect = function(index) {
-      $scope.target.fields.splice(index, 1);
+      $scope.target.select.splice(index, 1);
+      $scope.updateSelectParts();
       $scope.get_data();
+    };
+
+    $scope.updateSelectParts = function() {
+      $scope.selectParts = _.map($scope.target.select, function(parts) {
+        return _.map(parts, function(part) {
+          return queryPart.create(part);
+        });
+      });
     };
 
     $scope.changeFunction = function(func) {

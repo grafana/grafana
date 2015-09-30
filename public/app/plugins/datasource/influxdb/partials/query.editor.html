@@ -65,22 +65,20 @@
 
 	<div ng-hide="target.rawQuery">
 
-		<div class="tight-form" ng-repeat="parts in select">
+		<div class="tight-form" ng-repeat="parts in selectParts">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					<span ng-show="$index === 0">SELECT</span>
 				</li>
-				<li ng-repeat="func in parts">
-					<span influx-query-part-editor class="tight-form-item tight-form-func">
-					</span>
+				<li ng-repeat="part in parts">
+					<influx-query-part-editor part="part" class="tight-form-item tight-form-func"></influx-query-part-editor>
 				</li>
 			</ul>
-
 			<ul class="tight-form-list pull-right">
 				<li class="tight-form-item last" ng-show="$index === 0">
 					<a class="pointer" ng-click="addSelect()"><i class="fa fa-plus"></i></a>
 				</li>
-				<li class="tight-form-item last" ng-show="target.fields.length > 1">
+				<li class="tight-form-item last" ng-show="target.select.length > 1">
 					<a class="pointer" ng-click="removeSelect($index)"><i class="fa fa-minus"></i></a>
 				</li>
 			</ul>
@@ -93,8 +91,7 @@
 					<span ng-show="$index === 0">GROUP BY</span>
 				</li>
 				<li ng-if="groupBy.type === 'time'">
-					<span influx-query-part-editor class="tight-form-item tight-form-func">
-					</span>
+					<influx-query-part-editor part="groupByParts" class="tight-form-item tight-form-func"></influx-query-part-editor>
 				</li>
 				<!-- <li class="dropdown" ng&#45;if="groupBy.type === 'time'"> -->
 					<!-- 	<a class="tight&#45;form&#45;item pointer" data&#45;toggle="dropdown" bs&#45;tooltip="'Insert missing values, important when stacking'" data&#45;placement="right"> -->
