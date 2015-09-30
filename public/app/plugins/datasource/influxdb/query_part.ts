@@ -15,11 +15,13 @@ class QueryPartDef {
   name: string;
   params: any[];
   defaultParams: any[];
+  renderer: any;
 
   constructor(options: any) {
     this.name = options.name;
     this.params = options.params;
     this.defaultParams = options.defaultParams;
+    this.renderer = options.renderer;
   }
 
   static register(options: any) {
@@ -27,25 +29,55 @@ class QueryPartDef {
   }
 }
 
-QueryPartDef.register({
-  name: 'field',
-  category: categories.Transform,
-  params: [{type: 'field'}],
-  defaultParams: ['value'],
-});
+function functionRenderer(part, innerExpr) {
+  var str = part.def.name + '(';
+  var parameters = _.map(part.params, (value, index) => {
+    var paramType = part.def.params[index];
+    if (paramType.quote === 'single') {
+      return "'" + value + "'";
+    } else if (paramType.quote === 'double') {
+      return '"' + value + '"';
+    }
+
+    return value;
+  });
+
+  if (innerExpr) {
+    parameters.unshift(innerExpr);
+  }
+  return str + parameters.join(', ') + ')';
+}
+
+function aliasRenderer(part, innerExpr) {
+  return innerExpr + ' AS ' + '"' + part.params[0] + '"';
+}
+
+function suffixRenderer(part, innerExpr) {
+  return innerExpr + ' ' + part.params[0];
+}
+
+function identityRenderer(part, innerExpr) {
+  return part.params[0];
+}
+
+function quotedIdentityRenderer(part, innerExpr) {
+  return '"' + part.params[0] + '"';
+}
 
 QueryPartDef.register({
   name: 'mean',
   category: categories.Transform,
-  params: [],
-  defaultParams: [],
+  params: [{type: 'field', quote: 'double'}],
+  defaultParams: ['value'],
+  renderer: functionRenderer,
 });
 
 QueryPartDef.register({
-  name: 'derivate',
+  name: 'derivative',
   category: categories.Transform,
-  params: [{ name: "rate", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
+  renderer: functionRenderer,
 });
 
 QueryPartDef.register({
@@ -53,6 +85,7 @@ QueryPartDef.register({
   category: categories.Transform,
   params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
   defaultParams: ['$interval'],
+  renderer: functionRenderer,
 });
 
 QueryPartDef.register({
@@ -60,13 +93,16 @@ QueryPartDef.register({
   category: categories.Transform,
   params: [{ name: "expr", type: "string"}],
   defaultParams: [' / 100'],
+  renderer: suffixRenderer,
 });
 
 QueryPartDef.register({
   name: 'alias',
   category: categories.Transform,
-  params: [{ name: "name", type: "string"}],
+  params: [{ name: "name", type: "string", quote: 'double'}],
   defaultParams: ['alias'],
+  renderMode: 'suffix',
+  renderer: aliasRenderer,
 });
 
 class QueryPart {
@@ -83,29 +119,11 @@ class QueryPart {
     }
 
     this.params = part.params || _.clone(this.def.defaultParams);
+    this.updateText();
   }
 
   render(innerExpr: string) {
-    var str = this.def.name + '(';
-    var parameters = _.map(this.params, (value, index) => {
-
-      var paramType = this.def.params[index].type;
-      if (paramType === 'int' || paramType === 'value_or_series' || paramType === 'boolean') {
-        return value;
-      }
-      else if (paramType === 'int_or_interval' && _.isNumber(value)) {
-        return value;
-      }
-
-      return "'" + value + "'";
-
-    });
-
-    if (innerExpr) {
-      parameters.unshift(innerExpr);
-    }
-
-    return str + parameters.join(', ') + ')';
+    return this.def.renderer(this, innerExpr);
   }
 
   hasMultipleParamsInString (strValue, index) {

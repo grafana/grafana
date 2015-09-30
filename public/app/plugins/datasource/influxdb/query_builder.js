@@ -4,8 +4,9 @@ define([
 function (_) {
   'use strict';
 
-  function InfluxQueryBuilder(target) {
+  function InfluxQueryBuilder(target, queryModel) {
     this.target = target;
+    this.model = queryModel;
 
     if (target.groupByTags) {
       target.groupBy = [{type: 'time', interval: 'auto'}];
