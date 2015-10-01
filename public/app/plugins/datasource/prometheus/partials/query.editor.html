@@ -41,18 +41,11 @@
       Query
     </li>
     <li>
-      <input type="text"
-             class="input-xxlarge tight-form-input"
-             ng-model="target.expr"
-             spellcheck='false'
-             placeholder="query expression"
-             data-min-length=0 data-items=100
-             ng-model-onblur
-             ng-change="refreshMetricData()"
-             >
-      <a bs-tooltip="target.datasourceErrors.query"
-         style="color: rgb(229, 189, 28)"
-         ng-show="target.datasourceErrors.query">
+      <input type="text" class="input-xxlarge tight-form-input" ng-model="target.expr"
+             spellcheck='false' placeholder="query expression" data-min-length=0 data-items=100
+             ng-model-onblur ng-change="refreshMetricData()">
+      </input>
+      <a bs-tooltip="target.datasourceErrors.query" style="color: rgb(229, 189, 28)" ng-show="target.datasourceErrors.query">
         <i class="fa fa-warning"></i>
       </a>
     </li>
@@ -60,17 +53,10 @@
       Metric
     </li>
     <li>
-      <input type="text"
-             class="input-medium tight-form-input"
-             ng-model="target.metric"
-             spellcheck='false'
-             bs-typeahead="suggestMetrics"
-             placeholder="metric name"
-             data-min-length=0 data-items=100
-             >
-      <a bs-tooltip="target.errors.metric"
-         style="color: rgb(229, 189, 28)"
-         ng-show="target.errors.metric">
+      <input type="text" class="input-medium tight-form-input" ng-model="target.metric"
+             spellcheck='false' bs-typeahead="suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+      </input>
+      <a bs-tooltip="target.errors.metric" style="color: rgb(229, 189, 28)" ng-show="target.errors.metric">
         <i class="fa fa-warning"></i>
       </a>
     </li>
@@ -86,15 +72,10 @@
       Legend format
     </li>
     <li>
-      <input type="text"
-             class="tight-form-input input-xxlarge"
-             ng-model="target.legendFormat"
-             spellcheck='false'
-             placeholder="legend format"
-             data-min-length=0 data-items=1000
-             ng-model-onblur
-             ng-change="refreshMetricData()"
-             />
+      <input type="text" class="tight-form-input input-xxlarge" ng-model="target.legendFormat"
+             spellcheck='false' placeholder="legend format" data-min-length=0 data-items=1000
+             ng-model-onblur ng-change="refreshMetricData()">
+      </input>
     </li>
   </ul>
 
@@ -107,25 +88,18 @@
       Step
     </li>
     <li>
-      <input type="text"
-             class="input-mini tight-form-input"
-             ng-model="target.interval"
+      <input type="text" class="input-mini tight-form-input" ng-model="target.interval"
              bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
-             data-placement="right"
-             spellcheck='false'
-             placeholder="{{target.calculatedInterval}}"
-             data-min-length=0 data-items=100
-             ng-model-onblur
-             ng-change="refreshMetricData()"
-             />
+             data-placement="right" spellcheck='false' placeholder="{{target.calculatedInterval}}" data-min-length=0 data-items=100
+             ng-model-onblur ng-change="refreshMetricData()">
+      </input>
     </li>
 
     <li class="tight-form-item">
       Resolution
     </li>
     <li>
-      <select ng-model="target.intervalFactor"
-             class="tight-form-input input-mini"
+      <select ng-model="target.intervalFactor" class="tight-form-input input-mini"
              ng-options="r.factor as r.label for r in resolutions"
              ng-change="refreshMetricData()">
       </select>
