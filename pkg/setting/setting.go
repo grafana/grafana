@@ -162,7 +162,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0}`)
+	log.NewLogger(0, "console", `{"level": 0, "formatting":true}`)
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -580,7 +580,11 @@ func initLogging(args *CommandLineArgs) {
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			LogConfigs[i] = util.DynMap{"level": level}
+			formatting := sec.Key("formatting").MustBool(true)
+			LogConfigs[i] = util.DynMap{
+				"level":      level,
+				"formatting": formatting,
+			}
 		case "file":
 			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
