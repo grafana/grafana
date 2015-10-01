@@ -12,6 +12,7 @@ const (
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
 	DS_CLOUDWATCH    = "cloudwatch"
+	DS_PROMETHEUS    = "prometheus"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )

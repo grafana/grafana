@@ -21,12 +21,8 @@ function (angular, _, moment, dateMath) {
       this.name = datasource.name;
       this.supportMetrics = true;
 
-      var url = datasource.url;
-      if (url[url.length-1] === '/') {
-        // remove trailing slash
-        url = url.substr(0, url.length - 1);
-      }
-      this.url = url;
+      this.url = datasource.url.replace(/\/$/g, '');
+      this.directUrl = datasource.directUrl.replace(/\/$/g, '');
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
