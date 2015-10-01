@@ -73,13 +73,7 @@
 				<li ng-repeat="part in parts">
 					<influx-query-part-editor part="part" class="tight-form-item tight-form-func"></influx-query-part-editor>
 				</li>
-			</ul>
-			<ul class="tight-form-list pull-right">
-				<li class="tight-form-item last" ng-show="$index === 0">
-					<a class="pointer" ng-click="addSelect()"><i class="fa fa-plus"></i></a>
-				</li>
-				<li class="tight-form-item last" ng-show="target.select.length > 1">
-					<a class="pointer" ng-click="removeSelect($index)"><i class="fa fa-minus"></i></a>
+				<li class="dropdown" dropdown-typeahead="selectMenu" dropdown-typeahead-on-select="selectMenuAction(parts, $item, $subItem)">
 				</li>
 			</ul>
 			<div class="clearfix"></div>

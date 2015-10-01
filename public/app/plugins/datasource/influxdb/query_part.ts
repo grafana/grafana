@@ -4,11 +4,10 @@ import _ = require('lodash');
 
 var index = [];
 var categories = {
-  Combine: [],
-  Transform: [],
-  Calculate: [],
-  Filter: [],
-  Special: []
+  Aggregations: [],
+  Transformations: [],
+  Math: [],
+  Aliasing: [],
 };
 
 class QueryPartDef {
@@ -26,6 +25,7 @@ class QueryPartDef {
 
   static register(options: any) {
     index[options.name] = new QueryPartDef(options);
+    options.category.push(index[options.name]);
   }
 }
 
@@ -66,7 +66,15 @@ function quotedIdentityRenderer(part, innerExpr) {
 
 QueryPartDef.register({
   name: 'mean',
-  category: categories.Transform,
+  category: categories.Aggregations,
+  params: [{type: 'field', quote: 'double'}],
+  defaultParams: ['value'],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  name: 'sum',
+  category: categories.Aggregations,
   params: [{type: 'field', quote: 'double'}],
   defaultParams: ['value'],
   renderer: functionRenderer,
@@ -74,7 +82,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'derivative',
-  category: categories.Transform,
+  category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
   renderer: functionRenderer,
@@ -82,7 +90,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'time',
-  category: categories.Transform,
+  category: categories.Transformations,
   params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
   defaultParams: ['$interval'],
   renderer: functionRenderer,
@@ -90,7 +98,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'math',
-  category: categories.Transform,
+  category: categories.Math,
   params: [{ name: "expr", type: "string"}],
   defaultParams: [' / 100'],
   renderer: suffixRenderer,
@@ -98,7 +106,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'alias',
-  category: categories.Transform,
+  category: categories.Aliasing,
   params: [{ name: "name", type: "string", quote: 'double'}],
   defaultParams: ['alias'],
   renderMode: 'suffix',
