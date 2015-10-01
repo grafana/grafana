@@ -5,9 +5,9 @@ define([
   'config',
   'app/core/utils/datemath',
   './directives',
-  './queryCtrl',
-  './funcEditor',
-  './addGraphiteFunc',
+  './query_ctrl',
+  './func_editor',
+  './add_graphite_func',
 ],
 function (angular, _, $, config, dateMath) {
   'use strict';

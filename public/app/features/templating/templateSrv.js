@@ -44,7 +44,10 @@ function (angular, _) {
             return '(' + value.join('|') + ')';
           }
           case "lucene": {
-            return '(' + value.join(' OR ') + ')';
+            var quotedValues = _.map(value, function(val) {
+              return '\\\"' + val + '\\\"';
+            });
+            return '(' + quotedValues.join(' OR ') + ')';
           }
           case "pipe": {
             return value.join('|');
