@@ -10,6 +10,8 @@ function (angular, _, config) {
 
   module.controller('PlaylistCtrl', function($scope, playlistSrv, backendSrv) {
 
+    var self = this;
+
     $scope.init = function() {
       $scope.playlist = [];
       $scope.variables = [];  // for storing the playlist variables.
@@ -79,25 +81,25 @@ function (angular, _, config) {
 
     $scope.start = function() {
       if($scope.playlistType === "variables") {
-        playlistSrv.start($scope.playlistType, $scope.computeCombinations($scope.variables), $scope.timespan);
+        playlistSrv.start($scope.playlistType, self.computeCombinations($scope.playlist[0].uri,$scope.variables), $scope.timespan);
       } else if($scope.playlistType === "dashboards") {
         playlistSrv.start($scope.playlistType, $scope.playlist, $scope.timespan);
       }
     };
 
-    $scope.computeCombinations = function(variables) {
+    self.computeCombinations = function(dashboardUri, variables) {
       var combinations = [];
       for(var i=0; i<variables[0].options.length; i++) {
-        combinations.push({uri: $scope.playlist[0].uri,
+        combinations.push({uri: dashboardUri,
         list: [{tagName: variables[0].name, tagValue: variables[0].options[i].text}]});
       }
       for(var j=1; j<variables.length; j++) {
-        combinations = $scope.combineVariableOptions(combinations, variables[j]);
+        combinations = self.combineVariableOptions(combinations, variables[j]);
       }
       return combinations;
     };
 
-    $scope.combineVariableOptions = function(combinations, nextVariable) {
+    self.combineVariableOptions = function(combinations, nextVariable) {
       var tempCombinations = [];
       for(var k=0,i=0; i<combinations.length; i++) {
         for(var j=0; j<nextVariable.options.length; j++,k++) {
