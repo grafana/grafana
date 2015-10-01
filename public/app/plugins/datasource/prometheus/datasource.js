@@ -20,8 +20,14 @@ function (angular, _, moment, dateMath) {
       this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
       this.name = datasource.name;
       this.supportMetrics = true;
+<<<<<<< 31a27040669945f4e47872f1e01cb25495295b71
       this.url = datasource.url;
       this.directUrl = datasource.directUrl;
+=======
+
+      this.url = datasource.url.replace(/\/$/g, '');
+      this.directUrl = datasource.directUrl.replace(/\/$/g, '');
+>>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
