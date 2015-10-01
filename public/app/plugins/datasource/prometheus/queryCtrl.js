@@ -111,7 +111,7 @@ function (angular, _, kbn, dateMath) {
       };
 
       var hash = encodeURIComponent(JSON.stringify([expr]));
-      return $scope.datasource.url + '/graph#' + hash;
+      return $scope.datasource.directUrl + '/graph#' + hash;
     };
 
     $scope.calculateInterval = function() {

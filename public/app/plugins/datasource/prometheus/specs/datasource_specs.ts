@@ -10,11 +10,11 @@ describe('PrometheusDatasource', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.createService('PrometheusDatasource'));
   beforeEach(function() {
-    ctx.ds = new ctx.service({ url: '', user: 'test', password: 'mupp' });
+    ctx.ds = new ctx.service({ url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' });
   });
   describe('When querying prometheus with one target using query editor target spec', function() {
     var results;
-    var urlExpected = '/api/v1/query_range?query=' +
+    var urlExpected = 'proxied/api/v1/query_range?query=' +
                       encodeURIComponent('test{job="testjob"}') +
                       '&start=1443438675&end=1443460275&step=60s';
     var query = {
@@ -53,7 +53,7 @@ describe('PrometheusDatasource', function() {
         status: "success",
         data: ["value1", "value2", "value3"]
       };
-      ctx.$httpBackend.expect('GET', '/api/v1/label/resource/values').respond(response);
+      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/resource/values').respond(response);
       ctx.ds.metricFindQuery('label_values(resource)').then(function(data) { results = data; });
       ctx.$httpBackend.flush();
       ctx.$rootScope.$apply();
@@ -71,7 +71,7 @@ describe('PrometheusDatasource', function() {
           ]
         }
       };
-      ctx.$httpBackend.expect('GET', /\/api\/v1\/query\?query=count\(metric\)%20by%20\(resource\)&time=.*/).respond(response);
+      ctx.$httpBackend.expect('GET', /proxied\/api\/v1\/query\?query=count\(metric\)%20by%20\(resource\)&time=.*/).respond(response);
       ctx.ds.metricFindQuery('label_values(metric, resource)').then(function(data) { results = data; });
       ctx.$httpBackend.flush();
       ctx.$rootScope.$apply();
@@ -82,7 +82,7 @@ describe('PrometheusDatasource', function() {
         status: "success",
         data: ["metric1","metric2","metric3","nomatch"]
       };
-      ctx.$httpBackend.expect('GET', '/api/v1/label/__name__/values').respond(response);
+      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/__name__/values').respond(response);
       ctx.ds.metricFindQuery('metrics(metric.*)').then(function(data) { results = data; });
       ctx.$httpBackend.flush();
       ctx.$rootScope.$apply();
