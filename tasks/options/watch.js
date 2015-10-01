@@ -2,22 +2,23 @@ module.exports = function(config) {
   'use strict';
 
   return {
-    css: {
-      files: [ '<%= srcDir %>/less/**/*.less' ],
-      tasks: ['css'],
-      options: {
-        spawn: false
-      }
-    },
+    // css: {
+    //   files: [ '<%= srcDir %>/less#<{(||)}>#*.less' ],
+    //   tasks: ['css'],
+    //   options: {
+    //     spawn: false
+    //   }
+    // },
 
     copy_to_gen: {
-      files: ['<%= srcDir %>/**/*', '!<%= srcDir %>/**/*.less'],
+      files: ['<%= srcDir %>/**/*'],
       tasks: [
         'jshint',
         'jscs',
         'tslint',
         'clean:gen',
         'copy:public_to_gen',
+        'css',
         'typescript:build',
         'karma:test'
       ],
