@@ -1,11 +1,9 @@
-/* global AWS */
 define([
   'angular',
   'lodash',
   'moment',
   './queryCtrl',
   './directives',
-  'aws-sdk',
 ],
 function (angular, _) {
   'use strict';
@@ -18,14 +16,8 @@ function (angular, _) {
       this.type = 'cloudwatch';
       this.name = datasource.name;
       this.supportMetrics = true;
-      this.proxyMode = (datasource.jsonData.access === 'proxy');
       this.proxyUrl = datasource.url;
-
       this.defaultRegion = datasource.jsonData.defaultRegion;
-      this.credentials = {
-        accessKeyId: datasource.jsonData.accessKeyId,
-        secretAccessKey: datasource.jsonData.secretAccessKey
-      };
 
       /* jshint -W101 */
       this.supportedRegion = [
@@ -302,6 +294,7 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.performSuggestNamespace = function() {
+      console.log(this.supportMetrics);
       return _.keys(this.supportedMetrics);
     };
 
@@ -493,53 +486,42 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.getAwsClient = function(region, service) {
-      if (!this.proxyMode) {
-        return new AWS[service]({
-          region: region,
-          accessKeyId: this.credentials.accessKeyId,
-          secretAccessKey: this.credentials.secretAccessKey
-        });
-      } else {
-        var self = this;
-        var generateRequestProxy = function(service, action) {
-          return function(params, callback) {
-            var data = {
-              region: region,
-              service: service,
-              action: action,
-              parameters: params
-            };
-
-            var options = {
-              method: 'POST',
-              url: self.proxyUrl,
-              data: data
-            };
-
-            $http(options).then(function(response) {
-              callback(null, response.data);
-            }, function(err) {
-              callback(err, []);
-            });
+      var self = this;
+      var generateRequestProxy = function(service, action) {
+        return function(params, callback) {
+          var data = {
+            region: region,
+            service: service,
+            action: action,
+            parameters: params
           };
-        };
 
-        var proxy;
-        switch (service) {
-        case 'CloudWatch':
-          proxy = {
+          var options = {
+            method: 'POST',
+            url: self.proxyUrl,
+            data: data
+          };
+
+          $http(options).then(function(response) {
+            callback(null, response.data);
+          }, function(err) {
+            callback(err, []);
+          });
+        };
+      };
+
+      switch (service) {
+        case 'CloudWatch': {
+          return {
             getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
             listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
           };
-          break;
-        case 'EC2':
-          proxy = {
+        }
+        case 'EC2': {
+          return {
             describeInstances: generateRequestProxy('EC2', 'DescribeInstances')
           };
-          break;
         }
-
-        return proxy;
       }
     };
 
