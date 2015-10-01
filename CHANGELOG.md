@@ -66,6 +66,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
+<<<<<<< 07563ef9ebaa37acbbc8a7605855321a13ec45a2
 <<<<<<< b0ad384a6707e1bfece743747ad93f0ad41a3b83
 <<<<<<< d08905c6a242215c331482b925f4ed5cc4f5b50f
 <<<<<<< 31a27040669945f4e47872f1e01cb25495295b71
@@ -100,12 +101,16 @@ it allows you to add queries of differnet data source types & instances to the s
 <<<<<<< 837588f1a3d775ba83edd14154141add863da630
 =======
 =======
+=======
+>>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
 **Other new Features && Enhancements**
->>>>>>> Fix changelog formatting
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
+<<<<<<< 07563ef9ebaa37acbbc8a7605855321a13ec45a2
 >>>>>>> Update CHANGELOG.md
 >>>>>>> Update CHANGELOG.md
+=======
+>>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
 - [Issue #1186](https://github.com/grafana/grafana/issues/1186). Time Picker: New option `today`, will set time range from midnight to now
 <<<<<<< 7cae31a94e5c74ce8430bffe0d2365589f937a47
