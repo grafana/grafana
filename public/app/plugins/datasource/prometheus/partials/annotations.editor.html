@@ -1,0 +1,28 @@
+<div class="editor-row">
+	<div class="section">
+		<h5>Search expression</h5>
+		<div class="editor-option">
+			<input type="text" class="span6" ng-model='currentAnnotation.expr' placeholder="ALERTS"></input>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+  <div class="section">
+		<h5>Field formats</h5>
+		<div class="editor-option">
+			<label class="small">Title</label>
+			<input type="text" class="input-small" ng-model='currentAnnotation.titleFormat' placeholder="alertname"></input>
+		</div>
+
+		<div class="editor-option">
+			<label class="small">Tags</label>
+			<input type="text" class="input-small" ng-model='currentAnnotation.tagKeys' placeholder="label1,label2"></input>
+		</div>
+
+		<div class="editor-option">
+			<label class="small">Text</label>
+			<input type="text" class="input-small" ng-model='currentAnnotation.textFormat' placeholder="instance"></input>
+		</div>
+	</div>
+</div>
