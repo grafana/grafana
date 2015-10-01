@@ -1,5 +1,5 @@
 #define MyAppName "AdRem GrafCrunch Server"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.0.0"
 #define MyAppPublisher "AdRem Software, Inc. New York, NY"
 #define MyAppURL "http://www.adremsoft.com/"
 
@@ -19,8 +19,12 @@
 #define NetCrunchServerConfigSection "netcrunch-server"
 #define DefaultNetCrunchServerAddress "localhost"
 #define DefaultNetCrunchServerPort "80"
+#define DefaultNetCrunchServerSSLPort "443"
+#define DefaultNetCrunchServerProtocol "http"
 #define DefaultNetCrunchServerUser "admin"
 #define DefaultNetCrunchServerPassword "aqqaqq"
+
+#define NetCrunchWebAppServerKey "SOFTWARE\AdRem\WebAppSrv\1.0"
 
 [Setup]
 AppId={{5FFA65A5-D4CF-4E26-9AC0-1615E3895B1E}
@@ -42,6 +46,14 @@ SolidCompression=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Registry]
+Root: HKLM64; Subkey: "Software\AdRem"; Flags: uninsdeletekeyifempty
+Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch"; Flags: uninsdeletekey
+Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch\1.0"; Flags: uninsdeletekey
+Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch\1.0"; ValueType: string; ValueName: "AppFolder"; ValueData: "{app}"
+Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch\1.0"; ValueType: string; ValueName: "ConfigFile"; ValueData: "{#ConfigINI}"
+Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch\1.0"; ValueType: string; ValueName: "DataFolder"; ValueData: "{#GrafCrunchProgramData}"
+
 [INI]
 Filename: {#ConfigINI}; Section: {#PathConfigSection}; Key: "data"; String: {#GrafCrunchProgramData}; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#PathConfigSection}; Key: "logs"; String: {#GrafCrunchProgramData}\log; Flags: createkeyifdoesntexist
@@ -52,7 +64,7 @@ Filename: {#ConfigINI}; Section: {#GrafCrunchServerSection}; Key: "domain"; Stri
 Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "enable"; String: "true"; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "host"; String: "{code:GetNetCrunchServerConfig|Address}"; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "port"; String: "{code:GetNetCrunchServerConfig|Port}"; Flags: createkeyifdoesntexist
-Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "protocol"; String: "http"; Flags: createkeyifdoesntexist
+Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "protocol"; String: "{code:GetNetCrunchServerConfig|Protocol}"; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "user"; String: "{code:GetNetCrunchServerConfig|User}"; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: "{code:GetNetCrunchServerConfig|Password}"; Flags: createkeyifdoesntexist
 
@@ -75,7 +87,58 @@ Type: files; Name: {#ConfigINI}
 
 var 
   GrafCrunchServerConfig: TInputQueryWizardPage;
-  NetCrunchServerConfig: TInputQueryWizardPage;
+  NetCrunchServerConfig: TWizardPage;
+  NetCrunchServerAddressTextBox: TEdit;
+  NetCrunchServerPortTextBox: TEdit;
+  NetCrunchServerSSLCheckBox: TCheckBox;
+
+function CreateLabel (AParent : TWizardPage; ALeft, ATop: Integer; const ACaption: String) : TLabel;
+var TextLabel : TLabel;
+begin
+  TextLabel := TLabel.Create(AParent);
+  with TextLabel do begin
+    Parent := AParent.Surface;
+    Left := ScaleX(ALeft);
+    Top := ScaleY(ATop);
+    Height := ScaleY(17);
+    Caption := ACaption;
+  end;
+  Result := TextLabel;
+end;
+
+function CreateTextBox (AParent : TWizardPage; ATop, AWidth, ATabOrder : Integer; const ACaption: String) : TEdit;
+var TextBox : TEdit;
+begin
+  CreateLabel(AParent, 0, ATop, ACaption);
+  TextBox := TEdit.Create(AParent);
+  with TextBox do begin
+    Parent := AParent.Surface;
+    Left := ScaleX(0);
+    Top := ScaleY(ATop + 16);
+    Width := ScaleX(AWidth);
+    Height := ScaleY(25);
+    TabOrder := ATabOrder;
+    Text := '';
+  end;
+  Result := TextBox;
+end;
+
+function CreateCheckBox (AParent : TWizardPage; ATop, ATabOrder : Integer; const ACaption: String) : TCheckBox;
+var CheckBox : TCheckBox;
+begin
+  CheckBox := TCheckBox.Create(AParent);
+  with CheckBox do begin
+    Parent := AParent.Surface;
+    Left := ScaleX(0);
+    Top := ScaleY(ATop);
+    Height := ScaleY(17);
+    Width := AParent.SurfaceWidth;
+    Caption := ACaption;
+    Checked := False;
+    TabOrder := ATabOrder;
+  end;
+  Result := CheckBox;
+end;
 
 function GetDefaultData (const Section, Key, DefaultValue, PreviousDataKey: String) : String;
 var
@@ -125,14 +188,92 @@ begin
   end;
 end;
 
+function CheckGrafCrunchServerConfig : Boolean;
+begin
+
+  //**************
+  Result := True;
+  //**************
+
+end;
+
+function GetNetCrunchWebAppSrvConfig(const Key : String) : String;
+var Value : Cardinal;
+begin
+  if RegQueryDWordValue(HKLM64, ExpandConstant('{#NetCrunchWebAppServerKey}'), Key, Value) then begin
+    Result := IntToStr(Value);
+  end else begin
+    Result := '';
+  end;
+end;
+
+function GetNetCrunchWebAppSrvSSLMode : String;
+begin
+  Result := GetNetCrunchWebAppSrvConfig('UseSSL');
+end;
+
+function GetNetCrunchWebAppSrvHttpPort : String;
+begin
+  Result := GetNetCrunchWebAppSrvConfig('HttpPort');
+end;
+
+function GetNetCrunchWebAppSrvHttpsPort : String;
+begin
+  Result := GetNetCrunchWebAppSrvConfig('HttpsPort');
+end;
+
+function GetNetCrunchWebAppSrvSSLModeValue (WebAppSrvSSLMode : String) : Boolean;
+begin
+  if (WebAppSrvSSLMode <> '') then begin
+    Result := (StrToInt(WebAppSrvSSLMode) <> 0);
+  end else begin
+    Result := False;
+  end;
+end;
+
 function GetDefaultNetCrunchServerAddress : String;
 begin
   Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'host', '{#DefaultNetCrunchServerAddress}', 'NetCrunchAddress');
 end;
 
 function GetDefaultNetCrunchServerPort : String;
+var WebAppSrvPort : String;
+    WebAppSrvSSL : String;
+    DefaultNetCrunchPort : String;
 begin
-  Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'port', '{#DefaultNetCrunchServerPort}', 'NetCrunchPort');
+  WebAppSrvPort := '';
+  WebAppSrvSSL := GetNetCrunchWebAppSrvSSLMode;
+
+  if (NetCrunchServerSSLCheckBox.Checked) then begin
+    DefaultNetCrunchPort := '{#DefaultNetCrunchServerSSLPort}';
+    if ((WebAppSrvSSL <> '') and (GetNetCrunchWebAppSrvSSLModeValue(WebAppSrvSSL))) then begin
+      WebAppSrvPort := GetNetCrunchWebAppSrvHttpsPort;
+    end;
+  end else begin
+    DefaultNetCrunchPort := '{#DefaultNetCrunchServerPort}';
+    if ((WebAppSrvSSL <> '') and (not GetNetCrunchWebAppSrvSSLModeValue(WebAppSrvSSL))) then begin
+      WebAppSrvPort := GetNetCrunchWebAppSrvHttpPort;
+    end;
+  end;
+
+  if ((WebAppSrvPort <> '') and (WebAppSrvPort <> '0')) then begin
+    Result := WebAppSrvPort;
+  end else begin
+    Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'port', DefaultNetCrunchPort, 'NetCrunchPort');
+  end;
+end;
+
+function GetDefaultNetCrunchSSL : Boolean;
+var WebAppSrvSSL : String;
+    Protocol : String;
+begin
+  WebAppSrvSSL := GetNetCrunchWebAppSrvSSLMode;
+  if (WebAppSrvSSL <> '') then begin
+    Result := GetNetCrunchWebAppSrvSSLModeValue(WebAppSrvSSL);
+  end else begin
+    Protocol := GetDefaultData('{#NetCrunchServerConfigSection}', 'protocol', '{#DefaultNetCrunchServerProtocol}', 'NetCrunchProtocol');
+    Result := (Protocol = 'https');
+  end;
 end;
 
 function GetDefaultNetCrunchServerUser : String;
@@ -147,32 +288,55 @@ end;
 
 procedure SetNetCrunchServerConfigDefaultValues;
 begin
-  NetCrunchServerConfig.Values[0] := GetDefaultNetCrunchServerAddress;
-  NetCrunchServerConfig.Values[1] := GetDefaultNetCrunchServerPort;
+  NetCrunchServerAddressTextBox.Text := GetDefaultNetCrunchServerAddress;
+  NetCrunchServerSSLCheckBox.Checked := GetDefaultNetCrunchSSL;
+  NetCrunchServerPortTextBox.Text := GetDefaultNetCrunchServerPort;
+end;
+
+procedure NetCrunchServerSSLCheckBoxOnChange (Sender: TObject);
+begin
+  if (NetCrunchServerSSLCheckBox.Checked) then begin
+    NetCrunchServerPortTextBox.Text := '{#DefaultNetCrunchServerSSLPort}';
+  end else begin
+    NetCrunchServerPortTextBox.Text := '{#DefaultNetCrunchServerPort}';
+  end;
 end;
 
 procedure PrepareNetCrunchServerConfigPage;
 begin
-  NetCrunchServerConfig := CreateInputQueryPage(GrafCrunchServerConfig.ID, 'NetCrunch Server Configuration', '', 'Please specify NetCrunch server settings, then click Next.');
-  NetCrunchServerConfig.Add('NetCrunch server address:', False);
-  NetCrunchServerConfig.Add('NetCrunch server Web Access port:', False);
+  NetCrunchServerConfig := CreateCustomPage(GrafCrunchServerConfig.ID, 'NetCrunch Server Configuration', '');
+  CreateLabel(NetCrunchServerConfig, 0, 0, 'Please specify NetCrunch server settings, then click Next.');
+  NetCrunchServerAddressTextBox := CreateTextBox (NetCrunchServerConfig, 24, NetCrunchServerConfig.SurfaceWidth, 0, 'NetCrunch server address:');
+  NetCrunchServerPortTextBox := CreateTextBox (NetCrunchServerConfig, 76, NetCrunchServerConfig.SurfaceWidth, 1, 'NetCrunch server Web Access port:');
+  NetCrunchServerSSLCheckBox := CreateCheckBox (NetCrunchServerConfig, 125, 2, 'Use SSL for encryption');
+  NetCrunchServerSSLCheckBox.OnClick := @NetCrunchServerSSLCheckBoxOnChange;
   SetNetCrunchServerConfigDefaultValues;
 end;
 
 function GetNetCrunchServerConfig(Param: String) : String;
 begin
-  if (Param = 'Address') then begin
-    Result := NetCrunchServerConfig.Values[0];
+  case Param of
+    'Address': Result := NetCrunchServerAddressTextBox.Text;
+    'Port': Result := NetCrunchServerPortTextBox.Text;
+    'Protocol': begin
+                  if (NetCrunchServerSSLCheckBox.Checked) then begin
+                    Result := 'https';
+                  end else begin
+                    Result := 'http';
+                  end;
+                end;
+    'User': Result := GetDefaultNetCrunchServerUser;
+    'Password': Result := GetDefaultNetCrunchServerPassword;
   end;
-  if (Param = 'Port') then begin
-    Result := NetCrunchServerConfig.Values[1];
-  end;
-  if (Param = 'User') then begin
-    Result := GetDefaultNetCrunchServerUser;
-  end;
-  if (Param = 'Password') then begin
-    Result := GetDefaultNetCrunchServerPassword;
-  end;
+end;
+
+function CheckNetCrunchServerConfig : Boolean;
+begin
+
+  //**************
+  Result := True;
+  //**************
+
 end;
 
 procedure InitializeWizard;
@@ -187,21 +351,64 @@ begin
   SetPreviousData(PreviousDataKey, 'GrafCrunchPort', GetGrafCrunchServerConfig('Port'));
   SetPreviousData(PreviousDataKey, 'NetCrunchAddress', GetNetCrunchServerConfig('Address'));
   SetPreviousData(PreviousDataKey, 'NetCrunchPort', GetNetCrunchServerConfig('Port'));
+  SetPreviousData(PreviousDataKey, 'NetCrunchProtocol', GetNetCrunchServerConfig('Protocol'));
   SetPreviousData(PreviousDataKey, 'NetCrunchUser', GetNetCrunchServerConfig('User'));
   SetPreviousData(PreviousDataKey, 'NetCrunchPassword', GetNetCrunchServerConfig('Password'));
 end;
 
-//;**************
+function NextButtonClick(CurPageID: Integer): Boolean;
+var CheckStatus : Boolean;
+begin
+  CheckStatus := True;
+  case CurPageID of
+    GrafCrunchServerConfig.ID: CheckStatus := CheckGrafCrunchServerConfig;
+    NetCrunchServerConfig.ID: CheckStatus := CheckNetCrunchServerConfig;
+  end;
+  Result := CheckStatus;
+end;
 
+function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
+begin
+
+  Result := MemoDirInfo + NewLine + NewLine +
+    'Data location:' + NewLine +
+      Space + ExpandConstant('{#GrafCrunchProgramData}') + NewLine + NewLine + 
+    
+    'GrafCrunch server settings:' + NewLine +   
+      Space + 'Domain: ' + GetGrafCrunchServerConfig('Domain') + NewLine + 
+      Space + 'Port: ' + GetGrafCrunchServerConfig('Port') + NewLine + NewLine + 
+          
+    'NetCrunch server settings:' + NewLine + 
+      Space + 'Address: ' + GetNetCrunchServerConfig('Address') + NewLine + 
+      Space + 'Port: ' + GetNetCrunchServerConfig('Port') + NewLine + 
+      Space + 'Protocol: ' + GetNetCrunchServerConfig('Protocol');
+end;
+
+//**************
+
+//Get GrafCrunch ip adress from domain from dns
+//Checking installation of old version
+//Stop GrafCrunch server service
+//Validate GrafCrunch Server Config data - port bind
+//Validate NetCrunch Server Config data -- connection to netcrunch server
+//Open firewall
+//Start GrafCrunch server service
+//Create summary information with grafcrunch link and information about default account
+
+//function MyProgCheck(): Boolean;
+//begin
+//  if not MyProgChecked then begin
+    //MyProgCheckResult := MsgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO) = idYes;
+    //MyProgChecked := True;
+  //end;
+  //Result := MyProgCheckResult;
+//end;
+
+//function MyDirCheck(DirName: String): Boolean;
+//begin
+//  Result := DirExists(DirName);
+//end;
 //;Get this data from user
 
 //;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "user"; String: {#NetCrunchServerUser}; Flags: createkeyifdoesntexist
 //;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: {#NetCrunchServerPassword}; Flags: createkeyifdoesntexist
-
-//Checking installation of old version
-//Get GrafCrunch domain from dns
-//GetNetCrunch server setup from registers
-//Validate GrafCrunch Server Config data - port bind
-//Validate NetCrunch Server Config data -- connection to netcrunch server
-//Modify ready to install Information
-//Open firewall
