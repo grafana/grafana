@@ -2,13 +2,12 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
   './queryCtrl',
   './directives',
   'aws-sdk',
 ],
-function (angular, _, kbn) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -275,7 +274,7 @@ function (angular, _, kbn) {
     };
 
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
-      var cloudwatch = this.getCloudWatchClient(query.region);
+      var cloudwatch = this.getAwsClient(query.region, 'CloudWatch');
 
       var params = {
         Namespace: query.namespace,
@@ -321,7 +320,7 @@ function (angular, _, kbn) {
       namespace = templateSrv.replace(namespace);
       metricName = templateSrv.replace(metricName);
 
-      var cloudwatch = this.getCloudWatchClient(region);
+      var cloudwatch = this.getAwsClient(region, 'CloudWatch');
 
       var params = {
         Namespace: namespace,
@@ -348,6 +347,30 @@ function (angular, _, kbn) {
         .value();
 
         return d.resolve(suggestData);
+      });
+
+      return d.promise;
+    };
+
+    CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
+      var ec2 = this.getAwsClient(region, 'EC2');
+
+      var params = {};
+      if (filters.length > 0) {
+        params.Filters = filters;
+      }
+      if (instanceIds.length > 0) {
+        params.InstanceIds = instanceIds;
+      }
+
+      var d = $q.defer();
+
+      ec2.describeInstances(params, function(err, data) {
+        if (err) {
+          return d.reject(err);
+        }
+
+        return d.resolve(data);
       });
 
       return d.promise;
@@ -436,6 +459,24 @@ function (angular, _, kbn) {
         });
       }
 
+      var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
+      if (ebsVolumeIdsQuery) {
+        region = templateSrv.replace(ebsVolumeIdsQuery[1]);
+        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
+        var instanceIds = [
+          instanceId
+        ];
+
+        return this.performEC2DescribeInstances(region, [], instanceIds)
+        .then(function(result) {
+          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
+            return mapping.EBS.VolumeID;
+          });
+
+          return transformSuggestData(volumeIds);
+        });
+      }
+
       return $q.when([]);
     };
 
@@ -451,9 +492,9 @@ function (angular, _, kbn) {
       });
     };
 
-    CloudWatchDatasource.prototype.getCloudWatchClient = function(region) {
+    CloudWatchDatasource.prototype.getAwsClient = function(region, service) {
       if (!this.proxyMode) {
-        return new AWS.CloudWatch({
+        return new AWS[service]({
           region: region,
           accessKeyId: this.credentials.accessKeyId,
           secretAccessKey: this.credentials.secretAccessKey
@@ -483,10 +524,22 @@ function (angular, _, kbn) {
           };
         };
 
-        return {
-          getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
-          listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
-        };
+        var proxy;
+        switch (service) {
+        case 'CloudWatch':
+          proxy = {
+            getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
+            listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
+          };
+          break;
+        case 'EC2':
+          proxy = {
+            describeInstances: generateRequestProxy('EC2', 'DescribeInstances')
+          };
+          break;
+        }
+
+        return proxy;
       }
     };
 
@@ -543,7 +596,7 @@ function (angular, _, kbn) {
     }
 
     function convertToCloudWatchTime(date) {
-      return Math.round(kbn.parseDate(date).getTime() / 1000);
+      return Math.round(date.valueOf() / 1000);
     }
 
     function convertDimensionFormat(dimensions) {
