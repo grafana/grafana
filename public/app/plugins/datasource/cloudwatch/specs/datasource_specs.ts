@@ -55,9 +55,9 @@ describe('CloudWatchDatasource', function() {
     beforeEach(function() {
       ctx.ds.getAwsClient = function() {
         return {
-          getMetricStatistics: function(params, callback) {
+          getMetricStatistics: function(params) {
             requestParams = params;
-            callback(null, response);
+            return ctx.$q.when(response);
           }
         };
       };
@@ -89,7 +89,6 @@ describe('CloudWatchDatasource', function() {
 
   describe('When performing CloudWatch metricFindQuery', function() {
     var requestParams;
-
     var response = {
       Metrics: [
         {
@@ -108,9 +107,9 @@ describe('CloudWatchDatasource', function() {
     beforeEach(function() {
       ctx.ds.getAwsClient = function() {
         return {
-          listMetrics: function(params, callback) {
+          listMetrics: function(params) {
             requestParams = params;
-            callback(null, response);
+            return ctx.$q.when(response);
           }
         };
       };
@@ -119,8 +118,7 @@ describe('CloudWatchDatasource', function() {
     it('should return suggest list for region()', function(done) {
       var query = 'region()';
       ctx.ds.metricFindQuery(query).then(function(result) {
-        result = result.map(function(v) { return v.text; });
-        expect(result).to.contain('us-east-1');
+        expect(result[0].text).to.contain('us-east-1');
         done();
       });
       ctx.$rootScope.$apply();

@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'moment',
-  './queryCtrl',
+  './query_ctrl',
   './directives',
 ],
 function (angular, _) {
@@ -278,37 +278,28 @@ function (angular, _) {
         Period: query.period
       };
 
-      var d = $q.defer();
-      cloudwatch.getMetricStatistics(params, function(err, data) {
-        if (err) {
-          return d.reject(err);
-        }
-        return d.resolve(data);
-      });
-
-      return d.promise;
+      return cloudwatch.getMetricStatistics(params);
     };
 
-    CloudWatchDatasource.prototype.performSuggestRegion = function() {
-      return this.supportedRegion;
+    CloudWatchDatasource.prototype.getRegions = function() {
+      return $q.when(this.supportedRegion);
     };
 
-    CloudWatchDatasource.prototype.performSuggestNamespace = function() {
-      console.log(this.supportMetrics);
-      return _.keys(this.supportedMetrics);
+    CloudWatchDatasource.prototype.getNamespaces = function() {
+      return $q.when(_.keys(this.supportedMetrics));
     };
 
-    CloudWatchDatasource.prototype.performSuggestMetrics = function(namespace) {
+    CloudWatchDatasource.prototype.getMetrics = function(namespace) {
       namespace = templateSrv.replace(namespace);
-      return this.supportedMetrics[namespace] || [];
+      return $q.when(this.supportedMetrics[namespace] || []);
     };
 
-    CloudWatchDatasource.prototype.performSuggestDimensionKeys = function(namespace) {
+    CloudWatchDatasource.prototype.getDimensionKeys = function(namespace) {
       namespace = templateSrv.replace(namespace);
-      return this.supportedDimensions[namespace] || [];
+      return $q.when(this.supportedDimensions[namespace] || []);
     };
 
-    CloudWatchDatasource.prototype.performSuggestDimensionValues = function(region, namespace, metricName, dimensions) {
+    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
       region = templateSrv.replace(region);
       namespace = templateSrv.replace(namespace);
       metricName = templateSrv.replace(metricName);
@@ -323,26 +314,15 @@ function (angular, _) {
         params.Dimensions = convertDimensionFormat(dimensions);
       }
 
-      var d = $q.defer();
-
-      cloudwatch.listMetrics(params, function(err, data) {
-        if (err) {
-          return d.reject(err);
-        }
-
-        var suggestData = _.chain(data.Metrics)
-        .map(function(metric) {
+      return cloudwatch.listMetrics(params).then(function(data) {
+        var suggestData = _.chain(data.Metrics).map(function(metric) {
           return metric.Dimensions;
-        })
-        .reject(function(metric) {
+        }).reject(function(metric) {
           return _.isEmpty(metric);
-        })
-        .value();
+        }).value();
 
-        return d.resolve(suggestData);
+        return suggestData;
       });
-
-      return d.promise;
     };
 
     CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
@@ -356,26 +336,7 @@ function (angular, _) {
         params.InstanceIds = instanceIds;
       }
 
-      var d = $q.defer();
-
-      ec2.describeInstances(params, function(err, data) {
-        if (err) {
-          return d.reject(err);
-        }
-
-        return d.resolve(data);
-      });
-
-      return d.promise;
-    };
-
-    CloudWatchDatasource.prototype.getTemplateVariableNames = function() {
-      var variables = [];
-      templateSrv.fillVariableValuesForUrl(variables);
-
-      return _.map(_.keys(variables), function(k) {
-        return k.replace(/var-/, '$');
-      });
+      return ec2.describeInstances(params);
     };
 
     CloudWatchDatasource.prototype.metricFindQuery = function(query) {
@@ -389,32 +350,26 @@ function (angular, _) {
         });
       };
 
-      var d = $q.defer();
-
       var regionQuery = query.match(/^region\(\)/);
       if (regionQuery) {
-        d.resolve(transformSuggestData(this.performSuggestRegion()));
-        return d.promise;
+        return this.getRegions().then(transformSuggestData);
       }
 
       var namespaceQuery = query.match(/^namespace\(\)/);
       if (namespaceQuery) {
-        d.resolve(transformSuggestData(this.performSuggestNamespace()));
-        return d.promise;
+        return this.getNamespaces().then(transformSuggestData);
       }
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)\)/);
       if (metricNameQuery) {
         namespace = templateSrv.replace(metricNameQuery[1]);
-        d.resolve(transformSuggestData(this.performSuggestMetrics(namespace)));
-        return d.promise;
+        return this.getMetrics(namespace).then(transformSuggestData);
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
       if (dimensionKeysQuery) {
         namespace = templateSrv.replace(dimensionKeysQuery[1]);
-        d.resolve(transformSuggestData(this.performSuggestDimensionKeys(namespace)));
-        return d.promise;
+        return this.getDimensionKeys(namespace).then(transformSuggestData);
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
@@ -435,7 +390,7 @@ function (angular, _) {
           });
         }
 
-        return this.performSuggestDimensionValues(region, namespace, metricName, dimensions)
+        return this.getDimensionValues(region, namespace, metricName, dimensions)
         .then(function(suggestData) {
           return _.map(suggestData, function(dimensions) {
             var result = _.chain(dimensions)
@@ -460,8 +415,7 @@ function (angular, _) {
           instanceId
         ];
 
-        return this.performEC2DescribeInstances(region, [], instanceIds)
-        .then(function(result) {
+        return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
           var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
             return mapping.EBS.VolumeID;
           });
@@ -488,7 +442,7 @@ function (angular, _) {
     CloudWatchDatasource.prototype.getAwsClient = function(region, service) {
       var self = this;
       var generateRequestProxy = function(service, action) {
-        return function(params, callback) {
+        return function(params) {
           var data = {
             region: region,
             service: service,
@@ -502,11 +456,7 @@ function (angular, _) {
             data: data
           };
 
-          $http(options).then(function(response) {
-            callback(null, response.data);
-          }, function(err) {
-            callback(err, []);
-          });
+          return $http(options);
         };
       };
 

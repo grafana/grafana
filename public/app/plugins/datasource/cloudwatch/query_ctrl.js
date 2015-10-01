@@ -81,31 +81,30 @@ function (angular, _) {
     };
 
     $scope.suggestDimensionKeys = function(query, callback) { // jshint unused:false
-      return _.union($scope.datasource.performSuggestDimensionKeys($scope.target.namespace), $scope.datasource.getTemplateVariableNames());
+      $scope.datasource.getDimensionKeys($scope.target.namespace).then(function(result) {
+        callback(result);
+      });
     };
 
+    // TODO: Removed template variables from the suggest
+    // add this feature back after improving the editor
     $scope.suggestDimensionValues = function(query, callback) {
       if (!$scope.target.namespace || !$scope.target.metricName) {
         return callback([]);
       }
 
-      $scope.datasource.performSuggestDimensionValues(
+      return $scope.datasource.getDimensionValues(
         $scope.target.region,
         $scope.target.namespace,
         $scope.target.metricName,
         $scope.target.dimensions
-      )
-      .then(function(result) {
+      ).then(function(result) {
         var suggestData = _.chain(result)
         .flatten(true)
-        .filter(function(dimension) {
-          return dimension.Name === templateSrv.replace($scope.target.currentDimensionKey);
-        })
         .pluck('Value')
         .uniq()
         .value();
 
-        suggestData = _.union(suggestData, $scope.datasource.getTemplateVariableNames());
         callback(suggestData);
       }, function() {
         callback([]);

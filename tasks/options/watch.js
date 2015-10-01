@@ -13,13 +13,13 @@ module.exports = function(config) {
     copy_to_gen: {
       files: ['<%= srcDir %>/**/*'],
       tasks: [
-        'jshint',
-        'jscs',
-        'tslint',
         'clean:gen',
         'copy:public_to_gen',
         'css',
         'typescript:build',
+        'jshint',
+        'jscs',
+        'tslint',
         'karma:test'
       ],
       options: {
