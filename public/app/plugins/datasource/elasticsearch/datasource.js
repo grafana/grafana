@@ -3,10 +3,10 @@ define([
   'lodash',
   'moment',
   'kbn',
-  './queryBuilder',
-  './indexPattern',
-  './elasticResponse',
-  './queryCtrl',
+  './query_builder',
+  './index_pattern',
+  './elastic_response',
+  './query_ctrl',
   './directives'
 ],
 function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticResponse) {

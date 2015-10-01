@@ -106,7 +106,7 @@ _.each(rangeOptions, function (frame) {
         }
       }
     } else {
-      opt.display = 'parse error';
+      opt.display = opt.from + ' to ' + opt.to;
       opt.invalid = true;
     }
 
