@@ -3,9 +3,10 @@ define([
   'lodash',
   './query_builder',
   './influx_query',
+  './query_part',
   './query_part_editor',
 ],
-function (angular, _, InfluxQueryBuilder, InfluxQuery) {
+function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -45,7 +46,24 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery) {
       });
 
       $scope.fixTagSegments();
+      $scope.buildSelectMenu();
       $scope.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
+    };
+
+    $scope.buildSelectMenu = function() {
+      var categories = queryPart.getCategories();
+      $scope.selectMenu = _.reduce(categories, function(memo, cat, key) {
+        var menu = {text: key};
+        menu.submenu = _.map(cat, function(item) {
+          return {text: item.name, value: item.name};
+        });
+        memo.push(menu);
+        return memo;
+      }, []);
+    };
+
+    $scope.selectMenuAction = function(selectParts, cat, subitem) {
+      selectParts.push(queryPart.create({name: subitem.value }));
     };
 
     $scope.fixTagSegments = function() {

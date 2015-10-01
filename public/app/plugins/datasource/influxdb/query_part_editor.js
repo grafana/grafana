@@ -16,7 +16,8 @@ function (angular, _, $) {
         restrict: 'E',
         templateUrl: 'app/plugins/datasource/influxdb/partials/query_part.html',
         scope: {
-          part: "="
+          part: "=",
+          deleteAction: "&",
         },
         link: function postLink($scope, elem) {
           var part = $scope.part;
