@@ -52,6 +52,9 @@ function (angular, _) {
           case "pipe": {
             return value.join('|');
           }
+          case "native": {
+            return value;
+          }
           default:  {
             return '{' + value.join(',') + '}';
           }
@@ -94,7 +97,8 @@ function (angular, _) {
       var value;
       this._regex.lastIndex = 0;
 
-      return target.replace(this._regex, function(match, g1, g2) {
+      var native_array;
+      var regexed = target.replace(this._regex, function(match, g1, g2) {
         if (scopedVars) {
           value = scopedVars[g1 || g2];
           if (value) { return value.value; }
@@ -103,8 +107,13 @@ function (angular, _) {
         value = self._values[g1 || g2];
         if (!value) { return match; }
 
+        if (self._values[g1 || g2].constructor === Array) {
+          native_array = self._values[g1 || g2];
+        }
         return self._grafanaVariables[value] || value;
       });
+
+      return native_array || regexed;
     };
 
     this.replaceWithText = function(target, scopedVars) {
