@@ -56,6 +56,11 @@ describe("rangeUtil", () => {
       expect(text).to.be('Last 1 hour')
     });
 
+    it('Date range with rounding ranges', () => {
+      var text = rangeUtil.describeTimeRange({from: 'now/d+6h', to: 'now'});
+      expect(text).to.be('now/d+6h to now')
+    });
+
     it('Date range with absolute to now', () => {
       var text = rangeUtil.describeTimeRange({from: moment([2014,10,10,2,3,4]), to: 'now'});
       expect(text).to.be('Nov 10, 2014 02:03:04 to a few seconds ago')
