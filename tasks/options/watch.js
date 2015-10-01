@@ -34,14 +34,29 @@ module.exports = function(config) {
 
     copy_to_gen: {
       files: ['<%= srcDir %>/**/*', '!<%= srcDir %>/**/*.less'],
+<<<<<<< d7f7803cdfa8bbb58f83202942e40706b7a5cb87
       tasks: ['copy:everything_but_less'],
 >>>>>>> tech(typescript): its looking good
+=======
+      tasks: [
+        'jshint',
+        'jscs',
+        'tslint',
+        'clean:gen',
+        'copy:public_to_gen',
+        'typescript:build',
+        'karma:test'
+      ],
+>>>>>>> feat(cloudwatch): moved specs into plugins dir
       options: {
         spawn: false
       }
     },
 
+<<<<<<< d7f7803cdfa8bbb58f83202942e40706b7a5cb87
 <<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
+=======
+>>>>>>> feat(cloudwatch): moved specs into plugins dir
     // typescript: {
     //   files: ['<%= srcDir %>/app#<{(||)}>#*.ts', '<%= srcDir %>/test#<{(||)}>#*.ts'],
     //   tasks: ['tslint', 'typescript:build'],
@@ -49,6 +64,7 @@ module.exports = function(config) {
     //     spawn: false
     //   }
     // }
+<<<<<<< d7f7803cdfa8bbb58f83202942e40706b7a5cb87
 =======
     typescript: {
       files: ['<%= srcDir %>/app/**/*.ts', '<%= srcDir %>/test/**/*.ts'],
@@ -58,6 +74,8 @@ module.exports = function(config) {
       }
     }
 >>>>>>> feat() started work on more feature rich time picker
+=======
+>>>>>>> feat(cloudwatch): moved specs into plugins dir
 
   };
 };
