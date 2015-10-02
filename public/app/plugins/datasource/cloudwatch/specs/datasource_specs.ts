@@ -10,7 +10,7 @@ describe('CloudWatchDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(ctx.providePhase(['templateSrv']));
+  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
   beforeEach(ctx.createService('CloudWatchDatasource'));
   beforeEach(function() {
     ctx.ds = new ctx.service({
@@ -53,24 +53,21 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.ds.getAwsClient = function() {
-        return {
-          getMetricStatistics: function(params) {
-            requestParams = params;
-            return ctx.$q.when(response);
-          }
-        };
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params;
+        return ctx.$q.when({data: response});
       };
     });
 
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
-        expect(requestParams.Namespace).to.be(query.targets[0].namespace);
-        expect(requestParams.MetricName).to.be(query.targets[0].metricName);
-        expect(requestParams.Dimensions[0].Name).to.be(Object.keys(query.targets[0].dimensions)[0]);
-        expect(requestParams.Dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
-        expect(requestParams.Statistics).to.eql(Object.keys(query.targets[0].statistics));
-        expect(requestParams.Period).to.be(query.targets[0].period);
+        var params = requestParams.data.parameters;
+        expect(params.namespace).to.be(query.targets[0].namespace);
+        expect(params.metricName).to.be(query.targets[0].metricName);
+        expect(params.dimensions[0].Name).to.be(Object.keys(query.targets[0].dimensions)[0]);
+        expect(params.dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
+        expect(params.statistics).to.eql(Object.keys(query.targets[0].statistics));
+        expect(params.period).to.be(query.targets[0].period);
         done();
       });
       ctx.$rootScope.$apply();
@@ -105,13 +102,9 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.ds.getAwsClient = function() {
-        return {
-          listMetrics: function(params) {
-            requestParams = params;
-            return ctx.$q.when(response);
-          }
-        };
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params;
+        return ctx.$q.when({data: response});
       };
     });
 
@@ -158,7 +151,7 @@ describe('CloudWatchDatasource', function() {
       var query = 'dimension_values(us-east-1,AWS/EC2,CPUUtilization)';
       ctx.ds.metricFindQuery(query).then(function(result) {
         result = result.map(function(v) { return v.text; });
-        expect(result).to.eql(['InstanceId=i-12345678']);
+        expect(result).to.eql(['i-12345678']);
         done();
       });
       ctx.$rootScope.$apply();

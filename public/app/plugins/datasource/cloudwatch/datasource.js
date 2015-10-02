@@ -10,7 +10,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('CloudWatchDatasource', function($q, $http, templateSrv) {
+  module.factory('CloudWatchDatasource', function($q, backendSrv, templateSrv) {
 
     function CloudWatchDatasource(datasource) {
       this.type = 'cloudwatch';
@@ -173,7 +173,7 @@ function (angular, _) {
           return _.isEmpty(u);
         })
         .map(function(u) {
-          return $http({ method: 'GET', url: u });
+          return backendSrv.datasourceRequest({ method: 'GET', url: u });
         })
       )
       .then(function(allResponse) {
@@ -218,7 +218,7 @@ function (angular, _) {
 
       var queries = [];
       _.each(options.targets, _.bind(function(target) {
-        if (!target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
+        if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
         }
 
@@ -263,19 +263,20 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
-      var cloudwatch = this.getAwsClient(query.region, 'CloudWatch');
-
-      var params = {
-        Namespace: query.namespace,
-        MetricName: query.metricName,
-        Dimensions: query.dimensions,
-        Statistics: query.statistics,
-        StartTime: start,
-        EndTime: end,
-        Period: query.period
-      };
-
-      return cloudwatch.getMetricStatistics(params);
+      return this.awsRequest({
+        region: query.region,
+        service: 'CloudWatch',
+        action: 'GetMetricStatistics',
+        parameters:  {
+          namespace: query.namespace,
+          metricName: query.metricName,
+          dimensions: query.dimensions,
+          statistics: query.statistics,
+          startTime: start,
+          endTime: end,
+          period: query.period
+        }
+      });
     };
 
     CloudWatchDatasource.prototype.getRegions = function() {
@@ -297,38 +298,36 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
-      region = templateSrv.replace(region);
-      namespace = templateSrv.replace(namespace);
-      metricName = templateSrv.replace(metricName);
+      var request = {
+        region: templateSrv.replace(region),
+        service: 'CloudWatch',
+        action: 'ListMetrics',
+        parameters: {
+          namespace: templateSrv.replace(namespace),
+          metricName: templateSrv.replace(metricName),
+          dimensions: convertDimensionFormat(dimensions),
+        }
+      };
 
-      var cloudwatch = this.getAwsClient(region, 'CloudWatch');
-      var params = {Namespace: namespace, MetricName: metricName};
-
-      if (!_.isEmpty(dimensions)) {
-        params.Dimensions = convertDimensionFormat(dimensions);
-      }
-
-      return cloudwatch.listMetrics(params).then(function(result) {
+      return this.awsRequest(request).then(function(result) {
         return _.chain(result.Metrics).map(function(metric) {
-          return metric.Dimensions;
-        }).reject(function(metric) {
-          return _.isEmpty(metric);
+          return _.pluck(metric.Dimensions, 'Value');
+        }).flatten().uniq().sortBy(function(name) {
+          return name;
         }).value();
       });
     };
 
     CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
-      var ec2 = this.getAwsClient(region, 'EC2');
-
-      var params = {};
-      if (filters.length > 0) {
-        params.Filters = filters;
-      }
-      if (instanceIds.length > 0) {
-        params.InstanceIds = instanceIds;
-      }
-
-      return ec2.describeInstances(params);
+      return this.awsRequest({
+        region: region,
+        service: 'EC2',
+        action: 'DescribeInstances',
+        parameters: {
+          filter: filters,
+          instanceIds: instanceIds
+        }
+      });
     };
 
     CloudWatchDatasource.prototype.metricFindQuery = function(query) {
@@ -382,21 +381,7 @@ function (angular, _) {
           });
         }
 
-        return this.getDimensionValues(region, namespace, metricName, dimensions)
-        .then(function(suggestData) {
-          return _.map(suggestData, function(dimensions) {
-            var result = _.chain(dimensions)
-            .sortBy(function(dimension) {
-              return dimension.Name;
-            })
-            .map(function(dimension) {
-              return dimension.Name + '=' + dimension.Value;
-            })
-            .value().join(',');
-
-            return { text: result };
-          });
-        });
+        return this.getDimensionValues(region, namespace, metricName, dimensions).then(transformSuggestData);
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
@@ -431,42 +416,16 @@ function (angular, _) {
       });
     };
 
-    CloudWatchDatasource.prototype.getAwsClient = function(region, service) {
-      var self = this;
-      var generateRequestProxy = function(service, action) {
-        return function(params) {
-          var data = {
-            region: region,
-            service: service,
-            action: action,
-            parameters: params
-          };
-
-          var options = {
-            method: 'POST',
-            url: self.proxyUrl,
-            data: data
-          };
-
-          return $http(options).then(function(result) {
-            return result.data;
-          });
-        };
+    CloudWatchDatasource.prototype.awsRequest = function(data) {
+      var options = {
+        method: 'POST',
+        url: this.proxyUrl,
+        data: data
       };
 
-      switch (service) {
-        case 'CloudWatch': {
-          return {
-            getMetricStatistics: generateRequestProxy('CloudWatch', 'GetMetricStatistics'),
-            listMetrics: generateRequestProxy('CloudWatch', 'ListMetrics')
-          };
-        }
-        case 'EC2': {
-          return {
-            describeInstances: generateRequestProxy('EC2', 'DescribeInstances')
-          };
-        }
-      }
+      return backendSrv.datasourceRequest(options).then(function(result) {
+        return result.data;
+      });
     };
 
     CloudWatchDatasource.prototype.getDefaultRegion = function() {
