@@ -82,7 +82,7 @@ function (angular, _) {
 
     $scope.suggestDimensionKeys = function(query, callback) { // jshint unused:false
       $scope.datasource.getDimensionKeys($scope.target.namespace).then(function(result) {
-        callback(result);
+        callback(_.pluck(result, 'text'));
       });
     };
 

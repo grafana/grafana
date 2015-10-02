@@ -138,25 +138,39 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery', function() {
-    // it('should return suggest list for dimension_keys()', function(done) {
-    //   var query = 'dimension_keys(AWS/EC2)';
-    //   ctx.ds.metricFindQuery(query).then(function(result) {
-    //     result = result.map(function(v) { return v.text; });
-    //     expect(result).to.contain('InstanceId');
-    //     done();
-    //   });
-    //   ctx.$rootScope.$apply();
-    // });
-    //
-    // it('should return suggest list for dimension_values()', function(done) {
-    //   var query = 'dimension_values(us-east-1,AWS/EC2,CPUUtilization)';
-    //   ctx.ds.metricFindQuery(query).then(function(result) {
-    //     result = result.map(function(v) { return v.text; });
-    //     expect(result).to.eql(['i-12345678']);
-    //     done();
-    //   });
-    //   ctx.$rootScope.$apply();
-    // });
+  describeMetricFindQuery('dimension_keys(AWS/EC2)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = [{text: 'InstanceId'}];
+    });
+
+    it('should call __GetDimensions and return result', () => {
+      expect(scenario.result[0].text).to.be('InstanceId');
+      expect(scenario.request.data.action).to.be('__GetDimensions');
+    });
   });
+
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        Metrics: [
+          {
+            Namespace: 'AWS/EC2',
+            MetricName: 'CPUUtilization',
+            Dimensions: [
+              {
+                Name: 'InstanceId',
+                Value: 'i-12345678'
+              }
+            ]
+          }
+        ]
+      };
+    });
+
+    it('should call __GetMetrics and return result', () => {
+      expect(scenario.result[0].text).to.be('i-12345678');
+      expect(scenario.request.data.action).to.be('ListMetrics');
+    });
+  });
+
 });
