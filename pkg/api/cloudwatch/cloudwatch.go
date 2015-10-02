@@ -29,7 +29,8 @@ func init() {
 		"DescribeInstances":   handleDescribeInstances,
 		"__GetRegions":        handleGetRegions,
 		"__GetNamespaces":     handleGetNamespaces,
-		"__GetMetrics":     handleGetMetrics,
+		"__GetMetrics":        handleGetMetrics,
+		"__GetDimensions":     handleGetDimensions,
 	}
 }
 

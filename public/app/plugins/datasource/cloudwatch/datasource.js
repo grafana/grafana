@@ -104,8 +104,12 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.getDimensionKeys = function(namespace) {
-      namespace = templateSrv.replace(namespace);
-      return $q.when(this.supportedDimensions[namespace] || []);
+      return this.awsRequest({
+        action: '__GetDimensions',
+        parameters: {
+          namespace: templateSrv.replace(namespace)
+        }
+      });
     };
 
     CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
@@ -120,6 +124,7 @@ function (angular, _) {
       };
 
       return this.awsRequest(request).then(function(result) {
+        console.log(result);
         return _.chain(result.Metrics).map(function(metric) {
           return _.pluck(metric.Dimensions, 'Value');
         }).flatten().uniq().sortBy(function(name) {
@@ -167,8 +172,7 @@ function (angular, _) {
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
       if (dimensionKeysQuery) {
-        namespace = templateSrv.replace(dimensionKeysQuery[1]);
-        return this.getDimensionKeys(namespace).then(transformSuggestData);
+        return this.getDimensionKeys(dimensionKeysQuery[1]);
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
