@@ -5,6 +5,9 @@ awsconfig
 /dist
 /packaging/windows/dest
 /packaging/windows/release
+/packaging/windows/tools/Tools.dproj.local
+/packaging/windows/tools/Tools.dsk
+/packaging/windows/tools/Tools.identcache
 /packaging/windows/tools/__history
 /packaging/windows/tools/Win32
 /packaging/windows/tools/Win64
