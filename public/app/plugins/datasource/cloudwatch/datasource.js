@@ -20,9 +20,6 @@ function (angular, _) {
       this.defaultRegion = datasource.jsonData.defaultRegion;
 
       /* jshint -W101 */
-      this.supportedRegion = [
-        'us-east-1', 'us-west-2', 'us-west-1', 'eu-west-1', 'eu-central-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1'
-      ];
 
       this.supportedMetrics = {
         'AWS/AutoScaling': [
@@ -265,7 +262,6 @@ function (angular, _) {
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
       return this.awsRequest({
         region: query.region,
-        service: 'CloudWatch',
         action: 'GetMetricStatistics',
         parameters:  {
           namespace: query.namespace,
@@ -280,7 +276,7 @@ function (angular, _) {
     };
 
     CloudWatchDatasource.prototype.getRegions = function() {
-      return $q.when(this.supportedRegion);
+      return this.awsRequest({action: '__GetRegions'});
     };
 
     CloudWatchDatasource.prototype.getNamespaces = function() {
@@ -300,7 +296,6 @@ function (angular, _) {
     CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
       var request = {
         region: templateSrv.replace(region),
-        service: 'CloudWatch',
         action: 'ListMetrics',
         parameters: {
           namespace: templateSrv.replace(namespace),
@@ -321,7 +316,6 @@ function (angular, _) {
     CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
       return this.awsRequest({
         region: region,
-        service: 'EC2',
         action: 'DescribeInstances',
         parameters: {
           filter: filters,
@@ -341,12 +335,12 @@ function (angular, _) {
         });
       };
 
-      var regionQuery = query.match(/^region\(\)/);
+      var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
-        return this.getRegions().then(transformSuggestData);
+        return this.getRegions();
       }
 
-      var namespaceQuery = query.match(/^namespace\(\)/);
+      var namespaceQuery = query.match(/^namespaces\(\)/);
       if (namespaceQuery) {
         return this.getNamespaces().then(transformSuggestData);
       }

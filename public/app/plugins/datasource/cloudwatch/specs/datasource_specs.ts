@@ -108,17 +108,27 @@ describe('CloudWatchDatasource', function() {
       };
     });
 
-    it('should return suggest list for region()', function(done) {
-      var query = 'region()';
-      ctx.ds.metricFindQuery(query).then(function(result) {
-        expect(result[0].text).to.contain('us-east-1');
-        done();
+    describe('regions()', () => {
+      let params, result;
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = args => {
+          params = args;
+          return ctx.$q.when({data: [{text: 'us-east-1'}]});
+        };
+        ctx.ds.metricFindQuery("regions()").then(args => {
+          result = args;
+        });
+        ctx.$rootScope.$apply();
       });
-      ctx.$rootScope.$apply();
+
+      it('should issue __GetRegions request', () => {
+        expect(result[0].text).to.contain('us-east-1');
+        expect(params.data.action).to.be('__GetRegions');
+      });
     });
 
     it('should return suggest list for namespace()', function(done) {
-      var query = 'namespace()';
+      var query = 'namespaces()';
       ctx.ds.metricFindQuery(query).then(function(result) {
         result = result.map(function(v) { return v.text; });
         expect(result).to.contain('AWS/EC2');

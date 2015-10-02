@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -83,7 +84,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	if query.Result.Type == m.DS_CLOUDWATCH {
-		ProxyCloudWatchDataSourceRequest(c)
+		cloudwatch.HandleRequest(c)
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(&ds, proxyPath, targetUrl)
