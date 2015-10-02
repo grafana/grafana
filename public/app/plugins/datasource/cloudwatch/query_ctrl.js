@@ -25,12 +25,12 @@ function (angular, _) {
     };
 
     $scope.getRegions = function() {
-      return $scope.datasource.metricFindQuery('region()')
+      return $scope.datasource.metricFindQuery('regions()')
         .then($scope.transformToSegments(true));
     };
 
     $scope.getNamespaces = function() {
-      return $scope.datasource.metricFindQuery('namespace()')
+      return $scope.datasource.metricFindQuery('namespaces()')
         .then($scope.transformToSegments(true));
     };
 
