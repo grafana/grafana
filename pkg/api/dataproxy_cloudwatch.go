@@ -31,13 +31,13 @@ func ProxyCloudWatchDataSourceRequest(c *middleware.Context) {
 		case "GetMetricStatistics":
 			reqParam := &struct {
 				Parameters struct {
-					Namespace  string                  `json:"Namespace"`
-					MetricName string                  `json:"MetricName"`
-					Dimensions []*cloudwatch.Dimension `json:"Dimensions"`
-					Statistics []*string               `json:"Statistics"`
-					StartTime  int64                   `json:"StartTime"`
-					EndTime    int64                   `json:"EndTime"`
-					Period     int64                   `json:"Period"`
+					Namespace  string                  `json:"namespace"`
+					MetricName string                  `json:"metricName"`
+					Dimensions []*cloudwatch.Dimension `json:"dimensions"`
+					Statistics []*string               `json:"statistics"`
+					StartTime  int64                   `json:"startTime"`
+					EndTime    int64                   `json:"endTime"`
+					Period     int64                   `json:"period"`
 				} `json:"parameters"`
 			}{}
 			json.Unmarshal([]byte(body), reqParam)
@@ -63,9 +63,9 @@ func ProxyCloudWatchDataSourceRequest(c *middleware.Context) {
 		case "ListMetrics":
 			reqParam := &struct {
 				Parameters struct {
-					Namespace  string                        `json:"Namespace"`
-					MetricName string                        `json:"MetricName"`
-					Dimensions []*cloudwatch.DimensionFilter `json:"Dimensions"`
+					Namespace  string                        `json:"namespace"`
+					MetricName string                        `json:"metricName"`
+					Dimensions []*cloudwatch.DimensionFilter `json:"dimensions"`
 				} `json:"parameters"`
 			}{}
 			json.Unmarshal([]byte(body), reqParam)
@@ -94,8 +94,8 @@ func ProxyCloudWatchDataSourceRequest(c *middleware.Context) {
 		case "DescribeInstances":
 			reqParam := &struct {
 				Parameters struct {
-					Filters     []*ec2.Filter `json:"Filters"`
-					InstanceIds []*string     `json:"InstanceIds"`
+					Filters     []*ec2.Filter `json:"filters"`
+					InstanceIds []*string     `json:"instanceIds"`
 				} `json:"parameters"`
 			}{}
 			json.Unmarshal([]byte(body), reqParam)

@@ -99,13 +99,7 @@ function (angular, _) {
         $scope.target.metricName,
         $scope.target.dimensions
       ).then(function(result) {
-        var suggestData = _.chain(result)
-        .flatten(true)
-        .pluck('Value')
-        .uniq()
-        .value();
-
-        callback(suggestData);
+        callback(result);
       }, function() {
         callback([]);
       });
