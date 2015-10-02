@@ -254,7 +254,7 @@ function (angular, _) {
         var result = [];
 
         _.each(allResponse, function(response, index) {
-          var metrics = transformMetricData(response.data, options.targets[index]);
+          var metrics = transformMetricData(response, options.targets[index]);
           result = result.concat(metrics);
         });
 
@@ -309,7 +309,7 @@ function (angular, _) {
       }
 
       return cloudwatch.listMetrics(params).then(function(result) {
-        return _.chain(result.data.Metrics).map(function(metric) {
+        return _.chain(result.Metrics).map(function(metric) {
           return metric.Dimensions;
         }).reject(function(metric) {
           return _.isEmpty(metric);
@@ -448,7 +448,9 @@ function (angular, _) {
             data: data
           };
 
-          return $http(options);
+          return $http(options).then(function(result) {
+            return result.data;
+          });
         };
       };
 
