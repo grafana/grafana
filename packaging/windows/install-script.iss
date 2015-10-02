@@ -42,6 +42,8 @@ OutputDir=release
 OutputBaseFilename=GCServer
 Compression=lzma
 SolidCompression=yes
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -72,6 +74,8 @@ Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password
 Name: {#GrafCrunchProgramData}
 
 [Files]
+Source: "tools\Win32\Release\Tools.dll"; Flags: dontcopy 32bit
+
 Source: {#LICENSE}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 
@@ -85,7 +89,10 @@ Type: files; Name: {#ConfigINI}
 
 [Code]
 
+function GetHostName : PAnsiChar; external 'GetHostName@files:Tools.dll stdcall';
+
 var 
+  HostName: String;
   GrafCrunchServerConfig: TInputQueryWizardPage;
   NetCrunchServerConfig: TWizardPage;
   NetCrunchServerAddressTextBox: TEdit;
@@ -155,8 +162,14 @@ begin
 end;
 
 function GetDefaultGrafCrunchServerDomain : String;
+var 
+  DefaultServerDomain : String;
+
 begin
-  Result := GetDefaultData('{#GrafCrunchServerSection}', 'domain', '{#DefaultGrafCrunchServerDomain}', 'GrafCrunchDomain');
+  if (HostName <> '') 
+    then DefaultServerDomain := HostName
+    else DefaultServerDomain := '{#DefaultGrafCrunchServerDomain}';
+  Result := GetDefaultData('{#GrafCrunchServerSection}', 'domain', DefaultServerDomain, 'GrafCrunchDomain');
 end;
 
 function GetDefaultGrafCrunchServerPort : String;
@@ -192,6 +205,7 @@ function CheckGrafCrunchServerConfig : Boolean;
 begin
 
   //**************
+  //MsgBox(String(AnsiString(GetHostName)), mbInformation, MB_OK);
   Result := True;
   //**************
 
@@ -232,8 +246,14 @@ begin
 end;
 
 function GetDefaultNetCrunchServerAddress : String;
+var 
+  DefaultServerAddress : String;
+
 begin
-  Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'host', '{#DefaultNetCrunchServerAddress}', 'NetCrunchAddress');
+  if (HostName <> '') 
+    then DefaultServerAddress := HostName
+    else DefaultServerAddress := '{#DefaultNetCrunchServerAddress}';
+  Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'host', DefaultServerAddress, 'NetCrunchAddress');
 end;
 
 function GetDefaultNetCrunchServerPort : String;
@@ -341,6 +361,7 @@ end;
 
 procedure InitializeWizard;
 begin
+  HostName := String(AnsiString(GetHostName));
   PrepareGrafCrunchServerConfigPage;
   PrepareNetCrunchServerConfigPage;
 end;
@@ -386,7 +407,6 @@ end;
 
 //**************
 
-//Get GrafCrunch ip adress from domain from dns
 //Checking installation of old version
 //Stop GrafCrunch server service
 //Validate GrafCrunch Server Config data - port bind

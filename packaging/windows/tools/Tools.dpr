@@ -1,21 +1,53 @@
 library Tools;
 
-{ Important note about DLL memory management: ShareMem must be the
-  first unit in your library's USES clause AND your project's (select
-  Project-View Source) USES clause if your DLL exports any procedures or
-  functions that pass strings as parameters or function results. This
-  applies to all strings passed to and from your DLL--even those that
-  are nested in records and classes. ShareMem is the interface unit to
-  the BORLNDMM.DLL shared memory manager, which must be deployed along
-  with your DLL. To avoid using BORLNDMM.DLL, pass string information
-  using PChar or ShortString parameters. }
-
 uses
-  System.ShareMem,
   System.SysUtils,
-  System.Classes;
+  System.Classes,
+  Winsock;
 
 {$R *.res}
 
+procedure GetIPAddress(var HostName, IP: String);
+
+type
+  pu_long = ^u_long;
+
+var
+  TWSADataBuffer : TWSAData;
+  NameBuffer : Array[0..255] of AnsiChar;
+  PHostEntBuffer : PHostEnt;
+  TInAddrBuffer : TInAddr;
+
 begin
+  HostName := '';
+  IP := '';
+
+  if (WSAStartup($101, TWSADataBuffer) = 0) then begin
+    gethostname(NameBuffer, sizeof(NameBuffer));
+    PHostEntBuffer := gethostbyname(NameBuffer);
+    HostName := String(PHostEntBuffer^.h_name);
+    TInAddrBuffer.S_addr := u_long(pu_long(PHostEntBuffer^.h_addr_list^)^);
+    IP := String(inet_ntoa(TInAddrBuffer));
+  end;
+  WSACleanup;
+end;
+
+function GetHostName : PAnsiChar; stdcall;
+var
+  Name: String;
+  IP: String;
+  HostName: String;
+
+begin
+  GetIPAddress(Name, IP);
+  if (AnsiPos('.', Name) = 0)
+    then HostName := IP
+    else HostName := Name;
+  Result := PAnsiChar(AnsiString(HostName));
+end;
+
+exports
+  GetHostName;
+
 end.
+
