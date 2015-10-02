@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.065,=C:\Users\boguslaw.gorczyca\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.244,=C:\Users\boguslaw.gorczyca\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.111,=C:\Users\boguslaw.gorczyca\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2015-10-02 08:40:46.238,Z:\Projects\Go\src\github.com\grafana\grafana\packaging\windows\tools\Tools.dproj=C:\Users\boguslaw.gorczyca\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>
