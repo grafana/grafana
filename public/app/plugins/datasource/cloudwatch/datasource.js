@@ -246,23 +246,20 @@ function (angular, _) {
         return d.promise;
       }
 
-      var allQueryPromise = _.map(queries, _.bind(function(query) {
+      var allQueryPromise = _.map(queries, function(query) {
         return this.performTimeSeriesQuery(query, start, end);
-      }, this));
+      }, this);
 
-      return $q.all(allQueryPromise)
-        .then(function(allResponse) {
-          var result = [];
+      return $q.all(allQueryPromise).then(function(allResponse) {
+        var result = [];
 
-          _.each(allResponse, function(response, index) {
-            var metrics = transformMetricData(response, options.targets[index]);
-            _.each(metrics, function(m) {
-              result.push(m);
-            });
-          });
-
-          return { data: result };
+        _.each(allResponse, function(response, index) {
+          var metrics = transformMetricData(response.data, options.targets[index]);
+          result = result.concat(metrics);
         });
+
+        return { data: result };
+      });
     };
 
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
@@ -305,23 +302,18 @@ function (angular, _) {
       metricName = templateSrv.replace(metricName);
 
       var cloudwatch = this.getAwsClient(region, 'CloudWatch');
+      var params = {Namespace: namespace, MetricName: metricName};
 
-      var params = {
-        Namespace: namespace,
-        MetricName: metricName
-      };
       if (!_.isEmpty(dimensions)) {
         params.Dimensions = convertDimensionFormat(dimensions);
       }
 
-      return cloudwatch.listMetrics(params).then(function(data) {
-        var suggestData = _.chain(data.Metrics).map(function(metric) {
+      return cloudwatch.listMetrics(params).then(function(result) {
+        return _.chain(result.data.Metrics).map(function(metric) {
           return metric.Dimensions;
         }).reject(function(metric) {
           return _.isEmpty(metric);
         }).value();
-
-        return suggestData;
       });
     };
 
