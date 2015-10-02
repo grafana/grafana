@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type actionHandler func(*cwRequest, *middleware.Context)
@@ -29,6 +28,8 @@ func init() {
 		"ListMetrics":         handleListMetrics,
 		"DescribeInstances":   handleDescribeInstances,
 		"__GetRegions":        handleGetRegions,
+		"__GetNamespaces":     handleGetNamespaces,
+		"__GetMetrics":     handleGetMetrics,
 	}
 }
 
@@ -120,20 +121,6 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 	}
 
 	c.JSON(200, resp)
-}
-
-func handleGetRegions(req *cwRequest, c *middleware.Context) {
-	regions := []string{
-		"us-west-2", "us-west-1", "eu-west-1", "eu-central-1", "ap-southeast-1",
-		"ap-southeast-2", "ap-northeast-1", "sa-east-1",
-	}
-
-	result := []interface{}{}
-	for _, region := range regions {
-		result = append(result, util.DynMap{"text": region, "value": region})
-	}
-
-	c.JSON(200, result)
 }
 
 func HandleRequest(c *middleware.Context) {
