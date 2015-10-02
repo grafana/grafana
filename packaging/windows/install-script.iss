@@ -90,6 +90,7 @@ Type: files; Name: {#ConfigINI}
 [Code]
 
 function GetHostName : PAnsiChar; external 'GetHostName@files:Tools.dll stdcall';
+function CheckServerPort (APort : PAnsiChar) : Integer; external 'CheckServerPort@files:Tools.dll stdcall';
 
 var 
   HostName: String;
@@ -202,13 +203,27 @@ begin
 end;
 
 function CheckGrafCrunchServerConfig : Boolean;
+var
+  Port : String;
+  CheckResult : Integer;
+  ErrorMessage : String;
+
 begin
+  Port := GetGrafCrunchServerConfig('Port');
+  CheckResult := CheckServerPort(Port);
+  if (CheckResult > 0) then begin
+    case CheckResult of
+      1: ErrorMessage := 'Port must be an integer value.';
+      2: ErrorMessage := 'Port ' + Port + ' is reserved.';
+      3:  ErrorMessage := 'Port ' + Port + ' is not available.';
+      4:  ErrorMessage := 'Port must be greater than zero.';
+    end;
 
-  //**************
-  //MsgBox(String(AnsiString(GetHostName)), mbInformation, MB_OK);
-  Result := True;
-  //**************
-
+    MsgBox(ErrorMessage, mbError, MB_OK);
+    Result := False;
+  end else begin
+    Result := True;
+  end;
 end;
 
 function GetNetCrunchWebAppSrvConfig(const Key : String) : String;
@@ -409,11 +424,11 @@ end;
 
 //Checking installation of old version
 //Stop GrafCrunch server service
-//Validate GrafCrunch Server Config data - port bind
 //Validate NetCrunch Server Config data -- connection to netcrunch server
 //Open firewall
 //Start GrafCrunch server service
 //Create summary information with grafcrunch link and information about default account
+//Implement Modify mode for server config modifications;
 
 //function MyProgCheck(): Boolean;
 //begin
