@@ -11,6 +11,9 @@ const (
 	DS_INFLUXDB_08   = "influxdb_08"
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
+	DS_CLOUDWATCH    = "cloudwatch"
+	DS_KAIROSDB      = "kairosdb"
+	DS_PROMETHEUS    = "prometheus"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -44,6 +47,25 @@ type DataSource struct {
 	Updated time.Time
 }
 
+func IsStandardDataSource(dsType string) bool {
+	switch dsType {
+	case DS_ES:
+		return true
+	case DS_INFLUXDB:
+		return true
+	case DS_OPENTSDB:
+		return true
+	case DS_CLOUDWATCH:
+		return true
+	case DS_PROMETHEUS:
+		return true
+	case DS_GRAPHITE:
+		return true
+	default:
+		return false
+	}
+}
+
 // ----------------------
 // COMMANDS
 
@@ -69,7 +91,6 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Id                int64                  `json:"id" binding:"Required"`
 	Name              string                 `json:"name" binding:"Required"`
 	Type              string                 `json:"type" binding:"Required"`
 	Access            DsAccess               `json:"access" binding:"Required"`
@@ -84,6 +105,7 @@ type UpdateDataSourceCommand struct {
 	JsonData          map[string]interface{} `json:"jsonData"`
 
 	OrgId int64 `json:"-"`
+	Id    int64 `json:"-"`
 }
 
 type DeleteDataSourceCommand struct {

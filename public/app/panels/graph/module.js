@@ -1,17 +1,16 @@
 define([
   'angular',
-  'app',
   'jquery',
   'lodash',
   'kbn',
   'moment',
-  'components/timeSeries',
-  'components/panelmeta',
+  'app/components/timeSeries',
+  'app/components/panelmeta',
   './seriesOverridesCtrl',
   './graph',
   './legend',
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -116,7 +115,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     _.defaults($scope.panel.grid, _d.grid);
     _.defaults($scope.panel.legend, _d.legend);
 
-    $scope.logScales = {'linear': 1, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
+    $scope.logScales = {'linear': 1, 'log (base 2)': 2, 'log (base 10)': 10, 'log (base 32)': 32, 'log (base 1024)': 1024};
 
     $scope.hiddenSeries = {};
     $scope.seriesList = [];
@@ -130,7 +129,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeRaw, $scope.dashboard);
 
       return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler, function(err) {
@@ -175,7 +174,8 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.seriesHandler = function(seriesData, index) {
       var datapoints = seriesData.datapoints;
       var alias = seriesData.target;
-      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[index];
+      var colorIndex = index % $rootScope.colors.length;
+      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[colorIndex];
 
       var series = new TimeSeries({
         datapoints: datapoints,
@@ -197,7 +197,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     };
 
     $scope.render = function(data) {
-      $scope.$broadcast('render', data);
+      panelHelper.broadcastRender($scope, data);
     };
 
     $scope.changeSeriesColor = function(series, color) {

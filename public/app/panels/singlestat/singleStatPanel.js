@@ -1,6 +1,6 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'jquery',
   'jquery.flot',
@@ -15,11 +15,12 @@ function (angular, app, _, $) {
 
     return {
       link: function(scope, elem) {
-        var data, panel;
+        var data, panel, linkInfo;
         var $panelContainer = elem.parents('.panel-container');
 
         scope.$on('render', function() {
           render();
+          scope.panelRenderingComplete();
         });
 
         function setElementHeight() {
@@ -73,7 +74,7 @@ function (angular, app, _, $) {
 
           if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, scope.panel.prefix); }
 
-          var value = applyColoringThresholds(data.mainValue, data.mainValueFormated);
+          var value = applyColoringThresholds(data.valueRounded, data.valueFormated);
           body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
           if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -121,8 +122,8 @@ function (angular, app, _, $) {
             xaxis: {
               show: false,
               mode: "time",
-              min: scope.range.from.getTime(),
-              max: scope.range.to.getTime(),
+              min: scope.range.from.valueOf(),
+              max: scope.range.to.valueOf(),
             },
             grid: { hoverable: false, show: false },
           };
@@ -147,8 +148,8 @@ function (angular, app, _, $) {
 
           var body = getBigValueHtml();
 
-          if (panel.colorBackground && !isNaN(data.mainValue)) {
-            var color = getColorForValue(data.mainValue);
+          if (panel.colorBackground && !isNaN(data.valueRounded)) {
+            var color = getColorForValue(data.valueRounded);
             if (color) {
               $panelContainer.css('background-color', color);
               if (scope.fullscreen) {
@@ -169,10 +170,16 @@ function (angular, app, _, $) {
           }
 
           elem.toggleClass('pointer', panel.links.length > 0);
+
+          if (panel.links.length > 0) {
+            linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], scope.panel.scopedVars);
+          } else {
+            linkInfo = null;
+          }
         }
 
         // drilldown link tooltip
-        var drilldownTooltip = $('<div id="tooltip" class="">gello</div>"');
+        var drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
 
         elem.mouseleave(function() {
           if (panel.links.length === 0) { return;}
@@ -180,10 +187,13 @@ function (angular, app, _, $) {
         });
 
         elem.click(function() {
-          if (panel.links.length === 0) { return; }
+          if (!linkInfo) { return; }
 
-          var linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0]);
-          if (linkInfo.href[0] === '#') { linkInfo.href = linkInfo.href.substring(1); }
+          if (linkInfo.target === '_blank') {
+            var redirectWindow = window.open(linkInfo.href, '_blank');
+            redirectWindow.location;
+            return;
+          }
 
           if (linkInfo.href.indexOf('http') === 0) {
             window.location.href = linkInfo.href;
@@ -197,9 +207,9 @@ function (angular, app, _, $) {
         });
 
         elem.mousemove(function(e) {
-          if (panel.links.length === 0) { return;}
+          if (!linkInfo) { return;}
 
-          drilldownTooltip.text('click to go to: ' + panel.links[0].title);
+          drilldownTooltip.text('click to go to: ' + linkInfo.title);
 
           drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
         });

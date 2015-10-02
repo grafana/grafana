@@ -1,10 +1,7 @@
-define(['jquery'],
-function ($) {
+define(['jquery', 'angular', 'lodash'],
+function ($, angular, _) {
   'use strict';
 
-  /**
-   * jQuery extensions
-   */
   var $win = $(window);
 
   $.fn.place_tt = (function () {
@@ -14,6 +11,7 @@ function ($) {
 
     return function (x, y, opts) {
       opts = $.extend(true, {}, defaults, opts);
+
       return this.each(function () {
         var $tooltip = $(this), width, height;
 
@@ -21,6 +19,17 @@ function ($) {
 
         $("#tooltip").remove();
         $tooltip.appendTo(document.body);
+
+        if (opts.compile) {
+          angular.element(document).injector().invoke(["$compile", "$rootScope", function($compile, $rootScope) {
+            var tmpScope = $rootScope.$new(true);
+            _.extend(tmpScope, opts.scopeData);
+
+            $compile($tooltip)(tmpScope);
+            tmpScope.$digest();
+            tmpScope.$destroy();
+          }]);
+        }
 
         width = $tooltip.outerWidth(true);
         height = $tooltip.outerHeight(true);

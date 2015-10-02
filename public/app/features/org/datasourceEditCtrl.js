@@ -1,8 +1,9 @@
 define([
   'angular',
   'config',
+  'lodash',
 ],
-function (angular, config) {
+function (angular, config, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -12,12 +13,16 @@ function (angular, config) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {
-      name: '',
-      type: 'graphite',
-      url: '',
-      access: 'proxy'
-    };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+
+    $scope.indexPatternTypes = [
+      {name: 'No pattern',  value: undefined},
+      {name: 'Hourly',      value: 'Hourly',  example: '[logstash-]YYYY.MM.DD.HH'},
+      {name: 'Daily',       value: 'Daily',   example: '[logstash-]YYYY.MM.DD'},
+      {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
+      {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
+      {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
 
     $scope.init = function() {
       $scope.isNew = true;
@@ -25,7 +30,6 @@ function (angular, config) {
 
       $scope.loadDatasourceTypes().then(function() {
         if ($routeParams.id) {
-          $scope.isNew = false;
           $scope.getDatasourceById($routeParams.id);
         } else {
           $scope.current = angular.copy(defaults);
@@ -48,6 +52,7 @@ function (angular, config) {
 
     $scope.getDatasourceById = function(id) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
+        $scope.isNew = false;
         $scope.current = ds;
         $scope.typeChanged();
       });
@@ -58,33 +63,68 @@ function (angular, config) {
     };
 
     $scope.updateFrontendSettings = function() {
-      backendSrv.get('/api/frontend/settings').then(function(settings) {
+      return backendSrv.get('/api/frontend/settings').then(function(settings) {
         config.datasources = settings.datasources;
         config.defaultDatasource = settings.defaultDatasource;
         datasourceSrv.init();
       });
     };
 
-    $scope.update = function() {
-      if (!$scope.editForm.$valid) {
-        return;
-      }
+    $scope.testDatasource = function() {
+      $scope.testing = { done: false };
 
-      backendSrv.post('/api/datasources', $scope.current).then(function() {
-        $scope.updateFrontendSettings();
-        $location.path("datasources");
+      datasourceSrv.get($scope.current.name).then(function(datasource) {
+        if (!datasource.testDatasource) {
+          $scope.testing.message = 'Data source does not support test connection feature.';
+          $scope.testing.status = 'warning';
+          $scope.testing.title = 'Unknown';
+          return;
+        }
+
+        return datasource.testDatasource().then(function(result) {
+          $scope.testing.message = result.message;
+          $scope.testing.status = result.status;
+          $scope.testing.title = result.title;
+        }, function(err) {
+          if (err.statusText) {
+            $scope.testing.message = err.statusText;
+            $scope.testing.title = "HTTP Error";
+          } else {
+            $scope.testing.message = err.message;
+            $scope.testing.title = "Unknown error";
+          }
+        });
+      }).finally(function() {
+        $scope.testing.done = true;
       });
     };
 
-    $scope.add = function() {
+    $scope.saveChanges = function(test) {
       if (!$scope.editForm.$valid) {
         return;
       }
 
-      backendSrv.put('/api/datasources', $scope.current).then(function() {
-        $scope.updateFrontendSettings();
-        $location.path("datasources");
-      });
+      if ($scope.current.id) {
+        return backendSrv.put('/api/datasources/' + $scope.current.id, $scope.current).then(function() {
+          $scope.updateFrontendSettings().then(function() {
+            if (test) {
+              $scope.testDatasource();
+            } else {
+              $location.path('datasources');
+            }
+          });
+        });
+      } else {
+        return backendSrv.post('/api/datasources', $scope.current).then(function(result) {
+          $scope.updateFrontendSettings();
+          $location.path('datasources/edit/' + result.id);
+        });
+      }
+    };
+
+    $scope.indexPatternTypeChanged = function() {
+      var def = _.findWhere($scope.indexPatternTypes, {value: $scope.current.jsonData.interval});
+      $scope.current.database = def.example || 'es-index-name';
     };
 
     $scope.init();

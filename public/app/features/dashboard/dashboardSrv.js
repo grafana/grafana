@@ -10,7 +10,7 @@ function (angular, $, kbn, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(contextSrv)  {
+  module.factory('dashboardSrv', function()  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -31,19 +31,15 @@ function (angular, $, kbn, _, moment) {
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
-      this.nav = data.nav || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
+      this.timepicker = data.timepicker || {};
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
       this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
-
-      if (this.nav.length === 0) {
-        this.nav.push({ type: 'timepicker' });
-      }
-
+      this.links = data.links || [];
       this._updateSchema(data);
       this._initMeta(meta);
     }
@@ -55,13 +51,8 @@ function (angular, $, kbn, _, moment) {
 
       meta.canShare = meta.canShare === false ? false : true;
       meta.canSave = meta.canSave === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
       meta.canStar = meta.canStar === false ? false : true;
-      meta.canDelete = meta.canDelete === false ? false : true;
-
-      if (contextSrv.hasRole('Viewer')) {
-        meta.canSave = false;
-      }
+      meta.canEdit = meta.canEdit === false ? false : true;
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -149,8 +140,8 @@ function (angular, $, kbn, _, moment) {
       row.panels.push(panel);
     };
 
-    p.hasTemplateVarsOrAnnotations = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0;
+    p.isSubmenuFeaturesEnabled = function() {
+      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
@@ -178,25 +169,71 @@ function (angular, $, kbn, _, moment) {
       var newPanel = angular.copy(panel);
       newPanel.id = this.getNextPanelId();
 
+      delete newPanel.repeat;
+      delete newPanel.repeatIteration;
+      delete newPanel.repeatPanelId;
+      delete newPanel.scopedVars;
+
       var currentRow = this.rows[rowIndex];
       currentRow.panels.push(newPanel);
+      return newPanel;
+    };
+
+    p.getNextQueryLetter = function(panel) {
+      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      return _.find(letters, function(refId) {
+        return _.every(panel.targets, function(other) {
+          return other.refId !== refId;
+        });
+      });
+    };
+
+    p.addDataQueryTo = function(panel, datasource) {
+      var target = {
+        refId: this.getNextQueryLetter(panel)
+      };
+
+      if (datasource) {
+        target.datasource = datasource.name;
+      }
+
+      panel.targets.push(target);
+    };
+
+    p.removeDataQuery = function (panel, query) {
+      panel.targets = _.without(panel.targets, query);
+    };
+
+    p.duplicateDataQuery = function(panel, query) {
+      var clone = angular.copy(query);
+      clone.refId = this.getNextQueryLetter(panel);
+      panel.targets.push(clone);
+    };
+
+    p.moveDataQuery = function(panel, fromIndex, toIndex) {
+      _.move(panel.targets, fromIndex, toIndex);
     };
 
     p.formatDate = function(date, format) {
+      if (!moment.isMoment(date)) {
+        date = moment(date);
+      }
+
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
-              moment(date).format(format) :
-              moment.utc(date).format(format);
+        moment(date).format(format) :
+        moment.utc(date).format(format);
     };
 
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 6;
+      this.schemaVersion = 7;
 
-      if (oldVersion === 6) {
+      if (oldVersion === 7) {
         return;
       }
 
@@ -291,6 +328,11 @@ function (angular, $, kbn, _, moment) {
         }
       }
 
+      if (oldVersion < 7 && old.nav && old.nav.length) {
+        this.timepicker = old.nav[0];
+        delete this.nav;
+      }
+
       if (panelUpgrades.length === 0) {
         return;
       }
@@ -308,8 +350,13 @@ function (angular, $, kbn, _, moment) {
     return {
       create: function(dashboard, meta) {
         return new DashboardModel(dashboard, meta);
-      }
+      },
+      setCurrent: function(dashboard) {
+        this.currentDashboard = dashboard;
+      },
+      getCurrent: function() {
+        return this.currentDashboard;
+      },
     };
-
   });
 });

@@ -1,0 +1,107 @@
+.search-container {
+  left: 52px;
+  top: 33px;
+  margin: 15px;
+  z-index: 1000;
+  position: absolute;
+  width: 700px;
+  box-shadow: 0px 0px 55px 0px black;
+  padding: 10px;
+  background-color: @grafanaPanelBackground;
+  border: 1px solid @grafanaTargetFuncBackground;
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+}
+
+// Search
+.search-field-wrapper {
+  padding-bottom: 10px;
+  input {
+    width: 100%;
+    padding: 8px 8px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  button {
+    margin: 0 4px 0 0;
+  }
+  > span {
+    display: block;
+    overflow: hidden;
+  }
+}
+
+.search-results-container {
+  height: 450px;
+  overflow: auto;
+  display: block;
+  line-height: 28px;
+
+  .search-item:hover, .search-item.selected {
+    background-color: @grafanaListHighlight;
+  }
+
+  .selected {
+    .search-result-tag {
+      opacity: 0.70;
+      color: white;
+    }
+  }
+
+  .fa-star, .fa-star-o {
+    padding-left: 13px;
+  }
+
+  .fa-star {
+    color: @orange;
+  }
+
+  .search-result-link {
+    color: @grafanaListMainLinkColor;
+    .fa {
+      padding-right: 10px;
+    }
+  }
+
+  .search-item {
+    display: block;
+    padding: 3px 10px;
+    white-space: nowrap;
+    background-color: @grafanaListBackground;
+    margin-bottom: 4px;
+    .search-result-icon:before {
+      content: "\f009";
+    }
+
+    &.search-item-dash-home .search-result-icon:before {
+      content: "\f015";
+    }
+  }
+
+  .search-result-tags {
+    float: right;
+  }
+
+  .search-result-actions {
+    float: right;
+    padding-left: 20px;
+  }
+}
+
+.search-switches {
+  position: absolute;
+  top: 19px;
+  right: 21px;
+}
+
+.search-button-row {
+  padding-top: 20px;
+  button, a {
+    margin-right: 10px;
+  }
+}
+

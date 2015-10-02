@@ -9,7 +9,8 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: 0 };
 
@@ -42,19 +43,12 @@ function (angular, _, require, config) {
 
       var params = angular.copy($location.search());
 
-      var range = timeSrv.timeRangeForUrl();
-      params.from = range.from;
-      params.to = range.to;
+      var range = timeSrv.timeRange();
+      params.from = range.from.valueOf();
+      params.to = range.to.valueOf();
 
       if ($scope.options.includeTemplateVars) {
-        _.each(templateSrv.variables, function(variable) {
-          params['var-' + variable.name] = variable.current.text;
-        });
-      }
-      else {
-        _.each(templateSrv.variables, function(variable) {
-          delete params['var-' + variable.name];
-        });
+        templateSrv.fillVariableValuesForUrl(params);
       }
 
       if (!$scope.options.forCurrent) {
@@ -74,27 +68,14 @@ function (angular, _, require, config) {
         delete params.fullscreen;
       }
 
-      var paramsArray = [];
-      _.each(params, function(value, key) {
-        if (value === null) { return; }
-        if (value === true) {
-          paramsArray.push(key);
-        } else {
-          key += '=' + encodeURIComponent(value);
-          paramsArray.push(key);
-        }
-      });
-
-      var queryParams = "?" + paramsArray.join('&');
-      $scope.shareUrl = baseUrl + queryParams;
+      $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
       var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace('/dashboard/db/', '/dashboard/solo/db/');
-      soloUrl = soloUrl.replace('/dashboard/snapshot/', '/dashboard/solo/snapshot/');
+      soloUrl = soloUrl.replace('/dashboard/', '/dashboard-solo/');
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard/', '/render/dashboard/');
+      $scope.imageUrl = soloUrl.replace('/dashboard', '/render/dashboard');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

@@ -1,22 +1,24 @@
 module.exports = function(config) {
+  'use strict';
+
   return {
     dev: {
-      configFile: '<%= srcDir %>/test/karma.conf.js',
+      configFile: 'karma.conf.js',
       singleRun: false,
     },
     debug: {
-      configFile: '<%= srcDir %>/test/karma.conf.js',
+      configFile: 'karma.conf.js',
       singleRun: false,
       browsers: ['Chrome']
     },
     test: {
-      configFile: '<%= srcDir %>/test/karma.conf.js',
+      configFile: 'karma.conf.js',
     },
     coveralls: {
-      configFile: '<%= srcDir %>/test/karma.conf.js',
+      configFile: 'karma.conf.js',
       reporters: ['dots','coverage','coveralls'],
       preprocessors: {
-        '<%= srcDir %>/app/**/*.js': ['coverage']
+        'public/app/**/*.js': ['coverage']
       },
       coverageReporter: {
         type: 'lcov',

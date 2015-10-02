@@ -15,7 +15,6 @@
 						<i class="fa fa-caret-down"></i>
 					</a>
 				</div>
-
 			</div>
 
 			<ul class="nav pull-left top-nav-dash-actions">
@@ -31,7 +30,7 @@
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
 				<li class="dropdown">
-					<a class="pointer" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
+					<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 					<ul class="dropdown-menu">
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
@@ -39,7 +38,7 @@
 						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
 						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
 						<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
-						<li ng-if="dashboardMeta.canDelete"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
+						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -62,9 +61,8 @@
 						Back to dashboard
 					</a>
 				</li>
-				<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
-					<grafana-simple-panel type="pulldown.type" ng-cloak>
-					</grafana-simple-panel>
+				<li ng-if="dashboard">
+					<gf-time-picker dashboard="dashboard"></gf-time-picker>
 				</li>
 			</ul>
 		</div>

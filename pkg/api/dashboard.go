@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,7 +32,7 @@ func isDasboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) 
 func GetDashboard(c *middleware.Context) {
 	metrics.M_Api_Dashboard_Get.Inc(1)
 
-	slug := c.Params(":slug")
+	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
 	err := bus.Dispatch(&query)
@@ -46,9 +48,16 @@ func GetDashboard(c *middleware.Context) {
 	}
 
 	dash := query.Result
-	dto := dtos.Dashboard{
-		Model: dash.Data,
-		Meta:  dtos.DashboardMeta{IsStarred: isStarred, Slug: slug},
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta: dtos.DashboardMeta{
+			IsStarred: isStarred,
+			Slug:      slug,
+			Type:      m.DashTypeDB,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_READ_ONLY_EDITOR,
+		},
 	}
 
 	c.JSON(200, dto)
@@ -77,6 +86,19 @@ func DeleteDashboard(c *middleware.Context) {
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
 
+	dash := cmd.GetDashboardModel()
+	if dash.Id == 0 {
+		limitReached, err := middleware.QuotaReached(c, "dashboard")
+		if err != nil {
+			c.JsonApiErr(500, "failed to get quota", err)
+			return
+		}
+		if limitReached {
+			c.JsonApiErr(403, "Quota reached", nil)
+			return
+		}
+	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
@@ -85,6 +107,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		}
 		if err == m.ErrDashboardVersionMismatch {
 			c.JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
+			return
+		}
+		if err == m.ErrDashboardNotFound {
+			c.JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 			return
 		}
 		c.JsonApiErr(500, "Failed to save dashboard", err)
@@ -104,13 +130,39 @@ func GetHomeDashboard(c *middleware.Context) {
 		return
 	}
 
-	dash := dtos.Dashboard{}
+	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
 	jsonParser := json.NewDecoder(file)
-	if err := jsonParser.Decode(&dash.Model); err != nil {
+	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
 		c.JsonApiErr(500, "Failed to load home dashboard", err)
 		return
 	}
 
 	c.JSON(200, &dash)
+}
+
+func GetDashboardFromJsonFile(c *middleware.Context) {
+	file := c.Params(":file")
+
+	dashboard := search.GetDashboardFromJsonIndex(file)
+	if dashboard == nil {
+		c.JsonApiErr(404, "Dashboard not found", nil)
+		return
+	}
+
+	dash := dtos.DashboardFullWithMeta{Dashboard: dashboard.Data}
+	dash.Meta.Type = m.DashTypeJson
+
+	c.JSON(200, &dash)
+}
+
+func GetDashboardTags(c *middleware.Context) {
+	query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get tags from database", err)
+		return
+	}
+
+	c.JSON(200, query.Result)
 }

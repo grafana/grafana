@@ -142,18 +142,29 @@ define([
         name: this.consumeToken().value,
       };
 
-      // consume left paranthesis
+      // consume left parenthesis
       this.consumeToken();
 
       node.params = this.functionParameters();
 
       if (!this.match(')')) {
-        this.errorMark('Expected closing paranthesis');
+        this.errorMark('Expected closing parenthesis');
       }
 
       this.consumeToken();
 
       return node;
+    },
+
+    boolExpression: function() {
+      if (!this.match('bool')) {
+        return null;
+      }
+
+      return {
+        type: 'bool',
+        value: this.consumeToken().value === 'true',
+      };
     },
 
     functionParameters: function () {
@@ -165,6 +176,7 @@ define([
         this.functionCall() ||
         this.numericLiteral() ||
         this.seriesRefExpression() ||
+        this.boolExpression() ||
         this.metricExpression() ||
         this.stringLiteral();
 

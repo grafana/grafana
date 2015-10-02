@@ -69,7 +69,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package your self, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
 the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
@@ -87,7 +87,7 @@ go get github.com/grafana/grafana
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependecies in your current GOPATH)
+godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
 go build .
 ```
 
@@ -125,8 +125,9 @@ You only need to add the options you want to override. Config files are applied 
 2. dev.ini (if found)
 3. custom.ini
 
-## Create a pull requests
-Before or after your create a pull requests, sign the [contributor license aggrement](/docs/contributing/cla.html).## Contribute
+## Create a pull request
+Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!

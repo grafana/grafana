@@ -1,5 +1,18 @@
 package dtos
 
+type SignUpForm struct {
+	Email string `json:"email" binding:"Required"`
+}
+
+type SignUpStep2Form struct {
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Code     string `json:"code"`
+	OrgName  string `json:"orgName"`
+}
+
 type AdminCreateUserForm struct {
 	Email    string `json:"email"`
 	Login    string `json:"login"`
@@ -18,7 +31,7 @@ type AdminUpdateUserPasswordForm struct {
 }
 
 type AdminUpdateUserPermissionsForm struct {
-	IsGrafanaAdmin bool `json:"IsGrafanaAdmin" binding:"Required"`
+	IsGrafanaAdmin bool `json:"IsGrafanaAdmin"`
 }
 
 type AdminUserListItem struct {
@@ -26,4 +39,14 @@ type AdminUserListItem struct {
 	Name           string `json:"name"`
 	Login          string `json:"login"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+}
+
+type SendResetPasswordEmailForm struct {
+	UserOrEmail string `json:"userOrEmail" binding:"Required"`
+}
+
+type ResetUserPasswordForm struct {
+	Code            string `json:"code"`
+	NewPassword     string `json:"newPassword"`
+	ConfirmPassword string `json:"confirmPassword"`
 }

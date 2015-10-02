@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -30,7 +29,11 @@ func init() {
 	bus.AddHandler("sql", UpdateUserPermissions)
 }
 
-func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
+func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
+	if cmd.SkipOrgSetup {
+		return -1, nil
+	}
+
 	var org m.Org
 
 	if setting.AutoAssignOrg {
@@ -46,7 +49,10 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 			org.Id = 1
 		}
 	} else {
-		org.Name = userEmail
+		org.Name = cmd.OrgName
+		if len(org.Name) == 0 {
+			org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
+		}
 	}
 
 	org.Created = time.Now()
@@ -67,21 +73,26 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction2(func(sess *session) error {
-		orgId, err := getOrgIdForNewUser(cmd.Email, sess)
+		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
 		}
 
+		if cmd.Email == "" {
+			cmd.Email = cmd.Login
+		}
+
 		// create user
 		user := m.User{
-			Email:   cmd.Email,
-			Name:    cmd.Name,
-			Login:   cmd.Login,
-			Company: cmd.Company,
-			IsAdmin: cmd.IsAdmin,
-			OrgId:   orgId,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Email:         cmd.Email,
+			Name:          cmd.Name,
+			Login:         cmd.Login,
+			Company:       cmd.Company,
+			IsAdmin:       cmd.IsAdmin,
+			OrgId:         orgId,
+			EmailVerified: cmd.EmailVerified,
+			Created:       time.Now(),
+			Updated:       time.Now(),
 		}
 
 		if len(cmd.Password) > 0 {
@@ -96,23 +107,6 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			return err
 		}
 
-		// create org user link
-		orgUser := m.OrgUser{
-			OrgId:   orgId,
-			UserId:  user.Id,
-			Role:    m.ROLE_ADMIN,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if setting.AutoAssignOrg && !user.IsAdmin {
-			orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
-		}
-
-		if _, err = sess.Insert(&orgUser); err != nil {
-			return err
-		}
-
 		sess.publishAfterCommit(&events.UserCreated{
 			Timestamp: user.Created,
 			Id:        user.Id,
@@ -122,6 +116,26 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 		})
 
 		cmd.Result = user
+
+		// create org user link
+		if !cmd.SkipOrgSetup {
+			orgUser := m.OrgUser{
+				OrgId:   orgId,
+				UserId:  user.Id,
+				Role:    m.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if setting.AutoAssignOrg && !user.IsAdmin {
+				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+			}
+
+			if _, err = sess.Insert(&orgUser); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
@@ -231,10 +245,12 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 	}
 
 	query.Result = m.UserProfileDTO{
-		Name:  user.Name,
-		Email: user.Email,
-		Login: user.Login,
-		Theme: user.Theme,
+		Name:           user.Name,
+		Email:          user.Email,
+		Login:          user.Login,
+		Theme:          user.Theme,
+		IsGrafanaAdmin: user.IsAdmin,
+		OrgId:          user.OrgId,
 	}
 
 	return err
@@ -263,16 +279,28 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                org.id         as org_id
 	                FROM ` + dialect.Quote("user") + ` as u
 									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
-	                LEFT OUTER JOIN org on org.id = u.org_id
-	                WHERE u.id=?`
+	                LEFT OUTER JOIN org on org.id = u.org_id `
+
+	sess := x.Table("user")
+	if query.UserId > 0 {
+		sess.Sql(rawSql+"WHERE u.id=?", query.UserId)
+	} else if query.Login != "" {
+		sess.Sql(rawSql+"WHERE u.login=?", query.Login)
+	} else if query.Email != "" {
+		sess.Sql(rawSql+"WHERE u.email=?", query.Email)
+	}
 
 	var user m.SignedInUser
-	sess := x.Table("user")
-	has, err := sess.Sql(rawSql, query.UserId).Get(&user)
+	has, err := sess.Get(&user)
 	if err != nil {
 		return err
 	} else if !has {
 		return m.ErrUserNotFound
+	}
+
+	if user.OrgRole == "" {
+		user.OrgId = -1
+		user.OrgName = "Org missing"
 	}
 
 	query.Result = &user
@@ -291,9 +319,19 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = fmt.Sprintf("DELETE FROM %s WHERE id=?", x.Dialect().Quote("user"))
-		_, err := sess.Exec(rawSql, cmd.UserId)
-		return err
+		deletes := []string{
+			"DELETE FROM star WHERE user_id = ?",
+			"DELETE FROM user WHERE id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.UserId)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 }
 

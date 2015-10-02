@@ -144,7 +144,7 @@ func (w *FileLogWriter) WriteMsg(msg string, skip, level int) error {
 
 func (w *FileLogWriter) createLogFile() (*os.File, error) {
 	// Open the log file
-	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
+	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 }
 
 func (w *FileLogWriter) initFd() error {

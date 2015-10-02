@@ -1,4 +1,6 @@
 machine:
+  node:
+    version: 4.0
   environment:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"
@@ -22,3 +24,4 @@ test:
      - godep go test -v ./pkg/...
      # js tests
      - ./node_modules/grunt-cli/bin/grunt test
+     - npm run coveralls

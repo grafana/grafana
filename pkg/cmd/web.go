@@ -33,6 +33,7 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, "css", "css")
 	mapStatic(m, "img", "img")
 	mapStatic(m, "fonts", "fonts")
+	mapStatic(m, "robots.txt", "robots.txt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -40,8 +41,12 @@ func newMacaron() *macaron.Macaron {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
+	if setting.EnforceDomain {
+		m.Use(middleware.ValidateHostHeader(setting.Domain))
+	}
+
 	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(setting.SessionOptions))
+	m.Use(middleware.Sessioner(&setting.SessionOptions))
 
 	return m
 }

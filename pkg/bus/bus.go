@@ -1,7 +1,7 @@
 package bus
 
 import (
-	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -39,7 +39,7 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 
 	var handler = b.handlers[msgName]
 	if handler == nil {
-		return errors.New("handler not found")
+		return fmt.Errorf("handler not found for %s", msgName)
 	}
 
 	var params = make([]reflect.Value, 1)
@@ -120,4 +120,8 @@ func Dispatch(msg Msg) error {
 
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
+}
+
+func ClearBusHandlers() {
+	globalBus = New()
 }

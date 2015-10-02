@@ -10,7 +10,6 @@ import (
 )
 
 func TestAccountDataAccess(t *testing.T) {
-
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
 
@@ -80,6 +79,19 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 				})
 
+				Convey("Can update org user role", func() {
+					updateCmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, Role: m.ROLE_ADMIN}
+					err = UpdateOrgUser(&updateCmd)
+					So(err, ShouldBeNil)
+
+					orgUsersQuery := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
+					err = GetOrgUsers(&orgUsersQuery)
+					So(err, ShouldBeNil)
+
+					So(orgUsersQuery.Result[1].Role, ShouldEqual, m.ROLE_ADMIN)
+
+				})
+
 				Convey("Can get logged in user projection", func() {
 					query := m.GetSignedInUserQuery{UserId: ac2.Id}
 					err := GetSignedInUser(&query)
@@ -130,11 +142,18 @@ func TestAccountDataAccess(t *testing.T) {
 					})
 				})
 
-				Convey("Cannot delete last admin account user", func() {
+				Convey("Cannot delete last admin org user", func() {
 					cmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id}
 					err := RemoveOrgUser(&cmd)
 					So(err, ShouldEqual, m.ErrLastOrgAdmin)
 				})
+
+				Convey("Cannot update role so no one is admin user", func() {
+					cmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id, Role: m.ROLE_VIEWER}
+					err := UpdateOrgUser(&cmd)
+					So(err, ShouldEqual, m.ErrLastOrgAdmin)
+				})
+
 			})
 		})
 	})

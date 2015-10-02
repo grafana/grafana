@@ -1,16 +1,56 @@
+<div class="tight-form">
+	<ul class="tight-form-list pull-right">
+		<li ng-show="parserError" class="tight-form-item">
+			<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+				<i class="fa fa-warning"></i>
+			</a>
+		</li>
+		<li class="tight-form-item">
+			<div class="dropdown">
+				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+					<i class="fa fa-bars"></i>
+				</a>
+				<ul class="dropdown-menu pull-right" role="menu">
+					<li role="menuitem">
+						<a  tabindex="1"
+							ng-click="duplicate()">
+							Duplicate
+						</a>
+					</li>
+					<li role="menuitem">
+						<a  tabindex="1"
+							ng-click="moveMetricQuery($index, $index-1)">
+							Move up
+						</a>
+					</li>
+					<li role="menuitem">
+						<a  tabindex="1"
+							ng-click="moveMetricQuery($index, $index+1)">
+							Move down
+						</a>
+					</li>
+				</ul>
+			</div>
+		</li>
+		<li class="tight-form-item last">
+			<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+				<i class="fa fa-remove"></i>
+			</a>
+		</li>
+	</ul>
 
-<div class="fluid-row" style="margin-top: 20px">
-	<div class="span2"></div>
-	<div class="grafana-info-box span8">
-		<h5>Test graph</h5>
-
-		<p>
-		This is just a test data source that generates random walk series. If this is your only data source
-		open the left side menu and navigate to the data sources admin screen and add your data sources (you need to be
-		logged in to do this). You can change data source using the button to the left of the <strong>Add query</strong> button.
-		</p>
-	</div>
-	<div class="span2"></div>
-
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
+		<li>
+			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
+		</li>
+		<li class="tight-form-item">
+			Test metric (fake data source)
+		</li>
+	</ul>
 	<div class="clearfix"></div>
 </div>

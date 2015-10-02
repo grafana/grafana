@@ -1,13 +1,12 @@
 define([
   'angular',
-  'app',
   'lodash',
   'kbn',
   'jquery',
   'jquery.flot',
   'jquery.flot.time',
 ],
-function (angular, app, _, kbn, $) {
+function (angular, _, kbn, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -41,7 +40,7 @@ function (angular, app, _, kbn, $) {
           var popoverScope = scope.$new();
           popoverScope.series = seriesInfo;
           popoverSrv.show({
-            element: $(':first-child', el),
+            element: el,
             templateUrl:  'app/panels/graph/legend.popover.html',
             scope: popoverScope
           });
@@ -128,6 +127,10 @@ function (angular, app, _, kbn, $) {
 
             // ignore empty series
             if (panel.legend.hideEmpty && series.allIsNull) {
+              continue;
+            }
+            // ignore series excluded via override
+            if (!series.legend) {
               continue;
             }
 

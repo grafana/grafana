@@ -14,20 +14,17 @@ function (angular, config) {
       password: '',
     };
 
-    contextSrv.setSideMenuState(false);
+    contextSrv.sidemenu = false;
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
     $scope.disableUserSignUp = config.disableUserSignUp;
 
     $scope.loginMode = true;
-    $scope.submitBtnClass = 'btn-inverse';
     $scope.submitBtnText = 'Log in';
-    $scope.strengthClass = '';
 
     $scope.init = function() {
       $scope.$watch("loginMode", $scope.loginModeChanged);
-      $scope.passwordChanged();
 
       var params = $location.search();
       if (params.failedMsg) {
@@ -56,34 +53,17 @@ function (angular, config) {
       $scope.submitBtnText = newValue ? 'Log in' : 'Sign up';
     };
 
-    $scope.passwordChanged = function(newValue) {
-      if (!newValue) {
-        $scope.strengthText = "";
-        $scope.strengthClass = "hidden";
-        return;
-      }
-      if (newValue.length < 4) {
-        $scope.strengthText = "strength: weak sauce.";
-        $scope.strengthClass = "password-strength-bad";
-        return;
-      }
-      if (newValue.length <= 6) {
-        $scope.strengthText = "strength: you can do better.";
-        $scope.strengthClass = "password-strength-ok";
-        return;
-      }
-
-      $scope.strengthText = "strength: strong like a bull.";
-      $scope.strengthClass = "password-strength-good";
-    };
-
     $scope.signUp = function() {
       if (!$scope.loginForm.$valid) {
         return;
       }
 
-      backendSrv.post('/api/user/signup', $scope.formModel).then(function() {
-        window.location.href = config.appSubUrl + '/';
+      backendSrv.post('/api/user/signup', $scope.formModel).then(function(result) {
+        if (result.status === 'SignUpCreated') {
+          $location.path('/signup').search({email: $scope.formModel.email});
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
       });
     };
 

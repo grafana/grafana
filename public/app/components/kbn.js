@@ -1,9 +1,8 @@
 define([
   'jquery',
   'lodash',
-  'moment'
 ],
-function($, _, moment) {
+function($, _) {
   'use strict';
 
   var kbn = {};
@@ -81,11 +80,16 @@ function($, _, moment) {
     if(numminutes){
       return numminutes + 'm';
     }
-    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+    var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
     if(numseconds){
       return numseconds + 's';
     }
-    return 'less then a second'; //'just now' //or other string you like;
+    var nummilliseconds = Math.floor(seconds * 1000.0);
+    if(nummilliseconds){
+      return nummilliseconds + 'ms';
+    }
+
+    return 'less then a millisecond'; //'just now' //or other string you like;
   };
 
   kbn.to_percent = function(number,outof) {
@@ -158,158 +162,6 @@ function($, _, moment) {
     return info.sec * info.count;
   };
 
-  /* This is a simplified version of elasticsearch's date parser */
-  kbn.parseDate = function(text) {
-    if(_.isDate(text)) {
-      return text;
-    }
-
-    var time;
-    var mathString = "";
-    var index;
-    var parseString;
-
-    if (text.substring(0,3) === "now") {
-      time = new Date();
-      mathString = text.substring(3);
-    }
-    else if (text.substring(0,5) === 'today') {
-      time = new Date();
-      time.setHours(0,0,0,0);
-      mathString = text.substring(5);
-    }
-    else {
-      index = text.indexOf("||");
-      parseString;
-      if (index === -1) {
-        parseString = text;
-        mathString = ""; // nothing else
-      } else {
-        parseString = text.substring(0, index);
-        mathString = text.substring(index + 2);
-      }
-      // We're going to just require ISO8601 timestamps, k?
-      time = new Date(parseString);
-    }
-
-    if (!mathString.length) {
-      return time;
-    }
-
-    //return [time,parseString,mathString];
-    return kbn.parseDateMath(mathString, time);
-  };
-
-  kbn._timespanRegex = /^\d+[h,m,M,w,s,H,d]$/;
-  kbn.isValidTimeSpan = function(str) {
-    return kbn._timespanRegex.test(str);
-  };
-
-  kbn.parseDateMath = function(mathString, time, roundUp) {
-    var dateTime = moment(time);
-    for (var i = 0; i < mathString.length;) {
-      var c = mathString.charAt(i++),
-        type,
-        num,
-        unit;
-      if (c === '/') {
-        type = 0;
-      } else if (c === '+') {
-        type = 1;
-      } else if (c === '-') {
-        type = 2;
-      } else {
-        return false;
-      }
-
-      if (isNaN(mathString.charAt(i))) {
-        num = 1;
-      } else {
-        var numFrom = i;
-        while (!isNaN(mathString.charAt(i))) {
-          i++;
-        }
-        num = parseInt(mathString.substring(numFrom, i),10);
-      }
-      if (type === 0) {
-        // rounding is only allowed on whole numbers
-        if (num !== 1) {
-          return false;
-        }
-      }
-      unit = mathString.charAt(i++);
-      switch (unit) {
-      case 'y':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('year') : dateTime.startOf('year');
-        } else if (type === 1) {
-          dateTime.add(num, 'years');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'years');
-        }
-        break;
-      case 'M':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('month') : dateTime.startOf('month');
-        } else if (type === 1) {
-          dateTime.add(num, 'months');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'months');
-        }
-        break;
-      case 'w':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('week') : dateTime.startOf('week');
-        } else if (type === 1) {
-          dateTime.add(num, 'weeks');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'weeks');
-        }
-        break;
-      case 'd':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('day') : dateTime.startOf('day');
-        } else if (type === 1) {
-          dateTime.add(num, 'days');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'days');
-        }
-        break;
-      case 'h':
-      case 'H':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('hour') : dateTime.startOf('hour');
-        } else if (type === 1) {
-          dateTime.add(num, 'hours');
-        } else if (type === 2) {
-          dateTime.subtract(num,'hours');
-        }
-        break;
-      case 'm':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('minute') : dateTime.startOf('minute');
-        } else if (type === 1) {
-          dateTime.add(num, 'minutes');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'minutes');
-        }
-        break;
-      case 's':
-        if (type === 0) {
-          roundUp ? dateTime.endOf('second') : dateTime.startOf('second');
-        } else if (type === 1) {
-          dateTime.add(num, 'seconds');
-        } else if (type === 2) {
-          dateTime.subtract(num, 'seconds');
-        }
-        break;
-      default:
-        return false;
-      }
-    }
-    return dateTime.toDate();
-  };
-
   kbn.query_color_dot = function (color, diameter) {
     return '<div class="icon-circle" style="' + [
       'display:inline-block',
@@ -378,8 +230,9 @@ function($, _, moment) {
   kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.gbytes = kbn.formatFuncCreator(1024, [' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
   kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
+  kbn.valueFormats.pps = kbn.formatFuncCreator(1000, [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps']);
   kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
-  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Qaudr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
   kbn.valueFormats.amp = kbn.formatFuncCreator(1000, [' A', ' kA', ' MA', ' GA', ' TA', ' PA', ' EA', ' ZA', ' YA']);
   kbn.valueFormats.volt = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
@@ -395,11 +248,19 @@ function($, _, moment) {
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
+  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
+  kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
   kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
   kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
   kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
   kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
   kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
+
+  kbn.roundValue = function (num, decimals) {
+    if (num === null) { return null; }
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
 
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
@@ -551,6 +412,7 @@ function($, _, moment) {
           {text: 'short', value: 'short'},
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
+          {text: 'dB', value: 'dB'},
         ]
       },
       {
@@ -583,6 +445,7 @@ function($, _, moment) {
       {
         text: 'data rate',
         submenu: [
+          {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec', value: 'bps'},
           {text: 'bytes/sec', value: 'Bps'},
         ]
@@ -606,6 +469,8 @@ function($, _, moment) {
           {text: 'Celcius (°C)',         value: 'celsius'  },
           {text: 'Farenheit (°F)',       value: 'farenheit'},
           {text: 'Humidity (%H)',        value: 'humidity' },
+          {text: 'Pressure (mbar)',      value: 'pressurembar' },
+          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
         ]
       },
       {

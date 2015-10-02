@@ -48,6 +48,8 @@ func OAuthLogin(ctx *middleware.Context) {
 	if err != nil {
 		if err == social.ErrMissingTeamMembership {
 			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github team membership not fulfilled"))
+		} else if err == social.ErrMissingOrganizationMembership {
+			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github organization membership not fulfilled"))
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
@@ -72,7 +74,15 @@ func OAuthLogin(ctx *middleware.Context) {
 			ctx.Redirect(setting.AppSubUrl + "/login")
 			return
 		}
-
+		limitReached, err := middleware.QuotaReached(ctx, "user")
+		if err != nil {
+			ctx.Handle(500, "Failed to get user quota", err)
+			return
+		}
+		if limitReached {
+			ctx.Redirect(setting.AppSubUrl + "/login")
+			return
+		}
 		cmd := m.CreateUserCommand{
 			Login:   userInfo.Email,
 			Email:   userInfo.Email,

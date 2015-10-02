@@ -7,7 +7,7 @@
 					<strong>Mode</strong>
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="panel.mode" ng-options="f for f in modes" ng-change="get_data()"></select>
+					<select class="input-small tight-form-input last" ng-model="panel.mode" ng-options="f for f in modes" ng-change="get_data()"></select>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -23,15 +23,15 @@
 					Query
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" placeholder="title query"
+					<input type="text" class="input-medium tight-form-input" placeholder="title query"
 					ng-model="panel.query" ng-change="get_data()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Tag
+					Tags
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" placeholder="full tag name"
-					ng-model="panel.tag" ng-change="get_data()" ng-model-onblur>
+					<bootstrap-tagsinput ng-model="panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="get_data()">
+					</bootstrap-tagsinput>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -47,7 +47,7 @@
 					<strong>Limit number to</strong>
 				</li>
 				<li>
-					<input class="input-small tight-form-input" type="number" ng-model="panel.limit" ng-model-onblur ng-change="get_data()">
+					<input class="input-small tight-form-input last" type="number" ng-model="panel.limit" ng-model-onblur ng-change="get_data()">
 				</li>
 			</ul>
 			<div class="clearfix"></div>

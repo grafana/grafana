@@ -26,9 +26,8 @@
 			</ul>
 
 			<ul class="nav pull-right">
-				<li ng-repeat="pulldown in dashboard.nav" ng-controller="PulldownCtrl" ng-show="pulldown.enable">
-					<grafana-simple-panel type="pulldown.type" ng-cloak>
-					</grafana-simple-panel>
+				<li ng-if="dashboard">
+					<gf-time-picker></gf-time-picker>
 				</li>
 			</ul>
 

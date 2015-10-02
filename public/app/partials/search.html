@@ -2,7 +2,7 @@
 
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
-			<input  type="text" placeholder="Find dashboards by name" xng-focus="giveSearchFocus" tabindex="1"
+			<input  type="text" placeholder="Find dashboards by name" give-focus="giveSearchFocus" tabindex="1"
 			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 		</span>
 		<div class="search-switches">
@@ -11,63 +11,63 @@
 				<i class="fa fa-remove" ng-show="query.starred"></i>
 				starred
 			</a> |
-			<a class="pointer" href="javascript:void 0;" ng-click="showTags()" tabindex="3">
-				<i class="fa fa-remove" ng-show="query.tagcloud"></i>
+			<a class="pointer" href="javascript:void 0;" ng-click="getTags()" tabindex="3">
+				<i class="fa fa-remove" ng-show="tagsMode"></i>
 				tags
 			</a>
-			<span ng-show="query.tag">
-				| <a ng-click="filterByTag('')" tag-color-from-name tag="query.tag"  class="label label-tag" ng-if="query.tag">
-					<i class="fa fa-remove"></i>
-					{{query.tag}}
-				</a>
+			<span ng-if="query.tag.length">
+				|
+				<span ng-repeat="tagName in query.tag">
+					<a ng-click="removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+						<i class="fa fa-remove"></i>
+						{{tagName}}
+					</a>
+				</span>
 			</span>
 		</div>
 	</div>
 
-	<div ng-if="!showImport">
-		<div class="search-results-container" ng-if="query.tagcloud">
-			<div class="row">
-				<div class="span6 offset1">
-					<div ng-repeat="tag in results.tags" class="pointer" style="width: 180px; float: left;"
-						ng-class="{'selected': $index === selectedIndex }"
-						ng-click="filterByTag(tag.term, $event)">
-						<a class="search-result-tag label label-tag" tag-color-from-name tag="tag.term">
-							<i class="fa fa-tag"></i>
-							<span>{{tag.term}} &nbsp;({{tag.count}})</span>
-						</a>
-					</div>
+	<div class="search-results-container" ng-if="tagsMode">
+		<div class="row">
+			<div class="span6 offset1">
+				<div ng-repeat="tag in results" class="pointer" style="width: 180px; float: left;"
+					ng-class="{'selected': $index === selectedIndex }"
+					ng-click="filterByTag(tag.term, $event)">
+					<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
+						<i class="fa fa-tag"></i>
+						<span>{{tag.term}} &nbsp;({{tag.count}})</span>
+					</a>
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<div class="search-results-container" ng-if="!query.tagcloud">
-			<h6 ng-hide="results.dashboards.length">No dashboards matching your query were found.</h6>
+	<div class="search-results-container" ng-if="!tagsMode">
+		<h6 ng-hide="results.length">No dashboards matching your query were found.</h6>
 
-			<a class="search-result-item pointer" bindonce ng-repeat="row in results.dashboards"
-				ng-class="{'selected': $index === selectedIndex }" ng-href="{{row.url}}">
+		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in results"
+			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
 
-				<span class="search-result-tags">
-					<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name tag="tag"  class="label label-tag">
-						{{tag}}
-					</span>
-					<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
+			<span class="search-result-tags">
+				<span ng-click="filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
+					{{tag}}
 				</span>
+				<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
+			</span>
 
-				<span class="search-result-link">
-					<i class="fa fa-th-large" ng-show="!row.isHome"></i>
-					<i class="fa fa-home" ng-show="row.isHome"></i>
-					<span bo-text="row.title"></span>
-				</span>
-			</a>
-		</div>
+			<span class="search-result-link">
+				<i class="fa search-result-icon"></i>
+				<span bo-text="row.title"></span>
+			</span>
+		</a>
 	</div>
 
 	<div class="search-button-row">
-		<button class="btn btn-inverse pull-left" ng-click="newDashboard()">
+		<button class="btn btn-inverse pull-left" ng-click="newDashboard()" ng-show="contextSrv.isEditor">
 			<i class="fa fa-plus"></i>
 			New
 		</button>
-		<a class="btn btn-inverse pull-left" href="dashboard/import">
+		<a class="btn btn-inverse pull-left" href="import/dashboard" ng-show="contextSrv.isEditor">
 			<i class="fa fa-download"></i>
 			Import
 		</a>

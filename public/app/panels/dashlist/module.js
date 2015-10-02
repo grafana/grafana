@@ -1,9 +1,9 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'config',
-  'components/panelmeta',
+  'app/components/panelmeta',
 ],
 function (angular, app, _, config, PanelMeta) {
   'use strict';
@@ -21,7 +21,7 @@ function (angular, app, _, config, PanelMeta) {
   module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      panelName: 'Dash list',
+      panelName: 'Dashboard list',
       editIcon:  "fa fa-star",
       fullscreen: true,
     });
@@ -32,7 +32,7 @@ function (angular, app, _, config, PanelMeta) {
       mode: 'starred',
       query: '',
       limit: 10,
-      tag: '',
+      tags: []
     };
 
     $scope.modes = ['starred', 'search'];
@@ -43,6 +43,9 @@ function (angular, app, _, config, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
+      if ($scope.panel.tag) {
+        $scope.panel.tags = [$scope.panel.tag];
+      }
 
       if ($scope.isNewPanel()) {
         $scope.panel.title = "Starred Dashboards";
@@ -58,11 +61,12 @@ function (angular, app, _, config, PanelMeta) {
         params.starred = "true";
       } else {
         params.query = $scope.panel.query;
-        params.tag = $scope.panel.tag;
+        params.tag = $scope.panel.tags;
       }
 
       return backendSrv.search(params).then(function(result) {
-        $scope.dashList = result.dashboards;
+        $scope.dashList = result;
+        $scope.panelRenderingComplete();
       });
     };
 

@@ -30,18 +30,31 @@ type User struct {
 	Updated time.Time
 }
 
+func (u *User) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	} else if u.Login != "" {
+		return u.Login
+	} else {
+		return u.Email
+	}
+}
+
 // ---------------------
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email    string `json:"email" binding:"Required"`
-	Login    string `json:"login"`
-	Name     string `json:"name"`
-	Company  string `json:"compay"`
-	Password string `json:"password" binding:"Required"`
-	IsAdmin  bool   `json:"-"`
+	Email         string
+	Login         string
+	Name          string
+	Company       string
+	OrgName       string
+	Password      string
+	EmailVerified bool
+	IsAdmin       bool
+	SkipOrgSetup  bool
 
-	Result User `json:"-"`
+	Result User
 }
 
 type UpdateUserCommand struct {
@@ -89,6 +102,8 @@ type GetUserByIdQuery struct {
 
 type GetSignedInUserQuery struct {
 	UserId int64
+	Login  string
+	Email  string
 	Result *SignedInUser
 }
 
@@ -131,6 +146,7 @@ type UserProfileDTO struct {
 	Name           string `json:"name"`
 	Login          string `json:"login"`
 	Theme          string `json:"theme"`
+	OrgId          int64  `json:"orgId"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 

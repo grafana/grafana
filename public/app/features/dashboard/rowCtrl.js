@@ -1,10 +1,9 @@
 define([
   'angular',
-  'app',
   'lodash',
   'config'
 ],
-function (angular, app, _, config) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -22,7 +21,6 @@ function (angular, app, _, config) {
 
     $scope.init = function() {
       $scope.editor = {index: 0};
-      $scope.reset_panel();
     };
 
     $scope.togglePanelMenu = function(posX) {
@@ -47,7 +45,7 @@ function (angular, app, _, config) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
-        yesText: 'delete',
+        yesText: 'Delete',
         onConfirm: function() {
           $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
         }
@@ -64,8 +62,18 @@ function (angular, app, _, config) {
     };
 
     $scope.add_panel_default = function(type) {
-      $scope.reset_panel(type);
-      $scope.add_panel($scope.panel);
+      var defaultSpan = 12;
+      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
+
+      var panel = {
+        title: config.new_panel_title,
+        error: false,
+        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+        editable: true,
+        type: type
+      };
+
+      $scope.add_panel(panel);
 
       $timeout(function() {
         $scope.$broadcast('render');
@@ -89,7 +97,7 @@ function (angular, app, _, config) {
     };
 
     $scope.updatePanelSpan = function(panel, span) {
-      panel.span = Math.min(Math.max(panel.span + span, 1), 12);
+      panel.span = Math.min(Math.max(Math.floor(panel.span + span), 1), 12);
     };
 
     $scope.replacePanel = function(newPanel, oldPanel) {
@@ -105,31 +113,6 @@ function (angular, app, _, config) {
       });
     };
 
-    $scope.reset_panel = function(type) {
-      var defaultSpan = 12;
-      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
-
-      $scope.panel = {
-        title: config.new_panel_title,
-        error: false,
-        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
-        editable: true,
-        type: type
-      };
-
-      function fixRowHeight(height) {
-        if (!height) {
-          return '200px';
-        }
-        if (!_.isString(height)) {
-          return height + 'px';
-        }
-        return height;
-      }
-
-      $scope.row.height = fixRowHeight($scope.row.height);
-    };
-
     $scope.init();
 
   });
@@ -137,7 +120,18 @@ function (angular, app, _, config) {
   module.directive('rowHeight', function() {
     return function(scope, element) {
       scope.$watchGroup(['row.collapse', 'row.height'], function() {
-        element[0].style.minHeight = scope.row.collapse ? '5px' : scope.row.height;
+        element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
+      });
+
+      scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+        var hasPanel = _.findWhere(scope.row.panels, {id: info.panelId});
+        if (!hasPanel) {
+          element.hide();
+        }
+      });
+
+      scope.onAppEvent('panel-fullscreen-exit', function() {
+        element.show();
       });
     };
   });
@@ -147,6 +141,22 @@ function (angular, app, _, config) {
       function updateWidth() {
         element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
       }
+
+      scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+        if (scope.panel.id !== info.panelId) {
+          element.hide();
+        } else {
+          element[0].style.width = '100%';
+        }
+      });
+
+      scope.onAppEvent('panel-fullscreen-exit', function(evt, info) {
+        if (scope.panel.id !== info.panelId) {
+          element.show();
+        } else {
+          updateWidth();
+        }
+      });
 
       scope.$watch('panel.span', updateWidth);
     };

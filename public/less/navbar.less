@@ -1,0 +1,141 @@
+.navbar-inner {
+  padding-left: 0px;
+}
+
+.navbar .nav>li>a {
+  padding: 17px 15px 13px;
+  .fa { font-size: 115%; }
+}
+
+.top-nav {
+  float: left;
+  font-size: 16px;
+}
+
+.fa.top-nav-breadcrumb-icon {
+  margin: 18px 0 6px 5px;
+  float: left;
+  font-size: 120%;
+  color: @textColor;
+}
+
+.top-nav-menu-btn {
+  border: 1px solid @bodyBackground;
+  border-radius: 50%;
+  background: @iconContainerBackground;
+  display: block;
+  position: relative;
+  float: left;
+  width: 30px;
+  height: 30px;
+  padding: 4px;
+  margin: 6px 6px 3px 9px;
+  .fa {
+    color: @textColor;
+    width: 30px;
+    height: 30px;
+    left: 9px;
+    top: 7px;
+    font-size: 150%;
+    opacity: 0;
+    position: absolute;
+    transition: opacity .20s ease-in-out;
+  }
+  img {
+    width: 30px;
+    position: absolute;
+    opacity: 1;
+    transition: opacity .20s ease-in-out;
+  }
+  &:hover {
+    .fa {
+      opacity: .7;
+    }
+    img {
+      opacity: 0;
+    }
+  }
+}
+
+.top-nav-dashboards-btn {
+  display: block;
+  float: left;
+  margin: 9px 18px 5px 14px;
+  border-radius: 3px;
+  font-size: 1.4em;
+  color: #a2a2a2;
+  border: @grafanaTriggerBorder;
+  a {
+    background-color: @grafanaTargetFuncBackground;
+    display: inline-block;
+    padding: 5px 15px 5px 10px;
+    border-radius: 3px;
+    color: #a2a2a2;
+
+    &:hover {
+      background: @grafanaTargetFuncBackground;
+      .fa {
+        color: @linkColor;
+      }
+    }
+  }
+
+  .fa-th-large {
+    position: relative;
+    top: 2px;
+  }
+
+  .fa-caret-down {
+    font-size: 60%;
+    position: relative;
+    top: 4px;
+  }
+}
+
+.dashboard-title {
+  padding: 0px 6px 5px 5px;
+  color: @linkColorHover;
+  font-size: 17px;
+}
+
+.top-nav-icon {
+  margin: 5px 0px 0 11px;
+  line-height: 41px;
+  float: left;
+}
+
+.top-nav-section {
+  display: block;
+  float: left;
+  padding: 19px 9px 8px 0;
+  font-weight: bold;
+  i {
+    padding-left: 8px;
+  }
+}
+
+.top-nav-title {
+  display: block;
+  float: left;
+  font-size: 17px;
+  padding: 18px 10px 10px 13px;
+  color: @linkColor;
+}
+
+.top-nav-snapshot-title {
+  .gf-icon {
+    position: relative;
+    top: 3px;
+    font-size: 27px;
+  }
+  a {
+    display: inline-block;
+    padding: 0px 15px 5px 10px;
+  }
+  display: block;
+  float: left;
+  font-size: 1.4em;
+  margin: 9px 18px 5px 14px;
+  color: @linkColor;
+}
+

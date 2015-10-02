@@ -11,6 +11,7 @@ function (angular, _, config) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
 
     this.init = function($scope) {
+
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
       $scope.inspector = {};
@@ -42,17 +43,41 @@ function (angular, _, config) {
         });
       };
 
-      $scope.addDataQuery = function() {
-        $scope.panel.targets.push({target: ''});
+      $scope.addDataQuery = function(datasource) {
+        $scope.dashboard.addDataQueryTo($scope.panel, datasource);
       };
 
       $scope.removeDataQuery = function (query) {
-        $scope.panel.targets = _.without($scope.panel.targets, query);
+        $scope.dashboard.removeDataQuery($scope.panel, query);
         $scope.get_data();
       };
 
+      $scope.duplicateDataQuery = function(query) {
+        $scope.dashboard.duplicateDataQuery($scope.panel, query);
+      };
+
+      $scope.moveDataQuery = function(fromIndex, toIndex) {
+        $scope.dashboard.moveDataQuery($scope.panel, fromIndex, toIndex);
+      };
+
       $scope.setDatasource = function(datasource) {
-        $scope.panel.datasource = datasource;
+        // switching to mixed
+        if (datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            target.datasource = $scope.panel.datasource;
+            if (target.datasource === null) {
+              target.datasource = config.defaultDatasource;
+            }
+          });
+        }
+        // switching from mixed
+        else if ($scope.datasource && $scope.datasource.meta.mixed) {
+          _.each($scope.panel.targets, function(target) {
+            delete target.datasource;
+          });
+        }
+
+        $scope.panel.datasource = datasource.value;
         $scope.datasource = null;
         $scope.get_data();
       };
@@ -70,14 +95,6 @@ function (angular, _, config) {
       };
 
       $scope.toggleFullscreen = function(edit) {
-        if (edit && $scope.dashboardMeta.canEdit === false) {
-          $scope.appEvent('alert-warning', [
-            'Dashboard not editable',
-            'Use Save As.. feature to create an editable copy of this dashboard.'
-          ]);
-          return;
-        }
-
         $scope.dashboardViewState.update({ fullscreen: true, edit: edit, panelId: $scope.panel.id });
       };
 
@@ -91,6 +108,10 @@ function (angular, _, config) {
         }
 
         return datasourceSrv.get($scope.panel.datasource);
+      };
+
+      $scope.panelRenderingComplete = function() {
+        $rootScope.performance.panelsRendered++;
       };
 
       $scope.get_data = function() {

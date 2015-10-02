@@ -119,6 +119,8 @@ define([
     identifierStartTable[i] =
       i >= 48 && i <= 57 || // 0-9
       i === 36 ||           // $
+      i === 126 ||          // ~
+      i === 124 ||          // |
       i >= 65 && i <= 90 || // A-Z
       i === 95 ||           // _
       i === 45 ||           // -
@@ -365,6 +367,14 @@ define([
       }
 
       switch (id) {
+      case 'true': {
+        type = 'bool';
+        break;
+      }
+      case 'false': {
+        type = 'bool';
+        break;
+      }
       default:
         type = "identifier";
       }
@@ -377,7 +387,7 @@ define([
 
     },
 
-      /*
+    /*
      * Extract a numeric literal out of the next sequence of
      * characters or return 'null' if its not possible. This method
      * supports all numeric literals described in section 7.8.3

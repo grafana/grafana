@@ -1,14 +1,15 @@
 define([
   'angular',
-  'app',
+  'jquery',
+  'app/app',
   'lodash',
-], function(angular, app, _) {
+], function(angular, jquery, app, _) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph', []);
   app.useModule(module);
 
-  module.controller('SeriesOverridesCtrl', function($scope) {
+  module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv) {
     $scope.overrideMenu = [];
     $scope.currentOverrides = [];
     $scope.override = $scope.override || {};
@@ -28,6 +29,12 @@ define([
     };
 
     $scope.setOverride = function(item, subItem) {
+      // handle color overrides
+      if (item.propertyName === 'color') {
+        $scope.openColorSelector();
+        return;
+      }
+
       $scope.override[item.propertyName] = subItem.value;
 
       // automatically disable lines for this series and the fill bellow to series
@@ -39,6 +46,24 @@ define([
 
       $scope.updateCurrentOverrides();
       $scope.render();
+    };
+
+    $scope.colorSelected = function(color) {
+      $scope.override['color'] = color;
+      $scope.updateCurrentOverrides();
+      $scope.render();
+    };
+
+    $scope.openColorSelector = function() {
+      var popoverScope = $scope.$new();
+      popoverScope.colorSelected = $scope.colorSelected;
+
+      popoverSrv.show({
+        element: $element.find(".dropdown"),
+        placement: 'top',
+        templateUrl:  'app/partials/colorpicker.html',
+        scope: popoverScope
+      });
     };
 
     $scope.removeOverride = function(option) {
@@ -74,9 +99,12 @@ define([
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);
-    $scope.addOverrideOption('Stack', 'stack', [true, false, 2, 3, 4, 5]);
+    $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);
+    $scope.addOverrideOption('Color', 'color', ['change']);
     $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
     $scope.addOverrideOption('Z-index', 'zindex', [-1,-2,-3,0,1,2,3]);
+    $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
+    $scope.addOverrideOption('Legend', 'legend', [true, false]);
     $scope.updateCurrentOverrides();
 
   });

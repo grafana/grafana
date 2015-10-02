@@ -1,7 +1,8 @@
 define([
  'kbn',
- 'lodash'
-], function(kbn, _) {
+ 'lodash',
+ 'app/core/utils/datemath',
+], function(kbn, _, dateMath) {
   'use strict';
 
   function ControllerTestContext() {
@@ -69,6 +70,7 @@ define([
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
     self.backendSrv = {};
+    self.$location = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
@@ -106,8 +108,8 @@ define([
         return this.time;
       }
       return {
-        from : kbn.parseDate(this.time.from),
-        to : kbn.parseDate(this.time.to)
+        from : dateMath.parse(this.time.from, false),
+        to : dateMath.parse(this.time.to, true)
       };
     };
 
@@ -130,6 +132,7 @@ define([
       return _.template(text, this.data,  this.templateSettings);
     };
     this.init = function() {};
+    this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
     this.highlightVariablesAsHtml = function(str) { return str; };

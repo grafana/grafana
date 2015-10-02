@@ -1,6 +1,3 @@
-/**
- * main app level module
- */
 define([
   'angular',
   'jquery',
@@ -12,26 +9,20 @@ define([
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
+  'angular-ui',
   'extend-jquery',
   'bindonce',
+  'app/core/core',
 ],
 function (angular, $, _, appLevelRequire) {
-
   "use strict";
 
-  var app = angular.module('grafana', []),
-    // we will keep a reference to each module defined before boot, so that we can
-    // go back and allow it to define new features later. Once we boot, this will be false
-    pre_boot_modules = [],
-    // these are the functions that we need to call to register different
-    // features if we define them after boot time
-    register_fns = {};
+  var app = angular.module('grafana', []);
+  var register_fns = {};
+  var preBootModules = [];
 
   // This stores the grafana version number
   app.constant('grafanaVersion',"@grafanaVersion@");
-
-  // Use this for cache busting partials
-  app.constant('cacheBust',"cache-bust="+Date.now());
 
   /**
    * Tells the application to watch the module, once bootstraping has completed
@@ -41,8 +32,8 @@ function (angular, $, _, appLevelRequire) {
    * @return {[type]}        [description]
    */
   app.useModule = function (module) {
-    if (pre_boot_modules) {
-      pre_boot_modules.push(module);
+    if (preBootModules) {
+      preBootModules.push(module);
     } else {
       _.extend(module, register_fns);
     }
@@ -50,7 +41,6 @@ function (angular, $, _, appLevelRequire) {
   };
 
   app.config(function($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) {
-    // this is how the internet told me to dynamically add modules :/
     register_fns.controller = $controllerProvider.register;
     register_fns.directive  = $compileProvider.directive;
     register_fns.factory    = $provide.factory;
@@ -59,12 +49,15 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var apps_deps = [
+    'grafana.core',
     'ngRoute',
     'ngSanitize',
     '$strap.directives',
     'ang-drag-drop',
     'grafana',
-    'pasvaz.bindonce'
+    'pasvaz.bindonce',
+    'ui.bootstrap',
+    'ui.bootstrap.tpls',
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
@@ -78,13 +71,10 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-    'services/all',
-    'features/all',
-    'controllers/all',
-    'directives/all',
-    'filters/all',
-    'components/partials',
-    'routes/all',
+    'app/services/all',
+    'app/features/all',
+    'app/controllers/all',
+    'app/components/partials',
   ];
 
   app.boot = function() {
@@ -99,10 +89,11 @@ function (angular, $, _, appLevelRequire) {
         .ready(function() {
           angular.bootstrap(document, apps_deps)
             .invoke(['$rootScope', function ($rootScope) {
-              _.each(pre_boot_modules, function (module) {
+              _.each(preBootModules, function (module) {
                 _.extend(module, register_fns);
               });
-              pre_boot_modules = false;
+
+              preBootModules = null;
 
               $rootScope.requireContext = appLevelRequire;
               $rootScope.require = function (deps, fn) {

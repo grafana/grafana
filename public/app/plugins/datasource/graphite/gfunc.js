@@ -88,6 +88,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'multiplySeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
     name: 'asPercent',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
@@ -242,7 +249,7 @@ function (_, $) {
       {
         name: "function",
         type: "string",
-        options: ['sum', 'avg']
+        options: ['sum', 'avg', 'maxSeries']
       }
     ],
     defaultParams: [3, "sum"]
@@ -325,6 +332,13 @@ function (_, $) {
     category: categories.Special,
     params: [{ name: "n", type: "int", }],
     defaultParams: [100]
+  });
+
+  addFuncDef({
+    name: "changed",
+    category: categories.Special,
+    params: [],
+    defaultParams: []
   });
 
   addFuncDef({
@@ -531,6 +545,16 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'weightedAverage',
+    category: categories.Filter,
+    params: [
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+    ],
+    defaultParams: ['#A', 4]
+  });
+
+  addFuncDef({
     name: 'movingMedian',
     category: categories.Filter,
     params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
@@ -584,6 +608,11 @@ function (_, $) {
     category: categories.Filter,
     params: [{ name: "n", type: "int" }],
     defaultParams: [5]
+  });
+
+  addFuncDef({
+    name: 'removeEmptySeries',
+    category: categories.Filter
   });
 
   addFuncDef({

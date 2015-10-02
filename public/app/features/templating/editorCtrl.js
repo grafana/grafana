@@ -17,17 +17,34 @@ function (angular, _) {
       options: [],
       includeAll: false,
       allFormat: 'glob',
+      multi: false,
+      multiFormat: 'glob',
     };
 
     $scope.init = function() {
-      $scope.editor = { index: 0 };
-      $scope.datasources = datasourceSrv.getMetricSources();
+      $scope.mode = 'list';
+
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.builtIn;
+      });
+
       $scope.variables = templateSrv.variables;
       $scope.reset();
 
-      $scope.$watch('editor.index', function(index) {
-        if ($scope.currentIsNew === false && index === 1) {
+      $scope.$watch('mode', function(val) {
+        if (val === 'new') {
           $scope.reset();
+        }
+      });
+
+      $scope.$watch('current.datasource', function(val) {
+        if ($scope.mode === 'new') {
+          datasourceSrv.get(val).then(function(ds) {
+            if (ds.meta.defaultMatchFormat) {
+              $scope.current.allFormat = ds.meta.defaultMatchFormat;
+              $scope.current.multiFormat = ds.meta.defaultMatchFormat;
+            }
+          });
         }
       });
     };
@@ -70,12 +87,12 @@ function (angular, _) {
     $scope.edit = function(variable) {
       $scope.current = variable;
       $scope.currentIsNew = false;
-      $scope.editor.index = 2;
+      $scope.mode = 'edit';
 
       if ($scope.current.datasource === void 0) {
         $scope.current.datasource = null;
         $scope.current.type = 'query';
-        $scope.current.allFormat = 'Glob';
+        $scope.current.allFormat = 'glob';
       }
     };
 
@@ -83,7 +100,7 @@ function (angular, _) {
       if ($scope.isValid()) {
         $scope.runQuery().then(function() {
           $scope.reset();
-          $scope.editor.index = 0;
+          $scope.mode = 'list';
         });
       }
     };

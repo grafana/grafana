@@ -1,89 +1,161 @@
-<div class="editor-row">
-
-	<div  ng-repeat="target in panel.targets"
-        class="tight-form"
-        ng-class="{'tight-form-disabled': target.hide}"
-        ng-controller="InfluxQueryCtrl"
-        ng-init="init()">
-      <ul class="tight-form-list pull-right">
-        <li ng-show="parserError" class="tight-form-item">
-          <a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
-            <i class="fa fa-warning"></i>
-          </a>
-        </li>
-        <li class="tight-form-item">
-          <a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-            <i class="fa fa-pencil"></i>
-          </a>
-        </li>
-        <li class="tight-form-item">
-					<div class="dropdown">
-						<a  class="pointer dropdown-toggle"
-							data-toggle="dropdown"
-							tabindex="1">
-							<i class="fa fa-bars"></i>
-						</a>
-						<ul class="dropdown-menu pull-right" role="menu">
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="duplicate()">
-									Duplicate
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index-1)">
-									Move up
-								</a>
-							</li>
-							<li role="menuitem">
-								<a  tabindex="1"
-									ng-click="moveMetricQuery($index, $index+1)">
-									Move down
-								</a>
-							</li>
-						</ul>
-					</div>
-				</li>
-				<li class="tight-form-item last">
-					<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-						<i class="fa fa-remove"></i>
+<div class="tight-form-container-no-item-borders">
+	<div  class="tight-form">
+		<ul class="tight-form-list pull-right">
+			<li ng-show="parserError" class="tight-form-item">
+				<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+					<i class="fa fa-warning"></i>
+				</a>
+			</li>
+			<li class="tight-form-item small" ng-show="target.datasource">
+				<em>{{target.datasource}}</em>
+			</li>
+			<li class="tight-form-item">
+				<div class="dropdown">
+					<a  class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+						<i class="fa fa-bars"></i>
 					</a>
-				</li>
-			</ul>
+					<ul class="dropdown-menu pull-right" role="menu">
+						<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+						<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+					</ul>
+				</div>
+			</li>
 
-			<ul class="tight-form-list">
-				<li>
-					<a  class="tight-form-item"
-						ng-click="target.hide = !target.hide; get_data();"
-						role="menuitem">
-						<i class="fa fa-eye"></i>
-					</a>
-				</li>
-			</ul>
+			<li class="tight-form-item last">
+				<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</li>
+		</ul>
 
-			<input  type="text"
-			        class="tight-form-clear-input span10"
-              ng-model="target.query"
-              focus-me="target.rawQuery"
-              spellcheck='false'
-              ng-model-onblur ng-change="targetTextChanged()"
-              ng-show="target.rawQuery" />
+		<ul class="tight-form-list">
+			<li class="tight-form-item" style="min-width: 15px; text-align: center">
+				{{target.refId}}
+			</li>
+			<li>
+				<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+					<i class="fa fa-eye"></i>
+				</a>
+			</li>
+		</ul>
 
-      <ul class="tight-form-list" role="menu" ng-hide="target.rawQuery">
-        <li ng-repeat="segment in segments" role="menuitem" graphite-segment></li>
-				<li ng-repeat="func in functions">
-          <span graphite-func-editor class="tight-form-item tight-form-func">
-          </span>
-        </li>
-        <li class="dropdown" graphite-add-func>
-        </li>
-      </ul>
-      <div class="clearfix"></div>
-    </div>
-</div>
+		<ul class="tight-form-list" ng-hide="target.rawQuery">
+			<li class="tight-form-item query-keyword" style="width: 75px">
+				FROM
+			</li>
+			<li>
+				<metric-segment segment="measurementSegment" get-options="getMeasurements()" on-change="measurementChanged()"></metric-segment>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
 
-<div class="editor-row">
-	<div class="pull-left" style="margin-top: 30px;">
+		<div style="padding: 10px" ng-if="target.rawQuery">
+			<textarea ng-model="target.query" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="get_data()"></textarea>
+		</div>
 	</div>
+
+	<div ng-hide="target.rawQuery">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+					WHERE
+				</li>
+				<li ng-repeat="segment in tagSegments">
+					<metric-segment segment="segment" get-options="getTagsOrValues(segment, $index)" on-change="tagSegmentUpdated(segment, $index)"></metric-segment>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-repeat="field in target.fields">
+			<ul class="tight-form-list">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+					<span ng-show="$index === 0">SELECT</span>
+				</li>
+				<li>
+					<metric-segment-model property="field.func" get-options="getFunctions()" on-change="get_data()" css-class="tight-form-item-xlarge"></metric-segment>
+				</li>
+				<li>
+					<metric-segment-model property="field.name" get-options="getFields()" on-change="get_data()" css-class="tight-form-item-large"></metric-segment>
+				</li>
+				<li>
+					<input type="text" class="tight-form-clear-input text-center" style="width: 70px;" ng-model="field.mathExpr" spellcheck='false' placeholder="math expr" ng-blur="get_data()">
+				</li>
+				<li class="tight-form-item query-keyword">
+					AS
+				</li>
+				<li>
+					<input type="text" class="tight-form-clear-input" style="width: 180px;" ng-model="field.asExpr" spellcheck='false' placeholder="as expr" ng-blur="get_data()">
+				</li>
+			</ul>
+
+			<ul class="tight-form-list pull-right">
+				<li class="tight-form-item last" ng-show="$index === 0">
+					<a class="pointer" ng-click="addSelect()"><i class="fa fa-plus"></i></a>
+				</li>
+				<li class="tight-form-item last" ng-show="target.fields.length > 1">
+					<a class="pointer" ng-click="removeSelect($index)"><i class="fa fa-minus"></i></a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-repeat="groupBy in target.groupBy">
+			<ul class="tight-form-list">
+				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+					<span ng-show="$index === 0">GROUP BY</span>
+				</li>
+				<li ng-if="groupBy.type === 'time'">
+					<span class="tight-form-item">time</span>
+					<metric-segment-model property="groupBy.interval" get-options="getGroupByTimeIntervals()" on-change="get_data()">
+					</metric-segment>
+				</li>
+				<li class="dropdown" ng-if="groupBy.type === 'time'">
+					<a class="tight-form-item pointer" data-toggle="dropdown" bs-tooltip="'Insert missing values, important when stacking'" data-placement="right">
+						<span ng-show="target.fill">
+							fill ({{target.fill}})
+						</span>
+						<span ng-show="!target.fill">
+							no fill
+						</span>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a ng-click="setFill('')">no fill</a></li>
+						<li><a ng-click="setFill('0')">fill (0)</a></li>
+						<li><a ng-click="setFill('null')">fill (null)</a></li>
+						<li><a ng-click="setFill('none')">fill (none)</a></li>
+						<li><a ng-click="setFill('previous')">fill (previous)</a></li>
+					</ul>
+				</li>
+				<li ng-if="groupBy.type === 'tag'">
+					<metric-segment-model property="groupBy.key" get-options="getTagOptions()" on-change="get_data()"></metric-segment>
+				</li>
+			</ul>
+
+			<ul class="tight-form-list pull-right">
+				<li class="tight-form-item last" ng-show="$index === 0">
+					<a class="pointer" ng-click="addGroupBy()"><i class="fa fa-plus"></i></a>
+				</li>
+				<li class="tight-form-item last" ng-show="$index > 0">
+					<a class="pointer" ng-click="removeGroupBy($index)"><i class="fa fa-minus"></i></a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+
+	<div class="tight-form">
+		<ul class="tight-form-list">
+			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+				ALIAS BY
+			</li>
+			<li>
+				<input type="text" class="tight-form-clear-input input-xlarge" ng-model="target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="get_data()">
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+
 </div>

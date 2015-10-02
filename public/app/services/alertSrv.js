@@ -13,14 +13,14 @@ function (angular, _) {
     this.init = function() {
       $rootScope.onAppEvent('alert-error', function(e, alert) {
         self.set(alert[0], alert[1], 'error');
-      });
+      }, $rootScope);
       $rootScope.onAppEvent('alert-warning', function(e, alert) {
         self.set(alert[0], alert[1], 'warning', 5000);
-      });
+      }, $rootScope);
       $rootScope.onAppEvent('alert-success', function(e, alert) {
         self.set(alert[0], alert[1], 'success', 3000);
-      });
-      $rootScope.onAppEvent('confirm-modal', this.showConfirmModal);
+      }, $rootScope);
+      $rootScope.onAppEvent('confirm-modal', this.showConfirmModal, $rootScope);
     };
 
     // List of all alert objects
@@ -29,7 +29,7 @@ function (angular, _) {
     this.set = function(title,text,severity,timeout) {
       var newAlert = {
         title: title || '',
-        text: $sce.trustAsHtml(text || ''),
+        text: text || '',
         severity: severity || 'info',
       };
 
@@ -71,7 +71,7 @@ function (angular, _) {
       var confirmModal = $modal({
         template: './app/partials/confirm_modal.html',
         persist: false,
-        modalClass: 'confirm-modal',
+        modalClass: 'modal-no-header confirm-modal',
         show: false,
         scope: scope,
         keyboard: false

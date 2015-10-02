@@ -27,11 +27,36 @@ function (angular, _) {
       this._texts = {};
 
       _.each(this.variables, function(variable) {
-        if (!variable.current || !variable.current.value) { return; }
+        if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
 
-        this._values[variable.name] = variable.current.value;
+        this._values[variable.name] = this.renderVariableValue(variable);
         this._texts[variable.name] = variable.current.text;
       }, this);
+    };
+
+    this.renderVariableValue = function(variable) {
+      var value = variable.current.value;
+      if (_.isString(value)) {
+        return value;
+      } else {
+        switch(variable.multiFormat) {
+          case "regex values": {
+            return '(' + value.join('|') + ')';
+          }
+          case "lucene": {
+            var quotedValues = _.map(value, function(val) {
+              return '\\\"' + val + '\\\"';
+            });
+            return '(' + quotedValues.join(' OR ') + ')';
+          }
+          case "pipe": {
+            return value.join('|');
+          }
+          default:  {
+            return '{' + value.join(',') + '}';
+          }
+        }
+      }
     };
 
     this.setGrafanaVariable = function (name, value) {
@@ -64,7 +89,7 @@ function (angular, _) {
     };
 
     this.replace = function(target, scopedVars) {
-      if (!target) { return; }
+      if (!target) { return target; }
 
       var value;
       this._regex.lastIndex = 0;
@@ -83,7 +108,7 @@ function (angular, _) {
     };
 
     this.replaceWithText = function(target, scopedVars) {
-      if (!target) { return; }
+      if (!target) { return target; }
 
       var value;
       var text;
@@ -100,6 +125,23 @@ function (angular, _) {
         if (!value) { return match; }
 
         return self._grafanaVariables[value] || text;
+      });
+    };
+
+    this.fillVariableValuesForUrl = function(params, scopedVars) {
+      _.each(this.variables, function(variable) {
+        var current = variable.current;
+        var value = current.value;
+
+        if (current.text === 'All') {
+          value = 'All';
+        }
+
+        if (scopedVars && scopedVars[variable.name] !== void 0) {
+          value = scopedVars[variable.name].value;
+        }
+
+        params['var-' + variable.name] = value;
       });
     };
 

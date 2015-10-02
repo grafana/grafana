@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OpenTSDBQueryCtrl', function($scope, $timeout) {
+  module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
@@ -22,8 +22,8 @@ function (angular, _, kbn) {
         $scope.target.downsampleAggregator = 'avg';
       }
 
-      $scope.$on('typeahead-updated', function() {
-        $timeout($scope.targetBlur);
+      $scope.datasource.getAggregators().then(function(aggs) {
+        $scope.aggregators = aggs;
       });
     };
 
@@ -37,26 +37,25 @@ function (angular, _, kbn) {
       }
     };
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
+    $scope.getTextValues = function(metricFindResult) {
+      return _.map(metricFindResult, function(value) { return value.text; });
     };
 
     $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'metrics')
+      $scope.datasource.metricFindQuery('metrics(' + query + ')')
+        .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'tagk')
+      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+        .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query, 'tagv')
+      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+        .then($scope.getTextValues)
         .then(callback);
     };
 
@@ -109,6 +108,7 @@ function (angular, _, kbn) {
       return errs;
     }
 
+    $scope.init();
   });
 
 });

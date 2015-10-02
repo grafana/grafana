@@ -23,6 +23,10 @@ function (angular, _, config) {
       return this.request({ method: 'POST', url: url, data: data });
     };
 
+    this.patch = function(url, data) {
+      return this.request({ method: 'PATCH', url: url, data: data });
+    };
+
     this.put = function(url, data) {
       return this.request({ method: 'PUT', url: url, data: data });
     };
@@ -33,15 +37,14 @@ function (angular, _, config) {
           return;
         }
 
-        if (err.status === 422) {
-          alertSrv.set("Validation failed", "", "warning", 4000);
-          throw err.data;
-        }
-
         var data = err.data || { message: 'Unexpected error' };
-
         if (_.isString(data)) {
           data = { message: data };
+        }
+
+        if (err.status === 422) {
+          alertSrv.set("Validation failed", data.message, "warning", 4000);
+          throw data;
         }
 
         data.severity = 'error';
@@ -115,8 +118,8 @@ function (angular, _, config) {
       return this.get('/api/search', query);
     };
 
-    this.getDashboard = function(slug) {
-      return this.get('/api/dashboards/db/' + slug);
+    this.getDashboard = function(type, slug) {
+      return this.get('/api/dashboards/' + type + '/' + slug);
     };
 
     this.saveDashboard = function(dash, options) {

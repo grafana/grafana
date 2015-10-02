@@ -13,6 +13,7 @@ func setIndexViewData(c *middleware.Context) error {
 	}
 
 	currentUser := &dtos.CurrentUser{
+		Id:             c.UserId,
 		IsSignedIn:     c.IsSignedIn,
 		Login:          c.Login,
 		Email:          c.Email,
@@ -23,6 +24,10 @@ func setIndexViewData(c *middleware.Context) error {
 		OrgRole:        c.OrgRole,
 		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
 		IsGrafanaAdmin: c.IsGrafanaAdmin,
+	}
+
+	if setting.DisableGravatar {
+		currentUser.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
 	}
 
 	if len(currentUser.Name) == 0 {
@@ -43,6 +48,10 @@ func setIndexViewData(c *middleware.Context) error {
 		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId
 	}
 
+	if setting.GoogleTagManagerId != "" {
+		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
+	}
+
 	return nil
 }
 
@@ -55,7 +64,7 @@ func Index(c *middleware.Context) {
 	c.HTML(200, "index")
 }
 
-func NotFound(c *middleware.Context) {
+func NotFoundHandler(c *middleware.Context) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

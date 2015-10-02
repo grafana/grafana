@@ -112,7 +112,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
 
           if (elem.width() === 0) {
-            return;
+            return true;
           }
         }
 
@@ -247,22 +247,26 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
           sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
-          function callPlot() {
+          function callPlot(incrementRenderCounter) {
             try {
               $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
             }
+
+            if (incrementRenderCounter) {
+              scope.panelRenderingComplete();
+            }
           }
 
           if (shouldDelayDraw(panel)) {
             // temp fix for legends on the side, need to render twice to get dimensions right
-            callPlot();
-            setTimeout(callPlot, 50);
+            callPlot(false);
+            setTimeout(function() { callPlot(true); }, 50);
             legendSideLastValue = panel.legend.rightSide;
           }
           else {
-            callPlot();
+            callPlot(true);
           }
         }
 
@@ -277,13 +281,12 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
             return true;
           }
-          return false;
         }
 
         function addTimeAxis(options) {
           var ticks = elem.width() / 100;
-          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.getTime();
-          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
+          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.valueOf();
+          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.valueOf();
 
           options.xaxis = {
             timezone: dashboard.timezone,
@@ -370,7 +373,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
-            secondY.logBase = scope.panel.grid.rightLogBase || 2,
+            secondY.logBase = scope.panel.grid.rightLogBase || 1,
             secondY.position = 'right';
             secondY.min = scope.panel.grid.rightMin;
             secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
@@ -481,6 +484,9 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             case 'bps':
               url += '&yUnitSystem=si';
               break;
+            case 'pps':
+              url += '&yUnitSystem=si';
+              break;
             case 'Bps':
               url += '&yUnitSystem=si';
               break;
@@ -524,8 +530,8 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
             timeSrv.setTime({
-              from  : moment.utc(ranges.xaxis.from).toDate(),
-              to    : moment.utc(ranges.xaxis.to).toDate(),
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
             });
           });
         });

@@ -33,9 +33,16 @@ function (angular, config, _, $, store) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
-    $rootScope.onAppEvent = function(name, callback) {
+    $rootScope.onAppEvent = function(name, callback, localScope) {
       var unbind = $rootScope.$on(name, callback);
-      this.$on('$destroy', unbind);
+      var callerScope = this;
+      if (callerScope.$id === 1 && !localScope) {
+        console.log('warning rootScope onAppEvent called without localscope');
+      }
+      if (localScope) {
+        callerScope = localScope;
+      }
+      callerScope.$on('$destroy', unbind);
     };
 
     $rootScope.appEvent = function(name, payload) {
@@ -81,6 +88,26 @@ function (angular, config, _, $, store) {
       $scope.$watch(function digestCounter() {
         count++;
       }, function() {
+      });
+
+      $rootScope.performance.panels = [];
+
+      $scope.$on('refresh', function() {
+        if ($rootScope.performance.panels.length > 0) {
+          var totalRender = 0;
+          var totalQuery = 0;
+
+          _.each($rootScope.performance.panels, function(panelTiming) {
+            totalRender += panelTiming.render;
+            totalQuery += panelTiming.query;
+          });
+
+          console.log('total query: ' + totalQuery);
+          console.log('total render: ' + totalRender);
+          console.log('avg render: ' + totalRender / $rootScope.performance.panels.length);
+        }
+
+        $rootScope.performance.panels = [];
       });
 
       $scope.onAppEvent('dashboard-loaded', function() {

@@ -1,8 +1,8 @@
 define([
-  'mocks/dashboard-mock',
-  'helpers',
+  '../mocks/dashboard-mock',
+  './helpers',
   'moment',
-  'features/templating/templateValuesSrv'
+  'app/features/templating/templateValuesSrv'
 ], function(dashboardMock, helpers, moment) {
   'use strict';
 
@@ -10,7 +10,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', "$routeParams"]));
+    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
     beforeEach(ctx.createService('templateValuesSrv'));
 
     describe('update interval variable options', function() {
@@ -27,11 +27,62 @@ define([
       });
     });
 
+    describe('when template variable is present in url', function() {
+      var variable = {
+        name: 'apps',
+        current: {text: "test", value: "test"},
+        options: [{text: "test", value: "test"}]
+      };
+
+      beforeEach(function() {
+        var dashboard = { templating: { list: [variable] } };
+        var urlParams = {};
+        urlParams["var-apps"] = "new";
+        ctx.$location.search = sinon.stub().returns(urlParams);
+        ctx.service.init(dashboard);
+      });
+
+      it('should update current value', function() {
+        expect(variable.current.value).to.be("new");
+        expect(variable.current.text).to.be("new");
+      });
+    });
+
+    describe('when template variable is present in url multiple times', function() {
+      var variable = {
+        name: 'apps',
+        multi: true,
+        current: {text: "val1", value: "val1"},
+        options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}, {text: 'val3', value: 'val3', selected: true}]
+      };
+
+      beforeEach(function() {
+        var dashboard = { templating: { list: [variable] } };
+        var urlParams = {};
+        urlParams["var-apps"] = ["val2", "val1"];
+        ctx.$location.search = sinon.stub().returns(urlParams);
+        ctx.service.init(dashboard);
+      });
+
+      it('should update current value', function() {
+        expect(variable.current.value.length).to.be(2);
+        expect(variable.current.value[0]).to.be("val2");
+        expect(variable.current.value[1]).to.be("val1");
+        expect(variable.current.text).to.be("val2 + val1");
+        expect(variable.options[0].selected).to.be(true);
+        expect(variable.options[1].selected).to.be(true);
+      });
+
+      it('should set options that are not in value to selected false', function() {
+        expect(variable.options[2].selected).to.be(false);
+      });
+    });
+
     function describeUpdateVariable(desc, fn) {
       describe(desc, function() {
         var scenario = {};
         scenario.setup = function(setupFn) {
-         scenario.setupFn = setupFn;
+          scenario.setupFn = setupFn;
         };
 
         beforeEach(function() {
@@ -59,6 +110,31 @@ define([
         expect(scenario.variable.options[0].value).to.be('1s');
       });
     });
+
+    describeUpdateVariable('query variable with empty current object and refresh', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
+        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
+      });
+
+      it('should set current value to first option', function() {
+        expect(scenario.variable.options.length).to.be(2);
+        expect(scenario.variable.current.value).to.be('backend1');
+      });
+    });
+
+    describeUpdateVariable('interval variable without auto', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
+      });
+
+      it('should update options array', function() {
+        expect(scenario.variable.options.length).to.be(4);
+        expect(scenario.variable.options[0].text).to.be('1s');
+        expect(scenario.variable.options[0].value).to.be('1s');
+      });
+    });
+
 
     describeUpdateVariable('interval variable with auto', function(scenario) {
       scenario.setup(function() {
@@ -125,7 +201,7 @@ define([
     describeUpdateVariable('and existing value still exists in options', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
-        scenario.variable.current = { text: 'backend2'};
+        scenario.variable.current = { value: 'backend2', text: 'backend2'};
         scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}];
       });
 
@@ -153,8 +229,9 @@ define([
         scenario.queryResult = [{text: 'apps.backend.backend_01.counters.req'}, {text: 'apps.backend.backend_02.counters.req'}];
       });
 
-      it('should not add non matching items', function() {
-        expect(scenario.variable.options.length).to.be(0);
+      it('should not add non matching items, None option should be added instead', function() {
+        expect(scenario.variable.options.length).to.be(1);
+        expect(scenario.variable.options[0].isNone).to.be(true);
       });
     });
 
@@ -237,6 +314,17 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all lucene and values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'lucene' };
+        scenario.queryResult = [{text: 'backend1'}, { text: 'backend2'}];
+      });
+
+      it('should add lucene glob', function() {
+        expect(scenario.variable.options[0].value).to.be('(\\\"backend1\\\" OR \\\"backend2\\\")');
+      });
+    });
+
     describeUpdateVariable('with include all regex all values', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
@@ -245,6 +333,30 @@ define([
 
       it('should add empty glob', function() {
         expect(scenario.variable.options[0].value).to.be('(backend1|backend2|backend3)');
+      });
+    });
+
+    describeUpdateVariable('with include all regex values and values require escaping', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
+        scenario.queryResult = [{text: '/root'}, {text: '/var'}, { text: '/lib'}];
+      });
+
+      it('should regex escape options', function() {
+        expect(scenario.variable.options[0].value).to.be('(\\/lib|\\/root|\\/var)');
+        expect(scenario.variable.options[1].value).to.be('\\/lib');
+        expect(scenario.variable.options[1].text).to.be('/lib');
+      });
+    });
+
+    describeUpdateVariable('with include all pipe all values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'pipe' };
+        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add pipe delimited string', function() {
+        expect(scenario.variable.options[0].value).to.be('backend1|backend2|backend3');
       });
     });
 

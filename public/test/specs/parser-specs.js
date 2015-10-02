@@ -1,5 +1,5 @@
 define([
-  'plugins/datasource/graphite/parser'
+  'app/plugins/datasource/graphite/parser'
 ], function(Parser) {
   'use strict';
 
@@ -118,11 +118,11 @@ define([
       expect(rootNode.pos).to.be(19);
     });
 
-    it('invalid function expression missing closing paranthesis', function() {
+    it('invalid function expression missing closing parenthesis', function() {
       var parser = new Parser('sum(test');
       var rootNode = parser.getAst();
 
-      expect(rootNode.message).to.be('Expected closing paranthesis instead found end of string');
+      expect(rootNode.message).to.be('Expected closing parenthesis instead found end of string');
       expect(rootNode.pos).to.be(9);
     });
 
@@ -163,6 +163,15 @@ define([
       expect(rootNode.params[0].type).to.be('series-ref');
       expect(rootNode.params[0].value).to.be('#A');
       expect(rootNode.params[1].value).to.be('#B');
+    });
+
+    it('series parameters, issue 2788', function() {
+      var parser = new Parser("summarize(diffSeries(#A, #B), '10m', 'sum', false)");
+      var rootNode = parser.getAst();
+      expect(rootNode.type).to.be('function');
+      expect(rootNode.params[0].type).to.be('function');
+      expect(rootNode.params[1].value).to.be('10m');
+      expect(rootNode.params[3].type).to.be('bool');
     });
 
     it('should parse metric expression with ip number segments', function() {

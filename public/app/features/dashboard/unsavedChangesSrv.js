@@ -1,128 +1,116 @@
 define([
   'angular',
   'lodash',
-  'config',
 ],
-function(angular, _, config) {
+function(angular, _) {
   'use strict';
-
-  if (!config.unsaved_changes_warning) {
-    return;
-  }
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $modal, $q, $location, $timeout) {
+  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
 
-    var self = this;
-    var modalScope = $rootScope.$new();
+    function Tracker(dashboard, scope) {
+      var self = this;
 
-    $rootScope.$on("dashboard-loaded", function(event, newDashboard) {
-      // wait for different services to patch the dashboard (missing properties)
-      $timeout(function() {
-        self.original = newDashboard.getSaveModelClone();
-        self.current = newDashboard;
-      }, 1200);
-    });
+      this.original = dashboard.getSaveModelClone();
+      this.current = dashboard;
+      this.originalPath = $location.path();
+      this.scope = scope;
 
-    $rootScope.$on("dashboard-saved", function(event, savedDashboard) {
-      self.original = savedDashboard.getSaveModelClone();
-      self.current = savedDashboard;
-      self.orignalPath = $location.path();
-    });
+      // register events
+      scope.onAppEvent('dashboard-saved', function() {
+        self.original = self.current.getSaveModelClone();
+        self.originalPath = $location.path();
+      });
 
-    $rootScope.$on("$routeChangeSuccess", function() {
-      self.original = null;
-      self.originalPath = $location.path();
-    });
+      $window.onbeforeunload = function() {
+        if (self.ignoreChanges()) { return; }
+        if (self.hasChanges()) {
+          return "There are unsaved changes to this dashboard";
+        }
+      };
 
-    this.ignoreChanges = function() {
-      if (!self.current || !self.current.meta) { return true; }
-
-      var meta = self.current.meta;
-      return !meta.canSave || meta.fromScript || meta.fromFile;
-    };
-
-    window.onbeforeunload = function() {
-      if (self.ignoreChanges()) { return; }
-      if (self.has_unsaved_changes()) {
-        return "There are unsaved changes to this dashboard";
-      }
-    };
-
-    this.init = function() {
-      $rootScope.$on("$locationChangeStart", function(event, next) {
+      scope.$on("$locationChangeStart", function(event, next) {
         // check if we should look for changes
         if (self.originalPath === $location.path()) { return true; }
         if (self.ignoreChanges()) { return true; }
 
-        if (self.has_unsaved_changes()) {
+        if (self.hasChanges()) {
           event.preventDefault();
           self.next = next;
 
-          $timeout(self.open_modal);
+          $timeout(function() {
+            self.open_modal();
+          });
         }
       });
+    }
+
+    var p = Tracker.prototype;
+
+    // for some dashboards and users
+    // changes should be ignored
+    p.ignoreChanges = function() {
+      if (!this.original) { return true; }
+      if (!contextSrv.isEditor) { return true; }
+      if (!this.current || !this.current.meta) { return true; }
+
+      var meta = this.current.meta;
+      return !meta.canSave || meta.fromScript || meta.fromFile;
     };
 
-    this.open_modal = function() {
-      var confirmModal = $modal({
-        template: './app/partials/unsaved-changes.html',
-        modalClass: 'confirm-modal',
-        persist: true,
-        show: false,
-        scope: modalScope,
-        keyboard: false
-      });
+    // remove stuff that should not count in diff
+    p.cleanDashboardFromIgnoredChanges = function(dash) {
+      // ignore time and refresh
+      dash.time = 0;
+      dash.refresh = 0;
+      dash.schemaVersion = 0;
 
-      $q.when(confirmModal).then(function(modalEl) {
-        modalEl.modal('show');
-      });
-    };
-
-    this.has_unsaved_changes = function() {
-      if (!self.original) {
-        return false;
-      }
-
-      var current = self.current.getSaveModelClone();
-      var original = self.original;
-
-      // ignore timespan changes
-      current.time = original.time = {};
-      current.refresh = original.refresh;
-      // ignore version
-      current.version = original.version;
-
-      // ignore template variable values
-      _.each(current.templating.list, function(value, index) {
-        value.current = null;
-        value.options = null;
-
-        if (original.templating.list.length > index) {
-          original.templating.list[index].current = null;
-          original.templating.list[index].options = null;
+      // filter row and panels properties that should be ignored
+      dash.rows = _.filter(dash.rows, function(row) {
+        if (row.repeatRowId) {
+          return false;
         }
-      });
 
-      // ignore some panel and row stuff
-      current.forEachPanel(function(panel, panelIndex, row, rowIndex) {
-        var originalRow = original.rows[rowIndex];
-        var originalPanel = original.getPanelById(panel.id);
-        // ignore row collapse state
-        if (originalRow) {
-          row.collapse = originalRow.collapse;
-        }
-        if (originalPanel) {
-          // ignore graph legend sort
-          if (originalPanel.legend && panel.legend)  {
-            delete originalPanel.legend.sortDesc;
-            delete originalPanel.legend.sort;
+        row.panels = _.filter(row.panels, function(panel) {
+          if (panel.repeatPanelId) {
+            return false;
+          }
+
+          // remove scopedVars
+          panel.scopedVars = null;
+
+          // ignore span changes
+          panel.span = null;
+
+          // ignore panel legend sort
+          if (panel.legend)  {
             delete panel.legend.sort;
             delete panel.legend.sortDesc;
           }
-        }
+
+          return true;
+        });
+
+        // ignore collapse state
+        row.collapse = false;
+        return true;
       });
+
+      // ignore template variable values
+      _.each(dash.templating.list, function(value) {
+        value.current = null;
+        value.options = null;
+      });
+
+    };
+
+    p.hasChanges = function() {
+      var current = this.current.getSaveModelClone();
+      var original = this.original;
+
+      this.cleanDashboardFromIgnoredChanges(current);
+      this.cleanDashboardFromIgnoredChanges(original);
 
       var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
       var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
@@ -141,28 +129,36 @@ function(angular, _, config) {
       return false;
     };
 
-    this.goto_next = function() {
+    p.open_modal = function() {
+      var tracker = this;
+
+      var modalScope = this.scope.$new();
+      modalScope.ignore = function() {
+        tracker.original = null;
+        tracker.goto_next();
+      };
+
+      modalScope.save = function() {
+        tracker.scope.$emit('save-dashboard');
+      };
+
+      $rootScope.appEvent('show-modal', {
+        src: './app/partials/unsaved-changes.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: modalScope,
+      });
+    };
+
+    p.goto_next = function() {
       var baseLen = $location.absUrl().length - $location.url().length;
-      var nextUrl = self.next.substring(baseLen);
+      var nextUrl = this.next.substring(baseLen);
       $location.url(nextUrl);
     };
 
-    modalScope.ignore = function() {
-      self.original = null;
-      self.goto_next();
+    this.Tracker = Tracker;
+    this.init = function(dashboard, scope) {
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() { new Tracker(dashboard, scope); }, 1200);
     };
-
-    modalScope.save = function() {
-      var unregister = $rootScope.$on('dashboard-saved', function() {
-        self.goto_next();
-      });
-
-      $timeout(unregister, 2000);
-
-      $rootScope.$emit('save-dashboard');
-    };
-
-  }).run(function(unsavedChangesSrv) {
-    unsavedChangesSrv.init();
   });
 });
