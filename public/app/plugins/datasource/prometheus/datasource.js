@@ -271,12 +271,6 @@ function (angular, _, moment, dateMath) {
 
     function getPrometheusTime(date, roundUp) {
       if (_.isString(date)) {
-        if (date === 'now') {
-          return 'now()';
-        }
-        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-          return date.replace('now', 'now()').replace('-', ' - ');
-        }
         date = dateMath.parse(date, roundUp);
       }
       return (date.valueOf() / 1000).toFixed(0);
