@@ -129,6 +129,7 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 		Username: cmd.User,
 		Password: cmd.Password,
 	}
+	log.Info("authQuery =", authQuery)
 
 	if err := bus.Dispatch(&authQuery); err != nil {
 		if err == login.ErrInvalidCredentials {
@@ -160,10 +161,33 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	if user == nil {
 		log.Error(3, "User login with nil user")
 	}
-
+	
 	days := 86400 * setting.LogInRememberDays
+	// log.Info("user =", user)
+	// log.Info("setting.CookieUserName =", setting.CookieUserName)
+	// log.Info("user.Login =", user.Login)
+	// log.Info("days =", days)
+	// log.Info("setting.AppSubUrl =", setting.AppSubUrl)
+	
 	c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
 	c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	log.Info("grafana_remember =", c.GetCookie("grafana_remember"))
+	// log.Info("grafana_sess =", c.GetCookie("grafana_sess"))
+	log.Info("grafana_user =", c.GetCookie("grafana_user"))
+	
+	// log.Info("Cookie grafana_sess =", c.Req.Cookie("grafana_sess"))
+	// log.Info("Cookie grafana_sess =", string(c.Req.Cookie("grafana_sess").Value))
+	// log.Info("Cookie grafana_sess =", c.Req.Cookies())
+	cookies := c.Req.Cookies()
+	log.Info("len(cookies) =", len(cookies))
+	// for i, cookie := range cookies {
+	for _, cookie := range cookies {
+		// log.Info("cookie =", cookie)
+		log.Info("cookie.Value =", cookie.Value)
+	}
+
+	// c.Req.Cookie("grafana_sess")
+	// header := ctx.Req.Header.Get("Authorization")
 
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
