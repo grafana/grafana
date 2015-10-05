@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/Cepave/grafana/pkg/bus"
+	"github.com/Cepave/grafana/pkg/middleware"
+	"github.com/Cepave/grafana/pkg/services/search"
 )
 
 func Search(c *middleware.Context) {

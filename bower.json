@@ -1,7 +1,7 @@
 {
   "name": "grafana",
   "version": "2.0.2",
-  "homepage": "https://github.com/grafana/grafana",
+  "homepage": "https://github.com/Cepave/grafana",
   "authors": [],
   "license": "Apache 2.0",
   "ignore": [

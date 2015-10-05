@@ -1,6 +1,6 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import . "github.com/Cepave/grafana/pkg/services/sqlstore/migrator"
 
 func addOrgMigrations(mg *Migrator) {
 	orgV1 := Table{

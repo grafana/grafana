@@ -2,8 +2,8 @@ package sqlstore
 
 import (
 	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/Cepave/grafana/pkg/bus"
+	"github.com/Cepave/grafana/pkg/log"
 )
 
 type dbTransactionFunc func(sess *xorm.Session) error

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	m "github.com/grafana/grafana/pkg/models"
+	m "github.com/Cepave/grafana/pkg/models"
 )
 
 type LoginCommand struct {

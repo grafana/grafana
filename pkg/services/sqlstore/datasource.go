@@ -3,8 +3,8 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/bus"
+	m "github.com/Cepave/grafana/pkg/models"
 
 	"github.com/go-xorm/xorm"
 )

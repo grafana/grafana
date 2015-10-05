@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/go-xorm/xorm"
-	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	. "github.com/Cepave/grafana/pkg/services/sqlstore/migrator"
+	"github.com/Cepave/grafana/pkg/services/sqlstore/sqlutil"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

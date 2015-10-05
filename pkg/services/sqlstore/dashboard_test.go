@@ -5,8 +5,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/services/search"
 )
 
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {

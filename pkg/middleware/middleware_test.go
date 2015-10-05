@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/Cepave/grafana/pkg/bus"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/setting"
+	"github.com/Cepave/grafana/pkg/util"
 	"github.com/macaron-contrib/session"
 	. "github.com/smartystreets/goconvey/convey"
 )
