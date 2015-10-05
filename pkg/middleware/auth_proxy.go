@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"github.com/Cepave/grafana/pkg/bus"
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/log"
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 	m "github.com/Cepave/grafana/pkg/models"
 	"github.com/Cepave/grafana/pkg/setting"
 )

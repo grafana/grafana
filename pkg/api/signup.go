@@ -1,14 +1,20 @@
 package api
 
 import (
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/api/dtos"
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/events"
 	"github.com/Cepave/grafana/pkg/metrics"
 	"github.com/Cepave/grafana/pkg/middleware"
 	m "github.com/Cepave/grafana/pkg/models"
 	"github.com/Cepave/grafana/pkg/setting"
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/util"
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 // GET /api/user/signup/options

@@ -22,7 +22,10 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/Cepave/grafana/pkg/log"
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/setting"
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 func Logger() macaron.Handler {

@@ -23,6 +23,7 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 =======
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -35,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 >>>>>>> [OWL-32] Replace github.com/grafana/grafana/pkg/cmd with github.com/Cepave/grafana/pkg/cmd in main.go
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 var version = "master"

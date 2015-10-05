@@ -1,7 +1,10 @@
 package api
 
 import (
+<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/api/dtos"
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/metrics"
 	"github.com/Cepave/grafana/pkg/middleware"
