@@ -92,13 +92,15 @@ Type: files; Name: {#ConfigINI}
 function GetHostName : PAnsiChar; external 'GetHostName@files:Tools.dll stdcall';
 function CheckServerPort (APort : PAnsiChar) : Integer; external 'CheckServerPort@files:Tools.dll stdcall';
 
-var 
+var
+  UpdateGrafCrunchServer: Boolean;
   HostName: String;
   GrafCrunchServerConfig: TInputQueryWizardPage;
   NetCrunchServerConfig: TWizardPage;
   NetCrunchServerAddressTextBox: TEdit;
   NetCrunchServerPortTextBox: TEdit;
   NetCrunchServerSSLCheckBox: TCheckBox;
+  InfoPage: TOutputMsgMemoWizardPage;
 
 function CreateLabel (AParent : TWizardPage; ALeft, ATop: Integer; const ACaption: String) : TLabel;
 var TextLabel : TLabel;
@@ -146,6 +148,11 @@ begin
     TabOrder := ATabOrder;
   end;
   Result := CheckBox;
+end;
+
+function GrafCrunchServerDatabaseExist : Boolean;
+begin
+  Result := FileExists(ExpandConstant('{#GrafCrunchProgramData}' + '\grafana.db'));
 end;
 
 function GetDefaultData (const Section, Key, DefaultValue, PreviousDataKey: String) : String;
@@ -374,11 +381,37 @@ begin
 
 end;
 
+procedure PrepareInfoPage;
+begin
+  InfoPage := CreateOutputMsgMemoPage(wpInstalling, 'GrafCrunch server connection info', '', '', '');
+  with InfoPage.RichEditViewer do begin
+    Font.Size := 8;
+    Lines.Add('');
+    Lines.Add('  GrafCrunch is available at: ' + 'http://' + GetGrafCrunchServerConfig('Domain') + ':' + GetGrafCrunchServerConfig('Port'));
+    Lines.Add('');
+  end;
+
+  if UpdateGrafCrunchServer then begin
+    with InfoPage.RichEditViewer do begin
+      Lines.Add('  Previous GrafCrunch server data were detected.');
+      Lines.Add('  You can log in as previously defined user.');
+    end;
+  end else begin
+    with InfoPage.RichEditViewer do begin
+      Lines.Add('  Default GrafCrunch admin was created with credentials:');
+      Lines.Add('    User: admin');
+      Lines.Add('    Password: admin');
+    end;
+  end;
+end;
+
 procedure InitializeWizard;
 begin
+  UpdateGrafCrunchServer := GrafCrunchServerDatabaseExist;
   HostName := String(AnsiString(GetHostName));
   PrepareGrafCrunchServerConfigPage;
   PrepareNetCrunchServerConfigPage;
+  PrepareInfoPage;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
@@ -427,7 +460,6 @@ end;
 //Validate NetCrunch Server Config data -- connection to netcrunch server
 //Open firewall
 //Start GrafCrunch server service
-//Create summary information with grafcrunch link and information about default account
 //Implement Modify mode for server config modifications;
 
 //function MyProgCheck(): Boolean;
