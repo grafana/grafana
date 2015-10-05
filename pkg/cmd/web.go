@@ -11,15 +11,19 @@ import (
 	"github.com/Unknwon/macaron"
 
 	"github.com/Cepave/grafana/pkg/api"
+<<<<<<< 40884066c2e76363138819a297bc434060a9218b
 <<<<<<< 7233bfadf43890ab379f2549dc0945879b423165
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 <<<<<<< 70a59f5f003c96f4042de4bf2623b4620c8b6632
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 =======
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"github.com/Cepave/grafana/pkg/api/static"
 	"github.com/Cepave/grafana/pkg/log"
 	"github.com/Cepave/grafana/pkg/middleware"
 	"github.com/Cepave/grafana/pkg/setting"
+<<<<<<< 40884066c2e76363138819a297bc434060a9218b
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 =======
 =======
@@ -34,6 +38,8 @@ import (
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
 =======
 >>>>>>> OWL-28 refinements
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 func newMacaron() *macaron.Macaron {

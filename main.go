@@ -24,8 +24,12 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
+<<<<<<< 40884066c2e76363138819a297bc434060a9218b
 <<<<<<< dd59006883d8094231b294b25a1a91366264034d
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
+=======
+<<<<<<< 38ac1df282a252d7aa4dae518b4633cea6f2ddc1
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 =======
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -52,6 +56,8 @@ import (
 =======
 >>>>>>> inital backend suport for quotas. issue #321
 >>>>>>> inital backend suport for quotas. issue #321
+=======
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 var version = "master"

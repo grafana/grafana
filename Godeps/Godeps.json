@@ -1,4 +1,5 @@
 {
+<<<<<<< 40884066c2e76363138819a297bc434060a9218b
 <<<<<<< bd70efba9c3eb3e8cc1790f2ba4edcfecc5c68cb
 	"ImportPath": "github.com/Cepave/grafana",
 <<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
@@ -8,6 +9,9 @@
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
 =======
 	"ImportPath": "github.com/grafana/grafana",
+=======
+	"ImportPath": "github.com/Cepave/grafana",
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"GoVersion": "go1.5",
 >>>>>>> fix(build/aws): updated aws dependency and fixed minor build issue, fixes #3026
 	"Packages": [
