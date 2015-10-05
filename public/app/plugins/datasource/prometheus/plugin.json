@@ -11,5 +11,6 @@
     "config": "app/plugins/datasource/prometheus/partials/config.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "annotations": true
 }

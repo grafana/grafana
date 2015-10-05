@@ -10,4 +10,8 @@ function (angular) {
     return {controller: 'PrometheusQueryCtrl', templateUrl: 'app/plugins/datasource/prometheus/partials/query.editor.html'};
   });
 
+  module.directive('annotationsQueryEditorPrometheus', function() {
+    return {templateUrl: 'app/plugins/datasource/prometheus/partials/annotations.editor.html'};
+  });
+
 });

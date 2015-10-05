@@ -207,6 +207,57 @@ function (angular, _, moment, dateMath) {
       }
     };
 
+    PrometheusDatasource.prototype.annotationQuery = function(annotation, range) {
+      var expr = annotation.expr || '';
+      var tagKeys = annotation.tagKeys || '';
+      var titleFormat = annotation.titleFormat || '';
+      var textFormat = annotation.textFormat || '';
+
+      if (!expr) { return $q.when([]); }
+
+      var interpolated;
+      try {
+        interpolated = templateSrv.replace(expr);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      var query = {
+        expr: interpolated,
+        step: 60
+      };
+      var start = getPrometheusTime(range.from, false);
+      var end = getPrometheusTime(range.to, true);
+      return this.performTimeSeriesQuery(query, start, end).then(function(results) {
+        var eventList = [];
+        tagKeys = tagKeys.split(',');
+
+        _.each(results.data.data.result, function(series) {
+          var tags = _.chain(series.metric)
+          .filter(function(v, k) {
+            return _.contains(tagKeys, k);
+          }).value();
+
+          _.each(series.values, function(value) {
+            if (value[1] === '1') {
+              var event = {
+                annotation: annotation,
+                time: Math.floor(value[0]) * 1000,
+                title: renderTemplate(titleFormat, series.metric),
+                tags: tags,
+                text: renderTemplate(textFormat, series.metric)
+              };
+
+              eventList.push(event);
+            }
+          });
+        });
+
+        return eventList;
+      });
+    };
+
     PrometheusDatasource.prototype.testDatasource = function() {
       return this.metricFindQuery('metrics(.*)').then(function() {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
@@ -242,22 +293,26 @@ function (angular, _, moment, dateMath) {
         return getOriginalMetricName(labelData);
       }
 
+      return renderTemplate(options.legendFormat, labelData) || '{}';
+    }
+
+    function renderTemplate(format, data) {
       var originalSettings = _.templateSettings;
       _.templateSettings = {
         interpolate: /\{\{(.+?)\}\}/g
       };
 
-      var template = _.template(templateSrv.replace(options.legendFormat));
-      var metricName;
+      var template = _.template(templateSrv.replace(format));
+      var result;
       try {
-        metricName = template(labelData);
+        result = template(data);
       } catch (e) {
-        metricName = '{}';
+        result = null;
       }
 
       _.templateSettings = originalSettings;
 
-      return metricName;
+      return result;
     }
 
     function getOriginalMetricName(labelData) {
