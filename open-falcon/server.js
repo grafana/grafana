@@ -12,13 +12,8 @@ var path = require('path');
  * @function name:	function getMapData(chartType)
  * @description:	This function gets hosts locations for map chart.
  * @related issues:	OWL-062, OWL-052, OWL-030
-<<<<<<< HEAD
- * @param:			void
- * @return:			string chartType
-=======
  * @param:			string chartType
  * @return:			array [hosts]
->>>>>>> 005cab6028f1983f80cc716318a778032d2a5456
  * @author:			Don Hsieh
  * @since:			08/15/2015
  * @last modified: 	08/28/2015

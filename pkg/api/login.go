@@ -1,6 +1,8 @@
 package api
 
 import (
+	l "log"
+
 	"net/url"
 
 	"github.com/Cepave/grafana/pkg/api/dtos"
@@ -18,7 +20,42 @@ const (
 	VIEW_INDEX = "index"
 )
 
+/**
+ * @function name:	func LoginWithOpenFalconCookie(c *middleware.Context) bool
+ * @description:	This function gets user logged in if "sig" cookie of Open-Falcon is valid.
+ * @related issues:	OWL-110
+ * @param:			c *middleware.Context
+ * @return:			bool
+ * @author:			Don Hsieh
+ * @since:			10/06/2015
+ * @last modified: 	10/07/2015
+ * @called by:		func LoginView(c *middleware.Context)
+ *					 in pkg/api/login.go
+ */
+func LoginWithOpenFalconCookie(c *middleware.Context) bool {
+	sig := c.GetCookie("sig")
+	log.Info("sig = " + sig)
+	// l.Println("sig =", sig)
+
+	// uname := "don"
+	uname := "admin"
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
+	if err := bus.Dispatch(&userQuery); err == nil {
+		user := userQuery.Result
+		l.Println("user =", user)
+		loginUserWithUser(user, c)
+		return true
+	}
+	return false
+}
+
 func LoginView(c *middleware.Context) {
+	isLoggedIn := LoginWithOpenFalconCookie(c)
+	if isLoggedIn {
+		c.Redirect(setting.AppSubUrl + "/")
+		return
+	}
+
 	if err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return

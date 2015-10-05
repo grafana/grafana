@@ -1,3 +1,4 @@
+cfg.json
 open-falcon/data/*.json
 grafana
 node_modules
