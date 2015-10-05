@@ -285,7 +285,7 @@ function($, _) {
     else if (Math.abs(size) < Math.pow(10, 12)) {
       return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), 3)) + "B";
     }
-    else if (Math.abs(size) < Math.pow(10, 15)) {
+    else {
       return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), 3)) + "T";
     }
   };
