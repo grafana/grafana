@@ -99,7 +99,7 @@ function (angular, _) {
 
           var confirmModal = $modal({
             template: './app/partials/unsaved-changes.html',
-            modalClass: 'confirm-modal',
+            modalClass: 'modal-no-header confirm-modal',
             persist: false,
             show: false,
             scope: modalScope,

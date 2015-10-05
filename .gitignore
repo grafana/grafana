@@ -27,9 +27,9 @@ public/css/*.min.css
 /bin/*
 grafana
 
-conf/custom.ini
+conf/custom*
 fig.yml
 profile.cov
-
 rt-pkg/build
+.notouch
 
