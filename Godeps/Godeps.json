@@ -1,7 +1,11 @@
 {
+<<<<<<< 827d7ef8d4cb5e131a4f4e2570b6744f20bd362c
 <<<<<<< f32aa9ec11e3ba4da9dc2141585a7eeca8e6a461
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	"ImportPath": "github.com/grafana/grafana",
+=======
+	"ImportPath": "github.com/Cepave/grafana",
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"GoVersion": "go1.5",
 =======
 	"ImportPath": "github.com/Cepave/grafana",
