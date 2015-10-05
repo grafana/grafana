@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/Cepave/grafana/pkg/api/dtos"
+	"github.com/Cepave/grafana/pkg/middleware"
 	"math/rand"
 	"strconv"
 )

@@ -1,10 +1,16 @@
 package middleware
 
 import (
+<<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+=======
+	"github.com/Cepave/grafana/pkg/bus"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/setting"
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 func initContextWithAuthProxy(ctx *Context) bool {

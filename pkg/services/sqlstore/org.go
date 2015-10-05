@@ -3,9 +3,16 @@ package sqlstore
 import (
 	"time"
 
+<<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
+=======
+	"github.com/Cepave/grafana/pkg/bus"
+	"github.com/Cepave/grafana/pkg/events"
+	"github.com/Cepave/grafana/pkg/log"
+	m "github.com/Cepave/grafana/pkg/models"
+>>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 func init() {

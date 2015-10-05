@@ -13,8 +13,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/Cepave/grafana/pkg/log"
+	"github.com/Cepave/grafana/pkg/setting"
 )
 
 var mailQueue chan *Message
