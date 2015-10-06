@@ -223,7 +223,7 @@ function (angular, _) {
       var metricName = 'EstimatedCharges';
       var dimensions = {};
 
-      return this.performSuggestDimensionValues(region, namespace, metricName, dimensions).then(function () {
+      return this.getDimensionValues(region, namespace, metricName, dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
