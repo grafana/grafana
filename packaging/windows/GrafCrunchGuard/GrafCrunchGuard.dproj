@@ -89,8 +89,8 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="GrafCrunchGuardService.pas">
-            <Form>Service1</Form>
+        <DCCReference Include="uGrafCrunchGuardService.pas">
+            <Form>GrafCrunchGuardService</Form>
             <FormType>dfm</FormType>
             <DesignClass>TService</DesignClass>
         </DCCReference>

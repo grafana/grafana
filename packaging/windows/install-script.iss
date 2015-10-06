@@ -79,7 +79,8 @@ Source: "tools\Win32\Release\Tools.dll"; Flags: dontcopy 32bit
 Source: {#LICENSE}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "dest\bin\*"; DestDir: "{app}\bin\"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "GrafCrunchGuard\Win64\Release\GrafCrunchGuard.exe"; DestDir: "{app}\bin\"; DestName: "grafcrunch-guard.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "grafcrunch-server.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
