@@ -1,0 +1,103 @@
+<div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
+
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-bolt"></i>
+			Annotations
+		</div>
+
+		<div class="tabs">
+			<ul class="nav nav-tabs">
+				<li ng-class="{active: mode === 'list'}">
+					<a ng-click="mode = 'list';">
+						List
+					</a>
+				</li>
+
+				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
+					<a>
+						{{currentAnnotation.name}}
+					</a>
+				</li>
+
+				<li ng-class="{active: mode === 'new'}">
+					<a ng-click="mode = 'new';">
+						<i class="fa fa-plus"></i>
+						New
+					</a>
+				</li>
+			</ul>
+		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="gf-box-body">
+
+		<div class="editor-row row" ng-if="mode === 'list'">
+			<div class="span6">
+				<div ng-if="annotations.length === 0">
+					<em>No annotations defined</em>
+				</div>
+				<table class="grafana-options-table">
+					<tr ng-repeat="annotation in annotations">
+						<td style="width:90%">
+							<i class="fa fa-bolt"></i> &nbsp;
+							{{annotation.name}}
+						</td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+
+						<td style="width: 1%" class="nobg">
+							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
+								<i class="fa fa-edit"></i>
+								Edit
+							</a>
+						</td>
+						<td style="width: 1%" class="nobg">
+							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div ng-if="mode === 'edit' || mode === 'new'">
+			<div class="editor-row">
+				<div class="editor-option">
+					<label class="small">Name</label>
+					<input type="text" class="input-medium" ng-model='currentAnnotation.name' placeholder="name"></input>
+				</div>
+				<div class="editor-option">
+					<label class="small">Datasource</label>
+					<select ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
+				</div>
+				<div class="editor-option text-center">
+					<label class="small">Icon color</label>
+					<spectrum-picker ng-model="currentAnnotation.iconColor"></spectrum-picker>
+				</div>
+				<div class="editor-option">
+					<label class="small">Icon size</label>
+					<select class="input-mini" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
+				</div>
+				<editor-opt-bool text="Grid line" model="currentAnnotation.showLine"></editor-opt-bool>
+				<div class="editor-option text-center">
+					<label class="small">Line color</label>
+					<spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
+				</div>
+			</div>
+
+			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
+
+			<br>
+			<button ng-show="mode === 'new'" type="button" class="btn btn-success" ng-click="add()">Add</button>
+			<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
+			<br>
+			<br>
+		</div>
+	</div>
+</div>

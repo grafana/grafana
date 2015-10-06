@@ -1,0 +1,6 @@
+influxdb:
+  build: blocks/influxdb
+  ports:
+    - "2004:2004"
+    - "8083:8083"
+    - "8086:8086"

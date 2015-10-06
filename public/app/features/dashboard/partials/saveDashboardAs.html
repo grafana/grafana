@@ -1,0 +1,26 @@
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="SaveDashboardAsCtrl" ng-init="init();">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-copy"></i>
+			Save As...
+		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="gf-box-body">
+		<div class="text-center">
+			<h4>New title</h4>
+
+			<input type="text" class="input input-fluid" ng-model="clone.title" give-focus="true" ng-keydown="keyDown($event)">
+			<br>
+			<br>
+
+			<button class="btn btn-inverse" ng-click="dismiss();">Cancel</button>
+			<button class="btn btn-success" ng-click="saveClone();">Save</button>
+		</div>
+	</div>
+</div>
+

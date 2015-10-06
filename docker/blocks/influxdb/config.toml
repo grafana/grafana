@@ -1,0 +1,75 @@
+bind-address = "0.0.0.0"
+
+[logging]
+level  = "debug"
+file   = "/opt/influxdb/shared/data/influxdb.log"         # stdout to log to standard out
+
+[admin]
+port   = 8083              # binding is disabled if the port isn't set
+assets = "/opt/influxdb/current/admin"
+
+[api]
+port     = 8086    # binding is disabled if the port isn't set
+
+read-timeout = "5s"
+
+[input_plugins]
+
+  [input_plugins.graphite]
+  enabled = true
+  port = 2004
+  database = "graphite"  # store graphite data in this database
+
+
+[raft]
+port = 8090
+dir  = "/opt/influxdb/shared/data/raft"
+
+[storage]
+dir = "/opt/influxdb/shared/data/db"
+# How many requests to potentially buffer in memory. If the buffer gets filled then writes
+# will still be logged and once the local storage has caught up (or compacted) the writes
+# will be replayed from the WAL
+write-buffer-size = 10000
+default-engine = "rocksdb"
+max-open-shards = 0
+point-batch-size = 100
+write-batch-size = 5000000
+retention-sweep-period = "10m"
+
+[storage.engines.rocksdb]
+max-open-files = 1000
+lru-cache-size = "200m"
+
+[storage.engines.leveldb]
+max-open-files = 1000
+lru-cache-size = "200m"
+
+[cluster]
+protobuf_port = 8099
+protobuf_timeout = "2s" # the write timeout on the protobuf conn any duration parseable by time.ParseDuration
+protobuf_heartbeat = "200ms" # the heartbeat interval between the servers. must be parseable by time.ParseDuration
+protobuf_min_backoff = "1s" # the minimum backoff after a failed heartbeat attempt
+protobuf_max_backoff = "10s" # the maxmimum backoff after a failed heartbeat attempt
+write-buffer-size = 10000
+ax-response-buffer-size = 100000
+oncurrent-shard-query-limit = 10
+
+[sharding]
+  replication-factor = 1
+
+  [sharding.short-term]
+  duration = "7d"
+  split = 1
+
+  [sharding.long-term]
+  duration = "30d"
+  split = 1
+  # split-random = "/^Hf.*/"
+
+[wal]
+dir   = "/opt/influxdb/shared/data/wal"
+flush-after = 1000 # the number of writes after which wal will be flushed, 0 for flushing on every write
+bookmark-after = 1000 # the number of writes after which a bookmark will be created
+index-after = 1000
+requests-per-logfile = 10000

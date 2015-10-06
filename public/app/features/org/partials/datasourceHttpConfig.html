@@ -1,0 +1,44 @@
+<br>
+<h5>Http settings</h5>
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 80px">
+			Url
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='current.url' placeholder="http://my.server.com:8080" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
+		</li>
+		<li class="tight-form-item">
+			Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</tip>
+	  </li>
+		<li>
+			<select class="input-medium tight-form-input" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 80px">
+			Basic Auth
+		</li>
+		<li class="tight-form-item">
+			<editor-checkbox text="Enable" model="current.basicAuth"></editor-checkbox>
+		</li>
+		<li class="tight-form-item" ng-if="current.basicAuth">
+			User
+		</li>
+		<li ng-if="current.basicAuth">
+			<input type="text" class="tight-form-input input-medium" style="width: 139px" ng-model='current.basicAuthUser' placeholder="user" required></input>
+		</li>
+		<li class="tight-form-item" style="width: 67px" ng-if="current.basicAuth">
+			Password
+		</li>
+		<li ng-if="current.basicAuth">
+			<input type="password" class="tight-form-input input-medium" ng-model='current.basicAuthPassword' placeholder="password" required></input>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+
+

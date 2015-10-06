@@ -1,0 +1,74 @@
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="InspectCtrl" ng-init="init()">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-eye"></i>
+			Inspector
+		</div>
+
+		<div ng-model="editor.index" bs-tabs>
+			<div ng-repeat="tab in ['Request', 'Response', 'JS Error']" data-title="{{tab}}">
+			</div>
+		</div>
+
+	</div>
+
+	<div class="gf-box-body">
+
+		<div ng-if="editor.index == 0">
+			<h5>Request details</h5>
+			<table class="table table-striped small inspector-request-table">
+				<tr>
+					<td>Url</td>
+					<td>{{inspector.error.config.url}}</td>
+				</tr>
+				<tr>
+					<td>Method</td>
+					<td>{{inspector.error.config.method}}</td>
+				</tr>
+				<tr ng-repeat="(key, value) in inspector.error.config.headers">
+					<td>
+						{{key}}
+					</td>
+					<td>
+						{{value}}
+					</td>
+				</tr>
+			</table>
+
+			<h5>Request parameters</h5>
+			<table class="table table-striped small inspector-request-table">
+				<tr ng-repeat="param in request_parameters">
+					<td>
+						{{param.key}}
+					</td>
+					<td>
+						{{param.value}}
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div ng-if="editor.index == 1">
+			<h5 ng-show="message">{{message}}</h5>
+ 			<pre class="small">
+{{response}}
+			</pre>
+		</div>
+
+		<div ng-if="editor.index == 2">
+
+			<label>Message:</label>
+			<pre>
+			{{message}}
+		</pre>
+
+			<label>Stack trace:</label>
+			<pre>
+			{{stack_trace}}
+		</pre>
+
+		</div>
+
+	</div>
+</div>
+

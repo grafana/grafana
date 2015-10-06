@@ -1,0 +1,98 @@
+<topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
+	<ul class="nav">
+		<li class="active"><a href="org">Info</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+
+		<h2>Organization</h2>
+
+		<div class="tight-form-section">
+			<h5>Info</h5>
+
+			<form name="orgForm">
+				<div class="tight-form last">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							Org. name
+						</li>
+						<li>
+							<input type="text" required ng-model="org.name" class="tight-form-input last" style="width: 475px">
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
+				<br>
+				<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
+			</form>
+		</div>
+
+		<div class="tight-form-section">
+			<h5>Address</h5>
+
+			<form name="addressForm">
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							Address 1
+						</li>
+						<li>
+							<input type="text" ng-model="address.address1" class="tight-form-input" style="width:193px">
+						</li>
+						<li class="tight-form-item" style="width: 75px">
+							Address 2
+						</li>
+						<li>
+							<input type="text" ng-model="address.address2" class="tight-form-input last" style="width:193px">
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							City
+						</li>
+						<li>
+							<input type="text" ng-model="address.city" class="tight-form-input" style="width: 193px">
+						</li>
+						<li class="tight-form-item" style="width: 75px">
+							Postal code
+						</li>
+						<li>
+							<input type="text" ng-model="address.zipCode" class="input-medium tight-form-input last" style="width: 193px">
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form last">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							State
+						</li>
+						<li>
+							<input type="text" ng-model="address.state" class="tight-form-input" style="width: 193px">
+						</li>
+						<li class="tight-form-item" style="width: 75px">
+							Country
+						</li>
+						<li>
+							<input type="text" ng-model="address.country" class="tight-form-input last" style="width: 193px">
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+
+				<br>
+				<button type="submit" class="pull-right btn btn-success" ng-click="updateAddress()">Update</button>
+
+			</form>
+		</div>
+
+	</div>
+</div>
+
+

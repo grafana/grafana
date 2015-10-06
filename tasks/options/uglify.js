@@ -1,13 +1,13 @@
 module.exports = function(config) {
   return {
-    dest: {
+    genDir: {
       expand: true,
-      src: ['**/*.js', '!config.sample.js', '!app/dashboards/*.js', '!app/dashboards/**/*.js',],
-      dest: '<%= destDir %>',
-      cwd: '<%= destDir %>',
+      src: ['**/*.js', '!dashboards/*.js', '!vendor/**/*.js'],
+      dest: '<%= genDir %>',
+      cwd: '<%= genDir %>',
       options: {
         quite: true,
-        compress: true,
+        compress: {},
         preserveComments: false,
         banner: '<%= meta.banner %>'
       }

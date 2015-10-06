@@ -1,0 +1,94 @@
+<div ng-controller="SideMenuCtrl" ng-init="init()">
+
+	<ul class="sidemenu sidemenu-main">
+		<li style="margin-bottom: 15px;">
+			<a class="pointer sidemenu-top-btn" ng-click="contextSrv.toggleSideMenu()">
+				<img class="logo-icon" src="img/fav32.png"></img>
+				<i class="pull-right fa fa-angle-left"></i>
+			</a>
+		</li>
+
+		<li class="sidemenu-system-section" ng-if="systemSection">
+			<div class="sidemenu-system-section-inner">
+				<i class="fa fa-fw fa-cubes"></i>
+				<div class="sidemenu-section-text-wrapper">
+					<div class="sidemenu-section-heading">Grafana Admin</div>
+					<div class="sidemenu-section-tagline">v {{grafanaVersion}}</div>
+				</div>
+			</div>
+		</li>
+
+		<li ng-repeat="item in mainLinks">
+			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
+				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="sidemenu-item-text">{{item.text}}</span>
+	   	</a>
+		</li>
+	</ul>
+
+	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="!systemSection">
+
+		<li ng-if="contextSrv.user.isSignedIn">
+			<a href="profile" class="sidemenu-item">
+				<img ng-src="{{contextSrv.user.gravatarUrl}}">
+				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
+	   	</a>
+		</li>
+
+		<li class="dropdown">
+			<a class="sidemenu-item pointer" data-toggle="dropdown" ng-click="loadOrgs()" tabindex="0">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
+				<span class="sidemenu-item-text">{{contextSrv.user.orgName}}</span><i class="fa fa-caret-down small"></i>
+	   	</a>
+			<ul class="dropdown-menu" role="menu" style="left: 65px">
+				<li ng-repeat="menuItem in orgMenu" ng-class="menuItem.cssClass">
+					<a href="{{menuItem.href}}" ng-if="menuItem.href">
+						<i class="{{menuItem.icon}}" ng-if="menuItem.icon"></i>
+						{{menuItem.text}}
+					</a>
+					<a ng-click="menuItem.click()" ng-if="menuItem.click">
+						<i class="{{menuItem.icon}}"></i>
+						{{menuItem.text}}
+					</a>
+				</li>
+			</ul>
+		</li>
+
+		<li ng-if="contextSrv.isGrafanaAdmin">
+			<a href="admin/settings" class="sidemenu-item">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cog"></i></span>
+				<span class="sidemenu-item-text">Grafana admin</span>
+	   	</a>
+		</li>
+
+		<li ng-if="contextSrv.isSignedIn">
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
+				<span class="sidemenu-item-text">Sign out</span>
+	   	</a>
+		</li>
+
+		<li ng-if="!contextSrv.isSignedIn">
+			<a href="login" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
+				<span class="sidemenu-item-text">Sign in</span>
+	   	</a>
+		</li>
+	</ul>
+
+	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="systemSection">
+		<li>
+			<a href="{{appSubUrl}}/" class="sidemenu-item">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-backward"></i></span>
+				<span class="sidemenu-item-text">Exit admin</span>
+	   	</a>
+		</li>
+		<li>
+			<a href="logout" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
+				<span class="sidemenu-item-text">Sign out</span>
+	   	</a>
+		</li>
+	</ul>
+
+</div>

@@ -1,0 +1,25 @@
+<div class="modal-body">
+
+	<a class="modal-close" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</a>
+
+	<div class="confirm-modal-icon">
+		<i class="fa {{icon}}"></i>
+	</div>
+
+	<div class="confirm-modal-title">
+		{{title}}
+	</div>
+
+	<div class="modal-tagline">
+		{{text}}
+	</div>
+
+	<div class="confirm-modal-buttons">
+		<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
+		<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">{{yesText}}</button>
+	</div>
+
+</div>
+

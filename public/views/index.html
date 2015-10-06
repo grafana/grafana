@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <meta name="theme-color" content="#000">
+
+    <title>Grafana</title>
+
+		[[if .User.LightTheme]]
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
+		[[else]]
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
+		[[end]]
+
+    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
+		<base href="[[.AppSubUrl]]/" />
+
+		<!-- build:js [[.AppSubUrl]]/app/app.js -->
+    <script src="[[.AppSubUrl]]/public/vendor/requirejs/require.js"></script>
+    <script src="[[.AppSubUrl]]/public/app/components/require.config.js"></script>
+    <!-- endbuild -->
+  </head>
+
+	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
+		<div class="sidemenu-canvas">
+
+			<aside class="sidemenu-wrapper" ng-if="contextSrv.sidemenu">
+				<div ng-include="'app/partials/sidemenu.html'"></div>
+			</aside>
+
+			<div class="page-alert-list">
+				<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
+					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
+						<i class="fa fa-times-circle"></i>
+					</button>
+					<div class="alert-title">{{alert.title}}</div>
+					<div ng-bind='alert.text'></div>
+				</div>
+			</div>
+
+			<div ng-view class="main-view"></div>
+			</div>
+
+		</div>
+
+  </body>
+
+	<script>
+		window.grafanaBootData = {
+			user:[[.User]],
+			settings: [[.Settings]],
+		};
+
+    require(['app/app'], function (app) {
+	    app.boot();
+    })
+	</script>
+
+	[[if .GoogleAnalyticsId]]
+		<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+		ga('create', '[[.GoogleAnalyticsId]]', 'auto');
+		ga('send', 'pageview');
+		</script>
+	[[end]]
+
+	[[if .GoogleTagManagerId]]
+		<script>
+			dataLayer = [{
+				'IsSignedIn': '[[.User.IsSignedIn]]',
+				'Email': '[[.User.Email]]',
+				'Name': '[[.User.Name]]',
+				'UserId': '[[.User.Id]]',
+				'OrgId': '[[.User.OrgId]]',
+				'OrgName': '[[.User.OrgName]]',
+			}];
+		</script>
+		<!-- Google Tag Manager -->
+		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K2MJ65" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+			j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','[[.GoogleTagManagerId]]');</script>
+		<!-- End Google Tag Manager -->
+	[[end]]
+</html>

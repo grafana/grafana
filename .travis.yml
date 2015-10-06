@@ -1,9 +1,0 @@
-language: node_js
-node_js:
-  - "0.10"
-git:
-  depth: 1
-before_script:
-  - npm install -g grunt-cli
-after_script:
-  - npm run coveralls

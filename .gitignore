@@ -1,14 +1,34 @@
 node_modules
 coverage/
 .aws-config.json
-dist
+awsconfig
+/dist
+/emails/dist
+/public_gen
+/tmp
+vendor/phantomjs/phantomjs
+
+docs/AWS_S3_BUCKET
+docs/GIT_BRANCH
+docs/VERSION
+docs/GITCOMMIT
+docs/changed-files
+docs/changed-files
 
 # locally required config files
-web.config
-config.js
-src/css/*.min.css
+public/css/*.min.css
 
 # Editor junk
 *.sublime-workspace
 *.swp
 .idea/
+*.iml
+
+/data/*
+/bin/*
+
+conf/custom.ini
+fig.yml
+profile.cov
+grafana
+.notouch

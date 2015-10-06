@@ -1,0 +1,61 @@
+<div class="editor-row">
+  <div class="section">
+    <h5>General options</h5>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					Title
+				</li>
+				<li>
+					<input type="text" class="input-xlarge tight-form-input" ng-model='panel.title'></input>
+				</li>
+				<li class="tight-form-item">
+					Span
+				</li>
+				<li>
+					<select class="input-mini tight-form-input" ng-model="panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+				</li>
+				<li class="tight-form-item">
+					Height
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input" ng-model='panel.height'></input>
+				</li>
+				<li class="tight-form-item">
+					<label class="checkbox-label" for="panel.transparent">Transparent</label>
+					<input class="cr1" id="panel.transparent" type="checkbox" ng-model="panel.transparent" ng-checked="panel.transparent">
+					<label for="panel.transparent" class="cr1"></label>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	<div class="section">
+		<h5>Templating options</h5>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					Repeat Panel
+				</li>
+				<li>
+					<select class="input-small tight-form-input last" ng-model="panel.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
+						<option value=""></option>
+					</select>
+				</li>
+				<li class="tight-form-item">
+					Min span
+				</li>
+				<li>
+					<select class="input-small tight-form-input last" ng-model="panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]">
+						<option value=""></option>
+					</select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<panel-links-editor panel="panel"></panel-links-editor>
+
+

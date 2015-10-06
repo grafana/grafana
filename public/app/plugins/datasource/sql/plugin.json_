@@ -1,0 +1,16 @@
+{
+  "pluginType": "datasource",
+  "name": "Generic SQL (prototype)",
+
+  "type": "generic_sql",
+  "serviceName": "SqlDatasource",
+
+  "module": "app/plugins/datasource/sql/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/sql/partials/config.html",
+    "query": "app/plugins/datasource/sql/partials/query.editor.html"
+  },
+
+  "metrics": true
+}

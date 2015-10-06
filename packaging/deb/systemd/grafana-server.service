@@ -1,0 +1,23 @@
+[Unit]
+Description=Starts and stops a single grafana instance on this system
+Documentation=http://docs.grafana.org
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/default/grafana-server
+User=grafana
+Group=grafana
+Type=simple
+WorkingDirectory=/usr/share/grafana
+ExecStart=/usr/sbin/grafana-server                                \
+                            --config=${CONF_FILE}                 \
+                            --pidfile=${PID_FILE}                 \
+                            cfg:default.paths.logs=${LOG_DIR}     \
+                            cfg:default.paths.data=${DATA_DIR}    \
+LimitNOFILE=10000
+TimeoutStopSec=20
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

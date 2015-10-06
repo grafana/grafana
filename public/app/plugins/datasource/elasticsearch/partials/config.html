@@ -1,0 +1,33 @@
+<div ng-include="httpConfigPartialSrc"></div>
+<br>
+
+<h5>Elastic search details</h5>
+
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 144px">
+			Index name
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='current.database' placeholder="" required></input>
+		</li>
+		<li class="tight-form-item">
+			Pattern
+		</li>
+		<li>
+			<select class="input-medium tight-form-input" ng-model="current.jsonData.interval" ng-options="f.value as f.name for f in indexPatternTypes" ng-change="indexPatternTypeChanged()" ></select>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 144px">
+			Time field name
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.timeField' placeholder="" required ng-init="current.jsonData.timeField = current.jsonData.timeField || '@timestamp'"></input>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>

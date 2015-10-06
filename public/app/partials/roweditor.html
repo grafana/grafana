@@ -1,0 +1,64 @@
+
+<div class="gf-box-header">
+	<div class="gf-box-title">
+		<i class="fa fa-th-list"></i>
+		Row settings
+	</div>
+
+	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+		<div ng-repeat="tab in ['General']" data-title="{{tab}}">
+		</div>
+	</div>
+
+	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</button>
+</div>
+
+<div class="gf-box-body">
+
+	<div class="editor-row">
+		<div class="section">
+			<h5>Row details</h5>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						Title
+					</li>
+					<li>
+						<input type="text" class="input-xlarge tight-form-input" ng-model='row.title'></input>
+					</li>
+					<li class="tight-form-item">
+						Height
+					</li>
+					<li>
+						<input type="text" class="input-small tight-form-input" ng-model='row.height'></input>
+					</li>
+					<li class="tight-form-item last">
+						<label class="checkbox-label" for="row.showTitle">Show Title</label>
+						<input class="cr1" id="row.showTitle" type="checkbox" ng-model="row.showTitle" ng-checked="row.showTitle">
+						<label for="row.showTitle" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="section">
+			<h5>Templating options</h5>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						Repeat Row
+					</li>
+					<li>
+						<select class="input-small tight-form-input last" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
+							<option value=""></option>
+						</select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+
+</div>

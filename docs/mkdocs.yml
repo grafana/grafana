@@ -1,0 +1,76 @@
+site_name: Grafana Documentation
+#site_url: http://docs.grafana.com/
+site_url: /
+site_description: Documentation for Grafana, The Graphite and Influxdb dashboard and graph composer
+site_favicon: img/fav32.png
+
+dev_addr: '0.0.0.0:8000'
+
+repo_url: https://github.com/grafana/grafana/
+
+docs_dir: sources
+
+include_search: true
+
+use_absolute_urls: true
+
+# theme: docker
+theme_dir: ./theme/mkdocs/
+theme_center_lead: false
+
+copyright: Copyright &copy; 2014-2015, Coding Instinct AB.
+google_analytics: ['UA-47280256-1', 'grafana.org']
+
+
+pages:
+
+# Introduction:
+- ['index.md', 'About', 'Grafana']
+- ['installation/index.md', 'Installation', 'Installation']
+- ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
+- ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']
+- ['installation/mac.md', 'Installation', 'Installing on Mac OS X']
+- ['installation/windows.md', 'Installation', 'Installing on Windows']
+- ['installation/docker.md', 'Installation', 'Installing on Docker']
+
+- ['installation/configuration.md', 'Installation', 'Configuration']
+- ['installation/ldap.md', 'Installation', 'LDAP Integration']
+- ['installation/provisioning.md', 'Installation', 'Provisioning']
+- ['installation/performance.md', 'Installation', 'Performance Tips']
+- ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']
+- ['installation/migrating_to2.md', 'Installation', 'Migrating from v1.x to v2.x']
+
+- ['guides/basic_concepts.md', 'User Guides', 'Basic Concepts']
+- ['guides/gettingstarted.md', 'User Guides', 'Getting Started']
+- ['guides/whats-new-in-v2.md', 'User Guides', "What's New in Grafana v2.0"]
+- ['guides/whats-new-in-v2-1.md', 'User Guides', "What's New in Grafana v2.1"]
+- ['guides/screencasts.md', 'User Guides', 'Screencasts']
+
+- ['reference/graph.md', 'Reference', 'Graph Panel']
+- ['reference/singlestat.md', 'Reference', 'Singlestat Panel']
+- ['reference/dashlist.md', 'Reference', 'Dashboard List Panel']
+- ['reference/sharing.md', 'Reference', 'Sharing']
+- ['reference/annotations.md', 'Reference', 'Annotations']
+- ['reference/timerange.md', 'Reference', 'Time Range Controls']
+- ['reference/search.md', 'Reference', 'Dashboard Search']
+- ['reference/templating.md', 'Reference', 'Templated Dashboards']
+- ['reference/scripting.md', 'Reference', 'Scripted Dashboards']
+- ['reference/playlist.md', 'Reference', 'Playlist']
+- ['reference/export_import.md', 'Reference', 'Import & Export']
+- ['reference/admin.md', 'Reference', 'Administration']
+- ['reference/http_api.md', 'Reference', 'HTTP API']
+- ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
+
+- ['datasources/overview.md', 'Data Sources', 'Data Source Overview']
+- ['datasources/graphite.md', 'Data Sources', 'Graphite']
+- ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
+- ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
+- ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
+
+- ['tutorials/index.md', 'Tutorials', 'Tutorials']
+- ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
+
+- ['project/building_from_source.md', 'Project', 'Building from Source']
+- ['project/cla.md', 'Project', 'Contributor License Agreement']
+
+- ['jsearch.md', '**HIDDEN**']

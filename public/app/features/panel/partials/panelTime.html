@@ -1,0 +1,59 @@
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item tight-form-item-icon">
+					<i class="fa fa-clock-o"></i>
+				</li>
+				<li class="tight-form-item" style="width: 178px">
+					<strong>Override relative time</strong>
+				</li>
+				<li class="tight-form-item" style="width: 50px">
+					Last
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input last" placeholder="1h"
+					  empty-to-null ng-model="panel.timeFrom" valid-time-span
+					  ng-change="get_data()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item tight-form-item-icon">
+					<i class="fa fa-clock-o"></i>
+				</li>
+				<li class="tight-form-item" style="width: 178px">
+					<strong>Add time shift</strong>
+				</li>
+				<li class="tight-form-item" style="width: 50px">
+					Amount
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input last" placeholder="1h"
+					empty-to-null ng-model="panel.timeShift" valid-time-span
+					ng-change="get_data()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item tight-form-item-icon">
+					<i class="fa fa-clock-o"></i>
+				</li>
+				<li class="tight-form-item" style="width: 178px">
+					<strong>Hide time override info</strong>
+				</li>
+				<li class="tight-form-item last">
+					<input class="cr1" id="panel.hideTimeOverride" type="checkbox"
+					ng-model="panel.hideTimeOverride" ng-checked="panel.hideTimeOverride" ng-change="get_data()">
+					<label for="panel.hideTimeOverride" class="cr1"></label>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+

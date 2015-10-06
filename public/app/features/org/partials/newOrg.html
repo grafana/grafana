@@ -1,0 +1,32 @@
+<topnav title="Organization" icon="fa fa-fw fa-users" subnav="true">
+	<ul class="nav">
+		<li class="active"><a href="org/new">New organization</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+
+		<h2 style="margin-top: 30px;">Add Organization</h2>
+
+		<form name="form">
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px;">
+						<strong>Org. name</strong>
+					</li>
+					<li>
+						<input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="organization name">
+					</li>
+					<li>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<br>
+			<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
+		</form>
+
+	</div>
+</div>
+

@@ -1,0 +1,16 @@
+{
+  "pluginType": "datasource",
+  "name": "OpenTSDB",
+
+  "type": "opentsdb",
+  "serviceName": "OpenTSDBDatasource",
+
+  "module": "app/plugins/datasource/opentsdb/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/opentsdb/partials/config.html"
+  },
+
+  "metrics": true,
+  "defaultMatchFormat": "pipe"
+}

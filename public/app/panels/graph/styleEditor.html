@@ -1,0 +1,102 @@
+<div class="editor-row">
+  <div class="section">
+    <h5>Chart Options</h5>
+		<editor-opt-bool text="Bars" model="panel.bars" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Lines" model="panel.lines" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Points" model="panel.points" change="render()"></editor-opt-bool>
+  </div>
+
+  <div class="section">
+    <h5>Line options</h5>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Fill</label>
+      <select class="input-mini" ng-model="panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.lines">
+      <label class="small">Line Width</label>
+      <select class="input-mini" ng-model="panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option" ng-show="panel.points">
+      <label class="small">Point Radius</label>
+      <select class="input-mini" ng-model="panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="render()"></select>
+    </div>
+    <div class="editor-option">
+      <label class="small">Null point mode<tip>Define how null values should be drawn</tip></label>
+      <select class="input-medium" ng-model="panel.nullPointMode" ng-options="f for f in ['connected', 'null', 'null as zero']" ng-change="render()"></select>
+    </div>
+
+		<editor-opt-bool text="Staircase line" model="panel.steppedLine" change="render()"></editor-opt-bool>
+  </div>
+  <div class="section">
+    <h5>Multiple Series</h5>
+
+		<editor-opt-bool text="Stack" model="panel.stack" change="render()"></editor-opt-bool>
+		<editor-opt-bool text="Percent" model="panel.percentage" change="render()" tip="Stack as a percentage of total"></editor-opt-bool>
+	</div>
+
+  <div class="section">
+    <h5>Rendering</h5>
+    <div class="editor-option">
+      <label class="small">Flot <tip>client side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="flot" ng-change="get_data()" />
+    </div>
+    <div class="editor-option">
+      <label class="small">Graphite PNG <tip>server side</tip></label>
+      <input type="radio" class="input-small" ng-model="panel.renderer" value="png" ng-change="get_data()" />
+    </div>
+  </div>
+
+  <div class="section">
+    <h5>Tooltip</h5>
+		<editor-opt-bool
+			text="All series" model="panel.tooltip.shared" change="render()"
+			tip="Show all series on same tooltip and a x croshair to help follow all series">
+		</editor-opt-bool>
+		<div class="editor-option" ng-show="panel.stack">
+      <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
+      <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
+    </div>
+  </div>
+</div>
+
+
+<div class="editor-row">
+  <div class="section">
+		<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
+		<div>
+			<div class="tight-form" ng-repeat="override in panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer" ng-click="removeSeriesOverride(override)"></i>
+					</li>
+
+					<li class="tight-form-item">
+						alias or regex
+					</li>
+
+					<li>
+						<input type="text" ng-model="override.alias" bs-typeahead="getSeriesNames" ng-blur="render()" data-min-length=0 data-items=100 class="input-medium tight-form-input" >
+					</li>
+
+					<li class="tight-form-item" ng-repeat="option in currentOverrides">
+						<i class="pointer fa fa-remove" ng-click="removeOverride(option)"></i>
+						<span ng-show="option.propertyName === 'color'">
+							Color: <i class="fa fa-circle" ng-style="{color:option.value}"></i>
+						</span>
+						<span ng-show="option.propertyName !== 'color'">
+							{{option.name}}: {{option.value}}
+						</span>
+					</li>
+
+					<li class="dropdown" dropdown-typeahead="overrideMenu" dropdown-typeahead-on-select="setOverride($item, $subItem)">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+		<button class="btn btn-inverse" style="margin-top: 20px" ng-click="addSeriesOverride()">
+			Add series specific option
+		</button>
+	</div>
+</div>

@@ -1,0 +1,67 @@
+<topnav title="Data sources" icon="fa fa-fw fa-database" subnav="true">
+	<ul class="nav">
+		<li><a href="datasources">Overview</a></li>
+		<li ng-class="{active: isNew}"><a href="datasources/new">Add new</a></li>
+		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">Edit</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2 ng-show="isNew">Add data source</h2>
+		<h2 ng-show="!isNew">Edit data source</h2>
+
+		<form name="editForm">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 80px">
+						Name
+					</li>
+					<li>
+						<li>
+							<input type="text" class="input-xlarge tight-form-input" ng-model="current.name" placeholder="my data source name" required>
+						</li>
+					</li>
+					<li class="tight-form-item">
+						Default&nbsp;
+						<input class="cr1" id="current.isDefault" type="checkbox" ng-model="current.isDefault" ng-checked="current.isDefault">
+						<label for="current.isDefault" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 80px">
+						Type
+					</li>
+					<li>
+						<select class="input-xlarge tight-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+			<div ng-include="datasourceMeta.partials.config" ng-if="datasourceMeta.partials.config"></div>
+
+			<div ng-if="testing" style="margin-top: 25px">
+				<h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
+				<h5 ng-show="testing.done">Test results</h5>
+				<div class="alert-{{testing.status}} alert">
+					<div class="alert-title">{{testing.title}}</div>
+					<div ng-bind='testing.message'></div>
+				</div>
+			</div>
+
+			<div class="pull-right" style="margin-top: 35px">
+				<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
+				<button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
+				<button type="submit" class="btn btn-inverse" ng-show="!isNew" ng-click="saveChanges(true)">
+					Test Connection
+				</button>
+				<a class="btn btn-inverse" ng-show="!isNew" href="datasources">Cancel</a>
+			</div>
+			<br>
+		</form>
+	</div>
+</div>

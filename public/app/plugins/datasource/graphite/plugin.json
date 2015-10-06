@@ -1,0 +1,17 @@
+{
+  "pluginType": "datasource",
+  "name": "Graphite",
+
+  "type": "graphite",
+  "serviceName": "GraphiteDatasource",
+
+  "module": "app/plugins/datasource/graphite/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/graphite/partials/config.html"
+  },
+
+  "defaultMatchFormat": "glob",
+  "metrics": true,
+  "annotations": true
+}

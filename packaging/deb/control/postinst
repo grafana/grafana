@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set -e
+
+[ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
+
+startGrafana() {
+  if [ -x /bin/systemctl ]; then
+    /bin/systemctl daemon-reload
+    /bin/systemctl start grafana-server
+	elif [ -x "/etc/init.d/grafana-server" ]; then
+		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+			invoke-rc.d grafana-server start || true
+		else
+			/etc/init.d/grafana-server start || true
+		fi
+	fi
+}
+
+case "$1" in
+	configure)
+	[ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
+	[ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+	if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
+	    addgroup --system "$GRAFANA_GROUP" --quiet
+	fi
+	if ! id $GRAFANA_USER > /dev/null 2>&1 ; then
+	    adduser --system --home /usr/share/grafana --no-create-home \
+		--ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
+		"$GRAFANA_USER"
+	fi
+
+  if [ -x /opt/grafana/ ]; then
+    echo "### Upgrading Notice ### "
+    echo "-- New grafana install home is /usr/share/grafana"
+    echo "-- Please move sqlite3 database to /var/lib/grafana/"
+    echo "-- Notice: service name && binary changed to grafana-server"
+  fi
+
+	# Set user permissions on /var/log/grafana, /var/lib/grafana
+	mkdir -p /var/log/grafana /var/lib/grafana
+	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
+	chmod 755 /var/log/grafana /var/lib/grafana
+
+	# configuration files should not be modifiable by grafana user, as this can be a security issue
+	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
+	chmod 755 /etc/grafana
+	find /etc/grafana -type f -exec chmod 640 {} ';'
+	find /etc/grafana -type d -exec chmod 755 {} ';'
+
+	# if $2 is set, this is an upgrade
+	if ( [ -n $2 ] && [ "$RESTART_ON_UPGRADE" = "true" ] ) ; then
+		startGrafana
+	# this is a fresh installation
+	elif [ -z $2 ] ; then
+        if [ -x /bin/systemctl ] ; then
+            echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
+            echo " sudo /bin/systemctl daemon-reload"
+            echo " sudo /bin/systemctl enable grafana-server"
+            echo "### You can start grafana-server by executing"
+            echo " sudo /bin/systemctl start grafana-server"
+
+        elif [ -x /usr/sbin/update-rc.d ] ; then
+            echo "### NOT starting grafana-server by default on bootup, please execute"
+            echo " sudo update-rc.d grafana-server defaults 95 10"
+            echo "### In order to start grafana-server, execute"
+            echo " sudo service grafana-server start"
+        fi
+	fi
+	;;
+esac

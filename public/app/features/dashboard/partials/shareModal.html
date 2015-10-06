@@ -1,0 +1,190 @@
+<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl" ng-init="init()">
+	<div class="gf-box-header">
+		<div class="gf-box-title">
+			<i class="fa fa-share"></i>
+			{{modalTitle}}
+		</div>
+
+		<div ng-model="editor.index" bs-tabs>
+			<div ng-repeat="tab in tabs" data-title="{{tab.title}}">
+			</div>
+		</div>
+
+		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">
+		<div ng-include src="tab.src" class="share-modal-body"></div>
+	</div>
+
+</div>
+
+<script type="text/ng-template" id="shareEmbed.html">
+	<div class="share-modal-big-icon">
+		<i class="fa fa-code"></i>
+	</div>
+
+	<div class="share-snapshot-header">
+		<p class="share-snapshot-info-text">
+			The html code below can be pasted and included in another web page. Unless anonymous access
+			is enabled the user viewing that page need to be signed into grafana for the graph to load.
+		</p>
+	</div>
+
+	<div ng-include src="'shareLinkOptions.html'"></div>
+
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<span class="gf-fluid-input">
+				<textarea rows="5" data-share-panel-url class="input" ng-model='iframeHtml'></textarea>
+			</span>
+		</div>
+		<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+	</div>
+</script>
+
+<script type="text/ng-template" id="shareLinkOptions.html">
+	<div class="editor-row" style="margin: 11px 20px 33px 20px">
+		<div class="section">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 170px;">
+						<label class="checkbox-label" for="options.forCurrent">Current time range</label>
+					</li>
+					<li class="tight-form-item last">
+						<input class="cr1" id="options.forCurrent" type="checkbox" ng-model="options.forCurrent" ng-checked="options.forCurrent" ng-change="buildUrl()">
+						<label for="options.forCurrent" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 170px">
+						<label class="checkbox-label" for="options.includeTemplateVars">Include template variables</label>
+					</li>
+					<li class="tight-form-item last">
+						<input class="cr1" id="options.includeTemplateVars" type="checkbox" ng-model="options.includeTemplateVars" ng-checked="options.includeTemplateVars" ng-change="buildUrl()">
+						<label for="options.includeTemplateVars" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 170px">
+						Theme
+					</li>
+					<li>
+						<select class="input-small tight-form-input last" style="width: 211px" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</script>
+
+<script type="text/ng-template" id="shareLink.html">
+	<div class="share-modal-big-icon">
+		<i class="fa fa-external-link"></i>
+	</div>
+
+	<div ng-include src="'shareLinkOptions.html'"></div>
+	<div class="gf-form">
+		<div class="gf-form-row">
+			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+			<span class="gf-fluid-input">
+				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
+			</span>
+		</div>
+		<div class="editor-row" style="margin-top: 5px;" ng-show="modeSharePanel">
+			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
+		</div>
+	</div>
+</script>
+
+<script type="text/ng-template" id="shareSnapshot.html">
+	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl">
+		<div class="share-modal-big-icon">
+			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+			<i ng-if="!loading" class="gf-icon gf-icon-snap-multi"></i>
+		</div>
+
+		<div class="share-snapshot-header" ng-if="step === 1">
+			<p class="share-snapshot-info-text">
+				A snapshot is an instant way to share an interactive dashboard publicly.
+				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
+				leaving only the visible metric data and series names embedded into your dashboard.
+			</p>
+			<p class="share-snapshot-info-text">
+				Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
+				Share wisely.
+			</p>
+		</div>
+
+		<div class="share-snapshot-header" ng-if="step === 3">
+			<p class="share-snapshot-info-text">
+				The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before it is removed from
+				browser caches or CDN caches.
+			</p>
+		</div>
+
+		<div class="editor-row share-modal-options" style="">
+			<div class="section" ng-if="step === 1">
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 110px;">
+							Snapshot name
+						</li>
+						<li>
+							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 110px">
+							Expire
+						</li>
+						<li>
+							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+
+			<div class="gf-form" ng-if="step === 2" style="margin-top: 40px">
+				<div class="gf-form-row">
+					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
+						<i class="fa fa-external-link-square"></i>
+						{{snapshotUrl}}
+					</a>
+					<br>
+					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
+				</div>
+			</div>
+		</div>
+
+		<div ng-if="step === 1">
+			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
+				<i class="fa fa-save"></i>
+				Local Snapshot
+			</button>
+
+			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
+				<i class="fa fa-cloud-upload"></i>
+				Publish to snapshot.raintank.io
+			</button>
+		</div>
+
+		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
+			Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
+		</div>
+
+	</div>
+</script>

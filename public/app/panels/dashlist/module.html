@@ -1,0 +1,13 @@
+<grafana-panel>
+	<div class="dashlist">
+	<div class="dashlist-item" ng-repeat="dash in dashList">
+		<a class="dashlist-link dashlist-link-{{dash.type}}" href="dashboard/{{dash.uri}}">
+			<span class="dashlist-title">
+				{{dash.title}}
+			</span>
+			<span class="dashlist-star">
+				<i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': !dash.isStarred}"></i>
+			</span>
+		</a>
+	</div>
+</grafana-panel>

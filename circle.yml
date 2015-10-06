@@ -1,0 +1,27 @@
+machine:
+  node:
+    version: 4.0
+  environment:
+    GOPATH: "/home/ubuntu/.go_workspace"
+    ORG_PATH: "github.com/grafana"
+    REPO_PATH: "${ORG_PATH}/grafana"
+
+dependencies:
+  override:
+    - rm -rf ${GOPATH}/src/${REPO_PATH}
+    - mkdir -p ${GOPATH}/src/${ORG_PATH}
+    - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
+    - go get github.com/tools/godep
+    - npm install
+
+test:
+  override:
+     # FMT
+     - test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
+     # GO VET
+     - go vet ./pkg/...
+     # Go test
+     - godep go test -v ./pkg/...
+     # js tests
+     - ./node_modules/grunt-cli/bin/grunt test
+     - npm run coveralls

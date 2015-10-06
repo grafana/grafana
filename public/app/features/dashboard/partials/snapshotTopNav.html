@@ -1,0 +1,36 @@
+<div class="navbar navbar-static-top" ng-controller='SnapshotTopNavCtrl' ng-init="init()">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+
+			<div class="top-nav">
+				<a class="pointer top-nav-menu-btn" ng-if="!contextSrv.sidemenu" ng-click="contextSrv.toggleSideMenu()">
+					<img class="logo-icon" src="img/fav32.png"></img>
+					<i class="fa fa-bars"></i>
+				</a>
+
+				<div class="top-nav-snapshot-title">
+					<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom">
+						<i class="gf-icon gf-icon-snap-multi"></i>
+						<span class="dashboard-title">
+							{{dashboard.title}}
+							<em class="small">&nbsp;&nbsp;(snapshot)</em>
+						</span>
+					</a>
+				</div>
+			</div>
+
+			<ul class="nav pull-left top-nav-dash-actions">
+				<li>
+					<a class="pointer" ng-click="shareDashboard()" bs-tooltip="'Share dashboard'" data-placement="bottom"><i class="fa fa-share-square-o"></i></a>
+				</li>
+			</ul>
+
+			<ul class="nav pull-right">
+				<li ng-if="dashboard">
+					<gf-time-picker></gf-time-picker>
+				</li>
+			</ul>
+
+		</div>
+	</div>
+</div>

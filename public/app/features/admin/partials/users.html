@@ -1,0 +1,42 @@
+<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
+	<ul class="nav">
+		<li class="active"><a href="admin/users">List</a></li>
+		<li><a href="admin/users/create">Create user</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2>
+			Users
+		</h2>
+
+		<table class="grafana-options-table">
+			<tr>
+				<th style="text-align:left">Id</th>
+				<th>Name</th>
+				<th>Login</th>
+				<th>Email</th>
+				<th style="white-space: nowrap">Grafana Admin</th>
+				<th></th>
+			</tr>
+			<tr ng-repeat="user in users">
+				<td>{{user.id}}</td>
+				<td>{{user.name}}</td>
+				<td>{{user.login}}</td>
+				<td>{{user.email}}</td>
+				<td>{{user.isAdmin}}</td>
+				<td style="width: 1%">
+					<a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
+						<i class="fa fa-edit"></i>
+						Edit
+					</a>
+					&nbsp;&nbsp;
+					<a ng-click="deleteUser(user)" class="btn btn-danger btn-small">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>

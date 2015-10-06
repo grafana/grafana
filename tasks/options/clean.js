@@ -1,7 +1,9 @@
 module.exports = function(config) {
+  'use strict';
+
   return {
-    on_start: ['<%= destDir %>', '<%= tempDir %>'],
-    temp: ['<%= tempDir %>'],
-    docs: ['<%= docsDir %>']
+    release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
+    gen: ['<%= genDir %>'],
+    temp: ['<%= tempDir %>']
   };
 };
