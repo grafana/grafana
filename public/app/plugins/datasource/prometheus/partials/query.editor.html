@@ -62,7 +62,6 @@
              placeholder="metric name"
              data-min-length=0 data-items=100>
     </li>
-
   </ul>
 
   <div class="clearfix"></div>
@@ -74,15 +73,10 @@
       Legend format
     </li>
     <li>
-      <input type="text"
-             class="tight-form-input input-xxlarge"
-             ng-model="target.legendFormat"
-             spellcheck='false'
-             placeholder="legend format"
-             data-min-length=0 data-items=1000
-             ng-model-onblur
-             ng-change="refreshMetricData()"
-             />
+      <input type="text" class="tight-form-input input-xxlarge" ng-model="target.legendFormat"
+             spellcheck='false' placeholder="legend format" data-min-length=0 data-items=1000
+             ng-model-onblur ng-change="refreshMetricData()">
+      </input>
     </li>
   </ul>
 
@@ -95,9 +89,7 @@
       Step
     </li>
     <li>
-      <input type="text"
-             class="input-mini tight-form-input"
-             ng-model="target.interval"
+      <input type="text" class="input-mini tight-form-input" ng-model="target.interval"
              bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
              data-placement="right"
              spellcheck='false'
@@ -106,14 +98,14 @@
              ng-model-onblur
              ng-change="refreshMetricData()"
              />
+      </input>
     </li>
 
     <li class="tight-form-item">
       Resolution
     </li>
     <li>
-      <select ng-model="target.intervalFactor"
-             class="tight-form-input input-mini"
+      <select ng-model="target.intervalFactor" class="tight-form-input input-mini"
              ng-options="r.factor as r.label for r in resolutions"
              ng-change="refreshMetricData()">
       </select>
