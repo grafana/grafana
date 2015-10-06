@@ -17,6 +17,7 @@ function (_) {
       panels                        : {
         'graph':      { path: 'app/panels/graph',      name: 'Graph' },
         'singlestat': { path: 'app/panels/singlestat', name: 'Single stat' },
+        'piechart':   { path: 'panels/piechart',       name: 'Pie Chart' },
         'text':       { path: 'app/panels/text',       name: 'Text' },
         'dashlist':   { path: 'app/panels/dashlist',   name: 'Dashboard list' },
       },
