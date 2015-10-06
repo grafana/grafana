@@ -25,9 +25,17 @@ function (angular, _, moment, dateMath) {
       this.directUrl = datasource.directUrl;
 =======
 
+<<<<<<< 4f3b5b91e26289c325a2a4692c49d78e9435bddc
       this.url = datasource.url.replace(/\/$/g, '');
       this.directUrl = datasource.directUrl.replace(/\/$/g, '');
 >>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
+=======
+      var url = datasource.url;
+      if (url[url.length-1] === '/') {
+        url = url.substr(0, url.length - 1);
+      }
+      this.url = url;
+>>>>>>> feat(prometheus): refactoring and polish of the prometheus editor removing unused/uneeded code
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
