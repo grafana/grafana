@@ -36,7 +36,7 @@ function (_) {
       {text: "No limit", value: '0' },
       {text: "1", value: '1' },
       {text: "2", value: '2' },
-      {text: "3", value: '4' },
+      {text: "3", value: '3' },
       {text: "5", value: '5' },
       {text: "10", value: '10' },
       {text: "15", value: '15' },
