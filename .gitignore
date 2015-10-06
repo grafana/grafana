@@ -7,10 +7,20 @@ awsconfig
 /packaging/windows/release
 /packaging/windows/tools/Tools.dproj.local
 /packaging/windows/tools/Tools.dsk
+/packaging/windows/tools/Tools.~dsk
 /packaging/windows/tools/Tools.identcache
 /packaging/windows/tools/__history
 /packaging/windows/tools/Win32
 /packaging/windows/tools/Win64
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.dproj.local
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.dsk
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.~dsk
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.identcache
+/packaging/windows/GrafCrunchGuard/__history
+/packaging/windows/GrafCrunchGuard/Win32
+/packaging/windows/GrafCrunchGuard/Win64
+
+
 /emails/dist
 /tmp
 
