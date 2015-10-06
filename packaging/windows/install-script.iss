@@ -91,6 +91,7 @@ Type: files; Name: {#ConfigINI}
 
 function GetHostName : PAnsiChar; external 'GetHostName@files:Tools.dll stdcall';
 function CheckServerPort (APort : PAnsiChar) : Integer; external 'CheckServerPort@files:Tools.dll stdcall';
+function CheckNetCrunchServerConnection (AServerURL, User, Password: PAnsiChar) : Integer; external 'CheckNetCrunchServerConnection@files:Tools.dll stdcall';
 
 var
   UpdateGrafCrunchServer: Boolean;
@@ -373,12 +374,26 @@ begin
 end;
 
 function CheckNetCrunchServerConfig : Boolean;
+var 
+  NetCrunchServerURL : String;
+  CheckResult : Integer;
+  ErrorMessage : String;
+
 begin
+  NetCrunchServerURL := GetNetCrunchServerConfig('Protocol') + '://' + GetNetCrunchServerConfig('Address') + ':' + GetNetCrunchServerConfig('Port');
+  CheckResult := CheckNetCrunchServerConnection (NetCrunchServerURL, GetNetCrunchServerConfig('User'), GetNetCrunchServerConfig('Password'));
 
-  //**************
-  Result := True;
-  //**************
-
+  if (CheckResult > 0) then begin
+    case CheckResult of
+      1, 3: ErrorMessage := 'Can' + #39 + 't connect to NetCrunch server';
+      2: ErrorMessage := 'GrafCrunch require NetCrunch server version 9.0.0 or greater';
+      4: ErrorMessage := 'Can' + #39 + 't connect to ncapi interface';
+    end;
+    MsgBox(ErrorMessage, mbError, MB_OK);
+    Result := False;
+  end else begin
+    Result := True;
+  end;
 end;
 
 procedure PrepareInfoPage;
@@ -454,10 +469,11 @@ begin
 end;
 
 //**************
+//
+//When NetCrunch WebAppServer is in ssl mode - can't connect to it via IdHTTP and validate data
 
 //Checking installation of old version
 //Stop GrafCrunch server service
-//Validate NetCrunch Server Config data -- connection to netcrunch server
 //Open firewall
 //Start GrafCrunch server service
 //Implement Modify mode for server config modifications;

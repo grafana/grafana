@@ -1,14 +1,111 @@
 library Tools;
 
 uses
-  System.SysUtils,
-  System.Classes,
-  WinApi.Windows,
-  Winapi.WinSock,
-  WinApi.IpHlpApi,
-  WinApi.IpRtrMib;
+  System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib, uPackets,
+  uJSONClient;
 
 {$R *.res}
+
+Type
+
+TNetCrunchConnection = class(TJSONClient)
+private
+  FURL : String;
+  FUser : String;
+  FPassword : String;
+
+  function GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
+public
+  constructor Create(const AURL, AUser, APassword: String);
+  function GetApi(var AApi : TVariantArray) : Boolean;
+  function GetApiName(AApi : TVariantArray) : String;
+  function GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+end;
+
+function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
+begin
+  try
+    Number := StrToInt(StringNumber);
+    Result := True;
+  except
+    Result := False;
+  end;
+end;
+
+function ParseVersion(const AVersion : String; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+var
+  VersionStrings: TStrings;
+
+begin
+  AVer := 0;
+  AMajor := 0;
+  AMinor := 0;
+  ABuild := 0;
+
+  if (AVersion <> '') then begin
+    VersionStrings := TStringList.Create;
+    try
+      Result := False;
+      ExtractStrings(['.'],[], PChar(AVersion), VersionStrings);
+      if (VersionStrings.Count >= 3) then begin
+        if (CheckInteger(VersionStrings[0], AVer) and CheckInteger(VersionStrings[1], AMajor) and
+            CheckInteger(VersionStrings[2], AMinor)) then begin
+          if VersionStrings.Count > 3 then CheckInteger(VersionStrings[3], ABuild);
+          Result := True;
+        end;
+      end;
+    finally
+      VersionStrings.Free;
+    end;
+  end else begin
+    Result := False;
+  end;
+end;
+
+function TNetCrunchConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
+var
+  V: Variant;
+  Value: String;
+
+begin
+  for V in AJSONObject do begin
+    Value := VarAsPacket(V).GetProperty(APropertyName, '');
+    if Value <> '' then Exit(Value);
+  end;
+  Result := '';
+end;
+
+constructor TNetCrunchConnection.Create(const AURL, AUser, APassword: String);
+begin
+  inherited Create;
+  FURL := AURL;
+  FUser := AUser;
+  FPassword := APassword;
+end;
+
+function TNetCrunchConnection.GetApi(var AApi : TVariantArray) : Boolean;
+var QueryResult : TJSONClientResponse;
+begin
+  QueryResult := DoGet(FURL + '/ncapi/api.json');
+  if (QueryResult.IsValidStatus and (QueryResult.Status = 200)) then begin
+    AApi := VarAsArray(QueryResult.Data.Properties['api']);
+    Result := true;
+  end else begin
+    Result := false;
+  end;
+end;
+
+function TNetCrunchConnection.GetApiName (AApi : TVariantArray) : String;
+begin
+  Result := GetPropertyValue(AApi, 'name');
+end;
+
+function TNetCrunchConnection.GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+var Version : String;
+begin
+  Version := GetPropertyValue(AApi, 'ver');
+  Result := ParseVersion(Version, AVer, AMajor, AMinor, ABuild);
+end;
 
 procedure GetIPAddress(var HostName, IP: String);
 
@@ -33,16 +130,6 @@ begin
     IP := String(inet_ntoa(TInAddrBuffer));
   end;
   WSACleanup;
-end;
-
-function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
-begin
-  try
-    Number := StrToInt(StringNumber);
-    Result := True;
-  except
-    Result := False;
-  end;
 end;
 
 function IsPortRestricted(APort: Integer): Boolean;
@@ -118,8 +205,42 @@ begin
   Result := CheckCode;
 end;
 
+function CheckNetCrunchServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
+var
+  NetCrunchServerConnection : TNetCrunchConnection;
+  CheckCode : Integer;
+  Api : TVariantArray;
+  Version, Major, Minor, Build : Integer;
+
+begin
+  NetCrunchServerConnection := TNetCrunchConnection.Create(String(AnsiString(AServerURL)), String(AnsiString(AUser)),
+                                                           String(AnsiString(APassword)));
+  try
+    CheckCode := 3;
+    if NetCrunchServerConnection.GetApi(Api) then begin
+      if NetCrunchServerConnection.GetApiName(Api) = 'ncSrv' then begin
+        if NetCrunchServerConnection.GetApiVer(Api, Version, Major, Minor, Build) then begin
+          if (Version >= 9)
+            then CheckCode := 0
+            else CheckCode := 2;
+        end else begin
+          CheckCode := 2;
+        end;
+      end else begin
+        CheckCode := 4;
+      end;
+    end else begin
+      CheckCode := 1;
+    end;
+  finally
+    NetCrunchServerConnection.Free;
+  end;
+  Result := CheckCode;
+end;
+
 exports
   GetHostName,
-  CheckServerPort;
+  CheckServerPort,
+  CheckNetCrunchServerConnection;
 end.
 
