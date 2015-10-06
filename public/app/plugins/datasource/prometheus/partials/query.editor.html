@@ -48,13 +48,7 @@
              placeholder="query expression"
              data-min-length=0 data-items=100
              ng-model-onblur
-             ng-change="refreshMetricData()"
-             >
-      <a bs-tooltip="target.datasourceErrors.query"
-         style="color: rgb(229, 189, 28)"
-         ng-show="target.datasourceErrors.query">
-        <i class="fa fa-warning"></i>
-      </a>
+             ng-change="refreshMetricData()">
     </li>
     <li class="tight-form-item">
       Metric
@@ -66,13 +60,7 @@
              spellcheck='false'
              bs-typeahead="suggestMetrics"
              placeholder="metric name"
-             data-min-length=0 data-items=100
-             >
-      <a bs-tooltip="target.errors.metric"
-         style="color: rgb(229, 189, 28)"
-         ng-show="target.errors.metric">
-        <i class="fa fa-warning"></i>
-      </a>
+             data-min-length=0 data-items=100>
     </li>
 
   </ul>
@@ -113,7 +101,7 @@
              bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
              data-placement="right"
              spellcheck='false'
-             placeholder="{{target.calculatedInterval}}"
+             placeholder="{{interval}}"
              data-min-length=0 data-items=100
              ng-model-onblur
              ng-change="refreshMetricData()"
@@ -129,12 +117,6 @@
              ng-options="r.factor as r.label for r in resolutions"
              ng-change="refreshMetricData()">
       </select>
-    </li>
-
-    <li class="tight-form-item">
-      <a href="{{target.prometheusLink}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
-        <i class="fa fa-share-square-o"></i>
-      </a>
     </li>
 
   </ul>

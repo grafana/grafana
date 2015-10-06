@@ -5,7 +5,7 @@ define([
   'moment',
   'app/core/utils/datemath',
   './directives',
-  './queryCtrl',
+  './query_ctrl',
 ],
 function (angular, _, kbn, dateMath) {
   'use strict';
@@ -22,7 +22,6 @@ function (angular, _, kbn, dateMath) {
 
       var url = datasource.url;
       if (url[url.length-1] === '/') {
-        // remove trailing slash
         url = url.substr(0, url.length - 1);
       }
       this.url = url;
