@@ -29,6 +29,16 @@ function (angular, _, $, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+
+      if (_.isArray(window.thirdParty.MainLinks)) {
+        _.forEach(window.thirdParty.MainLinks, function(item) {
+          $scope.mainLinks.push({
+            text: item.text,
+            icon: item.icon,
+            href: $scope.getUrl(item.href)
+          });
+        });
+      }
     };
 
     $scope.loadOrgs = function() {

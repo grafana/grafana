@@ -16,8 +16,44 @@ type PluginMeta struct {
 	Name string `json:"name"`
 }
 
+type ThirdPartyRoute struct {
+	Path            string `json:"path"`
+	Method          string `json:"method"`
+	ReqSignedIn     bool   `json:"req_signed_in"`
+	ReqGrafanaAdmin bool   `json:"req_grafana_admin"`
+	ReqRole         string `json:"req_role"`
+	Url             string `json:"url"`
+}
+
+type ThirdPartyJs struct {
+	Src string `json:"src"`
+}
+
+type ThirdPartyMenuItem struct {
+	Text string `json:"text"`
+	Icon string `json:"icon"`
+	Href string `json:"href"`
+}
+
+type ThirdPartyCss struct {
+	Href string `json:"href"`
+}
+
+type ThirdPartyIntegration struct {
+	Routes    []*ThirdPartyRoute    `json:"routes"`
+	Js        []*ThirdPartyJs       `json:"js"`
+	Css       []*ThirdPartyCss      `json:"css"`
+	MenuItems []*ThirdPartyMenuItem `json:"menu_items"`
+}
+
+type ThirdPartyPlugin struct {
+	PluginType  string                `json:"pluginType"`
+	Integration ThirdPartyIntegration `json:"integration"`
+}
+
 var (
-	DataSources map[string]interface{}
+	DataSources  map[string]interface{}
+	Integrations []ThirdPartyIntegration
 )
 
 type PluginScanner struct {
@@ -31,6 +67,7 @@ func Init() {
 
 func scan(pluginDir string) error {
 	DataSources = make(map[string]interface{})
+	Integrations = make([]ThirdPartyIntegration, 0)
 
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
@@ -93,6 +130,14 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 		}
 
 		DataSources[datasourceType.(string)] = pluginJson
+	}
+	if pluginType == "thirdPartyIntegration" {
+		p := ThirdPartyPlugin{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+		Integrations = append(Integrations, p.Integration)
 	}
 
 	return nil

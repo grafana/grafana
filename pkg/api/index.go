@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -51,6 +52,25 @@ func setIndexViewData(c *middleware.Context) error {
 	if setting.GoogleTagManagerId != "" {
 		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
 	}
+	// This can be loaded from the DB/file to allow 3rdParty integration
+	thirdPartyJs := make([]string, 0)
+	thirdPartyCss := make([]string, 0)
+	thirdPartyMenu := make([]*plugins.ThirdPartyMenuItem, 0)
+	for _, integration := range plugins.Integrations {
+		for _, js := range integration.Js {
+			thirdPartyJs = append(thirdPartyJs, js.Src)
+		}
+		for _, css := range integration.Css {
+			thirdPartyCss = append(thirdPartyCss, css.Href)
+		}
+		for _, item := range integration.MenuItems {
+			thirdPartyMenu = append(thirdPartyMenu, item)
+		}
+
+	}
+	c.Data["ThirdPartyJs"] = thirdPartyJs
+	c.Data["ThirdPartyCss"] = thirdPartyCss
+	c.Data["ThirdPartyMenu"] = thirdPartyMenu
 
 	return nil
 }

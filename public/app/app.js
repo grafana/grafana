@@ -37,6 +37,8 @@ function (angular, $, _, appLevelRequire) {
     } else {
       _.extend(module, register_fns);
     }
+    // push it into the apps dependencies
+    apps_deps.push(module.name);
     return module;
   };
 
@@ -66,8 +68,6 @@ function (angular, $, _, appLevelRequire) {
     var module_name = 'grafana.'+type;
     // create the module
     app.useModule(angular.module(module_name, []));
-    // push it into the apps dependencies
-    apps_deps.push(module_name);
   });
 
   var preBootRequires = [
