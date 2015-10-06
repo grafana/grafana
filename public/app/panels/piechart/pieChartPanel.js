@@ -1,6 +1,6 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'jquery',
   'jquery.flot',
@@ -20,18 +20,25 @@ function (angular, app, _, $) {
 
         scope.$on('render', function() {
           render();
+          scope.panelRenderingComplete();
         });
 
         function setElementHeight() {
-          var height = scope.height || panel.height || scope.row.height;
-          if (_.isString(height)) {
-            height = parseInt(height.replace('px', ''), 10);
+          try {
+            var height = scope.height || panel.height || scope.row.height;
+            if (_.isString(height)) {
+              height = parseInt(height.replace('px', ''), 10);
+            }
+
+            height -= 5; // padding
+            height -= panel.title ? 24 : 9; // subtract panel title bar
+
+            elem.css('height', height + 'px');
+
+            return true;
+          } catch(e) { // IE throws errors sometimes
+            return false;
           }
-
-          height -= 10; // padding
-          height -= panel.title ? 24 : 9; // subtract panel title bar
-
-          elem.css('height', height + 'px');
         }
 
         function addPieChart() {
@@ -43,9 +50,10 @@ function (angular, app, _, $) {
           var plotCanvas = $('<div></div>');
           var plotCss = {};
 
-          plotCss.position = 'absolute';
+          // plotCss.position = 'absolute';
           plotCss.top = '10px';
-          plotCss.left = '10px';
+          // plotCss.left = '10px';
+          plotCss.margin = 'auto';
           plotCss.width = (size - 20) + 'px';
           plotCss.height = (size - 20) + 'px';
 
@@ -56,7 +64,7 @@ function (angular, app, _, $) {
             series: {
               pie: {
                 show: true,
-                label: { show: false }
+                label: { show: true }
               }
             }
           };
