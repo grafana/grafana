@@ -1,16 +1,17 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
   'app/core/utils/datemath',
   './directives',
   './query_ctrl',
 ],
-function (angular, _, kbn, dateMath) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
+
+  var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
   module.factory('PrometheusDatasource', function($q, backendSrv, templateSrv) {
 
@@ -19,12 +20,7 @@ function (angular, _, kbn, dateMath) {
       this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
       this.name = datasource.name;
       this.supportMetrics = true;
-
-      var url = datasource.url;
-      if (url[url.length-1] === '/') {
-        url = url.substr(0, url.length - 1);
-      }
-      this.url = url;
+      this.url = datasource.url;
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
@@ -126,29 +122,62 @@ function (angular, _, kbn, dateMath) {
     };
 
     PrometheusDatasource.prototype.metricFindQuery = function(query) {
+      if (!query) { return $q.when([]); }
+
+      var interpolated;
+      try {
+        interpolated = templateSrv.replace(query);
+      }
+      catch (err) {
+        return $q.reject(err);
+      }
+
+      var label_values_regex = /^label_values\(([^,]+)(?:,\s*(.+))?\)$/;
+      var metric_names_regex = /^metrics\((.+)\)$/;
+
       var url;
+      var label_values_query = interpolated.match(label_values_regex);
+      if (label_values_query) {
+        if (!label_values_query[2]) {
+          // return label values globally
+          url = '/api/v1/label/' + label_values_query[1] + '/values';
 
-      var metricsQuery = query.match(/^[a-zA-Z_:*][a-zA-Z0-9_:*]*/);
-      var labelValuesQuery = query.match(/^label_values\((.+)\)/);
-
-      if (labelValuesQuery) {
-        // return label values
-        url = '/api/v1/label/' + labelValuesQuery[1] + '/values';
-
-        return this._request('GET', url).then(function(result) {
-          return _.map(result.data.data, function(value) {
-            return {text: value};
+          return this._request('GET', url).then(function(result) {
+            return _.map(result.data.data, function(value) {
+              return {text: value};
+            });
           });
-        });
-      } else if (metricsQuery != null && metricsQuery[0].indexOf('*') >= 0) {
-        // if query has wildcard character, return metric name list
+        } else {
+          var metric_query = 'count(' + label_values_query[1] + ') by (' +
+                             label_values_query[2]  + ')';
+          url = '/api/v1/query?query=' + encodeURIComponent(metric_query) +
+                    '&time=' + (moment().valueOf() / 1000);
+
+          return this._request('GET', url)
+            .then(function(result) {
+              if (result.data.data.result.length === 0 ||
+                  _.keys(result.data.data.result[0].metric).length === 0) {
+                return [];
+              }
+              return _.map(result.data.data.result, function(metricValue) {
+                return {
+                  text: metricValue.metric[label_values_query[2]],
+                  expandable: true
+                };
+              });
+            });
+        }
+      }
+
+      var metric_names_query = interpolated.match(metric_names_regex);
+      if (metric_names_query) {
         url = '/api/v1/label/__name__/values';
 
         return this._request('GET', url)
           .then(function(result) {
             return _.chain(result.data.data)
               .filter(function(metricName) {
-                var r = new RegExp(metricsQuery[0].replace(/\*/g, '.*'));
+                var r = new RegExp(metric_names_query[1]);
                 return r.test(metricName);
               })
               .map(function(matchedMetricName) {
@@ -161,11 +190,12 @@ function (angular, _, kbn, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        url = '/api/v1/query?query=' + encodeURIComponent(query);
+        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
+              '&time=' + (moment().valueOf() / 1000);
 
         return this._request('GET', url)
           .then(function(result) {
-            return _.map(result.data.result, function(metricData) {
+            return _.map(result.data.data.result, function(metricData) {
               return {
                 text: getOriginalMetricName(metricData.metric),
                 expandable: true
@@ -176,19 +206,20 @@ function (angular, _, kbn, dateMath) {
     };
 
     PrometheusDatasource.prototype.testDatasource = function() {
-      return this.metricFindQuery('*').then(function() {
+      return this.metricFindQuery('metrics(.*)').then(function() {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
 
     PrometheusDatasource.prototype.calculateInterval = function(interval, intervalFactor) {
-      var sec = kbn.interval_to_seconds(interval);
-
+      var m = interval.match(durationSplitRegexp);
+      var dur = moment.duration(parseInt(m[1]), m[2]);
+      var sec = dur.asSeconds();
       if (sec < 1) {
         sec = 1;
       }
 
-      return sec * intervalFactor;
+      return Math.floor(sec * intervalFactor) + 's';
     };
 
     function transformMetricData(md, options) {
@@ -238,12 +269,6 @@ function (angular, _, kbn, dateMath) {
 
     function getPrometheusTime(date, roundUp) {
       if (_.isString(date)) {
-        if (date === 'now') {
-          return 'now()';
-        }
-        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-          return date.replace('now', 'now()').replace('-', ' - ');
-        }
         date = dateMath.parse(date, roundUp);
       }
       return (date.valueOf() / 1000).toFixed(0);
