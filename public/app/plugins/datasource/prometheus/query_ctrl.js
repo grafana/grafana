@@ -44,6 +44,7 @@ function (angular, _) {
         .then(callback);
     };
 
+<<<<<<< 8ebed963c1d31b77388df358686c84213a65f2f4
     $scope.linkToPrometheus = function() {
       var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
       var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
@@ -59,6 +60,8 @@ function (angular, _) {
       return $scope.datasource.directUrl + '/graph#' + hash;
     };
 
+=======
+>>>>>>> feat(prometheus): refactoring and polish of the prometheus editor removing unused/uneeded code
     $scope.init();
   });
 
