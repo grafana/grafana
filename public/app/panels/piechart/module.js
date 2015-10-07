@@ -6,6 +6,7 @@ define([
   'app/components/timeSeries',
   'app/components/panelmeta',
   './pieChartPanel',
+  './legend',
 ],
 function (angular, app, _, kbn, TimeSeries, PanelMeta) {
   'use strict';
@@ -29,15 +30,22 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       metricsEditor: true
     });
 
-    $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
-
     $scope.panelMeta.addEditorTab('Options', 'app/panels/piechart/editor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     // Set and populate defaults
     var _d = {
       pieType: 'pie',
-      legend: { show: false },
+      legend: {
+        show: true, // disable/enable legend
+        legendType: 'rightSide',
+        values: false, // disable/enable legend values
+        min: false,
+        max: false,
+        current: false,
+        total: false,
+        avg: false
+      },
       links: [],
       datasource: null,
       maxDataPoints: 3,
@@ -45,14 +53,12 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       targets: [{}],
       cacheTimeout: null,
       nullText: null,
-      nullPointMode: 'connected',
-      thresholds: '',
-      colorBackground: false,
-      colorValue: false,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"]
+      nullPointMode: 'connected'
     };
 
     _.defaults($scope.panel, _d);
+    _.defaults($scope.panel.legend, _d.legend);
+
     $scope.unitFormats = kbn.getUnitFormats();
 
     $scope.setUnitFormat = function(subItem) {
@@ -75,11 +81,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
         });
     };
 
-    $scope.loadSnapshot = function(snapshotData) {
-      panelHelper.updateTimeRange($scope);
-      $scope.dataHandler(snapshotData);
-    };
-
     $scope.dataHandler = function(results) {
       $scope.series = _.map(results.data, $scope.seriesHandler);
       $scope.render();
@@ -88,31 +89,12 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     $scope.seriesHandler = function(seriesData) {
       var series = new TimeSeries({
         datapoints: seriesData.datapoints,
-        alias: seriesData.target,
+        alias: seriesData.target
       });
 
       series.flotpairs = series.getFlotPairs($scope.panel.nullPointMode);
 
       return series;
-    };
-
-    $scope.setColoring = function(options) {
-      if (options.background) {
-        $scope.panel.colorValue = false;
-        $scope.panel.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
-      }
-      else {
-        $scope.panel.colorBackground = false;
-        $scope.panel.colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
-      }
-      $scope.render();
-    };
-
-    $scope.invertColorOrder = function() {
-      var tmp = $scope.panel.colors[0];
-      $scope.panel.colors[0] = $scope.panel.colors[2];
-      $scope.panel.colors[2] = tmp;
-      $scope.render();
     };
 
     $scope.getDecimalsForValue = function(value) {
@@ -155,17 +137,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     };
 
     $scope.render = function() {
-      // var data = {};
-      //
-      // $scope.setValues(data);
-      //
-      // data.thresholds = $scope.panel.thresholds.split(',').map(function(strVale) {
-      //   return Number(strVale.trim());
-      // });
-      //
-      // data.colorMap = $scope.panel.colors;
-      //
-      // $scope.data = data;
       var data = [];
 
       if ($scope.series && $scope.series.length > 0) {
@@ -175,19 +146,11 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       }
 
       $scope.data = data;
-      $scope.$broadcast('render');
+      panelHelper.broadcastRender($scope, data);
     };
 
     $scope.setValues = function(data) {
       data.flotpairs = [];
-
-      if($scope.series.length > 1) {
-        $scope.inspector.error = new Error();
-        $scope.inspector.error.message = 'Multiple Series Error';
-        $scope.inspector.error.data = 'Metric query returns ' + $scope.series.length +
-        ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify($scope.series);
-        throw $scope.inspector.error;
-      }
 
       if ($scope.series && $scope.series.length > 0) {
         var lastPoint = _.last($scope.series[0].datapoints);
@@ -208,26 +171,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
         }
       }
 
-      // check value to text mappings
-      for(var i = 0; i < $scope.panel.valueMaps.length; i++) {
-        var map = $scope.panel.valueMaps[i];
-        // special null case
-        if (map.value === 'null') {
-          if (data.value === null || data.value === void 0) {
-            data.valueFormated = map.text;
-            return;
-          }
-          continue;
-        }
-
-        // value/number to text mapping
-        var value = parseFloat(map.value);
-        if (value === data.value) {
-          data.valueFormated = map.text;
-          return;
-        }
-      }
-
       if (data.value === null || data.value === void 0) {
         data.valueFormated = "no value";
       }
@@ -241,6 +184,12 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
 
     $scope.addValueMap = function() {
       $scope.panel.valueMaps.push({value: '', op: '=', text: '' });
+    };
+
+    $scope.legendValuesOptionChanged = function() {
+      var legend = $scope.panel.legend;
+      legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+      $scope.render();
     };
 
     $scope.init();

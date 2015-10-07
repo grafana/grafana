@@ -50,22 +50,27 @@ function (angular, app, _, $) {
           var plotCanvas = $('<div></div>');
           var plotCss = {};
 
-          // plotCss.position = 'absolute';
           plotCss.top = '10px';
-          // plotCss.left = '10px';
           plotCss.margin = 'auto';
-          plotCss.width = (size - 20) + 'px';
+          plotCss.position = 'relative';
           plotCss.height = (size - 20) + 'px';
 
           plotCanvas.css(plotCss);
 
           var options = {
-            legend: { show: false },
+            legend: {
+              show: false
+            },
             series: {
               pie: {
                 show: true,
-                label: { show: true }
+                label: {
+                  show: scope.panel.legend.show && scope.panel.legendType === 'On graph'
+                }
               }
+            //},
+            //grid: {
+            //  hoverable: true
             }
           };
 
@@ -73,7 +78,7 @@ function (angular, app, _, $) {
             options.series.pie.innerRadius = 0.5;
           }
 
-          elem.append(plotCanvas);
+          elem.html(plotCanvas);
 
           $.plot(plotCanvas, scope.data, options);
         }
@@ -85,9 +90,6 @@ function (angular, app, _, $) {
           panel = scope.panel;
 
           setElementHeight();
-
-          var body = $('<div>');
-          elem.html(body);
 
           addPieChart();
         }
