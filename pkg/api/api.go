@@ -1,6 +1,12 @@
 package api
 
 import (
+	l "log"
+	"github.com/toolkits/file"
+	"flag"
+	"sync"
+	"encoding/json"
+
 	"github.com/Unknwon/macaron"
 	"github.com/Cepave/grafana/pkg/api/dtos"
 	"github.com/Cepave/grafana/pkg/middleware"
@@ -8,8 +14,61 @@ import (
 	"github.com/macaron-contrib/binding"
 )
 
+var OpenFalconConfigFile = flag.String("configGlobal", "cfg.json", "configuration file")
+type DatabaseConfig struct {
+	Addr       string	`json:"addr"`
+	Account    string	`json:"account"`
+	Password   string	`json:"password"`
+}
+
+type GlobalConfig struct {
+	Database      *DatabaseConfig  `json:"database"`
+}
+
+var (
+	configOpenFalcon     *GlobalConfig
+	lock = new(sync.RWMutex)
+)
+
+/**
+ * @function name:	func parseConfig(cfg string)
+ * @description:	This function parses config file cfg.json.
+ * @related issues:	OWL-115, OWL-085
+ * @param:			cfg string
+ * @return:			void
+ * @author:			Don Hsieh
+ * @since:			09/14/2015
+ * @last modified: 	10/07/2015
+ * @called by:		func main()
+ */
+func parseConfig(cfg string) {
+	if !file.IsExist(cfg) {
+		l.Fatalln("config file:", cfg, "is not existent. maybe you need `mv cfg.example.json cfg.json`")
+	}
+	configContent, err := file.ToTrimString(cfg)
+	if err != nil {
+		l.Fatalln("read config file:", cfg, "fail:", err)
+		// log.Fatal(3, "Failed to write pidfile", err)
+	}
+
+	var configGlobal GlobalConfig
+	err = json.Unmarshal([]byte(configContent), &configGlobal)
+	if err != nil {
+		l.Fatalln("parse config file:", cfg, "fail:", err)
+		return
+	}
+	lock.Lock()
+	defer lock.Unlock()
+	configOpenFalcon = &configGlobal
+	l.Println("read config file:", cfg, "successfully")
+	l.Println("configOpenFalcon =", configOpenFalcon)
+}
+
 // Register adds http routes
 func Register(r *macaron.Macaron) {
+	flag.Parse()
+	parseConfig(*OpenFalconConfigFile)
+
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)

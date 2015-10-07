@@ -25,7 +25,7 @@ import (
 )
 
 var version = "master"
-var commit = "NA"
+var commit = "2015.10.07"
 var buildstamp string
 
 var configFile = flag.String("config", "", "path to config file")
@@ -38,6 +38,7 @@ func init() {
 }
 
 func main() {
+	// buildstamp = "2015-10-05 18:18:16 +0800 CST"
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
 
 	setting.BuildVersion = version
