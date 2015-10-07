@@ -1,4 +1,8 @@
 <grafana-panel>
+<div class="rt-page-header-area" style="margin-left:25px;">
+    <h1 class="rt-h1">Endpoints</h1>
+<!--     <span style="float: right; margin-top: 10px;"><a class="rt-btn" href="endpoints/new">New Endpoint</a></span> -->
+</div>
 <div ng-if="!pageReady" class="rt-loading-message-container">
     <div class="rt-loading-message-inside">
         <img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
@@ -8,6 +12,21 @@
     </div>
 </div>
 <div ng-if="pageReady">
+    <div ng-if="endpoints.length === 0" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 350px;">
+        <div style="text-align: center; padding-top: 90px; min-height: 220px; min-width: 400px;  margin: 0 auto;">
+            <i ng-class="icon" class="icon-rt-endpoint no-endpoints"></i>
+            <p>Looks like you don’t have any endpoints yet. <a class="rt-body-link" href="endpoints/new">Add an endpoint now.</a></p>
+        </div>
+        <div style="text-align: center; min-height: 200px; max-width: 500px; margin: 0 auto;">
+            <label class="rt-collapse rt-collapse-secondary" for="_1">What's an endpoint? <i class="fa fa-caret-down"></i></label>
+            <input id="_1" type="checkbox">
+            <div class="rt-box rt-box-no-margin" style="margin-top:-10px; padding:20px">
+                <p class="rt-helper-blurb">In Litmus, an endpoint is anything you want to monitor.</p>
+                <p class="rt-helper-blurb">When you enter the fully qualified domain name of your endpoint, Litmus will automatically detect what is available to monitor (eg. PING, HTTP, HTTPS) and suggest a customizable set of defaults unique to your endpoint.</p>
+            </div>
+        </div>
+    </div>
+
     <div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block;">
     <div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | orderBy:sort_field">
         <div class="rt-list-header rt-page-box-header" style="overflow: visible; padding:5px;" ng-click="gotoEndpointURL(endpoint)">
@@ -38,28 +57,6 @@
                 </div>
                 <div style="display: inline; margin-left:25px;">
                     <a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="primary-icon dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Endpoint Summary</br> dashboard for {{endpoint.name}}'"></i></a>
-                </div>
-                <div class="dropdown" style="float: right; margin-left: 5px;">
-                    <a data-toggle="dropdown">
-                        <i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
-                    </a>
-                    <ul class="dropdown-menu" role="menu">
-                        <li>
-                            <a href="endpoints/summary/{{endpoint.id}}">
-                                View Endpoint
-                            </a>
-                        </li>
-                        <li>
-                            <a href="endpoints/edit/{{endpoint.id}}">
-                                Configure Endpoint
-                            </a>
-                        </li>
-                        <li>
-                            <a ng-click="remove(endpoint)">
-                                Delete Endpoint
-                            </a>
-                        </li>
-                    </ul>
                 </div>
             </div>
             <div class="clearfix"></div>
