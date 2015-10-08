@@ -64,7 +64,7 @@ function (angular, $, config) {
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       }).catch(function(err) {
-        console.log('Failed to initialize dashboard', err);
+        if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
     };
