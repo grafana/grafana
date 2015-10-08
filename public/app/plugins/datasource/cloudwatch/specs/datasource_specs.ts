@@ -34,9 +34,7 @@ describe('CloudWatchDatasource', function() {
           dimensions: {
             InstanceId: 'i-12345678'
           },
-          statistics: {
-            Average: true
-          },
+          statistics: ['Average'],
           period: 300
         }
       ]
@@ -66,7 +64,7 @@ describe('CloudWatchDatasource', function() {
         expect(params.metricName).to.be(query.targets[0].metricName);
         expect(params.dimensions[0].Name).to.be(Object.keys(query.targets[0].dimensions)[0]);
         expect(params.dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
-        expect(params.statistics).to.eql(Object.keys(query.targets[0].statistics));
+        expect(params.statistics).to.eql(query.targets[0].statistics);
         expect(params.period).to.be(query.targets[0].period);
         done();
       });
@@ -75,9 +73,8 @@ describe('CloudWatchDatasource', function() {
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        var s = Object.keys(query.targets[0].statistics)[0];
-        expect(result.data[0].target).to.be(response.Label + '_' + s + JSON.stringify(query.targets[0].dimensions));
-        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0][s]);
+        expect(result.data[0].target).to.be('CPUUtilization_Average');
+        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average']);
         done();
       });
       ctx.$rootScope.$apply();
@@ -167,7 +164,7 @@ describe('CloudWatchDatasource', function() {
       };
     });
 
-    it('should call __GetMetrics and return result', () => {
+    it('should call __ListMetrics and return result', () => {
       expect(scenario.result[0].text).to.be('i-12345678');
       expect(scenario.request.data.action).to.be('ListMetrics');
     });

@@ -10,12 +10,15 @@ function (angular, _) {
   module.controller('CloudWatchQueryCtrl', function($scope, templateSrv, uiSegmentSrv, $q) {
 
     $scope.init = function() {
-      $scope.target.namespace = $scope.target.namespace || '';
-      $scope.target.metricName = $scope.target.metricName || '';
-      $scope.target.statistics = $scope.target.statistics || {Average: true};
-      $scope.target.dimensions = $scope.target.dimensions || {};
-      $scope.target.period = $scope.target.period || 60;
-      $scope.target.region = $scope.target.region || $scope.datasource.getDefaultRegion();
+      var target = $scope.target;
+      target.namespace = target.namespace || '';
+      target.metricName = target.metricName || '';
+      target.statistics = target.statistics || ['Average'];
+      target.dimensions = target.dimensions || {};
+      target.period = target.period || 60;
+      target.region = target.region || $scope.datasource.getDefaultRegion();
+
+      $scope.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
 
       $scope.regionSegment =  uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
       $scope.namespaceSegment = uiSegmentSrv.getSegmentForValue($scope.target.namespace, 'select namespace');
@@ -28,16 +31,48 @@ function (angular, _) {
         return memo;
       }, []);
 
-      $scope.fixSegments();
+      $scope.statSegments = _.map($scope.target.statistics, function(stat) {
+        return uiSegmentSrv.getSegmentForValue(stat);
+      });
+
+      $scope.ensurePlusButton($scope.statSegments);
+      $scope.ensurePlusButton($scope.dimSegments);
       $scope.removeDimSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove dimension --'});
+      $scope.removeStatSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove stat --'});
     };
 
-    $scope.fixSegments = function() {
-      var count = $scope.dimSegments.length;
-      var lastSegment = $scope.dimSegments[Math.max(count-1, 0)];
+    $scope.getStatSegments = function() {
+      return $q.when([
+        angular.copy($scope.removeStatSegment),
+        uiSegmentSrv.getSegmentForValue('Average'),
+        uiSegmentSrv.getSegmentForValue('Maximum'),
+        uiSegmentSrv.getSegmentForValue('Minimum'),
+        uiSegmentSrv.getSegmentForValue('Sum'),
+        uiSegmentSrv.getSegmentForValue('SampleCount'),
+      ]);
+    };
+
+    $scope.statSegmentChanged = function(segment, index) {
+      if (segment.value === $scope.removeStatSegment.value) {
+        $scope.statSegments.splice(index, 1);
+      } else {
+        segment.type = 'value';
+      }
+
+      $scope.target.statistics = _.reduce($scope.statSegments, function(memo, seg) {
+        if (!seg.fake) { memo.push(seg.value); } return memo;
+      }, []);
+
+      $scope.ensurePlusButton($scope.statSegments);
+      $scope.get_data();
+    };
+
+    $scope.ensurePlusButton = function(segments) {
+      var count = segments.length;
+      var lastSegment = segments[Math.max(count-1, 0)];
 
       if (!lastSegment || lastSegment.type !== 'plus-button') {
-        $scope.dimSegments.push(uiSegmentSrv.newPlusButton());
+        segments.push(uiSegmentSrv.newPlusButton());
       }
     };
 
@@ -74,8 +109,8 @@ function (angular, _) {
         segment.cssClass = 'query-segment-key';
       }
 
-      $scope.fixSegments();
       $scope.syncDimSegmentsWithModel();
+      $scope.ensurePlusButton($scope.dimSegments);
       $scope.get_data();
     };
 
@@ -145,48 +180,6 @@ function (angular, _) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
       }
-    };
-
-    $scope.addDimension = function() {
-      if (!$scope.addDimensionMode) {
-        $scope.addDimensionMode = true;
-        return;
-      }
-
-      if (!$scope.target.dimensions) {
-        $scope.target.dimensions = {};
-      }
-
-      $scope.target.dimensions[$scope.target.currentDimensionKey] = $scope.target.currentDimensionValue;
-      $scope.target.escapedDimensions = this.escapeDimensions($scope.target.dimensions);
-      $scope.target.currentDimensionKey = '';
-      $scope.target.currentDimensionValue = '';
-      $scope.refreshMetricData();
-
-      $scope.addDimensionMode = false;
-    };
-
-    $scope.removeDimension = function(key) {
-      key = key.replace(/\\\$/g, '$');
-      delete $scope.target.dimensions[key];
-      $scope.target.escapedDimensions = this.escapeDimensions($scope.target.dimensions);
-      $scope.refreshMetricData();
-    };
-
-    $scope.escapeDimensions = function(d) {
-      var result = {};
-      _.chain(d)
-      .keys(d)
-      .each(function(k) {
-        var v = d[k];
-        result[k.replace(/\$/g, '\uFF04')] = v.replace(/\$/g, '\$');
-      });
-
-      return result;
-    };
-
-    $scope.statisticsOptionChanged = function() {
-      $scope.refreshMetricData();
     };
 
     $scope.init();
