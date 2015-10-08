@@ -124,11 +124,12 @@ function (angular, _) {
       };
 
       return this.awsRequest(request).then(function(result) {
-        console.log(result);
         return _.chain(result.Metrics).map(function(metric) {
           return _.pluck(metric.Dimensions, 'Value');
         }).flatten().uniq().sortBy(function(name) {
           return name;
+        }).map(function(value) {
+          return {value: value, text: value};
         }).value();
       });
     };
@@ -137,10 +138,7 @@ function (angular, _) {
       return this.awsRequest({
         region: region,
         action: 'DescribeInstances',
-        parameters: {
-          filter: filters,
-          instanceIds: instanceIds
-        }
+        parameters: { filter: filters, instanceIds: instanceIds }
       });
     };
 
@@ -247,6 +245,7 @@ function (angular, _) {
     function transformMetricData(md, options) {
       var result = [];
 
+      console.log(options);
       var dimensionPart = templateSrv.replace(JSON.stringify(options.dimensions));
       _.each(getActivatedStatistics(options.statistics), function(s) {
         var originalSettings = _.templateSettings;
