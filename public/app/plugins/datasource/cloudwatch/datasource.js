@@ -35,7 +35,7 @@ function (angular, _) {
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
         query.dimensions = convertDimensionFormat(target.dimensions);
-        query.statistics = getActivatedStatistics(target.statistics);
+        query.statistics = target.statistics;
         query.period = parseInt(target.period, 10);
 
         var range = end - start;
@@ -191,7 +191,7 @@ function (angular, _) {
           });
         }
 
-        return this.getDimensionValues(region, namespace, metricName, dimensions).then(transformSuggestData);
+        return this.getDimensionValues(region, namespace, metricName, dimensions);
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
@@ -243,52 +243,33 @@ function (angular, _) {
     };
 
     function transformMetricData(md, options) {
-      var result = [];
+      var aliasRegex = /\{\{(.+?)\}\}/g;
+      var aliasPattern = options.alias || '{{metric}}_{{stat}}';
+      var aliasData = {
+        region: templateSrv.replace(options.region),
+        namespace: templateSrv.replace(options.namespace),
+        metric: templateSrv.replace(options.metricName),
+      };
+      _.extend(aliasData, options.dimensions);
 
-      console.log(options);
-      var dimensionPart = templateSrv.replace(JSON.stringify(options.dimensions));
-      _.each(getActivatedStatistics(options.statistics), function(s) {
-        var originalSettings = _.templateSettings;
-        _.templateSettings = {
-          interpolate: /\{\{(.+?)\}\}/g
-        };
-        var template = _.template(options.legendFormat);
+      return _.map(options.statistics, function(stat) {
+        var dps = _.chain(md.Datapoints).map(function(dp) {
+          return [dp[stat], new Date(dp.Timestamp).getTime()];
+        })
+        .sortBy(function(dp) {
+          return dp[1];
+        }).value();
 
-        var metricLabel;
-        if (_.isEmpty(options.legendFormat)) {
-          metricLabel = md.Label + '_' + s + dimensionPart;
-        } else {
-          var d = convertDimensionFormat(options.dimensions);
-          metricLabel = template({
-            Region: templateSrv.replace(options.region),
-            Namespace: templateSrv.replace(options.namespace),
-            MetricName: templateSrv.replace(options.metricName),
-            Dimensions: d,
-            Statistics: s
-          });
-        }
-
-        _.templateSettings = originalSettings;
-
-        var dps = _.map(md.Datapoints, function(value) {
-          return [value[s], new Date(value.Timestamp).getTime()];
+        aliasData.stat = stat;
+        var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
+          if (aliasData[g1]) {
+            return aliasData[g1];
+          }
+          return g1;
         });
-        dps = _.sortBy(dps, function(dp) { return dp[1]; });
 
-        result.push({ target: metricLabel, datapoints: dps });
+        return {target: seriesName, datapoints: dps};
       });
-
-      return result;
-    }
-
-    function getActivatedStatistics(statistics) {
-      var activatedStatistics = [];
-      _.each(statistics, function(v, k) {
-        if (v) {
-          activatedStatistics.push(k);
-        }
-      });
-      return activatedStatistics;
     }
 
     function convertToCloudWatchTime(date) {
@@ -296,10 +277,10 @@ function (angular, _) {
     }
 
     function convertDimensionFormat(dimensions) {
-      return _.map(_.keys(dimensions), function(key) {
+      return _.map(dimensions, function(value, key) {
         return {
           Name: templateSrv.replace(key),
-          Value: templateSrv.replace(dimensions[key])
+          Value: templateSrv.replace(value)
         };
       });
     }
