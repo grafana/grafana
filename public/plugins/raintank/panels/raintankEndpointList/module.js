@@ -1,8 +1,8 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
-  'components/panelmeta',
+  'app/components/panelmeta',
 ],
 function (angular, app, _, PanelMeta) {
   'use strict';
@@ -18,7 +18,7 @@ function (angular, app, _, PanelMeta) {
     };
   });
 
-  module.controller('raintankEndpointList', function($scope, $http, $location, $rootScope, $q, backendSrv) {
+  module.controller('raintankEndpointList', function($scope, $http, $location, $rootScope, $q, backendSrv, panelSrv) {
     $scope.panelMeta = new PanelMeta({
       panelName: 'Raintank Endpoint List',
       description : "Endpoint List",
@@ -46,6 +46,12 @@ function (angular, app, _, PanelMeta) {
         "2": 0,
         "-1": 0,
       };
+      panelSrv.init(this);
+    };
+
+    $scope.refreshData = function() {
+      $scope.getEndpoints();
+      $scope.getCollectors();
     };
 
     $scope.endpointTags = function() {
