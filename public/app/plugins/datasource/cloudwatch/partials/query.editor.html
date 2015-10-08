@@ -55,40 +55,10 @@
 		<li class="tight-form-item tight-form-align" style="width: 100px">
 			Dimensions
 		</li>
-		<li ng-repeat="(key, value) in target.escapedDimensions track by $index" class="tight-form-item">
-			{{key}}&nbsp;=&nbsp;{{value}}
-			<a ng-click="removeDimension(key)">
-				<i class="fa fa-remove"></i>
-			</a>
-		</li>
-
-		<li class="tight-form-item" ng-hide="addDimensionMode">
-			<a ng-click="addDimension()">
-				<i class="fa fa-plus"></i>
-			</a>
-		</li>
-
-		<li ng-show="addDimensionMode">
-			<input type="text"
-			class="input-small tight-form-input"
-			spellcheck='false'
-			bs-typeahead="suggestDimensionKeys"
-			data-min-length=0 data-items=100
-			ng-model="target.currentDimensionKey"
-			placeholder="key">
-			<input type="text"
-			class="input-small tight-form-input"
-			spellcheck='false'
-			bs-typeahead="suggestDimensionValues"
-			data-min-length=0 data-items=100
-			ng-model="target.currentDimensionValue"
-			placeholder="value">
-			<a ng-click="addDimension()">
-				add dimension
-			</a>
+		<li ng-repeat="segment in dimSegments">
+			<metric-segment segment="segment" get-options="getDimSegments(segment, $index)" on-change="dimSegmentChanged(segment, $index)"></metric-segment>
 		</li>
 	</ul>
-
 	<div class="clearfix"></div>
 </div>
 
