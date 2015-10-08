@@ -40,9 +40,13 @@ func Logger() macaron.Handler {
 		switch rw.Status() {
 		case 200, 304:
 			content = fmt.Sprintf("%s", content)
+<<<<<<< 5aed00979aa8f2b04b309ef13d8eb287478cd207
 			if !setting.RouterLogging {
 				return
 			}
+=======
+			return
+>>>>>>> fixed gofmt issue
 		case 404:
 			content = fmt.Sprintf("%s", content)
 		case 500:
