@@ -172,11 +172,14 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+<<<<<<< e1a4c88eb080dbde6fa602230c46b499b5636629
 <<<<<<< c4053e22324c3bff1672d18b358c821047df4ec3
 <<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
 =======
 	ds := query.Result
 >>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
+=======
+>>>>>>> fixed gofmt issue
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -185,12 +188,16 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
+<<<<<<< e1a4c88eb080dbde6fa602230c46b499b5636629
 <<<<<<< c4053e22324c3bff1672d18b358c821047df4ec3
+=======
+>>>>>>> fixed gofmt issue
 	if ds.Type == m.DS_CLOUDWATCH {
 		cloudwatch.HandleRequest(c)
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+<<<<<<< e1a4c88eb080dbde6fa602230c46b499b5636629
 =======
 	if query.Result.Type == m.DS_CLOUDWATCH {
 		ProxyCloudWatchDataSourceRequest(c)
@@ -198,6 +205,8 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(&ds, proxyPath, targetUrl)
 >>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
+=======
+>>>>>>> fixed gofmt issue
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}
