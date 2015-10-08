@@ -73,6 +73,22 @@
         }
       ],
       "title": "Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "editable": true,
+          "error": false,
+          "id": 5,
+          "span": 12,
+          "title": "",
+          "type": "raintankEndpointList"
+        }
+      ],
+      "title": "Endpoint List Row"
     }
   ],
   "nav": [
