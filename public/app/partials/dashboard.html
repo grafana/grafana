@@ -60,8 +60,10 @@
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Move</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="move_row(-1)">Up</a></li>
-										<li><a ng-click="move_row(1)">Down</a></li>
+										<li><a ng-click="move_row('up')">Up</a></li>
+										<li><a ng-click="move_row('down')">Down</a></li>
+                    <li><a ng-click="move_row('top')">To top</a></li>
+                    <li><a ng-click="move_row('bottom')">To Bottom</a></li>
 									</ul>
 								</li>
 								<li>
