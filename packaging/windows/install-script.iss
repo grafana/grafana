@@ -39,7 +39,7 @@ LicenseFile={#LICENSE}
 DefaultDirName={pf64}\AdRem\GrafCrunch
 DefaultGroupName=AdRem GrafCrunch
 OutputDir=release
-OutputBaseFilename=GCServer
+OutputBaseFilename=GCServerSetup
 Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64
@@ -79,11 +79,22 @@ Source: "tools\Win32\Release\Tools.dll"; Flags: dontcopy 32bit
 Source: {#LICENSE}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "GrafCrunchGuard\Win64\Release\GrafCrunchGuard.exe"; DestDir: "{app}\bin\"; DestName: "grafcrunch-guard.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "grafcrunch-server.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "GrafCrunchGuard\Win64\Release\GrafCrunchGuard.exe"; DestDir: "{app}\bin\"; DestName: "GCGuard.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "GCServer.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Run]
+Filename: {app}\bin\GCGuard.exe; Parameters: "/install /silent"
+Filename: {sys}\sc.exe; Parameters: "description GrafCrunchGuardService ""Provides infrastructure for AdRem GrafCrunch""" ; Flags: runhidden
+FileName: {sys}\netsh; Parameters: "advfirewall firewall add rule name= ""AdRem GrafCrunch Server"" dir= in action= allow program= ""{app}\bin\GCServer.exe"" enable=yes"; Flags: runhidden
+Filename: {sys}\sc.exe; Parameters: "start GrafCrunchGuardService" ; Flags: runhidden
+
+[UninstallRun]
+Filename: {sys}\sc.exe; Parameters: "stop GrafCrunchGuardService" ; Flags: runhidden
+Filename: {app}\bin\GCGuard.exe; Parameters: "/uninstall /silent"
+FileName: {sys}\netsh; Parameters: "advfirewall firewall delete rule name= ""AdRem GrafCrunch Server"""; Flags: runhidden
 
 [UninstallDelete]
 Type: files; Name: {#ConfigINI}
@@ -472,12 +483,13 @@ end;
 //**************
 //
 //When NetCrunch WebAppServer is in ssl mode - can't connect to it via IdHTTP and validate data
-
+//Connect to NetCrunch Server: get NetCrunch port, getadministrator password
+//Get Version, Get password for Grafana user
 //Checking installation of old version
-//Stop GrafCrunch server service
-//Open firewall
-//Start GrafCrunch server service
+//Add shortcuts for start / stop GrafCrunch service
 //Implement Modify mode for server config modifications;
+//Add proceses descriptions
+//Grafana server log problem
 
 //function MyProgCheck(): Boolean;
 //begin
@@ -495,4 +507,4 @@ end;
 //;Get this data from user
 
 //;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "user"; String: {#NetCrunchServerUser}; Flags: createkeyifdoesntexist
-//;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: {#NetCrunchServerPassword}; Flags: createkeyifdoesntexist
+//;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: {#NetCrunchServerPassword}; Flags: createkeyifdoesntexistcls

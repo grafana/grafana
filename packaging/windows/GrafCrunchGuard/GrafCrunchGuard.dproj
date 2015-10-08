@@ -34,9 +34,27 @@
         <Cfg_1>true</Cfg_1>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+        <Cfg_2_Win32>true</Cfg_2_Win32>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
+        <Cfg_2_Win64>true</Cfg_2_Win64>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
@@ -79,11 +97,35 @@
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <DCC_RangeChecking>true</DCC_RangeChecking>
+        <DCC_MapFile>3</DCC_MapFile>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_DebugInformation>2</DCC_DebugInformation>
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_MapFile>3</DCC_MapFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
+        <DCC_DebugInformation>2</DCC_DebugInformation>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
+        <DCC_MapFile>3</DCC_MapFile>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -91,9 +133,15 @@
         </DelphiCompile>
         <DCCReference Include="uGrafCrunchGuardService.pas">
             <Form>GrafCrunchGuardService</Form>
-            <FormType>dfm</FormType>
             <DesignClass>TService</DesignClass>
         </DCCReference>
+        <DCCReference Include="V:\ADREM\Debug\uServiceDebugForm.pas">
+            <Form>ServiceDebugForm</Form>
+        </DCCReference>
+        <None Include="ModelSupport_GrafCrunchGuard\default.txaPackage"/>
+        <None Include="ModelSupport_GrafCrunchGuard\default.txvpck"/>
+        <None Include="ModelSupport_GrafCrunchGuard\uGrafCrunchGuardService\default.txvpck"/>
+        <None Include="ModelSupport_GrafCrunchGuard\GrafCrunchGuard\default.txvpck"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -114,11 +162,40 @@
                 <Source>
                     <Source Name="MainSource">GrafCrunchGuard.dpr</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="V:\BplXE8\Win32\AdremD22D.bpl">AdRem Software own components</Excluded_Packages>
+                    <Excluded_Packages Name="V:\BplXE8\Win32\AdRemGraphicD22.bpl">AdRem Software Graphic32 Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k220.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp220.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="V:\BplXE8\Win32\A405_D22.bpl">File V:\BplXE8\Win32\A405_D22.bpl not found</Excluded_Packages>
+                    <Excluded_Packages Name="V:\BplXE8\Win32\QR5DesignDXE8.bpl">File V:\BplXE8\Win32\QR5DesignDXE8.bpl not found</Excluded_Packages>
+                    <Excluded_Packages Name="V:\BplXE8\Win32\tmsdedXE8.bpl">File V:\BplXE8\Win32\tmsdedXE8.bpl not found</Excluded_Packages>
+                    <Excluded_Packages Name="v:\BplXE8\Win32\tmsexdXE8.bpl">File v:\BplXE8\Win32\tmsexdXE8.bpl not found</Excluded_Packages>
+                    <Excluded_Packages Name="v:\BplXE8\Win32\tmsdxe8.bpl">File v:\BplXE8\Win32\tmsdxe8.bpl not found</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="2">
-                <DeployFile LocalName="Win64\Debug\GrafCrunchGuard.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="ModelSupport_GrafCrunchGuard\GrafCrunchGuard\default.txvpck" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win64\Release\GrafCrunchGuard.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>GrafCrunchGuard.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="ModelSupport_GrafCrunchGuard\default.txvpck" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="ModelSupport_GrafCrunchGuard\uGrafCrunchGuardService\default.txvpck" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -128,9 +205,15 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Win64\Debug\GrafCrunchGuard.rsm" Configuration="Debug" Class="DebugSymbols">
+                <DeployFile LocalName="Win64\Debug\GrafCrunchGuard.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
-                        <RemoteName>GrafCrunchGuard.rsm</RemoteName>
+                        <RemoteName>GrafCrunchGuard.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="ModelSupport_GrafCrunchGuard\default.txaPackage" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win64">
+                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -510,18 +593,19 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">True</Platform>
             </Platforms>
+            <ModelSupport>True</ModelSupport>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>

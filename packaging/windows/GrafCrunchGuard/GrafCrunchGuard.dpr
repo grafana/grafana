@@ -13,13 +13,38 @@
 
 program GrafCrunchGuard;
 uses
+  SysUtils,
   Vcl.SvcMgr,
-  uGrafCrunchGuardService in 'uGrafCrunchGuardService.pas' {GrafCrunchGuardService: TService};
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
+  uMessages,
+  uConfigFilesUtils,
+  uNetCrunchConsts,
+  uErrorReportingUtils,
+  uGrafCrunchGuardService in 'uGrafCrunchGuardService.pas' {GrafCrunchGuardService: TService},
+  uServiceDebugForm in 'V:\ADREM\Debug\uServiceDebugForm.pas' {ServiceDebugForm};
 
 {$R *.RES}
 
+const
+  LOGS_FOLDER = 'C:\ProgramData\AdRem\GrafCrunch\log\';
+
 begin
+  ForceDirectories(LOGS_FOLDER);
+  MessagesList.LogLevel := tmsMessage;
+  MessagesList.LogFile := LOGS_FOLDER + ChangeFileExt(ExtractFileName(ParamStr(0)), '.log');
+  MessagesList.WriteToFile := True;
+  MessagesList.ReduceLogFileSize(500000);
+
   if not Application.DelayInitialize or Application.Installing then Application.Initialize;
   Application.CreateForm(TGrafCrunchGuardService, GrafCrunchGuardService);
+
+  // For debugging purpose
+  // Application.CreateForm(TServiceDebugForm, ServiceDebugForm);
+
+  InitializeErrorReporting(True);
   Application.Run;
 end.
