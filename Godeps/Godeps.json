@@ -29,6 +29,11 @@
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/ec2query",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
@@ -50,6 +55,11 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
+			"Comment": "v0.7.3",
+			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/ec2",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
