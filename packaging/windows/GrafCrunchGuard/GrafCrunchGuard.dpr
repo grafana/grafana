@@ -8,7 +8,7 @@
  * uploaded or downloaded to or from any computer system without
  * the prior written consent of AdRem Software sp z o.o.
  *
- * 2010 Copyright AdRem Software, all rights reserved
+ * 2015 Copyright AdRem Software, all rights reserved
  ****************************************************************}
 
 program GrafCrunchGuard;

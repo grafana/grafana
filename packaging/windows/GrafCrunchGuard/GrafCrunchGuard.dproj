@@ -58,6 +58,10 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <VerInfo_Locale>1045</VerInfo_Locale>
+        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <SanitizedProjectName>GrafCrunchGuard</SanitizedProjectName>
@@ -73,17 +77,13 @@
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_UsePackage>dxBarRS22;ZipMasterD22;JvMM;ipwZIPD22;CfgManD22;dxSkinsdxRibbonPainterRS22;FireDACSqliteDriver;frxTee22;DBXSqliteDriver;ipwsshD22;FireDACPgDriver;fmx;dxPScxVGridLnkRS22;dxLayoutControlRS22;IndySystem;TeeDB;tethering;sqD22;AdremD22R;DBXInterBaseDriver;dxSkinsdxNavBarPainterRS22;dxNavBarRS22;dxWizardControlRS22;frxe22;DbxCommonDriver;vclimg;ipwsnmpD22;dbxcds;dxServerModeRS22;DCEF_XE8;ipwsmimeD22;appanalytics;gtPDF32DXE8;vcldb;vcldsnap;dxBarDBNavRS22;dxPSCoreRS22;fmxFireDAC;dxGDIPlusRS22;dclZipForged22;cxGridRS22;CustomIPTransport;JvCore;AdremD22D;vclribbon;dsnap;IndyIPServer;IpworksD22;ccpackD22;fmxase;vcl;IndyCore;IndyIPCommon;CloudService;CodeSiteExpressPkg;FmxTeeUI;FireDACIBDriver;dxThemeRS22;dxSkinscxPCPainterRS22;soapserver;dxtrmdRS22;BE4D22;inetdbxpress;dxComnRS22;dsnapxml;dxPScxGridLnkRS22;dxBarExtItemsRS22;cxLibraryRS22;adortl;vclZipForged22;dxRibbonRS22;dxCoreRS22;dxSkinsdxBarPainterRS22;dxPSdxLCLnkRS22;TaskBarIconD22;O405_r22;madBasic_;FireDACASADriver;sqproD22;cxVerticalGridRS22;dxPScxCommonRS22;frx22;bindcompfmx;dxSkinsCoreRS22;dxSpreadSheetRS22;FireDACODBCDriver;RESTBackendComponents;rtl;dbrtl;DbxClientDriver;FireDACCommon;bindcomp;inetdb;cxExportRS22;AdRemDateRangeD22;Tee;dxDBXServerModeRS22;dxPSLnksRS22;JvCmp;vclFireDAC;madDisAsm_;JvSystem;xmlrtl;svnui;cxPageControldxBarPopupMenuRS22;dxSkinsdxDLPainterRS22;JvControls;cxTreeListdxBarPopupMenuRS22;IndyProtocols;DBXMySQLDriver;BSMSNDXE8;cxDataRS22;FireDACCommonDriver;AdRemExD22;cxBarEditItemRS22;bindcompdbx;soaprtl;bindengine;vclactnband;FMXTee;TeeUI;bindcompvcl;JvStdCtrls;JvCustom;Jcl;vclie;GR32_DXE8;SyntEdit22;dxBarExtDBItemsRS22;frxDB22;FireDACADSDriver;vcltouch;ipwsslD22;dxADOServerModeRS22;cxPageControlRS22;cxTreeListRS22;dxdbtrRS22;PngComponents;dxMasterViewD22;dxPSdxDBTVLnkRS22;madExcept_;VclSmp;FireDAC;VCLRESTComponents;aqDockingManagerD22;Intraweb;AdRemGraphicD22;dxPsPrVwAdvRS22;cxEditorsRS22;ColorPickerPgD22;BackdropD22;dxPScxExtCommonRS22;dxTileControlRS22;kprocsD22;dsnapcon;ipwWebSocketsD22;dxPSPrVwRibbonRS22;inet;FreeD22;fmxobj;GR32_DSGN_DXE8;JclVcl;dxmdsRS22;FireDACMySQLDriver;soapmidas;vclx;svn;fmxdae;dxDockingRS22;RESTComponents;dxTabbedMDIRS22;gtPDFkitDXE8ProP;edbrun;FireDACMSAccDriver;dbexpress;dxPScxTLLnkRS22;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_UsePackage>FireDACSqliteDriver;DBXSqliteDriver;FireDACPgDriver;fmx;IndySystem;TeeDB;tethering;DBXInterBaseDriver;DbxCommonDriver;vclimg;dbxcds;appanalytics;vcldb;vcldsnap;fmxFireDAC;CustomIPTransport;vclribbon;dsnap;IndyIPServer;fmxase;vcl;IndyCore;IndyIPCommon;CloudService;FmxTeeUI;FireDACIBDriver;soapserver;inetdbxpress;dsnapxml;adortl;FireDACASADriver;bindcompfmx;FireDACODBCDriver;RESTBackendComponents;rtl;dbrtl;DbxClientDriver;FireDACCommon;bindcomp;inetdb;Tee;vclFireDAC;xmlrtl;IndyProtocols;DBXMySQLDriver;FireDACCommonDriver;bindcompdbx;soaprtl;bindengine;vclactnband;FMXTee;TeeUI;bindcompvcl;vclie;FireDACADSDriver;vcltouch;VclSmp;FireDAC;VCLRESTComponents;Intraweb;dsnapcon;inet;fmxobj;FireDACMySQLDriver;soapmidas;vclx;fmxdae;RESTComponents;FireDACMSAccDriver;dbexpress;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
@@ -95,10 +95,11 @@
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
@@ -113,13 +114,14 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_DebugInformation>2</DCC_DebugInformation>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <DCC_MapFile>3</DCC_MapFile>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_DebugInformation>2</DCC_DebugInformation>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
@@ -593,13 +595,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
