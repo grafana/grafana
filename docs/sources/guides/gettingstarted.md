@@ -5,7 +5,7 @@ page_keywords: grafana, guide, documentation
 ---
 
 # Getting started
-This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana 2.x instance, and have added at least one Grafana Data Source. 
+This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana 2.x instance, and have added at least one [Data Source](/datasources/overview).
 
 ## Beginner guides
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
