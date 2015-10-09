@@ -1,25 +1,97 @@
-library Tools;
+{****************************************************************
+ *
+ * Author : Boguslaw Gorczyca
+ * Created: 2015-10-09
+ *
+ * No part of this file may be duplicated, revised, translated,
+ * localized or modified in any manner or compiled, linked or
+ * uploaded or downloaded to or from any computer system without
+ * the prior written consent of AdRem Software sp z o.o.
+ *
+ * 2015 Copyright AdRem Software, all rights reserved
+ ****************************************************************}
 
-uses
-  System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib, uPackets,
-  uJSONClient;
+unit uSetupTools;
 
-{$R *.res}
+interface
 
-Type
+  uses uPackets, uJSONClient;
 
-TNetCrunchConnection = class(TJSONClient)
-private
-  FURL : String;
-  FUser : String;
-  FPassword : String;
+  Type
 
-  function GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
-public
-  constructor Create(const AURL, AUser, APassword: String);
-  function GetApi(var AApi : TVariantArray) : Boolean;
-  function GetApiName(AApi : TVariantArray) : String;
-  function GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+  TNetCrunchConnection = class(TJSONClient)
+  private
+    FURL : String;
+    FUser : String;
+    FPassword : String;
+
+    function GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
+  public
+    constructor Create(const AURL, AUser, APassword: String);
+    function GetApi(var AApi : TVariantArray) : Boolean;
+    function GetApiName(AApi : TVariantArray) : String;
+    function GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+  end;
+
+  function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
+  function ParseVersion(const AVersion : String; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+  function CompareVersion (AVer1, AVer2 : PAnsiChar) : Integer; stdcall;
+  procedure GetIPAddress(var HostName, IP: String);
+  function IsPortRestricted(APort: Integer): Boolean;
+  function IsPortAvailable(APort: Integer): Boolean;
+  function GetHostName : PAnsiChar; stdcall;
+  function CheckServerPort (APort : PAnsiChar) : Integer; stdcall;
+  function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
+  function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
+
+implementation
+
+uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib,
+     uNetCrunchClient, uClientIntf, uNCAuthorityConsts;
+
+function TNetCrunchConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
+var
+  V: Variant;
+  Value: String;
+
+begin
+  for V in AJSONObject do begin
+    Value := VarAsPacket(V).GetProperty(APropertyName, '');
+    if Value <> '' then Exit(Value);
+  end;
+  Result := '';
+end;
+
+constructor TNetCrunchConnection.Create(const AURL, AUser, APassword: String);
+begin
+  inherited Create;
+  FURL := AURL;
+  FUser := AUser;
+  FPassword := APassword;
+end;
+
+function TNetCrunchConnection.GetApi(var AApi : TVariantArray) : Boolean;
+var QueryResult : TJSONClientResponse;
+begin
+  QueryResult := DoGet(FURL + '/ncapi/api.json');
+  if (QueryResult.IsValidStatus and (QueryResult.Status = 200)) then begin
+    AApi := VarAsArray(QueryResult.Data.Properties['api']);
+    Result := true;
+  end else begin
+    Result := false;
+  end;
+end;
+
+function TNetCrunchConnection.GetApiName (AApi : TVariantArray) : String;
+begin
+  Result := GetPropertyValue(AApi, 'name');
+end;
+
+function TNetCrunchConnection.GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+var Version : String;
+begin
+  Version := GetPropertyValue(AApi, 'ver');
+  Result := ParseVersion(Version, AVer, AMajor, AMinor, ABuild);
 end;
 
 function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
@@ -100,51 +172,6 @@ begin
   Result := CompareResult;
 end;
 
-function TNetCrunchConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
-var
-  V: Variant;
-  Value: String;
-
-begin
-  for V in AJSONObject do begin
-    Value := VarAsPacket(V).GetProperty(APropertyName, '');
-    if Value <> '' then Exit(Value);
-  end;
-  Result := '';
-end;
-
-constructor TNetCrunchConnection.Create(const AURL, AUser, APassword: String);
-begin
-  inherited Create;
-  FURL := AURL;
-  FUser := AUser;
-  FPassword := APassword;
-end;
-
-function TNetCrunchConnection.GetApi(var AApi : TVariantArray) : Boolean;
-var QueryResult : TJSONClientResponse;
-begin
-  QueryResult := DoGet(FURL + '/ncapi/api.json');
-  if (QueryResult.IsValidStatus and (QueryResult.Status = 200)) then begin
-    AApi := VarAsArray(QueryResult.Data.Properties['api']);
-    Result := true;
-  end else begin
-    Result := false;
-  end;
-end;
-
-function TNetCrunchConnection.GetApiName (AApi : TVariantArray) : String;
-begin
-  Result := GetPropertyValue(AApi, 'name');
-end;
-
-function TNetCrunchConnection.GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
-var Version : String;
-begin
-  Version := GetPropertyValue(AApi, 'ver');
-  Result := ParseVersion(Version, AVer, AMajor, AMinor, ABuild);
-end;
-
 procedure GetIPAddress(var HostName, IP: String);
 
 type
@@ -161,7 +188,7 @@ begin
   IP := '';
 
   if (WSAStartup($101, TWSADataBuffer) = 0) then begin
-    gethostname(NameBuffer, sizeof(NameBuffer));
+    WinApi.WinSock.gethostname(NameBuffer, sizeof(NameBuffer));
     PHostEntBuffer := gethostbyname(NameBuffer);
     HostName := String(PHostEntBuffer^.h_name);
     TInAddrBuffer.S_addr := u_long(pu_long(PHostEntBuffer^.h_addr_list^)^);
@@ -243,7 +270,7 @@ begin
   Result := CheckCode;
 end;
 
-function CheckNetCrunchServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
+function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
 var
   NetCrunchServerConnection : TNetCrunchConnection;
   CheckCode : Integer;
@@ -276,10 +303,42 @@ begin
   Result := CheckCode;
 end;
 
-exports
-  CompareVersion,
-  GetHostName,
-  CheckServerPort,
-  CheckNetCrunchServerConnection;
+//****
+function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
+var
+  Address : String;
+  Port : String;
+  Password : String;
+  SessionToken : String;
+  Status : String;
+begin
+  Address := String(AnsiString(AAddress));
+  Port := String(AnsiString(APort));
+  Password := String(AnsiString(APassword));
+  Status := 'Login Failed';
+
+//  InitNetCrunchClient(Address, Port);
+
+//  if (not Assigned(NetCrunchClient)) then begin
+//    Status := 'Client not assigned';    //Connection error
+//  end else begin
+//    Status := 'Client assigned';
+  //    NetCrunchClient.AutoReconnect := True;
+//    NetCrunchClient.Open;
+//
+//    if (NetCrunchClient.Login('NetCrunch', Password, SessionToken) = NC_AUTHENTICATE_OK) then begin
+//      NetCrunchClient.AuthToken := SessionToken;
+
+//      Status := SessionToken;
+
+//    end;
+//    NetCrunchClient.Close(True);
+//    NetCrunchClient := nil;
+//  end;
+
+  Result := PAnsiChar(AnsiString(Status));
+end;
+//****
+
 end.
 
