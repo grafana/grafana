@@ -1,7 +1,11 @@
+#define MyAppID "{5FFA65A5-D4CF-4E26-9AC0-1615E3895B1E}"
 #define MyAppName "AdRem GrafCrunch Server"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "AdRem Software, Inc. New York, NY"
 #define MyAppURL "http://www.adremsoft.com/"
+#define MyAppIcon "icon.ico"
+#define MyAppGroupName "AdRem GrafCrunch"
+#define MyAppUninstallKey "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + MyAppID + "_is1"
 
 #define LICENSE "..\..\LICENSE.md"
 #define NOTICE "..\..\NOTICE.md"
@@ -27,7 +31,7 @@
 #define NetCrunchWebAppServerKey "SOFTWARE\AdRem\WebAppSrv\1.0"
 
 [Setup]
-AppId={{5FFA65A5-D4CF-4E26-9AC0-1615E3895B1E}
+AppId={{#MyAppID}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName}
@@ -37,9 +41,11 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 LicenseFile={#LICENSE}
 DefaultDirName={pf64}\AdRem\GrafCrunch
-DefaultGroupName=AdRem GrafCrunch
+DefaultGroupName={#MyAppGroupName}
 OutputDir=release
 OutputBaseFilename=GCServerSetup
+SetupIconFile={#MyAppIcon}
+UninstallDisplayIcon={#MyAppIcon}
 Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64
@@ -76,6 +82,7 @@ Name: {#GrafCrunchProgramData}
 [Files]
 Source: "tools\Win32\Release\Tools.dll"; Flags: dontcopy 32bit
 
+Source: {#MyAppIcon}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#LICENSE}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 
@@ -84,6 +91,9 @@ Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "GCServe
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{group}\Uninstall"; Filename: "{uninstallexe}"; Comment: "Uninstall AdRem GrafCrunch Server";
 
 [Run]
 Filename: {app}\bin\GCGuard.exe; Parameters: "/install /silent"
@@ -101,6 +111,7 @@ Type: files; Name: {#ConfigINI}
 
 [Code]
 
+function CompareVersion (AVer1, AVer2 : PAnsiChar) : Integer; external 'CompareVersion@files:Tools.dll stdcall';
 function GetHostName : PAnsiChar; external 'GetHostName@files:Tools.dll stdcall';
 function CheckServerPort (APort : PAnsiChar) : Integer; external 'CheckServerPort@files:Tools.dll stdcall';
 function CheckNetCrunchServerConnection (AServerURL, User, Password: PAnsiChar) : Integer; external 'CheckNetCrunchServerConnection@files:Tools.dll stdcall';
@@ -114,6 +125,34 @@ var
   NetCrunchServerPortTextBox: TEdit;
   NetCrunchServerSSLCheckBox: TCheckBox;
   InfoPage: TOutputMsgMemoWizardPage;
+
+function CheckVersion : Boolean;
+var 
+  OldVersion: String;
+  CurrentVersion: String;
+  Uninstaller: String;
+  ErrorCode : Integer;
+begin
+  CurrentVersion := '{#MyAppVersion}';
+  if RegKeyExists(HKEY_LOCAL_MACHINE, '{#MyAppUninstallKey}') then begin
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, '{#MyAppUninstallKey}', 'DisplayVersion', OldVersion);
+
+    if (CompareVersion(OldVersion, CurrentVersion) <= 0) then begin
+      if (MsgBox('Version ' + OldVersion + ' of {#MyAppName} is already installed. Continue to use this old version?', mbConfirmation, MB_YESNO) = IDYES) then begin
+        Result := False;
+      end else begin
+        RegQueryStringValue(HKEY_LOCAL_MACHINE, '{#MyAppUninstallKey}', 'UninstallString', Uninstaller);
+        ShellExec('runas', Uninstaller, '/SILENT', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+        Result := True;
+      end;
+    end else begin
+      MsgBox('Version ' + OldVersion + ' of {#MyAppName} is already installed. This installer will exit.', mbInformation, MB_OK);
+      Result := False;
+    end;
+  end else begin
+    Result := True;
+  end;
+end;
 
 function CreateLabel (AParent : TWizardPage; ALeft, ATop: Integer; const ACaption: String) : TLabel;
 var TextLabel : TLabel;
@@ -434,6 +473,7 @@ end;
 
 procedure InitializeWizard;
 begin
+  if not CheckVersion then Abort;
   UpdateGrafCrunchServer := GrafCrunchServerDatabaseExist;
   HostName := String(AnsiString(GetHostName));
   PrepareGrafCrunchServerConfigPage;
@@ -481,30 +521,19 @@ begin
 end;
 
 //**************
-//
+
 //When NetCrunch WebAppServer is in ssl mode - can't connect to it via IdHTTP and validate data
 //Connect to NetCrunch Server: get NetCrunch port, getadministrator password
 //Get Version, Get password for Grafana user
-//Checking installation of old version
-//Add shortcuts for start / stop GrafCrunch service
-//Implement Modify mode for server config modifications;
+
 //Add proceses descriptions
+
+//Add shortcuts for start / stop GrafCrunch service
+//Name: "{group}\Start GrafCrunch Server"; Filename: {sys}\sc.exe; Parameters: "start GrafCrunchGuardService" ; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Starts AdRem GrafCrunch Server";
+//Name: "{group}\Stop GrafCrunch Server"; Filename: {sys}\sc.exe; Parameters: "stop GrafCrunchGuardService" ; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Stops AdRem GrafCrunch Server";
+
+//Implement Modify mode for server config modifications;
 //Grafana server log problem
-
-//function MyProgCheck(): Boolean;
-//begin
-//  if not MyProgChecked then begin
-    //MyProgCheckResult := MsgBox('Do you want to install MyProg.exe to ' + ExtractFilePath(CurrentFileName) + '?', mbConfirmation, MB_YESNO) = idYes;
-    //MyProgChecked := True;
-  //end;
-  //Result := MyProgCheckResult;
-//end;
-
-//function MyDirCheck(DirName: String): Boolean;
-//begin
-//  Result := DirExists(DirName);
-//end;
-//;Get this data from user
 
 //;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "user"; String: {#NetCrunchServerUser}; Flags: createkeyifdoesntexist
 //;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: {#NetCrunchServerPassword}; Flags: createkeyifdoesntexistcls

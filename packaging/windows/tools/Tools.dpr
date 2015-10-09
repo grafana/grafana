@@ -62,6 +62,44 @@ begin
   end;
 end;
 
+function CompareVersion (AVer1, AVer2 : PAnsiChar) : Integer; stdcall;
+
+var
+  Ver1, Major1, Minor1, Build1 : Integer;
+  Ver2, Major2, Minor2, Build2 : Integer;
+  CompareResult : Integer;
+
+  function CompareNumbers(ANumber1, ANumber2 : Integer) : Integer;
+  begin
+    if (ANumber1 < ANumber2) then begin
+      Result := -1;
+    end else begin
+      if (ANumber1 > ANumber2) then begin
+        Result := 1;
+      end else begin
+        Result := 0;
+      end;
+    end;
+  end;
+
+begin
+  CompareResult := 2;
+  if ((ParseVersion(String(AVer1), Ver1, Major1, Minor1, Build1) and
+       ParseVersion(String(AVer2), Ver2, Major2, Minor2, Build2))) then begin
+    CompareResult := CompareNumbers(Ver1, Ver2);
+    if (CompareResult = 0) then begin
+      CompareResult := CompareNumbers(Major1, Major2);
+      if CompareResult = 0 then begin
+        CompareResult := CompareNumbers(Minor1, Minor2);
+        if CompareResult = 0 then begin
+          CompareResult := CompareNumbers(Build1, Build2);
+        end;
+      end;
+    end;
+  end;
+  Result := CompareResult;
+end;
+
 function TNetCrunchConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
 var
   V: Variant;
@@ -239,6 +277,7 @@ begin
 end;
 
 exports
+  CompareVersion,
   GetHostName,
   CheckServerPort,
   CheckNetCrunchServerConnection;
