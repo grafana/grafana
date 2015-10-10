@@ -34,6 +34,7 @@ function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.panelMeta.addEditorTab('Axes & Grid', 'app/panels/graph/axisEditor.html');
     $scope.panelMeta.addEditorTab('Display Styles', 'app/panels/graph/styleEditor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
+    $scope.panelMeta.addEditorTab('Alerting', 'app/panels/graph/alerting.html');
 
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
     $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
