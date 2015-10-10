@@ -19,7 +19,7 @@ import (
 const INNER_QUERY = `
 WITH measurement AS (
     SELECT
-      (1000.0 * EXTRACT(epoch FROM time)::FLOAT / EXTRACT(epoch FROM INTERVAL '%s')::FLOAT)::BIGINT as interval,
+      (1000.0 * EXTRACT(epoch FROM time)::FLOAT / EXTRACT(epoch FROM INTERVAL '%s')::FLOAT)::BIGINT / 1000 as interval,
       *
     FROM
       (%s) filtered
