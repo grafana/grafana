@@ -21,12 +21,17 @@ import (
 	"time"
 
 	"github.com/Unknwon/macaron"
+<<<<<<< ec407d46e68841764716f30db72e0b17bf53a93b
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 =======
 	"github.com/Cepave/grafana/pkg/log"
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
+=======
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
+>>>>>>> fix(logging): fixed so that router_logging = true actually logs all http requests, fixes #2902
 )
 
 func Logger() macaron.Handler {
@@ -41,6 +46,7 @@ func Logger() macaron.Handler {
 		switch rw.Status() {
 		case 200, 304:
 			content = fmt.Sprintf("%s", content)
+<<<<<<< ec407d46e68841764716f30db72e0b17bf53a93b
 <<<<<<< e1a4c88eb080dbde6fa602230c46b499b5636629
 			if !setting.RouterLogging {
 				return
@@ -48,6 +54,11 @@ func Logger() macaron.Handler {
 =======
 			return
 >>>>>>> fixed gofmt issue
+=======
+			if !setting.RouterLogging {
+				return
+			}
+>>>>>>> fix(logging): fixed so that router_logging = true actually logs all http requests, fixes #2902
 		case 404:
 			content = fmt.Sprintf("%s", content)
 		case 500:
