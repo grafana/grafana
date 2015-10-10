@@ -7,7 +7,6 @@ define([
 
   describe('ShareModalCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
-    var browser;
 
     function setTime(range) {
       ctx.timeSrv.timeRange = sinon.stub().returns(range);
