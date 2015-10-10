@@ -1,0 +1,16 @@
+{
+  "pluginType": "datasource",
+  "name": "Postgres",
+
+  "type": "postgres",
+  "serviceName": "PostgresDatasource",
+
+  "module": "app/plugins/datasource/postgres/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/postgres/partials/config.html",
+    "query": "app/plugins/datasource/postgres/partials/query.editor.html"
+  },
+
+  "metrics": true
+}

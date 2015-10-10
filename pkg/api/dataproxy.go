@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
+  "github.com/grafana/grafana/pkg/api/postgres"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -96,12 +97,20 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
-	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c)
-	} else {
-		proxyPath := c.Params("*")
-		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-		proxy.Transport = dataProxyTransport
-		proxy.ServeHTTP(c.RW(), c.Req.Request)
-	}
+  switch ds.Type {
+  case m.DS_CLOUDWATCH:
+    cloudwatch.HandleRequest(c)
+  case m.DS_POSTGRES:
+    if pg, err := postgres.NewPostgres(ds); err == nil {
+      defer pg.Close()
+      pg.HandleRequest(c)
+    } else {
+      c.JsonApiErr(500, "Could not initialize Postgres", err)
+    }
+  default:
+    proxyPath := c.Params("*")
+    proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+    proxy.Transport = dataProxyTransport
+    proxy.ServeHTTP(c.RW(), c.Req.Request)
+  }
 }
