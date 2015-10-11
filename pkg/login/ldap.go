@@ -2,8 +2,10 @@ package login
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -25,12 +27,26 @@ func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
 
 func (a *ldapAuther) Dial() error {
 	var err error
+	var certPool *x509.CertPool
+	if a.server.RootCACert != "" {
+		certPool := x509.NewCertPool()
+		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
+			if pem, err := ioutil.ReadFile(caCertFile); err != nil {
+				return err
+			} else {
+				if !certPool.AppendCertsFromPEM(pem) {
+					return errors.New("Failed to append CA certficate " + caCertFile)
+				}
+			}
+		}
+	}
 	for _, host := range strings.Split(a.server.Host, " ") {
 		address := fmt.Sprintf("%s:%d", host, a.server.Port)
 		if a.server.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: a.server.SkipVerifySSL,
 				ServerName:         host,
+				RootCAs:            certPool,
 			}
 			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
 		} else {
