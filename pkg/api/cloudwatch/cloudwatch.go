@@ -112,7 +112,7 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 		params.Filters = reqParam.Parameters.Filters
 	}
 	if len(reqParam.Parameters.InstanceIds) > 0 {
-		params.InstanceIDs = reqParam.Parameters.InstanceIds
+		params.InstanceIds = reqParam.Parameters.InstanceIds
 	}
 
 	resp, err := svc.DescribeInstances(params)
