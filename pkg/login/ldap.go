@@ -24,18 +24,23 @@ func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
 }
 
 func (a *ldapAuther) Dial() error {
-	address := fmt.Sprintf("%s:%d", a.server.Host, a.server.Port)
 	var err error
-	if a.server.UseSSL {
-		tlsCfg := &tls.Config{
-			InsecureSkipVerify: a.server.SkipVerifySSL,
-			ServerName:         a.server.Host,
+	for _, host := range strings.Split(a.server.Host, " ") {
+		address := fmt.Sprintf("%s:%d", host, a.server.Port)
+		if a.server.UseSSL {
+			tlsCfg := &tls.Config{
+				InsecureSkipVerify: a.server.SkipVerifySSL,
+				ServerName:         host,
+			}
+			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+		} else {
+			a.conn, err = ldap.Dial("tcp", address)
 		}
-		a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
-	} else {
-		a.conn, err = ldap.Dial("tcp", address)
-	}
 
+		if err == nil {
+			return nil
+		}
+	}
 	return err
 }
 

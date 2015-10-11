@@ -2,7 +2,7 @@
 verbose_logging = false
 
 [[servers]]
-# Ldap server host
+# Ldap server host (specify multiple hosts space separated)
 host = "127.0.0.1"
 # Default port is 389 or 636 if use_ssl = true
 port = 389
