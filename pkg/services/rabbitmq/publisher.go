@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"sync"
 	"time"
 )
 
@@ -17,21 +18,53 @@ type Exchange struct {
 }
 
 type Publisher struct {
+	rw       sync.RWMutex
 	Url      string
 	Exchange *Exchange
 	conn     *amqp.Connection
 	channel  *amqp.Channel
 }
 
+func (p *Publisher) Close() {
+	p.rw.Lock()
+	defer p.rw.Unlock()
+	_ = p.conn.Close()
+}
+
+func (p *Publisher) Reconnect() error {
+	p.rw.Lock()
+	defer p.rw.Unlock()
+
+	_ = p.conn.Close()
+	fmt.Println("attempting to reconnect to rabbitmq.")
+	err := p.connect()
+
+	for err != nil {
+		time.Sleep(2 * time.Second)
+		fmt.Println("attempting to reconnect to rabbitmq.")
+		err = p.connect()
+	}
+	fmt.Println("Connected to rabbitmq again.")
+	return nil
+}
+
 func (p *Publisher) Connect() error {
+	p.rw.Lock()
+	defer p.rw.Unlock()
+	return p.connect()
+}
+
+func (p *Publisher) connect() error {
 	err := p.getConnection()
 	if err != nil {
 		return err
 	}
 	err = p.getChannel()
 	if err != nil {
+		p.Close()
 		return err
 	}
+
 	return nil
 }
 
@@ -62,29 +95,16 @@ func (p *Publisher) getChannel() error {
 	if err != nil {
 		return err
 	}
+
 	p.channel = ch
+
 	// listen for close events so we can reconnect.
 	errChan := p.channel.NotifyClose(make(chan *amqp.Error))
 	go func() {
 		for er := range errChan {
 			fmt.Println("connection to rabbitmq lost.")
 			fmt.Println(er)
-			fmt.Println("attempting to create new rabbitmq channel.")
-			err := p.getChannel()
-			if err == nil {
-				break
-			}
-
-			//could not create channel, so lets close the connection
-			// and re-create.
-			_ = p.conn.Close()
-
-			for err != nil {
-				time.Sleep(2 * time.Second)
-				fmt.Println("attempting to reconnect to rabbitmq.")
-				err = p.Connect()
-			}
-			fmt.Println("Connected to rabbitmq again.")
+			p.Reconnect()
 		}
 	}()
 	return nil
@@ -92,6 +112,7 @@ func (p *Publisher) getChannel() error {
 
 func (p *Publisher) Publish(routingKey string, msgString []byte) {
 	for {
+		p.rw.RLock()
 		err := p.channel.Publish(
 			p.Exchange.Name, //exchange
 			routingKey,      // routing key
@@ -102,6 +123,7 @@ func (p *Publisher) Publish(routingKey string, msgString []byte) {
 				Body:        msgString,
 			},
 		)
+		p.rw.RUnlock()
 		if err == nil {
 			return
 		}
