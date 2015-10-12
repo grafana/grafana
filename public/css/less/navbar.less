@@ -46,6 +46,15 @@
     position: absolute;
     opacity: 1;
     transition: opacity .20s ease-in-out;
+
+    &.logo-icon {
+      border-radius: 50%;
+      background: @grafcrunch-logo-background;
+      border: 2px solid @bodyBackground;
+      top: -1px;
+      left: -1px;
+      padding: 3px;
+    }
   }
   &:hover {
     .fa {
