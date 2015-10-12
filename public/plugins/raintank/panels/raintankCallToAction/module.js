@@ -60,7 +60,7 @@ function (angular, app, _, PanelMeta) {
         $scope.userStatus = "noTeam";
         return;
       }
-      if ($scope.quotas.user.used >= 2) {
+      if ($scope.quotas.org_user.used >= 2) {
         $scope.userStatus = "hasTeam";
         return;
       }
