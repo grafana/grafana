@@ -1,0 +1,7 @@
+{
+    "database": {
+        "addr": "yourDbAddress",
+        "account": "yourDbAccount",
+        "password": "yourDbPassword"
+    }
+}
