@@ -58,7 +58,7 @@ func Init(metrics met.Backend) {
 	tickQueueItems = metrics.NewMeter("alert-tickqueue.items", 0)
 	tickQueueSize = metrics.NewGauge("alert-tickqueue.size", int64(setting.TickQueueSize))
 	dispatcherJobsSkippedDueToSlowJobQueueInternal = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-internal-jobqueue")
-	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-pre-amqp-jobqueue")
+	dispatcherJobsSkippedDueToSlowJobQueuePreAMQP = metrics.NewCount("alert-dispatcher.jobs-skipped-due-to-slow-preamqp-jobqueue")
 	dispatcherTicksSkippedDueToSlowTickQueue = metrics.NewCount("alert-dispatcher.ticks-skipped-due-to-slow-tickqueue")
 
 	dispatcherGetSchedules = metrics.NewTimer("alert-dispatcher.get-schedules", 0)
