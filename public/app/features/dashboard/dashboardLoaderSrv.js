@@ -4,8 +4,9 @@ define([
   'lodash',
   'jquery',
   'kbn',
+  'app/core/utils/datemath',
 ],
-function (angular, moment, _, $, kbn) {
+function (angular, moment, _, $, kbn, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -59,8 +60,8 @@ function (angular, moment, _, $, kbn) {
       };
 
       /*jshint -W054 */
-      var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', 'services', result.data);
-      var script_result = script_func($routeParams, kbn, _ , moment, window, document, $, $, services);
+      var script_func = new Function('ARGS','kbn','dateMath','_','moment','window','document','$','jQuery', 'services', result.data);
+      var script_result = script_func($routeParams, kbn, dateMath, _ , moment, window, document, $, $, services);
 
       // Handle async dashboard scripts
       if (_.isFunction(script_result)) {
