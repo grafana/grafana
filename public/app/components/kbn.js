@@ -199,30 +199,6 @@ function($, _) {
     return new RegExp(match[1], match[2]);
   };
 
-  kbn.formatFuncCreator = function(factor, extArray) {
-    return function(size, decimals, scaledDecimals) {
-      if (size === null) {
-        return "";
-      }
-
-      var steps = 0;
-      var limit = extArray.length;
-
-      while (Math.abs(size) >= factor) {
-        steps++;
-        size /= factor;
-
-        if (steps >= limit) { return "NA"; }
-      }
-
-      if (steps > 0 && scaledDecimals !== null) {
-        decimals = scaledDecimals + (3 * steps);
-      }
-
-      return kbn.toFixed(size, decimals) + extArray[steps];
-    };
-  };
-
   kbn.toFixed = function(value, decimals) {
     if (value === null) {
       return "";
@@ -249,6 +225,46 @@ function($, _) {
     return formatted;
   };
 
+  kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
+    if (scaledDecimals === null) {
+      return kbn.toFixed(value, decimals) + ext;
+    } else {
+      return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
+    }
+  };
+
+  kbn.roundValue = function (num, decimals) {
+    if (num === null) { return null; }
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
+
+  ///// FORMAT FUNCTION CONSTRUCTORS /////
+
+  kbn.formatFuncCreator = function(factor, extArray) {
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) {
+        return "";
+      }
+
+      var steps = 0;
+      var limit = extArray.length;
+
+      while (Math.abs(size) >= factor) {
+        steps++;
+        size /= factor;
+
+        if (steps >= limit) { return "NA"; }
+      }
+
+      if (steps > 0 && scaledDecimals !== null) {
+        decimals = scaledDecimals + (3 * steps);
+      }
+
+      return kbn.toFixed(size, decimals) + extArray[steps];
+    };
+  };
+
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
@@ -257,6 +273,7 @@ function($, _) {
   kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
 
   kbn.valueFormats.percent = function(size, decimals) {
+    if (size == null) { return ""; }
     return kbn.toFixed(size, decimals) + '%';
   };
 
@@ -299,20 +316,6 @@ function($, _) {
 
   // Time
   kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
-
-  kbn.roundValue = function (num, decimals) {
-    if (num === null) { return null; }
-    var n = Math.pow(10, decimals);
-    return Math.round((n * num).toFixed(decimals))  / n;
-  };
-
-  kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
-    if (scaledDecimals === null) {
-      return kbn.toFixed(value, decimals) + ext;
-    } else {
-      return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
-    }
-  };
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
