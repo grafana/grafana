@@ -252,7 +252,10 @@ function($, _) {
     };
   };
 
-  kbn.formatFuncCreator = function(factor, extArray) {
+  // Formatter which scales the unit string geometrically according to the given
+  // numeric factor. Repeatedly scales the value down by the factor until it is
+  // less than the factor in magnitude, or the end of the array is reached.
+  kbn.formatBuilders.scaledUnits = function(factor, extArray) {
     return function(size, decimals, scaledDecimals) {
       if (size === null) {
         return "";
@@ -276,35 +279,54 @@ function($, _) {
     };
   };
 
+  // Extension of the scaledUnits builder which uses SI decimal prefixes. If an
+  // offset is given, it adjusts the starting units at the given prefix; a value
+  // of 0 starts at no scale; -3 drops to nano, +2 starts at mega, etc.
+  kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
+    var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    prefixes = prefixes.slice(3 + (offset || 0));
+    var units = prefixes.map(function(p) { return ' ' + p + unit; });
+    return kbn.formatBuilders.scaledUnits(1000, units);
+  };
+
+  // Extension of the scaledUnits builder which uses SI binary prefixes. If
+  // offset is given, it starts the units at the given prefix; otherwise, the
+  // offset defaults to zero and the initial unit is not prefixed.
+  kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
+    var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+    var units = prefixes.map(function(p) { return ' ' + p + unit; });
+    return kbn.formatBuilders.scaledUnits(1024, units);
+  };
+
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
   kbn.valueFormats.none    = kbn.toFixed;
-  kbn.valueFormats.short   = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.short   = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.ppm     = kbn.formatBuilders.fixedUnit('ppm');
   kbn.valueFormats.percent = kbn.formatBuilders.fixedUnit('%', '');
 
   // Data
-  kbn.valueFormats.bits   = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
-  kbn.valueFormats.bytes  = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.gbytes = kbn.formatFuncCreator(1024, [' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
+  kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
+  kbn.valueFormats.bytes  = kbn.formatBuilders.binarySIPrefix('B');
+  kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
+  kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
+  kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
 
   // Data Rate
-  kbn.valueFormats.pps = kbn.formatFuncCreator(1000, [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps']);
-  kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
-  kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
+  kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
+  kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
+  kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
 
   // Energy
-  kbn.valueFormats.watt   = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
-  kbn.valueFormats.kwatt  = kbn.formatFuncCreator(1000, [' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
-  kbn.valueFormats.watth  = kbn.formatFuncCreator(1000, [' Wh', ' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
-  kbn.valueFormats.kwatth = kbn.formatFuncCreator(1000, [' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
-  kbn.valueFormats.joule  = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
-  kbn.valueFormats.ev     = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
-  kbn.valueFormats.amp    = kbn.formatFuncCreator(1000, [' A', ' kA', ' MA', ' GA', ' TA', ' PA', ' EA', ' ZA', ' YA']);
-  kbn.valueFormats.volt   = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
+  kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
+  kbn.valueFormats.kwatt  = kbn.formatBuilders.decimalSIPrefix('W', 1);
+  kbn.valueFormats.watth  = kbn.formatBuilders.decimalSIPrefix('Wh');
+  kbn.valueFormats.kwatth = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
+  kbn.valueFormats.joule  = kbn.formatBuilders.decimalSIPrefix('J');
+  kbn.valueFormats.ev     = kbn.formatBuilders.decimalSIPrefix('eV');
+  kbn.valueFormats.amp    = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.volt   = kbn.formatBuilders.decimalSIPrefix('V');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -322,7 +344,7 @@ function($, _) {
   kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 
   // Time
-  kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
+  kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
