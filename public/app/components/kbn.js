@@ -245,10 +245,10 @@ function($, _) {
 
   // Formatter which always appends a fixed unit string to the value. No
   // scaling of the value is performed.
-  kbn.formatBuilders.fixedUnit = function(unit, separator) {
+  kbn.formatBuilders.fixedUnit = function(unit) {
     return function(size, decimals) {
       if (size === null) { return ""; }
-      return kbn.toFixed(size, decimals) + (separator || ' ') + unit;
+      return kbn.toFixed(size, decimals) + ' ' + unit;
     };
   };
 
@@ -301,10 +301,20 @@ function($, _) {
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
-  kbn.valueFormats.none    = kbn.toFixed;
-  kbn.valueFormats.short   = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
-  kbn.valueFormats.ppm     = kbn.formatBuilders.fixedUnit('ppm');
-  kbn.valueFormats.percent = kbn.formatBuilders.fixedUnit('%', '');
+  kbn.valueFormats.none  = kbn.toFixed;
+  kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.dB    = kbn.formatBuilders.fixedUnit('dB');
+  kbn.valueFormats.ppm   = kbn.formatBuilders.fixedUnit('ppm');
+
+  kbn.valueFormats.percent = function(size, decimals) {
+    if (size === null) { return ""; }
+    return kbn.toFixed(size, decimals) + '%';
+  };
+
+  kbn.valueFormats.percentunit = function(size, decimals) {
+    if (size === null) { return ""; }
+    return kbn.toFixed(100*size, decimals) + '%';
+  };
 
   // Data
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -442,6 +452,7 @@ function($, _) {
           {text: 'none' ,                     value: 'none'       },
           {text: 'short',                     value: 'short'      },
           {text: 'scaled percentage (0-100)', value: 'percent'    },
+          {text: 'unit percentage (0.0-1.0)', value: 'percentunit'},
           {text: 'ppm',                       value: 'ppm'        },
           {text: 'decibel',                   value: 'dB'         },
         ]
