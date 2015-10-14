@@ -347,11 +347,19 @@ function($, _) {
   kbn.valueFormats.pressurembar = kbn.formatBuilders.fixedUnit('mbar');
   kbn.valueFormats.pressurehpa  = kbn.formatBuilders.fixedUnit('hPa');
 
+  // Length
+  kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
+  kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
+
   // Velocity
   kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
   kbn.valueFormats.velocitykmh  = kbn.formatBuilders.fixedUnit('km/h');
   kbn.valueFormats.velocitymph  = kbn.formatBuilders.fixedUnit('mph');
   kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
+
+  // Volume
+  kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
+  kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
 
   // Time
   kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -486,6 +494,32 @@ function($, _) {
         ]
       },
       {
+        text: 'length',
+        submenu: [
+          {text: 'millimetre (mm)', value: 'lengthmm'},
+          {text: 'meter (m)',       value: 'lengthm' },
+          {text: 'kilometer (km)',  value: 'lengthm' },
+          {text: 'inches',          value: 'lengthin'},
+          {text: 'feet',            value: 'lengthft'},
+        ]
+      },
+      {
+        text: 'velocity',
+        submenu: [
+          {text: 'm/s',       value: 'velocityms'  },
+          {text: 'km/h',      value: 'velocitykmh' },
+          {text: 'mph',       value: 'velocitymph' },
+          {text: 'knot (kn)', value: 'velocityknot'},
+        ]
+      },
+      {
+        text: 'volume',
+        submenu: [
+          {text: 'millilitre', value: 'mlitre'},
+          {text: 'litre',      value: 'litre' },
+        ]
+      },
+      {
         text: 'energy',
         submenu: [
           {text: 'watt (W)',            value: 'watt'  },
@@ -506,15 +540,6 @@ function($, _) {
           {text: 'Humidity (%H)',   value: 'humidity'    },
           {text: 'Pressure (mbar)', value: 'pressurembar'},
           {text: 'Pressure (hPa)',  value: 'pressurehpa' },
-        ]
-      },
-      {
-        text: 'velocity',
-        submenu: [
-          {text: 'm/s',       value: 'velocityms'  },
-          {text: 'km/h',      value: 'velocitykmh' },
-          {text: 'mph',       value: 'velocitymph' },
-          {text: 'knot (kn)', value: 'velocityknot'},
         ]
       },
     ];
