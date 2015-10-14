@@ -4,6 +4,25 @@ define([
 ], function(kbn, dateMath) {
   'use strict';
 
+  describe('unit format menu', function() {
+    var menu = kbn.getUnitFormats();
+    menu.map(function(submenu) {
+      describe('submenu ' + submenu.text, function() {
+        it('should have a title', function() { expect(submenu.text).to.be.a('string'); });
+        it('should have a submenu', function() { expect(submenu.submenu).to.be.an('array'); });
+        submenu.submenu.map(function(entry) {
+          describe('entry ' + entry.text, function() {
+            it('should have a title', function() { expect(entry.text).to.be.a('string'); });
+            it('should have a format', function() { expect(entry.value).to.be.a('string'); });
+            it('should have a valid format', function() {
+              expect(kbn.valueFormats[entry.value]).to.be.a('function');
+            });
+          });
+        });
+      });
+    });
+  });
+
   function describeValueFormat(desc, value, tickSize, tickDecimals, result) {
 
     describe('value format: ' + desc, function() {
