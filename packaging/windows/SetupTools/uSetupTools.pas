@@ -73,6 +73,8 @@ uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpH
 
 const
   MIN_NETCRUNCH_SERVER_VERSION = '9.0.0.0';
+  NC_WRONG_SERVER_VERSION = 10;
+  HOST_ADDRESS_RESOLVE_ERROR = 11;
 
 function TNetCrunchWebAppConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
 var
@@ -324,6 +326,16 @@ begin
   WSACleanup;
 end;
 
+function ResolveDNSName(AName: string): string;
+var
+  HostEnt: PHostEnt;
+begin
+  Result := '';
+  HostEnt := gethostbyname(PAnsiChar(AnsiString(AName)));
+  if Assigned(HostEnt) and (HostEnt^.h_addrtype = AF_INET) then
+    Result := string(PAnsiChar(inet_ntoa(PInAddr(HostEnt^.h_addr^)^)));
+end;
+
 function IsPortRestricted(APort: Integer): Boolean;
 const
   RESTRICTED_PORTS = [1, 79];
@@ -443,37 +455,42 @@ var
   ServerConfigList : TStrings;
   ServerConfig : String;
 begin
-  Address := String(AnsiString(AAddress));
+  Address := ResolveDNSName(String(AnsiString(AAddress)));
   Port := String(AnsiString(APort));
   Password := EncodeNcConsolePassword(String(AnsiString(APassword)));
 
   NetCrunchConnection := TNetCrunchServerConnection.Create(Address, Port, Password);
   ServerConfigList := TStringList.Create;
   try
-    NetCrunchConnection.Connect;
-    ConnectionStatus := NetCrunchConnection.GetConnectionStatus;
-    if (ConnectionStatus = NC_AUTHENTICATE_OK) then begin
-      CurrentServerVersion := NetCrunchConnection.GetServerVersion;
-      if (CompareVersion(PAnsiChar(AnsiString(CurrentServerVersion)),
-                         MIN_NETCRUNCH_SERVER_VERSION) in [0, 1]) then begin
-        ServerConfigList.Add(IntToStr(0));
-        ServerConfigList.Add(CurrentServerVersion);
-        ServerConfigList.Add(NetCrunchConnection.GetGrafCrunchUserPass);
-        NetCrunchConnection.GetWebAppServerConfig(WebAccessPort, WebAccessUseSSL);
-        ServerConfigList.Add(IntToStr(WebAccessPort));
-        if WebAccessUseSSL
-          then ServerConfigList.Add('https')
-          else ServerConfigList.Add('http');
+    if (Address <> '') then begin
+      NetCrunchConnection.Connect;
+      ConnectionStatus := NetCrunchConnection.GetConnectionStatus;
+      if (ConnectionStatus = NC_AUTHENTICATE_OK) then begin
+        CurrentServerVersion := NetCrunchConnection.GetServerVersion;
+        if (CompareVersion(PAnsiChar(AnsiString(CurrentServerVersion)),
+                           MIN_NETCRUNCH_SERVER_VERSION) in [0, 1]) then begin
+          ServerConfigList.Add(IntToStr(0));
+          ServerConfigList.Add(Address);
+          ServerConfigList.Add(CurrentServerVersion);
+          ServerConfigList.Add(NetCrunchConnection.GetGrafCrunchUserPass);
+          NetCrunchConnection.GetWebAppServerConfig(WebAccessPort, WebAccessUseSSL);
+          ServerConfigList.Add(IntToStr(WebAccessPort));
+          if WebAccessUseSSL
+            then ServerConfigList.Add('https')
+            else ServerConfigList.Add('http');
+        end else begin
+          ServerConfigList.Add(IntToStr(NC_WRONG_SERVER_VERSION));
+          ServerConfigList.Add(CurrentServerVersion);
+        end;
+        NetCrunchConnection.Close;
       end else begin
-        ServerConfigList.Add(IntToStr(10));
-        ServerConfigList.Add(CurrentServerVersion);
+        ServerConfigList.Add(IntToStr(ConnectionStatus));
       end;
-      NetCrunchConnection.Close;
     end else begin
-      ServerConfigList.Add(IntToStr(ConnectionStatus));
+      ServerConfigList.Add(IntToStr(HOST_ADDRESS_RESOLVE_ERROR));
     end;
   finally
-    ServerConfigList.Delimiter := '#';
+    ServerConfigList.Delimiter := '~';
     ServerConfig := ServerConfigList.DelimitedText;
     NetCrunchConnection.Free;
     ServerConfigList.Free;

@@ -63,12 +63,12 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\INCLUDE;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\Imonitor\Client\UI\User Profiles;Z:\NetCrunch\Development\Source\Imonitor\Shared\User Profiles;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;Z:\NetCrunch\Development\Source\WebAccess\Common;Z:\NetCrunch\Development\Source\Imonitor\Shared\Remote Access;Z:\NetCrunch\Development\Source\Imonitor\Client;Z:\NetCrunch\Development\Source\Imonitor\Shared\Monitoring;Z:\NetCrunch\Development\Source\Imonitor\Server\Monitoring;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>None</Manifest_File>
         <DCC_BplOutput>Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer\</DCC_BplOutput>
         <VerInfo_Locale>1045</VerInfo_Locale>
-        <DCC_Define>NO_FORMS;$(DCC_Define)</DCC_Define>
+        <DCC_Define>NO_FORMS;NC_SHARED;$(DCC_Define)</DCC_Define>
         <SanitizedProjectName>SetupTools</SanitizedProjectName>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <GenDll>true</GenDll>
@@ -104,6 +104,7 @@
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <Debugger_HostApplication>Z:\Projects\Delphi Test Application\Win32\Debug\DelphiTestApplication.exe</Debugger_HostApplication>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
@@ -152,8 +153,6 @@
                     <Source Name="MainSource">SetupTools.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="V:\BplXE8\Win32\AdremD22D.bpl">AdRem Software own components</Excluded_Packages>
-                    <Excluded_Packages Name="V:\BplXE8\Win32\AdRemGraphicD22.bpl">AdRem Software Graphic32 Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k220.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp220.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="V:\BplXE8\Win32\A405_D22.bpl">File V:\BplXE8\Win32\A405_D22.bpl not found</Excluded_Packages>
@@ -561,13 +560,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="OSX32">False</Platform>

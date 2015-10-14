@@ -14,9 +14,20 @@
 library SetupTools;
 
 uses
-  uSetupTools in 'uSetupTools.pas';
+  uSetupTools in 'uSetupTools.pas', uTxTimer;
 
 {$R *.res}
+
+function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
+begin
+  Result := PAnsiChar(AnsiString(''));
+  uTxTimer.DoInitialize;
+  try
+    Result := uSetupTools.ReadNetCrunchServerConfig(AAddress, APort, APassword);
+  finally
+    uTxTimer.DoFinalize;
+  end;
+end;
 
 exports
   CompareVersion,
@@ -25,5 +36,4 @@ exports
   CheckNetCrunchWebAppServerConnection,
   ReadNetCrunchServerConfig;
 end.
-
 
