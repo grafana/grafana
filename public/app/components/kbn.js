@@ -241,6 +241,17 @@ function($, _) {
 
   ///// FORMAT FUNCTION CONSTRUCTORS /////
 
+  kbn.formatBuilders = {};
+
+  // Formatter which always appends a fixed unit string to the value. No
+  // scaling of the value is performed.
+  kbn.formatBuilders.fixedUnit = function(unit, separator) {
+    return function(size, decimals) {
+      if (size === null) { return ""; }
+      return kbn.toFixed(size, decimals) + (separator || ' ') + unit;
+    };
+  };
+
   kbn.formatFuncCreator = function(factor, extArray) {
     return function(size, decimals, scaledDecimals) {
       if (size === null) {
@@ -268,14 +279,10 @@ function($, _) {
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
-  kbn.valueFormats.none = kbn.toFixed;
-  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
-  kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
-
-  kbn.valueFormats.percent = function(size, decimals) {
-    if (size == null) { return ""; }
-    return kbn.toFixed(size, decimals) + '%';
-  };
+  kbn.valueFormats.none    = kbn.toFixed;
+  kbn.valueFormats.short   = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.ppm     = kbn.formatBuilders.fixedUnit('ppm');
+  kbn.valueFormats.percent = kbn.formatBuilders.fixedUnit('%', '');
 
   // Data
   kbn.valueFormats.bits   = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
@@ -300,19 +307,19 @@ function($, _) {
   kbn.valueFormats.volt   = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
 
   // Temperature
-  kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
-  kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
-  kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
+  kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
+  kbn.valueFormats.farenheit = kbn.formatBuilders.fixedUnit('°F');
+  kbn.valueFormats.humidity  = kbn.formatBuilders.fixedUnit('%H');
 
   // Pressure
-  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
-  kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
+  kbn.valueFormats.pressurembar = kbn.formatBuilders.fixedUnit('mbar');
+  kbn.valueFormats.pressurehpa  = kbn.formatBuilders.fixedUnit('hPa');
 
   // Velocity
-  kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
-  kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
-  kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
-  kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
+  kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
+  kbn.valueFormats.velocitykmh  = kbn.formatBuilders.fixedUnit('km/h');
+  kbn.valueFormats.velocitymph  = kbn.formatBuilders.fixedUnit('mph');
+  kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 
   // Time
   kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
