@@ -15,11 +15,11 @@ unit uSetupTools;
 
 interface
 
-  uses uPackets, uJSONClient;
+  uses uPackets, uJSONClient, uNetCrunchClient, uClientIntf;
 
   Type
 
-  TNetCrunchConnection = class(TJSONClient)
+  TNetCrunchWebAppConnection = class(TJSONClient)
   private
     FURL : String;
     FUser : String;
@@ -31,6 +31,27 @@ interface
     function GetApi(var AApi : TVariantArray) : Boolean;
     function GetApiName(AApi : TVariantArray) : String;
     function GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+  end;
+
+  TNetCrunchServerConnection = class
+  private
+    FNetCrunchClient : INCClient;
+    FUsername : String;
+    FPassword : String;
+    FToken : String;
+    FLoginCode : Integer;
+    procedure Authenticate (Sender: TObject; out Authenticated: Boolean);
+  public
+    constructor Create (const AAddress, APort, APassword : String);
+    procedure Connect;
+    function IsReady : Boolean;
+    function IsAuthenticated : Boolean;
+    function GetConnectionStatus : Integer;
+    function GetServerVersion : String;
+    function GetGrafCrunchUserPass : String;
+    procedure GetWebAppServerConfig (out Port : Integer; out SSL : Boolean);
+    procedure Close;
+    destructor Destroy; override;
   end;
 
   function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
@@ -47,9 +68,13 @@ interface
 implementation
 
 uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib,
-     uNetCrunchClient, uClientIntf, uNCAuthorityConsts;
+     uNCAuthorityConsts, uNCSharedConsts, uRemoteUserProfilesManagerClient, uUserProfilesManagerIntf,
+     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor;
 
-function TNetCrunchConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
+const
+  MIN_NETCRUNCH_SERVER_VERSION = '9.0.0.0';
+
+function TNetCrunchWebAppConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
 var
   V: Variant;
   Value: String;
@@ -62,7 +87,7 @@ begin
   Result := '';
 end;
 
-constructor TNetCrunchConnection.Create(const AURL, AUser, APassword: String);
+constructor TNetCrunchWebAppConnection.Create(const AURL, AUser, APassword: String);
 begin
   inherited Create;
   FURL := AURL;
@@ -70,7 +95,7 @@ begin
   FPassword := APassword;
 end;
 
-function TNetCrunchConnection.GetApi(var AApi : TVariantArray) : Boolean;
+function TNetCrunchWebAppConnection.GetApi(var AApi : TVariantArray) : Boolean;
 var QueryResult : TJSONClientResponse;
 begin
   QueryResult := DoGet(FURL + '/ncapi/api.json');
@@ -82,16 +107,118 @@ begin
   end;
 end;
 
-function TNetCrunchConnection.GetApiName (AApi : TVariantArray) : String;
+function TNetCrunchWebAppConnection.GetApiName (AApi : TVariantArray) : String;
 begin
   Result := GetPropertyValue(AApi, 'name');
 end;
 
-function TNetCrunchConnection.GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
+function TNetCrunchWebAppConnection.GetApiVer(AApi : TVariantArray; var AVer, AMajor, AMinor, ABuild : Integer) : Boolean;
 var Version : String;
 begin
   Version := GetPropertyValue(AApi, 'ver');
   Result := ParseVersion(Version, AVer, AMajor, AMinor, ABuild);
+end;
+
+constructor TNetCrunchServerConnection.Create (const AAddress, APort, APassword : String);
+begin
+  inherited Create;
+  FLoginCode := -1;
+  try
+    FNetCrunchClient := InitNetCrunchClient(AAddress, APort, 0, False) as INCClient;
+    FUsername := CONSOLE_NETCRUNCH_USER;
+    FPassword := APassword;
+  except
+    FNetCrunchClient := Nil;
+    FUsername := '';
+    FPassword := '';
+  end;
+end;
+
+procedure TNetCrunchServerConnection.Authenticate (Sender: TObject; out Authenticated: Boolean);
+begin
+  FLoginCode := FNetCrunchClient.Login(FUsername, FPassword, FToken);
+  Authenticated := (FLogincode = NC_AUTHENTICATE_OK);
+end;
+
+procedure TNetCrunchServerConnection.Connect;
+begin
+  if IsReady then begin
+    FNetCrunchClient.OnAuthenticateNeeded := Authenticate;
+    FNetCrunchClient.AutoReconnect := True;
+    FNetCrunchClient.Open;
+  end;
+end;
+
+function TNetCrunchServerConnection.IsReady : Boolean;
+begin
+  Result := Assigned(FNetCrunchClient);
+end;
+
+function TNetCrunchServerConnection.IsAuthenticated : Boolean;
+begin
+  Result := IsReady and FNetCrunchClient.IsAuthenticated;
+end;
+
+function TNetCrunchServerConnection.GetConnectionStatus : Integer;
+begin
+  Result := FLoginCode;
+end;
+
+function TNetCrunchServerConnection.GetServerVersion : String;
+begin
+  if IsReady then begin
+    Result := FNetCrunchClient.GetServerInfo.GetAsPacket.Properties['Version'];
+  end else begin
+    Result := '';
+  end;
+end;
+
+function TNetCrunchServerConnection.GetGrafCrunchUserPass : String;
+var
+  UserProfilesManager : IUserProfilesManager;
+  Password : String;
+begin
+  UserProfilesManager := CreateRemoteUserProfilesManagerClient(FNetCrunchClient);
+  Password := '';
+  try
+    UserProfilesManager.CreateGrafCrunchUser(Password);
+  finally
+    UserProfilesManager := NIL;
+  end;
+  Result := Password;
+end;
+
+procedure TNetCrunchServerConnection.GetWebAppServerConfig (out Port : Integer; out SSL : Boolean);
+var
+  WAOptionsEditor : TWAOptionsEditor;
+begin
+  Port := 0;
+  SSL := False;
+
+  WAOptionsEditor := TWAOptionsEditor.Create;
+  try
+    NcMonitorConfigProvider := Create_NcMonitorConfigProvider(FNetCrunchClient);
+    try
+      WAOptionsEditor.Load;
+      Port := WAOptionsEditor.Port;
+      SSL := WAOptionsEditor.UseSSL;
+    finally
+      NcMonitorConfigProvider := NIL;
+    end;
+  finally
+    WAOptionsEditor.Free;
+  end;
+end;
+
+procedure TNetCrunchServerConnection.Close;
+begin
+  if IsReady then FNetCrunchClient.Close(True);
+end;
+
+destructor TNetCrunchServerConnection.Destroy;
+begin
+  inherited Destroy;
+  Close;
 end;
 
 function CheckInteger (const StringNumber : String; var Number : Integer) : Boolean;
@@ -272,13 +399,13 @@ end;
 
 function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
 var
-  NetCrunchServerConnection : TNetCrunchConnection;
+  NetCrunchServerConnection : TNetCrunchWebAppConnection;
   CheckCode : Integer;
   Api : TVariantArray;
   Version, Major, Minor, Build : Integer;
 
 begin
-  NetCrunchServerConnection := TNetCrunchConnection.Create(String(AnsiString(AServerURL)), String(AnsiString(AUser)),
+  NetCrunchServerConnection := TNetCrunchWebAppConnection.Create(String(AnsiString(AServerURL)), String(AnsiString(AUser)),
                                                            String(AnsiString(APassword)));
   try
     CheckCode := 3;
@@ -303,42 +430,56 @@ begin
   Result := CheckCode;
 end;
 
-//****
 function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
 var
+  NetCrunchConnection : TNetCrunchServerConnection;
   Address : String;
   Port : String;
   Password : String;
-  SessionToken : String;
-  Status : String;
+  ConnectionStatus : Integer;
+  CurrentServerVersion : String;
+  WebAccessPort : Integer;
+  WebAccessUseSSL : Boolean;
+  ServerConfigList : TStrings;
+  ServerConfig : String;
 begin
   Address := String(AnsiString(AAddress));
   Port := String(AnsiString(APort));
-  Password := String(AnsiString(APassword));
-  Status := 'Login Failed';
+  Password := EncodeNcConsolePassword(String(AnsiString(APassword)));
 
-//  InitNetCrunchClient(Address, Port);
-
-//  if (not Assigned(NetCrunchClient)) then begin
-//    Status := 'Client not assigned';    //Connection error
-//  end else begin
-//    Status := 'Client assigned';
-  //    NetCrunchClient.AutoReconnect := True;
-//    NetCrunchClient.Open;
-//
-//    if (NetCrunchClient.Login('NetCrunch', Password, SessionToken) = NC_AUTHENTICATE_OK) then begin
-//      NetCrunchClient.AuthToken := SessionToken;
-
-//      Status := SessionToken;
-
-//    end;
-//    NetCrunchClient.Close(True);
-//    NetCrunchClient := nil;
-//  end;
-
-  Result := PAnsiChar(AnsiString(Status));
+  NetCrunchConnection := TNetCrunchServerConnection.Create(Address, Port, Password);
+  ServerConfigList := TStringList.Create;
+  try
+    NetCrunchConnection.Connect;
+    ConnectionStatus := NetCrunchConnection.GetConnectionStatus;
+    if (ConnectionStatus = NC_AUTHENTICATE_OK) then begin
+      CurrentServerVersion := NetCrunchConnection.GetServerVersion;
+      if (CompareVersion(PAnsiChar(AnsiString(CurrentServerVersion)),
+                         MIN_NETCRUNCH_SERVER_VERSION) in [0, 1]) then begin
+        ServerConfigList.Add(IntToStr(0));
+        ServerConfigList.Add(CurrentServerVersion);
+        ServerConfigList.Add(NetCrunchConnection.GetGrafCrunchUserPass);
+        NetCrunchConnection.GetWebAppServerConfig(WebAccessPort, WebAccessUseSSL);
+        ServerConfigList.Add(IntToStr(WebAccessPort));
+        if WebAccessUseSSL
+          then ServerConfigList.Add('https')
+          else ServerConfigList.Add('http');
+      end else begin
+        ServerConfigList.Add(IntToStr(10));
+        ServerConfigList.Add(CurrentServerVersion);
+      end;
+      NetCrunchConnection.Close;
+    end else begin
+      ServerConfigList.Add(IntToStr(ConnectionStatus));
+    end;
+  finally
+    ServerConfigList.Delimiter := '#';
+    ServerConfig := ServerConfigList.DelimitedText;
+    NetCrunchConnection.Free;
+    ServerConfigList.Free;
+  end;
+  Result := PAnsiChar(AnsiString(ServerConfig));
 end;
-//****
 
 end.
 
