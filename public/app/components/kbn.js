@@ -439,28 +439,28 @@ function($, _) {
       {
         text: 'none',
         submenu: [
-          {text: 'none' , value: 'none'},
-          {text: 'short', value: 'short'},
-          {text: 'percent', value: 'percent'},
-          {text: 'ppm', value: 'ppm'},
-          {text: 'dB', value: 'dB'},
+          {text: 'none' ,                     value: 'none'       },
+          {text: 'short',                     value: 'short'      },
+          {text: 'scaled percentage (0-100)', value: 'percent'    },
+          {text: 'ppm',                       value: 'ppm'        },
+          {text: 'decibel',                   value: 'dB'         },
         ]
       },
       {
         text: 'duration',
         submenu: [
-          {text: 'nanoseconds (ns)' , value: 'ns'},
-          {text: 'microseconds (µs)', value: 'µs'},
-          {text: 'milliseconds (ms)', value: 'ms'},
-          {text: 'seconds (s)', value: 's'},
-          {text: 'Hertz (1/s)', value: 'hertz'},
+          {text: 'Hertz (1/s)',       value: 'hertz'},
+          {text: 'nanoseconds (ns)' , value: 'ns'   },
+          {text: 'microseconds (µs)', value: 'µs'   },
+          {text: 'milliseconds (ms)', value: 'ms'   },
+          {text: 'seconds (s)',       value: 's'    },
         ]
       },
       {
         text: 'data',
         submenu: [
-          {text: 'bits', value: 'bits'},
-          {text: 'bytes', value: 'bytes'},
+          {text: 'bits',      value: 'bits'  },
+          {text: 'bytes',     value: 'bytes' },
           {text: 'kilobytes', value: 'kbytes'},
           {text: 'megabytes', value: 'mbytes'},
           {text: 'gigabytes', value: 'gbytes'},
@@ -470,40 +470,40 @@ function($, _) {
         text: 'data rate',
         submenu: [
           {text: 'packets/sec', value: 'pps'},
-          {text: 'bits/sec', value: 'bps'},
-          {text: 'bytes/sec', value: 'Bps'},
+          {text: 'bits/sec',    value: 'bps'},
+          {text: 'bytes/sec',   value: 'Bps'},
         ]
       },
       {
         text: 'energy',
         submenu: [
-          {text: 'watt (W)',              value: 'watt'},
-          {text: 'kilowatt (kW)',         value: 'kwatt'},
-          {text: 'watt-hour (Wh)',        value: 'watth'},
-          {text: 'kilowatt-hour (kWh)',   value: 'kwatth'},
-          {text: 'joule (J)',             value: 'joule'},
-          {text: 'electron volt (eV)',    value: 'ev'},
-          {text: 'Ampere (A)',            value: 'amp'},
-          {text: 'Volt (V)',              value: 'volt'},
+          {text: 'watt (W)',            value: 'watt'  },
+          {text: 'kilowatt (kW)',       value: 'kwatt' },
+          {text: 'watt-hour (Wh)',      value: 'watth' },
+          {text: 'kilowatt-hour (kWh)', value: 'kwatth'},
+          {text: 'joule (J)',           value: 'joule' },
+          {text: 'electron volt (eV)',  value: 'ev'    },
+          {text: 'Ampere (A)',          value: 'amp'   },
+          {text: 'Volt (V)',            value: 'volt'  },
         ]
       },
       {
         text: 'weather',
         submenu: [
-          {text: 'Celcius (°C)',         value: 'celsius'  },
-          {text: 'Farenheit (°F)',       value: 'farenheit'},
-          {text: 'Humidity (%H)',        value: 'humidity' },
-          {text: 'Pressure (mbar)',      value: 'pressurembar' },
-          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
+          {text: 'Celcius (°C)',    value: 'celsius'     },
+          {text: 'Farenheit (°F)',  value: 'farenheit'   },
+          {text: 'Humidity (%H)',   value: 'humidity'    },
+          {text: 'Pressure (mbar)', value: 'pressurembar'},
+          {text: 'Pressure (hPa)',  value: 'pressurehpa' },
         ]
       },
       {
         text: 'velocity',
         submenu: [
-          {text: 'm/s',  value: 'velocityms'  },
-          {text: 'km/h', value: 'velocitykmh'  },
-          {text: 'mph',  value: 'velocitymph'  },
-          {text: 'knot (kn)', value: 'velocityknot'  },
+          {text: 'm/s',       value: 'velocityms'  },
+          {text: 'km/h',      value: 'velocitykmh' },
+          {text: 'mph',       value: 'velocitymph' },
+          {text: 'knot (kn)', value: 'velocityknot'},
         ]
       },
     ];
