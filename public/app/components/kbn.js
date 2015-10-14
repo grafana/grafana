@@ -352,7 +352,9 @@ function($, _) {
 
   // Length
   kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
+  kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
   kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
+  kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
 
   // Velocity
   kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
@@ -502,9 +504,8 @@ function($, _) {
         submenu: [
           {text: 'millimetre (mm)', value: 'lengthmm'},
           {text: 'meter (m)',       value: 'lengthm' },
-          {text: 'kilometer (km)',  value: 'lengthm' },
-          {text: 'inches',          value: 'lengthin'},
-          {text: 'feet',            value: 'lengthft'},
+          {text: 'kilometer (km)',  value: 'lengthkm'},
+          {text: 'mile (mi)',       value: 'lengthmi'},
         ]
       },
       {
@@ -549,7 +550,7 @@ function($, _) {
         submenu: [
           {text: 'Millibars',         value: 'pressurembar'},
           {text: 'Hectopascals',      value: 'pressurehpa' },
-          {text: 'Inches of mercury', value: 'pressurehq'  },
+          {text: 'Inches of mercury', value: 'pressurehg'  },
           {text: 'PSI',               value: 'pressurepsi' },
         ]
       },
