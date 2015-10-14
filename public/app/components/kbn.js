@@ -341,11 +341,14 @@ function($, _) {
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
   kbn.valueFormats.farenheit = kbn.formatBuilders.fixedUnit('°F');
+  kbn.valueFormats.kelvin    = kbn.formatBuilders.fixedUnit('K');
   kbn.valueFormats.humidity  = kbn.formatBuilders.fixedUnit('%H');
 
   // Pressure
   kbn.valueFormats.pressurembar = kbn.formatBuilders.fixedUnit('mbar');
   kbn.valueFormats.pressurehpa  = kbn.formatBuilders.fixedUnit('hPa');
+  kbn.valueFormats.pressurehg   = kbn.formatBuilders.fixedUnit('"Hg');
+  kbn.valueFormats.pressurepsi  = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
 
   // Length
   kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
@@ -461,12 +464,13 @@ function($, _) {
           {text: 'short',                     value: 'short'      },
           {text: 'scaled percentage (0-100)', value: 'percent'    },
           {text: 'unit percentage (0.0-1.0)', value: 'percentunit'},
+          {text: 'Humidity (%H)',             value: 'humidity'   },
           {text: 'ppm',                       value: 'ppm'        },
           {text: 'decibel',                   value: 'dB'         },
         ]
       },
       {
-        text: 'duration',
+        text: 'time',
         submenu: [
           {text: 'Hertz (1/s)',       value: 'hertz'},
           {text: 'nanoseconds (ns)' , value: 'ns'   },
@@ -533,13 +537,20 @@ function($, _) {
         ]
       },
       {
-        text: 'weather',
+        text: 'temperature',
         submenu: [
           {text: 'Celcius (°C)',    value: 'celsius'     },
           {text: 'Farenheit (°F)',  value: 'farenheit'   },
-          {text: 'Humidity (%H)',   value: 'humidity'    },
-          {text: 'Pressure (mbar)', value: 'pressurembar'},
-          {text: 'Pressure (hPa)',  value: 'pressurehpa' },
+          {text: 'Kelvin (K)',      value: 'kelvin'      },
+        ]
+      },
+      {
+        text: 'pressure',
+        submenu: [
+          {text: 'Millibars',         value: 'pressurembar'},
+          {text: 'Hectopascals',      value: 'pressurehpa' },
+          {text: 'Inches of mercury', value: 'pressurehq'  },
+          {text: 'PSI',               value: 'pressurepsi' },
         ]
       },
     ];
