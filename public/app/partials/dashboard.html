@@ -69,6 +69,13 @@
 								<li>
 									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
 								</li>
+                <li class="dropdown-submenu">
+                  <a href="javascript:void(0);">Insert Row</a>
+                  <ul class="dropdown-menu">
+                    <li><a ng-click="insert_row(0)">Above</a></li>
+                    <li><a ng-click="insert_row(1)">Below</a></li>
+                  </ul>
+                </li>
 								<li>
 									<a ng-click="delete_row()">Delete row</a>
 								</li>

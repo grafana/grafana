@@ -82,6 +82,16 @@ function (angular, _, config) {
       }
     };
 
+    $scope.insert_row = function(direction) {
+      var rowsList = $scope.dashboard.rows;
+      var currentRowIndex = _.indexOf(rowsList, $scope.row);
+      $scope.add_row_default();
+      var newIndex = currentRowIndex + direction;
+      if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
+        _.move(rowsList, rowsList.length - 1, newIndex);
+      }
+    };
+
     $scope.add_panel_default = function(type) {
       var defaultSpan = 12;
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
