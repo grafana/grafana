@@ -8,6 +8,8 @@ function($, _) {
   var kbn = {};
   kbn.valueFormats = {};
 
+  ///// HELPER FUNCTIONS /////
+
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
@@ -168,6 +170,33 @@ function($, _) {
       'color:' + color,
       'font-size:' + diameter + 'px',
     ].join(';') + '"></div>';
+  };
+
+  kbn.slugifyForUrl = function(str) {
+    return str
+      .toLowerCase()
+      .replace(/[^\w ]+/g,'')
+      .replace(/ +/g,'-');
+  };
+
+  kbn.exportSeriesListToCsv = function(seriesList) {
+    var text = 'Series;Time;Value\n';
+    _.each(seriesList, function(series) {
+      _.each(series.datapoints, function(dp) {
+        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+      });
+    });
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    window.saveAs(blob, 'grafana_data_export.csv');
+  };
+
+  kbn.stringToJsRegex = function(str) {
+    if (str[0] !== '/') {
+      return new RegExp(str);
+    }
+
+    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+    return new RegExp(match[1], match[2]);
   };
 
   kbn.valueFormats.percent = function(size, decimals) {
@@ -354,32 +383,7 @@ function($, _) {
     }
   };
 
-  kbn.slugifyForUrl = function(str) {
-    return str
-      .toLowerCase()
-      .replace(/[^\w ]+/g,'')
-      .replace(/ +/g,'-');
-  };
-
-  kbn.exportSeriesListToCsv = function(seriesList) {
-    var text = 'Series;Time;Value\n';
-    _.each(seriesList, function(series) {
-      _.each(series.datapoints, function(dp) {
-        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
-      });
-    });
-    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-    window.saveAs(blob, 'grafana_data_export.csv');
-  };
-
-  kbn.stringToJsRegex = function(str) {
-    if (str[0] !== '/') {
-      return new RegExp(str);
-    }
-
-    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
-    return new RegExp(match[1], match[2]);
-  };
+  ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
     return [
