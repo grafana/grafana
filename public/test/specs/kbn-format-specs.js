@@ -26,6 +26,14 @@ define([
 
   describeValueFormat('none', 2.75e-10, 0, 10, '3e-10');
   describeValueFormat('none', 0, 0, 2, '0');
+  describeValueFormat('dB', 10, 1000, 2, '10.00 dB');
+
+  describeValueFormat('percent',  0, 0, 0, '0%');
+  describeValueFormat('percent', 53, 0, 1, '53.0%');
+  describeValueFormat('percentunit', 0.0, 0, 0, '0%');
+  describeValueFormat('percentunit', 0.278, 0, 1, '27.8%');
+  describeValueFormat('percentunit', 1.0, 0, 0, '100%');
+
   describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');
