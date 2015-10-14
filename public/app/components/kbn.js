@@ -462,13 +462,13 @@ function($, _) {
       {
         text: 'none',
         submenu: [
-          {text: 'none' ,                     value: 'none'       },
-          {text: 'short',                     value: 'short'      },
-          {text: 'scaled percentage (0-100)', value: 'percent'    },
-          {text: 'unit percentage (0.0-1.0)', value: 'percentunit'},
-          {text: 'Humidity (%H)',             value: 'humidity'   },
-          {text: 'ppm',                       value: 'ppm'        },
-          {text: 'decibel',                   value: 'dB'         },
+          {text: 'none' ,             value: 'none'       },
+          {text: 'short',             value: 'short'      },
+          {text: 'percent (0-100)',   value: 'percent'    },
+          {text: 'percent (0.0-1.0)', value: 'percentunit'},
+          {text: 'Humidity (%H)',     value: 'humidity'   },
+          {text: 'ppm',               value: 'ppm'        },
+          {text: 'decibel',           value: 'dB'         },
         ]
       },
       {
