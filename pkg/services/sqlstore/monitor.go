@@ -47,16 +47,16 @@ type MonitorWithCollectorDTO struct {
 
 // scrutinizeState fixes the state.  We can't just trust what the database says, we have to verify that the value actually has been updated recently.
 // we can simply do this by requiring that the value has been updated since 2*frequency ago.
-func scrutinizeState(now time.Time, state m.CheckEvalResult, stateCheck time.Time, frequency int64) m.CheckEvalResult {
-	if state == m.EvalResultUnknown {
-		return state
+func scrutinizeState(now time.Time, monitor *MonitorWithCollectorDTO) {
+	if monitor.State == m.EvalResultUnknown {
+		return
 	}
-	freq := time.Duration(frequency) * time.Second
+	freq := time.Duration(monitor.Frequency) * time.Second
 	oldest := now.Add(-2 * freq)
-	if stateCheck.Before(oldest) {
-		return m.EvalResultUnknown
+	if monitor.StateCheck.Before(oldest) {
+		monitor.State = m.EvalResultUnknown
+		monitor.StateChange = monitor.StateCheck
 	}
-	return state
 }
 
 func GetMonitorById(query *m.GetMonitorByIdQuery) error {
@@ -135,7 +135,7 @@ WHERE monitor.id=?
 		mergedCollectors[count] = k
 		count += 1
 	}
-
+	scrutinizeState(time.Now(), result)
 	query.Result = &m.MonitorDTO{
 		Id:              result.Id,
 		EndpointId:      result.EndpointId,
@@ -146,7 +146,7 @@ WHERE monitor.id=?
 		CollectorIds:    monitorCollectorIds,
 		CollectorTags:   monitorCollectorTags,
 		Collectors:      mergedCollectors,
-		State:           scrutinizeState(time.Now(), result.State, result.StateCheck, result.Frequency),
+		State:           result.State,
 		StateChange:     result.StateChange,
 		StateCheck:      result.StateCheck,
 		Settings:        result.Settings,
@@ -304,7 +304,7 @@ FROM monitor
 			h.NumCollectors = row.HealthSettings["numCollectors"]
 			h.Steps = row.HealthSettings["steps"]
 		*/
-
+		scrutinizeState(time.Now(), row)
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:              row.Id,
 			EndpointId:      row.EndpointId,
@@ -315,7 +315,7 @@ FROM monitor
 			CollectorIds:    monitorCollectorIds,
 			CollectorTags:   monitorCollectorTags,
 			Collectors:      mergedCollectors,
-			State:           scrutinizeState(time.Now(), row.State, row.StateCheck, row.Frequency),
+			State:           row.State,
 			StateChange:     row.StateChange,
 			StateCheck:      row.StateCheck,
 			Settings:        row.Settings,
