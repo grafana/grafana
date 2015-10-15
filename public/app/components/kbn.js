@@ -298,6 +298,18 @@ function($, _) {
     return kbn.formatBuilders.scaledUnits(1024, units);
   };
 
+  // Currency formatter for prefixing a symbol onto a number. Supports scaling
+  // up to the trillions.
+  kbn.formatBuilders.currency = function(symbol) {
+    var units = ['', 'K', 'M', 'B', 'T'];
+    var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) { return ""; }
+      var scaled = scaler(size, decimals, scaledDecimals);
+      return symbol + scaled;
+    };
+  };
+
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
@@ -315,6 +327,10 @@ function($, _) {
     if (size === null) { return ""; }
     return kbn.toFixed(100*size, decimals) + '%';
   };
+
+  // Currencies
+  kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
+  kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
 
   // Data
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -469,6 +485,13 @@ function($, _) {
           {text: 'Humidity (%H)',     value: 'humidity'   },
           {text: 'ppm',               value: 'ppm'        },
           {text: 'decibel',           value: 'dB'         },
+        ]
+      },
+      {
+        text: 'currency',
+        submenu: [
+          {text: 'Dollars ($)', value: 'currencyUSD'},
+          {text: 'Pounds (£)',  value: 'currencyGBP'},
         ]
       },
       {
