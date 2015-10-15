@@ -53,6 +53,10 @@ define([
   describeValueFormat('percentunit', 0.278, 0, 1, '27.8%');
   describeValueFormat('percentunit', 1.0, 0, 0, '100%');
 
+  describeValueFormat('currencyUSD', 7.42, 10000, 2, '$7.42');
+  describeValueFormat('currencyUSD', 1532.82, 1000, 1, '$1.53K');
+  describeValueFormat('currencyUSD', 18520408.7, 10000000, 0, '$19M');
+
   describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');
