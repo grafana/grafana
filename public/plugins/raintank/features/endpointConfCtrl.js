@@ -368,7 +368,7 @@ function (angular, _) {
         collector_tags: $scope.global_collectors.collector_tags,
         settings: [],
         enabled: true,
-        frequency: 10,
+        frequency: 60,
         health_settings: {
           steps: 3,
           num_collectors: 3,
@@ -381,8 +381,8 @@ function (angular, _) {
       _.forEach(payload, function(suggestion) {
         _.defaults(suggestion, defaults);
         var type = $scope.monitor_types[suggestion.monitor_type_id];
-        if (type.name.indexOf("HTTP") === 0) {
-          suggestion.frequency = 60;
+        if (type.name.indexOf("Ping") === 0) {
+          suggestion.frequency = 10;
         }
         $scope.monitors[type.name.toLowerCase()] = suggestion;
       });
