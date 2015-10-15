@@ -33,6 +33,7 @@ exports
   CompareVersion,
   GetHostName,
   CheckServerPort,
+  ProcessExists,
   CheckNetCrunchWebAppServerConnection,
   ReadNetCrunchServerConfig;
 end.

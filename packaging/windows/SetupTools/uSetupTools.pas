@@ -62,6 +62,7 @@ interface
   function IsPortAvailable(APort: Integer): Boolean;
   function GetHostName : PAnsiChar; stdcall;
   function CheckServerPort (APort : PAnsiChar) : Integer; stdcall;
+  function ProcessExists(const ProcessName : String) : Boolean;  stdcall;
   function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
   function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
 
@@ -69,7 +70,7 @@ implementation
 
 uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib,
      uNCAuthorityConsts, uNCSharedConsts, uRemoteUserProfilesManagerClient, uUserProfilesManagerIntf,
-     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor;
+     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor, uClientServerBase, uProcessUtils;
 
 const
   MIN_NETCRUNCH_SERVER_VERSION = '9.0.0.0';
@@ -145,9 +146,16 @@ end;
 procedure TNetCrunchServerConnection.Connect;
 begin
   if IsReady then begin
-    FNetCrunchClient.OnAuthenticateNeeded := Authenticate;
-    FNetCrunchClient.AutoReconnect := True;
-    FNetCrunchClient.Open;
+    try
+      FNetCrunchClient.OnAuthenticateNeeded := Authenticate;
+      FNetCrunchClient.AutoReconnect := True;
+      FNetCrunchClient.Open;
+    except
+      on E: EClientError do
+        if (E.CC = RESULT_HELLO_MISMATCH)
+          then FLoginCode := NC_AUTH_HELLO_MISMATCH
+          else FLoginCode := NC_AUTH_UNKNOWN_ERROR;
+    end;
   end;
 end;
 
@@ -407,6 +415,28 @@ begin
   end;
 
   Result := CheckCode;
+end;
+
+function ProcessExists(const ProcessName : String) : Boolean; stdcall;
+var
+  ProcessList : TStrings;
+  ProcessWorking : Boolean;
+  I : Integer;
+begin
+  ProcessWorking := False;
+  ProcessList := TStringList.Create;
+  try
+    GetProcessList(ProcessList);
+    for I := 0 to ProcessList.Count-1 do begin
+      if (Pos(ProcessName, ProcessList[I]) > 0) then begin
+        ProcessWorking := True;
+        Break;
+      end;
+    end;
+  finally
+    ProcessList.Free;
+  end;
+  Result := ProcessWorking;
 end;
 
 function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
