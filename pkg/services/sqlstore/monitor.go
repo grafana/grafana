@@ -47,8 +47,7 @@ type MonitorWithCollectorDTO struct {
 
 // scrutinizeState fixes the state.  We can't just trust what the database says, we have to verify that the value actually has been updated recently.
 // we can simply do this by requiring that the value has been updated since 2*frequency ago.
-func scrutinizeState(monitor *MonitorWithCollectorDTO) {
-	now := time.Now()
+func scrutinizeState(now time.Time, monitor *MonitorWithCollectorDTO) {
 	if monitor.State == m.EvalResultUnknown {
 		return
 	}
@@ -136,7 +135,7 @@ WHERE monitor.id=?
 		mergedCollectors[count] = k
 		count += 1
 	}
-	scrutinizeState(result)
+	scrutinizeState(time.Now(), result)
 	query.Result = &m.MonitorDTO{
 		Id:              result.Id,
 		EndpointId:      result.EndpointId,
@@ -305,7 +304,7 @@ FROM monitor
 			h.NumCollectors = row.HealthSettings["numCollectors"]
 			h.Steps = row.HealthSettings["steps"]
 		*/
-		scrutinizeState(row)
+		scrutinizeState(time.Now(), row)
 		monitors = append(monitors, &m.MonitorDTO{
 			Id:              row.Id,
 			EndpointId:      row.EndpointId,
