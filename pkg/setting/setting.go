@@ -307,7 +307,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// init logging before specific config so we can log errors from here on
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
+	//initLogging(args) //It brakes paths/logs key defined in custom.ini
 
 	// load specified config file
 	loadSpecifedConfigFile(args.Config)
