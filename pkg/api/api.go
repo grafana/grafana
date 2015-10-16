@@ -60,8 +60,7 @@ func parseConfig(cfg string) {
 	lock.Lock()
 	defer lock.Unlock()
 	configOpenFalcon = &configGlobal
-	l.Println("read config file:", cfg, "successfully")
-	l.Println("configOpenFalcon =", configOpenFalcon)
+	// l.Println("read config file:", cfg, "successfully")
 }
 
 // Register adds http routes
