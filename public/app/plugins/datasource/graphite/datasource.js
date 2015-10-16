@@ -75,7 +75,7 @@ function (angular, _, $, config, dateMath) {
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
         var graphiteQuery = {
-          range: rangeUnparsed,
+          rangeRaw: rangeUnparsed,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
