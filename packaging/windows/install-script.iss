@@ -21,7 +21,7 @@
 #define DefaultGrafCrunchServerPort "3000"
 
 #define NetCrunchServerConfigSection "netcrunch-server"
-#define DefaultNetCrunchServerAddress "localhost"
+#define DefaultNetCrunchServerAddress ""
 #define DefaultNetCrunchServerPort "12009"
 #define DefaultNetCrunchServerUser "GrafCrunch"
 
@@ -121,6 +121,8 @@ type
 function CompareVersion (AVer1, AVer2 : PAnsiChar) : Integer; external 'CompareVersion@files:SetupTools.dll stdcall';
 function GetHostName : PAnsiChar; external 'GetHostName@files:SetupTools.dll stdcall';
 function CheckServerPort (APort : PAnsiChar) : Integer; external 'CheckServerPort@files:SetupTools.dll stdcall';
+function ProcessExists(AProcessName : PAnsiChar) : Boolean; external 'ProcessExists@files:SetupTools.dll stdcall';
+function NCServerServiceRunning : Boolean; external 'NCServerServiceRunning@files:SetupTools.dll stdcall';
 function CheckNetCrunchWebAppServerConnection (AServerURL, User, Password: PAnsiChar) : Integer; external 'CheckNetCrunchWebAppServerConnection@files:SetupTools.dll stdcall';
 function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; external 'ReadNetCrunchServerConfig@files:SetupTools.dll stdcall';
 
@@ -316,7 +318,7 @@ function GetDefaultNetCrunchServerAddress : String;
 var 
   DefaultServerAddress : String;
 begin
-  if (HostName <> '') 
+  if ((HostName <> '') and NCServerServiceRunning)
     then DefaultServerAddress := HostName
     else DefaultServerAddress := '{#DefaultNetCrunchServerAddress}';
   Result := GetDefaultData('{#NetCrunchServerConfigSection}', 'host', DefaultServerAddress, 'NetCrunchAddress');
@@ -541,8 +543,6 @@ begin
 end;
 
 //**************
-
-//Kiedy NC nie jest zainstalowany na mszynie gdzie jest instalowany GC to domyœlny adres NC serwera powinien byc pusty
 
 //Add proceses descriptions
 

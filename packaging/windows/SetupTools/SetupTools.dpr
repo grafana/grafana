@@ -20,7 +20,6 @@ uses
 
 function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
 begin
-  Result := PAnsiChar(AnsiString(''));
   uTxTimer.DoInitialize;
   try
     Result := uSetupTools.ReadNetCrunchServerConfig(AAddress, APort, APassword);
@@ -34,6 +33,7 @@ exports
   GetHostName,
   CheckServerPort,
   ProcessExists,
+  NCServerServiceRunning,
   CheckNetCrunchWebAppServerConnection,
   ReadNetCrunchServerConfig;
 end.

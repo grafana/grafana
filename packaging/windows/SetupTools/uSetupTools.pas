@@ -62,20 +62,22 @@ interface
   function IsPortAvailable(APort: Integer): Boolean;
   function GetHostName : PAnsiChar; stdcall;
   function CheckServerPort (APort : PAnsiChar) : Integer; stdcall;
-  function ProcessExists(const ProcessName : String) : Boolean;  stdcall;
+  function ProcessExists(AProcessName : PAnsiChar) : Boolean; stdcall;
+  function NCServerServiceRunning : Boolean; stdcall;
   function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
   function ReadNetCrunchServerConfig(AAddress, APort, APassword: PAnsiChar) : PAnsiChar; stdcall;
 
 implementation
 
-uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib,
+uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib, Winapi.WinSvc,
      uNCAuthorityConsts, uNCSharedConsts, uRemoteUserProfilesManagerClient, uUserProfilesManagerIntf,
-     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor, uClientServerBase, uProcessUtils;
+     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor, uClientServerBase, uProcessUtils, uRemoteService;
 
 const
   MIN_NETCRUNCH_SERVER_VERSION = '9.0.0.0';
   NC_WRONG_SERVER_VERSION = 10;
   HOST_ADDRESS_RESOLVE_ERROR = 11;
+  NC_SERVER_SERVICE_NAME = 'NCServerSvc';
 
 function TNetCrunchWebAppConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
 var
@@ -417,7 +419,7 @@ begin
   Result := CheckCode;
 end;
 
-function ProcessExists(const ProcessName : String) : Boolean; stdcall;
+function ProcessExists(AProcessName : PAnsiChar) : Boolean; stdcall;
 var
   ProcessList : TStrings;
   ProcessWorking : Boolean;
@@ -428,7 +430,7 @@ begin
   try
     GetProcessList(ProcessList);
     for I := 0 to ProcessList.Count-1 do begin
-      if (Pos(ProcessName, ProcessList[I]) > 0) then begin
+      if (Pos(String(AnsiString(AProcessName)), ProcessList[I]) > 0) then begin
         ProcessWorking := True;
         Break;
       end;
@@ -437,6 +439,24 @@ begin
     ProcessList.Free;
   end;
   Result := ProcessWorking;
+end;
+
+function NCServerServiceRunning : Boolean; stdcall;
+var
+  Service: TRemoteService;
+begin
+  Result := False;
+  Service := TRemoteService.Create;
+  try
+    Service.ServiceName := NC_SERVER_SERVICE_NAME;
+    Service.Connect;
+    if (Service.Connect and Service.RefreshService and
+       (Service.Status.dwCurrentState in [SERVICE_RUNNING, SERVICE_START_PENDING])) then begin
+      Result := True;
+    end;
+  finally
+    Service.Free;
+  end;
 end;
 
 function CheckNetCrunchWebAppServerConnection (AServerURL, AUser, APassword: PAnsiChar) : Integer; stdcall;
