@@ -243,6 +243,8 @@ function($, _) {
   kbn.valueFormats.kwatth = kbn.formatFuncCreator(1000, [' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
   kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
   kbn.valueFormats.none = kbn.toFixed;
+  kbn.valueFormats.dollars = function(value, decimals) { return kbn.toCurrency(value, decimals, "$"); };
+  kbn.valueFormats.pounds = function(value, decimals) { return kbn.toCurrency(value, decimals, "£"); };
   kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
   kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
   kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
@@ -265,6 +267,26 @@ function($, _) {
       return kbn.toFixed(value, decimals) + ext;
     } else {
       return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
+    }
+  };
+
+  kbn.toCurrency = function(size, decimals, currency) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < Math.pow(10, 3)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size, 2));
+    }
+    if (Math.abs(size) < Math.pow(10, 6)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 3), 3)) + "K";
+    }
+    else if (Math.abs(size) < Math.pow(10, 9)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 6), 3)) + "MM";
+    }
+    else if (Math.abs(size) < Math.pow(10, 12)) {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), 3)) + "B";
+    }
+    else {
+      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), 3)) + "T";
     }
   };
 
@@ -391,6 +413,13 @@ function($, _) {
           {text: 'percent', value: 'percent'},
           {text: 'ppm', value: 'ppm'},
           {text: 'dB', value: 'dB'},
+        ]
+      },
+      {
+        text: 'currency',
+        submenu: [
+          {text: 'Dollars ($)',          value: 'dollars' },
+          {text: 'Pounds (£)',           value: 'pounds'  }
         ]
       },
       {
