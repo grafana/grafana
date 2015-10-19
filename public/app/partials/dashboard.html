@@ -44,17 +44,9 @@
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Set height</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="set_height('25px')">25 px</a></li>
-										<li><a ng-click="set_height('100px')">100 px</a></li>
-										<li><a ng-click="set_height('150px')">150 px</a></li>
-										<li><a ng-click="set_height('200px')">200 px</a></li>
-										<li><a ng-click="set_height('250px')">250 px</a></li>
-										<li><a ng-click="set_height('300px')">300 px</a></li>
-										<li><a ng-click="set_height('350px')">350 px</a></li>
-										<li><a ng-click="set_height('450px')">450 px</a></li>
-										<li><a ng-click="set_height('500px')">500 px</a></li>
-										<li><a ng-click="set_height('600px')">600 px</a></li>
-										<li><a ng-click="set_height('700px')">700 px</a></li>
+                    <li  ng-repeat="item in row_list">
+                      <a ng-click="set_height($index)" class="ng-class:item.isSelected">{{item.name}}</a>
+                    </li>
 									</ul>
 								</li>
 								<li class="dropdown-submenu">
