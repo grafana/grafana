@@ -28,6 +28,7 @@ function (angular, $, _) {
         }
         return template;
       }
+
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
 
@@ -51,7 +52,7 @@ function (angular, $, _) {
           }
 
           template += '<a class="panel-menu-link" ';
-          if (item.click) { template += ' ng-click="' + item.click + '"'; }
+          if (item.click) { template += ' ng-click="' + _.escape(item.click) + '"'; }
           if (item.editorLink) { template += ' dash-editor-link="' + item.editorLink + '"'; }
           template += '>';
           template += item.text + '</a>';
@@ -65,6 +66,22 @@ function (angular, $, _) {
 
       function getExtendedMenu($scope) {
         var menu = angular.copy($scope.panelMeta.extendedMenu);
+
+        // Determine the datasource for the panel.
+        var datasource = $scope.panel.datasource;
+        if (datasource == null) {
+          datasource = $scope.datasource;
+        }
+        if (datasource != null && datasource.getPanelExtendedMenuItems) {
+          var links = datasource.getPanelExtendedMenuItems($scope.panel);
+          if (links && links.length > 0) {
+            menu.push({ divider: true });
+            _.each(links, function(link) {
+              menu.push(link);
+            });
+          }
+        }
+
         return menu;
       }
 
