@@ -4,6 +4,8 @@ import (
 	l "log"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"time"
+	"strconv"
 
 	"net/url"
 
@@ -25,12 +27,12 @@ const (
 /**
  * @function name:	GetOpenFalconSessionUsername(sig string) string
  * @description:	This function gets user logged in if "sig" cookie of Open-Falcon is valid.
- * @related issues:	OWL-115, OWL-110
+ * @related issues:	OWL-124, OWL-115, OWL-110
  * @param:			sig string
  * @return:			username string
  * @author:			Don Hsieh
  * @since:			10/07/2015
- * @last modified: 	10/07/2015
+ * @last modified: 	10/16/2015
  * @called by:		func LoginWithOpenFalconCookie(c *middleware.Context) bool
  *					 in pkg/api/login.go
  */
@@ -42,7 +44,6 @@ func GetOpenFalconSessionUsername(sig string) string {
 
 	str := configOpenFalcon.Database.Account + ":" + configOpenFalcon.Database.Password
 	str += "@tcp(" + configOpenFalcon.Database.Addr + ")/graph?charset=utf8"
-	log.Info("str = " + str)
 	
 	db, err := sql.Open("mysql", str)
 	db.SetMaxOpenConns(2000)
@@ -68,9 +69,21 @@ func GetOpenFalconSessionUsername(sig string) string {
 		l.Println(err.Error())
 		return ""
 	}
-	l.Println("Session ID =", id)
-	l.Println("Session user ID =", uid)
 	l.Println("Expired time stamp =", expired)
+
+	expiredTimeInt, err := strconv.ParseInt(expired, 10, 64)
+	if err != nil {
+		l.Println(err.Error())
+		return ""
+	}
+
+	now := time.Now().Unix()
+	l.Println("now =", now)
+	isExpired := now > expiredTimeInt
+	l.Println("isExpired =", isExpired)
+	if isExpired {
+		return ""
+	}
 
 	stmtOut, err = db.Prepare("SELECT name FROM uic.user WHERE id = ?")
 	if err != nil {
@@ -109,20 +122,16 @@ func LoginWithOpenFalconCookie(c *middleware.Context) bool {
 	}
 	
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
-	l.Println("userQuery =", userQuery)
 	if err := bus.Dispatch(&userQuery); err == nil {
 		user := userQuery.Result
-		l.Println("user =", user)
 		loginUserWithUser(user, c)
 		return true
 	}
 
 	uname = "admin"
 	userQuery = m.GetUserByLoginQuery{LoginOrEmail: uname}
-	l.Println("userQuery =", userQuery)
 	if err := bus.Dispatch(&userQuery); err == nil {
 		user := userQuery.Result
-		l.Println("user =", user)
 		loginUserWithUser(user, c)
 		return true
 	}
