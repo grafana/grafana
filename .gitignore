@@ -23,7 +23,13 @@ awsconfig
 /packaging/windows/GrafCrunchGuard/ModelSupport_GrafCrunchGuard
 /packaging/windows/GrafCrunchGuard/Win32
 /packaging/windows/GrafCrunchGuard/Win64
-
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.dproj.local
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.dsk
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.~dsk
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.identcache
+/packaging/windows/RunGrafCrunch/__history
+/packaging/windows/RunGrafCrunch/Win32
+/packaging/windows/RunGrafCrunch/Win64
 
 /emails/dist
 /tmp

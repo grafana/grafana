@@ -84,12 +84,15 @@ Source: {#LICENSE}; DestDir: "{app}"; Flags: ignoreversion
 Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "GrafCrunchGuard\Win64\Release\GrafCrunchGuard.exe"; DestDir: "{app}\bin\"; DestName: "GCGuard.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "RunGrafCrunch\Win64\Release\RunGrafCrunch.exe"; DestDir: "{app}\bin\"; DestName: "GCRun.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "GCServer.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
+Name: "{group}\Start GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-start"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Starts AdRem GrafCrunch Server";
+Name: "{group}\Stop GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-stop"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Stops AdRem GrafCrunch Server";
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"; Comment: "Uninstall AdRem GrafCrunch Server";
 
 [Run]
@@ -494,6 +497,11 @@ begin
       Lines.Add('    Password: admin');
     end;
   end;
+
+  with InfoPage.RichEditViewer do begin
+    Lines.Add('');
+    Lines.Add('  Google Chrome is recommended for working with GrafCrunch.');
+  end;
 end;
 
 procedure InitializeWizard;
@@ -541,17 +549,3 @@ begin
       Space + 'Port: ' + GetNetCrunchServerConfig('Port') + NewLine + 
       Space + 'Protocol: ' + GetNetCrunchServerConfig('Protocol');
 end;
-
-//**************
-
-//Add proceses descriptions
-
-//Add shortcuts for start / stop GrafCrunch service
-//Name: "{group}\Start GrafCrunch Server"; Filename: {sys}\sc.exe; Parameters: "start GrafCrunchGuardService" ; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Starts AdRem GrafCrunch Server";
-//Name: "{group}\Stop GrafCrunch Server"; Filename: {sys}\sc.exe; Parameters: "stop GrafCrunchGuardService" ; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Stops AdRem GrafCrunch Server";
-
-//Implement Modify mode for server config modifications;
-//Grafana server log problem
-
-//;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "user"; String: {#NetCrunchServerUser}; Flags: createkeyifdoesntexist
-//;Filename: {#ConfigINI}; Section: {#NetCrunchServerConfigSection}; Key: "password"; String: {#NetCrunchServerPassword}; Flags: createkeyifdoesntexistcls
