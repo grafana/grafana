@@ -1,5 +1,5 @@
 {
-  "id": 128,
+  "id": 357,
   "title": "Litmus Endpoint: |--- Web",
   "originalTitle": "Litmus Endpoint: |--- Web",
   "tags": [
@@ -10,51 +10,15 @@
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "sharedCrosshair": true,
   "rows": [
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "125px",
       "panels": [
         {
-          "title": "WEB HEALTH (LAST)",
-          "error": false,
-          "span": 3,
-          "editable": true,
-          "type": "singlestat",
-          "id": 588,
-          "links": [],
-          "maxDataPoints": 100,
-          "interval": null,
-          "targets": [
-            {
-              "target": "averageSeries(health.$endpoint.$protocol.ok_state)"
-            }
-          ],
           "cacheTimeout": null,
-          "format": "none",
-          "prefix": "",
-          "postfix": "",
-          "nullText": null,
-          "valueMaps": [
-            {
-              "value": "1",
-              "op": "=",
-              "text": "OK"
-            },
-            {
-              "value": "0",
-              "op": "=",
-              "text": "ERROR"
-            }
-          ],
-          "nullPointMode": "connected",
-          "valueName": "current",
-          "prefixFontSize": "50%",
-          "valueFontSize": "80%",
-          "postfixFontSize": "50%",
-          "thresholds": "0,1,1",
           "colorBackground": false,
           "colorValue": true,
           "colors": [
@@ -62,12 +26,51 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "id": 590,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
           "sparkline": {
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
             "lineColor": "rgb(110, 208, 224)",
             "show": false
-          }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "averageSeries(health.$endpoint.$protocol.ok_state)"
+            }
+          ],
+          "thresholds": "0,1,1",
+          "title": "WEB HEALTH (LAST)",
+          "transparent": false,
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "OK",
+              "value": "1"
+            },
+            {
+              "op": "=",
+              "text": "ERROR",
+              "value": "0"
+            }
+          ],
+          "valueName": "current"
         },
         {
           "cacheTimeout": null,
@@ -78,13 +81,15 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
+          "decimals": 2,
           "editable": true,
           "error": false,
           "format": "percent",
-          "id": 585,
+          "id": 593,
           "interval": null,
           "links": [],
-          "maxDataPoints": 100,
+          "maxDataPoints": "100",
           "nullPointMode": "connected",
           "nullText": null,
           "postfix": "",
@@ -96,15 +101,17 @@
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
             "lineColor": "rgb(110, 208, 224)",
-            "show": true
+            "show": false
           },
           "targets": [
             {
+              "refId": "A",
               "target": "scale(averageSeries(litmus.$endpoint.$collector.$protocol.ok_state), 100)"
             }
           ],
           "thresholds": "0,100,100",
-          "title": "UPTIME",
+          "title": "WEB UPTIME",
+          "transparent": false,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -125,10 +132,12 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
+          "decimals": 0,
           "editable": true,
           "error": false,
           "format": "ms",
-          "id": 586,
+          "id": 591,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -147,11 +156,12 @@
           },
           "targets": [
             {
+              "refId": "A",
               "target": "averageSeries(litmus.$endpoint.$collector.$protocol.total)"
             }
           ],
           "thresholds": "",
-          "title": "RESPONSE TIME",
+          "title": "WEB RESPONSE",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -172,10 +182,12 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
+          "decimals": 1,
           "editable": true,
           "error": false,
           "format": "bps",
-          "id": 587,
+          "id": 592,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -194,11 +206,12 @@
           },
           "targets": [
             {
-              "target": "averageSeries(litmus.$endpoint.$collector.$protocol.throughput)"
+              "refId": "C",
+              "target": "litmus.$endpoint.$collector.$protocol.throughput"
             }
           ],
           "thresholds": "",
-          "title": "THROUGHPUT",
+          "title": "WEB THROUGHPUT",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -211,21 +224,21 @@
           "valueName": "avg"
         }
       ],
-      "title": "New row"
+      "showTitle": false,
+      "title": "ping status for $endpoint (all selected Collectors)"
     },
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "125px",
       "panels": [
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
           "datasource": null,
-          "decimals": 0,
           "editable": true,
           "error": false,
           "fill": 1,
@@ -237,47 +250,66 @@
             "rightMax": null,
             "rightMin": null,
             "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold1Color": "rgba(56, 149, 0, 0.27)",
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "100",
-          "id": 583,
+          "height": "",
+          "id": 586,
           "legend": {
+            "alignAsTable": true,
             "avg": false,
-            "current": false,
+            "current": true,
+            "hideEmpty": true,
             "max": false,
             "min": false,
-            "show": false,
-            "total": false,
-            "values": false
+            "rightSide": true,
+            "show": true,
+            "total": true,
+            "values": true
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-events.json",
+              "dashboard": "Litmus Events",
+              "includeVars": true,
+              "keepTime": true,
+              "params": "var-monitor_type=ping",
+              "title": "Litmus Events",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": "120",
-          "nullPointMode": "connected",
+          "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
           "scopedVars": {},
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "//",
+              "color": "#E24D42"
+            },
+            {
+              "alias": "OKs",
+              "color": "#629E51"
+            }
+          ],
           "span": 12,
           "stack": true,
           "steppedLine": false,
           "targets": [
             {
-              "hide": false,
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.$protocol.error_state), 'sum'), 'error')"
-            },
-            {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.$protocol.ok_state), 'sum'), 'ok')"
+              "refId": "A",
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$collector.$protocol.error_state, 'sum'), 1), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "",
+          "title": "WEB ERRORS (ALL SELECTED COLLECTORS)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -287,13 +319,13 @@
           "x-axis": true,
           "y-axis": false,
           "y_formats": [
-            "none",
+            "short",
             "short"
-          ]
+          ],
+          "leftYAxisLabel": "Errors"         
         }
       ],
-      "showTitle": true,
-      "title": "$protocol status for $endpoint (all selected Collectors)"
+      "title": "New row"
     },
     {
       "collapse": false,
@@ -301,107 +333,16 @@
       "height": "250px",
       "panels": [
         {
-          "aliasColors": {
-            "connect": "#508642",
-            "dns": "#0A50A1",
-            "recv": "#BA43A9",
-            "send": "#1F78C1",
-            "wait": "#EA6460"
-          },
-          "bars": false,
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": 0,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": 0,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "height": "250",
-          "id": 584,
-          "leftYAxisLabel": "latency",
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 4,
-          "links": [],
-          "maxDataPoints": "60",
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 1,
-          "points": false,
-          "renderer": "flot",
-          "scopedVars": {},
-          "seriesOverrides": [
-            {
-              "alias": "download speed",
-              "bars": true,
-              "fill": 0,
-              "lines": false,
-              "points": false,
-              "yaxis": 2
-            }
-          ],
-          "span": 6,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dataLength), 'content size')"
-            },
-            {
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.throughput), 'download speed')"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "",
-          "tooltip": {
-            "shared": true,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "bytes",
-            "Bps"
-          ]
-        },
-        {
-          "aliasColors": {
-            "connect": "#508642",
-            "dns": "#0A50A1",
-            "recv": "#BA43A9",
-            "send": "#1F78C1",
-            "wait": "#EA6460"
-          },
+          "aliasColors": {},
           "bars": true,
           "datasource": null,
           "editable": true,
           "error": false,
-          "fill": 2,
+          "fill": 1,
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0,
+            "leftMin": null,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -410,16 +351,12 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "250",
-          "id": 579,
-          "leftYAxisLabel": "latency",
+          "id": 594,
           "legend": {
-            "alignAsTable": false,
             "avg": false,
             "current": false,
             "max": false,
             "min": false,
-            "rightSide": false,
             "show": true,
             "total": false,
             "values": false
@@ -427,45 +364,41 @@
           "lines": false,
           "linewidth": 2,
           "links": [],
-          "maxDataPoints": "60",
-          "nullPointMode": "null",
+          "maxDataPoints": "20",
+          "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "scopedVars": {},
-          "seriesOverrides": [
-            {
-              "alias": "throughput",
-              "bars": false,
-              "fill": 0,
-              "lines": true,
-              "yaxis": 2
-            }
-          ],
+          "seriesOverrides": [],
           "span": 6,
           "stack": true,
           "steppedLine": false,
           "targets": [
             {
+              "refId": "A",
               "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dns), 'dns')"
             },
             {
+              "refId": "B",
               "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.connect), 'connect')"
             },
             {
+              "refId": "E",
               "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.send), 'send')"
             },
             {
+              "refId": "C",
               "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.wait), 'wait')"
             },
             {
+              "refId": "D",
               "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.recv), 'recv')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "",
+          "title": "WEB RESPONSE (ALL SELECTED COLLECTORS)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -474,26 +407,14 @@
           "x-axis": true,
           "y-axis": true,
           "y_formats": [
-            "ms",
-            "Bps"
+            "short",
+            "short"
           ]
-        }
-      ],
-      "showTitle": true,
-      "title": "HTTP PERFORMANCE FOR $endpoint (AVERAGE ALL SELECTED COLLECTORS)"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "250px",
-      "panels": [
+        },
         {
           "aliasColors": {
-            "connect": "#0A50A1",
-            "dns": "#890F02",
-            "recv": "#6ED0E0",
-            "send": "#508642",
-            "wait": "#EAB839"
+            "content size": "#7EB26D",
+            "throughput": "#EAB839"
           },
           "bars": false,
           "datasource": null,
@@ -512,8 +433,94 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "500",
-          "id": 581,
+          "id": 595,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "throughput",
+              "yaxis": 2
+            }
+          ],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.throughput), 'throughput')"
+            },
+            {
+              "refId": "B",
+              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dataLength), 'content size')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "WEB THROUGHPUT (ALL SELECTED COLLECTORS)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "bps",
+            "bytes"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "connect": "#0A50A1",
+            "dns": "#890F02",
+            "recv": "#6ED0E0",
+            "send": "#508642",
+            "wait": "#EAB839"
+          },
+          "bars": false,
+          "datasource": null,
+          "decimals": 1,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "600",
+          "id": 589,
           "leftYAxisLabel": "latency",
           "legend": {
             "alignAsTable": true,
@@ -521,7 +528,7 @@
             "current": true,
             "max": false,
             "min": false,
-            "rightSide": false,
+            "rightSide": true,
             "show": true,
             "sort": "current",
             "sortDesc": true,
@@ -534,22 +541,24 @@
           "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
-          "scopedVars": {},
           "seriesOverrides": [],
           "span": 12,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.$protocol.total, 2)"
+              "hide": false,
+              "refId": "A",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$collector.$protocol.total, $outliers), 2)",
+              "textEditor": false
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "",
+          "title": "WEB PERFORMANCE (EACH INDIVIDUAL COLLECTOR)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -563,49 +572,46 @@
           ]
         }
       ],
-      "repeat": "$endpoint",
-      "showTitle": true,
-      "title": "HTTP PERFORMANCE FOR $endpoint  (FOR EACH SELECTED COLLECTOR)"
-    }
-  ],
-  "nav": [
-    {
-      "collapse": false,
-      "enable": true,
-      "notice": false,
-      "now": true,
-      "nowDelay": "1m",
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "3h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
+      "showTitle": false,
+      "title": "ping performance for $endpoint (mean of each selected Collector)"
     }
   ],
   "time": {
     "from": "now-3h",
-    "to": "now"
+    "to": "now-1m"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "nowDelay": "1m",
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "3h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
   },
   "templating": {
     "list": [
@@ -619,7 +625,7 @@
         "name": "endpoint",
         "query": "litmus.*",
         "refresh": true,
-        "refresh_on_load": false,
+        "refresh_on_load": true,
         "type": "query"
       },
       {
@@ -651,20 +657,74 @@
         },
         "datasource": null,
         "includeAll": false,
-        "label": "protocol",
+        "label": "Protocol",
         "multi": false,
         "multiFormat": "glob",
         "name": "protocol",
         "options": [
           {
             "text": "http",
-            "value": "http"
+            "value": "http",
+            "selected": true
+          },
+          {
+            "text": "https",
+            "value": "https",
+            "selected": false
           }
         ],
         "query": "litmus.$endpoint.$collector.{http,https}",
-        "refresh": true,
         "refresh_on_load": false,
         "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "tags": [],
+          "text": "100",
+          "value": "100"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "Outliers",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "outliers",
+        "options": [
+          {
+            "selected": true,
+            "text": "100",
+            "value": "100"
+          },
+          {
+            "selected": false,
+            "text": "99.9",
+            "value": "99.9"
+          },
+          {
+            "selected": false,
+            "text": "99.5",
+            "value": "99.5"
+          },
+          {
+            "selected": false,
+            "text": "99",
+            "value": "99"
+          },
+          {
+            "selected": false,
+            "text": "95",
+            "value": "95"
+          },
+          {
+            "selected": false,
+            "text": "50",
+            "value": "50"
+          }
+        ],
+        "query": "100,99.9,99.5,99,95,50",
+        "refresh_on_load": false,
+        "type": "custom"
       }
     ]
   },
@@ -672,8 +732,8 @@
     "list": []
   },
   "refresh": false,
-  "schemaVersion": 6,
-  "version": 3,
+  "schemaVersion": 7,
+  "version": 11,
   "links": [
     {
       "asDropdown": true,
