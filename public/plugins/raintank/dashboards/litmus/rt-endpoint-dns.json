@@ -1,5 +1,5 @@
 {
-  "id": 127,
+  "id": 354,
   "title": "Litmus Endpoint: |--- DNS",
   "originalTitle": "Litmus Endpoint: |--- DNS",
   "tags": [
@@ -10,12 +10,12 @@
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "sharedCrosshair": true,
   "rows": [
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "125px",
       "panels": [
         {
           "cacheTimeout": null,
@@ -26,19 +26,14 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
           "editable": true,
           "error": false,
           "format": "none",
-          "id": 588,
+          "id": 590,
           "interval": null,
-          "links": [
-            {
-              "dashboard": "",
-              "name": "Drilldown dashboard",
-              "type": "dashboard"
-            }
-          ],
-          "maxDataPoints": 100,
+          "links": [],
+          "maxDataPoints": "100",
           "nullPointMode": "connected",
           "nullText": null,
           "postfix": "",
@@ -47,18 +42,20 @@
           "prefixFontSize": "50%",
           "span": 3,
           "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
-            "lineColor": "rgb(31, 120, 193)",
+            "lineColor": "rgb(110, 208, 224)",
             "show": false
           },
           "targets": [
             {
+              "refId": "A",
               "target": "averageSeries(health.$endpoint.dns.ok_state)"
             }
           ],
           "thresholds": "0,1,1",
           "title": "DNS HEALTH (LAST)",
+          "transparent": false,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -84,13 +81,15 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
+          "datasource": null,
+          "decimals": 2,
           "editable": true,
           "error": false,
           "format": "percent",
-          "id": 584,
+          "id": 593,
           "interval": null,
           "links": [],
-          "maxDataPoints": 100,
+          "maxDataPoints": "100",
           "nullPointMode": "connected",
           "nullText": null,
           "postfix": "",
@@ -102,15 +101,17 @@
             "fillColor": "rgba(255, 255, 255, 0)",
             "full": false,
             "lineColor": "rgb(110, 208, 224)",
-            "show": true
+            "show": false
           },
           "targets": [
             {
+              "refId": "A",
               "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
             }
           ],
           "thresholds": "0,100,100",
           "title": "DNS UPTIME",
+          "transparent": false,
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -131,57 +132,11 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
-          "editable": true,
-          "error": false,
-          "format": "ms",
-          "id": 587,
-          "interval": null,
-          "links": [],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "span": 3,
-          "sparkline": {
-            "fillColor": "rgba(255, 255, 255, 0)",
-            "full": false,
-            "lineColor": "rgb(110, 208, 224)",
-            "show": true
-          },
-          "targets": [
-            {
-              "target": "averageSeries(litmus.$endpoint.$collector.dns.time)"
-            }
-          ],
-          "thresholds": "",
-          "title": "DNS PERFORMANCE",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "rgba(139, 139, 139, 1)",
-            "rgba(139, 139, 139, 1)",
-            "rgba(63, 104, 51, 1)"
-          ],
+          "datasource": null,
           "editable": true,
           "error": false,
           "format": "none",
-          "id": 586,
+          "id": 592,
           "interval": null,
           "links": [],
           "maxDataPoints": 100,
@@ -200,6 +155,7 @@
           },
           "targets": [
             {
+              "refId": "A",
               "target": "averageSeries(litmus.$endpoint.$collector.dns.answers)"
             }
           ],
@@ -215,18 +171,69 @@
             }
           ],
           "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "datasource": null,
+          "decimals": 2,
+          "editable": true,
+          "error": false,
+          "format": "ms",
+          "id": 591,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "averageSeries(litmus.$endpoint.$collector.dns.time)"
+            }
+          ],
+          "thresholds": "",
+          "title": "DNS LATENCY",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
         }
       ],
-      "title": "New row"
+      "showTitle": false,
+      "title": "ping status for $endpoint (all selected Collectors)"
     },
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "125",
       "panels": [
         {
           "aliasColors": {
-            "error": "#BF1B00",
+            "error": "#E24D42",
             "ok": "#508642"
           },
           "bars": true,
@@ -242,46 +249,66 @@
             "rightMax": null,
             "rightMin": null,
             "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold1Color": "rgba(56, 149, 0, 0.27)",
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "100",
-          "id": 583,
+          "height": "125",
+          "id": 586,
           "legend": {
+            "alignAsTable": true,
             "avg": false,
-            "current": false,
+            "current": true,
+            "hideEmpty": true,
             "max": false,
             "min": false,
-            "show": false,
-            "total": false,
-            "values": false
+            "rightSide": true,
+            "show": true,
+            "total": true,
+            "values": true
           },
           "lines": false,
           "linewidth": 2,
-          "links": [],
+          "links": [
+            {
+              "dashUri": "file/rt-events.json",
+              "dashboard": "Litmus Events",
+              "includeVars": true,
+              "keepTime": true,
+              "params": "var-monitor_type=ping",
+              "title": "Litmus Events",
+              "type": "dashboard"
+            }
+          ],
           "maxDataPoints": "120",
-          "nullPointMode": "connected",
+          "nullPointMode": "null",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
           "scopedVars": {},
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {
+              "alias": "//",
+              "color": "#E24D42"
+            },
+            {
+              "alias": "OKs",
+              "color": "#629E51"
+            }
+          ],
           "span": 12,
           "stack": true,
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.error_state), 'sum'), 'error')"
-            },
-            {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.ok_state), 'sum'), 'ok')"
+              "refId": "A",
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$collector.dns.error_state, 'sum'), 1), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "",
+          "title": "DNS ERRORS (ALL SELECTED COLLECTORS)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -293,16 +320,16 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "leftYAxisLabel": "Errors"         
         }
       ],
-      "showTitle": true,
-      "title": "DNS status for $endpoint (over all selected Collectors)"
+      "title": "New row"
     },
     {
       "collapse": false,
       "editable": true,
-      "height": "500px",
+      "height": "250px",
       "panels": [
         {
           "aliasColors": {
@@ -314,13 +341,14 @@
           },
           "bars": false,
           "datasource": null,
+          "decimals": 1,
           "editable": true,
           "error": false,
           "fill": 0,
           "grid": {
             "leftLogBase": 1,
             "leftMax": null,
-            "leftMin": 0.5,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -329,8 +357,8 @@
             "threshold2": null,
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
-          "height": "500",
-          "id": 581,
+          "height": "600",
+          "id": 589,
           "leftYAxisLabel": "latency",
           "legend": {
             "alignAsTable": true,
@@ -338,9 +366,9 @@
             "current": true,
             "max": false,
             "min": false,
-            "rightSide": false,
+            "rightSide": true,
             "show": true,
-            "sort": "avg",
+            "sort": "current",
             "sortDesc": true,
             "total": false,
             "values": true
@@ -351,29 +379,24 @@
           "maxDataPoints": "",
           "nullPointMode": "null",
           "percentage": false,
-          "pointradius": 2,
+          "pointradius": 1,
           "points": true,
           "renderer": "flot",
-          "scopedVars": {},
-          "seriesOverrides": [
-            {
-              "alias": "average ttl",
-              "lines": true,
-              "points": false,
-              "yaxis": 2
-            }
-          ],
+          "seriesOverrides": [],
           "span": 12,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(litmus.$endpoint.$collector.dns.time, 2)"
+              "hide": false,
+              "refId": "A",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$collector.dns.time, $outliers), 2)",
+              "textEditor": false
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "",
+          "title": "DNS PERFORMANCE (EACH INDIVIDUAL COLLECTOR)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -387,48 +410,46 @@
           ]
         }
       ],
-      "repeat": "$endpoint",
-      "showTitle": true,
-      "title": "DNS performance for $endpoint (each individual collector)"
-    }
-  ],
-  "nav": [
-    {
-      "collapse": false,
-      "enable": true,
-      "notice": false,
-      "now": true,
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ],
-      "status": "Stable",
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "3h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ],
-      "type": "timepicker"
+      "showTitle": false,
+      "title": "ping performance for $endpoint (mean of each selected Collector)"
     }
   ],
   "time": {
     "from": "now-3h",
-    "to": "now"
+    "to": "now-1m"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "nowDelay": "1m",
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "3h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
   },
   "templating": {
     "list": [
@@ -465,6 +486,55 @@
         "tagsQuery": "raintank_db.tags.collectors.*",
         "type": "query",
         "useTags": true
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "tags": [],
+          "text": "100",
+          "value": "100"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "label": "Outliers",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "outliers",
+        "options": [
+          {
+            "selected": true,
+            "text": "100",
+            "value": "100"
+          },
+          {
+            "selected": false,
+            "text": "99.9",
+            "value": "99.9"
+          },
+          {
+            "selected": false,
+            "text": "99.5",
+            "value": "99.5"
+          },
+          {
+            "selected": false,
+            "text": "99",
+            "value": "99"
+          },
+          {
+            "selected": false,
+            "text": "95",
+            "value": "95"
+          },
+          {
+            "selected": false,
+            "text": "50",
+            "value": "50"
+          }
+        ],
+        "query": "100,99.9,99.5,99,95,50",
+        "refresh_on_load": false,
+        "type": "custom"
       }
     ]
   },
@@ -472,8 +542,8 @@
     "list": []
   },
   "refresh": false,
-  "schemaVersion": 6,
-  "version": 4,
+  "schemaVersion": 7,
+  "version": 2,
   "links": [
     {
       "asDropdown": true,
