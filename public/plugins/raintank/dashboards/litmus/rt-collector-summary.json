@@ -528,7 +528,7 @@
           "grid": {
             "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": 1,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -594,7 +594,7 @@
           "grid": {
             "leftLogBase": 10,
             "leftMax": 10000,
-            "leftMin": 1,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -659,7 +659,7 @@
           "grid": {
             "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": 1,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
@@ -724,7 +724,7 @@
           "grid": {
             "leftLogBase": 10,
             "leftMax": null,
-            "leftMin": 1,
+            "leftMin": 0,
             "rightLogBase": 1,
             "rightMax": null,
             "rightMin": null,
