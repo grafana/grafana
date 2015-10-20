@@ -48,6 +48,7 @@ var dataProxyTransport = &http.Transport{
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
  * @related issues:	OWL-168, OWL-123, OWL-028, OWL-017, OWL-002
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 =======
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
@@ -58,6 +59,8 @@ var dataProxyTransport = &http.Transport{
 =======
  * @related issues:	OWL-168, OWL-028, OWL-017, OWL-002
 >>>>>>> OWL-28 refinements
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
  * @param:			ds *m.DataSource
  * @param:			proxyPath string
  * @param:			targetUrl *url.URL
@@ -176,7 +179,11 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 =======
 		} else if ds.Type == "openfalcon" {
+			urlDashboard := configOpenFalcon.Datasource.UrlDashboard
+			urlQuery := configOpenFalcon.Datasource.UrlQuery
 			reqQueryVals.Add("target", ds.Url)
+			reqQueryVals.Add("urlDashboard", urlDashboard)
+			reqQueryVals.Add("urlQuery", urlQuery)
 			req.URL.RawQuery = reqQueryVals.Encode()
 
 			ds.Url = "http://localhost"

@@ -337,7 +337,6 @@ function (angular, _, $, config, kbn, moment) {
      */
 >>>>>>> [OWL-30] Add Echarts map to Grafana
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
-      // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
       var obj = {};
       if (!result.data.length) {
         return result;
@@ -385,18 +384,26 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      // Graphite metric as annotation
+      // Open-Falcon metric as annotation
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
         var graphiteQuery = {
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+        var openFalconQuery = {
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
           range: rangeUnparsed,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
         };
 
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
@@ -408,12 +415,21 @@ function (angular, _, $, config, kbn, moment) {
         return this.query(openFalconQuery)
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         return this.query(openFalconQuery)
 =======
         return this.query(graphiteQuery)
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+        return this.query(openFalconQuery)
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
           .then(function(result) {
             var list = [];
 
@@ -467,9 +483,16 @@ function (angular, _, $, config, kbn, moment) {
             return list;
           });
       }
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
       // Graphite event as annotation
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+      // Open-Falcon event as annotation
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       else {
         var tags = templateSrv.replace(annotation.tags);
         return this.events({ range: rangeUnparsed, tags: tags })
@@ -495,6 +518,7 @@ function (angular, _, $, config, kbn, moment) {
     OpenfalconDatasource.prototype.events = function(options) {
 =======
     OpenFalconDatasource.prototype.events = function(options) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
       // console.log('OpenFalconDatasource.events options =', options);
@@ -502,11 +526,19 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
       // console.log('OpenFalconDatasource.events options =', options);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       try {
         var tags = '';
         if (options.tags) {
@@ -613,11 +645,15 @@ function (angular, _, $, config, kbn, moment) {
       else if (roundUp === false) {
 =======
       else if (rounding === 'round-down') {
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         // open-falcon' s from filter is exclusive
 =======
         // graphite' s from filter is exclusive
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+        // open-falcon' s from filter is exclusive
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
         // here we step back one minute in order
         // to guarantee that we get all the data that
         // exists for the specified range
@@ -637,6 +673,7 @@ function (angular, _, $, config, kbn, moment) {
         interpolated = encodeURIComponent(templateSrv.replace(query));
 =======
     OpenFalconDatasource.prototype.metricFindQuery = function(query) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
@@ -653,6 +690,9 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> OWL-28 refinements
 =======
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
@@ -664,6 +704,8 @@ function (angular, _, $, config, kbn, moment) {
 =======
       console.log('metricFindQuery query =', query);
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -696,11 +738,15 @@ function (angular, _, $, config, kbn, moment) {
 =======
 >>>>>>> OWL-28 refinements
           return _.map(results.data, function(metric) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 >>>>>>> [OWL-30] Add Echarts map to Grafana
             // console.log('metricFindQuery metric =', metric);
@@ -708,6 +754,7 @@ function (angular, _, $, config, kbn, moment) {
 =======
             console.log('metricFindQuery metric =', metric);
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
@@ -717,6 +764,10 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 =======
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false
@@ -759,11 +810,15 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.doOpenFalconRequest = function(options) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
       // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options =', options);
 <<<<<<< 70a59f5f003c96f4042de4bf2623b4620c8b6632
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 =======
       // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options =', options);
@@ -784,12 +839,15 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> OWL-28 refinements
 =======
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 =======
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
 =======
 =======
 >>>>>>> OWL-28 refinements
 >>>>>>> OWL-28 refinements
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
@@ -833,6 +891,7 @@ function (angular, _, $, config, kbn, moment) {
     ];
 
     OpenFalconDatasource.prototype.buildOpenFalconParams = function(options, scopedVars) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 7233bfadf43890ab379f2549dc0945879b423165
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
@@ -843,6 +902,9 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
 >>>>>>> OWL-28 refinements
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
@@ -854,7 +916,13 @@ function (angular, _, $, config, kbn, moment) {
 >>>>>>> OWL-28 refinements
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+      var openFalcon_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       var clean_options = [], targets = {};
       var target, targetValue, i;
       var regex = /(\#[A-Z])/g;
@@ -901,22 +969,32 @@ function (angular, _, $, config, kbn, moment) {
       } else {}
 
       _.each(options, function (value, key) {
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 <<<<<<< 47688153d3c00e97d373e75e35c8747dadfffc2c
 <<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
 =======
+=======
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
         if ($.inArray(key, openFalcon_options) === -1) { return; }
 =======
         if ($.inArray(key, graphite_options) === -1) { return; }
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+<<<<<<< 0dee2880a999b8d391f13441493df165eb06b2e3
 <<<<<<< 73898edacbfd89c13676309274cea8c9bc52b89e
 =======
         if ($.inArray(key, openFalcon_options) === -1) { return; }
 >>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 =======
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+=======
+        if ($.inArray(key, openFalcon_options) === -1) { return; }
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
         if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
