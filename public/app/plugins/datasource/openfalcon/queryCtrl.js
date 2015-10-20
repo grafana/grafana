@@ -50,7 +50,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       try {
-        parseTargeRecursive(astNode);
+        parseTargetRecursive(astNode);
       }
       catch (err) {
         $scope.parserError = err.message;
@@ -67,7 +67,7 @@ function (angular, _, config, gfunc, Parser) {
       func.params[index] = value;
     }
 
-    function parseTargeRecursive(astNode, func, index) {
+    function parseTargetRecursive(astNode, func, index) {
       if (astNode === null) {
         return null;
       }
@@ -77,7 +77,7 @@ function (angular, _, config, gfunc, Parser) {
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
-          parseTargeRecursive(param, innerFunc, index);
+          parseTargetRecursive(param, innerFunc, index);
         });
 
         innerFunc.updateText();
