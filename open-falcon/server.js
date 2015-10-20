@@ -42,7 +42,6 @@ function getMapData(chartType)
 				if (provincesName.indexOf(key) > -1) {
 				// if (key === '内蒙古') {
 					_.forEach(province, function(city, key2) {
-						// console.log(province);
 						if (key2.length && key2 !== 'lat' && key2 !== 'lng' && key2 !== 'count') {
 							obj = {};
 							obj.name = key2;
@@ -56,7 +55,6 @@ function getMapData(chartType)
 		hosts.chartType = chartType;
 		hosts.provinces = provinces;
 		hosts.citiesInProvince = citiesInProvince;
-		// console.log('hosts =', hosts);
 		return [hosts];
 	} catch (e) {
 		console.log('Exception e =', e);
@@ -67,14 +65,14 @@ function getMapData(chartType)
 /**
  * @function name:	function function queryMetric(req, res, targets)
  * @description:	This function gets hosts locations for map chart.
- * @related issues:	OWL-030
+ * @related issues:	OWL-123, OWL-030
  * @param:			object req
  * @param:			object res
  * @param:			array targets
  * @return:			void
  * @author:			Don Hsieh
  * @since:			08/15/2015
- * @last modified: 	08/15/2015
+ * @last modified: 	10/20/2015
  * @called by:		app.post('/')
  *					 in open-falcon/server.js
  */
@@ -82,9 +80,6 @@ function queryMetric(req, res, targets)
 {
 	var metrics = [];
 	var target = '';
-	/*
-	 *	MODIFIED FOR TEMPLATING
-	 */
 	var i = 0;
 	while (i < targets.length) {	// targets.length changes dynamically
 		target = targets[i];
@@ -133,12 +128,10 @@ function queryMetric(req, res, targets)
 			from = parseInt(from) * unit;
 		}
 
-		var queryUrl = req.query['target'].split('//')[1].split(':')[0] + ':9966/graph/history';
-		queryUrl = req.query['target'].split('//')[0] + '//' + queryUrl;
-		// console.log('queryUrl =', queryUrl);
-
+		var urlQuery = req.query['urlQuery'];
+		urlQuery += '/graph/history';
 		var options = {
-			uri: queryUrl,
+			uri: urlQuery,
 			method: 'POST',
 			json: {
 				"endpoint_counters": metrics,
@@ -168,13 +161,13 @@ function queryMetric(req, res, targets)
  * @description:	This route returns list of hosts (endpoints)
  *					 if query[0] == '*'; returns list of metrics (counters)
  *					 otherwise.
- * @related issues:	OWL-063, OWL-032, OWL-029, OWL-017
+ * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	08/28/2015
+ * @last modified: 	10/20/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -183,7 +176,6 @@ app.get('/', function(req, res) {
 	var url = '';
 	var obj = {};
 	var results = [];
-	var queryUrl = req.query['target'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
 
@@ -192,7 +184,7 @@ app.get('/', function(req, res) {
 		if ('chart'.indexOf(query) > -1) {
 			results.push({text: 'chart', expandable: true});
 		}
-		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
@@ -234,7 +226,7 @@ app.get('/', function(req, res) {
 			metric_q = arr.join('.');
 
 			var options = {
-				uri: queryUrl + '/api/counters',
+				uri: urlDashboard + '/api/counters',
 				method: 'POST',
 				form: {
 					"endpoints": host,
@@ -286,7 +278,6 @@ app.get('/', function(req, res) {
 							}
 						});
 					}
-					// console.log('results =', results);
 					res.send(results);
 				}
 			});

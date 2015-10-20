@@ -71,7 +71,6 @@ function (angular, _, $, config, kbn, moment) {
      *                   in public/app/plugins/datasource/openfalcon/datasource.js
      */
     OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
-      // console.log('OpenFalconDatasource.prototype.convertDataPointsToMs result.data =', result.data);
       var obj = {};
       if (!result.data.length) {
         return result;
@@ -119,17 +118,17 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      // Graphite metric as annotation
+      // Open-Falcon metric as annotation
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
-        var graphiteQuery = {
+        var openFalconQuery = {
           range: rangeUnparsed,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
         };
 
-        return this.query(graphiteQuery)
+        return this.query(openFalconQuery)
           .then(function(result) {
             var list = [];
 
@@ -150,7 +149,7 @@ function (angular, _, $, config, kbn, moment) {
             return list;
           });
       }
-      // Graphite event as annotation
+      // Open-Falcon event as annotation
       else {
         var tags = templateSrv.replace(annotation.tags);
         return this.events({ range: rangeUnparsed, tags: tags })
@@ -173,7 +172,6 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.events = function(options) {
-      // console.log('OpenFalconDatasource.events options =', options);
       try {
         var tags = '';
         if (options.tags) {
@@ -212,7 +210,7 @@ function (angular, _, $, config, kbn, moment) {
         }
       }
       else if (rounding === 'round-down') {
-        // graphite' s from filter is exclusive
+        // open-falcon' s from filter is exclusive
         // here we step back one minute in order
         // to guarantee that we get all the data that
         // exists for the specified range
@@ -225,7 +223,6 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.metricFindQuery = function(query) {
-      // console.log('metricFindQuery query =', query);
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -237,7 +234,6 @@ function (angular, _, $, config, kbn, moment) {
       return this.doOpenFalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
         .then(function(results) {
           return _.map(results.data, function(metric) {
-            // console.log('metricFindQuery metric =', metric);
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false
@@ -264,7 +260,6 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     OpenFalconDatasource.prototype.doOpenFalconRequest = function(options) {
-      // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options =', options);
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
@@ -290,7 +285,7 @@ function (angular, _, $, config, kbn, moment) {
     ];
 
     OpenFalconDatasource.prototype.buildOpenFalconParams = function(options, scopedVars) {
-      var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+      var openFalcon_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
       var regex = /(\#[A-Z])/g;
@@ -333,7 +328,7 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       _.each(options, function (value, key) {
-        if ($.inArray(key, graphite_options) === -1) { return; }
+        if ($.inArray(key, openFalcon_options) === -1) { return; }
         if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }

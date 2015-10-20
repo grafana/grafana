@@ -21,8 +21,15 @@ type DatabaseConfig struct {
 	Password   string	`json:"password"`
 }
 
+type DatasourceConfig struct {
+	Type			string	`json:"type"`
+	UrlDashboard	string	`json:"urlDashboard"`
+	UrlQuery		string	`json:"urlQuery"`
+}
+
 type GlobalConfig struct {
-	Database      *DatabaseConfig  `json:"database"`
+	Database      *DatabaseConfig    `json:"database"`
+	Datasource    *DatasourceConfig  `json:"datasource"`
 }
 
 var (
@@ -48,7 +55,6 @@ func parseConfig(cfg string) {
 	configContent, err := file.ToTrimString(cfg)
 	if err != nil {
 		l.Fatalln("read config file:", cfg, "fail:", err)
-		// log.Fatal(3, "Failed to write pidfile", err)
 	}
 
 	var configGlobal GlobalConfig
@@ -60,7 +66,6 @@ func parseConfig(cfg string) {
 	lock.Lock()
 	defer lock.Unlock()
 	configOpenFalcon = &configGlobal
-	// l.Println("read config file:", cfg, "successfully")
 }
 
 // Register adds http routes

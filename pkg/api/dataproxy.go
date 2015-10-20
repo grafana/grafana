@@ -1,11 +1,6 @@
 package api
 
 import (
-	// "fmt"
-	// "strings"
-	// "bytes"
-	// "reflect"
-	
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -38,6 +33,7 @@ var dataProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
+<<<<<<< 98cbab4ab5c4a3e9cb0b7f87b2ebe2e76d292acb
 <<<<<<< 6397b8c1ef60e96800e3e9c76ccabae4410bc088
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
@@ -47,16 +43,18 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 
 =======
 
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
- * @related issues:	OWL-028, OWL-017, OWL-002
+ * @related issues:	OWL-123, OWL-028, OWL-017, OWL-002
  * @param:			*m.DataSource ds
  * @param:			string proxyPath
  * @return:			*httputil.ReverseProxy
  * @author:			Don Hsieh
  * @since:			07/17/2015
- * @last modified: 	08/04/2015
+ * @last modified: 	10/19/2015
  * @called by:		func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
  */
@@ -85,15 +83,16 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string) *httputil.ReverseProxy 
 			}
 =======
 		} else if ds.Type == "openfalcon" {
-			// fmt.Printf("Welcome to %v!\n", ds.Type)
-			// fmt.Printf("NewReverseProxy req.URL = %v\n", req.URL)
+			urlDashboard := configOpenFalcon.Datasource.UrlDashboard
+			urlQuery := configOpenFalcon.Datasource.UrlQuery
 			reqQueryVals.Add("target", ds.Url)
+			reqQueryVals.Add("urlDashboard", urlDashboard)
+			reqQueryVals.Add("urlQuery", urlQuery)
 			req.URL.RawQuery = reqQueryVals.Encode()
 
 			ds.Url = "http://localhost"
 			var port = "4001"
 			ds.Url += ":" + port
-			// fmt.Printf("NewReverseProxy ds.Url = %v\n", ds.Url)
 			proxyPath = "/"
 			target, _ := url.Parse(ds.Url)
 			req.URL.Scheme = target.Scheme
@@ -167,7 +166,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 =======
 	proxyPath := c.Params("*")
-	// fmt.Printf("proxyPath = %v\n", proxyPath)
 	proxy := NewReverseProxy(&query.Result, proxyPath)
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.RW(), c.Req.Request)
