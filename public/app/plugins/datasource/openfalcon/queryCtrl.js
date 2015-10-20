@@ -63,12 +63,16 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       try {
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         parseTargetRecursive(astNode);
       }
       catch (err) {
 =======
         parseTargeRecursive(astNode);
+=======
+        parseTargetRecursive(astNode);
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       }
       catch (err) {
 <<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
@@ -98,11 +102,15 @@ function (angular, _, config, gfunc, Parser) {
       func.params[index] = value;
     }
 
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
     function parseTargetRecursive(astNode, func, index) {
 =======
     function parseTargeRecursive(astNode, func, index) {
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+    function parseTargetRecursive(astNode, func, index) {
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       if (astNode === null) {
         return null;
       }
@@ -112,11 +120,15 @@ function (angular, _, config, gfunc, Parser) {
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
           parseTargetRecursive(param, innerFunc, index);
 =======
           parseTargeRecursive(param, innerFunc, index);
 >>>>>>> [OWL-17] Add "Open-Falcon" data source.
+=======
+          parseTargetRecursive(param, innerFunc, index);
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
         });
 
         innerFunc.updateText();

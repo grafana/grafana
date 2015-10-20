@@ -142,6 +142,7 @@ function getMapData()
  * @author:			Don Hsieh
  * @since:			08/15/2015
  * @last modified: 	10/20/2015
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
  * @called by:		app.post('/')
 =======
  * @function name:	function getMapData()
@@ -156,6 +157,8 @@ function getMapData()
  * @call	ed by:		app.post('/')
 >>>>>>> [OWL-30] Add Echarts map to Grafana
 =======
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
  * @called by:		app.post('/')
 >>>>>>> [OWL-52] Add servers distribution map among provinces
  *					 in open-falcon/server.js
@@ -164,12 +167,15 @@ function queryMetric(req, res, targets)
 {
 	var metrics = [];
 	var target = '';
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 =======
 	/*
 	 *	MODIFIED FOR TEMPLATING
 	 */
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 	var i = 0;
 	while (i < targets.length) {	// targets.length changes dynamically
 		target = targets[i];
@@ -218,6 +224,7 @@ function queryMetric(req, res, targets)
 			from = parseInt(from) * unit;
 		}
 
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
 		var urlQuery = req.query['urlQuery'];
 		urlQuery += '/graph/history';
@@ -231,6 +238,12 @@ function queryMetric(req, res, targets)
 		var options = {
 			uri: queryUrl,
 >>>>>>> [OWL-30] Add Echarts map to Grafana
+=======
+		var urlQuery = req.query['urlQuery'];
+		urlQuery += '/graph/history';
+		var options = {
+			uri: urlQuery,
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 			method: 'POST',
 			json: {
 				"endpoint_counters": metrics,
@@ -269,22 +282,30 @@ function queryMetric(req, res, targets)
  *					 if query[0] == '*'; returns list of metrics (counters)
 >>>>>>> [OWL-34] Set vm.variable.multi = true; to enable hostname selection in Grafana template
  *					 otherwise.
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
  * @related issues:	OWL-029, OWL-017
 >>>>>>> OWL-29 autocomplete for hostname request
 =======
  * @related issues:	OWL-032, OWL-029, OWL-017
 >>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
+=======
+ * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 <<<<<<< 4cb82993107e37e359dcba77baf9b9bce01bd6e7
  * @last modified: 	10/23/2015
 =======
  * @last modified: 	08/05/2015
 >>>>>>> OWL-29 autocomplete for hostname request
+=======
+ * @last modified: 	10/20/2015
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -293,7 +314,10 @@ app.get('/', function(req, res) {
 	var url = '';
 	var obj = {};
 	var results = [];
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 	var urlDashboard = req.query['urlDashboard'];
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
 <<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
@@ -305,6 +329,7 @@ app.get('/', function(req, res) {
 			results.push({text: 'chart', expandable: true});
 		}
 		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
 =======
 	if (query[0] === '*') {	// Query hosts, i.e., endpoints.
 =======
@@ -314,6 +339,8 @@ app.get('/', function(req, res) {
 		query = query.replace('*.', '');
 		url = queryUrl + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
 >>>>>>> OWL-29 autocomplete for hostname request
+=======
+>>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
