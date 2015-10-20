@@ -12,10 +12,10 @@
 	</div>
 
 	<div class="gf-box-body">
-		<div class="row" style="margin-bottom: 10px;">
-			<div class="span6">
+		<div class="row-fluid" style="margin-bottom: 10px;">
+			<div class="span12">
 				<div style="display: inline-block">
-					<div class="tight-form">
+					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item">
 								Search
@@ -28,13 +28,11 @@
 					</div>
 				</div>
 			</div>
-			<div class="span6">
-				<h5>Playlist dashboards</h5>
-			</div>
 		</div>
 
-		<div class="row">
+		<div class="row-fluid">
 			<div class="span6">
+				<h5>Search result</h5>
 				<table class="grafana-options-table">
 					<tr ng-repeat="dashboard in filteredHits">
 						<td style="white-space: nowrap;">
@@ -55,6 +53,8 @@
 				</table>
 			</div>
 			<div class="span6">
+				<h5>Playlist dashboards</h5>
+
 				<table class="grafana-options-table">
 					<tr ng-repeat="dashboard in playlist">
 						<td style="white-space: nowrap;">
@@ -78,7 +78,7 @@
 		<br>
 		<br>
 		<div class="pull-left">
-			<div class="tight-form">
+			<div class="tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item">
 						Timespan between dashboard change

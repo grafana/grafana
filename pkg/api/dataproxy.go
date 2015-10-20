@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -63,17 +64,30 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 	return &httputil.ReverseProxy{Director: director}
 }
 
-//ProxyDataSourceRequest TODO need to cache datasources
-func ProxyDataSourceRequest(c *middleware.Context) {
-	id := c.ParamsInt64(":id")
-	query := m.GetDataSourceByIdQuery{Id: id, OrgId: c.OrgId}
+var dsMap map[int64]*m.DataSource = make(map[int64]*m.DataSource)
 
+func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
+	// ds, exists := dsMap[id]
+	// if exists && ds.OrgId == orgId {
+	// 	return ds, nil
+	// }
+
+	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	dsMap[id] = &query.Result
+	return &query.Result, nil
+}
+
+func ProxyDataSourceRequest(c *middleware.Context) {
+	ds, err := getDatasource(c.ParamsInt64(":id"), c.OrgId)
+	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
 	}
 
-	ds := query.Result
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -82,11 +96,11 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
-	if query.Result.Type == m.DS_CLOUDWATCH {
-		ProxyCloudWatchDataSourceRequest(c)
+	if ds.Type == m.DS_CLOUDWATCH {
+		cloudwatch.HandleRequest(c)
 	} else {
 		proxyPath := c.Params("*")
-		proxy := NewReverseProxy(&ds, proxyPath, targetUrl)
+		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}

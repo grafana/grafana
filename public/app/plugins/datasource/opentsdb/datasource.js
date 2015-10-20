@@ -175,6 +175,19 @@ function (angular, _, dateMath) {
       });
     };
 
+    var aggregatorsPromise = null;
+    OpenTSDBDatasource.prototype.getAggregators = function() {
+      if (aggregatorsPromise) { return aggregatorsPromise; }
+
+      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+        if (result.data && _.isArray(result.data)) {
+          return result.data.sort();
+        }
+        return [];
+      });
+      return aggregatorsPromise;
+    };
+
     function transformMetricData(md, groupByTags, target, options) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
       var dps = [];

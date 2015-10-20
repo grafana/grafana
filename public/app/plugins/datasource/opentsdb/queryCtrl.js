@@ -21,6 +21,10 @@ function (angular, _, kbn) {
       if (!$scope.target.downsampleAggregator) {
         $scope.target.downsampleAggregator = 'avg';
       }
+
+      $scope.datasource.getAggregators().then(function(aggs) {
+        $scope.aggregators = aggs;
+      });
     };
 
     $scope.targetBlur = function() {

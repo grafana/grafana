@@ -266,11 +266,11 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
     }
 
     function getInfluxTime(date, roundUp) {
-      if (_.isString(date) && date.indexOf('/') === -1) {
+      if (_.isString(date)) {
         if (date === 'now') {
           return 'now()';
         }
-        if (date.indexOf('now-') >= 0) {
+        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           return date.replace('now', 'now()');
         }
         date = dateMath.parse(date, roundUp);

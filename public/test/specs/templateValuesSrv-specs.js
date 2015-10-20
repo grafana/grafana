@@ -321,7 +321,7 @@ define([
       });
 
       it('should add lucene glob', function() {
-        expect(scenario.variable.options[0].value).to.be('(backend1 OR backend2)');
+        expect(scenario.variable.options[0].value).to.be('(\\\"backend1\\\" OR \\\"backend2\\\")');
       });
     });
 
@@ -346,6 +346,17 @@ define([
         expect(scenario.variable.options[0].value).to.be('(\\/lib|\\/root|\\/var)');
         expect(scenario.variable.options[1].value).to.be('\\/lib');
         expect(scenario.variable.options[1].text).to.be('/lib');
+      });
+    });
+
+    describeUpdateVariable('with include all pipe all values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'pipe' };
+        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      });
+
+      it('should add pipe delimited string', function() {
+        expect(scenario.variable.options[0].value).to.be('backend1|backend2|backend3');
       });
     });
 

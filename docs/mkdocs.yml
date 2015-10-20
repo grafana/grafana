@@ -25,13 +25,16 @@ google_analytics: ['UA-47280256-1', 'grafana.org']
 pages:
 
 # Introduction:
-- ['index.md', 'About', 'Grafana']
+- ['index.md', 'Project', 'About Grafana']
+- ['project/cla.md', 'Project', 'Contributor License Agreement']
+
 - ['installation/index.md', 'Installation', 'Installation']
 - ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
 - ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']
 - ['installation/mac.md', 'Installation', 'Installing on Mac OS X']
 - ['installation/windows.md', 'Installation', 'Installing on Windows']
 - ['installation/docker.md', 'Installation', 'Installing on Docker']
+- ['project/building_from_source.md', 'Installation', 'Building from Source']
 
 - ['installation/configuration.md', 'Installation', 'Configuration']
 - ['installation/ldap.md', 'Installation', 'LDAP Integration']
@@ -66,11 +69,9 @@ pages:
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
+- ['datasources/prometheus.md', 'Data Sources', 'Prometheus']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
-
-- ['project/building_from_source.md', 'Project', 'Building from Source']
-- ['project/cla.md', 'Project', 'Contributor License Agreement']
 
 - ['jsearch.md', '**HIDDEN**']

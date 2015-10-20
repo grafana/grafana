@@ -68,7 +68,7 @@ define([
             value: ['test','test2'],
           }
         });
-        expect(result).to.be('(test OR test2)');
+        expect(result).to.be('(\\\"test\\\" OR \\\"test2\\\")');
       });
 
       it('multi value and regex format should render regex string', function() {
@@ -79,6 +79,16 @@ define([
           }
         });
         expect(result).to.be('(test|test2)');
+      });
+
+      it('multi value and pipe should render pipe string', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'pipe',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('test|test2');
       });
 
     });

@@ -30,7 +30,7 @@ The drilldown section allows adding dynamic links to the panel that can link to 
 or URLs
 
 Each link has a title, a type and params.  A link can be either a ``dashboard`` or ``absolute`` links.
-If it is a dashboard links, the `dashboard` value must be the name of a dashbaord.  If it's an
+If it is a dashboard links, the `dashboard` value must be the name of a dashboard.  If it's an
 `absolute` link, the URL is the URL to link.
 
 ``params`` allows adding additional URL params to the links.  The format is the ``name=value`` with

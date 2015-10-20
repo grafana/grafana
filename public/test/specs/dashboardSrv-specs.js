@@ -152,7 +152,10 @@ define([
           rows: [
             {
               panels: [
-                {type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 }}
+                {
+                  type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  targets: [{refId: 'A'}, {}],
+                }
               ]
             }
           ]
@@ -176,6 +179,10 @@ define([
 
       it('graphite panel should change name too graph', function() {
         expect(graph.type).to.be('graph');
+      });
+
+      it('queries without refId should get it', function() {
+        expect(graph.targets[1].refId).to.be('B');
       });
 
       it('update legend setting', function() {

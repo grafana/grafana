@@ -122,8 +122,8 @@ function (angular, app, _, $) {
             xaxis: {
               show: false,
               mode: "time",
-              min: scope.range.from.getTime(),
-              max: scope.range.to.getTime(),
+              min: scope.range.from.valueOf(),
+              max: scope.range.to.valueOf(),
             },
             grid: { hoverable: false, show: false },
           };

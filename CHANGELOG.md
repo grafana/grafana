@@ -1,24 +1,24 @@
 # 2.5 (unreleased)
 
-** New Feature: Mix data sources **
-A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
+**New Feature: Mix data sources**
+- A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
 it allows you to add queries of differnet data source types & instances to the same graph/panel!
 [Issue #436](https://github.com/grafana/grafana/issues/436)
 
-** New Feature: Elasticsearch Metrics Query Editor and Viz Support **
+**New Feature: Elasticsearch Metrics Query Editor and Viz Support**
 - Feature rich query editor and processing features enables you to issues all kind of metric queries to Elasticsearch
 - See [Issue #1034](https://github.com/grafana/grafana/issues/1034) for more info.
 
-** New Feature: New and much improved time picker**
+**New Feature: New and much improved time picker**
 - Support for quick ranges like `Today`, `This day last week`, `This week`, `The day so far`, etc.
 - Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
 
-** User Onboarding **
+**User Onboarding**
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
 - See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
 
-** Other new Features && Enhancements**
+**Other new Features && Enhancements**
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
 - [Issue #2577](https://github.com/grafana/grafana/issues/2577). Panel: Resize handles in panel bottom right corners for easy width and height change
 - [Issue #2457](https://github.com/grafana/grafana/issues/2457). Admin: admin page for all grafana organizations (list / edit view)
@@ -27,6 +27,7 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2599](https://github.com/grafana/grafana/issues/2599). InfluxDB: Improved alias support, you can now use the `AS` clause for each select statement
 - [Issue #2708](https://github.com/grafana/grafana/issues/2708). InfluxDB: You can now set math expression for select clauses.
 - [Issue #1575](https://github.com/grafana/grafana/issues/1575). Drilldown link: now you can click on the external link icon in the panel header to access drilldown links!
+- [Issue #1646](https://github.com/grafana/grafana/issues/1646). OpenTSDB: Fetch list of aggregators from OpenTSDB
 
 **Fixes**
 - [Issue #2413](https://github.com/grafana/grafana/issues/2413). InfluxDB 0.9: Fix for handling empty series object in response from influxdb

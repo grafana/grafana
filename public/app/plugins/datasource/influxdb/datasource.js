@@ -2,17 +2,17 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
-  './influxSeries',
-  './queryBuilder',
+  './influx_series',
+  './query_builder',
   './directives',
-  './queryCtrl',
+  './query_ctrl',
 ],
 function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxdb';
@@ -161,7 +161,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
         if (err.status !== 0 || err.status >= 300) {

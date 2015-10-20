@@ -5,9 +5,9 @@ define([
   'config',
   'app/core/utils/datemath',
   './directives',
-  './queryCtrl',
-  './funcEditor',
-  './addGraphiteFunc',
+  './query_ctrl',
+  './func_editor',
+  './add_graphite_func',
 ],
 function (angular, _, $, config, dateMath) {
   'use strict';
@@ -75,7 +75,7 @@ function (angular, _, $, config, dateMath) {
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
         var graphiteQuery = {
-          range: rangeUnparsed,
+          rangeRaw: rangeUnparsed,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100

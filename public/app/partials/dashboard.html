@@ -79,7 +79,7 @@
 					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
 					</div>
 
-					<div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="true" drag="panel.id"
+					<div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
 						ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
 						<panel-loader type="panel.type" class="panel-margin"></panel-loader>
 					</div>
