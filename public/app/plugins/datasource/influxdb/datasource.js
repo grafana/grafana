@@ -78,7 +78,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ range: rangeUnparsed });
+      var timeFilter = getTimeFilter({ rangeRaw: rangeUnparsed });
       var query = annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
