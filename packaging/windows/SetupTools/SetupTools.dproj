@@ -63,8 +63,9 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\Imonitor\Client\UI\User Profiles;Z:\NetCrunch\Development\Source\Imonitor\Shared\User Profiles;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;Z:\NetCrunch\Development\Source\WebAccess\Common;Z:\NetCrunch\Development\Source\Imonitor\Shared\Remote Access;Z:\NetCrunch\Development\Source\Imonitor\Client;Z:\NetCrunch\Development\Source\Imonitor\Shared\Monitoring;Z:\NetCrunch\Development\Source\Imonitor\Server\Monitoring;V:\ADREM\common\lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=AdRem Software, Inc.;FileDescription=Tools for installer;FileVersion=1.0.0.0;InternalName=Tools for installer;LegalCopyright=2015 (c) AdRem Software Inc., all rights reserved;LegalTrademarks=;OriginalFilename=SetupTools.dll;ProductName=AdRem Setup Tools Library;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>None</Manifest_File>
         <DCC_BplOutput>Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer\</DCC_BplOutput>
         <VerInfo_Locale>1045</VerInfo_Locale>
@@ -124,7 +125,6 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <ItemGroup>
@@ -560,13 +560,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="OSX32">False</Platform>

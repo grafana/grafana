@@ -18,6 +18,7 @@ awsconfig
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.~dsk
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.identcache
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.mes
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.skincfg
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard_project.tvsconfig
 /packaging/windows/GrafCrunchGuard/__history
 /packaging/windows/GrafCrunchGuard/ModelSupport_GrafCrunchGuard
@@ -27,6 +28,7 @@ awsconfig
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.dsk
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.~dsk
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.identcache
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.skincfg
 /packaging/windows/RunGrafCrunch/__history
 /packaging/windows/RunGrafCrunch/Win32
 /packaging/windows/RunGrafCrunch/Win64
