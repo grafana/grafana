@@ -8,7 +8,7 @@ declare var IndexPattern: any;
 
 describe('IndexPattern', function() {
 
-  describe('when getting index for today', function() {
+  describe.only('when getting index for today', function() {
     it('should return correct index name', function() {
       var pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
       var expected = 'asd-' + moment().format('YYYY.MM.DD');
