@@ -26,7 +26,7 @@ function (angular, $) {
 
     $scope.initPanelScope = function() {
       $scope.row = {
-        height: ($(window).height() - 10) + 'px',
+        height: $(window).height() + 'px',
       };
 
       $scope.test = "Hej";
