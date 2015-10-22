@@ -14,6 +14,7 @@ function (angular, _) {
 
       target.expr = target.expr || '';
       target.intervalFactor = target.intervalFactor || 2;
+      target.prometheusLink = $scope.linkToPrometheus();
 
       $scope.metric = '';
       $scope.resolutions = _.map([1,2,3,4,5,10], function(f) {
@@ -27,6 +28,7 @@ function (angular, _) {
     };
 
     $scope.refreshMetricData = function() {
+      $scope.target.prometheusLink = $scope.linkToPrometheus();
       if (!_.isEqual($scope.oldTarget, $scope.target)) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
@@ -42,6 +44,21 @@ function (angular, _) {
       $scope.datasource
         .performSuggestQuery(query)
         .then(callback);
+    };
+
+    $scope.linkToPrometheus = function() {
+      var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
+      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
+      var expr = {
+        expr: $scope.target.expr,
+        range_input: range + 's',
+        end_input: endTime,
+        step_input: '',
+        stacked: $scope.panel.stack,
+        tab: 0
+      };
+      var hash = encodeURIComponent(JSON.stringify([expr]));
+      return $scope.datasource.directUrl + '/graph#' + hash;
     };
 
     $scope.init();

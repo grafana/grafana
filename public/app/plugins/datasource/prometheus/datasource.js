@@ -21,6 +21,7 @@ function (angular, _, moment, dateMath) {
       this.name = datasource.name;
       this.supportMetrics = true;
       this.url = datasource.url;
+      this.directUrl = datasource.directUrl;
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
