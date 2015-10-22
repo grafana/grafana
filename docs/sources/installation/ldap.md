@@ -1,6 +1,6 @@
 ---
 page_title: LDAP Integration
-page_description: LDAP Integrtaion guide for Grafana.
+page_description: LDAP Integration guide for Grafana.
 page_keywords: grafana, ldap, configuration, documentation, integration
 ---
 
@@ -85,12 +85,12 @@ bind_dn = "cn=%s,o=users,dc=grafana,dc=org"
 ```
 
 In this case you skip providing a `bind_password` and instead provide a `bind_dn` value with a `%s` somewhere. This will be replaced with the username entered in on the Grafana login page.
-The search filter and search bases settings are still needed to perform the LDAP search to retreive the other LDAP information (like LDAP groups and email).
+The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
 ## LDAP to Grafana Org Role Sync
 
 ## Group Mappings
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoratative source.
+In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoritative source.
 So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you change the LDAP groups of a user, the change will take effect the next time the user logs in.
 
 ### Priority between Multiple Mappings
