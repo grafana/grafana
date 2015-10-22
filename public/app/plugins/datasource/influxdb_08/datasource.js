@@ -2,11 +2,11 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
-  './influxSeries',
-  './queryBuilder',
+  './influx_series',
+  './query_builder',
   './directives',
-  './queryCtrl',
-  './funcEditor',
+  './query_ctrl',
+  './func_editor',
 ],
 function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
