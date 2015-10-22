@@ -40,6 +40,7 @@
             "error": false,
             "id": 5,
             "span": 7.5,
+            "height": "331px",
             "title": "",
             "type": "raintankEndpointList"
           },
