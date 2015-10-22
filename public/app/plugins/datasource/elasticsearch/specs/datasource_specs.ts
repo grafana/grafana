@@ -36,7 +36,7 @@ describe('ElasticDatasource', function() {
       ctx.ds.testDatasource();
       ctx.$rootScope.$apply();
 
-      var today = moment().format("YYYY.MM.DD");
+      var today = moment.utc().format("YYYY.MM.DD");
       expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
     });
   });
