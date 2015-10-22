@@ -127,7 +127,7 @@ If you have stack enabled you can select what the mouse hover feature should sho
 ### Rendering
 
 - ``Flot`` - Render the graphs in the browser using Flot (default)
-- ``Graphite PNG`` - Render the graph on the server using graphites render API.
+- ``Graphite PNG`` - Render the graph on the server using graphite's render API.
 
 ### Tooltip
 
