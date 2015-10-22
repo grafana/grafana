@@ -167,10 +167,10 @@ can LDAP groups for a user in LDAP the change will take effect the next time the
 >>>>>>> Added patch from ct
 =======
 In this case you skip providing a `bind_password` and instead provide a `bind_dn` value with a `%s` somewhere. This will be replaced with the username entered in on the Grafana login page.
-The search filter and search bases settings are still needed to perform the LDAP search to retreive the other LDAP information (like LDAP groups and email).
+The search filter and search bases settings are still needed to perform the LDAP search to retrieve the other LDAP information (like LDAP groups and email).
 
 ## Group Mappings
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoratative source.
+In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role. These will be synced every time the user logs in, with LDAP being the authoritative source.
 So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you change the LDAP groups of a user, the change will take effect the next time the user logs in.
 ### Priority between Multiple Mappings
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML config will be used.
