@@ -14,6 +14,7 @@ function (angular, _) {
 
       target.expr = target.expr || '';
       target.intervalFactor = target.intervalFactor || 2;
+      target.prometheusLink = $scope.linkToPrometheus();
 
       $scope.metric = '';
       $scope.resolutions = _.map([1,2,3,4,5,10], function(f) {
@@ -27,6 +28,7 @@ function (angular, _) {
     };
 
     $scope.refreshMetricData = function() {
+      $scope.target.prometheusLink = $scope.linkToPrometheus();
       if (!_.isEqual($scope.oldTarget, $scope.target)) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
@@ -44,7 +46,10 @@ function (angular, _) {
         .then(callback);
     };
 
+<<<<<<< 3291157be5136e59a20cdbf38a3cfc495545563d
 <<<<<<< 8ebed963c1d31b77388df358686c84213a65f2f4
+=======
+>>>>>>> revert prometheus link
     $scope.linkToPrometheus = function() {
       var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
       var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
@@ -60,8 +65,11 @@ function (angular, _) {
       return $scope.datasource.directUrl + '/graph#' + hash;
     };
 
+<<<<<<< 3291157be5136e59a20cdbf38a3cfc495545563d
 =======
 >>>>>>> feat(prometheus): refactoring and polish of the prometheus editor removing unused/uneeded code
+=======
+>>>>>>> revert prometheus link
     $scope.init();
   });
 
