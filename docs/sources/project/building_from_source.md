@@ -25,11 +25,15 @@ go get github.com/grafana/grafana
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup              # (only needed once to install godep)
+<<<<<<< b924730c3a728e7cc164e86ad7b5e8cbf78c795d
 <<<<<<< 1ecc85bbb31dd419d73ded43757c8f56abb5ddf0
 $GOPATH/bin/godep restore          # (will pull down all golang lib dependencies in your current GOPATH)
 =======
 $GOPATH/bin/godep restore          # (will pull down all golang lib dependecies in your current GOPATH)
 >>>>>>> Added patch from ct
+=======
+$GOPATH/bin/godep restore          # (will pull down all golang lib dependencies in your current GOPATH)
+>>>>>>> Fixed other docs typos
 go run build.go build              # (or 'go build .')
 ```
 
