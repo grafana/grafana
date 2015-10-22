@@ -20,6 +20,7 @@ function (angular, _, moment, dateMath) {
       this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
       this.name = datasource.name;
       this.supportMetrics = true;
+<<<<<<< 6bf82c03b34a8bebe22aadd263e1da368a1ff4a4
 <<<<<<< 07563ef9ebaa37acbbc8a7605855321a13ec45a2
       this.url = datasource.url;
       this.directUrl = datasource.directUrl;
@@ -36,6 +37,10 @@ function (angular, _, moment, dateMath) {
       }
       this.url = url;
 >>>>>>> feat(prometheus): refactoring and polish of the prometheus editor removing unused/uneeded code
+=======
+      this.url = datasource.url;
+      this.directUrl = datasource.directUrl;
+>>>>>>> revert prometheus link
       this.basicAuth = datasource.basicAuth;
       this.lastErrors = {};
     }
