@@ -59,7 +59,9 @@ function (angular, dateMath, rangeUtil, _, kbn, $) {
         scope.resolution = Math.ceil($(window).width() * (scope.panel.span / 12));
       }
 
-      scope.interval = kbn.calculateInterval(scope.range, scope.resolution, scope.panel.interval);
+      var panelInterval = scope.panel.interval;
+      var datasourceInterval = (scope.datasource || {}).interval;
+      scope.interval = kbn.calculateInterval(scope.range, scope.resolution, panelInterval || datasourceInterval);
     };
 
     this.applyPanelTimeOverrides = function(scope) {
