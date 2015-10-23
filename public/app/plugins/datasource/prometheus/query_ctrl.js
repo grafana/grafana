@@ -14,7 +14,6 @@ function (angular, _) {
 
       target.expr = target.expr || '';
       target.intervalFactor = target.intervalFactor || 2;
-      target.prometheusLink = $scope.linkToPrometheus();
 
       $scope.metric = '';
       $scope.resolutions = _.map([1,2,3,4,5,10], function(f) {
@@ -28,7 +27,6 @@ function (angular, _) {
     };
 
     $scope.refreshMetricData = function() {
-      $scope.target.prometheusLink = $scope.linkToPrometheus();
       if (!_.isEqual($scope.oldTarget, $scope.target)) {
         $scope.oldTarget = angular.copy($scope.target);
         $scope.get_data();
