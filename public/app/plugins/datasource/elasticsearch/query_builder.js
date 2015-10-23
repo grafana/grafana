@@ -15,7 +15,7 @@ function (angular) {
   };
 
   ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
-    var metricRef, metric, size, y;
+    var metricRef, metric, y;
     queryNode.terms = { "field": aggDef.field };
 
     if (!aggDef.settings) {
