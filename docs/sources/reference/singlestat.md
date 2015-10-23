@@ -17,8 +17,8 @@ The singlestat panel has a normal query editor to allow you define your exact me
 <img class="no-shadow" src="/img/v1/Singlestat-BaseSettings.png">
 
 1. `Big Value`: Big Value refers to how we display the main stat for the Singlestat Panel. This is always a single value that is displayed in the Panel in between two strings, `Prefix` and  `Suffix`. The single number is calculated by choosing a function (min,max,average,current,total) of your metric query. This functions reduces your query into a single numeric value.
-2. `Font Size`: You can use this section 
-3. `Values`: The Value fields let you set the function (min, max, average, current, total) that your entire query is reduced into a single value with. You can also set the font size of theand font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
+2. `Font Size`: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
+3. `Values`: The Value fields let you set the function (min, max, average, current, total) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
 4. `Postfixes`: The Postfix fields let you define a custom label and font-size (as a %) to appear *after* the value
 5. `Units`: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 6. `Decimals`: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
