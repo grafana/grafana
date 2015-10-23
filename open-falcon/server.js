@@ -167,7 +167,7 @@ function queryMetric(req, res, targets)
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	10/20/2015
+ * @last modified: 	10/23/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -176,6 +176,7 @@ app.get('/', function(req, res) {
 	var url = '';
 	var obj = {};
 	var results = [];
+	var urlDashboard = req.query['urlDashboard'];
 	var arrQuery = req.query;
 	var query = arrQuery['query'];
 
