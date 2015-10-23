@@ -59,19 +59,16 @@ describe('PrometheusDatasource', function() {
       ctx.$rootScope.$apply();
       expect(results.length).to.be(3);
     });
-    it('label_values(metric, resource) should generate count metric query', function() {
+    it('label_values(metric, resource) should generate series query', function() {
       response = {
         status: "success",
-        data: {
-          resultType: "vector",
-          result: [
-            {metric: {resource: "value1"}, value: []},
-            {metric: {resource: "value2"}, value: []},
-            {metric: {resource: "value3"}, value: []}
-          ]
-        }
+        data: [
+          {__name__: "metric", resource: "value1"},
+          {__name__: "metric", resource: "value2"},
+          {__name__: "metric", resource: "value3"}
+        ]
       };
-      ctx.$httpBackend.expect('GET', /proxied\/api\/v1\/query\?query=count\(metric\)%20by%20\(resource\)&time=.*/).respond(response);
+      ctx.$httpBackend.expect('GET', 'proxied/api/v1/series?match[]=metric').respond(response);
       ctx.ds.metricFindQuery('label_values(metric, resource)').then(function(data) { results = data; });
       ctx.$httpBackend.flush();
       ctx.$rootScope.$apply();
@@ -90,4 +87,3 @@ describe('PrometheusDatasource', function() {
     });
   });
 });
-
