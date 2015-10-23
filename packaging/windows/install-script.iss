@@ -6,6 +6,7 @@
 #define MyAppIcon "icon.ico"
 #define MyAppGroupName "AdRem GrafCrunch"
 #define MyAppUninstallKey "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + MyAppID + "_is1"
+#define MyAppGettingStartedArticle "http://www.adremsoft.com/blog/view/blog:v1/5338024126755"
 
 #define LICENSE "..\..\LICENSE.md"
 #define NOTICE "..\..\NOTICE.md"
@@ -91,6 +92,7 @@ Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recurses
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
+Name: "{group}\GrafCrunch Getting started"; Filename: {#MyAppGettingStartedArticle}; IconFilename: {app}\{#MyAppIcon}; Comment: "AdRem GrafCrunch Getting started";
 Name: "{group}\Start GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-start"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Starts AdRem GrafCrunch Server";
 Name: "{group}\Stop GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-stop"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Stops AdRem GrafCrunch Server";
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"; Comment: "Uninstall AdRem GrafCrunch Server";
@@ -100,6 +102,8 @@ Filename: {app}\bin\GCGuard.exe; Parameters: "/install /silent"
 Filename: {sys}\sc.exe; Parameters: "description GrafCrunchGuardService ""Provides infrastructure for AdRem GrafCrunch""" ; Flags: runhidden
 FileName: {sys}\netsh; Parameters: "advfirewall firewall add rule name= ""AdRem GrafCrunch Server"" dir= in action= allow program= ""{app}\bin\GCServer.exe"" enable=yes"; Flags: runhidden
 Filename: {sys}\sc.exe; Parameters: "start GrafCrunchGuardService" ; Flags: runhidden
+Filename: {code:GetGrafCrunchServerConfig|URL}; Description: "GrafCrunch Client"; Flags: shellexec nowait postinstall skipifsilent
+Filename: {#MyAppGettingStartedArticle}; Description: "GrafCrunch Getting started"; Flags: shellexec nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: {sys}\sc.exe; Parameters: "stop GrafCrunchGuardService" ; Flags: runhidden
@@ -291,6 +295,9 @@ begin
   if (Param = 'Port') then begin
     Result := GrafCrunchServerConfig.Values[1];
   end;
+  if (Param = 'URL') then begin
+    Result := 'http://' + GetGrafCrunchServerConfig('Domain') + ':' + GetGrafCrunchServerConfig('Port') + '/';
+  end;
 end;
 
 function CheckGrafCrunchServerConfig : Boolean;
@@ -449,8 +456,8 @@ begin
          5 : ErrorMessage := 'Remote access disabled';
          6 : ErrorMessage := 'No remote access license';
          7, 8 : ErrorMessage := 'Unknown error';
-         9 : ErrorMessage := 'GrafCrunch requires NetCrunch server version 9.0.0 or higher.';
-        10 : ErrorMessage := 'GrafCrunch requires NetCrunch server version 9.0.0 or higher. Your version is ' + NetCrunchServerConfigData.Version;
+         9 : ErrorMessage := 'GrafCrunch requires NetCrunch server version 9.';
+        10 : ErrorMessage := 'GrafCrunch requires NetCrunch server version 9. Your version is ' + NetCrunchServerConfigData.Version;
         11 : ErrorMessage := 'Incorrect NetCrunch server address';
         12 : ErrorMessage := 'Conversion error';
       end;
