@@ -148,20 +148,13 @@ function (angular, _, moment, dateMath) {
             });
           });
         } else {
-          var metric_query = 'count(' + label_values_query[1] + ') by (' +
-                             label_values_query[2]  + ')';
-          url = '/api/v1/query?query=' + encodeURIComponent(metric_query) +
-                    '&time=' + (moment().valueOf() / 1000);
+          url = '/api/v1/series?match[]=' + encodeURIComponent(label_values_query[1]);
 
           return this._request('GET', url)
             .then(function(result) {
-              if (result.data.data.result.length === 0 ||
-                  _.keys(result.data.data.result[0].metric).length === 0) {
-                return [];
-              }
-              return _.map(result.data.data.result, function(metricValue) {
+              return _.map(result.data.data, function(metric) {
                 return {
-                  text: metricValue.metric[label_values_query[2]],
+                  text: metric[label_values_query[2]],
                   expandable: true
                 };
               });
@@ -190,14 +183,13 @@ function (angular, _, moment, dateMath) {
           });
       } else {
         // if query contains full metric name, return metric name and label list
-        url = '/api/v1/query?query=' + encodeURIComponent(interpolated) +
-              '&time=' + (moment().valueOf() / 1000);
+        url = '/api/v1/series?match[]=' + encodeURIComponent(interpolated);
 
         return this._request('GET', url)
           .then(function(result) {
-            return _.map(result.data.data.result, function(metricData) {
+            return _.map(result.data.data, function(metric) {
               return {
-                text: getOriginalMetricName(metricData.metric),
+                text: getOriginalMetricName(metric),
                 expandable: true
               };
             });
