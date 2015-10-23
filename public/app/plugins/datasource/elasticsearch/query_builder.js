@@ -22,8 +22,7 @@ function (angular) {
       return queryNode;
     }
 
-    size = parseInt(aggDef.settings.size, 10);
-    if (size > 0) { queryNode.terms.size = size; }
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
