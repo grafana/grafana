@@ -15,15 +15,14 @@ function (angular) {
   };
 
   ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
-    var metricRef, metric, size, y;
+    var metricRef, metric, y;
     queryNode.terms = { "field": aggDef.field };
 
     if (!aggDef.settings) {
       return queryNode;
     }
 
-    size = parseInt(aggDef.settings.size, 10);
-    if (size > 0) { queryNode.terms.size = size; }
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
