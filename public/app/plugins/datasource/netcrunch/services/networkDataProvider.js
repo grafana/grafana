@@ -130,7 +130,8 @@ define([
     module
       .factory('networkDataProvider', function ($q, $rootScope, adrem, atlasTree) {
         var networkData,
-            hostsData;
+            hostsData,
+            initialized = null;
 
         function openRemoteData(table, query, processFunction, broadcastMessageName) {
           var networkData = new adrem.RemoteDataListStore('ncSrv', 1000);
@@ -211,6 +212,8 @@ define([
               atlasTree.addMapToIndex(decodeNetworkData(map));
             };
 
+            if (initialized != null) { return initialized; }
+
             hostsData = openRemoteData('Hosts', 'Select Id, Name, Address, DeviceType, GlobalDataNode ',
                 processHostsData, 'host-data-changed');
 
@@ -223,7 +226,8 @@ define([
                 '(NetIntId != ' + monitoringPacksNetIntId + ')',
                 processMapData, 'network-data-changed');
 
-            return $q.all([hostsData, networkData]);
+            initialized = $q.all([hostsData, networkData]);
+            return initialized;
           }
         };
       });
