@@ -23,6 +23,10 @@ Or install manually using `rpm`.
     $ sudo yum install initscripts fontconfig
     $ sudo rpm -Uvh grafana-2.1.3-1.x86_64.rpm
 
+On OpenSuse you need to run the following command to install the `rpm`.
+
+    $ sudo rpm -i --nodeps grafana-2.1.3-1.x86_64.rpm
+
 ## Install via YUM Repository
 
 Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
