@@ -41,26 +41,8 @@
       Query
     </li>
     <li>
-      <input type="text"
-             class="input-xxlarge tight-form-input"
-             ng-model="target.expr"
-             spellcheck='false'
-             placeholder="query expression"
-             data-min-length=0 data-items=100
-             ng-model-onblur
-             ng-change="refreshMetricData()">
-    </li>
-    <li class="tight-form-item">
-      Metric
-    </li>
-    <li>
-      <input type="text"
-             class="input-medium tight-form-input"
-             ng-model="target.metric"
-             spellcheck='false'
-             bs-typeahead="suggestMetrics"
-             placeholder="metric name"
-             data-min-length=0 data-items=100>
+      <span prometheus-func-editor>
+      </span>
     </li>
   </ul>
 

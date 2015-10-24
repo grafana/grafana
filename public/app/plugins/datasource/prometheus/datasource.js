@@ -5,6 +5,7 @@ define([
   'app/core/utils/datemath',
   './directives',
   './query_ctrl',
+  './func_editor',
 ],
 function (angular, _, moment, dateMath) {
   'use strict';
