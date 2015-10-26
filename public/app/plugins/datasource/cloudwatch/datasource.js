@@ -209,6 +209,74 @@ function (angular, _) {
       return $q.when([]);
     };
 
+    CloudWatchDatasource.prototype.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarmsForMetric',
+        parameters: { namespace: namespace, metricName: metricName, dimensions: dimensions, statistic: statistic, period: period }
+      });
+    };
+
+    CloudWatchDatasource.prototype.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarmHistory',
+        parameters: { alarmName: alarmName, startDate: startDate, endDate: endDate }
+      });
+    };
+
+    CloudWatchDatasource.prototype.annotationQuery = function(annotation, range) {
+      var region = templateSrv.replace(annotation.region);
+      var namespace = templateSrv.replace(annotation.namespace);
+      var metricName = templateSrv.replace(annotation.metricName);
+      var dimensionPart = templateSrv.replace(annotation.dimensions);
+      var statistic = templateSrv.replace(annotation.statistic) || '';
+      var period = annotation.period || '300';
+
+      if (!region || !namespace || !metricName) { return $q.when([]); }
+
+      var dimensions = {};
+      if (!_.isEmpty(dimensionPart)) {
+        _.each(dimensionPart.split(','), function(v) {
+          var t = v.split('=');
+          if (t.length !== 2) {
+            throw new Error('Invalid query format');
+          }
+          dimensions[t[0]] = t[1];
+        });
+        dimensions = convertDimensionFormat(dimensions);
+      }
+      period = parseInt(period, 10);
+
+      var d = $q.defer();
+      var self = this;
+      this.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period).then(function(alarms) {
+        var eventList = [];
+
+        var start = convertToCloudWatchTime(range.from);
+        var end = convertToCloudWatchTime(range.to);
+        _.each(alarms.MetricAlarms, function(alarm) {
+          self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
+            _.each(history.AlarmHistoryItems, function(h) {
+              var event = {
+                annotation: annotation,
+                time: Date.parse(h.Timestamp),
+                title: h.AlarmName,
+                tags: [h.HistoryItemType],
+                text: h.HistorySummary
+              };
+
+              eventList.push(event);
+            });
+
+            d.resolve(eventList);
+          });
+        });
+      });
+
+      return d.promise;
+    };
+
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
       var region = this.defaultRegion;
