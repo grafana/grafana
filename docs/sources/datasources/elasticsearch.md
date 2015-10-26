@@ -43,6 +43,7 @@ Elasticsearch from the browser. You do this by specifying these to options in yo
 
 ![](/img/elasticsearch/elasticsearch_ds_details.png)
 
+<<<<<<< ceb73b6f7fde383c02c4b387bd719907a5cefefc
 Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
 
@@ -55,4 +56,15 @@ metrics or group bys. Some metrics and group by have options, click the option t
 
 ## Annotations
 TODO
+=======
+
+## Metric editor
+
+### Navigate metric segments
+Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
+or keyboard arrow keys. You can select a wildcard and still continue.
+
+![](/img/animated_gifs/graphite_query1.gif)
+
+>>>>>>> docs(elasticsearch): began work on elasticsearch docs #2862
 

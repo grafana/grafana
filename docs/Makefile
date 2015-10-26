@@ -44,11 +44,15 @@ docs-test: docs-build
 	$(DOCKER_RUN_DOCS) "$(DOCKER_DOCS_IMAGE)" ./test.sh
 
 docs-build:
+<<<<<<< ceb73b6f7fde383c02c4b387bd719907a5cefefc
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	git fetch https://github.com/grafana/grafana.git docs-2.1 && git diff --name-status FETCH_HEAD...HEAD -- . > changed-files
 =======
 	git fetch https://github.com/Cepave/grafana.git docs-1.x && git diff --name-status FETCH_HEAD...HEAD -- . > changed-files
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
+=======
+	git fetch https://github.com/grafana/grafana.git docs-2.1 && git diff --name-status FETCH_HEAD...HEAD -- . > changed-files
+>>>>>>> docs(elasticsearch): began work on elasticsearch docs #2862
 	echo "$(GIT_BRANCH)" > GIT_BRANCH
 	echo "$(GITCOMMIT)" > GITCOMMIT
 	docker build -t "$(DOCKER_DOCS_IMAGE)" .
