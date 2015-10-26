@@ -64,13 +64,13 @@ The `hubot-grafana` plugin requires a number of environment variables to be set 
 The hubot plugin will take advantage of the Grafana server side rendering feature that can
 render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (linux only).
 
-To verify that this freature works try the `Direct link to rendered image` link in the panel share dialog.
+To verify that this feature works try the `Direct link to rendered image` link in the panel share dialog.
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.
 
 ### Grafana API Key
 <img src="/img/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key.
-You can add these from the API Keys page wich you find in the Organization dropdown.
+You can add these from the API Keys page which you find in the Organization dropdown.
 
 ### Amazon S3
 The `S3` options are optional but for the images to work properly in services like Slack and Hipchat they need
@@ -118,7 +118,7 @@ Now you can add an alias like this:
 
 ## Summary
 
-Grafana is going to ship with integrated Slack and Hiptchat features some day but you do
+Grafana is going to ship with integrated Slack and Hipchat features some day but you do
 not have to wait for that. Grafana 2 shipped with a very clever server side rendering feature
 that can render any panel to a png using phantomjs. The hubot plugin for Grafana is something
 you can install and use today!

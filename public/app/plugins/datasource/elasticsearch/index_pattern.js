@@ -20,7 +20,7 @@ function (_, moment) {
 
   IndexPattern.prototype.getIndexForToday = function() {
     if (this.interval) {
-      return moment().format(this.pattern);
+      return moment.utc().format(this.pattern);
     } else {
       return this.pattern;
     }

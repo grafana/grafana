@@ -22,6 +22,7 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func Logger() macaron.Handler {
@@ -36,7 +37,9 @@ func Logger() macaron.Handler {
 		switch rw.Status() {
 		case 200, 304:
 			content = fmt.Sprintf("%s", content)
-			return
+			if !setting.RouterLogging {
+				return
+			}
 		case 404:
 			content = fmt.Sprintf("%s", content)
 		case 500:
