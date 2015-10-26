@@ -28,7 +28,7 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 Database | Name of your influxdb database
 User | Name of your database user
 Password | Database user's password
