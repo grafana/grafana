@@ -28,7 +28,7 @@ function (angular, _, config) {
       $scope.panelMenuPos = posX;
     };
 
-    $scope.toggle_row = function(row) {
+    $scope.toggleRow = function(row) {
       row.collapse = row.collapse ? false : true;
       if (!row.collapse) {
         $timeout(function() {
@@ -37,11 +37,11 @@ function (angular, _, config) {
       }
     };
 
-    $scope.add_panel = function(panel) {
-      $scope.dashboard.add_panel(panel, $scope.row);
+    $scope.addPanel = function(panel) {
+      $scope.dashboard.addPanel(panel, $scope.row);
     };
 
-    $scope.delete_row = function() {
+    $scope.deleteRow = function() {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
@@ -52,7 +52,7 @@ function (angular, _, config) {
       });
     };
 
-    $scope.move_row = function(direction) {
+    $scope.moveRow = function(direction) {
       var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);
       var newIndex = rowIndex;
@@ -82,17 +82,7 @@ function (angular, _, config) {
       }
     };
 
-    $scope.insert_row = function(direction) {
-      var rowsList = $scope.dashboard.rows;
-      var currentRowIndex = _.indexOf(rowsList, $scope.row);
-      $scope.add_row_default();
-      var newIndex = currentRowIndex + direction;
-      if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
-        _.move(rowsList, rowsList.length - 1, newIndex);
-      }
-    };
-
-    $scope.add_panel_default = function(type) {
+    $scope.addPanelDefault = function(type) {
       var defaultSpan = 12;
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
 
@@ -104,14 +94,14 @@ function (angular, _, config) {
         type: type
       };
 
-      $scope.add_panel(panel);
+      $scope.addPanel(panel);
 
       $timeout(function() {
         $scope.$broadcast('render');
       });
     };
 
-    $scope.set_height = function(height) {
+    $scope.setHeight = function(height) {
       $scope.row.height = height;
       $scope.$broadcast('render');
     };

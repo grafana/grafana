@@ -94,7 +94,7 @@ define([
 
       it('adding default should split span in half', function() {
         dashboard.rows = [{ panels: [{ span: 12, id: 7 }] }];
-        dashboard.add_panel({span: 4}, dashboard.rows[0]);
+        dashboard.addPanel({span: 4}, dashboard.rows[0]);
 
         expect(dashboard.rows[0].panels[0].span).to.be(6);
         expect(dashboard.rows[0].panels[1].span).to.be(6);
