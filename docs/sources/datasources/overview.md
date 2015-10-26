@@ -15,6 +15,8 @@ The query language and capabilities of each Data Source are obviously very diffe
 The following datasources are officially supported:
 
 * [Graphite](/datasources/graphite/)
+* [Elasticsearch](/datasources/elasticsearch/)
+* [Cloudwatch](/datasources/cloudwatch/)
 * [InfluxDB](/datasources/influxdb/)
 * [OpenTSDB](/datasources/opentsdb/)
 * [KairosDB](/datasources/kairosdb)
