@@ -55,9 +55,40 @@ function (angular, _, config) {
     $scope.move_row = function(direction) {
       var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);
-      var newIndex = rowIndex + direction;
+      var newIndex = rowIndex;
+      switch(direction) {
+        case 'up': {
+          newIndex = rowIndex - 1;
+          break;
+        }
+        case 'down': {
+          newIndex = rowIndex + 1;
+          break;
+        }
+        case 'top': {
+          newIndex = 0;
+          break;
+        }
+        case 'bottom': {
+          newIndex = rowsList.length - 1;
+          break;
+        }
+        default: {
+          newIndex = rowIndex;
+        }
+      }
       if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
-        _.move(rowsList, rowIndex, rowIndex + direction);
+        _.move(rowsList, rowIndex, newIndex);
+      }
+    };
+
+    $scope.insert_row = function(direction) {
+      var rowsList = $scope.dashboard.rows;
+      var currentRowIndex = _.indexOf(rowsList, $scope.row);
+      $scope.add_row_default();
+      var newIndex = currentRowIndex + direction;
+      if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
+        _.move(rowsList, rowsList.length - 1, newIndex);
       }
     };
 

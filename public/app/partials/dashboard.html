@@ -60,13 +60,22 @@
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Move</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="move_row(-1)">Up</a></li>
-										<li><a ng-click="move_row(1)">Down</a></li>
+										<li><a ng-click="move_row('up')">Up</a></li>
+										<li><a ng-click="move_row('down')">Down</a></li>
+                    <li><a ng-click="move_row('top')">To top</a></li>
+                    <li><a ng-click="move_row('bottom')">To Bottom</a></li>
 									</ul>
 								</li>
 								<li>
 									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
 								</li>
+                <li class="dropdown-submenu">
+                  <a href="javascript:void(0);">Insert Row</a>
+                  <ul class="dropdown-menu">
+                    <li><a ng-click="insert_row(0)">Above</a></li>
+                    <li><a ng-click="insert_row(1)">Below</a></li>
+                  </ul>
+                </li>
 								<li>
 									<a ng-click="delete_row()">Delete row</a>
 								</li>
