@@ -118,7 +118,7 @@ function (angular, $, kbn, _, moment) {
       },0);
     };
 
-    p.add_panel = function(panel, row) {
+    p.addPanel = function(panel, row) {
       var rowSpan = this.rowSpan(row);
       var panelCount = row.panels.length;
       var space = (12 - rowSpan) - panel.span;
