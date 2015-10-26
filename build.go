@@ -328,9 +328,15 @@ func build(pkg string, tags []string) {
 func ldflags() string {
 	var b bytes.Buffer
 	b.WriteString("-w")
+<<<<<<< f32aa9ec11e3ba4da9dc2141585a7eeca8e6a461
 	b.WriteString(fmt.Sprintf(" -X main.version %s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit %s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp %d", buildStamp()))
+=======
+	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
+	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
+	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+>>>>>>> fix(build/aws): updated aws dependency and fixed minor build issue, fixes #3026
 	return b.String()
 }
 

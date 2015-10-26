@@ -1,4 +1,5 @@
 {
+<<<<<<< f32aa9ec11e3ba4da9dc2141585a7eeca8e6a461
 <<<<<<< 2a5dc9d78a8348937a25624bf121704836c7f07c
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5",
@@ -6,6 +7,10 @@
 	"ImportPath": "github.com/Cepave/grafana",
 	"GoVersion": "go1.4.2",
 >>>>>>> Replace the import path with github.com/Cepave/grafana.
+=======
+	"ImportPath": "github.com/grafana/grafana",
+	"GoVersion": "go1.5",
+>>>>>>> fix(build/aws): updated aws dependency and fixed minor build issue, fixes #3026
 	"Packages": [
 		"./pkg/..."
 	],
