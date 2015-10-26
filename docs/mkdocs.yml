@@ -66,6 +66,7 @@ pages:
 
 - ['datasources/overview.md', 'Data Sources', 'Overview']
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
+- ['datasources/elasticsearch.md', 'Data Sources', 'Elasticsearch']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']

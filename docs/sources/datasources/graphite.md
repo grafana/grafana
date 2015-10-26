@@ -10,11 +10,11 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
-## Adding the data source to Grafana
+## Adding the data source
 ![](/img/v2/add_Graphite.jpg)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
