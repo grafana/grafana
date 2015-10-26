@@ -1,16 +1,17 @@
-package credentials
+package ec2rolecreds
 
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 )
-
-const metadataCredentialsEndpoint = "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
 // A EC2RoleProvider retrieves credentials from the EC2 service, and keeps track if
 // those credentials are expired.
@@ -18,7 +19,7 @@ const metadataCredentialsEndpoint = "http://169.254.169.254/latest/meta-data/iam
 // Example how to configure the EC2RoleProvider with custom http Client, Endpoint
 // or ExpiryWindow
 //
-//     p := &credentials.EC2RoleProvider{
+//     p := &ec2rolecreds.EC2RoleProvider{
 //         // Pass in a custom timeout to be used when requesting
 //         // IAM EC2 Role credentials.
 //         Client: &http.Client{
@@ -32,13 +33,10 @@ const metadataCredentialsEndpoint = "http://169.254.169.254/latest/meta-data/iam
 //         ExpiryWindow: 0,
 //     }
 type EC2RoleProvider struct {
-	Expiry
+	credentials.Expiry
 
-	// Endpoint must be fully quantified URL
-	Endpoint string
-
-	// HTTP client to use when connecting to EC2 service
-	Client *http.Client
+	// EC2Metadata client to use when connecting to EC2 metadata service
+	Client *ec2metadata.Client
 
 	// ExpiryWindow will allow the credentials to trigger refreshing prior to
 	// the credentials actually expiring. This is beneficial so race conditions
@@ -52,7 +50,7 @@ type EC2RoleProvider struct {
 	ExpiryWindow time.Duration
 }
 
-// NewEC2RoleCredentials returns a pointer to a new Credentials object
+// NewCredentials returns a pointer to a new Credentials object
 // wrapping the EC2RoleProvider.
 //
 // Takes a custom http.Client which can be configured for custom handling of
@@ -64,9 +62,8 @@ type EC2RoleProvider struct {
 // Window is the expiry window that will be subtracted from the expiry returned
 // by the role credential request. This is done so that the credentials will
 // expire sooner than their actual lifespan.
-func NewEC2RoleCredentials(client *http.Client, endpoint string, window time.Duration) *Credentials {
-	return NewCredentials(&EC2RoleProvider{
-		Endpoint:     endpoint,
+func NewCredentials(client *ec2metadata.Client, window time.Duration) *credentials.Credentials {
+	return credentials.NewCredentials(&EC2RoleProvider{
 		Client:       client,
 		ExpiryWindow: window,
 	})
@@ -75,32 +72,29 @@ func NewEC2RoleCredentials(client *http.Client, endpoint string, window time.Dur
 // Retrieve retrieves credentials from the EC2 service.
 // Error will be returned if the request fails, or unable to extract
 // the desired credentials.
-func (m *EC2RoleProvider) Retrieve() (Value, error) {
+func (m *EC2RoleProvider) Retrieve() (credentials.Value, error) {
 	if m.Client == nil {
-		m.Client = http.DefaultClient
-	}
-	if m.Endpoint == "" {
-		m.Endpoint = metadataCredentialsEndpoint
+		m.Client = ec2metadata.New(nil)
 	}
 
-	credsList, err := requestCredList(m.Client, m.Endpoint)
+	credsList, err := requestCredList(m.Client)
 	if err != nil {
-		return Value{}, err
+		return credentials.Value{}, err
 	}
 
 	if len(credsList) == 0 {
-		return Value{}, awserr.New("EmptyEC2RoleList", "empty EC2 Role list", nil)
+		return credentials.Value{}, awserr.New("EmptyEC2RoleList", "empty EC2 Role list", nil)
 	}
 	credsName := credsList[0]
 
-	roleCreds, err := requestCred(m.Client, m.Endpoint, credsName)
+	roleCreds, err := requestCred(m.Client, credsName)
 	if err != nil {
-		return Value{}, err
+		return credentials.Value{}, err
 	}
 
 	m.SetExpiration(roleCreds.Expiration, m.ExpiryWindow)
 
-	return Value{
+	return credentials.Value{
 		AccessKeyID:     roleCreds.AccessKeyID,
 		SecretAccessKey: roleCreds.SecretAccessKey,
 		SessionToken:    roleCreds.Token,
@@ -110,29 +104,35 @@ func (m *EC2RoleProvider) Retrieve() (Value, error) {
 // A ec2RoleCredRespBody provides the shape for deserializing credential
 // request responses.
 type ec2RoleCredRespBody struct {
+	// Success State
 	Expiration      time.Time
 	AccessKeyID     string
 	SecretAccessKey string
 	Token           string
+
+	// Error state
+	Code    string
+	Message string
 }
+
+const iamSecurityCredsPath = "/iam/security-credentials"
 
 // requestCredList requests a list of credentials from the EC2 service.
 // If there are no credentials, or there is an error making or receiving the request
-func requestCredList(client *http.Client, endpoint string) ([]string, error) {
-	resp, err := client.Get(endpoint)
+func requestCredList(client *ec2metadata.Client) ([]string, error) {
+	resp, err := client.GetMetadata(iamSecurityCredsPath)
 	if err != nil {
-		return nil, awserr.New("ListEC2Role", "failed to list EC2 Roles", err)
+		return nil, awserr.New("EC2RoleRequestError", "failed to list EC2 Roles", err)
 	}
-	defer resp.Body.Close()
 
 	credsList := []string{}
-	s := bufio.NewScanner(resp.Body)
+	s := bufio.NewScanner(strings.NewReader(resp))
 	for s.Scan() {
 		credsList = append(credsList, s.Text())
 	}
 
 	if err := s.Err(); err != nil {
-		return nil, awserr.New("ReadEC2Role", "failed to read list of EC2 Roles", err)
+		return nil, awserr.New("SerializationError", "failed to read list of EC2 Roles", err)
 	}
 
 	return credsList, nil
@@ -142,20 +142,26 @@ func requestCredList(client *http.Client, endpoint string) ([]string, error) {
 //
 // If the credentials cannot be found, or there is an error reading the response
 // and error will be returned.
-func requestCred(client *http.Client, endpoint, credsName string) (*ec2RoleCredRespBody, error) {
-	resp, err := client.Get(endpoint + credsName)
+func requestCred(client *ec2metadata.Client, credsName string) (ec2RoleCredRespBody, error) {
+	resp, err := client.GetMetadata(path.Join(iamSecurityCredsPath, credsName))
 	if err != nil {
-		return nil, awserr.New("GetEC2RoleCredentials",
-			fmt.Sprintf("failed to get %s EC2 Role credentials", credsName),
-			err)
+		return ec2RoleCredRespBody{},
+			awserr.New("EC2RoleRequestError",
+				fmt.Sprintf("failed to get %s EC2 Role credentials", credsName),
+				err)
 	}
-	defer resp.Body.Close()
 
-	respCreds := &ec2RoleCredRespBody{}
-	if err := json.NewDecoder(resp.Body).Decode(respCreds); err != nil {
-		return nil, awserr.New("DecodeEC2RoleCredentials",
-			fmt.Sprintf("failed to decode %s EC2 Role credentials", credsName),
-			err)
+	respCreds := ec2RoleCredRespBody{}
+	if err := json.NewDecoder(strings.NewReader(resp)).Decode(&respCreds); err != nil {
+		return ec2RoleCredRespBody{},
+			awserr.New("SerializationError",
+				fmt.Sprintf("failed to decode %s EC2 Role credentials", credsName),
+				err)
+	}
+
+	if respCreds.Code != "Success" {
+		// If an error code was returned something failed requesting the role.
+		return ec2RoleCredRespBody{}, awserr.New(respCreds.Code, respCreds.Message, nil)
 	}
 
 	return respCreds, nil
