@@ -43,6 +43,7 @@ Elasticsearch from the browser. You do this by specifying these to options in yo
 
 ![](/img/elasticsearch/elasticsearch_ds_details.png)
 
+<<<<<<< 34a87b5970f147f55d53f8dde2896e31f4b7e65e
 <<<<<<< ceb73b6f7fde383c02c4b387bd719907a5cefefc
 Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -57,14 +58,22 @@ metrics or group bys. Some metrics and group by have options, click the option t
 ## Annotations
 TODO
 =======
+=======
+Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
+a time pattern for the index name or a wildcard.
+>>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
 
-## Metric editor
+## Metric Query editor
 
-### Navigate metric segments
-Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
-or keyboard arrow keys. You can select a wildcard and still continue.
+![](/img/elasticsearch/query_editor.png)
 
-![](/img/animated_gifs/graphite_query1.gif)
+The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add / remove
+metrics or group bys. Some metrics and group by have options, click the option text to expand the the row to view and edit metric or group by options.
 
+<<<<<<< 34a87b5970f147f55d53f8dde2896e31f4b7e65e
 >>>>>>> docs(elasticsearch): began work on elasticsearch docs #2862
+=======
+## Annotations
+TODO
+>>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
 
