@@ -10,4 +10,8 @@ function (angular) {
     return {controller: 'CloudWatchQueryCtrl', templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.editor.html'};
   });
 
+  module.directive('annotationsQueryEditorCloudwatch', function() {
+    return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/annotations.editor.html'};
+  });
+
 });
