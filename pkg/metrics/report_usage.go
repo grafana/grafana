@@ -67,7 +67,7 @@ func sendUsageStats() {
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if m.IsStandardDataSource(dsStat.Type) {
+		if m.IsKnownDataSourcePlugin(dsStat.Type) {
 			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
