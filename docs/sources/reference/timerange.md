@@ -8,7 +8,7 @@ page_keywords: grafana, time range, guide, documentation
 
 Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
-<img class="no-shadow" src="/img/v1/time_range_controls.png">
+<img class="no-shadow" src="/img/v2/time_range_controls.png">
 
 In the top right, you have the master Dashboard time picker (it's in between the 'Zoom out' and the 'Refresh' links).
 
