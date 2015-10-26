@@ -25,12 +25,16 @@ The following datasources are officially supported:
 
 * [Graphite](/datasources/graphite/)
 * [Elasticsearch](/datasources/elasticsearch/)
+<<<<<<< 05b941c75cf4422a6ede399871781a6ba63b7397
 <<<<<<< 18ea8c9186f85496a3c30e579c3b2559d3b7c1b5
 * [CloudWatch](/datasources/cloudwatch/)
 * [InfluxDB](/datasources/influxdb/)
 * [OpenTSDB](/datasources/opentsdb/)
 =======
 * [Cloudwatch](/datasources/cloudwatch/)
+=======
+* [CloudWatch](/datasources/cloudwatch/)
+>>>>>>> docs(cloudwatch): initial cloudwatch docs, closes #2900
 * [InfluxDB](/datasources/influxdb/)
 * [OpenTSDB](/datasources/opentsdb/)
 >>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
