@@ -23,16 +23,16 @@ type Endpoint struct {
 }
 
 func NewEndpoint(domainName string) (*Endpoint, error) {
-	host := strings.ToLower(domainName)
-	e := &Endpoint{Host: host}
-	if strings.Contains(host, "://") {
-		u, err := url.Parse(host)
+	e := &Endpoint{Host: domainName}
+	if strings.Contains(domainName, "://") {
+		u, err := url.Parse(domainName)
 		if err != nil {
 			return nil, err
 		}
 		e.Host = strings.Split(u.Host, ":")[0]
 		e.URL = u
 	}
+	e.Host = strings.ToLower(e.Host)
 
 	if net.ParseIP(e.Host) != nil {
 		// the parsed host is an IP address.
@@ -103,8 +103,10 @@ func DiscoverPing(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
 func DiscoverHttp(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
 	host := endpoint.Host
 	path := "/"
-	if endpoint.URL != nil && endpoint.URL.Scheme == "http" {
-		host = endpoint.URL.Host
+	if endpoint.URL != nil {
+		if endpoint.URL.Scheme == "http" {
+			host = endpoint.URL.Host
+		}
 		path = endpoint.URL.Path
 	}
 	resp, err := http.Head(fmt.Sprintf("http://%s%s", host, path))
@@ -136,8 +138,10 @@ func DiscoverHttp(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
 func DiscoverHttps(endpoint *Endpoint) (*m.SuggestedMonitor, error) {
 	host := endpoint.Host
 	path := "/"
-	if endpoint.URL != nil && endpoint.URL.Scheme == "https" {
-		host = endpoint.URL.Host
+	if endpoint.URL != nil {
+		if endpoint.URL.Scheme == "https" {
+			host = endpoint.URL.Host
+		}
 		path = endpoint.URL.Path
 	}
 	resp, err := http.Head(fmt.Sprintf("https://%s%s", host, path))
