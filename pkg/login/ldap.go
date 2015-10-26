@@ -319,6 +319,11 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		var groupSearchResult *ldap.SearchResult
 		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", username, -1)
+
+			if ldapCfg.VerboseLogging {
+				log.Info("LDAP: Searching for user's groups: %s", filter)
+			}
+
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
 				Scope:        ldap.ScopeWholeSubtree,
