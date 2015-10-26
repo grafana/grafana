@@ -1,10 +1,9 @@
-package aws_test
+package aws
 
 import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,20 +17,20 @@ func TestStringSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.StringSlice(in)
+		out := StringSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.StringValueSlice(out)
+		out2 := StringValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
 }
 
 var testCasesStringValueSlice = [][]*string{
-	{aws.String("a"), aws.String("b"), nil, aws.String("c")},
+	{String("a"), String("b"), nil, String("c")},
 }
 
 func TestStringValueSlice(t *testing.T) {
@@ -39,7 +38,7 @@ func TestStringValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.StringValueSlice(in)
+		out := StringValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -49,7 +48,7 @@ func TestStringValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.StringSlice(out)
+		out2 := StringSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -70,13 +69,13 @@ func TestStringMap(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.StringMap(in)
+		out := StringMap(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.StringValueMap(out)
+		out2 := StringValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -91,13 +90,13 @@ func TestBoolSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.BoolSlice(in)
+		out := BoolSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.BoolValueSlice(out)
+		out2 := BoolValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -110,7 +109,7 @@ func TestBoolValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.BoolValueSlice(in)
+		out := BoolValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -120,7 +119,7 @@ func TestBoolValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.BoolSlice(out)
+		out2 := BoolSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -141,13 +140,13 @@ func TestBoolMap(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.BoolMap(in)
+		out := BoolMap(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.BoolValueMap(out)
+		out2 := BoolValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -162,13 +161,13 @@ func TestIntSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.IntSlice(in)
+		out := IntSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.IntValueSlice(out)
+		out2 := IntValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -181,7 +180,7 @@ func TestIntValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.IntValueSlice(in)
+		out := IntValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -191,7 +190,7 @@ func TestIntValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.IntSlice(out)
+		out2 := IntSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -212,13 +211,13 @@ func TestIntMap(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.IntMap(in)
+		out := IntMap(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.IntValueMap(out)
+		out2 := IntValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -233,13 +232,13 @@ func TestInt64Slice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Int64Slice(in)
+		out := Int64Slice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.Int64ValueSlice(out)
+		out2 := Int64ValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -252,7 +251,7 @@ func TestInt64ValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Int64ValueSlice(in)
+		out := Int64ValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -262,7 +261,7 @@ func TestInt64ValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.Int64Slice(out)
+		out2 := Int64Slice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -283,13 +282,13 @@ func TestInt64Map(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Int64Map(in)
+		out := Int64Map(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.Int64ValueMap(out)
+		out2 := Int64ValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -304,13 +303,13 @@ func TestFloat64Slice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Float64Slice(in)
+		out := Float64Slice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.Float64ValueSlice(out)
+		out2 := Float64ValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -323,7 +322,7 @@ func TestFloat64ValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Float64ValueSlice(in)
+		out := Float64ValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -333,7 +332,7 @@ func TestFloat64ValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.Float64Slice(out)
+		out2 := Float64Slice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -354,13 +353,13 @@ func TestFloat64Map(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.Float64Map(in)
+		out := Float64Map(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.Float64ValueMap(out)
+		out2 := Float64ValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -375,13 +374,13 @@ func TestTimeSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.TimeSlice(in)
+		out := TimeSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.TimeValueSlice(out)
+		out2 := TimeValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -394,7 +393,7 @@ func TestTimeValueSlice(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.TimeValueSlice(in)
+		out := TimeValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -404,7 +403,7 @@ func TestTimeValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := aws.TimeSlice(out)
+		out2 := TimeSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -425,13 +424,13 @@ func TestTimeMap(t *testing.T) {
 		if in == nil {
 			continue
 		}
-		out := aws.TimeMap(in)
+		out := TimeMap(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := aws.TimeValueMap(out)
+		out2 := TimeValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}

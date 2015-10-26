@@ -3,19 +3,19 @@ package ec2
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/request"
 )
 
 func init() {
-	initRequest = func(r *aws.Request) {
+	initRequest = func(r *request.Request) {
 		if r.Operation.Name == opCopySnapshot { // fill the PresignedURL parameter
 			r.Handlers.Build.PushFront(fillPresignedURL)
 		}
 	}
 }
 
-func fillPresignedURL(r *aws.Request) {
+func fillPresignedURL(r *request.Request) {
 	if !r.ParamsFilled() {
 		return
 	}
@@ -23,7 +23,7 @@ func fillPresignedURL(r *aws.Request) {
 	params := r.Params.(*CopySnapshotInput)
 
 	// Stop if PresignedURL/DestinationRegion is set
-	if params.PresignedURL != nil || params.DestinationRegion != nil {
+	if params.PresignedUrl != nil || params.DestinationRegion != nil {
 		return
 	}
 
@@ -53,5 +53,5 @@ func fillPresignedURL(r *aws.Request) {
 	}
 
 	// We have our URL, set it on params
-	params.PresignedURL = &url
+	params.PresignedUrl = &url
 }
