@@ -4,6 +4,7 @@ page_description: Cloudwatch grafana datasource documentation
 page_keywords: Cloudwatch, grafana, documentation, datasource, docs
 ---
 
+<<<<<<< 18ea8c9186f85496a3c30e579c3b2559d3b7c1b5
 # CloudWatch
 
 Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will
@@ -11,6 +12,14 @@ be ready to build dashboards for you CloudWatch metrics.
 
 ## Adding the data source
 ![](/img/cloudwatch/cloudwatch_add.png)
+=======
+# Cloudwatch
+
+Grafana ships with support for Cloudwatch.
+
+## Adding the data source
+![](/img/v2/add_Graphite.jpg)
+>>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -18,12 +27,17 @@ be ready to build dashboards for you CloudWatch metrics.
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
 3. Click the `Add new` link in the top header.
+<<<<<<< 18ea8c9186f85496a3c30e579c3b2559d3b7c1b5
 4. Select `CloudWatch` from the dropdown.
+=======
+4. Select `Elasticsearch` from the dropdown.
+>>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
 
 Name | Description
 ------------ | -------------
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
+<<<<<<< 18ea8c9186f85496a3c30e579c3b2559d3b7c1b5
 Credentials profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default. This option was introduced in Grafana 2.5.1
 Default Region | Used in query editor to set region (can be changed on per query basis)
 
@@ -81,4 +95,12 @@ $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Graf
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
+=======
+Url | The http protocol, ip and port of you elasticsearch server.
+Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+
+Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
+>>>>>>> docs(elasticsearch): initial elasticsearch docs, closes #2862
 
