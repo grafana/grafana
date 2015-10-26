@@ -1,4 +1,8 @@
+<<<<<<< e55f8a7f49192a8921074e67c8d29d14a6a8de9c
 <li><a class='version' href='/v2.5'>Version v2.5</a></li>
+=======
+<li><a class='version' href='/v2.1'>Version v2.5</a></li>
+>>>>>>> docs(elasticsearch): began work on elasticsearch docs #2862
 <li><a class='version' href='/v2.1'>Version v2.1</a></li>
 <li><a class='version' href='/v2.0'>Version v2.0</a></li>
 <li><a class='version' href='/v1.9'>Version v1.9</a></li>
