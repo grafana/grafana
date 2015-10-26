@@ -47,14 +47,14 @@ Example content:
     region = us-west-2
 
 
-### Metric Query Editor
+## Metric Query Editor
 
 ![](/img/cloudwatch/query_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
 
-### Cost
+## Cost
 
 It's worth to mention that Amazon will charge you for CloudWatch API usage. CloudWatch costs
 $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
