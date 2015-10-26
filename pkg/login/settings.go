@@ -26,6 +26,8 @@ type LdapServerConf struct {
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
 
+	SearchInGroups bool `toml:"search_user_in_groups"`
+
 	LdapGroups []*LdapGroupToOrgRole `toml:"group_mappings"`
 }
 

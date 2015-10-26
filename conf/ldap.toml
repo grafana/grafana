@@ -21,6 +21,9 @@ search_filter = "(cn=%s)"
 # An array of base dns to search through
 search_base_dns = ["dc=grafana,dc=org"]
 
+# Search user's DN in `member` atribute of groups specified in `group_mappings`
+search_in_groups = false
+
 # Specify names of the ldap attributes your ldap uses
 [servers.attributes]
 name = "givenName"
