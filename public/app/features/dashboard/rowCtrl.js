@@ -19,6 +19,20 @@ function (angular, _, config) {
 
     _.defaults($scope.row,_d);
 
+    $scope.row_list = [
+      {"name": "25 px", "isSelected": "", height: "25px"},
+      {"name": "100 px", "isSelected": "", height: "100px"},
+      {"name": "150 px", "isSelected": "", height: "150px"},
+      {"name": "200 px", "isSelected": "", height: "200px"},
+      {"name": "250 px", "isSelected": "", height: "250px"},
+      {"name": "300 px", "isSelected": "", height: "300px"},
+      {"name": "350 px", "isSelected": "", height: "350px"},
+      {"name": "450 px", "isSelected": "", height: "450px"},
+      {"name": "500 px", "isSelected": "", height: "500px"},
+      {"name": "600 px", "isSelected": "", height: "600px"},
+      {"name": "700 px", "isSelected": "", height: "700px"}
+    ];
+
     $scope.init = function() {
       $scope.editor = {index: 0};
     };
@@ -80,8 +94,12 @@ function (angular, _, config) {
       });
     };
 
-    $scope.set_height = function(height) {
-      $scope.row.height = height;
+    $scope.set_height = function(index) {
+      angular.forEach($scope.row_list, function(item) {
+        item.isSelected = "";
+      });
+      $scope.row.height = $scope.row_list[index].height;
+      $scope.row_list[index].isSelected = "active";
       $scope.$broadcast('render');
     };
 
@@ -120,6 +138,11 @@ function (angular, _, config) {
   module.directive('rowHeight', function() {
     return function(scope, element) {
       scope.$watchGroup(['row.collapse', 'row.height'], function() {
+        angular.forEach(scope.row_list, function(item) {
+          if (item.height === scope.row.height) {
+            item.isSelected = "active";
+          }
+        });
         element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
       });
 
