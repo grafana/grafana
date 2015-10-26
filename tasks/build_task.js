@@ -23,7 +23,6 @@ module.exports = function(grunt) {
     'filerev',
     'remapFilerev',
     'usemin',
-    'clean:temp',
     'uglify:genDir'
   ]);
 

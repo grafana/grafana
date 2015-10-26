@@ -12,7 +12,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxdb';
@@ -78,7 +78,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
     };
 
     InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ range: rangeUnparsed });
+      var timeFilter = getTimeFilter({ rangeRaw: rangeUnparsed });
       var query = annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
@@ -161,7 +161,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
         if (err.status !== 0 || err.status >= 300) {

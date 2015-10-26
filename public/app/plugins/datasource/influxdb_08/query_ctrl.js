@@ -89,6 +89,7 @@ function (angular) {
       }
     };
 
-  });
+    $scope.init();
 
+  });
 });

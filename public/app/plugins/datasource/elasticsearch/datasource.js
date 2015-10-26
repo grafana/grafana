@@ -159,7 +159,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         if (target.hide) {return;}
 
         var esQuery = angular.toJson(this.queryBuilder.build(target));
-        esQuery = esQuery.replace("$lucene_query", target.query || '*');
+        var luceneQuery = angular.toJson(target.query || '*');
+        // remove inner quotes
+        luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
+        esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
         payload += header + '\n' + esQuery + '\n';
         sentTargets.push(target);

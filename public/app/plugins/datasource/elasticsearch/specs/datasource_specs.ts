@@ -36,22 +36,21 @@ describe('ElasticDatasource', function() {
       ctx.ds.testDatasource();
       ctx.$rootScope.$apply();
 
-      var today = moment().format("YYYY.MM.DD");
+      var today = moment.utc().format("YYYY.MM.DD");
       expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
     });
   });
 
   describe('When issueing metric query with interval pattern', function() {
+    var requestOptions, parts, header;
+
     beforeEach(function() {
       ctx.ds = new ctx.service({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
         jsonData: { interval: 'Daily' }
       });
-    });
 
-    it('should translate index pattern to current day', function() {
-      var requestOptions;
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
         return ctx.$q.when({data: {responses: []}});
@@ -62,13 +61,22 @@ describe('ElasticDatasource', function() {
           from: moment([2015, 4, 30, 10]),
           to: moment([2015, 5, 1, 10])
         },
-        targets: [{ bucketAggs: [], metrics: [] }]
+        targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
       });
 
       ctx.$rootScope.$apply();
-      var parts = requestOptions.data.split('\n');
-      var header = angular.fromJson(parts[0]);
+
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+    });
+
+    it('should translate index pattern to current day', function() {
       expect(header.index).to.eql(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+    });
+
+    it('should json escape lucene query', function() {
+      var body = angular.fromJson(parts[1]);
+      expect(body.query.filtered.query.query_string.query).to.be('escape\\:test');
     });
   });
 });
