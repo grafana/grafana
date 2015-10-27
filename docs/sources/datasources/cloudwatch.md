@@ -30,7 +30,7 @@ Default-Region | Used in query editor to set region (can be changed on per query
 
 ### IAM Roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the offical AWS SDK. If you grafana
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles]](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -58,7 +58,7 @@ You need to specify a namespace, metric, at least one stat, and at least one dim
 
 It's worth to mention that Amazon will charge you for CloudWatch API usage. CloudWatch costs
 $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
-issue a GetMetricStatistics request and every time you pick a dimenion in the query editor
+issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
 
