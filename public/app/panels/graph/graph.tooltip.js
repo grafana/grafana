@@ -117,7 +117,7 @@ function ($) {
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
         seriesHtml = '';
-        timestamp = dashboard.formatDate(seriesHoverInfo.time);
+        timestamp = dashboard.formatDate(seriesHoverInfo.time,scope.panel.tooltip.relativeTimestamp);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];

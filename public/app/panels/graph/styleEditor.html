@@ -52,6 +52,10 @@
 			text="All series" model="panel.tooltip.shared" change="render()"
 			tip="Show all series on same tooltip and a x croshair to help follow all series">
 		</editor-opt-bool>
+    <editor-opt-bool
+      text="Relative timestamp" model="panel.tooltip.relativeTimestamp" change="render()"
+      tip="Shows elapsed time in relatively from the current timestamp. For example, 45 mins ago, 1 day 2 hours ago, etc.">
+    </editor-opt-bool>
 		<div class="editor-option" ng-show="panel.stack">
       <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
       <select class="input-small" ng-model="panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="render()"></select>
