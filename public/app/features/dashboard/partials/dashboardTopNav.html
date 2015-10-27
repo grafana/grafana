@@ -29,14 +29,14 @@
 				<li ng-show="dashboardMeta.canSave">
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
-				<li class="dropdown">
+				<li ng-if="dashboardMeta.canEdit" class="dropdown">
 					<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 					<ul class="dropdown-menu">
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
-						<li><a class="pointer" ng-click="exportDashboard();">Export</a></li>
-						<li><a class="pointer" ng-click="editJson();">View JSON</a></li>
+						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="exportDashboard();">Export</a></li>
+						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">View JSON</a></li>
 						<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
 						<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 					</ul>
