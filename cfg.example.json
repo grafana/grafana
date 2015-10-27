@@ -3,5 +3,10 @@
         "addr": "yourDbAddress",
         "account": "yourDbAccount",
         "password": "yourDbPassword"
+    },
+    "datasource": {
+        "type": "Open-Falcon",
+        "urlDashboard": "yourDashboardUrl",
+        "urlQuery": "yourQueryUrl"
     }
 }
