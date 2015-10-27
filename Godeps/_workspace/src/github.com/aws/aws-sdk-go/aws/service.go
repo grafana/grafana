@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/internal/endpoints"
+	"github.com/aws/aws-sdk-go/private/endpoints"
 )
 
 // A Service implements the base service request and response handling

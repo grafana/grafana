@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.5",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -20,38 +20,48 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/ec2query",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/query",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/rest",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/signer/v4",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
-			"Comment": "v0.7.3",
-			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/ec2",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
