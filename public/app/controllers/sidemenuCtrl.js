@@ -39,10 +39,12 @@ function (angular, _, $, config) {
           text: "Organization settings",
           href: $scope.getUrl("/org"),
         });
+/*
         $scope.orgMenu.push({
           text: "Users",
           href: $scope.getUrl("/org/users"),
         });
+*/
         $scope.orgMenu.push({
           text: "API Keys",
           href: $scope.getUrl("/org/apikeys"),
