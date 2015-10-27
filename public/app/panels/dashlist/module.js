@@ -43,8 +43,10 @@ function (angular, app, _, config, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
+
       if ($scope.panel.tag) {
         $scope.panel.tags = [$scope.panel.tag];
+        delete $scope.panel.tag;
       }
 
       if ($scope.isNewPanel()) {
