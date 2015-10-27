@@ -24,27 +24,27 @@
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/query",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/rest",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"ImportPath": "github.com/aws/aws-sdk-go/private/signer/v4",
 			"Comment": "v0.7.3",
 			"Rev": "bed164a424e75154a40550c04c313ef51a7bb275"
 		},
