@@ -28,6 +28,9 @@
 
 #define NetCrunchServerKey "SOFTWARE\AdRem\NetCrunch\9.0\NCServer\Options\ServerConfiguration"
 
+#define SignKey "Z:\Projects\Keys\AdRem Code-Signing Cert.pfx"
+#define TimeStampService "http://timestamp.globalsign.com/scripts/timstamp.dll"
+
 [Setup]
 AppId={{#MyAppID}
 AppName={#MyAppName}
@@ -48,6 +51,7 @@ Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
+SignTool=MySignTool sign /f "{#SignKey}" /v /t "{#TimeStampService}" $f
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
