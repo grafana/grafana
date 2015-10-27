@@ -16,7 +16,7 @@ it allows you to add queries of differnet data source types & instances to the s
 **User Onboarding**
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
-- See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
+- See [Issue #2353](https://github.com/grafana/grafana/issues/2353) for more info.
 
 **Other new Features && Enhancements**
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
