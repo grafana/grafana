@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -17,9 +19,10 @@ type actionHandler func(*cwRequest, *middleware.Context)
 var actionHandlers map[string]actionHandler
 
 type cwRequest struct {
-	Region string `json:"region"`
-	Action string `json:"action"`
-	Body   []byte `json:"-"`
+	Region  string `json:"region"`
+	Profile string `json:"profile"`
+	Action  string `json:"action"`
+	Body    []byte `json:"-"`
 }
 
 func init() {
@@ -35,7 +38,16 @@ func init() {
 }
 
 func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
-	svc := cloudwatch.New(&aws.Config{Region: aws.String(req.Region)})
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.Profile},
+			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+		})
+	svc := cloudwatch.New(&aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: creds,
+	})
 
 	reqParam := &struct {
 		Parameters struct {
@@ -70,7 +82,17 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
-	svc := cloudwatch.New(&aws.Config{Region: aws.String(req.Region)})
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.Profile},
+			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+		})
+	svc := cloudwatch.New(&aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: creds,
+	})
+
 	reqParam := &struct {
 		Parameters struct {
 			Namespace  string                        `json:"namespace"`
@@ -78,7 +100,6 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 			Dimensions []*cloudwatch.DimensionFilter `json:"dimensions"`
 		} `json:"parameters"`
 	}{}
-
 	json.Unmarshal(req.Body, reqParam)
 
 	params := &cloudwatch.ListMetricsInput{
