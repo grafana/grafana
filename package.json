@@ -1,13 +1,13 @@
 {
   "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "name": "AdRem Software",
+    "company": "AdRem Software"
   },
-  "name": "grafana",
-  "version": "1.0",
+  "name": "GrafCrunch",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "http://github.com/torkelo/grafana.git"
+    "url": "https://github.com/adremsoft/NetCrunch-grafana"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",

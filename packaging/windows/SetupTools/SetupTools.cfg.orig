@@ -1,0 +1,11 @@
+-$D0 -$L- -$Y- -B -Q -TX.dll
+-AGenerics.Collections=System.Generics.Collections;Generics.Defaults=System.Generics.Defaults;WinTypes=Winapi.Windows;WinProcs=Winapi.Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE
+-DRELEASE;NO_FORMS;NC_SHARED
+-NSWinapi;System;System.Win;Xml;Data;Datasnap;Web;Soap;
+
+
+-E.\Win32\Release
+-NU.\Win32\Release
+-NO.\Win32\Release
+-IV:\ADREM\;Z:\NetCrunch\Development\Source\INCLUDE\;
+-U"V:\AdRem\ClientServer;V:\AdRem\Debug;V:\Free\Detours\V2\Src;V:\ADREM\common\lib;V:\ADREM\REST\;V:\ADREM\WINNT\Lib\;V:\Free\XML\;V:\ADREM\CfgMan\;V:\AdRem\ClientServer\Client;V:\AdRem\ClientServer\Client\internal;V:\AdRem\WebServer\Server;V:\Free\Encryption;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer\;Z:\NetCrunch\Development\Source\Imonitor\Client\UI\User Profiles\;Z:\NetCrunch\Development\Source\Imonitor\Shared\User Profiles\;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\Shared;Z:\NetCrunch\Development\Source\WebAccess\Common\;Z:\NetCrunch\Development\Source\Imonitor\Shared\Remote Access\;V:\jedi\jwa\lib\DXE8\;"

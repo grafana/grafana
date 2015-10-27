@@ -2,9 +2,12 @@ node_modules
 coverage/
 .aws-config.json
 awsconfig
+build-windows.cmd
 /dist
+/packaging/windows/install-script.iss
 /packaging/windows/dest
 /packaging/windows/release
+/packaging/windows/SetupTools/SetupTools.cfg
 /packaging/windows/SetupTools/SetupTools.dproj.local
 /packaging/windows/SetupTools/SetupTools.dsk
 /packaging/windows/SetupTools/SetupTools.skincfg
@@ -13,6 +16,7 @@ awsconfig
 /packaging/windows/SetupTools/__history
 /packaging/windows/SetupTools/Win32
 /packaging/windows/SetupTools/Win64
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.cfg
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.dproj.local
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.dsk
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.~dsk
@@ -24,6 +28,7 @@ awsconfig
 /packaging/windows/GrafCrunchGuard/ModelSupport_GrafCrunchGuard
 /packaging/windows/GrafCrunchGuard/Win32
 /packaging/windows/GrafCrunchGuard/Win64
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.cfg
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.dproj.local
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.dsk
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.~dsk
