@@ -31,8 +31,13 @@ function ($) {
       return j - 1;
     };
 
-    this.showTooltip = function(title, innerHtml, pos) {
-      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ title + '</div> ' ;
+    this.showTooltip = function(absoluteTime, relativeTime, innerHtml, pos) {
+      var body;
+      if(typeof relativeTime === 'undefined') {
+        body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '</div> ' ;
+      } else {
+        body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '<br>(' + relativeTime + ')</div> ' ;
+      }
       body += innerHtml + '</div>';
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };
@@ -101,7 +106,7 @@ function ($) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
-      var group, value, timestamp, hoverInfo, i, series, seriesHtml;
+      var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml;
 
       if(dashboard.sharedCrosshair){
         scope.appEvent('setCrosshair', { pos: pos, scope: scope });
@@ -117,11 +122,12 @@ function ($) {
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
         seriesHtml = '';
+
         if(scope.panel.tooltip.relativeTimestamp) {
-          timestamp = dashboard.formatRelativeDate(seriesHoverInfo.time);
-        } else {
-          timestamp = dashboard.formatDate(seriesHoverInfo.time);
+          relativeTime = dashboard.formatRelativeDate(seriesHoverInfo.time);
         }
+
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -140,7 +146,7 @@ function ($) {
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(timestamp, seriesHtml, pos);
+        self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
       }
       // single series tooltip
       else if (item) {
@@ -158,14 +164,14 @@ function ($) {
         value = series.formatValue(value);
 
         if(scope.panel.tooltip.relativeTimestamp) {
-          timestamp = dashboard.formatRelativeDate(item.datapoint[0]);
-        } else {
-          timestamp = dashboard.formatDate(item.datapoint[0]);
+          relativeTime = dashboard.formatRelativeDate(item.datapoint[0]);
         }
+
+        absoluteTime = dashboard.formatDate(item.datapoint[0]);
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltip(timestamp, group, pos);
+        self.showTooltipOther(absoluteTime, relativeTime, group, pos);
       }
       // no hit
       else {
