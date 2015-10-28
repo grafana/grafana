@@ -11,7 +11,7 @@ it allows you to add queries of differnet data source types & instances to the s
 
 **New Feature: New and much improved time picker**
 - Support for quick ranges like `Today`, `This day last week`, `This week`, `The day so far`, etc.
-- Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
+- Improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
 
 **User Onboarding**
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
