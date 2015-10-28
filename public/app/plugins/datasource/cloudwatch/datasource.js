@@ -34,7 +34,7 @@ function (angular, _) {
         query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = convertDimensionFormat(target.dimensions);
+        query.dimensions = convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
         query.period = parseInt(target.period, 10);
 
@@ -119,7 +119,7 @@ function (angular, _) {
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(dimensions),
+          dimensions: convertDimensionFormat(dimensions, {}),
         }
       };
 
@@ -276,11 +276,11 @@ function (angular, _) {
       return Math.round(date.valueOf() / 1000);
     }
 
-    function convertDimensionFormat(dimensions) {
+    function convertDimensionFormat(dimensions, scopedVars) {
       return _.map(dimensions, function(value, key) {
         return {
-          Name: templateSrv.replace(key),
-          Value: templateSrv.replace(value)
+          Name: templateSrv.replace(key, scopedVars),
+          Value: templateSrv.replace(value, scopedVars)
         };
       });
     }
