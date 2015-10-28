@@ -1,4 +1,9 @@
 # 2.5.1 (unreleased)
+<<<<<<< 05dcee8f87c786112166f95db2aa1bc2681c3c4c
+=======
+
+# 2.5 (2015-10-28)
+>>>>>>> changelog: updated and marked 2.5 as released
 
 <<<<<<< b0ad384a6707e1bfece743747ad93f0ad41a3b83
 <<<<<<< c814803908eaf6f16fbd17dd456f30a419308e8b
