@@ -1,30 +1,33 @@
 <div class="editor-row">
 	<div class="section">
-		<h5>Metric name</h5>
 		<div class="editor-option">
-			<input type="text" class="span6" ng-model='currentAnnotation.metricName' placeholder="CPUUtilization"></input>
+			<label class="small">Region</label>
+			<input type="text" class="input-medium" ng-model='currentAnnotation.region' placeholder="us-east-1"></input>
+		</div>
+
+		<div class="editor-option">
+			<label class="small">Namespace</label>
+			<input type="text" class="input-medium" ng-model='currentAnnotation.namespace' placeholder="AWS/EC2"></input>
+		</div>
+
+		<div class="editor-option">
+			<label class="small">Metric name</label>
+			<input type="text" class="input-large" ng-model='currentAnnotation.metricName' placeholder="CPUUtilization"></input>
 		</div>
 	</div>
 </div>
 
 <div class="editor-row">
 	<div class="section">
-		<h5>Field mappings</h5>
-		<div class="editor-option">
-			<label class="small">Region</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.region' placeholder="us-east-1"></input>
-		</div>
-
-		<div class="editor-option">
-			<label class="small">Namespace</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.namespace' placeholder="AWS/EC2"></input>
-		</div>
-
 		<div class="editor-option">
 			<label class="small">Dimensions</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.dimensions' placeholder="InstanceId=i-12345678"></input>
+			<input type="text" class="input-large" ng-model='currentAnnotation.dimensions' placeholder="InstanceId=i-12345678"></input>
 		</div>
+	</div>
+</div>
 
+<div class="editor-row">
+	<div class="section">
 		<div class="editor-option">
 			<label class="small">Statistic</label>
 			<input type="text" class="input-small" ng-model='currentAnnotation.statistic' placeholder="Average"></input>
@@ -32,7 +35,7 @@
 
 		<div class="editor-option">
 			<label class="small">Period</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.period' placeholder="300"></input>
+			<input type="text" class="input-mini" ng-model='currentAnnotation.period' placeholder="300"></input>
 		</div>
 	</div>
 </div>
