@@ -1,4 +1,6 @@
-# 2.5 (unreleased)
+# 2.5.1 (unreleased)
+
+# 2.5 (2015-10-28)
 
 <<<<<<< f0efbe4a9386646dfe4e47b4a1226d4cdb19e63f
 <<<<<<< 1b7ba34e481f3622a64f26c0c03e83fc5fbc7115
