@@ -32,12 +32,7 @@ function ($) {
     };
 
     this.showTooltip = function(absoluteTime, relativeTime, innerHtml, pos) {
-      var body;
-      if(typeof relativeTime === 'undefined') {
-        body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '</div> ' ;
-      } else {
-        body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '<br>(' + relativeTime + ')</div> ' ;
-      }
+      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '<br>(' + relativeTime + ')</div> ' ;
       body += innerHtml + '</div>';
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };
@@ -123,10 +118,7 @@ function ($) {
 
         seriesHtml = '';
 
-        if(scope.panel.tooltip.relativeTimestamp) {
-          relativeTime = dashboard.formatRelativeDate(seriesHoverInfo.time);
-        }
-
+        relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
@@ -163,15 +155,12 @@ function ($) {
 
         value = series.formatValue(value);
 
-        if(scope.panel.tooltip.relativeTimestamp) {
-          relativeTime = dashboard.formatRelativeDate(item.datapoint[0]);
-        }
-
+        relativeTime = dashboard.getRelativeTime(item.datapoint[0]);
         absoluteTime = dashboard.formatDate(item.datapoint[0]);
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltipOther(absoluteTime, relativeTime, group, pos);
+        self.showTooltip(absoluteTime, relativeTime, group, pos);
       }
       // no hit
       else {
