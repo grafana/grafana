@@ -1,7 +1,12 @@
 {
     "database": {
-        "addr": "yourDbAddress",
+        "addr": "11.22.33.44:port",
         "account": "yourDbAccount",
         "password": "yourDbPassword"
+    },
+    "datasource": {
+        "type": "Open-Falcon",
+        "urlDashboard": "http://dashboard.com",
+        "urlQuery": "http://query.com:port"
     }
 }
