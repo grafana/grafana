@@ -83,10 +83,8 @@ type CollectorDisconnected struct {
 	InstanceId  string `json:"instance_id"`
 }
 
-type CollectorEnabled struct {
-	CollectorId int64 `json:"collector_id"`
-}
-
-type CollectorDisabled struct {
-	CollectorId int64 `json:"collector_id"`
+type CollectorUpdated struct {
+	m.CollectorDTO
+	Timestamp time.Time       `json:"timestamp"`
+	LastState *m.CollectorDTO `json:"last_state"`
 }

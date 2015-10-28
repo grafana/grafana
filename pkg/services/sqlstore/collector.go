@@ -349,47 +349,6 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 			return err
 		}
 
-		//the collector can only be edited by those who own it.
-		if collectorQuery.Result.OrgId == cmd.OrgId {
-			l := &m.Collector{
-				OrgId:     cmd.OrgId,
-				Name:      cmd.Name,
-				Latitude:  cmd.Latitude,
-				Longitude: cmd.Longitude,
-				Public:    cmd.Public,
-				Enabled:   cmd.Enabled,
-				Updated:   time.Now(),
-			}
-			if collectorQuery.Result.Enabled != cmd.Enabled {
-				l.EnabledChange = time.Now()
-				//emit event so that collector gets notified
-				if cmd.Enabled {
-					sess.publishAfterCommit(&events.CollectorEnabled{
-						CollectorId: cmd.Id,
-					})
-				} else {
-					sess.publishAfterCommit(&events.CollectorDisabled{
-						CollectorId: cmd.Id,
-					})
-				}
-			}
-			l.UpdateCollectorSlug()
-			sess.UseBool("enabled")
-			sess.UseBool("public")
-			_, err := sess.Id(cmd.Id).Update(l)
-			if err != nil {
-				return err
-			}
-			//if we are un-publicing a collector, then we need to remove
-			//the tags created by all users on the collector.
-			if collectorQuery.Result.Public && !cmd.Public {
-				rawSql := "DELETE from collector_tag where collector_id=? AND org_id != ?"
-				if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
-					return err
-				}
-			}
-		}
-
 		tagMap := make(map[string]bool)
 		tagsToDelete := make([]string, 0)
 		tagsToAddMap := make(map[string]bool, 0)
@@ -465,6 +424,56 @@ func UpdateCollector(cmd *m.UpdateCollectorCommand) error {
 					}
 				}
 			}
+		}
+
+		//the collector can only be edited by those who own it.
+		if collectorQuery.Result.OrgId == cmd.OrgId {
+			l := &m.Collector{
+				OrgId:     cmd.OrgId,
+				Name:      cmd.Name,
+				Latitude:  cmd.Latitude,
+				Longitude: cmd.Longitude,
+				Public:    cmd.Public,
+				Enabled:   cmd.Enabled,
+				Updated:   time.Now(),
+			}
+			if collectorQuery.Result.Enabled != cmd.Enabled {
+				l.EnabledChange = time.Now()
+			}
+			l.UpdateCollectorSlug()
+			sess.UseBool("enabled")
+			sess.UseBool("public")
+			_, err := sess.Id(cmd.Id).Update(l)
+			if err != nil {
+				return err
+			}
+			//if we are un-publicing a collector, then we need to remove
+			//the tags created by all users on the collector.
+			if collectorQuery.Result.Public && !cmd.Public {
+				rawSql := "DELETE from collector_tag where collector_id=? AND org_id != ?"
+				if _, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId); err != nil {
+					return err
+				}
+			}
+
+			sess.publishAfterCommit(&events.CollectorUpdated{
+				CollectorDTO: m.CollectorDTO{
+					Id:            cmd.Id,
+					OrgId:         l.OrgId,
+					Name:          l.Name,
+					Slug:          l.Slug,
+					Tags:          cmd.Tags,
+					Latitude:      l.Latitude,
+					Longitude:     l.Longitude,
+					Public:        l.Public,
+					Online:        l.Online,
+					OnlineChange:  l.OnlineChange,
+					Enabled:       l.Enabled,
+					EnabledChange: l.EnabledChange,
+				},
+				Timestamp: time.Now(),
+				LastState: collectorQuery.Result,
+			})
 		}
 
 		return nil
