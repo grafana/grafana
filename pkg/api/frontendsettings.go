@@ -86,6 +86,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["directUrl"] = ds.Url
 		}
 
+		if ds.Type == m.DS_BOSUN {
+			// add unproxied server URL for link to Bosun
+			dsMap["directUrl"] = ds.Url
+		}
+
 		datasources[ds.Name] = dsMap
 	}
 

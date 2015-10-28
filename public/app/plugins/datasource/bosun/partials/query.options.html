@@ -1,0 +1,33 @@
+<section class="grafana-metric-options">
+	<div class="tight-form last">
+		<ul class="tight-form-list">
+			<li class="tight-form-item tight-form-item-icon">
+				<i class="fa fa-info-circle"></i>
+			</li>
+			<li class="tight-form-item">
+				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					Variable Interpolation
+				</a>
+			</li>
+		</ul>
+		<div class="clearfix"></div>
+	</div>
+</section>
+
+<div class="editor-row">
+	<div class="pull-left" style="margin-top: 30px;">
+
+		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+			<h5>Variable Interpolation</h5>
+			<ul>
+				<li>$start = replaced with seconds from the end time of Grafana's time selection.</li>
+				<li>$ds = replaced by grafana's recommend autodownsample interval.</li>
+				<li>Example: q("avg:$ds-avg:rate:os.cpu{host=*bosun*}", "$start", "")</li>
+				<li>Note: Since bosun's time is relative to now, the expression is executed as if Grafana's end time is "now".</li>
+			</ul>
+		</div>
+
+	</div>
+</div>
+
+

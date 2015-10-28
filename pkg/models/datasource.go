@@ -14,6 +14,7 @@ const (
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
+	DS_BOSUN         = "bosun"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -55,6 +56,7 @@ var knownDatasourcePlugins map[string]bool = map[string]bool{
 	DS_KAIROSDB:    true,
 	DS_CLOUDWATCH:  true,
 	DS_PROMETHEUS:  true,
+	DS_BOSUN:       true,
 	DS_OPENTSDB:    true,
 	"opennms":      true,
 	"druid":        true,
