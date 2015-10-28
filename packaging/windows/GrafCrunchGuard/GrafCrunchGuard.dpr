@@ -24,8 +24,10 @@ uses
   uConfigFilesUtils,
   uNetCrunchConsts,
   uErrorReportingUtils,
-  uGrafCrunchGuardService in 'uGrafCrunchGuardService.pas' {GrafCrunchGuardService: TService},
-  uServiceDebugForm in 'V:\ADREM\Debug\uServiceDebugForm.pas' {ServiceDebugForm};
+  {$IfDef DEVELOPMENT}
+  uServiceDebugForm in 'V:\ADREM\Debug\uServiceDebugForm.pas' {ServiceDebugForm},
+  {$EndIf}
+  uGrafCrunchGuardService in 'uGrafCrunchGuardService.pas' {GrafCrunchGuardService: TService};
 
 {$R *.RES}
 
@@ -42,8 +44,9 @@ begin
   if not Application.DelayInitialize or Application.Installing then Application.Initialize;
   Application.CreateForm(TGrafCrunchGuardService, GrafCrunchGuardService);
 
-  // For debugging purpose
-  // Application.CreateForm(TServiceDebugForm, ServiceDebugForm);
+  {$IfDef DEVELOPMENT}
+  Application.CreateForm(TServiceDebugForm, ServiceDebugForm);
+  {$EndIf}
 
   InitializeErrorReporting(True);
   Application.Run;
