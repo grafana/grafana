@@ -5,47 +5,53 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 		<h2>Data sources</h2>
 
 		<div ng-if="datasources.length === 0">
 			<em>No datasources defined</em>
 		</div>
 
-		<table class="grafana-options-table" ng-if="datasources.length > 0">
-			<tr>
-				<td><strong>Name</strong></td>
-				<td><strong>Url</strong></td>
-				<td></td>
-				<td></td>
-				<td></td>
-			</tr>
-			<tr ng-repeat="ds in datasources">
-				<td style="width:1%">
-					<i class="fa fa-database"></i> &nbsp;
-					{{ds.name}}
-				</td>
-				<td style="width:90%">
-					{{ds.url}}
-				</td>
-				<td style="width:2%" class="text-center">
-					<span ng-if="ds.isDefault">
-						<span class="label label-info">default</span>
-					</span>
-				</td>
-				<td style="width: 1%">
-					<a href="datasources/edit/{{ds.id}}" class="btn btn-inverse btn-mini">
-						<i class="fa fa-edit"></i>
-						Edit
-					</a>
-				</td>
-				<td style="width: 1%">
-					<a ng-click="remove(ds)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
+		<table class="filter-table" ng-if="datasources.length > 0">
+			<thead>
+				<tr>
+					<th><strong>Name</strong></th>
+					<th><strong>Url</strong></th>
+					<th style="width: 60px;"></th>
+					<th style="width: 65px;"></th>
+					<th style="width: 30px;"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="ds in datasources">
+					<td>
+						<span class="ellipsis">
+							<i class="fa fa-database"></i> &nbsp;
+							{{ds.name}}
+						</span>
+					</td>
+					<td>
+						<span class="ellipsis">{{ds.url}}</span>
+					</td>
+					<td class="text-center">
+						<span ng-if="ds.isDefault">
+							<span class="label label-info">default</span>
+						</span>
+					</td>
+					<td class="text-right">
+						<a href="datasources/edit/{{ds.id}}" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							Edit
+						</a>
+					</td>
+					<td class="text-right">
+						<a ng-click="remove(ds)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
 
 	</div>
