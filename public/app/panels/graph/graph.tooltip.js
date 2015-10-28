@@ -117,7 +117,11 @@ function ($) {
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
         seriesHtml = '';
-        timestamp = dashboard.formatDate(seriesHoverInfo.time,scope.panel.tooltip.relativeTimestamp);
+        if(scope.panel.tooltip.relativeTimestamp) {
+          timestamp = dashboard.formatRelativeDate(seriesHoverInfo.time);
+        } else {
+          timestamp = dashboard.formatDate(seriesHoverInfo.time);
+        }
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -127,6 +131,7 @@ function ($) {
           }
 
           series = seriesList[i];
+
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
@@ -151,7 +156,13 @@ function ($) {
         }
 
         value = series.formatValue(value);
-        timestamp = dashboard.formatDate(item.datapoint[0]);
+
+        if(scope.panel.tooltip.relativeTimestamp) {
+          timestamp = dashboard.formatRelativeDate(item.datapoint[0]);
+        } else {
+          timestamp = dashboard.formatDate(item.datapoint[0]);
+        }
+
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
         self.showTooltip(timestamp, group, pos);

@@ -216,15 +216,30 @@ function (angular, $, kbn, _, moment) {
     };
 
     p.formatDate = function(date, format) {
-      if (!moment.isMoment(date)) {
-        date = moment(date);
-      }
+
+      date = this.checkDate(date);
 
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
         moment(date).format(format) :
         moment.utc(date).format(format);
+    };
+
+    p.formatRelativeDate = function(date) {
+
+      date = this.checkDate(date);
+
+      return this.timezone === 'browser' ?
+        moment(date).fromNow() :
+        moment.utc(date).fromNow();
+    };
+
+    p.checkDate = function(date) {
+      if (!moment.isMoment(date)) {
+        date = moment(date);
+      }
+      return date;
     };
 
     p._updateSchema = function(old) {
