@@ -17,6 +17,9 @@
 * **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
 * **graph**: layout fix for color picker when right side legend was enabled, fixes [#3093](https://github.com/grafana/grafana/issues/3093)
 
+### Bug Fixes
+* **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
+
 # 2.5 (2015-10-28)
 
 <<<<<<< f0efbe4a9386646dfe4e47b4a1226d4cdb19e63f
