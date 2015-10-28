@@ -1,4 +1,6 @@
-# 2.5 (unreleased)
+# 2.5.1 (unreleased)
+
+# 2.5 (2015-10-28)
 
 **New Feature: Mix data sources**
 - A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
