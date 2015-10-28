@@ -10,6 +10,7 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 
 Description | Download
 ------------ | -------------
+<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 <<<<<<< 0c279530fe5c7f81a51dbea877c967e4713b6525
 <<<<<<< 2dadab0f8478fae10bec8894bf319f00fdfe4d6b
 .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-2.5.0-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm)
@@ -19,11 +20,15 @@ Description | Download
 =======
 .RPM for Fedora / RHEL / CentOS Linux | [grafana-2.1.3-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.3-1.x86_64.rpm)
 >>>>>>> docs(): updated download links in docs
+=======
+.RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-2.5.0-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm)
+>>>>>>> docs(): update to install docs and whats new in 2.5
 
 ## Install from package file
 
 You can install Grafana using Yum directly.
 
+<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 <<<<<<< 0c279530fe5c7f81a51dbea877c967e4713b6525
 <<<<<<< 2dadab0f8478fae10bec8894bf319f00fdfe4d6b
     $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm
@@ -33,25 +38,34 @@ You can install Grafana using Yum directly.
 =======
     $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.1.3-1.x86_64.rpm
 >>>>>>> docs(): updated download links in docs
+=======
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm
+>>>>>>> docs(): update to install docs and whats new in 2.5
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
+<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 <<<<<<< 0c279530fe5c7f81a51dbea877c967e4713b6525
 <<<<<<< 2dadab0f8478fae10bec8894bf319f00fdfe4d6b
+=======
+>>>>>>> docs(): update to install docs and whats new in 2.5
     $ sudo rpm -Uvh grafana-2.5.0-1.x86_64.rpm
 
 #### On OpenSuse:
 
     $ sudo rpm -i --nodeps grafana-2.5.0-1.x86_64.rpm
+<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 =======
     $ sudo rpm -Uvh grafana-2.1.2-1.x86_64.rpm
 >>>>>>> docs(): updated version in install docs
 =======
     $ sudo rpm -Uvh grafana-2.1.3-1.x86_64.rpm
 >>>>>>> docs(): updated download links in docs
+=======
+>>>>>>> docs(): update to install docs and whats new in 2.5
 
 ## Install via YUM Repository
 
