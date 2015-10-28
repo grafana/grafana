@@ -2,10 +2,11 @@ define([
   'angular',
   'lodash',
   'moment',
+  'app/core/utils/datemath',
   './query_ctrl',
   './directives',
 ],
-function (angular, _) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,8 +22,8 @@ function (angular, _) {
     }
 
     CloudWatchDatasource.prototype.query = function(options) {
-      var start = convertToCloudWatchTime(options.range.from);
-      var end = convertToCloudWatchTime(options.range.to);
+      var start = convertToCloudWatchTime(options.range.from, false);
+      var end = convertToCloudWatchTime(options.range.to, true);
 
       var queries = [];
       options = angular.copy(options);
@@ -253,8 +254,8 @@ function (angular, _) {
       this.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period).then(function(alarms) {
         var eventList = [];
 
-        var start = convertToCloudWatchTime(range.from);
-        var end = convertToCloudWatchTime(range.to);
+        var start = convertToCloudWatchTime(range.from, false);
+        var end = convertToCloudWatchTime(range.to, true);
         _.each(alarms.MetricAlarms, function(alarm) {
           self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
             _.each(history.AlarmHistoryItems, function(h) {
@@ -344,7 +345,10 @@ function (angular, _) {
       });
     }
 
-    function convertToCloudWatchTime(date) {
+    function convertToCloudWatchTime(date, roundUp) {
+      if (_.isString(date)) {
+        date = dateMath.parse(date, roundUp);
+      }
       return Math.round(date.valueOf() / 1000);
     }
 
