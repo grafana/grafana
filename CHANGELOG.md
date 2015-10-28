@@ -1,5 +1,8 @@
 # 2.5.1 (unreleased)
 
+### Bug Fixes
+* **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
+
 # 2.5 (2015-10-28)
 
 **New Feature: Mix data sources**
