@@ -62,7 +62,7 @@
         <VerInfo_Keys>CompanyName=AdRem Software, Inc.;FileDescription=AdRem GrafCrunch Service Guard;FileVersion=1.0.0.0;InternalName=AdRem GrafCrunch Service Guard;LegalCopyright=2015 (c) AdRem Software Inc., all rights reserved;LegalTrademarks=;OriginalFilename=GCGuard.exe;ProductName=AdRem GrafCrunch Service Guard;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <VerInfo_Locale>1045</VerInfo_Locale>
-        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>Z:\NetCrunch\Development\Source\INCLUDE;Z:\NetCrunch\Development\Source\units;Z:\NetCrunch\Development\Source\Imonitor\Shared\MessageSender;Z:\NetCrunch\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\Development\Source\Imonitor\Shared\Alerts\shared;V:\ADREM\Debug\;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <Icon_MainIcon>..\icon.ico</Icon_MainIcon>
         <SanitizedProjectName>GrafCrunchGuard</SanitizedProjectName>
@@ -103,7 +103,6 @@
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_RangeChecking>true</DCC_RangeChecking>
         <DCC_MapFile>3</DCC_MapFile>
@@ -134,12 +133,10 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="V:\ADREM\Debug\uServiceDebugForm.pas"/>
         <DCCReference Include="uGrafCrunchGuardService.pas">
             <Form>GrafCrunchGuardService</Form>
             <DesignClass>TService</DesignClass>
-        </DCCReference>
-        <DCCReference Include="V:\ADREM\Debug\uServiceDebugForm.pas">
-            <Form>ServiceDebugForm</Form>
         </DCCReference>
         <None Include="ModelSupport_GrafCrunchGuard\default.txaPackage"/>
         <None Include="ModelSupport_GrafCrunchGuard\default.txvpck"/>
@@ -594,13 +591,13 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
