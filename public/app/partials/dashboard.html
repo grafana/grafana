@@ -78,7 +78,7 @@
 				</div>
 
 				<div class="panels-wrapper" ng-if="!row.collapse">
-					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
+					<div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
 					</div>
 
 					<div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
