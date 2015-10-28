@@ -38,7 +38,8 @@ describe('CloudWatchDatasource', function() {
             InstanceId: 'i-12345678'
           },
           statistics: ['Average'],
-          period: 300
+          period: 300,
+          expressions: []
         }
       ]
     };
@@ -94,6 +95,16 @@ describe('CloudWatchDatasource', function() {
     it('should return null for missing data point', function(done) {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].datapoints[2][0]).to.be(null);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+
+    it('should return calculated series list', function(done) {
+      query.targets[0].expressions = ["* 100"];
+      ctx.ds.query(query).then(function(result) {
+        expect(result.data[0].target).to.be('CPUUtilization_Average');
+        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average'] * 100);
         done();
       });
       ctx.$rootScope.$apply();
