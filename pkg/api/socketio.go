@@ -496,46 +496,19 @@ func HandleCollectorDisconnected(event *events.CollectorDisconnected) error {
 	return nil
 }
 
-func HandleCollectorEnabled(event *events.CollectorEnabled) error {
+func HandleCollectorUpdated(event *events.CollectorUpdated) error {
 	contextCache.RLock()
 	defer contextCache.RUnlock()
 	// get list of local sockets for this collector.
 	contexts := make([]*CollectorContext, 0)
 	for _, ctx := range contextCache.Contexts {
-		if ctx.Collector.Id == event.CollectorId {
+		if ctx.Collector.Id == event.Id {
 			contexts = append(contexts, ctx)
 		}
 	}
 	if len(contexts) > 0 {
 		q := m.GetCollectorByIdQuery{
-			Id:    event.CollectorId,
-			OrgId: contexts[0].Collector.OrgId,
-		}
-		if err := bus.Dispatch(&q); err != nil {
-			return err
-		}
-		for _, ctx := range contexts {
-			ctx.Collector = q.Result
-			_ = ctx.EmitReady()
-		}
-	}
-
-	return nil
-}
-
-func HandleCollectorDisabled(event *events.CollectorDisabled) error {
-	contextCache.RLock()
-	defer contextCache.RUnlock()
-	// get list of local sockets for this collector.
-	contexts := make([]*CollectorContext, 0)
-	for _, ctx := range contextCache.Contexts {
-		if ctx.Collector.Id == event.CollectorId {
-			contexts = append(contexts, ctx)
-		}
-	}
-	if len(contexts) > 0 {
-		q := m.GetCollectorByIdQuery{
-			Id:    event.CollectorId,
+			Id:    event.Id,
 			OrgId: contexts[0].Collector.OrgId,
 		}
 		if err := bus.Dispatch(&q); err != nil {
@@ -612,23 +585,13 @@ func eventConsumer(msg *amqp.Delivery) error {
 			return err
 		}
 		break
-	case "INFO.collector.enabled":
-		event := events.CollectorEnabled{}
+	case "INFO.collector.updated":
+		event := events.CollectorUpdated{}
 		if err := json.Unmarshal(payloadRaw, &event); err != nil {
-			log.Error(0, "unable to unmarshal payload into CollectorEnabled event.", err)
+			log.Error(0, "unable to unmarshal payload into CollectorUpdated event.", err)
 			return err
 		}
-		if err := HandleCollectorEnabled(&event); err != nil {
-			return err
-		}
-		break
-	case "INFO.collector.disabled":
-		event := events.CollectorDisabled{}
-		if err := json.Unmarshal(payloadRaw, &event); err != nil {
-			log.Error(0, "unable to unmarshal payload into CollectorDisabled event.", err)
-			return err
-		}
-		if err := HandleCollectorDisabled(&event); err != nil {
+		if err := HandleCollectorUpdated(&event); err != nil {
 			return err
 		}
 		break
