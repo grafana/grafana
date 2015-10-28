@@ -1,0 +1,75 @@
+<div class="tight-form">
+  <ul class="tight-form-list pull-right">
+    <li class="tight-form-item">
+      <div class="dropdown">
+        <a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+          <i class="fa fa-bars"></i>
+        </a>
+        <ul class="dropdown-menu pull-right" role="menu">
+          <li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+        </ul>
+      </div>
+    </li>
+    <li class="tight-form-item last">
+      <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+  </ul>
+
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="min-width: 15px; text-align: center">
+      {{target.refId}}
+    </li>
+    <li>
+      <a  class="tight-form-item"
+          ng-click="target.hide = !target.hide; get_data();"
+          role="menuitem">
+        <i class="fa fa-eye"></i>
+      </a>
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+      Filter query
+    </li>
+    <li>
+      <input style="width: 500px" type="text" class="input-xlarge tight-form-input"  ng-model="target.filterQuery" spellcheck='false' ng-model-onblur ng-change="get_data()">
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+      Aggregation
+    </li>
+    <li>
+      <input style="width: 500px" type="text" class="input-xlarge tight-form-input"  ng-model="target.aggregation" spellcheck='false' ng-model-onblur ng-change="get_data()">
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+      Alias
+    </li>
+    <li>
+      <input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="get_data()">
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
