@@ -226,7 +226,7 @@ function (angular, $, kbn, _, moment) {
         moment.utc(date).format(format);
     };
 
-    p.formatRelativeDate = function(date) {
+    p.getRelativeTime = function(date) {
 
       date = this.checkDate(date);
 
