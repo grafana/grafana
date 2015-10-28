@@ -86,5 +86,5 @@ type CollectorDisconnected struct {
 type CollectorUpdated struct {
 	m.CollectorDTO
 	Timestamp time.Time       `json:"timestamp"`
-	LastState *m.CollectorDTO `json:"last_state`
+	LastState *m.CollectorDTO `json:"last_state"`
 }
