@@ -84,7 +84,7 @@ describe('InfluxDatasource', function() {
         return str.replace('$server', 'backend_01');
       };
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
-      ctx.ds.annotationQuery(annotation, range).then(function(data) { results = data; });
+      ctx.ds.annotationQuery({annotation: annotation, rangeRaw: range}).then(function(data) { results = data; });
       ctx.$httpBackend.flush();
     });
 
