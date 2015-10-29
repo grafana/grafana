@@ -178,7 +178,7 @@ function (angular, _, dateMath) {
         return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
       }
 
-      return $q.when([{text: "wtf"}]);
+      return $q.when([]);
     };
 
     OpenTSDBDatasource.prototype.testDatasource = function() {
