@@ -1,0 +1,28 @@
+1 VERSIONINFO
+FILEVERSION 9, 0, 0, 0
+PRODUCTVERSION 9, 0, 0, 0
+FILEOS 4
+FILETYPE 1
+
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904E4"
+		{
+			VALUE "CompanyName", "AdRem Software, Inc.\000"
+			VALUE "FileDescription", "AdRem GrafCrunch Runner\000"
+			VALUE "FileVersion", "9.0.0 Build 1\000"
+			VALUE "InternalName", "AdRem GrafCrunch Runner\000"
+			VALUE "LegalCopyright", "2015 © AdRem Software, Inc., all rights reserved\000"
+			VALUE "OriginalFileName", "GCRun.exe\000"
+			VALUE "ProductName", "AdRem GrafCrunch Runner\000"
+			VALUE "ProductVersion", "9.0.0.0\000"
+			VALUE "Comments", "\000"
+		}
+	}
+
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 0x409, 1252
+	}
+}
