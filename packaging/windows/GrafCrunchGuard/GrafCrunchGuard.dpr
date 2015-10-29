@@ -30,6 +30,7 @@ uses
   uGrafCrunchGuardService in 'uGrafCrunchGuardService.pas' {GrafCrunchGuardService: TService};
 
 {$R *.RES}
+{$R 'VERINFO.RES'}
 
 const
   LOGS_FOLDER = 'C:\ProgramData\AdRem\GrafCrunch\log\';

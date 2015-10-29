@@ -3,7 +3,12 @@ program RunGrafCrunch;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, Windows, ShellAPI, StrUtils, ShFolder, uRemoteService;
+  System.SysUtils,
+  Windows,
+  ShellAPI,
+  StrUtils,
+  ShFolder,
+  uRemoteService;
 
 var
   Path: string;
@@ -36,6 +41,7 @@ const
   GC_GUARD_SVC_NAME = 'GrafCrunchGuardService';
 
 {$R *.res}
+{$R VERINFO.RES}
 
 var
   Switch : string;
