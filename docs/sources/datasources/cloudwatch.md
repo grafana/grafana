@@ -86,6 +86,25 @@ Example content:
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
+## Templated queries
+CloudWatch Datasource Plugin provides the following functions in `Variables values query` field in Templating Editor to query `region`, `namespaces`, `metric names` and `dimension keys/values` on the CloudWatch.
+
+Name | Description
+------- | --------
+`regions()` | Returns a list of regions AWS provides their service.
+`namespaces()` | Returns a list of namespaces CloudWatch support.
+`metrics(namespace)` | Returns a list of metrics in the namespace.
+`dimension_keys(namespace)` | Returns a list of dimension keys in the namespace.
+`dimension_values(region, namespace, metric)` | Returns a list of dimension values matching the specified `region`, `namespace` and `metric`.
+
+For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
+
+If you want to filter dimension values by other dimension key/value pair, you can specify optional parameter like this.
+```sql
+dimension_values(region, namespace, metric, dim_key1=dim_val1,dim_key2=dim_val2,...)
+```
+
+![](/img/v2/cloudwatch_templating.png)
 
 ## Cost
 
