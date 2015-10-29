@@ -6,6 +6,7 @@
 
 ### Bug Fixes
 * **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
+* **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
 
 # 2.5 (2015-10-28)
 
