@@ -57,13 +57,13 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ rangeRaw: rangeUnparsed });
-      var query = annotation.query.replace('$timeFilter', timeFilter);
+    InfluxDatasource.prototype.annotationQuery = function(options) {
+      var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
+      var query = options.annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
       return this._seriesQuery(query).then(function(results) {
-        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+        return new InfluxSeries({seriesList: results, annotation: options.annotation}).getAnnotations();
       });
     };
 

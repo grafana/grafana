@@ -2,6 +2,12 @@
 
 ## Changelog
 
+2.5.1
+datasource annotationQuery changed. now single options parameter with:
+- range
+- rangeRaw
+- annotation
+
 2.5 changed the `range` parameter in the `datasource.query` function's options parameter. This
 parameter now holds a parsed range with `moment` dates `form` and `to`. To get
 millisecond epoc from a `moment` you the function `valueOf`. The raw date range as represented
