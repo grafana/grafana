@@ -15,7 +15,7 @@ function (angular, _) {
       target.metricName = target.metricName || '';
       target.statistics = target.statistics || ['Average'];
       target.dimensions = target.dimensions || {};
-      target.period = target.period || 60;
+      target.period = target.period || '';
       target.region = target.region || $scope.datasource.getDefaultRegion();
 
       $scope.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';

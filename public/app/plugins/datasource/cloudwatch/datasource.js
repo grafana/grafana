@@ -36,12 +36,12 @@ function (angular, _) {
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
         query.dimensions = convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
-        query.period = parseInt(target.period, 10);
 
         var range = end - start;
-        // CloudWatch limit datapoints up to 1440
+        query.period = parseInt(target.period, 10) || 60;
+
         if (range / query.period >= 1440) {
-          query.period = Math.floor(range / 1440 / 60) * 60;
+          query.period = Math.ceil(range / 1440 / 60) * 60;
         }
 
         queries.push(query);
