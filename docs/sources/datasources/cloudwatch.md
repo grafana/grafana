@@ -50,9 +50,14 @@ Name | Description
 ------------ | -------------
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
+<<<<<<< 12e03ee2ff3ba90dfcd03da768d0ca06048138dd
 <<<<<<< 66fb7f76036ae74714fda0520a620a1faf879e0c
 <<<<<<< 34a87b5970f147f55d53f8dde2896e31f4b7e65e
 Default-Region | Used in query editor to set region (can be changed on per query basis)
+=======
+Credentials profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default. This option was introduced in Grafana 2.5.1
+Default Region | Used in query editor to set region (can be changed on per query basis)
+>>>>>>> docs(cloudwatch): updated docs with info about #3080
 
 ## Authentication
 
