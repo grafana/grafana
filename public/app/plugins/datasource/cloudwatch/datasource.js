@@ -18,7 +18,6 @@ function (angular, _) {
       this.supportMetrics = true;
       this.proxyUrl = datasource.url;
       this.defaultRegion = datasource.jsonData.defaultRegion;
-      this.profile = datasource.jsonData.profile;
     }
 
     CloudWatchDatasource.prototype.query = function(options) {
@@ -74,7 +73,6 @@ function (angular, _) {
     CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
       return this.awsRequest({
         region: query.region,
-        profile: this.profile,
         action: 'GetMetricStatistics',
         parameters:  {
           namespace: query.namespace,
@@ -117,7 +115,6 @@ function (angular, _) {
     CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
       var request = {
         region: templateSrv.replace(region),
-        profile: this.profile,
         action: 'ListMetrics',
         parameters: {
           namespace: templateSrv.replace(namespace),
