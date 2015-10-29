@@ -4,7 +4,7 @@
     "company": "AdRem Software"
   },
   "name": "GrafCrunch",
-  "version": "1.0.0",
+  "version": "2.5.0-pre1",
   "repository": {
     "type": "git",
     "url": "https://github.com/adremsoft/NetCrunch-grafana"
