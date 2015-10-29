@@ -204,8 +204,12 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         if (date === 'now') {
           return 'now()';
         }
-        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-          return date.replace('now', 'now()').replace('-', ' - ');
+
+        var parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
+        if (parts) {
+          var amount = parseInt(parts[1]);
+          var unit = parts[2];
+          return 'now() - ' + amount + unit;
         }
         date = dateMath.parse(date, roundUp);
       }
