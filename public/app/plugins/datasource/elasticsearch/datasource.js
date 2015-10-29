@@ -60,17 +60,18 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         });
     };
 
-    ElasticDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var range = {};
+    ElasticDatasource.prototype.annotationQuery = function(options) {
+      var annotation = options.annotation;
       var timeField = annotation.timeField || '@timestamp';
       var queryString = annotation.query || '*';
       var tagsField = annotation.tagsField || 'tags';
       var titleField = annotation.titleField || 'desc';
       var textField = annotation.textField || null;
 
+      var range = {};
       range[timeField]= {
-        from: rangeUnparsed.from,
-        to: rangeUnparsed.to,
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
       };
 
       var queryInterpolated = templateSrv.replace(queryString);
@@ -82,9 +83,20 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         "size": 10000
       };
 
-      return this._request('POST', annotation.index + '/_search', data).then(function(results) {
+      var header = {search_type: "query_then_fetch", "ignore_unavailable": true};
+
+      // old elastic annotations had index specified on them
+      if (annotation.index) {
+        header.index = annotation.index;
+      } else {
+        header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
+      }
+
+      var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
+
+      return this._post('/_msearch', payload).then(function(res) {
         var list = [];
-        var hits = results.data.hits.hits;
+        var hits = res.responses[0].hits.hits;
 
         var getFieldFromSource = function(source, fieldName) {
           if (!fieldName) { return; }
