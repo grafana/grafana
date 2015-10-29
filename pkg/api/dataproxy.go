@@ -236,7 +236,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 >>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 =======
 	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c)
+		cloudwatch.HandleRequest(c, ds)
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
