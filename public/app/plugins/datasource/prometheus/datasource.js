@@ -99,11 +99,11 @@ function (angular, _, moment, dateMath) {
       var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end;
 
       var step = query.step;
-      var range = Math.floor(end - start);
+      var range = Math.ceil(end - start);
       // Prometheus drop query if range/step > 11000
       // calibrate step if it is too big
       if (step !== 0 && range / step > 11000) {
-        step = Math.floor(range / 11000);
+        step = Math.ceil(range / 11000);
       }
       url += '&step=' + step;
 
@@ -212,7 +212,7 @@ function (angular, _, moment, dateMath) {
         sec = 1;
       }
 
-      return Math.floor(sec * intervalFactor) + 's';
+      return Math.ceil(sec * intervalFactor) + 's';
     };
 
     function transformMetricData(md, options) {
