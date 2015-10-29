@@ -1,73 +1,29 @@
 <br>
 <h5>CloudWatch details</h5>
 
-<div class="tight-form last">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-      Default Region<tip>Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region.</tip>
-    </li>
-    <li>
-      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.defaultRegion' placeholder="" required></input>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
+<div class="editor-row">
+	<div class="section tight-form-container" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 200px">
+					Credentials profile name<tip>Credentials profile name, as specified in ~/.aws/credentials, leave blank for default</tip>
+				</li>
+				<li>
+					<input type="text" class="tight-form-input input-large last" ng-model='current.database' placeholder="default" required></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 200px">
+					Default Region<tip>Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region.</tip>
+				</li>
+				<li>
+					<input type="text" class="tight-form-input input-large last" ng-model='current.jsonData.defaultRegion' placeholder="" required></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
 </div>
-<div class="tight-form last">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-      AWS Profile
-    </li>
-    <li>
-      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.profile' placeholder="default" required></input>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
-</div>
-
-<!-- <div class="tight&#45;form" ng&#45;show="current.jsonData.access === 'direct'"> -->
-<!--   <ul class="tight&#45;form&#45;list"> -->
-<!--     <li class="tight&#45;form&#45;item" style="width: 160px"> -->
-<!--     </li> -->
-<!--     <li> -->
-<!--       <input type="text" class="tight&#45;form&#45;input input&#45;xlarge" ng&#45;model='current.jsonData.accessKeyId' placeholder=""></input> -->
-<!--     </li> -->
-<!--   </ul> -->
-<!--   <div class="clearfix"></div> -->
-<!-- </div> -->
-<!-- <div class="tight&#45;form" ng&#45;show="current.jsonData.access === 'direct'"> -->
-<!--   <ul class="tight&#45;form&#45;list"> -->
-<!--     <li class="tight&#45;form&#45;item" style="width: 160px"> -->
-<!--       Access Key Id -->
-<!--     </li> -->
-<!--     <li> -->
-<!--       <input type="text" class="tight&#45;form&#45;input input&#45;xlarge" ng&#45;model='current.jsonData.accessKeyId' placeholder=""></input> -->
-<!--     </li> -->
-<!--   </ul> -->
-<!--   <div class="clearfix"></div> -->
-<!-- </div> -->
-<!-- <div class="tight&#45;form" ng&#45;show="current.jsonData.access === 'direct'"> -->
-<!--   <ul class="tight&#45;form&#45;list"> -->
-<!--     <li class="tight&#45;form&#45;item" style="width: 160px"> -->
-<!-- 			Secret Access Key -->
-<!--     </li> -->
-<!--     <li> -->
-<!-- 			<input type="password" class="tight&#45;form&#45;input input&#45;xlarge" ng&#45;model='current.jsonData.secretAccessKey' placeholder=""></input> -->
-<!--     </li> -->
-<!--   </ul> -->
-<!--   <div class="clearfix"></div> -->
-<!-- </div> -->
-
-<!-- <div class="tight&#45;form last"> -->
-<!--   <ul class="tight&#45;form&#45;list"> -->
-<!--     <li class="tight&#45;form&#45;item" style="width: 160px"> -->
-<!--       Custom Metric Attributes -->
-<!--     </li> -->
-<!--     <li> -->
-<!-- 			<input type="text" class="tight&#45;form&#45;input input&#45;xlarge" -->
-<!-- 				ng&#45;model='current.jsonData.customMetricsAttributes[0]' -->
-<!-- 			ng&#45;init="current.jsonData.customMetricsAttributes = current.jsonData.customMetricsAttributes || []" placeholder="JSON url" bs&#45;tooltip="'Set JSON url of the result, \'aws cloudwatch list&#45;metrics &#45;&#45;output json\''"> -->
-<!-- 			</input> -->
-<!--     </li> -->
-<!--   </ul> -->
-<!--   <div class="clearfix"></div> -->
-<!-- </div> -->

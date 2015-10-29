@@ -193,7 +193,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 =======
 >>>>>>> fixed gofmt issue
 	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c)
+		cloudwatch.HandleRequest(c, ds)
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
