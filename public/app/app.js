@@ -71,7 +71,6 @@ function (angular, $, _, appLevelRequire) {
   var preBootRequires = [
     'app/services/all',
     'app/features/all',
-    'app/controllers/all',
   ];
 
   app.boot = function() {

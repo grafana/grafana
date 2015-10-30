@@ -1,16 +1,13 @@
 define([
   'angular',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, config) {
+function (angular, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
-
+  coreModule.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
     contextSrv.sidemenu = false;
-
     $scope.formModel = {};
 
     $scope.init = function() {

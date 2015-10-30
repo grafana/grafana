@@ -16,6 +16,7 @@
 ///<amd-dependency path="./directives/value_select_dropdown" />
 ///<amd-dependency path="./routes/all" />
 
+///<amd-dependency path="./controllers/all" />
 ///<amd-dependency path="./jquery_extended" />
 ///<amd-dependency path="./partials" />
 

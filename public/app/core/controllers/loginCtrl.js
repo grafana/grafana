@@ -1,13 +1,12 @@
 define([
   'angular',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, config) {
+function (angular, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
+  coreModule.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
       email: '',
