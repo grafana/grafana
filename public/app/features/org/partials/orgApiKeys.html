@@ -4,9 +4,8 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
+<div class="page-container" style="background: transparent; border: 0;">
 	<div class="page">
-
 		<h2>
 			API Keys
 		</h2>
@@ -32,21 +31,75 @@
 			</ul>
 		</form>
 
-		<table class="grafana-options-table" style="width: 250px">
-			<tr>
-				<th style="text-align: left">Name</th>
-				<th style="text-align: left">Role</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="t in tokens">
-				<td>{{t.name}}</td>
-				<td>{{t.role}}</td>
-				<td style="width: 1%">
-					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
+		<div class="filter-controls-filters">
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item">Filters:</li>
+          <li class="tight-form-item">Name</li>
+          <li><!-- <value-select-dropdown></value-select-dropdown> --></li>
+          <li class="tight-form-item">Role</li>
+          <li><!-- <value-select-dropdown></value-select-dropdown> --></li>
+          <li class="tight-form-item">
+            <a class="pointer">
+              <i class="fa fa-pencil"></i>
+            </a>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+
+    <ul class="filter-controls-actions">
+      <li>
+        <div class="dropdown">
+          <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
+            <input class="cr1" id="state-enabled" type="checkbox">
+            <label for="state-enabled" class="cr1"></label> <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li><a>All</a></li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <div class="dropdown">
+          <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
+            Bulk Actions &nbsp; <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li><a>Update notifications</a></li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <span class="filter-controls-actions-selected">0 selected, showing 2 of 2 total</span>
+      </li>
+    </ul>
+
+		<table class="filter-table">
+			<thead>
+				<tr>
+					<th style="width: 48px;"></th>
+					<th>Name</th>
+					<th>Role</th>
+					<th style="width: 34px;"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="t in tokens">
+					<td>
+						<input class="cr1" id="alert1" type="checkbox">
+            <label for="alert1" class="cr1"></label>
+					</td>
+					<td>{{t.name}}</td>
+					<td>{{t.role}}</td>
+					<td style="width: 1%">
+						<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
 	</div>
 
