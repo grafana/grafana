@@ -1,13 +1,12 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  '../core_module',
 ],
-function (angular, _) {
+function (angular, _, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('timer', function($timeout) {
+  coreModule.service('timer', function($timeout) {
     // This service really just tracks a list of $timeout promises to give us a
     // method for cancelling them all when we need to
 

@@ -1,9 +1,9 @@
 define([
-  '../mocks/dashboard-mock',
-  './helpers',
+  'test/mocks/dashboard-mock',
+  'test/specs/helpers',
   'lodash',
   'moment',
-  'app/services/timer',
+  'app/core/services/timer',
   'app/features/dashboard/timeSrv'
 ], function(dashboardMock, helpers, _, moment) {
   'use strict';
@@ -12,6 +12,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
     var _dashboard;
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase(['$routeParams']));
     beforeEach(ctx.createService('timeSrv'));

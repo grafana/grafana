@@ -1,13 +1,12 @@
 define([
   'angular',
   'lodash',
+  '../core_module',
 ],
-function (angular, _) {
+function (angular, _, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('uiSegmentSrv', function($sce, templateSrv) {
+  coreModule.service('uiSegmentSrv', function($sce, templateSrv) {
 
     function MetricSegment(options) {
       if (options === '*' || options.value === '*') {

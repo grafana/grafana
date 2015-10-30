@@ -1,12 +1,11 @@
 define([
   'angular',
+  '../core_module',
 ],
-function(angular) {
+function(angular, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-  module.service('googleAnalyticsSrv', function($rootScope, $location) {
-
+  coreModule.service('googleAnalyticsSrv', function($rootScope, $location) {
     var first = true;
 
     this.init = function() {

@@ -1,14 +1,13 @@
 define([
   'angular',
   'lodash',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, _, config) {
+function (angular, _, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('datasourceSrv', function($q, $injector, $rootScope) {
+  coreModule.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
     this.init = function() {

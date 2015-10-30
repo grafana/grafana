@@ -51,9 +51,7 @@ module.exports = function(config,grunt) {
           'angular-strap',
           'angular-dragdrop',
           'app/core/core',
-          'app/services/all',
           'app/features/all',
-          'app/controllers/all',
           // bundle the datasources
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',
