@@ -3,7 +3,6 @@ require.config({
   baseUrl: 'public',
 
   paths: {
-    settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
     'extend-jquery':          'app/components/extend-jquery',
     lodash:                   'app/components/lodash.extended',
