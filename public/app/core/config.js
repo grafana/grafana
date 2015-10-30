@@ -1,5 +1,5 @@
 define([
-  'settings',
+  'app/core/settings',
 ],
 function (Settings) {
   "use strict";
