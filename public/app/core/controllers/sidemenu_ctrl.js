@@ -120,6 +120,7 @@ function (angular, _, $, coreModule, config) {
     };
 
     $scope.init = function() {
+      $scope.showSignup = contextSrv.isSignedIn && !config['authProxyEnabled'];
       $scope.updateMenu();
       $scope.$on('$routeChangeSuccess', $scope.updateMenu);
     };
