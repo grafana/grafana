@@ -9,7 +9,7 @@ declare module 'app/core/config' {
   export = config;
 }
 
-declare module 'kbn' {
+declare module 'app/core/utils/kbn' {
   var kbn : any;
   export = kbn;
 }

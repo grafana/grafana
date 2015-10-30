@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'moment',
-  'kbn',
+  'app/core/utils/kbn',
   './query_builder',
   './index_pattern',
   './elastic_response',

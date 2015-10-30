@@ -1,9 +1,9 @@
 define([
   'angular',
   'jquery',
-  'kbn',
   'moment',
   'lodash',
+  'app/core/utils/kbn',
   './graph.tooltip',
   'jquery.flot',
   'jquery.flot.events',
@@ -14,7 +14,7 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
-function (angular, $, kbn, moment, _, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');

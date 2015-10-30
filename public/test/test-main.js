@@ -2,9 +2,6 @@ require.config({
   baseUrl: 'http://localhost:9876/base/',
 
   paths: {
-    kbn:                   'app/components/kbn',
-
-    settings:              'app/components/settings',
     lodash:                'app/components/lodash.extended',
     'lodash-src':          'vendor/lodash',
 

@@ -1,5 +1,5 @@
 define([
-  'kbn',
+  'app/core/utils/kbn',
   'app/core/utils/datemath'
 ], function(kbn, dateMath) {
   'use strict';

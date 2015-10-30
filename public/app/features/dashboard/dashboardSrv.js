@@ -1,11 +1,10 @@
 define([
   'angular',
   'jquery',
-  'kbn',
   'lodash',
   'moment',
 ],
-function (angular, $, kbn, _, moment) {
+function (angular, $, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
