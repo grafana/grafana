@@ -1,7 +1,7 @@
 ///<reference path="../headers/common.d.ts" />
 
 import angular = require('angular');
-import config = require('config');
+import config = require('app/core/config');
 
 var module = angular.module('grafana.controllers');
 

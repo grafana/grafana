@@ -3,7 +3,6 @@ define([
   'jquery',
   'lodash',
   'require',
-  'config',
   'bootstrap',
   'angular-route',
   'angular-sanitize',

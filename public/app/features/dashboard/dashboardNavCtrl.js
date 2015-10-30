@@ -1,9 +1,7 @@
 define([
   'angular',
   'lodash',
-  'config',
-  'store',
-  'filesaver'
+  'app/core/config',
 ],
 function (angular, _) {
   'use strict';
