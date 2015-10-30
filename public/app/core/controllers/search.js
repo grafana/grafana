@@ -1,14 +1,13 @@
 define([
   'angular',
   'lodash',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, _, config) {
+function (angular, _, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
+  coreModule.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;

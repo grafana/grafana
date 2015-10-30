@@ -1,13 +1,11 @@
 define([
   'angular',
-  'lodash'
+  '../core_module',
 ],
-function (angular) {
+function (angular, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('ErrorCtrl', function($scope, contextSrv) {
+  coreModule.controller('ErrorCtrl', function($scope, contextSrv) {
 
     var showSideMenu = contextSrv.sidemenu;
     contextSrv.sidemenu = false;

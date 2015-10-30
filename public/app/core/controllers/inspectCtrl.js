@@ -2,13 +2,12 @@ define([
   'angular',
   'lodash',
   'jquery',
+  '../core_module',
 ],
-function (angular, _, $) {
+function (angular, _, $, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('InspectCtrl', function($scope) {
+  coreModule.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
 
     function getParametersFromQueryString(queryString) {

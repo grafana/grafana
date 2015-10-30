@@ -2,14 +2,13 @@ define([
   'angular',
   'lodash',
   'jquery',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, _, $, config) {
+function (angular, _, $, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
+  coreModule.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;

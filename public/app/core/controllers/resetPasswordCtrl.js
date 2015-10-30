@@ -1,13 +1,11 @@
 define([
   'angular',
+  '../core_module',
 ],
-function (angular) {
+function (angular, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('ResetPasswordCtrl', function($scope, contextSrv, backendSrv, $location) {
-
+  coreModule.controller('ResetPasswordCtrl', function($scope, contextSrv, backendSrv, $location) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
     $scope.mode = 'send';

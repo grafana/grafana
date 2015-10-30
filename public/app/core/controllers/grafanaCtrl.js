@@ -2,15 +2,14 @@ define([
   'angular',
   'lodash',
   'jquery',
+  '../core_module',
   'app/core/config',
   'app/core/store',
 ],
-function (angular, _, $, config, store) {
+function (angular, _, $, coreModule, config, store) {
   "use strict";
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
+  coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;

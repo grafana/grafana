@@ -1,9 +1,8 @@
-///<reference path="../headers/common.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 import angular = require('angular');
 import config = require('app/core/config');
-
-var module = angular.module('grafana.controllers');
+import coreModule = require('../core_module');
 
 export class SignUpCtrl {
 
@@ -48,5 +47,5 @@ export class SignUpCtrl {
   };
 }
 
-module.controller('SignUpCtrl', SignUpCtrl);
+coreModule.controller('SignUpCtrl', SignUpCtrl);
 

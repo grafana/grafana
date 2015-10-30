@@ -1,13 +1,11 @@
 define([
   'angular',
-  'lodash'
+  '../core_module',
 ],
-function (angular) {
+function (angular, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('JsonEditorCtrl', function($scope) {
+  coreModule.controller('JsonEditorCtrl', function($scope) {
 
     $scope.json = angular.toJson($scope.object, true);
     $scope.canUpdate = $scope.updateHandler !== void 0;
