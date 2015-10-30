@@ -17,6 +17,7 @@
 ///<amd-dependency path="./routes/all" />
 
 ///<amd-dependency path="./controllers/all" />
+///<amd-dependency path="./services/all" />
 ///<amd-dependency path="./jquery_extended" />
 ///<amd-dependency path="./partials" />
 

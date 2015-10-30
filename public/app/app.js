@@ -69,7 +69,6 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-    'app/services/all',
     'app/features/all',
   ];
 

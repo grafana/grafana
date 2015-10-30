@@ -1,14 +1,13 @@
 define([
   'angular',
   'lodash',
+  '../core_module',
   'app/core/config',
 ],
-function (angular, _, config) {
+function (angular, _, coreModule, config) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('backendSrv', function($http, alertSrv, $timeout) {
+  coreModule.service('backendSrv', function($http, alertSrv, $timeout) {
     var self = this;
 
     this.get = function(url, params) {

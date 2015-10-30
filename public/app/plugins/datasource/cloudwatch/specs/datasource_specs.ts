@@ -8,10 +8,13 @@ declare var helpers: any;
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
+
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
   beforeEach(ctx.createService('CloudWatchDatasource'));
+
   beforeEach(function() {
     ctx.ds = new ctx.service({
       jsonData: {

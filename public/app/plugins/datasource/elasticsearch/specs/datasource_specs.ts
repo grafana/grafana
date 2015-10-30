@@ -10,6 +10,7 @@ declare var helpers: any;
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
   beforeEach(ctx.createService('ElasticDatasource'));

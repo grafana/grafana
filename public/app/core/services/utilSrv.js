@@ -1,12 +1,11 @@
 define([
   'angular',
+  '../core_module',
 ],
-function (angular) {
+function (angular, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('utilSrv', function($rootScope, $modal, $q) {
+  coreModule.service('utilSrv', function($rootScope, $modal, $q) {
 
     this.init = function() {
       $rootScope.onAppEvent('show-modal', this.showModal, $rootScope);

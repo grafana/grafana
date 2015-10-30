@@ -2,13 +2,12 @@ define([
   'angular',
   'lodash',
   'jquery',
+  '../core_module',
 ],
-function (angular, _, $) {
+function (angular, _, $, coreModule) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('popoverSrv', function($templateCache, $timeout, $q, $http, $compile) {
+  coreModule.service('popoverSrv', function($templateCache, $timeout, $q, $http, $compile) {
 
     this.getTemplate = function(url) {
       return $q.when($templateCache.get(url) || $http.get(url, {cache: true}));

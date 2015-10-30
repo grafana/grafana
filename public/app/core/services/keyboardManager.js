@@ -1,15 +1,14 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  '../core_module',
 ],
-function (angular, _) {
+function (angular, _, coreModule) {
   'use strict';
-
-  var module = angular.module('grafana.services');
 
   // This service was based on OpenJS library available in BSD License
   // http://www.openjs.com/scripts/events/keyboard_shortcuts/index.php
-  module.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
+  coreModule.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
     var keyboardManagerService = {};
 
     var defaultOpt = {

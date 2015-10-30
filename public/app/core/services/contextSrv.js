@@ -1,15 +1,14 @@
 define([
   'angular',
   'lodash',
+  '../core_module',
   'app/core/store',
   'app/core/config',
 ],
-function (angular, _, store, config) {
+function (angular, _, coreModule, store, config) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('contextSrv', function($rootScope, $timeout) {
+  coreModule.service('contextSrv', function($rootScope, $timeout) {
     var self = this;
 
     function User() {
