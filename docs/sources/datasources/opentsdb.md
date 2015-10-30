@@ -40,8 +40,10 @@ Grafana's OpenTSDB data source now supports template variable values queries. Th
 
 When using OpenTSDB with a template variable of `query` type you can use following syntax for lookup.
 
-    metrics()                     // returns metric names
+    metrics(prefix)               // returns metric names with specific prefix (can be empty)
     tag_names(cpu)                // return tag names (i.e. keys) for a specific cpu metric
     tag_values(cpu, hostname)     // return tag values for metric cpu and tag key hostname
+    suggest_tagk(prefix)          // return tag names (i.e. keys) for all metrics with specific prefix (can be empty)
+    suggest_tagv(prefix)          // return tag values for all metrics with specific prefix (can be empty)
 
 For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
