@@ -169,7 +169,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
             throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
           }
           else {
-            throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+            throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
           }
         }
       });
