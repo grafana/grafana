@@ -9,7 +9,6 @@ define([
   'angular-strap',
   'angular-dragdrop',
   'angular-ui',
-  'extend-jquery',
   'bindonce',
   'app/core/core',
 ],
@@ -73,7 +72,6 @@ function (angular, $, _, appLevelRequire) {
     'app/services/all',
     'app/features/all',
     'app/controllers/all',
-    'app/components/partials',
   ];
 
   app.boot = function() {
