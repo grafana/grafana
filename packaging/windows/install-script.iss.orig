@@ -12,6 +12,7 @@
 #define NOTICE "..\..\NOTICE.md"
 
 #define GrafCrunchProgramData "{%programdata}\AdRem\GrafCrunch"
+#define GrafCrunchClientURL "GrafCrunch Client.url"
 
 #define ConfigINIFile "\conf\custom.ini"
 #define ConfigINI "{app}" + ConfigINIFile
@@ -90,8 +91,11 @@ Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "GCServe
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#GrafCrunchClientURL}"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
+Name: "{group}\GrafCrunch Client"; Filename: {app}\{#GrafCrunchClientURL}; IconFilename: {app}\{#MyAppIcon}; Comment: "AdRem GrafCrunch Client"; AfterInstall: UpdateGrafCrunchClientURL;
+Name: "{commondesktop}\GrafCrunch Client"; Filename: {app}\{#GrafCrunchClientURL}; IconFilename: {app}\{#MyAppIcon}; Comment: "AdRem GrafCrunch Client";
 Name: "{group}\GrafCrunch Getting started"; Filename: {#MyAppGettingStartedArticle}; IconFilename: {app}\{#MyAppIcon}; Comment: "AdRem GrafCrunch Getting started";
 Name: "{group}\Start GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-start"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Starts AdRem GrafCrunch Server";
 Name: "{group}\Stop GrafCrunch Server"; Filename: {app}\bin\GCRun.exe; Parameters: "-stop"; Flags: runminimized; IconFilename: {app}\{#MyAppIcon}; Comment: "Stops AdRem GrafCrunch Server";
@@ -482,13 +486,19 @@ begin
   end;
 end;
 
+procedure UpdateGrafCrunchClientURL;
+begin
+  SaveStringToFile(ExpandConstant('{app}\{#GrafCrunchClientURL}'), '[InternetShortcut]' + #13#10, False);
+  SaveStringToFile(ExpandConstant('{app}\{#GrafCrunchClientURL}'), 'URL=' + GetGrafCrunchServerConfig('URL') + #13#10, True);
+end;
+
 procedure PrepareInfoPage;
 begin
   InfoPage := CreateOutputMsgMemoPage(wpInstalling, 'GrafCrunch server connection info', '', '', '');
   with InfoPage.RichEditViewer do begin
     Font.Size := 8;
     Lines.Add('');
-    Lines.Add('  GrafCrunch is available at: ' + 'http://' + GetGrafCrunchServerConfig('Domain') + ':' + GetGrafCrunchServerConfig('Port'));
+    Lines.Add('  GrafCrunch is available at: ' + GetGrafCrunchServerConfig('URL'));
     Lines.Add('');
   end;
 
@@ -518,7 +528,6 @@ begin
   HostName := String(AnsiString(GetHostName));
   PrepareGrafCrunchServerConfigPage;
   PrepareNetCrunchServerConfigPage;
-  PrepareInfoPage;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
@@ -542,6 +551,7 @@ end;
 
 function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
 begin
+  PrepareInfoPage;
 
   Result := MemoDirInfo + NewLine + NewLine +
     'Data location:' + NewLine +
