@@ -1,11 +1,11 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'moment',
   'app/core/config',
+  'app/core/utils/kbn',
   'app/core/utils/datemath'
-], function (angular, _, kbn, moment, config, dateMath) {
+], function (angular, _, moment, config, kbn, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');

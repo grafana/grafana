@@ -2,7 +2,7 @@ define([
   'angular',
   'app/app',
   'lodash',
-  'kbn',
+  'app/core/utils/kbn',
   'app/core/time_series',
   'app/features/panel/panel_meta',
   './singleStatPanel',

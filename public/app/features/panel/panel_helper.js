@@ -1,12 +1,12 @@
 define([
   'angular',
+  'lodash',
+  'jquery',
+  'app/core/utils/kbn',
   'app/core/utils/datemath',
   'app/core/utils/rangeutil',
-  'lodash',
-  'kbn',
-  'jquery',
 ],
-function (angular, dateMath, rangeUtil, _, kbn, $) {
+function (angular, _, $, kbn, dateMath, rangeUtil) {
   'use strict';
 
   var module = angular.module('grafana.services');

@@ -1,6 +1,6 @@
 define([
   'lodash',
-  'kbn'
+  'app/core/utils/kbn'
 ],
 function (_, kbn) {
   'use strict';
