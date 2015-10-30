@@ -2,7 +2,7 @@ define([
   'angular',
   'app/app',
   'lodash',
-  'config',
+  'app/core/config',
   'app/features/panel/panel_meta',
 ],
 function (angular, app, _, config, PanelMeta) {

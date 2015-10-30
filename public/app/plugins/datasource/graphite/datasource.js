@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'jquery',
-  'config',
+  'app/core/config',
   'app/core/utils/datemath',
   './directives',
   './query_ctrl',

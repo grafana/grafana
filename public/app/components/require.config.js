@@ -3,10 +3,8 @@ require.config({
   baseUrl: 'public',
 
   paths: {
-    config:                   'app/components/config',
     settings:                 'app/components/settings',
     kbn:                      'app/components/kbn',
-    store:                    'app/components/store',
     'extend-jquery':          'app/components/extend-jquery',
     lodash:                   'app/components/lodash.extended',
 
@@ -61,7 +59,7 @@ require.config({
     },
 
     angular: {
-      deps: ['jquery','config'],
+      deps: ['jquery'],
       exports: 'angular'
     },
 

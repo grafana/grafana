@@ -1,8 +1,7 @@
 define([
   'angular',
   'jquery',
-  'config',
-  'lodash',
+  'app/core/config',
 ],
 function (angular, $, config) {
   "use strict";

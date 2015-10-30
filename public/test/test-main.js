@@ -2,9 +2,7 @@ require.config({
   baseUrl: 'http://localhost:9876/base/',
 
   paths: {
-    config:                'app/components/config',
     kbn:                   'app/components/kbn',
-    store:                 'app/components/store',
 
     settings:              'app/components/settings',
     lodash:                'app/components/lodash.extended',
@@ -58,7 +56,7 @@ require.config({
     },
 
     angular: {
-      deps: ['jquery', 'config'],
+      deps: ['jquery'],
       exports: 'angular'
     },
 
