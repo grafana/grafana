@@ -1,5 +1,5 @@
 ///<amd-dependency path="../query_ctrl" />
-///<amd-dependency path="app/core/services/uiSegmentSrv" />
+///<amd-dependency path="app/core/services/segment_srv" />
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
