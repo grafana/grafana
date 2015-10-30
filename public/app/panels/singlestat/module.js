@@ -3,8 +3,8 @@ define([
   'app/app',
   'lodash',
   'kbn',
-  'app/components/timeSeries',
-  'app/components/panelmeta',
+  'app/core/time_series',
+  'app/features/panel/panel_meta',
   './singleStatPanel',
 ],
 function (angular, app, _, kbn, TimeSeries, PanelMeta) {

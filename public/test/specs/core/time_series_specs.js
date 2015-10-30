@@ -1,5 +1,5 @@
 define([
-  'app/components/timeSeries'
+  'app/core/time_series'
 ], function(TimeSeries) {
   'use strict';
 
