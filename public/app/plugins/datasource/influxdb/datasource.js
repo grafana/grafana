@@ -178,6 +178,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           }
           else {
             throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+<<<<<<< c9a8062cb665e72baf1ad3085cea2d617e398452
 =======
       return $http(options).then(function(result) {
         return result.data;
@@ -189,6 +190,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           else {
             throw { messsage: 'InfluxDB Error: ' + reason.message };
 >>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
+=======
+>>>>>>> Correct object key typo
           }
         }
       });
