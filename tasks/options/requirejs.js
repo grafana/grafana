@@ -6,7 +6,7 @@ module.exports = function(config,grunt) {
     var options = {
       appDir: '<%= genDir %>',
       dir:  '<%= tempDir %>',
-      mainConfigFile: '<%= genDir %>/app/components/require.config.js',
+      mainConfigFile: '<%= genDir %>/app/require_config.js',
       baseUrl: './',
       waitSeconds: 0,
 
@@ -41,16 +41,12 @@ module.exports = function(config,grunt) {
         // main/common module
         name: 'app/app',
         include: [
-          'kbn',
           'text',
           'jquery',
-          'angular',
-          'settings',
           'bootstrap',
           'modernizr',
           'timepicker',
           'datepicker',
-          'lodash',
           'jquery.flot',
           'angular-strap',
           'angular-dragdrop',
@@ -58,7 +54,6 @@ module.exports = function(config,grunt) {
           'app/services/all',
           'app/features/all',
           'app/controllers/all',
-          'app/components/partials',
           // bundle the datasources
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',

@@ -16,6 +16,9 @@
 ///<amd-dependency path="./directives/value_select_dropdown" />
 ///<amd-dependency path="./routes/all" />
 
+///<amd-dependency path="./jquery_extended" />
+///<amd-dependency path="./partials" />
+
 export * from './directives/array_join'
 export * from './directives/give_focus'
 export * from './filters/filters'

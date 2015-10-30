@@ -3,13 +3,11 @@ require.config({
   baseUrl: 'public',
 
   paths: {
-    'extend-jquery':          'app/components/extend-jquery',
-    lodash:                   'app/components/lodash.extended',
+    'lodash-src':             'vendor/lodash',
+    lodash:                   'app/core/lodash_extended',
 
     text:                     'vendor/requirejs-text/text',
     moment:                   'vendor/moment',
-    filesaver:                'vendor/filesaver',
-    ZeroClipboard:            'vendor/ZeroClipboard',
     angular:                  'vendor/angular/angular',
     'angular-route':          'vendor/angular-route/angular-route',
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
@@ -21,10 +19,7 @@ require.config({
     bindonce:                 'vendor/angular-bindonce/bindonce',
     crypto:                   'vendor/crypto.min',
     spectrum:                 'vendor/spectrum',
-
-    'lodash-src':             'vendor/lodash',
     bootstrap:                'vendor/bootstrap/bootstrap',
-
     jquery:                   'vendor/jquery/dist/jquery',
 
     'jquery.flot':             'vendor/flot/jquery.flot',
@@ -42,6 +37,7 @@ require.config({
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
     'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
   },
+
   shim: {
 
     spectrum: {
@@ -50,10 +46,6 @@ require.config({
 
     crypto: {
       exports: 'Crypto'
-    },
-
-    ZeroClipboard: {
-      exports: 'ZeroClipboard'
     },
 
     angular: {
