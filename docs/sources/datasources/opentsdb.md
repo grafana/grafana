@@ -45,7 +45,7 @@ When using OpenTSDB with a template variable of `query` type you can use followi
     suggest_tagk(prefix)          // return tag names (i.e. keys) for all metrics with specific prefix (can be empty)
     suggest_tagv(prefix)          // return tag values for all metrics with specific prefix (can be empty)
 
-If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsd uid metasync` on the OpenTSDB server.
+If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
 
 > Note: This is required for the OpenTSDB `lookup` api to work.
 
