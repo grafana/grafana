@@ -98,7 +98,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **rows** | row metadata, see rows section for details |
 | **time** | time range of dashboard, i.e. last 6 hours, last 7 days, etc |
 | **timepicker** | timepicker metadata, see timepicker section for details |
-| **templating** | timeplating metadata, see templating section for details |
+| **templating** | templating metadata, see templating section for details |
 | **annotations** | annotations metadata, see annotations section for details |
 | **schemaVersion** | TODO |
 | **version** | TODO |
