@@ -1,0 +1,49 @@
+.table-panel-wrapper {
+  .panel-content {
+    padding: 0;
+  }
+  .panel-title-container {
+    padding-bottom: 4px;
+  }
+}
+
+.gf-table-panel* {
+  box-sizing: border-box;
+}
+
+.gf-table-panel {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.gf-table-panel tr {
+  border-bottom: 2px solid @bodyBackground;
+}
+
+.gf-table-panel th {
+  background: @grafanaTargetFuncBackground;
+  padding: 5px 0 5px 15px;
+  text-align: left;
+  border-top: 2px solid @bodyBackground;
+
+  &:first-child {
+    padding-left: 15px;
+  }
+}
+
+.gf-table-panel td {
+  padding: 15px 0 15px 15px;
+
+  &:first-child {
+    padding-left: 15px;
+  }
+}
+
+.gf-table-panel .ellipsis {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -6,6 +6,7 @@ import _ = require('lodash');
 import moment = require('moment');
 import PanelMeta = require('app/features/panel/panel_meta');
 import TimeSeries = require('app/core/time_series');
+import {TableModel} from './table_model';
 
 var panelDefaults = {
   targets: [{}],
@@ -29,54 +30,19 @@ export class TablePanelCtrl {
     _.defaults($scope.panel, panelDefaults);
 
     $scope.refreshData = function(datasource) {
-      var data = {
-        columns: [],
-        rows: [],
-      };
+      panelHelper.updateTimeRange($scope);
 
-      data.columns.push({text: 'Time'});
-      data.columns.push({text: 'Value'});
-      data.columns.push({text: 'Value2'});
-      data.rows.push([
-        moment().format('LLL'), 17.2, 15.12
-      ]);
-      data.rows.push([
-        moment().format('LLL'), 12.2, 122.3244
-      ]);
-      data.rows.push([
-        moment().format('LLL'), 111.2, 2312.22
-      ]);
-
-      panelHelper.broadcastRender($scope, data);
-
-      // panelHelper.updateTimeRange($scope);
-      //
-      // return panelHelper.issueMetricQuery($scope, datasource)
-      //   .then($scope.dataHandler, function(err) {
-      //     $scope.seriesList = [];
-      //     $scope.render([]);
-      //     throw err;
-      //   });
+      return panelHelper.issueMetricQuery($scope, datasource)
+        .then($scope.dataHandler, function(err) {
+          $scope.seriesList = [];
+          $scope.render([]);
+          throw err;
+        });
     };
 
     $scope.dataHandler = function(results) {
-      $scope.seriesList = _.map(results.data, $scope.seriesHandler);
-      panelHelper.broadcastRender($scope, $scope.seriesList);
-    };
-
-    $scope.seriesHandler = function(seriesData, index) {
-      var datapoints = seriesData.datapoints;
-      var alias = seriesData.target;
-      var colorIndex = index % $rootScope.colors.length;
-      var color = $scope.panel.aliasColors[alias] || $rootScope.colors[colorIndex];
-
-      var series = new TimeSeries({
-        datapoints: datapoints,
-        alias: alias,
-        color: color,
-      });
-
-      return series;
+      $scope.tableModel = TableModel.transform(results.data, $scope.panel);
+      panelHelper.broadcastRender($scope, $scope.tableModel);
     };
 
     panelSrv.init($scope);
@@ -94,13 +60,13 @@ export function tablePanelDirective() {
 
       function renderPanel() {
         var rootDiv = elem.find('.table-panel-container');
-        var tableDiv = $('<table class="table-panel"></table>');
+        var tableDiv = $('<table class="gf-table-panel"></table>');
         var i, y, rowElem, colElem, column, row;
 
         rowElem = $('<tr></tr>');
         for (i = 0; i < data.columns.length; i++) {
           column = data.columns[i];
-          colElem = $('<td>' + column.text + '</td>');
+          colElem = $('<th>' + column.text + '</th>');
           rowElem.append(colElem);
         }
 
@@ -108,7 +74,7 @@ export function tablePanelDirective() {
 
         for (y = 0; y < data.rows.length; y++) {
           row = data.rows[y];
-          rowElem = $('<tr></tr>')
+          rowElem = $('<tr></tr>');
           for (i = 0; i < data.columns.length; i++) {
             colElem = $('<td>' + row[i] + '</td>');
             rowElem.append(colElem);
