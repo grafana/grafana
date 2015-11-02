@@ -55,6 +55,7 @@ module.exports = function(config,grunt) {
           // bundle the datasources
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',
+          'app/plugins/datasource/elasticsearch/datasource',
           'app/plugins/datasource/influxdb/datasource',
         ]
       },
