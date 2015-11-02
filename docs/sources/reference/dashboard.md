@@ -66,11 +66,11 @@ Each field in the dashboard JSON is explained below with its usage:
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
 | **sharedCrosshair** | TODO |
-| **rows** | row metadata, see [rows section](/dashboard.md/#rows) for details |
+| **rows** | row metadata, see [rows section](/docs/sources/reference/dashboard.md/#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
-| **timepicker** | timepicker metadata, see [timepicker section](/dashboard.md/#timepicker) for details |
-| **templating** | templating metadata, see [templating section](/dashboard.md/#templating) for details |
-| **annotations** | annotations metadata, see [annotations section](/dashboard.md/#annotations) for details |
+| **timepicker** | timepicker metadata, see [timepicker section](/docs/sources/reference/dashboard.md/#timepicker) for details |
+| **templating** | templating metadata, see [templating section](/docs/sources/reference/dashboard.md/#templating) for details |
+| **annotations** | annotations metadata, see [annotations section](/docs/sources/reference/dashboard.md/#annotations) for details |
 | **schemaVersion** | TODO |
 | **version** | TODO |
 | **links** | TODO |
@@ -105,7 +105,7 @@ Usage of the fields is explained below:
 | **collapse** | whether row is collapsed or not |
 | **editable** | whether a row is editable or not |
 | **height** | height of the row in pixels |
-| **panels** | panels metadata, see [panels section](/dashboard.md/#panels) for details |
+| **panels** | panels metadata, see [panels section](/docs/sources/reference/dashboard.md/#panels) for details |
 | **title** | title of row |
 
 #### panels
