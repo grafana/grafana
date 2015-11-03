@@ -9,7 +9,7 @@
   "style": "dark",
   "timezone": "browser",
   "editable": true,
-  "hideControls": false,
+  "hideControls": true,
   "sharedCrosshair": true,
   "rows": [
     {
@@ -26,7 +26,7 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "none",
@@ -81,7 +81,7 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 2,
           "editable": true,
           "error": false,
@@ -132,7 +132,7 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "percent",
@@ -181,7 +181,7 @@
             "rgba(139, 139, 139, 1)",
             "rgba(63, 104, 51, 1)"
           ],
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 2,
           "editable": true,
           "error": false,
@@ -237,7 +237,7 @@
             "ok": "#508642"
           },
           "bars": true,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -345,7 +345,7 @@
             "wait": "#EA6460"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -465,7 +465,7 @@
             "wait": "#EAB839"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -580,7 +580,7 @@
     "list": [
       {
         "allFormat": "glob",
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Endpoint",
         "multi": false,
@@ -593,7 +593,7 @@
       },
       {
         "allFormat": "glob",
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
@@ -618,7 +618,7 @@
           "text": "100",
           "value": "100"
         },
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Outliers",
         "multi": false,

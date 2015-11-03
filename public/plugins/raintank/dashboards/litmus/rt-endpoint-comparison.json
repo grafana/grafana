@@ -9,7 +9,7 @@
   "style": "dark",
   "timezone": "browser",
   "editable": true,
-  "hideControls": false,
+  "hideControls": true,
   "sharedCrosshair": true,
   "rows": [
     {
@@ -20,7 +20,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -95,7 +95,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -174,7 +174,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -254,7 +254,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -334,7 +334,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -414,7 +414,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -494,7 +494,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -574,7 +574,7 @@
             "raindex": "#DEDAF7"
           },
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -697,7 +697,7 @@
     "list": [
       {
         "allFormat": "glob",
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Endpoint",
         "multi": true,
@@ -720,7 +720,7 @@
           "text": "All",
           "value": "{collector1be,collector2be,collector2tw,collector2us,collector3tw,collectortw1,publictest}"
         },
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": true,
         "label": "Collector(s)",
         "multi": true,
@@ -777,7 +777,7 @@
           "text": "ping",
           "value": "ping"
         },
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Protocol",
         "multi": false,
