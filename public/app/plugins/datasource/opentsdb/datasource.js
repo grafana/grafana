@@ -18,6 +18,7 @@ function (angular, _, dateMath) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
+      this.msResolution = datasource.jsonData.msResolution;
     }
 
     // Called once per panel (graph)
@@ -47,6 +48,8 @@ function (angular, _, dateMath) {
         });
       });
 
+      var msResolution = this.msResolution;
+
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
         var metricToTargetMapping = mapMetricsToTargets(response.data, options);
         var result = _.map(response.data, function(metricData, index) {
@@ -54,16 +57,18 @@ function (angular, _, dateMath) {
           if (index === -1) {
             index = 0;
           }
-          return transformMetricData(metricData, groupByTags, options.targets[index], options);
+          return transformMetricData(metricData, groupByTags, options.targets[index], options, msResolution);
         });
         return { data: result };
       });
     };
 
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
+
       var reqBody = {
         start: start,
-        queries: queries
+        queries: queries,
+        msResolution: this.msResolution
       };
 
       // Relative queries (e.g. last hour) don't include an end time
@@ -200,14 +205,18 @@ function (angular, _, dateMath) {
       return aggregatorsPromise;
     };
 
-    function transformMetricData(md, groupByTags, target, options) {
+    function transformMetricData(md, groupByTags, target, options, msResolution) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
       _.each(md.dps, function (v, k) {
-        dps.push([v, k * 1000]);
+        if (!msResolution) {
+          dps.push([v, k * 1000]);
+        } else {
+          dps.push([v, k]);
+        }
       });
 
       return { target: metricLabel, datapoints: dps };
