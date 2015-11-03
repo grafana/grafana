@@ -58,6 +58,15 @@ export function tablePanelDirective() {
     link: function(scope, elem) {
       var data;
 
+      function getTableHeight() {
+        var panelHeight = scope.height || scope.panel.height || scope.row.height;
+        if (_.isString(panelHeight)) {
+          panelHeight = parseInt(panelHeight.replace('px', ''), 10);
+        }
+
+        return (panelHeight - 40) + 'px';
+      }
+
       function renderPanel() {
         var rootDiv = elem.find('.table-panel-container');
         var tableDiv = $('<table class="gf-table-panel"></table>');
@@ -70,8 +79,10 @@ export function tablePanelDirective() {
           rowElem.append(colElem);
         }
 
-        tableDiv.append(rowElem);
+        var headElem = $('<thead></thead>');
+        headElem.append(rowElem);
 
+        var tbodyElem = $('<tbody></tbody>');
         for (y = 0; y < data.rows.length; y++) {
           row = data.rows[y];
           rowElem = $('<tr></tr>');
@@ -79,8 +90,13 @@ export function tablePanelDirective() {
             colElem = $('<td>' + row[i] + '</td>');
             rowElem.append(colElem);
           }
-          tableDiv.append(rowElem);
+          tbodyElem.append(rowElem);
         }
+
+        tableDiv.append(headElem);
+        tableDiv.append(tbodyElem);
+
+        rootDiv.css({'max-height': getTableHeight()});
 
         rootDiv.empty();
         rootDiv.append(tableDiv);
