@@ -101,7 +101,11 @@ function ($) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
-      var group, value, timestamp, hoverInfo, i, series, seriesHtml;
+      var group, value, timestamp, hoverInfo, i, series, seriesHtml, tooltipFormat;
+
+      if(scope.datasource.msResolution) {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      }
 
       if(dashboard.sharedCrosshair){
         scope.appEvent('setCrosshair', { pos: pos, scope: scope });
@@ -117,7 +121,8 @@ function ($) {
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
         seriesHtml = '';
-        timestamp = dashboard.formatDate(seriesHoverInfo.time);
+
+        timestamp = dashboard.formatDate(seriesHoverInfo.time,tooltipFormat);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -151,7 +156,7 @@ function ($) {
         }
 
         value = series.formatValue(value);
-        timestamp = dashboard.formatDate(item.datapoint[0]);
+        timestamp = dashboard.formatDate(item.datapoint[0],tooltipFormat);
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
         self.showTooltip(timestamp, group, pos);

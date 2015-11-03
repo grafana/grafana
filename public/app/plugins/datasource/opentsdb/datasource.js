@@ -215,7 +215,7 @@ function (angular, _, dateMath) {
         if (!msResolution) {
           dps.push([v, k * 1000]);
         } else {
-          dps.push([v, k]);
+          dps.push([v, k * 1]);
         }
       });
 
