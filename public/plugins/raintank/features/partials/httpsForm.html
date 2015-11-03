@@ -71,7 +71,9 @@
                           </div>
                         </div>  
                         <div class="rt-flex-form-field">
-                          <label class="small">Content Match</label>
+                          <label class="small">Content Match
+                            <i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'Content match looks to match a string on the specified page. Regular expressions are also supported.'" data-original-title="" title=""></i>
+                          </label>
                           <input type="text" class="rt-input-long-text" ng-model="currentSettingByVariable(monitors['https'], 'expectRegex').value"> 
                         </div>  
                         <div class="rt-flex-form-field">
