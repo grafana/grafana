@@ -1,0 +1,58 @@
+<div class="editor-row">
+	<div class="tight-form-section">
+		<h5>Data Table</h5>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 170px">
+					Data to Table Transform
+				</li>
+				<li>
+					<select class="input-xlarge tight-form-input"
+						ng-model="panel.transform"
+						ng-options="k as v.description for (k, v) in transformers"
+						ng-change="render()"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="tight-form-section">
+		<h5>Table Display</h5>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="tight-form-section">
+		<h5>Column Styles</h5>
+
+		<div class="tight-form-container">
+			<div class="tight-form" ng-repeat="column panel.columns">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer" ng-click="removeSeriesOverride(override)"></i>
+					</li>
+
+					<li class="tight-form-item">
+						alias or regex
+					</li>
+
+					<li>
+						<input type="text" ng-model="override.alias" bs-typeahead="getColumnNames" ng-blur="render()" data-min-length=0 data-items=100 class="input-medium tight-form-input" >
+					</li>
+
+					<li class="dropdown" dropdown-typeahead="overrideMenu" dropdown-typeahead-on-select="setOverride($item, $subItem)">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+		<button class="btn btn-inverse" style="margin-top: 20px" ng-click="addSeriesOverride()">
+			Add column display rule
+		</button>
+	</div>
+</div>
+
