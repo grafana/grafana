@@ -248,5 +248,23 @@ define([
         expect(clone.meta).to.be(undefined);
       });
     });
+
+    describe('Formatting epoch timestamp', function() {
+
+      var dashboard;
+
+      beforeEach(function() {
+        dashboard = _dashboardSrv.create({});
+      });
+
+      it('Should format timestamp with second resolution by default', function() {
+        expect(dashboard.formatDate(1234567890000)).to.be('2009-02-13 15:31:30');
+      });
+
+      it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
+        expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss.SSS')).to.be('2009-02-13 15:31:30.007');
+      });
+    });
+
   });
 });
