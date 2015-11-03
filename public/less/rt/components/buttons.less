@@ -83,6 +83,11 @@
   .ButtonCTA(transparent, @secondaryCTA, @secondaryCTA, @secondaryCTAHighlight);
 }
 
+.destroy-button,
+.destroy-button:visited {
+  .ButtonCTA(@destroy-button, @destroy-button, @white, @destroy-button-highlight);
+}
+
 
 
 // Tertiary CTA
@@ -218,6 +223,24 @@
     color: @white;
     text-decoration:none;
   }
+}
+
+.rt-btn-destroy {
+  .rt-btn;
+  padding: 7px 12px;  
+  background: @rt-red;  
+
+  &:hover, &:focus {
+    background: darken(@rt-red, 10%);
+    color: @white;
+    text-decoration:none;
+  }
+
+  &:active {
+    background: lighten(@rt-red, 5%);
+    color: @white;
+    text-decoration:none;
+  }  
 }
 
 .modal-body .rt-btn{

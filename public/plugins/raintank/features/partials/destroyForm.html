@@ -1,0 +1,45 @@
+
+        <!-- HTTPS Section  -->
+        <div class="rt-config-box rt-page-box" id="destroy" ng-class="{ 'destroy-open': showDestroy }">
+          <div class="rt-box-header rt-page-box-header" ng-click="showDestroy = !showDestroy" ng-class="{ active: showhttps }">
+            <div class="rt-page-box-header-checkbox checkbox-check-enabled">
+              <span class="rt-h2 rt-modal">General Settings</span>
+            </div>
+            <div class="rt-box-row-info">
+              <a href="#">
+                <span><i class="fa fa-caret-down" ng-show="showDestroy"></i></span>
+                <span><i class="fa fa-caret-right rt-box-accordian-control" ng-hide="showDestroy"></i></span>
+              </a>
+            </div>            
+          </div>
+          <div class="rt-box-body rt-page-box-body">
+            <div class="rt-box-interior-section">
+              <div class="rt-box-interior-header-icon">
+                <i class="icon icon-rt-monitoring" style="font-size:32px;"></i>
+              </div>
+              <div class="rt-box-interior-header rt-h3">Delete your endpoint
+              </div>
+              <div class="rt-box-interior-content">
+                <p class="rt-body-copy">When an endpoint is deleted, we will remove it from your  quota, however all <span class="emphasis">historical data will still be available</span> and accessible within your dashboards. To remove this data, please contact us.</p>
+                <div class="rt-form">
+<!--                 <div class="rt-form rt-input-styles rt-flex-form-block" style="margin-top: 25px;">
+                  <a class="rt-btn-destroy" ng-click="remove(endpoint)">Delete Endpoint</a>
+                </div> -->
+                <div class="rt-mini-form new-endpoint-domain-form">
+                  <div class="rt-mini-form-col">
+                    <label class="rt-form-label-medium">Type DELETE to confirm</label>
+                    <input type="text" class="rt-form-input" required pattern="DELETE">
+                  </div>
+                  <div class="rt-mini-form-col" style="margin-top: 15px;">
+                    <div>
+                      <div class="editor-row" ng-show="endpoint.id">
+                        <button type="submit" class="rt-btn-destroy" style="position:relative;" ng-click="remove(endpoint)">Delete</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>                
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End HTTPS Section -->
