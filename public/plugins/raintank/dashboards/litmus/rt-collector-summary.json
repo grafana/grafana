@@ -232,7 +232,7 @@
             "ok": "#508642"
           },
           "bars": true,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -303,7 +303,7 @@
             "ok": "#508642"
           },
           "bars": true,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -373,7 +373,7 @@
             "ok": "#508642"
           },
           "bars": true,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -444,7 +444,7 @@
             "ok": "#508642"
           },
           "bars": true,
-          "datasource": null,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -520,7 +520,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -586,7 +586,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -651,7 +651,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -716,7 +716,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "raintank",
           "decimals": 1,
           "editable": true,
           "error": false,
@@ -826,7 +826,7 @@
     "list": [
       {
         "allFormat": "glob",
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Collector",
         "multi": false,
@@ -843,7 +843,7 @@
       },
       {
         "allFormat": "glob",
-        "datasource": null,
+        "datasource": "raintank",
         "includeAll": false,
         "label": "Endpoint(s)",
         "multi": true,
@@ -860,7 +860,55 @@
         "tagsQuery": "raintank_db.tags.endpoints.*",
         "type": "query",
         "useTags": true
-      }
+      },
+      {
+        "type": "custom",
+        "datasource": "raintank",
+        "refresh_on_load": false,
+        "name": "outliers",
+        "options": [
+          {
+            "text": "100",
+            "value": "100",
+            "selected": true
+          },
+          {
+            "text": "99.9",
+            "value": "99.9",
+            "selected": false
+          },
+          {
+            "text": "99.5",
+            "value": "99.5",
+            "selected": false
+          },
+          {
+            "text": "99",
+            "value": "99",
+            "selected": false
+          },
+          {
+            "text": "95",
+            "value": "95",
+            "selected": false
+          },
+          {
+            "text": "50",
+            "value": "50",
+            "selected": false
+          }
+        ],
+        "includeAll": false,
+        "allFormat": "glob",
+        "multi": false,
+        "multiFormat": "glob",
+        "query": "100,99.9,99.5,99,95,50",
+        "current": {
+          "text": "100",
+          "value": "100"
+        },
+        "label": "Outliers"
+      }      
     ]
   },
   "annotations": {
