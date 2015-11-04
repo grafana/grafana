@@ -289,6 +289,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 				a.server.Attr.Email,
 				a.server.Attr.Name,
 				a.server.Attr.MemberOf,
+				a.server.Attr.UID,
 			},
 			Filter: strings.Replace(a.server.SearchFilter, "%s", username, -1),
 		}
@@ -311,6 +312,9 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		return nil, errors.New("Ldap search matched more than one entry, please review your filter setting")
 	}
 
+	var uid string
+	uid = getLdapAttr(a.server.Attr.UID, searchResult)
+
 	var memberOf []string
 	if a.server.GroupSearchFilter == "" {
 		memberOf = getLdapAttrArray(a.server.Attr.MemberOf, searchResult)
@@ -318,7 +322,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
 		var groupSearchResult *ldap.SearchResult
 		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
-			filter := strings.Replace(a.server.GroupSearchFilter, "%s", username, -1)
+			filter := strings.Replace(a.server.GroupSearchFilter, "%s", uid, -1)
 
 			if ldapCfg.VerboseLogging {
 				log.Info("LDAP: Searching for user's groups: %s", filter)
@@ -356,6 +360,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		Username:  getLdapAttr(a.server.Attr.Username, searchResult),
 		Email:     getLdapAttr(a.server.Attr.Email, searchResult),
 		MemberOf:  memberOf,
+		UID:       uid,
 	}, nil
 }
 
