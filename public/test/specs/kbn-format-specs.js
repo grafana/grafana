@@ -4,6 +4,25 @@ define([
 ], function(kbn, dateMath) {
   'use strict';
 
+  describe('unit format menu', function() {
+    var menu = kbn.getUnitFormats();
+    menu.map(function(submenu) {
+      describe('submenu ' + submenu.text, function() {
+        it('should have a title', function() { expect(submenu.text).to.be.a('string'); });
+        it('should have a submenu', function() { expect(submenu.submenu).to.be.an('array'); });
+        submenu.submenu.map(function(entry) {
+          describe('entry ' + entry.text, function() {
+            it('should have a title', function() { expect(entry.text).to.be.a('string'); });
+            it('should have a format', function() { expect(entry.value).to.be.a('string'); });
+            it('should have a valid format', function() {
+              expect(kbn.valueFormats[entry.value]).to.be.a('function');
+            });
+          });
+        });
+      });
+    });
+  });
+
   function describeValueFormat(desc, value, tickSize, tickDecimals, result) {
 
     describe('value format: ' + desc, function() {
@@ -26,6 +45,18 @@ define([
 
   describeValueFormat('none', 2.75e-10, 0, 10, '3e-10');
   describeValueFormat('none', 0, 0, 2, '0');
+  describeValueFormat('dB', 10, 1000, 2, '10.00 dB');
+
+  describeValueFormat('percent',  0, 0, 0, '0%');
+  describeValueFormat('percent', 53, 0, 1, '53.0%');
+  describeValueFormat('percentunit', 0.0, 0, 0, '0%');
+  describeValueFormat('percentunit', 0.278, 0, 1, '27.8%');
+  describeValueFormat('percentunit', 1.0, 0, 0, '100%');
+
+  describeValueFormat('currencyUSD', 7.42, 10000, 2, '$7.42');
+  describeValueFormat('currencyUSD', 1532.82, 1000, 1, '$1.53K');
+  describeValueFormat('currencyUSD', 18520408.7, 10000000, 0, '$19M');
+
   describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');

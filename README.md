@@ -30,7 +30,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - Click and drag to zoom
 - Multiple Y-axis, logarithmic scales
 - Bars, Lines, Points
-- Smart Y-axis formating
+- Smart Y-axis formatting
 - Series toggles & color selector
 - Legend values, and formatting options
 - Grid thresholds, axis labels
@@ -142,7 +142,7 @@ And if you have time clone this repo and submit a pull request and help me make 
 the kickass metrics & devops dashboard we all dream about!
 
 Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
+please [sign the CLA](http://docs.grafana.org/project/cla/)
 
 ## License
 

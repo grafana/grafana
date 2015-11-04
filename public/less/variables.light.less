@@ -80,7 +80,7 @@
 @altFontFamily:         @serifFontFamily;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsFontWeight:    bold;    // instead of browser default, bold
 @headingsColor:         @textColor; // empty to use BS default, @textColor
 
 
@@ -278,8 +278,9 @@
 
 // Tooltips and popovers
 // -------------------------
-@tooltipColor:            @grayDark;
-@tooltipBackground:       darken(@white, 3%);
+@tooltipColor:            @white;
+@tooltipBackground:       @grayDark;
+
 @tooltipArrowWidth:       5px;
 @tooltipArrowColor:       @tooltipBackground;
 @tooltipLinkColor:        darken(@white, 11%);

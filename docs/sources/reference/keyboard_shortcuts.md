@@ -1,5 +1,5 @@
-page_title: Kayboard Shortcuts
-page_description: Kayboard Shortcuts for Grafana
+page_title: Keyboard Shortcuts
+page_description: Keyboard Shortcuts for Grafana
 page_keywords: grafana, export, import, documentation
 ---
 
