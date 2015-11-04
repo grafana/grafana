@@ -6,7 +6,9 @@ import _ = require('lodash');
 import moment = require('moment');
 import PanelMeta = require('app/features/panel/panel_meta');
 import TimeSeries = require('app/core/time_series');
-import {TableModel, transformers} from './table_model';
+
+import {TableModel} from './table_model';
+import {transformers} from './transformers';
 
 export class TablePanelCtrl {
 
@@ -26,7 +28,9 @@ export class TablePanelCtrl {
 
     var panelDefaults = {
       targets: [{}],
-      transform: 'timeseries_to_rows'
+      transform: 'timeseries_to_rows',
+      pageSize: 50,
+      showHeader: true,
     };
 
     _.defaults($scope.panel, panelDefaults);

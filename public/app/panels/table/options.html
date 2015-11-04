@@ -1,10 +1,10 @@
 <div class="editor-row">
 	<div class="tight-form-section">
-		<h5>Data Table</h5>
+		<h5>Data</h5>
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 170px">
-					Data to Table Transform
+					To Table Transform
 				</li>
 				<li>
 					<select class="input-xlarge tight-form-input"
@@ -22,6 +22,13 @@
 	<div class="tight-form-section">
 		<h5>Table Display</h5>
 	</div>
+	<li class="tight-form-item" style="width: 80px">
+		Pagination (Page size)
+	</li>
+	<li>
+		<input type="pageSize" class="input-small tight-form-input" placeholder="50"
+		empty-to-null ng-model="panel.pageSize" ng-change="render()" ng-model-onblur>
+	</li>
 </div>
 
 <div class="editor-row">
