@@ -53,8 +53,8 @@ export class TablePanelCtrl {
     };
 
     $scope.render = function() {
-      $scope.tableModel = TableModel.transform($scope.dataRaw, $scope.panel);
-      panelHelper.broadcastRender($scope, $scope.tableModel);
+      $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
+      panelHelper.broadcastRender($scope, $scope.table);
     };
 
     panelSrv.init($scope);
@@ -93,8 +93,8 @@ export function tablePanelDirective() {
         headElem.appendTo(tableElem);
       }
 
-      function appendTableRows(tableElem) {
-        var tbodyElem = $('<tbody></tbody>');
+      function appendTableRows(tbodyElem) {
+        var rowElements = $(document.createDocumentFragment());
         var rowEnd = Math.min(panel.pageSize, data.rows.length);
         var rowStart = 0;
 
@@ -105,14 +105,14 @@ export function tablePanelDirective() {
             var colElem = $('<td>' + row[i] + '</td>');
             rowElem.append(colElem);
           }
-          tbodyElem.append(rowElem);
+          rowElements.append(rowElem);
         }
 
-        tableElem.append(tbodyElem);
+        tbodyElem.empty();
+        tbodyElem.append(rowElements);
       }
 
       function appendPaginationControls(footerElem) {
-        var paginationElem = $('<div class="pagination">');
         var paginationList = $('<ul></ul>');
 
         var pageCount = data.rows.length / panel.pageSize;
@@ -123,23 +123,19 @@ export function tablePanelDirective() {
 
         var nextLink = $('<li><a href="#">»</a></li>');
         paginationList.append(nextLink);
-        paginationElem.append(paginationList);
 
         footerElem.empty();
-        footerElem.append(paginationElem);
+        footerElem.append(paginationList);
       }
 
       function renderPanel() {
-        var rootElem = elem.find('.table-panel-container');
+        var rootElem = elem.find('.table-panel-scroll');
+        var tbodyElem = elem.find('tbody');
         var footerElem = elem.find('.table-panel-footer');
-        var tableElem = $('<table class="gf-table-panel"></table>');
 
-        appendTableHeader(tableElem);
-        appendTableRows(tableElem);
+        appendTableRows(tbodyElem);
 
         rootElem.css({'max-height': getTableHeight()});
-        rootElem.empty();
-        rootElem.append(tableElem);
         appendPaginationControls(footerElem);
       }
 

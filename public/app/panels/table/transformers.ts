@@ -79,6 +79,12 @@ transformers['timeseries_to_columns'] = {
   }
 };
 
+transformers['annotations'] = {
+  description: 'Annotations',
+};
+
+transformers['json'] = {
+  description: 'JSON',
+};
+
 export {transformers}
-
-
