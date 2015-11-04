@@ -22,12 +22,6 @@ transformers['timeseries_to_rows'] = {
         var dp = series.datapoints[y];
         var time = moment(dp[1]).format('LLL');
         var value = dp[0];
-        if (value === null) {
-          value = 'null';
-        } else if (_.isNumber(value)) {
-          value = value.toFixed(2);
-        }
-
         model.rows.push([time, series.target, value]);
       }
     }
@@ -67,11 +61,7 @@ transformers['timeseries_to_columns'] = {
 
       for (var i = 0; i < data.length; i++) {
         var value = point[i];
-        if (_.isNumber(value)) {
-          values.push(value.toFixed(2));
-        } else {
-          values.push('-');
-        }
+        values.push(value);
       }
 
       model.rows.push(values);
@@ -88,3 +78,5 @@ transformers['json'] = {
 };
 
 export {transformers}
+
+

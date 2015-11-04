@@ -192,7 +192,7 @@ function($, _) {
 
   kbn.stringToJsRegex = function(str) {
     if (str[0] !== '/') {
-      return new RegExp(str);
+      return new RegExp('^' + str + '$');
     }
 
     var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
