@@ -3,63 +3,9 @@
 import angular = require('angular');
 import $ = require('jquery');
 import _ = require('lodash');
-import moment = require('moment');
-import PanelMeta = require('app/features/panel/panel_meta');
-import TimeSeries = require('app/core/time_series');
+import kbn = require('app/core/utils/kbn');
 
-import {TableModel} from './table_model';
-import {transformers} from './transformers';
-
-export class TablePanelCtrl {
-
-  constructor($scope, $rootScope, $q, panelSrv, panelHelper) {
-    $scope.ctrl = this;
-    $scope.transformers = transformers;
-    $scope.pageIndex = 0;
-
-    $scope.panelMeta = new PanelMeta({
-      panelName: 'Table',
-      editIcon:  "fa fa-table",
-      fullscreen: true,
-      metricsEditor: true,
-    });
-
-    $scope.panelMeta.addEditorTab('Options', 'app/panels/table/options.html');
-    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
-
-    var panelDefaults = {
-      targets: [{}],
-      transform: 'timeseries_to_rows',
-      pageSize: 50,
-      showHeader: true,
-    };
-
-    _.defaults($scope.panel, panelDefaults);
-
-    $scope.refreshData = function(datasource) {
-      panelHelper.updateTimeRange($scope);
-
-      return panelHelper.issueMetricQuery($scope, datasource)
-      .then($scope.dataHandler, function(err) {
-        $scope.seriesList = [];
-        $scope.render([]);
-        throw err;
-      });
-    };
-
-    $scope.dataHandler = function(results) {
-      $scope.dataRaw = results.data;
-      $scope.render();
-    };
-
-    $scope.render = function() {
-      $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
-      panelHelper.broadcastRender($scope, $scope.table);
-    };
-
-    panelSrv.init($scope);
-  }
-}
+import {TablePanelCtrl} from './controller';
 
 export function tablePanelDirective() {
   'use strict';
@@ -70,6 +16,7 @@ export function tablePanelDirective() {
     link: function(scope, elem) {
       var data;
       var panel = scope.panel;
+      var formaters = [];
 
       function getTableHeight() {
         var panelHeight = scope.height || scope.panel.height || scope.row.height;
@@ -93,16 +40,53 @@ export function tablePanelDirective() {
         headElem.appendTo(tableElem);
       }
 
+      function createColumnFormater(style) {
+        return function(v) {
+          if (v === null) {
+            return '-';
+          }
+          if (_.isString(v)) {
+            return v;
+          }
+          let valueFormater = kbn.valueFormats[style.unit];
+          return valueFormater(v, style.decimals);
+        };
+      }
+
+      function formatColumnValue(colIndex, value) {
+        if (formaters[colIndex]) {
+          return formaters[colIndex](value);
+        }
+
+        for (let i = 0; i < panel.columns.length; i++) {
+          let style = panel.columns[i];
+          let column = data.columns[colIndex];
+          var regex = kbn.stringToJsRegex(style.pattern);
+          if (column.text.match(regex)) {
+            formaters[colIndex] = createColumnFormater(style);
+            return formaters[colIndex](value);
+          }
+        }
+
+        formaters[colIndex] = function(v) {
+          return v;
+        };
+
+        return formaters[colIndex](value);
+      }
+
       function appendTableRows(tbodyElem) {
-        var rowElements = $(document.createDocumentFragment());
-        var rowEnd = Math.min(panel.pageSize, data.rows.length);
-        var rowStart = 0;
+        let rowElements = $(document.createDocumentFragment());
+        let rowEnd = Math.min(panel.pageSize, data.rows.length);
+        let rowStart = 0;
+
 
         for (var y = rowStart; y < rowEnd; y++) {
-          var row = data.rows[y];
-          var rowElem = $('<tr></tr>');
+          let row = data.rows[y];
+          let rowElem = $('<tr></tr>');
           for (var i = 0; i < data.columns.length; i++) {
-            var colElem = $('<td>' + row[i] + '</td>');
+            var colValue = formatColumnValue(i, row[i]);
+            let colElem = $('<td> ' + colValue +  '</td>');
             rowElem.append(colElem);
           }
           rowElements.append(rowElem);
