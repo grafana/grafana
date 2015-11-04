@@ -273,7 +273,7 @@ automatically signed up.
 ### team_ids
 
 Require an active team membership for at least one of the given teams on
-GitHub.  If the authenticated user isn't a member of at least one the
+GitHub. If the authenticated user isn't a member of at least one of the
 teams they will not be able to register or authenticate with your
 Grafana instance. For example:
 
@@ -281,7 +281,7 @@ Grafana instance. For example:
     enabled = true
     client_id = YOUR_GITHUB_APP_CLIENT_ID
     client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-    scopes = user:email
+    scopes = user:email,read:org
     team_ids = 150,300
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token

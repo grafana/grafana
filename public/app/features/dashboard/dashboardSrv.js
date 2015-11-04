@@ -118,7 +118,7 @@ function (angular, $, kbn, _, moment) {
       },0);
     };
 
-    p.add_panel = function(panel, row) {
+    p.addPanel = function(panel, row) {
       var rowSpan = this.rowSpan(row);
       var panelCount = row.panels.length;
       var space = (12 - rowSpan) - panel.span;
@@ -328,9 +328,20 @@ function (angular, $, kbn, _, moment) {
         }
       }
 
-      if (oldVersion < 7 && old.nav && old.nav.length) {
-        this.timepicker = old.nav[0];
-        delete this.nav;
+      if (oldVersion < 7) {
+        if (old.nav && old.nav.length) {
+          this.timepicker = old.nav[0];
+          delete this.nav;
+        }
+
+        // ensure query refIds
+        panelUpgrades.push(function(panel) {
+          _.each(panel.targets, function(target) {
+            if (!target.refId) {
+              target.refId = this.getNextQueryLetter(panel);
+            }
+          }, this);
+        });
       }
 
       if (panelUpgrades.length === 0) {
@@ -341,7 +352,7 @@ function (angular, $, kbn, _, moment) {
         var row = this.rows[i];
         for (j = 0; j < row.panels.length; j++) {
           for (k = 0; k < panelUpgrades.length; k++) {
-            panelUpgrades[k](row.panels[j]);
+            panelUpgrades[k].call(this, row.panels[j]);
           }
         }
       }

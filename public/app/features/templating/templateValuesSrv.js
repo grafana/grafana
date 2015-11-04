@@ -292,7 +292,10 @@ function (angular, _, kbn) {
           break;
         }
         case 'lucene': {
-          allValue = '(' + _.pluck(variable.options, 'text').join(' OR ') + ')';
+          var quotedValues = _.map(variable.options, function(val) {
+            return '\\\"' + val.text + '\\\"';
+          });
+          allValue = '(' + quotedValues.join(' OR ') + ')';
           break;
         }
         case 'regex values': {

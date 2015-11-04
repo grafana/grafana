@@ -1,11 +1,12 @@
 package stscreds
 
 import (
+	"testing"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 type stubSTS struct {
@@ -16,7 +17,7 @@ func (s *stubSTS) AssumeRole(input *sts.AssumeRoleInput) (*sts.AssumeRoleOutput,
 	return &sts.AssumeRoleOutput{
 		Credentials: &sts.Credentials{
 			// Just reflect the role arn to the provider.
-			AccessKeyID:     input.RoleARN,
+			AccessKeyId:     input.RoleArn,
 			SecretAccessKey: aws.String("assumedSecretAccessKey"),
 			SessionToken:    aws.String("assumedSessionToken"),
 			Expiration:      &expiry,

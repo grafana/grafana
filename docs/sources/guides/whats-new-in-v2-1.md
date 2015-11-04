@@ -112,7 +112,7 @@ for example make all series that contain the word **CPU** `red` and assigned to 
 
 ![Define series color using regex rule](/img/v2/regex_color_override.png "Define series color using regex rule")
 
-New series style override, negative-y transform and stack groups. Negative y tranform is
+New series style override, negative-y transform and stack groups. Negative y transform is
 very useful if you want to plot a series on the negative y scale without affecting the legend values like min or max or
 the values shown in the hover tooltip.
 
@@ -126,5 +126,5 @@ string values.
 
 ### Changelog
 For a detailed list and link to github issues for everything included in the 2.1 release please
-view the [CHANGELOG.md]("https://github.com/grafana/grafana/blob/master/CHANGELOG.md") file.
+view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.
 
