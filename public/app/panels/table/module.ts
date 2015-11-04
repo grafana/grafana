@@ -15,6 +15,7 @@ export class TablePanelCtrl {
   constructor($scope, $rootScope, $q, panelSrv, panelHelper) {
     $scope.ctrl = this;
     $scope.transformers = transformers;
+    $scope.pageIndex = 0;
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
@@ -68,6 +69,7 @@ export function tablePanelDirective() {
     controller: TablePanelCtrl,
     link: function(scope, elem) {
       var data;
+      var panel = scope.panel;
 
       function getTableHeight() {
         var panelHeight = scope.height || scope.panel.height || scope.row.height;
@@ -78,39 +80,67 @@ export function tablePanelDirective() {
         return (panelHeight - 40) + 'px';
       }
 
-      function renderPanel() {
-        var rootDiv = elem.find('.table-panel-container');
-        var tableDiv = $('<table class="gf-table-panel"></table>');
-        var i, y, rowElem, colElem, column, row;
-
-        rowElem = $('<tr></tr>');
-        for (i = 0; i < data.columns.length; i++) {
-          column = data.columns[i];
-          colElem = $('<th>' + column.text + '</th>');
+      function appendTableHeader(tableElem) {
+        var rowElem = $('<tr></tr>');
+        for (var i = 0; i < data.columns.length; i++) {
+          var column = data.columns[i];
+          var colElem = $('<th>' + column.text + '</th>');
           rowElem.append(colElem);
         }
 
         var headElem = $('<thead></thead>');
         headElem.append(rowElem);
+        headElem.appendTo(tableElem);
+      }
 
+      function appendTableRows(tableElem) {
         var tbodyElem = $('<tbody></tbody>');
-        for (y = 0; y < data.rows.length; y++) {
-          row = data.rows[y];
-          rowElem = $('<tr></tr>');
-          for (i = 0; i < data.columns.length; i++) {
-            colElem = $('<td>' + row[i] + '</td>');
+        var rowEnd = Math.min(panel.pageSize, data.rows.length);
+        var rowStart = 0;
+
+        for (var y = rowStart; y < rowEnd; y++) {
+          var row = data.rows[y];
+          var rowElem = $('<tr></tr>');
+          for (var i = 0; i < data.columns.length; i++) {
+            var colElem = $('<td>' + row[i] + '</td>');
             rowElem.append(colElem);
           }
           tbodyElem.append(rowElem);
         }
 
-        tableDiv.append(headElem);
-        tableDiv.append(tbodyElem);
+        tableElem.append(tbodyElem);
+      }
 
-        rootDiv.css({'max-height': getTableHeight()});
+      function appendPaginationControls(footerElem) {
+        var paginationElem = $('<div class="pagination">');
+        var paginationList = $('<ul></ul>');
 
-        rootDiv.empty();
-        rootDiv.append(tableDiv);
+        var pageCount = data.rows.length / panel.pageSize;
+        for (var i = 0; i < pageCount; i++) {
+          var pageLinkElem = $('<li><a href="#">' + (i+1) + '</a></li>');
+          paginationList.append(pageLinkElem);
+        }
+
+        var nextLink = $('<li><a href="#">»</a></li>');
+        paginationList.append(nextLink);
+        paginationElem.append(paginationList);
+
+        footerElem.empty();
+        footerElem.append(paginationElem);
+      }
+
+      function renderPanel() {
+        var rootElem = elem.find('.table-panel-container');
+        var footerElem = elem.find('.table-panel-footer');
+        var tableElem = $('<table class="gf-table-panel"></table>');
+
+        appendTableHeader(tableElem);
+        appendTableRows(tableElem);
+
+        rootElem.css({'max-height': getTableHeight()});
+        rootElem.empty();
+        rootElem.append(tableElem);
+        appendPaginationControls(footerElem);
       }
 
       scope.$on('render', function(event, renderData) {
@@ -126,4 +156,3 @@ export function tablePanelDirective() {
 }
 
 angular.module('grafana.directives').directive('grafanaPanelTable', tablePanelDirective);
-

@@ -11,6 +11,13 @@
   overflow: auto;
 }
 
+.table-panel-footer {
+  text-align: center;
+  .pagination {
+    display: inline-block;
+  }
+}
+
 .gf-table-panel* {
   box-sizing: border-box;
 }
@@ -25,10 +32,11 @@
 }
 
 .gf-table-panel th {
-  background: @grafanaTargetFuncBackground;
+  background: @grafanaListAccent;
   padding: 5px 0 5px 15px;
   text-align: left;
   border-top: 2px solid @bodyBackground;
+  color: @blue;
 
   &:first-child {
     padding-left: 15px;
@@ -36,7 +44,7 @@
 }
 
 .gf-table-panel td {
-  padding: 15px 0 15px 15px;
+  padding: 12px 0 12px 15px;
 
   &:first-child {
     padding-left: 15px;
