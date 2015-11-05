@@ -274,19 +274,19 @@ function($, _) {
     if (size === null) { return ""; }
 
     if (Math.abs(size) < Math.pow(10, 3)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size, 2));
+      return currency + kbn.toFixed(size, 2).toLocaleString();
     }
     if (Math.abs(size) < Math.pow(10, 6)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 3), 3)) + "K";
+      return currency + kbn.toFixed(size/Math.pow(10, 3), decimals) + "K";
     }
     else if (Math.abs(size) < Math.pow(10, 9)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 6), 3)) + "MM";
+      return currency + kbn.toFixed(size/Math.pow(10, 6), decimals) + "MM";
     }
     else if (Math.abs(size) < Math.pow(10, 12)) {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 9), 3)) + "B";
+      return currency + kbn.toFixed(size/Math.pow(10, 9), decimals) + "B";
     }
     else {
-      return currency + Intl.NumberFormat().format(kbn.toFixed(size/Math.pow(10, 12), 3)) + "T";
+      return currency + kbn.toFixed(size/Math.pow(10, 12), decimals).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") + "T";
     }
   };
 

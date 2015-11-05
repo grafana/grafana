@@ -31,6 +31,18 @@ define([
   describeValueFormat('ns', 25, 1, 0, '25 ns');
   describeValueFormat('ns', 2558, 50, 0, '2.56 µs');
 
+  describeValueFormat('pounds', 0.99, 0, 1, '£0.99');
+
+  describeValueFormat('dollars', 0.99, 0, 0, '$0.99');
+  describeValueFormat('dollars', 1.02, 0, 1, '$1.02');
+  describeValueFormat('dollars', 1350, 0, 2, '$1.35K');
+  describeValueFormat('dollars', 1500000, 0, 1, '$1.5MM');
+  describeValueFormat('dollars', 150000000, 0, 0, '$150MM');
+  describeValueFormat('dollars', 1500000000, 0, 1, '$1.5B');
+  describeValueFormat('dollars', 1500000000000, 0, 1, '$1.5T');
+  describeValueFormat('dollars', 1500000000000000, 0, 0, '$1,500T');
+  describeValueFormat('dollars', 1500000000000000000, 0, 0, '$1,500,000T');
+
   describe('kbn.toFixed and negative decimals', function() {
     it('should treat as zero decimals', function() {
       var str = kbn.toFixed(186.123, -2);
