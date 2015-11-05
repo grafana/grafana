@@ -37,15 +37,18 @@ export class TablePanelCtrl {
       transform: 'timeseries_to_rows',
       pageSize: 50,
       showHeader: true,
-      columns: [{
-        pattern: '/.*/',
-        unit: 'short',
-        decimals: 2,
-        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-      }],
+      columns: [],
     };
 
-    _.defaults($scope.panel, panelDefaults);
+    $scope.init = function() {
+      _.defaults($scope.panel, panelDefaults);
+
+      if ($scope.panel.columns.length === 0) {
+        $scope.addColumnStyle();
+      }
+
+      panelSrv.init($scope);
+    };
 
     $scope.setUnitFormat = function(column, subItem) {
       column.unit = subItem.value;
@@ -73,7 +76,32 @@ export class TablePanelCtrl {
       panelHelper.broadcastRender($scope, $scope.table);
     };
 
-    panelSrv.init($scope);
+    $scope.getColumnNames = function() {
+      if (!$scope.table) {
+        return [];
+      }
+      return _.map($scope.table.columns, function(col: any) {
+        return col.text;
+      });
+    };
+
+    $scope.addColumnStyle = function() {
+      var columnStyleDefaults = {
+        unit: 'short',
+        decimals: 2,
+        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+        pattern: '/.*/',
+        colorMode: 'value',
+      };
+
+      $scope.panel.columns.push(angular.copy(columnStyleDefaults));
+    };
+
+    $scope.removeColumnStyle = function(col) {
+      $scope.panel.columns = _.without($scope.panel.columns, col);
+    };
+
+    $scope.init();
   }
 }
 

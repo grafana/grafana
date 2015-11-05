@@ -30,7 +30,7 @@ describe('when transforming time series table', () => {
         expect(table.rows[0][1]).to.be('series1');
         expect(table.rows[1][1]).to.be('series1');
         expect(table.rows[2][1]).to.be('series2');
-        expect(table.rows[0][2]).to.be('12.12');
+        expect(table.rows[0][2]).to.be(12.12);
       });
 
       it('should return 3 rows', () => {
@@ -59,12 +59,12 @@ describe('when transforming time series table', () => {
 
       it ('should return 2 rows', () => {
         expect(table.rows.length).to.be(2);
-        expect(table.rows[0][1]).to.be('12.12');
-        expect(table.rows[0][2]).to.be('16.12');
+        expect(table.rows[0][1]).to.be(12.12);
+        expect(table.rows[0][2]).to.be(16.12);
       });
 
-      it ('should show - when no value for timestamp', () => {
-        expect(table.rows[1][2]).to.be('-');
+      it ('should be undefined when no value for timestamp', () => {
+        expect(table.rows[1][2]).to.be(undefined);
       });
     });
   });
