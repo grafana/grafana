@@ -3,24 +3,15 @@
 import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
-import kbn = require('app/core/utils/kbn');
 import PanelMeta = require('app/features/panel/panel_meta');
 
 import {TableModel} from './table_model';
-import {transformers} from './transformers';
 
 export class TablePanelCtrl {
 
   constructor($scope, $rootScope, $q, panelSrv, panelHelper) {
     $scope.ctrl = this;
-    $scope.transformers = transformers;
     $scope.pageIndex = 0;
-    $scope.unitFormats = kbn.getUnitFormats();
-    $scope.colorModes = {
-      'cell': {text: 'Cell'},
-      'value': {text: 'Value'},
-      'row': {text: 'Row'},
-    };
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Table',
@@ -38,21 +29,16 @@ export class TablePanelCtrl {
       pageSize: 50,
       showHeader: true,
       columns: [],
+      fields: []
     };
 
     $scope.init = function() {
       _.defaults($scope.panel, panelDefaults);
 
       if ($scope.panel.columns.length === 0) {
-        $scope.addColumnStyle();
       }
 
       panelSrv.init($scope);
-    };
-
-    $scope.setUnitFormat = function(column, subItem) {
-      column.unit = subItem.value;
-      $scope.render();
     };
 
     $scope.refreshData = function(datasource) {
@@ -73,32 +59,7 @@ export class TablePanelCtrl {
 
     $scope.render = function() {
       $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
-      panelHelper.broadcastRender($scope, $scope.table);
-    };
-
-    $scope.getColumnNames = function() {
-      if (!$scope.table) {
-        return [];
-      }
-      return _.map($scope.table.columns, function(col: any) {
-        return col.text;
-      });
-    };
-
-    $scope.addColumnStyle = function() {
-      var columnStyleDefaults = {
-        unit: 'short',
-        decimals: 2,
-        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-        pattern: '/.*/',
-        colorMode: 'value',
-      };
-
-      $scope.panel.columns.push(angular.copy(columnStyleDefaults));
-    };
-
-    $scope.removeColumnStyle = function(col) {
-      $scope.panel.columns = _.without($scope.panel.columns, col);
+      panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
     };
 
     $scope.init();

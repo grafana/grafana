@@ -9,7 +9,7 @@ transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
   transform: function(data, panel, model) {
     model.columns = [
-      {text: 'Time'},
+      {text: 'Time', type: 'date'},
       {text: 'Series'},
       {text: 'Value'},
     ];
@@ -18,9 +18,7 @@ transformers['timeseries_to_rows'] = {
       var series = data[i];
       for (var y = 0; y < series.datapoints.length; y++) {
         var dp = series.datapoints[y];
-        var time = moment(dp[1]).format('LLL');
-        var value = dp[0];
-        model.rows.push([time, series.target, value]);
+        model.rows.push([dp[1], series.target, dp[0]]);
       }
     }
   },
@@ -29,7 +27,7 @@ transformers['timeseries_to_rows'] = {
 transformers['timeseries_to_columns'] = {
   description: 'Time series to columns',
   transform: function(data, panel, model) {
-    model.columns.push({text: 'Time'});
+    model.columns.push({text: 'Time', type: 'date'});
 
     // group by time
     var points = {};
@@ -54,7 +52,7 @@ transformers['timeseries_to_columns'] = {
 
     for (var time in points) {
       var point = points[time];
-      var values = [moment(point.time).format('LLL')];
+      var values = [point.time];
 
       for (var i = 0; i < data.length; i++) {
         var value = point[i];
@@ -71,17 +69,31 @@ transformers['annotations'] = {
 };
 
 transformers['json'] = {
-  description: 'JSON',
+  description: 'JSON Data',
   transform: function(data, panel, model) {
-    model.columns.push({text: 'JSON'});
-    debugger;
+    var i, y, z;
+    for (i = 0; i < panel.fields.length; i++) {
+      model.columns.push({text: panel.fields[i].name});
+    }
 
-    for (var i = 0; i < data.length; i++) {
+    if (model.columns.length === 0) {
+      model.columns.push({text: 'JSON'});
+    }
+
+    for (i = 0; i < data.length; i++) {
       var series = data[i];
 
-      for (var y = 0; y < series.datapoints.length; y++) {
+      for (y = 0; y < series.datapoints.length; y++) {
         var dp = series.datapoints[y];
-        model.rows.push([JSON.stringify(dp)]);
+        var values = [];
+        for (z = 0; z < panel.fields.length; z++) {
+          values.push(dp[panel.fields[z].name]);
+        }
+
+        if (values.length === 0) {
+          values.push([JSON.stringify(dp)]);
+        }
+        model.rows.push(values);
       }
     }
   }

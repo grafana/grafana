@@ -4,10 +4,12 @@ import angular = require('angular');
 import $ = require('jquery');
 import _ = require('lodash');
 import kbn = require('app/core/utils/kbn');
+import moment = require('moment');
 
 import {TablePanelCtrl} from './controller';
+import {tablePanelEditor} from './editor';
 
-export function tablePanelDirective() {
+export function tablePanel() {
   'use strict';
   return {
     restrict: 'E',
@@ -45,8 +47,12 @@ export function tablePanelDirective() {
           if (v === null || v === void 0) {
             return '-';
           }
-          if (_.isString(v) || style) {
+          if (_.isString(v) || !style) {
             return v;
+          }
+          if (style.type === 'date') {
+            var date = moment(v);
+            return date.format(style.dateFormat);
           }
           let valueFormater = kbn.valueFormats[style.unit];
           return valueFormater(v, style.decimals);
@@ -136,4 +142,5 @@ export function tablePanelDirective() {
   };
 }
 
-angular.module('grafana.directives').directive('grafanaPanelTable', tablePanelDirective);
+angular.module('grafana.directives').directive('grafanaPanelTable', tablePanel);
+angular.module('grafana.directives').directive('grafanaPanelTableEditor', tablePanelEditor);
