@@ -1,0 +1,167 @@
+<div class="editor-row">
+	<div class="section">
+		<h5>Data</h5>
+		<div class="tight-form-container">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 140px">
+						To Table Transform
+					</li>
+					<li>
+						<select class="input-large tight-form-input"
+							ng-model="panel.transform"
+							ng-options="k as v.description for (k, v) in transformers"
+							ng-change="render()"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="panel.transform === 'json'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 140px">
+						Fields
+					</li>
+					<li class="tight-form-item" ng-repeat="field in panel.fields">
+						<i class="pointer fa fa-remove" ng-click="removeJsonField(field)"></i>
+						<span>
+							{{field.name}}
+						</span>
+					</li>
+					<li class="dropdown" dropdown-typeahead="jsonFieldsMenu" dropdown-typeahead-on-select="addJsonField($item, $subItem)">
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="section">
+		<h5>Table Display</h5>
+		<div class="tight-form-container">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						Pagination (Page size)
+					</li>
+					<li>
+						<input type="text" class="input-small tight-form-input" placeholder="50"
+						empty-to-null ng-model="panel.pageSize" ng-change="render()" ng-model-onblur>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<h5>Column Styles</h5>
+
+	<div class="tight-form-container">
+		<div ng-repeat="column in panel.columns">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer" ng-click="removeColumnStyle(column)"></i>
+					</li>
+					<li class="tight-form-item">
+						Name or regex
+					</li>
+					<li>
+						<input type="text" ng-model="column.pattern" bs-typeahead="getColumnNames" ng-blur="render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
+					</li>
+					<li class="tight-form-item" style="width: 86px">
+						Type
+					</li>
+					<li>
+						<select class="input-small tight-form-input"
+							ng-model="column.type"
+							ng-options="k as v.text for (k, v) in columnTypes"
+							ng-change="render()"
+							style="width: 150px"
+							></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="column.type === 'date'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer invisible"></i>
+					</li>
+					<li class="tight-form-item text-right" style="width: 93px">
+						Format
+					</li>
+					<li>
+						<input type="text" class="input-medium tight-form-input" ng-model="column.dateFormat" ng-change="render()" ng-model-onblur>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="column.type === 'number'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer invisible"></i>
+					</li>
+					<li class="tight-form-item text-right" style="width: 93px">
+						Coloring
+					</li>
+					<li>
+						<select class="input-small tight-form-input"
+							ng-model="column.colorMode"
+							ng-options="k as v.text for (k, v) in colorModes"
+							ng-change="render()"
+							style="width: 150px"
+							></select>
+					</li>
+					<li class="tight-form-item">
+						Thresholds<tip>Comma seperated values</tip>
+					</li>
+					<li>
+						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="column.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
+					</li>
+					<li class="tight-form-item" style="width: 60px">
+						Colors
+					</li>
+					<li class="tight-form-item">
+						<spectrum-picker ng-model="column.colors[0]" ng-change="render()" ></spectrum-picker>
+						<spectrum-picker ng-model="column.colors[1]" ng-change="render()" ></spectrum-picker>
+						<spectrum-picker ng-model="column.colors[2]" ng-change="render()" ></spectrum-picker>
+					</li>
+					<li class="tight-form-item last">
+						<a class="pointer" ng-click="invertColorOrder()">invert order</a>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="column.type === 'number'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						<i class="fa fa-remove pointer invisible"></i>
+					</li>
+					<li class="tight-form-item text-right" style="width: 93px">
+						Unit
+					</li>
+					<li class="dropdown" style="width: 150px"
+						ng-model="column.unit"
+						dropdown-typeahead="unitFormats"
+						dropdown-typeahead-on-select="setUnitFormat(column, $subItem)">
+					</li>
+					<li class="tight-form-item" style="width: 86px">
+						Decimals
+					</li>
+					<li style="width: 105px">
+						<input type="number" class="input-mini tight-form-input" ng-model="column.decimals" ng-change="render()" ng-model-onblur>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+		</div>
+	</div>
+
+	<button class="btn btn-inverse" style="margin-top: 20px" ng-click="addColumnStyle()">
+		Add column display rule
+	</button>
+</div>
+
