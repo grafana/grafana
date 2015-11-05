@@ -42,10 +42,10 @@ export function tablePanelDirective() {
 
       function createColumnFormater(style) {
         return function(v) {
-          if (v === null) {
+          if (v === null || v === void 0) {
             return '-';
           }
-          if (_.isString(v)) {
+          if (_.isString(v) || style) {
             return v;
           }
           let valueFormater = kbn.valueFormats[style.unit];
@@ -79,7 +79,8 @@ export function tablePanelDirective() {
         let rowElements = $(document.createDocumentFragment());
         let rowEnd = Math.min(panel.pageSize, data.rows.length);
         let rowStart = 0;
-
+        // reset formater cache
+        formaters = [];
 
         for (var y = rowStart; y < rowEnd; y++) {
           let row = data.rows[y];
