@@ -170,7 +170,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         target = options.targets[i];
         if (target.hide) {return;}
 
-        var esQuery = angular.toJson(this.queryBuilder.build(target));
+        var queryObj = this.queryBuilder.build(target);
+        var esQuery = angular.toJson(queryObj);
         var luceneQuery = angular.toJson(target.query || '*');
         // remove inner quotes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
@@ -185,7 +186,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      return this._post('/_msearch?search_type=count', payload).then(function(res) {
+      return this._post('/_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
     };
