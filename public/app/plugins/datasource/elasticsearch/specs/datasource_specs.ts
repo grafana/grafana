@@ -108,7 +108,7 @@ describe('ElasticDatasource', function() {
 
     it('should set size', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.size).to.be(500);
+      expect(body.size).to.be(500);
     });
   });
 

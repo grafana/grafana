@@ -14,8 +14,6 @@ transformers['timeseries_to_rows'] = {
       {text: 'Value'},
     ];
 
-    model.rows = [];
-
     for (var i = 0; i < data.length; i++) {
       var series = data[i];
       for (var y = 0; y < series.datapoints.length; y++) {
@@ -31,8 +29,7 @@ transformers['timeseries_to_rows'] = {
 transformers['timeseries_to_columns'] = {
   description: 'Time series to columns',
   transform: function(data, panel, model) {
-    model.columns = [{text: 'Time'}];
-    model.rows = [];
+    model.columns.push({text: 'Time'});
 
     // group by time
     var points = {};
@@ -75,8 +72,19 @@ transformers['annotations'] = {
 
 transformers['json'] = {
   description: 'JSON',
+  transform: function(data, panel, model) {
+    model.columns.push({text: 'JSON'});
+    debugger;
+
+    for (var i = 0; i < data.length; i++) {
+      var series = data[i];
+
+      for (var y = 0; y < series.datapoints.length; y++) {
+        var dp = series.datapoints[y];
+        model.rows.push([JSON.stringify(dp)]);
+      }
+    }
+  }
 };
 
 export {transformers}
-
-
