@@ -4,6 +4,11 @@ export class TableModel {
   columns: any[];
   rows: any[];
 
+  constructor() {
+    this.columns = [];
+    this.rows = [];
+  }
+
   static transform(data, panel) {
     var model = new TableModel();
 
