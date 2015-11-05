@@ -63,10 +63,12 @@ export function tablePanelEditor() {
 
       scope.addJsonField = function(menuItem) {
         scope.panel.fields.push({name: menuItem.text});
+        scope.render();
       };
 
       scope.removeJsonField = function(field) {
         scope.panel.fields = _.without(scope.panel.fields, field);
+        scope.render();
       };
 
       scope.setUnitFormat = function(column, subItem) {
