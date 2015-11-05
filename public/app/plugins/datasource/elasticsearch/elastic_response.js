@@ -173,6 +173,33 @@ function (_, queryDef) {
     }
   };
 
+  ElasticResponse.prototype.processHits = function(hits, seriesList) {
+    var series = {target: 'docs', type: 'docs', datapoints: [], total: hits.total};
+    var propName, hit, doc, i;
+
+    for (i = 0; i < hits.hits.length; i++) {
+      hit = hits.hits[i];
+      doc = {
+        _id: hit._id,
+        _type: hit._type,
+        _index: hit._index
+      };
+
+      if (hit._source) {
+        for (propName in hit._source) {
+          doc[propName] = hit._source[propName];
+        }
+      }
+
+      for (propName in hit.fields) {
+        doc[propName] = hit.fields[propName];
+      }
+      series.datapoints.push(doc);
+    }
+
+    seriesList.push(series);
+  };
+
   ElasticResponse.prototype.getTimeSeries = function() {
     var seriesList = [];
 
@@ -182,15 +209,21 @@ function (_, queryDef) {
         throw { message: response.error };
       }
 
-      var aggregations = response.aggregations;
-      var target = this.targets[i];
-      var tmpSeriesList = [];
+      if (response.hits) {
+        this.processHits(response.hits, seriesList);
+      }
 
-      this.processBuckets(aggregations, target, tmpSeriesList, {});
-      this.nameSeries(tmpSeriesList, target);
+      if (response.aggregations) {
+        var aggregations = response.aggregations;
+        var target = this.targets[i];
+        var tmpSeriesList = [];
 
-      for (var y = 0; y < tmpSeriesList.length; y++) {
-        seriesList.push(tmpSeriesList[y]);
+        this.processBuckets(aggregations, target, tmpSeriesList, {});
+        this.nameSeries(tmpSeriesList, target);
+
+        for (var y = 0; y < tmpSeriesList.length; y++) {
+          seriesList.push(tmpSeriesList[y]);
+        }
       }
     }
 

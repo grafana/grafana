@@ -153,8 +153,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.getQueryHeader = function(timeFrom, timeTo) {
-      var header = {search_type: "count", "ignore_unavailable": true};
+    ElasticDatasource.prototype.getQueryHeader = function(searchType, timeFrom, timeTo) {
+      var header = {search_type: searchType, "ignore_unavailable": true};
       header.index = this.indexPattern.getIndexList(timeFrom, timeTo);
       return angular.toJson(header);
     };
@@ -163,8 +163,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var payload = "";
       var target;
       var sentTargets = [];
-
-      var header = this.getQueryHeader(options.range.from, options.range.to);
+      var headerAdded = false;
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
@@ -177,7 +176,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
-        payload += header + '\n' + esQuery + '\n';
+        if (!headerAdded) {
+          var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
+          var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+          payload +=  header + '\n';
+          headerAdded = true;
+        }
+
+        payload += esQuery + '\n';
         sentTargets.push(target);
       }
 
@@ -230,7 +236,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     ElasticDatasource.prototype.getTerms = function(queryDef) {
       var range = timeSrv.timeRange();
-      var header = this.getQueryHeader(range.from, range.to);
+      var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
       esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');

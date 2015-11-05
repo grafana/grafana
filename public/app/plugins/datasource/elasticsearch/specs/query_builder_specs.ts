@@ -120,4 +120,14 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
   });
 
+  it('with raw_document metric', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1'}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(500);
+  });
+
 });
