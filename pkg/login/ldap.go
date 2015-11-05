@@ -321,8 +321,14 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 	} else {
 		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
 		var groupSearchResult *ldap.SearchResult
+		var groupSearchId string
+		if a.server.Attr.UID == "" {
+			groupSearchId = username
+		} else {
+			groupSearchId = uid
+		}
 		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
-			filter := strings.Replace(a.server.GroupSearchFilter, "%s", uid, -1)
+			filter := strings.Replace(a.server.GroupSearchFilter, "%s", groupSearchId, -1)
 
 			if ldapCfg.VerboseLogging {
 				log.Info("LDAP: Searching for user's groups: %s", filter)
