@@ -29,19 +29,6 @@ export function tablePanel() {
         return (panelHeight - 40) + 'px';
       }
 
-      function appendTableHeader(tableElem) {
-        var rowElem = $('<tr></tr>');
-        for (var i = 0; i < data.columns.length; i++) {
-          var column = data.columns[i];
-          var colElem = $('<th>' + column.text + '</th>');
-          rowElem.append(colElem);
-        }
-
-        var headElem = $('<thead></thead>');
-        headElem.append(rowElem);
-        headElem.appendTo(tableElem);
-      }
-
       function createColumnFormater(style) {
         return function(v) {
           if (v === null || v === void 0) {
@@ -50,12 +37,23 @@ export function tablePanel() {
           if (_.isString(v) || !style) {
             return v;
           }
+
           if (style.type === 'date') {
+            if (_.isArray(v)) { v = v[0]; }
             var date = moment(v);
             return date.format(style.dateFormat);
           }
-          let valueFormater = kbn.valueFormats[style.unit];
-          return valueFormater(v, style.decimals);
+
+          if (_.isNumber(v) && style.type === 'number') {
+            let valueFormater = kbn.valueFormats[style.unit];
+            return valueFormater(v, style.decimals);
+          }
+
+          if (_.isArray(v)) {
+            v = v.join(',&nbsp;');
+          }
+
+          return v;
         };
       }
 

@@ -60,10 +60,13 @@
 	<div class="tight-form-container">
 		<div ng-repeat="column in panel.columns">
 			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item">
+				<ul class="tight-form-list pull-right">
+					<li class="tight-form-item last">
 						<i class="fa fa-remove pointer" ng-click="removeColumnStyle(column)"></i>
 					</li>
+				</ul>
+
+				<ul class="tight-form-list">
 					<li class="tight-form-item">
 						Name or regex
 					</li>
@@ -86,9 +89,6 @@
 			</div>
 			<div class="tight-form" ng-if="column.type === 'date'">
 				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						<i class="fa fa-remove pointer invisible"></i>
-					</li>
 					<li class="tight-form-item text-right" style="width: 93px">
 						Format
 					</li>
@@ -100,9 +100,6 @@
 			</div>
 			<div class="tight-form" ng-if="column.type === 'number'">
 				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						<i class="fa fa-remove pointer invisible"></i>
-					</li>
 					<li class="tight-form-item text-right" style="width: 93px">
 						Coloring
 					</li>
@@ -136,9 +133,6 @@
 			</div>
 			<div class="tight-form" ng-if="column.type === 'number'">
 				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						<i class="fa fa-remove pointer invisible"></i>
-					</li>
 					<li class="tight-form-item text-right" style="width: 93px">
 						Unit
 					</li>

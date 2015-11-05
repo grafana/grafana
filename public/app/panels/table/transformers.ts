@@ -91,7 +91,7 @@ transformers['json'] = {
         }
 
         if (values.length === 0) {
-          values.push([JSON.stringify(dp)]);
+          values.push(JSON.stringify(dp));
         }
         model.rows.push(values);
       }

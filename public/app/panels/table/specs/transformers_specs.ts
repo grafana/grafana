@@ -96,7 +96,7 @@ describe('when transforming time series table', () => {
       });
 
       it ('should return 2 rows', () => {
-        expect(table.rows.length).to.be(2);
+        expect(table.rows.length).to.be(1);
         expect(table.rows[0][0]).to.be('time');
         expect(table.rows[0][1]).to.be('message');
       });
