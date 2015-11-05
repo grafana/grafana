@@ -10,6 +10,7 @@ define([
     this.datasource = {};
     this.$element = {};
     this.annotationsSrv = {};
+    this.idMapSrv = {};
     this.timeSrv = new TimeSrvStub();
     this.templateSrv = new TemplateSrvStub();
     this.datasourceSrv = {
@@ -27,6 +28,7 @@ define([
       return module(function($provide) {
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
+        $provide.value('idMapSrv', self.idMapSrv);
         $provide.value('timeSrv', self.timeSrv);
         $provide.value('templateSrv', self.templateSrv);
         $provide.value('$element', self.$element);

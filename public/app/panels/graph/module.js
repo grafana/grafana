@@ -21,7 +21,7 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, idMapSrv, panelHelper, $q) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -157,14 +157,31 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
 
       $scope.seriesList = _.map(results.data, $scope.seriesHandler);
 
+      var resolveAliases = idMapSrv.getIdMap($scope.seriesList, $scope.dashboard)
+        .then(function(idMap) {
+          console.log("Alias promise returned: ");
+          console.log(idMap);
+          if (_.isEmpty(idMap)) {
+            return;
+          }
+
+          $scope.seriesList = _.map($scope.seriesList, function(series) {
+            series.alias = idMapSrv.replaceID(series.alias, idMap);
+            return new TimeSeries(series);
+          });
+          console.log("UPdated seriesList: ");
+          console.log($scope.seriesList);
+        });
+
       $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;
 
-      $scope.annotationsPromise
+      var resolveAnnotations = $scope.annotationsPromise
         .then(function(annotations) {
-          $scope.panelMeta.loading = false;
           $scope.seriesList.annotations = annotations;
-          $scope.render($scope.seriesList);
-        }, function() {
+        });
+
+      $q.all([resolveAnnotations, resolveAliases])
+        .finally(function() {
           $scope.panelMeta.loading = false;
           $scope.render($scope.seriesList);
         });

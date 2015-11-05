@@ -16,6 +16,7 @@ function (angular, $, config) {
       templateValuesSrv,
       dynamicDashboardSrv,
       dashboardSrv,
+      datasourceSrv,
       unsavedChangesSrv,
       dashboardViewStateSrv,
       contextSrv,

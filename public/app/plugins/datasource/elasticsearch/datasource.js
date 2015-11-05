@@ -60,6 +60,26 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         });
     };
 
+    function getFieldFromSource(source, fieldName) {
+      if (!fieldName) { return; }
+
+      var fieldNames = fieldName.split('.');
+      var fieldValue = source;
+
+      for (var i = 0; i < fieldNames.length; i++) {
+        fieldValue = fieldValue[fieldNames[i]];
+        if (!fieldValue) {
+          console.log('could not find field in annotatation: ', fieldName);
+          return '';
+        }
+      }
+
+      if (_.isArray(fieldValue)) {
+        fieldValue = fieldValue.join(', ');
+      }
+      return fieldValue;
+    }
+
     ElasticDatasource.prototype.annotationQuery = function(options) {
       var annotation = options.annotation;
       var timeField = annotation.timeField || '@timestamp';
@@ -98,26 +118,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         var list = [];
         var hits = res.responses[0].hits.hits;
 
-        var getFieldFromSource = function(source, fieldName) {
-          if (!fieldName) { return; }
-
-          var fieldNames = fieldName.split('.');
-          var fieldValue = source;
-
-          for (var i = 0; i < fieldNames.length; i++) {
-            fieldValue = fieldValue[fieldNames[i]];
-            if (!fieldValue) {
-              console.log('could not find field in annotatation: ', fieldName);
-              return '';
-            }
-          }
-
-          if (_.isArray(fieldValue)) {
-            fieldValue = fieldValue.join(', ');
-          }
-          return fieldValue;
-        };
-
         for (var i = 0; i < hits.length; i++) {
           var source = hits[i]._source;
           var fields = hits[i].fields;
@@ -138,6 +138,26 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           list.push(event);
         }
         return list;
+      });
+    };
+
+    ElasticDatasource.prototype.mapAliasQuery = function(id, idfield, namefield) {
+      var queryString = idfield+":"+id;
+
+      var query = { "bool": { "should": [{ "query_string": { "query": queryString } }] } };
+      var data = {
+        "query" : query,
+        "size": 1
+      };
+
+      return this._request('POST', this.index + '/_search', data).then(function(results) {
+        console.log(results);
+        var hits = results.data.hits.hits;
+
+        for (var i = 0; i < hits.length; i++) {
+          var source = hits[i]._source;
+          return getFieldFromSource(source, namefield);
+        }
       });
     };
 

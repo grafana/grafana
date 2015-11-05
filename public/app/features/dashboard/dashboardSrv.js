@@ -34,6 +34,7 @@ function (angular, $, _, moment) {
       this.timepicker = data.timepicker || {};
       this.templating = this._ensureListExist(data.templating);
       this.annotations = this._ensureListExist(data.annotations);
+      this.idMapping = data.idMapping || {};
       this.refresh = data.refresh;
       this.snapshot = data.snapshot;
       this.schemaVersion = data.schemaVersion || 0;

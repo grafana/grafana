@@ -18,6 +18,7 @@ define([
     describe('get_data with 2 series', function() {
       beforeEach(function() {
         ctx.annotationsSrv.getAnnotations = sinon.stub().returns(ctx.$q.when([]));
+        ctx.idMapSrv.getIdMap = sinon.stub().returns(ctx.$q.when([]));
         ctx.datasource.query = sinon.stub().returns(ctx.$q.when({
           data: [
             { target: 'test.cpu1', datapoints: [[1, 10]]},
