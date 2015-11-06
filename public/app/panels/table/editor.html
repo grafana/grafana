@@ -79,21 +79,18 @@
 					<li>
 						<select class="input-small tight-form-input"
 							ng-model="column.type"
-							ng-options="k as v.text for (k, v) in columnTypes"
+							ng-options="c.value as c.text for c in columnTypes"
 							ng-change="render()"
 							style="width: 150px"
 							></select>
 					</li>
 				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form" ng-if="column.type === 'date'">
-				<ul class="tight-form-list">
-					<li class="tight-form-item text-right" style="width: 93px">
+				<ul class="tight-form-list" ng-if="column.type === 'date'">
+					<li class="tight-form-item">
 						Format
 					</li>
 					<li>
-						<input type="text" class="input-medium tight-form-input" ng-model="column.dateFormat" ng-change="render()" ng-model-onblur>
+						<input type="text" class="input-large tight-form-input" ng-model="column.dateFormat" ng-change="render()" ng-model-onblur>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -106,7 +103,7 @@
 					<li>
 						<select class="input-small tight-form-input"
 							ng-model="column.colorMode"
-							ng-options="k as v.text for (k, v) in colorModes"
+							ng-options="c.value as c.text for c in colorModes"
 							ng-change="render()"
 							style="width: 150px"
 							></select>
@@ -115,7 +112,7 @@
 						Thresholds<tip>Comma seperated values</tip>
 					</li>
 					<li>
-						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="column.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
+						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="column.thresholds" ng-blur="render()" placeholder="0,50,80" array-join></input>
 					</li>
 					<li class="tight-form-item" style="width: 60px">
 						Colors

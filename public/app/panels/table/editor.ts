@@ -18,16 +18,17 @@ export function tablePanelEditor() {
     link: function(scope, elem) {
       scope.transformers = transformers;
       scope.unitFormats = kbn.getUnitFormats();
-      scope.colorModes = {
-        'cell': {text: 'Cell'},
-        'value': {text: 'Value'},
-        'row': {text: 'Row'},
-      };
-      scope.columnTypes = {
-        'number': {text: 'Number'},
-        'string': {text: 'String'},
-        'date': {text: 'Date'},
-      };
+      scope.colorModes = [
+        {text: 'Disabled', value: null},
+        {text: 'Cell', value: 'cell'},
+        {text: 'Value', value: 'value'},
+        {text: 'Row', value: 'row'},
+      ];
+      scope.columnTypes = [
+        {text: 'Number', value: 'number'},
+        {text: 'String', value: 'string'},
+        {text: 'Date', value: 'date'},
+      ];
 
       scope.updateJsonFieldsMenu = function(data) {
         scope.jsonFieldsMenu = [];
@@ -82,8 +83,9 @@ export function tablePanelEditor() {
           type: 'number',
           decimals: 2,
           colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          colorMode: 'value',
+          colorMode: null,
           pattern: '/.*/',
+          thresholds: [],
         };
 
         scope.panel.columns.push(angular.copy(columnStyleDefaults));
