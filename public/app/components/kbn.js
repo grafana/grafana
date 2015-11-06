@@ -310,6 +310,16 @@ function($, _) {
     };
   };
 
+  kbn.formatBuilders.simpleCountUnit = function(symbol) {
+    var units = ['', 'K', 'M', 'B', 'T'];
+    var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) { return ""; }
+      var scaled = scaler(size, decimals, scaledDecimals);
+      return scaled + " " + symbol;
+    };
+  };
+
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
@@ -345,10 +355,10 @@ function($, _) {
   kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
 
   // Throughput
-  kbn.valueFormats.ops  = kbn.formatBuilders.fixedUnit('ops');
-  kbn.valueFormats.rps  = kbn.formatBuilders.fixedUnit('rps');
-  kbn.valueFormats.wps  = kbn.formatBuilders.fixedUnit('wps');
-  kbn.valueFormats.iops = kbn.formatBuilders.fixedUnit('iops');
+  kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
+  kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
+  kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
+  kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
 
   // Energy
   kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
