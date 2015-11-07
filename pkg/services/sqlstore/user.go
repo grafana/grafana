@@ -319,10 +319,15 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		deletes := []string{
-			"DELETE FROM star WHERE user_id = ?",
-			"DELETE FROM user WHERE id = ?",
-		}
+    var deletes [2]string
+
+    if (sess.Engine.DriverName() == "postgres") {
+      deletes[0] = "DELETE FROM star WHERE user_id = ?"
+      deletes[1] = "DELETE FROM \"user\" WHERE id = ?"
+    } else {
+      deletes[0] = "DELETE FROM star WHERE user_id = ?"
+      deletes[1] = "DELETE FROM user WHERE id = ?"
+    }
 
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.UserId)
