@@ -222,7 +222,7 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-  membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
+	membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
 	r, err := client.Get(membershipUrl)
 	if err != nil {
 		return nil, err
