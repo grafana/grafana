@@ -55,6 +55,10 @@ define([
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/alerts', {
+        templateUrl: 'app/features/org/partials/alerts.html',
+        controller : 'alertsCtrl',
+      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',

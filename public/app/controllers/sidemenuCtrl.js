@@ -29,6 +29,12 @@ function (angular, _, $, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+
+      $scope.mainLinks.push({
+        text: "Alerts",
+        icon: "fa fa-fw fa-th-large",
+        href: $scope.getUrl("/alerts"),
+      });
     };
 
     $scope.loadOrgs = function() {
