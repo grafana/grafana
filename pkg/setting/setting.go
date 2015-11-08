@@ -567,6 +567,14 @@ func initLogging(args *CommandLineArgs) {
 				"driver": sec.Key("driver").String(),
 				"conn":   sec.Key("conn").String(),
 			}
+		case "syslog":
+			LogConfigs[i] = util.DynMap{
+				"level":    level,
+				"network":  sec.Key("network").MustString(""),
+				"address":  sec.Key("address").MustString(""),
+				"facility": sec.Key("facility").MustString("local7"),
+				"tag":      sec.Key("tag").MustString(""),
+			}
 		}
 
 		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
