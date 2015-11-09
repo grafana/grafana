@@ -32,11 +32,9 @@ export class TimePickerCtrl {
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
-    $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
-    $rootScope.onAppEvent('dash-editor-hidden', () => {
-      this.isOpen = false;
-    }, $scope);
+    $rootScope.onAppEvent('refresh', () => this.init(), $scope);
+    $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
 
     this.init();
   }
@@ -64,9 +62,14 @@ export class TimePickerCtrl {
 
     this.rangeString = rangeUtil.describeTimeRange(timeRaw);
     this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
-    this.timeRaw = timeRaw;
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
+
+    // do not update time raw when dropdown is open
+    // as auto refresh will reset the from/to input fields
+    if (!this.isOpen) {
+      this.timeRaw = timeRaw;
+    }
   }
 
   zoom(factor) {
@@ -88,6 +91,7 @@ export class TimePickerCtrl {
   }
 
   openDropdown() {
+    this.init();
     this.isOpen = true;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {

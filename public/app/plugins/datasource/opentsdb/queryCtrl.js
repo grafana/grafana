@@ -48,13 +48,13 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+      $scope.datasource.metricFindQuery('suggest_tagk(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+      $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };

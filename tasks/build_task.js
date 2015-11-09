@@ -11,6 +11,7 @@ module.exports = function(grunt) {
     'copy:public_to_gen',
     'typescript:build',
     'karma:test',
+    'phantomjs',
     'css',
     'htmlmin:build',
     'ngtemplates',
@@ -22,7 +23,6 @@ module.exports = function(grunt) {
     'filerev',
     'remapFilerev',
     'usemin',
-    'clean:temp',
     'uglify:genDir'
   ]);
 

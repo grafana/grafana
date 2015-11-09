@@ -113,7 +113,7 @@ require([
   var specs = [];
 
   for (var file in window.__karma__.files) {
-    if (/base\/test\/specs.*/.test(file)) {
+    if (/specs.*/.test(file)) {
       file = file2moduleName(file);
       specs.push(file);
     }

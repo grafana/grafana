@@ -12,6 +12,8 @@ const (
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
 	DS_CLOUDWATCH    = "cloudwatch"
+	DS_KAIROSDB      = "kairosdb"
+	DS_PROMETHEUS    = "prometheus"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -43,6 +45,27 @@ type DataSource struct {
 
 	Created time.Time
 	Updated time.Time
+}
+
+var knownDatasourcePlugins map[string]bool = map[string]bool{
+	DS_ES:          true,
+	DS_GRAPHITE:    true,
+	DS_INFLUXDB:    true,
+	DS_INFLUXDB_08: true,
+	DS_KAIROSDB:    true,
+	DS_CLOUDWATCH:  true,
+	DS_PROMETHEUS:  true,
+	DS_OPENTSDB:    true,
+	"opennms":      true,
+	"druid":        true,
+	"dalmatinerdb": true,
+	"gnocci":       true,
+	"zabbix":       true,
+}
+
+func IsKnownDataSourcePlugin(dsType string) bool {
+	_, exists := knownDatasourcePlugins[dsType]
+	return exists
 }
 
 // ----------------------

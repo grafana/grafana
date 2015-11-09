@@ -8,6 +8,8 @@ function($, _) {
   var kbn = {};
   kbn.valueFormats = {};
 
+  ///// HELPER FUNCTIONS /////
+
   kbn.round_interval = function(interval) {
     switch (true) {
     // 0.5s
@@ -170,32 +172,31 @@ function($, _) {
     ].join(';') + '"></div>';
   };
 
-  kbn.valueFormats.percent = function(size, decimals) {
-    return kbn.toFixed(size, decimals) + '%';
+  kbn.slugifyForUrl = function(str) {
+    return str
+      .toLowerCase()
+      .replace(/[^\w ]+/g,'')
+      .replace(/ +/g,'-');
   };
 
-  kbn.formatFuncCreator = function(factor, extArray) {
-    return function(size, decimals, scaledDecimals) {
-      if (size === null) {
-        return "";
-      }
+  kbn.exportSeriesListToCsv = function(seriesList) {
+    var text = 'Series;Time;Value\n';
+    _.each(seriesList, function(series) {
+      _.each(series.datapoints, function(dp) {
+        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+      });
+    });
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    window.saveAs(blob, 'grafana_data_export.csv');
+  };
 
-      var steps = 0;
-      var limit = extArray.length;
+  kbn.stringToJsRegex = function(str) {
+    if (str[0] !== '/') {
+      return new RegExp(str);
+    }
 
-      while (Math.abs(size) >= factor) {
-        steps++;
-        size /= factor;
-
-        if (steps >= limit) { return "NA"; }
-      }
-
-      if (steps > 0 && scaledDecimals !== null) {
-        decimals = scaledDecimals + (3 * steps);
-      }
-
-      return kbn.toFixed(size, decimals) + extArray[steps];
-    };
+    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+    return new RegExp(match[1], match[2]);
   };
 
   kbn.toFixed = function(value, decimals) {
@@ -224,42 +225,6 @@ function($, _) {
     return formatted;
   };
 
-  kbn.valueFormats.bits = kbn.formatFuncCreator(1024, [' b', ' Kib', ' Mib', ' Gib', ' Tib', ' Pib', ' Eib', ' Zib', ' Yib']);
-  kbn.valueFormats.bytes = kbn.formatFuncCreator(1024, [' B', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.kbytes = kbn.formatFuncCreator(1024, [' KiB', ' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.mbytes = kbn.formatFuncCreator(1024, [' MiB', ' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.gbytes = kbn.formatFuncCreator(1024, [' GiB', ' TiB', ' PiB', ' EiB', ' ZiB', ' YiB']);
-  kbn.valueFormats.bps = kbn.formatFuncCreator(1000, [' bps', ' Kbps', ' Mbps', ' Gbps', ' Tbps', ' Pbps', ' Ebps', ' Zbps', ' Ybps']);
-  kbn.valueFormats.pps = kbn.formatFuncCreator(1000, [' pps', ' Kpps', ' Mpps', ' Gpps', ' Tpps', ' Ppps', ' Epps', ' Zpps', ' Ypps']);
-  kbn.valueFormats.Bps = kbn.formatFuncCreator(1000, [' Bps', ' KBps', ' MBps', ' GBps', ' TBps', ' PBps', ' EBps', ' ZBps', ' YBps']);
-  kbn.valueFormats.short = kbn.formatFuncCreator(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
-  kbn.valueFormats.joule = kbn.formatFuncCreator(1000, [' J', ' kJ', ' MJ', ' GJ', ' TJ', ' PJ', ' EJ', ' ZJ', ' YJ']);
-  kbn.valueFormats.amp = kbn.formatFuncCreator(1000, [' A', ' kA', ' MA', ' GA', ' TA', ' PA', ' EA', ' ZA', ' YA']);
-  kbn.valueFormats.volt = kbn.formatFuncCreator(1000, [' V', ' kV', ' MV', ' GV', ' TV', ' PV', ' EV', ' ZV', ' YV']);
-  kbn.valueFormats.hertz = kbn.formatFuncCreator(1000, [' Hz', ' kHz', ' MHz', ' GHz', ' THz', ' PHz', ' EHz', ' ZHz', ' YHz']);
-  kbn.valueFormats.watt = kbn.formatFuncCreator(1000, [' W', ' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
-  kbn.valueFormats.kwatt = kbn.formatFuncCreator(1000, [' kW', ' MW', ' GW', ' TW', ' PW', ' EW', ' ZW', ' YW']);
-  kbn.valueFormats.watth = kbn.formatFuncCreator(1000, [' Wh', ' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
-  kbn.valueFormats.kwatth = kbn.formatFuncCreator(1000, [' kWh', ' MWh', ' GWh', ' TWh', ' PWh', ' EWh', ' ZWh', ' YWh']);
-  kbn.valueFormats.ev = kbn.formatFuncCreator(1000, [' eV', ' keV', ' MeV', 'GeV', 'TeV', 'PeV', 'EeV', 'ZeV', 'YeV']);
-  kbn.valueFormats.none = kbn.toFixed;
-  kbn.valueFormats.celsius = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °C'; };
-  kbn.valueFormats.farenheit = function(value, decimals) { return kbn.toFixed(value, decimals) + ' °F'; };
-  kbn.valueFormats.humidity = function(value, decimals) { return kbn.toFixed(value, decimals) + ' %H'; };
-  kbn.valueFormats.pressurembar = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mbar'; };
-  kbn.valueFormats.pressurehpa = function(value, decimals) { return kbn.toFixed(value, decimals) + ' hPa'; };
-  kbn.valueFormats.ppm = function(value, decimals) { return kbn.toFixed(value, decimals) + ' ppm'; };
-  kbn.valueFormats.velocityms = function(value, decimals) { return kbn.toFixed(value, decimals) + ' m/s'; };
-  kbn.valueFormats.velocitykmh = function(value, decimals) { return kbn.toFixed(value, decimals) + ' km/h'; };
-  kbn.valueFormats.velocitymph = function(value, decimals) { return kbn.toFixed(value, decimals) + ' mph'; };
-  kbn.valueFormats.velocityknot = function(value, decimals) { return kbn.toFixed(value, decimals) + ' kn'; };
-
-  kbn.roundValue = function (num, decimals) {
-    if (num === null) { return null; }
-    var n = Math.pow(10, decimals);
-    return Math.round((n * num).toFixed(decimals))  / n;
-  };
-
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
       return kbn.toFixed(value, decimals) + ext;
@@ -267,6 +232,158 @@ function($, _) {
       return kbn.toFixed(value, scaledDecimals + additionalDecimals) + ext;
     }
   };
+
+  kbn.roundValue = function (num, decimals) {
+    if (num === null) { return null; }
+    var n = Math.pow(10, decimals);
+    return Math.round((n * num).toFixed(decimals))  / n;
+  };
+
+  ///// FORMAT FUNCTION CONSTRUCTORS /////
+
+  kbn.formatBuilders = {};
+
+  // Formatter which always appends a fixed unit string to the value. No
+  // scaling of the value is performed.
+  kbn.formatBuilders.fixedUnit = function(unit) {
+    return function(size, decimals) {
+      if (size === null) { return ""; }
+      return kbn.toFixed(size, decimals) + ' ' + unit;
+    };
+  };
+
+  // Formatter which scales the unit string geometrically according to the given
+  // numeric factor. Repeatedly scales the value down by the factor until it is
+  // less than the factor in magnitude, or the end of the array is reached.
+  kbn.formatBuilders.scaledUnits = function(factor, extArray) {
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) {
+        return "";
+      }
+
+      var steps = 0;
+      var limit = extArray.length;
+
+      while (Math.abs(size) >= factor) {
+        steps++;
+        size /= factor;
+
+        if (steps >= limit) { return "NA"; }
+      }
+
+      if (steps > 0 && scaledDecimals !== null) {
+        decimals = scaledDecimals + (3 * steps);
+      }
+
+      return kbn.toFixed(size, decimals) + extArray[steps];
+    };
+  };
+
+  // Extension of the scaledUnits builder which uses SI decimal prefixes. If an
+  // offset is given, it adjusts the starting units at the given prefix; a value
+  // of 0 starts at no scale; -3 drops to nano, +2 starts at mega, etc.
+  kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
+    var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+    prefixes = prefixes.slice(3 + (offset || 0));
+    var units = prefixes.map(function(p) { return ' ' + p + unit; });
+    return kbn.formatBuilders.scaledUnits(1000, units);
+  };
+
+  // Extension of the scaledUnits builder which uses SI binary prefixes. If
+  // offset is given, it starts the units at the given prefix; otherwise, the
+  // offset defaults to zero and the initial unit is not prefixed.
+  kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
+    var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+    var units = prefixes.map(function(p) { return ' ' + p + unit; });
+    return kbn.formatBuilders.scaledUnits(1024, units);
+  };
+
+  // Currency formatter for prefixing a symbol onto a number. Supports scaling
+  // up to the trillions.
+  kbn.formatBuilders.currency = function(symbol) {
+    var units = ['', 'K', 'M', 'B', 'T'];
+    var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) { return ""; }
+      var scaled = scaler(size, decimals, scaledDecimals);
+      return symbol + scaled;
+    };
+  };
+
+  ///// VALUE FORMATS /////
+
+  // Dimensionless Units
+  kbn.valueFormats.none  = kbn.toFixed;
+  kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.dB    = kbn.formatBuilders.fixedUnit('dB');
+  kbn.valueFormats.ppm   = kbn.formatBuilders.fixedUnit('ppm');
+
+  kbn.valueFormats.percent = function(size, decimals) {
+    if (size === null) { return ""; }
+    return kbn.toFixed(size, decimals) + '%';
+  };
+
+  kbn.valueFormats.percentunit = function(size, decimals) {
+    if (size === null) { return ""; }
+    return kbn.toFixed(100*size, decimals) + '%';
+  };
+
+  // Currencies
+  kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
+  kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
+
+  // Data
+  kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
+  kbn.valueFormats.bytes  = kbn.formatBuilders.binarySIPrefix('B');
+  kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
+  kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
+  kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
+
+  // Data Rate
+  kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
+  kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
+  kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+
+  // Energy
+  kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
+  kbn.valueFormats.kwatt  = kbn.formatBuilders.decimalSIPrefix('W', 1);
+  kbn.valueFormats.watth  = kbn.formatBuilders.decimalSIPrefix('Wh');
+  kbn.valueFormats.kwatth = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
+  kbn.valueFormats.joule  = kbn.formatBuilders.decimalSIPrefix('J');
+  kbn.valueFormats.ev     = kbn.formatBuilders.decimalSIPrefix('eV');
+  kbn.valueFormats.amp    = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.volt   = kbn.formatBuilders.decimalSIPrefix('V');
+
+  // Temperature
+  kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
+  kbn.valueFormats.farenheit = kbn.formatBuilders.fixedUnit('°F');
+  kbn.valueFormats.kelvin    = kbn.formatBuilders.fixedUnit('K');
+  kbn.valueFormats.humidity  = kbn.formatBuilders.fixedUnit('%H');
+
+  // Pressure
+  kbn.valueFormats.pressurembar = kbn.formatBuilders.fixedUnit('mbar');
+  kbn.valueFormats.pressurehpa  = kbn.formatBuilders.fixedUnit('hPa');
+  kbn.valueFormats.pressurehg   = kbn.formatBuilders.fixedUnit('"Hg');
+  kbn.valueFormats.pressurepsi  = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
+
+  // Length
+  kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
+  kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
+  kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
+  kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
+
+  // Velocity
+  kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
+  kbn.valueFormats.velocitykmh  = kbn.formatBuilders.fixedUnit('km/h');
+  kbn.valueFormats.velocitymph  = kbn.formatBuilders.fixedUnit('mph');
+  kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
+
+  // Volume
+  kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
+  kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
+
+  // Time
+  kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
 
   kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
@@ -354,60 +471,44 @@ function($, _) {
     }
   };
 
-  kbn.slugifyForUrl = function(str) {
-    return str
-      .toLowerCase()
-      .replace(/[^\w ]+/g,'')
-      .replace(/ +/g,'-');
-  };
-
-  kbn.exportSeriesListToCsv = function(seriesList) {
-    var text = 'Series;Time;Value\n';
-    _.each(seriesList, function(series) {
-      _.each(series.datapoints, function(dp) {
-        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
-      });
-    });
-    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-    window.saveAs(blob, 'grafana_data_export.csv');
-  };
-
-  kbn.stringToJsRegex = function(str) {
-    if (str[0] !== '/') {
-      return new RegExp(str);
-    }
-
-    var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
-    return new RegExp(match[1], match[2]);
-  };
+  ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
     return [
       {
         text: 'none',
         submenu: [
-          {text: 'none' , value: 'none'},
-          {text: 'short', value: 'short'},
-          {text: 'percent', value: 'percent'},
-          {text: 'ppm', value: 'ppm'},
-          {text: 'dB', value: 'dB'},
+          {text: 'none' ,             value: 'none'       },
+          {text: 'short',             value: 'short'      },
+          {text: 'percent (0-100)',   value: 'percent'    },
+          {text: 'percent (0.0-1.0)', value: 'percentunit'},
+          {text: 'Humidity (%H)',     value: 'humidity'   },
+          {text: 'ppm',               value: 'ppm'        },
+          {text: 'decibel',           value: 'dB'         },
         ]
       },
       {
-        text: 'duration',
+        text: 'currency',
         submenu: [
-          {text: 'nanoseconds (ns)' , value: 'ns'},
-          {text: 'microseconds (µs)', value: 'µs'},
-          {text: 'milliseconds (ms)', value: 'ms'},
-          {text: 'seconds (s)', value: 's'},
-          {text: 'Hertz (1/s)', value: 'hertz'},
+          {text: 'Dollars ($)', value: 'currencyUSD'},
+          {text: 'Pounds (£)',  value: 'currencyGBP'},
+        ]
+      },
+      {
+        text: 'time',
+        submenu: [
+          {text: 'Hertz (1/s)',       value: 'hertz'},
+          {text: 'nanoseconds (ns)' , value: 'ns'   },
+          {text: 'microseconds (µs)', value: 'µs'   },
+          {text: 'milliseconds (ms)', value: 'ms'   },
+          {text: 'seconds (s)',       value: 's'    },
         ]
       },
       {
         text: 'data',
         submenu: [
-          {text: 'bits', value: 'bits'},
-          {text: 'bytes', value: 'bytes'},
+          {text: 'bits',      value: 'bits'  },
+          {text: 'bytes',     value: 'bytes' },
           {text: 'kilobytes', value: 'kbytes'},
           {text: 'megabytes', value: 'mbytes'},
           {text: 'gigabytes', value: 'gbytes'},
@@ -417,40 +518,63 @@ function($, _) {
         text: 'data rate',
         submenu: [
           {text: 'packets/sec', value: 'pps'},
-          {text: 'bits/sec', value: 'bps'},
-          {text: 'bytes/sec', value: 'Bps'},
+          {text: 'bits/sec',    value: 'bps'},
+          {text: 'bytes/sec',   value: 'Bps'},
         ]
       },
       {
-        text: 'energy',
+        text: 'length',
         submenu: [
-          {text: 'watt (W)',              value: 'watt'},
-          {text: 'kilowatt (kW)',         value: 'kwatt'},
-          {text: 'watt-hour (Wh)',        value: 'watth'},
-          {text: 'kilowatt-hour (kWh)',   value: 'kwatth'},
-          {text: 'joule (J)',             value: 'joule'},
-          {text: 'electron volt (eV)',    value: 'ev'},
-          {text: 'Ampere (A)',            value: 'amp'},
-          {text: 'Volt (V)',              value: 'volt'},
-        ]
-      },
-      {
-        text: 'weather',
-        submenu: [
-          {text: 'Celcius (°C)',         value: 'celsius'  },
-          {text: 'Farenheit (°F)',       value: 'farenheit'},
-          {text: 'Humidity (%H)',        value: 'humidity' },
-          {text: 'Pressure (mbar)',      value: 'pressurembar' },
-          {text: 'Pressure (hPa)',       value: 'pressurehpa' },
+          {text: 'millimetre (mm)', value: 'lengthmm'},
+          {text: 'meter (m)',       value: 'lengthm' },
+          {text: 'kilometer (km)',  value: 'lengthkm'},
+          {text: 'mile (mi)',       value: 'lengthmi'},
         ]
       },
       {
         text: 'velocity',
         submenu: [
-          {text: 'm/s',  value: 'velocityms'  },
-          {text: 'km/h', value: 'velocitykmh'  },
-          {text: 'mph',  value: 'velocitymph'  },
-          {text: 'knot (kn)', value: 'velocityknot'  },
+          {text: 'm/s',       value: 'velocityms'  },
+          {text: 'km/h',      value: 'velocitykmh' },
+          {text: 'mph',       value: 'velocitymph' },
+          {text: 'knot (kn)', value: 'velocityknot'},
+        ]
+      },
+      {
+        text: 'volume',
+        submenu: [
+          {text: 'millilitre', value: 'mlitre'},
+          {text: 'litre',      value: 'litre' },
+        ]
+      },
+      {
+        text: 'energy',
+        submenu: [
+          {text: 'watt (W)',            value: 'watt'  },
+          {text: 'kilowatt (kW)',       value: 'kwatt' },
+          {text: 'watt-hour (Wh)',      value: 'watth' },
+          {text: 'kilowatt-hour (kWh)', value: 'kwatth'},
+          {text: 'joule (J)',           value: 'joule' },
+          {text: 'electron volt (eV)',  value: 'ev'    },
+          {text: 'Ampere (A)',          value: 'amp'   },
+          {text: 'Volt (V)',            value: 'volt'  },
+        ]
+      },
+      {
+        text: 'temperature',
+        submenu: [
+          {text: 'Celcius (°C)',    value: 'celsius'     },
+          {text: 'Farenheit (°F)',  value: 'farenheit'   },
+          {text: 'Kelvin (K)',      value: 'kelvin'      },
+        ]
+      },
+      {
+        text: 'pressure',
+        submenu: [
+          {text: 'Millibars',         value: 'pressurembar'},
+          {text: 'Hectopascals',      value: 'pressurehpa' },
+          {text: 'Inches of mercury', value: 'pressurehg'  },
+          {text: 'PSI',               value: 'pressurepsi' },
         ]
       },
     ];

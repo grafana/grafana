@@ -6,7 +6,7 @@ module.exports = function(config) {
       dest: '<%= genDir %>/app/components/partials.js',
       options: {
         bootstrap: function(module, script) {
-          return "define('components/partials', ['angular'], function(angular) { \n" +
+          return "define('app/components/partials', ['angular'], function(angular) { \n" +
             "angular.module('grafana').run(['$templateCache', function($templateCache) { \n" +
                 script +
             '\n}]);' +

@@ -94,7 +94,7 @@ define([
       _.extend(this.time, time);
 
       // disable refresh if we have an absolute time
-      if (_.isString(time.to) && time.to.indexOf('now') === -1) {
+      if (moment.isMoment(time.to)) {
         this.old_refresh = this.dashboard.refresh || this.old_refresh;
         this.setAutoRefresh(false);
       }
