@@ -1,11 +1,46 @@
-define([
-  'lodash',
-  'app/core/utils/kbn'
-],
-function (_, kbn) {
-  'use strict';
+///<reference path="../headers/common.d.ts" />
 
-  function TimeSeries(opts) {
+import _ = require('lodash');
+import kbn = require('app/core/utils/kbn');
+
+function matchSeriesOverride(aliasOrRegex, seriesAlias) {
+  if (!aliasOrRegex) { return false; }
+
+  if (aliasOrRegex[0] === '/') {
+    var regex = kbn.stringToJsRegex(aliasOrRegex);
+    return seriesAlias.match(regex) != null;
+  }
+
+  return aliasOrRegex === seriesAlias;
+}
+
+function translateFillOption(fill) {
+  return fill === 0 ? 0.001 : fill/10;
+}
+
+class TimeSeries {
+  datapoints: any;
+  id: string;
+  label: string;
+  alias: string;
+  color: string;
+  valueFormater: any;
+  stats: any;
+  legend: boolean;
+  allIsNull: boolean;
+  decimals: number;
+  scaledDecimals: number;
+
+  lines: any;
+  bars: any;
+  points: any;
+  yaxis: any;
+  zindex: any;
+  stack: any;
+  fillBelowTo: any;
+  transform: any;
+
+  constructor(opts) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
     this.id = opts.alias;
@@ -16,22 +51,7 @@ function (_, kbn) {
     this.legend = true;
   }
 
-  function matchSeriesOverride(aliasOrRegex, seriesAlias) {
-    if (!aliasOrRegex) { return false; }
-
-    if (aliasOrRegex[0] === '/') {
-      var regex = kbn.stringToJsRegex(aliasOrRegex);
-      return seriesAlias.match(regex) != null;
-    }
-
-    return aliasOrRegex === seriesAlias;
-  }
-
-  function translateFillOption(fill) {
-    return fill === 0 ? 0.001 : fill/10;
-  }
-
-  TimeSeries.prototype.applySeriesOverrides = function(overrides) {
+  applySeriesOverrides(overrides) {
     this.lines = {};
     this.points = {};
     this.bars = {};
@@ -64,7 +84,7 @@ function (_, kbn) {
     }
   };
 
-  TimeSeries.prototype.getFlotPairs = function (fillStyle) {
+  getFlotPairs(fillStyle) {
     var result = [];
 
     this.stats.total = 0;
@@ -124,18 +144,17 @@ function (_, kbn) {
     }
 
     return result;
-  };
+  }
 
-  TimeSeries.prototype.updateLegendValues = function(formater, decimals, scaledDecimals) {
+  updateLegendValues(formater, decimals, scaledDecimals) {
     this.valueFormater = formater;
     this.decimals = decimals;
     this.scaledDecimals = scaledDecimals;
-  };
+  }
 
-  TimeSeries.prototype.formatValue = function(value) {
+  formatValue(value) {
     return this.valueFormater(value, this.decimals, this.scaledDecimals);
-  };
+  }
+}
 
-  return TimeSeries;
-
-});
+export = TimeSeries;

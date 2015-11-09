@@ -411,4 +411,40 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('Raw documents query', function() {
+    beforeEach(function() {
+      targets = [{ refId: 'A', metrics: [{type: 'raw_document', id: '1'}], bucketAggs: [] }];
+      response = {
+        responses: [{
+          hits: {
+            total: 100,
+            hits: [
+              {
+                _id: '1',
+                _type: 'type',
+                _index: 'index',
+                _source: {sourceProp: "asd"},
+                fields: {fieldProp: "field" },
+              },
+              {
+                _source: {sourceProp: "asd2"},
+                fields: {fieldProp: "field2" },
+              }
+            ]
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return docs', function() {
+      expect(result.data.length).to.be(1);
+      expect(result.data[0].type).to.be('docs');
+      expect(result.data[0].total).to.be(100);
+      expect(result.data[0].datapoints.length).to.be(2);
+      expect(result.data[0].datapoints[0].sourceProp).to.be("asd");
+      expect(result.data[0].datapoints[0].fieldProp).to.be("field");
+    });
+  });
 });

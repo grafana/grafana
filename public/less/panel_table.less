@@ -1,0 +1,88 @@
+.table-panel-wrapper {
+  .panel-content {
+    padding: 0;
+  }
+  .panel-title-container {
+    padding-bottom: 4px;
+  }
+}
+
+.table-panel-scroll {
+  overflow: auto;
+}
+
+.table-panel-container {
+  padding-top: 32px;
+  position: relative;
+}
+
+.table-panel-footer {
+  text-align: center;
+  font-size: 80%;
+  line-height: 2px;
+
+  ul {
+    position: relative;
+    display: inline-block;
+    margin-left: 0;
+    margin-bottom: 0;
+  }
+  ul > li {
+    display: inline; // Remove list-style and block-level defaults
+  }
+  ul > li > a {
+    float: left; // Collapse white-space
+    padding: 4px 12px;
+    text-decoration: none;
+    border-left-width: 0;
+  }
+}
+
+.table-panel-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+    border-bottom: 2px solid @bodyBackground;
+  }
+
+  th {
+    padding: 0;
+
+    &:first-child {
+      .table-panel-table-header-inner {
+        padding-left: 15px;
+      }
+    }
+  }
+
+  td {
+    padding: 10px 0 10px 15px;
+
+    &:first-child {
+      padding-left: 15px;
+    }
+  }
+}
+
+.table-panel-header-bg {
+  background: @grafanaListAccent;
+  border-top: 2px solid @bodyBackground;
+  border-bottom: 2px solid @bodyBackground;
+  height: 30px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.table-panel-table-header-inner {
+  padding: 5px 0 5px 15px;
+  text-align: left;
+  color: @blue;
+
+  position: absolute;
+  top: 0;
+  line-height: 23px;
+}
+

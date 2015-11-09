@@ -153,8 +153,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.getQueryHeader = function(timeFrom, timeTo) {
-      var header = {search_type: "count", "ignore_unavailable": true};
+    ElasticDatasource.prototype.getQueryHeader = function(searchType, timeFrom, timeTo) {
+      var header = {search_type: searchType, "ignore_unavailable": true};
       header.index = this.indexPattern.getIndexList(timeFrom, timeTo);
       return angular.toJson(header);
     };
@@ -163,20 +163,27 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var payload = "";
       var target;
       var sentTargets = [];
-
-      var header = this.getQueryHeader(options.range.from, options.range.to);
+      var headerAdded = false;
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {return;}
 
-        var esQuery = angular.toJson(this.queryBuilder.build(target));
+        var queryObj = this.queryBuilder.build(target);
+        var esQuery = angular.toJson(queryObj);
         var luceneQuery = angular.toJson(target.query || '*');
         // remove inner quotes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
-        payload += header + '\n' + esQuery + '\n';
+        if (!headerAdded) {
+          var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
+          var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+          payload +=  header + '\n';
+          headerAdded = true;
+        }
+
+        payload += esQuery + '\n';
         sentTargets.push(target);
       }
 
@@ -185,7 +192,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      return this._post('/_msearch?search_type=count', payload).then(function(res) {
+      return this._post('/_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
     };
@@ -229,7 +236,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     ElasticDatasource.prototype.getTerms = function(queryDef) {
       var range = timeSrv.timeRange();
-      var header = this.getQueryHeader(range.from, range.to);
+      var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
       esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
