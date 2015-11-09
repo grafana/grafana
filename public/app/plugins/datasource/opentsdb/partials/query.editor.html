@@ -162,20 +162,20 @@
 			<editor-checkbox text="Counter" model="target.isCounter" change="targetBlur()"></editor-checkbox>
 		</li>
 
-		<li class="tight-form-item" ng-hide="!target.isCounter">
+		<li class="tight-form-item" ng-hide="!target.isCounter || !target.shouldComputeRate">
 			Counter Max:
 		</li>
 
-		<li ng-hide="!target.isCounter">
+		<li ng-hide="!target.isCounter || !target.shouldComputeRate">
 			<input type="text" class="tight-form-input input-small" ng-disabled="!target.shouldComputeRate"
 			ng-model="target.counterMax" spellcheck='false'
 			placeholder="max value" ng-model-onblur
 			ng-blur="targetBlur()"></input>
 		</li>
-		<li class="tight-form-item" ng-hide="!target.isCounter">
+		<li class="tight-form-item" ng-hide="!target.isCounter || !target.shouldComputeRate">
 			Reset Value:
 		</li>
-		<li ng-hide="!target.isCounter">
+		<li ng-hide="!target.isCounter || !target.shouldComputeRate">
 			<input type="text" class="tight-form-input input-small" ng-disabled="!target.shouldComputeRate"
 			ng-model="target.counterResetValue" spellcheck='false'
 			placeholder="reset value" ng-model-onblur
