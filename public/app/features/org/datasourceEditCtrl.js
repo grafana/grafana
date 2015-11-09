@@ -50,34 +50,16 @@ function (angular, config, _) {
       });
     };
 
-    $scope.loadAWSRegions = function() {
-      var options = {
-        method: 'POST',
-        url: '/api/datasources/proxy/' + $scope.current.id,
-        data: { action: '__GetRegions' }
-      };
-
-      return backendSrv.datasourceRequest(options).then(function(result) {
-        $scope.current.jsonData.allRegions = result.data.map(function(region) {
-          return region.text;
-        });
-      });
-    };
-
     $scope.getDatasourceById = function(id) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
         $scope.isNew = false;
         $scope.current = ds;
-        console.log($scope.current);
         $scope.typeChanged();
       });
     };
 
     $scope.typeChanged = function() {
       $scope.datasourceMeta = $scope.types[$scope.current.type];
-      if ($scope.current.type === 'cloudwatch') {
-        $scope.loadAWSRegions();
-      }
     };
 
     $scope.updateFrontendSettings = function() {

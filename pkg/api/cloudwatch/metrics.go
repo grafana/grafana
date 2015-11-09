@@ -65,6 +65,8 @@ func init() {
 	}
 }
 
+// Whenever this list is updated, frontend list should also be updated.
+// Please update the region list in public/app/features/org/datasourceEditCtrl.js
 func handleGetRegions(req *cwRequest, c *middleware.Context) {
 	regions := []string{
 		"us-west-2", "us-west-1", "eu-west-1", "eu-central-1", "ap-southeast-1",
