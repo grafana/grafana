@@ -8,7 +8,7 @@
         <img class="rt-loading-pulse" src="/img/loading-pulse.svg" style="margin-bottom: 10px;">
         <p class="freqMsg nodata rt-loading-msg-1">To infinity...and beyond.</p>
         <p class="freqMsg nodata rt-loading-msg-2">This is taking longer than expected.</p>
-        <p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please contact us if this continues to happen.</p>
+        <p class="freqMsg nodata rt-loading-msg-3">We apologize, something may be up. Please try refreshing first, and contact us if this continues to happen.</p>
     </div>
 </div>
 <div ng-if="pageReady">
@@ -26,6 +26,32 @@
             </div>
         </div>
     </div>
+
+    <div ng-if="endpoints.length > 0" style="margin-left: 28px;" class="editor-row">
+        <div class="editor-option">
+            <span class="small">Filtered by:</span>
+            <div class="select-input">
+                <select ng-model="filter.tag" ng-options="t for t in endpointTags()">
+                    <option value="">All Tags</option>
+                </select>
+            </div>
+
+        </div>
+        <div style="display: block; padding: 45px 0 0 0;">
+            <div style="display: inline-block" class="rt-list-status">
+                <span class="small">Showing {{(endpoints | filterByTag:filter.tag).length}}</span>
+                <span class="small"> of <span class="rt-list-links" ng-click="setTagFilter('')">{{endpoints.length}} total</a></span>
+            </div>
+            <div class="editor-option" style="float: right;">
+<!--                    <span class="small">Sorted By:</span>
+                <div class="select-input">
+                    <select ng-model="sort_field" ng-options="field for field in ['name']"></select>
+                </div> -->
+            </div>
+        </div>
+    </div>
+</div>
+<div ng-if="pageReady">
 
     <div ng-if="endpoints.length > 0" style="margin: 15px; position: relative; display: block;">
     <div class="rt-list" ng-repeat="endpoint in endpoints | filterByTag:filter.tag | orderBy:sort_field">
