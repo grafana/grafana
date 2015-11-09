@@ -1,3 +1,47 @@
-<div>
-  <p>Alerts Dummy Page</p>
+<topnav title="Alerts" icon="fa fa-fw fa-th-large" subnav="true">
+  <ul class="nav">
+    <li class="active" ><a href="alerts">Overview</a></li>
+    <li><a href="alerts/new">Add new</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page">
+    <h2>Alert Definitions</h2>
+
+    <div ng-if="datasources.length === 0">
+      <em>No alerts defined</em>
+    </div>
+
+    <table class="grafana-options-table" ng-if="alertDefList.length > 0">
+      <tr>
+        <td><strong>Name</strong></td>
+        <td><strong>Description</strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr ng-repeat="alertDef in alertDefList">
+        <td style="width:1%">
+          <i class="fa fa-database"></i> &nbsp;
+          {{alertDef.name}}
+        </td>
+        <td style="width:90%">
+          {{alertDef.description}}
+        </td>
+        <td style="width: 1%">
+          <a href="alerts/edit/{{alertDef.id}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-edit"></i>
+            Edit
+          </a>
+        </td>
+        <td style="width: 1%">
+          <a ng-click="remove()" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+
+  </div>
 </div>
+

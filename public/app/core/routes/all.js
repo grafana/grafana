@@ -57,7 +57,8 @@ define([
       })
       .when('/alerts', {
         templateUrl: 'app/features/org/partials/alerts.html',
-        controller : 'alertsCtrl',
+        controller : 'AlertsCtrl',
+        resolve: loadOrgBundle,
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
