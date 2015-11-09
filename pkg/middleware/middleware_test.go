@@ -157,7 +157,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled enabled and user exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyUsernameHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -178,7 +178,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("When auth_proxy is enabled enabled and user does not exists", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyUsernameHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyAutoSignUp = true
 
