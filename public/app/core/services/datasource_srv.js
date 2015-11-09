@@ -12,6 +12,7 @@ function (angular, _, coreModule, config) {
 
     this.init = function() {
       this.datasources = {};
+      this.dynamicDatasources = {};
       this.metricSources = [];
       this.annotationSources = [];
 
@@ -39,16 +40,70 @@ function (angular, _, coreModule, config) {
       });
     };
 
+    this.addDynamicDatasource = function(name, targetDatasourceName) {
+      var varName = '$' + name;
+      this.dynamicDatasources[varName] = targetDatasourceName;
+
+      if (_.findIndex(this.metricSources, { name: name }) === -1) {
+        this.metricSources.push({name: varName, value: varName, meta: {dynamic: true}});
+      }
+    };
+
+    this.removeDynamicDatasource = function(name) {
+      var varName = '$' + name;
+      if (varName in this.dynamicDatasources) {
+        delete this.dynamicDatasources[varName];
+      }
+
+      var idx = _.findIndex(this.metricSources, {name: name});
+      if (idx !== -1) {
+        this.metricSources.splice(idx, 1);
+      }
+    };
+
+    this.updateDynamicDatasource = function(name, targetDatasource) {
+      var varName = '$' + name;
+
+      if (varName in this.dynamicDatasources) {
+        this.dynamicDatasources[varName] = targetDatasource;
+      }
+
+      $rootScope.$broadcast('dynamic-datasource-updated', {
+        name: varName
+      });
+    };
+
+    this.resetDynamicDatasources = function() {
+      this.dynamicDatasources = {};
+
+      this.metricSources = this.metricSources.filter(function(source) {
+        return source.name[0] !== '$';
+      });
+    };
+
     this.get = function(name) {
       if (!name) {
         return this.get(config.defaultDatasource);
       }
 
+      if (name[0] === '$') {
+        return this._aquireDatasource(this.dynamicDatasources[name])
+          .then(function(ds) {
+            return _.create(ds, {name: name, value: name});
+          });
+      }
+      else {
+        return this._aquireDatasource(name);
+      }
+    };
+
+    this._aquireDatasource = function(name) {
       if (this.datasources[name]) {
         return $q.when(this.datasources[name]);
       }
-
-      return this.loadDatasource(name);
+      else {
+        return this.loadDatasource(name);
+      }
     };
 
     this.loadDatasource = function(name) {
@@ -66,7 +121,11 @@ function (angular, _, coreModule, config) {
         var instance = new AngularService(dsConfig, pluginDef);
         instance.meta = pluginDef;
         instance.name = name;
-        self.datasources[name] = instance;
+
+        if (name[0] !== '$') {
+          self.datasources[name] = instance;
+        }
+
         deferred.resolve(instance);
       });
 

@@ -88,7 +88,7 @@
 								Type
 							</li>
 							<li>
-								<select class="input-small tight-form-input" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
+								<select class="input-small tight-form-input" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom', 'datasource']" ng-change="typeChanged()"></select>
 							</li>
 							<li class="tight-form-item" ng-show="current.type === 'query'">
 								Data source
@@ -163,6 +163,18 @@
               </ul>
               <div class="clearfix"></div>
             </div>
+					</div>
+
+					<div ng-show="current.type === 'datasource'">
+						<label ng-repeat="dts in dtsSelector" class="checkbox-inline">
+							<input
+								type="checkbox"
+								name="selectedDatasources[]"
+								value="{{dts}}"
+								ng-checked="dtsSelection.indexOf(dts) > -1"
+								ng-click="toggleDtsSelection(dts)"
+							> {{dts}}
+						</label>
 					</div>
 
 					<div ng-show="current.type === 'query'">

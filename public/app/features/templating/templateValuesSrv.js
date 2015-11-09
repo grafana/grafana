@@ -90,6 +90,11 @@ function (angular, _, kbn) {
 
     this.variableUpdated = function(variable) {
       templateSrv.updateTemplateData();
+
+      if (variable.type === "datasource") {
+        datasourceSrv.updateDynamicDatasource(variable.name, variable.current.value);
+      }
+
       return this.updateOptionsInChildVariables(variable);
     };
 
