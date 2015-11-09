@@ -55,7 +55,7 @@ a:focus {
 .top-nav-menu-btn { // modifies attributes in navbar.less
   top:2px;
   margin: 6px 6px 3px 22px;
-  
+
   &:hover {
     .logo {
       opacity: 0;
@@ -245,7 +245,7 @@ div.rt-modal-override {
     float:none;
     transition: 0.15s;
   }
-  
+
 .modalLeft {padding-right:0px; margin-left:0px;}
 .modalRight {padding-left:0px;}
 }
@@ -318,7 +318,7 @@ raintank BOX
 
 ul.rt-modal-ul {
   margin: 0 0 10px 0;
-  list-style: none;  
+  list-style: none;
 }
 
 .no-padding {
@@ -381,19 +381,19 @@ ul.rt-modal-ul {
 }
 
 .currentStatus:last-child,
-.collectorCurrentStatus:last-child { 
+.collectorCurrentStatus:last-child {
   padding-bottom: 30px;
   border-bottom: none;
-  border-bottom-left-radius: 2px; 
+  border-bottom-left-radius: 2px;
   border-bottom-right-radius: 2px;
 }
 
-.currentStatus .rt-event-success, 
-.currentStatus .rt-event-warning, 
+.currentStatus .rt-event-success,
+.currentStatus .rt-event-warning,
 .currentStatus .rt-event-error,
-.collectorCurrentStatus .rt-event-success, 
-.collectorCurrentStatus .rt-event-warning, 
-.collectorCurrentStatus .rt-event-error {  
+.collectorCurrentStatus .rt-event-success,
+.collectorCurrentStatus .rt-event-warning,
+.collectorCurrentStatus .rt-event-error {
   display:inline-block;
   padding: 10px;
   border-radius: 50px;
@@ -412,8 +412,8 @@ ul.rt-modal-ul {
 }
 
 .statusEvents {
-  display:block; 
-  margin-left:70px; 
+  display:block;
+  margin-left:70px;
 }
 
 .collectorCurrentStatus .statusEvents {
@@ -430,8 +430,8 @@ ul.rt-modal-ul {
 
 .event:last-child {margin-right:0;}
 
-.event .rt-event-success, 
-.event .rt-event-warning, 
+.event .rt-event-success,
+.event .rt-event-warning,
 .event .rt-event-error {
   margin:0;
 }
@@ -471,23 +471,23 @@ ul.rt-modal-ul {
 .refresh {padding-top:15px;}
 
 .mainLink i, .mainLink i:visited{
-  color: @linkColor;  
+  color: @linkColor;
   -webkit-text-fill-color: transparent;
   background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
-  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;
   -webkit-background-clip: text;
   text-decoration:none;
-  transition: 0.15s; 
+  transition: 0.15s;
 }
 
 .mainLink i:hover, .mainLink i:active {
-  color: @linkColorHover;  
+  color: @linkColorHover;
   -webkit-text-fill-color: @linkColorHover;
   text-decoration:none;
-  transition: 0.15s; 
+  transition: 0.15s;
 }
 
-.tag-icon {  
+.tag-icon {
   font-size: 14px;
   vertical-align: text-bottom;
   margin-left:5px;
@@ -496,10 +496,10 @@ ul.rt-modal-ul {
 /***********************************
 raintank TYPE
 ***********************************/
-.refresh a:link, 
-.refresh a:visited, 
-.refresh a:hover, 
-.refresh a:active { 
+.refresh a:link,
+.refresh a:visited,
+.refresh a:hover,
+.refresh a:active {
   text-decoration: none; // was underlineing on click.
 }
 
@@ -518,8 +518,8 @@ raintank TYPE
 .checkTime {color:@rt-dark-gray}
 
 .no-endpoints {
-    font-size:800%; 
-    color:@linkColor; 
+    font-size:800%;
+    color:@linkColor;
     opacity: 0.15;
     display: block;
     margin-bottom: 50px;
@@ -558,7 +558,7 @@ raintank TYPE
   font-weight: 400;
   &:hover {
      color: @linkColorHover;
-  }    
+  }
 }
 
 .critical {
@@ -588,7 +588,7 @@ raintank POSITIONING
 }
 
 .icon {
-  vertical-align:middle; 
+  vertical-align:middle;
 }
 
 .collector_icon {
@@ -598,7 +598,7 @@ raintank POSITIONING
 
 .collectorMap {
   position:relative;
-  background-color:@gray; 
+  background-color:@gray;
   background-image: url(../img/ams_map.png);
   background-position: top left;
   background-repeat: repeat;
@@ -627,7 +627,7 @@ raintank POSITIONING
   }
 }
 
-/************************************** 
+/**************************************
 Crazy Helper Box
 **************************************/
 
@@ -639,10 +639,10 @@ Crazy Helper Box
 
 .helperBorder1 {
     border: 1px solid #13b2d4;
-    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
-    border-image-slice: 1;  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);
+    border-image-slice: 1;
     border-radius: 2px;
     padding:0em;
     width:100%;
@@ -653,10 +653,10 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
-    border-image-slice: 1;  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);
+    border-image-slice: 1;
     border-radius: 2px;
     width:100%;
 }
@@ -665,10 +665,10 @@ Crazy Helper Box
     top:-5px;
     right:-5px;
     border: 1px solid @rt-blue;
-    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);  
-    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);  
-    border-image-slice: 1;  
+    -moz-border-image: -moz-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    -webkit-border-image: -webkit-linear-gradient(top left, @linkColor 0%, @rt-blue 100%);
+    border-image: linear-gradient(to bottom right, @linkColor 0%, @rt-blue 100%);
+    border-image-slice: 1;
     border-radius: 2px;
     width:100%;
 }
@@ -688,12 +688,12 @@ MATT STYLES
   margin: 0 0 0 6px;
   border-width: 1px;
   border-style: solid;
-  line-height: 12px;  
+  line-height: 12px;
 }
 
-.statusDetail .rt-event-success, 
-.statusDetail .rt-event-warning, 
-.statusDetail .rt-event-error{  
+.statusDetail .rt-event-success,
+.statusDetail .rt-event-warning,
+.statusDetail .rt-event-error{
   display:inline-block;
   padding: 15px 10px;
   border-radius: 50px;
@@ -758,16 +758,16 @@ MATT STYLES
 }
 
 .rt-list-status-up {
-    .rt-list-status;  
+    .rt-list-status;
     font-size: 20px;
     font-weight: 600;
     color: @rt-green;
   &:link, &:visited {
-    .rt-list-status;  
+    .rt-list-status;
     font-size: 20px;
     font-weight: 600;
     color: @rt-green;
-    &:hover {color: lighten(@rt-green, 10%);} 
+    &:hover {color: lighten(@rt-green, 10%);}
   }
 }
 
@@ -781,7 +781,7 @@ MATT STYLES
     font-size: 20px;
     font-weight: 600;
     color: @rt-yellow;
-    &:hover {color: lighten(@rt-yellow, 10%);} 
+    &:hover {color: lighten(@rt-yellow, 10%);}
   }
 }
 
@@ -795,7 +795,7 @@ MATT STYLES
     font-size: 20px;
     font-weight: 600;
     color: @rt-red;
-    &:hover {color: lighten(@rt-red, 10%);} 
+    &:hover {color: lighten(@rt-red, 10%);}
   }
 }
 
@@ -809,7 +809,7 @@ MATT STYLES
     font-size: 20px;
     font-weight: 600;
     color: @rt-light-gray;
-    &:hover {color: lighten(@rt-light-gray, 10%);} 
+    &:hover {color: lighten(@rt-light-gray, 10%);}
   }
 }
 
@@ -821,7 +821,7 @@ MATT STYLES
   cursor: pointer;
   &:hover {
     color: lighten(@rt-light-gray, 10%);
-  } 
+  }
 }
 
 // raintank override styles from gfbox.less
@@ -840,10 +840,10 @@ MATT STYLES
     font-size: 15px;
     a:link {
       color: @linkColor;
-    }  
+    }
     a:hover {
      color: @linkColorHover;
-    }    
+    }
   margin: 10px;
 }
 
@@ -859,12 +859,12 @@ MATT STYLES
   }
 }
 
-.rt-tabs { 
+.rt-tabs {
   box-shadow: inset 0px -1px 0px 0px @tabBorder;
-  font-size: @rt-fontSizeMed-2; 
+  font-size: @rt-fontSizeMed-2;
   padding:3px 20px 0 20px;
- 
-  .nonactive a:link, 
+
+  .nonactive a:link,
   .nonactive a:visited {
     color:@linkColor;
     margin:0 5px;
@@ -877,7 +877,7 @@ MATT STYLES
     background:@bodyBackground;
     border-top-left-radius:4px;
     border-top-right-radius: 4px;
-    border-top:1px solid @tabBorder; 
+    border-top:1px solid @tabBorder;
     border-right:1px solid @tabBorder;
     border-left:1px solid @tabBorder;
     border-bottom: none;
@@ -888,7 +888,7 @@ MATT STYLES
   a:hover,
   .active a:hover,
   .nonactive a:hover {
-    color:@linkColorHover; 
+    color:@linkColorHover;
     text-decoration: none;
   }
 }
@@ -898,12 +898,12 @@ MATT STYLES
   margin-bottom: 0px;
 }
 
-.rt-modal-tabs .nav-tabs { 
+.rt-modal-tabs .nav-tabs {
   border-bottom:1px solid @raintankPanelBackground;
-  font-size: @rt-fontSizeMed-1; 
+  font-size: @rt-fontSizeMed-1;
   padding:10px 10px 0 10px;
 
- 
+
   li>a {
     color:@grayDark;
     margin:0 25px;
@@ -919,8 +919,8 @@ MATT STYLES
     color:@black;
     border-top-left-radius:4px;
     border-top-right-radius: 4px;
-    border-top:1px solid @raintankPanelBackground; 
-    border-right:1px solid @raintankPanelBackground; 
+    border-top:1px solid @raintankPanelBackground;
+    border-right:1px solid @raintankPanelBackground;
     border-left:1px solid @raintankPanelBackground;
     background-color: @white;
     margin:0 5px;
@@ -936,14 +936,14 @@ MATT STYLES
 
 // Form Additions
 
-.ng-hide-add         { 
-  -webkit-animation:1.5s ease; 
-  animation:1.5s ease; 
+.ng-hide-add         {
+  -webkit-animation:1.5s ease;
+  animation:1.5s ease;
 }
 
-.ng-hide-remove      { 
-  -webkit-animation:1.5s ease; 
-  animation:1.5s ease;  
+.ng-hide-remove      {
+  -webkit-animation:1.5s ease;
+  animation:1.5s ease;
 }
 
 
@@ -999,10 +999,10 @@ input[type="checkbox"].rt-modal {
 select.rt-select-dropdown {
   color: @linkColor;
   font-size: 16px;
-  vertical-align: baseline; 
-  margin: 0; 
-  background: none; 
-  border: none; 
+  vertical-align: baseline;
+  margin: 0;
+  background: none;
+  border: none;
   width: auto;
 
   &.small {
@@ -1102,11 +1102,11 @@ input[type="checkbox"]:checked+label {
 
   a {
      color: @white;
-    }    
+    }
 
   a:hover {
      color: @white;
-    }    
+    }
 
   .icon-tag {
     position: relative;
@@ -1116,7 +1116,7 @@ input[type="checkbox"]:checked+label {
 }
 
 .rt-label-tag:hover {
-  // Hover will trigger the tool tip eventually. This is temporary/ 
+  // Hover will trigger the tool tip eventually. This is temporary/
   background-color: rgba(255,255,255,.4);
 }
 
@@ -1189,11 +1189,11 @@ input[type="checkbox"]:checked+label {
 }
 
 .modal-body .rt-h1{
-  color: #262626; // Needs to be consolidated into one of gray variables. 
+  color: #262626; // Needs to be consolidated into one of gray variables.
 }
 
 .modal-body .rt-h2{
-  color: #262626; // Needs to be consolidated into one of gray variables. 
+  color: #262626; // Needs to be consolidated into one of gray variables.
   margin: 40px 0 10px 0;
   display: inline-block;
 }
@@ -1258,18 +1258,18 @@ input[type="checkbox"]:checked+label {
 }
 
 a.rt-modal-body-link {
-    color: @rt-primary;   
+    color: @rt-primary;
     font-size: @rt-fontSizeMed-2;
   &:hover {color: lighten(@rt-primary, 10%);}
-  } 
+  }
 
 .rt-body-link {
   &:link, &:visited {
-    color: @rt-primary;   
+    color: @rt-primary;
     font-size: @rt-fontSizeMed-2;
   }
   &:hover {color: lighten(@rt-primary, 10%);}
-  } 
+  }
 
 .rt-page-header-area {
   display: block;
@@ -1291,7 +1291,7 @@ a.rt-modal-body-link {
 
 .rt-collapse:hover {
  color: @rt-light-gray;
-}    
+}
 
 .rt-collapse + input{
   // display:none;
@@ -1319,11 +1319,11 @@ a.rt-modal-body-link {
 }
 .rt-advanced-options:hover{
  color: @rt-light-gray;
-}    
+}
 
 .rt-advanced-options + input{
   display:none;
-  
+
 }
 .rt-advanced-options + input + *{
   display:none;
@@ -1343,7 +1343,7 @@ a.rt-modal-body-link {
         -moz-transform: rotate(125deg);
         opacity: 1;
     }
-  
+
 
     100% {
         -moz-transform: rotate(350deg);
@@ -1379,9 +1379,9 @@ a.rt-modal-body-link {
 .rt-loading-message-inside {
     text-align: center;
     padding-top: 90px;
-    min-height: 150px; 
+    min-height: 150px;
     min-width: 400px;
-    margin: 0 auto;  
+    margin: 0 auto;
   }
 
 .rt-loading-pulse {
@@ -1408,17 +1408,17 @@ a.rt-modal-body-link {
 
 .rt-loading-msg-1 {
   .rt-loading-msg;
-  animation: loading-opacity 200ms 500ms ease-in forwards, loading-clear 200ms 5s ease-in forwards; 
+  animation: loading-opacity 200ms 500ms ease-in forwards, loading-clear 200ms 5s ease-in forwards;
 }
 
 .rt-loading-msg-2 {
   .rt-loading-msg;
-  animation: loading-opacity 200ms 5.5s ease-in forwards, loading-clear 200ms 15s ease-in forwards; 
+  animation: loading-opacity 200ms 5.5s ease-in forwards, loading-clear 200ms 15s ease-in forwards;
 }
 
 .rt-loading-msg-3 {
   .rt-loading-msg;
-  animation: loading-opacity 200ms 15.5s ease-in forwards; 
+  animation: loading-opacity 200ms 15.5s ease-in forwards;
 }
 
 @-webkit-keyframes loading-opacity {
@@ -1481,14 +1481,14 @@ a.rt-modal-body-link {
   animation:          loading-1 2250ms ease-in infinite;
   -webkit-animation:  loading-1 2250ms ease-in infinite;
   -moz-animation:     loading-1 2250ms ease-in infinite;
-  -o-animation:       loading-1 2250ms ease-in infinite;  
+  -o-animation:       loading-1 2250ms ease-in infinite;
 }
 
 .ascii-spinner-2 {
   .ascii-spinner-layout;
   -webkit-animation:  loading-2 2250ms ease-in infinite;
   -moz-animation:     loading-2 2250ms ease-in infinite;
-  -o-animation:       loading-2 2250ms ease-in infinite;  
+  -o-animation:       loading-2 2250ms ease-in infinite;
   animation:          loading-2 2250ms ease-in infinite;
 }
 
@@ -1497,7 +1497,7 @@ a.rt-modal-body-link {
   -webkit-animation:  loading-3 2250ms ease-in infinite;
   -moz-animation:     loading-3 2250ms ease-in infinite;
   -o-animation:       loading-3 2250ms ease-in infinite;
-  animation:          loading-3 2250ms ease-in infinite;  
+  animation:          loading-3 2250ms ease-in infinite;
 }
 
 
@@ -1505,7 +1505,7 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   1% { opacity: .5; }
   11% { opacity: .5; }
-  12% { opacity: 0; }  
+  12% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1513,7 +1513,7 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   1% { opacity: .5; }
   11% { opacity: .5; }
-  12% { opacity: 0; }  
+  12% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1521,7 +1521,7 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   1% { opacity: .5; }
   11% { opacity: .5; }
-  12% { opacity: 0; }  
+  12% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1529,7 +1529,7 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   1% { opacity: .5; }
   11% { opacity: .5; }
-  12% { opacity: 0; }  
+  12% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1537,8 +1537,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   10% { opacity: 0; }
   11% { opacity: .5; }
-  22% { opacity: .5; }  
-  23% { opacity: 0; }    
+  22% { opacity: .5; }
+  23% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1546,8 +1546,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   10% { opacity: 0; }
   11% { opacity: .5; }
-  22% { opacity: .5; }  
-  23% { opacity: 0; }    
+  22% { opacity: .5; }
+  23% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1555,8 +1555,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   10% { opacity: 0; }
   11% { opacity: .5; }
-  22% { opacity: .5; }  
-  23% { opacity: 0; }    
+  22% { opacity: .5; }
+  23% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1564,8 +1564,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   10% { opacity: 0; }
   11% { opacity: .5; }
-  22% { opacity: .5; }  
-  23% { opacity: 0; }    
+  22% { opacity: .5; }
+  23% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1573,8 +1573,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   21% { opacity: 0; }
   22% { opacity: .5; }
-  33% { opacity: .5; }    
-  34% { opacity: 0; }      
+  33% { opacity: .5; }
+  34% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1582,8 +1582,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   21% { opacity: 0; }
   22% { opacity: .5; }
-  33% { opacity: .5; }  
-  34% { opacity: 0; }      
+  33% { opacity: .5; }
+  34% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1591,8 +1591,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   21% { opacity: 0; }
   22% { opacity: .5; }
-  33% { opacity: .5; }  
-  34% { opacity: 0; }      
+  33% { opacity: .5; }
+  34% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1600,8 +1600,8 @@ a.rt-modal-body-link {
   0% { opacity: 0; }
   21% { opacity: 0; }
   22% { opacity: .5; }
-  33% { opacity: .5; }  
-  34% { opacity: 0; }      
+  33% { opacity: .5; }
+  34% { opacity: 0; }
   100% { opacity: 0; }
 }
 
@@ -1611,7 +1611,7 @@ a.rt-modal-body-link {
 
 .rt-radio-custom {
     opacity: 0;
-    position: absolute;   
+    position: absolute;
 }
 
 .rt-radio-layout {
@@ -1711,13 +1711,13 @@ p.rt-dashboard-copy {
     -moz-box-flex: 1;         /* OLD - Firefox 19- */
     -webkit-flex: 1;          /* Chrome */
     -ms-flex: 1;              /* IE 10 */
-    flex: 1 100%;             /* NEW, Spec - Opera 12.1, Firefox 20+  */
+    flex: 1;                  /* NEW, Spec - Opera 12.1, Firefox 20+  */
     text-align: left;
     margin-left: 15px;
     margin-top: 15px;
 }
 
- @media screen and (max-width: 780px) { 
+ @media screen and (max-width: 780px) {
   .rt-dash-flex-item {
     -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
     -moz-box-flex: 1;         /* OLD - Firefox 19- */
@@ -1758,7 +1758,7 @@ a.rt-dashboard-blurb:hover{
   color: @rt-primary;
   -webkit-text-fill-color: transparent;
   background: -webkit-linear-gradient(top left, @linkColor 0%, #13b2d4 100%) repeat;
-  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;  
+  background: -o-linear-gradient(top left, @linkColor 0%, @rt-blue 100%) repeat;
   -webkit-background-clip: text;
   text-decoration:none;
   font-size: 85px;
@@ -1772,7 +1772,7 @@ a.rt-dashboard-blurb:hover{
 .rt-icon-success {
   color: @rt-green;
   text-decoration:none;
-  vertical-align: sub; 
+  vertical-align: sub;
 }
 
 .rt-blurb-success {
