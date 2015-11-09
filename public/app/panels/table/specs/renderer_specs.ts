@@ -50,6 +50,11 @@ describe('when rendering table', () => {
       expect(html).to.be('<td>1.230 s</td>');
     });
 
+    it('number style should ignore string values', () => {
+      var html = renderer.renderCell(1, 'asd');
+      expect(html).to.be('<td>asd</td>');
+    });
+
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 55);
       expect(html).to.be('<td style="color:orange">55.0</td>');

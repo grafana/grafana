@@ -48,6 +48,10 @@ export class TableRenderer {
           return '-';
         }
 
+        if (_.isString(v)) {
+          return v;
+        }
+
         if (style.colorMode) {
           this.colorState[style.colorMode] = this.getColorForValue(v, style);
         }
