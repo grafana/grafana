@@ -6,6 +6,11 @@ module.exports = function(config,grunt) {
     var dest = './vendor/phantomjs/phantomjs';
     var confDir = './node_modules/karma-phantomjs-launcher/node_modules/phantomjs/lib/'
 
+    if (!grunt.file.exists(confDir)) {
+      // npm 3 or npm 2 with dedupe
+      confDir = './node_modules/phantomjs/lib/';
+    }
+
     if (!grunt.file.exists(dest)){
 
       var m=grunt.file.read(confDir+"location.js")

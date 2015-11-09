@@ -28,9 +28,11 @@ define([
       });
 
       it('metrics() should generate api suggest query', function() {
-        ctx.ds.metricFindQuery('metrics()').then(function(data) { results = data; });
+        ctx.ds.metricFindQuery('metrics(pew)').then(function(data) { results = data; });
         ctx.$rootScope.$apply();
         expect(requestOptions.url).to.be('/api/suggest');
+        expect(requestOptions.params.type).to.be('metrics');
+        expect(requestOptions.params.q).to.be('pew');
       });
 
       it('tag_names(cpu) should generate looku  query', function() {
@@ -45,6 +47,22 @@ define([
         ctx.$rootScope.$apply();
         expect(requestOptions.url).to.be('/api/search/lookup');
         expect(requestOptions.params.m).to.be('cpu{hostname=*}');
+      });
+
+      it('suggest_tagk() should generate api suggest query', function() {
+        ctx.ds.metricFindQuery('suggest_tagk(foo)').then(function(data) { results = data; });
+        ctx.$rootScope.$apply();
+        expect(requestOptions.url).to.be('/api/suggest');
+        expect(requestOptions.params.type).to.be('tagk');
+        expect(requestOptions.params.q).to.be('foo');
+      });
+
+      it('suggest_tagv() should generate api suggest query', function() {
+        ctx.ds.metricFindQuery('suggest_tagv(bar)').then(function(data) { results = data; });
+        ctx.$rootScope.$apply();
+        expect(requestOptions.url).to.be('/api/suggest');
+        expect(requestOptions.params.type).to.be('tagv');
+        expect(requestOptions.params.q).to.be('bar');
       });
 
     });

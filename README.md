@@ -30,7 +30,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - Click and drag to zoom
 - Multiple Y-axis, logarithmic scales
 - Bars, Lines, Points
-- Smart Y-axis formating
+- Smart Y-axis formatting
 - Series toggles & color selector
 - Legend values, and formatting options
 - Grid thresholds, axis labels
