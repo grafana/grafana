@@ -32,9 +32,9 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
       scope.timing.renderEnd = new Date().getTime();
     };
 
-    this.broadcastRender = function(scope, data) {
+    this.broadcastRender = function(scope, arg1, arg2) {
       this.setTimeRenderStart(scope);
-      scope.$broadcast('render', data);
+      scope.$broadcast('render', arg1, arg2);
       this.setTimeRenderEnd(scope);
 
       if ($rootScope.profilingEnabled) {
