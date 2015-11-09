@@ -29,7 +29,8 @@ export class TablePanelCtrl {
       pageSize: 50,
       showHeader: true,
       columns: [],
-      fields: []
+      fields: [],
+      sort: {col: null, desc: true},
     };
 
     $scope.init = function() {
@@ -52,6 +53,21 @@ export class TablePanelCtrl {
       });
     };
 
+    $scope.toggleColumnSort = function(col, colIndex) {
+      if ($scope.panel.sort.col === colIndex) {
+        if ($scope.panel.sort.desc) {
+          $scope.panel.sort.desc = false;
+        } else {
+          $scope.panel.sort.col = null;
+        }
+      } else {
+        $scope.panel.sort.col = colIndex;
+        $scope.panel.sort.desc = true;
+      }
+
+      $scope.render();
+    };
+
     $scope.dataHandler = function(results) {
       $scope.dataRaw = results.data;
       $scope.render();
@@ -59,6 +75,7 @@ export class TablePanelCtrl {
 
     $scope.render = function() {
       $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
+      $scope.table.sort($scope.panel.sort);
       panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
     };
 
