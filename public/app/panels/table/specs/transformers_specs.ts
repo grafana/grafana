@@ -19,7 +19,10 @@ describe('when transforming time series table', () => {
     ];
 
     describe('timeseries_to_rows', () => {
-      var panel = {transform: 'timeseries_to_rows'};
+      var panel = {
+        transform: 'timeseries_to_rows',
+        sort: {col: 0, desc: true},
+      };
 
       beforeEach(() => {
         table = TableModel.transform(timeSeries, panel);
