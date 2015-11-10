@@ -124,13 +124,7 @@ function (angular, _) {
       };
 
       return this.awsRequest(request).then(function(result) {
-        return _.chain(result.Metrics).map(function(metric) {
-          return _.pluck(metric.Dimensions, 'Value');
-        }).flatten().uniq().sortBy(function(name) {
-          return name;
-        }).map(function(value) {
-          return {value: value, text: value};
-        }).value();
+        return _.pluck(result.Metrics, 'Dimensions');
       });
     };
 
@@ -191,7 +185,20 @@ function (angular, _) {
           });
         }
 
-        return this.getDimensionValues(region, namespace, metricName, dimensions);
+        return this.getDimensionValues(region, namespace, metricName, dimensions).then(function(result) {
+          return _.map(result, function(dimensions) {
+            var values = _.chain(dimensions)
+            .sortBy(function(dimension) {
+              return dimension.Name;
+            })
+            .map(function(dimension) {
+              return dimension.Name + '=' + dimension.Value;
+            })
+            .value().join(',');
+
+            return { text: values };
+          });
+        });
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
