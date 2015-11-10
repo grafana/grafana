@@ -360,6 +360,19 @@ define([
       });
     });
 
+    describe('when variable of type datasource is updated', function() {
+      beforeEach(function () {
+        ctx.datasourceSrv.updateDynamicDatasource = sinon.spy();
+
+        var variable = {type: 'datasource', current: {value: 'current'}, name: 'test'};
+        ctx.service.variableUpdated(variable);
+      });
+
+      it('should update the corresponding dynamic datasource', function () {
+        expect(ctx.datasourceSrv.updateDynamicDatasource.withArgs('test', 'current').callCount).to.be(1);
+      });
+    });
+
   });
 
 });
