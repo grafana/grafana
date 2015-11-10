@@ -76,7 +76,7 @@ function (angular, _) {
       }
     };
 
-    $scope.getDimSegments = function(segment) {
+    $scope.getDimSegments = function(segment, $index) {
       if (segment.type === 'operator') { return $q.when([]); }
 
       var target = $scope.target;
@@ -88,7 +88,22 @@ function (angular, _) {
         query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, {});
       }
 
-      return query.then($scope.transformToSegments(true)).then(function(results) {
+      return query.then(function(results) {
+        if (segment.type === 'value') {
+          results = _.chain(results)
+          .flatten(true)
+          .filter(function(dimension) {
+            return dimension.Name === templateSrv.replace($scope.dimSegments[$index-2].value);
+          })
+          .pluck('Value')
+          .uniq()
+          .map(function(value) {
+            return {value: value, text: value};
+          })
+          .value();
+        }
+        return $scope.transformToSegments(true)(results);
+      }).then(function(results) {
         if (segment.type === 'key') {
           results.splice(0, 0, angular.copy($scope.removeDimSegment));
         }

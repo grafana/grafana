@@ -165,7 +165,7 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).to.be('i-12345678');
+      expect(scenario.result[0].text).to.be('InstanceId=i-12345678');
       expect(scenario.request.data.action).to.be('ListMetrics');
     });
   });
