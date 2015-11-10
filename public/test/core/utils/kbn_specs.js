@@ -62,6 +62,12 @@ define([
   describeValueFormat('ns', 25, 1, 0, '25 ns');
   describeValueFormat('ns', 2558, 50, 0, '2.56 µs');
 
+  describeValueFormat('ops', 123, 1, 0, '123 ops');
+  describeValueFormat('rps', 456000, 1000, -1, '456K rps');
+  describeValueFormat('rps', 123456789, 1000000, 2, '123.457M rps');
+  describeValueFormat('wps', 789000000, 1000000, -1, '789M wps');
+  describeValueFormat('iops', 11000000000, 1000000000, -1, '11B iops');
+
   describe('kbn.toFixed and negative decimals', function() {
     it('should treat as zero decimals', function() {
       var str = kbn.toFixed(186.123, -2);

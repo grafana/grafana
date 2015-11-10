@@ -216,7 +216,7 @@ function (angular, _) {
 
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
-      var region = 'us-east-1';
+      var region = this.defaultRegion;
       var namespace = 'AWS/Billing';
       var metricName = 'EstimatedCharges';
       var dimensions = {};
