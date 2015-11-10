@@ -18,7 +18,7 @@ function (coreModule) {
         '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
         '<div class="top-nav">' +
         '<a class="top-nav-menu-btn pointer" ng-if="!contextSrv.sidemenu" ng-click="toggle()">' +
-        '<img class="logo-icon" src="img/fav32.png"></img> ' +
+        '<img class="logo-icon" src="img/rt-fav32.png"></img> ' +
         '<i class="fa fa-bars"></i>' +
         '</a>' +
 
