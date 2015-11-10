@@ -9,7 +9,7 @@ import {TableModel} from './table_model';
 
 export class TablePanelCtrl {
 
-  constructor($scope, $rootScope, $q, panelSrv, panelHelper) {
+  constructor($scope, $rootScope, $q, panelSrv, panelHelper, annotationsSrv) {
     $scope.ctrl = this;
     $scope.pageIndex = 0;
 
@@ -36,19 +36,22 @@ export class TablePanelCtrl {
     $scope.init = function() {
       _.defaults($scope.panel, panelDefaults);
 
-      if ($scope.panel.columns.length === 0) {
-      }
-
       panelSrv.init($scope);
     };
 
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
+      if ($scope.panel.transform === 'annotations') {
+        return annotationsSrv.getAnnotations($scope.dashboard).then(annotations => {
+          $scope.dataRaw = annotations;
+          $scope.render();
+        });
+      }
+
       return panelHelper.issueMetricQuery($scope, datasource)
       .then($scope.dataHandler, function(err) {
-        $scope.seriesList = [];
-        $scope.render([]);
+        $scope.render();
         throw err;
       });
     };

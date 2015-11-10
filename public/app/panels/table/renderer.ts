@@ -24,9 +24,22 @@ export class TableRenderer {
     return null;
   }
 
+  defaultCellFormater(v) {
+    if (v === null || v === void 0) {
+      return '';
+    }
+
+    if (_.isArray(v)) {
+      v = v.join(',&nbsp;');
+    }
+
+    return v;
+  }
+
+
   createColumnFormater(style) {
     if (!style) {
-      return v => v;
+      return this.defaultCellFormater;
     }
 
     if (style.type === 'date') {
@@ -60,17 +73,7 @@ export class TableRenderer {
       };
     }
 
-    return v => {
-      if (v === null || v === void 0) {
-        return '-';
-      }
-
-      if (_.isArray(v)) {
-        v = v.join(',&nbsp;');
-      }
-
-      return v;
-    };
+    return this.defaultCellFormater;
   }
 
   formatColumnValue(colIndex, value) {
@@ -88,10 +91,7 @@ export class TableRenderer {
       }
     }
 
-    this.formaters[colIndex] = function(v) {
-      return v;
-    };
-
+    this.formaters[colIndex] = this.defaultCellFormater;
     return this.formaters[colIndex](value);
   }
 
