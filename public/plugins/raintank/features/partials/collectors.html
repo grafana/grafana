@@ -2,8 +2,8 @@
 </topnav>
 <div style="margin: 15px; position: relative; display: block; max-width: 1000px; min-width: 400px;">
 	<div class="rt-page-header-area">
-		<h1 class="rt-h1">Collectors</h1>
-		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="/collectors/new">New Collector</a></span>
+		<h1 class="rt-h1">Probes</h1>
+		<span style="float: right; margin-top: 10px;"><a class="rt-btn" href="/collectors/new">New Probe</a></span>
 	</div>
 
 	<div ng-if="!pageReady" class="rt-loading-message-container">
@@ -21,7 +21,7 @@
 				<span class="small">Filter by:</span>
 					<div class="select-input">
 						<select ng-model="filter.tag">
-							<option value="" label="All Tags">All Collectors</option>
+							<option value="" label="All Tags">All Probes</option>
 							<option ng-repeat="t in collectorTags()" value="{{t}}" label="{{t}}">{{t}}</option>
 						</select>
 					</div>
@@ -53,7 +53,7 @@
 <div ng-if="pageReady">
 	<div style="margin: 15px; position: relative; display: block; max-width: 1000px;">
 		<div ng-if="collectors.length === 0">
-			<em>No collectors defined</em>
+			<em>No probes found</em>
 		</div>
 		<div class="rt-list" ng-repeat="collector in collectors | filterByTag:filter.tag | filter:statusFilter | orderBy:sort_field">
 			<div class="rt-list-header" style="overflow:hidden;">
@@ -96,30 +96,8 @@
 					<div style="display: inline; margin-left:6px;">
 						<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to {{collector.name}} dashboard'"></i></a>
 					</div>
-					<div class="dropdown" style="display: inline;">
-						<a data-toggle="dropdown">
-							<i ng-class="icon" class="icon-rt-bulk_action miniCTA"></i>
-						</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a href="collectors/summary/{{collector.id}}">
-									View
-								</a>
-							</li>
-							<li ng-show="collector.org_id == contextSrv.user.orgId">
-								<a href="collectors/edit/{{collector.id}}">
-									Configure
-								</a>
-							</li>
-							<li ng-show="collector.org_id == contextSrv.user.orgId">
-								<a ng-click="remove(collector)">
-									Delete
-								</a>
-							</li>
-						</ul>
-					</div>
+
 				</div>
-			
 		</div>
 	</div>
 </div>

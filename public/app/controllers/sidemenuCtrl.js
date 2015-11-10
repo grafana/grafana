@@ -27,7 +27,7 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/endpoints"),
       });
       $scope.mainLinks.push({
-        text: "Collectors",
+        text: "Probes",
         icon: "fa-fw icon-rt-collector",
         href: $scope.getUrl("/collectors"),
       });

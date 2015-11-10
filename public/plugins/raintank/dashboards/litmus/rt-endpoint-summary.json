@@ -27,6 +27,7 @@
             "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "percent",
@@ -60,7 +61,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.dns.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -87,6 +88,7 @@
             "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "percent",
@@ -119,7 +121,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.ping.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.ping.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -146,6 +148,7 @@
             "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "percent",
@@ -179,7 +182,7 @@
           },
           "targets": [
             {
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.http.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.http.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -206,6 +209,7 @@
             "rgba(63, 104, 51, 1)"
           ],
           "decimals": 2,
+          "datasource": "raintank",
           "editable": true,
           "error": false,
           "format": "percent",
@@ -239,7 +243,7 @@
           },
           "targets": [
             {
-              "target": "scale(litmus.$endpoint.$collector.https.ok_state, 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.https.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
@@ -322,11 +326,11 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.dns.error_state), 'sum'), 'error')"
             },
             {
               "hide": false,
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.dns.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.dns.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -402,10 +406,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.ping.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.ping.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.ping.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -483,10 +487,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.http.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.http.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.http.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.http.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -563,10 +567,10 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.error_state), 'sum'), 'error')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.https.error_state), 'sum'), 'error')"
             },
             {
-              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$collector.https.ok_state), 'sum'), 'ok')"
+              "target": "alias(consolidateBy(sumSeries(litmus.$endpoint.$probe.https.ok_state), 'sum'), 'ok')"
             }
           ],
           "timeFrom": null,
@@ -651,12 +655,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.dns.time), 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$probe.dns.time), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "DNS response by Collector",
+          "title": "DNS response by Probe",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -725,12 +729,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.ping.mean), 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$probe.ping.mean), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Ping response by Collector",
+          "title": "Ping response by Probe",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -800,12 +804,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.http.total), 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$probe.http.total), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "HTTP response by Collector",
+          "title": "HTTP response by Probe",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -875,12 +879,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "aliasByNode(sortByName(litmus.$endpoint.$collector.https.total), 2)"
+              "target": "aliasByNode(sortByName(litmus.$endpoint.$probe.https.total), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "HTTPS response by Collector",
+          "title": "HTTPS response by Probe",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -961,10 +965,10 @@
         },
         "datasource": "raintank",
         "includeAll": true,
-        "label": "Collector(s)",
+        "label": "Probe(s)",
         "multi": true,
         "multiFormat": "glob",
-        "name": "collector",
+        "name": "probe",
         "options": [],
         "query": "litmus.$endpoint.*",
         "refresh": true,

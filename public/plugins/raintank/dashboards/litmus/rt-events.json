@@ -20,7 +20,7 @@
         {
           "editable": true,
           "error": false,
-          "filter": "tags:/endpoint\\:$endpoint/ AND tags:/collector\\:$collector/ AND tags:/monitor_type\\:$monitor_type/ AND severity:/$severity/",
+          "filter": "tags:/endpoint\\:$endpoint/ AND tags:/collector\\:$probe/ AND tags:/monitor_type\\:$monitor_type/ AND severity:/$severity/",
           "height": "500",
           "id": 1,
           "links": [],
@@ -30,7 +30,7 @@
           "type": "raintankEventsPanel"
         }
       ],
-      "title": "Events for $endpoint on $collector for $monitor_type (showing $severity)",
+      "title": "Events for $endpoint on $probe for $monitor_type (showing $severity)",
       "showTitle": true
     }
   ],
@@ -92,10 +92,10 @@
         "allFormat": "regex values",
         "datasource": null,
         "includeAll": true,
-        "label": "collector",
+        "label": "probe",
         "multi": true,
         "multiFormat": "regex values",
-        "name": "collector",
+        "name": "probe",
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": false,
@@ -108,7 +108,7 @@
         "multi": true,
         "multiFormat": "regex values",
         "name": "monitor_type",
-        "query": "litmus.$endpoint.$collector.*",
+        "query": "litmus.$endpoint.$probe.*",
         "refresh": true,
         "refresh_on_load": false,
         "regex": "",

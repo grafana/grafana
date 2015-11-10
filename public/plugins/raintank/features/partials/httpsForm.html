@@ -8,7 +8,7 @@
             <div class="rt-box-row-info">
               <a href="#">
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="monitors['https'].enabled"></i>
-                <span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} Collectors |</span>
+                <span class="freqMsg" ng-show="monitors['https'].enabled" > Every {{monitors['https'].frequency}}s from {{collectorCount(monitors['https'])}} {{collectorCount(monitors['https']) == 1 ? "Probe" : "Probes"}} |</span>
                 <i class="icon icon-rt-monitoring-tiny" style="font-size:17px;"ng-show="!monitors['https'].enabled"></i>
                 <span class="freqMsg disabled" ng-show="!monitors['https'].enabled" > Not enabled |</span>
                 <span class="freqMsg" ng-show="!monitors['https'].enabled && discovered" > Not Discovered |</span>
@@ -30,7 +30,7 @@
                 </div>
               </div>
               <div class="rt-box-interior-content">
-                <p class="rt-body-copy">At the selected <span class="emphasis">frequency</span>, we'll do a <span class="emphasis">single</span> HTTPS request to your <span class="emphasis">URL</span>, from each collector within your <span class="emphasis">dynamic or static footprint</span>.</p>
+                <p class="rt-body-copy">At the selected <span class="emphasis">frequency</span>, we'll do a <span class="emphasis">single</span> HTTPS request to your <span class="emphasis">URL</span>, from each probe within your <span class="emphasis">dynamic or static footprint</span>.</p>
                 <div class="rt-form">
                 <div class="rt-form rt-input-styles rt-flex-form-block">
                   <div style="margin: 20px 45px 0 0;">
@@ -101,7 +101,7 @@
                   <div class="rt-input-styles editor-option">
                     <label><input type="number" min="1" value="3"class="natural-language-form" ng-model="monitors['https'].health_settings.num_collectors"></select></label>
                   </div>
-                  <span class="rt-body-copy">or more collectors report <span class="emphasis">connection errors</span> for</span>
+                  <span class="rt-body-copy">or more probes report <span class="emphasis">connection errors</span> for</span>
                   <div class="rt-input-styles editor-option">
                     <label><input type="number" min="1" value="5" class="natural-language-form" ng-model="monitors['https'].health_settings.steps"></select></label>
                   </div>
