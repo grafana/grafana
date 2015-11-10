@@ -9,7 +9,8 @@ describe('when rendering table', () => {
     table.columns = [
       {text: 'Time'},
       {text: 'Value'},
-      {text: 'Colored'}
+      {text: 'Colored'},
+      {text: 'Undefined'},
     ];
 
     var panel = {
@@ -58,6 +59,11 @@ describe('when rendering table', () => {
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 55);
       expect(html).to.be('<td style="color:orange">55.0</td>');
+    });
+
+    it('unformated undefined should be rendered as -', () => {
+      var html = renderer.renderCell(3, undefined);
+      expect(html).to.be('<td></td>');
     });
   });
 });

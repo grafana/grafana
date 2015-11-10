@@ -103,8 +103,37 @@ describe('when transforming time series table', () => {
         expect(table.rows[0][0]).to.be('time');
         expect(table.rows[0][1]).to.be('message');
       });
-
     });
+
+    describe('Annnotations', () => {
+      var panel = {transform: 'annotations'};
+      var rawData = [
+        {
+          min: 1000,
+          text: 'hej',
+          tags: ['tags', 'asd'],
+          title: 'title',
+        }
+      ];
+
+      beforeEach(() => {
+        table = TableModel.transform(rawData, panel);
+      });
+
+      it ('should return 4 columns', () => {
+        expect(table.columns.length).to.be(4);
+        expect(table.columns[0].text).to.be('Time');
+        expect(table.columns[1].text).to.be('Title');
+        expect(table.columns[2].text).to.be('Text');
+        expect(table.columns[3].text).to.be('Tags');
+      });
+
+      it ('should return 1 rows', () => {
+        expect(table.rows.length).to.be(1);
+        expect(table.rows[0][0]).to.be(1000);
+      });
+    });
+
   });
 });
 

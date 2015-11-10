@@ -66,6 +66,21 @@ transformers['timeseries_to_columns'] = {
 
 transformers['annotations'] = {
   description: 'Annotations',
+  transform: function(data, panel, model) {
+    model.columns.push({text: 'Time', type: 'date'});
+    model.columns.push({text: 'Title'});
+    model.columns.push({text: 'Text'});
+    model.columns.push({text: 'Tags'});
+
+    if (!data || data.length === 0) {
+      return;
+    }
+
+    for (var i = 0; i < data.length; i++) {
+      var evt = data[i];
+      model.rows.push([evt.min, evt.title, evt.text, evt.tags]);
+    }
+  }
 };
 
 transformers['json'] = {
