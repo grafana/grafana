@@ -310,6 +310,16 @@ function($, _) {
     };
   };
 
+  kbn.formatBuilders.simpleCountUnit = function(symbol) {
+    var units = ['', 'K', 'M', 'B', 'T'];
+    var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+    return function(size, decimals, scaledDecimals) {
+      if (size === null) { return ""; }
+      var scaled = scaler(size, decimals, scaledDecimals);
+      return scaled + " " + symbol;
+    };
+  };
+
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
@@ -343,6 +353,12 @@ function($, _) {
   kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
   kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
   kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+
+  // Throughput
+  kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
+  kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
+  kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
+  kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
 
   // Energy
   kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
@@ -523,6 +539,15 @@ function($, _) {
         ]
       },
       {
+        text: 'throughput',
+        submenu: [
+          {text: 'ops/sec (ops)',       value: 'ops' },
+          {text: 'reads/sec (rps)',     value: 'rps' },
+          {text: 'writes/sec (wps)',    value: 'wps' },
+          {text: 'I/O ops/sec (iops)',  value: 'iops'},
+        ]
+      },
+      {
         text: 'length',
         submenu: [
           {text: 'millimetre (mm)', value: 'lengthmm'},
@@ -576,7 +601,7 @@ function($, _) {
           {text: 'Inches of mercury', value: 'pressurehg'  },
           {text: 'PSI',               value: 'pressurepsi' },
         ]
-      },
+      }
     ];
   };
 
