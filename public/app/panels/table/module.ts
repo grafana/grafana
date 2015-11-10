@@ -37,9 +37,14 @@ export function tablePanel() {
       }
 
       function appendPaginationControls(footerElem) {
-        var paginationList = $('<ul></ul>');
+        footerElem.empty();
 
-        var pageCount = data.rows.length / panel.pageSize;
+        var pageCount = Math.ceil(data.rows.length / panel.pageSize);
+        if (pageCount === 1) {
+          return;
+        }
+
+        var paginationList = $('<ul></ul>');
         for (var i = 0; i < pageCount; i++) {
           var pageLinkElem = $('<li><a href="#">' + (i+1) + '</a></li>');
           paginationList.append(pageLinkElem);
@@ -48,7 +53,6 @@ export function tablePanel() {
         var nextLink = $('<li><a href="#">»</a></li>');
         paginationList.append(nextLink);
 
-        footerElem.empty();
         footerElem.append(paginationList);
       }
 
