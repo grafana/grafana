@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -17,12 +18,12 @@ type PluginMeta struct {
 }
 
 type ExternalPluginRoute struct {
-	Path            string `json:"path"`
-	Method          string `json:"method"`
-	ReqSignedIn     bool   `json:"req_signed_in"`
-	ReqGrafanaAdmin bool   `json:"req_grafana_admin"`
-	ReqRole         string `json:"req_role"`
-	Url             string `json:"url"`
+	Path            string          `json:"path"`
+	Method          string          `json:"method"`
+	ReqSignedIn     bool            `json:"req_signed_in"`
+	ReqGrafanaAdmin bool            `json:"req_grafana_admin"`
+	ReqRole         models.RoleType `json:"req_role"`
+	Url             string          `json:"url"`
 }
 
 type ExternalPluginJs struct {
