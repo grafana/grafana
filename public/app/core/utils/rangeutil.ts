@@ -133,12 +133,12 @@ _.each(rangeOptions, function (frame) {
       return from.fromNow() + ' to ' + formatDate(range.to);
     }
 
-    if (!moment.isMoment(range.from) && !moment.isMoment(range.to)) {
-      return formatDate(dateMath.parse(range.from, true)) + ' to ' + formatDate(dateMath.parse(range.to, true));
+    if (range.to.toString() === 'now') {
+      var res = describeTextRange(range.from);
+      return res.display;
     }
 
-    var res = describeTextRange(range.from);
-    return res.display;
+    return range.from.toString() + ' to ' + range.to.toString();
   }
 
 export = {
