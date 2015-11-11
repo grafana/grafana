@@ -14,19 +14,19 @@
   </ul>
 </topnav>
 <div style="margin: 10px 10px 50px; position: relative; display: block; min-width:400px; max-width: 1000px;">
-  <!-- Step 1 Accept, check for collector duplicates and add collector record. -->
+  <!-- Step 1 Accept, check for probe duplicates and add probe record. -->
   <div ng-if="!collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
-      <h1 class="rt-h1">Add a new collector</h1>
+      <h1 class="rt-h1">Add a new probe</h1>
       <span class="form-step-count">Step 1 of 2</span>
     </div>
     <div class="rt-form">
       <form name="collectorNameForm">
-        <label class="rt-form-label-medium">Collector Name:</label>
+        <label class="rt-form-label-medium">Probe Name:</label>
         <input type="text" class="rt-form-input" ng-model="collector.name" required="required">
         <div class="rt-form-row">
-          <button type="submit" class="rt-btn" ng-click="collectorNameForm.$valid && add()">Next -> Install Collector</button>
+          <button type="submit" class="rt-btn" ng-click="collectorNameForm.$valid && add()">Next -> Install Probe</button>
         </div>
       </form>
     </div>
@@ -35,15 +35,15 @@
   <div ng-if="collector.id">
     <div class="rt-page-header">
       <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
-      <h1 class="rt-h1">Add a new collector</h1>
+      <h1 class="rt-h1">Add a new probe</h1>
       <span class="form-step-count">Step 2 of 2</span>
     </div>
-    <label class="rt-form-label-medium">Collector Name:</label>
+    <label class="rt-form-label-medium">Probe Name:</label>
     <h2 class="collector-name">{{collector.name}}</h2>
-    <p><i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 20px;"></i><strong>Collector record added</strong>. Please install the application or <a class="rt-dashboard-blurb" ng-href="/collectors/summary/{{collector.id}}">skip to collector summary</a>.</p>
+    <p><i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 20px;"></i><strong>Probe record added</strong>. Please install the application or <a class="rt-dashboard-blurb" ng-href="/collectors/summary/{{collector.id}}">skip to probe summary</a>.</p>
     <div class="rt-collector-config rt-config-box">
       <div class="rt-collector-config-header rt-box-header">
-        <h2>Install the collector application</h2>
+        <h2>Install the probe application</h2>
         <span class="rt-config-setup-time">Setup time: 5-7 minutes</span>
       </div>
       <div class="rt-box-body">
@@ -73,7 +73,7 @@
             </div>
           </div>
           <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
-            <h3>Install the collector</h3>
+            <h3>Install the probe</h3>
             <pre><code>curl https://app.raintank.io/scripts/collector_install.sh | sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>" bash</code></pre>
           </div>
           <div class="rt-box-interior-section" ng-hide="showDistroConfig">
@@ -99,7 +99,7 @@
               <pre><code>npm install</code></pre>
             </div>
             <div class="rt-box-interior-section">
-              <h3><span class="emphasis">7. </span>Create a config file using etc/config.json as a template, with the collector name and ApiKey</h3>
+              <h3><span class="emphasis">7. </span>Create a config file using etc/config.json as a template, with the probe name and ApiKey</h3>
 <pre><code>{
 "collector": {
   "name": "<span class="h">{{collector.name}}</span>"

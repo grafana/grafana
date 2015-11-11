@@ -106,7 +106,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.ping.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.ping.ok_state), 100)"
             }
           ],
           "thresholds": "0,100,100",
@@ -156,7 +156,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "averageSeries(litmus.$endpoint.$collector.ping.loss)"
+              "target": "averageSeries(litmus.$endpoint.$probe.ping.loss)"
             }
           ],
           "thresholds": "",
@@ -206,7 +206,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "averageSeries(litmus.$endpoint.$collector.ping.mean)"
+              "target": "averageSeries(litmus.$endpoint.$probe.ping.mean)"
             }
           ],
           "thresholds": "",
@@ -224,7 +224,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping status for $endpoint (all selected Collectors)"
+      "title": "ping status for $endpoint (all selected Probes)"
     },
     {
       "collapse": false,
@@ -303,12 +303,12 @@
           "targets": [
             {
               "refId": "A",
-              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$collector.ping.error_state, 'sum'), 1), 2)"
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$probe.ping.error_state, 'sum'), 1), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "PING ERRORS (ALL SELECTED COLLECTORS)",
+          "title": "PING ERRORS (ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -417,24 +417,24 @@
             {
               "hide": false,
               "refId": "D",
-              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$collector.ping.loss), 1), 'loss %')"
+              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$probe.ping.loss), 1), 'loss %')"
             },
             {
               "refId": "B",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.ping.mean), 'average')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.ping.mean), 'average')"
             },
             {
               "refId": "A",
-              "target": "alias(consolidateBy(minSeries(litmus.$endpoint.$collector.ping.min), 'min'), 'minimum')"
+              "target": "alias(consolidateBy(minSeries(litmus.$endpoint.$probe.ping.min), 'min'), 'minimum')"
             },
             {
               "refId": "C",
-              "target": "alias(removeAbovePercentile(consolidateBy(maxSeries(litmus.$endpoint.$collector.ping.max), 'max'), $outliers), 'maximum')"
+              "target": "alias(removeAbovePercentile(consolidateBy(maxSeries(litmus.$endpoint.$probe.ping.max), 'max'), $outliers), 'maximum')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "PING PERFORMANCE RANGE AND LOSS (AVERGAGE ALL SELECTED COLLECTORS)",
+          "title": "PING PERFORMANCE RANGE AND LOSS (AVERGAGE ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -449,7 +449,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping performance range and loss for $endpoint (average all selected collectors)"
+      "title": "ping performance range and loss for $endpoint (average all selected probes)"
     },
     {
       "collapse": false,
@@ -515,13 +515,13 @@
             {
               "hide": false,
               "refId": "A",
-              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$collector.ping.mean, $outliers), 2)",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$probe.ping.mean, $outliers), 2)",
               "textEditor": false
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "PING PERFORMANCE (EACH INDIVIDUAL COLLECTOR)",
+          "title": "PING PERFORMANCE (EACH INDIVIDUAL PROBE)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -536,7 +536,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping performance for $endpoint (mean of each selected Collector)"
+      "title": "ping performance for $endpoint (mean of each selected Probe)"
     }
   ],
   "time": {
@@ -595,10 +595,10 @@
         "allFormat": "glob",
         "datasource": "raintank",
         "includeAll": true,
-        "label": "Collector(s)",
+        "label": "Probe(s)",
         "multi": true,
         "multiFormat": "glob",
-        "name": "collector",
+        "name": "probe",
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,

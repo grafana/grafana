@@ -106,7 +106,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.dns.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.dns.ok_state), 100)"
             }
           ],
           "thresholds": "0,100,100",
@@ -156,7 +156,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "averageSeries(litmus.$endpoint.$collector.dns.answers)"
+              "target": "averageSeries(litmus.$endpoint.$probe.dns.answers)"
             }
           ],
           "thresholds": "",
@@ -206,7 +206,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "averageSeries(litmus.$endpoint.$collector.dns.time)"
+              "target": "averageSeries(litmus.$endpoint.$probe.dns.time)"
             }
           ],
           "thresholds": "",
@@ -224,7 +224,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping status for $endpoint (all selected Collectors)"
+      "title": "ping status for $endpoint (all selected Probes)"
     },
     {
       "collapse": false,
@@ -303,12 +303,12 @@
           "targets": [
             {
               "refId": "A",
-              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$collector.dns.error_state, 'sum'), 1), 2)"
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$probe.dns.error_state, 'sum'), 1), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "DNS ERRORS (ALL SELECTED COLLECTORS)",
+          "title": "DNS ERRORS (ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -390,13 +390,13 @@
             {
               "hide": false,
               "refId": "A",
-              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$collector.dns.time, $outliers), 2)",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$probe.dns.time, $outliers), 2)",
               "textEditor": false
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "DNS PERFORMANCE (EACH INDIVIDUAL COLLECTOR)",
+          "title": "DNS PERFORMANCE (EACH INDIVIDUAL PROBE)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -411,7 +411,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping performance for $endpoint (mean of each selected Collector)"
+      "title": "ping performance for $endpoint (mean of each selected Probe)"
     }
   ],
   "time": {
@@ -470,10 +470,10 @@
         "allFormat": "glob",
         "datasource": "raintank",
         "includeAll": true,
-        "label": "Collector(s)",
+        "label": "Probe(s)",
         "multi": true,
         "multiFormat": "glob",
-        "name": "collector",
+        "name": "probe",
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
