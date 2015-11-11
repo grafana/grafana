@@ -1,0 +1,67 @@
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Type</strong>
+				</li>
+				<li class="tight-form-item">
+					<select class="input-small tight-form-input" ng-model="panel.pieType" ng-options="t for t in ['pie', 'donut']" ng-change="render()"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+<div class="editor-row">
+	<div class="section">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 110px">
+					<strong>Legend</strong>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Show" model="panel.legend.show" change="get_data()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<select class="input-small tight-form-input" ng-model="panel.legendType" ng-options="t for t in ['On graph', 'Table', 'Right side']" ng-change="render()"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+	<div class="section">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 105px">
+					<strong>Legend values</strong>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Max" model="panel.legend.max" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Avg" model="panel.legend.avg" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Current" model="panel.legend.current" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<!--<div class="tight-form last">-->
+			<!--<ul class="tight-form-list">-->
+				<!--<li class="tight-form-item" style="width: 105px">-->
+					<!--<strong>Decimals</strong>-->
+				<!--</li>-->
+				<!--<li style="width: 105px">-->
+					<!--<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"-->
+					<!--ng-model="panel.decimals" ng-change="render()" ng-model-onblur>-->
+				<!--</li>-->
+			<!--</ul>-->
+			<!--<div class="clearfix"></div>-->
+		<!--</div>-->
+	<!--</div>-->
+</div>
