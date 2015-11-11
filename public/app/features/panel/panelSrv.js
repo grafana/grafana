@@ -103,10 +103,6 @@ function (angular, _, config) {
       };
 
       $scope.getCurrentDatasource = function() {
-        if ($scope.datasource) {
-          return $q.when($scope.datasource);
-        }
-
         return datasourceSrv.get($scope.panel.datasource);
       };
 
