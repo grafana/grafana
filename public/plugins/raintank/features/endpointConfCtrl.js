@@ -284,7 +284,7 @@ function (angular, _) {
 
     $scope.remove = function(endpoint) {
       backendSrv.delete('/api/endpoints/' + endpoint.id).then(function() {
-        $scope.getEndpoints();
+        $location.path('/endpoints');
       });
     };
 
@@ -319,7 +319,7 @@ function (angular, _) {
         if (location) {
           $location.path(location);
         } else {
-          $location.path("/endpoints");
+          $location.path("endpoints");
         }
       });
     };
