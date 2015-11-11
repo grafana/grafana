@@ -18,7 +18,7 @@
 
 .table-panel-footer {
   text-align: center;
-  font-size: 80%;
+  font-size: 90%;
   line-height: 2px;
 
   ul {
@@ -35,16 +35,21 @@
     padding: 4px 12px;
     text-decoration: none;
     border-left-width: 0;
+
+    &:hover {
+      background-color: @grafanaTargetFuncBackground;
+    }
+
+    &.active {
+      font-weight: bold;
+      color: @blue;
+    }
   }
 }
 
 .table-panel-table {
   width: 100%;
   border-collapse: collapse;
-
-  tr {
-    border-bottom: 2px solid @bodyBackground;
-  }
 
   th {
     padding: 0;
@@ -57,10 +62,15 @@
   }
 
   td {
-    padding: 10px 0 10px 15px;
+    padding: 6px 0 6px 15px;
+    border-bottom: 2px solid @bodyBackground;
+    border-right: 2px solid @bodyBackground;
 
     &:first-child {
       padding-left: 15px;
+    }
+    &:last-child {
+      border-right: none;
     }
   }
 }
@@ -69,7 +79,7 @@
   background: @grafanaListAccent;
   border-top: 2px solid @bodyBackground;
   border-bottom: 2px solid @bodyBackground;
-  height: 30px;
+  height: 32px;
   position: absolute;
   top: 0;
   right: 0;
@@ -77,7 +87,7 @@
 }
 
 .table-panel-table-header-inner {
-  padding: 5px 0 5px 15px;
+  padding: 6px 0 6px 15px;
   text-align: left;
   color: @blue;
 

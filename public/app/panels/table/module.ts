@@ -20,6 +20,7 @@ export function tablePanel() {
       var data;
       var panel = scope.panel;
       var formaters = [];
+      var pageIndex = 0;
 
       function getTableHeight() {
         var panelHeight = scope.height || scope.panel.height || scope.row.height;
@@ -33,7 +34,13 @@ export function tablePanel() {
       function appendTableRows(tbodyElem) {
         var renderer = new TableRenderer(panel, data, scope.dashboard.timezone);
         tbodyElem.empty();
-        tbodyElem.html(renderer.render(0));
+        tbodyElem.html(renderer.render(pageIndex));
+      }
+
+      function switchPage(e) {
+        var el = $(e.currentTarget);
+        pageIndex = (parseInt(el.text(), 10)-1);
+        renderPanel();
       }
 
       function appendPaginationControls(footerElem) {
@@ -44,9 +51,17 @@ export function tablePanel() {
           return;
         }
 
+        var startPage = Math.max(pageIndex - 3, 0);
+        var endPage = Math.min(pageCount, startPage + 9);
+
         var paginationList = $('<ul></ul>');
-        for (var i = 0; i < pageCount; i++) {
-          var pageLinkElem = $('<li><a href="#">' + (i+1) + '</a></li>');
+
+        var prevLink = $('<li><a class="table-panel-page-link pointer">«</a></li>');
+        paginationList.append(prevLink);
+
+        for (var i = startPage; i < endPage; i++) {
+          var activeClass = i === pageIndex ? 'active' : '';
+          var pageLinkElem = $('<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i+1) + '</a></li>');
           paginationList.append(pageLinkElem);
         }
 
@@ -67,12 +82,20 @@ export function tablePanel() {
         appendPaginationControls(footerElem);
       }
 
+      elem.on('click', '.table-panel-page-link', switchPage);
+
+      scope.$on('$destroy', function() {
+        elem.off('click', '.table-panel-page-link');
+      });
+
       scope.$on('render', function(event, renderData) {
         data = renderData || data;
         if (!data) {
           scope.get_data();
           return;
         }
+
+        pageIndex = 0;
         renderPanel();
       });
     }

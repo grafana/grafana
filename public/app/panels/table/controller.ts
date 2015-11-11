@@ -42,6 +42,8 @@ export class TablePanelCtrl {
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
+      $scope.pageIndex = 0;
+
       if ($scope.panel.transform === 'annotations') {
         return annotationsSrv.getAnnotations($scope.dashboard).then(annotations => {
           $scope.dataRaw = annotations;
@@ -79,6 +81,12 @@ export class TablePanelCtrl {
     $scope.render = function() {
       $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
       $scope.table.sort($scope.panel.sort);
+
+      $scope.pageCount = Math.ceil($scope.table.rows.length / $scope.panel.pageSize);
+      $scope.showPagination = $scope.pageCount > 1;
+      $scope.showPrevPageLink = $scope.pageIndex > 0;
+      $scope.showNextPageLink = $scope.pageIndex < $scope.pageCount;
+
       panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
     };
 
