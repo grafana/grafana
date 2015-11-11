@@ -80,6 +80,22 @@ describe("rangeUtil", () => {
       var text = rangeUtil.describeTimeRange({from: 'now-13h', to: 'now'});
       expect(text).to.be('Last 13 hours')
     });
+
+    it('Date range with from and to both are in now-* format', () => {
+      var text = rangeUtil.describeTimeRange({from: 'now-6h', to: 'now-3h'});
+      expect(text).to.be('now-6h to now-3h')
+    });
+
+    it('Date range with from and to both are either in now-* or now/* format', () => {
+      var text = rangeUtil.describeTimeRange({from: 'now/d+6h', to: 'now-3h'});
+      expect(text).to.be('now/d+6h to now-3h')
+    });
+
+    it('Date range with from and to both are either in now-* or now+* format', () => {
+      var text = rangeUtil.describeTimeRange({from: 'now-6h', to: 'now+1h'});
+      expect(text).to.be('now-6h to now+1h')
+    });
+
   });
 
 });
