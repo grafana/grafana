@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"encoding/json"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/util"
@@ -82,8 +83,14 @@ func handleGetRegions(req *cwRequest, c *middleware.Context) {
 }
 
 func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
-	result := []interface{}{}
+	keys := []string{}
 	for key := range metricsMap {
+		keys = append(keys, key)
+	}
+	sort.Sort(sort.StringSlice(keys))
+
+	result := []interface{}{}
+	for _, key := range keys {
 		result = append(result, util.DynMap{"text": key, "value": key})
 	}
 
