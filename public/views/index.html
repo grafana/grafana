@@ -13,8 +13,8 @@
 		[[else]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
 		[[end]]
-		[[ range $css := .ThirdPartyCss ]]
-		<link rel="stylesheet" href="[[$.AppSubUrl]]/thirdparty[[ $css ]]">
+		[[ range $css := .ExternalPluginCss ]]
+		<link rel="stylesheet" href="[[$.AppSubUrl]]/plugins[[ $css ]]">
 		[[ end ]]
 
     <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
@@ -56,16 +56,16 @@
 			settings: [[.Settings]],
 		};
 
-		window.thirdParty =  {
-			MainLinks: [[.ThirdPartyMenu]]
+		window.externalPlugins =  {
+			MainLinks: [[.ExternalPluginMenu]]
 		};
 
     require(['app/app'], function (app) {
     	app.boot();
     })
 	</script>
-	[[ range $js := .ThirdPartyJs]]
-	<script src="[[$.AppSubUrl]]/thirdparty[[ $js ]]"></script>
+	[[ range $js := .ExternalPluginJs]]
+	<script src="[[$.AppSubUrl]]/plugins[[ $js ]]"></script>
 	[[ end ]]
 	[[if .GoogleAnalyticsId]]
 		<script>

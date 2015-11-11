@@ -3,16 +3,16 @@ package api
 import (
 	"encoding/json"
 	"github.com/Unknwon/macaron"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 )
 
-func InitThirdPartyRoutes(r *macaron.Macaron) {
+func InitExternalPluginRoutes(r *macaron.Macaron) {
 	/*
 		// Handle Auth and role requirements
 		if route.ReqSignedIn {
@@ -30,34 +30,33 @@ func InitThirdPartyRoutes(r *macaron.Macaron) {
 			}
 		}
 	*/
-	for _, integration := range plugins.Integrations {
-		log.Printf("adding routes for integration")
-		for _, route := range integration.Routes {
-			log.Printf("adding route %s %s", route.Method, route.Path)
-			r.Route(util.JoinUrlFragments("/thirdparty/", route.Path), route.Method, ThirdParty(route.Url))
+	for _, plugin := range plugins.ExternalPlugins {
+		log.Info("adding routes for external plugin")
+		for _, route := range plugin.Settings.Routes {
+			log.Info("adding route %s /plugins%s", route.Method, route.Path)
+			r.Route(util.JoinUrlFragments("/plugins/", route.Path), route.Method, ExternalPlugin(route.Url))
 		}
 	}
 }
 
-func ThirdParty(routeUrl string) macaron.Handler {
+func ExternalPlugin(routeUrl string) macaron.Handler {
 	return func(c *middleware.Context) {
 		path := c.Params("*")
 
 		//Create a HTTP header with the context in it.
 		ctx, err := json.Marshal(c.SignedInUser)
 		if err != nil {
-			c.JsonApiErr(500, "Not found", err)
+			c.JsonApiErr(500, "failed to marshal context to json.", err)
 			return
 		}
-		log.Printf(string(ctx))
 		targetUrl, _ := url.Parse(routeUrl)
-		proxy := NewThirdPartyProxy(string(ctx), path, targetUrl)
+		proxy := NewExternalPluginProxy(string(ctx), path, targetUrl)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}
 }
 
-func NewThirdPartyProxy(ctx string, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+func NewExternalPluginProxy(ctx string, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host

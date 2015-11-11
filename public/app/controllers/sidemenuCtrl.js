@@ -30,13 +30,15 @@ function (angular, _, $, config) {
         });
       }
 
-      if (_.isArray(window.thirdParty.MainLinks)) {
-        _.forEach(window.thirdParty.MainLinks, function(item) {
-          $scope.mainLinks.push({
-            text: item.text,
-            icon: item.icon,
-            href: $scope.getUrl(item.href)
-          });
+      if (_.isArray(window.externalPlugins.MainLinks)) {
+        _.forEach(window.externalPlugins.MainLinks, function(item) {
+          if (!item.adminOnly || contextSrv.hasRole('Admin')) {
+            $scope.mainLinks.push({
+              text: item.text,
+              icon: item.icon,
+              href: $scope.getUrl(item.href)
+            });
+          }
         });
       }
     };

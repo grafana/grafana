@@ -16,7 +16,7 @@ type PluginMeta struct {
 	Name string `json:"name"`
 }
 
-type ThirdPartyRoute struct {
+type ExternalPluginRoute struct {
 	Path            string `json:"path"`
 	Method          string `json:"method"`
 	ReqSignedIn     bool   `json:"req_signed_in"`
@@ -25,35 +25,35 @@ type ThirdPartyRoute struct {
 	Url             string `json:"url"`
 }
 
-type ThirdPartyJs struct {
+type ExternalPluginJs struct {
 	Src string `json:"src"`
 }
 
-type ThirdPartyMenuItem struct {
+type ExternalPluginMenuItem struct {
 	Text string `json:"text"`
 	Icon string `json:"icon"`
 	Href string `json:"href"`
 }
 
-type ThirdPartyCss struct {
+type ExternalPluginCss struct {
 	Href string `json:"href"`
 }
 
-type ThirdPartyIntegration struct {
-	Routes    []*ThirdPartyRoute    `json:"routes"`
-	Js        []*ThirdPartyJs       `json:"js"`
-	Css       []*ThirdPartyCss      `json:"css"`
-	MenuItems []*ThirdPartyMenuItem `json:"menu_items"`
+type ExternalPluginSettings struct {
+	Routes    []*ExternalPluginRoute    `json:"routes"`
+	Js        []*ExternalPluginJs       `json:"js"`
+	Css       []*ExternalPluginCss      `json:"css"`
+	MenuItems []*ExternalPluginMenuItem `json:"menu_items"`
 }
 
-type ThirdPartyPlugin struct {
-	PluginType  string                `json:"pluginType"`
-	Integration ThirdPartyIntegration `json:"integration"`
+type ExternalPlugin struct {
+	PluginType string                 `json:"pluginType"`
+	Settings   ExternalPluginSettings `json:"settings"`
 }
 
 var (
-	DataSources  map[string]interface{}
-	Integrations []ThirdPartyIntegration
+	DataSources     map[string]interface{}
+	ExternalPlugins []ExternalPlugin
 )
 
 type PluginScanner struct {
@@ -67,7 +67,7 @@ func Init() {
 
 func scan(pluginDir string) error {
 	DataSources = make(map[string]interface{})
-	Integrations = make([]ThirdPartyIntegration, 0)
+	ExternalPlugins = make([]ExternalPlugin, 0)
 
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
@@ -131,13 +131,13 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 
 		DataSources[datasourceType.(string)] = pluginJson
 	}
-	if pluginType == "thirdPartyIntegration" {
-		p := ThirdPartyPlugin{}
+	if pluginType == "externalPlugin" {
+		p := ExternalPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
-		Integrations = append(Integrations, p.Integration)
+		ExternalPlugins = append(ExternalPlugins, p)
 	}
 
 	return nil
