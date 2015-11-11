@@ -111,8 +111,8 @@ export class TableRenderer {
   }
 
   render(page) {
-    let endPos = Math.min(this.panel.pageSize, this.table.rows.length);
-    let startPos = 0;
+    let startPos = page * this.panel.pageSize;
+    let endPos = Math.min(startPos + this.panel.pageSize, this.table.rows.length);
     var html = "";
 
     for (var y = startPos; y < endPos; y++) {
