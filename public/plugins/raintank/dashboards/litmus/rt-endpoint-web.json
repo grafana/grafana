@@ -106,7 +106,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "scale(averageSeries(litmus.$endpoint.$collector.$protocol.ok_state), 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.$protocol.ok_state), 100)"
             }
           ],
           "thresholds": "0,100,100",
@@ -157,7 +157,7 @@
           "targets": [
             {
               "refId": "A",
-              "target": "averageSeries(litmus.$endpoint.$collector.$protocol.total)"
+              "target": "averageSeries(litmus.$endpoint.$probe.$protocol.total)"
             }
           ],
           "thresholds": "",
@@ -207,7 +207,7 @@
           "targets": [
             {
               "refId": "C",
-              "target": "litmus.$endpoint.$collector.$protocol.throughput"
+              "target": "averageSeries(litmus.$endpoint.$probe.$protocol.throughput)"
             }
           ],
           "thresholds": "",
@@ -225,7 +225,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping status for $endpoint (all selected Collectors)"
+      "title": "ping status for $endpoint (all selected Probes)"
     },
     {
       "collapse": false,
@@ -304,12 +304,12 @@
           "targets": [
             {
               "refId": "A",
-              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$collector.$protocol.error_state, 'sum'), 1), 2)"
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$probe.$protocol.error_state, 'sum'), 1), 2)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "WEB ERRORS (ALL SELECTED COLLECTORS)",
+          "title": "WEB ERRORS (ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -377,28 +377,28 @@
           "targets": [
             {
               "refId": "A",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dns), 'dns')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.dns), 'dns')"
             },
             {
               "refId": "B",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.connect), 'connect')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.connect), 'connect')"
             },
             {
               "refId": "E",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.send), 'send')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.send), 'send')"
             },
             {
               "refId": "C",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.wait), 'wait')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.wait), 'wait')"
             },
             {
               "refId": "D",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.recv), 'recv')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.recv), 'recv')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "WEB RESPONSE (ALL SELECTED COLLECTORS)",
+          "title": "WEB RESPONSE (ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -463,16 +463,16 @@
           "targets": [
             {
               "refId": "A",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.throughput), 'throughput')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.throughput), 'throughput')"
             },
             {
               "refId": "B",
-              "target": "alias(averageSeries(litmus.$endpoint.$collector.$protocol.dataLength), 'content size')"
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.$protocol.dataLength), 'content size')"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "WEB THROUGHPUT (ALL SELECTED COLLECTORS)",
+          "title": "WEB THROUGHPUT (ALL SELECTED PROBES)",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -552,13 +552,13 @@
             {
               "hide": false,
               "refId": "A",
-              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$collector.$protocol.total, $outliers), 2)",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$probe.$protocol.total, $outliers), 2)",
               "textEditor": false
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "WEB PERFORMANCE (EACH INDIVIDUAL COLLECTOR)",
+          "title": "WEB PERFORMANCE (EACH INDIVIDUAL PROBE)",
           "tooltip": {
             "shared": true,
             "value_type": "individual"
@@ -573,7 +573,7 @@
         }
       ],
       "showTitle": false,
-      "title": "ping performance for $endpoint (mean of each selected Collector)"
+      "title": "ping performance for $endpoint (mean of each selected Probe)"
     }
   ],
   "time": {
@@ -632,10 +632,10 @@
         "allFormat": "glob",
         "datasource": "raintank",
         "includeAll": true,
-        "label": "Collector(s)",
+        "label": "Probe(s)",
         "multi": true,
         "multiFormat": "glob",
-        "name": "collector",
+        "name": "probe",
         "query": "litmus.$endpoint.*",
         "refresh": true,
         "refresh_on_load": true,
@@ -673,7 +673,7 @@
             "selected": false
           }
         ],
-        "query": "litmus.$endpoint.$collector.{http,https}",
+        "query": "litmus.$endpoint.$probe.{http,https}",
         "refresh_on_load": false,
         "type": "query"
       },

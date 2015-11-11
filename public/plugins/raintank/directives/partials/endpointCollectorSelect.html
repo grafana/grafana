@@ -2,7 +2,7 @@
 	<!-- TAGS -->
 	<div style="min-height: 40px;">
 		<input id="rt-radio-collector-{{model['monitor_type_id']}}-1" class="rt-radio-custom"  type="radio" ng-model="footprint.value" value="dynamic" ng-click="show()">
-		<label for="rt-radio-collector-{{model['monitor_type_id']}}-1" class="rt-radio-body-label">Dynamic Footprint</label><i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A dynamic footprint is a set of collectors that will update as you add and remove collectors from tag.'" data-original-title="" title=""></i>
+		<label for="rt-radio-collector-{{model['monitor_type_id']}}-1" class="rt-radio-body-label">Dynamic Footprint</label><i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A dynamic footprint is a set of probes that will update as you add and remove the probes from a tag.'" data-original-title="" title=""></i>
 		<div class="editor-option" ng-show="footprint.value == 'dynamic'">
 			<div class="rt-collector-select pointer" ng-click="show()">
 			 	<a class="variable-value-link">
@@ -14,7 +14,7 @@
 			</div>
 			<div ng-if="selectorOpen" class="collector-dropdown variable-value-dropdown">
 				<div class="collector-dropdown-search search-field-wrapper">
-					<input class="collector-dropdown-search-input" type="text" placeholder="Search collector values" give-focus="giveFocus" tabindex="1"
+					<input class="collector-dropdown-search-input" type="text" placeholder="Search probe values" give-focus="giveFocus" tabindex="1"
 					ng-keydown="keyDown($event)" ng-model="query.text" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 				</div>
 				<div class="tags collector-dropdown-container variable-options-container">
@@ -33,7 +33,7 @@
 						</a>
 					</div>
 					<div class="collector-dropdown-container-col">
-						<p class="collector-dropdown-desc">Tags allow you to create a <strong>dynamic</strong> set of collectors which will update as you add and remove collectors from tag groups.</p>
+						<p class="collector-dropdown-desc">Tags allow you to create a <strong>dynamic</strong> set of probes which will update as you add and remove probes from tag groups.</p>
 					</div>
 				</div>
 				<div class="collector-dropdown-footer">
@@ -48,7 +48,7 @@
 	<div style="min-height: 40px;">
 		<input id="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-custom" type="radio" ng-model="footprint.value" value="static"  ng-click="show()">
 		<label for="rt-radio-collector-{{model['monitor_type_id']}}-2" class="rt-radio-body-label">Static Footprint</label>
-		<i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A Static footprint will allow your monitoring footprint to remain the same, only monitoring from the specific individual collectors.'" data-original-title="" title=""></i>
+		<i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'A Static footprint will allow your monitoring footprint to remain the same, only monitoring from the specific individual probes.'" data-original-title="" title=""></i>
 		<div class="editor-option" ng-show="footprint.value == 'static'">
 			<div class="rt-collector-select pointer" ng-click="show()">
 			 	<a class="variable-value-link">
@@ -79,7 +79,7 @@
 					</a>
 				</div>
 				<div class="collector-dropdown-container-col">
-					<p class="collector-dropdown-desc">Selecting individual collectors will allow your monitoring footprint to remain <strong>static</strong>, always monitoring from the selected collectors.</p>
+					<p class="collector-dropdown-desc">Selecting individual probes will allow your monitoring footprint to remain <strong>static</strong>, always monitoring from the selected probes.</p>
 				</div>
 			</div>
 			<div ng-show="error" class="collector-dropdown-footer">

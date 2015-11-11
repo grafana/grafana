@@ -34,15 +34,14 @@
 // raintank Variables
 // -------------------------
 @raintankPanelBackground: 	@grayDarker;
-
-@raintankPanelBorder: 		solid 1px @grayDark;
+@raintankRowBackground: 	@grayDark;
+@raintankPanelBorder: 		solid 1px darken(@grayDark, 4%);
 @raintankTriggerBorder:		solid 1px #555;
 
-@rt-primary:				@rt-blue;
 @rt-emphasis:				lighten(@textColor, 10%);
 
 // Graphite Target Editor
-@raintankTargetBorder:         @black;
+@raintankTargetBorder:         lighten(@grayDark,7%);
 @raintankTargetBackground:     @grayDark;
 @raintankTargetColor:          #c8c8c8;
 @raintankTargetColorHide:      darken(#c8c8c8, 25%);
@@ -91,7 +90,7 @@
 @inputDisabledBackground:       #555;
 @formActionsBackground:         transparent;
 @inputHeight:                   @baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-@raintankSelectBackground:		@grayDarker;
+@raintankSelectBackground:		@raintankTargetFuncBackground;
 
 // images
 @rt-checkboxImageUrl: '../img/rt-checkbox_white.png';
