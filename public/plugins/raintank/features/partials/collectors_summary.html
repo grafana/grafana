@@ -1,4 +1,4 @@
-<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Collectors" show-menu-btn="!grafana.sidemenu">
+<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Probes" show-menu-btn="!grafana.sidemenu">
 	<ul class="nav">
 		<li class="top-nav-title ng-binding"> <!-- <span class="top-nav-title ng-binding" style="margin-left:-20px; margin-right:20px;">{{collector.name}}</span> -->
 			<div>
@@ -28,7 +28,7 @@
 	<div class="rt-page-header-area">
 		<h1 class="rt-h1">{{collector.name}}</h1>
 
-		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public" bs-tooltip="'This is a public collector'"></i></span>
+		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public" bs-tooltip="'This is a public probe'"></i></span>
 		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="!collector.public" bs-tooltip="'This is a private collector'"></i></span>
 	</div>
 	<div class="editor-row rt-detail-pages">
@@ -113,7 +113,7 @@
 					<div class="rt-box-body no-padding" style="min-height: 50px">
 						<div class="rt-mini-form new-endpoint-domain-form collectorCurrentStatus">
 				            <div class="rt-mini-form-col">
-				              <label class="rt-form-label-medium">Collector Name</label>
+				              <label class="rt-form-label-medium">Probe Name</label>
 							  <input type="text" class="rt-form-input" ng-model="collectorUpdates.name" required="">
 				            </div>
 							<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin" style="padding: 15px 0;">
