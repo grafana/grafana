@@ -185,7 +185,7 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
-	InitThirdPartyRoutes(r)
+	InitExternalPluginRoutes(r)
 
 	r.NotFound(NotFoundHandler)
 }

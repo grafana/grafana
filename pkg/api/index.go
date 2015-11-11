@@ -52,25 +52,25 @@ func setIndexViewData(c *middleware.Context) error {
 	if setting.GoogleTagManagerId != "" {
 		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
 	}
-	// This can be loaded from the DB/file to allow 3rdParty integration
-	thirdPartyJs := make([]string, 0)
-	thirdPartyCss := make([]string, 0)
-	thirdPartyMenu := make([]*plugins.ThirdPartyMenuItem, 0)
-	for _, integration := range plugins.Integrations {
-		for _, js := range integration.Js {
-			thirdPartyJs = append(thirdPartyJs, js.Src)
+
+	externalPluginJs := make([]string, 0)
+	externalPluginCss := make([]string, 0)
+	externalPluginMenu := make([]*plugins.ExternalPluginMenuItem, 0)
+	for _, plugin := range plugins.ExternalPlugins {
+		for _, js := range plugin.Settings.Js {
+			externalPluginJs = append(externalPluginJs, js.Src)
 		}
-		for _, css := range integration.Css {
-			thirdPartyCss = append(thirdPartyCss, css.Href)
+		for _, css := range plugin.Settings.Css {
+			externalPluginCss = append(externalPluginCss, css.Href)
 		}
-		for _, item := range integration.MenuItems {
-			thirdPartyMenu = append(thirdPartyMenu, item)
+		for _, item := range plugin.Settings.MenuItems {
+			externalPluginMenu = append(externalPluginMenu, item)
 		}
 
 	}
-	c.Data["ThirdPartyJs"] = thirdPartyJs
-	c.Data["ThirdPartyCss"] = thirdPartyCss
-	c.Data["ThirdPartyMenu"] = thirdPartyMenu
+	c.Data["ExternalPluginJs"] = externalPluginJs
+	c.Data["ExternalPluginCss"] = externalPluginCss
+	c.Data["ExternalPluginMenu"] = externalPluginMenu
 
 	return nil
 }

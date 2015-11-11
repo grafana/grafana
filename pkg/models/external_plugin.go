@@ -1,6 +1,6 @@
 package models
 
-type ThirdPartyRoute struct {
+type ExternalPluginRoute struct {
 	Path            string   `json:"path"`
 	Method          string   `json:"method"`
 	ReqSignedIn     bool     `json:"req_signed_in"`
@@ -9,23 +9,23 @@ type ThirdPartyRoute struct {
 	Url             string   `json:"url"`
 }
 
-type ThirdPartyJs struct {
+type ExternalPluginJs struct {
 	src string `json:"src"`
 }
 
-type ThirdPartyMenuItem struct {
+type ExternalPluginMenuItem struct {
 	Text string `json:"text"`
 	Icon string `json:"icon"`
 	Href string `json:"href"`
 }
 
-type ThirdPartyCss struct {
+type ExternalPluginCss struct {
 	Href string `json:"href"`
 }
 
-type ThirdPartyIntegration struct {
-	Routes    []*ThirdPartyRoute    `json:"routes"`
-	Js        []*ThirdPartyJs       `json:"js"`
-	Css       []*ThirdPartyCss      `json:"css"`
-	MenuItems []*ThirdPartyMenuItem `json:"menu_items"`
+type ExternalPluginIntegration struct {
+	Routes    []*ExternalPluginRoute    `json:"routes"`
+	Js        []*ExternalPluginJs       `json:"js"`
+	Css       []*ExternalPluginCss      `json:"css"`
+	MenuItems []*ExternalPluginMenuItem `json:"menu_items"`
 }
