@@ -126,7 +126,7 @@ function (angular) {
           esAgg["date_histogram"] = {
             "interval": this.getInterval(aggDef),
             "field": this.timeField,
-            "min_doc_count": 1,
+            "min_doc_count": 0,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
           break;
