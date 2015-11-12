@@ -106,10 +106,22 @@ function (angular, _, $, coreModule, config) {
       });
     };
 
+    $scope.loadAdHocTypes = function() {
+
+      $scope.adHocTypes = [];
+      for (var panel in config.panels) {
+        $scope.adHocTypes.push({
+          text: config.panels[panel].name,
+          href: $scope.getUrl('/panel-adHoc/' + panel)
+        });
+      }
+    };
+
     $scope.updateMenu = function() {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.orgMenu = [];
+      $scope.adHocTypes = [];
 
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {

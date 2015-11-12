@@ -93,6 +93,7 @@ export class TimePickerCtrl {
   openDropdown() {
     this.init();
     this.isOpen = true;
+
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {
       value: this.dashboard.refresh,
