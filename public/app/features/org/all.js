@@ -1,5 +1,6 @@
 define([
   './alertsCtrl',
+  './alertEditCtrl',
   './datasourcesCtrl',
   './datasourceEditCtrl',
   './orgUsersCtrl',

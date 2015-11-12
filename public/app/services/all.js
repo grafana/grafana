@@ -1,4 +1,5 @@
 define([
+  './alertMgrSrv',
   './alertSrv',
   './utilSrv',
   './datasourceSrv',
