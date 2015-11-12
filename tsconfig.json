@@ -1,7 +1,5 @@
 {
     "compilerOptions": {
-<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
-<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
         "sourceMap": true,
         "declaration": true,
         "outDir": "public_gen/app",
@@ -12,7 +10,6 @@
     },
     "files": [
         "public/app/components/panelmeta.ts",
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
         "public/app/controllers/signupCtrl.ts",
         "public/app/core/core.ts",
         "public/app/core/core_module.ts",
@@ -30,41 +27,5 @@
         "public/app/headers/moment/moment-node.d.ts",
         "public/app/headers/moment/moment.d.ts",
         "public/app/headers/require/require.d.ts"
-=======
-        "public/app/controllers/fileSearcher.ts",
-        "public/app/controllers/testCtrl.ts",
-        "public/app/core/core.ts",
-        "public/app/core/directives/cool_dir.ts",
-        "public/app/core/routes/module_loader.ts",
-        "public/app/core/time_series.ts",
-        "public/app/headers/require.d.ts"
->>>>>>> tech(typescript): its looking good
     ]
 }
-=======
-=======
->>>>>>> feat() started work on more feature rich time picker
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "declaration": true,
-        "noImplicitAny": false,
-        "removeComments": true,
-        "noLib": true,
-        "outDir": "public_gen/app",
-        "target": "ES5",
-        "rootDir": "public/app",
-        "sourceRoot": "public/app",
-        "module": "amd",
-        "noEmitOnError": true
-    },
-    "fileGlobs": [
-        "./public/app/**/*.ts",
-        "!./node_modules/**",
-        "!./public_gen/**",
-    ]
-}
-<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
->>>>>>> feat() started work on more feature rich time picker
-=======
->>>>>>> feat() started work on more feature rich time picker

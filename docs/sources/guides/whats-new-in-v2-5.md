@@ -33,11 +33,7 @@ and complex queries for logs or metrics.
 - Group by multiple terms or filters
   - Specify group by options like Top 5 based on Avg @value
 - Auto completion for field names
-<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 - Query only relevant indices based on time pattern
-=======
-- Query only relevant indicies based on time pattern
->>>>>>> docs(): update to install docs and whats new in 2.5
 - Alias patterns for short readable series names
 
 Try the new Elasticsearch query editor on the [play.grafana.org](http://play.grafana.org/dashboard/db/elasticsearch-metrics) site.
@@ -96,11 +92,7 @@ This version also brings some new features for user management.
 
 ### Breaking changes
 There have been some changes to the data source plugin API. If you are using a custom plugin check that there is an update for it before you upgrade. Also
-<<<<<<< fea81cd595d8167f0b82424200d50d18d82ae5a8
 the new time picker does not currently support custom quick ranges like the last one did. This will likely be added in a
-=======
-the new time picker does not currenty support custom quick ranges like the last one did. This will likey be added in a
->>>>>>> docs(): update to install docs and whats new in 2.5
 future release.
 
 ### Changelog

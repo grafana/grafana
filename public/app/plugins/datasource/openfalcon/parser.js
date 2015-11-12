@@ -156,7 +156,6 @@ define([
       return node;
     },
 
-<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
     boolExpression: function() {
       if (!this.match('bool')) {
         return null;
@@ -168,8 +167,6 @@ define([
       };
     },
 
-=======
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
     functionParameters: function () {
       if (this.match(')') || this.match('')) {
         return [];
@@ -179,10 +176,7 @@ define([
         this.functionCall() ||
         this.numericLiteral() ||
         this.seriesRefExpression() ||
-<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
         this.boolExpression() ||
-=======
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
         this.metricExpression() ||
         this.stringLiteral();
 
@@ -268,8 +262,4 @@ define([
   };
 
   return Parser;
-<<<<<<< 48155c49f466021136cd8fff8665058dd59c198b
 });
-=======
-});
->>>>>>> [OWL-17] Add "Open-Falcon" data source.

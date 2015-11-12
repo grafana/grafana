@@ -1,20 +1,5 @@
-<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
-=======
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
->>>>>>> [OWL-30] Add Echarts map to Grafana
 cfg.json
-=======
-<<<<<<< 69731ad64d6739e64bddf8f0ed4807f151d3c0c8
->>>>>>> [OWL-30] Add Echarts map to Grafana
 open-falcon/data/*.json
-=======
->>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
-=======
-open-falcon/data/*.json
->>>>>>> [OWL-30] Add Echarts map to Grafana
->>>>>>> [OWL-30] Add Echarts map to Grafana
 grafana
 node_modules
 coverage/
@@ -48,29 +33,6 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
-<<<<<<< 982b00e21b6fd691134ad23c6e93ffcc941308bb
-<<<<<<< 4080e71f0162df6f7aadfa1ac979c53ba86b9bba
-<<<<<<< d2990b60ec74138d9a51007b47efbcb10200a2cf
 grafana
-<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
-<<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
 .notouch
 .DS_Store
-<<<<<<< 13db6cebceeffaef68d4e1cd288cc7d116261413
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
-
-
-*.DS_Store
->>>>>>> [OWL-52] Add servers distribution map among provinces
-=======
-grafana
->>>>>>> feat(signup): added back the welcome on signup completed email
-=======
-tsconfig.json
->>>>>>> tech(typescript): converted signup controller to typescript
-=======
->>>>>>> feat() started work on more feature rich time picker
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces

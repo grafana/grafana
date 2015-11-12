@@ -77,25 +77,11 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// User settings
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
-<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
-=======
-	AllowUserSignUp        bool
-	AllowUserOrgCreate     bool
-	AutoAssignOrg          bool
-	AutoAssignOrgRole      string
-	RequireEmailValidation bool
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 
 	// Http auth
 	AdminUser     string
@@ -416,13 +402,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 
-<<<<<<< 2f1438800f66d353ba27af074d29b3439f6ba16a
 	if err := validateStaticRootPath(); err != nil {
 		return err
 	}
 
-=======
->>>>>>> feat(dataproxy): added whitelist setting and feature for data proxies, closes #2626
 	// read security settings
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()
@@ -478,19 +461,13 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	readSessionConfig()
 	readSmtpSettings()
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
 	readQuotaSettings()
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
 
 	return nil
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 }
 
 func readSessionConfig() {

@@ -4,7 +4,6 @@ type SignUpForm struct {
 	Email string `json:"email" binding:"Required"`
 }
 
-<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
 type SignUpStep2Form struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`
@@ -14,8 +13,6 @@ type SignUpStep2Form struct {
 	OrgName  string `json:"orgName"`
 }
 
-=======
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 type AdminCreateUserForm struct {
 	Email    string `json:"email"`
 	Login    string `json:"login"`

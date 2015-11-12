@@ -1,26 +1,13 @@
 package api
 
 import (
-<<<<<<< b35a158ee7a28a445c38102e0f8a056ff35e010f
-<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
 	"github.com/Cepave/grafana/pkg/api/dtos"
-=======
->>>>>>> Replace the import path with github.com/Cepave/grafana.
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/metrics"
 	"github.com/Cepave/grafana/pkg/middleware"
 	m "github.com/Cepave/grafana/pkg/models"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/util"
-=======
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
->>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 )
 
 // GET /api/org

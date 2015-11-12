@@ -6,10 +6,6 @@
 
 /// <reference path="../jquery/jquery.d.ts" />
 
-<<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
-=======
-declare var angular: angular.IAngularStatic;
->>>>>>> tech(typescript): converted signup controller to typescript
 
 // Support for painless dependency injection
 interface Function {
@@ -20,10 +16,7 @@ interface Function {
 import ng = angular;
 // Support AMD require
 declare module 'angular' {
-<<<<<<< 9f143c1b0a87ec72b64ae4ee2a5619a80c1ec1ef
     var angular: angular.IAngularStatic;
-=======
->>>>>>> tech(typescript): converted signup controller to typescript
     export = angular;
 }
 

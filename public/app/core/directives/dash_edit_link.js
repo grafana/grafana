@@ -35,14 +35,10 @@ function ($, coreModule) {
         var lastEditor;
 
         function hideEditorPane() {
-<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
           if (editorScope) {
             scope.appEvent('dash-editor-hidden', lastEditor);
             editorScope.dismiss();
           }
-=======
-          if (editorScope) { editorScope.dismiss(); }
->>>>>>> refactor: improving structure, moving things into a core module
         }
 
         function showEditorPane(evt, payload, editview) {
@@ -58,11 +54,6 @@ function ($, coreModule) {
 
           hideEditorPane();
 
-<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
-=======
-          scope.exitFullscreen();
-
->>>>>>> refactor: improving structure, moving things into a core module
           lastEditor = payload.src;
           editorScope = payload.scope ? payload.scope.$new() : scope.$new();
 
@@ -82,12 +73,8 @@ function ($, coreModule) {
           };
 
           var src = "'" + payload.src + "'";
-<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
           var cssClass = payload.cssClass || 'gf-box';
           var view = $('<div class="' + cssClass + '" ng-include="' + src + '"></div>');
-=======
-          var view = $('<div class="gf-box" ng-include="' + src + '"></div>');
->>>>>>> refactor: improving structure, moving things into a core module
 
           if (payload.cssClass) {
             view.addClass(payload.cssClass);

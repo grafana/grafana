@@ -60,15 +60,7 @@ function (_) {
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
-<<<<<<< 102cf94a9067d823c71ed6f91004e744fc87bbf4:public/app/plugins/datasource/influxdb/influx_series.js
-<<<<<<< 9e73171717d0846fdbbb9ebf5c1e1e1d4377aaaf:public/app/plugins/datasource/influxdb/influx_series.js
       var segIndex = parseInt(group, 10);
-=======
-      var segIndex = parseInt(group, 10)
->>>>>>> feat(influxdb): More alias options, can now use  syntax to reference part of a measurement name (seperated by dots), closes #2599:public/app/plugins/datasource/influxdb/influxSeries.js
-=======
-      var segIndex = parseInt(group, 10);
->>>>>>> fix(): fixed problems in last commit:public/app/plugins/datasource/influxdb/influxSeries.js
 
       if (group === 'm' || group === 'measurement') { return series.name; }
       if (group === 'col') { return series.columns[index]; }

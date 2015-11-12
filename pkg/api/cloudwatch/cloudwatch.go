@@ -11,12 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
-<<<<<<< 1a2669e1afb7e1d2516e492e2519ccfb6b35f76b
 	"github.com/Cepave/grafana/pkg/middleware"
-=======
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
->>>>>>> refactoring: some minor refactoring and changes to AWS profile PR #3053
 )
 
 type actionHandler func(*cwRequest, *middleware.Context)

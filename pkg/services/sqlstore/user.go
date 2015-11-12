@@ -321,11 +321,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
-<<<<<<< 0ed5b14584fdd088d8a6c299c9614a453cbc8e80
 			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
-=======
-			"DELETE FROM user WHERE id = ?",
->>>>>>> fix(db): remove stars and tags when removing user or dashboard, fixes #2016
 		}
 
 		for _, sql := range deletes {

@@ -44,15 +44,7 @@ function (angular, _, config) {
       };
 
       $scope.addDataQuery = function(datasource) {
-<<<<<<< a2e8a1a99c1489f6667273cb59bd2ea903857a39
-<<<<<<< a07e6ed8cd8b3dcf9178d85421158e05a7a4518a
         $scope.dashboard.addDataQueryTo($scope.panel, datasource);
-=======
-        $scope.panel.targets.push({target: '', datasource: datasource});
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
-=======
-        $scope.dashboard.addDataQueryTo($scope.panel, datasource);
->>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId)
       };
 
       $scope.removeDataQuery = function (query) {

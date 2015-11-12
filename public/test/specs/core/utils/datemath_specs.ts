@@ -1,4 +1,3 @@
-<<<<<<< c2c5414f721c2b21b957173f2def0a4367a70051
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
 import dateMath = require('app/core/utils/datemath')
@@ -116,18 +115,6 @@ describe("DateMath", () => {
       var date = dateMath.parseDateMath('2', moment([2014, 1, 5]));
       expect(date).to.equal(undefined);
     });
-=======
-import {DateMath} from 'app/core/utils/datemath'
-
-declare var describe: any;
-declare var expect: any;
-declare var it: any;
-
-describe("test", () => {
-
-  it("hello", () => {
-    expect(true).to.be(true);
->>>>>>> feat() started work on more feature rich time picker
   });
 
 });

@@ -3,23 +3,9 @@ package sqlstore
 import (
 	"time"
 
-<<<<<<< b35a158ee7a28a445c38102e0f8a056ff35e010f
-<<<<<<< 0ed5b14584fdd088d8a6c299c9614a453cbc8e80
 	"github.com/Cepave/grafana/pkg/bus"
 	"github.com/Cepave/grafana/pkg/events"
-<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
-=======
-	"github.com/Cepave/grafana/pkg/log"
->>>>>>> Replace the import path with github.com/Cepave/grafana.
 	m "github.com/Cepave/grafana/pkg/models"
-=======
-=======
-	"github.com/Unknwon/log"
->>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
-	m "github.com/grafana/grafana/pkg/models"
->>>>>>> fix(db): remove stars and tags when removing user or dashboard, fixes #2016
 )
 
 func init() {
@@ -163,11 +149,6 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 
 func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 	return inTransaction2(func(sess *session) error {
-<<<<<<< b35a158ee7a28a445c38102e0f8a056ff35e010f
-=======
-		log.Info("address %s", cmd.Address1)
-
->>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 		org := m.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,

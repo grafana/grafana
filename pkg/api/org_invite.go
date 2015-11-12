@@ -168,12 +168,7 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 	user := &cmd.Result
 
 	bus.Publish(&events.SignUpCompleted{
-<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
 		Name:  user.NameOrFallback(),
-=======
-		Id:    user.Id,
-		Name:  user.Name,
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 		Email: user.Email,
 	})
 
@@ -213,25 +208,12 @@ func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool,
 		return false, rsp
 	}
 
-<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
-<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
-=======
->>>>>>> feat(signup): progress on new signup flow, #2353
 	if setActive {
 		// set org to active
 		if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
 			return false, ApiError(500, "Failed to set org as active", err)
 		}
 	}
-<<<<<<< 94d2e9c8fb0de6793fe2500f1c0c0cbc4c3ea4f9
-=======
-	loginUserWithUser(&user, c)
-
-	metrics.M_Api_User_SignUpCompleted.Inc(1)
-	metrics.M_Api_User_SignUpInvite.Inc(1)
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
-=======
->>>>>>> feat(signup): progress on new signup flow, #2353
 
 	return true, nil
 }

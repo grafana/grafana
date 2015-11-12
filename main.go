@@ -11,9 +11,7 @@ import (
 	"syscall"
 	"time"
 
-<<<<<<< 072caca2c6e358edadedc76a9c996c33fd47837b
 	"github.com/Cepave/grafana/pkg/cmd"
-<<<<<<< 0638f0a96a50b401c204ce09beabfecd2073bb48
 	"github.com/Cepave/grafana/pkg/log"
 	"github.com/Cepave/grafana/pkg/login"
 	"github.com/Cepave/grafana/pkg/metrics"
@@ -24,40 +22,6 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
-<<<<<<< 40884066c2e76363138819a297bc434060a9218b
-<<<<<<< dd59006883d8094231b294b25a1a91366264034d
-<<<<<<< a84f1f0a3df6380f5a6561dd65aca819f7df5e8a
-=======
-<<<<<<< 38ac1df282a252d7aa4dae518b4633cea6f2ddc1
->>>>>>> Replace the import path with github.com/Cepave/grafana.
-=======
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
-=======
-=======
-	"github.com/grafana/grafana/pkg/cmd"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
->>>>>>> inital backend suport for quotas. issue #321
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/social"
-<<<<<<< dd59006883d8094231b294b25a1a91366264034d
->>>>>>> [OWL-32] Replace github.com/grafana/grafana/pkg/cmd with github.com/Cepave/grafana/pkg/cmd in main.go
-=======
->>>>>>> Replace the import path with github.com/Cepave/grafana.
-=======
->>>>>>> inital backend suport for quotas. issue #321
->>>>>>> inital backend suport for quotas. issue #321
-=======
->>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 var version = "master"
@@ -92,8 +56,6 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-
-	models.InitQuotaDefaults()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)

@@ -1,18 +1,12 @@
 define([
   'angular',
-<<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129
   'config',
 ],
 function (angular, config) {
-=======
-],
-function (angular) {
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-<<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129
   module.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
 
     contextSrv.sidemenu = false;
@@ -39,13 +33,6 @@ function (angular) {
       backendSrv.post('/api/user/invite/complete', $scope.formModel).then(function() {
         window.location.href = config.appSubUrl + '/';
       });
-=======
-  module.controller('InvitedCtrl', function($scope, contextSrv) {
-
-    contextSrv.sidemenu = false;
-
-    $scope.init = function() {
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
     };
 
     $scope.init();

@@ -81,16 +81,12 @@ func Register(r *macaron.Macaron) {
 	bind := binding.Bind
 
 	// not logged in views
-	r.Get("/", reqSignedIn, Index)		
+	r.Get("/", reqSignedIn, Index)
 	r.Get("/logout", Logout)
 	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), wrap(LoginPost))
 	r.Get("/login/:name", quota("session"), OAuthLogin)
 	r.Get("/login", LoginView)
-<<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129
 	r.Get("/invite/:code", Index)
-=======
-	r.Get("/signup/invited", Index)
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
@@ -113,22 +109,13 @@ func Register(r *macaron.Macaron) {
 
 	// sign up
 	r.Get("/signup", Index)
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
-<<<<<<< e10a004f77a35c271848c113e6ad48ddcdccf129
 	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), wrap(SignUp))
-=======
-	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
-	r.Post("/api/user/signup", bind(dtos.SignUpForm{}), wrap(SignUp))
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 	r.Post("/api/user/signup/step2", bind(dtos.SignUpStep2Form{}), wrap(SignUpStep2))
 
 	// invited
 	r.Get("/api/user/invite/:code", wrap(GetInviteInfoByCode))
 	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), wrap(CompleteInvite))
-=======
-	r.Post("/api/user/signup", bind(m.CreateUserCommand{}), wrap(SignUp))
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 
 	// reset password
 	r.Get("/user/password/send-reset-email", Index)
@@ -173,7 +160,6 @@ func Register(r *macaron.Macaron) {
 		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
-<<<<<<< b35a158ee7a28a445c38102e0f8a056ff35e010f
 			r.Get("/quotas", wrap(GetOrgQuotas))
 		})
 
@@ -182,11 +168,6 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			r.Post("/users", quota("user"), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
-=======
-			r.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
-			r.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
-			r.Post("/users", bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
->>>>>>> feat(organization): added update org address to http api and to org details settings view, closes #2672
 			r.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			r.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
@@ -214,11 +195,7 @@ func Register(r *macaron.Macaron) {
 			r.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUser))
 			r.Delete("/users/:userId", wrap(RemoveOrgUser))
 			r.Get("/quotas", wrap(GetOrgQuotas))
-<<<<<<< dd59006883d8094231b294b25a1a91366264034d
 			r.Put("/quotas/:target", bind(m.UpdateOrgQuotaCmd{}), wrap(UpdateOrgQuota))
-=======
-			r.Put("/quotas/:target", bind(m.UpdateQuotaCmd{}), wrap(UpdateOrgQuota))
->>>>>>> inital backend suport for quotas. issue #321
 		}, reqGrafanaAdmin)
 
 		// auth api keys

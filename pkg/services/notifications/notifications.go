@@ -142,7 +142,6 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 	}
 
 	log.Info("User signup started: %s", evt.Email)
-<<<<<<< 480b120d4e1187bc8acaa8d22f3daffed4cb5a49
 
 	if evt.Email == "" {
 		return nil
@@ -158,8 +157,6 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 		},
 	})
 }
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 
 func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
@@ -169,24 +166,6 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 	return sendEmailCommandHandler(&m.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
-		Data: map[string]interface{}{
-<<<<<<< aaf45d229a76bf7461b0e22adf2a0fddb6c4a352
-			"Name": evt.Name,
-=======
-			"Email": evt.Email,
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
-		},
-	})
-}
-
-func signUpCompletedHandler(evt *events.SignUpCompleted) error {
-	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
-		return nil
-	}
-
-	return sendEmailCommandHandler(&m.SendEmailCommand{
-		To:       []string{evt.Email},
-		Template: tmplSignUpStarted,
 		Data: map[string]interface{}{
 			"Name": evt.Name,
 		},

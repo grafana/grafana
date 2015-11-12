@@ -4,19 +4,7 @@
     "company": "Cepave"
   },
   "name": "grafana",
-<<<<<<< e7decf74117323112b177ea81e91d87019384a4d
-<<<<<<< 1206577f03bcca37f8a1c16d33103c3dcff26757
-<<<<<<< 48de235319caae3f339553fb1ea4a455b949808c
   "version": "2.5.1-pre1",
-=======
-  "version": "2.1.2",
->>>>>>> updated version to v2.1.2
-=======
-  "version": "2.5.0-pre1",
->>>>>>> version bumped to 2.5
-=======
-  "version": "2.5.1-pre1",
->>>>>>> fix(dashboard): fix for collapse row by clicking on row title, fixes #3065
   "repository": {
     "type": "git",
     "url": "http://github.com/Cepave/grafana.git"

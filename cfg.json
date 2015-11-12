@@ -6,7 +6,7 @@
     },
     "datasource": {
         "type": "Open-Falcon",
-        "urlDashboard": "http://fastweb:fastowl@falcon-dashboard.owlemon.com",
+        "urlDashboard": "http://falcon-dashboard.owlemon.com",
         "urlQuery": "http://graph.owlemon.com:9966"
     }
 }

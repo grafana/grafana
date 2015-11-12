@@ -17,17 +17,6 @@ function (_, $, coreModule) {
           $("#tooltip, .tooltip").remove();
         });
 
-<<<<<<< 6bdfa28aeaae9b1754a9ff9a568ec1dd5c7ad294
-=======
-        $scope.$watch('submenuEnabled', function() {
-          if (!$scope.dashboard) {
-            return;
-          }
-
-          elem.toggleClass('submenu-controls-visible', $scope.submenuEnabled);
-        });
-
->>>>>>> refactor: improving structure, moving things into a core module
         $scope.$watch('dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;

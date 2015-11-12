@@ -8,10 +8,6 @@ function (angular, $, config) {
 
   var module = angular.module('grafana.directives');
 
-<<<<<<< a07e6ed8cd8b3dcf9178d85421158e05a7a4518a
-<<<<<<< 06a640d61d6c69647faf3e7b90c5dc602043001b
-=======
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
   module.directive('panelLoader', function($compile, $parse) {
     return {
       restrict: 'E',
@@ -44,7 +40,6 @@ function (angular, $, config) {
     };
   });
 
-<<<<<<< a07e6ed8cd8b3dcf9178d85421158e05a7a4518a
   module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
     var self = this;
 
@@ -60,13 +55,6 @@ function (angular, $, config) {
         if (editorScope) {
           editorScope.$destroy();
           options.parentElem.empty();
-=======
-          scope.require([panelPath + "/module"], function () {
-            var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
-            elem.append(panelEl);
-            $compile(panelEl)(scope);
-          });
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
         }
 
         editorScope = options.scope.$new();
@@ -77,14 +65,11 @@ function (angular, $, config) {
     };
   });
 
-=======
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
   module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
     return {
       restrict: 'E',
       link: function(scope, elem) {
         var editorScope;
-<<<<<<< a07e6ed8cd8b3dcf9178d85421158e05a7a4518a
 
         scope.$watch("panel.datasource", function() {
           var datasource = scope.target.datasource || scope.panel.datasource;
@@ -196,49 +181,6 @@ function (angular, $, config) {
 
         scope.$on("$destroy", function() {
           elem.off('mousedown', dragStartHandler);
-=======
-
-        scope.$watch("panel.datasource", function() {
-          var datasource = scope.target.datasource || scope.panel.datasource;
-
-          datasourceSrv.get(datasource).then(function(ds) {
-            if (editorScope) {
-              editorScope.$destroy();
-              elem.empty();
-            }
-
-            editorScope = scope.$new();
-            editorScope.datasource = ds;
-
-            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
-            elem.append(panelEl);
-            $compile(panelEl)(editorScope);
-          });
-        });
-      }
-    };
-  });
-
-  module.directive('queryOptionsLoader', function($compile, $parse, datasourceSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem) {
-        var editorScope;
-
-        scope.$watch("panel.datasource", function() {
-
-          datasourceSrv.get(scope.panel.datasource).then(function(ds) {
-            if (editorScope) {
-              editorScope.$destroy();
-              elem.empty();
-            }
-
-            editorScope = scope.$new();
-            var panelEl = angular.element(document.createElement('metric-query-options-' + ds.meta.type));
-            elem.append(panelEl);
-            $compile(panelEl)(editorScope);
-          });
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
         });
       }
     };
