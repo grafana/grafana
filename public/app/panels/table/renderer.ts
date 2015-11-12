@@ -95,7 +95,7 @@ export class TableRenderer {
     return this.formaters[colIndex](value);
   }
 
-  renderCell(columnIndex, value) {
+  renderCell(columnIndex, value, addWidthHack = false) {
     var value = this.formatColumnValue(columnIndex, value);
     var style = '';
     if (this.colorState.cell) {
@@ -107,7 +107,15 @@ export class TableRenderer {
       this.colorState.value = null;
     }
 
-    return '<td' + style + '>' + value + '</td>';
+    // because of the fixed table headers css only solution
+    // there is an issue if header cell is wider the cell
+    // this hack adds header content to cell (not visible)
+    var widthHack = '';
+    if (addWidthHack) {
+      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '<div>';
+    }
+
+    return '<td' + style + '>' + value + widthHack + '</td>';
   }
 
   render(page) {
@@ -117,11 +125,18 @@ export class TableRenderer {
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
-      html += '<tr>';
+      let cellHtml = '';
+      let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        html += this.renderCell(i, row[i]);
+        cellHtml += this.renderCell(i, row[i], y === 0);
       }
-      html += '</tr>';
+
+      if (this.colorState.row) {
+        rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
+        this.colorState.row = null;
+      }
+
+      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
     }
 
     return html;

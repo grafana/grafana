@@ -55,8 +55,8 @@ export function tablePanel() {
 
         var paginationList = $('<ul></ul>');
 
-        var prevLink = $('<li><a class="table-panel-page-link pointer">«</a></li>');
-        paginationList.append(prevLink);
+        // var prevLink = $('<li><a class="table-panel-page-link pointer">«</a></li>');
+        // paginationList.append(prevLink);
 
         for (var i = startPage; i < endPage; i++) {
           var activeClass = i === scope.pageIndex ? 'active' : '';
@@ -64,8 +64,8 @@ export function tablePanel() {
           paginationList.append(pageLinkElem);
         }
 
-        var nextLink = $('<li><a href="#">»</a></li>');
-        paginationList.append(nextLink);
+        // var nextLink = $('<li><a href="#">»</a></li>');
+        // paginationList.append(nextLink);
 
         footerElem.append(paginationList);
       }
