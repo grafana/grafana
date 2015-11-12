@@ -3,6 +3,7 @@ define([
   './datasourceEditCtrl',
   './orgUsersCtrl',
   './newOrgCtrl',
+  './userInviteCtrl',
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
 ], function () {});

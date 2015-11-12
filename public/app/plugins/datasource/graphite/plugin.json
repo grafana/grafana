@@ -5,14 +5,13 @@
   "type": "graphite",
   "serviceName": "GraphiteDatasource",
 
-  "module": "plugins/datasource/graphite/datasource",
+  "module": "app/plugins/datasource/graphite/datasource",
 
   "partials": {
-    "config": "app/plugins/datasource/graphite/partials/config.html",
-    "query": "app/plugins/datasource/graphite/partials/query.editor.html",
-    "annotations": "app/plugins/datasource/graphite/partials/annotations.editor.html"
+    "config": "app/plugins/datasource/graphite/partials/config.html"
   },
 
+  "defaultMatchFormat": "glob",
   "metrics": true,
   "annotations": true
 }

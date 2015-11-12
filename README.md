@@ -30,7 +30,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - Click and drag to zoom
 - Multiple Y-axis, logarithmic scales
 - Bars, Lines, Points
-- Smart Y-axis formating
+- Smart Y-axis formatting
 - Series toggles & color selector
 - Legend values, and formatting options
 - Grid thresholds, axis labels
@@ -69,7 +69,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package your self, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
 the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
@@ -133,7 +133,7 @@ And if you have time clone this repo and submit a pull request and help me make 
 the kickass metrics & devops dashboard we all dream about!
 
 Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
+please [sign the CLA](http://docs.grafana.org/project/cla/)
 
 ## License
 

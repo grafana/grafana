@@ -1,7 +1,27 @@
 define([
-  'kbn'
-], function(kbn) {
+  'kbn',
+  'app/core/utils/datemath'
+], function(kbn, dateMath) {
   'use strict';
+
+  describe('unit format menu', function() {
+    var menu = kbn.getUnitFormats();
+    menu.map(function(submenu) {
+      describe('submenu ' + submenu.text, function() {
+        it('should have a title', function() { expect(submenu.text).to.be.a('string'); });
+        it('should have a submenu', function() { expect(submenu.submenu).to.be.an('array'); });
+        submenu.submenu.map(function(entry) {
+          describe('entry ' + entry.text, function() {
+            it('should have a title', function() { expect(entry.text).to.be.a('string'); });
+            it('should have a format', function() { expect(entry.value).to.be.a('string'); });
+            it('should have a valid format', function() {
+              expect(kbn.valueFormats[entry.value]).to.be.a('function');
+            });
+          });
+        });
+      });
+    });
+  });
 
   function describeValueFormat(desc, value, tickSize, tickDecimals, result) {
 
@@ -25,6 +45,18 @@ define([
 
   describeValueFormat('none', 2.75e-10, 0, 10, '3e-10');
   describeValueFormat('none', 0, 0, 2, '0');
+  describeValueFormat('dB', 10, 1000, 2, '10.00 dB');
+
+  describeValueFormat('percent',  0, 0, 0, '0%');
+  describeValueFormat('percent', 53, 0, 1, '53.0%');
+  describeValueFormat('percentunit', 0.0, 0, 0, '0%');
+  describeValueFormat('percentunit', 0.278, 0, 1, '27.8%');
+  describeValueFormat('percentunit', 1.0, 0, 0, '100%');
+
+  describeValueFormat('currencyUSD', 7.42, 10000, 2, '$7.42');
+  describeValueFormat('currencyUSD', 1532.82, 1000, 1, '$1.53K');
+  describeValueFormat('currencyUSD', 18520408.7, 10000000, 0, '$19M');
+
   describeValueFormat('bytes', -1.57e+308, -1.57e+308, 2, 'NA');
 
   describeValueFormat('ns', 25, 1, 0, '25 ns');
@@ -60,53 +92,33 @@ define([
 
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {
-      var range = { from: kbn.parseDate('now-1h'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-1h'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 100, null);
       expect(str).to.be('30s');
     });
 
     it('10m 1600 resolution', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, null);
       expect(str).to.be('100ms');
     });
 
     it('fixed user interval', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, '10s');
       expect(str).to.be('10s');
     });
 
     it('short time range and user low limit', function() {
-      var range = { from: kbn.parseDate('now-10m'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, '>10s');
       expect(str).to.be('10s');
     });
 
     it('large time range and user low limit', function() {
-      var range = { from: kbn.parseDate('now-14d'), to: kbn.parseDate('now') };
+      var range = { from: dateMath.parse('now-14d'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1000, '>10s');
       expect(str).to.be('30m');
     });
-
   });
-
-  describe('relative time to date parsing', function() {
-    it('should handle negative time', function() {
-      var date = kbn.parseDateMath('-2d', new Date(2014,1,5));
-      expect(date.getTime()).to.equal(new Date(2014, 1, 3).getTime());
-    });
-
-    it('should handle multiple math expressions', function() {
-      var date = kbn.parseDateMath('-2d-6h', new Date(2014, 1, 5));
-      expect(date.toString()).to.equal(new Date(2014, 1, 2, 18).toString());
-    });
-
-    it('should return false when invalid expression', function() {
-      var date = kbn.parseDateMath('2', new Date(2014, 1, 5));
-      expect(date).to.equal(false);
-    });
-
-  });
-
 });

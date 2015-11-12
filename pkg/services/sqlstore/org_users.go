@@ -19,6 +19,12 @@ func init() {
 
 func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
+		// check if user exists
+		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, cmd.UserId); err != nil {
+			return err
+		} else if len(res) == 1 {
+			return m.ErrOrgUserAlreadyAdded
+		}
 
 		entity := m.OrgUser{
 			OrgId:   cmd.OrgId,

@@ -8,7 +8,7 @@ page_keywords: grafana, singlestat, panel, documentation
 
 ![](/img/v1/singlestat_panel2.png)
 
-The singlestat Panel allows you to show the one main summary stat of a single series (like max, min, avg, sum). It also provides thresholds to color the stat or the Panel background.
+The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
 ### Singlestat Panel Configuration
 
@@ -17,11 +17,11 @@ The singlestat panel has a normal query editor to allow you define your exact me
 <img class="no-shadow" src="/img/v1/Singlestat-BaseSettings.png">
 
 1. `Big Value`: Big Value refers to how we display the main stat for the Singlestat Panel. This is always a single value that is displayed in the Panel in between two strings, `Prefix` and  `Suffix`. The single number is calculated by choosing a function (min,max,average,current,total) of your metric query. This functions reduces your query into a single numeric value.
-2. `Font Size`: You can use this section 
-3. `Values`: The Value fields let you set the function (min, max, average, current, total) that your entire query is reduced into a single value with. You can also set the font size of theand font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
+2. `Font Size`: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
+3. `Values`: The Value fields let you set the function (min, max, average, current, total) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
 4. `Postfixes`: The Postfix fields let you define a custom label and font-size (as a %) to appear *after* the value
 5. `Units`: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
-6. `Decimals`: The Decimal field allows you to override the automatic decimal precision, and set it explicitely.
+6. `Decimals`: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
 
 ### Coloring
 
@@ -29,15 +29,15 @@ The coloring options of the Singlestat Panel config allow you to dynamically cha
 
 <img class="no-shadow" src="/img/v1/Singlestat-Coloring.png">
 
-1. `Background`: This checkbox applies the configured thresholds and colors to the entirity of the Singlestat Panel background.
+1. `Background`: This checkbox applies the configured thresholds and colors to the entirety of the Singlestat Panel background.
 2. `Value`: This checkbox applies the configured thresholds and colors to the summary stat.
-3. `Thresholds`: Change the background and value colors dyanmically within the panel, depending on the Singlestat value. The threshold field accepts **3 comma-separated** values, corresponding to the three colors directly to the right.
+3. `Thresholds`: Change the background and value colors dynamically within the panel, depending on the Singlestat value. The threshold field accepts **3 comma-separated** values, corresponding to the three colors directly to the right.
 4. `Colors`: Select a color and opacity
 5. `Invert order`: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/v1/ryg.png">).
 
 ### Spark Lines
 
-Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional graph panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
+Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional Graph Panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
 
 <img class="no-shadow" src="/img/v1/Singlestat-Sparklines.png">
 

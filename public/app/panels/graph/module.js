@@ -1,17 +1,16 @@
 define([
   'angular',
-  'app',
   'jquery',
   'lodash',
   'kbn',
   'moment',
-  'components/timeSeries',
-  'components/panelmeta',
+  'app/components/timeSeries',
+  'app/components/panelmeta',
   './seriesOverridesCtrl',
   './graph',
   './legend',
 ],
-function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -130,7 +129,7 @@ function (angular, app, $, _, kbn, moment, TimeSeries, PanelMeta) {
     $scope.refreshData = function(datasource) {
       panelHelper.updateTimeRange($scope);
 
-      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.rangeUnparsed, $scope.dashboard);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.dashboard);
 
       return panelHelper.issueMetricQuery($scope, datasource)
         .then($scope.dataHandler, function(err) {

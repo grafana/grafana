@@ -36,9 +36,19 @@ func getApiKey(c *Context) string {
 	return ""
 }
 
-func authDenied(c *Context) {
+func accessForbidden(c *Context) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(401, "Access denied", nil)
+		c.JsonApiErr(403, "Permission denied", nil)
+		return
+	}
+
+	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func notAuthorized(c *Context) {
+	if c.IsApiRequest() {
+		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
 
@@ -56,20 +66,20 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 			}
 		}
 		if !ok {
-			authDenied(c)
+			accessForbidden(c)
 		}
 	}
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
-			authDenied(c)
+		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
+			notAuthorized(c)
 			return
 		}
 
-		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
-			authDenied(c)
+		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+			accessForbidden(c)
 			return
 		}
 	}

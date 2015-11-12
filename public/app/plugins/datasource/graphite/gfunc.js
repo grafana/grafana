@@ -88,6 +88,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'multiplySeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
     name: 'asPercent',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
@@ -242,7 +249,7 @@ function (_, $) {
       {
         name: "function",
         type: "string",
-        options: ['sum', 'avg']
+        options: ['sum', 'avg', 'maxSeries']
       }
     ],
     defaultParams: [3, "sum"]

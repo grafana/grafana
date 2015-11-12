@@ -1,6 +1,7 @@
 {
   "name": "requirejs",
-  "version": "2.1.18",
+  "version": "2.1.20",
+  "ignore": [],
   "homepage": "http://requirejs.org",
   "authors": [
     "jrburke.com"

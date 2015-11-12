@@ -1,0 +1,70 @@
+<div class="modal-body" ng-controller="UserInviteCtrl" ng-init="init()">
+
+	<a class="modal-close" ng-click="dismiss();">
+		<i class="fa fa-remove"></i>
+	</a>
+
+	<h3>
+		Invite Users
+	</h3>
+
+	<div class="modal-tagline">
+		Send invite or add existing Grafana users to the organization
+		<span class="highlight-word">{{contextSrv.user.orgName}}</span>
+	</div>
+
+	<br>
+	<br>
+
+	<form name="inviteForm">
+		<div style="display: inline-block">
+			<div class="tight-form-container">
+				<div class="tight-form" ng-repeat="invite in invites">
+					<ul class="tight-form-list">
+						<li class="tight-form-item">
+							Email or Username
+						</li>
+						<li>
+							<input type="text" ng-model="invite.loginOrEmail" required class="input-large tight-form-input" placeholder="email@test.com">
+						</li>
+						<li class="tight-form-item">
+							Name
+						</li>
+						<li>
+							<input type="text" ng-model="invite.name" class="input-large tight-form-input" placeholder="name (optional)">
+						</li>
+
+						<li class="tight-form-item">
+							Role
+						</li>
+						<li>
+							<select ng-model="invite.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
+							</select>
+						</li>
+						<li class="tight-form-item last" ng-show="$index > 0">
+							<a class="pointer" tabindex="1" ng-click="removeInvite(invite)">
+								<i class="fa fa-remove"></i>
+							</a>
+						</li>
+						<div class="clearfix"></div>
+					</ul>
+				</div>
+			</div>
+
+			<div style="text-align: left; margin-top: 6px;">
+				<a ng-click="addInvite()">+ Invite another</a>
+				<div class="form-inline" style="margin-top: 20px">
+					<editor-checkbox text="Skip sending invite email" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
+				</div>
+			</div>
+
+			<div class="" style="margin-top: 30px; margin-bottom: 20px;">
+				<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
+				<button type="submit" class="btn btn-success" ng-click="sendInvites();">Invite Users</button>
+
+			</div>
+		</div>
+	</form>
+</div>
+
+

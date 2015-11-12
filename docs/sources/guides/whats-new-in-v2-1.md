@@ -5,11 +5,8 @@ page_keywords: grafana, new, changes, features, documentation
 ---
 
 # What's new in Grafana v2.1
-
 Grafana 2.1 brings improvements in three core areas: dashboarding, authentication, and data sources.
-As with every Grafana release, there is a whole slew of new features, enhancements, and bug fixes. To see everyting
-that's been added to Grafana 2.1 head over to the <a href="https://github.com/grafana/grafana/issues?page=4&q=milestone%3A2.1+is%3Aclosed" target="_blank">2.1 milestone issues section</a>.
-
+As with every Grafana release, there is a whole slew of new features, enhancements, and bug fixes.
 
 ## More Dynamic Dashboards
 The Templating system is one of the most powerful and well-used features of Grafana.
@@ -42,8 +39,11 @@ Dashboard links can be added under dashboard settings. Either defined as static 
 dashboard links or dropdowns based on custom dashboard search query. These links appear in the same
 row under the top menu where template variables appear.
 
+- - -
+
 ### Better local Dashboard support
-Grafana can now index Dashboards saved locally as JSON from a given directory.
+Grafana can now index Dashboards saved locally as JSON from a given directory. These file based dashboards
+will appear in the regular dashboard search along regular DB dashboards.
 
 > ***Note:*** Saving local dashboards back the folder is not supported; this feature is meant for statically generated JSON dashboards.
 
@@ -51,7 +51,6 @@ Grafana can now index Dashboards saved locally as JSON from a given directory.
 
 ## New Authentication Options
 New authentication methods add numerous options to manage users, roles and organizations.
-Grafana 2.1 also includes a "Read-only Editor" role.
 
 ### LDAP support
 This highly requested feature now allows your Grafana users to login with their LDAP credentials.
@@ -80,14 +79,14 @@ The Viewer role has been modified in Grafana 2.1 so that users assigned this rol
 ## Data source Improvements
 
 ### InfluxDB 0.9 Support
-Grafana 2.1 now comes with full support for InfluxDB 0.9. There is a new query editor designed from the start
+Grafana 2.1 now comes with full support for InfluxDB 0.9. There is a new query editor designed from scratch
 for the new features InfluxDB 0.9 enables.
 
-![InfluxDB Support](/img/v2/influx-query.gif "InfluxDB Support")
-<br/><br/>
+![InfluxDB Editor](/img/v2/influx_09_editor_anim.gif "InfluxDB Editor")
 
+<br/>
 
-### OpenTSDB Data Source improvements
+### OpenTSDB Improvements
 Grafana OpenTSDB data source now supports template variable values queries. This means you can create
 template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
 The query editor is also enhanced to limiting tags by metric.
@@ -107,13 +106,25 @@ Overriding the colors of specific series using regular expressions, changing how
 and allowing string values will help you better understand your data at a glance.
 
 ### Graph Panel
-Define series color using regex rule
-![Define series color using regex rule  ](/img/v2/regex_color.gif "Define series color using regex rule  ")
+Define series color using regex rule. This is useful when you have templated graphs with series names
+that change depending selected template variables. Using a regex style override rule you could
+for example make all series that contain the word **CPU** `red` and assigned to the second y axis.
 
-New series style override, negative-y transform and stack groups
+![Define series color using regex rule](/img/v2/regex_color_override.png "Define series color using regex rule")
+
+New series style override, negative-y transform and stack groups. Negative y transform is
+very useful if you want to plot a series on the negative y scale without affecting the legend values like min or max or
+the values shown in the hover tooltip.
+
 ![Negative-y Transform](/img/v2/negative-y.png "Negative-y Transform")
 
 ![Negative-y Transform](/img/v2/negative-y-form.png "Negative-y Transform")
 
 ### Singlestat Panel
-Now support string values - read more about [Singlestat Panels](../reference/singlestat.md)
+Now support string values. Useful for time series database like InfluxDB that supports
+string values.
+
+### Changelog
+For a detailed list and link to github issues for everything included in the 2.1 release please
+view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.
+

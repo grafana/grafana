@@ -112,5 +112,13 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 }
 
 func GetDataSourcePlugins(c *middleware.Context) {
-	c.JSON(200, plugins.DataSources)
+	dsList := make(map[string]interface{})
+
+	for key, value := range plugins.DataSources {
+		if value.(map[string]interface{})["builtIn"] == nil {
+			dsList[key] = value
+		}
+	}
+
+	c.JSON(200, dsList)
 }

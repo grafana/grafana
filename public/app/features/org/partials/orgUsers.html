@@ -9,53 +9,67 @@
 
 		<h2>Organization users</h2>
 
-		<form name="form">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 127px">
-						<strong>Username or Email</strong>
-					</li>
-					<li>
-						<input type="text" ng-model="user.loginOrEmail" required class="input-xlarge tight-form-input" placeholder="user@email.com or username">
-					</li>
-					<li class="tight-form-item">
-						role
-					</li>
-					<li>
-						<select type="text" ng-model="user.role" class="input-medium tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
-						</select>
-					</li>
-					<li>
-						<button class="btn btn-success tight-form-btn" ng-click="addUser()">Add</button>
-					</li>
-					<div class="clearfix"></div>
-				</ul>
-			</div>
-		</form>
+		<button class="btn btn-success pull-right" ng-click="openInviteModal()">
+			<i class="fa fa-plus"></i>
+			Add or Invite
+		</button>
 
 		<br>
 
-		<table class="grafana-options-table form-inline">
-			<tr>
-				<th>Login</th>
-				<th>Email</th>
-				<th>Role</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="user in users">
-				<td>{{user.login}}</td>
-				<td>{{user.email}}</td>
-				<td>
-					<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
-					</select>
-				</td>
-				<td style="width: 1%">
-					<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
+		<tabset>
+			<tab heading="Users ({{users.length}})">
+				<table class="grafana-options-table form-inline">
+					<tr>
+						<th>Login</th>
+						<th>Email</th>
+						<th>Role</th>
+						<th></th>
+					</tr>
+					<tr ng-repeat="user in users">
+						<td>{{user.login}}</td>
+						<td>{{user.email}}</td>
+						<td>
+							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
+							</select>
+						</td>
+						<td style="width: 1%">
+							<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</tab>
+			<tab heading="Pending Invitations ({{pendingInvites.length}})">
+				<div class="grafana-list-item" ng-repeat="invite in pendingInvites" ng-click="invite.expanded = !invite.expanded">
+					{{invite.email}}
+					<span ng-show="invite.name" style="padding-left: 20px"> {{invite.name}}</span>
+					<span class="pull-right">
+						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)"
+							<i class="fa fa-clipboard"></i> Copy Invite
+						</button>
+						&nbsp;
+						<a class="pointer">
+							<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
+							<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
+						</a>
+					</span>
+					<div ng-show="invite.expanded">
+						<a href="{{invite.url}}">{{invite.url}}</a><br>
+						<button class="btn btn-inverse btn-mini">
+							<i class="fa fa-envelope-o"></i> Resend invite
+						</button>
+						&nbsp;
+						<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
+							<i class="fa fa-remove" style="color: red"></i> Revoke invite
+						</button>
+						<span style="padding-left: 15px">
+							Invited: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
+						</span>
+					<div>
+				</div>
+			</tab>
+		</tabset>
 
 	</div>
 </div>

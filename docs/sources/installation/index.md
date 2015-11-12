@@ -9,7 +9,7 @@ page_keywords: grafana, installation, documentation
 Grafana is easily installed via a Debian/Ubuntu package (.deb), via
 Redhat/Centos package (.rpm) or manually via a tarball that contains all
 required files and binaries. If you can't find a package or binary for
-your platform you might be able to build one your self, read the [build
+your platform, you might be able to build one yourself. Read the [build
 from source](../project/building_from_source) instructions for more
 information.
 

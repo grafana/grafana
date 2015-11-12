@@ -1124,8 +1124,8 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
 
         function addTimeAxis(options) {
           var ticks = elem.width() / 100;
-          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.getTime();
-          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.getTime();
+          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.valueOf();
+          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.valueOf();
 
           options.xaxis = {
             timezone: dashboard.timezone,
@@ -1369,8 +1369,8 @@ function (angular, $, kbn, moment, _, ec, ecConfig, GraphTooltip) {
         elem.bind("plotselected", function (event, ranges) {
           scope.$apply(function() {
             timeSrv.setTime({
-              from  : moment.utc(ranges.xaxis.from).toDate(),
-              to    : moment.utc(ranges.xaxis.to).toDate(),
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
             });
           });
         });

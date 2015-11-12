@@ -14,7 +14,8 @@ func TestDataSourceProxy(t *testing.T) {
 
 	Convey("When getting graphite datasource proxy", t, func() {
 		ds := m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
-		proxy := NewReverseProxy(&ds, "/render")
+		targetUrl, _ := url.Parse(ds.Url)
+		proxy := NewReverseProxy(&ds, "/render", targetUrl)
 
 		requestUrl, _ := url.Parse("http://grafana.com/sub")
 		req := http.Request{URL: requestUrl}
@@ -36,7 +37,8 @@ func TestDataSourceProxy(t *testing.T) {
 			Password: "password",
 		}
 
-		proxy := NewReverseProxy(&ds, "")
+		targetUrl, _ := url.Parse(ds.Url)
+		proxy := NewReverseProxy(&ds, "", targetUrl)
 
 		requestUrl, _ := url.Parse("http://grafana.com/sub")
 		req := http.Request{URL: requestUrl}

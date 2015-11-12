@@ -3,9 +3,9 @@
   "name": "Open-Falcon",
 
   "type": "openfalcon",
-  "serviceName": "OpenFalconDatasource",
+  "serviceName": "OpenfalconDatasource",
 
-  "module": "plugins/datasource/openfalcon/datasource",
+  "module": "app/plugins/datasource/openfalcon/datasource",
 
   "partials": {
     "config": "app/plugins/datasource/openfalcon/partials/config.html",
