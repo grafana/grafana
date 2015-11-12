@@ -1,25 +1,13 @@
 {
   "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "name": "Cepave",
+    "company": "Cepave"
   },
   "name": "grafana",
-<<<<<<< 45b70939aef7a329a606e2f93e28f2f874c869e9
-<<<<<<< dac8247433186ddfafc50f6502fa83cdd24f98f8
-<<<<<<< 27f5398c86ca2dc083eabb0f42cec55c56df75d1
-  "version": "2.5.0",
-=======
-  "version": "2.1.2",
->>>>>>> updated version to v2.1.2
-=======
-  "version": "2.5.0-pre1",
->>>>>>> version bumped to 2.5
-=======
   "version": "2.5.1-pre1",
->>>>>>> fix(dashboard): fix for collapse row by clicking on row title, fixes #3065
   "repository": {
     "type": "git",
-    "url": "http://github.com/torkelo/grafana.git"
+    "url": "http://github.com/Cepave/grafana.git"
   },
   "devDependencies": {
     "body-parser": "^1.13.3",

@@ -1,23 +1,22 @@
 define([
   'angular',
-  'app',
   'lodash',
   'jquery',
   './gfunc',
 ],
-function (angular, app, _, $, gfunc) {
+function (angular, _, $, gfunc) {
   'use strict';
 
   angular
     .module('grafana.directives')
-    .directive('graphiteAddFunc', function($compile) {
+    .directive('openfalconAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
                             ' class="tight-form-input input-medium tight-form-input"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="tight-form-item tight-form-func dropdown-toggle"' +
-                              ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown"' +
-                              ' data-placement="top"><i class="fa fa-plus"></i></a>';
+      var buttonTemplate = '<a class="tight-form-item tight-form-func dropdown-toggle"' +
+                              ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
+                              '<i class="fa fa-plus"></i></a>';
 
       return {
         link: function($scope, elem) {

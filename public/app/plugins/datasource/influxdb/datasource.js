@@ -161,7 +161,6 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
-<<<<<<< b321d4d39f52afce6f32ef2b78f9cd42747dd840
       return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
@@ -170,22 +169,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
             throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
           }
           else {
-<<<<<<< a1ab699f0e4ad08e6c5adb5b5dc4c1b26bccdbba
-            throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
-=======
-      return $http(options).then(function(result) {
-        return result.data;
-      }, function(reason) {
-        if (reason.status !== 0 || reason.status >= 300) {
-          if (reason.data && reason.data.error) {
-            throw { message: 'InfluxDB Error Response: ' + reason.data.error };
-          }
-          else {
-            throw { messsage: 'InfluxDB Error: ' + reason.message };
->>>>>>> influxdb(auth): fixed issue with using basic auth and influxdb, fixes #2455
-=======
             throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
->>>>>>> Correct object key typo
           }
         }
       });

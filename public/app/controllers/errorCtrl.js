@@ -7,7 +7,6 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-
   module.controller('ErrorCtrl', function($scope, contextSrv) {
 
     var showSideMenu = contextSrv.sidemenu;

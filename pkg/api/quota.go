@@ -1,11 +1,10 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/Cepave/grafana/pkg/bus"
+	"github.com/Cepave/grafana/pkg/middleware"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/setting"
 )
 
 func GetOrgQuotas(c *middleware.Context) Response {
@@ -13,12 +12,6 @@ func GetOrgQuotas(c *middleware.Context) Response {
 		return ApiError(404, "Quotas not enabled", nil)
 	}
 	query := m.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
-=======
-)
-
-func GetOrgQuotas(c *middleware.Context) Response {
-	query := m.GetQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
->>>>>>> inital backend suport for quotas. issue #321
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get org quotas", err)
@@ -27,7 +20,6 @@ func GetOrgQuotas(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateOrgQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)
@@ -69,11 +61,6 @@ func UpdateUserQuota(c *middleware.Context, cmd m.UpdateUserQuotaCmd) Response {
 		return ApiError(404, "Invalid quota target", nil)
 	}
 
-=======
-func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateQuotaCmd) Response {
-	cmd.OrgId = c.ParamsInt64(":orgId")
-	cmd.Target = m.QuotaTarget(c.Params(":target"))
->>>>>>> inital backend suport for quotas. issue #321
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to update org quotas", err)
 	}

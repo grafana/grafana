@@ -29,11 +29,7 @@ They can all be used to create dynamic variables that you can use throughout the
 
  > Note: The Query type is Data Source specific. Please consult the appropriate documentation for your particular Data Source.
 
-<<<<<<< 47d678096bd1b8b2797cd96e181731b3e7bf2a12
 Query is the most common type of Template variable. Use the `Query` template type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
-=======
-Query is the most common type of Template variable. Using the Query type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
->>>>>>> update to templating doc
 
 For example a query like `prod.servers.*` will fill the variable with all possible values that exists in that wildcard position (in the case of the Graphite Data Source).
 
@@ -50,11 +46,7 @@ For example, if you were using Templating to list all 20 of your applications, y
 
  > Note: Multi-Select Tagging functionality is currently experimental but is part of Grafana 2.1. To enable this feature click the enable icon when editing Template options for a particular variable.
 
-<<<<<<< 47d678096bd1b8b2797cd96e181731b3e7bf2a12
 <img class="no-shadow" src="/img/v2/template-tags-config.png">
-=======
-![](/img/v2/tag_groups.jpg)
->>>>>>> update to templating doc
 
 Grafana gets the list of tags and the list of values in each tag by performing two queries on your metric namespace.
 
@@ -69,10 +61,6 @@ Once configured, Multi-Select Tagging provides a convenient way to group and you
 ![](/img/v2/multi-select.gif)
 
 
-<<<<<<< 47d678096bd1b8b2797cd96e181731b3e7bf2a12
-=======
-
->>>>>>> update to templating doc
 ### Interval
 
 Use the `Interval` type to create Template variables around time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.

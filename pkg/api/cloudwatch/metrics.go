@@ -3,8 +3,8 @@ package cloudwatch
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/Cepave/grafana/pkg/middleware"
+	"github.com/Cepave/grafana/pkg/util"
 )
 
 var metricsMap map[string][]string

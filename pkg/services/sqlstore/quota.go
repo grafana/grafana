@@ -2,10 +2,9 @@ package sqlstore
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/Cepave/grafana/pkg/bus"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/setting"
 )
 
 func init() {
@@ -16,30 +15,17 @@ func init() {
 	bus.AddHandler("sql", GetUserQuotas)
 	bus.AddHandler("sql", UpdateUserQuota)
 	bus.AddHandler("sql", GetGlobalQuotaByTarget)
-=======
-)
-
-func init() {
-	bus.AddHandler("sql", GetQuotaByTarget)
-	bus.AddHandler("sql", GetQuotas)
-	bus.AddHandler("sql", UpdateQuota)
->>>>>>> inital backend suport for quotas. issue #321
 }
 
 type targetCount struct {
 	Count int64
 }
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
-=======
-func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
->>>>>>> inital backend suport for quotas. issue #321
 	quota := m.Quota{
 		Target: query.Target,
 		OrgId:  query.OrgId,
 	}
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 	has, err := x.Get(&quota)
 	if err != nil {
 		return err
@@ -49,27 +35,12 @@ func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
 
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
-=======
-	has, err := x.Get(quota)
-	if err != nil {
-		return err
-	} else if has == false {
-		quota.Limit = m.DefaultQuotas[query.Target]
-	}
-
-	//get quota used.
-	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", string(query.Target))
->>>>>>> inital backend suport for quotas. issue #321
 	resp := make([]*targetCount, 0)
 	if err := x.Sql(rawSql, query.OrgId).Find(&resp); err != nil {
 		return err
 	}
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 	query.Result = &m.OrgQuotaDTO{
-=======
-	query.Result = &m.QuotaDTO{
->>>>>>> inital backend suport for quotas. issue #321
 		Target: query.Target,
 		Limit:  quota.Limit,
 		OrgId:  query.OrgId,
@@ -79,7 +50,6 @@ func GetQuotaByTarget(query *m.GetQuotaByTargetQuery) error {
 	return nil
 }
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 	quotas := make([]*m.Quota, 0)
 	sess := x.Table("quota")
@@ -90,25 +60,11 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 	defaultQuotas := setting.Quota.Org.ToMap()
 
 	seenTargets := make(map[string]bool)
-=======
-func GetQuotas(query *m.GetQuotasQuery) error {
-	quotas := make([]*m.Quota, 0)
-	sess := x.Table("quota")
-	if err := sess.Where("org_id=?", query.OrgId).Find(&quotas); err != nil {
-		return err
-	}
-
-	seenTargets := make(map[m.QuotaTarget]bool)
->>>>>>> inital backend suport for quotas. issue #321
 	for _, q := range quotas {
 		seenTargets[q.Target] = true
 	}
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 	for t, v := range defaultQuotas {
-=======
-	for t, v := range m.DefaultQuotas {
->>>>>>> inital backend suport for quotas. issue #321
 		if _, ok := seenTargets[t]; !ok {
 			quotas = append(quotas, &m.Quota{
 				OrgId:  query.OrgId,
@@ -117,27 +73,16 @@ func GetQuotas(query *m.GetQuotasQuery) error {
 			})
 		}
 	}
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 
 	result := make([]*m.OrgQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		//get quota used.
 		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
-=======
-	result := make([]*m.QuotaDTO, len(quotas))
-	for i, q := range quotas {
-		//get quota used.
-		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", string(q.Target))
->>>>>>> inital backend suport for quotas. issue #321
 		resp := make([]*targetCount, 0)
 		if err := x.Sql(rawSql, q.OrgId).Find(&resp); err != nil {
 			return err
 		}
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 		result[i] = &m.OrgQuotaDTO{
-=======
-		result[i] = &m.QuotaDTO{
->>>>>>> inital backend suport for quotas. issue #321
 			Target: q.Target,
 			Limit:  q.Limit,
 			OrgId:  q.OrgId,
@@ -148,7 +93,6 @@ func GetQuotas(query *m.GetQuotasQuery) error {
 	return nil
 }
 
-<<<<<<< a45fe092e3c019f7fa28ff8a075cba3eccc0f82f
 func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 	return inTransaction2(func(sess *session) error {
 		//Check if quota is already defined in the DB
@@ -291,8 +235,5 @@ func GetGlobalQuotaByTarget(query *m.GetGlobalQuotaByTargetQuery) error {
 		Used:   resp[0].Count,
 	}
 
-=======
-func UpdateQuota(cmd *m.UpdateQuotaCmd) error {
->>>>>>> inital backend suport for quotas. issue #321
 	return nil
 }

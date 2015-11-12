@@ -71,27 +71,10 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
-<<<<<<< 48cb73f5f674dc00ac540a966fd8c20991da8c92
-=======
->>>>>>> feat() started work on more feature rich time picker
     'app/services/all',
     'app/features/all',
     'app/controllers/all',
     'app/components/partials',
-<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
-=======
-    'services/all',
-    'features/all',
-    'controllers/all',
-    'components/partials',
-<<<<<<< d63b2540f5db1d3c15c625f00bbb075a168bc933
-    'routes/all',
->>>>>>> refactor: improving structure, moving things into a core module
-=======
->>>>>>> refactor: moving routes into core, improved bundle loader
-=======
->>>>>>> feat() started work on more feature rich time picker
   ];
 
   app.boot = function() {
@@ -109,13 +92,9 @@ function (angular, $, _, appLevelRequire) {
               _.each(preBootModules, function (module) {
                 _.extend(module, register_fns);
               });
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
 
               preBootModules = null;
-=======
->>>>>>> tech(typescript): its looking good
 
-              pre_boot_modules = false;
               $rootScope.requireContext = appLevelRequire;
               $rootScope.require = function (deps, fn) {
                 var $scope = this;

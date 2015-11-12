@@ -11,8 +11,6 @@ import (
 	"syscall"
 	"time"
 
-<<<<<<< 2f77576788aec9ae56a51566fade1f08f01f1729
-<<<<<<< 072caca2c6e358edadedc76a9c996c33fd47837b
 	"github.com/Cepave/grafana/pkg/cmd"
 	"github.com/Cepave/grafana/pkg/log"
 	"github.com/Cepave/grafana/pkg/login"
@@ -24,30 +22,10 @@ import (
 	"github.com/Cepave/grafana/pkg/services/sqlstore"
 	"github.com/Cepave/grafana/pkg/setting"
 	"github.com/Cepave/grafana/pkg/social"
-<<<<<<< 38ac1df282a252d7aa4dae518b4633cea6f2ddc1
-=======
-	"github.com/grafana/grafana/pkg/cmd"
-=======
-	"github.com/Cepave/grafana/pkg/cmd"
->>>>>>> [OWL-32] Replace github.com/grafana/grafana/pkg/cmd with github.com/Cepave/grafana/pkg/cmd in main.go
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/social"
->>>>>>> inital backend suport for quotas. issue #321
-=======
->>>>>>> Replace the import path with github.com/Cepave/grafana.
 )
 
 var version = "master"
-var commit = "2015.10.07"
+var commit = "2015.11.11"
 var buildstamp string
 
 var configFile = flag.String("config", "", "path to config file")
@@ -78,8 +56,6 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-
-	models.InitQuotaDefaults()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)

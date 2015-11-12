@@ -4,7 +4,6 @@
 			Metric
 		</li>
 		<li>
-<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
 			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
 		</li>
 		<li ng-if="agg.type !== 'count'">
@@ -12,15 +11,6 @@
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
-=======
-			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onChange()"></metric-segment-model>
-		</li>
-		<li ng-if="agg.type !== 'count'">
-			<metric-segment-model property="agg.field" get-options="getFields()" on-change="onChange()"></metric-segment>
-		</li>
-		<li class="tight-form-item tight-form-align" ng-if="aggOptionsString">
-			<a ng-click="toggleOptions()">{{aggOptionsString}}</a>
->>>>>>> feat(editor): thing are starting to work again
 		</li>
 	</ul>
 
@@ -29,17 +19,12 @@
 			<a class="pointer" ng-click="addMetricAgg()"><i class="fa fa-plus"></i></a>
 		</li>
 		<li class="tight-form-item last" ng-if="!isSingle">
-<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
 			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
-=======
-			<a class="pointer" ng-click="removeMetricAgg($index)"><i class="fa fa-minus"></i></a>
->>>>>>> feat(editor): thing are starting to work again
 		</li>
 	</ul>
 	<div class="clearfix"></div>
 </div>
 
-<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box">
 		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
@@ -79,6 +64,3 @@
 		</div>
 	</div>
 </div>
-=======
-
->>>>>>> feat(editor): thing are starting to work again

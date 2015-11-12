@@ -4,17 +4,10 @@ module.exports = function(config,grunt) {
   function buildRequireJsOptions() {
 
     var options = {
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
       appDir: '<%= genDir %>',
       dir:  '<%= tempDir %>',
       mainConfigFile: '<%= genDir %>/app/components/require.config.js',
       baseUrl: './',
-=======
-      appDir: '<%= tempDir %>',
-      dir:  '<%= destDir %>',
-      mainConfigFile: '<%= tempDir %>/app/components/require.config.js',
-      baseUrl: 'app_gen',
->>>>>>> tech(typescript): its looking good
       waitSeconds: 0,
 
       modules: [], // populated below,
@@ -46,11 +39,7 @@ module.exports = function(config,grunt) {
     var requireModules = options.modules = [
       {
         // main/common module
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
         name: 'app/app',
-=======
-        name: 'app',
->>>>>>> tech(typescript): its looking good
         include: [
           'kbn',
           'text',
@@ -65,32 +54,17 @@ module.exports = function(config,grunt) {
           'jquery.flot',
           'angular-strap',
           'angular-dragdrop',
-<<<<<<< d63b2540f5db1d3c15c625f00bbb075a168bc933
           'app/core/core',
           'app/services/all',
           'app/features/all',
           'app/controllers/all',
           'app/components/partials',
-=======
-          'core/core',
-          'services/all',
-          'features/all',
-          'controllers/all',
-          'components/partials',
->>>>>>> refactor: moving routes into core, improved bundle loader
           // bundle the datasources
           'app/plugins/datasource/grafana/datasource',
           'app/plugins/datasource/graphite/datasource',
           'app/plugins/datasource/influxdb/datasource',
         ]
       },
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
-=======
-      // {
-      //   name: 'features/org/all',
-      //   exclude: ['app'],
-      // }
->>>>>>> tech(typescript): its looking good
     ];
 
     var fs = require('fs');

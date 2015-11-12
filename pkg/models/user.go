@@ -52,10 +52,7 @@ type CreateUserCommand struct {
 	Password      string
 	EmailVerified bool
 	IsAdmin       bool
-<<<<<<< 0cef0587acc57cbcb9e2e4fee102f2afe55f68da
 	SkipOrgSetup  bool
-=======
->>>>>>> feat(signup): almost done with new sign up flow, #2353
 
 	Result User
 }

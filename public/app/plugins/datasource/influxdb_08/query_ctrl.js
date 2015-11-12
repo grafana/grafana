@@ -89,10 +89,7 @@ function (angular) {
       }
     };
 
-<<<<<<< 67dec8109256b22dadc31650bf94a36e9018db13:public/app/plugins/datasource/influxdb_08/query_ctrl.js
     $scope.init();
 
-=======
->>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId):public/app/plugins/datasource/influxdb_08/queryCtrl.js
   });
 });

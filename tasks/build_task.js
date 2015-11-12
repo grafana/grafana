@@ -6,8 +6,6 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-<<<<<<< 1d80184393eeceb8b85607609946c8057b6ef299
-<<<<<<< 715feb1cc233716c1a7eb4a10a87d86e2ca2af24
     'tslint',
     'clean:release',
     'copy:public_to_gen',
@@ -15,22 +13,10 @@ module.exports = function(grunt) {
     // 'karma:test',
     'phantomjs',
     'css',
-=======
-    // 'karma:test',
-=======
->>>>>>> tech(typescript): its looking good
-    'clean:on_start',
-    'copy:app_gen_build',
-    'typescript:build',
-    'karma:test',
-    'css',
-    'copy:everything_but_less_to_temp',
->>>>>>> [OWL-47] Reduce page load time of Grafana
     'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
-<<<<<<< 8b37b131c51c65a4c2ac87c935f95a55bf99256f
     'requirejs:build',
     'concat:js',
     'clean:temp',
@@ -38,16 +24,6 @@ module.exports = function(grunt) {
     'remapFilerev',
     'usemin',
     'uglify:genDir'
-=======
-    // 'requirejs:build',
-    // 'concat:js',
-    // 'clean:temp',
-    // 'filerev',
-    // 'remapFilerev',
-    // 'usemin',
-    // 'clean:temp',
-    // 'uglify:genDir'
->>>>>>> tech(typescript): converted signup controller to typescript
   ]);
 
   // task to add [[.AppSubUrl]] to reved path

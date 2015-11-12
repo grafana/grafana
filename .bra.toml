@@ -9,11 +9,7 @@ watch_dirs = [
 	"$WORKDIR/public/views",
 	"$WORKDIR/conf",
 ]
-<<<<<<< 350904500dc0256857920fc88984a84ee9ac44d8
 watch_exts = [".go", ".ini", ".toml", ".html"]
-=======
-watch_exts = [".go", ".ini", ".toml"]
->>>>>>> fix(auth proxy): Fix for server side rendering of panel when using auth proxy, fixes #2568
 build_delay = 1500
 cmds = [
   ["go", "build", "-o", "./bin/grafana-server"],

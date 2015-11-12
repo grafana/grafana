@@ -23,7 +23,6 @@
 		</a>
 	</li>
 
-<<<<<<< 6e6200173affee36da5b148c4da2e935e892fb9e
 	<li class="grafana-menu-refresh" ng-show="!ctrl.dashboard.refresh">
 		<a ng-click="ctrl.timeSrv.refreshDashboard()">
 			<i class="fa fa-refresh"></i>
@@ -31,40 +30,3 @@
 	</li>
 
 </ul>
-=======
-			<a class="dropdown-toggle timepicker-dropdown" data-toggle="dropdown" bs-tooltip="time.tooltip" data-placement="bottom" ng-click="ctrl.loadTimeOptions();">
-				<i class="fa fa-clock-o"></i>
-				<span ng-bind="time.rangeString"></span>
-				<span ng-show="dashboard.refresh" class="text-warning">refreshed every {{dashboard.refresh}} </span>
-				<i class="fa fa-caret-down"></i>
-			</a>
-
-			<!-- lacy load this -->
-			<ul class="dropdown-menu" ng-if="timeOptions" >
-				<li bindonce ng-repeat='option in timeOptions'>
-					<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>
-				</li>
-
-				<!-- Auto refresh submenu -->
-				<li class="dropdown-submenu">
-					<a href="#">Auto-Refresh</a>
-					<ul class="dropdown-menu" ng-class="{'dropdown-submenu-left': refreshMenuLeftSide}">
-						<li>
-							<a ng-click="timeSrv.set_interval(false)">Off</a>
-						</li>
-						<li bindonce ng-repeat="interval in panel.refresh_intervals track by $index">
-							<a ng-click="timeSrv.set_interval(interval)" bo-text="'Every ' + interval"></a>
-						</li>
-					</ul>
-				</li>
-				<li><a ng-click="ctrl.customTime()">Custom</a></li>
-			</ul>
-
-		</li>
-		<li ng-show="!dashboard.refresh" class="grafana-menu-refresh">
-			<a ng-click="timeSrv.refreshDashboard()"><i class="fa fa-refresh"></i></a>
-		</li>
-	</ul>
-</form>
-</div>
->>>>>>> refactor: finished timepicker to typescript and directive refactor

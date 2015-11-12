@@ -1,8 +1,4 @@
-<<<<<<< c5d18c8de984da2610a30fc098dd0c6ee58581ab
 <div class="tight-form-container-no-item-borders">
-=======
-<div class="tight-form-container-no-item-borders" style="margin-bottom: 10px">
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
 	<div  class="tight-form">
 		<ul class="tight-form-list pull-right">
 			<li ng-show="parserError" class="tight-form-item">
@@ -10,7 +6,6 @@
 					<i class="fa fa-warning"></i>
 				</a>
 			</li>
-<<<<<<< c5d18c8de984da2610a30fc098dd0c6ee58581ab
 			<li class="tight-form-item small" ng-show="target.datasource">
 				<em>{{target.datasource}}</em>
 			</li>
@@ -24,7 +19,6 @@
 						<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
 						<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
 						<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
-<<<<<<< 67dec8109256b22dadc31650bf94a36e9018db13
 					</ul>
 				</div>
 			</li>
@@ -32,63 +26,10 @@
 			<li class="tight-form-item last">
 				<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
 					<i class="fa fa-remove"></i>
-=======
-			<li class="tight-form-item">
-				<a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
-					<i class="fa fa-pencil"></i>
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<div class="dropdown">
-					<a  class="pointer dropdown-toggle"
-						data-toggle="dropdown"
-						tabindex="1">
-						<i class="fa fa-bars"></i>
-					</a>
-					<ul class="dropdown-menu pull-right" role="menu">
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="duplicate()">
-								Duplicate
-							</a>
-						</li>
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index-1)">
-								Move up
-							</a>
-						</li>
-						<li role="menuitem">
-							<a  tabindex="1"
-								ng-click="moveMetricQuery($index, $index+1)">
-								Move down
-							</a>
-						</li>
-=======
->>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId)
-					</ul>
-				</div>
-			</li>
-			<li class="tight-form-item last">
-				<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-					<i class="fa fa-remove"></i>
 				</a>
 			</li>
 		</ul>
 
-		<ul class="tight-form-list">
-			<li>
-				<a  class="tight-form-item"
-					ng-click="target.hide = !target.hide; get_data();"
-					role="menuitem">
-					<i class="fa fa-eye"></i>
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
-				</a>
-			</li>
-		</ul>
-
-<<<<<<< c5d18c8de984da2610a30fc098dd0c6ee58581ab
-<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 		<ul class="tight-form-list">
 			<li class="tight-form-item" style="min-width: 15px; text-align: center">
 				{{target.refId}}
@@ -99,12 +40,6 @@
 				</a>
 			</li>
 		</ul>
-=======
-			<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" give-focus="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
-=======
-		<input type="text" class="tight-form-clear-input" style="width: 80%" ng-model="target.query" give-focus="target.rawQuery" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.rawQuery"/>
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising
 
 		<ul class="tight-form-list" ng-hide="target.rawQuery">
 			<li class="tight-form-item query-keyword" style="width: 75px">
@@ -203,7 +138,6 @@
 				<li class="tight-form-item last" ng-show="$index === 0">
 					<a class="pointer" ng-click="addGroupBy()"><i class="fa fa-plus"></i></a>
 				</li>
-<<<<<<< c5d18c8de984da2610a30fc098dd0c6ee58581ab
 				<li class="tight-form-item last" ng-show="$index > 0">
 					<a class="pointer" ng-click="removeGroupBy($index)"><i class="fa fa-minus"></i></a>
 				</li>
@@ -225,16 +159,3 @@
 	</div>
 
 </div>
-=======
-				<li>
-					<input type="text" class="input-medium tight-form-input" ng-model="target.alias" spellcheck='false' placeholder="alias" ng-model-onblur ng-change="get_data()">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-
-		</div>
-	</div>
-
-
->>>>>>> feat(mutli db query): major changes to query editor and data source handling, looks promising

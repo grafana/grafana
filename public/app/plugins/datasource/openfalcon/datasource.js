@@ -3,20 +3,20 @@ define([
   'lodash',
   'jquery',
   'config',
-  'kbn',
-  'moment',
-  './queryCtrl',
+  'app/core/utils/datemath',
+  './directives',
+  './query_ctrl',
   './funcEditor',
-  './addGraphiteFunc',
+  './addOpenfalconFunc',
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, $, config, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenFalconDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('OpenfalconDatasource', function($q, backendSrv, templateSrv) {
 
-    function OpenFalconDatasource(datasource) {
+    function OpenfalconDatasource(datasource) {
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.name = datasource.name;
@@ -25,14 +25,7 @@ function (angular, _, $, config, kbn, moment) {
       this.render_method = datasource.render_method || 'POST';
     }
 
-    OpenFalconDatasource.prototype.query = function(options) {
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-      // console.log('OpenFalconDatasource.prototype.query options =', options);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
+    OpenfalconDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -42,15 +35,8 @@ function (angular, _, $, config, kbn, moment) {
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
           maxDataPoints: options.maxDataPoints,
         };
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-        // console.log('graphOptions =', graphOptions);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
 
-        var params = this.buildOpenFalconParams(graphOptions, options.scopedVars);
+        var params = this.buildOpenfalconParams(graphOptions, options.scopedVars);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -65,47 +51,26 @@ function (angular, _, $, config, kbn, moment) {
           httpOptions.data = params.join('&');
           httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
         }
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-        // console.log('graphOptions =', graphOptions);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
-        return this.doOpenFalconRequest(httpOptions).then(this.convertDataPointsToMs);
+        return this.doOpenfalconRequest(httpOptions).then(this.convertDataPointsToMs);
       }
       catch(err) {
         return $q.reject(err);
       }
     };
 
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
     /**
-     * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
+     * @function name:  OpenfalconDatasource.prototype.convertDataPointsToMs = function(result)
      * @description:    This function gets hosts locations for map chart.
-     * @related issues: OWL-052, OWL-030
-=======
-    /**
-     * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
-     * @description:    This function gets hosts locations for map chart.
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-     * @related issues: OWL-030
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
-     * @related issues: OWL-052, OWL-030
->>>>>>> [OWL-52] Add servers distribution map among provinces
+     * @related issues: OWL-168, OWL-052, OWL-030
      * @param:          object result
      * @return:         object results
      * @author:         Don Hsieh
      * @since:          08/20/2015
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-     * @last modified:  08/27/2015
-     * @called by:      OpenFalconDatasource.prototype.query = function(options)
+     * @last modified:  11/11/2015
+     * @called by:      OpenfalconDatasource.prototype.query = function(options)
      *                   in public/app/plugins/datasource/openfalcon/datasource.js
      */
-    OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
+    OpenfalconDatasource.prototype.convertDataPointsToMs = function(result) {
       var obj = {};
       if (!result.data.length) {
         return result;
@@ -152,93 +117,18 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
+    OpenfalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       // Open-Falcon metric as annotation
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
         var openFalconQuery = {
-=======
-=======
-     * @last modified:  08/21/2015
-=======
-     * @last modified:  08/27/2015
->>>>>>> [OWL-52] Add servers distribution map among provinces
-     * @called by:      OpenFalconDatasource.prototype.query = function(options)
-     *                   in public/app/plugins/datasource/openfalcon/datasource.js
-     */
->>>>>>> [OWL-30] Add Echarts map to Grafana
-    OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
-      var obj = {};
-      if (!result.data.length) {
-        return result;
-      }
-      if ('chartType' in result.data[0]) {   // This is a map query
-        obj.datapoints = result.data;
-        result.data = [obj];
-        return result;
-      } else {
-        var data = [];
-        var datapoints = [];
-        var timestamp = 0;
-        var value = 0;
-        var values = [];
-        var metric = '';
-        var host = '';
-        _.forEach(result.data, function(row) {
-          if ('Values' in row) {
-            values = row.Values;
-            metric = row.counter;
-            host = row.endpoint;
-
-            datapoints = [];
-            _.forEach(values, function(arr) {
-              timestamp = arr['timestamp'];
-              value = arr['value'];
-              datapoints.push([value, timestamp]);
-            });
-            obj = {};
-            obj.datapoints = datapoints;
-            obj.target = host + '.' + metric;
-            data.push(obj);
-          }
-        });
-        result.data = data;
-        if (!result || !result.data) { return []; }
-        for (var i = 0; i < result.data.length; i++) {
-          var series = result.data[i];
-          for (var y = 0; y < series.datapoints.length; y++) {
-            series.datapoints[y][1] *= 1000;
-          }
-        }
-        return result;
-      }
-    };
-
-    OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      // Open-Falcon metric as annotation
-      if (annotation.target) {
-        var target = templateSrv.replace(annotation.target);
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-        var graphiteQuery = {
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-        var openFalconQuery = {
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
           range: rangeUnparsed,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
         };
 
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         return this.query(openFalconQuery)
-=======
-        return this.query(graphiteQuery)
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-        return this.query(openFalconQuery)
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
           .then(function(result) {
             var list = [];
 
@@ -256,25 +146,10 @@ function (angular, _, $, config, kbn, moment) {
                 });
               }
             }
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
             return list;
           });
       }
       // Open-Falcon event as annotation
-=======
-
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
-            return list;
-          });
-      }
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-      // Graphite event as annotation
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-      // Open-Falcon event as annotation
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       else {
         var tags = templateSrv.replace(annotation.tags);
         return this.events({ range: rangeUnparsed, tags: tags })
@@ -296,28 +171,14 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.events = function(options) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-      // console.log('OpenFalconDatasource.events options =', options);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+    OpenfalconDatasource.prototype.events = function(options) {
       try {
         var tags = '';
         if (options.tags) {
           tags = '&tags=' + options.tags;
         }
 
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-        // console.log('OpenFalconDatasource.prototype.events options =', options);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
-        return this.doOpenFalconRequest({
+        return this.doOpenfalconRequest({
           method: 'GET',
           url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
         });
@@ -327,48 +188,30 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.translateTime = function(date, rounding) {
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-      // console.log('OpenFalconDatasource.prototype.translateTime date =', date);
-      // console.log('OpenFalconDatasource.prototype.translateTime rounding =', rounding);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
+    OpenfalconDatasource.prototype.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
           return date;
         }
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, roundUp);
       }
 
-      date = moment.utc(date);
-
-      if (rounding === 'round-up') {
+      // graphite's from filter is exclusive
+      // here we step back one minute in order
+      // to guarantee that we get all the data that
+      // exists for the specified range
+      if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
-      else if (rounding === 'round-down') {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-        // open-falcon' s from filter is exclusive
-=======
-        // graphite' s from filter is exclusive
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-        // open-falcon' s from filter is exclusive
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
-        // here we step back one minute in order
-        // to guarantee that we get all the data that
-        // exists for the specified range
+      else if (roundUp === false) {
         if (date.get('s')) {
           date.subtract(1, 'm');
         }
@@ -377,52 +220,18 @@ function (angular, _, $, config, kbn, moment) {
       return date.unix();
     };
 
-    OpenFalconDatasource.prototype.metricFindQuery = function(query) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+    OpenfalconDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
-=======
-      // console.log('metricFindQuery query =', query);
-=======
-      console.log('metricFindQuery query =', query);
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
-      var interpolated;
-      try {
-        interpolated = encodeURIComponent(templateSrv.replace(query));
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-        // console.log('metricFindQuery query =', interpolated);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
       }
       catch(err) {
         return $q.reject(err);
       }
 
-      return this.doOpenFalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
+      return this.doOpenfalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
         .then(function(results) {
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
           return _.map(results.data, function(metric) {
-=======
-          // console.log('metricFindQuery results =', results);
-=======
->>>>>>> OWL-28 refinements
-          return _.map(results.data, function(metric) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-            // console.log('metricFindQuery metric =', metric);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-            console.log('metricFindQuery metric =', metric);
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false
@@ -431,39 +240,24 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
-    OpenFalconDatasource.prototype.testDatasource = function() {
+    OpenfalconDatasource.prototype.testDatasource = function() {
       return this.metricFindQuery('*').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
-    OpenFalconDatasource.prototype.listDashboards = function(query) {
-      return this.doOpenFalconRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
+    OpenfalconDatasource.prototype.listDashboards = function(query) {
+      return this.doOpenfalconRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
         .then(function(results) {
           return results.data.dashboards;
         });
     };
 
-    OpenFalconDatasource.prototype.loadDashboard = function(dashName) {
-      return this.doOpenFalconRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
+    OpenfalconDatasource.prototype.loadDashboard = function(dashName) {
+      return this.doOpenfalconRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
     };
 
-    OpenFalconDatasource.prototype.doOpenFalconRequest = function(options) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-      // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options =', options);
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-      // this.url = 'http://localhost:4000';
-      // this.url += ':4000';
-      // options.url += '/';
-      // console.log('this.url =', this.url);
-      // console.log('options.url =', options.url);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
-=======
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
+    OpenfalconDatasource.prototype.doOpenfalconRequest = function(options) {
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
@@ -474,43 +268,14 @@ function (angular, _, $, config, kbn, moment) {
 
       options.url = this.url + options.url;
 
-      options.inspect = { type: 'graphite' };
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
-=======
-      // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options =', options);
-      // console.log('OpenFalconDatasource.prototype.doOpenFalconRequest options.url =', options.url);
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
->>>>>>> OWL-28 refinements
+      options.inspect = { type: 'openfalcon' };
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenFalconDatasource.prototype._seriesRefLetters = [
-      '#A', '#B', '#C', '#D',
-      '#E', '#F', '#G', '#H',
-      '#I', '#J', '#K', '#L',
-      '#M', '#N', '#O', '#P',
-      '#Q', '#R', '#S', '#T',
-      '#U', '#V', '#W', '#X',
-      '#Y', '#Z'
-    ];
+    OpenfalconDatasource.prototype._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    OpenFalconDatasource.prototype.buildOpenFalconParams = function(options, scopedVars) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
+    OpenfalconDatasource.prototype.buildOpenfalconParams = function(options, scopedVars) {
       var openFalcon_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
-=======
-      // console.log('OpenFalconDatasource.buildOpenFalconParams options =', options);
-      // console.log('OpenFalconDatasource.buildOpenFalconParams scopedVars =', scopedVars);
-=======
->>>>>>> OWL-28 refinements
-      var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-      var openFalcon_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
       var clean_options = [], targets = {};
       var target, targetValue, i;
       var regex = /(\#[A-Z])/g;
@@ -552,20 +317,8 @@ function (angular, _, $, config, kbn, moment) {
         clean_options.push("target=" + encodeURIComponent(targetValue));
       }
 
-      if (!clean_options.length) {
-        clean_options.push("target=map");
-      } else {}
-
       _.each(options, function (value, key) {
-<<<<<<< 074058e8a908292afe19560604d0adce0dabcd09
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
         if ($.inArray(key, openFalcon_options) === -1) { return; }
-=======
-        if ($.inArray(key, graphite_options) === -1) { return; }
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-        if ($.inArray(key, openFalcon_options) === -1) { return; }
->>>>>>> [OWL-123] update Open-Falcon query and dashboard URL for Grafana
         if (value) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
@@ -574,14 +327,6 @@ function (angular, _, $, config, kbn, moment) {
       return clean_options;
     };
 
-    return OpenFalconDatasource;
+    return OpenfalconDatasource;
   });
-<<<<<<< 73649fa8c74f0f6ef3f94eca7931e897a8d41f70
-<<<<<<< 2ba3d199a9dacbda5e0260a91a86d6daac02a1fa
 });
-=======
-});
->>>>>>> [OWL-17] Add "Open-Falcon" data source.
-=======
-});
->>>>>>> OWL-28 refinements

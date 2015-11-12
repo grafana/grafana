@@ -1,14 +1,6 @@
 <div class="container">
 
-<<<<<<< f9fc891673549432b73c0ddd64d94e418e3665f9
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 	<div class="signup-page-background">
-=======
-	<div class="login-page-background">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
-=======
-	<div class="signup-page-background">
->>>>>>> feat(signup): began work on new / alternate signup flow that includes email verification, #2353
 	</div>
 
 	<div class="login-box">
@@ -17,7 +9,6 @@
 			<img src="img/logo_transparent_200x75.png">
 		</div>
 
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
     <div class="invite-box">
 			<h3>
 				Hello {{greeting}}.
@@ -36,24 +27,10 @@
 							</li>
 							<li>
 								<input type="email" name="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="Email" style="width: 253px">
-=======
-    <div class="login-inner-box">
-
-      <form name="loginForm" class="login-form">
-				<div class="tight-from-container">
-					<div class="tight-form" ng-if="loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>User</strong>
-							</li>
-							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.user' placeholder="email or username" style="width: 253px">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
@@ -61,20 +38,10 @@
 							</li>
 							<li>
 								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
-=======
-					<div class="tight-form" ng-if="loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>Password</strong>
-							</li>
-							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
@@ -82,22 +49,11 @@
 							</li>
 							<li>
 								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px">
-=======
-
-					<div class="tight-form" ng-if="!loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>Email</strong>
-							</li>
-							<li>
-								<input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 253px">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
 
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 128px">
@@ -105,37 +61,19 @@
 							</li>
 							<li>
 								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
-=======
-					<div class="tight-form" ng-if="!loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>Password</strong>
-							</li>
-							<li>
-								<input type="password" class="tight-form-input last" watch-change="formModel.password = inputValue;" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 253px">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 							</li>
 						</ul>
 						<div class="clearfix"></div>
 					</div>
 				</div>
 
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 				<div style="margin-left: 147px; width: 254px;">
-=======
-				<div ng-if="!loginMode" style="margin-left: 97px; width: 254px;">
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 					<password-strength password="formModel.password"></password-strength>
 				</div>
 
 				<div class="login-submit-button-row">
-<<<<<<< 3c0e0c31d9af327416f25b7fc12ede46e5be16f4
 					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
 						Continue
-=======
-					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-						{{submitBtnText}}
->>>>>>> feat(invite): began work on invited signup view, also added backdrop to login view, #2353
 					</button>
 				</div>
 			</form>

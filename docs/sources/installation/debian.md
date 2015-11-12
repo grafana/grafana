@@ -10,39 +10,6 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
-<<<<<<< 140248751b5eeca2c0648c725321fdf7d564a08d
-<<<<<<< 90f5f19f594a9f2553750f254685185ccf397461
-<<<<<<< be987b8397031d77c3b51a0933a6be298004cad2
-.deb for Debian-based Linux | [grafana_2.1.3_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
-
-## Install
-
-<<<<<<< 712bc6d6cfbe1f57e7d2a2cea0e4edbffb40626a
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb
-    $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_2.1.3_amd64.deb
-=======
-    `$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.0_amd64.deb`
-    `$ sudo apt-get install -y adduser libfontconfig`
-    `$ sudo dpkg -i grafana_2.1.0_amd64.deb`
->>>>>>> Added patch from ct
-=======
-.deb for Debian-based Linux | [grafana_2.1.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.2_amd64.deb)
-=======
-.deb for Debian-based Linux | [grafana_2.1.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb)
->>>>>>> docs(): updated download links in docs
-
-## Install
-
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb
-    $ sudo apt-get install -y adduser libfontconfig
-<<<<<<< 90f5f19f594a9f2553750f254685185ccf397461
-    $ sudo dpkg -i grafana_2.1.2_amd64.deb
->>>>>>> docs(): updated version in install docs
-=======
-    $ sudo dpkg -i grafana_2.1.3_amd64.deb
->>>>>>> docs(): updated download links in docs
-=======
 .deb for Debian-based Linux | [grafana_2.5.0_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb)
 
 ## Install
@@ -50,7 +17,6 @@ Description | Download
     $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
     $ sudo dpkg -i grafana_2.5.0_amd64.deb
->>>>>>> docs(): update to install docs and whats new in 2.5
 
 ## APT Repository
 
@@ -147,15 +113,9 @@ those options.
 
 ## Installing from binary tar file
 
-<<<<<<< 712bc6d6cfbe1f57e7d2a2cea0e4edbffb40626a
 Download [the latest `.tar.gz` file](http://grafana.org/download/builds) and
 extract it.  This will extract into a folder named after the version you
 downloaded. This folder contains all files required to run Grafana.  There are
-=======
-Download [the latest `.tar.gz` file](http://grafana.org/download/builds) and 
-extract it.  This will extract into a folder named after the version you 
-downloaded. This folder contains all files required to run Grafana.  There are 
->>>>>>> Added patch from ct
 no init scripts or install scripts in this package.
 
 To configure Grafana add a configuration file named `custom.ini` to the

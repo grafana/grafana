@@ -68,11 +68,7 @@ describe('PrometheusDatasource', function() {
           {__name__: "metric", resource: "value3"}
         ]
       };
-<<<<<<< 31a27040669945f4e47872f1e01cb25495295b71
       ctx.$httpBackend.expect('GET', 'proxied/api/v1/series?match[]=metric').respond(response);
-=======
-      ctx.$httpBackend.expect('GET', /proxied\/api\/v1\/query\?query=count\(metric\)%20by%20\(resource\)&time=.*/).respond(response);
->>>>>>> Fix "Link to Prometheus" button for proxied Prometheus sources.
       ctx.ds.metricFindQuery('label_values(metric, resource)').then(function(data) { results = data; });
       ctx.$httpBackend.flush();
       ctx.$rootScope.$apply();

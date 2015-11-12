@@ -2,16 +2,10 @@ define([
   '../mocks/dashboard-mock',
   './helpers',
   'lodash',
-<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
   'moment',
   'app/services/timer',
   'app/features/dashboard/timeSrv'
 ], function(dashboardMock, helpers, _, moment) {
-=======
-  'app/services/timer',
-  'app/features/dashboard/timeSrv'
-], function(dashboardMock, helpers, _) {
->>>>>>> feat() started work on more feature rich time picker
   'use strict';
 
   describe('timeSrv', function() {

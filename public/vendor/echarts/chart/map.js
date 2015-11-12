@@ -154,10 +154,6 @@ define(function (require) {
         /**
          * 绘制图形
          */
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
         /**
          * @function name:  _buildShape : function ()
          * @description:    Add try catch block for exception handling.
@@ -169,11 +165,6 @@ define(function (require) {
          * @last modified:  08/27/2015
          * @called by:
          */
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
         _buildShape : function () {
             var series = this.series;
             this.selectedMap = {}; // 系列
@@ -311,10 +302,6 @@ define(function (require) {
                 }
 
                 this._mapDataMap[mt] = this._mapDataMap[mt] || {};
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
                 try {
                     if (this._mapDataMap[mt].mapData) {
                         // 已经缓存了则直接用
@@ -335,26 +322,6 @@ define(function (require) {
                     }
                 } catch (err) {
                     console.log('Error message:', err);
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-=======
-
-                if (this._mapDataMap[mt].mapData) {
-                    // 已经缓存了则直接用
-                    this._mapDataCallback(mt, valueData[mt], mapSeries[mt])(
-                        this._mapDataMap[mt].mapData
-                    );
-                }
-                else if (_mapParams[mt.replace(/\|.*/, '')].getGeoJson) {
-                    // 特殊区域
-                    this._specialArea[mt] =
-                        _mapParams[mt.replace(/\|.*/, '')].specialArea
-                        || this._specialArea[mt];
-                    _mapParams[mt.replace(/\|.*/, '')].getGeoJson(
-                        this._mapDataCallback(mt, valueData[mt], mapSeries[mt])
-                    );
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
                 }
             }
         },
@@ -531,10 +498,6 @@ define(function (require) {
             }
 
             // 中国地图加入南海诸岛
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
             // if (mapType == 'china') {
             //     var leftTop = this.geo2pos(
             //         mapType,
@@ -559,35 +522,6 @@ define(function (require) {
             //     });
 
             // }
-<<<<<<< eb50ae50342cbb319aaa8faa354b2abf6d49508b
-=======
-            if (mapType == 'china') {
-                var leftTop = this.geo2pos(
-                    mapType,
-                    _geoCoord['南海诸岛'] || _mapParams['南海诸岛'].textCoord
-                );
-                // scale.x : width  = 10.51 : 64
-                var scale = transform.scale.x / 10.5;
-                var textPosition = [
-                    32 * scale + leftTop[0],
-                    83 * scale + leftTop[1]
-                ];
-                if (_textFixed['南海诸岛']) {
-                    textPosition[0] += _textFixed['南海诸岛'][0];
-                    textPosition[1] += _textFixed['南海诸岛'][1];
-                }
-                province.push({
-                    name : this._nameChange(mapType, '南海诸岛'),
-                    path : _mapParams['南海诸岛'].getPath(leftTop, scale),
-                    position : position,
-                    textX : textPosition[0],
-                    textY : textPosition[1]
-                });
-
-            }
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
->>>>>>> [OWL-52] Add servers distribution map among provinces
             //console.log(JSON.stringify(province));
             //console.log(JSON.stringify(this._mapDataMap[mapType].transform));
             return province;

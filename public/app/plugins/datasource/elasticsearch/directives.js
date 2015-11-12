@@ -1,12 +1,7 @@
 define([
   'angular',
-<<<<<<< 65eac3f1cbacb552534483c12102fdaa3c14eba1
   './bucket_agg',
   './metric_agg',
-=======
-  './bucketAgg',
-  './metricAgg',
->>>>>>> feat(editor): thing are starting to work again
 ],
 function (angular) {
   'use strict';

@@ -5,30 +5,16 @@
 				<i class="fa fa-warning"></i>
 			</a>
 		</li>
-<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 		<li class="tight-form-item small" ng-show="target.datasource">
 			<em>{{target.datasource}}</em>
 		</li>
 		<li class="tight-form-item">
 			<div class="dropdown">
 				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
-=======
-		<li class="tight-form-item">
-			<a class="pointer" tabindex="1" ng-click="toggleEditorMode()">
-				<i class="fa fa-pencil"></i>
-			</a>
-		</li>
-		<li class="tight-form-item">
-			<div class="dropdown">
-				<a  class="pointer dropdown-toggle"
-					data-toggle="dropdown"
-					tabindex="1">
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 					<i class="fa fa-bars"></i>
 				</a>
 				<ul class="dropdown-menu pull-right" role="menu">
 					<li role="menuitem">
-<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 						<a tabindex="1" ng-click="toggleEditorMode()">
 							Switch editor mode
 						</a>
@@ -41,27 +27,6 @@
 					</li>
 					<li role="menuitem">
 						<a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a>
-<<<<<<< 67dec8109256b22dadc31650bf94a36e9018db13
-=======
-						<a  tabindex="1"
-							ng-click="duplicate()">
-							Duplicate
-						</a>
-					</li>
-					<li role="menuitem">
-						<a  tabindex="1"
-							ng-click="moveMetricQuery($index, $index-1)">
-							Move up
-						</a>
-					</li>
-					<li role="menuitem">
-						<a  tabindex="1"
-							ng-click="moveMetricQuery($index, $index+1)">
-							Move down
-						</a>
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
-=======
->>>>>>> fix(datasource query editors): fixed issue with duplicate query and the query letter (refId)
 					</li>
 				</ul>
 			</div>
@@ -75,25 +40,15 @@
 
 	<ul class="tight-form-list">
 		<li class="tight-form-item" style="min-width: 15px; text-align: center">
-<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 			{{target.refId}}
 		</li>
 		<li>
 			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
-=======
-			{{targetLetters[$index]}}
-		</li>
-		<li>
-			<a  class="tight-form-item"
-				ng-click="target.hide = !target.hide; get_data();"
-				role="menuitem">
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 				<i class="fa fa-eye"></i>
 			</a>
 		</li>
 	</ul>
 
-<<<<<<< b8568d3f8a010dcd9cc251f66711e52dcd6c3619
 	<input type="text" class="tight-form-clear-input span10" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
 
 	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
@@ -108,26 +63,4 @@
 		</li>
 	</ul>
 	<div class="clearfix"></div>
-=======
-	<input  type="text" class="tight-form-clear-input span10"
-		ng-model="target.target"
-		give-focus="target.textEditor"
-		spellcheck='false'
-		ng-model-onblur ng-change="get_data()"
-		ng-show="target.textEditor" />
-
-		<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
-			<li ng-repeat="segment in segments" role="menuitem">
-				<metric-segment segment="segment" get-alt-segments="getAltSegments($index)" on-value-changed="segmentValueChanged(segment, $index)"></metric-segment>
-			</li>
-			<li ng-repeat="func in functions">
-				<span graphite-func-editor class="tight-form-item tight-form-func">
-				</span>
-			</li>
-			<li class="dropdown" graphite-add-func>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
->>>>>>> refactor(): began work on big design change for how data source query editors are loaded
 </div>

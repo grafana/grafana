@@ -1,12 +1,5 @@
-<<<<<<< 95874f488acf04b56ea0735ac04ab9f7d20f7d27
-<<<<<<< b0a891e147e609e9fc8552182b2983a44b89a9da
 cfg.json
 open-falcon/data/*.json
-=======
->>>>>>> [OWL-32] Set {obj: _ , str: query} to pass jscs and jshint syntax validation
-=======
-open-falcon/data/*.json
->>>>>>> [OWL-30] Add Echarts map to Grafana
 grafana
 node_modules
 coverage/
@@ -40,29 +33,6 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
-<<<<<<< 35c4025f455daf582cf24f41130f26bfac9113de
-<<<<<<< 9bb9edd67d129a39e4ad327b091b5921e3edf81f
-<<<<<<< 81ef08580f3fd3388e01c174fdcbe2ee49c042f2
 grafana
-<<<<<<< 07d3105067bfce4cc18a59f70da160bb1d3907e6
-<<<<<<< 8b37b131c51c65a4c2ac87c935f95a55bf99256f
 .notouch
-<<<<<<< af318b5e1776379babdc4e00974edc2dbf5e51b8
-=======
->>>>>>> [OWL-30] Add Echarts map to Grafana
-=======
-
-
-*.DS_Store
->>>>>>> [OWL-52] Add servers distribution map among provinces
-=======
-grafana
->>>>>>> feat(signup): added back the welcome on signup completed email
-=======
-tsconfig.json
->>>>>>> tech(typescript): converted signup controller to typescript
-=======
->>>>>>> feat() started work on more feature rich time picker
-=======
 .DS_Store
->>>>>>> [OWL-52] Add servers distribution map among provinces

@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	// "github.com/Cepave/grafana/pkg/bus"
+	"github.com/Cepave/grafana/pkg/log"
+	m "github.com/Cepave/grafana/pkg/models"
+	"github.com/Cepave/grafana/pkg/setting"
 )
 
 func Quota(target string) macaron.Handler {
@@ -57,9 +57,9 @@ func QuotaReached(c *Context, target string) (bool, error) {
 				continue
 			}
 			query := m.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
+			// if err := bus.Dispatch(&query); err != nil {
+			// 	return true, err
+			// }
 			if query.Result.Used >= scope.DefaultLimit {
 				return true, nil
 			}
@@ -68,9 +68,9 @@ func QuotaReached(c *Context, target string) (bool, error) {
 				continue
 			}
 			query := m.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
+			// if err := bus.Dispatch(&query); err != nil {
+			// 	return true, err
+			// }
 			if query.Result.Limit < 0 {
 				continue
 			}
@@ -86,9 +86,9 @@ func QuotaReached(c *Context, target string) (bool, error) {
 				continue
 			}
 			query := m.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
+			// if err := bus.Dispatch(&query); err != nil {
+			// 	return true, err
+			// }
 			if query.Result.Limit < 0 {
 				continue
 			}

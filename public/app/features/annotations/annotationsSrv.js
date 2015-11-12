@@ -66,7 +66,7 @@ define([
         min: options.time,
         max: options.time,
         eventType: options.annotation.name,
-        title: 'Torkel <test@asd.com>',//  options.title,
+        title: options.title,
         tags: options.tags,
         text: options.text,
         score: 1
