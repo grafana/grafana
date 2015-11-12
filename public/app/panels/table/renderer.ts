@@ -128,7 +128,7 @@ export class TableRenderer {
       let cellHtml = '';
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === 0);
+        cellHtml += this.renderCell(i, row[i], y === startPos);
       }
 
       if (this.colorState.row) {
