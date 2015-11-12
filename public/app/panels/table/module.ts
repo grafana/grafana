@@ -20,7 +20,6 @@ export function tablePanel() {
       var data;
       var panel = scope.panel;
       var formaters = [];
-      var pageIndex = 0;
 
       function getTableHeight() {
         var panelHeight = scope.height || scope.panel.height || scope.row.height;
@@ -34,12 +33,12 @@ export function tablePanel() {
       function appendTableRows(tbodyElem) {
         var renderer = new TableRenderer(panel, data, scope.dashboard.timezone);
         tbodyElem.empty();
-        tbodyElem.html(renderer.render(pageIndex));
+        tbodyElem.html(renderer.render(scope.pageIndex));
       }
 
       function switchPage(e) {
         var el = $(e.currentTarget);
-        pageIndex = (parseInt(el.text(), 10)-1);
+        scope.pageIndex = (parseInt(el.text(), 10)-1);
         renderPanel();
       }
 
@@ -51,7 +50,7 @@ export function tablePanel() {
           return;
         }
 
-        var startPage = Math.max(pageIndex - 3, 0);
+        var startPage = Math.max(scope.pageIndex - 3, 0);
         var endPage = Math.min(pageCount, startPage + 9);
 
         var paginationList = $('<ul></ul>');
@@ -60,7 +59,7 @@ export function tablePanel() {
         paginationList.append(prevLink);
 
         for (var i = startPage; i < endPage; i++) {
-          var activeClass = i === pageIndex ? 'active' : '';
+          var activeClass = i === scope.pageIndex ? 'active' : '';
           var pageLinkElem = $('<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i+1) + '</a></li>');
           paginationList.append(pageLinkElem);
         }
@@ -72,13 +71,18 @@ export function tablePanel() {
       }
 
       function renderPanel() {
+        var container = elem.find('.table-panel-container');
         var rootElem = elem.find('.table-panel-scroll');
         var tbodyElem = elem.find('tbody');
         var footerElem = elem.find('.table-panel-footer');
 
         appendTableRows(tbodyElem);
 
-        rootElem.css({'max-height': getTableHeight()});
+        rootElem.css({
+          'max-height': panel.scroll ? getTableHeight() : ''
+        });
+
+        container.css({'font-size': panel.fontSize});
         appendPaginationControls(footerElem);
       }
 
@@ -95,7 +99,6 @@ export function tablePanel() {
           return;
         }
 
-        pageIndex = 0;
         renderPanel();
       });
     }

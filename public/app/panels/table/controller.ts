@@ -30,6 +30,8 @@ export class TablePanelCtrl {
       showHeader: true,
       columns: [],
       fields: [],
+      scroll: true,
+      fontSize: '100%',
       sort: {col: null, desc: true},
     };
 
@@ -75,18 +77,13 @@ export class TablePanelCtrl {
 
     $scope.dataHandler = function(results) {
       $scope.dataRaw = results.data;
+      $scope.pageIndex = 0;
       $scope.render();
     };
 
     $scope.render = function() {
       $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
       $scope.table.sort($scope.panel.sort);
-
-      $scope.pageCount = Math.ceil($scope.table.rows.length / $scope.panel.pageSize);
-      $scope.showPagination = $scope.pageCount > 1;
-      $scope.showPrevPageLink = $scope.pageIndex > 0;
-      $scope.showNextPageLink = $scope.pageIndex < $scope.pageCount;
-
       panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
     };
 
