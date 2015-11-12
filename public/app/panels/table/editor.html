@@ -47,6 +47,15 @@
 						<input type="number" class="input-small tight-form-input" placeholder="50"
 						empty-to-null ng-model="panel.pageSize" ng-change="render()" ng-model-onblur>
 					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="Scroll" model="panel.scroll" change="render()"></editor-checkbox>
+					</li>
+					<li class="tight-form-item">
+						Font size
+					</li>
+					<li>
+						<select class="input-small tight-form-input" ng-model="panel.fontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
@@ -90,7 +99,7 @@
 						Format
 					</li>
 					<li>
-						<input type="text" class="input-large tight-form-input" ng-model="column.dateFormat" ng-change="render()" ng-model-onblur>
+						<metric-segment-model property="column.dateFormat" options="dateFormats" on-change="render()" custom="true"></metric-segment-model>
 					</li>
 				</ul>
 				<div class="clearfix"></div>

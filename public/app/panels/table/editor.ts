@@ -29,6 +29,12 @@ export function tablePanelEditor() {
         {text: 'String', value: 'string'},
         {text: 'Date', value: 'date'},
       ];
+      scope.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
+      scope.dateFormats = [
+         {text: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss'},
+         {text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a'},
+         {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
+      ];
 
       scope.updateJsonFieldsMenu = function(data) {
         scope.jsonFieldsMenu = [];
@@ -103,7 +109,6 @@ export function tablePanelEditor() {
           return col.text;
         });
       };
-
     }
   };
 }
