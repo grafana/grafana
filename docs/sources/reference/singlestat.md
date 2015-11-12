@@ -68,7 +68,7 @@ To fix your singlestat panel:
 - Edit your panel by clicking the Panel Title and selecting *Edit*.
 
 - Do you have multiple queries in the metrics tab?
-    - Solution: Select a single query to vizualize. You can toggle whether a query is vizualized by clicking the eye icon on each line. If the error persists, continue to the next solution.
+    - Solution: Select a single query to visualize. You can toggle whether a query is visualized by clicking the eye icon on each line. If the error persists, continue to the next solution.
 
 - Do you have one query?
     - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.
