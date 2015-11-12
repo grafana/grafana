@@ -73,6 +73,10 @@ export function tablePanelEditor() {
         scope.render();
       };
 
+      scope.transformChanged = function() {
+        scope.render();
+      };
+
       scope.removeJsonField = function(field) {
         scope.panel.fields = _.without(scope.panel.fields, field);
         scope.render();

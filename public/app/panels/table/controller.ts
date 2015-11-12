@@ -28,11 +28,26 @@ export class TablePanelCtrl {
       transform: 'timeseries_to_rows',
       pageSize: 50,
       showHeader: true,
-      columns: [],
+      columns: [
+        {
+          type: 'date',
+          pattern: 'Time',
+          dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        },
+        {
+          unit: 'short',
+          type: 'number',
+          decimals: 2,
+          colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+          colorMode: null,
+          pattern: '/.*/',
+          thresholds: [],
+        }
+      ],
       fields: [],
       scroll: true,
       fontSize: '100%',
-      sort: {col: null, desc: true},
+      sort: {col: 0, desc: true},
     };
 
     $scope.init = function() {

@@ -10,7 +10,7 @@ export class TableModel {
   }
 
   sort(options) {
-    if (options.col === null || this.columns.length < options.col) {
+    if (options.col === null || this.columns.length <= options.col) {
       return;
     }
 

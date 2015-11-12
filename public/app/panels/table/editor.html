@@ -11,7 +11,7 @@
 						<select class="input-large tight-form-input"
 							ng-model="panel.transform"
 							ng-options="k as v.description for (k, v) in transformers"
-							ng-change="render()"></select>
+							ng-change="transformChanged()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -130,9 +130,6 @@
 						<spectrum-picker ng-model="column.colors[0]" ng-change="render()" ></spectrum-picker>
 						<spectrum-picker ng-model="column.colors[1]" ng-change="render()" ></spectrum-picker>
 						<spectrum-picker ng-model="column.colors[2]" ng-change="render()" ></spectrum-picker>
-					</li>
-					<li class="tight-form-item last">
-						<a class="pointer" ng-click="invertColorOrder()">invert order</a>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
