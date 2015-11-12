@@ -15,7 +15,7 @@ function (_) {
         'text':       { path: 'app/panels/text',       name: 'Text' },
         'dashlist':   { path: 'app/panels/dashlist',   name: 'Dashboard list' },
       },
-      new_panel_title: 'no title (click here)',
+      new_panel_title: 'Panel Title',
       plugins: {},
       playlist_timespan: "1m",
       unsaved_changes_warning: true,
