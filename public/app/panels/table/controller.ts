@@ -9,6 +9,7 @@ import {TableModel} from './table_model';
 
 export class TablePanelCtrl {
 
+  /** @ngInject */
   constructor($scope, $rootScope, $q, panelSrv, panelHelper, annotationsSrv) {
     $scope.ctrl = this;
     $scope.pageIndex = 0;
