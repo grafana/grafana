@@ -1,11 +1,12 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/datemath',
   'moment',
+  './directives',
   './queryCtrl',
 ],
-function (angular, _, kbn) {
+function (angular, _, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,8 +22,8 @@ function (angular, _, kbn) {
 
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
-      var start = convertToTSDBTime(options.range.from);
-      var end = convertToTSDBTime(options.range.to);
+      var start = convertToTSDBTime(options.rangeRaw.from, false);
+      var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
 
       _.each(options.targets, function(target) {
@@ -79,8 +80,8 @@ function (angular, _, kbn) {
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype._performSuggestQuery = function(query) {
-      return this._get('/api/suggest', {type: 'metrics', q: query, max: 1000}).then(function(result) {
+    OpenTSDBDatasource.prototype._performSuggestQuery = function(query, type) {
+      return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
@@ -92,11 +93,13 @@ function (angular, _, kbn) {
 
       var m = metric + "{" + key + "=*}";
 
-      return this._get('/api/search/lookup', {m: m}).then(function(result) {
+      return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
         var tagvs = [];
         _.each(result, function(r) {
-          tagvs.push(r.tags[key]);
+          if (tagvs.indexOf(r.tags[key]) === -1) {
+            tagvs.push(r.tags[key]);
+          }
         });
         return tagvs;
       });
@@ -105,7 +108,7 @@ function (angular, _, kbn) {
     OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/search/lookup', {m: metric}).then(function(result) {
+      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
         result = result.data.results;
         var tagks = [];
         _.each(result, function(r) {
@@ -147,10 +150,12 @@ function (angular, _, kbn) {
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
       var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
+      var tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
+      var tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
-        return this._performSuggestQuery(metrics_query[1]).then(responseTransform);
+        return this._performSuggestQuery(metrics_query[1], 'metrics').then(responseTransform);
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
@@ -163,13 +168,36 @@ function (angular, _, kbn) {
         return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
       }
 
+      var tag_names_suggest_query = interpolated.match(tag_names_suggest_regex);
+      if (tag_names_suggest_query) {
+        return this._performSuggestQuery(tag_names_suggest_query[1], 'tagk').then(responseTransform);
+      }
+
+      var tag_values_suggest_query = interpolated.match(tag_values_suggest_regex);
+      if (tag_values_suggest_query) {
+        return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
+      }
+
       return $q.when([]);
     };
 
     OpenTSDBDatasource.prototype.testDatasource = function() {
-      return this.performSuggestQuery('cpu', 'metrics').then(function () {
+      return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
+    };
+
+    var aggregatorsPromise = null;
+    OpenTSDBDatasource.prototype.getAggregators = function() {
+      if (aggregatorsPromise) { return aggregatorsPromise; }
+
+      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+        if (result.data && _.isArray(result.data)) {
+          return result.data.sort();
+        }
+        return [];
+      });
+      return aggregatorsPromise;
     };
 
     function transformMetricData(md, groupByTags, target, options) {
@@ -274,14 +302,13 @@ function (angular, _, kbn) {
       });
     }
 
-    function convertToTSDBTime(date) {
+    function convertToTSDBTime(date, roundUp) {
       if (date === 'now') {
         return null;
       }
 
-      date = kbn.parseDate(date);
-
-      return date.getTime();
+      date = dateMath.parse(date, roundUp);
+      return date.valueOf();
     }
 
     return OpenTSDBDatasource;

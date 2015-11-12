@@ -7,6 +7,18 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetSystemStats)
+	bus.AddHandler("sql", GetDataSourceStats)
+}
+
+func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
+	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
+	query.Result = make([]*m.DataSourceStats, 0)
+	err := x.Sql(rawSql).Find(&query.Result)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func GetSystemStats(query *m.GetSystemStatsQuery) error {

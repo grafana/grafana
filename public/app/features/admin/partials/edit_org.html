@@ -1,0 +1,60 @@
+<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
+	<ul class="nav">
+		<li><a href="admin/orgs">List</a></li>
+		<li class="active"><a href="admin/orgs/edit/{{org.id}}">Edit Org</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2>
+			Organization Details
+		</h2>
+
+		<form name="orgDetailsForm">
+			<div>
+				<div class="tight-form">
+					<ul class="tight-form-list">
+						<li class="tight-form-item" style="width: 100px">
+							Name
+						</li>
+						<li>
+							<input type="text" required ng-model="org.name" class="input-xxlarge tight-form-input last" >
+						</li>
+					</ul>
+					<div class="clearfix"></div>
+				</div>
+			</div>
+
+			<br>
+			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+		</form>
+
+		<h3>
+			Organization Users
+		</h3>
+
+		<table class="grafana-options-table form-inline">
+			<tr>
+				<th>Username</th>
+				<th>Email</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
+			<tr ng-repeat="orgUser in orgUsers">
+				<td>{{orgUser.login}}</td>
+				<td>{{orgUser.email}}</td>
+				<td>
+					<select type="text" ng-model="orgUser.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
+					</select>
+				</td>
+				<td style="width: 1%">
+					<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
+
+	</div>
+</div>

@@ -44,8 +44,8 @@ function (angular, _, require, config) {
       var params = angular.copy($location.search());
 
       var range = timeSrv.timeRange();
-      params.from = range.from.getTime();
-      params.to = range.to.getTime();
+      params.from = range.from.valueOf();
+      params.to = range.to.valueOf();
 
       if ($scope.options.includeTemplateVars) {
         templateSrv.fillVariableValuesForUrl(params);
@@ -75,7 +75,7 @@ function (angular, _, require, config) {
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard', '/render/dashboard');
+      $scope.imageUrl = soloUrl.replace('/dashboard-solo/', '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

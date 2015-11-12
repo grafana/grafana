@@ -1,7 +1,8 @@
 define([
  'kbn',
- 'lodash'
-], function(kbn, _) {
+ 'lodash',
+ 'app/core/utils/datemath',
+], function(kbn, _, dateMath) {
   'use strict';
 
   function ControllerTestContext() {
@@ -37,9 +38,10 @@ define([
     };
 
     this.createControllerPhase = function(controllerName) {
-      return inject(function($controller, $rootScope, $q, $location) {
+      return inject(function($controller, $rootScope, $q, $location, $browser) {
         self.scope = $rootScope.$new();
         self.$location = $location;
+        self.$browser = $browser;
         self.scope.contextSrv = {};
         self.scope.panel = {};
         self.scope.row = { panels:[] };
@@ -107,8 +109,8 @@ define([
         return this.time;
       }
       return {
-        from : kbn.parseDate(this.time.from),
-        to : kbn.parseDate(this.time.to)
+        from : dateMath.parse(this.time.from, false),
+        to : dateMath.parse(this.time.to, true)
       };
     };
 

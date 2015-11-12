@@ -13,6 +13,7 @@ func setIndexViewData(c *middleware.Context) error {
 	}
 
 	currentUser := &dtos.CurrentUser{
+		Id:             c.UserId,
 		IsSignedIn:     c.IsSignedIn,
 		Login:          c.Login,
 		Email:          c.Email,
@@ -45,6 +46,10 @@ func setIndexViewData(c *middleware.Context) error {
 
 	if setting.GoogleAnalyticsId != "" {
 		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId
+	}
+
+	if setting.GoogleTagManagerId != "" {
+		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
 	}
 
 	return nil

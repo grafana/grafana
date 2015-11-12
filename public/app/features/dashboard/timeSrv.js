@@ -3,8 +3,9 @@ define([
   'lodash',
   'config',
   'kbn',
-  'moment'
-], function (angular, _, config, kbn, moment) {
+  'moment',
+  'app/core/utils/datemath'
+], function (angular, _, config, kbn, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -22,17 +23,17 @@ define([
       this._parseTime();
 
       if(this.dashboard.refresh) {
-        this.set_interval(this.dashboard.refresh);
+        this.setAutoRefresh(this.dashboard.refresh);
       }
     };
 
     this._parseTime = function() {
       // when absolute time is saved in json it is turned to a string
       if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-        this.time.from = new Date(this.time.from);
+        this.time.from = moment(this.time.from).utc();
       }
       if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-        this.time.to = new Date(this.time.to);
+        this.time.to = moment(this.time.to).utc();
       }
     };
 
@@ -41,14 +42,14 @@ define([
         return value;
       }
       if (value.length === 8) {
-        return moment.utc(value, 'YYYYMMDD').toDate();
+        return moment.utc(value, 'YYYYMMDD');
       }
       if (value.length === 15) {
-        return moment.utc(value, 'YYYYMMDDTHHmmss').toDate();
+        return moment.utc(value, 'YYYYMMDDTHHmmss');
       }
       var epoch = parseInt(value);
       if (!_.isNaN(epoch)) {
-        return new Date(epoch);
+        return moment(epoch);
       }
 
       return null;
@@ -63,7 +64,7 @@ define([
       }
     };
 
-    this.set_interval = function (interval) {
+    this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
@@ -93,12 +94,12 @@ define([
       _.extend(this.time, time);
 
       // disable refresh if we have an absolute time
-      if (_.isString(time.to) && time.to.indexOf('now') === -1) {
+      if (moment.isMoment(time.to)) {
         this.old_refresh = this.dashboard.refresh || this.old_refresh;
-        this.set_interval(false);
+        this.setAutoRefresh(false);
       }
       else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
-        this.set_interval(this.old_refresh);
+        this.setAutoRefresh(this.old_refresh);
         this.old_refresh = null;
       }
 
@@ -112,29 +113,23 @@ define([
         range = this.timeRange();
       }
 
-      if (_.isDate(range.from)) { range.from = range.from.getTime(); }
-      if (_.isDate(range.to)) { range.to = range.to.getTime(); }
+      if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
+      if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
 
       return range;
     };
 
     this.timeRange = function(parse) {
-      var _t = this.time;
+      // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
+      var from = moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from ;
+      var to = moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to ;
 
-      if(parse === false) {
-        return {
-          from: _t.from,
-          to: _t.to
-        };
-      } else {
-        var _from = _t.from;
-        var _to = _t.to || new Date();
-
-        return {
-          from: kbn.parseDate(_from),
-          to: kbn.parseDate(_to)
-        };
+      if (parse !== false) {
+        from = dateMath.parse(from, false);
+        to = dateMath.parse(to, true);
       }
+
+      return {from: from, to: to};
     };
 
   });

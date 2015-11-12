@@ -10,12 +10,14 @@ import . "github.com/Cepave/grafana/pkg/services/sqlstore/migrator"
 func AddMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
 	addUserMigrations(mg)
+	addTempUserMigrations(mg)
 	addStarMigrations(mg)
 	addOrgMigrations(mg)
 	addDashboardMigration(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
+	addQuotaMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

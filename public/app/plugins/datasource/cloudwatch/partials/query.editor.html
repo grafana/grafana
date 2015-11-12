@@ -1,0 +1,93 @@
+<div class="tight-form">
+	<ul class="tight-form-list pull-right">
+		<li class="tight-form-item">
+			<div class="dropdown">
+				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+					<i class="fa fa-bars"></i>
+				</a>
+				<ul class="dropdown-menu pull-right" role="menu">
+					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+				</ul>
+			</div>
+		</li>
+		<li class="tight-form-item last">
+			<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+				<i class="fa fa-remove"></i>
+			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="min-width: 15px; text-align: center">
+			{{target.refId}}
+		</li>
+		<li>
+			<a  class="tight-form-item"
+				ng-click="target.hide = !target.hide; get_data();"
+				role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword" style="width: 100px">
+			Metric
+		</li>
+		<li>
+			<metric-segment segment="regionSegment" get-options="getRegions()" on-change="regionChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="namespaceSegment" get-options="getNamespaces()" on-change="namespaceChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="metricSegment" get-options="getMetrics()" on-change="metricChanged()"></metric-segment>
+		</li>
+		<li class="tight-form-item query-keyword">
+			Stats
+		</li>
+		<li ng-repeat="segment in statSegments">
+			<metric-segment segment="segment" get-options="getStatSegments(segment, $index)" on-change="statSegmentChanged(segment, $index)"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+			Dimensions
+		</li>
+		<li ng-repeat="segment in dimSegments">
+			<metric-segment segment="segment" get-options="getDimSegments(segment, $index)" on-change="dimSegmentChanged(segment, $index)"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+			Alias
+			<tip>{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}</tip>
+		</li>
+		<li>
+			<input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="refreshMetricData()">
+		</li>
+		<li class="tight-form-item query-keyword">
+			Period
+			<tip>Interval between points in seconds</tip>
+		</li>
+		<li>
+			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="refreshMetricData()" />
+		</li>
+
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+

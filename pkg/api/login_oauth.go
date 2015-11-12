@@ -74,7 +74,15 @@ func OAuthLogin(ctx *middleware.Context) {
 			ctx.Redirect(setting.AppSubUrl + "/login")
 			return
 		}
-
+		limitReached, err := middleware.QuotaReached(ctx, "user")
+		if err != nil {
+			ctx.Handle(500, "Failed to get user quota", err)
+			return
+		}
+		if limitReached {
+			ctx.Redirect(setting.AppSubUrl + "/login")
+			return
+		}
 		cmd := m.CreateUserCommand{
 			Login:   userInfo.Email,
 			Email:   userInfo.Email,

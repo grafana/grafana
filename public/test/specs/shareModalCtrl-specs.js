@@ -1,7 +1,7 @@
 define([
-  'helpers',
-  'features/dashboard/shareModalCtrl',
-  'features/panellinks/linkSrv',
+  './helpers',
+  'app/features/dashboard/shareModalCtrl',
+  'app/features/panellinks/linkSrv',
 ], function(helpers) {
   'use strict';
 
@@ -29,6 +29,17 @@ define([
 
         ctx.scope.init();
         expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1000&to=2000&panelId=22&fullscreen');
+      });
+
+      it('should generate render url', function() {
+        ctx.$location.$$absUrl = 'http://dashboards.grafana.com/dashboard/db/my-dash';
+
+        ctx.scope.panel = { id: 22 };
+
+        ctx.scope.init();
+        var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
+        var params = '?from=1000&to=2000&panelId=22&fullscreen&width=1000&height=500';
+        expect(ctx.scope.imageUrl).to.be(base + params);
       });
 
       it('should remove panel id when no panel in scope', function() {

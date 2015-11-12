@@ -111,6 +111,8 @@ function (angular, _, $) {
       self.fullscreenPanel.fullscreen = false;
       delete self.fullscreenPanel.height;
 
+      this.$scope.appEvent('panel-fullscreen-exit', {panelId: this.fullscreenPanel.panel.id});
+
       if (!render) { return false;}
 
       $timeout(function() {
@@ -125,8 +127,6 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
-      this.$scope.appEvent('hide-dash-editor');
-
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.3);
       var fullscreenHeight = Math.floor(docHeight * 0.7);
@@ -140,6 +140,7 @@ function (angular, _, $) {
       $(window).scrollTop(0);
 
       panelScope.fullscreen = true;
+      this.$scope.appEvent('panel-fullscreen-enter', {panelId: panelScope.panel.id});
 
       $timeout(function() {
         panelScope.$broadcast('render');

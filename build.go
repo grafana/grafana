@@ -89,8 +89,13 @@ func main() {
 }
 
 func makeLatestDistCopies() {
+	rpmIteration := "-1"
+	if linuxPackageIteration != "" {
+		rpmIteration = "-" + linuxPackageIteration
+	}
+
 	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
-	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
+	runError("cp", "dist/grafana-"+linuxPackageVersion+rpmIteration+".x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
 	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
 }
 
@@ -221,6 +226,7 @@ func createPackage(options linuxPackageOptions) {
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
+		"--config-files", options.ldapFilePath,
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
@@ -322,8 +328,8 @@ func build(pkg string, tags []string) {
 func ldflags() string {
 	var b bytes.Buffer
 	b.WriteString("-w")
-	b.WriteString(fmt.Sprintf(" -X main.version '%s'", version))
-	b.WriteString(fmt.Sprintf(" -X main.commit '%s'", getGitSha()))
+	b.WriteString(fmt.Sprintf(" -X main.version %s", version))
+	b.WriteString(fmt.Sprintf(" -X main.commit %s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp %d", buildStamp()))
 	return b.String()
 }

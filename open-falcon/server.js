@@ -65,14 +65,14 @@ function getMapData(chartType)
 /**
  * @function name:	function function queryMetric(req, res, targets)
  * @description:	This function gets hosts locations for map chart.
- * @related issues:	OWL-123, OWL-030
+ * @related issues:	OWL-168, OWL-123, OWL-030
  * @param:			object req
  * @param:			object res
  * @param:			array targets
  * @return:			void
  * @author:			Don Hsieh
  * @since:			08/15/2015
- * @last modified: 	10/20/2015
+ * @last modified: 	11/11/2015
  * @called by:		app.post('/')
  *					 in open-falcon/server.js
  */
@@ -117,15 +117,15 @@ function queryMetric(req, res, targets)
 		var unit = 0;
 		if (from.indexOf('m') > 0) {
 			unit = 60;
-		}
-		if (from.indexOf('h') > 0) {
+			from = now + parseInt(from) * unit;
+		} else if (from.indexOf('h') > 0) {
 			unit = 3600;
-		}
-		if (from.indexOf('d') > 0) {
+			from = now + parseInt(from) * unit;
+		} else if (from.indexOf('d') > 0) {
 			unit = 86400;
-		}
-		if (from.indexOf('h') > 0) {
-			from = parseInt(from) * unit;
+			from = now + parseInt(from) * unit;
+		} else {
+			from = parseInt(from);
 		}
 
 		var urlQuery = req.query['urlQuery'];
@@ -136,7 +136,7 @@ function queryMetric(req, res, targets)
 			json: {
 				"endpoint_counters": metrics,
 				"cf": "AVERAGE",
-				"start": now + from,
+				"start": from,
 				"end": now
 			}
 		};
@@ -158,16 +158,16 @@ function queryMetric(req, res, targets)
 
 /**
  * @function:		app.get('/', function(req, res))
- * @description:	This route returns list of hosts (endpoints)
- *					 if query[0] == '*'; returns list of metrics (counters)
- *					 otherwise.
+ * @description:	This route returns list of hosts (endpoints) if query[0] == '*';
+ *					 returns list of metrics (counters) otherwise.
+ * @related issues:	OWL-168
  * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	10/23/2015
+ * @last modified: 	11/11/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -178,14 +178,20 @@ app.get('/', function(req, res) {
 	var results = [];
 	var urlDashboard = req.query['urlDashboard'];
 	var arrQuery = req.query;
-	var query = arrQuery['query'];
+	var query = arrQuery['query'].replace('undefined', '').replace('.select metric', '');
+	var limit = 'limit';
 
-	if (query.indexOf('*.') === 0) {	// Query hosts, i.e., endpoints.
-		query = query.replace('*.', '');
-		if ('chart'.indexOf(query) > -1) {
+	var host = query.split('.')[0];
+	var gotHostname = host.length > 4;
+	if (!gotHostname) {	// Query hosts, i.e., endpoints.
+		query = host.replace('*', '');
+		if (query === '') {
+			query = '%';
+			limit = 'limit=500';
 			results.push({text: 'chart', expandable: true});
 		}
-		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&limit&_r=' + Math.random();
+
+		url = urlDashboard + '/api/endpoints?q=' + query + '&tags&' + limit + '&_r=' + Math.random();
 		request(url, function (error, response, body) {
 			if (!error && response.statusCode === 200) {
 				body = JSON.parse(body);
@@ -206,7 +212,7 @@ app.get('/', function(req, res) {
 		if (query[query.length-1].indexOf('{') > -1) {
 			query.pop();
 		} else {}
-		var host = query.shift();
+		host = query.shift();
 		if (host === 'chart') {
 			results.push({text: 'bar', expandable: false});
 			results.push({text: 'map', expandable: false});
@@ -315,7 +321,6 @@ app.post('/', function (req, res) {
 				res.send(results);
 			} else if (targets.split('.')[1] === 'pie') {
 				results = getMapData('pie');
-				// console.log('results =', results);
 				res.send(results);
 			} else {
 				res.send([]);

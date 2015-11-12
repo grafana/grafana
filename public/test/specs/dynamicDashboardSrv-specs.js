@@ -1,6 +1,6 @@
 define([
-  'features/dashboard/dynamicDashboardSrv',
-  'features/dashboard/dashboardSrv'
+  'app/features/dashboard/dynamicDashboardSrv',
+  'app/features/dashboard/dashboardSrv'
 ], function() {
   'use strict';
 

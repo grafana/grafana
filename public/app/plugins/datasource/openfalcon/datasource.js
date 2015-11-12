@@ -3,20 +3,20 @@ define([
   'lodash',
   'jquery',
   'config',
-  'kbn',
-  'moment',
-  './queryCtrl',
+  'app/core/utils/datemath',
+  './directives',
+  './query_ctrl',
   './funcEditor',
-  './addGraphiteFunc',
+  './addOpenfalconFunc',
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, $, config, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenFalconDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('OpenfalconDatasource', function($q, backendSrv, templateSrv) {
 
-    function OpenFalconDatasource(datasource) {
+    function OpenfalconDatasource(datasource) {
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
       this.name = datasource.name;
@@ -25,7 +25,7 @@ function (angular, _, $, config, kbn, moment) {
       this.render_method = datasource.render_method || 'POST';
     }
 
-    OpenFalconDatasource.prototype.query = function(options) {
+    OpenfalconDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.range.from, 'round-down'),
@@ -36,7 +36,7 @@ function (angular, _, $, config, kbn, moment) {
           maxDataPoints: options.maxDataPoints,
         };
 
-        var params = this.buildOpenFalconParams(graphOptions, options.scopedVars);
+        var params = this.buildOpenfalconParams(graphOptions, options.scopedVars);
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -51,7 +51,7 @@ function (angular, _, $, config, kbn, moment) {
           httpOptions.data = params.join('&');
           httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
         }
-        return this.doOpenFalconRequest(httpOptions).then(this.convertDataPointsToMs);
+        return this.doOpenfalconRequest(httpOptions).then(this.convertDataPointsToMs);
       }
       catch(err) {
         return $q.reject(err);
@@ -59,18 +59,18 @@ function (angular, _, $, config, kbn, moment) {
     };
 
     /**
-     * @function name:  OpenFalconDatasource.prototype.convertDataPointsToMs = function(result)
+     * @function name:  OpenfalconDatasource.prototype.convertDataPointsToMs = function(result)
      * @description:    This function gets hosts locations for map chart.
-     * @related issues: OWL-052, OWL-030
+     * @related issues: OWL-168, OWL-052, OWL-030
      * @param:          object result
      * @return:         object results
      * @author:         Don Hsieh
      * @since:          08/20/2015
-     * @last modified:  08/27/2015
-     * @called by:      OpenFalconDatasource.prototype.query = function(options)
+     * @last modified:  11/11/2015
+     * @called by:      OpenfalconDatasource.prototype.query = function(options)
      *                   in public/app/plugins/datasource/openfalcon/datasource.js
      */
-    OpenFalconDatasource.prototype.convertDataPointsToMs = function(result) {
+    OpenfalconDatasource.prototype.convertDataPointsToMs = function(result) {
       var obj = {};
       if (!result.data.length) {
         return result;
@@ -117,7 +117,7 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
+    OpenfalconDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
       // Open-Falcon metric as annotation
       if (annotation.target) {
         var target = templateSrv.replace(annotation.target);
@@ -171,14 +171,14 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.events = function(options) {
+    OpenfalconDatasource.prototype.events = function(options) {
       try {
         var tags = '';
         if (options.tags) {
           tags = '&tags=' + options.tags;
         }
 
-        return this.doOpenFalconRequest({
+        return this.doOpenfalconRequest({
           method: 'GET',
           url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
         });
@@ -188,32 +188,30 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    OpenFalconDatasource.prototype.translateTime = function(date, rounding) {
+    OpenfalconDatasource.prototype.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
           return date;
         }
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, roundUp);
       }
 
-      date = moment.utc(date);
-
-      if (rounding === 'round-up') {
+      // graphite's from filter is exclusive
+      // here we step back one minute in order
+      // to guarantee that we get all the data that
+      // exists for the specified range
+      if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
-      else if (rounding === 'round-down') {
-        // open-falcon' s from filter is exclusive
-        // here we step back one minute in order
-        // to guarantee that we get all the data that
-        // exists for the specified range
+      else if (roundUp === false) {
         if (date.get('s')) {
           date.subtract(1, 'm');
         }
@@ -222,7 +220,7 @@ function (angular, _, $, config, kbn, moment) {
       return date.unix();
     };
 
-    OpenFalconDatasource.prototype.metricFindQuery = function(query) {
+    OpenfalconDatasource.prototype.metricFindQuery = function(query) {
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -231,7 +229,7 @@ function (angular, _, $, config, kbn, moment) {
         return $q.reject(err);
       }
 
-      return this.doOpenFalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
+      return this.doOpenfalconRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
         .then(function(results) {
           return _.map(results.data, function(metric) {
             return {
@@ -242,24 +240,24 @@ function (angular, _, $, config, kbn, moment) {
         });
     };
 
-    OpenFalconDatasource.prototype.testDatasource = function() {
+    OpenfalconDatasource.prototype.testDatasource = function() {
       return this.metricFindQuery('*').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
-    OpenFalconDatasource.prototype.listDashboards = function(query) {
-      return this.doOpenFalconRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
+    OpenfalconDatasource.prototype.listDashboards = function(query) {
+      return this.doOpenfalconRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
         .then(function(results) {
           return results.data.dashboards;
         });
     };
 
-    OpenFalconDatasource.prototype.loadDashboard = function(dashName) {
-      return this.doOpenFalconRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
+    OpenfalconDatasource.prototype.loadDashboard = function(dashName) {
+      return this.doOpenfalconRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
     };
 
-    OpenFalconDatasource.prototype.doOpenFalconRequest = function(options) {
+    OpenfalconDatasource.prototype.doOpenfalconRequest = function(options) {
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
@@ -270,21 +268,13 @@ function (angular, _, $, config, kbn, moment) {
 
       options.url = this.url + options.url;
 
-      options.inspect = { type: 'graphite' };
+      options.inspect = { type: 'openfalcon' };
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenFalconDatasource.prototype._seriesRefLetters = [
-      '#A', '#B', '#C', '#D',
-      '#E', '#F', '#G', '#H',
-      '#I', '#J', '#K', '#L',
-      '#M', '#N', '#O', '#P',
-      '#Q', '#R', '#S', '#T',
-      '#U', '#V', '#W', '#X',
-      '#Y', '#Z'
-    ];
+    OpenfalconDatasource.prototype._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    OpenFalconDatasource.prototype.buildOpenFalconParams = function(options, scopedVars) {
+    OpenfalconDatasource.prototype.buildOpenfalconParams = function(options, scopedVars) {
       var openFalcon_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
@@ -337,6 +327,6 @@ function (angular, _, $, config, kbn, moment) {
       return clean_options;
     };
 
-    return OpenFalconDatasource;
+    return OpenfalconDatasource;
   });
 });

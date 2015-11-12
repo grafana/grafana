@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'plugins/datasource/kairosdb/datasource'
+  './helpers',
+  'app/plugins/datasource/kairosdb/datasource'
 ], function(helpers) {
   'use strict';
 
@@ -27,7 +27,7 @@ define([
       };
 
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ metric: 'test', downsampling: '(NONE)'}]
       };
 

@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/Cepave/grafana",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.5",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -17,6 +17,51 @@
 		{
 			"ImportPath": "github.com/Unknwon/macaron",
 			"Rev": "93de4f3fad97bf246b838f828e2348f46f21f20a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/ec2query",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/query",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/rest",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/signer/v4",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/ec2",
+			"Comment": "v0.9.16-3-g4944a94",
+			"Rev": "4944a94a3b092d1dad8a964415700a70f55e580a"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -78,6 +123,10 @@
 		{
 			"ImportPath": "github.com/streadway/amqp",
 			"Rev": "150b7f24d6ad507e6026c13d85ce1f1391ac7400"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
