@@ -204,7 +204,7 @@ function (angular, _) {
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
           var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.EBS.VolumeID;
+            return mapping.Ebs.VolumeId;
           });
 
           return transformSuggestData(volumeIds);
