@@ -58,7 +58,7 @@ Value to text mapping allows you to translate the value of the summary stat into
 
 ### Multiple Series Error
 
-<img class="no-shadow" src="/img/v1/Singlestat-MultiSeriesError.png">
+<img class="no-shadow" src="/img/v2/Singlestat-MultiSeriesError.png">
 
 
 Grafana 2.5 introduced stricter checking for multiple-series on singlestat panels. In previous versions, the panel logic did not verify that only a single series was used, and instead, displayed the first series encountered. Depending on your data source, this could have lead to inconsistent data being shown and/or a general confusion about which metric was being displayed.
