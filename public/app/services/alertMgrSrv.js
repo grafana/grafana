@@ -24,14 +24,19 @@ function (angular) {
         }
         return response;
       }, function onFailed(response) {
-        alertSrv.set("error", response.status + " " + (response.message || "Request failed"), response.severity, 50);
+        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 5000);
         return response;
       });
     };
 
-    this.save = function(json) {
-      return $http.post(alertUrl, json});
-    }
+    this.save = function(alertDef) {
+      return $http({
+        method: "post",
+        url: "http://0.0.0.0:5001/alert/definition",
+        data: angular.toJson(alertDef),
+        headers: {'Content-Type': 'text/plain'},
+      });
+    };
 
     this.get = function(id) {
       return self.alertDefMap[id];
