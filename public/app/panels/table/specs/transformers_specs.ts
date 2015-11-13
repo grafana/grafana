@@ -39,7 +39,7 @@ describe('when transforming time series table', () => {
       it('should return 3 rows', () => {
         expect(table.columns.length).to.be(3);
         expect(table.columns[0].text).to.be('Time');
-        expect(table.columns[1].text).to.be('Series');
+        expect(table.columns[1].text).to.be('Metric');
         expect(table.columns[2].text).to.be('Value');
       });
     });
@@ -71,36 +71,36 @@ describe('when transforming time series table', () => {
       });
     });
 
-    describe('timeseries_to_summaries', () => {
+    describe('timeseries_aggregations', () => {
       var panel = {
-        transform: 'timeseries_to_summaries',
+        transform: 'timeseries_aggregations',
         sort: {col: 0, desc: true},
+        columns: [{text: 'Max', value: 'max'}, {text: 'Min', value: 'min'}]
       };
 
       beforeEach(() => {
         table = TableModel.transform(timeSeries, panel);
       });
 
-      // it('should return 2 rows', () => {
-      //   expect(table.rows.length).to.be(2);
-      //   expect(table.rows[0][0]).to.be('series1');
-      //   expect(table.rows[0][1]).to.be('Min');
-      //   expect(table.rows[1][0]).to.be('series2');
-      // });
-      //
-      // it('should return 2 columns', () => {
-      //   expect(table.columns.length).to.be(3);
-      //   expect(table.columns[0].text).to.be('Series');
-      //   expect(table.columns[1].text).to.be('Min');
-      //   expect(table.columns[2].text).to.be('Value');
-      // });
-    });
+      it('should return 2 rows', () => {
+        expect(table.rows.length).to.be(2);
+        expect(table.rows[0][0]).to.be('series1');
+        expect(table.rows[0][1]).to.be(14.44);
+        expect(table.rows[0][2]).to.be(12.12);
+      });
 
+      it('should return 2 columns', () => {
+        expect(table.columns.length).to.be(3);
+        expect(table.columns[0].text).to.be('Metric');
+        expect(table.columns[1].text).to.be('Max');
+        expect(table.columns[2].text).to.be('Min');
+      });
+    });
 
     describe('JSON Data', () => {
       var panel = {
         transform: 'json',
-        columns: [{name: 'timestamp'}, {name: 'message'}]
+        columns: [{text: 'Timestamp', value: 'timestamp'}, {text: 'Message', value: 'message'}]
       };
       var rawData = [
         {
@@ -120,8 +120,8 @@ describe('when transforming time series table', () => {
 
       it ('should return 2 columns', () => {
         expect(table.columns.length).to.be(2);
-        expect(table.columns[0].text).to.be('timestamp');
-        expect(table.columns[1].text).to.be('message');
+        expect(table.columns[0].text).to.be('Timestamp');
+        expect(table.columns[1].text).to.be('Message');
       });
 
       it ('should return 2 rows', () => {
