@@ -191,11 +191,17 @@ describe('CloudWatchDatasource', function() {
   });
 
   describe('When performing annotationQuery', function() {
-    var annotation = {
-      region: 'us-east-1',
-      namespace: 'AWS/EC2',
-      metricName: 'CPUUtilization',
-      dimensions: 'InstanceId=i-12345678'
+    var parameter = {
+      annotation: {
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: 'InstanceId=i-12345678'
+      },
+      range: {
+        from: moment(1443438674760),
+        to: moment(1443460274760)
+      }
     };
     var alarmResponse = {
       MetricAlarms: [
@@ -228,7 +234,7 @@ describe('CloudWatchDatasource', function() {
       };
     });
     it('should return annotation list', function(done) {
-      ctx.ds.annotationQuery(annotation, {from: moment(1443438674760), to: moment(1443460274760)}).then(function(result) {
+      ctx.ds.annotationQuery(parameter).then(function(result) {
         expect(result[0].title).to.be('test_alarm_name');
         expect(result[0].text).to.be('test_history_summary');
         done();
