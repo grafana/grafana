@@ -81,8 +81,8 @@ export class TableRenderer {
       return this.formaters[colIndex](value);
     }
 
-    for (let i = 0; i < this.panel.columns.length; i++) {
-      let style = this.panel.columns[i];
+    for (let i = 0; i < this.panel.styles.length; i++) {
+      let style = this.panel.styles[i];
       let column = this.table.columns[colIndex];
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {

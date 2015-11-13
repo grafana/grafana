@@ -87,8 +87,8 @@ transformers['json'] = {
   description: 'JSON Data',
   transform: function(data, panel, model) {
     var i, y, z;
-    for (i = 0; i < panel.fields.length; i++) {
-      model.columns.push({text: panel.fields[i].name});
+    for (i = 0; i < panel.columns.length; i++) {
+      model.columns.push({text: panel.columns[i].name});
     }
 
     if (model.columns.length === 0) {
@@ -101,8 +101,8 @@ transformers['json'] = {
       for (y = 0; y < series.datapoints.length; y++) {
         var dp = series.datapoints[y];
         var values = [];
-        for (z = 0; z < panel.fields.length; z++) {
-          values.push(dp[panel.fields[z].name]);
+        for (z = 0; z < panel.columns.length; z++) {
+          values.push(dp[panel.columns[z].name]);
         }
 
         if (values.length === 0) {

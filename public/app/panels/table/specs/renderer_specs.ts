@@ -15,7 +15,7 @@ describe('when rendering table', () => {
 
     var panel = {
       pageSize: 10,
-      columns: [
+      styles: [
         {
           pattern: 'Time',
           type: 'date',
