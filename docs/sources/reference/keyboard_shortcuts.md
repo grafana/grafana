@@ -17,7 +17,7 @@ Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the 
 |Shortcut|Action|
 |---|---|
 |`Esc`|Exit fullscreen edit/view mode, close search or any editor view|
-|`CTRL`+`F`|Open dashboard search view (also contains import/playlist controls)|
+|`F`|Open dashboard search view (also contains import/playlist controls)|
 |`CTRL`+`S`|Save dashboard|
 |`CTRL`+`H`|Hide row controls|
 |`CTRL`+`Z`|Zoom out|
@@ -29,4 +29,4 @@ Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the 
 **Note**: Grafana keyboard shortcuts are the same across operating system. For example, `CTRL`+`F` will open the dashboard picker on a Mac as well, **not** `⌘`+`F`
 
 
-Have a suggestion for a new keyboard shortcut? Let us know. 
+Have a suggestion for a new keyboard shortcut? Let us know.
