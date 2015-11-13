@@ -32,7 +32,7 @@ function (angular) {
     this.save = function(alertDef) {
       return $http({
         method: "post",
-        url: "http://0.0.0.0:5001/alert/definition",
+        url: alertUrl,
         data: angular.toJson(alertDef),
         headers: {'Content-Type': 'text/plain'},
       });
