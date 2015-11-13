@@ -28,7 +28,7 @@ function (angular, _, $, config) {
       });
       $scope.mainLinks.push({
         text: "Probes",
-        icon: "fa-fw icon-rt-collector",
+        icon: "fa-fw icon-rt-probe",
         href: $scope.getUrl("/collectors"),
       });
       if (contextSrv.hasRole('Admin')) {
