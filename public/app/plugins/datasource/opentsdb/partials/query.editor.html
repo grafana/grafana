@@ -118,8 +118,11 @@
 			Tags
 		</li>
 		<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
-			{{key}}&nbsp;=&nbsp;{{value}}
-			<a ng-click="removeTag(key)">
+			  {{key}}&nbsp;=&nbsp;{{value}}
+			<a ng-click="editTag(key, value)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a ng-click="removeTag(key)">
 				<i class="fa fa-remove"></i>
 			</a>
 		</li>
