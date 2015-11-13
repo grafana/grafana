@@ -200,7 +200,7 @@
           },
           "targets": [
             {
-              "target": "scale(litmus.$endpoint.$probe.https.ok_state, 100)"
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.https.ok_state), 100)"
             }
           ],
           "thresholds": "0,0,100",
