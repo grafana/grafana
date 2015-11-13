@@ -37,7 +37,7 @@
 	</ul>
 
 	<ul class="tight-form-list" role="menu">
-		<li class="tight-form-item" style="width: 86px">
+		<li class="tight-form-item query-keyword" style="width: 100px">
 			Metric
 		</li>
 		<li>
@@ -49,7 +49,7 @@
 				<i class="fa fa-warning"></i>
 			</a>
 		</li>
-		<li class="tight-form-item">
+		<li class="tight-form-item query-keyword">
 			Aggregator
 		</li>
 		<li>
@@ -62,7 +62,7 @@
 			</a>
 		</li>
 
-		<li class="tight-form-item">
+		<li class="tight-form-item query-keyword">
 			Alias:
 			<tip>Use patterns like $tag_tagname to replace part of the alias for a tag value</tip>
 		</li>
@@ -81,7 +81,7 @@
 
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
-		<li class="tight-form-item tight-form-align" style="width: 86px">
+		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
 			Down sample
 		</li>
 
@@ -93,7 +93,7 @@
 			placeholder="interval (empty = auto)"></input>
 		</li>
 
-		<li class="tight-form-item">
+		<li class="tight-form-item query-keyword">
 			Aggregator
 		</li>
 
@@ -104,8 +104,8 @@
 			</select>
 		</li>
 
-		<li class="tight-form-item">
-			<editor-checkbox text="Disable downsampling" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
+		<li class="tight-form-item query-keyword">
+			Disable downsampling <editor-checkbox text="" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
 		</li>
 
 	</ul>
@@ -114,7 +114,7 @@
 
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
-		<li class="tight-form-item tight-form-align" style="width: 86px">
+		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
 			Tags
 		</li>
 		<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
@@ -124,7 +124,7 @@
 			</a>
 		</li>
 
-		<li class="tight-form-item" ng-hide="addTagMode">
+		<li class="tight-form-item query-keyword" ng-hide="addTagMode">
 			<a ng-click="addTag()">
 				<i class="fa fa-plus"></i>
 			</a>
@@ -154,15 +154,15 @@
 
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
-		<li class="tight-form-item tight-form-align" style="width: 86px">
-			<editor-checkbox text="Rate" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
+		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
+			Rate <editor-checkbox text="" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
 		</li>
 
-		<li class="tight-form-item" ng-hide="!target.shouldComputeRate">
-			<editor-checkbox text="Counter" model="target.isCounter" change="targetBlur()"></editor-checkbox>
+		<li class="tight-form-item query-keyword" ng-hide="!target.shouldComputeRate">
+			Counter <editor-checkbox text="" model="target.isCounter" change="targetBlur()"></editor-checkbox>
 		</li>
 
-		<li class="tight-form-item" ng-hide="!target.isCounter || !target.shouldComputeRate">
+		<li class="tight-form-item query-keyword" ng-hide="!target.isCounter || !target.shouldComputeRate">
 			Counter Max:
 		</li>
 
@@ -172,7 +172,7 @@
 			placeholder="max value" ng-model-onblur
 			ng-blur="targetBlur()"></input>
 		</li>
-		<li class="tight-form-item" ng-hide="!target.isCounter || !target.shouldComputeRate">
+		<li class="tight-form-item query-keyword" ng-hide="!target.isCounter || !target.shouldComputeRate">
 			Reset Value:
 		</li>
 		<li ng-hide="!target.isCounter || !target.shouldComputeRate">
