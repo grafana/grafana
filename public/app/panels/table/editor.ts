@@ -37,48 +37,26 @@ export function tablePanelEditor() {
       ];
 
       scope.updateColumnsMenu = function(data) {
-        scope.columnsMenu = [];
-        if (!data || data.length === 0) {
-          return;
-        }
-
-        var names =  {};
-        for (var i = 0; i < data.length; i++) {
-          var series = data[i];
-          if (series.type !== 'docs') {
-            continue;
-          }
-
-          for (var y = 0; y < series.datapoints.length; y++) {
-            var doc = series.datapoints[y];
-            for (var propName in doc) {
-              names[propName] = true;
-            }
-          }
-        }
-
-        _.each(names, function(value, key) {
-          scope.columnsMenu.push({text: key});
-        });
-      };
-
-      scope.updateColumnsMenu(scope.dataRaw);
+        scope.columnsMenu = transformers[scope.panel.transform].getColumns(data);
+        scope.showColumnOptions = scope.columnsMenu.length > 0;
+     };
 
       scope.$on('render', function(event, table, rawData) {
         scope.updateColumnsMenu(rawData);
       });
 
       scope.addColumn = function(menuItem) {
-        scope.panel.columns.push({name: menuItem.text});
+        scope.panel.columns.push({text: menuItem.text, value: menuItem.value});
         scope.render();
       };
 
       scope.transformChanged = function() {
+        scope.updateColumnsMenu();
         scope.render();
       };
 
       scope.removeColumn = function(column) {
-        scope.panel.column = _.without(scope.panel.column, column);
+        scope.panel.columns = _.without(scope.panel.columns, column);
         scope.render();
       };
 
@@ -114,6 +92,8 @@ export function tablePanelEditor() {
           return col.text;
         });
       };
+
+      scope.updateColumnsMenu(scope.dataRaw);
     }
   };
 }

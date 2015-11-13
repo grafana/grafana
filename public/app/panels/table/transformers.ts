@@ -2,15 +2,19 @@
 
 import moment = require('moment');
 import _ = require('lodash');
+import TimeSeries = require('app/core/time_series');
 
 var transformers = {};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
+  getColumns: function() {
+    return [];
+  },
   transform: function(data, panel, model) {
     model.columns = [
       {text: 'Time', type: 'date'},
-      {text: 'Series'},
+      {text: 'Metric'},
       {text: 'Value'},
     ];
 
@@ -26,6 +30,9 @@ transformers['timeseries_to_rows'] = {
 
 transformers['timeseries_to_columns'] = {
   description: 'Time series to columns',
+  getColumns: function() {
+    return [];
+  },
   transform: function(data, panel, model) {
     model.columns.push({text: 'Time', type: 'date'});
 
@@ -64,8 +71,50 @@ transformers['timeseries_to_columns'] = {
   }
 };
 
+transformers['timeseries_aggregations'] = {
+  description: 'Time series aggregations',
+  getColumns: function() {
+    return [
+      {text: 'Avg', value: 'avg'},
+      {text: 'Min', value: 'min'},
+      {text: 'Max', value: 'max'},
+    ];
+  },
+  transform: function(data, panel, model) {
+    var i, y;
+    model.columns.push({text: 'Metric'});
+
+    if (panel.columns.length === 0) {
+      panel.columns.push({text: 'Avg', value: 'avg'});
+    }
+
+    for (i = 0; i < panel.columns.length; i++) {
+      model.columns.push({text: panel.columns[i].text});
+    }
+
+    for (i = 0; i < data.length; i++) {
+      var series = new TimeSeries({
+        datapoints: data[i].datapoints,
+        alias: data[i].target,
+      });
+
+      series.getFlotPairs('connected');
+      var cells = [series.alias];
+
+      for (y = 0; y < panel.columns.length; y++) {
+        cells.push(series.stats[panel.columns[y].value]);
+      }
+
+      model.rows.push(cells);
+    }
+  }
+};
+
 transformers['annotations'] = {
   description: 'Annotations',
+  getColumns: function() {
+    return [];
+  },
   transform: function(data, panel, model) {
     model.columns.push({text: 'Time', type: 'date'});
     model.columns.push({text: 'Title'});
@@ -85,10 +134,34 @@ transformers['annotations'] = {
 
 transformers['json'] = {
   description: 'JSON Data',
+  getColumns: function(data) {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    var names: any = {};
+    for (var i = 0; i < data.length; i++) {
+      var series = data[i];
+      if (series.type === 'docs') {
+        continue;
+      }
+
+      for (var y = 0; y < series.datapoints.length; y++) {
+        var doc = series.datapoints[y];
+        for (var propName in doc) {
+          names[propName] = true;
+        }
+      }
+    }
+
+    return _.map(names, function(value, key) {
+      return {text: key, value: key};
+    });
+  },
   transform: function(data, panel, model) {
     var i, y, z;
     for (i = 0; i < panel.columns.length; i++) {
-      model.columns.push({text: panel.columns[i].name});
+      model.columns.push({text: panel.columns[i].text});
     }
 
     if (model.columns.length === 0) {
@@ -102,7 +175,7 @@ transformers['json'] = {
         var dp = series.datapoints[y];
         var values = [];
         for (z = 0; z < panel.columns.length; z++) {
-          values.push(dp[panel.columns[z].name]);
+          values.push(dp[panel.columns[z].value]);
         }
 
         if (values.length === 0) {
