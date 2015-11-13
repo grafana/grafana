@@ -432,7 +432,7 @@ function($, _) {
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
 
-    if (Math.abs(size) < 600) {
+    if (Math.abs(size) < 60) {
       return kbn.toFixed(size, decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
@@ -502,10 +502,41 @@ function($, _) {
       return kbn.toFixedScaled(size / 1440, decimals, scaledDecimals, 3, " day");
     }
     else if (Math.abs(size) < 604800) {
-      return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 4, " week");
+      return kbn.toFixedScaled(size / 10080, decimals, scaledDecimals, 4, " week");
     }
     else {
       return kbn.toFixedScaled(size / 5.25948e5, decimals, scaledDecimals, 5, " year");
+    }
+  };
+
+  kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 24) {
+      return kbn.toFixed(size, decimals) + " hour";
+    }
+    else if (Math.abs(size) < 168) {
+      return kbn.toFixedScaled(size / 24, decimals, scaledDecimals, 2, " day");
+    }
+    else if (Math.abs(size) < 8760) {
+      return kbn.toFixedScaled(size / 168, decimals, scaledDecimals, 3, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 8760, decimals, scaledDecimals, 4, " year");
+    }
+  };
+
+  kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 7) {
+      return kbn.toFixed(size, decimals) + " day";
+    }
+    else if (Math.abs(size) < 365) {
+      return kbn.toFixedScaled(size / 7, decimals, scaledDecimals, 2, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 365, decimals, scaledDecimals, 3, " year");
     }
   };
 
