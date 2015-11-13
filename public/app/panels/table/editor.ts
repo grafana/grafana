@@ -36,8 +36,8 @@ export function tablePanelEditor() {
          {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
       ];
 
-      scope.updateJsonFieldsMenu = function(data) {
-        scope.jsonFieldsMenu = [];
+      scope.updateColumnsMenu = function(data) {
+        scope.columnsMenu = [];
         if (!data || data.length === 0) {
           return;
         }
@@ -58,18 +58,18 @@ export function tablePanelEditor() {
         }
 
         _.each(names, function(value, key) {
-          scope.jsonFieldsMenu.push({text: key});
+          scope.columnsMenu.push({text: key});
         });
       };
 
-      scope.updateJsonFieldsMenu(scope.dataRaw);
+      scope.updateColumnsMenu(scope.dataRaw);
 
       scope.$on('render', function(event, table, rawData) {
-        scope.updateJsonFieldsMenu(rawData);
+        scope.updateColumnsMenu(rawData);
       });
 
-      scope.addJsonField = function(menuItem) {
-        scope.panel.fields.push({name: menuItem.text});
+      scope.addColumn = function(menuItem) {
+        scope.panel.columns.push({name: menuItem.text});
         scope.render();
       };
 
@@ -77,8 +77,8 @@ export function tablePanelEditor() {
         scope.render();
       };
 
-      scope.removeJsonField = function(field) {
-        scope.panel.fields = _.without(scope.panel.fields, field);
+      scope.removeColumn = function(column) {
+        scope.panel.column = _.without(scope.panel.column, column);
         scope.render();
       };
 
@@ -99,11 +99,11 @@ export function tablePanelEditor() {
           thresholds: [],
         };
 
-        scope.panel.columns.push(angular.copy(columnStyleDefaults));
+        scope.panel.styles.push(angular.copy(columnStyleDefaults));
       };
 
-      scope.removeColumnStyle = function(col) {
-        scope.panel.columns = _.without(scope.panel.columns, col);
+      scope.removeColumnStyle = function(style) {
+        scope.panel.styles = _.without(scope.panel.styles, style);
       };
 
       scope.getColumnNames = function() {

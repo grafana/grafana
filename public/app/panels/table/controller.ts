@@ -29,7 +29,7 @@ export class TablePanelCtrl {
       transform: 'timeseries_to_rows',
       pageSize: 50,
       showHeader: true,
-      columns: [
+      styles: [
         {
           type: 'date',
           pattern: 'Time',
@@ -45,13 +45,20 @@ export class TablePanelCtrl {
           thresholds: [],
         }
       ],
-      fields: [],
+      columns: [],
       scroll: true,
       fontSize: '100%',
       sort: {col: 0, desc: true},
     };
 
     $scope.init = function() {
+      if ($scope.panel.styles === void 0) {
+        $scope.panel.styles = $scope.panel.columns;
+        $scope.panel.columns = $scope.panel.fields;
+        delete $scope.panel.columns;
+        delete $scope.panel.fields;
+      }
+
       _.defaults($scope.panel, panelDefaults);
 
       panelSrv.init($scope);
