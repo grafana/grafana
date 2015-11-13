@@ -489,6 +489,26 @@ function($, _) {
     }
   };
 
+  kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 60) {
+      return kbn.toFixed(size, decimals) + " min";
+    }
+    else if (Math.abs(size) < 1440) {
+      return kbn.toFixedScaled(size / 60, decimals, scaledDecimals, 2, " hour");
+    }
+    else if (Math.abs(size) < 10080) {
+      return kbn.toFixedScaled(size / 1440, decimals, scaledDecimals, 3, " day");
+    }
+    else if (Math.abs(size) < 604800) {
+      return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 4, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 5.25948e5, decimals, scaledDecimals, 5, " year");
+    }
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -522,6 +542,9 @@ function($, _) {
           {text: 'microseconds (µs)', value: 'µs'   },
           {text: 'milliseconds (ms)', value: 'ms'   },
           {text: 'seconds (s)',       value: 's'    },
+          {text: 'minutes (m)',       value: 'm'    },
+          {text: 'hours (h)',         value: 'h'    },
+          {text: 'days (d)',          value: 'd'    },
         ]
       },
       {
