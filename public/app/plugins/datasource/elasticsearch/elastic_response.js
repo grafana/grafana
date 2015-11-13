@@ -209,7 +209,7 @@ function (_, queryDef) {
         throw { message: response.error };
       }
 
-      if (response.hits) {
+      if (response.hits && response.hits.hits.length > 0) {
         this.processHits(response.hits, seriesList);
       }
 
