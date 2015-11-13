@@ -25,8 +25,6 @@ Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the 
 |`CTRL`+`O`|Enable/Disable shared graph crosshair|
 
 
-
-**Note**: Grafana keyboard shortcuts are the same across operating system. For example, `CTRL`+`F` will open the dashboard picker on a Mac as well, **not** `⌘`+`F`
-
+**Note**: Grafana keyboard shortcuts are the same across operating system.
 
 Have a suggestion for a new keyboard shortcut? Let us know.
