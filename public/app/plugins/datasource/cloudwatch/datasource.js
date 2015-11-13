@@ -226,7 +226,8 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.annotationQuery = function(annotation, range) {
+    CloudWatchDatasource.prototype.annotationQuery = function(options) {
+      var annotation = options.annotation;
       var region = templateSrv.replace(annotation.region);
       var namespace = templateSrv.replace(annotation.namespace);
       var metricName = templateSrv.replace(annotation.metricName);
@@ -254,8 +255,8 @@ function (angular, _, moment, dateMath) {
       this.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period).then(function(alarms) {
         var eventList = [];
 
-        var start = convertToCloudWatchTime(range.from, false);
-        var end = convertToCloudWatchTime(range.to, true);
+        var start = convertToCloudWatchTime(options.range.from, false);
+        var end = convertToCloudWatchTime(options.range.to, true);
         _.each(alarms.MetricAlarms, function(alarm) {
           self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
             _.each(history.AlarmHistoryItems, function(h) {
