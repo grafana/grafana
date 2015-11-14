@@ -101,8 +101,14 @@ function (angular, _) {
         panel.links = [];
         panel.datasource = null;
       });
-      // remove annotations
-      dash.annotations.list = [];
+      // remove annotation queries
+      dash.annotations.list = _.map(dash.annotations.list, function(annotation) {
+        return {
+          name: annotation.name,
+          enable: annotation.enable,
+          snapshotData: annotation.snapshotData
+        };
+      });
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";
@@ -121,6 +127,9 @@ function (angular, _) {
       delete $scope.dashboard.snapshot;
       $scope.dashboard.forEachPanel(function(panel) {
         delete panel.snapshotData;
+      });
+      _.each($scope.dashboard.annotations.list, function(annotation) {
+        delete annotation.snapshotData;
       });
     };
 
