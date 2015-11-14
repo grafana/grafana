@@ -21,7 +21,7 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
     };
   });
 
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper, $q) {
+  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -144,7 +144,7 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
 
     $scope.loadSnapshot = function(snapshotData) {
       panelHelper.updateTimeRange($scope);
-      $scope.annotationsPromise = $q.when([]);
+      $scope.annotationsPromise = annotationsSrv.getAnnotations($scope.dashboard);
       $scope.dataHandler(snapshotData);
     };
 

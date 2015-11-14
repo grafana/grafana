@@ -38,10 +38,19 @@ define([
       var rangeRaw = timeSrv.timeRange(false);
 
       var promises  = _.map(annotations, function(annotation) {
+        if (annotation.snapshotData) {
+          self.receiveAnnotationResults(annotation.snapshotData);
+          return;
+        }
         return datasourceSrv.get(annotation.datasource).then(function(datasource) {
           var query = {range: range, rangeRaw: rangeRaw, annotation: annotation};
           return datasource.annotationQuery(query)
             .then(self.receiveAnnotationResults)
+            .then(function(options) {
+              if (dashboard.snapshot) {
+                annotation.snapshotData = angular.copy(options);
+              }
+            })
             .then(null, errorHandler);
         }, this);
       });
@@ -58,6 +67,8 @@ define([
       for (var i = 0; i < results.length; i++) {
         self.addAnnotation(results[i]);
       }
+
+      return results;
     };
 
     this.addAnnotation = function(options) {
