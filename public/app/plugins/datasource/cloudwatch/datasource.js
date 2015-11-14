@@ -112,19 +112,30 @@ function (angular, _) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
+    CloudWatchDatasource.prototype.getDimensions = function(region, namespace, metricName, filterDimensions) {
       var request = {
         region: templateSrv.replace(region),
         action: 'ListMetrics',
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(dimensions, {}),
+          dimensions: convertDimensionFormat(filterDimensions, {}),
         }
       };
 
       return this.awsRequest(request).then(function(result) {
         return _.pluck(result.Metrics, 'Dimensions');
+      });
+    };
+
+    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
+      return this.getDimensions(region, namespace, metricName, filterDimensions).then(function(dimensions) {
+        return _.chain(dimensions)
+        .flatten()
+        .filter(function(dimension) {
+          return dimension.Name === dimensionKey;
+        })
+        .pluck('Value').uniq().sortBy().value();
       });
     };
 
@@ -140,11 +151,28 @@ function (angular, _) {
       var region;
       var namespace;
       var metricName;
+      var dimensionPart;
+      var dimensions;
 
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
           return { text: v };
         });
+      };
+
+      var parseDimensions = function(dimensionPart) {
+        if (_.isEmpty(dimensionPart)) {
+          return {};
+        }
+        var dimensions = {};
+        _.each(dimensionPart.split(','), function(v) {
+          var t = v.split('=');
+          if (t.length !== 2) {
+            throw new Error('Invalid query format');
+          }
+          dimensions[t[0]] = t[1];
+        });
+        return dimensions;
       };
 
       var regionQuery = query.match(/^regions\(\)/);
@@ -167,25 +195,31 @@ function (angular, _) {
         return this.getDimensionKeys(dimensionKeysQuery[1]);
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
       if (dimensionValuesQuery) {
         region = templateSrv.replace(dimensionValuesQuery[1]);
         namespace = templateSrv.replace(dimensionValuesQuery[2]);
         metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionPart = templateSrv.replace(dimensionValuesQuery[5]);
+        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
+        dimensionPart = templateSrv.replace(dimensionValuesQuery[6]);
 
-        var dimensions = {};
-        if (!_.isEmpty(dimensionPart)) {
-          _.each(dimensionPart.split(','), function(v) {
-            var t = v.split('=');
-            if (t.length !== 2) {
-              throw new Error('Invalid query format');
-            }
-            dimensions[t[0]] = t[1];
+        dimensions = parseDimensions(dimensionPart);
+        return this.getDimensionValues(region, namespace, metricName, dimensionKey, dimensions).then(function(result) {
+          return _.map(result, function(dimension_value) {
+            return { text: dimension_value };
           });
-        }
+        });
+      }
 
-        return this.getDimensionValues(region, namespace, metricName, dimensions).then(function(result) {
+      var dimensionsQuery = query.match(/^dimensions\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
+      if (dimensionsQuery) {
+        region = templateSrv.replace(dimensionsQuery[1]);
+        namespace = templateSrv.replace(dimensionsQuery[2]);
+        metricName = templateSrv.replace(dimensionsQuery[3]);
+        dimensionPart = templateSrv.replace(dimensionsQuery[5]);
+
+        dimensions = parseDimensions(dimensionPart);
+        return this.getDimensions(region, namespace, metricName, dimensions).then(function(result) {
           return _.map(result, function(dimensions) {
             var values = _.chain(dimensions)
             .sortBy(function(dimension) {
@@ -228,7 +262,7 @@ function (angular, _) {
       var metricName = 'EstimatedCharges';
       var dimensions = {};
 
-      return this.getDimensionValues(region, namespace, metricName, dimensions).then(function () {
+      return this.getDimensions(region, namespace, metricName, dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
