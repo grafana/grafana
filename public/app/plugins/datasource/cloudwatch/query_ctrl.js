@@ -85,25 +85,11 @@ function (angular, _) {
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace);
       } else if (segment.type === 'value')  {
-        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, {});
+        var dimensionKey = $scope.dimSegments[$index-2].value;
+        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, {});
       }
 
-      return query.then(function(results) {
-        if (segment.type === 'value') {
-          results = _.chain(results)
-          .flatten(true)
-          .filter(function(dimension) {
-            return dimension.Name === templateSrv.replace($scope.dimSegments[$index-2].value);
-          })
-          .pluck('Value')
-          .uniq()
-          .map(function(value) {
-            return {value: value, text: value};
-          })
-          .value();
-        }
-        return $scope.transformToSegments(true)(results);
-      }).then(function(results) {
+      return query.then($scope.transformToSegments(true)).then(function(results) {
         if (segment.type === 'key') {
           results.splice(0, 0, angular.copy($scope.removeDimSegment));
         }

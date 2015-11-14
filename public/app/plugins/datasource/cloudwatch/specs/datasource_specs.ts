@@ -146,7 +146,7 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization)', scenario => {
+  describeMetricFindQuery('dimensions(us-east-1,AWS/EC2,CPUUtilization)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
         Metrics: [
@@ -166,6 +166,30 @@ describe('CloudWatchDatasource', function() {
 
     it('should call __ListMetrics and return result', () => {
       expect(scenario.result[0].text).to.be('InstanceId=i-12345678');
+      expect(scenario.request.data.action).to.be('ListMetrics');
+    });
+  });
+
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        Metrics: [
+          {
+            Namespace: 'AWS/EC2',
+            MetricName: 'CPUUtilization',
+            Dimensions: [
+              {
+                Name: 'InstanceId',
+                Value: 'i-12345678'
+              }
+            ]
+          }
+        ]
+      };
+    });
+
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).to.be('i-12345678');
       expect(scenario.request.data.action).to.be('ListMetrics');
     });
   });
