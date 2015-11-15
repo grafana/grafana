@@ -294,8 +294,6 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          console.log(target);
-          console.log(metricData);
           return target.metric === metricData.query.metric &&
           _.all(target.tags, function(tagV, tagK) {
               interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
