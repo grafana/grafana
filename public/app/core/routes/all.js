@@ -60,6 +60,16 @@ define([
         controller : 'AlertsCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/alerts/edit/:id', {
+        templateUrl: 'app/features/org/partials/alertEdit.html',
+        controller : 'AlertEditCtrl',
+        resolve: loadOrgBundle,
+      })
+      .when('/alerts/new', {
+        templateUrl: 'app/features/org/partials/alertEdit.html',
+        controller : 'AlertEditCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',

@@ -1,0 +1,98 @@
+<topnav title="Alerts" icon="fa fa-fw fa-th-large" subnav="true">
+  <ul class="nav">
+    <li class="active" ><a href="alerts">Overview</a></li>
+    <li ng-class="{active: isNew}"><a href="alerts/new">Add new</a></li>
+    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">Edit</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page">
+    <h2 ng-show="isNew">Add Alert</h2>
+    <h2 ng-show="!isNew">Edit Alert</h2>
+
+    <form name="editForm">
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Name</li>
+          <li><li><input type="text" class="input-xlarge tight-form-input" ng-model="alertDef.name" placeholder="alert name" required></li></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Description</li>
+          <li><li><input type="text" class="input-xlarge tight-form-input" ng-model="alertDef.description" placeholder="alert description" required></li></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <br>
+      <h5>Alert Details</h5>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">
+            Metric
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-xlarge" ng-model='alertDef.alertDetails.hostQuery.metricQueries[0].metric' placeholder="metric name" required />
+          </li>
+          <li class="tight-form-item">
+            Aggregator <tip>Select how to round up data point to a minute granularity</tip>
+          </li>
+          <li>
+            <select class="input-medium tight-form-input" ng-model="alertDef.alertDetails.hostQuery.metricQueries[0].aggregator" ng-options="f for f in ['AVG', 'MIN', 'MAX', 'SUM', 'P99', 'P999']"></select>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">
+            Critical
+          </li>
+          <li class="tight-form-item">
+            Threshold
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium" style="width: 139px" ng-model='alertDef.alertDetails.crit.threshold' placeholder="critical threshold" required />
+          </li>
+          <li class="tight-form-item" style="width: 67px">
+            DurationInMinutes
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium" ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="critical duration" required />
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">
+            Warning
+          </li>
+          <li class="tight-form-item">
+            Threshold
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium" style="width: 139px" ng-model='alertDef.alertDetails.warn.threshold' placeholder="warn threshold" required />
+          </li>
+          <li class="tight-form-item" style="width: 67px">
+            DurationInMinutes
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium" ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="warn duration" required />
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="pull-right" style="margin-top: 35px">
+        <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
+        <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
+        <a class="btn btn-inverse" href="alerts">Cancel</a>
+      </div>
+      <br>
+    </form>
+  </div>
+</div>

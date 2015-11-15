@@ -7,32 +7,25 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertsCtrl', function($scope, $http, backendSrv) {
-    $scope.init = function() {
-      $scope.getAlertsource();
-    };
-
-    $scope.getAlertsource = function() {
-      backendSrv.get('/api/alertsource').then(function(result) {
-        $scope.alertUrl = result.alert.alert_url;
-      });
-    };
-
-    //var alertUrl = "http://0.0.0.0:5001/alert/definition";
-    $http({
-      method: "get",
-      url: $scope.alertUrl,
-    }).then(function onSuccess(response) {
+  module.controller('AlertsCtrl', function($scope, alertMgrSrv, alertSrv) {
+    alertMgrSrv.load().then(function onSuccess(response) {
       $scope.alertDefList = response.data;
     }, function onFailed(response) {
-      $scope.data = response.data || "Request failed";
+      $scope.err = response.message || "Request failed";
       $scope.status = response.status;
     });
 
-    $scope.remove = function() {
+    $scope.remove = function(alertId) {
+      alertMgrSrv.remove(alertId).then(function onSuccess() {
+        for (var i = $scope.alertDefList.length - 1; i >= 0; i--) {
+          if (alertId === $scope.alertDefList[i].id) {
+            $scope.alertDefList.splice(i, 1);
+            break;
+          }
+        }
+      }, function onFailed(response) {
+        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
+      });
     };
-
-    $scope.init();
-
   });
 });
