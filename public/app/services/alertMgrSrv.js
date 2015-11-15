@@ -38,6 +38,15 @@ function (angular) {
       });
     };
 
+    this.remove = function(alertId) {
+      return $http({
+        method: "delete",
+        url: alertUrl,
+        params: {id: alertId},
+        headers: {'Content-Type': 'text/plain'},
+      });
+    };
+
     this.get = function(id) {
       return self.alertDefMap[id];
     };
