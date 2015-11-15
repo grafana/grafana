@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	m "github.com/grafana/grafana/pkg/models"
+	m "github.com/wangy1931/grafana/pkg/models"
 )
 
 type LoginCommand struct {
@@ -62,6 +62,11 @@ type DataSource struct {
 	BasicAuthPassword string                 `json:"basicAuthPassword"`
 	IsDefault         bool                   `json:"isDefault"`
 	JsonData          map[string]interface{} `json:"jsonData"`
+}
+
+type AlertSource struct {
+	OrgId int64  `json:"orgId"`
+	Url   string `json:"url"`
 }
 
 type MetricQueryResultDto struct {

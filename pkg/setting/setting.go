@@ -19,8 +19,8 @@ import (
 	"github.com/macaron-contrib/session"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/wangy1931/grafana/pkg/log"
+	"github.com/wangy1931/grafana/pkg/util"
 )
 
 type Scheme string
@@ -130,6 +130,9 @@ var (
 
 	// QUOTA
 	Quota QuotaSettings
+
+  // Alert settings
+  Alert AlertSettings
 )
 
 type CommandLineArgs struct {
@@ -462,6 +465,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
+
+  readAlertSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")

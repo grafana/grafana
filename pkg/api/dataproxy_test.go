@@ -7,7 +7,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	m "github.com/grafana/grafana/pkg/models"
+	m "github.com/wangy1931/grafana/pkg/models"
 )
 
 func TestDataSourceProxy(t *testing.T) {

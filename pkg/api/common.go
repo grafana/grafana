@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/wangy1931/grafana/pkg/log"
+	"github.com/wangy1931/grafana/pkg/metrics"
+	"github.com/wangy1931/grafana/pkg/middleware"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 var (

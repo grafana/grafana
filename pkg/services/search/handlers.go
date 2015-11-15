@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/wangy1931/grafana/pkg/bus"
+	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 var jsonDashIndex *JsonDashIndex

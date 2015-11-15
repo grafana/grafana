@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/api/dtos"
+	"github.com/wangy1931/grafana/pkg/bus"
+	"github.com/wangy1931/grafana/pkg/components/apikeygen"
+	"github.com/wangy1931/grafana/pkg/middleware"
+	m "github.com/wangy1931/grafana/pkg/models"
 )
 
 func GetApiKeys(c *middleware.Context) Response {

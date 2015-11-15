@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/BurntSushi/toml"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/wangy1931/grafana/pkg/log"
+	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 type LdapConfig struct {
