@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/api/dtos"
+	"github.com/wangy1931/grafana/pkg/middleware"
+	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/macaron-contrib/binding"
 )
 
@@ -150,6 +150,11 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", GetDataSourceById)
 			r.Get("/plugins", GetDataSourcePlugins)
+		}, regOrgAdmin)
+
+		// Alert source
+		r.Group("/alertsource", func() {
+			r.Get("/", AlertSource)
 		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)

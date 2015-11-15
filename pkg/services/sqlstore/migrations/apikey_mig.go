@@ -1,6 +1,6 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import . "github.com/wangy1931/grafana/pkg/services/sqlstore/migrator"
 
 func addApiKeyMigrations(mg *Migrator) {
 	apiKeyV1 := Table{

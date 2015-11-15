@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	. "github.com/wangy1931/grafana/pkg/services/sqlstore/migrator"
 )
 
 func addQuotaMigration(mg *Migrator) {

@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/wangy1931/grafana/pkg/log"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )

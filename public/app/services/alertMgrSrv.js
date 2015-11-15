@@ -8,10 +8,17 @@ function (angular) {
 
   var module = angular.module('grafana.services');
 
-  module.service('alertMgrSrv', function($http, alertSrv) {
+  module.service('alertMgrSrv', function($http, alertSrv, backendSrv) {
     this.alertDefMap = {};
     var self = this;
-    var alertUrl = "http://0.0.0.0:5001/alert/definition";
+    var alertUrl = "";
+    //var alertUrl = "http://0.0.0.0:5001/alert/definition";
+
+    this.init = function() {
+      backendSrv.get('/api/alertsource').then(function(result) {
+        alertUrl = result.alert.alert_url;
+      });
+    };
 
     this.load = function() {
       return $http({
@@ -50,5 +57,8 @@ function (angular) {
     this.get = function(id) {
       return self.alertDefMap[id];
     };
+
+    this.init();
+
   });
 });
