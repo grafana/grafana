@@ -43,4 +43,15 @@ function (coreModule) {
     }, $scope);
   });
 
+  coreModule.controller('MetricsCtrl', function($scope) {
+    var dashboard = {
+      title: " ",
+      rows: [{height: '250px', panels: []}]
+    };
+    $scope.initDashboard({
+      meta: {canStar: false, canShare: false},
+      dashboard: dashboard
+    }, $scope);
+  });
+
 });

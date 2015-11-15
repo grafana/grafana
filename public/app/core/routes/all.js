@@ -36,6 +36,11 @@ define([
         controller : 'NewDashboardCtrl',
         reloadOnSearch: false,
       })
+      .when('/dashboard/metrics',{
+        templateUrl: 'app/partials/dashboard.html',
+        controller : 'MetricsCtrl',
+        reloadOnSearch: true,
+      })
       .when('/import/dashboard', {
         templateUrl: 'app/features/dashboard/partials/import.html',
         controller : 'DashboardImportCtrl',

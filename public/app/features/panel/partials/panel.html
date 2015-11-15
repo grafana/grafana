@@ -10,7 +10,7 @@
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
 
-		<div class="panel-title-container drag-handle" panel-menu></div>
+		<div class="panel-title-container drag-handle" panel-menu ng-if="dashboardMeta.canSave"></div>
 	</div>
 
 	<div class="panel-content">
@@ -32,7 +32,7 @@
 				</div>
 			</div>
 
-			<button class="gf-box-header-close-btn" ng-click="exitFullscreen();">
+			<button ng-show='dashboardMeta.canSave' class="gf-box-header-close-btn" ng-click="exitFullscreen();">
 				Back to dashboard
 			</button>
 		</div>

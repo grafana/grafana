@@ -120,6 +120,9 @@ function (angular, _, coreModule, config) {
 
     $scope.newDashboard = function() {
       $location.url('dashboard/new');
+
+      var search = _.extend($location.search(),{editview:'settings'});
+      $location.search(search);
     };
 
   });
