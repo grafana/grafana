@@ -36,8 +36,8 @@
   </div>
 </div>
 
-  <form name="endpointForm" style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
-
+  <div style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
+    <form name="endpointForm">
         <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
           <div class="rt-mini-form new-endpoint-domain-form">
             <div class="rt-mini-form-col">
@@ -58,7 +58,8 @@
         <div ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
         <div ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
         <div ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
+      </form>
         <div ng-include src="'plugins/raintank/features/partials/destroyForm.html'"></div>        
-</form>
+    </div>
 </div>
 <div style="padding-bottom: 100px;"></div>
