@@ -1388,7 +1388,7 @@ Create new user
 		HTTP/1.1 200
         Content-Type: application/json
 		
-		{"message":"User created"}
+		{"id":5,"message":"User created"}
 
 ### Password for User
 
