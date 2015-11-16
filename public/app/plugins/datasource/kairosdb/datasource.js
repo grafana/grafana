@@ -18,6 +18,7 @@ function (angular, _, dateMath, kbn) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
+      this.patternPattern = new RegExp('^/(.*)/([gim]*)$');
     }
 
     // Called once per panel (graph)
@@ -25,32 +26,63 @@ function (angular, _, dateMath, kbn) {
       var start = options.rangeRaw.from;
       var end = options.rangeRaw.to;
 
-      var queries = _.compact(_.map(options.targets, _.partial(convertTargetToQuery, options)));
-      var plotParams = _.compact(_.map(options.targets, function(target) {
-        var alias = target.alias;
-        if (typeof target.alias === 'undefined' || target.alias === "") {
-          alias = target.metric;
-        }
-
-        if (!target.hide) {
-          return { alias: alias, exouter: target.exOuter };
-        }
-        else {
-          return null;
-        }
-      }));
-
-      var handleKairosDBQueryResponseAlias = _.partial(handleKairosDBQueryResponse, plotParams);
-
-      // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries)) {
+      var targetsPromise = null;
+      var patternPattern = this.patternPattern;
+      var self = this;
+      if (_.some(options.targets, function(target) { return patternPattern.test(target.metric); })) {
+        targetsPromise = $q.all(_.map(options.targets, _.partial(matchMetricNames, self))).then(_.flatten);
+      } else {
         var d = $q.defer();
-        d.resolve({ data: [] });
-        return d.promise;
+        d.resolve(options.targets);
+        targetsPromise = d.promise;
       }
 
-      return this.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
+      return targetsPromise.then(function(targets) {
+        var queries = _.compact(_.map(targets, _.partial(convertTargetToQuery, options)));
+        var plotParams = _.compact(_.map(targets, function(target) {
+          var alias = target.alias;
+          if (typeof target.alias === 'undefined' || target.alias === "") {
+            alias = templateSrv.replace(target.metric);
+          }
+
+          if (!target.hide) {
+            return { alias: alias, exouter: target.exOuter };
+          }
+          else {
+            return null;
+          }
+        }));
+
+        var handleKairosDBQueryResponseAlias = _.partial(handleKairosDBQueryResponse, plotParams);
+
+        // No valid targets, return the empty result to save a round trip.
+        if (_.isEmpty(queries)) {
+          var d = $q.defer();
+          d.resolve({ data: [] });
+          return d.promise;
+        }
+
+        return self.performTimeSeriesQuery(queries, start, end).then(handleKairosDBQueryResponseAlias, handleQueryError);
+      });
     };
+
+    function matchMetricNames(self, target) {
+      var match = self.patternPattern.exec(templateSrv.replace(target.metric));
+      if (match !== null) {
+        var pattern = new RegExp(match[1], match[2]);
+        return self.performMetricSuggestQuery().then(function(names) {
+          return _.map(_.filter(names, function(name) { return pattern.test(name); }), function(name) {
+            var result = _.clone(target);
+            result.metric = name;
+            return result;
+          });
+        });
+      } else {
+        var d = $q.defer();
+        d.resolve([target]);
+        return d.promise;
+      }
+    }
 
     KairosDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
@@ -230,28 +262,47 @@ function (angular, _, dateMath, kbn) {
       var index = 0;
       _.each(results.data.queries, function(series) {
         _.each(series.results, function(result) {
+          var seriesName = result.name;
+          var replaceRegex = /\$(\w+)/g;
+          var segments = seriesName.split('.');
           var target = plotParams[index].alias;
-          var details = " ( ";
+          var details = "";
 
           _.each(result.group_by, function(element) {
             if (element.name === "tag") {
-              _.each(element.group, function(value, key) {
-                details += key + "=" + value + " ";
+              _.each(element.group, function(value) {
+                if (details !== "") {
+                  details += ", ";
+                }
+                details += value;
               });
             }
             else if (element.name === "value") {
-              details += 'value_group=' + element.group.group_number + " ";
+              if (details !== "") {
+                details += ", ";
+              }
+              details += 'value_group=' + element.group.group_number;
             }
             else if (element.name === "time") {
-              details += 'time_group=' + element.group.group_number + " ";
+              if (details !== "") {
+                details += ", ";
+              }
+              details += 'time_group=' + element.group.group_number;
             }
           });
 
-          details += ") ";
-
-          if (details !== " ( ) ") {
-            target += details;
-          }
+          target = target.replace(replaceRegex, function(match, group) {
+            if (group === 's') {
+              return seriesName;
+            } else if (group === 'g') {
+              return details;
+            }
+            var index = parseInt(group);
+            if (_.isNumber(index) && index < segments.length) {
+              return segments[index];
+            }
+            return match;
+          });
 
           var datapoints = [];
 
