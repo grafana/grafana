@@ -37,14 +37,14 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 
 	metrics.M_Api_Admin_User_Create.Inc(1)
 
-  user := cmd.Result
+	user := cmd.Result
 
-  result := m.UserIdDTO{
-    Message: "User created",
-    Id:      user.Id,
-  }
+	result := m.UserIdDTO{
+		Message: "User created",
+		Id:      user.Id,
+	}
 
-  c.JSON(200, result)
+	c.JSON(200, result)
 }
 
 func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPasswordForm) {
@@ -103,5 +103,5 @@ func AdminDeleteUser(c *middleware.Context) {
 		return
 	}
 
-  c.JsonOK("User deleted")
+	c.JsonOK("User deleted")
 }
