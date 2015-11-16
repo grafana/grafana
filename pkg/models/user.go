@@ -157,3 +157,8 @@ type UserSearchHitDTO struct {
 	Email   string `json:"email"`
 	IsAdmin bool   `json:"isAdmin"`
 }
+
+type UserIdDTO struct {
+  Id      int64  `json:"id"`
+  Message string `json:"message"`
+}
