@@ -135,7 +135,12 @@ function (angular, _) {
         .filter(function(dimension) {
           return dimension.Name === dimensionKey;
         })
-        .pluck('Value').uniq().sortBy().value();
+        .pluck('Value')
+        .uniq()
+        .sortBy()
+        .map(function(value) {
+          return {value: value, text: value};
+        }).value();
       });
     };
 
@@ -204,11 +209,7 @@ function (angular, _) {
         dimensionPart = templateSrv.replace(dimensionValuesQuery[6]);
 
         dimensions = parseDimensions(dimensionPart);
-        return this.getDimensionValues(region, namespace, metricName, dimensionKey, dimensions).then(function(result) {
-          return _.map(result, function(dimension_value) {
-            return { text: dimension_value };
-          });
-        });
+        return this.getDimensionValues(region, namespace, metricName, dimensionKey, dimensions);
       }
 
       var dimensionsQuery = query.match(/^dimensions\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
