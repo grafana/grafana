@@ -86,6 +86,13 @@ function (angular, _, kbn) {
       $scope.targetBlur();
     };
 
+    $scope.editTag = function(key, value) {
+      $scope.removeTag(key);
+      $scope.target.currentTagKey = key;
+      $scope.target.currentTagValue = value;
+      $scope.addTag();
+    };
+
     function validateTarget(target) {
       var errs = {};
 
