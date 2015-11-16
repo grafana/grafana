@@ -45,17 +45,6 @@ function (angular, _, kbn) {
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
-      if (variable.refresh) {
-        var self = this;
-        //refresh the list of options before setting the value
-        return this.updateOptions(variable).then(function() {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          self.updateAutoInterval(variable);
-          return self.setVariableValue(variable, option);
-        });
-      }
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 
