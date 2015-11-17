@@ -289,6 +289,11 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
       kbn.exportSeriesListToCsv($scope.seriesList);
     };
 
+    // Called from panel menu.
+    $scope.openUrlInNewWindow = function(url) {
+      return window.open(url, '_blank');
+    };
+
     panelSrv.init($scope);
 
   });
