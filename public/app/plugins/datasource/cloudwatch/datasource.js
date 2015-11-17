@@ -112,7 +112,7 @@ function (angular, _) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensions = function(region, namespace, metricName, filterDimensions) {
+    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       var request = {
         region: templateSrv.replace(region),
         action: 'ListMetrics',
@@ -124,13 +124,8 @@ function (angular, _) {
       };
 
       return this.awsRequest(request).then(function(result) {
-        return _.pluck(result.Metrics, 'Dimensions');
-      });
-    };
-
-    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
-      return this.getDimensions(region, namespace, metricName, filterDimensions).then(function(dimensions) {
-        return _.chain(dimensions)
+        return _.chain(result.Metrics)
+        .pluck('Dimensions')
         .flatten()
         .filter(function(dimension) {
           return dimension.Name === dimensionKey;
@@ -212,30 +207,6 @@ function (angular, _) {
         return this.getDimensionValues(region, namespace, metricName, dimensionKey, dimensions);
       }
 
-      var dimensionsQuery = query.match(/^dimensions\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
-      if (dimensionsQuery) {
-        region = templateSrv.replace(dimensionsQuery[1]);
-        namespace = templateSrv.replace(dimensionsQuery[2]);
-        metricName = templateSrv.replace(dimensionsQuery[3]);
-        dimensionPart = templateSrv.replace(dimensionsQuery[5]);
-
-        dimensions = parseDimensions(dimensionPart);
-        return this.getDimensions(region, namespace, metricName, dimensions).then(function(result) {
-          return _.map(result, function(dimensions) {
-            var values = _.chain(dimensions)
-            .sortBy(function(dimension) {
-              return dimension.Name;
-            })
-            .map(function(dimension) {
-              return dimension.Name + '=' + dimension.Value;
-            })
-            .value().join(',');
-
-            return { text: values };
-          });
-        });
-      }
-
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
@@ -263,7 +234,7 @@ function (angular, _) {
       var metricName = 'EstimatedCharges';
       var dimensions = {};
 
-      return this.getDimensions(region, namespace, metricName, dimensions).then(function () {
+      return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
