@@ -81,10 +81,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["index"] = ds.Database
 		}
 
-		if ds.Type == m.DS_PROMETHEUS {
-			// add unproxied server URL for link to Prometheus web UI
-			dsMap["directUrl"] = ds.Url
-		}
+		// Add unproxied server URL for uses such as links to Prometheus web UI and Graphite Composer.
+		dsMap["directUrl"] = ds.Url
 
 		datasources[ds.Name] = dsMap
 	}
