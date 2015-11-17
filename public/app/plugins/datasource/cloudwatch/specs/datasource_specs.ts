@@ -48,6 +48,14 @@ describe('CloudWatchDatasource', function() {
         {
           Average: 1,
           Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
+        },
+        {
+          Average: 2,
+          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
+        },
+        {
+          Average: 5,
+          Timestamp: 'Wed Dec 31 1969 16:20:00 GMT-0800 (PST)'
         }
       ],
       Label: 'CPUUtilization'
@@ -78,6 +86,14 @@ describe('CloudWatchDatasource', function() {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).to.be('CPUUtilization_Average');
         expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average']);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+
+    it('should return null for missing data point', function(done) {
+      ctx.ds.query(query).then(function(result) {
+        expect(result.data[0].datapoints[2][0]).to.be(null);
         done();
       });
       ctx.$rootScope.$apply();
