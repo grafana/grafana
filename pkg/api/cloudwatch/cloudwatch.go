@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -45,10 +46,13 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
 			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
 		})
-	svc := cloudwatch.New(&aws.Config{
+
+	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
 		Credentials: creds,
-	})
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -89,10 +93,13 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
 			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
 		})
-	svc := cloudwatch.New(&aws.Config{
+
+	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
 		Credentials: creds,
-	})
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -119,7 +126,11 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
-	svc := ec2.New(&aws.Config{Region: aws.String(req.Region)})
+	cfg := &aws.Config{
+		Region: aws.String(req.Region),
+	}
+
+	svc := ec2.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
