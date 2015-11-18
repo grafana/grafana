@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/stretchr/testify/assert"
 )
 
-var _ = unit.Imported
-
 func TestPresignHandler(t *testing.T) {
-	svc := s3.New(nil)
+	svc := s3.New(unit.Session)
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		Bucket:             aws.String("bucket"),
 		Key:                aws.String("key"),
