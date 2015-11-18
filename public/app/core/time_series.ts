@@ -143,6 +143,7 @@ class TimeSeries {
       }
     }
 
+    this.stats.count = result.length;
     return result;
   }
 
