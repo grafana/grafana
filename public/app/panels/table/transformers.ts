@@ -78,6 +78,9 @@ transformers['timeseries_aggregations'] = {
       {text: 'Avg', value: 'avg'},
       {text: 'Min', value: 'min'},
       {text: 'Max', value: 'max'},
+      {text: 'Total', value: 'total'},
+      {text: 'Current', value: 'current'},
+      {text: 'Count', value: 'count'},
     ];
   },
   transform: function(data, panel, model) {
