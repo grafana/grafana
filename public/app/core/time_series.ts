@@ -37,6 +37,7 @@ class TimeSeries {
   yaxis: any;
   zindex: any;
   stack: any;
+  nullPointMode: any;
   fillBelowTo: any;
   transform: any;
 
@@ -57,6 +58,7 @@ class TimeSeries {
     this.bars = {};
     this.yaxis = 1;
     this.zindex = 0;
+    this.nullPointMode = null;
     delete this.stack;
 
     for (var i = 0; i < overrides.length; i++) {
@@ -70,6 +72,7 @@ class TimeSeries {
       if (override.fill !== void 0) { this.lines.fill = translateFillOption(override.fill); }
       if (override.stack !== void 0) { this.stack = override.stack; }
       if (override.linewidth !== void 0) { this.lines.lineWidth = override.linewidth; }
+      if (override.nullPointMode !== void 0) { this.nullPointMode = override.nullPointMode; }
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
