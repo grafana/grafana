@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,8 +17,44 @@ type PluginMeta struct {
 	Name string `json:"name"`
 }
 
+type ExternalPluginRoute struct {
+	Path            string          `json:"path"`
+	Method          string          `json:"method"`
+	ReqSignedIn     bool            `json:"req_signed_in"`
+	ReqGrafanaAdmin bool            `json:"req_grafana_admin"`
+	ReqRole         models.RoleType `json:"req_role"`
+	Url             string          `json:"url"`
+}
+
+type ExternalPluginJs struct {
+	Src string `json:"src"`
+}
+
+type ExternalPluginMenuItem struct {
+	Text string `json:"text"`
+	Icon string `json:"icon"`
+	Href string `json:"href"`
+}
+
+type ExternalPluginCss struct {
+	Href string `json:"href"`
+}
+
+type ExternalPluginSettings struct {
+	Routes    []*ExternalPluginRoute    `json:"routes"`
+	Js        []*ExternalPluginJs       `json:"js"`
+	Css       []*ExternalPluginCss      `json:"css"`
+	MenuItems []*ExternalPluginMenuItem `json:"menu_items"`
+}
+
+type ExternalPlugin struct {
+	PluginType string                 `json:"pluginType"`
+	Settings   ExternalPluginSettings `json:"settings"`
+}
+
 var (
-	DataSources map[string]interface{}
+	DataSources     map[string]interface{}
+	ExternalPlugins []ExternalPlugin
 )
 
 type PluginScanner struct {
@@ -31,6 +68,7 @@ func Init() {
 
 func scan(pluginDir string) error {
 	DataSources = make(map[string]interface{})
+	ExternalPlugins = make([]ExternalPlugin, 0)
 
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
@@ -92,6 +130,14 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 			return errors.New("Did not find type property in plugin.json")
 		}
 		DataSources[datasourceType.(string)] = pluginJson
+	}
+	if pluginType == "externalPlugin" {
+		p := ExternalPlugin{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+		ExternalPlugins = append(ExternalPlugins, p)
 	}
 
 	return nil

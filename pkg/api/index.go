@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -51,6 +52,25 @@ func setIndexViewData(c *middleware.Context) error {
 	if setting.GoogleTagManagerId != "" {
 		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
 	}
+
+	externalPluginJs := make([]string, 0)
+	externalPluginCss := make([]string, 0)
+	externalPluginMenu := make([]*plugins.ExternalPluginMenuItem, 0)
+	for _, plugin := range plugins.ExternalPlugins {
+		for _, js := range plugin.Settings.Js {
+			externalPluginJs = append(externalPluginJs, js.Src)
+		}
+		for _, css := range plugin.Settings.Css {
+			externalPluginCss = append(externalPluginCss, css.Href)
+		}
+		for _, item := range plugin.Settings.MenuItems {
+			externalPluginMenu = append(externalPluginMenu, item)
+		}
+
+	}
+	c.Data["ExternalPluginJs"] = externalPluginJs
+	c.Data["ExternalPluginCss"] = externalPluginCss
+	c.Data["ExternalPluginMenu"] = externalPluginMenu
 
 	return nil
 }
