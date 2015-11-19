@@ -12,6 +12,13 @@ type DataSourcePlugin struct {
 	Annotations        bool                   `json:"annotations"`
 	Metrics            bool                   `json:"metrics"`
 	BuiltIn            bool                   `json:"builtIn"`
+	StaticRootConfig   *StaticRootConfig      `json:"staticRoot"`
+}
+
+type StaticRootConfig struct {
+	Url        string `json:"url"`
+	Path       string `json:"path"`
+	PluginRoot string `json:"-"`
 }
 
 type ExternalPluginRoute struct {
