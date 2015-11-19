@@ -95,6 +95,8 @@ function file2moduleName(filePath) {
     .replace(/\.\w*$/, '');
 }
 
+window.grafanaBootData = {};
+
 require([
   'lodash',
   'angular',

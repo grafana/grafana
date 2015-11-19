@@ -2,14 +2,15 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+
 	"github.com/Unknwon/macaron"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 )
 
 func InitExternalPluginRoutes(r *macaron.Macaron) {
@@ -31,10 +32,10 @@ func InitExternalPluginRoutes(r *macaron.Macaron) {
 		}
 	*/
 	for _, plugin := range plugins.ExternalPlugins {
-		log.Info("adding routes for external plugin")
-		for _, route := range plugin.Settings.Routes {
-			log.Info("adding route %s /plugins%s", route.Method, route.Path)
-			r.Route(util.JoinUrlFragments("/plugins/", route.Path), route.Method, ExternalPlugin(route.Url))
+		log.Info("Plugin: Adding proxy routes for backend plugin")
+		for _, route := range plugin.Routes {
+			log.Info("Plugin: Adding route %s /api/plugin-proxy/%s", route.Method, route.Path)
+			r.Route(util.JoinUrlFragments("/api/plugin-proxy/", route.Path), route.Method, ExternalPlugin(route.Url))
 		}
 	}
 }

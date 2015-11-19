@@ -38,7 +38,7 @@ func checkExternalPluginPaths() error {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
-				log.Info("Plugin: scaning specific dir %s", path)
+				log.Info("Plugin: Scaning dir %s", path)
 				scan(path)
 			}
 		}
@@ -81,6 +81,13 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	return nil
 }
 
+func addStaticRoot(staticRootConfig *StaticRootConfig, currentDir string) {
+	if staticRootConfig != nil {
+		staticRootConfig.Path = path.Join(currentDir, staticRootConfig.Path)
+		StaticRoutes = append(StaticRoutes, staticRootConfig)
+	}
+}
+
 func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	currentDir := filepath.Dir(pluginJsonFilePath)
 	reader, err := os.Open(pluginJsonFilePath)
@@ -114,20 +121,17 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 
 		DataSources[p.Type] = p
-
-		if p.StaticRootConfig != nil {
-			p.StaticRootConfig.Path = path.Join(currentDir, p.StaticRootConfig.Path)
-			StaticRoutes = append(StaticRoutes, p.StaticRootConfig)
-		}
+		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
-	if pluginType == "externalPlugin" {
+	if pluginType == "external" {
 		p := ExternalPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
 		ExternalPlugins = append(ExternalPlugins, p)
+		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
 	return nil

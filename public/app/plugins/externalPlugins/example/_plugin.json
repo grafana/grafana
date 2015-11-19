@@ -37,11 +37,6 @@
         "adminOnly": false,
       }
     ]
-  },
-
-  "staticRoot": {
-    "url": "_plugins/test_ds",
-    "path": "public"
-  },
+  }
 
 }
