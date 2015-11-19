@@ -227,7 +227,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
-            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+            series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack
             if (scope.hiddenSeries[series.alias]) {
