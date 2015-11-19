@@ -140,7 +140,20 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
-	svc := cloudwatch.New(&aws.Config{Region: aws.String(req.Region)})
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
+			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+		})
+
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: creds,
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
 	reqParam := &struct {
 		Parameters struct {
 			Namespace  string                  `json:"namespace"`
@@ -174,7 +187,20 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
-	svc := cloudwatch.New(&aws.Config{Region: aws.String(req.Region)})
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
+			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+		})
+
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: creds,
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
 	reqParam := &struct {
 		Parameters struct {
 			AlarmName       string `json:"alarmName"`
