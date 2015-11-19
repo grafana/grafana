@@ -68,9 +68,13 @@ function (angular, $, _, appLevelRequire) {
     app.useModule(angular.module(module_name, []));
   });
 
-  var preBootRequires = [
-    'app/features/all',
-  ];
+  var preBootRequires = ['app/features/all'];
+  var pluginModules = window.grafanaBootData.pluginModules || [];
+
+  // add plugin modules
+  for (var i = 0; i < pluginModules.length; i++) {
+    preBootRequires.push(pluginModules[i]);
+  }
 
   app.boot = function() {
     require(preBootRequires, function () {

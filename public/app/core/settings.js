@@ -16,7 +16,6 @@ function (_) {
         'dashlist':   { path: 'app/panels/dashlist',   name: 'Dashboard list' },
       },
       new_panel_title: 'Panel Title',
-      plugins: {},
       playlist_timespan: "1m",
       unsaved_changes_warning: true,
       appSubUrl: ""

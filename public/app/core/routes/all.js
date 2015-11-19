@@ -10,7 +10,7 @@ define([
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
-    console.log("adding grafana routes");
+
     $routeProvider
       .when('/', {
         templateUrl: 'app/partials/dashboard.html',

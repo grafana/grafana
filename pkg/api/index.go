@@ -57,16 +57,15 @@ func setIndexViewData(c *middleware.Context) error {
 	externalPluginCss := make([]string, 0)
 	externalPluginMenu := make([]*plugins.ExternalPluginMenuItem, 0)
 	for _, plugin := range plugins.ExternalPlugins {
-		for _, js := range plugin.Settings.Js {
-			externalPluginJs = append(externalPluginJs, js.Src)
+		for _, js := range plugin.Js {
+			externalPluginJs = append(externalPluginJs, js.Module)
 		}
-		for _, css := range plugin.Settings.Css {
+		for _, css := range plugin.Css {
 			externalPluginCss = append(externalPluginCss, css.Href)
 		}
-		for _, item := range plugin.Settings.MenuItems {
+		for _, item := range plugin.MenuItems {
 			externalPluginMenu = append(externalPluginMenu, item)
 		}
-
 	}
 	c.Data["ExternalPluginJs"] = externalPluginJs
 	c.Data["ExternalPluginCss"] = externalPluginCss

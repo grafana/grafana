@@ -29,8 +29,8 @@ function (angular, _, $, coreModule, config) {
         });
       }
 
-      if (_.isArray(window.externalPlugins.MainLinks)) {
-        _.forEach(window.externalPlugins.MainLinks, function(item) {
+      if (_.isArray(window.externalPlugins.mainLinks)) {
+        _.forEach(window.externalPlugins.mainLinks, function(item) {
           if (!item.adminOnly || contextSrv.hasRole('Admin')) {
             $scope.mainLinks.push({
               text: item.text,

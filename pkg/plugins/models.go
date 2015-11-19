@@ -16,22 +16,21 @@ type DataSourcePlugin struct {
 }
 
 type StaticRootConfig struct {
-	Url        string `json:"url"`
-	Path       string `json:"path"`
-	PluginRoot string `json:"-"`
+	Url  string `json:"url"`
+	Path string `json:"path"`
 }
 
 type ExternalPluginRoute struct {
 	Path            string          `json:"path"`
 	Method          string          `json:"method"`
-	ReqSignedIn     bool            `json:"req_signed_in"`
-	ReqGrafanaAdmin bool            `json:"req_grafana_admin"`
-	ReqRole         models.RoleType `json:"req_role"`
+	ReqSignedIn     bool            `json:"reqSignedIn"`
+	ReqGrafanaAdmin bool            `json:"reqGrafanaAdmin"`
+	ReqRole         models.RoleType `json:"reqRole"`
 	Url             string          `json:"url"`
 }
 
 type ExternalPluginJs struct {
-	Src string `json:"src"`
+	Module string `json:"module"`
 }
 
 type ExternalPluginMenuItem struct {
@@ -44,14 +43,10 @@ type ExternalPluginCss struct {
 	Href string `json:"href"`
 }
 
-type ExternalPluginSettings struct {
-	Routes    []*ExternalPluginRoute    `json:"routes"`
-	Js        []*ExternalPluginJs       `json:"js"`
-	Css       []*ExternalPluginCss      `json:"css"`
-	MenuItems []*ExternalPluginMenuItem `json:"menu_items"`
-}
-
 type ExternalPlugin struct {
-	PluginType string                 `json:"pluginType"`
-	Settings   ExternalPluginSettings `json:"settings"`
+	Routes           []*ExternalPluginRoute    `json:"routes"`
+	Js               []*ExternalPluginJs       `json:"js"`
+	Css              []*ExternalPluginCss      `json:"css"`
+	MenuItems        []*ExternalPluginMenuItem `json:"menuItems"`
+	StaticRootConfig *StaticRootConfig         `json:"staticRoot"`
 }

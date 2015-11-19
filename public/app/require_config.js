@@ -3,8 +3,6 @@ require.config({
   baseUrl: 'public',
 
   paths: {
-    '_plugins':               '../_plugins',
-
     'lodash-src':             'vendor/lodash',
     lodash:                   'app/core/lodash_extended',
 

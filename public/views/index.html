@@ -13,8 +13,9 @@
 		[[else]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
 		[[end]]
+
 		[[ range $css := .ExternalPluginCss ]]
-		<link rel="stylesheet" href="[[$.AppSubUrl]]/plugins[[ $css ]]">
+			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css ]]">
 		[[ end ]]
 
     <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
@@ -53,19 +54,18 @@
 		window.grafanaBootData = {
 			user:[[.User]],
 			settings: [[.Settings]],
+			pluginModules: [[.ExternalPluginJs]],
 		};
 
 		window.externalPlugins =  {
-			MainLinks: [[.ExternalPluginMenu]]
+			mainLinks: [[.ExternalPluginMenu]]
 		};
 
     require(['app/app'], function (app) {
     	app.boot();
     })
 	</script>
-	[[ range $js := .ExternalPluginJs]]
-	<script src="[[$.AppSubUrl]]/plugins[[ $js ]]"></script>
-	[[ end ]]
+
 	[[if .GoogleAnalyticsId]]
 		<script>
 		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
