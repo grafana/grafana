@@ -117,7 +117,7 @@ func GetDataSourcePlugins(c *middleware.Context) {
 	dsList := make(map[string]interface{})
 
 	for key, value := range plugins.DataSources {
-		if value.(map[string]interface{})["builtIn"] == nil {
+		if !value.BuiltIn {
 			dsList[key] = value
 		}
 	}

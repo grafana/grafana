@@ -28,12 +28,13 @@ func newMacaron() *macaron.Macaron {
 		m.Use(middleware.Gziper())
 	}
 
-	mapStatic(m, "", "public")
-	mapStatic(m, "app", "app")
-	mapStatic(m, "css", "css")
-	mapStatic(m, "img", "img")
-	mapStatic(m, "fonts", "fonts")
-	mapStatic(m, "robots.txt", "robots.txt")
+	mapStatic(m, setting.StaticRootPath, "", "public")
+	mapStatic(m, setting.StaticRootPath, "app", "app")
+	mapStatic(m, setting.StaticRootPath, "css", "css")
+	mapStatic(m, setting.StaticRootPath, "img", "img")
+	mapStatic(m, setting.StaticRootPath, "fonts", "fonts")
+	mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
+	mapStatic(m, setting.DataPath, "plugins", "_plugins")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -51,7 +52,7 @@ func newMacaron() *macaron.Macaron {
 	return m
 }
 
-func mapStatic(m *macaron.Macaron, dir string, prefix string) {
+func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
@@ -63,7 +64,7 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 	}
 
 	m.Use(httpstatic.Static(
-		path.Join(setting.StaticRootPath, dir),
+		path.Join(rootDir, dir),
 		httpstatic.StaticOptions{
 			SkipLogging: true,
 			Prefix:      prefix,
