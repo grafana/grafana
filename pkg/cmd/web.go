@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,7 +35,11 @@ func newMacaron() *macaron.Macaron {
 	mapStatic(m, setting.StaticRootPath, "img", "img")
 	mapStatic(m, setting.StaticRootPath, "fonts", "fonts")
 	mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
-	mapStatic(m, setting.DataPath, "plugins", "_plugins")
+
+	for _, route := range plugins.StaticRoutes {
+		log.Info("Adding plugin static route %s -> %s", route.Url, route.Path)
+		mapStatic(m, route.Path, "", route.Url)
+	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),

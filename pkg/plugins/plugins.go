@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,6 +15,7 @@ import (
 var (
 	DataSources     map[string]DataSourcePlugin
 	ExternalPlugins []ExternalPlugin
+	StaticRoutes    []*StaticRootConfig
 )
 
 type PluginScanner struct {
@@ -21,12 +23,27 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Init() {
+func Init() error {
 	DataSources = make(map[string]DataSourcePlugin)
 	ExternalPlugins = make([]ExternalPlugin, 0)
+	StaticRoutes = make([]*StaticRootConfig, 0)
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
-	scan(path.Join(setting.DataPath, "plugins"))
+	checkExternalPluginPaths()
+	return nil
+}
+
+func checkExternalPluginPaths() error {
+	for _, section := range setting.Cfg.Sections() {
+		if strings.HasPrefix(section.Name(), "plugin.") {
+			path := section.Key("path").String()
+			if path != "" {
+				log.Info("Plugin: scaning specific dir %s", path)
+				scan(path)
+			}
+		}
+	}
+	return nil
 }
 
 func scan(pluginDir string) error {
@@ -45,7 +62,7 @@ func scan(pluginDir string) error {
 	return nil
 }
 
-func (scanner *PluginScanner) walker(path string, f os.FileInfo, err error) error {
+func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
@@ -55,17 +72,18 @@ func (scanner *PluginScanner) walker(path string, f os.FileInfo, err error) erro
 	}
 
 	if f.Name() == "plugin.json" {
-		err := scanner.loadPluginJson(path)
+		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			log.Error(3, "Failed to load plugin json file: %v,  err: %v", path, err)
+			log.Error(3, "Failed to load plugin json file: %v,  err: %v", currentPath, err)
 			scanner.errors = append(scanner.errors, err)
 		}
 	}
 	return nil
 }
 
-func (scanner *PluginScanner) loadPluginJson(path string) error {
-	reader, err := os.Open(path)
+func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
+	currentDir := filepath.Dir(pluginJsonFilePath)
+	reader, err := os.Open(pluginJsonFilePath)
 	if err != nil {
 		return err
 	}
@@ -96,6 +114,11 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 		}
 
 		DataSources[p.Type] = p
+
+		if p.StaticRootConfig != nil {
+			p.StaticRootConfig.Path = path.Join(currentDir, p.StaticRootConfig.Path)
+			StaticRoutes = append(StaticRoutes, p.StaticRootConfig)
+		}
 	}
 
 	if pluginType == "externalPlugin" {

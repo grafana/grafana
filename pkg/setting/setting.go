@@ -275,13 +275,11 @@ func loadSpecifedConfigFile(configFile string) {
 
 			defaultSec, err := Cfg.GetSection(section.Name())
 			if err != nil {
-				log.Error(3, "Unknown config section %s defined in %s", section.Name(), configFile)
-				continue
+				defaultSec, _ = Cfg.NewSection(section.Name())
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Error(3, "Unknown config key %s defined in section %s, in file %s", key.Name(), section.Name(), configFile)
-				continue
+				defaultKey, _ = defaultSec.NewKey(key.Name(), key.Value())
 			}
 			defaultKey.SetValue(key.Value())
 		}
