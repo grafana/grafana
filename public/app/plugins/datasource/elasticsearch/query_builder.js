@@ -10,7 +10,7 @@ function (angular) {
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
-    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
+    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo", "format": "epoch_millis"};
     return filter;
   };
 
@@ -127,6 +127,7 @@ function (angular) {
             "interval": this.getInterval(aggDef),
             "field": this.timeField,
             "min_doc_count": 0,
+            "format": "epoch_millis",
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
           break;
