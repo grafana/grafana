@@ -2,6 +2,7 @@ define([
   'angular',
   'jquery',
   'lodash',
+  'app/core/config',
   'require',
   'bootstrap',
   'angular-route',
@@ -12,7 +13,7 @@ define([
   'bindonce',
   'app/core/core',
 ],
-function (angular, $, _, appLevelRequire) {
+function (angular, $, _, config, appLevelRequire) {
   "use strict";
 
   var app = angular.module('grafana', []);
@@ -69,7 +70,7 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = ['app/features/all'];
-  var pluginModules = window.grafanaBootData.pluginModules || [];
+  var pluginModules = config.bootData.pluginModules || [];
 
   // add plugin modules
   for (var i = 0; i < pluginModules.length; i++) {

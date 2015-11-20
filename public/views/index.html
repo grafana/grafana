@@ -14,7 +14,7 @@
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
 		[[end]]
 
-		[[ range $css := .ExternalPluginCss ]]
+		[[ range $css := .PluginCss ]]
 			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css ]]">
 		[[ end ]]
 
@@ -54,11 +54,8 @@
 		window.grafanaBootData = {
 			user:[[.User]],
 			settings: [[.Settings]],
-			pluginModules: [[.ExternalPluginJs]],
-		};
-
-		window.externalPlugins =  {
-			mainLinks: [[.ExternalPluginMenu]]
+			pluginModules: [[.PluginJs]],
+			mainNavLinks: [[.MainNavLinks]]
 		};
 
     require(['app/app'], function (app) {
