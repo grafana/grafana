@@ -15,31 +15,13 @@ function (angular, _, $, coreModule, config) {
     };
 
     $scope.setupMainNav = function() {
-      $scope.mainLinks.push({
-        text: "Dashboards",
-        icon: "fa fa-fw fa-th-large",
-        href: $scope.getUrl("/"),
-      });
-
-      if (contextSrv.hasRole('Admin')) {
+      _.each(config.bootData.mainNavLinks, function(item) {
         $scope.mainLinks.push({
-          text: "Data Sources",
-          icon: "fa fa-fw fa-database",
-          href: $scope.getUrl("/datasources"),
+          text: item.text,
+          icon: item.icon,
+          href: $scope.getUrl(item.href)
         });
-      }
-
-      if (_.isArray(window.externalPlugins.mainLinks)) {
-        _.forEach(window.externalPlugins.mainLinks, function(item) {
-          if (!item.adminOnly || contextSrv.hasRole('Admin')) {
-            $scope.mainLinks.push({
-              text: item.text,
-              icon: item.icon,
-              href: $scope.getUrl(item.href)
-            });
-          }
-        });
-      }
+      });
     };
 
     $scope.loadOrgs = function() {

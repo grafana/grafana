@@ -33,7 +33,7 @@ type ExternalPluginJs struct {
 	Module string `json:"module"`
 }
 
-type ExternalPluginMenuItem struct {
+type ExternalPluginNavLink struct {
 	Text string `json:"text"`
 	Icon string `json:"icon"`
 	Href string `json:"href"`
@@ -44,9 +44,9 @@ type ExternalPluginCss struct {
 }
 
 type ExternalPlugin struct {
-	Routes           []*ExternalPluginRoute    `json:"routes"`
-	Js               []*ExternalPluginJs       `json:"js"`
-	Css              []*ExternalPluginCss      `json:"css"`
-	MenuItems        []*ExternalPluginMenuItem `json:"menuItems"`
-	StaticRootConfig *StaticRootConfig         `json:"staticRoot"`
+	Routes           []*ExternalPluginRoute   `json:"routes"`
+	Js               []*ExternalPluginJs      `json:"js"`
+	Css              []*ExternalPluginCss     `json:"css"`
+	MainNavLinks     []*ExternalPluginNavLink `json:"mainNavLinks"`
+	StaticRootConfig *StaticRootConfig        `json:"staticRoot"`
 }

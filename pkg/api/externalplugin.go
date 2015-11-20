@@ -34,8 +34,9 @@ func InitExternalPluginRoutes(r *macaron.Macaron) {
 	for _, plugin := range plugins.ExternalPlugins {
 		log.Info("Plugin: Adding proxy routes for backend plugin")
 		for _, route := range plugin.Routes {
-			log.Info("Plugin: Adding route %s /api/plugin-proxy/%s", route.Method, route.Path)
-			r.Route(util.JoinUrlFragments("/api/plugin-proxy/", route.Path), route.Method, ExternalPlugin(route.Url))
+			url := util.JoinUrlFragments("/api/plugin-proxy/", route.Path)
+			r.Route(url, route.Method, ExternalPlugin(route.Url))
+			log.Info("Plugin: Adding route %s", url)
 		}
 	}
 }
