@@ -101,6 +101,7 @@ class TimeSeries {
     var nullAsZero = fillStyle === 'null as zero';
     var currentTime;
     var currentValue;
+    var nonNulls = 0;
 
     for (var i = 0; i < this.datapoints.length; i++) {
       currentValue = this.datapoints[i][0];
@@ -117,6 +118,7 @@ class TimeSeries {
         if (_.isNumber(currentValue)) {
           this.stats.total += currentValue;
           this.allIsNull = false;
+          nonNulls++;
         }
 
         if (currentValue > this.stats.max) {
@@ -139,7 +141,7 @@ class TimeSeries {
     if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
     if (result.length) {
-      this.stats.avg = (this.stats.total / result.length);
+      this.stats.avg = (this.stats.total / nonNulls);
       this.stats.current = result[result.length-1][1];
       if (this.stats.current === null && result.length > 1) {
         this.stats.current = result[result.length-2][1];

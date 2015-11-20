@@ -43,6 +43,17 @@ define([
         expect(series.stats.max).to.be(-4);
       });
 
+      it('average value should ignore nulls', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.avg).to.be(6.333333333333333);
+      });
+
+      it('with null as zero style, average value should treat nulls as 0', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null as zero', yAxisFormats);
+        expect(series.stats.avg).to.be(4.75);
+      });
     });
 
     describe('series overrides', function() {
