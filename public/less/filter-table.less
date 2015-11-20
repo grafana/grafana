@@ -13,8 +13,8 @@
 
 .filter-table {
   width: 100%;
-  // table-layout: fixed;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .filter-table tr {
@@ -46,4 +46,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.filter-table .expanded {
+  border-color: @grafanaPanelBackground;
+}
+
+.filter-table .expanded > td {
+  padding-bottom: 0;
 }

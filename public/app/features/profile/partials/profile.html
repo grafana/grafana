@@ -5,8 +5,8 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 
 		<h2>Profile</h2>
 
@@ -62,19 +62,28 @@
 
 		<h3>Organizations</h3>
 
-		<table class="grafana-options-table">
-			<tr ng-repeat="org in orgs">
-				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
-				<td><strong>Role: </strong> {{org.role}}</td>
-				<td class="nobg max-width-btns">
-					<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
-						Current
-					</span>
-					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
-						Select
-					</a>
-				</td>
-			</tr>
+		<table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Role</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="org in orgs">
+					<td><strong>Name: </strong> {{org.name}}</td>
+					<td><strong>Role: </strong> {{org.role}}</td>
+					<td class="text-right">
+						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
+							Current
+						</span>
+						<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+							Select
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
 
 	</div>
