@@ -209,7 +209,7 @@ function (angular, _, moment, dateMath) {
         sec = 1;
       }
 
-      return Math.ceil(sec * intervalFactor) + 's';
+      return Math.ceil(sec * intervalFactor);
     };
 
     function transformMetricData(md, options) {
@@ -218,7 +218,7 @@ function (angular, _, moment, dateMath) {
 
       metricLabel = createMetricLabel(md.metric, options);
 
-      var stepMs = parseInt(options.step.slice(0, -1)) * 1000;
+      var stepMs = parseInt(options.step) * 1000;
       var lastTimestamp = null;
       _.each(md.values, function(value) {
         var dp_value = parseFloat(value[1]);
