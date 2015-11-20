@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var metricsMap map[string][]string
@@ -76,27 +75,17 @@ func handleGetRegions(req *cwRequest, c *middleware.Context) {
 		"eu-central-1", "eu-west-1", "sa-east-1", "us-east-1", "us-west-1", "us-west-2",
 	}
 
-	result := []interface{}{}
-	for _, region := range regions {
-		result = append(result, util.DynMap{"text": region, "value": region})
-	}
-
-	c.JSON(200, result)
+	c.JSON(200, regions)
 }
 
 func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
-	keys := []string{}
+	var keys []string
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
 	sort.Sort(sort.StringSlice(keys))
 
-	result := []interface{}{}
-	for _, key := range keys {
-		result = append(result, util.DynMap{"text": key, "value": key})
-	}
-
-	c.JSON(200, result)
+	c.JSON(200, keys)
 }
 
 func handleGetMetrics(req *cwRequest, c *middleware.Context) {
@@ -114,9 +103,9 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		return
 	}
 
-	result := []interface{}{}
+	var result []string
 	for _, name := range namespaceMetrics {
-		result = append(result, util.DynMap{"text": name, "value": name})
+		result = append(result, name)
 	}
 
 	c.JSON(200, result)
@@ -137,9 +126,9 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		return
 	}
 
-	result := []interface{}{}
+	var result []string
 	for _, name := range dimensionValues {
-		result = append(result, util.DynMap{"text": name, "value": name})
+		result = append(result, name)
 	}
 
 	c.JSON(200, result)
