@@ -127,7 +127,6 @@ function (angular) {
             "interval": this.getInterval(aggDef),
             "field": this.timeField,
             "min_doc_count": 0,
-            "format": "epoch_millis",
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
           break;
