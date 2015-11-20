@@ -19,7 +19,7 @@ describe('PrometheusDatasource', function() {
     var results;
     var urlExpected = 'proxied/api/v1/query_range?query=' +
                       encodeURIComponent('test{job="testjob"}') +
-                      '&start=1443438675&end=1443460275&step=60s';
+                      '&start=1443438675&end=1443460275&step=60';
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
       targets: [{ expr: 'test{job="testjob"}' }],
