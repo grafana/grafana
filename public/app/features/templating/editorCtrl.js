@@ -96,6 +96,13 @@ function (angular, _) {
       }
     };
 
+    $scope.duplicate = function(variable) {
+      $scope.current = angular.copy(variable);
+      $scope.variables.push($scope.current);
+      $scope.current.name = 'copy_of_'+variable.name;
+      $scope.updateSubmenuVisibility();
+    };
+
     $scope.update = function() {
       if ($scope.isValid()) {
         $scope.runQuery().then(function() {
