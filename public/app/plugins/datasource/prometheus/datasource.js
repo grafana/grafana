@@ -212,7 +212,7 @@ function (angular, _, moment, dateMath) {
         sec = 1;
       }
 
-      return Math.ceil(sec * intervalFactor) + 's';
+      return Math.ceil(sec * intervalFactor);
     };
 
     function transformMetricData(md, options) {
