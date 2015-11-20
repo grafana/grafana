@@ -38,7 +38,7 @@ export function tablePanelEditor() {
 
       scope.updateColumnsMenu = function(data) {
         scope.columnsMenu = transformers[scope.panel.transform].getColumns(data);
-        scope.showColumnOptions = scope.columnsMenu.length > 0;
+        scope.showColumnOptions = true;
      };
 
       scope.$on('render', function(event, table, rawData) {
@@ -51,6 +51,7 @@ export function tablePanelEditor() {
       };
 
       scope.transformChanged = function() {
+        scope.panel.columns = [];
         scope.updateColumnsMenu();
         scope.render();
       };

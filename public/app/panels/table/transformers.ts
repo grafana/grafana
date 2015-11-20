@@ -145,7 +145,7 @@ transformers['json'] = {
     var names: any = {};
     for (var i = 0; i < data.length; i++) {
       var series = data[i];
-      if (series.type === 'docs') {
+      if (series.type !== 'docs') {
         continue;
       }
 
