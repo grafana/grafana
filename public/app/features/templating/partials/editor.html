@@ -39,7 +39,7 @@
 		<div ng-if="mode === 'list'">
 
 			<div class="editor-row row">
-				<div class="span8">
+				<div style="max-width: 1024px">
 					<div ng-if="variables.length === 0">
 						<em>No template variables defined</em>
 					</div>
@@ -59,6 +59,11 @@
 									Edit
 								</a>
 							</td>
+              <td style="width: 1%">
+                <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small">
+                  Duplicate
+                </a>
+              </td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 							<td style="width: 1%">

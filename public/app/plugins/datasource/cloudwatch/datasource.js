@@ -263,7 +263,7 @@ function (angular, _) {
         })
         .each(function(dp) {
           var timestamp = new Date(dp.Timestamp).getTime();
-          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs * 2) {
+          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
             dps.push([null, lastTimestamp + periodMs]);
           }
           lastTimestamp = timestamp;
