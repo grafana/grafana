@@ -256,8 +256,11 @@
 							<li>
 								<input type="text" class="input-medium tight-form-input" ng-model='current.label' placeholder=""></input>
 							</li>
-							<li class="tight-form-item last">
+							<li class="tight-form-item">
 								<editor-checkbox text="Hide label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
+							</li>
+							<li class="tight-form-item last">
+								<editor-checkbox text="Map value IDs" tip="Use variable values as IDs for name lookup. Requires dashboard ID mapping enabled" model="current.mapIds" change="runQuery()"></editor-checkbox>
 							</li>
 						</ul>
 						<div class="clearfix"></div>

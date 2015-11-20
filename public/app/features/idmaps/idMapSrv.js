@@ -9,7 +9,6 @@ define([
 
   module.service('idMapSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
     var promiseCached;
-    var idMap = {};
     var MAP_REGEX = /\$map\(([\S]+)\)/g;
 
     this.init = function() {
@@ -19,36 +18,27 @@ define([
 
     this.clearCache = function() {
       promiseCached = null;
-      idMap = {};
     };
 
-    this.getIdMap = function(seriesList, dashboard) {
-      var ctrl = dashboard.idMapping;
-      if (!ctrl.enabled || !ctrl.datasource) {
+    this.getSeriesListIdMap = function(seriesList, ctrl) {
+      if (skipIdMapping(ctrl)) {
         return $q.when(null);
-      } else {
+      }
 
-        if (promiseCached) {
-          return promiseCached;
-        }
-
-        var promises = _.map(extractIDs(seriesList), function(id) {
-          return datasourceSrv.get(ctrl.datasource).then(function(datasource) {
-            return datasource.mapIdQuery(id, ctrl.idField, ctrl.nameField)
-              .then(function(result) {
-                idMap[id] = result;
-              })
-              .catch(errorHandler);
-          });
-        });
-
-        promiseCached = $q.all(promises)
-        .then(function() {
-          return idMap;
-        });
-
+      if (promiseCached) {
         return promiseCached;
       }
+
+      promiseCached = getIDMap(extractIDs(seriesList), ctrl);
+      return promiseCached;
+    };
+
+    this.getTemplateVariableIDMap = function(variable, ctrl) {
+      if (skipIdMapping(ctrl)) {
+        return $q.when(null);
+      }
+      var ids = _.pluck(variable.options, 'value');
+      return getIDMap(ids, ctrl);
     };
 
     this.replaceID = function(target, map) {
@@ -56,6 +46,22 @@ define([
         return map[captureGroup];
       });
     };
+
+    function getIDMap(ids, ctrl) {
+      var idMap = {};
+      var promises = _.map(ids, function(id) {
+        return datasourceSrv.get(ctrl.datasource).then(function(datasource) {
+          return datasource.mapIdQuery(id, ctrl.idField, ctrl.nameField)
+            .then(function(result) {
+              idMap[id] = result;
+            }).catch(errorHandler);
+        }).catch(errorHandler);
+      });
+
+      return $q.all(promises).then(function() {
+        return idMap;
+      });
+    }
 
     function errorHandler(err) {
       console.log('ID mapping error: ', err);
@@ -71,6 +77,10 @@ define([
         });
       });
       return ids;
+    }
+
+    function skipIdMapping(ctrl) {
+      return !ctrl.enabled || !ctrl.datasource;
     }
 
     // Now init

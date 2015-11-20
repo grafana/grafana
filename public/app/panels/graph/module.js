@@ -157,10 +157,8 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
 
       $scope.seriesList = _.map(results.data, $scope.seriesHandler);
 
-      var resolveAliases = idMapSrv.getIdMap($scope.seriesList, $scope.dashboard)
+      var resolveAliases = idMapSrv.getSeriesListIdMap($scope.seriesList, $scope.dashboard.idMapping)
         .then(function(idMap) {
-          console.log("Alias promise returned: ");
-          console.log(idMap);
           if (_.isEmpty(idMap)) {
             return;
           }

@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
+  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv, idMapSrv) {
     var self = this;
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
@@ -22,6 +22,8 @@ function (angular, _, kbn) {
 
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
+      this.idMapping = dashboard.idMapping;
+
       templateSrv.init(this.variables);
 
       var queryParams = $location.search();
@@ -131,6 +133,7 @@ function (angular, _, kbn) {
 
       return datasourceSrv.get(variable.datasource)
         .then(_.partial(this.updateOptionsFromMetricFindQuery, variable))
+        .then(_.partial(this.updateOptionsFromIdMapQuery, variable))
         .then(_.partial(this.updateTags, variable))
         .then(_.partial(this.validateVariableSelectionState, variable));
     };
@@ -199,6 +202,30 @@ function (angular, _, kbn) {
           variable.options.push(getNoneOption());
         }
         return datasource;
+      });
+    };
+
+    this.updateOptionsFromIdMapQuery = function(variable, datasource) {
+      if (variable.mapIds) {
+        return idMapSrv.getTemplateVariableIDMap(variable, self.idMapping)
+          .then(function(idMap) {
+            variable.options = self.variableTextsToIds(variable.options, idMap);
+            return datasource;
+          });
+      }
+      return datasource;
+    };
+
+    this.variableTextsToIds = function(options, idMap) {
+      if (!idMap) {
+        return options;
+      }
+
+      return _.map(options, function(option) {
+        return {
+          text: idMap[option.value] || option.text,
+          value: option.value
+        };
       });
     };
 

@@ -19,6 +19,7 @@ function (angular, _) {
       allFormat: 'glob',
       multi: false,
       multiFormat: 'glob',
+      mapIds: false,
     };
 
     $scope.init = function() {

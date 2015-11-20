@@ -72,6 +72,7 @@ define([
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
     self.backendSrv = {};
+    self.idMapSrv = {};
     self.$location = {};
     self.$routeParams = {};
 

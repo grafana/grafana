@@ -29,20 +29,20 @@ define([
     describe('when fetching ids for series aliases', function() {
       var ds = {};
       var idMap;
-      var dash; = dashboardMock.create();
+      var ctrl = dashboardMock.create().idMapping;
 
       beforeEach(function() {
         idMap = {};
         ds.mapIdQuery = sinon.stub();
         ds.mapIdQuery.withArgs('id1').returns(ctx.$q.when('value1'));
         ds.mapIdQuery.withArgs('id2').returns(ctx.$q.when('value2'));
-        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));        
+        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
       });
 
       it('should return an idmap based on ids present in series list', function() {
         var seriesList = [{alias:'alias text $map(id1)'}];
 
-        ctx.service.getIdMap(seriesList, dash).then(function(returnedFromPromise) {
+        ctx.service.getSeriesListIdMap(seriesList, ctrl).then(function(returnedFromPromise) {
           idMap = returnedFromPromise;
         });
         ctx.$rootScope.$digest();
@@ -53,7 +53,7 @@ define([
       it('should call the backend once for each unique id', function() {
         var seriesList = [{alias:'$map(id1)'}, {alias:'$map(id1)'}, {alias:'$map(id2)'}];
 
-        ctx.service.getIdMap(seriesList, dash).then(function(returnedFromPromise) {
+        ctx.service.getSeriesListIdMap(seriesList, ctrl).then(function(returnedFromPromise) {
           idMap = returnedFromPromise;
         });
         ctx.$rootScope.$digest();
@@ -63,7 +63,35 @@ define([
       });
 
     });
-    
+
+    describe('when fetching ids for template variables', function() {
+      var ds = {};
+      var idMap;
+      var ctrl = dashboardMock.create().idMapping;
+
+      beforeEach(function() {
+        idMap = {};
+        ds.mapIdQuery = sinon.stub();
+        ds.mapIdQuery.withArgs('id1').returns(ctx.$q.when('value1'));
+        ds.mapIdQuery.withArgs('id2').returns(ctx.$q.when('value2'));
+        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
+      });
+
+      it('should return an idmap based on ids present in variable values', function() {
+        var variable = {options:[{text:'txt',value:'id1'},{text:'txt',value:'id2'}]};
+
+        ctx.service.getTemplateVariableIDMap(variable, ctrl).then(function(returnedFromPromise) {
+          idMap = returnedFromPromise;
+        });
+        ctx.$rootScope.$digest();
+
+        expect(idMap).to.eql({id1:'value1', id2: 'value2'});
+      });
+
+    });
+
   });
 
 });
+
+//update template variable current value when enabling id mapping.

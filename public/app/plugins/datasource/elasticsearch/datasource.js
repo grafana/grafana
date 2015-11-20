@@ -141,7 +141,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    ElasticDatasource.prototype.mapAliasQuery = function(id, idfield, namefield) {
+    ElasticDatasource.prototype.mapIdQuery = function(id, idfield, namefield) {
       var queryString = idfield+":"+id;
 
       var query = { "bool": { "should": [{ "query_string": { "query": queryString } }] } };
@@ -151,7 +151,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       };
 
       return this._request('POST', this.index + '/_search', data).then(function(results) {
-        console.log(results);
         var hits = results.data.hits.hits;
 
         for (var i = 0; i < hits.length; i++) {
