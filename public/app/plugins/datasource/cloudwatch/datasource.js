@@ -150,28 +150,36 @@ function (angular, _) {
 
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
-          return { text: v };
+          return { text: v, value: v };
         });
       };
 
       var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
-        return this.getRegions();
+        return this.getRegions().then(function(result) {
+          return transformSuggestData(result);
+        });
       }
 
       var namespaceQuery = query.match(/^namespaces\(\)/);
       if (namespaceQuery) {
-        return this.getNamespaces();
+        return this.getNamespaces().then(function(result) {
+          return transformSuggestData(result);
+        });
       }
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)\)/);
       if (metricNameQuery) {
-        return this.getMetrics(metricNameQuery[1]);
+        return this.getMetrics(metricNameQuery[1]).then(function(result) {
+          return transformSuggestData(result);
+        });
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
       if (dimensionKeysQuery) {
-        return this.getDimensionKeys(dimensionKeysQuery[1]);
+        return this.getDimensionKeys(dimensionKeysQuery[1]).then(function(result) {
+          return transformSuggestData(result);
+        });
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
