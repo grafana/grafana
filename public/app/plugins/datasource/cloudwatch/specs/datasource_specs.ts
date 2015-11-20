@@ -55,7 +55,7 @@ describe('CloudWatchDatasource', function() {
         },
         {
           Average: 5,
-          Timestamp: 'Wed Dec 31 1969 16:20:00 GMT-0800 (PST)'
+          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
         }
       ],
       Label: 'CPUUtilization'
