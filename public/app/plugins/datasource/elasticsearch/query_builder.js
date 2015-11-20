@@ -10,7 +10,7 @@ function (angular) {
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
-    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo", "format": "epoch_millis"};
+    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
     return filter;
   };
 
