@@ -48,6 +48,7 @@ function (angular, _, moment, dateMath) {
       var end = getPrometheusTime(options.range.to, true);
 
       var queries = [];
+      options = _.clone(options);
       _.each(options.targets, _.bind(function(target) {
         if (!target.expr || target.hide) {
           return;
@@ -58,7 +59,13 @@ function (angular, _, moment, dateMath) {
 
         var interval = target.interval || options.interval;
         var intervalFactor = target.intervalFactor || 1;
-        query.step = this.calculateInterval(interval, intervalFactor);
+        target.step = query.step = this.calculateInterval(interval, intervalFactor);
+        var range = Math.ceil(end - start);
+        // Prometheus drop query if range/step > 11000
+        // calibrate step if it is too big
+        if (query.step !== 0 && range / query.step > 11000) {
+          target.step = query.step = Math.ceil(range / 11000);
+        }
 
         queries.push(query);
       }, this));
@@ -96,17 +103,7 @@ function (angular, _, moment, dateMath) {
     };
 
     PrometheusDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
-      var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end;
-
-      var step = query.step;
-      var range = Math.ceil(end - start);
-      // Prometheus drop query if range/step > 11000
-      // calibrate step if it is too big
-      if (step !== 0 && range / step > 11000) {
-        step = Math.ceil(range / 11000);
-      }
-      url += '&step=' + step;
-
+      var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
       return this._request('GET', url);
     };
 
@@ -221,8 +218,20 @@ function (angular, _, moment, dateMath) {
 
       metricLabel = createMetricLabel(md.metric, options);
 
-      dps = _.map(md.values, function(value) {
-        return [parseFloat(value[1]), value[0] * 1000];
+      var stepMs = parseInt(options.step) * 1000;
+      var lastTimestamp = null;
+      _.each(md.values, function(value) {
+        var dp_value = parseFloat(value[1]);
+        if (_.isNaN(dp_value)) {
+          dp_value = null;
+        }
+
+        var timestamp = value[0] * 1000;
+        if (lastTimestamp && (timestamp - lastTimestamp) > stepMs) {
+          dps.push([null, lastTimestamp + stepMs]);
+        }
+        lastTimestamp = timestamp;
+        dps.push([dp_value, timestamp]);
       });
 
       return { target: metricLabel, datapoints: dps };
