@@ -45,7 +45,8 @@ export function tablePanel() {
       function appendPaginationControls(footerElem) {
         footerElem.empty();
 
-        var pageCount = Math.ceil(data.rows.length / panel.pageSize);
+        var pageSize = panel.pageSize || 100;
+        var pageCount = Math.ceil(data.rows.length / pageSize);
         if (pageCount === 1) {
           return;
         }
@@ -55,17 +56,11 @@ export function tablePanel() {
 
         var paginationList = $('<ul></ul>');
 
-        // var prevLink = $('<li><a class="table-panel-page-link pointer">«</a></li>');
-        // paginationList.append(prevLink);
-
         for (var i = startPage; i < endPage; i++) {
           var activeClass = i === scope.pageIndex ? 'active' : '';
           var pageLinkElem = $('<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i+1) + '</a></li>');
           paginationList.append(pageLinkElem);
         }
-
-        // var nextLink = $('<li><a href="#">»</a></li>');
-        // paginationList.append(nextLink);
 
         footerElem.append(paginationList);
       }

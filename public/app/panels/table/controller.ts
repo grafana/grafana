@@ -27,7 +27,7 @@ export class TablePanelCtrl {
     var panelDefaults = {
       targets: [{}],
       transform: 'timeseries_to_rows',
-      pageSize: 50,
+      pageSize: null,
       showHeader: true,
       styles: [
         {
