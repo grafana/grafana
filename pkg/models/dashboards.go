@@ -43,7 +43,9 @@ func NewDashboard(title string) *Dashboard {
 	dash.Data = make(map[string]interface{})
 	dash.Data["title"] = title
 	dash.Title = title
-	dash.UpdateSlug()
+	dash.Created = time.Now()
+  dash.Updated = time.Now()
+  dash.UpdateSlug()
 	return dash
 }
 
@@ -66,19 +68,19 @@ func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = data
 	dash.Title = dash.Data["title"].(string)
-	dash.UpdateSlug()
+  dash.UpdateSlug()
 
 	if dash.Data["id"] != nil {
 		dash.Id = int64(dash.Data["id"].(float64))
 
 		if dash.Data["version"] != nil {
 			dash.Version = int(dash.Data["version"].(float64))
-			dash.Updated = time.Now()
-		}
+      dash.Updated = time.Now()
+    }
 	} else {
 		dash.Data["version"] = 0
-		dash.Created = time.Now()
-		dash.Updated = time.Now()
+    dash.Created = time.Now()
+    dash.Updated = time.Now()
 	}
 
 	return dash
