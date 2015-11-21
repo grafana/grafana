@@ -163,11 +163,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var payload = "";
       var target;
       var sentTargets = [];
-      var headerAdded = false;
 
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
-        if (target.hide) {return;}
+        if (target.hide) {continue;}
 
         var queryObj = this.queryBuilder.build(target);
         var esQuery = angular.toJson(queryObj);
@@ -176,12 +175,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
-        if (!headerAdded) {
-          var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
-          var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
-          payload +=  header + '\n';
-          headerAdded = true;
-        }
+        var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
+        var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+        payload +=  header + '\n';
 
         payload += esQuery + '\n';
         sentTargets.push(target);
