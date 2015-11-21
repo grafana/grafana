@@ -1,5 +1,4 @@
-
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import angular = require('angular');
 import $ = require('jquery');
@@ -14,7 +13,7 @@ export function tablePanelEditor() {
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'app/panels/table/editor.html',
+    templateUrl: 'app/plugins/panels/table/editor.html',
     link: function(scope, elem) {
       scope.transformers = transformers;
       scope.unitFormats = kbn.getUnitFormats();

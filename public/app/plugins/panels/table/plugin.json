@@ -1,0 +1,8 @@
+{
+  "pluginType": "panel",
+
+  "name": "Table",
+  "type": "table",
+
+  "module": "app/plugins/panels/table/module"
+}

@@ -1,4 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import moment = require('moment');
 import _ = require('lodash');
