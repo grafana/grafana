@@ -158,7 +158,7 @@ function (angular, _, moment) {
       playlistSrv.stop(1);
     };
 
-    $scope.dateFormat = function(date) {
+    $scope.formatDate = function(date) {
       return moment(date).format('MMMM Do YYYY, h:mm a');
     };
 
