@@ -397,6 +397,7 @@ function($, _) {
   // Volume
   kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
   kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
+  kbn.valueFormats.m3     = kbn.formatBuilders.decimalSIPrefix('m3');
 
   // Time
   kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -568,8 +569,9 @@ function($, _) {
       {
         text: 'volume',
         submenu: [
-          {text: 'millilitre', value: 'mlitre'},
-          {text: 'litre',      value: 'litre' },
+          {text: 'millilitre',  value: 'mlitre'},
+          {text: 'litre',       value: 'litre' },
+          {text: 'cubic metre', value: 'm3'    },
         ]
       },
       {
