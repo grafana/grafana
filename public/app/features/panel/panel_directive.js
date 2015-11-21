@@ -13,9 +13,9 @@ function (angular, $, config) {
       restrict: 'E',
       link: function(scope, elem, attr) {
         var getter = $parse(attr.type), panelType = getter(scope);
-        var panelPath = config.panels[panelType].path;
+        var module = config.panels[panelType].module;
 
-        scope.require([panelPath + "/module"], function () {
+        scope.require([module], function () {
           var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
           elem.append(panelEl);
           $compile(panelEl)(scope);

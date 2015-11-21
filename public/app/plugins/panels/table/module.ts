@@ -1,4 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import angular = require('angular');
 import $ = require('jquery');
@@ -14,7 +14,7 @@ export function tablePanel() {
   'use strict';
   return {
     restrict: 'E',
-    templateUrl: 'app/panels/table/module.html',
+    templateUrl: 'app/plugins/panels/table/module.html',
     controller: TablePanelCtrl,
     link: function(scope, elem) {
       var data;

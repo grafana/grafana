@@ -106,9 +106,18 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		defaultDatasource = "-- Grafana --"
 	}
 
+	panels := map[string]interface{}{}
+	for _, panel := range plugins.Panels {
+		panels[panel.Type] = map[string]interface{}{
+			"module": panel.Module,
+			"name":   panel.Name,
+		}
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
+		"panels":            panels,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"buildInfo": map[string]interface{}{

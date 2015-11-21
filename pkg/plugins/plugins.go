@@ -14,6 +14,7 @@ import (
 
 var (
 	DataSources     map[string]DataSourcePlugin
+	Panels          []PanelPlugin
 	ExternalPlugins []ExternalPlugin
 	StaticRoutes    []*StaticRootConfig
 )
@@ -27,6 +28,7 @@ func Init() error {
 	DataSources = make(map[string]DataSourcePlugin)
 	ExternalPlugins = make([]ExternalPlugin, 0)
 	StaticRoutes = make([]*StaticRootConfig, 0)
+	Panels = make([]PanelPlugin, 0)
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 	checkExternalPluginPaths()
@@ -121,6 +123,21 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 
 		DataSources[p.Type] = p
+		addStaticRoot(p.StaticRootConfig, currentDir)
+	}
+
+	if pluginType == "panel" {
+		p := PanelPlugin{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+
+		if p.Type == "" {
+			return errors.New("Did not find type property in plugin.json")
+		}
+
+		Panels = append(Panels, p)
 		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
