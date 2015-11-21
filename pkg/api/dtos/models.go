@@ -40,6 +40,7 @@ type DashboardMeta struct {
 	Slug       string    `json:"slug"`
 	Expires    time.Time `json:"expires"`
 	Created    time.Time `json:"created"`
+	Updated    time.Time `json:"updated"`
 }
 
 type DashboardFullWithMeta struct {
