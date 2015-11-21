@@ -443,7 +443,7 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it.only('should return table', function() {
+    it('should return table', function() {
       expect(result.data.length).to.be(1);
       expect(result.data[0].type).to.be('docs');
       expect(result.data[0].datapoints.length).to.be(2);
