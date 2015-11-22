@@ -6,11 +6,18 @@ function (angular) {
 
   function ElasticQueryBuilder(options) {
     this.timeField = options.timeField;
+    this.elasticsearchVersion = options.elasticsearchVersion;
   }
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
     filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
+
+    // elastic search versions above 2.0 require the time format to be specified
+    if (this.elasticsearchVersion >= 2) {
+      filter[this.timeField]["format"] = "epoch_millis";
+    }
+
     return filter;
   };
 
@@ -129,6 +136,10 @@ function (angular) {
             "min_doc_count": 0,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
+          // elastic search versions above 2.0 require the time format to be specified
+          if (this.elasticsearchVersion >= 2) {
+            esAgg["date_histogram"]["format"] = "epoch_millis";
+          }
           break;
         }
         case 'filters': {
