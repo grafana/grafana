@@ -1,0 +1,46 @@
+<div class="gf-box-header">
+	<div class="gf-box-title">
+		<i class="fa fa-info"></i>
+		Metadata
+	</div>
+</div>
+
+<div class="gf-box-body" style="padding-bottom: 50px;">
+  <div class="editor-row">
+		<div class="tight-form-section">
+			<h5>Dashboard info</h5>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 120px">
+            Last updated at:
+          </li>
+          <li class="tight-form-item" style="width: 180px">
+            {{formatDate(dashboardMeta.updated)}}
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 120px">
+            Created at:
+          </li>
+          <li class="tight-form-item" style="width: 180px">
+            {{formatDate(dashboardMeta.created)}}
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+	</div>
+</div>
+
+<div class="gf-box-footer">
+	<div class="grafana-version-info">
+		<span class="editor-option small">
+			Grafana version: {{contextSrv.version}} &nbsp;&nbsp;
+		</span>
+		<span grafana-version-check>
+		</span>
+	</div>
+</div>

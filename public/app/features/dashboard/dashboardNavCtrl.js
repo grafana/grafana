@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  'moment',
   'vendor/filesaver'
 ],
-function (angular, _, moment) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -156,10 +155,6 @@ function (angular, _, moment) {
 
     $scope.stopPlaylist = function() {
       playlistSrv.stop(1);
-    };
-
-    $scope.formatDate = function(date) {
-      return moment(date).format('MMM Do YYYY, h:mm a');
     };
 
   });
