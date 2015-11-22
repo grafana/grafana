@@ -24,6 +24,12 @@ function (angular, _, config) {
       {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
     ];
 
+    $scope.elasticsearchVersions = [
+      {name: '0.x', value: 0},
+      {name: '1.x', value: 1},
+      {name: '2.x', value: 2},
+    ];
+
     $scope.init = function() {
       $scope.isNew = true;
       $scope.datasources = [];
