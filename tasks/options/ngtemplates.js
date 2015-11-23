@@ -2,7 +2,7 @@ module.exports = function(config) {
   return {
     grafana: {
       cwd:  '<%= genDir %>',
-      src:  ['app/**/*.html'],
+      src:  ['app/**/*.html', 'plugins/**/*.html'],
       dest: '<%= genDir %>/app/core/partials.js',
       options: {
         bootstrap: function(module, script) {

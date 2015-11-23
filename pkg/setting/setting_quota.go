@@ -9,6 +9,8 @@ type OrgQuota struct {
 	DataSource int64 `target:"data_source"`
 	Dashboard  int64 `target:"dashboard"`
 	ApiKey     int64 `target:"api_key"`
+	Endpoint   int64 `target:"endpoint"`
+	Collector  int64 `target:"collector"`
 }
 
 type UserQuota struct {
@@ -21,6 +23,8 @@ type GlobalQuota struct {
 	DataSource int64 `target:"data_source"`
 	Dashboard  int64 `target:"dashboard"`
 	ApiKey     int64 `target:"api_key"`
+	Endpoint   int64 `target:"endpoint"`
+	Collector  int64 `target:"collector"`
 	Session    int64 `target:"-"`
 }
 
@@ -74,6 +78,8 @@ func readQuotaSettings() {
 		DataSource: quota.Key("org_data_source").MustInt64(10),
 		Dashboard:  quota.Key("org_dashboard").MustInt64(10),
 		ApiKey:     quota.Key("org_api_key").MustInt64(10),
+		Endpoint:   quota.Key("org_endpoint").MustInt64(10),
+		Collector:  quota.Key("org_collector").MustInt64(10),
 	}
 
 	// per User limits
@@ -88,6 +94,8 @@ func readQuotaSettings() {
 		DataSource: quota.Key("global_data_source").MustInt64(-1),
 		Dashboard:  quota.Key("global_dashboard").MustInt64(-1),
 		ApiKey:     quota.Key("global_api_key").MustInt64(-1),
+		Endpoint:   quota.Key("global_endpoint").MustInt64(10),
+		Collector:  quota.Key("global_collector").MustInt64(10),
 		Session:    quota.Key("global_session").MustInt64(-1),
 	}
 

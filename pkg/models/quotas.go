@@ -119,6 +119,18 @@ func GetQuotaScopes(target string) ([]QuotaScope, error) {
 			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.ApiKey},
 		)
 		return scopes, nil
+	case "endpoint":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Endpoint},
+			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.Endpoint},
+		)
+		return scopes, nil
+	case "collector":
+		scopes = append(scopes,
+			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Collector},
+			QuotaScope{Name: "org", Target: target, DefaultLimit: setting.Quota.Org.Collector},
+		)
+		return scopes, nil
 	case "session":
 		scopes = append(scopes,
 			QuotaScope{Name: "global", Target: target, DefaultLimit: setting.Quota.Global.Session},

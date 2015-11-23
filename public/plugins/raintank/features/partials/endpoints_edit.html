@@ -1,0 +1,65 @@
+<topnav toggle="toggleSideMenu()" icon="icon-rt-endpoint" section="Endpoints" show-menu-btn="!grafana.sidemenu">
+  <ul class="nav">
+    <li class="top-nav-title ng-binding">
+      <div>
+        <form style="margin-bottom:0px;">
+          <li class="dropdown">
+            <a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+              <span>{{endpoint.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+              </a>
+            <ul class="dropdown-menu" role="menu" style="left: 65px">
+              <li ng-repeat="endpoint in endpoints">
+                <a class="small" href="endpoints/summary/{{endpoint.id}}">{{endpoint.name}}</a>
+              </li>
+            </ul>
+          </li>
+        </form>
+      </div>
+    </li>
+  </ul>
+</topnav>
+
+<div style="margin: 10px; position: relative; display: block; min-width:400px; max-width: 1000px;">
+  <!-- page title -->
+  <div class="rt-page-header-area">
+    <h1 class="rt-h1">{{endpoint.name}}</h1><a ng-click="gotoDashboard(endpoint)"><i ng-class="icon" class="primary-icon-header dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: Summary </br>dashboard for this endpoint'"></i></a>
+  </div>
+  <div class="editor-row rt-detail-pages">
+    <div class="editor-option">
+      <bootstrap-tagsinput ng-model="endpoint.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="tagsUpdated()" ></bootstrap-tagsinput>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div class="rt-tabs" ng-if="endpoint.id">
+    <span class="nonactive"><a href="endpoints/summary/{{endpoint.id}}">Status</a></span>  <span class="active"><a href="endpoints/edit/{{endpoint.id}}">Configuration</a></span>
+  </div>
+</div>
+
+  <div style="margin: 0px; position: relative; display: block; min-width:400px; max-width: 1020px;">
+    <form name="endpointForm">
+        <div class="rt-page-section" style="padding-left: 10px; margin-top: 35px;">
+          <div class="rt-mini-form new-endpoint-domain-form">
+            <div class="rt-mini-form-col">
+              <label class="rt-form-label-medium">Endpoint Name</label>
+              <input type="text" class="rt-form-input" ng-model="newEndpointName" required="">
+            </div>
+            <div class="rt-mini-form-col" style="margin-top: 15px;">
+              <div>
+                <div class="editor-row" ng-show="endpoint.id">
+                  <button type="submit" class="secondaryCTA ButtonTall" style="position:relative; top:-1px;" ng-click="updateEndpoint(endpoint)">Update Endpoint Name</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div ng-include src="'plugins/raintank/features/partials/dnsForm.html'" ng-if="monitors['dns']"></div>
+        <div ng-include src="'plugins/raintank/features/partials/pingForm.html'" ng-if="monitors['ping']"></div>
+        <div ng-include src="'plugins/raintank/features/partials/httpForm.html'" ng-if="monitors['http']"></div>
+        <div ng-include src="'plugins/raintank/features/partials/httpsForm.html'" ng-if="monitors['https']"></div>
+      </form>
+        <div ng-include src="'plugins/raintank/features/partials/destroyForm.html'"></div>        
+    </div>
+</div>
+<div style="padding-bottom: 100px;"></div>

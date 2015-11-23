@@ -1,0 +1,159 @@
+<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Probes" show-menu-btn="!grafana.sidemenu">
+	<ul class="nav">
+		<li class="top-nav-title ng-binding"> <!-- <span class="top-nav-title ng-binding" style="margin-left:-20px; margin-right:20px;">{{collector.name}}</span> -->
+			<div>
+				<form style="margin-bottom:0px;">
+					<!-- <select ng-model="collector" ng-options="c as c.name for c in collectors" ng-change="setLocation(collector.id)"></select> -->
+					<li class="dropdown">
+						<a class="pointer" data-toggle="dropdown" ng-click="openSearch()">
+							<span>{{collector.name}}</span><i class="fa fa-caret-down small" style="position:relative; top:5px; left:10px;"></i>
+				   		</a>
+						<ul class="dropdown-menu" role="menu" style="left: 65px">
+							<li ng-repeat="collector in collectors">
+								<a class="small" href="collectors/summary/{{collector.id}}">{{collector.name}}</a>
+							</li>
+						</ul>
+					</li>
+				</form>
+			</div>
+		</li>
+		<!--  <li class="active" style="margin-left:200px;"><a href="collectors/summary/{{collector.id}}">Summary</a></li>
+		<li ng-show="collector.org_id == contextSrv.user.orgId"><a href="collectors/edit/{{collector.id}}">Edit</a></li> -->
+	</ul>
+</topnav>
+
+<div style="margin: 10px; position: relative; display: block; max-width: 1000px; min-width:400px;">
+
+	<!-- page title -->
+	<div class="rt-page-header-area">
+		<h1 class="rt-h1">{{collector.name}}</h1>
+
+		<span class="collector_icon public"><i ng-class="icon" class="icon-rt-raintank_icn" style="" ng-if="collector.public" bs-tooltip="'This is a public probe'"></i></span>
+		<span class="collector_icon private"><i ng-class="icon" class="icon-rt-private-collector" style="" ng-if="!collector.public" bs-tooltip="'This is a private collector'"></i></span>
+	</div>
+	<div class="editor-row rt-detail-pages">
+		<div class="editor-option">
+			<bootstrap-tagsinput ng-model="collector.tags" tagclass="label rt-label-tag" placeholder="New Tag" on-tags-updated="save()" ></bootstrap-tagsinput>
+		</div>
+	</div>
+
+	<!-- tabs -->
+	<div class="rt-tabs">
+		<span class="active"><a href="collectors/summary/{{collector.id}}">Summary</a></span>
+<!-- 		<span class="nonactive" ng-show="collector.org_id == contextSrv.user.orgId">
+			<a href="collectors/edit/{{collector.id}}">Configuration</a>
+		</span> -->
+	</div>
+</div>
+
+<form name="collectorForm">
+	<div class="detailContainer">
+		<div class="detailColumn detailLeft">
+		<div class="rt-box clearBack oneCol">
+				<span><a class="superCTA" ng-click="gotoDashboard(collector)">Go to {{collector.name}} Dashboard <i ng-class="icon" class="icon-rt-dashboard"></i></a></span>
+			</div>
+			<div class="rt-box">
+				<div class="rt-box-header">Probe Details
+					<div ng-show="collector.online" style="float: right; display: inline;">
+						<div style="display: inline; margin-left:6px;">
+							<a ng-click="gotoDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard" bs-tooltip="'Go to Litmus: {{collector.name}} dashboard'"></i></a>
+						</div>
+					</div>
+				</div>
+				<div class="rt-box-body no-padding" style="min-height: 50px">
+					<div ng-show="collector.online" class="collectorCurrentStatus">
+						<div class="rt-summary-status">
+							<span class="{{collector.online?'online':'offline'}} jumbo"> {{collector.online?'online':'offline'}}</span>
+						  <span class="checkTime">&nbsp; {{collector.online_change | timeDuration}}</span>
+						</div>
+						<div class="collectorStatus">
+							<div class="pull-left msg">This probe is <span ng-class="{disabled: !collector.enabled, enabled: collector.enabled}">{{collector.enabled? "enabled": "disabled"}}</span>.</div>
+						  <span class="checkTime">&nbsp; {{collector.enabled_change | timeDuration}}</span>
+							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-hide="collector.enabled">Enable</button>
+							<button type="submit" ng-if="collector.org_id == contextSrv.user.orgId" class="pull-right tertiaryCTA" ng-click="setEnabled(!collector.enabled)" ng-show="collector.enabled">Disable</button>
+						</div>
+						<div class="statusEvents" >
+							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
+						</div>
+						<!-- <button type="submit" class="secondaryCTA">View All Errors</button> -->
+						<div class="clearfix"></div>
+					</div>
+					<div ng-show="!collector.online" class="collectorCurrentStatus">
+						<div class="rt-summary-status">
+							<div class="collector-animation" id="collector-animation">
+								<div class="collector collector-1"></div>
+							    <div class="collector collector-2"></div>
+							    <div class="collector collector-3"></div>
+							    <div class="collector collector-4"></div>
+							    <div class="collector collector-5"></div>
+							</div>
+  							<h3>LOOKING FOR SIGNS OF LIFE
+							<span class="ascii-ellipses-1"></span>
+    <span class="ascii-ellipses-2">.&nbsp;</span>
+    <span class="ascii-ellipses-3">&nbsp;.</span>
+    <span class="ascii-ellipses-4">&nbsp;&nbsp;.</span>
+							</h3>
+							<p>We're checking, but we havent seen this probe appear online yet.</p>
+							<p>Need to install it? <a href="/collectors/init/{{collector.id}}" class="rt-dashboard-blurb">Read the installation instructions</a></p>
+						</div>
+						<div class="statusEvents" >
+							<rt-collector-summary-health model="collector"></rt-collector-summary-health>
+						</div>
+						<div class="clearfix"></div>
+					</div>					
+				</div>
+			</div>
+
+
+		</div>
+		<div class="detailColumn detailRight" ng-if="collector.org_id === contextSrv.user.orgId">
+			<div class="rt-box clearBack twoCol">
+				<div class="rt-box">
+					<div class="rt-box-header">Configuration</div>
+					<div class="rt-box-body no-padding" style="min-height: 50px">
+						<div class="rt-mini-form new-endpoint-domain-form collectorCurrentStatus">
+				            <div class="rt-mini-form-col">
+				              <label class="rt-form-label-medium">Probe Name</label>
+							  <input type="text" class="rt-form-input" ng-model="collectorUpdates.name" required="">
+				            </div>
+							<div class="checkbox-check-enabled" ng-if="contextSrv.isGrafanaAdmin" style="padding: 15px 0;">
+								<input class="rt-modal" id="collector-public"type="checkbox" ng-model="collectorUpdates.public">
+								<label for="collector-public" class="rt-modal rt-body-copy"> Public?</label>
+							</div>
+				            <div class="rt-mini-form-col" style="margin-top: 15px; display: block;">
+				              <div>
+								<div class="editor-row">
+									<button type="submit" class="secondaryCTA" ng-click="update()" ng-if="collector.id">Update Probe</button>
+									<button type="submit" class="secondaryCTA" ng-click="add()" ng-if="!collector.id">Create Probe</button>
+								</div>
+				              </div>
+				            </div>
+				          </div>
+				    </div>
+				</div>
+			</div>
+
+
+		</div>
+	</div>
+	<div class="detailContainer" ng-show="collector.online">
+		<div class="detailColumn detailFull">
+			<div class="rt-box">
+				<div class="rt-box-header">Probe Events: Last 30 Days
+					<div style="float: right; display: inline;">
+						<div style="display: inline; margin-right: 15px;">
+							<a ng-click="gotoEventDashboard(collector)"><i ng-class="icon" class="dashboard-icon icon-rt-jump-to-dashboard"></i><span class="disabled small" style="vertical-align: text-top;">&nbsp;Go to Litmus: Events dashboard</span></a>
+						</div>
+					</div>
+				</div>
+				<div class="rt-box-body no-padding">
+					<div class="panel-iframe-container">
+						<div class="panel-iframe-container-bg">
+							<iframe ng-src="{{getEventsDashboardLink(collector)}}" width="100%" height="501" frameborder="0"></iframe>
+					</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>

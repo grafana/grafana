@@ -109,6 +109,11 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 		_, err := sess.Insert(&user)
 		cmd.Result = org
 
+		err = CopyPublicCollectorTags(org.Id, sess)
+		if err != nil {
+			return err
+		}
+
 		sess.publishAfterCommit(&events.OrgCreated{
 			Timestamp: org.Created,
 			Id:        org.Id,

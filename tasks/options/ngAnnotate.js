@@ -5,6 +5,7 @@ module.exports = function(config) {
       cwd:'<%= genDir %>',
       src: [
         'app/**/*.js',
+        'plugins/**/*.js'
       ],
       dest: '<%= genDir %>'
     }

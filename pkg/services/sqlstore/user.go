@@ -61,7 +61,9 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) 
 	if _, err := sess.Insert(&org); err != nil {
 		return 0, err
 	}
-
+	if err := CopyPublicCollectorTags(org.Id, sess); err != nil {
+		return 0, err
+	}
 	sess.publishAfterCommit(&events.OrgCreated{
 		Timestamp: org.Created,
 		Id:        org.Id,

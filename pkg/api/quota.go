@@ -20,6 +20,19 @@ func GetOrgQuotas(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
+func GetOwnOrgQuotas(c *middleware.Context) Response {
+	if !setting.Quota.Enabled {
+		return ApiError(404, "Quotas not enabled", nil)
+	}
+	query := m.GetOrgQuotasQuery{OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to get org quotas", err)
+	}
+
+	return Json(200, query.Result)
+}
+
 func UpdateOrgQuota(c *middleware.Context, cmd m.UpdateOrgQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)

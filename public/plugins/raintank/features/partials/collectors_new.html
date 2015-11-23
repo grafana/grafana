@@ -1,0 +1,127 @@
+<topnav toggle="toggleSideMenu()" icon="icon-rt-collector" section="Probes" show-menu-btn="!grafana.sidemenu">
+  <ul class="nav">
+    <li class="top-nav-title ng-binding">
+      <div>
+        <form style="margin-bottom:0px;">
+          <li>
+            <a class="pointer" data-toggle="dropdown" ng-click="loadOrgs()">
+              <span>{{collector.name}}</span>
+            </a>
+          </li>
+        </form>
+      </div>
+    </li>
+  </ul>
+</topnav>
+<div style="margin: 10px 10px 50px; position: relative; display: block; min-width:400px; max-width: 1000px;">
+  <!-- Step 1 Accept, check for probe duplicates and add probe record. -->
+  <div ng-if="!collector.id">
+    <div class="rt-page-header">
+      <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
+      <h1 class="rt-h1">Add a new probe</h1>
+      <span class="form-step-count">Step 1 of 2</span>
+    </div>
+    <div class="rt-form">
+      <form name="collectorNameForm">
+        <label class="rt-form-label-medium">Probe Name:</label>
+        <input type="text" class="rt-form-input" ng-model="collector.name" required="required">
+        <div class="rt-form-row">
+          <button type="submit" class="rt-btn" ng-click="collectorNameForm.$valid && add()">Next -> Install Probe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Step 2 - Show after collector record has been added. -->
+  <div ng-if="collector.id">
+    <div class="rt-page-header">
+      <i ng-class="icon" class="icon-rt-collector" style="font-size:24px;"></i>
+      <h1 class="rt-h1">Add a new probe</h1>
+      <span class="form-step-count">Step 2 of 2</span>
+    </div>
+    <label class="rt-form-label-medium">Probe Name:</label>
+    <h2 class="collector-name">{{collector.name}}</h2>
+    <p><i class="fa-fw icon-rt-check rt-icon-success" style="font-size: 20px;"></i><strong>Probe record added</strong>. Please install the application or <a class="rt-dashboard-blurb" ng-href="/collectors/summary/{{collector.id}}">skip to probe summary</a>.</p>
+    <div class="rt-collector-config rt-config-box">
+      <div class="rt-collector-config-header rt-box-header">
+        <h2>Install the probe application</h2>
+        <span class="rt-config-setup-time">Setup time: 5-7 minutes</span>
+      </div>
+      <div class="rt-box-body">
+<!--         <div class="rt-box-interior-section">
+          <h3>Choose your distro:</h3>
+          <ul class="rt-collector-config-distro">
+            <li>
+              <input name="distro" type="radio" id="distros-1">
+              <label for="distros-1" ng-click="configInfo(); defaultDistro()">Ubuntu, Debian, CentOS, Redhat</label>
+            </li>
+            <li>
+              <input name="distro" type="radio" id="distros-2">
+              <label for="distros-2" ng-click="configInfo(); otherDistro()">Other</label>
+            </li>
+          </ul>
+        </div> -->
+        <div class="rt-collector-config-info" ng-hide="showConfigInfo">
+          <div class="rt-box-interior-section">
+            <h3><span class="emphasis">1. </span> Have your API key <a href="/org/apikeys">Manage API keys</a></h3>
+            <div ng-hide="showApiKey">
+              <button class="rt-btn" ng-click="apiKey()">Generate New API Key</button>
+            </div>
+            <div ng-hide="!showApiKey">
+              <span class="helper success">New API key generated</span>
+              <pre><code>{{ apiKey }}</code></pre>
+              <span class="helper">You will only be able to view this key here <span class="emphasis">once</span>, so be sure to copy it and keep it safe.</span>
+            </div>
+          </div>
+          <div class="rt-box-interior-section" ng-hide="!showDistroConfig">
+            <h3>Install the probe</h3>
+            <pre><code>curl https://app.raintank.io/scripts/collector_install.sh | sudo KEY="<span class="h">asdfasdf7897asdfljadskjads889</span>" bash</code></pre>
+          </div>
+          <div class="rt-box-interior-section" ng-hide="showDistroConfig">
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">2. </span>Clone the repository</h3>
+              <pre><code>git clone https://github.com/raintank/raintank-collector.git</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">3. </span>Install Go.</h3>
+              <p>>> <a href="https://golang.org/doc/install">https://golang.org/doc/install</a>.</p>
+              <p>Once you've installed Go, you'll need to configure your workspace like so: <a href="https://golang.org/doc/code.html#Workspaces">https://golang.org/doc/code.html#Workspaces</a></p>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">4. </span>Install raintank_probe.</h3>
+              <pre><code>go get github.com/raintank/raintank-probe</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">5. </span>Copy raintank-probe to raintank-collector's directory.</h3>
+              <pre><code>cd raintank-collector &amp;&amp; cp $(which raintank-probe) .</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">6. </span>Install all of the dependent node_modules.</h3>
+              <pre><code>npm install</code></pre>
+            </div>
+            <div class="rt-box-interior-section">
+              <h3><span class="emphasis">7. </span>Create a config file using etc/config.json as a template, with the probe name and ApiKey</h3>
+<pre><code>{
+"collector": {
+  "name": "<span class="h">{{collector.name}}</span>"
+},
+"numCPUs": 1,
+"serverUrl": "https://controller.raintank.io",
+"apiKey": "<span class="h">{{apiKey}}</span>",
+"probeServerPort": 8284
+}</code></pre>
+            </div>
+          </div>
+          <div class="rt-box-interior-section">
+            <h3><span class="emphasis">8. </span>Start the app</h3>
+            <pre><code>nodejs app.js -c <span class="h">/path/to/config.json</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <a href="/collectors/summary/{{collector.id}}"><button class="rt-btn">Continue to Summary and Verify</button></a>
+<!--       <a href="#" class="btn-link">Having issues? Read our troubleshooting guide.</a> -->
+    </div>
+  </div>
+  <div style="margin-bottom: 50px;"></div>
+</div>

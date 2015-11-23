@@ -1,0 +1,112 @@
+// ==========================================================================
+// TAG DROPUP
+// 
+//
+// Example markup:
+//
+// <ul class="dropdown-menu rt-tag-dropup">
+//   <li>
+//     <a href="#">
+//       <i ng-class="icon" class="dashboard-icon"></i>
+//       Label
+//     </a>
+//   </li>
+//   <li>
+//     <a href="#">
+//       <i ng-class="icon" class="dashboard-icon"></i>
+//       Label
+//     </a>
+//   </li>
+// </ul>
+// ==========================================================================
+
+
+
+.rt-tag-dropup {
+  top: auto;
+  bottom: 100%;
+  left: 50%;
+  width: 170px;
+  min-width: 90px;
+  margin: 0 0 8px -79px;
+  border: 1px solid @rt-dark-gray;
+  background-color: @grayDark;
+  box-shadow: 0 0 1px fade(@rt-dark-gray, 90%);
+  border-radius: 2px;
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding;
+          background-clip: padding-box;
+
+  // CSS arrow
+  &:after, 
+  &:before {
+    top: 100%;
+    left: 50%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  &:after {
+    border-color: rgba(38, 38, 38, 0);
+    border-top-color: @grayDark;
+    border-width: 5px;
+    margin-left: -5px;
+  }
+
+  &:before {
+    border-color: rgba(102, 102, 102, 0);
+    border-top-color: #666;
+    border-width: 6px;
+    margin-left: -6px;
+  }
+}
+
+
+
+.rt-tag-dropup > li,
+.rt-tag-dropup a {
+  display: inline-block;
+}
+
+
+
+// Links
+// ==========================================================================
+
+.rt-tag-dropup > li > a {
+  padding: 3px 8px;
+
+  &:hover {
+    opacity: 1;
+
+    .dashboard-icon {
+      color: @white;
+    }
+  }
+}
+
+.dropdown-menu.rt-tag-dropup a {
+  font-size: @rt-fontSizeMini-2;
+}
+
+.rt-tag-dropup li:first-child > a {
+  padding-right: 4px;
+}
+
+.rt-tag-dropup li:last-child > a {
+  padding-left: 4px;
+}
+
+
+
+// Icons
+// ==========================================================================
+
+.rt-tag-dropup .dashboard-icon {
+  vertical-align: middle;
+  transition: none;
+}

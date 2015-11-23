@@ -23,13 +23,23 @@ func (self *statistics) Report(report *AssertionResult) {
 func (self *statistics) Exit() {}
 
 func (self *statistics) EndStory() {
+	if !self.suppressed {
+		self.PrintSummary()
+	}
+}
+
+func (self *statistics) Suppress() {
+	self.suppressed = true
+}
+
+func (self *statistics) PrintSummary() {
 	self.reportAssertions()
 	self.reportSkippedSections()
 	self.completeReport()
 }
 func (self *statistics) reportAssertions() {
 	self.decideColor()
-	self.out.Print("\n%d %s thus far", self.total, plural("assertion", self.total))
+	self.out.Print("\n%d total %s", self.total, plural("assertion", self.total))
 }
 func (self *statistics) decideColor() {
 	if self.failing && !self.erroring {
@@ -44,7 +54,6 @@ func (self *statistics) reportSkippedSections() {
 	if self.skipped > 0 {
 		fmt.Print(yellowColor)
 		self.out.Print(" (one or more sections skipped)")
-		self.skipped = 0
 	}
 }
 func (self *statistics) completeReport() {
@@ -64,11 +73,12 @@ func NewStatisticsReporter(out *Printer) *statistics {
 }
 
 type statistics struct {
-	out      *Printer
-	total    int
-	failing  bool
-	erroring bool
-	skipped  int
+	out        *Printer
+	total      int
+	failing    bool
+	erroring   bool
+	skipped    int
+	suppressed bool
 }
 
 func plural(word string, count int) string {

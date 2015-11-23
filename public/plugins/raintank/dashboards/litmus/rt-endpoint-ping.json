@@ -1,0 +1,684 @@
+{
+  "id": 351,
+  "title": "Litmus Endpoint: |--- Ping",
+  "originalTitle": "Litmus Endpoint: |--- Ping",
+  "tags": [
+    "raintank",
+    "Endpoints"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "sharedCrosshair": true,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "125px",
+      "panels": [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "datasource": "raintank",
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "id": 590,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": false
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "averageSeries(health.$endpoint.ping.ok_state)"
+            }
+          ],
+          "thresholds": "0,1,1",
+          "title": "PING HEALTH (LAST)",
+          "transparent": false,
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "OK",
+              "value": "1"
+            },
+            {
+              "op": "=",
+              "text": "ERROR",
+              "value": "0"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "datasource": "raintank",
+          "decimals": 2,
+          "editable": true,
+          "error": false,
+          "format": "percent",
+          "id": 593,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": "100",
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": false
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "scale(averageSeries(litmus.$endpoint.$probe.ping.ok_state), 100)"
+            }
+          ],
+          "thresholds": "0,100,100",
+          "title": "PING UPTIME",
+          "transparent": false,
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "datasource": "raintank",
+          "editable": true,
+          "error": false,
+          "format": "percent",
+          "id": 592,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "averageSeries(litmus.$endpoint.$probe.ping.loss)"
+            }
+          ],
+          "thresholds": "",
+          "title": "PING PACKET LOSS",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(139, 139, 139, 1)",
+            "rgba(139, 139, 139, 1)",
+            "rgba(63, 104, 51, 1)"
+          ],
+          "datasource": "raintank",
+          "decimals": 2,
+          "editable": true,
+          "error": false,
+          "format": "ms",
+          "id": 591,
+          "interval": null,
+          "links": [],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(255, 255, 255, 0)",
+            "full": false,
+            "lineColor": "rgb(110, 208, 224)",
+            "show": true
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "target": "averageSeries(litmus.$endpoint.$probe.ping.mean)"
+            }
+          ],
+          "thresholds": "",
+          "title": "PING LATENCY",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        }
+      ],
+      "showTitle": false,
+      "title": "ping status for $endpoint (all selected Probes)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "125",
+      "panels": [
+        {
+          "aliasColors": {
+            "error": "#E24D42",
+            "ok": "#508642"
+          },
+          "bars": true,
+          "datasource": "raintank",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(56, 149, 0, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "125",
+          "id": 586,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": true,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [
+            {
+              "dashUri": "file/rt-events.json",
+              "dashboard": "Litmus Events",
+              "includeVars": true,
+              "keepTime": true,
+              "params": "var-monitor_type=ping",
+              "title": "Litmus Events",
+              "type": "dashboard"
+            }
+          ],
+          "maxDataPoints": "120",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "scopedVars": {},
+          "seriesOverrides": [
+            {
+              "alias": "//",
+              "color": "#E24D42"
+            },
+            {
+              "alias": "OKs",
+              "color": "#629E51"
+            }
+          ],
+          "span": 12,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasByNode(removeBelowValue(consolidateBy(litmus.$endpoint.$probe.ping.error_state, 'sum'), 1), 2)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "PING ERRORS (ALL SELECTED PROBES)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "transparent": true,
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": false,
+          "y_formats": [
+            "short",
+            "short"
+          ],
+          "leftYAxisLabel": "Errors"         
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "average": "#6ED0E0",
+            "connect": "#508642",
+            "dns": "#0A50A1",
+            "loss": "#BF1B00",
+            "loss %": "#BF1B00",
+            "maximum": "#2F575E",
+            "minimum": "#2F575E",
+            "recv": "#BA43A9",
+            "send": "#1F78C1",
+            "wait": "#EA6460"
+          },
+          "bars": false,
+          "datasource": "raintank",
+          "decimals": 1,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": 100,
+            "rightMin": 0,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "",
+          "id": 588,
+          "leftYAxisLabel": "latency",
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "sort": null,
+            "sortDesc": null,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "rightYAxisLabel": "",
+          "seriesOverrides": [
+            {
+              "alias": "maximum",
+              "fillBelowTo": "minimum",
+              "lines": false
+            },
+            {
+              "alias": "minimum",
+              "lines": false
+            },
+            {
+              "alias": "loss %",
+              "lines": false,
+              "pointradius": 1,
+              "points": true,
+              "yaxis": 2
+            },
+            {
+              "alias": "minimum",
+              "lines": false
+            }
+          ],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "hide": false,
+              "refId": "D",
+              "target": "alias(removeBelowValue(averageSeries(litmus.$endpoint.$probe.ping.loss), 1), 'loss %')"
+            },
+            {
+              "refId": "B",
+              "target": "alias(averageSeries(litmus.$endpoint.$probe.ping.mean), 'average')"
+            },
+            {
+              "refId": "A",
+              "target": "alias(consolidateBy(minSeries(litmus.$endpoint.$probe.ping.min), 'min'), 'minimum')"
+            },
+            {
+              "refId": "C",
+              "target": "alias(removeAbovePercentile(consolidateBy(maxSeries(litmus.$endpoint.$probe.ping.max), 'max'), $outliers), 'maximum')"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "PING PERFORMANCE RANGE AND LOSS (AVERGAGE ALL SELECTED PROBES)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "ms",
+            "percent"
+          ]
+        }
+      ],
+      "showTitle": false,
+      "title": "ping performance range and loss for $endpoint (average all selected probes)"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {
+            "connect": "#0A50A1",
+            "dns": "#890F02",
+            "recv": "#6ED0E0",
+            "send": "#508642",
+            "wait": "#EAB839"
+          },
+          "bars": false,
+          "datasource": "raintank",
+          "decimals": 1,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": 0,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "600",
+          "id": 589,
+          "leftYAxisLabel": "latency",
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "sort": "current",
+            "sortDesc": true,
+            "total": false,
+            "values": true
+          },
+          "lines": false,
+          "linewidth": 2,
+          "links": [],
+          "maxDataPoints": "",
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "hide": false,
+              "refId": "A",
+              "target": "aliasByNode(removeAbovePercentile(litmus.$endpoint.$probe.ping.mean, $outliers), 2)",
+              "textEditor": false
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "PING PERFORMANCE (EACH INDIVIDUAL PROBE)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "ms",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": false,
+      "title": "ping performance for $endpoint (mean of each selected Probe)"
+    }
+  ],
+  "time": {
+    "from": "now-3h",
+    "to": "now-1m"
+  },
+  "timepicker": {
+    "collapse": false,
+    "enable": true,
+    "notice": false,
+    "now": true,
+    "nowDelay": "1m",
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "status": "Stable",
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "3h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "datasource": "raintank",
+        "includeAll": false,
+        "label": "Endpoint",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "endpoint",
+        "query": "litmus.*",
+        "refresh": true,
+        "refresh_on_load": true,
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "datasource": "raintank",
+        "includeAll": true,
+        "label": "Probe(s)",
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "probe",
+        "query": "litmus.$endpoint.*",
+        "refresh": true,
+        "refresh_on_load": true,
+        "tagValuesQuery": "raintank_db.tags.collectors.$tag",
+        "tags": [
+          "AsiaPac",
+          "EMEA",
+          "USA"
+        ],
+        "tagsQuery": "raintank_db.tags.collectors.*",
+        "type": "query",
+        "useTags": true
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "100",
+          "value": "100"
+        },
+        "datasource": "raintank",
+        "includeAll": false,
+        "label": "Outliers",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "outliers",
+        "options": [
+          {
+            "selected": true,
+            "text": "100",
+            "value": "100"
+          },
+          {
+            "selected": false,
+            "text": "99.9",
+            "value": "99.9"
+          },
+          {
+            "selected": false,
+            "text": "99.5",
+            "value": "99.5"
+          },
+          {
+            "selected": false,
+            "text": "99",
+            "value": "99"
+          },
+          {
+            "selected": false,
+            "text": "95",
+            "value": "95"
+          },
+          {
+            "selected": false,
+            "text": "50",
+            "value": "50"
+          }
+        ],
+        "query": "100,99.9,99.5,99,95,50",
+        "refresh_on_load": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 7,
+  "version": 2,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "Endpoints"
+      ],
+      "title": "Endpoint Dashboards",
+      "type": "dashboards"
+    }
+  ]
+}

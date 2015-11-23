@@ -59,6 +59,8 @@ type (
 	SadForm struct {
 		AlphaDash    string   `form:"AlphaDash" binding:"AlphaDash"`
 		AlphaDashDot string   `form:"AlphaDashDot" binding:"AlphaDashDot"`
+		Size         string   `form:"Size" binding:"Size(1)"`
+		SizeSlice    []string `form:"SizeSlice" binding:"Size(1)"`
 		MinSize      string   `form:"MinSize" binding:"MinSize(5)"`
 		MinSizeSlice []string `form:"MinSizeSlice" binding:"MinSize(5)"`
 		MaxSize      string   `form:"MaxSize" binding:"MaxSize(1)"`
@@ -73,6 +75,12 @@ type (
 		NotIn        string   `form:"NotIn" binding:"NotIn(1,2,3)"`
 		Include      string   `form:"Include" binding:"Include(a)"`
 		Exclude      string   `form:"Exclude" binding:"Exclude(a)"`
+		Empty        string   `binding:"OmitEmpty"`
+	}
+
+	Group struct {
+		Name   string   `json:"name" binding:"Required"`
+		People []Person `json:"people" binding:"MinSize(1)"`
 	}
 
 	CustomErrorHandle struct {
@@ -105,6 +113,10 @@ func (p Post) Validate(ctx *macaron.Context, errs Errors) Errors {
 
 func (p Post) Model() string {
 	return p.Title
+}
+
+func (g Group) Model() string {
+	return g.Name
 }
 
 func (_ CustomErrorHandle) Error(_ *macaron.Context, _ Errors) {}

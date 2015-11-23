@@ -57,6 +57,7 @@ module.exports = function(config,grunt) {
           'app/plugins/datasource/graphite/datasource',
           'app/plugins/datasource/elasticsearch/datasource',
           'app/plugins/datasource/influxdb/datasource',
+          'plugins/raintank/all'
         ]
       },
     ];

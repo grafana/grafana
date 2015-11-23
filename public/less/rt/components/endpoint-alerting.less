@@ -1,0 +1,91 @@
+// ==========================================================================
+// BOX
+// ==========================================================================
+
+
+
+.endpoint-alerting {
+  float: left;
+  margin: 0 0 15px;
+}
+
+.endpoint-alerting-status,
+.endpoint-alerting-recipients {
+  display: inline-block;
+
+  .icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 16px;
+    vertical-align: top;
+    margin-top: 2px;
+  }
+}
+
+.endpoint-alerting-recipients {
+  .icon {
+    margin-right: 10px;
+  }
+}
+
+.endpoint-alerting-status {
+  margin-right: 30px;
+  font-weight: 600; 
+
+  &.not-enabled,
+  &.not-enabled a {
+    display: inline-block;
+    color: @rt-dark-gray;
+    font-weight: normal;
+
+    &:hover {
+     color: @linkColorHover;
+    }
+  }
+
+  a {
+    display: inline-block;
+    color: @rt-emphasis;
+  }
+
+  @media (min-width: 675px) {
+    margin-bottom: 2px;
+  }
+}
+
+.endpoint-alerting-recipients {
+  color: @rt-light-gray;
+}
+
+.endpoint-alerting-status,
+.endpoint-alerting-recipients {
+  @media (min-width: 675px) {
+    display: block;
+  }
+}
+
+
+
+// Side menu open
+// ====================================
+
+.sidemenu-open .endpoint-alerting-status {
+  @media (min-width: 675px) {
+    margin-bottom: 0;
+  }
+
+  @media (min-width: 875px) {
+    margin-bottom: 2px;
+  }
+}
+
+.sidemenu-open .endpoint-alerting-status,
+.sidemenu-open .endpoint-alerting-recipients {
+  @media (min-width: 675px) {
+    display: inline;
+  }
+
+  @media (min-width: 875px) {
+    display: block;
+  }
+}

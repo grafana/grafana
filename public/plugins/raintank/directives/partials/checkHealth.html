@@ -1,0 +1,67 @@
+<div ng-if="eventReady">
+    <div class="statusType" ng-show="okCount > 0">OK:&nbsp;
+    	<a class="online" bs-tooltip="'View recent OK events'" href="dashboard/file/rt-events.json?from=now-15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=OK">{{okCount}}</a>
+    </div> 
+
+    <div class="statusType" ng-show="!okCount">OK:&nbsp;
+    	<span class="nodata">--</span>
+    </div>
+ </div>
+<!-- Please display this while we're waiting for data. Note: I made up eventReady -->
+<div class="statusType" ng-if="!eventReady">OK:&nbsp;
+    	<div class="ascii-spinner-container">
+    		<span>&nbsp;&nbsp;</span>
+    		<span class="ascii-spinner-1">-&nbsp;</span>
+    		<span class="ascii-spinner-2">&nbsp;-</span>
+    		<span class="ascii-spinner-3"></span>
+    	</div>
+</div>
+<!-- End animation -->
+
+<!-- <div class="statusType" ng-show="warnCount > 0">Warn:&nbsp;
+	<span class="warn" bs-tooltip="'View recent Warn events'" href="dashboard/file/rt-events.json?from=now-15m&to=now&var-endpoint={{model.endpoint_slug}}&var-monitor_type={{model.monitor_type_name|lowercase}}&var-severity=WARN">{{warnCount}}</span>
+</div>
+<div class="statusType" ng-show="!warnCount">Warn:&nbsp;
+	<span class="nodata">--</span>
+</div> -->
+<div ng-if="eventReady">
+    <div class="statusType" ng-show="errorCount > 0">Error:&nbsp;
+    	<span class="critical">{{errorCount}}</span>
+    </div>
+
+    <div class="statusType" ng-show="!errorCount">Error:&nbsp;
+    	<span class="nodata">--</span>
+    </div>
+</div>
+
+<!-- Please display this while we're waiting for data. Note: I made up eventReady-->
+<div class="statusType" ng-if="!eventReady">Error:&nbsp;
+    	<div class="ascii-spinner-container">
+    		<span>&nbsp;&nbsp;</span>
+    		<span class="ascii-spinner-1" style="animation-delay: 750ms;">-&nbsp;</span>
+    		<span class="ascii-spinner-2" style="animation-delay: 750ms;">&nbsp;-</span>
+    		<span class="ascii-spinner-3" style="animation-delay: 750ms;"></span>
+    	</div>
+</div>
+<!-- End animation -->
+
+<div ng-if="eventReady">
+    <div class="statusType" ng-show="unknownCount > 0">Unknown:&nbsp;
+    	<span class="none">{{unknownCount}}</span>
+    </div>
+
+    <div class="statusType" ng-show="!unknownCount">Unknown:&nbsp;
+    	<span class="nodata">--</span>
+    </div>
+</div>
+
+<!-- Please display this while we're waiting for data. Note: I made up eventReady -->
+<div class="statusType" ng-if="!eventReady">Unknown:&nbsp;
+    	<div class="ascii-spinner-container">
+	    	<span>&nbsp;&nbsp;</span>
+	    	<span class="ascii-spinner-1" style="animation-delay: 1.5s;">-&nbsp;</span>
+	    	<span class="ascii-spinner-2" style="animation-delay: 1.5s;">&nbsp;-</span>
+	    	<span class="ascii-spinner-3" style="animation-delay: 1.5s;"></span>
+    	</div>
+</div>
+<!-- End animation -->

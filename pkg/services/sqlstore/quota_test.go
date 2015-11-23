@@ -1,18 +1,17 @@
 package sqlstore
 
 import (
-	"testing"
-
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 func TestQuotaCommandsAndQueries(t *testing.T) {
 
 	Convey("Testing Qutoa commands & queries", t, func() {
 		InitTestDB(t)
-		userId := int64(1)
+		userId := int64(2)
 		orgId := int64(0)
 
 		setting.Quota = setting.QuotaSettings{
@@ -22,6 +21,8 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Dashboard:  5,
 				DataSource: 5,
 				ApiKey:     5,
+				Endpoint:   5,
+				Collector:  5,
 			},
 			User: &setting.UserQuota{
 				Org: 5,
@@ -32,6 +33,8 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Dashboard:  5,
 				DataSource: 5,
 				ApiKey:     5,
+				Endpoint:   5,
+				Collector:  5,
 				Session:    5,
 			},
 		}
@@ -41,7 +44,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 		// with 1 org.
 		userCmd := m.CreateOrgCommand{
 			Name:   "TestOrg",
-			UserId: 1,
+			UserId: 2,
 		}
 		err := CreateOrg(&userCmd)
 		So(err, ShouldBeNil)
@@ -89,7 +92,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				err = GetOrgQuotas(&query)
 
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 4)
+				So(len(query.Result), ShouldEqual, 6)
 				for _, res := range query.Result {
 					limit := 5 //default quota limit
 					used := 0
@@ -97,6 +100,10 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 						limit = 10 //customized quota limit.
 						used = 1
 					}
+					if res.Target == "api_key" {
+						used = 1
+					}
+
 					So(res.Limit, ShouldEqual, limit)
 					So(res.Used, ShouldEqual, used)
 
@@ -134,7 +141,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				So(query.Result.Used, ShouldEqual, 1)
 			})
 			Convey("Should be able to get used user quota when no rows exist", func() {
-				query := m.GetUserQuotaByTargetQuery{UserId: 2, Target: "org_user", Default: 11}
+				query := m.GetUserQuotaByTargetQuery{UserId: 3, Target: "org_user", Default: 11}
 				err = GetUserQuotaByTarget(&query)
 
 				So(err, ShouldBeNil)

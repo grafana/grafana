@@ -26,9 +26,15 @@ public/css/*.min.css
 
 /data/*
 /bin/*
+grafana
 
-conf/custom.ini
+conf/custom*
 fig.yml
 profile.cov
+
+rt-pkg/build
+.notouch
+
 grafana
 .notouch
+

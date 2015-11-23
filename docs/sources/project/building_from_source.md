@@ -18,7 +18,9 @@ dev environment. Grafana ships with its own required backend server; also comple
 Create a directory for the project and set your path accordingly. Then download and install Grafana into your $GOPATH directory
 ```
 export GOPATH=`pwd`
-go get github.com/grafana/grafana
+mkdir -p $GOPATH/src/github.com/grafana
+ln -s $GOPATH/src/github.com/raintank/grafana $GOPATH/src/github.com/grafana/grafana
+go get github.com/raintank/grafana
 ```
 
 ## Building the backend

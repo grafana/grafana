@@ -175,6 +175,10 @@ angular.module('$strap.directives').directive('bsTooltip', [
             });
           });
         }
+        // (awoods) - hide the tooltip when the page location is about to change.
+        scope.$on('$locationChangeStart', function(event, next, current) {
+          scope.hide();
+        });
         element.tooltip({
           title: function () {
             return angular.isFunction(value) ? value.apply(null, arguments) : value;

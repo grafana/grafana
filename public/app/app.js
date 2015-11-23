@@ -70,6 +70,7 @@ function (angular, $, _, appLevelRequire) {
 
   var preBootRequires = [
     'app/features/all',
+    'plugins/raintank/all',
   ];
 
   app.boot = function() {

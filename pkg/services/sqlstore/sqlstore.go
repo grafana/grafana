@@ -96,7 +96,7 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 		x.Logger = xorm.NewSimpleLogger(f)
 
 		if setting.Env == setting.DEV {
-			x.ShowSQL = false
+			x.ShowSQL = true
 			x.ShowInfo = false
 			x.ShowDebug = false
 			x.ShowErr = true

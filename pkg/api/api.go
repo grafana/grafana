@@ -44,6 +44,11 @@ func Register(r *macaron.Macaron) {
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 
+	r.Get("/collectors", reqSignedIn, Index)
+	r.Get("/collectors/*", reqSignedIn, Index)
+	r.Get("/endpoints", reqSignedIn, Index)
+	r.Get("/endpoints/*", reqSignedIn, Index)
+
 	// sign up
 	r.Get("/signup", Index)
 	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
@@ -97,7 +102,7 @@ func Register(r *macaron.Macaron) {
 		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
-			r.Get("/quotas", wrap(GetOrgQuotas))
+			r.Get("/quotas", wrap(GetOwnOrgQuotas))
 		})
 
 		// current org
@@ -171,6 +176,43 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
 
+		// collectors
+		r.Group("/collectors", func() {
+			r.Combo("/").
+				Get(bind(m.GetCollectorsQuery{}), wrap(GetCollectors)).
+				Put(reqEditorRole, quota("collector"), bind(m.AddCollectorCommand{}), wrap(AddCollector)).
+				Post(reqEditorRole, bind(m.UpdateCollectorCommand{}), wrap(UpdateCollector))
+			r.Get("/:id", wrap(GetCollectorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteCollector))
+		})
+
+		// Monitors
+		r.Group("/monitors", func() {
+			r.Combo("/").
+				Get(bind(m.GetMonitorsQuery{}), wrap(GetMonitors)).
+				Put(reqEditorRole, bind(m.AddMonitorCommand{}), wrap(AddMonitor)).
+				Post(reqEditorRole, bind(m.UpdateMonitorCommand{}), wrap(UpdateMonitor))
+			r.Get("/:id", wrap(GetMonitorById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteMonitor))
+		})
+		// endpoints
+		r.Group("/endpoints", func() {
+			r.Combo("/").Get(bind(m.GetEndpointsQuery{}), wrap(GetEndpoints)).
+				Put(reqEditorRole, quota("endpoint"), bind(m.AddEndpointCommand{}), wrap(AddEndpoint)).
+				Post(reqEditorRole, bind(m.UpdateEndpointCommand{}), wrap(UpdateEndpoint))
+			r.Get("/:id", wrap(GetEndpointById))
+			r.Delete("/:id", reqEditorRole, wrap(DeleteEndpoint))
+			r.Get("/discover", reqEditorRole, bind(m.EndpointDiscoveryCommand{}), wrap(DiscoverEndpoint))
+		})
+
+		r.Get("/monitor_types", wrap(GetMonitorTypes))
+
+		//Events
+		r.Get("/events", bind(m.GetEventsQuery{}), wrap(GetEvents))
+
+		//Get Graph data from Graphite.
+		r.Any("/graphite/*", GraphiteProxy)
+
 	}, reqSignedIn)
 
 	// admin api
@@ -186,6 +228,8 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	r.Any("/socket.io/", SocketIO)
 
 	r.NotFound(NotFoundHandler)
 }

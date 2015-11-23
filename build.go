@@ -124,6 +124,8 @@ func readVersionFromPackageJson() {
 	if len(parts) > 1 {
 		linuxPackageVersion = parts[0]
 		linuxPackageIteration = parts[1]
+	} else {
+		linuxPackageIteration = strconv.FormatInt(time.Now().Unix(), 10)
 	}
 }
 
@@ -137,33 +139,63 @@ type linuxPackageOptions struct {
 	etcDefaultPath         string
 	etcDefaultFilePath     string
 	initdScriptFilePath    string
+	upstartFilePath        string
 	systemdServiceFilePath string
+	version                string
+	iteration              string
 
-	postinstSrc    string
-	initdScriptSrc string
-	defaultFileSrc string
-	systemdFileSrc string
+	postinstSrc      string
+	initdScriptSrc   string
+	upstartScriptSrc string
+	defaultFileSrc   string
+	systemdFileSrc   string
 
 	depends []string
 }
 
 func createLinuxPackages() {
+	// debian wheezy and before
+	createPackage(linuxPackageOptions{
+		packageType:         "deb",
+		homeDir:             "/usr/share/grafana",
+		binPath:             "/usr/sbin/grafana-server",
+		configDir:           "/etc/grafana",
+		configFilePath:      "/etc/grafana/grafana.ini",
+		etcDefaultPath:      "/etc/default",
+		etcDefaultFilePath:  "/etc/default/grafana-server",
+		initdScriptFilePath: "/etc/init.d/grafana-server",
+		version:             linuxPackageVersion,
+		iteration:           linuxPackageIteration,
+
+		postinstSrc:    "packaging/deb/control/postinst",
+		initdScriptSrc: "packaging/deb/init.d/grafana-server",
+		defaultFileSrc: "packaging/deb/default/grafana-server",
+
+		depends: []string{"adduser", "libfontconfig"},
+	})
+
+	ubuntuIteration := linuxPackageIteration
+	if ubuntuIteration != "" {
+		ubuntuIteration = fmt.Sprintf("%subuntu", ubuntuIteration)
+	}
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
+		upstartFilePath:        "/etc/init/grafana-server.conf",
 		ldapFilePath:           "/etc/grafana/ldap.toml",
 		etcDefaultPath:         "/etc/default",
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+		version:                linuxPackageVersion,
+		iteration:              ubuntuIteration,
 
-		postinstSrc:    "packaging/deb/control/postinst",
-		initdScriptSrc: "packaging/deb/init.d/grafana-server",
-		defaultFileSrc: "packaging/deb/default/grafana-server",
-		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
+		postinstSrc:      "packaging/deb/control/postinst",
+		upstartScriptSrc: "packaging/deb/init/grafana-server.conf",
+		systemdFileSrc:   "packaging/deb/systemd/grafana-server.service",
 
 		depends: []string{"adduser", "libfontconfig"},
 	})
@@ -179,10 +211,10 @@ func createLinuxPackages() {
 		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
+		version:                linuxPackageVersion,
+		iteration:              linuxPackageIteration,
 
 		postinstSrc:    "packaging/rpm/control/postinst",
-		initdScriptSrc: "packaging/rpm/init.d/grafana-server",
-		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
 		depends: []string{"initscripts", "fontconfig"},
@@ -195,19 +227,26 @@ func createPackage(options linuxPackageOptions) {
 	// create directories
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeDir))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.configDir))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
 	// copy binary
 	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinaryName), filepath.Join(packageRoot, options.binPath))
 	// copy init.d script
-	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
-	// copy environment var file
-	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
+	if options.initdScriptSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
+		runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
+		runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
+	}
+	if options.upstartScriptSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init"))
+		runPrint("cp", "-p", options.upstartScriptSrc, filepath.Join(packageRoot, options.upstartFilePath))
+	}
 	// copy systemd file
-	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
+	if options.systemdFileSrc != "" {
+		runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
+		runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
+	}
 	// copy release files
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
@@ -226,18 +265,31 @@ func createPackage(options linuxPackageOptions) {
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
-		"--config-files", options.ldapFilePath,
-		"--config-files", options.initdScriptFilePath,
-		"--config-files", options.etcDefaultFilePath,
-		"--config-files", options.systemdServiceFilePath,
 		"--after-install", options.postinstSrc,
 		"--name", "grafana",
-		"--version", linuxPackageVersion,
+		"--version", options.version,
 		"-p", "./dist",
+	}
+	if options.initdScriptSrc != "" {
+		b := []string{
+			"--config-files", options.initdScriptFilePath,
+			"--config-files", options.etcDefaultFilePath,
+		}
+		args = append(args, b...)
+	} else if options.upstartScriptSrc != "" {
+		b := []string{
+			"--config-files", options.upstartFilePath,
+		}
+		args = append(args, b...)
+	} else {
+		b := []string{
+			"--config-files", options.systemdServiceFilePath,
+		}
+		args = append(args, b...)
 	}
 
 	if linuxPackageIteration != "" {
-		args = append(args, "--iteration", linuxPackageIteration)
+		args = append(args, "--iteration", options.iteration)
 	}
 
 	// add dependenciesj

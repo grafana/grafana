@@ -83,6 +83,7 @@ require.config({
     'angular-route':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
     'bindonce':             ['angular'],
+    'wu.masonry':           ['jquery', 'angular', 'masonry', 'imagesloaded'],
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],
