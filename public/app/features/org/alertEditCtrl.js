@@ -1,14 +1,24 @@
 define([
   'angular',
-  'lodash',
+  'lodash'
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv) {
+  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv) {
+
     $scope.init = function() {
+      $scope.datasource = null;
+      _.each(datasourceSrv.getAll(), function(ds) {
+        if (ds.type === 'opentsdb') {
+          datasourceSrv.get(ds.name).then(function(datasource) {
+            $scope.datasource = datasource;
+          });
+        }
+      });
+
       $scope.alertDef = alertMgrSrv.get($routeParams.id);
       $scope.isNew = !$scope.alertDef;
       if ($scope.isNew) {
@@ -36,6 +46,16 @@ function (angular) {
       }, function onFailed(response) {
         alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
+    };
+
+    $scope.getTextValues = function(metricFindResult) {
+      return _.map(metricFindResult, function(value) { return value.text; });
+    };
+
+    $scope.suggestMetrics = function(query, callback) {
+      $scope.datasource.metricFindQuery('metrics(' + query + ')')
+        .then($scope.getTextValues)
+        .then(callback);
     };
 
     $scope.init();
