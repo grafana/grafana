@@ -3,7 +3,7 @@ define([
   'app/app',
   'lodash',
   'kbn',
-  'app/components/panelmeta',
+  'app/features/panel/panel_meta',
 ],
 function (angular, app, _, kbn, PanelMeta) {
   'use strict';

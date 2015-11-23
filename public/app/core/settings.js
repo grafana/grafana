@@ -23,6 +23,9 @@ function (_) {
     };
 
     var settings = _.extend({}, defaults, options);
+    if (settings.plugins.panels) {
+      _.extend(settings.panels, settings.plugins.panels);
+    }
     return settings;
   };
 });

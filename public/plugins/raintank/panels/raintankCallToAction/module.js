@@ -2,7 +2,7 @@ define([
   'angular',
   'app/app',
   'lodash',
-  'app/components/panelmeta',
+  'app/features/panel/panel_meta',
 ],
 function (angular, app, _, PanelMeta) {
   'use strict';
