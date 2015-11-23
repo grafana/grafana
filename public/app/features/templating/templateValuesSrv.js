@@ -22,7 +22,7 @@ function (angular, _, kbn) {
 
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
-      templateSrv.init(this.variables);
+      templateSrv.init(dashboard.templating);
 
       var queryParams = $location.search();
       var promises = [];

@@ -11,6 +11,8 @@ function (angular, _, config) {
   module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
 
     this.init = function($scope) {
+      //memory for the last valid Title after variable reload
+      $scope.lastValidTitle='';
 
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
@@ -115,6 +117,8 @@ function (angular, _, config) {
       };
 
       $scope.get_data = function() {
+        //resel panel last title
+        $scope.lastValidTitle='';
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
         if ($scope.panel.snapshotData) {
@@ -151,7 +155,7 @@ function (angular, _, config) {
       $scope.dashboardViewState.registerPanel($scope);
       $scope.datasources = datasourceSrv.getMetricSources();
 
-      if (!$scope.skipDataOnInit) {
+      if (!$scope.skipDataOnInit && $scope.dashboard.templating.dashboard_autoupdate) {
         $timeout(function() {
           $scope.get_data();
         }, 30);

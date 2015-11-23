@@ -23,6 +23,7 @@ function (angular, _) {
 
     $scope.init = function() {
       $scope.mode = 'list';
+      $scope.dashboard_autoupdate = templateSrv.dashboard_autoupdate;
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
         return !ds.meta.builtIn;
@@ -82,6 +83,11 @@ function (angular, _) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });
+    };
+
+    $scope.toggleDashboardAutoUpdate = function() {
+      $scope.dashboard_autoupdate=!$scope.dashboard_autoupdate;
+      templateSrv.dashboard_autoupdate= !templateSrv.dashboard_autoupdate;
     };
 
     $scope.edit = function(variable) {

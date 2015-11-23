@@ -7,6 +7,11 @@
 
 		<div class="tabs">
 			<ul class="nav nav-tabs">
+				<li ng-class="{active: mode === 'globalops'}">
+					<a ng-click="mode = 'globalops';">
+						Global Options
+					</a>
+				</li>
 				<li ng-class="{active: mode === 'list'}">
 					<a ng-click="mode = 'list';">
 						Variables
@@ -35,6 +40,23 @@
 	</div>
 
 	<div class="gf-box-body">
+	
+		<div ng-if="mode === 'globalops'">
+			<div class="editor-row">
+				<div class="tight-form-section">
+					<h5>Dashboard Options</h5>
+					<div class="tight-form last">
+						<ul class="tight-form-list">
+							<li class="tight-form-item last">
+									<editor-checkbox text="Refresh Dashboard on each variable Change" model="dashboard_autoupdate" change="toggleDashboardAutoUpdate()"></editor-checkbox>
+									<tip>Check if you want dashboard auto refresh on each variable change, this will add unnecessari overload to the metric backend if you have several variables to choose before reloadng dashboard </tip>
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+      </div>
+		</div>
 
 		<div ng-if="mode === 'list'">
 
