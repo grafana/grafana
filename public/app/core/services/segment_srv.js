@@ -7,6 +7,7 @@ function (angular, _, coreModule) {
   'use strict';
 
   coreModule.service('uiSegmentSrv', function($sce, templateSrv) {
+    var self = this;
 
     function MetricSegment(options) {
       if (options === '*' || options.value === '*') {
@@ -72,6 +73,24 @@ function (angular, _, coreModule) {
       return _.map(ops, function(op) {
         return new MetricSegment({value: op, type: 'operator', cssClass: 'query-segment-operator' });
       });
+    };
+
+    this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
+      return function(results) {
+        var segments = _.map(results, function(segment) {
+          return self.newSegment({ value: segment.text, expandable: segment.expandable });
+        });
+
+        if (addTemplateVars) {
+          _.each(templateSrv.variables, function(variable) {
+            if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
+              segments.unshift(self.newSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
+            }
+          });
+        }
+
+        return segments;
+      };
     };
 
     this.newSelectMetric = function() {
