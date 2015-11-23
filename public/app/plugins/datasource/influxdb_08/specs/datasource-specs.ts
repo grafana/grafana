@@ -1,6 +1,6 @@
 ///<amd-dependency path="app/plugins/datasource/influxdb_08/datasource"/>
-///<amd-dependency path="app/services/backendSrv"/>
-///<amd-dependency path="app/services/alertSrv"/>
+///<amd-dependency path="app/core/services/backend_srv"/>
+///<amd-dependency path="app/core/services/alert_srv"/>
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
@@ -10,6 +10,7 @@ declare var helpers: any;
 describe('InfluxDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv']));
   beforeEach(ctx.createService('InfluxDatasource_08'));

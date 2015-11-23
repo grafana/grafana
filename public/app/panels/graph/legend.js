@@ -1,12 +1,11 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'jquery',
   'jquery.flot',
   'jquery.flot.time',
 ],
-function (angular, _, kbn, $) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');

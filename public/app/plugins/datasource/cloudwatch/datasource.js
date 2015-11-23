@@ -25,6 +25,7 @@ function (angular, _) {
       var end = convertToCloudWatchTime(options.range.to);
 
       var queries = [];
+      options = _.clone(options);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -38,11 +39,11 @@ function (angular, _) {
         query.statistics = target.statistics;
 
         var range = end - start;
-        query.period = parseInt(target.period, 10) || 60;
-
+        query.period = parseInt(target.period, 10) || (query.namespace === 'AWS/EC2' ? 300 : 60);
         if (range / query.period >= 1440) {
           query.period = Math.ceil(range / 1440 / 60) * 60;
         }
+        target.period = query.period;
 
         queries.push(query);
       }, this));
@@ -204,7 +205,7 @@ function (angular, _) {
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
           var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.EBS.VolumeID;
+            return mapping.Ebs.VolumeId;
           });
 
           return transformSuggestData(volumeIds);
@@ -216,7 +217,7 @@ function (angular, _) {
 
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
-      var region = 'us-east-1';
+      var region = this.defaultRegion;
       var namespace = 'AWS/Billing';
       var metricName = 'EstimatedCharges';
       var dimensions = {};
@@ -252,13 +253,22 @@ function (angular, _) {
       };
       _.extend(aliasData, options.dimensions);
 
+      var periodMs = options.period * 1000;
       return _.map(options.statistics, function(stat) {
-        var dps = _.chain(md.Datapoints).map(function(dp) {
-          return [dp[stat], new Date(dp.Timestamp).getTime()];
-        })
+        var dps = [];
+        var lastTimestamp = null;
+        _.chain(md.Datapoints)
         .sortBy(function(dp) {
-          return dp[1];
-        }).value();
+          return dp.Timestamp;
+        })
+        .each(function(dp) {
+          var timestamp = new Date(dp.Timestamp).getTime();
+          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
+            dps.push([null, lastTimestamp + periodMs]);
+          }
+          lastTimestamp = timestamp;
+          dps.push([dp[stat], timestamp]);
+        });
 
         aliasData.stat = stat;
         var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {

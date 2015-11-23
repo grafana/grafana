@@ -1,9 +1,9 @@
 define([
   'angular',
-  'kbn',
   'lodash',
+  'app/core/utils/kbn',
 ],
-function (angular, kbn, _) {
+function (angular, _, kbn) {
   'use strict';
 
   angular

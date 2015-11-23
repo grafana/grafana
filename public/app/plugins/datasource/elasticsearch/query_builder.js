@@ -71,6 +71,16 @@ function (angular) {
     return filterObj;
   };
 
+  ElasticQueryBuilder.prototype.documentQuery = function(query) {
+    query.size = 500;
+    query.sort = {};
+    query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
+    query.fields = ["*", "_source"];
+    query.script_fields = {},
+    query.fielddata_fields = [this.timeField];
+    return query;
+  };
+
   ElasticQueryBuilder.prototype.build = function(target) {
     if (target.rawQuery) {
       return angular.fromJson(target.rawQuery);
@@ -96,6 +106,15 @@ function (angular) {
       }
     };
 
+    // handle document query
+    if (target.bucketAggs.length === 0) {
+      metric = target.metrics[0];
+      if (metric && metric.type !== 'raw_document') {
+        throw {message: 'Invalid query'};
+      }
+      return this.documentQuery(query, target);
+    }
+
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
@@ -107,7 +126,7 @@ function (angular) {
           esAgg["date_histogram"] = {
             "interval": this.getInterval(aggDef),
             "field": this.timeField,
-            "min_doc_count": 1,
+            "min_doc_count": 0,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
           break;

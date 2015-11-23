@@ -14,7 +14,11 @@
 			<span class="tight-form-item tight-form-item-xxlarge">&nbsp;</span>
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
-			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
+			<a ng-click="toggleOptions()">
+				<i class="fa fa-caret-down" ng-show="showOptions"></i>
+				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+				{{settingsLinkText}}
+			</a>
 		</li>
 	</ul>
 
@@ -22,7 +26,7 @@
 		<li class="tight-form-item last" ng-if="isFirst">
 			<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
 		</li>
-		<li class="tight-form-item last" ng-if="!isLast">
+		<li class="tight-form-item last">
 			<a class="pointer" ng-click="removeBucketAgg()"><i class="fa fa-minus"></i></a>
 		</li>
 	</ul>
@@ -37,7 +41,7 @@
 					Interval
 				</li>
 				<li>
-					<metric-segment-model property="agg.settings.interval" options="intervalOptions" on-change="onChangeInternal()" css-class="last" custom="true"></metric-segment-model>
+					<metric-segment-model property="agg.settings.interval" get-options="getIntervalOptions()" on-change="onChangeInternal()" css-class="last" custom="true"></metric-segment-model>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

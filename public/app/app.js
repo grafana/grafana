@@ -3,14 +3,12 @@ define([
   'jquery',
   'lodash',
   'require',
-  'config',
   'bootstrap',
   'angular-route',
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
   'angular-ui',
-  'extend-jquery',
   'bindonce',
   'app/core/core',
 ],
@@ -71,11 +69,8 @@ function (angular, $, _, appLevelRequire) {
   });
 
   var preBootRequires = [
-    'app/services/all',
     'app/features/all',
-    'app/controllers/all',
-    'app/components/partials',
-    'plugins/raintank/all'
+    'plugins/raintank/all',
   ];
 
   app.boot = function() {

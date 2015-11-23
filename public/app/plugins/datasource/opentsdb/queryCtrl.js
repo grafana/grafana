@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'kbn'
+  'app/core/utils/kbn'
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -84,6 +84,13 @@ function (angular, _, kbn) {
     $scope.removeTag = function(key) {
       delete $scope.target.tags[key];
       $scope.targetBlur();
+    };
+
+    $scope.editTag = function(key, value) {
+      $scope.removeTag(key);
+      $scope.target.currentTagKey = key;
+      $scope.target.currentTagValue = value;
+      $scope.addTag();
     };
 
     function validateTarget(target) {

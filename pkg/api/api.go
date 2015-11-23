@@ -153,7 +153,7 @@ func Register(r *macaron.Macaron) {
 			r.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
-			r.Get("/:id", GetDataSourceById)
+			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/plugins", GetDataSourcePlugins)
 		}, regOrgAdmin)
 

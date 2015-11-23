@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'config'
+  'app/core/config'
 ],
 function (angular, _, config) {
   'use strict';
@@ -91,13 +91,14 @@ function (angular, _, config) {
         error: false,
         span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: true,
-        type: type
+        type: type,
+        isNew: true,
       };
 
       $scope.addPanel(panel);
 
       $timeout(function() {
-        $scope.$broadcast('render');
+        $scope.dashboardViewState.update({fullscreen: true, edit: true, panelId: panel.id });
       });
     };
 

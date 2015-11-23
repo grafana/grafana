@@ -13,6 +13,7 @@ type Struct struct {
 	B *Struct
 	D *Struct
 	C string
+	E map[string]string
 }
 
 var data = Struct{
@@ -21,30 +22,69 @@ var data = Struct{
 	B: &Struct{B: &Struct{C: "terminal"}, D: &Struct{C: "terminal2"}},
 	C: "initial",
 }
+var data2 = Struct{A: []Struct{
+	{A: []Struct{{C: "1"}, {C: "1"}, {C: "1"}, {C: "1"}, {C: "1"}}},
+	{A: []Struct{{C: "2"}, {C: "2"}, {C: "2"}, {C: "2"}, {C: "2"}}},
+}}
 
 func TestValueAtPathSuccess(t *testing.T) {
-	assert.Equal(t, []interface{}{"initial"}, awsutil.ValuesAtPath(data, "C"))
-	assert.Equal(t, []interface{}{"value1"}, awsutil.ValuesAtPath(data, "A[0].C"))
-	assert.Equal(t, []interface{}{"value2"}, awsutil.ValuesAtPath(data, "A[1].C"))
-	assert.Equal(t, []interface{}{"value3"}, awsutil.ValuesAtPath(data, "A[2].C"))
-	assert.Equal(t, []interface{}{"value3"}, awsutil.ValuesAtAnyPath(data, "a[2].c"))
-	assert.Equal(t, []interface{}{"value3"}, awsutil.ValuesAtPath(data, "A[-1].C"))
-	assert.Equal(t, []interface{}{"value1", "value2", "value3"}, awsutil.ValuesAtPath(data, "A[].C"))
-	assert.Equal(t, []interface{}{"terminal"}, awsutil.ValuesAtPath(data, "B . B . C"))
-	assert.Equal(t, []interface{}{"terminal", "terminal2"}, awsutil.ValuesAtPath(data, "B.*.C"))
-	assert.Equal(t, []interface{}{"initial"}, awsutil.ValuesAtPath(data, "A.D.X || C"))
+	var testCases = []struct {
+		expect []interface{}
+		data   interface{}
+		path   string
+	}{
+		{[]interface{}{"initial"}, data, "C"},
+		{[]interface{}{"value1"}, data, "A[0].C"},
+		{[]interface{}{"value2"}, data, "A[1].C"},
+		{[]interface{}{"value3"}, data, "A[2].C"},
+		{[]interface{}{"value3"}, data, "a[2].c"},
+		{[]interface{}{"value3"}, data, "A[-1].C"},
+		{[]interface{}{"value1", "value2", "value3"}, data, "A[].C"},
+		{[]interface{}{"terminal"}, data, "B . B . C"},
+		{[]interface{}{"initial"}, data, "A.D.X || C"},
+		{[]interface{}{"initial"}, data, "A[0].B || C"},
+		{[]interface{}{
+			Struct{A: []Struct{{C: "1"}, {C: "1"}, {C: "1"}, {C: "1"}, {C: "1"}}},
+			Struct{A: []Struct{{C: "2"}, {C: "2"}, {C: "2"}, {C: "2"}, {C: "2"}}},
+		}, data2, "A"},
+	}
+	for i, c := range testCases {
+		v, err := awsutil.ValuesAtPath(c.data, c.path)
+		assert.NoError(t, err, "case %d, expected no error, %s", i, c.path)
+		assert.Equal(t, c.expect, v, "case %d, %s", i, c.path)
+	}
 }
 
 func TestValueAtPathFailure(t *testing.T) {
-	assert.Equal(t, []interface{}(nil), awsutil.ValuesAtPath(data, "C.x"))
-	assert.Equal(t, []interface{}(nil), awsutil.ValuesAtPath(data, ".x"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(data, "X.Y.Z"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(data, "A[100].C"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(data, "A[3].C"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(data, "B.B.C.Z"))
-	assert.Equal(t, []interface{}(nil), awsutil.ValuesAtPath(data, "z[-1].C"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(nil, "A.B.C"))
-	assert.Equal(t, []interface{}{}, awsutil.ValuesAtPath(Struct{}, "A"))
+	var testCases = []struct {
+		expect      []interface{}
+		errContains string
+		data        interface{}
+		path        string
+	}{
+		{nil, "", data, "C.x"},
+		{nil, "SyntaxError: Invalid token: tDot", data, ".x"},
+		{nil, "", data, "X.Y.Z"},
+		{nil, "", data, "A[100].C"},
+		{nil, "", data, "A[3].C"},
+		{nil, "", data, "B.B.C.Z"},
+		{nil, "", data, "z[-1].C"},
+		{nil, "", nil, "A.B.C"},
+		{[]interface{}{}, "", Struct{}, "A"},
+		{nil, "", data, "A[0].B.C"},
+		{nil, "", data, "D"},
+	}
+
+	for i, c := range testCases {
+		v, err := awsutil.ValuesAtPath(c.data, c.path)
+		if c.errContains != "" {
+			assert.Contains(t, err.Error(), c.errContains, "case %d, expected error, %s", i, c.path)
+			continue
+		} else {
+			assert.NoError(t, err, "case %d, expected no error, %s", i, c.path)
+		}
+		assert.Equal(t, c.expect, v, "case %d, %s", i, c.path)
+	}
 }
 
 func TestSetValueAtPathSuccess(t *testing.T) {
@@ -61,8 +101,8 @@ func TestSetValueAtPathSuccess(t *testing.T) {
 	assert.Equal(t, "test0", s.B.D.C)
 
 	var s2 Struct
-	awsutil.SetValueAtAnyPath(&s2, "b.b.c", "test0")
+	awsutil.SetValueAtPath(&s2, "b.b.c", "test0")
 	assert.Equal(t, "test0", s2.B.B.C)
-	awsutil.SetValueAtAnyPath(&s2, "A", []Struct{{}})
+	awsutil.SetValueAtPath(&s2, "A", []Struct{{}})
 	assert.Equal(t, []Struct{{}}, s2.A)
 }

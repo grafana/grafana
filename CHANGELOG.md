@@ -1,4 +1,7 @@
-# 2.5.1 (unreleased)
+# 2.6.0 (unreleased)
+
+### New Table Panel
+* **table**:  New powerful and flexible table panel, closes [#215](https://github.com/grafana/grafana/issues/215)
 
 ### Enhancements
 * **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
@@ -9,6 +12,7 @@
 * **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
 * **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
 * **graph**: layout fix for color picker when right side legend was enabled, fixes [#3093](https://github.com/grafana/grafana/issues/3093)
+* **elasticsearch**: disabling elastic query (via eye) caused error, fixes [#3300](https://github.com/grafana/grafana/issues/3300)
 
 # 2.5 (2015-10-28)
 

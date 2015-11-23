@@ -1,13 +1,12 @@
 define([
   'angular',
-  'lodash',
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv, templateSrv) {
+  module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv) {
 
     $scope.init = function() {
       var target = $scope.target;
@@ -21,7 +20,7 @@ function (angular, _) {
     $scope.getFields = function(type) {
       var jsonStr = angular.toJson({find: 'fields', type: type});
       return $scope.datasource.metricFindQuery(jsonStr)
-      .then($scope.transformToSegments(false))
+      .then(uiSegmentSrv.transformToSegments(false))
       .then(null, $scope.handleQueryError);
     };
 
@@ -33,21 +32,6 @@ function (angular, _) {
       }
 
       $scope.appEvent('elastic-query-updated');
-    };
-
-    $scope.transformToSegments = function(addTemplateVars) {
-      return function(results) {
-        var segments = _.map(results, function(segment) {
-          return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
-        });
-
-        if (addTemplateVars) {
-          _.each(templateSrv.variables, function(variable) {
-            segments.unshift(uiSegmentSrv.newSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
-          });
-        }
-        return segments;
-      };
     };
 
     $scope.handleQueryError = function(err) {

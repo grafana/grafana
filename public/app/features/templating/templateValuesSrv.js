@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/kbn',
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -145,6 +145,11 @@ function (angular, _, kbn) {
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
       }
+
+      if (variable.type === 'custom' && variable.includeAll) {
+        self.addAllOption(variable);
+      }
+
     };
 
     this.updateOptions = function(variable) {

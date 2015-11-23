@@ -69,6 +69,18 @@ func TestSharedCredentialsProviderWithoutTokenFromProfile(t *testing.T) {
 	assert.Empty(t, creds.SessionToken, "Expect no token")
 }
 
+func TestSharedCredentialsProviderColonInCredFile(t *testing.T) {
+	os.Clearenv()
+
+	p := SharedCredentialsProvider{Filename: "example.ini", Profile: "with_colon"}
+	creds, err := p.Retrieve()
+	assert.Nil(t, err, "Expect no error")
+
+	assert.Equal(t, "accessKey", creds.AccessKeyID, "Expect access key ID to match")
+	assert.Equal(t, "secret", creds.SecretAccessKey, "Expect secret access key to match")
+	assert.Empty(t, creds.SessionToken, "Expect no token")
+}
+
 func BenchmarkSharedCredentialsProvider(b *testing.B) {
 	os.Clearenv()
 
