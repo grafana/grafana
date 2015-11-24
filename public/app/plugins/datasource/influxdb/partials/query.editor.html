@@ -65,15 +65,15 @@
 
 	<div ng-hide="target.rawQuery">
 
-		<div class="tight-form" ng-repeat="parts in queryModel.selectParts">
+		<div class="tight-form" ng-repeat="selectModel in queryModel.selectModels">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 					<span ng-show="$index === 0">SELECT</span>
 				</li>
-				<li ng-repeat="part in parts">
-					<influx-query-part-editor part="part" class="tight-form-item tight-form-func"></influx-query-part-editor>
+				<li ng-repeat="part in selectModel.modelParts">
+					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeSelectPart(selectModel, part)" part-updated="selectPartUpdated(selectModel, part)"></influx-query-part-editor>
 				</li>
-				<li class="dropdown" dropdown-typeahead="selectMenu" dropdown-typeahead-on-select="selectMenuAction(parts, $item, $subItem)">
+				<li class="dropdown" dropdown-typeahead="selectMenu" dropdown-typeahead-on-select="selectMenuAction(selectModel, $item, $subItem)">
 				</li>
 			</ul>
 			<div class="clearfix"></div>
