@@ -44,9 +44,6 @@ function (angular, _, coreModule, config) {
     };
 
     this.get = function(name) {
-      if (name === "Dummy") {
-        return $q.when({name:"Dummy", meta:{name:"CustomType"}});
-      }
       if (!name) {
         return this.get(config.defaultDatasource);
       }
@@ -89,7 +86,7 @@ function (angular, _, coreModule, config) {
     };
 
     this.getIdMapSources = function() {
-      return _.union(this.idMapSources, [{name:"Dummy", meta:{name:"CustomType"}}]);
+      return this.idMapSources;
     };
 
     this.getMetricSources = function() {

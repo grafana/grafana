@@ -167,8 +167,6 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
             series.alias = idMapSrv.replaceID(series.alias, idMap);
             return new TimeSeries(series);
           });
-          console.log("UPdated seriesList: ");
-          console.log($scope.seriesList);
         });
 
       $scope.datapointsWarning = $scope.datapointsCount === 0 || $scope.datapointsOutside;

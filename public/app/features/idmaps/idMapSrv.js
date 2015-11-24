@@ -7,47 +7,53 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('idMapSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
-    var promiseCached;
+  module.service('idMapSrv', function(datasourceSrv, $q, alertSrv) {
     var MAP_REGEX = /\$map\(([\S]+)\)/g;
 
-    this.init = function() {
-      $rootScope.onAppEvent('refresh', this.clearCache, $rootScope);
-      $rootScope.onAppEvent('setup-dashboard', this.clearCache, $rootScope);
-    };
-
-    this.clearCache = function() {
-      promiseCached = null;
-    };
-
     this.getSeriesListIdMap = function(seriesList, ctrl) {
-      if (skipIdMapping(ctrl)) {
-        return $q.when(null);
-      }
-
-      if (promiseCached) {
-        return promiseCached;
-      }
-
-      promiseCached = getIDMap(extractIDs(seriesList), ctrl);
-      return promiseCached;
+      var ids = {};
+      _.forEach(seriesList, function(series) {
+        ids = _.merge(ids, extractIDs(series.alias));
+      });
+      return getIDMap(ids, ctrl);
     };
 
     this.getTemplateVariableIDMap = function(variable, ctrl) {
-      if (skipIdMapping(ctrl)) {
-        return $q.when(null);
-      }
       var ids = _.pluck(variable.options, 'value');
       return getIDMap(ids, ctrl);
     };
 
+    this.mapIDsInText = function(target, ctrl) {
+      if (skipIdMapping(ctrl)) {
+        return $q.when(target);
+      }
+
+      var ids = extractIDs(target);
+      return getIDMap(ids, ctrl)
+        .then(_.partial(this.replaceID, target))
+        .catch(errorHandler);
+    };
+
     this.replaceID = function(target, map) {
+      var alerted = false;
       return target.replace(MAP_REGEX, function(match, captureGroup) {
-        return map[captureGroup];
+        var name = map[captureGroup];
+        if (name) {
+          return name;
+        }
+        else if (!alerted) {
+          alerted = true;
+          errorHandler("'"+captureGroup+"' missing from datasource");
+        }
+        return captureGroup;
       });
     };
 
     function getIDMap(ids, ctrl) {
+      if (skipIdMapping(ctrl)) {
+        return $q.when(null);
+      }
+
       var idMap = {};
       var promises = _.map(ids, function(id) {
         return datasourceSrv.get(ctrl.datasource).then(function(datasource) {
@@ -69,12 +75,10 @@ define([
       alertSrv.set('ID mapping error', message,'error');
     }
 
-    function extractIDs(seriesList) {
+    function extractIDs(text) {
       var ids = {};
-      _.forEach(seriesList, function(series) {
-        series.alias.replace(MAP_REGEX, function(match, captureGroup) {
-          ids[captureGroup]=captureGroup;
-        });
+      text.replace(MAP_REGEX, function(match, captureGroup) {
+        ids[captureGroup]=captureGroup;
       });
       return ids;
     }
@@ -83,8 +87,6 @@ define([
       return !ctrl.enabled || !ctrl.datasource;
     }
 
-    // Now init
-    this.init();
   });
 
 });

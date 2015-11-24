@@ -73,6 +73,7 @@ define([
     self.datasourceSrv = {};
     self.backendSrv = {};
     self.idMapSrv = {};
+    self.alertSrv = {};
     self.$location = {};
     self.$routeParams = {};
 
