@@ -18,7 +18,8 @@ class InfluxQuery {
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
     target.select = target.select || [[
-      {name: 'mean', params: ['value']},
+      {name: 'field', params: ['value']},
+      {name: 'mean', params: []},
     ]];
 
     this.updateSelectParts();

@@ -21,7 +21,8 @@ describe.only('InfluxQuery', function() {
         measurement: 'cpu',
         select: [
           [
-            {name: 'mean', params: ['value']},
+            {name: 'field', params: ['value']},
+            {name: 'mean', params: []},
             {name: 'math', params: ['/100']},
             {name: 'alias', params: ['text']},
           ]
