@@ -111,11 +111,9 @@ function (angular, _, moment, dateMath) {
       var url = '/api/v1/label/__name__/values';
 
       return this._request('GET', url).then(function(result) {
-        var suggestData = _.filter(result.data.data, function(metricName) {
-          return metricName.indexOf(query) !==  1;
+        return _.filter(result.data.data, function (metricName) {
+          return metricName.indexOf(query) !== 1;
         });
-
-        return suggestData;
       });
     };
 

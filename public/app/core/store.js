@@ -12,7 +12,7 @@ define([], function() {
       if (def !== void 0 && !this.exists(key)) {
         return def;
       }
-      return window.localStorage[key] === 'true' ? true : false;
+      return window.localStorage[key] === 'true';
     },
     exists: function(key) {
       return window.localStorage[key] !== void 0;
