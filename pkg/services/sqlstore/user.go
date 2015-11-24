@@ -321,7 +321,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
-			"DELETE FROM user WHERE id = ?",
+			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
 		}
 
 		for _, sql := range deletes {

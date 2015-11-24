@@ -32,7 +32,7 @@ no_toc: true
   </div>
   <div class="columns medium-6">
     <h3><strong>Episode 4</strong> - Installation & Configuration on Ubuntu / Debian</h3>
-    Learn how to easily install the dependencies and packages to get Grafana 2.0 up and running on Ubuntu or Debian in just a few mintues.
+    Learn how to easily install the dependencies and packages to get Grafana 2.0 up and running on Ubuntu or Debian in just a few minutes.
     <div class="video-container" style="margin-top:10px;">
     <iframe height="215" src="https://www.youtube.com/embed/JY22EBOR9hQ?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
     </div>

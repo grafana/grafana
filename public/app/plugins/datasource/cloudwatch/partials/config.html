@@ -1,54 +1,34 @@
+<br>
 <h5>CloudWatch details</h5>
 
-<div class="tight-form">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-      Default Region
-    </li>
-    <li>
-      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.defaultRegion' placeholder="" required></input>
-    </li>
-  </ul>
-  <ul class="tight-form-list">
-    <li class="tight-form-item">
-      Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</label>
-    </li>
-    <li>
-      <select class="input-small tight-form-input" ng-model="current.jsonData.access" ng-options="f for f in ['direct', 'proxy']" ng-init="current.jsonData.access = current.jsonData.access || 'direct'"></select>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
-</div>
-<div class="tight-form" ng-show="current.jsonData.access === 'direct'">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-      Access Key Id
-    </li>
-    <li>
-      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.accessKeyId' placeholder="" ng-required="current.jsonData.access === 'direct'"></input>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
-</div>
-<div class="tight-form">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-			Secret Access Key
-    </li>
-    <li>
-			<input type="password" class="tight-form-input input-xlarge" ng-model='current.jsonData.secretAccessKey' placeholder="" ng-required="current.jsonData.access === 'direct'"></input>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
-</div>
-<div class="tight-form last">
-  <ul class="tight-form-list">
-    <li class="tight-form-item" style="width: 160px">
-      Custom Metric Attributes
-    </li>
-    <li>
-      <input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.customMetricsAttributes[0]' ng-init="current.jsonData.customMetricsAttributes = current.jsonData.customMetricsAttributes || []" placeholder="JSON url" bs-tooltip="'Set JSON url of the result, \'aws cloudwatch list-metrics --output json\''"></input>
-    </li>
-  </ul>
-  <div class="clearfix"></div>
+<div class="editor-row">
+	<div class="section tight-form-container" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 200px">
+					Credentials profile name<tip>Credentials profile name, as specified in ~/.aws/credentials, leave blank for default</tip>
+				</li>
+				<li>
+					<input type="text" class="tight-form-input input-large last" ng-model='current.database' placeholder="default"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 200px">
+					Default Region<tip>Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region.</tip>
+				</li>
+        <!-- 
+          Whenever this list is updated, backend list should also be updated.
+          Please update the region list in pkg/api/cloudwatch/metric.go
+				-->
+        <li>
+          <select class="tight-form-input input-large last" ng-model="current.jsonData.defaultRegion" ng-options="region for region in ['us-east-1', 'us-west-2', 'us-west-1', 'eu-west-1',
+          'eu-central-1', 'ap-southeast-1'  ,'ap-southeast-2' ,'ap-northeast-1' ,'sa-east-1'  ,'cn-north-1']"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
 </div>

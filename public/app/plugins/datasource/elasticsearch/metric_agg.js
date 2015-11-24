@@ -28,6 +28,7 @@ function (angular, _, queryDef) {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
+      $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
       if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
@@ -53,6 +54,11 @@ function (angular, _, queryDef) {
             $scope.agg.meta.std_deviation_bounds_lower = true;
             $scope.agg.meta.std_deviation_bounds_upper = true;
           }
+          break;
+        }
+        case 'raw_document': {
+          $scope.target.metrics = [$scope.agg];
+          $scope.target.bucketAggs = [];
         }
       }
     };
@@ -65,8 +71,6 @@ function (angular, _, queryDef) {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
-
-      $scope.validateModel();
       $scope.onChange();
     };
 

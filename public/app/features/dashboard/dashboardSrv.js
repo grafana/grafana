@@ -1,11 +1,10 @@
 define([
   'angular',
   'jquery',
-  'kbn',
   'lodash',
   'moment',
 ],
-function (angular, $, kbn, _, moment) {
+function (angular, $, _, moment) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -27,7 +26,7 @@ function (angular, $, kbn, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editable === false ? false : true;
+      this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
@@ -49,10 +48,10 @@ function (angular, $, kbn, _, moment) {
     p._initMeta = function(meta) {
       meta = meta || {};
 
-      meta.canShare = meta.canShare === false ? false : true;
-      meta.canSave = meta.canSave === false ? false : true;
-      meta.canStar = meta.canStar === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
+      meta.canShare = meta.canShare !== false;
+      meta.canSave = meta.canSave !== false;
+      meta.canStar = meta.canStar !== false;
+      meta.canEdit = meta.canEdit !== false;
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -118,7 +117,7 @@ function (angular, $, kbn, _, moment) {
       },0);
     };
 
-    p.add_panel = function(panel, row) {
+    p.addPanel = function(panel, row) {
       var rowSpan = this.rowSpan(row);
       var panelCount = row.panels.length;
       var space = (12 - rowSpan) - panel.span;
@@ -152,7 +151,6 @@ function (angular, $, kbn, _, moment) {
             result.panel = panel;
             result.row = row;
             result.index = index;
-            return;
           }
         });
       });
@@ -328,9 +326,20 @@ function (angular, $, kbn, _, moment) {
         }
       }
 
-      if (oldVersion < 7 && old.nav && old.nav.length) {
-        this.timepicker = old.nav[0];
-        delete this.nav;
+      if (oldVersion < 7) {
+        if (old.nav && old.nav.length) {
+          this.timepicker = old.nav[0];
+          delete this.nav;
+        }
+
+        // ensure query refIds
+        panelUpgrades.push(function(panel) {
+          _.each(panel.targets, function(target) {
+            if (!target.refId) {
+              target.refId = this.getNextQueryLetter(panel);
+            }
+          }, this);
+        });
       }
 
       if (panelUpgrades.length === 0) {
@@ -341,7 +350,7 @@ function (angular, $, kbn, _, moment) {
         var row = this.rows[i];
         for (j = 0; j < row.panels.length; j++) {
           for (k = 0; k < panelUpgrades.length; k++) {
-            panelUpgrades[k](row.panels[j]);
+            panelUpgrades[k].call(this, row.panels[j]);
           }
         }
       }

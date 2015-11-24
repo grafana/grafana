@@ -21,7 +21,6 @@
     "angular-native-dragdrop": "~1.1.1",
     "angular-bindonce": "~0.3.3",
     "requirejs": "~2.1.18",
-    "requirejs-text": "~2.0.14",
-    "aws-sdk": "~2.1.42"
+    "requirejs-text": "~2.0.14"
   }
 }
