@@ -142,10 +142,10 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
         "rows": [
           {
           }
-        ]
+        ],
         "schemaVersion": 6,
         "version": 0
-      },
+      }
     }
 
 ### Delete dashboard
@@ -787,7 +787,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
         "id": 2,
         "name": "User",
         "login": "user",
-        "email": "user@mygraf.com"
+        "email": "user@mygraf.com",
         "isAdmin": false
       }
     ]
@@ -1046,7 +1046,7 @@ Deletes the starring of the given Dashboard for the actual user.
         "timezone":"browser",
         "title":"Home",
         "version":5
-        }
+        },
       "expires": 3600
     }
 
@@ -1091,34 +1091,33 @@ Keys:
         "canStar":false,
         "slug":"",
         "expires":"2200-13-32T25:23:23+02:00",
-        "created":"2200-13-32T28:24:23+02:00"},
-
-    {
-      "dashboard": {
-        "editable":false,
-        "hideControls":true,
-        "nav":[
-        {
-          "enable":false,
-        "type":"timepicker"
-        }
-        ],
-        "rows": [
+        "created":"2200-13-32T28:24:23+02:00"
+        },
+        "dashboard": {
+          "editable":false,
+          "hideControls":true,
+          "nav":[
           {
-
+            "enable":false,
+          "type":"timepicker"
           }
-        ],
-        "style":"dark",
-        "tags":[],
-        "templating":{
-          "list":[
-          ]
-        },
-        "time":{
-        },
-        "timezone":"browser",
-        "title":"Home",
-        "version":5
+          ],
+          "rows": [
+            {
+
+            }
+          ],
+          "style":"dark",
+          "tags":[],
+          "templating":{
+            "list":[
+            ]
+          },
+          "time":{
+          },
+          "timezone":"browser",
+          "title":"Home",
+          "version":5
         }
     }
 
@@ -1181,11 +1180,10 @@ Keys:
           "pluginType":"datasource",
           "serviceName":"Grafana",
           "type":"grafanasearch"
+          }
         }
-        }
-      }
-
-      defaultDatasource: "Grafana"
+      },
+      "defaultDatasource": "Grafana"
     }
 
 ## Login
