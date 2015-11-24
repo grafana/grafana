@@ -64,8 +64,7 @@ function (angular, $, _) {
       }
 
       function getExtendedMenu($scope) {
-        var menu = angular.copy($scope.panelMeta.extendedMenu);
-        return menu;
+        return angular.copy($scope.panelMeta.extendedMenu);
       }
 
       return {
