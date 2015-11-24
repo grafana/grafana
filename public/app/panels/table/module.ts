@@ -19,6 +19,7 @@ export function tablePanel() {
     link: function(scope, elem) {
       var data;
       var panel = scope.panel;
+      var pageCount = 0;
       var formaters = [];
 
       function getTableHeight() {
@@ -26,8 +27,11 @@ export function tablePanel() {
         if (_.isString(panelHeight)) {
           panelHeight = parseInt(panelHeight.replace('px', ''), 10);
         }
+        if (pageCount > 1) {
+          panelHeight -= 28;
+        }
 
-        return (panelHeight - 40) + 'px';
+        return (panelHeight - 60) + 'px';
       }
 
       function appendTableRows(tbodyElem) {
@@ -46,7 +50,7 @@ export function tablePanel() {
         footerElem.empty();
 
         var pageSize = panel.pageSize || 100;
-        var pageCount = Math.ceil(data.rows.length / pageSize);
+        pageCount = Math.ceil(data.rows.length / pageSize);
         if (pageCount === 1) {
           return;
         }
@@ -73,12 +77,10 @@ export function tablePanel() {
 
         appendTableRows(tbodyElem);
 
-        rootElem.css({
-          'max-height': panel.scroll ? getTableHeight() : ''
-        });
-
         container.css({'font-size': panel.fontSize});
         appendPaginationControls(footerElem);
+
+        rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
       }
 
       elem.on('click', '.table-panel-page-link', switchPage);
