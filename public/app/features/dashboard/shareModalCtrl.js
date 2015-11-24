@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'require',
-  'config',
+  'app/core/config',
 ],
 function (angular, _, require, config) {
   'use strict';
@@ -75,7 +75,7 @@ function (angular, _, require, config) {
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard', '/render/dashboard');
+      $scope.imageUrl = soloUrl.replace('/dashboard-solo/', '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };
@@ -84,9 +84,9 @@ function (angular, _, require, config) {
 
   module.directive('clipboardButton',function() {
     return function(scope, elem) {
-      require(['ZeroClipboard'], function(ZeroClipboard) {
+      require(['vendor/zero_clipboard'], function(ZeroClipboard) {
         ZeroClipboard.config({
-          swfPath: config.appSubUrl + '/public/vendor/ZeroClipboard.swf'
+          swfPath: config.appSubUrl + '/public/vendor/zero_clipboard.swf'
         });
         new ZeroClipboard(elem[0]);
       });

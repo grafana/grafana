@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, alertSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -78,9 +78,9 @@ function (angular, _) {
     };
 
     $scope.runQuery = function() {
-      return templateValuesSrv.updateOptions($scope.current).then(function() {
-      }, function(err) {
-        alertSrv.set('Templating', 'Failed to run query for variable values: ' + err.message, 'error');
+      return templateValuesSrv.updateOptions($scope.current).then(null, function(err) {
+        if (err.data && err.data.message) { err.message = err.data.message; }
+        $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });
     };
 
@@ -94,6 +94,13 @@ function (angular, _) {
         $scope.current.type = 'query';
         $scope.current.allFormat = 'glob';
       }
+    };
+
+    $scope.duplicate = function(variable) {
+      $scope.current = angular.copy(variable);
+      $scope.variables.push($scope.current);
+      $scope.current.name = 'copy_of_'+variable.name;
+      $scope.updateSubmenuVisibility();
     };
 
     $scope.update = function() {

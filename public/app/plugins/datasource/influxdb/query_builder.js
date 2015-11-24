@@ -162,8 +162,7 @@ function (_) {
   };
 
   p._modifyRawQuery = function () {
-    var query = this.target.query.replace(";", "");
-    return query;
+    return this.target.query.replace(";", "");
   };
 
   return InfluxQueryBuilder;

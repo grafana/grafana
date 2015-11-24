@@ -27,7 +27,7 @@ that is not really the case, or, at least, that it is a lot better than you expe
 To begin with we are going to install the 3 main components that define our metric stack. Later in the guide we will
 install StatsD, but that is optional.
 
-- Carbon is the graphite ingestion deamon responsible for
+- Carbon is the graphite ingestion daemon responsible for
 receiving metrics and storing them.
 - Graphite-api is light weight version of graphite-web with only the HTTP api and is
 responsible for executing metric queries.
@@ -90,7 +90,7 @@ pattern = .*
 retentions = 10s:1d,1m:7d,10m:1y
 ```
 
-This config specifies the resolution of metrics and the retention periods. For example for all metrics begining with the word `carbon` receive metrics every minute and store for 30 days, then
+This config specifies the resolution of metrics and the retention periods. For example for all metrics beginning with the word `carbon` receive metrics every minute and store for 30 days, then
 roll them up into 10 minute buckets and store those for 1 year, then roll those up into 1 hour buckets and store those for 5 years. For all other metrics
 the default rule will be applied with other retention periods.
 
@@ -206,7 +206,7 @@ Reload supervisor
 
     supervisorctl reload
 
-A carbon-cache deamon and graphite-api should now be running. Type `supervisorctl status` to verify that they are running. You can
+A carbon-cache daemon and graphite-api should now be running. Type `supervisorctl status` to verify that they are running. You can
 also open `http://your_server_ip:8888/metrics/find?query?*` in your browser. You should see a json snippet.
 
 
@@ -243,12 +243,12 @@ Open http://your_server_ip:3000 in your browser and login with the default user 
 - Select `Add Panel` > `Graph` from the row menu
 - An empty graph panel should appear with title `no title (click here)`. Click on this title and then `Edit`
 - This will open the graph in edit mode and take you to the metrics tab.
-- There is one query already added (asigned letter A) but it is empty.
+- There is one query already added (assigned letter A) but it is empty.
 - Click on `select metric` to pick the first graphite metric node. A new `select metric` link will appear until you reached a leaf node.
 - Try picking the metric paths for `carbon.agents.<server name>.cpuUsage`, you should now see a line appear in the graph!
 
 ## Writing metrics to Graphite
-Graphite has the simples metric write protocol imaginable. Something that has surely contributed to its wide adoption by metric
+Graphite has the simplest metric write protocol imaginable. Something that has surely contributed to its wide adoption by metric
 frameworks and numerous integrations.
 
     prod.server1.requests.count 10 1398969187

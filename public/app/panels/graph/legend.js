@@ -1,12 +1,11 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'jquery',
   'jquery.flot',
   'jquery.flot.time',
 ],
-function (angular, _, kbn, $) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -34,7 +33,12 @@ function (angular, _, kbn, $) {
         }
 
         function openColorSelector(e) {
-          var el = $(e.currentTarget);
+          // if we clicked inside poup container ignore click
+          if ($(e.target).parents('.popover').length) {
+            return;
+          }
+
+          var el = $(e.currentTarget).find('.fa-minus');
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
           var popoverScope = scope.$new();

@@ -148,7 +148,7 @@ case "$1" in
     $0 start
     ;;
   *)
-    echo -n "Usage: $0 {start|stop|restart|force-reload|status}"
+    echo "Usage: $0 {start|stop|restart|force-reload|status}"
     exit 3
     ;;
 esac

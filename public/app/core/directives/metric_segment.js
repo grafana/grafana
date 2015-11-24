@@ -192,6 +192,8 @@ function (_, $, coreModule) {
               var option = _.findWhere($scope.options, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
+              } else if (attrs.custom !== 'false') {
+                $scope.property = $scope.segment.value;
               }
             } else {
               $scope.property = $scope.segment.value;

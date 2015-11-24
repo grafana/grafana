@@ -63,7 +63,7 @@ Once configured, Multi-Select Tagging provides a convenient way to group and you
 
 ### Interval
 
-Use the `Interval` type to create Template variables aroundr time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.
+Use the `Interval` type to create Template variables around time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.
 
 ![](/img/v2/templated_variable_parameter.png)
 
@@ -75,7 +75,7 @@ Use the `Custom` type to manually create Template variables around explicit valu
 
 Template Variables can be very useful to dynamically change what you're visualizing on a given panel. Sometimes, you might want to create entire new Panels (or Rows) based on what Template Variables have been selected. This is now possible in Grafana 2.1.
 
-Once you've got your Template variables (of any type) configured the way you'd like, check out the Repeating Panels and Repeating Row documentatione
+Once you've got your Template variables (of any type) configured the way you'd like, check out the Repeating Panels and Repeating Row documentation
 
 ## Screencast - Templated Graphite Queries
 

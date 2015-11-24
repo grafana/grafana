@@ -6,14 +6,15 @@ function (_) {
 
   return {
     metricAggTypes: [
-      {text: "Count",   value: 'count' },
-      {text: "Average",  value: 'avg' },
-      {text: "Sum",  value: 'sum' },
-      {text: "Max",  value: 'max' },
-      {text: "Min",  value: 'min' },
-      {text: "Extended Stats",  value: 'extended_stats' },
-      {text: "Percentiles",  value: 'percentiles' },
-      {text: "Unique Count", value: "cardinality" }
+      {text: "Count",   value: 'count', requiresField: false},
+      {text: "Average",  value: 'avg', requiresField: true},
+      {text: "Sum",  value: 'sum', requiresField: true},
+      {text: "Max",  value: 'max', requiresField: true},
+      {text: "Min",  value: 'min', requiresField: true},
+      {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
+      {text: "Percentiles",  value: 'percentiles', requiresField: true},
+      {text: "Unique Count", value: "cardinality", requiresField: true},
+      {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
 
     bucketAggTypes: [
@@ -36,7 +37,7 @@ function (_) {
       {text: "No limit", value: '0' },
       {text: "1", value: '1' },
       {text: "2", value: '2' },
-      {text: "3", value: '4' },
+      {text: "3", value: '3' },
       {text: "5", value: '5' },
       {text: "10", value: '10' },
       {text: "15", value: '15' },
