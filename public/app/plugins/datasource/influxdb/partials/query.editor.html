@@ -87,41 +87,12 @@
 				<li>
 					<influx-query-part-editor part="part" class="tight-form-item tight-form-func"></influx-query-part-editor>
 				</li>
-				<!-- <li class="dropdown" ng&#45;if="groupBy.type === 'time'"> -->
-					<!-- 	<a class="tight&#45;form&#45;item pointer" data&#45;toggle="dropdown" bs&#45;tooltip="'Insert missing values, important when stacking'" data&#45;placement="right"> -->
-						<!-- 		<span ng&#45;show="target.fill"> -->
-							<!-- 			fill ({{target.fill}}) -->
-							<!-- 		</span> -->
-						<!-- 		<span ng&#45;show="!target.fill"> -->
-							<!-- 			no fill -->
-							<!-- 		</span> -->
-						<!-- 	</a> -->
-					<!-- 	<ul class="dropdown&#45;menu"> -->
-						<!-- 		<li><a ng&#45;click="setFill('')">no fill</a></li> -->
-						<!-- 		<li><a ng&#45;click="setFill('0')">fill (0)</a></li> -->
-						<!-- 		<li><a ng&#45;click="setFill('null')">fill (null)</a></li> -->
-						<!-- 		<li><a ng&#45;click="setFill('none')">fill (none)</a></li> -->
-						<!-- 		<li><a ng&#45;click="setFill('previous')">fill (previous)</a></li> -->
-						<!-- 	</ul> -->
-					<!-- </li> -->
-				<!-- <li ng&#45;if="groupBy.type === 'tag'"> -->
-					<!-- 	<metric&#45;segment&#45;model property="groupBy.key" get&#45;options="getTagOptions()" on&#45;change="get_data()"></metric&#45;segment> -->
-					<!-- </li> -->
-			</ul>
-
-			<ul class="tight-form-list pull-right">
-				<li class="tight-form-item last" ng-show="$index === 0">
-					<a class="pointer" ng-click="addGroupBy()"><i class="fa fa-plus"></i></a>
-				</li>
-				<li class="tight-form-item last" ng-show="$index > 0">
-					<a class="pointer" ng-click="removeGroupBy($index)"><i class="fa fa-minus"></i></a>
+				<li class="dropdown" dropdown-typeahead="groupByMenu" dropdown-typeahead-on-select="groupByMenuAction(parts, $item, $subItem)">
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
 	</div>
-
-
 
 	<div class="tight-form">
 		<ul class="tight-form-list">

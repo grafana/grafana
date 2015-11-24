@@ -8,6 +8,7 @@ var categories = {
   Transformations: [],
   Math: [],
   Aliasing: [],
+  Fields: [],
 };
 
 class QueryPartDef {
@@ -65,18 +66,26 @@ function quotedIdentityRenderer(part, innerExpr) {
 }
 
 QueryPartDef.register({
+  name: 'field',
+  category: categories.Fields,
+  params: [{type: 'field'}],
+  defaultParams: ['value'],
+  renderer: quotedIdentityRenderer,
+});
+
+QueryPartDef.register({
   name: 'mean',
   category: categories.Aggregations,
-  params: [{type: 'field', quote: 'double'}],
-  defaultParams: ['value'],
+  params: [],
+  defaultParams: [],
   renderer: functionRenderer,
 });
 
 QueryPartDef.register({
   name: 'sum',
   category: categories.Aggregations,
-  params: [{type: 'field', quote: 'double'}],
-  defaultParams: ['value'],
+  params: [],
+  defaultParams: [],
   renderer: functionRenderer,
 });
 
