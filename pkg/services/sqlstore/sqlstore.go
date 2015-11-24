@@ -18,7 +18,16 @@ import (
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/go-sql-driver/mysql"
 )
+
+type MySQLConfig struct {
+	SslMode string
+	CaCertPath string
+	ClientKeyPath  string
+	ClientCertPath string
+	ServerCertName string
+}
 
 var (
 	x       *xorm.Engine
@@ -29,6 +38,8 @@ var (
 	DbCfg struct {
 		Type, Host, Name, User, Pwd, Path, SslMode string
 	}
+
+	mysqlConfig MySQLConfig
 
 	UseSQLite3 bool
 )
@@ -115,6 +126,14 @@ func getEngine() (*xorm.Engine, error) {
 	case "mysql":
 		cnnstr = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",
 			DbCfg.User, DbCfg.Pwd, DbCfg.Host, DbCfg.Name)
+		if mysqlConfig.SslMode == "true" || mysqlConfig.SslMode == "skip-verify" {
+			tlsCert, err := makeCert("custom", mysqlConfig)
+			if err != nil {
+				return nil, err
+			}
+			mysql.RegisterTLSConfig("custom", tlsCert)
+			cnnstr += "&tls=custom"
+		}
 	case "postgres":
 		var host, port = "127.0.0.1", "5432"
 		fields := strings.Split(DbCfg.Host, ":")
@@ -156,4 +175,12 @@ func LoadConfig() {
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+
+	if DbCfg.Type == "mysql" {
+		mysqlConfig.SslMode = DbCfg.SslMode
+		mysqlConfig.CaCertPath = sec.Key("ca_cert_path").String()
+		mysqlConfig.ClientKeyPath = sec.Key("client_key_path").String()
+		mysqlConfig.ClientCertPath = sec.Key("client_cert_path").String()
+		mysqlConfig.ServerCertName = sec.Key("server_cert_name").String()
+	}
 }
