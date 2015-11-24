@@ -6,9 +6,19 @@ import queryPart = require('./query_part');
 
 declare var InfluxQueryBuilder: any;
 
+class InfluxSelectModel {
+  modelParts: any[];
+  persistedParts: any[];
+
+  constructor(persistedParts: any[]) {
+    this.persistedParts = persistedParts;
+    this.modelParts = _.map(persistedParts, queryPart.create);
+  }
+}
+
 class InfluxQuery {
   target: any;
-  selectParts: any[];
+  selectModels: any[];
   groupByParts: any;
   queryBuilder: any;
 
@@ -29,16 +39,26 @@ class InfluxQuery {
   }
 
   updateSelectParts() {
-    this.selectParts = _.map(this.target.select, function(parts: any) {
-      return _.map(parts, function(part: any) {
-        return queryPart.create(part);
-      });
+    this.selectModels = _.map(this.target.select, function(parts: any) {
+      return new InfluxSelectModel(parts);
     });
   }
 
   removeSelect(index: number) {
     this.target.select.splice(index, 1);
     this.updateSelectParts();
+  }
+
+  removeSelectPart(selectModel, part) {
+    var partIndex = _.indexOf(selectModel.modelParts, part);
+    selectModel.persistedParts.splice(partIndex, 1);
+    this.updateSelectParts();
+  }
+
+  addSelectPart(selectModel, name) {
+    var partModel = queryPart.create({name: name});
+    selectModel.persistedParts.push(partModel.part);
+    selectModel.modelParts.push(partModel);
   }
 
   addSelect() {
@@ -92,8 +112,8 @@ class InfluxQuery {
 
     var query = 'SELECT ';
     var i, y;
-    for (i = 0; i < this.selectParts.length; i++) {
-      let parts = this.selectParts[i];
+    for (i = 0; i < this.selectModels.length; i++) {
+      let parts = this.selectModels[i].modelParts;
       var selectText = "";
       for (y = 0; y < parts.length; y++) {
         let part = parts[y];

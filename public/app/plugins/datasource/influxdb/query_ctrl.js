@@ -62,8 +62,18 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       }, []);
     };
 
-    $scope.selectMenuAction = function(selectParts, cat, subitem) {
-      selectParts.push(queryPart.create({name: subitem.value }));
+    $scope.selectMenuAction = function(selectModel, cat, subitem) {
+      $scope.queryModel.addSelectPart(selectModel, subitem.value);
+      $scope.get_data();
+    };
+
+    $scope.removeSelectPart = function(selectModel, part) {
+      $scope.queryModel.removeSelectPart(selectModel, part);
+      $scope.get_data();
+    };
+
+    $scope.selectPartUpdated = function() {
+      $scope.get_data();
     };
 
     $scope.fixTagSegments = function() {
@@ -75,27 +85,9 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       }
     };
 
-    $scope.addGroupBy = function() {
-      $scope.target.groupBy.push({type: 'tag', key: "select tag"});
-    };
-
-    $scope.removeGroupBy = function(index) {
-      $scope.target.groupBy.splice(index, 1);
-      $scope.get_data();
-    };
-
-    $scope.addSelect = function() {
-      $scope.queryModel.addSelect();
-    };
-
-    $scope.removeSelect = function(index) {
-      $scope.queryModel.removeSelect(index);
-      $scope.get_data();
-    };
-
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
-      $scope.$parent.get_data();
+      $scope.get_data();
     };
 
     $scope.getFields = function() {

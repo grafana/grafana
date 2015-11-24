@@ -135,7 +135,8 @@ class QueryPart {
       throw {message: 'Could not find query part ' + part.name};
     }
 
-    this.params = part.params || _.clone(this.def.defaultParams);
+    part.params = part.params || _.clone(this.def.defaultParams);
+    this.params = part.params;
     this.updateText();
   }
 

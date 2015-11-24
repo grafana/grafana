@@ -17,7 +17,8 @@ function (angular, _, $) {
         templateUrl: 'app/plugins/datasource/influxdb/partials/query_part.html',
         scope: {
           part: "=",
-          deleteAction: "&",
+          removeAction: "&",
+          partUpdated: "&",
         },
         link: function postLink($scope, elem) {
           var part = $scope.part;
@@ -55,7 +56,7 @@ function (angular, _, $) {
               $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
               part.updateParam($input.val(), paramIndex);
-              $scope.$apply($scope.targetChanged);
+              $scope.$apply($scope.partUpdated);
             }
 
             $input.hide();
