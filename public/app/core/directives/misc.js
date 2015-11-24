@@ -1,9 +1,10 @@
 define([
   'angular',
+  'lodash',
   '../core_module',
   'app/core/utils/kbn',
 ],
-function (angular, coreModule, kbn) {
+function (angular, _, coreModule, kbn) {
   'use strict';
 
   coreModule.directive('tip', function($compile) {
@@ -87,7 +88,7 @@ function (angular, coreModule, kbn) {
         }
 
         var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
-          '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
+          '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + _.escape(item.click) + '"' : '') +
           (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
           (item.configModal ? ' dash-editor-link="' + item.configModal + '"' : "") +
           '>' + (item.text || '') + '</a>';

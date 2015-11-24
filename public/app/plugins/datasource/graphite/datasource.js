@@ -19,6 +19,7 @@ function (angular, _, $, config, dateMath) {
     function GraphiteDatasource(datasource) {
       this.basicAuth = datasource.basicAuth;
       this.url = datasource.url;
+      this.directUrl = datasource.directUrl;
       this.name = datasource.name;
       this.cacheTimeout = datasource.cacheTimeout;
       this.withCredentials = datasource.withCredentials;
@@ -193,6 +194,24 @@ function (angular, _, $, config, dateMath) {
           };
         });
       });
+    };
+
+    GraphiteDatasource.prototype.getPanelExtendedMenuItems = function(options) {
+      var graphOptions = {
+        targets: options.targets,
+        cacheTimeout: options.cacheTimeout || this.cacheTimeout,
+        maxDataPoints: options.maxDataPoints,
+      };
+
+      var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+      params = _.filter(params, function(param) { return !param.startsWith('format'); });
+
+      var composerUrl = this.directUrl + '/composer?' + params.join('&');
+
+      return [{
+        text: 'Graphite Composer',
+        click: 'openUrlInNewWindow("' + composerUrl + '")',
+      }];
     };
 
     GraphiteDatasource.prototype.testDatasource = function() {
