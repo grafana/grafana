@@ -26,7 +26,7 @@ function (angular, $, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editable === false ? false : true;
+      this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
@@ -48,10 +48,10 @@ function (angular, $, _, moment) {
     p._initMeta = function(meta) {
       meta = meta || {};
 
-      meta.canShare = meta.canShare === false ? false : true;
-      meta.canSave = meta.canSave === false ? false : true;
-      meta.canStar = meta.canStar === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
+      meta.canShare = meta.canShare !== false;
+      meta.canSave = meta.canSave !== false;
+      meta.canStar = meta.canStar !== false;
+      meta.canEdit = meta.canEdit !== false;
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -151,7 +151,6 @@ function (angular, $, _, moment) {
             result.panel = panel;
             result.row = row;
             result.index = index;
-            return;
           }
         });
       });
