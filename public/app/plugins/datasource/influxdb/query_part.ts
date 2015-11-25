@@ -11,17 +11,23 @@ var categories = {
   Fields: [],
 };
 
+var groupByTimeFunctions = [];
+
 class QueryPartDef {
   name: string;
   params: any[];
   defaultParams: any[];
   renderer: any;
+  category: any;
+  addStrategy: any;
 
   constructor(options: any) {
     this.name = options.name;
     this.params = options.params;
     this.defaultParams = options.defaultParams;
     this.renderer = options.renderer;
+    this.category = options.category;
+    this.addStrategy = options.addStrategy;
   }
 
   static register(options: any) {
@@ -65,6 +71,67 @@ function quotedIdentityRenderer(part, innerExpr) {
   return '"' + part.params[0] + '"';
 }
 
+function replaceAggregationAddStrategy(selectParts, partModel) {
+  // look for existing aggregation
+  for (var i = 0; i < selectParts.length; i++) {
+    var part = selectParts[i];
+    if (part.def.category === categories.Aggregations) {
+      selectParts[i] = partModel;
+      return;
+    }
+  }
+
+  selectParts.splice(1, 0, partModel);
+}
+
+function addTransformationStrategy(selectParts, partModel) {
+  var i;
+  // look for index to add transformation
+  for (i = 0; i < selectParts.length; i++) {
+    var part = selectParts[i];
+    if (part.def.category === categories.Math  || part.def.category === categories.Aliasing) {
+      break;
+    }
+  }
+
+  selectParts.splice(i, 0, partModel);
+}
+
+function addMathStrategy(selectParts, partModel) {
+  var partCount = selectParts.length;
+  if (partCount > 0) {
+    // if last is math, replace it
+    if (selectParts[partCount-1].def.name === 'math') {
+      selectParts[partCount-1] = partModel;
+      return;
+    }
+    // if next to last is math, replace it
+    if (selectParts[partCount-2].def.name === 'math') {
+      selectParts[partCount-2] = partModel;
+      return;
+    }
+    // if last is alias add it before
+    else if (selectParts[partCount-1].def.name === 'alias') {
+      selectParts.splice(partCount-1, 0, partModel);
+      return;
+    }
+  }
+  selectParts.push(partModel);
+}
+
+function addAliasStrategy(selectParts, partModel) {
+  var partCount = selectParts.length;
+  if (partCount > 0) {
+    // if last is alias, replace it
+    if (selectParts[partCount-1].def.name === 'alias') {
+      selectParts[partCount-1] = partModel;
+      return;
+    }
+  }
+  selectParts.push(partModel);
+}
+
+
 QueryPartDef.register({
   name: 'field',
   category: categories.Fields,
@@ -75,6 +142,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'mean',
+  addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
@@ -83,6 +151,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'sum',
+  addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
@@ -91,6 +160,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'derivative',
+  addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
@@ -99,7 +169,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'time',
-  category: categories.Transformations,
+  category: groupByTimeFunctions,
   params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
   defaultParams: ['$interval'],
   renderer: functionRenderer,
@@ -107,6 +177,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'math',
+  addStrategy: addMathStrategy,
   category: categories.Math,
   params: [{ name: "expr", type: "string"}],
   defaultParams: [' / 100'],
@@ -115,6 +186,7 @@ QueryPartDef.register({
 
 QueryPartDef.register({
   name: 'alias',
+  addStrategy: addAliasStrategy,
   category: categories.Aliasing,
   params: [{ name: "name", type: "string", quote: 'double'}],
   defaultParams: ['alias'],
