@@ -19,6 +19,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.target = $scope.target;
       $scope.queryModel = new InfluxQuery($scope.target);
       $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
+      $scope.groupBySegment = uiSegmentSrv.newPlusButton();
 
       if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();
@@ -60,16 +61,39 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
         memo.push(menu);
         return memo;
       }, []);
+    };
 
-      $scope.groupByMenu = _.reduce(categories, function(memo, cat, key) {
-        var menu = {text: key};
-        menu.submenu = _.map(cat, function(item) {
-          return {text: item.type, value: item.type};
+    $scope.getGroupByOptions = function() {
+      var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
+
+      return $scope.datasource.metricFindQuery(query)
+      .then(function(tags) {
+        var options = [];
+        if (!$scope.queryModel.hasFill()) {
+          options.push(uiSegmentSrv.newSegment({value: 'fill(option)'}));
+        }
+        if (!$scope.queryModel.hasGroupByTime()) {
+          options.push(uiSegmentSrv.newSegment({value: 'time($interval)'}));
+        }
+        _.each(tags, function(tag) {
+          options.push(uiSegmentSrv.newSegment({value: 'tag(' + tag.text + ')'}));
         });
-        memo.push(menu);
-        return memo;
-      }, []);
+        return options;
+      })
+      .then(null, $scope.handleQueryError);
+    };
 
+    $scope.groupByAction = function() {
+      $scope.queryModel.addGroupBy($scope.groupBySegment.value);
+      var plusButton = uiSegmentSrv.newPlusButton();
+      $scope.groupBySegment.value  = plusButton.value;
+      $scope.groupBySegment.html  = plusButton.html;
+      $scope.get_data();
+    };
+
+    $scope.removeGroupByPart = function(part, index) {
+      $scope.queryModel.removeGroupByPart(part, index);
+      $scope.get_data();
     };
 
     $scope.addSelectPart = function(selectParts, cat, subitem) {
@@ -178,12 +202,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
     };
 
     $scope.getTagOptions = function() {
-      var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
-
-      return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments(false))
-      .then(null, $scope.handleQueryError);
-    };
+   };
 
     $scope.setFill = function(fill) {
       $scope.target.fill = fill;

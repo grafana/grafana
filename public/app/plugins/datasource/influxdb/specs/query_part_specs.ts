@@ -3,12 +3,12 @@ import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import queryPart = require('../query_part');
 
-describe('InfluxQueryBuilder', () => {
+describe('InfluxQueryPart', () => {
 
   describe('series with mesurement only', () => {
     it('should handle nested function parts', () => {
       var part = queryPart.create({
-        name: 'derivative',
+        type: 'derivative',
         params: ['10s'],
       });
 
@@ -18,7 +18,7 @@ describe('InfluxQueryBuilder', () => {
 
     it('should handle suffirx parts', () => {
       var part = queryPart.create({
-        name: 'math',
+        type: 'math',
         params: ['/ 100'],
       });
 
@@ -28,7 +28,7 @@ describe('InfluxQueryBuilder', () => {
 
     it('should handle alias parts', () => {
       var part = queryPart.create({
-        name: 'alias',
+        type: 'alias',
         params: ['test'],
       });
 

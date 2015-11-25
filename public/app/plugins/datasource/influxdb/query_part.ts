@@ -185,6 +185,14 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
+  type: 'tag',
+  category: groupByTimeFunctions,
+  params: [{name: 'tag', type: 'string'}],
+  defaultParams: ['tag'],
+  renderer: quotedIdentityRenderer,
+});
+
+QueryPartDef.register({
   type: 'math',
   addStrategy: addMathStrategy,
   category: categories.Math,

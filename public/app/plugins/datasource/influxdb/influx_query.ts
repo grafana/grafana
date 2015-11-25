@@ -16,22 +16,20 @@ class InfluxQuery {
     this.target = target;
 
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
+    target.groupBy = target.groupBy || [{type: 'time', params: ['$interval']}];
     target.select = target.select || [[
       {type: 'field', params: ['value']},
       {type: 'mean', params: []},
     ]];
 
-    this.updateSelectParts();
-    this.groupByParts = [
-      queryPart.create({type: 'time', params: ['$interval']})
-    ];
+    this.updateProjection();
   }
 
-  updateSelectParts() {
+  updateProjection() {
     this.selectModels = _.map(this.target.select, function(parts: any) {
       return _.map(parts, queryPart.create);
     });
+    this.groupByParts = _.map(this.target.groupBy, queryPart.create);
   }
 
   updatePersistedParts() {
@@ -42,9 +40,32 @@ class InfluxQuery {
     });
   }
 
+  hasGroupByTime() {
+    return false;
+  }
+
+  hasFill() {
+    return false;
+  }
+
+  addGroupBy(value) {
+    var stringParts = value.match(/^(\w+)\((.*)\)$/);
+    var typePart = stringParts[1];
+    var arg = stringParts[2];
+    console.log(value, stringParts);
+    var partModel = queryPart.create({type: typePart, params: [arg]});
+    this.target.groupBy.push(partModel.part);
+    this.updateProjection();
+  }
+
+  removeGroupByPart(part, index) {
+    this.target.groupBy.splice(index, 1);
+    this.updateProjection();
+  }
+
   removeSelect(index: number) {
     this.target.select.splice(index, 1);
-    this.updateSelectParts();
+    this.updateProjection();
   }
 
   removeSelectPart(selectParts, part) {
@@ -139,14 +160,13 @@ class InfluxQuery {
     query += conditions.join(' ');
     query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
 
-    query += ' GROUP BY';
-    for (i = 0; i < target.groupBy.length; i++) {
-      var group = target.groupBy[i];
-      if (group.type === 'time') {
-        query += ' time(' + this.getGroupByTimeInterval(group.interval) + ')';
-      } else {
-        query += ', "' + group.key + '"';
+    query += ' GROUP BY ';
+    for (i = 0; i < this.groupByParts.length; i++) {
+      var part = this.groupByParts[i];
+      if (i > 0) {
+        query += ', ';
       }
+      query += part.render('');
     }
 
     if (target.fill) {
