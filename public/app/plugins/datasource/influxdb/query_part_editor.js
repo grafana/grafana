@@ -117,6 +117,11 @@ function (angular, _, $) {
             $controlsContainer.show();
           };
 
+          $scope.removeActionInternal = function() {
+            $scope.toggleControls();
+            $scope.removeAction();
+          };
+
           function addElementsAndCompile() {
             _.each(partDef.params, function(param, index) {
               if (param.optional && part.params.length <= index) {

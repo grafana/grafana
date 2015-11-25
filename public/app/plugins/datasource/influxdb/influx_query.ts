@@ -6,16 +6,6 @@ import queryPart = require('./query_part');
 
 declare var InfluxQueryBuilder: any;
 
-class InfluxSelectModel {
-  modelParts: any[];
-  persistedParts: any[];
-
-  constructor(persistedParts: any[]) {
-    this.persistedParts = persistedParts;
-    this.modelParts = _.map(persistedParts, queryPart.create);
-  }
-}
-
 class InfluxQuery {
   target: any;
   selectModels: any[];
@@ -40,7 +30,15 @@ class InfluxQuery {
 
   updateSelectParts() {
     this.selectModels = _.map(this.target.select, function(parts: any) {
-      return new InfluxSelectModel(parts);
+      return _.map(parts, queryPart.create);
+    });
+  }
+
+  updatePersistedParts() {
+    this.target.select = _.map(this.selectModels, function(selectParts) {
+      return _.map(selectParts, function(part: any) {
+        return {name: part.def.name, params: part.params};
+      });
     });
   }
 
@@ -49,16 +47,16 @@ class InfluxQuery {
     this.updateSelectParts();
   }
 
-  removeSelectPart(selectModel, part) {
-    var partIndex = _.indexOf(selectModel.modelParts, part);
-    selectModel.persistedParts.splice(partIndex, 1);
-    this.updateSelectParts();
+  removeSelectPart(selectParts, part) {
+    var partIndex = _.indexOf(selectParts, part);
+    selectParts.splice(partIndex, 1);
+    this.updatePersistedParts();
   }
 
-  addSelectPart(selectModel, name) {
+  addSelectPart(selectParts, name) {
     var partModel = queryPart.create({name: name});
-    selectModel.persistedParts.push(partModel.part);
-    selectModel.modelParts.push(partModel);
+    partModel.def.addStrategy(selectParts, partModel);
+    this.updatePersistedParts();
   }
 
   addSelect() {
@@ -113,7 +111,7 @@ class InfluxQuery {
     var query = 'SELECT ';
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
-      let parts = this.selectModels[i].modelParts;
+      let parts = this.selectModels[i];
       var selectText = "";
       for (y = 0; y < parts.length; y++) {
         let part = parts[y];

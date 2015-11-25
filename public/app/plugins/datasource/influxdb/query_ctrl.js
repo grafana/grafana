@@ -62,13 +62,13 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       }, []);
     };
 
-    $scope.selectMenuAction = function(selectModel, cat, subitem) {
-      $scope.queryModel.addSelectPart(selectModel, subitem.value);
+    $scope.addSelectPart = function(selectParts, cat, subitem) {
+      $scope.queryModel.addSelectPart(selectParts, subitem.value);
       $scope.get_data();
     };
 
-    $scope.removeSelectPart = function(selectModel, part) {
-      $scope.queryModel.removeSelectPart(selectModel, part);
+    $scope.removeSelectPart = function(selectParts, part) {
+      $scope.queryModel.removeSelectPart(selectParts, part);
       $scope.get_data();
     };
 
