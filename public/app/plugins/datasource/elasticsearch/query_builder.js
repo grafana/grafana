@@ -13,7 +13,7 @@ function (angular) {
     var filter = {};
     filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
 
-    // elastic search versions above 2.0 require the time format to be specified
+    // elastic search versions 2.x require the time format to be specified
     if (this.elasticsearchVersion >= 2) {
       filter[this.timeField]["format"] = "epoch_millis";
     }
@@ -136,7 +136,7 @@ function (angular) {
             "min_doc_count": 0,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
-          // elastic search versions above 2.0 require the time format to be specified
+          // elastic search versions 2.x require the time format to be specified
           if (this.elasticsearchVersion >= 2) {
             esAgg["date_histogram"]["format"] = "epoch_millis";
           }

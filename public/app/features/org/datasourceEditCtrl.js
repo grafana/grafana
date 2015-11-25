@@ -13,7 +13,7 @@ function (angular, _, config) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {'elasticsearchVersion': 2} };
 
     $scope.indexPatternTypes = [
       {name: 'No pattern',  value: undefined},
