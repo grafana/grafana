@@ -1,0 +1,552 @@
+<!--
+Copyright 2014-2015 Quantiply Corporation. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<div class="tight-form"
+     ng-class="{'tight-form-disabled': target.hide}">
+  <ul class="tight-form-list pull-right">
+    <li class="tight-form-item">
+      <div class="dropdown">
+        <a class="pointer dropdown-toggle"
+           data-toggle="dropdown"
+           tabindex="1">
+          <i class="fa fa-bars"></i>
+        </a>
+        <ul class="dropdown-menu pull-right" role="menu">
+          <li role="menuitem">
+            <a tabindex="1" ng-click="duplicate()">Duplicate</a>
+          </li>
+        </ul>
+      </div>
+    </li>
+    <li class="tight-form-item last">
+      <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+  </ul>
+  <ul class="tight-form-list">
+    <li>
+      <a class="tight-form-item"
+         ng-click="target.hide = !target.hide; get_data();"
+         role="menuitem">
+        <i class="fa fa-eye"></i>
+      </a>
+    </li>
+  </ul>
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item">
+      Datasource
+    </li>
+    <li>
+      <input type="text"
+             class="tight-form-input input-medium"
+             ng-model="target.druidDS"
+             spellcheck='false'
+             placeholder="druidDS"
+             bs-typeahead="listDataSources"
+             data-min-length=0
+             ng-blur="targetBlur()">
+      <a bs-tooltip="target.errors.druidDS"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.druidDS">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+    <li class="tight-form-item">
+      Type
+    </li>
+    <li>
+      <select ng-model="target.queryType"
+              class="tight-form-input input-medium"
+              ng-options="type for type in queryTypes"
+              ng-change="targetBlur()">
+      </select>
+      <a bs-tooltip="target.errors.queryType"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.queryType">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+    <li class="tight-form-item">
+      Custom Granularity
+      <input type="checkbox"
+             class="tight-form-checkbox"
+             ng-model="target.shouldOverrideGranularity"
+             ng-change="targetBlur()">
+    </li>
+    <li ng-hide="!target.shouldOverrideGranularity">
+      <select ng-model="target.customGranularity"
+              ng-disabled="!target.shouldOverrideGranularity"
+              class="tight-form-input input-medium"
+              ng-options="granularity for granularity in customGranularities"
+              ng-change="targetBlur()">
+      </select>
+      <a bs-tooltip="target.errors.customGranularity"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.customGranularity">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+    <li class="tight-form-item" ng-hide="target.shouldOverrideGranularity">
+      Max Data Points
+    </li>
+    <li ng-hide="target.shouldOverrideGranularity">
+      <input type="text"
+             class="tight-form-input input-small"
+             ng-model="target.maxDataPoints"
+             spellcheck='false'
+             placeholder="default"
+             ng-blur="targetBlur()">
+      <a bs-tooltip="target.errors.maxDataPoints"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.maxDataPoints">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form">
+  <ul class="tight-form-list" role="menu" ng-switch on="target.queryType">
+    <li ng-switch-when="topN">
+      <span class="tight-form-item">
+          Dimension
+      </span>
+      <input type="text"
+             class="tight-form-input input-medium"
+             ng-model="target.dimension"
+             spellcheck='false'
+             placeholder="dimension"
+             bs-typeahead="getDimensions"
+             data-min-length=0
+             ng-blur="targetBlur()"/>
+      <a bs-tooltip="target.errors.dimension"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.dimension">
+        <i class="fa fa-warning"></i>
+      </a>
+      <span class="tight-form-item">
+          Metric
+      </span>
+      <input type="text"
+             class="tight-form-input input-medium"
+             ng-model="target.druidMetric"
+             spellcheck='false'
+             placeholder="metric"
+             ng-blur="targetBlur()"/>
+      <a bs-tooltip="target.errors.druidMetric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.druidMetric">
+        <i class="fa fa-warning"></i>
+      </a>
+      <span class="tight-form-item">
+          Limit
+      </span>
+      <input type="number" required
+             class="tight-form-input input-small"
+             ng-model="target.limit"
+             spellcheck='false'
+             ng-blur="targetBlur()"/>
+      <a bs-tooltip="target.errors.limit"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.limit">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+    <li ng-switch-when="groupBy">
+      <span class="tight-form-item">
+          Group By
+      </span>
+      <input type="text"
+             class="tight-form-input input-medium"
+             ng-model="target.groupBy"
+             spellcheck='false'
+             placeholder="dim1,dim2"
+             data-min-length=0
+             bs-typeahead="getDimensions"
+             ng-blur="targetBlur()"/>
+      <a bs-tooltip="target.errors.groupBy"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.groupBy">
+        <i class="fa fa-warning"></i>
+      </a>
+      <span class="tight-form-input">
+          Limit
+      </span>
+      <span>
+        <input type="number" required
+               class="tight-form-input input-small"
+               ng-model="target.limit"
+               spellcheck='false'
+               ng-blur="targetBlur()"/>
+        <a bs-tooltip="target.errors.limit"
+           style="color: rgb(229, 189, 28)"
+           ng-show="target.errors.limit">
+          <i class="fa fa-warning"></i>
+        </a>
+        Order By
+        <input type="text"
+               class="tight-form-input input-medium"
+               ng-model="target.orderBy"
+               spellcheck='false'
+               placeholder="col1,col2"
+               bs-typeahead="getDimensions"
+               ng-blur="targetBlur()"/>
+      </span><!--end hasLimit -->
+      <!-- TODO: add having -->
+    </li>
+    <li ng-switch-when="select">
+      <span class="tight-form-item">
+        Dimensions(empty = *)
+      </span>
+      <span ng-repeat="dim in target.selectDimensions track by $index" class="tight-form-item">
+        <span>&nbsp;{{dim}}</span>
+        <a ng-click="removeSelectDimension($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </span>
+      <span class="tight-form-item" ng-hide="addDimensionsMode">
+        <a ng-click="addSelectDimensions()">
+          <i class="fa fa-plus"></i>
+        </a>
+      </span>
+      <span ng-show="addDimensionsMode">
+        <input type="text"
+               class="tight-form-input input-medium"
+               ng-model="target.currentSelect.dimension"
+               spellcheck='false'
+               placeholder="dimension"
+               data-min-length=0
+               bs-typeahead="getDimensions"
+               />
+        <a ng-click="clearCurrentSelectDimension()">
+          <i class="fa fa-remove"></i>
+        </a>
+        <a ng-click="addSelectDimensions()">
+          <i class="fa fa-plus"></i>
+        </a>
+      </span>
+      <span class="tight-form-item">
+        Metrics(empty = *)
+      </span>
+      <span ng-repeat="metric in target.selectMetrics track by $index" class="tight-form-item">
+        <span>&nbsp;{{metric}}</span>
+        <a ng-click="removeSelectMetric($index)">
+          <i class="fa fa-remove"></i>
+        </a>
+      </span>
+      <span class="tight-form-item" ng-hide="addMetricsMode">
+        <a ng-click="addSelectMetrics()">
+          <i class="fa fa-plus"></i>
+        </a>
+      </span>
+      <span ng-show="addMetricsMode">
+        <input type="text"
+               class="tight-form-input input-medium"
+               ng-model="target.currentSelect.metric"
+               spellcheck='false'
+               placeholder="metric"
+               data-min-length=0
+               bs-typeahead="getMetrics"
+        />
+        <a ng-click="clearCurrentSelectMetric()">
+          <i class="fa fa-remove"></i>
+        </a>
+        <a ng-click="addSelectMetrics()">
+          <i class="fa fa-plus"></i>
+        </a>
+      </span>
+      <span class="tight-form-item">
+        threshold
+      </span>
+      <input type="number" required
+             class="tight-form-input input-small"
+             ng-model="target.selectThreshold"
+             placeholder="5"
+             spellcheck='false'
+             ng-blur="targetBlur()"/>
+      <a bs-tooltip="target.errors.selectThreshold"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.selectThreshold">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item">
+      Filters
+    </li>
+    <li ng-repeat="filter in target.filters track by $index" class="tight-form-item">
+      <span ng-switch on="filter.type">
+        <span ng-if="filter.negate">NOT(&nbsp;</span>
+        <span ng-switch-when="regex">
+            {{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.pattern}}
+        </span>
+        <span ng-switch-when="selector">
+            {{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.value}}
+        </span>
+        <span ng-switch-when="javascript">
+            {{filter.type}}:&nbsp;{{filter.dimension}}&nbsp;=&nbsp;{{filter.function}}
+        </span>
+        <span ng-if="filter.negate">&nbsp;)</span>
+      </span>
+      <a ng-click="editFilter($index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a ng-click="removeFilter($index)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+
+    <li class="tight-form-item" ng-hide="addFilterMode">
+      <a ng-click="addFilter()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+
+    <li ng-show="addFilterMode">
+      <select ng-model="target.currentFilter.type"
+              class="tight-form-input input-small"
+              ng-options="type for type in filterTypes"
+              ng-change="targetBlur()">
+      </select>
+      <span ng-switch on="target.currentFilter.type">
+        <span ng-switch-when="regex">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.dimension"
+                 placeholder="dimension"
+                 bs-typeahead="getDimensions"
+                 data-min-length=0
+                 ng-blur="targetBlur()">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.pattern"
+                 ng-blur="targetBlur()"
+                 placeholder="pattern">
+        </span>
+        <span ng-switch-when="selector">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.dimension"
+                 placeholder="dimension"
+                 bs-typeahead="getDimensions"
+                 data-min-length=0
+                 ng-blur="targetBlur()">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.value"
+                 ng-blur="targetBlur()"
+                 placeholder="value">
+        </span>
+        <span ng-switch-when="javascript">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.dimension"
+                 placeholder="dimension"
+                 bs-typeahead="getDimensions"
+                 data-min-length=0
+                 ng-blur="targetBlur()">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentFilter.function"
+                 placeholder="func"
+                 ng-blur="targetBlur()"
+                 placeholder="value">
+        </span>
+        Negate
+        <input type="checkbox"
+               class="tight-form-checkbox"
+               ng-model="target.currentFilter.negate">
+      </span>
+      <a ng-click="clearCurrentFilter()">
+        <i class="fa fa-remove"></i>
+      </a>
+      <a bs-tooltip="target.errors.currentFilter"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.currentFilter">
+        <i class="fa fa-warning"></i>
+      </a>
+      <a ng-click="addFilter()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form" ng-hide="target.queryType == 'select'">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item">
+      Aggregations
+      <a bs-tooltip="target.errors.aggregators"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.aggregators">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+
+    <li ng-repeat="aggregator in target.aggregators track by $index" class="tight-form-item">
+      <span ng-switch on="aggregator.type">
+        <span ng-switch-when="count">
+            {{aggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{aggregator.name}}
+        </span>
+        <span ng-switch-when="longSum">
+            {{aggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{aggregator.name}},&nbsp;fieldName&nbsp;=&nbsp;{{aggregator.fieldName}}
+        </span>
+        <span ng-switch-when="doubleSum">
+            {{aggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{aggregator.name}},&nbsp;fieldName&nbsp;=&nbsp;{{aggregator.fieldName}}
+        </span>
+        <span ng-switch-when="approxHistogramFold">
+            {{aggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{aggregator.name}},&nbsp;fieldName&nbsp;=&nbsp;{{aggregator.fieldName}}
+        </span>
+        <span ng-switch-when="hyperUnique">
+            {{aggregator.type}}:&nbsp;name&nbsp;=&nbsp;{{aggregator.name}},&nbsp;fieldName&nbsp;=&nbsp;{{aggregator.fieldName}}
+        </span>
+      </span>
+      <a ng-click="removeAggregator($index)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+
+    <li class="tight-form-item" ng-hide="addAggregatorMode">
+      <a ng-click="addAggregator()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+
+    <li ng-show="addAggregatorMode">
+      <select ng-model="target.currentAggregator.type"
+              class="tight-form-input input-small"
+              ng-options="type for type in aggregatorTypes"
+              ng-change="targetBlur()">
+      </select>
+      <span ng-switch on="target.currentAggregator.type">
+        <span ng-switch-when="count">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.name"
+                 ng-blur="targetBlur()"
+                 placeholder="output name">
+        </span>
+        <span ng-switch-when="longSum">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.name"
+                 ng-blur="targetBlur()"
+                 placeholder="output name">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.fieldName"
+                 ng-blur="targetBlur()"
+                 placeholder="metric name"
+                 bs-typeahead="getMetrics"
+                 data-min-length=0>
+        </span>
+        <span ng-switch-when="doubleSum">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.name"
+                 ng-blur="targetBlur()"
+                 placeholder="output name">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.fieldName"
+                 ng-blur="targetBlur()"
+                 placeholder="metric name"
+                 bs-typeahead="getMetrics"
+                 data-min-length=0>
+        </span>
+        <span ng-switch-when="approxHistogramFold">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.name"
+                 ng-blur="targetBlur()"
+                 placeholder="output name">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.fieldName"
+                 ng-blur="targetBlur()"
+                 placeholder="metric name">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.resolution"
+                 ng-blur="targetBlur()"
+                 placeholder="resolution">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.numBuckets"
+                 ng-blur="targetBlur()"
+                 placeholder="numBuckets">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.lowerLimit"
+                 ng-blur="targetBlur()"
+                 placeholder="lowerLimit">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.upperLimit"
+                 ng-blur="targetBlur()"
+                 placeholder="upperLimit">
+        </span>
+        <span ng-switch-when="hyperUnique">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.name"
+                 ng-blur="targetBlur()"
+                 placeholder="output name">
+          <input type="text"
+                 class="input-small tight-form-input"
+                 spellcheck='false'
+                 ng-model="target.currentAggregator.fieldName"
+                 ng-blur="targetBlur()"
+                 placeholder="metric name">
+        </span>
+      </span>
+      <a ng-click="clearCurrentAggregator()">
+        <i class="fa fa-remove"></i>
+      </a>
+      <a bs-tooltip="target.errors.currentAggregator"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.currentAggregator">
+        <i class="fa fa-warning"></i>
+      </a>
+      <a ng-click="addAggregator()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
