@@ -93,12 +93,7 @@ define([
     this.setTime = function(time) {
       _.extend(this.time, time);
 
-      // disable refresh if we have an absolute time
-      if (moment.isMoment(time.to)) {
-        this.old_refresh = this.dashboard.refresh || this.old_refresh;
-        this.setAutoRefresh(false);
-      }
-      else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
+      if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
         this.setAutoRefresh(this.old_refresh);
         this.old_refresh = null;
       }
