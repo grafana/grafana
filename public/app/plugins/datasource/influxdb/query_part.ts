@@ -14,7 +14,7 @@ var categories = {
 var groupByTimeFunctions = [];
 
 class QueryPartDef {
-  name: string;
+  type: string;
   params: any[];
   defaultParams: any[];
   renderer: any;
@@ -22,7 +22,7 @@ class QueryPartDef {
   addStrategy: any;
 
   constructor(options: any) {
-    this.name = options.name;
+    this.type = options.type;
     this.params = options.params;
     this.defaultParams = options.defaultParams;
     this.renderer = options.renderer;
@@ -31,13 +31,13 @@ class QueryPartDef {
   }
 
   static register(options: any) {
-    index[options.name] = new QueryPartDef(options);
-    options.category.push(index[options.name]);
+    index[options.type] = new QueryPartDef(options);
+    options.category.push(index[options.type]);
   }
 }
 
 function functionRenderer(part, innerExpr) {
-  var str = part.def.name + '(';
+  var str = part.def.type + '(';
   var parameters = _.map(part.params, (value, index) => {
     var paramType = part.def.params[index];
     if (paramType.quote === 'single') {
@@ -101,17 +101,17 @@ function addMathStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
     // if last is math, replace it
-    if (selectParts[partCount-1].def.name === 'math') {
+    if (selectParts[partCount-1].def.type === 'math') {
       selectParts[partCount-1] = partModel;
       return;
     }
     // if next to last is math, replace it
-    if (selectParts[partCount-2].def.name === 'math') {
+    if (selectParts[partCount-2].def.type === 'math') {
       selectParts[partCount-2] = partModel;
       return;
     }
     // if last is alias add it before
-    else if (selectParts[partCount-1].def.name === 'alias') {
+    else if (selectParts[partCount-1].def.type === 'alias') {
       selectParts.splice(partCount-1, 0, partModel);
       return;
     }
@@ -123,7 +123,7 @@ function addAliasStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
     // if last is alias, replace it
-    if (selectParts[partCount-1].def.name === 'alias') {
+    if (selectParts[partCount-1].def.type === 'alias') {
       selectParts[partCount-1] = partModel;
       return;
     }
@@ -131,9 +131,18 @@ function addAliasStrategy(selectParts, partModel) {
   selectParts.push(partModel);
 }
 
+function addFieldStrategy(selectParts, partModel, query) {
+  // copy all parts
+  var parts = _.map(selectParts, function(part: any) {
+    return new QueryPart({type: part.def.type, params: _.clone(part.params)});
+  });
+
+  query.selectModels.push(parts);
+}
 
 QueryPartDef.register({
-  name: 'field',
+  type: 'field',
+  addStrategy: addFieldStrategy,
   category: categories.Fields,
   params: [{type: 'field'}],
   defaultParams: ['value'],
@@ -141,7 +150,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'mean',
+  type: 'mean',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
@@ -150,7 +159,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'sum',
+  type: 'sum',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
@@ -159,7 +168,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'derivative',
+  type: 'derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
@@ -168,7 +177,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'time',
+  type: 'time',
   category: groupByTimeFunctions,
   params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
   defaultParams: ['$interval'],
@@ -176,7 +185,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'math',
+  type: 'math',
   addStrategy: addMathStrategy,
   category: categories.Math,
   params: [{ name: "expr", type: "string"}],
@@ -185,7 +194,7 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
-  name: 'alias',
+  type: 'alias',
   addStrategy: addAliasStrategy,
   category: categories.Aliasing,
   params: [{ name: "name", type: "string", quote: 'double'}],
@@ -202,9 +211,9 @@ class QueryPart {
 
   constructor(part: any) {
     this.part = part;
-    this.def = index[part.name];
+    this.def = index[part.type];
     if (!this.def) {
-      throw {message: 'Could not find query part ' + part.name};
+      throw {message: 'Could not find query part ' + part.type};
     }
 
     part.params = part.params || _.clone(this.def.defaultParams);
@@ -247,11 +256,11 @@ class QueryPart {
 
   updateText() {
     if (this.params.length === 0) {
-      this.text = this.def.name + '()';
+      this.text = this.def.type + '()';
       return;
     }
 
-    var text = this.def.name + '(';
+    var text = this.def.type + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;
@@ -261,10 +270,6 @@ class QueryPart {
 export = {
   create: function(part): any {
     return new QueryPart(part);
-  },
-
-  getFuncDef: function(name) {
-    return index[name];
   },
 
   getCategories: function() {
