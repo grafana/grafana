@@ -44,6 +44,39 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["2"].aggs["3"].date_histogram.field).to.be("@timestamp");
   });
 
+  it('with es1.x and es2.x date histogram queries check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      elasticsearchVersion: 2
+    });
+
+    var query_params = {
+      metrics: [],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '1'}
+      ],
+    };
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.build(query_params)["aggs"]["1"]["date_histogram"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.build(query_params)["aggs"]["1"]["date_histogram"]["format"]).to.be("epoch_millis");
+  });
+
+  it('with es1.x and es2.x range filter check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      elasticsearchVersion: 2
+    });
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.getRangeFilter()["@timestamp"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.getRangeFilter()["@timestamp"]["format"]).to.be("epoch_millis");
+  });
+
   it('with select field', function() {
     var query = builder.build({
       metrics: [{type: 'avg', field: '@value', id: '1'}],
