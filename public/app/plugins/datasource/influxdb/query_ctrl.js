@@ -55,11 +55,21 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.selectMenu = _.reduce(categories, function(memo, cat, key) {
         var menu = {text: key};
         menu.submenu = _.map(cat, function(item) {
-          return {text: item.name, value: item.name};
+          return {text: item.type, value: item.type};
         });
         memo.push(menu);
         return memo;
       }, []);
+
+      $scope.groupByMenu = _.reduce(categories, function(memo, cat, key) {
+        var menu = {text: key};
+        menu.submenu = _.map(cat, function(item) {
+          return {text: item.type, value: item.type};
+        });
+        memo.push(menu);
+        return memo;
+      }, []);
+
     };
 
     $scope.addSelectPart = function(selectParts, cat, subitem) {

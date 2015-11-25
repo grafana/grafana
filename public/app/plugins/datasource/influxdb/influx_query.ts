@@ -18,13 +18,13 @@ class InfluxQuery {
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
     target.select = target.select || [[
-      {name: 'field', params: ['value']},
-      {name: 'mean', params: []},
+      {type: 'field', params: ['value']},
+      {type: 'mean', params: []},
     ]];
 
     this.updateSelectParts();
     this.groupByParts = [
-      queryPart.create({name: 'time', params: ['$interval']})
+      queryPart.create({type: 'time', params: ['$interval']})
     ];
   }
 
@@ -37,7 +37,7 @@ class InfluxQuery {
   updatePersistedParts() {
     this.target.select = _.map(this.selectModels, function(selectParts) {
       return _.map(selectParts, function(part: any) {
-        return {name: part.def.name, params: part.params};
+        return {type: part.def.type, params: part.params};
       });
     });
   }
@@ -48,22 +48,24 @@ class InfluxQuery {
   }
 
   removeSelectPart(selectParts, part) {
-    var partIndex = _.indexOf(selectParts, part);
-    selectParts.splice(partIndex, 1);
+    // if we remove the field remove the whole statement
+    if (part.def.type === 'field') {
+      if (this.selectModels.length > 1) {
+        var modelsIndex = _.indexOf(this.selectModels, selectParts);
+        this.selectModels.splice(modelsIndex, 1);
+      }
+    } else {
+      var partIndex = _.indexOf(selectParts, part);
+      selectParts.splice(partIndex, 1);
+    }
+
     this.updatePersistedParts();
   }
 
-  addSelectPart(selectParts, name) {
-    var partModel = queryPart.create({name: name});
-    partModel.def.addStrategy(selectParts, partModel);
+  addSelectPart(selectParts, type) {
+    var partModel = queryPart.create({type: type});
+    partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
-  }
-
-  addSelect() {
-    this.target.select.push([
-      {name: 'mean', params: ['value']},
-    ]);
-    this.updateSelectParts();
   }
 
   private renderTagCondition(tag, index) {
@@ -100,12 +102,12 @@ class InfluxQuery {
   render() {
     var target = this.target;
 
-    if (!target.measurement) {
-      throw "Metric measurement is missing";
+    if (target.rawQuery) {
+      return target.query;
     }
 
-    if (!target.fields) {
-      target.fields = [{name: 'value', func: target.function || 'mean'}];
+    if (!target.measurement) {
+      throw "Metric measurement is missing";
     }
 
     var query = 'SELECT ';
