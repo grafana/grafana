@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -40,11 +41,12 @@ func init() {
 }
 
 func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
+	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
 
 	cfg := &aws.Config{
@@ -87,11 +89,12 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
+	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
 
 	cfg := &aws.Config{
@@ -126,11 +129,12 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
+	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
 
 	cfg := &aws.Config{
