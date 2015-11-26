@@ -126,8 +126,16 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
+			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+		})
+
 	cfg := &aws.Config{
-		Region: aws.String(req.Region),
+		Region:      aws.String(req.Region),
+		Credentials: creds,
 	}
 
 	svc := ec2.New(session.New(cfg), cfg)
