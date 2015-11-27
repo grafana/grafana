@@ -41,9 +41,10 @@ type ExternalPluginJs struct {
 }
 
 type ExternalPluginNavLink struct {
-	Text string `json:"text"`
-	Icon string `json:"icon"`
-	Href string `json:"href"`
+	Text    string          `json:"text"`
+	Icon    string          `json:"icon"`
+	Href    string          `json:"href"`
+	ReqRole models.RoleType `json:"reqRole"`
 }
 
 type ExternalPluginCss struct {
@@ -51,6 +52,7 @@ type ExternalPluginCss struct {
 }
 
 type ExternalPlugin struct {
+	Type             string                   `json:"type"`
 	Routes           []*ExternalPluginRoute   `json:"routes"`
 	Js               []*ExternalPluginJs      `json:"js"`
 	Css              []*ExternalPluginCss     `json:"css"`
