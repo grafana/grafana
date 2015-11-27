@@ -16,7 +16,10 @@ class InfluxQuery {
     this.target = target;
 
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [{type: 'time', params: ['$interval']}];
+    target.groupBy = target.groupBy || [
+      {type: 'time', params: ['$interval']},
+      {type: 'fill', params: ['null']},
+    ];
     target.select = target.select || [[
       {type: 'field', params: ['value']},
       {type: 'mean', params: []},
@@ -160,13 +163,18 @@ class InfluxQuery {
     query += conditions.join(' ');
     query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
 
-    query += ' GROUP BY ';
+    var groupBySection = "";
     for (i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
-        query += ', ';
+        // for some reason fill has no seperator
+        groupBySection += part.def.type === 'fill' ? ' ' : ', ';
       }
-      query += part.render('');
+      groupBySection += part.render('');
+    }
+
+    if (groupBySection.length) {
+      query += ' GROUP BY ' + groupBySection;
     }
 
     if (target.fill) {

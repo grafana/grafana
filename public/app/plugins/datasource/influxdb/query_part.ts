@@ -71,6 +71,13 @@ function quotedIdentityRenderer(part, innerExpr) {
   return '"' + part.params[0] + '"';
 }
 
+function fieldRenderer(part, innerExpr) {
+  if (part.params[0] === '*')  {
+    return '*';
+  }
+  return '"' + part.params[0] + '"';
+}
+
 function replaceAggregationAddStrategy(selectParts, partModel) {
   // look for existing aggregation
   for (var i = 0; i < selectParts.length; i++) {
@@ -146,7 +153,7 @@ QueryPartDef.register({
   category: categories.Fields,
   params: [{type: 'field'}],
   defaultParams: ['value'],
-  renderer: quotedIdentityRenderer,
+  renderer: fieldRenderer,
 });
 
 QueryPartDef.register({
@@ -185,11 +192,19 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
+  type: 'fill',
+  category: groupByTimeFunctions,
+  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
+  defaultParams: ['null'],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
   type: 'tag',
   category: groupByTimeFunctions,
   params: [{name: 'tag', type: 'string'}],
   defaultParams: ['tag'],
-  renderer: quotedIdentityRenderer,
+  renderer: fieldRenderer,
 });
 
 QueryPartDef.register({
