@@ -341,6 +341,7 @@ function($, _) {
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
+  kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
 
   // Data
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -508,6 +509,7 @@ function($, _) {
         submenu: [
           {text: 'Dollars ($)', value: 'currencyUSD'},
           {text: 'Pounds (£)',  value: 'currencyGBP'},
+          {text: 'Euros (€)',  value: 'currencyEUR'},
         ]
       },
       {
