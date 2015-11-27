@@ -4,18 +4,18 @@ import InfluxQuery = require('../influx_query');
 
 describe.only('InfluxQuery', function() {
 
-  describe('series with mesurement only', function() {
+  describe('render series with mesurement only', function() {
     it('should generate correct query', function() {
       var query = new InfluxQuery({
         measurement: 'cpu',
       });
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
     });
   });
 
-  describe('series with math and alias', function() {
+  describe('render series with math and alias', function() {
     it('should generate correct query', function() {
       var query = new InfluxQuery({
         measurement: 'cpu',
@@ -30,7 +30,31 @@ describe.only('InfluxQuery', function() {
       });
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+    });
+  });
+
+  describe('render series without group by', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        select: [[{type: 'field', params: ['value']}]],
+        groupBy: [],
+      });
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter');
+    });
+  });
+
+  describe('render series without group by and fill', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        select: [[{type: 'field', params: ['value']}]],
+        groupBy: [{type: 'time'}, {type: 'fill', params: ['0']}],
+      });
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(0)');
     });
   });
 

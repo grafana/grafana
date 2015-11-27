@@ -70,7 +70,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       .then(function(tags) {
         var options = [];
         if (!$scope.queryModel.hasFill()) {
-          options.push(uiSegmentSrv.newSegment({value: 'fill(option)'}));
+          options.push(uiSegmentSrv.newSegment({value: 'fill(null)'}));
         }
         if (!$scope.queryModel.hasGroupByTime()) {
           options.push(uiSegmentSrv.newSegment({value: 'time($interval)'}));
