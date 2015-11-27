@@ -51,6 +51,7 @@ type ExternalPluginCss struct {
 }
 
 type ExternalPlugin struct {
+	Type             string                   `json:"type"`
 	Routes           []*ExternalPluginRoute   `json:"routes"`
 	Js               []*ExternalPluginJs      `json:"js"`
 	Css              []*ExternalPluginCss     `json:"css"`
