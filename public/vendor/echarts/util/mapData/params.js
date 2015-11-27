@@ -266,13 +266,13 @@ define(function (require) {
                 });
             }
         },
-        // '贵州': {
-        //     getGeoJson: function (callback) { 
-        //         require(['./geoJson/gui_zhou_geo'], function (md){
-        //             callback(decode(md));
-        //         });
-        //     }
-        // },
+        '贵州': {
+            getGeoJson: function (callback) { 
+                require(['./geoJson/gui_zhou_geo'], function (md){
+                    callback(decode(md));
+                });
+            }
+        },
         '山东': {
             getGeoJson: function (callback) { 
                 require(['./geoJson/shan_dong_geo'], function (md){

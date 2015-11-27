@@ -65,13 +65,8 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			urlDashboard := configOpenFalcon.Datasource.UrlDashboard
 			urlQuery := configOpenFalcon.Datasource.UrlQuery
 			reqQueryVals.Add("target", ds.Url)
-			reqQueryVals.Add("urlDashboard", urlDashboard)
-			reqQueryVals.Add("urlQuery", urlQuery)
 			req.URL.RawQuery = reqQueryVals.Encode()
 
-			ds.Url = "http://localhost"
-			var port = "4001"
-			ds.Url += ":" + port
 			proxyPath = "/"
 			target, _ := url.Parse(ds.Url)
 			req.URL.Scheme = target.Scheme

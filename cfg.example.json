@@ -1,12 +1,7 @@
 {
-    "database": {
-        "addr": "11.22.33.44:port",
-        "account": "yourDbAccount",
-        "password": "yourDbPassword"
-    },
-    "datasource": {
-        "type": "Open-Falcon",
-        "urlDashboard": "http://dashboard.com",
-        "urlQuery": "http://query.com:port"
+    "db": {
+        "addr": "root:@tcp(127.0.0.1:3306)/grafana?charset=utf8&loc=Asia%2FTaipei",
+        "idle": 10,
+        "max": 100
     }
 }
