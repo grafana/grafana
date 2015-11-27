@@ -70,7 +70,28 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			data.PluginCss = append(data.PluginCss, css.Href)
 		}
 		for _, item := range plugin.MainNavLinks {
-			data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: item.Text, Href: item.Href, Icon: item.Icon})
+			// only show menu items for the specified roles.
+			var validRoles []m.RoleType
+			if string(item.ReqRole) == "" || item.ReqRole == m.ROLE_VIEWER {
+				validRoles = []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR, m.ROLE_VIEWER}
+			} else if item.ReqRole == m.ROLE_EDITOR {
+				validRoles = []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR}
+			} else if item.ReqRole == m.ROLE_ADMIN {
+				validRoles = []m.RoleType{m.ROLE_ADMIN}
+			}
+			ok := true
+			if len(validRoles) > 0 {
+				ok = false
+				for _, role := range validRoles {
+					if role == c.OrgRole {
+						ok = true
+						break
+					}
+				}
+			}
+			if ok {
+				data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: item.Text, Href: item.Href, Icon: item.Icon})
+			}
 		}
 	}
 
