@@ -9,33 +9,32 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func InitExternalPluginRoutes(r *macaron.Macaron) {
-	/*
-		// Handle Auth and role requirements
-		if route.ReqSignedIn {
-			c.Invoke(middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true}))
-		}
-		if route.ReqGrafanaAdmin {
-			c.Invoke(middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true}))
-		}
-		if route.ReqRole != nil {
-			if *route.ReqRole == m.ROLE_EDITOR {
-				c.Invoke(middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN))
-			}
-			if *route.ReqRole == m.ROLE_ADMIN {
-				c.Invoke(middleware.RoleAuth(m.ROLE_ADMIN))
-			}
-		}
-	*/
 	for _, plugin := range plugins.ExternalPlugins {
 		log.Info("Plugin: Adding proxy routes for backend plugin")
 		for _, route := range plugin.Routes {
 			url := util.JoinUrlFragments("/api/plugin-proxy/", route.Path)
-			r.Route(url, route.Method, ExternalPlugin(route.Url))
+			handlers := make([]macaron.Handler, 0)
+			if route.ReqSignedIn {
+				handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true}))
+			}
+			if route.ReqGrafanaAdmin {
+				handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true}))
+			}
+			if route.ReqSignedIn && route.ReqRole != "" {
+				if route.ReqRole == m.ROLE_ADMIN {
+					handlers = append(handlers, middleware.RoleAuth(m.ROLE_ADMIN))
+				} else if route.ReqRole == m.ROLE_EDITOR {
+					handlers = append(handlers, middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN))
+				}
+			}
+			handlers = append(handlers, ExternalPlugin(route.Url))
+			r.Route(url, route.Method, handlers...)
 			log.Info("Plugin: Adding route %s", url)
 		}
 	}
