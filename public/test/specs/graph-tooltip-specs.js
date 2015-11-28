@@ -166,6 +166,42 @@ define([
 
   });
 
-});
+  describeSharedTooltip("steppedLine false, stack true, individual true, stacked value percent true ", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        {
+          data: [[10, 8], [12, 20]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 8], [12, 20]],
+          },
+          stack: true
+        },
+        {
+          data: [[10, 2], [12, 3]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 2], [12, 3]],
+          },
+          stack: true
+        }
+      ];
+      ctx.scope.panel.stack = true;
+      ctx.scope.panel.tooltip.value_type = 'individual';
+      ctx.scope.panel.tooltip.percent_vals = true;
+      ctx.pos = { x: 11 };
+    });
 
+    it('should not show stacked value', function() {
+      expect(ctx.results[1].value).to.be(2);
+      expect(ctx.results[0].value).to.be(8);
+      expect(ctx.results[1].percent_val).to.be(20);
+      expect(ctx.results[0].percent_val).to.be(80);
+    });
+
+  });
+
+});
 

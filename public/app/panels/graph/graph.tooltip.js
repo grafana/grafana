@@ -1,7 +1,8 @@
 define([
   'jquery',
+  'app/core/utils/kbn',
 ],
-function ($) {
+function ($,kbn) {
   'use strict';
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
@@ -38,11 +39,12 @@ function ($) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex;
+      var value, i, series, hoverIndex, original_value;
       var results = [];
 
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
+      var sum_value = 0; // needed to compute percent on stacked graphs
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
@@ -63,11 +65,13 @@ function ($) {
         if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
-          } else if (!series.stack) {
-            value = series.data[hoverIndex][1];
+            original_value = value;
+            sum_value+= original_value;
           } else {
-            last_value += series.data[hoverIndex][1];
+            original_value = series.data[hoverIndex][1];
+            last_value += original_value;
             value = last_value;
+            sum_value+= original_value;
           }
         } else {
           value = series.data[hoverIndex][1];
@@ -79,12 +83,19 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex});
+          results.push({ original_value: original_value, value: value, hoverIndex: newhoverIndex , percent_val: 0});
         } else {
           results.push({ value: value, hoverIndex: hoverIndex});
         }
       }
-
+      //compute percent for stacked series
+      if(scope.panel.tooltip.percent_vals) {
+        $.each(results,function (index,value) {
+          if(value.percent_val === 0) {
+            value.percent_val = value.original_value*100/sum_value;
+          }
+        });
+      }
       return results;
     };
 
@@ -136,7 +147,12 @@ function ($) {
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
           seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
-          seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
+          seriesHtml += '<div class="graph-tooltip-value">' + value + '</div>';
+          if(scope.panel.tooltip.percent_vals && hoverInfo.percent_val) {
+            var value_percent = kbn.valueFormats.percent(hoverInfo.percent_val,1);
+            seriesHtml += '<div class="graph-tooltip-value"> (' + value_percent + ')</div>';
+          }
+          seriesHtml += '</div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
