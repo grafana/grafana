@@ -231,33 +231,32 @@ function (angular, _, moment, dateMath) {
       var region = templateSrv.replace(annotation.region);
       var namespace = templateSrv.replace(annotation.namespace);
       var metricName = templateSrv.replace(annotation.metricName);
-      var dimensionPart = templateSrv.replace(annotation.dimensions);
-      var statistic = templateSrv.replace(annotation.statistic) || '';
+      var dimensions = convertDimensionFormat(annotation.dimensions);
+      var statistics = _.map(annotation.statistics, function(s) { return templateSrv.replace(s); });
       var period = annotation.period || '300';
-
-      if (!region || !namespace || !metricName) { return $q.when([]); }
-
-      var dimensions = {};
-      if (!_.isEmpty(dimensionPart)) {
-        _.each(dimensionPart.split(','), function(v) {
-          var t = v.split('=');
-          if (t.length !== 2) {
-            throw new Error('Invalid query format');
-          }
-          dimensions[t[0]] = t[1];
-        });
-        dimensions = convertDimensionFormat(dimensions);
-      }
       period = parseInt(period, 10);
+
+      if (!region || !namespace || !metricName || _.isEmpty(statistics)) { return $q.when([]); }
 
       var d = $q.defer();
       var self = this;
-      this.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period).then(function(alarms) {
+      var allQueryPromise = _.map(statistics, function(statistic) {
+        return self.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period);
+      });
+      $q.all(allQueryPromise).then(function(alarms) {
         var eventList = [];
 
         var start = convertToCloudWatchTime(options.range.from, false);
         var end = convertToCloudWatchTime(options.range.to, true);
-        _.each(alarms.MetricAlarms, function(alarm) {
+        _.chain(alarms)
+        .pluck('MetricAlarms')
+        .flatten()
+        .each(function(alarm) {
+          if (!alarm) {
+            d.resolve(eventList);
+            return;
+          }
+
           self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
             _.each(history.AlarmHistoryItems, function(h) {
               var event = {
