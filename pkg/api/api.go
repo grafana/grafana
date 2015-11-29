@@ -21,15 +21,8 @@ type DatabaseConfig struct {
 	Password   string	`json:"password"`
 }
 
-type DatasourceConfig struct {
-	Type			string	`json:"type"`
-	UrlDashboard	string	`json:"urlDashboard"`
-	UrlQuery		string	`json:"urlQuery"`
-}
-
 type GlobalConfig struct {
 	Database      *DatabaseConfig    `json:"database"`
-	Datasource    *DatasourceConfig  `json:"datasource"`
 }
 
 var (

@@ -160,14 +160,14 @@ function queryMetric(req, res, targets)
  * @function:		app.get('/', function(req, res))
  * @description:	This route returns list of hosts (endpoints) if query[0] == '*';
  *					 returns list of metrics (counters) otherwise.
- * @related issues:	OWL-168
+ * @related issues:	OWL-159, OWL-168
  * @related issues:	OWL-123, OWL-063, OWL-032, OWL-029, OWL-017
  * @param:			object req
  * @param:			object res
  * @return:			array results
  * @author:			Don Hsieh, WH Lin
  * @since:			07/25/2015
- * @last modified: 	11/11/2015
+ * @last modified: 	11/19/2015
  * @called by:		GET http://localhost:4001
  *					func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
@@ -183,6 +183,9 @@ app.get('/', function(req, res) {
 
 	var host = query.split('.')[0];
 	var gotHostname = host.length > 4;
+	if (!gotHostname && host.indexOf('$') === 0) {
+		gotHostname = true;
+	}
 	if (!gotHostname) {	// Query hosts, i.e., endpoints.
 		query = host.replace('*', '');
 		if (query === '') {
