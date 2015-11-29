@@ -92,10 +92,17 @@ define([
         expect(_dashboard.refresh).to.be('30s');
       });
 
+      it('should restore refresh for absolute time range', function() {
+        _dashboard.refresh = '30s';
+
+        ctx.service.setTime({from: '2011-01-01', to: '2015-01-01' });
+        expect(_dashboard.refresh).to.be('30s');
+      });
+
       it('should restore refresh after relative time range is set', function() {
         _dashboard.refresh = '10s';
         ctx.service.setTime({from: moment([2011,1,1]), to: moment([2015,1,1])});
-        expect(_dashboard.refresh).to.be('10s');
+        expect(_dashboard.refresh).to.be(false);
         ctx.service.setTime({from: '2011-01-01', to: 'now' });
         expect(_dashboard.refresh).to.be('10s');
       });

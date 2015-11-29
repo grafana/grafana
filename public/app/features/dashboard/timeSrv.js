@@ -90,10 +90,15 @@ define([
       timer.cancel(this.refresh_timer);
     };
 
-    this.setTime = function(time) {
+    this.setTime = function(time, enableRefresh) {
       _.extend(this.time, time);
 
-      if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
+      // disable refresh if zoom in or zoom out
+      if (!enableRefresh && moment.isMoment(time.to)) {
+        this.old_refresh = this.dashboard.refresh || this.old_refresh;
+        this.setAutoRefresh(false);
+      }
+      else if (this.old_refresh && this.old_refresh !== this.dashboard.refresh) {
         this.setAutoRefresh(this.old_refresh);
         this.old_refresh = null;
       }
