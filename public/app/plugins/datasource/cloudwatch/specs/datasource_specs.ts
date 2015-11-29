@@ -196,7 +196,11 @@ describe('CloudWatchDatasource', function() {
         region: 'us-east-1',
         namespace: 'AWS/EC2',
         metricName: 'CPUUtilization',
-        dimensions: 'InstanceId=i-12345678'
+        dimensions: {
+          InstanceId: 'i-12345678'
+        },
+        statistics: ['Average'],
+        period: 300
       },
       range: {
         from: moment(1443438674760),
