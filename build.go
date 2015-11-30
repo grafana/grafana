@@ -89,8 +89,13 @@ func main() {
 }
 
 func makeLatestDistCopies() {
+	rpmIteration := "-1"
+	if linuxPackageIteration != "" {
+		rpmIteration = "-" + linuxPackageIteration
+	}
+
 	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
-	runError("cp", "dist/grafana-"+strings.Replace(version, "-", "_", 5)+"-1.x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
+	runError("cp", "dist/grafana-"+linuxPackageVersion+rpmIteration+".x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
 	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
 }
 
@@ -128,6 +133,7 @@ type linuxPackageOptions struct {
 	binPath                string
 	configDir              string
 	configFilePath         string
+	ldapFilePath           string
 	etcDefaultPath         string
 	etcDefaultFilePath     string
 	initdScriptFilePath    string
@@ -148,6 +154,7 @@ func createLinuxPackages() {
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
+		ldapFilePath:           "/etc/grafana/ldap.toml",
 		etcDefaultPath:         "/etc/default",
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
@@ -167,6 +174,7 @@ func createLinuxPackages() {
 		binPath:                "/usr/sbin/grafana-server",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
+		ldapFilePath:           "/etc/grafana/ldap.toml",
 		etcDefaultPath:         "/etc/sysconfig",
 		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
@@ -204,8 +212,10 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
 	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
-	// copy sample ini file to /etc/opt/grafana
+	// copy sample ini file to /etc/grafana
 	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
+	// copy sample ldap toml config file to /etc/grafana/ldap.toml
+	runPrint("cp", "conf/ldap.toml", filepath.Join(packageRoot, options.ldapFilePath))
 
 	args := []string{
 		"-s", "dir",
@@ -216,6 +226,7 @@ func createPackage(options linuxPackageOptions) {
 		"--license", "Apache 2.0",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
+		"--config-files", options.ldapFilePath,
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
@@ -317,8 +328,8 @@ func build(pkg string, tags []string) {
 func ldflags() string {
 	var b bytes.Buffer
 	b.WriteString("-w")
-	b.WriteString(fmt.Sprintf(" -X main.version '%s'", version))
-	b.WriteString(fmt.Sprintf(" -X main.commit '%s'", getGitSha()))
+	b.WriteString(fmt.Sprintf(" -X main.version %s", version))
+	b.WriteString(fmt.Sprintf(" -X main.commit %s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp %d", buildStamp()))
 	return b.String()
 }

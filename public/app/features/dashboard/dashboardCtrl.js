@@ -1,8 +1,7 @@
 define([
   'angular',
   'jquery',
-  'config',
-  'lodash',
+  'app/core/config',
 ],
 function (angular, $, config) {
   "use strict";
@@ -29,7 +28,7 @@ function (angular, $, config) {
     var resizeEventTimeout;
 
     this.init = function(dashboard) {
-      $scope.reset_row();
+      $scope.resetRow();
       $scope.registerWindowResizeEvent();
       $scope.onAppEvent('show-json-editor', $scope.showJsonEditor);
       $scope.setupDashboard(dashboard);
@@ -64,7 +63,7 @@ function (angular, $, config) {
 
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       }).catch(function(err) {
-        console.log('Failed to initialize dashboard', err);
+        if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
     };
@@ -88,17 +87,17 @@ function (angular, $, config) {
       $rootScope.$broadcast('refresh');
     };
 
-    $scope.add_row = function(dash, row) {
+    $scope.addRow = function(dash, row) {
       dash.rows.push(row);
     };
 
-    $scope.add_row_default = function() {
-      $scope.reset_row();
+    $scope.addRowDefault = function() {
+      $scope.resetRow();
       $scope.row.title = 'New row';
-      $scope.add_row($scope.dashboard, $scope.row);
+      $scope.addRow($scope.dashboard, $scope.row);
     };
 
-    $scope.reset_row = function() {
+    $scope.resetRow = function() {
       $scope.row = {
         title: '',
         height: '250px',

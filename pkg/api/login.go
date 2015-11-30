@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -86,22 +87,21 @@ func LoginApiPing(c *middleware.Context) {
 	c.JsonOK("Logged in")
 }
 
-func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.User}
-	err := bus.Dispatch(&userQuery)
-
-	if err != nil {
-		c.JsonApiErr(401, "Invalid username or password", err)
-		return
+func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
+	authQuery := login.LoginUserQuery{
+		Username: cmd.User,
+		Password: cmd.Password,
 	}
 
-	user := userQuery.Result
+	if err := bus.Dispatch(&authQuery); err != nil {
+		if err == login.ErrInvalidCredentials {
+			return ApiError(401, "Invalid username or password", err)
+		}
 
-	passwordHashed := util.EncodePassword(cmd.Password, user.Salt)
-	if passwordHashed != user.Password {
-		c.JsonApiErr(401, "Invalid username or password", err)
-		return
+		return ApiError(500, "Error while trying to authenticate user", err)
 	}
+
+	user := authQuery.User
 
 	loginUserWithUser(user, c)
 
@@ -116,7 +116,7 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) {
 
 	metrics.M_Api_Login_Post.Inc(1)
 
-	c.JSON(200, result)
+	return Json(200, result)
 }
 
 func loginUserWithUser(user *m.User, c *middleware.Context) {

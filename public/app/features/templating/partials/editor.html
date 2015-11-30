@@ -5,10 +5,27 @@
 			Templating
 		</div>
 
+		<div class="tabs">
+			<ul class="nav nav-tabs">
+				<li ng-class="{active: mode === 'list'}">
+					<a ng-click="mode = 'list';">
+						Variables
+					</a>
+				</li>
 
-		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Variables', 'Add', 'Edit']" data-title="{{tab}}">
-			</div>
+				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
+					<a>
+						{{current.name}}
+					</a>
+				</li>
+
+				<li ng-class="{active: mode === 'new'}">
+					<a ng-click="mode = 'new';">
+						<i class="fa fa-plus"></i>
+						New
+					</a>
+				</li>
+			</ul>
 		</div>
 
 		<button class="gf-box-header-close-btn" ng-click="dismiss();dashboard.refresh();">
@@ -19,10 +36,10 @@
 
 	<div class="gf-box-body">
 
-		<div ng-if="editor.index == 0">
+		<div ng-if="mode === 'list'">
 
 			<div class="editor-row row">
-				<div class="span8">
+				<div style="max-width: 1024px">
 					<div ng-if="variables.length === 0">
 						<em>No template variables defined</em>
 					</div>
@@ -42,6 +59,11 @@
 									Edit
 								</a>
 							</td>
+              <td style="width: 1%">
+                <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small">
+                  Duplicate
+                </a>
+              </td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 							<td style="width: 1%">
@@ -55,7 +77,7 @@
 			</div>
 		</div>
 
-		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
+		<div ng-if="mode === 'edit' || mode === 'new'">
 			<div class="editor-row">
 				<div class="tight-form-section">
 					<h5>Variable</h5>
@@ -129,6 +151,23 @@
 							</ul>
 							<div class="clearfix"></div>
 						</div>
+            <div class="tight-form">
+              <ul class="tight-form-list">
+                <li class="tight-form-item" style="width: 100px;">
+                  <editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
+                </li>
+                <li ng-show="current.includeAll">
+                  <input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
+                </li>
+                <li class="tight-form-item" ng-show="current.includeAll">
+                  All format
+                </li>
+                <li ng-show="current.includeAll">
+                  <select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
 					</div>
 
 					<div ng-show="current.type === 'query'">
@@ -169,7 +208,7 @@
 									All format
 								</li>
 								<li ng-show="current.includeAll">
-									<select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values']"></select>
+									<select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
 								</li>
 							</ul>
 							<div class="clearfix"></div>
@@ -200,7 +239,7 @@
 								Multi format
 							</li>
 							<li ng-show="current.multi">
-								<select class="input-small tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values']"></select>
+								<select class="input-medium tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values', 'lucene', 'pipe']"></select>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -229,7 +268,7 @@
 			<div class="editor-row" ng-if="current.type === 'query'">
 				<div class="tight-form-section">
 					<h5>Value groups/tags (Experimental feature)</h5>
-					<div class="tight-form" ng-if="current.useTags">
+					<div class="tight-form last" ng-if="current.useTags">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 135px">
 								Tags query
@@ -246,7 +285,7 @@
 								Tag values query
 							</li>
 							<li>
-								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$__tag.*" ng-model-onblur></input>
+								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -278,8 +317,8 @@
 		</div>
 
 		<div class="editor-row" style="margin-top: 20px">
-			<button type="button" class="btn btn-success" ng-show="editor.index === 2" ng-click="update();">Update</button>
-			<button type="button" class="btn btn-success" ng-show="editor.index === 1" ng-click="add();">Add</button>
+			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
+			<button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
 		</div>
 
 	</div>

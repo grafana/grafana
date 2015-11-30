@@ -6,6 +6,7 @@ package setting
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -73,12 +74,14 @@ var (
 	CookieRememberName    string
 	DisableGravatar       bool
 	EmailCodeValidMinutes int
+	DataProxyWhiteList    map[string]bool
 
 	// User settings
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
+	VerifyEmailEnabled bool
 
 	// Http auth
 	AdminUser     string
@@ -114,11 +117,19 @@ var (
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 
-	ReportingEnabled  bool
-	GoogleAnalyticsId string
+	ReportingEnabled   bool
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
+
+	// LDAP
+	LdapEnabled    bool
+	LdapConfigFile string
 
 	// SMTP email settings
 	Smtp SmtpSettings
+
+	// QUOTA
+	Quota QuotaSettings
 )
 
 type CommandLineArgs struct {
@@ -129,7 +140,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0}`)
+	log.NewLogger(0, "console", `{"level": 0, "formatting":true}`)
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -269,7 +280,7 @@ func loadSpecifedConfigFile(configFile string) {
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Error(3, "Unknown config key %s defined in section %s, in file", key.Name(), section.Name(), configFile)
+				log.Error(3, "Unknown config key %s defined in section %s, in file %s", key.Name(), section.Name(), configFile)
 				continue
 			}
 			defaultKey.SetValue(key.Value())
@@ -348,7 +359,26 @@ func setHomePath(args *CommandLineArgs) {
 	}
 }
 
-func NewConfigContext(args *CommandLineArgs) {
+var skipStaticRootValidation bool = false
+
+func validateStaticRootPath() error {
+	if skipStaticRootValidation {
+		return nil
+	}
+
+	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
+		return nil
+	}
+
+	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
+		StaticRootPath = StaticRootPath + "_gen"
+		return nil
+	}
+
+	return errors.New("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?")
+}
+
+func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)
 
@@ -367,17 +397,28 @@ func NewConfigContext(args *CommandLineArgs) {
 	Domain = server.Key("domain").MustString("localhost")
 	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
 	HttpPort = server.Key("http_port").MustString("3000")
-	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
 
+	if err := validateStaticRootPath(); err != nil {
+		return err
+	}
+
+	// read security settings
 	security := Cfg.Section("security")
 	SecretKey = security.Key("secret_key").String()
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
+	//  read data source proxy white list
+	DataProxyWhiteList = make(map[string]bool)
+	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
+		DataProxyWhiteList[hostAndIp] = true
+	}
 
 	// admin
 	AdminUser = security.Key("admin_user").String()
@@ -387,7 +428,8 @@ func NewConfigContext(args *CommandLineArgs) {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
+	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -411,9 +453,21 @@ func NewConfigContext(args *CommandLineArgs) {
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+
+	ldapSec := Cfg.Section("auth.ldap")
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapConfigFile = ldapSec.Key("config_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()
+	readQuotaSettings()
+
+	if VerifyEmailEnabled && !Smtp.Enabled {
+		log.Warn("require_email_validation is enabled but smpt is disabled")
+	}
+
+	return nil
 }
 
 func readSessionConfig() {
@@ -448,6 +502,8 @@ var logLevels = map[string]int{
 }
 
 func initLogging(args *CommandLineArgs) {
+	//close any existing log handlers.
+	log.Close()
 	// Get and check log mode.
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
@@ -471,7 +527,11 @@ func initLogging(args *CommandLineArgs) {
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			LogConfigs[i] = util.DynMap{"level": level}
+			formatting := sec.Key("formatting").MustBool(true)
+			LogConfigs[i] = util.DynMap{
+				"level":      level,
+				"formatting": formatting,
+			}
 		case "file":
 			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
@@ -532,7 +592,7 @@ func LogConfigurationInfo() {
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for i, prop := range appliedCommandLineProperties {
+		for i, prop := range appliedEnvOverrides {
 			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
 		}
 	}

@@ -6,16 +6,14 @@
 [Email](mailto:contact@grafana.org)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
-Graphite, InfluxDB & OpenTSDB.
+Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ![](http://grafana.org/assets/img/start_page_bg.png)
 
-## Grafana 2.0
-The develop branch has now been merged with master. For 1.9 users this is a big change as Grafana is no longer
-a standalone frontend only web application. Grafana 2.0 comes with a backend.
-- [Install instructions](http://docs.grafana.org/v2.0/installation/)
-- [Migrating from 1.x to 2.x](http://docs.grafana.org/v2.0/installation/migrating_to2/)
-- [What's New in Grafana 2.0](http://docs.grafana.org/v2.0/guides/whats-new-in-v2/)
+- [Install instructions](http://docs.grafana.org/installation/)
+- [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
+- [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
+- [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 
 ## Features
 ### Graphite Target Editor
@@ -30,7 +28,7 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - Click and drag to zoom
 - Multiple Y-axis, logarithmic scales
 - Bars, Lines, Points
-- Smart Y-axis formating
+- Smart Y-axis formatting
 - Series toggles & color selector
 - Legend values, and formatting options
 - Grid thresholds, axis labels
@@ -46,6 +44,9 @@ a standalone frontend only web application. Grafana 2.0 comes with a backend.
 - [Dashboard playlists](http://docs.grafana.org/reference/playlist/)
 - [Time range controls](http://docs.grafana.org/reference/timerange/)
 - [Share snapshots publicly](http://docs.grafana.org/v2.0/reference/sharing/)
+
+### Elasticsearch
+- Feature rich query editor UI
 
 ### InfluxDB
 - Use InfluxDB as a metric data source, annotation source
@@ -69,7 +70,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package your self, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
 the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
@@ -133,7 +134,7 @@ And if you have time clone this repo and submit a pull request and help me make 
 the kickass metrics & devops dashboard we all dream about!
 
 Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://grafana.org/docs/contributing/cla.html)
+please [sign the CLA](http://docs.grafana.org/project/cla/)
 
 ## License
 

@@ -39,10 +39,23 @@ function (angular, _) {
       if (_.isString(value)) {
         return value;
       } else {
-        if (variable.multiFormat === 'regex values') {
-          return '(' + value.join('|') + ')';
+        switch(variable.multiFormat) {
+          case "regex values": {
+            return '(' + value.join('|') + ')';
+          }
+          case "lucene": {
+            var quotedValues = _.map(value, function(val) {
+              return '\\\"' + val + '\\\"';
+            });
+            return '(' + quotedValues.join(' OR ') + ')';
+          }
+          case "pipe": {
+            return value.join('|');
+          }
+          default:  {
+            return '{' + value.join(',') + '}';
+          }
         }
-        return '{' + value.join(',') + '}';
       }
     };
 
@@ -115,17 +128,20 @@ function (angular, _) {
       });
     };
 
-    this.fillVariableValuesForUrl = function(params) {
-      var toUrlVal = function(current) {
-        if (current.text === 'All') {
-          return 'All';
-        } else {
-          return current.value;
-        }
-      };
-
+    this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        params['var-' + variable.name] = toUrlVal(variable.current);
+        var current = variable.current;
+        var value = current.value;
+
+        if (current.text === 'All') {
+          value = 'All';
+        }
+
+        if (scopedVars && scopedVars[variable.name] !== void 0) {
+          value = scopedVars[variable.name].value;
+        }
+
+        params['var-' + variable.name] = value;
       });
     };
 

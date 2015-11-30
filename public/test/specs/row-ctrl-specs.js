@@ -1,6 +1,6 @@
 define([
-  'helpers',
-  'features/dashboard/rowCtrl'
+  './helpers',
+  'app/features/dashboard/rowCtrl'
 ], function(helpers) {
   'use strict';
 

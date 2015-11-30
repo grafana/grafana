@@ -1,0 +1,95 @@
+<div class="container">
+
+	<div class="signup-page-background">
+	</div>
+
+	<div class="login-box">
+
+		<div class="login-box-logo">
+			<img src="img/logo_transparent_200x75.png">
+		</div>
+
+    <div class="invite-box">
+			<h3>
+				Hello {{greeting}}.
+			</h3>
+
+			<div class="modal-tagline">
+				<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
+			</div>
+
+      <form name="inviteForm" class="login-form">
+				<div class="tight-form-container">
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Email
+							</li>
+							<li>
+								<input type="email" name="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="Email" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Name
+							</li>
+							<li>
+								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Username
+							</li>
+							<li>
+								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+
+					<div class="tight-form">
+						<ul class="tight-form-list">
+							<li class="tight-form-item" style="width: 128px">
+								Password
+							</li>
+							<li>
+								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div style="margin-left: 147px; width: 254px;">
+					<password-strength password="formModel.password"></password-strength>
+				</div>
+
+				<div class="login-submit-button-row">
+					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
+						Continue
+					</button>
+				</div>
+			</form>
+
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="row" style="margin-top: 50px">
+			<div class="version-footer text-center small">
+				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
+				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+			</div>
+		</div>
+
+	</div>
+
+</div>
+
+
