@@ -68,6 +68,27 @@ define([
   describeValueFormat('wps', 789000000, 1000000, -1, '789M wps');
   describeValueFormat('iops', 11000000000, 1000000000, -1, '11B iops');
 
+  describeValueFormat('s', 24, 1, 0, '24 s');
+  describeValueFormat('s', 246, 1, 0, '4.1 min');
+  describeValueFormat('s', 24567, 100, 0, '6.82 hour');
+  describeValueFormat('s', 24567890, 10000, 0, '40.62 week');
+  describeValueFormat('s', 24567890000, 1000000, 0, '778.53 year');
+
+  describeValueFormat('m', 24, 1, 0, '24 min');
+  describeValueFormat('m', 246, 10, 0, '4.1 hour');
+  describeValueFormat('m', 6545, 10, 0, '4.55 day');
+  describeValueFormat('m', 24567, 100, 0, '2.44 week');
+  describeValueFormat('m', 24567892, 10000, 0, '46.7 year');
+
+  describeValueFormat('h', 21, 1, 0, '21 hour');
+  describeValueFormat('h', 145, 1, 0, '6.04 day');
+  describeValueFormat('h', 1234, 100, 0, '7.3 week');
+  describeValueFormat('h', 9458, 1000, 0, '1.08 year');
+
+  describeValueFormat('d', 3, 1, 0, '3 day');
+  describeValueFormat('d', 245, 100, 0, '35 week');
+  describeValueFormat('d', 2456, 10, 0, '6.73 year');
+
   describe('kbn.toFixed and negative decimals', function() {
     it('should treat as zero decimals', function() {
       var str = kbn.toFixed(186.123, -2);
