@@ -115,7 +115,7 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    this.timeSrv.setTime(this.timeRaw);
+    this.timeSrv.setTime(this.timeRaw, true);
     this.$rootScope.appEvent('hide-dash-editor');
   }
 
