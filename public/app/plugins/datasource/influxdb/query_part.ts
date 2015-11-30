@@ -40,6 +40,11 @@ function functionRenderer(part, innerExpr) {
   var str = part.def.type + '(';
   var parameters = _.map(part.params, (value, index) => {
     var paramType = part.def.params[index];
+    if (paramType.type === 'time') {
+      if (value === 'auto') {
+        value = '$interval';
+      }
+    }
     if (paramType.quote === 'single') {
       return "'" + value + "'";
     } else if (paramType.quote === 'double') {
@@ -186,8 +191,8 @@ QueryPartDef.register({
 QueryPartDef.register({
   type: 'time',
   category: groupByTimeFunctions,
-  params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
-  defaultParams: ['$interval'],
+  params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
+  defaultParams: ['auto'],
   renderer: functionRenderer,
 });
 
