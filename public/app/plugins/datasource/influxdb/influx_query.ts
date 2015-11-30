@@ -144,13 +144,6 @@ class InfluxQuery {
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
-  private getGroupByTimeInterval(interval) {
-    if (interval === 'auto') {
-      return '$interval';
-    }
-    return interval;
-  }
-
   render() {
     var target = this.target;
 

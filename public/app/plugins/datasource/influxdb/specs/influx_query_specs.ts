@@ -2,7 +2,7 @@ import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import InfluxQuery = require('../influx_query');
 
-describe.only('InfluxQuery', function() {
+describe('InfluxQuery', function() {
 
   describe('render series with mesurement only', function() {
     it('should generate correct query', function() {
