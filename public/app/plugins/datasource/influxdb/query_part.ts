@@ -5,6 +5,7 @@ import _ = require('lodash');
 var index = [];
 var categories = {
   Aggregations: [],
+  Selectors: [],
   Transformations: [],
   Math: [],
   Aliasing: [],
@@ -91,6 +92,10 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
       selectParts[i] = partModel;
       return;
     }
+    if (part.def.category === categories.Selectors) {
+      selectParts[i] = partModel;
+      return;
+    }
   }
 
   selectParts.splice(1, 0, partModel);
@@ -161,8 +166,45 @@ QueryPartDef.register({
   renderer: fieldRenderer,
 });
 
+// Aggregations
+QueryPartDef.register({
+  type: 'count',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'distinct',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'integral',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
 QueryPartDef.register({
   type: 'mean',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'median',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
@@ -179,12 +221,32 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
+// transformations
+
 QueryPartDef.register({
   type: 'derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'non_negative_derivative',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
+  defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'stddev',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
   renderer: functionRenderer,
 });
 
@@ -201,6 +263,70 @@ QueryPartDef.register({
   category: groupByTimeFunctions,
   params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
   defaultParams: ['null'],
+  renderer: functionRenderer,
+});
+
+// Selectors
+QueryPartDef.register({
+  type: 'bottom',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [{name: 'count', type: 'int'}],
+  defaultParams: [3],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'first',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'last',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'max',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'min',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'percentile',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [{name: 'nth', type: 'int'}],
+  defaultParams: [95],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'top',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Selectors,
+  params: [{name: 'count', type: 'int'}],
+  defaultParams: [3],
   renderer: functionRenderer,
 });
 

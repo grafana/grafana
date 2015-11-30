@@ -85,6 +85,9 @@ class InfluxQuery {
           if (partModel.def.category === categories.Aggregations) {
             return false;
           }
+          if (partModel.def.category === categories.Selectors) {
+            return false;
+          }
           return true;
         });
       });
