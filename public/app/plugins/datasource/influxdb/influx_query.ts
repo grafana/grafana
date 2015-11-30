@@ -44,20 +44,34 @@ class InfluxQuery {
   }
 
   hasGroupByTime() {
-    return false;
+    return _.find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
   hasFill() {
-    return false;
+    return _.find(this.target.groupBy, (g: any) => g.type === 'fill');
   }
 
   addGroupBy(value) {
     var stringParts = value.match(/^(\w+)\((.*)\)$/);
     var typePart = stringParts[1];
     var arg = stringParts[2];
-    console.log(value, stringParts);
     var partModel = queryPart.create({type: typePart, params: [arg]});
-    this.target.groupBy.push(partModel.part);
+    var partCount = this.target.groupBy.length;
+
+    if (partCount === 0) {
+      this.target.groupBy.push(partModel.part);
+    } else if (typePart === 'time') {
+      this.target.groupBy.splice(0, 0, partModel.part);
+    } else if (typePart === 'tag') {
+      if (this.target.groupBy[partCount-1].type === 'fill') {
+        this.target.groupBy.splice(partCount-1, 0, partModel.part);
+      } else {
+        this.target.groupBy.push(partModel.part);
+      }
+    } else {
+      this.target.groupBy.push(partModel.part);
+    }
+
     this.updateProjection();
   }
 
