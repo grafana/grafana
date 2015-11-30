@@ -71,7 +71,7 @@
 					<span ng-show="$index === 0">SELECT</span>
 				</li>
 				<li ng-repeat="part in selectParts">
-					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeSelectPart(selectParts, part)" part-updated="selectPartUpdated(selectParts, part)"></influx-query-part-editor>
+					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeSelectPart(selectParts, part)" part-updated="selectPartUpdated(selectParts, part)" get-options="getPartOptions(part)"></influx-query-part-editor>
 				</li>
 				<li class="dropdown" dropdown-typeahead="selectMenu" dropdown-typeahead-on-select="addSelectPart(selectParts, $item, $subItem)">
 				</li>
@@ -85,7 +85,7 @@
 					<span ng-show="$index === 0">GROUP BY</span>
 				</li>
 				<li ng-repeat="part in queryModel.groupByParts">
-					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeGroupByPart(part, $index)" part-updated="get_data();"></influx-query-part-editor>
+					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeGroupByPart(part, $index)" part-updated="get_data();" get-options="getPartOptions(part)"></influx-query-part-editor>
 				</li>
 				<li>
 					<metric-segment segment="groupBySegment" get-options="getGroupByOptions()" on-change="groupByAction(part, $index)"></metric-segment>

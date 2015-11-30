@@ -19,6 +19,7 @@ function (angular, _, $) {
           part: "=",
           removeAction: "&",
           partUpdated: "&",
+          getOptions: "&",
         },
         link: function postLink($scope, elem) {
           var part = $scope.part;
@@ -75,18 +76,32 @@ function (angular, _, $) {
             this.style.width = (3 + this.value.length) * 8 + 'px';
           }
 
-          function addTypeahead($input, paramIndex) {
-            $input.attr('data-provide', 'typeahead');
+          function addTypeahead($input, param, paramIndex) {
+            if (!param.options && !param.dynamicLookup) {
+              return;
+            }
 
-            var options = partDef.params[paramIndex].options;
-            if (partDef.params[paramIndex].type === 'int') {
+            var typeaheadSource = function (query, callback) {
+              if (param.options) { return param.options; }
+
+              $scope.$apply(function() {
+                $scope.getOptions().then(function(result) {
+                  var dynamicOptions = _.map(result, function(op) { return op.value; });
+                  callback(dynamicOptions);
+                });
+              });
+            };
+
+            $input.attr('data-provide', 'typeahead');
+            var options = param.options;
+            if (param.type === 'int') {
               options = _.map(options, function(val) { return val.toString(); });
             }
 
             $input.typeahead({
-              source: options,
+              source: typeaheadSource,
               minLength: 0,
-              items: 20,
+              items: 1000,
               updater: function (value) {
                 setTimeout(function() {
                   inputBlur.call($input[0], paramIndex);
@@ -98,7 +113,8 @@ function (angular, _, $) {
             var typeahead = $input.data('typeahead');
             typeahead.lookup = function () {
               this.query = this.$element.val() || '';
-              return this.process(this.source);
+              var items = this.source(this.query, $.proxy(this.process, this));
+              return items ? this.process(items) : items;
             };
           }
 
@@ -144,9 +160,7 @@ function (angular, _, $) {
               $input.keypress(_.partial(inputKeyPress, index));
               $paramLink.click(_.partial(clickFuncParam, index));
 
-              if (partDef.params[index].options) {
-                addTypeahead($input, index);
-              }
+              addTypeahead($input, param, index);
             });
           }
 
