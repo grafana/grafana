@@ -151,7 +151,7 @@ QueryPartDef.register({
   type: 'field',
   addStrategy: addFieldStrategy,
   category: categories.Fields,
-  params: [{type: 'field'}],
+  params: [{type: 'field', dynamicLookup: true}],
   defaultParams: ['value'],
   renderer: fieldRenderer,
 });
@@ -202,7 +202,7 @@ QueryPartDef.register({
 QueryPartDef.register({
   type: 'tag',
   category: groupByTimeFunctions,
-  params: [{name: 'tag', type: 'string'}],
+  params: [{name: 'tag', type: 'string', dynamicLookup: true}],
   defaultParams: ['tag'],
   renderer: fieldRenderer,
 });

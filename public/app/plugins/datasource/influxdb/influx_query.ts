@@ -1,10 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
-///<amd-dependency path="./query_builder" name="InfluxQueryBuilder" />
 
 import _ = require('lodash');
 import queryPart = require('./query_part');
-
-declare var InfluxQueryBuilder: any;
 
 class InfluxQuery {
   target: any;
@@ -76,6 +73,23 @@ class InfluxQuery {
   }
 
   removeGroupByPart(part, index) {
+    var categories = queryPart.getCategories();
+
+    if (part.def.type === 'time') {
+      // remove fill
+      this.target.groupBy = _.filter(this.target.groupBy, (g: any) => g.type !== 'fill');
+      // remove aggregations
+      this.target.select = _.map(this.target.select, (s: any) => {
+        return _.filter(s, (part: any) => {
+          var partModel = queryPart.create(part);
+          if (partModel.def.category === categories.Aggregations) {
+            return false;
+          }
+          return true;
+        });
+      });
+    }
+
     this.target.groupBy.splice(index, 1);
     this.updateProjection();
   }
@@ -166,7 +180,7 @@ class InfluxQuery {
 
     var measurement = target.measurement;
     if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-      measurement = '"' + measurement+ '"';
+measurement = '"' + measurement+ '"';
     }
 
     query += ' FROM ' + measurement + ' WHERE ';

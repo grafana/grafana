@@ -124,12 +124,6 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.get_data();
     };
 
-    $scope.getFields = function() {
-      var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
-      return $scope.datasource.metricFindQuery(fieldsQuery)
-      .then($scope.transformToSegments(false), $scope.handleQueryError);
-    };
-
     $scope.toggleQueryMode = function () {
       $scope.target.rawQuery = !$scope.target.rawQuery;
     };
@@ -138,6 +132,19 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
       return $scope.datasource.metricFindQuery(query)
       .then($scope.transformToSegments(true), $scope.handleQueryError);
+    };
+
+    $scope.getPartOptions = function(part) {
+      if (part.def.type === 'field') {
+        var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
+        return $scope.datasource.metricFindQuery(fieldsQuery)
+        .then($scope.transformToSegments(true), $scope.handleQueryError);
+      }
+      if (part.def.type === 'tag') {
+        var tagsQuery = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
+        return $scope.datasource.metricFindQuery(tagsQuery)
+        .then($scope.transformToSegments(true), $scope.handleQueryError);
+      }
     };
 
     $scope.handleQueryError = function(err) {
