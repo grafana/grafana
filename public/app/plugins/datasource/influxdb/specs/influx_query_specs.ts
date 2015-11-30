@@ -34,6 +34,74 @@ describe('InfluxQuery', function() {
     });
   });
 
+  describe('series with single tag only', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [{type: 'time', params: ['auto']}],
+        tags: [{key: 'hostname', value: 'server1'}]
+      });
+
+      var queryText = query.render();
+
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
+                          + ' GROUP BY time($interval)');
+    });
+
+    it('should switch regex operator with tag value is regex', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [{type: 'time', params: ['auto']}],
+        tags: [{key: 'app', value: '/e.*/'}]
+      });
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
+    });
+  });
+
+  describe('series with multiple tags only', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [{type: 'time', params: ['auto']}],
+        tags: [{key: 'hostname', value: 'server1'}, {key: 'app', value: 'email', condition: "AND"}]
+      });
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+                          '$timeFilter GROUP BY time($interval)');
+    });
+  });
+
+  describe('series with tags OR condition', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [{type: 'time', params: ['auto']}],
+        tags: [{key: 'hostname', value: 'server1'}, {key: 'hostname', value: 'server2', condition: "OR"}]
+      });
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+                          '$timeFilter GROUP BY time($interval)');
+    });
+  });
+
+  describe('series with groupByTag', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        tags: [],
+        groupBy: [{type: 'time', interval: 'auto'}, {type: 'tag', params: ['host']}],
+      });
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
+                          'GROUP BY time($interval), "host"');
+    });
+  });
+
   describe('render series without group by', function() {
     it('should generate correct query', function() {
       var query = new InfluxQuery({
