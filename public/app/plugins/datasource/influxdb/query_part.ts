@@ -186,7 +186,7 @@ QueryPartDef.register({
 QueryPartDef.register({
   type: 'time',
   category: groupByTimeFunctions,
-  params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5min', '10m', '15m', '1h'] }],
+  params: [{ name: "rate", type: "interval", options: ['$interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
   defaultParams: ['$interval'],
   renderer: functionRenderer,
 });

@@ -58,6 +58,34 @@ describe.only('InfluxQuery', function() {
     });
   });
 
+  describe('when adding group by part', function() {
+
+    it('should add tag before fill', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [{type: 'time'}, {type: 'fill'}]
+      });
+
+      query.addGroupBy('tag(host)');
+      expect(query.target.groupBy.length).to.be(3);
+      expect(query.target.groupBy[1].type).to.be('tag');
+      expect(query.target.groupBy[1].params[0]).to.be('host');
+      expect(query.target.groupBy[2].type).to.be('fill');
+    });
+
+    it('should add tag last if no fill', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: []
+      });
+
+      query.addGroupBy('tag(host)');
+      expect(query.target.groupBy.length).to.be(1);
+      expect(query.target.groupBy[0].type).to.be('tag');
+    });
+
+  });
+
   describe('when adding select part', function() {
 
     it('should add mean after after field', function() {
