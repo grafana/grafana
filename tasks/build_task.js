@@ -6,35 +6,34 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
+    'tslint',
+    'clean:release',
+    'copy:public_to_gen',
+    'typescript:build',
     'karma:test',
-    'clean:on_start',
-    'less:src',
-    'concat:cssDark',
-    'concat:cssLight',
-    'copy:everything_but_less_to_temp',
+    'phantomjs',
+    'css',
     'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
     'requirejs:build',
     'concat:js',
+    'clean:temp',
     'filerev',
     'remapFilerev',
     'usemin',
-    'clean:temp',
-    'uglify:dest'
+    'uglify:genDir'
   ]);
 
-
   // task to add [[.AppSubUrl]] to reved path
-  grunt.registerTask('remapFilerev', function(){
-    var root = grunt.config().destDir;
+  grunt.registerTask('remapFilerev', function() {
+    var root = grunt.config().genDir;
     var summary = grunt.filerev.summary;
     var fixed = {};
 
     for(var key in summary){
       if(summary.hasOwnProperty(key)){
-
         var orig = key.replace(root, root+'/[[.AppSubUrl]]');
         var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]');
         fixed[orig] = revved;
@@ -45,13 +44,12 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('build-post-process', function() {
-    grunt.config('copy.dist_to_tmp', {
+    grunt.config('copy.public_gen_to_temp', {
       expand: true,
-      cwd: '<%= destDir %>',
+      cwd: '<%= genDir %>',
       src: '**/*',
       dest: '<%= tempDir %>/public/',
     });
-    grunt.config('clean.dest_dir', ['<%= destDir %>']);
     grunt.config('copy.backend_bin', {
       cwd: 'bin',
       expand: true,
@@ -66,8 +64,7 @@ module.exports = function(grunt) {
       dest: '<%= tempDir %>'
     });
 
-    grunt.task.run('copy:dist_to_tmp');
-    grunt.task.run('clean:dest_dir');
+    grunt.task.run('copy:public_gen_to_temp');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
   });

@@ -1,0 +1,601 @@
+// Media queries
+// ---------------------
+@media (max-width: 767px) {
+  div.panel {
+    width: 100% !important;
+    padding: 0px !important;
+  }
+}
+
+// Containers
+// ---------------------
+.container-fluid {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.main-view-container {
+  padding: 5px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// Backgrounds
+// ---------------------
+
+.bgNav {
+  background: @navbarBackground;
+}
+
+.bgPrimary {
+  background: @btnPrimaryBackground;
+  color: rgba(255,255,255,.90);
+}
+
+.bgInfo {
+  background: @btnInfoBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgSuccess {
+  background: @btnSuccessBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgWarning {
+  background: @btnWarningBackground;
+  color: rgba(255,255,255,.90);
+}
+
+.bgDanger {
+  background: @btnDangerBackground;
+  color: rgba(255,255,255,.90);
+
+}
+
+.bgInverse {
+  background: @btnInverseBackground;
+  color: rgba(255,255,255,.90);
+}
+
+code, pre {
+  background-color: @grayLighter;
+}
+
+div.editor-row {
+  vertical-align: top;
+}
+
+div.editor-row div.section {
+  margin-right: 20px;
+  vertical-align: top;
+  display: inline-block;
+}
+
+div.editor-option {
+  vertical-align: top;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+div.editor-option label {
+  display: block;
+}
+
+#events {
+  font-size: 12px;
+}
+
+.version {
+  font-size: 85%;
+}
+
+.legend {
+  color: @black;
+}
+
+div.fake-input {
+  background-color: @inputBackground;
+  border: 1px solid @inputBorder;
+  .border-radius(@inputBorderRadius @inputBorderRadius @inputBorderRadius @inputBorderRadius);
+}
+
+hr.small {
+  margin: 5px 0px;
+}
+
+form input.ng-invalid {
+  color: @errorText;
+}
+
+.editor-title {
+  margin-right: 10px;
+  font-size: 1.7em;
+  font-weight: bold;
+  text-transform:capitalize;
+}
+
+.editor-title small {
+  opacity: 0.5;
+  font-size: 0.7em;
+  font-weight: normal;
+}
+
+.bordered {
+  border: 1px solid @tableBorder;
+}
+
+.table-unpadded {
+  th,
+  td {
+    padding: 0px 2px;
+  }
+}
+
+.spy {
+  position:absolute;
+  right:0px;
+  top:0px;
+}
+
+.navbar-inner {
+  border-width: 0 0 0px;
+}
+
+.grafana-row {
+  margin-bottom: 5px;
+}
+
+.row-tab {
+  .dropdown-menu-right {
+    top: 0;
+    left: 33px;
+  }
+}
+
+.row-tab-button {
+  padding: 0px;
+  cursor: pointer;
+  vertical-align: middle;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+}
+
+.row-button {
+  width: 30px;
+  float: left;
+  cursor: pointer;
+  line-height: 31px;
+}
+
+.row-text {
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.9em;
+  text-align: center;
+  line-height: 31px;
+  height: 31px;
+}
+
+.row-close {
+  padding: 0px;
+  margin: 0px;
+  background: @grafanaPanelBackground;
+  text-align: center;
+}
+
+.row-close-buttons {
+  position: absolute;
+  left: 0;
+}
+
+.row-open {
+  margin-top: 5px;
+  left:-34px;
+  position: absolute;
+  z-index: 100;
+  transition: .10s left;
+  transition-delay: .10s;
+  -webkit-transition-delay: .10s;
+}
+
+.row-open:hover {
+  left:-12px;
+}
+
+.odd {
+  background-color: @tableBackgroundAccent;
+}
+
+.nomargin {
+  margin: 0px;
+}
+
+
+[ng\:cloak], [ng-cloak], .ng-cloak {
+  display: none !important;
+}
+
+.table tbody + tbody {
+  border-top: 0px;
+}
+
+.ui-draggable-dragging {
+  display: block;
+  z-index: 9999;
+}
+
+.link {
+  color: @linkColor;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: @linkColorHover;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.popover {
+  max-width: 480px;
+}
+
+.tiny {
+  font-size: 50%;
+}
+
+.smaller {
+  font-size: 70%;
+}
+
+.small {
+  font-size: 85%;
+}
+
+.large {
+  font-size: 120%;
+}
+
+.strong {
+  font-weight: bold;
+}
+
+a {
+  cursor: pointer;
+}
+
+.normal {
+  font-weight: normal;
+}
+
+.light {
+  font-weight: 200;
+}
+
+.input-smaller {
+  width: 75px;
+}
+
+.string {color:lighten(@textColor, 5%)}
+.number {color:lighten(@infoText, 5%)}
+.boolean {color:lighten(@warningText, 5%)}
+.key {color:lighten(@errorText, 5%)}
+
+.btn-active {
+  background-color: #E6E6E6;
+  background-image: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+  outline: 0 none
+}
+
+.remove:hover {
+  background-color: @btnDangerBackgroundHighlight;
+}
+
+.faded {
+  opacity: 0.2;
+}
+
+div.flot-text {
+  color: @textColor !important;
+}
+
+.page-alert-list {
+  z-index:8000;
+  min-width: 300px;
+  max-width: 300px;
+  position: fixed;
+  right: 20px;
+  top: 56px;
+}
+
+.alert {
+  color: @white;
+  padding-bottom: 13px;
+  position: relative;
+}
+
+.alert-close {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  background: @grayLighter;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.1rem;
+  color: @grayDarker;
+}
+
+.alert-title {
+  font-weight: bold;
+  padding-bottom: 2px;
+}
+
+
+.alert-warning {
+  background-color: @warningBackground;
+  border-color: @warningBorder;
+}
+
+/* ===================================================
+ * popover-extra-placements.css v0.1
+ * http://twitter.github.com/bootstrap-popover-extra-placements
+ * ===================================================
+ * Copyright 2012 Daniel Kleehammer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ========================================================== */
+
+
+/*************************
+ *   Top Positions
+ *************************/
+
+/** Top Left **/
+.popover.topLeft {
+  margin-top: -10px;
+}
+
+.popover.topLeft .arrow {
+  bottom: -10px;
+  left: 25%;
+  margin-left: -10px;
+  border-width: 10px 10px 0;
+  border-top-color: @popoverTitleBackground;
+}
+
+.popover.topLeft .arrow:after {
+  border-width: 11px 11px 0;
+  border-top-color: rgba(0, 0, 0, 0.25);
+  bottom: -1px;
+  left: -11px;
+}
+
+/** Top Right **/
+.popover.topRight {
+  margin-top: -10px;
+}
+
+.popover.topRight .arrow {
+  bottom: -10px;
+  left: 75%;
+  margin-left: -10px;
+  border-width: 10px 10px 0;
+  border-top-color: @popoverTitleBackground;;
+}
+
+.popover.topRight .arrow:after {
+  border-width: 11px 11px 0;
+  border-top-color: rgba(0, 0, 0, 0.25);
+  bottom: -1px;
+  left: -11px;
+}
+
+
+/*************************
+ *   Right Positions
+ *************************/
+.popover {
+  &.rightTop .arrow {
+    top: 10%;
+    left: -@popoverArrowOuterWidth;
+    margin-top: -@popoverArrowOuterWidth;
+    border-left-width: 0;
+    border-right-color: #999; // IE8 fallback
+    border-right-color: @popoverArrowOuterColor;
+    &:after {
+      left: 1px;
+      bottom: -@popoverArrowWidth;
+      border-left-width: 0;
+      border-right-color: @popoverArrowColor;
+    }
+  }
+  &.rightBottom .arrow {
+    top: 90%;
+    left: -@popoverArrowOuterWidth;
+    margin-top: -@popoverArrowOuterWidth;
+    border-left-width: 0;
+    border-right-color: #999; // IE8 fallback
+    border-right-color: @popoverArrowOuterColor;
+    &:after {
+      left: 1px;
+      bottom: -@popoverArrowWidth;
+      border-left-width: 0;
+      border-right-color: @popoverArrowColor;
+    }
+  }
+  &.bottomLeft .arrow {
+    left: 10%;
+    margin-left: -@popoverArrowOuterWidth;
+    border-top-width: 0;
+    border-bottom-color: #999; // IE8 fallback
+    border-bottom-color: @popoverArrowOuterColor;
+    top: -@popoverArrowOuterWidth;
+    &:after {
+      top: 1px;
+      margin-left: -@popoverArrowWidth;
+      border-top-width: 0;
+      border-bottom-color: @popoverArrowColor;
+    }
+  }
+  &.bottomRight .arrow {
+    left: 90%;
+    margin-left: -@popoverArrowOuterWidth;
+    border-top-width: 0;
+    border-bottom-color: #999; // IE8 fallback
+    border-bottom-color: @popoverArrowOuterColor;
+    top: -@popoverArrowOuterWidth;
+    &:after {
+      top: 1px;
+      margin-left: -@popoverArrowWidth;
+      border-top-width: 0;
+      border-bottom-color: @popoverArrowColor;
+    }
+  }
+  &.leftTop .arrow {
+    top: 10%;
+    right: -@popoverArrowOuterWidth;
+    margin-top: -@popoverArrowOuterWidth;
+    border-right-width: 0;
+    border-left-color: #999; // IE8 fallback
+    border-left-color: @popoverArrowOuterColor;
+    &:after {
+      right: 1px;
+      border-right-width: 0;
+      border-left-color: @popoverArrowColor;
+      bottom: -@popoverArrowWidth;
+    }
+  }
+  &.leftBottom .arrow {
+    top: 90%;
+    right: -@popoverArrowOuterWidth;
+    margin-top: -@popoverArrowOuterWidth;
+    border-right-width: 0;
+    border-left-color: #999; // IE8 fallback
+    border-left-color: @popoverArrowOuterColor;
+    &:after {
+      right: 1px;
+      border-right-width: 0;
+      border-left-color: @popoverArrowColor;
+      bottom: -@popoverArrowWidth;
+    }
+  }
+  &.topLeft .arrow {
+    left: 10%;
+    margin-left: -@popoverArrowOuterWidth;
+    border-bottom-width: 0;
+    border-top-color: #999; // IE8 fallback
+    border-top-color: @popoverArrowOuterColor;
+    bottom: -@popoverArrowOuterWidth;
+    &:after {
+      bottom: 1px;
+      margin-left: -@popoverArrowWidth;
+      border-bottom-width: 0;
+      border-top-color: @popoverArrowColor;
+    }
+  }
+  &.topRight .arrow {
+    left: 90%;
+    margin-left: -@popoverArrowOuterWidth;
+    border-bottom-width: 0;
+    border-top-color: #999; // IE8 fallback
+    border-top-color: @popoverArrowOuterColor;
+    bottom: -@popoverArrowOuterWidth;
+    &:after {
+      bottom: 1px;
+      margin-left: -@popoverArrowWidth;
+      border-bottom-width: 0;
+      border-top-color: @popoverArrowColor;
+    }
+  }
+}
+
+// typeahead max height
+.typeahead {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+// Labels & Badges
+.label-tag {
+  background-color: @purple;
+  color: darken(@white, 5%);
+  white-space: nowrap;
+  border-radius: 3px;
+  text-shadow: none;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  .icon-tag {
+    position: relative;
+    top: 1px;
+    padding-right: 4px;
+  }
+}
+
+.label-tag:hover {
+  opacity: 0.85;
+  background-color: darken(@purple, 10%);
+}
+
+
+// inspector
+.inspector-request-table {
+  td {
+     padding: 5px;
+  }
+
+  td:first-child {
+    white-space: nowrap;
+  }
+}
+
+.modal-body {
+  padding: 0;
+}
+
+// pre
+code, pre {
+  background-color: @grafanaPanelBackground;
+  color: @textColor;
+}
+
+.dropdown-menu {
+  min-width: 140px;
+  > li > a {
+    padding: 3px 20px 3px 15px;
+    i {
+      padding-right: 5px;
+      color: @linkColorDisabled;
+    }
+  }
+}
+
+.dropdown-submenu>.dropdown-menu.dropdown-submenu-left {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: -1px;
+}

@@ -15,13 +15,20 @@ function (angular) {
     $scope.getOrgInfo = function() {
       backendSrv.get('/api/org').then(function(org) {
         $scope.org = org;
+        $scope.address = org.address;
         contextSrv.user.orgName = org.name;
       });
     };
 
     $scope.update = function() {
       if (!$scope.orgForm.$valid) { return; }
-      backendSrv.put('/api/org', $scope.org).then($scope.getOrgInfo);
+      var data = {name: $scope.org.name};
+      backendSrv.put('/api/org', data).then($scope.getOrgInfo);
+    };
+
+    $scope.updateAddress = function() {
+      if (!$scope.addressForm.$valid) { return; }
+      backendSrv.put('/api/org/address', $scope.address).then($scope.getOrgInfo);
     };
 
     $scope.init();

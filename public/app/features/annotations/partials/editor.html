@@ -6,9 +6,27 @@
 			Annotations
 		</div>
 
-		<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-			<div ng-repeat="tab in ['Overview', 'Add', 'Edit']" data-title="{{tab}}">
-			</div>
+		<div class="tabs">
+			<ul class="nav nav-tabs">
+				<li ng-class="{active: mode === 'list'}">
+					<a ng-click="mode = 'list';">
+						List
+					</a>
+				</li>
+
+				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
+					<a>
+						{{currentAnnotation.name}}
+					</a>
+				</li>
+
+				<li ng-class="{active: mode === 'new'}">
+					<a ng-click="mode = 'new';">
+						<i class="fa fa-plus"></i>
+						New
+					</a>
+				</li>
+			</ul>
 		</div>
 
 		<button class="gf-box-header-close-btn" ng-click="dismiss();">
@@ -17,7 +35,8 @@
 	</div>
 
 	<div class="gf-box-body">
-		<div class="editor-row row" ng-if="editor.index == 0">
+
+		<div class="editor-row row" ng-if="mode === 'list'">
 			<div class="span6">
 				<div ng-if="annotations.length === 0">
 					<em>No annotations defined</em>
@@ -47,7 +66,7 @@
 			</div>
 		</div>
 
-		<div ng-if="editor.index == 1 || (editor.index == 2 && !currentIsNew)">
+		<div ng-if="mode === 'edit' || mode === 'new'">
 			<div class="editor-row">
 				<div class="editor-option">
 					<label class="small">Name</label>
@@ -72,15 +91,13 @@
 				</div>
 			</div>
 
-			<div ng-include src="currentDatasource.meta.partials.annotations">
-			</div>
+			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
 
 			<br>
-			<button ng-show="editor.index === 1" type="button" class="btn btn-success" ng-click="add()">Add</button>
-			<button ng-show="editor.index === 2" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
+			<button ng-show="mode === 'new'" type="button" class="btn btn-success" ng-click="add()">Add</button>
+			<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
 			<br>
 			<br>
-
 		</div>
 	</div>
 </div>

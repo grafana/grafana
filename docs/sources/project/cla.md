@@ -28,7 +28,7 @@ but protects both the contributor and the company / foundation behind the projec
 It also gives us the option to relicense the code with a more permissive license in the future.
 
 
-If you have more questions, shoot us an email or drop by #grafana on IRC (freenode).
+If you have more questions, shoot us an [email](mailto:torkel@grafana.org) or drop by #grafana on IRC (freenode).
 
 Many thanks to [RethinkDB](http://rethinkdb.com) for permission to re-use their CLA!
 

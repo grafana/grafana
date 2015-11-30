@@ -23,7 +23,7 @@
   "laxcomma": true,
   "sub": true,
   "unused": true,
-  "maxdepth": 5,
+  "maxdepth": 6,
   "maxlen": 140,
 
   "globals": {

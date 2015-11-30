@@ -3,7 +3,10 @@ coverage/
 .aws-config.json
 awsconfig
 /dist
+/emails/dist
+/public_gen
 /tmp
+vendor/phantomjs/phantomjs
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
@@ -27,4 +30,5 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 profile.cov
-
+grafana
+.notouch

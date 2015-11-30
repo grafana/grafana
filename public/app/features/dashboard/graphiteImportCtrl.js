@@ -1,10 +1,9 @@
 define([
   'angular',
-  'app',
   'lodash',
-  'kbn'
+  'app/core/utils/kbn'
 ],
-function (angular, app, _, kbn) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -90,7 +89,7 @@ function (angular, app, _, kbn) {
       });
 
       window.grafanaImportDashboard = newDashboard;
-      $location.path('/dashboard/import/' + kbn.slugifyForUrl(newDashboard.title));
+      $location.path('/dashboard-import/' + kbn.slugifyForUrl(newDashboard.title));
     }
   });
 });

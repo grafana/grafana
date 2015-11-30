@@ -52,7 +52,7 @@ function (angular, _) {
         if (link.asDropdown) {
           template += '<ul class="dropdown-menu" role="menu">' +
             '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}"><i class="fa fa-th-large"></i> {{dash.title}}</a></li>' +
-            '</ul';
+            '</ul>';
         }
 
         elem.html(template);
@@ -114,7 +114,7 @@ function (angular, _) {
           title: linkDef.title,
           icon: iconMap[linkDef.icon],
           tooltip: linkDef.tooltip,
-          target: linkDef.targetBlank ? "_blank" : "",
+          target: linkDef.targetBlank ? "_blank" : "_self",
           keepTime: linkDef.keepTime,
           includeVars: linkDef.includeVars,
         }]);
@@ -159,7 +159,7 @@ function (angular, _) {
     };
 
     updateDashLinks();
-    $rootScope.onAppEvent('dash-links-updated', updateDashLinks);
+    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $rootScope);
   });
 
   module.controller('DashLinkEditorCtrl', function($scope, $rootScope) {

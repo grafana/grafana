@@ -37,20 +37,22 @@ func GetDataSources(c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func GetDataSourceById(c *middleware.Context) {
+func GetDataSourceById(c *middleware.Context) Response {
 	query := m.GetDataSourceByIdQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query datasources", err)
-		return
+		if err == m.ErrDataSourceNotFound {
+			return ApiError(404, "Data source not found", nil)
+		}
+		return ApiError(500, "Failed to query datasources", err)
 	}
 
 	ds := query.Result
 
-	c.JSON(200, &dtos.DataSource{
+	return Json(200, &dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
@@ -112,5 +114,13 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 }
 
 func GetDataSourcePlugins(c *middleware.Context) {
-	c.JSON(200, plugins.DataSources)
+	dsList := make(map[string]interface{})
+
+	for key, value := range plugins.DataSources {
+		if value.(map[string]interface{})["builtIn"] == nil {
+			dsList[key] = value
+		}
+	}
+
+	c.JSON(200, dsList)
 }

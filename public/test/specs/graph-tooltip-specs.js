@@ -1,6 +1,6 @@
 define([
   'jquery',
-  'panels/graph/graph.tooltip'
+  'app/panels/graph/graph.tooltip'
 ], function($, GraphTooltip) {
   'use strict';
 
@@ -41,8 +41,8 @@ define([
   describeSharedTooltip("steppedLine false, stack false", function(ctx) {
     ctx.setup(function() {
       ctx.data = [
-        { data: [[10, 15], [12, 20]], },
-        { data: [[10, 2], [12, 3]], }
+        { data: [[10, 15], [12, 20]], lines: {} },
+        { data: [[10, 2], [12, 3]], lines: {} }
       ];
       ctx.pos = { x: 11 };
     });
@@ -73,8 +73,24 @@ define([
   describeSharedTooltip("steppedLine false, stack true, individual false", function(ctx) {
     ctx.setup(function() {
       ctx.data = [
-        { data: [[10, 15], [12, 20]], },
-        { data: [[10, 2], [12, 3]], }
+        {
+          data: [[10, 15], [12, 20]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10,15], [12,20]],
+          },
+          stack: true,
+        },
+        {
+          data: [[10, 2], [12, 3]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 2], [12, 3]],
+          },
+          stack: true
+        }
       ];
       ctx.scope.panel.stack = true;
       ctx.pos = { x: 11 };
@@ -83,14 +99,61 @@ define([
     it('should show stacked value', function() {
       expect(ctx.results[1].value).to.be(17);
     });
+  });
+
+  describeSharedTooltip("steppedLine false, stack true, individual false, series stack false", function(ctx) {
+    ctx.setup(function() {
+      ctx.data = [
+        {
+          data: [[10, 15], [12, 20]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 15], [12, 20]],
+          },
+          stack: true
+        },
+        {
+          data: [[10, 2], [12, 3]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 2], [12, 3]],
+          },
+          stack: false
+        }
+      ];
+      ctx.scope.panel.stack = true;
+      ctx.pos = { x: 11 };
+    });
+
+    it('should not show stacked value', function() {
+      expect(ctx.results[1].value).to.be(2);
+    });
 
   });
 
   describeSharedTooltip("steppedLine false, stack true, individual true", function(ctx) {
     ctx.setup(function() {
       ctx.data = [
-        { data: [[10, 15], [12, 20]], },
-        { data: [[10, 2], [12, 3]], }
+        {
+          data: [[10, 15], [12, 20]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 15], [12, 20]],
+          },
+          stack: true
+        },
+        {
+          data: [[10, 2], [12, 3]],
+          lines: {},
+          datapoints: {
+            pointsize: 2,
+            points: [[10, 2], [12, 3]],
+          },
+          stack: false
+        }
       ];
       ctx.scope.panel.stack = true;
       ctx.scope.panel.tooltip.value_type = 'individual';

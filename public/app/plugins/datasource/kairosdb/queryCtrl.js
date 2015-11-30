@@ -6,8 +6,6 @@ function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
-  var metricList = [];
-  var tagList = [];
 
   module.controller('KairosDBQueryCtrl', function($scope) {
 
@@ -39,59 +37,26 @@ function (angular, _) {
       $scope.get_data();
     };
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
-    $scope.moveMetricQuery = function(fromIndex, toIndex) {
-      _.move($scope.panel.targets, fromIndex, toIndex);
+    $scope.getTextValues = function(metricFindResult) {
+      return _.map(metricFindResult, function(value) { return value.text; });
     };
 
     $scope.suggestMetrics = function(query, callback) {
-      if (!_.isEmpty(metricList)) {
-        return metricList;
-      }
-      else {
-        $scope.datasource.performMetricSuggestQuery().then(function(result) {
-          metricList = result;
-          callback(metricList);
-        });
-      }
+      $scope.datasource.metricFindQuery('metrics(' + query + ')')
+        .then($scope.getTextValues)
+        .then(callback);
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      if (!_.isEmpty(tagList)) {
-        var result = _.find(tagList, { name : $scope.target.metric });
-
-        if (!_.isEmpty(result)) {
-          return _.keys(result.tags);
-        }
-      }
-
-      $scope.datasource.performTagSuggestQuery($scope.target.metric).then(function(result) {
-        if (!_.isEmpty(result)) {
-          tagList.push(result);
-          callback(_.keys(result.tags));
-        }
-      });
+      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+        .then($scope.getTextValues)
+        .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      if (!_.isEmpty(tagList)) {
-        var result = _.find(tagList, { name : $scope.target.metric });
-
-        if (!_.isEmpty(result)) {
-          return result.tags[$scope.target.currentTagKey];
-        }
-      }
-
-      $scope.datasource.performTagSuggestQuery($scope.target.metric).then(function(result) {
-        if (!_.isEmpty(result)) {
-          tagList.push(result);
-          callback(result.tags[$scope.target.currentTagKey]);
-        }
-      });
+      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+        .then($scope.getTextValues)
+        .then(callback);
     };
 
     // Filter metric by tag

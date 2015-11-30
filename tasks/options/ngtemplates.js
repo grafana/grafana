@@ -1,13 +1,13 @@
 module.exports = function(config) {
   return {
     grafana: {
-      cwd:  '<%= tempDir %>',
+      cwd:  '<%= genDir %>',
       src:  ['app/**/*.html'],
-      dest: '<%= tempDir %>/app/components/partials.js',
+      dest: '<%= genDir %>/app/core/partials.js',
       options: {
         bootstrap: function(module, script) {
-          return "define('components/partials', ['angular'], function(angular) { \n" +
-            "angular.module('grafana').run(['$templateCache', function($templateCache) { \n" +
+          return "define('app/core/partials', ['app/core/core_module'], function(coreModule) { \n" +
+            "coreModule.run(['$templateCache', function($templateCache) { \n" +
                 script +
             '\n}]);' +
           '\n});';

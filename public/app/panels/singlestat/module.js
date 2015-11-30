@@ -1,13 +1,13 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
-  'components/timeSeries',
-  'kbn',
-  'components/panelmeta',
+  'app/core/utils/kbn',
+  'app/core/time_series',
+  'app/features/panel/panel_meta',
   './singleStatPanel',
 ],
-function (angular, app, _, TimeSeries, kbn, PanelMeta) {
+function (angular, app, _, kbn, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat');
@@ -37,6 +37,7 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     // Set and populate defaults
     var _d = {
       links: [],
+      datasource: null,
       maxDataPoints: 100,
       interval: null,
       targets: [{}],
@@ -185,8 +186,18 @@ function (angular, app, _, TimeSeries, kbn, PanelMeta) {
     $scope.setValues = function(data) {
       data.flotpairs = [];
 
+      if($scope.series.length > 1) {
+        $scope.inspector.error = new Error();
+        $scope.inspector.error.message = 'Multiple Series Error';
+        $scope.inspector.error.data = 'Metric query returns ' + $scope.series.length +
+        ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify($scope.series);
+        throw $scope.inspector.error;
+      }
+
       if ($scope.series && $scope.series.length > 0) {
-        var lastValue = _.last($scope.series[0].datapoints)[0];
+        var lastPoint = _.last($scope.series[0].datapoints);
+        var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+
         if (_.isString(lastValue)) {
           data.value = 0;
           data.valueFormated = lastValue;
