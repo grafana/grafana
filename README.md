@@ -85,11 +85,13 @@ go get github.com/grafana/grafana
 ```
 
 ### Building the backend
+Replace X.Y.Z by actual version number.
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
-go build .
+go build -ldflags "-X main.build_date=`date +%Y-%m-%d` -X main.version=X.Y.Z -X main.commit=`git rev-parse --verify HEAD`" 
+
 ```
 
 ### Building frontend assets
