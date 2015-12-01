@@ -43,7 +43,6 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
         // build query
         var queryModel = new InfluxQuery(target);
         var query =  queryModel.render();
-        console.log(query);
         query = query.replace(/\$interval/g, (target.interval || options.interval));
         return query;
 
