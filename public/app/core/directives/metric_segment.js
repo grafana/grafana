@@ -20,7 +20,6 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-
       link: function($scope, elem) {
         var $input = $(inputTemplate);
         var $button = $(buttonTemplate);

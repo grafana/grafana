@@ -60,7 +60,6 @@ export class TablePanelCtrl {
       }
 
       _.defaults($scope.panel, panelDefaults);
-
       panelSrv.init($scope);
     };
 
