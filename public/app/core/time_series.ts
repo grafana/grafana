@@ -28,6 +28,7 @@ class TimeSeries {
   stats: any;
   legend: boolean;
   allIsNull: boolean;
+  allIsZero: boolean;
   decimals: number;
   scaledDecimals: number;
 
@@ -96,6 +97,7 @@ class TimeSeries {
     this.stats.avg = null;
     this.stats.current = null;
     this.allIsNull = true;
+    this.allIsZero = true;
 
     var ignoreNulls = fillStyle === 'connected';
     var nullAsZero = fillStyle === 'null as zero';
@@ -128,6 +130,10 @@ class TimeSeries {
         if (currentValue < this.stats.min) {
           this.stats.min = currentValue;
         }
+      }
+
+      if (currentValue != 0) {
+        this.allIsZero = false;
       }
 
       result.push([currentTime, currentValue]);
