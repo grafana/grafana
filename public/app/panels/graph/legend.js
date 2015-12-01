@@ -137,6 +137,10 @@ function (angular, _, $) {
             if (!series.legend) {
               continue;
             }
+            // ignore zero series
+            if (panel.legend.hideZero && series.allIsZero) {
+              continue;
+            }
 
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }
