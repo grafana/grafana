@@ -75,7 +75,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
 
-- Go 1.4
+- Go 1.5
 - NodeJS
 
 ### Get Code
@@ -90,8 +90,7 @@ Replace X.Y.Z by actual version number.
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
-go build -ldflags "-X main.build_date=`date +%Y-%m-%d` -X main.version=X.Y.Z -X main.commit=`git rev-parse --verify HEAD`" 
-
+godep go run build.go build
 ```
 
 ### Building frontend assets
@@ -114,7 +113,7 @@ bra run
 
 ### Running
 ```
-./grafana
+./bin/grafana-server
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
