@@ -127,7 +127,7 @@ You only need to add the options you want to override. Config files are applied 
 3. custom.ini
 
 ## Create a pull request
-Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+Before or after you create a pull request, sign the [contributor license agreement](http://docs.grafana.org/project/cla/).
 ## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
