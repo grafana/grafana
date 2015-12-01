@@ -142,9 +142,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     ElasticDatasource.prototype.mapIdQuery = function(id, idfield, namefield) {
-      var queryString = idfield+":"+id;
-
-      var query = { "bool": { "should": [{ "query_string": { "query": queryString } }] } };
+      var query = { "term": {} };
+      query["term"][idfield] = id;
       var data = {
         "query" : query,
         "size": 1

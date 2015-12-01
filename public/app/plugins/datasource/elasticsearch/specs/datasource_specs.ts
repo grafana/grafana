@@ -114,7 +114,7 @@ describe('ElasticDatasource', function() {
 
   describe('When issuing id mapping query', function() {
     var requestOptions;
-    var esReply = { data: { hits: { hits: [{ _source: { idfield: "id1", namefield: "name1" } }] } } };
+    var esReply = { data: { hits: { hits: [{ _source: { idfieldname: "id1", namefield: "name1" } }] } } };
     var result;
     beforeEach(function() {
       ctx.ds = new ctx.service({
@@ -128,7 +128,7 @@ describe('ElasticDatasource', function() {
         return ctx.$q.when(esReply);
       };
 
-      ctx.ds.mapIdQuery('id1', 'idfield', 'namefield').then(function(r) {
+      ctx.ds.mapIdQuery('id1', 'idfieldname', 'namefield').then(function(r) {
         result = r;
       });
 
@@ -141,7 +141,7 @@ describe('ElasticDatasource', function() {
 
     it('should send query for the requested id and idfield', function() {
       expect(requestOptions.data).to.eql({
-        query: { bool: { should: [{ query_string: { query: 'idfield:id1' } }] } },
+        query: { "term": { idfieldname: "id1" } },
         size: 1
       });
     });
