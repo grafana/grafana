@@ -150,9 +150,9 @@
 
 <div class="editor-row">
 	<div class="section">
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
+				<li class="tight-form-item" style="width: 80px">
 					Legend
 				</li>
 				<li class="tight-form-item">
@@ -164,21 +164,13 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
-				<li class="tight-form-item last">
-					<editor-checkbox text="Hide empty" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
-				</li>
-        <li class="tight-form-item last">
-          <editor-checkbox text="Hide zero" model="panel.legend.hideZero" change="render()"></editor-checkbox>
-        </li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-	</div>
-	<div class="section">
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					Legend values
+				<li class="tight-form-item" style="width: 80px">
+					Values
 				</li>
 				<li class="tight-form-item">
 					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
@@ -195,13 +187,8 @@
 				<li class="tight-form-item last">
 					<editor-checkbox text="Total" model="panel.legend.total" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					<strong>Decimals</strong>
+				<li class="tight-form-item">
+					Decimals
 				</li>
 				<li style="width: 105px">
 					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
@@ -210,7 +197,19 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-
-
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					Hide
+				</li>
+				<li class="tight-form-item last">
+					<editor-checkbox text="All null series" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+				</li>
+        <li class="tight-form-item last">
+          <editor-checkbox text="All zero series" model="panel.legend.hideZero" change="render()"></editor-checkbox>
+        </li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
 	</div>
 </div>
