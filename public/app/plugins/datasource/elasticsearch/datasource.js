@@ -107,7 +107,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           for (var i = 0; i < fieldNames.length; i++) {
             fieldValue = fieldValue[fieldNames[i]];
             if (!fieldValue) {
-              console.log('could not find field in annotatation: ', fieldName);
+              console.log('could not find field in annotation: ', fieldName);
               return '';
             }
           }
