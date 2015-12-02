@@ -63,7 +63,8 @@ function (angular, _, dateMath) {
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         start: start,
-        queries: queries
+        queries: queries,
+        showQuery: true
       };
 
       // Relative queries (e.g. last hour) don't include an end time
@@ -293,11 +294,12 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) {
-            interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
-            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
-          });
+          return target.metric === metricData.query.metric &&
+          _.all(target.tags, function(tagV, tagK) {
+              interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
+              return metricData.query.tags[tagK] === "literal_or("+interpolatedTagValue+")" || interpolatedTagValue === "*";
+            }) &&
+          target.aggregator === metricData.query.aggregator;
         });
       });
     }
