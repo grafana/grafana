@@ -20,13 +20,13 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-
       link: function($scope, elem) {
         var $input = $(inputTemplate);
         var $button = $(buttonTemplate);
         var segment = $scope.segment;
         var options = null;
         var cancelBlur = null;
+        var linkMode = true;
 
         $input.appendTo(elem);
         $button.appendTo(elem);
@@ -55,19 +55,21 @@ function (_, $, coreModule) {
           });
         };
 
-        $scope.switchToLink = function(now) {
-          if (now === true || cancelBlur) {
-            clearTimeout(cancelBlur);
-            cancelBlur = null;
-            $input.hide();
-            $button.show();
-            $scope.updateVariableValue($input.val());
-          }
-          else {
-            // need to have long delay because the blur
-            // happens long before the click event on the typeahead options
-            cancelBlur = setTimeout($scope.switchToLink, 100);
-          }
+        $scope.switchToLink = function() {
+          if (linkMode) { return; }
+
+          clearTimeout(cancelBlur);
+          cancelBlur = null;
+          linkMode = true;
+          $input.hide();
+          $button.show();
+          $scope.updateVariableValue($input.val());
+        };
+
+        $scope.inputBlur = function() {
+          // happens long before the click event on the typeahead options
+          // need to have long delay because the blur
+          cancelBlur = setTimeout($scope.switchToLink, 100);
         };
 
         $scope.source = function(query, callback) {
@@ -98,7 +100,7 @@ function (_, $, coreModule) {
           }
 
           $input.val(value);
-          $scope.switchToLink(true);
+          $scope.switchToLink();
 
           return value;
         };
@@ -139,6 +141,8 @@ function (_, $, coreModule) {
           $input.show();
           $input.focus();
 
+          linkMode = false;
+
           var typeahead = $input.data('typeahead');
           if (typeahead) {
             $input.val('');
@@ -146,7 +150,7 @@ function (_, $, coreModule) {
           }
         });
 
-        $input.blur($scope.switchToLink);
+        $input.blur($scope.inputBlur);
 
         $compile(elem.contents())($scope);
       }

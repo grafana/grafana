@@ -341,6 +341,8 @@ function($, _) {
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
+  kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
+  kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
 
   // Data
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -430,7 +432,7 @@ function($, _) {
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
 
-    if (Math.abs(size) < 600) {
+    if (Math.abs(size) < 60) {
       return kbn.toFixed(size, decimals) + " s";
     }
     // Less than 1 hour, devide in minutes
@@ -487,6 +489,57 @@ function($, _) {
     }
   };
 
+  kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 60) {
+      return kbn.toFixed(size, decimals) + " min";
+    }
+    else if (Math.abs(size) < 1440) {
+      return kbn.toFixedScaled(size / 60, decimals, scaledDecimals, 2, " hour");
+    }
+    else if (Math.abs(size) < 10080) {
+      return kbn.toFixedScaled(size / 1440, decimals, scaledDecimals, 3, " day");
+    }
+    else if (Math.abs(size) < 604800) {
+      return kbn.toFixedScaled(size / 10080, decimals, scaledDecimals, 4, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 5.25948e5, decimals, scaledDecimals, 5, " year");
+    }
+  };
+
+  kbn.valueFormats.h = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 24) {
+      return kbn.toFixed(size, decimals) + " hour";
+    }
+    else if (Math.abs(size) < 168) {
+      return kbn.toFixedScaled(size / 24, decimals, scaledDecimals, 2, " day");
+    }
+    else if (Math.abs(size) < 8760) {
+      return kbn.toFixedScaled(size / 168, decimals, scaledDecimals, 3, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 8760, decimals, scaledDecimals, 4, " year");
+    }
+  };
+
+  kbn.valueFormats.d = function(size, decimals, scaledDecimals) {
+    if (size === null) { return ""; }
+
+    if (Math.abs(size) < 7) {
+      return kbn.toFixed(size, decimals) + " day";
+    }
+    else if (Math.abs(size) < 365) {
+      return kbn.toFixedScaled(size / 7, decimals, scaledDecimals, 2, " week");
+    }
+    else {
+      return kbn.toFixedScaled(size / 365, decimals, scaledDecimals, 3, " year");
+    }
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -508,6 +561,8 @@ function($, _) {
         submenu: [
           {text: 'Dollars ($)', value: 'currencyUSD'},
           {text: 'Pounds (£)',  value: 'currencyGBP'},
+          {text: 'Euro (€)',    value: 'currencyEUR'},
+          {text: 'Yen (¥)',     value: 'currencyJPY'},
         ]
       },
       {
@@ -518,6 +573,9 @@ function($, _) {
           {text: 'microseconds (µs)', value: 'µs'   },
           {text: 'milliseconds (ms)', value: 'ms'   },
           {text: 'seconds (s)',       value: 's'    },
+          {text: 'minutes (m)',       value: 'm'    },
+          {text: 'hours (h)',         value: 'h'    },
+          {text: 'days (d)',          value: 'd'    },
         ]
       },
       {
