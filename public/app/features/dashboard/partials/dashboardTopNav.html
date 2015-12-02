@@ -3,10 +3,12 @@
 		<div class="container-fluid">
 
 			<div class="top-nav">
-				<a class="pointer top-nav-menu-btn" ng-if="!contextSrv.sidemenu" ng-click="contextSrv.toggleSideMenu()">
-					<img class="logo-icon" src="img/fav32.png"></img>
-					<i class="fa fa-bars"></i>
-				</a>
+				<div ng-if="!contextSrv.sidemenu" style="width:200px; float:left;">
+					<a class="pointer" style="display:block; padding:0; margin:8px 0 4px 22px; font-size:16px;">
+						<img class="logo-icon" src="img/fav32.png" ng-click="contextSrv.redirectToHome()" style="margin-top:5px; margin-left:5px; background:#fff; border-radius:50%; width:30px;"></img>
+						<i class="pull-right fa fa-angle-right" ng-click="contextSrv.toggleSideMenu()" style="opacity:1; padding-right:5px; padding-top:5px; font-size:170%;"></i>
+					</a>
+				</div>
 
 				<div class="top-nav-dashboards-btn">
 					<a class="pointer" ng-click="openSearch()">
@@ -68,4 +70,3 @@
 		</div>
 	</div>
 </div>
-
