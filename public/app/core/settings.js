@@ -15,7 +15,6 @@ function (_) {
       appSubUrl: ""
     };
 
-    var settings = _.extend({}, defaults, options);
-    return settings;
+    return _.extend({}, defaults, options);
   };
 });

@@ -3,11 +3,11 @@ define([
   'lodash',
   'app/core/utils/datemath',
   './influx_series',
-  './query_builder',
+  './influx_query',
   './directives',
   './query_ctrl',
 ],
-function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
+function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -41,8 +41,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         queryTargets.push(target);
 
         // build query
-        var queryBuilder = new InfluxQueryBuilder(target);
-        var query =  queryBuilder.build();
+        var queryModel = new InfluxQuery(target);
+        var query =  queryModel.render();
         query = query.replace(/\$interval/g, (target.interval || options.interval));
         return query;
 
