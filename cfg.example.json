@@ -3,5 +3,6 @@
         "addr": "root:@tcp(127.0.0.1:3306)/grafana?charset=utf8&loc=Asia%2FTaipei",
         "idle": 10,
         "max": 100
-    }
+    },
+    "home": "http://exemple.com/"
 }

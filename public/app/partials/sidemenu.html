@@ -1,10 +1,10 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 
 	<ul class="sidemenu sidemenu-main">
-		<li style="margin-bottom: 15px;">
-			<a class="pointer sidemenu-top-btn" ng-click="contextSrv.toggleSideMenu()">
-				<img class="logo-icon" src="img/fav32.png"></img>
-				<i class="pull-right fa fa-angle-left"></i>
+		<li style="margin-bottom:15px;">
+			<a class="pointer sidemenu-top-btn">
+				<img class="logo-icon" src="img/fav32.png" ng-click="contextSrv.redirectToHome()"></img>
+				<i class="pull-right fa fa-angle-left" ng-click="contextSrv.toggleSideMenu()"></i>
 			</a>
 		</li>
 

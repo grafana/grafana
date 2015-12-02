@@ -9,7 +9,7 @@ function (angular, _, store, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('contextSrv', function($rootScope, $timeout) {
+  module.service('contextSrv', function($rootScope, $timeout, $http, $window) {
     var self = this;
 
     function User() {
@@ -42,6 +42,32 @@ function (angular, _, store, config) {
 
     this.getSidemenuDefault = function() {
       return this.hasRole('Admin');
+    };
+
+    /**
+     * @function name:   this.redirectToHome = function()
+     * @description:     This function redirects users to homepage.
+     * @related issues:  OWL-187
+     * @param:           void
+     * @return:          void
+     * @author:          Don Hsieh
+     * @since:           12/01/2015
+     * @last modified:   12/01/2015
+     * @called by:       <img class="logo-icon" src="img/fav32.png" ng-click="contextSrv.redirectToHome()"></img>
+     *                    in grafana/public/app/partials/sidemenu.html
+     *                   <img class="logo-icon" src="img/fav32.png" ng-click="contextSrv.redirectToHome()"></img>
+     *                    in grafana/public/app/features/dashboard/partials/dashboardTopNav.html
+     */
+    this.redirectToHome = function() {
+      $http({
+        method: 'GET',
+        url: '/home'
+      }).then(function successCallback(data) {
+          var url = data.data[0];
+          $window.location.href = url;
+        }, function errorCallback(data) {
+          console.log('Error: data =', data);
+        });
     };
 
     this.version = config.buildInfo.version;
