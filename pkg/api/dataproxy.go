@@ -29,6 +29,7 @@ var dataProxyTransport = &http.Transport{
 /**
  * @function:		func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy
  * @description:	This function initializes a reverse proxy.
+ * @related issues:	OWL-159
  * @related issues:	OWL-168, OWL-123, OWL-028, OWL-017, OWL-002
  * @param:			ds *m.DataSource
  * @param:			proxyPath string
@@ -36,7 +37,7 @@ var dataProxyTransport = &http.Transport{
  * @return:			*httputil.ReverseProxy
  * @author:			Don Hsieh
  * @since:			07/17/2015
- * @last modified: 	11/09/2015
+ * @last modified: 	11/30/2015
  * @called by:		func ProxyDataSourceRequest(c *middleware.Context)
  *					 in pkg/api/dataproxy.go
  */
@@ -62,8 +63,6 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
 			}
 		} else if ds.Type == "openfalcon" {
-			urlDashboard := configOpenFalcon.Datasource.UrlDashboard
-			urlQuery := configOpenFalcon.Datasource.UrlQuery
 			reqQueryVals.Add("target", ds.Url)
 			req.URL.RawQuery = reqQueryVals.Encode()
 

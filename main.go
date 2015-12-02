@@ -25,7 +25,7 @@ import (
 )
 
 var version = "master"
-var commit = "2015.11.27"
+var commit = "2015.12.02"
 var buildstamp string
 
 var configFile = flag.String("config", "", "path to config file")

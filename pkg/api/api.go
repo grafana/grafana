@@ -1,11 +1,12 @@
 package api
 
 import (
-	l "log"
-	"github.com/toolkits/file"
-	"flag"
-	"sync"
 	"encoding/json"
+	"flag"
+	"github.com/toolkits/file"
+	"log"
+	"net/http"
+	"sync"
 
 	"github.com/Unknwon/macaron"
 	"github.com/Cepave/grafana/pkg/api/dtos"
@@ -16,13 +17,14 @@ import (
 
 var OpenFalconConfigFile = flag.String("configGlobal", "cfg.json", "configuration file")
 type DatabaseConfig struct {
-	Addr       string	`json:"addr"`
-	Account    string	`json:"account"`
-	Password   string	`json:"password"`
+	Addr    string  `json:"addr"`
+	Idle    int     `json:"idle"`
+	Max     int     `json:"max"`
 }
 
 type GlobalConfig struct {
-	Database      *DatabaseConfig    `json:"database"`
+	Db      *DatabaseConfig  `json:"db"`
+	Home    string           `json:"home"`
 }
 
 var (
@@ -31,34 +33,60 @@ var (
 )
 
 /**
- * @function name:	func parseConfig(cfg string)
- * @description:	This function parses config file cfg.json.
- * @related issues:	OWL-115, OWL-085
- * @param:			cfg string
- * @return:			void
- * @author:			Don Hsieh
- * @since:			09/14/2015
- * @last modified: 	10/07/2015
- * @called by:		func main()
+ * @function name:   func parseConfig(cfg string)
+ * @description:     This function parses config file cfg.json.
+ * @related issues:  OWL-115, OWL-085
+ * @param:           cfg string
+ * @return:          void
+ * @author:          Don Hsieh
+ * @since:           09/14/2015
+ * @last modified:   10/07/2015
+ * @called by:       func Register(r *macaron.Macaron)
  */
 func parseConfig(cfg string) {
 	if !file.IsExist(cfg) {
-		l.Fatalln("config file:", cfg, "is not existent. maybe you need `mv cfg.example.json cfg.json`")
+		log.Fatalln("config file:", cfg, "is not existent. maybe you need `mv cfg.example.json cfg.json`")
 	}
 	configContent, err := file.ToTrimString(cfg)
 	if err != nil {
-		l.Fatalln("read config file:", cfg, "fail:", err)
+		log.Fatalln("read config file:", cfg, "fail:", err)
 	}
 
 	var configGlobal GlobalConfig
 	err = json.Unmarshal([]byte(configContent), &configGlobal)
 	if err != nil {
-		l.Fatalln("parse config file:", cfg, "fail:", err)
+		log.Fatalln("parse config file:", cfg, "fail:", err)
 		return
 	}
 	lock.Lock()
 	defer lock.Unlock()
 	configOpenFalcon = &configGlobal
+}
+
+/**
+ * @function name:   func GetHomepageUrl(w http.ResponseWriter)
+ * @description:     This function gets URL of homepage.
+ * @related issues:  OWL-187
+ * @param:           w http.ResponseWriter
+ * @return:          void
+ * @author:          Don Hsieh
+ * @since:           12/01/2015
+ * @last modified:   12/01/2015
+ * @called by:       func Register(r *macaron.Macaron)
+ */
+func GetHomepageUrl(w http.ResponseWriter) {
+	url := configOpenFalcon.Home
+	log.Println("url =", url)
+	resp := []string {
+		url,
+	}
+	bs, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write(bs)
 }
 
 // Register adds http routes
@@ -80,6 +108,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/login/:name", quota("session"), OAuthLogin)
 	r.Get("/login", LoginView)
 	r.Get("/invite/:code", Index)
+	r.Get("/home", GetHomepageUrl)
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)

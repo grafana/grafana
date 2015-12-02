@@ -1,13 +1,12 @@
 package api
 
 import (
-	l "log"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"time"
-	"strconv"
-
+	l "log"
 	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/Cepave/grafana/pkg/api/dtos"
 	"github.com/Cepave/grafana/pkg/bus"
@@ -27,24 +26,21 @@ const (
 /**
  * @function name:	GetOpenFalconSessionUsername(sig string) string
  * @description:	This function gets user logged in if "sig" cookie of Open-Falcon is valid.
- * @related issues:	OWL-124, OWL-115, OWL-110
+ * @related issues:	OWL-159, OWL-124, OWL-115, OWL-110
  * @param:			sig string
  * @return:			username string
  * @author:			Don Hsieh
  * @since:			10/07/2015
- * @last modified: 	10/16/2015
+ * @last modified: 	11/30/2015
  * @called by:		func LoginWithOpenFalconCookie(c *middleware.Context) bool
  *					 in pkg/api/login.go
  */
 func GetOpenFalconSessionUsername(sig string) string {
-	// log.Info("sig = " + sig)
 	if sig == "" {
 		return ""
 	}
 
-	str := configOpenFalcon.Database.Account + ":" + configOpenFalcon.Database.Password
-	str += "@tcp(" + configOpenFalcon.Database.Addr + ")/graph?charset=utf8"
-	
+	str := configOpenFalcon.Db.Addr
 	db, err := sql.Open("mysql", str)
 	db.SetMaxOpenConns(2000)
 	db.SetMaxIdleConns(1000)
