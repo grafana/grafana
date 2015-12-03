@@ -55,21 +55,6 @@ function (angular, _) {
       });
     };
 
-    // TODO(DAN): This should no longer be in use because we removed checkboxes
-    $scope.toggleDtsSelection = function(dts) {
-      var idx = $scope.dtsSelection.indexOf(dts);
-
-      if (idx > -1) {
-        $scope.dtsSelection.splice(idx, 1);
-      }
-      else {
-        $scope.dtsSelection.push(dts);
-      }
-
-      $scope.current.query = $scope.dtsSelection.join(',');
-      $scope.runQuery();
-    };
-
     $scope.add = function() {
       if ($scope.isValid()) {
         if ($scope.current.type === 'datasource') {
