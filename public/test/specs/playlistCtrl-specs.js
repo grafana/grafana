@@ -1,13 +1,15 @@
 define([
   './helpers',
   'app/features/dashboard/playlistCtrl',
-  'app/features/dashboard/playlistSrv'
+  'app/features/dashboard/playlistSrv',
 ], function(helpers) {
   'use strict';
 
   describe('PlaylistCtrl', function() {
 
     var ctx = new helpers.ControllerTestContext();
+
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(module('grafana.controllers'));
     beforeEach(ctx.providePhase(['PlaylistSrv']));
