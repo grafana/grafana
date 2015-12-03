@@ -106,6 +106,16 @@ function (angular, _, kbn) {
         if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
+        // If our datasource is dynamic, get the new datasource
+        if (otherVariable.datasource && otherVariable.datasource[0] === '$'){
+          datasourceSrv.get(otherVariable.datasource).then(function(x) {
+            self.updateOptionsFromMetricFindQuery(otherVariable,x);
+
+            // Update our dropdown values
+            $rootScope.$emit('template-variable-value-updated');
+          });
+          return;
+        }
       });
 
       return $q.all(promises);

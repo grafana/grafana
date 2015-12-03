@@ -25,7 +25,7 @@ function (angular, _) {
       $scope.mode = 'list';
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn && !ds.meta.dynamic;
+        return !ds.meta.builtIn;
       });
 
       $scope.variables = templateSrv.variables;
