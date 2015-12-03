@@ -94,7 +94,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
 
-      return this._post('/_msearch', payload).then(function(res) {
+      return this._post('_msearch', payload).then(function(res) {
         var list = [];
         var hits = res.responses[0].hits.hits;
 
@@ -188,7 +188,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      return this._post('/_msearch', payload).then(function(res) {
+      return this._post('_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
     };
