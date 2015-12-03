@@ -127,7 +127,40 @@ function (angular, _, kbn) {
 
     };
 
+    this.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+      return !ds.meta.builtIn && !ds.meta.dynamic;
+    });
+
+    // This creates a query based on the type we've chosen. Also parses regex. The end result is options is filled
+    this._updateDataSourceVariable = function(variable) {
+      // Fix regex
+      var re = null;
+      if (variable.datasourceRegexp) {
+        re = new RegExp(variable.datasourceRegexp);
+      }
+      var filterFn = function(source) {
+        if (re) {
+          return (source.meta.type === variable.datasourceType) && re.test(source.name);
+        } else {
+          return source.meta.type === variable.datasourceType;
+        }
+      };
+      var temp = _.filter(this.datasources, filterFn);
+      variable.query = _.map(temp, function (source) {return source.name;}).join(',');
+      // extract options in comma seperated string
+      variable.options = _.map(variable.query.split(/[,]+/), function(text) {
+        return { text: text.trim(), value: text.trim() };
+      });
+    };
+
     this.updateOptions = function(variable) {
+      if (variable.type === 'datasource') {
+        self._updateDataSourceVariable(variable);
+        self._updateNonQueryVariable(variable);
+        self.validateVariableSelectionState(variable);
+        return $q.when([]);
+      }
+
       if (variable.type !== 'query') {
         self._updateNonQueryVariable(variable);
         self.setVariableValue(variable, variable.options[0]);

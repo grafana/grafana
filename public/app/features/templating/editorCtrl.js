@@ -55,6 +55,7 @@ function (angular, _) {
       });
     };
 
+    // TODO(DAN): This should no longer be in use because we removed checkboxes
     $scope.toggleDtsSelection = function(dts) {
       var idx = $scope.dtsSelection.indexOf(dts);
 
@@ -101,8 +102,13 @@ function (angular, _) {
       return true;
     };
 
+    // This makes sure our dynamic datasource still works
+    function updateDtsSelection() {
+      $scope.dtsSelection = $scope.current.query.split(",");
+    }
+
     $scope.runQuery = function() {
-      return templateValuesSrv.updateOptions($scope.current).then(null, function(err) {
+      return templateValuesSrv.updateOptions($scope.current).then(updateDtsSelection, function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });
