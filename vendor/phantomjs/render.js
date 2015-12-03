@@ -32,6 +32,8 @@ var tries = 0;
 page.open(params.url, function (status) {
   console.log('Loading a web page: ' + params.url);
 
+  page.injectJs('promise.js');
+
   function checkIsReady() {
     var canvas = page.evaluate(function() {
       var body = angular.element(document.body);   // 1
