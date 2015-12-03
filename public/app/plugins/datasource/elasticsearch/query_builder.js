@@ -1,7 +1,6 @@
 define([
-  "angular"
 ],
-function (angular) {
+function () {
   'use strict';
 
   function ElasticQueryBuilder(options) {
@@ -82,9 +81,11 @@ function (angular) {
   };
 
   ElasticQueryBuilder.prototype.build = function(target) {
-    if (target.rawQuery) {
-      return angular.fromJson(target.rawQuery);
-    }
+    // make sure query has defaults;
+    target.metrics = target.metrics || [{ type: 'count', id: '1' }];
+    target.dsType = 'elasticsearch';
+    target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
+    target.timeField =  this.timeField;
 
     var i, nestedAggs, metric;
     var query = {
