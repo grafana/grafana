@@ -1,8 +1,9 @@
 {
   "pluginType": "bundle",
   "type": "core",
+  "module": "",
   "enabled": true,
-  "panelPlugins": ["graph", "singlestat", "text", "dashlist"],
-  "datasourcePlugins": ["grafana", "graphite"],
+  "panelPlugins": ["graph", "singlestat", "text", "dashlist", "table"],
+  "datasourcePlugins": ["mixed", "grafana", "graphite", "cloudwatch", "elasticsearch", "influxdb", "influxdb_08", "kairosdb", "opentsdb", "prometheus"],
   "externalPlugins": []
 }

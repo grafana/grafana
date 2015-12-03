@@ -172,13 +172,18 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	return nil
 }
 
-func GetEnabledPlugins(bundles map[string]models.PluginBundle) EnabledPlugins {
+func GetEnabledPlugins(orgBundles []*models.PluginBundle) EnabledPlugins {
 	enabledPlugins := NewEnabledPlugins()
+
+	orgBundlesMap := make(map[string]*models.PluginBundle)
+	for _, orgBundle := range orgBundles {
+		orgBundlesMap[orgBundle.Type] = orgBundle
+	}
 
 	for bundleType, bundle := range Bundles {
 		enabled := bundle.Enabled
 		// check if the bundle is stored in the DB.
-		if b, ok := bundles[bundleType]; ok {
+		if b, ok := orgBundlesMap[bundleType]; ok {
 			enabled = b.Enabled
 		}
 

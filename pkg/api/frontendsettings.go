@@ -29,9 +29,12 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
-	//TODO(awoods): query DB to get list of the users plugin preferences.
-	orgPlugins := map[string]m.PluginBundle{}
-	enabledPlugins := plugins.GetEnabledPlugins(orgPlugins)
+	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&orgBundles)
+	if err != nil {
+		return nil, err
+	}
+	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
