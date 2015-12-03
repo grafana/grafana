@@ -61,3 +61,25 @@ type ExternalPlugin struct {
 	MainNavLinks     []*ExternalPluginNavLink `json:"mainNavLinks"`
 	StaticRootConfig *StaticRootConfig        `json:"staticRoot"`
 }
+
+type PluginBundle struct {
+	Type              string   `json:"type"`
+	Enabled           bool     `json:"enabled"`
+	PanelPlugins      []string `json:"panelPlugins"`
+	DatasourcePlugins []string `json:"datasourcePlugins"`
+	ExternalPlugins   []string `json:"externalPlugins"`
+}
+
+type EnabledPlugins struct {
+	PanelPlugins      []*PanelPlugin
+	DataSourcePlugins map[string]*DataSourcePlugin
+	ExternalPlugins   []*ExternalPlugin
+}
+
+func NewEnabledPlugins() EnabledPlugins {
+	return EnabledPlugins{
+		PanelPlugins:      make([]*PanelPlugin, 0),
+		DataSourcePlugins: make(map[string]*DataSourcePlugin),
+		ExternalPlugins:   make([]*ExternalPlugin, 0),
+	}
+}

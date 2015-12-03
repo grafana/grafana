@@ -62,7 +62,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		})
 	}
 
-	for _, plugin := range plugins.ExternalPlugins {
+	//TODO(awoods): query DB to get list of the users plugin preferences.
+	orgPlugins := map[string]m.PluginBundle{}
+	enabledPlugins := plugins.GetEnabledPlugins(orgPlugins)
+	for _, plugin := range enabledPlugins.ExternalPlugins {
 		for _, js := range plugin.Js {
 			data.PluginJs = append(data.PluginJs, js.Module)
 		}

@@ -1,0 +1,8 @@
+{
+  "pluginType": "bundle",
+  "type": "core",
+  "enabled": true,
+  "panelPlugins": ["graph", "singlestat", "text", "dashlist"],
+  "datasourcePlugins": ["grafana", "graphite"],
+  "externalPlugins": []
+}
