@@ -1,5 +1,5 @@
 <div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
+	<div class="section tight-form-container" style="margin-bottom: 20px">
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
@@ -68,7 +68,7 @@
 					Decimals
 				</li>
 				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
+					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
 					ng-model="panel.decimals" ng-change="render()" ng-model-onblur>
 				</li>
 			</ul>
@@ -79,7 +79,7 @@
 
 <div class="editor-row">
 	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
 					<strong>Coloring</strong>
@@ -121,7 +121,7 @@
 
 <div class="editor-row">
 	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
 					<strong>Spark lines</strong>
@@ -147,7 +147,7 @@
 				<li class="tight-form-item">
 					Fill Color
 				</li>
-				<li class="tight-form-item">
+				<li class="tight-form-item last">
 					<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
 				</li>
 			</ul>
@@ -158,7 +158,7 @@
 
 <div class="editor-row">
 	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
 					<strong>Value to text mapping</strong>
@@ -177,7 +177,7 @@
 				</li>
 
 				<li>
-					<a class="pointer tight-form-item" ng-click="addValueMap();">
+					<a class="pointer tight-form-item last" ng-click="addValueMap();">
 						<i class="fa fa-plus"></i>
 					</a>
 				</li>

@@ -1,6 +1,6 @@
 ---
 page_title: Installing on RPM-based Linux
-page_description: Grafana Installation guide for Centos, Fedora, Redhat.
+page_description: Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat.
 page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 ---
 
@@ -10,18 +10,24 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 
 Description | Download
 ------------ | -------------
-.RPM for Fedora / RHEL / CentOS Linux | [grafana-2.0.2-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.2-1.x86_64.rpm)
+.RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-2.5.0-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm)
 
 ## Install from package file
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.0.2-1.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0-1.x86_64.rpm
 
 Or install manually using `rpm`.
 
+#### On CentOS / Fedora / Redhat:
+
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-2.0.1-1.x86_64.rpm
+    $ sudo rpm -Uvh grafana-2.5.0-1.x86_64.rpm
+
+#### On OpenSuse:
+
+    $ sudo rpm -i --nodeps grafana-2.5.0-1.x86_64.rpm
 
 ## Install via YUM Repository
 
@@ -100,7 +106,7 @@ By default Grafana will log to `/var/log/grafana`
 
 The default configuration specifies a sqlite3 database located at
 `/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database.
+upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page](configuration.md#database).
 
 ## Configuration
 

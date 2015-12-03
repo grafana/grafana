@@ -5,9 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Links']" data-title="{{tab}}">
-		</div>
-		<div ng-repeat="tab in dashboard.nav" data-title="{{tab.type}}">
+		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker']" data-title="{{tab}}">
 		</div>
 	</div>
 
@@ -40,7 +38,7 @@
 					</ul>
 					<div class="clearfix"></div>
 				</div>
-				<div class="tight-form">
+				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 90px">
 							Timezone
@@ -57,7 +55,7 @@
 		<div class="editor-row">
 			<div class="tight-form-section">
 				<h5>Toggles</h5>
-				<div class="tight-form">
+				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item">
 							<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
@@ -65,7 +63,7 @@
 						<li class="tight-form-item">
 							<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
 						</li>
-						<li class="tight-form-item">
+						<li class="tight-form-item last">
 							<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
 						</li>
 					</ul>
@@ -79,28 +77,30 @@
 		<div class="editor-row">
 			<div class="tight-form-section">
 				<h5>Rows settings</h5>
-				<div class="tight-form" ng-repeat="row in dashboard.rows">
-					<ul class="tight-form-list">
-						<li class="tight-form-item">
-							Title
-						</li>
-						<li>
-							<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
-						</li>
-						<li class="tight-form-item">
-							<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
+				<div class="tight-form-container">
+					<div class="tight-form" ng-repeat="row in dashboard.rows">
+						<ul class="tight-form-list">
+							<li class="tight-form-item">
+								Title
+							</li>
+							<li>
+								<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
+							</li>
+							<li class="tight-form-item">
+								<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -110,9 +110,8 @@
 		<dash-links-editor></dash-links-editor>
 	</div>
 
-	<div ng-repeat="pulldown in dashboard.nav" ng-controller="SubmenuCtrl" ng-show="editor.index == 3+$index">
-		<ng-include ng-show="pulldown.enable" src="pulldownEditorPath(pulldown.type)"></ng-include>
-		<button ng-hide="pulldown.enable" class="btn" ng-click="pulldown.enable = true">Enable the {{pulldown.type}}</button>
+	<div ng-if="editor.index == 3">
+		<gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
 	</div>
 
 </div>

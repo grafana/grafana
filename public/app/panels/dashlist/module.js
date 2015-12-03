@@ -1,9 +1,9 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
-  'config',
-  'components/panelmeta',
+  'app/core/config',
+  'app/features/panel/panel_meta',
 ],
 function (angular, app, _, config, PanelMeta) {
   'use strict';
@@ -43,8 +43,10 @@ function (angular, app, _, config, PanelMeta) {
 
     $scope.init = function() {
       panelSrv.init($scope);
+
       if ($scope.panel.tag) {
         $scope.panel.tags = [$scope.panel.tag];
+        delete $scope.panel.tag;
       }
 
       if ($scope.isNewPanel()) {

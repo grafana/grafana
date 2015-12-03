@@ -19,12 +19,16 @@ type LdapServerConf struct {
 	Port          int              `toml:"port"`
 	UseSSL        bool             `toml:"use_ssl"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
+	RootCACert    string           `toml:"root_ca_cert"`
 	BindDN        string           `toml:"bind_dn"`
 	BindPassword  string           `toml:"bind_password"`
 	Attr          LdapAttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
+
+	GroupSearchFilter  string   `toml:"group_search_filter"`
+	GroupSearchBaseDNs []string `toml:"group_search_base_dns"`
 
 	LdapGroups []*LdapGroupToOrgRole `toml:"group_mappings"`
 }
@@ -63,8 +67,6 @@ func loadLdapConfig() {
 
 	// set default org id
 	for _, server := range ldapCfg.Servers {
-		assertNotEmptyCfg(server.Host, "host")
-		assertNotEmptyCfg(server.BindDN, "bind_dn")
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 

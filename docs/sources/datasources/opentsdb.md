@@ -5,15 +5,17 @@ page_keywords: grafana, opentsdb, documentation
 ---
 
 # OpenTSDB Guide
+The newest release of Grafana adds additional functionality when using an OpenTSDB Data source.
 
-## Adding the data source to Grafana
-Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you
-should find a link named `Data Sources`. If this link is missing in the side menu it means that your current
-user does not have the `Admin` role for the current organization.
+![](/img/v2/add_OpenTSDB.jpg)
 
-![](/img/v2/add_datasource_opentsdb.png)
+1. Open the side menu by clicking the the Grafana icon in the top header. 
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
 
-Now click the `Add new` link in the top header.
+    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
+
+3. Click the `Add new` link in the top header.
+4. Select `OpenTSDB` from the dropdown.
 
 Name | Description
 ------------ | -------------
@@ -28,20 +30,23 @@ Open a graph in edit mode by click the title.
 ![](/img/v2/opentsdb_query_editor.png)
 
 ### Auto complete suggestions
-You should get auto complete suggestions for tags and tag values. If you do not you need to enable `tsd.core.meta.enable_realtime_ts` in
-the OpentSDB server settings. This is required for the OpenTSDB `lookup` api to work.
+As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
+
+ > Note: This is required for the OpenTSDB `suggest` api to work.
 
 ## Templating queries
+Grafana's OpenTSDB data source now supports template variable values queries. This means you can create template variables that fetch the values from OpenTSDB (for example metric names, tag names, or tag values). The query editor is also enhanced to limiting tags by metric.
 
 When using OpenTSDB with a template variable of `query` type you can use following syntax for lookup.
 
-    metrics()                     // returns metric names
+    metrics(prefix)               // returns metric names with specific prefix (can be empty)
     tag_names(cpu)                // return tag names (i.e. keys) for a specific cpu metric
     tag_values(cpu, hostname)     // return tag values for metric cpu and tag key hostname
+    suggest_tagk(prefix)          // return tag names (i.e. keys) for all metrics with specific prefix (can be empty)
+    suggest_tagv(prefix)          // return tag values for all metrics with specific prefix (can be empty)
+
+If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
+
+> Note: This is required for the OpenTSDB `lookup` api to work.
 
 For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
-
-
-
-
-

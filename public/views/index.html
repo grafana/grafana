@@ -9,17 +9,17 @@
     <title>Grafana</title>
 
 		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.light.min.css">
 		[[else]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.dark.min.css">
 		[[end]]
 
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
+    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />
 
-		<!-- build:js [[.AppSubUrl]]/app/app.js -->
+		<!-- build:js [[.AppSubUrl]]/public/app/app.js -->
     <script src="[[.AppSubUrl]]/public/vendor/requirejs/require.js"></script>
-    <script src="[[.AppSubUrl]]/public/app/components/require.config.js"></script>
+    <script src="[[.AppSubUrl]]/public/app/require_config.js"></script>
     <!-- endbuild -->
   </head>
 
@@ -41,7 +41,6 @@
 			</div>
 
 			<div ng-view class="main-view"></div>
-			</div>
 
 		</div>
 
@@ -53,10 +52,9 @@
 			settings: [[.Settings]],
 		};
 
-    require(['app'], function (app) {
+    require(['app/app'], function (app) {
 	    app.boot();
     })
-
 	</script>
 
 	[[if .GoogleAnalyticsId]]
@@ -71,4 +69,22 @@
 		</script>
 	[[end]]
 
+	[[if .GoogleTagManagerId]]
+		<script>
+			dataLayer = [{
+				'IsSignedIn': '[[.User.IsSignedIn]]',
+				'Email': '[[.User.Email]]',
+				'Name': '[[.User.Name]]',
+				'UserId': '[[.User.Id]]',
+				'OrgId': '[[.User.OrgId]]',
+				'OrgName': '[[.User.OrgName]]',
+			}];
+		</script>
+		<!-- Google Tag Manager -->
+		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K2MJ65" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+			j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','[[.GoogleTagManagerId]]');</script>
+		<!-- End Google Tag Manager -->
+	[[end]]
 </html>

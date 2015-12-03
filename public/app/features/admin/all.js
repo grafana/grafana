@@ -1,5 +1,7 @@
 define([
-  './adminUsersCtrl',
+  './adminListUsersCtrl',
+  './adminListOrgsCtrl',
+  './adminEditOrgCtrl',
   './adminEditUserCtrl',
   './adminSettingsCtrl',
 ], function () {});

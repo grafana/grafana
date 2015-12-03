@@ -1,15 +1,18 @@
 define([
-  'helpers',
-  'plugins/datasource/kairosdb/datasource'
+  './helpers',
+  'app/plugins/datasource/kairosdb/datasource'
 ], function(helpers) {
   'use strict';
 
   describe('KairosDBDatasource', function() {
     var ctx = new helpers.ServiceTestContext();
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
+
     beforeEach(ctx.providePhase(['templateSrv']));
     beforeEach(ctx.createService('KairosDBDatasource'));
+
     beforeEach(function() {
       ctx.ds = new ctx.service({ url: ''});
     });
@@ -27,7 +30,7 @@ define([
       };
 
       var query = {
-        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 'now-1h', to: 'now' },
         targets: [{ metric: 'test', downsampling: '(NONE)'}]
       };
 

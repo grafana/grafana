@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/kbn',
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -18,7 +18,7 @@ function (angular, _, kbn) {
       if (variable) {
         self.updateAutoInterval(variable);
       }
-    });
+    }, $rootScope);
 
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
@@ -45,17 +45,6 @@ function (angular, _, kbn) {
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
-      if (variable.refresh) {
-        var self = this;
-        //refresh the list of options before setting the value
-        return this.updateOptions(variable).then(function() {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          self.updateAutoInterval(variable);
-          return self.setVariableValue(variable, option);
-        });
-      }
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 
@@ -80,11 +69,12 @@ function (angular, _, kbn) {
 
       if (_.isArray(variable.current.value)) {
         variable.current.text = variable.current.value.join(' + ');
-        this.selectOptionsForCurrentValue(variable);
       }
 
+      self.selectOptionsForCurrentValue(variable);
+
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
@@ -114,6 +104,11 @@ function (angular, _, kbn) {
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
       }
+
+      if (variable.type === 'custom' && variable.includeAll) {
+        self.addAllOption(variable);
+      }
+
     };
 
     this.updateOptions = function(variable) {
@@ -130,13 +125,20 @@ function (angular, _, kbn) {
     };
 
     this.selectOptionsForCurrentValue = function(variable) {
-      for (var i = 0; i < variable.current.value.length; i++) {
-        var value = variable.current.value[i];
-        for (var y = 0; y < variable.options.length; y++) {
-          var option = variable.options[y];
-          if (option.value === value) {
-            option.selected = true;
+      var i, y, value, option;
+
+      for (i = 0; i < variable.options.length; i++) {
+        option = variable.options[i];
+        option.selected = false;
+        if (_.isArray(variable.current.value)) {
+          for (y = 0; y < variable.current.value.length; y++) {
+            value = variable.current.value[y];
+            if (option.value === value) {
+              option.selected = true;
+            }
           }
+        } else if (option.value === variable.current.value) {
+          option.selected = true;
         }
       }
     };
@@ -148,7 +150,7 @@ function (angular, _, kbn) {
       }
 
       if (_.isArray(variable.current.value)) {
-        this.selectOptionsForCurrentValue(variable);
+        self.selectOptionsForCurrentValue(variable);
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
@@ -245,21 +247,36 @@ function (angular, _, kbn) {
     this.addAllOption = function(variable) {
       var allValue = '';
       switch(variable.allFormat) {
-      case 'wildcard':
-        allValue = '*';
-        break;
-      case 'regex wildcard':
-        allValue = '.*';
-        break;
-      case 'regex values':
-        allValue = '(' + _.map(variable.options, function(option) {
-          return self.regexEscape(option.text);
-        }).join('|') + ')';
-        break;
-      default:
-        allValue = '{';
-        allValue += _.pluck(variable.options, 'text').join(',');
-        allValue += '}';
+        case 'wildcard': {
+          allValue = '*';
+          break;
+        }
+        case 'regex wildcard': {
+          allValue = '.*';
+          break;
+        }
+        case 'lucene': {
+          var quotedValues = _.map(variable.options, function(val) {
+            return '\\\"' + val.text + '\\\"';
+          });
+          allValue = '(' + quotedValues.join(' OR ') + ')';
+          break;
+        }
+        case 'regex values': {
+          allValue = '(' + _.map(variable.options, function(option) {
+            return self.regexEscape(option.text);
+          }).join('|') + ')';
+          break;
+        }
+        case 'pipe': {
+          allValue = _.pluck(variable.options, 'text').join('|');
+          break;
+        }
+        default: {
+          allValue = '{';
+          allValue += _.pluck(variable.options, 'text').join(',');
+          allValue += '}';
+        }
       }
 
       variable.options.unshift({text: 'All', value: allValue});

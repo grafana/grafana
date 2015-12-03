@@ -1,9 +1,9 @@
 define([
   'angular',
-  'app',
+  'app/app',
   'lodash',
   'require',
-  'components/panelmeta',
+  'app/features/panel/panel_meta',
 ],
 function (angular, app, _, require, PanelMeta) {
   'use strict';
@@ -93,7 +93,7 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = $sce.trustAsHtml(templateSrv.replace(html));
+        $scope.content = $sce.trustAsHtml(templateSrv.replace(html, $scope.panel.scopedVars));
       } catch(e) {
         console.log('Text panel error: ', e);
         $scope.content = $sce.trustAsHtml(html);

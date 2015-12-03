@@ -1,9 +1,9 @@
 define([
   'angular',
-  'kbn',
   'lodash',
+  'app/core/utils/kbn',
 ],
-function (angular, kbn, _) {
+function (angular, _, kbn) {
   'use strict';
 
   angular
@@ -48,8 +48,22 @@ function (angular, kbn, _) {
           return url;
         }
 
-        url += (url.indexOf('?') !== -1 ? '&' : '?');
-        return url + paramsArray.join('&');
+        return this.appendToQueryString(url, paramsArray.join('&'));
+      };
+
+      this.appendToQueryString = function(url, stringToAppend) {
+        if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
+          var pos = url.indexOf('?');
+          if (pos !== -1) {
+            if (url.length - pos > 1) {
+              url += '&';
+            }
+          } else {
+            url += '?';
+          }
+          url += stringToAppend;
+        }
+        return url;
       };
 
       this.getAnchorInfo = function(link) {
@@ -59,21 +73,20 @@ function (angular, kbn, _) {
         return info;
       };
 
-      this.getPanelLinkAnchorInfo = function(link) {
+      this.getPanelLinkAnchorInfo = function(link, scopedVars) {
         var info = {};
         if (link.type === 'absolute') {
           info.target = link.targetBlank ? '_blank' : '_self';
-          info.href = templateSrv.replace(link.url || '');
-          info.title = templateSrv.replace(link.title || '');
-          info.href += '?';
+          info.href = templateSrv.replace(link.url || '', scopedVars);
+          info.title = templateSrv.replace(link.title || '', scopedVars);
         }
         else if (link.dashUri) {
           info.href = 'dashboard/' + link.dashUri + '?';
-          info.title = templateSrv.replace(link.title || '');
+          info.title = templateSrv.replace(link.title || '', scopedVars);
           info.target = link.targetBlank ? '_blank' : '';
         }
         else {
-          info.title = templateSrv.replace(link.title || '');
+          info.title = templateSrv.replace(link.title || '', scopedVars);
           var slug = kbn.slugifyForUrl(link.dashboard || '');
           info.href = 'dashboard/db/' + slug + '?';
         }
@@ -87,12 +100,13 @@ function (angular, kbn, _) {
         }
 
         if (link.includeVars) {
-          templateSrv.fillVariableValuesForUrl(params);
+          templateSrv.fillVariableValuesForUrl(params, scopedVars);
         }
 
         info.href = this.addParamsToUrl(info.href, params);
+
         if (link.params) {
-          info.href += "&" + templateSrv.replace(link.params);
+          info.href = this.appendToQueryString(info.href, templateSrv.replace(link.params, scopedVars));
         }
 
         return info;

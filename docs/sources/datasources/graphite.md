@@ -10,14 +10,16 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
-## Adding the data source to Grafana
-Open the side menu by clicking the the Grafana icon in the top header. In the side menu under the `Dashboards` link you
-should find a link named `Data Sources`. If this link is missing in the side menu it means that your current
-user does not have the `Admin` role for the current organization.
+## Adding the data source
+![](/img/v2/add_Graphite.jpg)
 
-![](/img/v2/add_datasource_graphite.png)
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
-Now click the `Add new` link in the top header.
+    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
+
+3. Click the `Add new` link in the top header.
+4. Select `Graphite` from the dropdown.
 
 Name | Description
 ------------ | -------------
@@ -26,17 +28,21 @@ Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you graphite-web or graphite-api install.
 Access | Proxy = access via Grafana backend, Direct = access directory from browser.
 
+
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+
+Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
+
+
 ## Metric editor
 
 ### Navigate metric segments
-
 Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 ![](/img/animated_gifs/graphite_query1.gif)
 
 ### Functions
-
 Click the plus icon to the right to add a function. You can search for the function or select it from the menu. Once
 a function is selected it will be added and your focus will be in the text box of the first parameter. To later change
 a parameter just click on it and it will turn into a text box. To delete a function click the function name followed
@@ -70,3 +76,6 @@ You can also create nested variables that use other variables in their definitio
 
 ![](/img/v2/templated_variable_parameter.png)
 
+
+## Query Reference
+You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.

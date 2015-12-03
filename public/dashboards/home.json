@@ -3,7 +3,7 @@
   "tags": [],
   "style": "dark",
   "timezone": "browser",
-  "editable": false,
+  "editable": true,
   "hideControls": true,
   "rows": [
     {

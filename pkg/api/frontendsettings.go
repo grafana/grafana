@@ -81,18 +81,29 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["index"] = ds.Database
 		}
 
+		if ds.Type == m.DS_PROMETHEUS {
+			// add unproxied server URL for link to Prometheus web UI
+			dsMap["directUrl"] = ds.Url
+		}
+
 		datasources[ds.Name] = dsMap
 	}
 
 	// add grafana backend data source
 	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["grafana"] = map[string]interface{}{
+	datasources["-- Grafana --"] = map[string]interface{}{
 		"type": "grafana",
 		"meta": grafanaDatasourceMeta,
 	}
 
+	// add mixed backend data source
+	datasources["-- Mixed --"] = map[string]interface{}{
+		"type": "mixed",
+		"meta": plugins.DataSources["mixed"],
+	}
+
 	if defaultDatasource == "" {
-		defaultDatasource = "grafana"
+		defaultDatasource = "-- Grafana --"
 	}
 
 	jsonObj := map[string]interface{}{

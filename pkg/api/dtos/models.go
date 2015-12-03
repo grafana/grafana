@@ -17,6 +17,7 @@ type LoginCommand struct {
 
 type CurrentUser struct {
 	IsSignedIn     bool       `json:"isSignedIn"`
+	Id             int64      `json:"id"`
 	Login          string     `json:"login"`
 	Email          string     `json:"email"`
 	Name           string     `json:"name"`
@@ -39,6 +40,7 @@ type DashboardMeta struct {
 	Slug       string    `json:"slug"`
 	Expires    time.Time `json:"expires"`
 	Created    time.Time `json:"created"`
+	Updated    time.Time `json:"updated"`
 }
 
 type DashboardFullWithMeta struct {

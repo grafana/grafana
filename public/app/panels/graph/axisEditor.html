@@ -4,31 +4,15 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Left Y</strong>
+					Left Y
 				</li>
-				<li class="tight-form-item">
+				<li class="tight-form-item" style="width: 40px">
 					Unit
 				</li>
 				<li class="dropdown" style="width: 140px;"
 					ng-model="panel.y_formats[0]"
 					dropdown-typeahead="unitFormats"
 					dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
-				</li>
-				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMax"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Min
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMin"
-					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
 					Scale type
@@ -49,31 +33,39 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Right Y</strong>
+					<i class="fa fa-remove invisible"></i>
 				</li>
 				<li class="tight-form-item">
+					Y-Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.leftMax"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item" style="width: 115px; text-align: right;">
+					Y-Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.leftMin"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					Right Y
+				</li>
+				<li class="tight-form-item" style="width: 40px">
 					Unit
 				</li>
 				<li class="dropdown" style="width: 140px"
 					ng-model="panel.y_formats[1]"
 					dropdown-typeahead="unitFormats"
 					dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
-				</li>
-				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMax"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Min
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMin"
-					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
 					Scale type
@@ -91,13 +83,38 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<i class="fa fa-remove invisible"></i>
+				</li>
+				<li class="tight-form-item">
+					Y-Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.rightMax"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item" style="width: 115px; text-align: right;">
+					Y-Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.rightMin"
+					ng-change="render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
 	</div>
 
 	<div class="section" style="margin-bottom: 20px">
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Show Axis</strong>
+					Show Axis
 				</li>
 				<li class="tight-form-item">
 					X-Axis&nbsp;
@@ -114,10 +131,10 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form">
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Thresholds</strong>
+					Thresholds
 				</li>
 				<li class="tight-form-item">
 					Level 1
@@ -140,11 +157,7 @@
 					<spectrum-picker ng-model="panel.grid.threshold2Color" ng-change="render()" ></spectrum-picker>
 				</li>
 				<li class="tight-form-item last">
-					Line mode&nbsp;
-					<input class="cr1" id="panel.grid.thresholdLine" type="checkbox"
-					ng-model="panel.grid.thresholdLine" ng-checked="panel.grid.thresholdLine" ng-change="render()">
-					<label for="panel.grid.thresholdLine" class="cr1"></label>
-
+					<editor-checkbox text="Line mode" model="panel.grid.thresholdLine" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -154,82 +167,60 @@
 
 <div class="editor-row">
 	<div class="section">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
-					<strong>Legend</strong>
-				</li>
-				<li class="tight-form-item">
-					Show&nbsp;
-					<input class="cr1" id="panel.legend.show" type="checkbox"
-					ng-model="panel.legend.show" ng-checked="panel.legend.show" ng-change="get_data()">
-					<label for="panel.legend.show" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Table&nbsp;
-					<input class="cr1" id="panel.legend.alignAsTable" type="checkbox"
-					ng-model="panel.legend.alignAsTable" ng-checked="panel.legend.alignAsTable" ng-change="render()">
-					<label for="panel.legend.alignAsTable" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Right side&nbsp;
-					<input class="cr1" id="panel.legend.rightSide" type="checkbox"
-					ng-model="panel.legend.rightSide" ng-checked="panel.legend.rightSide" ng-change="render()">
-					<label for="panel.legend.rightSide" class="cr1"></label>
-				</li>
-				<li class="tight-form-item last">
-					<span bs-tooltip="'Hides series with only null values'">Hide empty&nbsp;<span>
-					<input class="cr1" id="panel.legend.hideEmpty" type="checkbox"
-							ng-model="panel.legend.hideEmpty" ng-checked="panel.legend.hideEmpty" ng-change="render()">
-					<label for="panel.legend.hideEmpty" class="cr1"></label>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-	<div class="section">
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					<strong>Legend values</strong>
+				<li class="tight-form-item" style="width: 80px">
+					Legend
 				</li>
 				<li class="tight-form-item">
-					Min&nbsp;
-					<input class="cr1" id="panel.legend.min" type="checkbox"
-					ng-model="panel.legend.min" ng-checked="panel.legend.min" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.min" class="cr1"></label>
+					<editor-checkbox text="Show" model="panel.legend.show" change="get_data()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Max&nbsp;
-					<input class="cr1" id="panel.legend.max" type="checkbox"
-					ng-model="panel.legend.max" ng-checked="panel.legend.max" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.max" class="cr1"></label>
+					<editor-checkbox text="Table" model="panel.legend.alignAsTable" change="render()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					Avg&nbsp;
-					<input class="cr1" id="panel.legend.avg" type="checkbox"
-					ng-model="panel.legend.avg" ng-checked="panel.legend.avg" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.avg" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Current&nbsp;
-					<input class="cr1" id="panel.legend.current" type="checkbox"
-					ng-model="panel.legend.current" ng-checked="panel.legend.current" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.current" class="cr1"></label>
-				</li>
-				<li class="tight-form-item last">
-					Total&nbsp;
-					<input class="cr1" id="panel.legend.total" type="checkbox"
-					ng-model="panel.legend.total" ng-checked="panel.legend.total" ng-change="legendValuesOptionChanged()">
-					<label for="panel.legend.total" class="cr1"></label>
+					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					Hide series
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="With only nulls" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item last">
+					<editor-checkbox text="With only zeroes" model="panel.legend.hideZero" change="render()"></editor-checkbox>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
 		<div class="tight-form last">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					<strong>Decimals</strong>
+				<li class="tight-form-item" style="width: 80px">
+					Values
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Max" model="panel.legend.max" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Avg" model="panel.legend.avg" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Current" model="panel.legend.current" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="Total" model="panel.legend.total" change="legendValuesOptionChanged()"></editor-checkbox>
+				</li>
+				<li class="tight-form-item">
+					Decimals
 				</li>
 				<li style="width: 105px">
 					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
@@ -238,7 +229,5 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-
-
 	</div>
 </div>
