@@ -47,23 +47,25 @@ type DataSource struct {
 	Updated time.Time
 }
 
-func IsStandardDataSource(dsType string) bool {
-	switch dsType {
-	case DS_ES:
-		return true
-	case DS_INFLUXDB:
-		return true
-	case DS_OPENTSDB:
-		return true
-	case DS_CLOUDWATCH:
-		return true
-	case DS_PROMETHEUS:
-		return true
-	case DS_GRAPHITE:
-		return true
-	default:
-		return false
-	}
+var knownDatasourcePlugins map[string]bool = map[string]bool{
+	DS_ES:          true,
+	DS_GRAPHITE:    true,
+	DS_INFLUXDB:    true,
+	DS_INFLUXDB_08: true,
+	DS_KAIROSDB:    true,
+	DS_CLOUDWATCH:  true,
+	DS_PROMETHEUS:  true,
+	DS_OPENTSDB:    true,
+	"opennms":      true,
+	"druid":        true,
+	"dalmatinerdb": true,
+	"gnocci":       true,
+	"zabbix":       true,
+}
+
+func IsKnownDataSourcePlugin(dsType string) bool {
+	_, exists := knownDatasourcePlugins[dsType]
+	return exists
 }
 
 // ----------------------

@@ -80,8 +80,8 @@ function (angular, _, dateMath) {
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype._performSuggestQuery = function(query) {
-      return this._get('/api/suggest', {type: 'metrics', q: query, max: 1000}).then(function(result) {
+    OpenTSDBDatasource.prototype._performSuggestQuery = function(query, type) {
+      return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
@@ -150,10 +150,12 @@ function (angular, _, dateMath) {
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
       var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
+      var tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
+      var tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
-        return this._performSuggestQuery(metrics_query[1]).then(responseTransform);
+        return this._performSuggestQuery(metrics_query[1], 'metrics').then(responseTransform);
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
@@ -164,6 +166,16 @@ function (angular, _, dateMath) {
       var tag_values_query = interpolated.match(tag_values_regex);
       if (tag_values_query) {
         return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
+      }
+
+      var tag_names_suggest_query = interpolated.match(tag_names_suggest_regex);
+      if (tag_names_suggest_query) {
+        return this._performSuggestQuery(tag_names_suggest_query[1], 'tagk').then(responseTransform);
+      }
+
+      var tag_values_suggest_query = interpolated.match(tag_values_suggest_regex);
+      if (tag_values_suggest_query) {
+        return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
       }
 
       return $q.when([]);

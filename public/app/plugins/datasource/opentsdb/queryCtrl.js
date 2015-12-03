@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'kbn'
+  'app/core/utils/kbn'
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -48,13 +48,13 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+      $scope.datasource.metricFindQuery('suggest_tagk(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+      $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
@@ -84,6 +84,13 @@ function (angular, _, kbn) {
     $scope.removeTag = function(key) {
       delete $scope.target.tags[key];
       $scope.targetBlur();
+    };
+
+    $scope.editTag = function(key, value) {
+      $scope.removeTag(key);
+      $scope.target.currentTagKey = key;
+      $scope.target.currentTagValue = value;
+      $scope.addTag();
     };
 
     function validateTarget(target) {
