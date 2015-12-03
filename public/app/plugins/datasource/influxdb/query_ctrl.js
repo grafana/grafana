@@ -20,6 +20,11 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.queryModel = new InfluxQuery($scope.target);
       $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
       $scope.groupBySegment = uiSegmentSrv.newPlusButton();
+      $scope.resultFormats = [
+         {text: 'Time series', value: 'time_series'},
+         {text: 'Table', value: 'table'},
+         {text: 'JSON field', value: 'json_field'},
+      ];
 
       if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();

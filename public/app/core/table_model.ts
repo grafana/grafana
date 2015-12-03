@@ -1,12 +1,13 @@
-import {transformers} from './transformers';
 
-export class TableModel {
+class TableModel {
   columns: any[];
   rows: any[];
+  type: string;
 
   constructor() {
     this.columns = [];
     this.rows = [];
+    this.type = 'table';
   }
 
   sort(options) {
@@ -33,20 +34,6 @@ export class TableModel {
       this.columns[options.col].desc = true;
     }
   }
-
-  static transform(data, panel) {
-    var model = new TableModel();
-
-    if (!data || data.length === 0) {
-      return model;
-    }
-
-    var transformer = transformers[panel.transform];
-    if (!transformer) {
-      throw {message: 'Transformer ' + panel.transformer + ' not found'};
-    }
-
-    transformer.transform(data, panel, model);
-    return model;
-  }
 }
+
+export = TableModel;

@@ -1,7 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import {TableModel} from '../table_model';
-import {transformers} from '../transformers';
+import {transformers, transformDataToTable} from '../transformers';
 
 describe('when transforming time series table', () => {
   var table;
@@ -26,7 +25,7 @@ describe('when transforming time series table', () => {
       };
 
       beforeEach(() => {
-        table = TableModel.transform(timeSeries, panel);
+        table = transformDataToTable(timeSeries, panel);
       });
 
       it('should return 3 rows', () => {
@@ -51,7 +50,7 @@ describe('when transforming time series table', () => {
       };
 
       beforeEach(() => {
-        table = TableModel.transform(timeSeries, panel);
+        table = transformDataToTable(timeSeries, panel);
       });
 
       it ('should return 3 columns', () => {
@@ -80,7 +79,7 @@ describe('when transforming time series table', () => {
       };
 
       beforeEach(() => {
-        table = TableModel.transform(timeSeries, panel);
+        table = transformDataToTable(timeSeries, panel);
       });
 
       it('should return 2 rows', () => {
@@ -133,7 +132,7 @@ describe('when transforming time series table', () => {
 
       describe('transform', function() {
         beforeEach(() => {
-          table = TableModel.transform(rawData, panel);
+          table = transformDataToTable(rawData, panel);
         });
 
         it ('should return 2 columns', () => {
@@ -164,7 +163,7 @@ describe('when transforming time series table', () => {
       ];
 
       beforeEach(() => {
-        table = TableModel.transform(rawData, panel);
+        table = transformDataToTable(rawData, panel);
       });
 
       it ('should return 4 columns', () => {
