@@ -39,7 +39,7 @@ describe('ElasticQueryBuilder', function() {
   it('with es1.x and es2.x date histogram queries check time format', function() {
     var builder_2x = new ElasticQueryBuilder({
       timeField: '@timestamp',
-      elasticsearchVersion: 2
+      esVersion: 2
     });
 
     var query_params = {
@@ -59,7 +59,7 @@ describe('ElasticQueryBuilder', function() {
   it('with es1.x and es2.x range filter check time format', function() {
     var builder_2x = new ElasticQueryBuilder({
       timeField: '@timestamp',
-      elasticsearchVersion: 2
+      esVersion: 2
     });
 
     // format should not be specified in 1.x queries
