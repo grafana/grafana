@@ -1,7 +1,8 @@
 define([
   'lodash',
+  'app/core/table_model',
 ],
-function (_) {
+function (_, TableModel) {
   'use strict';
 
   function InfluxSeries(options) {
@@ -106,6 +107,45 @@ function (_) {
     });
 
     return list;
+  };
+
+  p.getTable = function() {
+    var table = new TableModel();
+    var self = this;
+    var i, j;
+
+    if (self.series.length === 0) {
+      return table;
+    }
+
+    _.each(self.series, function(series, seriesIndex) {
+
+      if (seriesIndex === 0) {
+        table.columns.push({text: 'Time', type: 'time'});
+        _.each(_.keys(series.tags), function(key) {
+          table.columns.push({text: key});
+        });
+        for (j = 1; j < series.columns.length; j++) {
+          table.columns.push({text: series.columns[j]});
+        }
+      }
+
+      if (series.values) {
+        for (i = 0; i < series.values.length; i++) {
+          var values = series.values[i];
+          if (series.tags) {
+            for (var key in series.tags) {
+              if (series.tags.hasOwnProperty(key)) {
+                values.splice(1, 0, series.tags[key]);
+              }
+            }
+          }
+          table.rows.push(values);
+        }
+      }
+    });
+
+    return table;
   };
 
   return InfluxSeries;

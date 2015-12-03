@@ -5,7 +5,7 @@ import _ = require('lodash');
 import moment = require('moment');
 import PanelMeta = require('app/features/panel/panel_meta');
 
-import {TableModel} from './table_model';
+import {transformDataToTable} from './transformers';
 
 export class TablePanelCtrl {
 
@@ -104,7 +104,23 @@ export class TablePanelCtrl {
     };
 
     $scope.render = function() {
-      $scope.table = TableModel.transform($scope.dataRaw, $scope.panel);
+      // automatically correct transform mode
+      // based on data
+      if ($scope.dataRaw && $scope.dataRaw.length) {
+        if ($scope.dataRaw[0].type === 'table') {
+          $scope.panel.transform = 'table';
+        } else {
+          if ($scope.dataRaw[0].type === 'docs') {
+            $scope.panel.transform = 'json';
+          } else {
+            if ($scope.panel.transform === 'table' || $scope.panel.transform === 'json') {
+              $scope.panel.transform = 'timeseries_to_rows';
+            }
+          }
+        }
+      }
+
+      $scope.table = transformDataToTable($scope.dataRaw, $scope.panel);
       $scope.table.sort($scope.panel.sort);
       panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
     };
