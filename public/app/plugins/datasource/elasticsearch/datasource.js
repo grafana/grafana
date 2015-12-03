@@ -183,6 +183,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         sentTargets.push(target);
       }
 
+      if (sentTargets.length === 0) {
+        return $q.when([]);
+      }
+
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
