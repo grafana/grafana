@@ -13,7 +13,7 @@ function (angular, _, config) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {'elasticsearchVersion': 2} };
 
     $scope.indexPatternTypes = [
       {name: 'No pattern',  value: undefined},
@@ -22,6 +22,12 @@ function (angular, _, config) {
       {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
       {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
       {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
+
+    $scope.elasticsearchVersions = [
+      {name: '0.x', value: 0},
+      {name: '1.x', value: 1},
+      {name: '2.x', value: 2},
     ];
 
     $scope.init = function() {
