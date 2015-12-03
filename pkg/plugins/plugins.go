@@ -9,14 +9,16 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
 	DataSources     map[string]DataSourcePlugin
-	Panels          []PanelPlugin
-	ExternalPlugins []ExternalPlugin
+	Panels          map[string]PanelPlugin
+	ExternalPlugins map[string]ExternalPlugin
 	StaticRoutes    []*StaticRootConfig
+	Bundles         map[string]PluginBundle
 )
 
 type PluginScanner struct {
@@ -26,9 +28,10 @@ type PluginScanner struct {
 
 func Init() error {
 	DataSources = make(map[string]DataSourcePlugin)
-	ExternalPlugins = make([]ExternalPlugin, 0)
+	ExternalPlugins = make(map[string]ExternalPlugin)
 	StaticRoutes = make([]*StaticRootConfig, 0)
-	Panels = make([]PanelPlugin, 0)
+	Panels = make(map[string]PanelPlugin)
+	Bundles = make(map[string]PluginBundle)
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 	checkExternalPluginPaths()
@@ -137,7 +140,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 			return errors.New("Did not find type property in plugin.json")
 		}
 
-		Panels = append(Panels, p)
+		Panels[p.Type] = p
 		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
@@ -147,9 +150,55 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
-		ExternalPlugins = append(ExternalPlugins, p)
+		if p.Type == "" {
+			return errors.New("Did not find type property in plugin.json")
+		}
+		ExternalPlugins[p.Type] = p
 		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
+	if pluginType == "bundle" {
+		p := PluginBundle{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+		if p.Type == "" {
+			return errors.New("Did not find type property in plugin.json")
+		}
+		Bundles[p.Type] = p
+	}
+
 	return nil
+}
+
+func GetEnabledPlugins(bundles map[string]models.PluginBundle) EnabledPlugins {
+	enabledPlugins := NewEnabledPlugins()
+
+	for bundleType, bundle := range Bundles {
+		enabled := bundle.Enabled
+		// check if the bundle is stored in the DB.
+		if b, ok := bundles[bundleType]; ok {
+			enabled = b.Enabled
+		}
+
+		if enabled {
+			for _, d := range bundle.DatasourcePlugins {
+				if ds, ok := DataSources[d]; ok {
+					enabledPlugins.DataSourcePlugins[d] = &ds
+				}
+			}
+			for _, p := range bundle.PanelPlugins {
+				if panel, ok := Panels[p]; ok {
+					enabledPlugins.PanelPlugins = append(enabledPlugins.PanelPlugins, &panel)
+				}
+			}
+			for _, e := range bundle.ExternalPlugins {
+				if external, ok := ExternalPlugins[e]; ok {
+					enabledPlugins.ExternalPlugins = append(enabledPlugins.ExternalPlugins, &external)
+				}
+			}
+		}
+	}
+	return enabledPlugins
 }
