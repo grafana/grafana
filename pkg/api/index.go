@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -62,9 +63,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		})
 	}
 
-	//TODO(awoods): query DB to get list of the users plugin preferences.
-	orgPlugins := map[string]m.PluginBundle{}
-	enabledPlugins := plugins.GetEnabledPlugins(orgPlugins)
+	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
+	err = bus.Dispatch(&orgBundles)
+	if err != nil {
+		return nil, err
+	}
+	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+
 	for _, plugin := range enabledPlugins.ExternalPlugins {
 		for _, js := range plugin.Js {
 			data.PluginJs = append(data.PluginJs, js.Module)

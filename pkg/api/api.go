@@ -13,7 +13,7 @@ func Register(r *macaron.Macaron) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	regOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	quota := middleware.Quota
 	bind := binding.Bind
 
@@ -113,7 +113,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/invites", wrap(GetPendingOrgInvites))
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
-		}, regOrgAdmin)
+		}, reqOrgAdmin)
 
 		// create new org
 		r.Post("/orgs", quota("org"), bind(m.CreateOrgCommand{}), wrap(CreateOrg))
@@ -140,7 +140,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(GetApiKeys))
 			r.Post("/", quota("api_key"), bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
 			r.Delete("/:id", wrap(DeleteApiKey))
-		}, regOrgAdmin)
+		}, reqOrgAdmin)
 
 		// Data sources
 		r.Group("/datasources", func() {
@@ -150,7 +150,13 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/plugins", GetDataSourcePlugins)
-		}, regOrgAdmin)
+		}, reqOrgAdmin)
+
+		// PluginBundles
+		r.Group("/plugins", func() {
+			r.Get("/", wrap(GetPluginBundles))
+			r.Post("/", bind(m.UpdatePluginBundleCmd{}), wrap(UpdatePluginBundle))
+		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
