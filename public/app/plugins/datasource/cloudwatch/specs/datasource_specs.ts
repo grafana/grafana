@@ -165,7 +165,7 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization)', scenario => {
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
         Metrics: [
