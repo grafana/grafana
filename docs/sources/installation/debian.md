@@ -10,15 +10,16 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
-.deb for Debian-based Linux | [grafana_2.0.2_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.2_amd64.deb)
+.deb for Debian-based Linux | [grafana_2.5.0_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb)
 
 ## Install
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.2_amd64.deb
+    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_2.0.2_amd64.deb
+    $ sudo dpkg -i grafana_2.5.0_amd64.deb
 
 ## APT Repository
+
 Add the following line to your `/etc/apt/sources.list` file.
 
     deb https://packagecloud.io/grafana/stable/debian/ wheezy main
@@ -57,7 +58,7 @@ HTTPS.
 
 ## Start the server (init.d service)
 
-You can start Grafana by running:
+Start Grafana by running:
 
     $ sudo service grafana-server start
 
@@ -71,7 +72,7 @@ To configure the Grafana server to start at boot time:
 
 ## Start the server (via systemd)
 
-To start the service using systemd.
+To start the service using systemd:
 
     $ systemctl daemon-reload
     $ systemctl start grafana-server
@@ -96,7 +97,7 @@ By default Grafana will log to `/var/log/grafana`
 
 The default configuration specifies a sqlite3 database located at
 `/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database.
+upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page](configuration.md#database).
 
 ## Configuration
 
@@ -112,17 +113,16 @@ those options.
 
 ## Installing from binary tar file
 
-Start by [downloading](http://grafana.org/download/builds) the latest
-`.tar.gz` file and extract it.  This will extract into a folder named
-after the version you downloaded. This folder contains all files
-required to run Grafana.  There are no init scripts or install scripts
-in this package.
+Download [the latest `.tar.gz` file](http://grafana.org/download/builds) and
+extract it.  This will extract into a folder named after the version you
+downloaded. This folder contains all files required to run Grafana.  There are
+no init scripts or install scripts in this package.
 
 To configure Grafana add a configuration file named `custom.ini` to the
 `conf` folder and override any of the settings defined in
 `conf/defaults.ini`.
 
-Start Grafana by executing `./grafana web`. The `grafana` binary needs
+Start Grafana by executing `./grafana-server web`. The `grafana-server` binary needs
 the working directory to be the root install directory (where the binary
 and the `public` folder is located).
 

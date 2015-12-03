@@ -1,7 +1,7 @@
 define([
-  'mocks/dashboard-mock',
+  '../mocks/dashboard-mock',
   'lodash',
-  'features/templating/templateSrv'
+  'app/features/templating/templateSrv'
 ], function(dashboardMock) {
   'use strict';
 
@@ -61,6 +61,16 @@ define([
         expect(result).to.be('{test,test2}');
       });
 
+      it('multi value and lucene should render as lucene expr', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'lucene',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('(\\\"test\\\" OR \\\"test2\\\")');
+      });
+
       it('multi value and regex format should render regex string', function() {
         var result = _templateSrv.renderVariableValue({
           multiFormat: 'regex values',
@@ -69,6 +79,16 @@ define([
           }
         });
         expect(result).to.be('(test|test2)');
+      });
+
+      it('multi value and pipe should render pipe string', function() {
+        var result = _templateSrv.renderVariableValue({
+          multiFormat: 'pipe',
+          current: {
+            value: ['test','test2'],
+          }
+        });
+        expect(result).to.be('test|test2');
       });
 
     });
@@ -109,7 +129,6 @@ define([
     describe('when checking if a string contains a variable', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
-        _templateSrv.updateTemplateData();
       });
 
       it('should find it with $var syntax', function() {
@@ -127,12 +146,35 @@ define([
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
         _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
-        _templateSrv.updateTemplateData();
       });
 
       it('should set current value and update template data', function() {
         var target = _templateSrv.replace('this.[[test]].filters');
         expect(target).to.be('this.muuuu.filters');
+      });
+    });
+
+    describe('fillVariableValuesForUrl with multi value', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+      });
+
+      it('should set multiple url params', function() {
+        var params = {};
+        _templateSrv.fillVariableValuesForUrl(params);
+        expect(params['var-test']).to.eql(['val1', 'val2']);
+      });
+    });
+
+    describe('fillVariableValuesForUrl with multi value and scopedVars', function() {
+      beforeEach(function() {
+        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+      });
+
+      it('should set multiple url params', function() {
+        var params = {};
+        _templateSrv.fillVariableValuesForUrl(params, {'test': {value: 'val1'}});
+        expect(params['var-test']).to.eql('val1');
       });
     });
 

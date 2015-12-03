@@ -16,8 +16,8 @@
 				</button>
 			</div>
 
-      <form name="loginForm" class="login-form">
-				<div class="tight-from-container">
+      <form name="loginForm" class="login-form" style="margin-top: 25px;">
+				<div class="tight-form-container">
 					<div class="tight-form" ng-if="loginMode">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 78px">
@@ -53,21 +53,6 @@
 						<div class="clearfix"></div>
 					</div>
 
-					<div class="tight-form" ng-if="!loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>Password</strong>
-							</li>
-							<li>
-								<input type="password" class="tight-form-input last" watch-change="formModel.password = inputValue;" ng-minlength="4" required ng-model='formModel.password' placeholder="password" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-				</div>
-
-				<div ng-if="!loginMode" style="margin-left: 97px; width: 254px;">
-					<password-strength password="formModel.password"></password-strength>
 				</div>
 
 				<div class="login-submit-button-row">

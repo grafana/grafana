@@ -1,9 +1,9 @@
 define([
-  'helpers',
+  './helpers',
   'angular',
   'jquery',
-  'components/timeSeries',
-  'panels/graph/graph'
+  'app/core/time_series',
+  'app/panels/graph/graph'
 ], function(helpers, angular, $, TimeSeries) {
   'use strict';
 

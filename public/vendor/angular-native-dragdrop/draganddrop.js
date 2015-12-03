@@ -5,6 +5,18 @@
         return 'ondrag' in document.createElement('a');
     }
 
+    function determineEffectAllowed(e) {
+        // Chrome doesn't set dropEffect, so we have to work it out ourselves
+        if (e.dataTransfer && e.dataTransfer.dropEffect === 'none') {
+            if (e.dataTransfer.effectAllowed === 'copy' ||
+                e.dataTransfer.effectAllowed === 'move') {
+                e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed;
+            } else if (e.dataTransfer.effectAllowed === 'copyMove' || e.dataTransfer.effectAllowed === 'copymove') {
+                e.dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
+            }
+        }
+    }
+
     if (!isDnDsSupported()) {
         angular.module('ang-drag-drop', []);
         return;
@@ -54,6 +66,9 @@
                 }, 0);
                 var sendChannel = attrs.dragChannel || 'defaultchannel';
                 $rootScope.$broadcast('ANGULAR_DRAG_END', e, sendChannel);
+
+                determineEffectAllowed(e);
+
                 if (e.dataTransfer && e.dataTransfer.dropEffect !== 'none') {
                     if (attrs.onDropSuccess) {
                         var onDropSuccessFn = $parse(attrs.onDropSuccess);
@@ -75,6 +90,10 @@
             function dragstartHandler(e) {
                 var isDragAllowed = !isDragHandleUsed || dragTarget.classList.contains(dragHandleClass);
 
+                if (dragTarget.classList.contains("resize-panel-handle")) {
+                  return;
+                }
+
                 if (isDragAllowed) {
                     var sendChannel = attrs.dragChannel || 'defaultchannel';
                     var dragData = '';
@@ -87,7 +106,11 @@
                     element.addClass(draggingClass);
                     element.bind('$destroy', dragendHandler);
 
-                    if (dragImage) {
+                    //Code to make sure that the setDragImage is available. IE 10, 11, and Opera do not support setDragImage.
+                    var hasNativeDraggable = !(document.uniqueID || window.opera);
+
+                    //If there is a draggable image passed in, then set the image to be dragged.
+                    if (dragImage && hasNativeDraggable) {
                         var dragImageFn = $parse(attrs.dragImage);
                         scope.$apply(function() {
                             var dragImageParameters = dragImageFn(scope, {$event: e});
@@ -208,15 +231,7 @@
                 var sendData = e.dataTransfer.getData('text');
                 sendData = angular.fromJson(sendData);
 
-                // Chrome doesn't set dropEffect, so we have to work it out ourselves
-                if (e.dataTransfer.dropEffect === 'none') {
-                    if (e.dataTransfer.effectAllowed === 'copy' ||
-                        e.dataTransfer.effectAllowed === 'move') {
-                        e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed;
-                    } else if (e.dataTransfer.effectAllowed === 'copyMove') {
-                        e.dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
-                    }
-                }
+                determineEffectAllowed(e);
 
                 var uiOnDropFn = $parse(attr.uiOnDrop);
                 scope.$evalAsync(function() {
@@ -258,7 +273,12 @@
 
                 if (valid && attr.dropValidate) {
                     var validateFn = $parse(attr.dropValidate);
-                    valid = validateFn(scope, {$drop: {scope: scope, element:element}, $event:e, $data: transferDataObject.data, $channel: transferDataObject.channel});
+                    valid = validateFn(scope, {
+                        $drop: {scope: scope, element: element},
+                        $event: e,
+                        $data: transferDataObject.data,
+                        $channel: transferDataObject.channel
+                    });
                 }
 
                 if (valid) {

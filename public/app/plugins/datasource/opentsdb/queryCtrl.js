@@ -1,14 +1,14 @@
 define([
   'angular',
   'lodash',
-  'kbn'
+  'app/core/utils/kbn'
 ],
 function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OpenTSDBQueryCtrl', function($scope, $timeout) {
+  module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
@@ -22,8 +22,8 @@ function (angular, _, kbn) {
         $scope.target.downsampleAggregator = 'avg';
       }
 
-      $scope.$on('typeahead-updated', function() {
-        $timeout($scope.targetBlur);
+      $scope.datasource.getAggregators().then(function(aggs) {
+        $scope.aggregators = aggs;
       });
     };
 
@@ -37,11 +37,6 @@ function (angular, _, kbn) {
       }
     };
 
-    $scope.duplicate = function() {
-      var clone = angular.copy($scope.target);
-      $scope.panel.targets.push(clone);
-    };
-
     $scope.getTextValues = function(metricFindResult) {
       return _.map(metricFindResult, function(value) { return value.text; });
     };
@@ -53,13 +48,13 @@ function (angular, _, kbn) {
     };
 
     $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_names(' + $scope.target.metric + ')')
+      $scope.datasource.metricFindQuery('suggest_tagk(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
 
     $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource.metricFindQuery('tag_values(' + $scope.target.metric + ',' + $scope.target.currentTagKey + ')')
+      $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
         .then($scope.getTextValues)
         .then(callback);
     };
@@ -91,6 +86,13 @@ function (angular, _, kbn) {
       $scope.targetBlur();
     };
 
+    $scope.editTag = function(key, value) {
+      $scope.removeTag(key);
+      $scope.target.currentTagKey = key;
+      $scope.target.currentTagValue = value;
+      $scope.addTag();
+    };
+
     function validateTarget(target) {
       var errs = {};
 
@@ -113,6 +115,7 @@ function (angular, _, kbn) {
       return errs;
     }
 
+    $scope.init();
   });
 
 });

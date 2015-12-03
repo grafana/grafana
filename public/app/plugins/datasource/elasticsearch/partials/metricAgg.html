@@ -1,0 +1,66 @@
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+			Metric
+		</li>
+		<li>
+			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
+		</li>
+		<li ng-if="aggDef.requiresField">
+			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment>
+		</li>
+		<li class="tight-form-item last" ng-if="settingsLinkText">
+			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list pull-right">
+		<li class="tight-form-item last" ng-if="isFirst">
+			<a class="pointer" ng-click="addMetricAgg()"><i class="fa fa-plus"></i></a>
+		</li>
+		<li class="tight-form-item last" ng-if="!isSingle">
+			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form" ng-if="showOptions">
+	<div class="tight-form-inner-box">
+		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					Percentiles
+				</li>
+				<li>
+					<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div ng-if="agg.type === 'extended_stats'">
+			<div class="tight-form" ng-repeat="stat in extendedStats">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						{{stat.text}}
+					</li>
+					<li class="tight-form-item last">
+						<editor-checkbox text="" model="agg.meta.{{stat.value}}" change="onChange()"></editor-checkbox>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="tight-form last" ng-if="agg.type === 'extended_stats'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px">
+					Sigma
+				</li>
+				<li>
+					<input type="number" class="input-mini tight-form-input last" placeholder="3" ng-model="agg.settings.sigma" ng-blur="onChange()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>

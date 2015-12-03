@@ -2,14 +2,14 @@ define([
   'angular',
   'lodash',
   'jquery',
-  'config',
-  'kbn',
-  'moment',
-  './queryCtrl',
-  './funcEditor',
-  './addGraphiteFunc',
+  'app/core/config',
+  'app/core/utils/datemath',
+  './directives',
+  './query_ctrl',
+  './func_editor',
+  './add_graphite_func',
 ],
-function (angular, _, $, config, kbn, moment) {
+function (angular, _, $, config, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -28,8 +28,8 @@ function (angular, _, $, config, kbn, moment) {
     GraphiteDatasource.prototype.query = function(options) {
       try {
         var graphOptions = {
-          from: this.translateTime(options.range.from, 'round-down'),
-          until: this.translateTime(options.range.to, 'round-up'),
+          from: this.translateTime(options.rangeRaw.from, false),
+          until: this.translateTime(options.rangeRaw.to, true),
           targets: options.targets,
           format: options.format,
           cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -70,12 +70,12 @@ function (angular, _, $, config, kbn, moment) {
       return result;
     };
 
-    GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
+    GraphiteDatasource.prototype.annotationQuery = function(options) {
       // Graphite metric as annotation
-      if (annotation.target) {
-        var target = templateSrv.replace(annotation.target);
+      if (options.annotation.target) {
+        var target = templateSrv.replace(options.annotation.target);
         var graphiteQuery = {
-          range: rangeUnparsed,
+          rangeRaw: options.rangeRaw,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
@@ -93,7 +93,7 @@ function (angular, _, $, config, kbn, moment) {
                 if (!datapoint[0]) { continue; }
 
                 list.push({
-                  annotation: annotation,
+                  annotation: options.annotation,
                   time: datapoint[1],
                   title: target.target
                 });
@@ -105,15 +105,15 @@ function (angular, _, $, config, kbn, moment) {
       }
       // Graphite event as annotation
       else {
-        var tags = templateSrv.replace(annotation.tags);
-        return this.events({ range: rangeUnparsed, tags: tags })
+        var tags = templateSrv.replace(options.annotation.tags);
+        return this.events({range: options.rangeRaw, tags: tags})
           .then(function(results) {
             var list = [];
             for (var i = 0; i < results.data.length; i++) {
               var e = results.data[i];
 
               list.push({
-                annotation: annotation,
+                annotation: options.annotation,
                 time: e.when * 1000,
                 title: e.what,
                 tags: e.tags,
@@ -134,7 +134,8 @@ function (angular, _, $, config, kbn, moment) {
 
         return this.doGraphiteRequest({
           method: 'GET',
-          url: '/events/get_data?from=' + this.translateTime(options.range.from) + '&until=' + this.translateTime(options.range.to) + tags,
+          url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
+            '&until=' + this.translateTime(options.range.to, true) + tags,
         });
       }
       catch(err) {
@@ -142,32 +143,30 @@ function (angular, _, $, config, kbn, moment) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, rounding) {
+    GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
         }
-        else if (date.indexOf('now') >= 0) {
+        else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
           date = date.substring(3);
           date = date.replace('m', 'min');
           date = date.replace('M', 'mon');
           return date;
         }
-        date = kbn.parseDate(date);
+        date = dateMath.parse(date, roundUp);
       }
 
-      date = moment.utc(date);
-
-      if (rounding === 'round-up') {
+      // graphite' s from filter is exclusive
+      // here we step back one minute in order
+      // to guarantee that we get all the data that
+      // exists for the specified range
+      if (roundUp) {
         if (date.get('s')) {
           date.add(1, 'm');
         }
       }
-      else if (rounding === 'round-down') {
-        // graphite' s from filter is exclusive
-        // here we step back one minute in order
-        // to guarantee that we get all the data that
-        // exists for the specified range
+      else if (roundUp === false) {
         if (date.get('s')) {
           date.subtract(1, 'm');
         }
@@ -186,14 +185,14 @@ function (angular, _, $, config, kbn, moment) {
       }
 
       return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-        .then(function(results) {
-          return _.map(results.data, function(metric) {
-            return {
-              text: metric.text,
-              expandable: metric.expandable ? true : false
-            };
-          });
+      .then(function(results) {
+        return _.map(results.data, function(metric) {
+          return {
+            text: metric.text,
+            expandable: metric.expandable ? true : false
+          };
         });
+      });
     };
 
     GraphiteDatasource.prototype.testDatasource = function() {
@@ -204,9 +203,9 @@ function (angular, _, $, config, kbn, moment) {
 
     GraphiteDatasource.prototype.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
-        .then(function(results) {
-          return results.data.dashboards;
-        });
+      .then(function(results) {
+        return results.data.dashboards;
+      });
     };
 
     GraphiteDatasource.prototype.loadDashboard = function(dashName) {
@@ -228,21 +227,13 @@ function (angular, _, $, config, kbn, moment) {
       return backendSrv.datasourceRequest(options);
     };
 
-    GraphiteDatasource.prototype._seriesRefLetters = [
-      '#A', '#B', '#C', '#D',
-      '#E', '#F', '#G', '#H',
-      '#I', '#J', '#K', '#L',
-      '#M', '#N', '#O', '#P',
-      '#Q', '#R', '#S', '#T',
-      '#U', '#V', '#W', '#X',
-      '#Y', '#Z'
-    ];
+    GraphiteDatasource.prototype._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     GraphiteDatasource.prototype.buildGraphiteParams = function(options, scopedVars) {
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
-      var regex = /(\#[A-Z])/g;
+      var regex = /\#([A-Z])/g;
       var intervalFormatFixRegex = /'(\d+)m'/gi;
 
       if (options.format !== 'png') {
@@ -259,26 +250,32 @@ function (angular, _, $, config, kbn, moment) {
           continue;
         }
 
+        if (!target.refId) {
+          target.refId = this._seriesRefLetters[i];
+        }
+
         targetValue = templateSrv.replace(target.target, scopedVars);
         targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
-        targets[this._seriesRefLetters[i]] = targetValue;
+        targets[target.refId] = targetValue;
       }
 
-      function nestedSeriesRegexReplacer(match) {
-        return targets[match];
+      function nestedSeriesRegexReplacer(match, g1) {
+        return targets[g1];
       }
 
       for (i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
-        if (!target.target || target.hide) {
+        if (!target.target) {
           continue;
         }
 
-        targetValue = targets[this._seriesRefLetters[i]];
+        targetValue = targets[target.refId];
         targetValue = targetValue.replace(regex, nestedSeriesRegexReplacer);
-        targets[this._seriesRefLetters[i]] = targetValue;
+        targets[target.refId] = targetValue;
 
-        clean_options.push("target=" + encodeURIComponent(targetValue));
+        if (!target.hide) {
+          clean_options.push("target=" + encodeURIComponent(targetValue));
+        }
       }
 
       _.each(options, function (value, key) {
