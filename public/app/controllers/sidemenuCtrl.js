@@ -32,7 +32,7 @@ function (angular, _, $, config) {
 
       $scope.mainLinks.push({
         text: "Alerts",
-        icon: "fa fa-fw fa-th-large",
+        icon: "fa fa-fw fa-bell",
         href: $scope.getUrl("/alerts"),
       });
     };
