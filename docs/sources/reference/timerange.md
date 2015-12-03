@@ -8,40 +8,61 @@ page_keywords: grafana, time range, guide, documentation
 
 Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
-<img class="no-shadow" src="/img/v1/time_range_controls.png">
+<img class="no-shadow" src="/img/v2/time_range_controls.png">
 
 In the top right, you have the master Dashboard time picker (it's in between the 'Zoom out' and the 'Refresh' links).
 
-From this dropdown you can:
+1. `Current time range & refresh interval`: This shows the current dashboard time and refresh interval. It also acts as the menu button to toggle the time range controls. 
+2. `Quick ranges`: Quick ranges are preset values to choose a relative time. At this time, quick ranges are not configurable, and will appear on every dashboard. 
+3. `Time range`: The time range section allows you to mix both explicit and relative ranges. The explicit time range format is `YYYY-MM-DD HH:MM:SS`
+4. `Refreshing every:` When enabled, auto-refresh will reload the dashboard at the specified time range. Auto-refresh is most commonly used with relative time ranges ending in `now`, so new data will appear when the dashboard refreshes. 
 
-1. Specify an exact time range (eg. "October 13 12:01 to October 14 12:05)
-2. Choose a relative time (eg. "Last 15 minutes","Last 1 week")
-3. Configure auto-refresh options
+These settings apply to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
 
-All of this applies to all Panels in the Dashboard (except those with Panel Time Overrides enabled)
+## Time Units
 
-## Customize relative time and auto auto-refresh options
+The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `y (years)`. The minus operator allows you to step back in time, relative to now. If you wish to display the full period of the unit (day, week, month, etc...), append `/$unit` to the end. 
 
-It's possible to customize the options displayed for relative time and the auto-refresh options.
+Take a look at some examples to seen these concepts in practice:
 
-From Dashboard settings, click the Timepicker tab. From here you can specify the relative and auto refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.  Entries are comma separated and accept a number followed by one of the following units: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, `y (years)`.
+Example Relative Range | From: | To: 
+-------------- | ----- | --- 
+Last 5 minutes | `now-5m` | `now`
+The day so far | `now/d` | `now`
+This week | `now/w` | `now/w`
+Week to date | `now/w` | `now`
+Previous Month | `now-1M/M` | `now-1M/M`
+
+
+## Dashboard-Level Time Picker Settings
+
+There are two settings available from the Dashboard Settings area, allowing customization of the auto-refresh intervals and the definition of `now`.
 
 <img class="no-shadow" src="/img/v2/TimePicker-TimeOptions.png">
 
+### Auto-Refresh Options
+
+It's possible to customize the options displayed for relative time and the auto-refresh options.
+
+From Dashboard settings, click the Timepicker tab. From here you can specify the relative and auto-refresh intervals. The Timepicker tab settings are saved on a per Dashboard basis.  Entries are comma separated and accept any valid time unit.
+
+### Defining Now
+
+Users often ask, [when will then be now](https://www.youtube.com/watch?v=VeZ9HhHU86o)? Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
 
 ## Panel time overrides & timeshift
 
-In Grafana v2.x you can now override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. You can also add a time shift to individual panels. This allows you to show metrics from different time periods or days at the same time.
+You can override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
 <img class="no-shadow" src="/img/v2/panel_time_override.jpg">
 
-You control these overrides in panel editor mode and the new tab `Time Range`.
+You control these overrides in panel editor mode and the tab `Time Range`.
 
 <img class="no-shadow" src="/img/v2/time_range_tab.jpg">
 
-When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override however is always active, even when the dashboard time is absolute.
+When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override is always active, even when the dashboard time is absolute.
 
-The `Hide time override info` option allows you to hide the the override info text that is by default shown in the
+The `Hide time override info` option allows you to hide the override info text that is by default shown in the
 upper right of a panel when overridden time range options.
 
-Currently you can only override the dashboard time with relative time ranges, not absolute time ranges. 
+Note: You can only override the dashboard time with relative time ranges. Absolute time ranges are not available. 

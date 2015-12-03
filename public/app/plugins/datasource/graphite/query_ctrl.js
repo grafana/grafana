@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'config',
+  'app/core/config',
   './gfunc',
   './parser'
 ],

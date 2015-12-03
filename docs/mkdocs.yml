@@ -45,8 +45,9 @@ pages:
 
 - ['guides/basic_concepts.md', 'User Guides', 'Basic Concepts']
 - ['guides/gettingstarted.md', 'User Guides', 'Getting Started']
-- ['guides/whats-new-in-v2.md', 'User Guides', "What's New in Grafana v2.0"]
+- ['guides/whats-new-in-v2-5.md', 'User Guides', "What's New in Grafana v2.5"]
 - ['guides/whats-new-in-v2-1.md', 'User Guides', "What's New in Grafana v2.1"]
+- ['guides/whats-new-in-v2.md', 'User Guides', "What's New in Grafana v2.0"]
 - ['guides/screencasts.md', 'User Guides', 'Screencasts']
 
 - ['reference/graph.md', 'Reference', 'Graph Panel']
@@ -64,8 +65,10 @@ pages:
 - ['reference/http_api.md', 'Reference', 'HTTP API']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
 
-- ['datasources/overview.md', 'Data Sources', 'Data Source Overview']
+- ['datasources/overview.md', 'Data Sources', 'Overview']
 - ['datasources/graphite.md', 'Data Sources', 'Graphite']
+- ['datasources/elasticsearch.md', 'Data Sources', 'Elasticsearch']
+- ['datasources/cloudwatch.md', 'Data Sources', 'CloudWatch']
 - ['datasources/influxdb.md', 'Data Sources', 'InfluxDB']
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']

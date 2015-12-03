@@ -1,11 +1,11 @@
 define([
   'angular',
   'lodash',
-  'config',
-  'kbn',
   'moment',
+  'app/core/config',
+  'app/core/utils/kbn',
   'app/core/utils/datemath'
-], function (angular, _, config, kbn, moment, dateMath) {
+], function (angular, _, moment, config, kbn, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -90,11 +90,11 @@ define([
       timer.cancel(this.refresh_timer);
     };
 
-    this.setTime = function(time) {
+    this.setTime = function(time, enableRefresh) {
       _.extend(this.time, time);
 
-      // disable refresh if we have an absolute time
-      if (moment.isMoment(time.to)) {
+      // disable refresh if zoom in or zoom out
+      if (!enableRefresh && moment.isMoment(time.to)) {
         this.old_refresh = this.dashboard.refresh || this.old_refresh;
         this.setAutoRefresh(false);
       }

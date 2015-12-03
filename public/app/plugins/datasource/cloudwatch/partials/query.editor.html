@@ -73,16 +73,17 @@
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
 			Alias
-			<tip>{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}</tip>
+			<tip>{{metric}} {{stat}} {{namespace}} {{region}} {{DIMENSION_NAME}}</tip>
 		</li>
 		<li>
 			<input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="refreshMetricData()">
 		</li>
 		<li class="tight-form-item query-keyword">
 			Period
+			<tip>Interval between points in seconds</tip>
 		</li>
 		<li>
-			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="period" ng-model-onblur ng-change="refreshMetricData()" />
+			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="refreshMetricData()" />
 		</li>
 
 	</ul>
