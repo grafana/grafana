@@ -67,7 +67,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			data.PluginJs = append(data.PluginJs, js.Module)
 		}
 		for _, css := range plugin.Css {
-			data.PluginCss = append(data.PluginCss, css.Href)
+			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: css.Light, Dark: css.Dark})
 		}
 		for _, item := range plugin.MainNavLinks {
 			// only show menu items for the specified roles.

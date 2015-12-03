@@ -10,13 +10,17 @@
 
 		[[if .User.LightTheme]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
+		  [[ range $css := .PluginCss ]]
+			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css.Light ]]">
+		  [[ end ]]
 		[[else]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
+		  [[ range $css := .PluginCss ]]
+			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css.Dark ]]">
+		  [[ end ]]
 		[[end]]
 
-		[[ range $css := .PluginCss ]]
-			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css ]]">
-		[[ end ]]
+		
 
     <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />

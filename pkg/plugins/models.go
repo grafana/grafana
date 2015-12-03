@@ -37,7 +37,8 @@ type ExternalPluginRoute struct {
 }
 
 type ExternalPluginJs struct {
-	Module string `json:"module"`
+	Module    string `json:"module"`
+	Directive string `json:"Directive"`
 }
 
 type ExternalPluginNavLink struct {
@@ -48,7 +49,8 @@ type ExternalPluginNavLink struct {
 }
 
 type ExternalPluginCss struct {
-	Href string `json:"href"`
+	Light string `json:"light"`
+	Dark  string `json:"dark"`
 }
 
 type ExternalPlugin struct {
