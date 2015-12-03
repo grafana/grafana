@@ -27,7 +27,7 @@ function (coreModule) {
       $location.path('');
       return;
     }
-    $scope.initDashboard({
+    $scope. initDashboard({
       meta: { canShare: false, canStar: false },
       dashboard: window.grafanaImportDashboard
     }, $scope);

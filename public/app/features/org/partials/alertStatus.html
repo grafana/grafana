@@ -1,0 +1,44 @@
+<topnav title="Alerts" icon="fa fa-fw fa-th-large" subnav="true">
+  <ul class="nav">
+    <li><a href="alerts">Overview</a></li>
+    <li><a href="alerts/new">Add new</a></li>
+    <li class="active"><a href="alerts/status">Status</a></li>
+  </ul>
+</topnav>
+
+<div class="main-view-container">
+  <div class="grafana-row" ng-controller="RowCtrl" ng-init="createAlertGraphPanel(row.triggeredAlert)" ng-repeat="(row_name, row) in dashboard.rows" row-height>
+    <div class="row-control">
+      <div class="row-control-inner">
+        <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
+          <div class="row-close-buttons">
+							<span class="row-button bgPrimary" ng-click="toggleRow(row)">
+								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
+							</span>
+          </div>
+          <div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
+        </div>
+      </div>
+
+      <div class="panels-wrapper" ng-if="!row.collapse">
+        <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
+        </div>
+
+        <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
+             ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
+          <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+        </div>
+
+        <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
+          <div class="panel-container" style="background: transparent">
+            <div style="text-align: center">
+              <em>Drop here</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+</div>

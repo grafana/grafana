@@ -70,6 +70,11 @@ define([
         controller : 'AlertEditCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/alerts/status', {
+        templateUrl: 'app/features/org/partials/alertStatus.html',
+        controller : 'AlertStatusCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',

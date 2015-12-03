@@ -134,8 +134,29 @@ function (angular, _, config) {
       });
     };
 
-    $scope.init();
+    $scope.createAlertGraphPanel = function(triggeredAlert) {
+      var defaultSpan = 12;
+      var _as = 12 - $scope.dashboard.rowSpan($scope.row);
+      var triggeredMetric = triggeredAlert.alertDetails.hostQuery.metricQueries[0].metric;
 
+      var panel = {
+        title: triggeredAlert.name,
+        error: false,
+        span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+        editable: false,
+        type: "graph",
+        targets: [{aggregator: "avg", metric: triggeredMetric, downsampleAggregator: "avg", downsampleInterval: "1m"}]
+      };
+
+      $scope.addPanel(panel);
+
+      $timeout(function() {
+        $scope.$broadcast('render');
+      });
+
+    };
+
+    $scope.init();
   });
 
   module.directive('rowHeight', function() {
