@@ -75,7 +75,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
 
-- Go 1.4
+- Go 1.5
 - NodeJS
 
 ### Get Code
@@ -85,11 +85,12 @@ go get github.com/grafana/grafana
 ```
 
 ### Building the backend
+Replace X.Y.Z by actual version number.
 ```
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
-go build .
+godep go run build.go build
 ```
 
 ### Building frontend assets
@@ -112,7 +113,7 @@ bra run
 
 ### Running
 ```
-./grafana
+./bin/grafana-server
 ```
 
 Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
@@ -128,6 +129,7 @@ You only need to add the options you want to override. Config files are applied 
 
 ## Create a pull request
 Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+
 ## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana

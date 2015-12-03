@@ -26,7 +26,7 @@ function (angular, $, _, moment) {
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || 'browser';
-      this.editable = data.editable === false ? false : true;
+      this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
       this.rows = data.rows || [];
@@ -48,10 +48,10 @@ function (angular, $, _, moment) {
     p._initMeta = function(meta) {
       meta = meta || {};
 
-      meta.canShare = meta.canShare === false ? false : true;
-      meta.canSave = meta.canSave === false ? false : true;
-      meta.canStar = meta.canStar === false ? false : true;
-      meta.canEdit = meta.canEdit === false ? false : true;
+      meta.canShare = meta.canShare !== false;
+      meta.canSave = meta.canSave !== false;
+      meta.canStar = meta.canStar !== false;
+      meta.canEdit = meta.canEdit !== false;
 
       if (!this.editable) {
         meta.canEdit = false;
@@ -151,7 +151,6 @@ function (angular, $, _, moment) {
             result.panel = panel;
             result.row = row;
             result.index = index;
-            return;
           }
         });
       });
@@ -230,9 +229,9 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 7;
+      this.schemaVersion = 8;
 
-      if (oldVersion === 7) {
+      if (oldVersion === 8) {
         return;
       }
 
@@ -340,6 +339,49 @@ function (angular, $, _, moment) {
               target.refId = this.getNextQueryLetter(panel);
             }
           }, this);
+        });
+      }
+
+      if (oldVersion < 8) {
+        panelUpgrades.push(function(panel) {
+          _.each(panel.targets, function(target) {
+            // update old influxdb query schema
+            if (target.fields && target.tags && target.groupBy) {
+              if (target.rawQuery) {
+                delete target.fields;
+                delete target.fill;
+              } else {
+                target.select = _.map(target.fields, function(field) {
+                  var parts = [];
+                  parts.push({type: 'field', params: [field.name]});
+                  parts.push({type: field.func, params: []});
+                  if (field.mathExpr) {
+                    parts.push({type: 'math', params: [field.mathExpr]});
+                  }
+                  if (field.asExpr) {
+                    parts.push({type: 'alias', params: [field.asExpr]});
+                  }
+                  return parts;
+                });
+                delete target.fields;
+                _.each(target.groupBy, function(part) {
+                  if (part.type === 'time' && part.interval)  {
+                    part.params = [part.interval];
+                    delete part.interval;
+                  }
+                  if (part.type === 'tag' && part.key) {
+                    part.params = [part.key];
+                    delete part.key;
+                  }
+                });
+
+                if (target.fill) {
+                  target.groupBy.push({type: 'fill', params: [target.fill]});
+                  delete target.fill;
+                }
+              }
+            }
+          });
         });
       }
 

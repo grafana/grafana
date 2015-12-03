@@ -4,8 +4,9 @@ define([
 function (_) {
   'use strict';
 
-  function InfluxQueryBuilder(target) {
+  function InfluxQueryBuilder(target, queryModel) {
     this.target = target;
+    this.model = queryModel;
 
     if (target.groupByTags) {
       target.groupBy = [{type: 'time', interval: 'auto'}];
@@ -89,79 +90,6 @@ function (_) {
       }
     }
 
-    return query;
-  };
-
-  p._getGroupByTimeInterval = function(interval) {
-    if (interval === 'auto') {
-      return '$interval';
-    }
-    return interval;
-  };
-
-  p._buildQuery = function() {
-    var target = this.target;
-
-    if (!target.measurement) {
-      throw "Metric measurement is missing";
-    }
-
-    if (!target.fields) {
-      target.fields = [{name: 'value', func: target.function || 'mean'}];
-    }
-
-    var query = 'SELECT ';
-    var i;
-    for (i = 0; i < target.fields.length; i++) {
-      var field = target.fields[i];
-      if (i > 0) {
-        query += ', ';
-      }
-      query += field.func + '("' + field.name + '")';
-      if (field.mathExpr) {
-        query += field.mathExpr;
-      }
-      if (field.asExpr) {
-        query += ' AS "' + field.asExpr + '"';
-      } else {
-        query += ' AS "' + field.name + '"';
-      }
-    }
-
-    var measurement = target.measurement;
-    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-      measurement = '"' + measurement+ '"';
-    }
-
-    query += ' FROM ' + measurement + ' WHERE ';
-    var conditions = _.map(target.tags, function(tag, index) {
-      return renderTagCondition(tag, index);
-    });
-
-    query += conditions.join(' ');
-    query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
-
-    query += ' GROUP BY';
-    for (i = 0; i < target.groupBy.length; i++) {
-      var group = target.groupBy[i];
-      if (group.type === 'time') {
-        query += ' time(' + this._getGroupByTimeInterval(group.interval) + ')';
-      } else {
-        query += ', "' + group.key + '"';
-      }
-    }
-
-    if (target.fill) {
-      query += ' fill(' + target.fill + ')';
-    }
-
-    target.query = query;
-
-    return query;
-  };
-
-  p._modifyRawQuery = function () {
-    var query = this.target.query.replace(";", "");
     return query;
   };
 
