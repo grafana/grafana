@@ -1,6 +1,7 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import {TableModel} from '../table_model';
+import {transformers} from '../transformers';
 
 describe('when transforming time series table', () => {
   var table;
@@ -100,7 +101,11 @@ describe('when transforming time series table', () => {
     describe('JSON Data', () => {
       var panel = {
         transform: 'json',
-        columns: [{text: 'Timestamp', value: 'timestamp'}, {text: 'Message', value: 'message'}]
+        columns: [
+          {text: 'Timestamp', value: 'timestamp'},
+          {text: 'Message', value: 'message'},
+          {text: 'nested.level2', value: 'nested.level2'},
+        ]
       };
       var rawData = [
         {
@@ -108,26 +113,42 @@ describe('when transforming time series table', () => {
           datapoints: [
             {
               timestamp: 'time',
-              message: 'message'
+              message: 'message',
+              nested: {
+                level2: 'level2-value'
+              }
             }
           ]
         }
       ];
 
-      beforeEach(() => {
-        table = TableModel.transform(rawData, panel);
+      describe('getColumns', function() {
+        it('should return nested properties', function() {
+          var columns = transformers['json'].getColumns(rawData);
+          expect(columns[0].text).to.be('timestamp');
+          expect(columns[1].text).to.be('message');
+          expect(columns[2].text).to.be('nested.level2');
+        });
       });
 
-      it ('should return 2 columns', () => {
-        expect(table.columns.length).to.be(2);
-        expect(table.columns[0].text).to.be('Timestamp');
-        expect(table.columns[1].text).to.be('Message');
-      });
+      describe('transform', function() {
+        beforeEach(() => {
+          table = TableModel.transform(rawData, panel);
+        });
 
-      it ('should return 2 rows', () => {
-        expect(table.rows.length).to.be(1);
-        expect(table.rows[0][0]).to.be('time');
-        expect(table.rows[0][1]).to.be('message');
+        it ('should return 2 columns', () => {
+          expect(table.columns.length).to.be(3);
+          expect(table.columns[0].text).to.be('Timestamp');
+          expect(table.columns[1].text).to.be('Message');
+          expect(table.columns[2].text).to.be('nested.level2');
+        });
+
+        it ('should return 2 rows', () => {
+          expect(table.rows.length).to.be(1);
+          expect(table.rows[0][0]).to.be('time');
+          expect(table.rows[0][1]).to.be('message');
+          expect(table.rows[0][2]).to.be('level2-value');
+        });
       });
     });
 

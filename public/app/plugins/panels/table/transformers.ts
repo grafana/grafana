@@ -2,6 +2,7 @@
 
 import moment = require('moment');
 import _ = require('lodash');
+import flatten = require('app/core/utils/flatten');
 import TimeSeries = require('app/core/time_series');
 
 var transformers = {};
@@ -149,9 +150,12 @@ transformers['json'] = {
         continue;
       }
 
-      for (var y = 0; y < series.datapoints.length; y++) {
+      // only look at 100 docs
+      var maxDocs = Math.min(series.datapoints.length, 100);
+      for (var y = 0; y < maxDocs; y++) {
         var doc = series.datapoints[y];
-        for (var propName in doc) {
+        var flattened = flatten(doc, null);
+        for (var propName in flattened) {
           names[propName] = true;
         }
       }
@@ -177,13 +181,16 @@ transformers['json'] = {
       for (y = 0; y < series.datapoints.length; y++) {
         var dp = series.datapoints[y];
         var values = [];
-        for (z = 0; z < panel.columns.length; z++) {
-          values.push(dp[panel.columns[z].value]);
-        }
 
-        if (values.length === 0) {
+        if (_.isObject(dp) && panel.columns.length > 0) {
+          var flattened = flatten(dp, null);
+          for (z = 0; z < panel.columns.length; z++) {
+            values.push(flattened[panel.columns[z].value]);
+          }
+        } else {
           values.push(JSON.stringify(dp));
         }
+
         model.rows.push(values);
       }
     }

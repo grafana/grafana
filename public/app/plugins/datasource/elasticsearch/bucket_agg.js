@@ -15,7 +15,6 @@ function (angular, _, queryDef) {
     $scope.bucketAggTypes = queryDef.bucketAggTypes;
     $scope.orderOptions = queryDef.orderOptions;
     $scope.sizeOptions = queryDef.sizeOptions;
-    $scope.intervalOptions = queryDef.intervalOptions;
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
@@ -126,6 +125,10 @@ function (angular, _, queryDef) {
       } else {
         return $scope.getFields();
       }
+    };
+
+    $scope.getIntervalOptions = function() {
+      return $q.when(uiSegmentSrv.transformToSegments(true, 'interval')(queryDef.intervalOptions));
     };
 
     $scope.addBucketAgg = function() {

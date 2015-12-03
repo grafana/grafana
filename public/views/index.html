@@ -9,12 +9,12 @@
     <title>Grafana</title>
 
 		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.light.min.css">
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.light.min.css">
 		  [[ range $css := .PluginCss ]]
 			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css.Light ]]">
 		  [[ end ]]
 		[[else]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/css/grafana.dark.min.css">
+		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.dark.min.css">
 		  [[ range $css := .PluginCss ]]
 			<link rel="stylesheet" href="[[$.AppSubUrl]]/[[ $css.Dark ]]">
 		  [[ end ]]
@@ -22,10 +22,10 @@
 
 		
 
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/img/fav32.png">
+    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />
 
-		<!-- build:js [[.AppSubUrl]]/app/app.js -->
+		<!-- build:js [[.AppSubUrl]]/public/app/app.js -->
     <script src="[[.AppSubUrl]]/public/vendor/requirejs/require.js"></script>
     <script src="[[.AppSubUrl]]/public/app/require_config.js"></script>
     <!-- endbuild -->
