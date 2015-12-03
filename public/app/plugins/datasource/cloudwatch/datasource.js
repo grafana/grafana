@@ -151,28 +151,11 @@ function (angular, _) {
       var region;
       var namespace;
       var metricName;
-      var dimensionPart;
-      var dimensions;
 
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
           return { text: v };
         });
-      };
-
-      var parseDimensions = function(dimensionPart) {
-        if (_.isEmpty(dimensionPart)) {
-          return {};
-        }
-        var dimensions = {};
-        _.each(dimensionPart.split(','), function(v) {
-          var t = v.split('=');
-          if (t.length !== 2) {
-            throw new Error('Invalid query format');
-          }
-          dimensions[t[0]] = t[1];
-        });
-        return dimensions;
       };
 
       var regionQuery = query.match(/^regions\(\)/);
@@ -195,16 +178,14 @@ function (angular, _) {
         return this.getDimensionKeys(dimensionKeysQuery[1]);
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
         region = templateSrv.replace(dimensionValuesQuery[1]);
         namespace = templateSrv.replace(dimensionValuesQuery[2]);
         metricName = templateSrv.replace(dimensionValuesQuery[3]);
         var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
-        dimensionPart = templateSrv.replace(dimensionValuesQuery[6]);
 
-        dimensions = parseDimensions(dimensionPart);
-        return this.getDimensionValues(region, namespace, metricName, dimensionKey, dimensions);
+        return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
