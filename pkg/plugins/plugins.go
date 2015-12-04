@@ -35,7 +35,28 @@ func Init() error {
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 	checkExternalPluginPaths()
+	checkDependencies()
 	return nil
+}
+
+func checkDependencies() {
+	for bundleType, bundle := range Bundles {
+		for _, reqPanel := range bundle.PanelPlugins {
+			if _, ok := Panels[reqPanel]; !ok {
+				log.Fatal(4, "Bundle %s requires Panel type %s, but it is not present.", bundleType, reqPanel)
+			}
+		}
+		for _, reqDataSource := range bundle.DatasourcePlugins {
+			if _, ok := DataSources[reqDataSource]; !ok {
+				log.Fatal(4, "Bundle %s requires DataSource type %s, but it is not present.", bundleType, reqDataSource)
+			}
+		}
+		for _, reqExtPlugin := range bundle.ExternalPlugins {
+			if _, ok := ExternalPlugins[reqExtPlugin]; !ok {
+				log.Fatal(4, "Bundle %s requires DataSource type %s, but it is not present.", bundleType, reqExtPlugin)
+			}
+		}
+	}
 }
 
 func checkExternalPluginPaths() error {
