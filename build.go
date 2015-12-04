@@ -76,6 +76,14 @@ func main() {
 			grunt("release")
 			createLinuxPackages()
 
+		case "pkg-rpm":
+			grunt("release")
+			createRpmPackages()
+      
+		case "pkg-deb":
+			grunt("release")
+			createDebPackages()
+
 		case "latest":
 			makeLatestDistCopies()
 
@@ -146,8 +154,7 @@ type linuxPackageOptions struct {
 
 	depends []string
 }
-
-func createLinuxPackages() {
+func createDebPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
@@ -167,7 +174,9 @@ func createLinuxPackages() {
 
 		depends: []string{"adduser", "libfontconfig"},
 	})
+}
 
+func createRpmPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",
 		homeDir:                "/usr/share/grafana",
@@ -187,6 +196,11 @@ func createLinuxPackages() {
 
 		depends: []string{"initscripts", "fontconfig"},
 	})
+}
+
+func createLinuxPackages() {
+	createDebPackages()
+	createRpmPackages()
 }
 
 func createPackage(options linuxPackageOptions) {
