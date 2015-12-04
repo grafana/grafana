@@ -1,16 +1,21 @@
 define([
-  "angular"
 ],
-function (angular) {
+function () {
   'use strict';
 
   function ElasticQueryBuilder(options) {
     this.timeField = options.timeField;
+    this.esVersion = options.esVersion;
   }
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
     filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
+
+    if (this.esVersion >= 2) {
+      filter[this.timeField]["format"] = "epoch_millis";
+    }
+
     return filter;
   };
 
@@ -82,9 +87,11 @@ function (angular) {
   };
 
   ElasticQueryBuilder.prototype.build = function(target) {
-    if (target.rawQuery) {
-      return angular.fromJson(target.rawQuery);
-    }
+    // make sure query has defaults;
+    target.metrics = target.metrics || [{ type: 'count', id: '1' }];
+    target.dsType = 'elasticsearch';
+    target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
+    target.timeField =  this.timeField;
 
     var i, nestedAggs, metric;
     var query = {
@@ -129,6 +136,9 @@ function (angular) {
             "min_doc_count": 0,
             "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
           };
+          if (this.esVersion >= 2) {
+            esAgg["date_histogram"]["format"] = "epoch_millis";
+          }
           break;
         }
         case 'filters': {

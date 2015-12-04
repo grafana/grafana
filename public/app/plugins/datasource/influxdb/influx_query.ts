@@ -12,6 +12,8 @@ class InfluxQuery {
   constructor(target) {
     this.target = target;
 
+    target.dsType = 'influxdb';
+    target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
       {type: 'time', params: ['$interval']},
