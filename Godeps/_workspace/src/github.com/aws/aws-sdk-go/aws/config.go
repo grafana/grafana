@@ -2,48 +2,22 @@ package aws
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
-// DefaultChainCredentials is a Credentials which will find the first available
-// credentials Value from the list of Providers.
-//
-// This should be used in the default case. Once the type of credentials are
-// known switching to the specific Credentials will be more efficient.
-var DefaultChainCredentials = credentials.NewChainCredentials(
-	[]credentials.Provider{
-		&credentials.EnvProvider{},
-		&credentials.SharedCredentialsProvider{Filename: "", Profile: ""},
-		&credentials.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
-	})
-
-// The default number of retries for a service. The value of -1 indicates that
-// the service specific retry default will be used.
-const DefaultRetries = -1
-
-// DefaultConfig is the default all service configuration will be based off of.
-// By default, all clients use this structure for initialization options unless
-// a custom configuration object is passed in.
-//
-// You may modify this global structure to change all default configuration
-// in the SDK. Note that configuration options are copied by value, so any
-// modifications must happen before constructing a client.
-var DefaultConfig = NewConfig().
-	WithCredentials(DefaultChainCredentials).
-	WithRegion(os.Getenv("AWS_REGION")).
-	WithHTTPClient(http.DefaultClient).
-	WithMaxRetries(DefaultRetries).
-	WithLogger(NewDefaultLogger()).
-	WithLogLevel(LogOff)
+// UseServiceDefaultRetries instructs the config to use the service's own default
+// number of retries. This will be the default action if Config.MaxRetries
+// is nil also.
+const UseServiceDefaultRetries = -1
 
 // A Config provides service configuration for service clients. By default,
-// all clients will use the {DefaultConfig} structure.
+// all clients will use the {defaults.DefaultConfig} structure.
 type Config struct {
 	// The credentials object to use when signing requests. Defaults to
-	// {DefaultChainCredentials}.
+	// a chain of credential providers to search for credentials in environment
+	// variables, shared credential file, and EC2 Instance Roles.
 	Credentials *credentials.Credentials
 
 	// An optional endpoint URL (hostname only or fully qualified URI)
@@ -102,6 +76,8 @@ type Config struct {
 	// @see http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html
 	//   Amazon S3: Virtual Hosting of Buckets
 	S3ForcePathStyle *bool
+
+	SleepDelay func(time.Duration)
 }
 
 // NewConfig returns a new Config pointer that can be chained with builder methods to
@@ -190,15 +166,24 @@ func (c *Config) WithS3ForcePathStyle(force bool) *Config {
 	return c
 }
 
-// Merge returns a new Config with the other Config's attribute values merged into
-// this Config. If the other Config's attribute is nil it will not be merged into
-// the new Config to be returned.
-func (c Config) Merge(other *Config) *Config {
-	if other == nil {
-		return &c
-	}
+// WithSleepDelay overrides the function used to sleep while waiting for the
+// next retry. Defaults to time.Sleep.
+func (c *Config) WithSleepDelay(fn func(time.Duration)) *Config {
+	c.SleepDelay = fn
+	return c
+}
 
-	dst := c
+// MergeIn merges the passed in configs into the existing config object.
+func (c *Config) MergeIn(cfgs ...*Config) {
+	for _, other := range cfgs {
+		mergeInConfig(c, other)
+	}
+}
+
+func mergeInConfig(dst *Config, other *Config) {
+	if other == nil {
+		return
+	}
 
 	if other.Credentials != nil {
 		dst.Credentials = other.Credentials
@@ -244,11 +229,20 @@ func (c Config) Merge(other *Config) *Config {
 		dst.S3ForcePathStyle = other.S3ForcePathStyle
 	}
 
-	return &dst
+	if other.SleepDelay != nil {
+		dst.SleepDelay = other.SleepDelay
+	}
 }
 
-// Copy will return a shallow copy of the Config object.
-func (c Config) Copy() *Config {
-	dst := c
-	return &dst
+// Copy will return a shallow copy of the Config object. If any additional
+// configurations are provided they will be merged into the new config returned.
+func (c *Config) Copy(cfgs ...*Config) *Config {
+	dst := &Config{}
+	dst.MergeIn(c)
+
+	for _, cfg := range cfgs {
+		dst.MergeIn(cfg)
+	}
+
+	return dst
 }

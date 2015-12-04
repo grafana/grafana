@@ -1,9 +1,9 @@
 define([
   'angular',
-  'config',
   'lodash',
+  'app/core/config',
 ],
-function (angular, config, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -13,7 +13,7 @@ function (angular, config, _) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {}};
 
     $scope.indexPatternTypes = [
       {name: 'No pattern',  value: undefined},
@@ -22,6 +22,11 @@ function (angular, config, _) {
       {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
       {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
       {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
+
+    $scope.esVersions = [
+      {name: '1.x', value: 1},
+      {name: '2.x', value: 2},
     ];
 
     $scope.init = function() {

@@ -25,6 +25,7 @@ function (angular, _) {
       var end = convertToCloudWatchTime(options.range.to);
 
       var queries = [];
+      options = _.clone(options);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -34,15 +35,15 @@ function (angular, _) {
         query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = convertDimensionFormat(target.dimensions);
+        query.dimensions = convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
-        query.period = parseInt(target.period, 10);
 
         var range = end - start;
-        // CloudWatch limit datapoints up to 1440
+        query.period = parseInt(target.period, 10) || (query.namespace === 'AWS/EC2' ? 300 : 60);
         if (range / query.period >= 1440) {
-          query.period = Math.floor(range / 1440 / 60) * 60;
+          query.period = Math.ceil(range / 1440 / 60) * 60;
         }
+        target.period = query.period;
 
         queries.push(query);
       }, this));
@@ -112,23 +113,28 @@ function (angular, _) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
+    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       var request = {
         region: templateSrv.replace(region),
         action: 'ListMetrics',
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(dimensions),
+          dimensions: convertDimensionFormat(filterDimensions, {}),
         }
       };
 
       return this.awsRequest(request).then(function(result) {
-        return _.chain(result.Metrics).map(function(metric) {
-          return _.pluck(metric.Dimensions, 'Value');
-        }).flatten().uniq().sortBy(function(name) {
-          return name;
-        }).map(function(value) {
+        return _.chain(result.Metrics)
+        .pluck('Dimensions')
+        .flatten()
+        .filter(function(dimension) {
+          return dimension.Name === dimensionKey;
+        })
+        .pluck('Value')
+        .uniq()
+        .sortBy()
+        .map(function(value) {
           return {value: value, text: value};
         }).value();
       });
@@ -173,25 +179,14 @@ function (angular, _) {
         return this.getDimensionKeys(dimensionKeysQuery[1]);
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
         region = templateSrv.replace(dimensionValuesQuery[1]);
         namespace = templateSrv.replace(dimensionValuesQuery[2]);
         metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionPart = templateSrv.replace(dimensionValuesQuery[5]);
+        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
 
-        var dimensions = {};
-        if (!_.isEmpty(dimensionPart)) {
-          _.each(dimensionPart.split(','), function(v) {
-            var t = v.split('=');
-            if (t.length !== 2) {
-              throw new Error('Invalid query format');
-            }
-            dimensions[t[0]] = t[1];
-          });
-        }
-
-        return this.getDimensionValues(region, namespace, metricName, dimensions);
+        return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
@@ -204,7 +199,7 @@ function (angular, _) {
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
           var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.EBS.VolumeID;
+            return mapping.Ebs.VolumeId;
           });
 
           return transformSuggestData(volumeIds);
@@ -216,12 +211,12 @@ function (angular, _) {
 
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
-      var region = 'us-east-1';
+      var region = this.defaultRegion;
       var namespace = 'AWS/Billing';
       var metricName = 'EstimatedCharges';
       var dimensions = {};
 
-      return this.getDimensionValues(region, namespace, metricName, dimensions).then(function () {
+      return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };
@@ -252,13 +247,22 @@ function (angular, _) {
       };
       _.extend(aliasData, options.dimensions);
 
+      var periodMs = options.period * 1000;
       return _.map(options.statistics, function(stat) {
-        var dps = _.chain(md.Datapoints).map(function(dp) {
-          return [dp[stat], new Date(dp.Timestamp).getTime()];
-        })
+        var dps = [];
+        var lastTimestamp = null;
+        _.chain(md.Datapoints)
         .sortBy(function(dp) {
-          return dp[1];
-        }).value();
+          return dp.Timestamp;
+        })
+        .each(function(dp) {
+          var timestamp = new Date(dp.Timestamp).getTime();
+          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
+            dps.push([null, lastTimestamp + periodMs]);
+          }
+          lastTimestamp = timestamp;
+          dps.push([dp[stat], timestamp]);
+        });
 
         aliasData.stat = stat;
         var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
@@ -276,11 +280,11 @@ function (angular, _) {
       return Math.round(date.valueOf() / 1000);
     }
 
-    function convertDimensionFormat(dimensions) {
+    function convertDimensionFormat(dimensions, scopedVars) {
       return _.map(dimensions, function(value, key) {
         return {
-          Name: templateSrv.replace(key),
-          Value: templateSrv.replace(value)
+          Name: templateSrv.replace(key, scopedVars),
+          Value: templateSrv.replace(value, scopedVars)
         };
       });
     }

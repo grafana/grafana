@@ -34,11 +34,12 @@ var rangeOptions = [
   { from: 'now-15m',  to: 'now',      display: 'Last 15 minutes',       section: 3 },
   { from: 'now-30m',  to: 'now',      display: 'Last 30 minutes',       section: 3 },
   { from: 'now-1h',   to: 'now',      display: 'Last 1 hour',           section: 3 },
+  { from: 'now-3h',   to: 'now',      display: 'Last 3 hours',          section: 3 },
   { from: 'now-6h',   to: 'now',      display: 'Last 6 hours',          section: 3 },
   { from: 'now-12h',  to: 'now',      display: 'Last 12 hours',         section: 3 },
   { from: 'now-24h',  to: 'now',      display: 'Last 24 hours',         section: 3 },
-  { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 3 },
 
+  { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 0 },
   { from: 'now-30d',  to: 'now',      display: 'Last 30 days',          section: 0 },
   { from: 'now-60d',  to: 'now',      display: 'Last 60 days',          section: 0 },
   { from: 'now-90d',  to: 'now',      display: 'Last 90 days',          section: 0 },
@@ -133,8 +134,12 @@ _.each(rangeOptions, function (frame) {
       return from.fromNow() + ' to ' + formatDate(range.to);
     }
 
-    var res = describeTextRange(range.from);
-    return res.display;
+    if (range.to.toString() === 'now') {
+      var res = describeTextRange(range.from);
+      return res.display;
+    }
+
+    return range.from.toString() + ' to ' + range.to.toString();
   }
 
 export = {

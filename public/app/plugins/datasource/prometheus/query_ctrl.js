@@ -44,6 +44,21 @@ function (angular, _) {
         .then(callback);
     };
 
+    $scope.linkToPrometheus = function() {
+      var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
+      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
+      var expr = {
+        expr: $scope.target.expr,
+        range_input: range + 's',
+        end_input: endTime,
+        step_input: '',
+        stacked: $scope.panel.stack,
+        tab: 0
+      };
+      var hash = encodeURIComponent(JSON.stringify([expr]));
+      return $scope.datasource.directUrl + '/graph#' + hash;
+    };
+
     $scope.init();
   });
 

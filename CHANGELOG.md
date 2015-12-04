@@ -1,4 +1,24 @@
-# 2.5 (unreleased)
+# 2.6.0 (unreleased)
+
+### New Table Panel
+* **table**:  New powerful and flexible table panel, closes [#215](https://github.com/grafana/grafana/issues/215)
+
+### Enhancements
+* **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
+* **Elasticsearch**: Support for dynamic daily indices for annotations, closes [#3061](https://github.com/grafana/grafana/issues/3061)
+* **Graph Panel**: Option to hide series with all zeroes from legend and tooltip, closes [#1381](https://github.com/grafana/grafana/issues/1381), [#3336](https://github.com/grafana/grafana/issues/3336)
+
+### Bug Fixes
+* **cloudwatch**: fix for handling of period for long time ranges, fixes [#3086](https://github.com/grafana/grafana/issues/3086)
+* **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
+* **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
+* **graph**: layout fix for color picker when right side legend was enabled, fixes [#3093](https://github.com/grafana/grafana/issues/3093)
+* **elasticsearch**: disabling elastic query (via eye) caused error, fixes [#3300](https://github.com/grafana/grafana/issues/3300)
+
+### Breaking changes
+* **elasticsearch**: Manual json edited queries are not supported any more (They very barely worked in 2.5)
+
+# 2.5 (2015-10-28)
 
 **New Feature: Mix data sources**
 - A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
@@ -11,12 +31,12 @@ it allows you to add queries of differnet data source types & instances to the s
 
 **New Feature: New and much improved time picker**
 - Support for quick ranges like `Today`, `This day last week`, `This week`, `The day so far`, etc.
-- Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
+- Improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
 
 **User Onboarding**
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
-- See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
+- See [Issue #2353](https://github.com/grafana/grafana/issues/2353) for more info.
 
 **Other new Features && Enhancements**
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)
@@ -28,6 +48,8 @@ it allows you to add queries of differnet data source types & instances to the s
 - [Issue #2708](https://github.com/grafana/grafana/issues/2708). InfluxDB: You can now set math expression for select clauses.
 - [Issue #1575](https://github.com/grafana/grafana/issues/1575). Drilldown link: now you can click on the external link icon in the panel header to access drilldown links!
 - [Issue #1646](https://github.com/grafana/grafana/issues/1646). OpenTSDB: Fetch list of aggregators from OpenTSDB
+- [Issue #2955](https://github.com/grafana/grafana/issues/2955). Graph: More axis units (Length, Volume, Temperature, Pressure, etc), thanks @greglook
+- [Issue #2928](https://github.com/grafana/grafana/issues/2928). LDAP: Support for searching for groups memberships, i.e. POSIX (no memberOf) schemas, also multiple ldap servers, and root ca cert, thanks @abligh
 
 **Fixes**
 - [Issue #2413](https://github.com/grafana/grafana/issues/2413). InfluxDB 0.9: Fix for handling empty series object in response from influxdb

@@ -40,7 +40,9 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
+
 	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -146,7 +148,7 @@ func Register(r *macaron.Macaron) {
 			r.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
-			r.Get("/:id", GetDataSourceById)
+			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/plugins", GetDataSourcePlugins)
 		}, regOrgAdmin)
 

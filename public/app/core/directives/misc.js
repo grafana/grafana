@@ -1,9 +1,9 @@
 define([
   'angular',
-  'kbn',
   '../core_module',
+  'app/core/utils/kbn',
 ],
-function (angular, kbn, coreModule) {
+function (angular, coreModule, kbn) {
   'use strict';
 
   coreModule.directive('tip', function($compile) {

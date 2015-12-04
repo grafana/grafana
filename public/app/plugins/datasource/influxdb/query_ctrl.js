@@ -2,32 +2,38 @@ define([
   'angular',
   'lodash',
   './query_builder',
+  './influx_query',
+  './query_part',
+  './query_part_editor',
 ],
-function (angular, _, InfluxQueryBuilder) {
+function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('InfluxQueryCtrl', function($scope, $timeout, $sce, templateSrv, $q, uiSegmentSrv) {
+  module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
       if (!$scope.target) { return; }
 
-      var target = $scope.target;
-      target.tags = target.tags || [];
-      target.groupBy = target.groupBy || [{type: 'time', interval: 'auto'}];
-      target.fields = target.fields || [{name: 'value', func: target.function || 'mean'}];
+      $scope.target = $scope.target;
+      $scope.queryModel = new InfluxQuery($scope.target);
+      $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
+      $scope.groupBySegment = uiSegmentSrv.newPlusButton();
+      $scope.resultFormats = [
+         {text: 'Time series', value: 'time_series'},
+         {text: 'Table', value: 'table'},
+         {text: 'JSON field', value: 'json_field'},
+      ];
 
-      $scope.queryBuilder = new InfluxQueryBuilder(target);
-
-      if (!target.measurement) {
+      if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();
       } else {
-        $scope.measurementSegment = uiSegmentSrv.newSegment(target.measurement);
+        $scope.measurementSegment = uiSegmentSrv.newSegment($scope.target.measurement);
       }
 
       $scope.tagSegments = [];
-      _.each(target.tags, function(tag) {
+      _.each($scope.target.tags, function(tag) {
         if (!tag.operator) {
           if (/^\/.*\/$/.test(tag.value)) {
             tag.operator = "=~";
@@ -46,7 +52,67 @@ function (angular, _, InfluxQueryBuilder) {
       });
 
       $scope.fixTagSegments();
+      $scope.buildSelectMenu();
       $scope.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
+    };
+
+    $scope.buildSelectMenu = function() {
+      var categories = queryPart.getCategories();
+      $scope.selectMenu = _.reduce(categories, function(memo, cat, key) {
+        var menu = {text: key};
+        menu.submenu = _.map(cat, function(item) {
+          return {text: item.type, value: item.type};
+        });
+        memo.push(menu);
+        return memo;
+      }, []);
+    };
+
+    $scope.getGroupByOptions = function() {
+      var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
+
+      return $scope.datasource.metricFindQuery(query)
+      .then(function(tags) {
+        var options = [];
+        if (!$scope.queryModel.hasFill()) {
+          options.push(uiSegmentSrv.newSegment({value: 'fill(null)'}));
+        }
+        if (!$scope.queryModel.hasGroupByTime()) {
+          options.push(uiSegmentSrv.newSegment({value: 'time($interval)'}));
+        }
+        _.each(tags, function(tag) {
+          options.push(uiSegmentSrv.newSegment({value: 'tag(' + tag.text + ')'}));
+        });
+        return options;
+      })
+      .then(null, $scope.handleQueryError);
+    };
+
+    $scope.groupByAction = function() {
+      $scope.queryModel.addGroupBy($scope.groupBySegment.value);
+      var plusButton = uiSegmentSrv.newPlusButton();
+      $scope.groupBySegment.value  = plusButton.value;
+      $scope.groupBySegment.html  = plusButton.html;
+      $scope.get_data();
+    };
+
+    $scope.removeGroupByPart = function(part, index) {
+      $scope.queryModel.removeGroupByPart(part, index);
+      $scope.get_data();
+    };
+
+    $scope.addSelectPart = function(selectParts, cat, subitem) {
+      $scope.queryModel.addSelectPart(selectParts, subitem.value);
+      $scope.get_data();
+    };
+
+    $scope.removeSelectPart = function(selectParts, part) {
+      $scope.queryModel.removeSelectPart(selectParts, part);
+      $scope.get_data();
+    };
+
+    $scope.selectPartUpdated = function() {
+      $scope.get_data();
     };
 
     $scope.fixTagSegments = function() {
@@ -58,38 +124,9 @@ function (angular, _, InfluxQueryBuilder) {
       }
     };
 
-    $scope.addGroupBy = function() {
-      $scope.target.groupBy.push({type: 'tag', key: "select tag"});
-    };
-
-    $scope.removeGroupBy = function(index) {
-      $scope.target.groupBy.splice(index, 1);
-      $scope.get_data();
-    };
-
-    $scope.addSelect = function() {
-      $scope.target.fields.push({name: "select field", func: 'mean'});
-    };
-
-    $scope.removeSelect = function(index) {
-      $scope.target.fields.splice(index, 1);
-      $scope.get_data();
-    };
-
-    $scope.changeFunction = function(func) {
-      $scope.target.function = func;
-      $scope.$parent.get_data();
-    };
-
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
-      $scope.$parent.get_data();
-    };
-
-    $scope.getFields = function() {
-      var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
-      return $scope.datasource.metricFindQuery(fieldsQuery)
-      .then($scope.transformToSegments(false), $scope.handleQueryError);
+      $scope.get_data();
     };
 
     $scope.toggleQueryMode = function () {
@@ -102,20 +139,17 @@ function (angular, _, InfluxQueryBuilder) {
       .then($scope.transformToSegments(true), $scope.handleQueryError);
     };
 
-    $scope.getFunctions = function () {
-      var functionList = ['count', 'mean', 'sum', 'min', 'max', 'mode', 'distinct', 'median',
-        'stddev', 'first', 'last'
-      ];
-      return $q.when(_.map(functionList, function(func) {
-        return uiSegmentSrv.newSegment(func);
-      }));
-    };
-
-    $scope.getGroupByTimeIntervals = function () {
-      var times = ['auto', '1s', '10s', '1m', '2m', '5m', '10m', '30m', '1h', '1d'];
-      return $q.when(_.map(times, function(func) {
-        return uiSegmentSrv.newSegment(func);
-      }));
+    $scope.getPartOptions = function(part) {
+      if (part.def.type === 'field') {
+        var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
+        return $scope.datasource.metricFindQuery(fieldsQuery)
+        .then($scope.transformToSegments(true), $scope.handleQueryError);
+      }
+      if (part.def.type === 'tag') {
+        var tagsQuery = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
+        return $scope.datasource.metricFindQuery(tagsQuery)
+        .then($scope.transformToSegments(true), $scope.handleQueryError);
+      }
     };
 
     $scope.handleQueryError = function(err) {
@@ -179,25 +213,8 @@ function (angular, _, InfluxQueryBuilder) {
       .then(null, $scope.handleQueryError);
     };
 
-    $scope.addField = function() {
-      $scope.target.fields.push({name: $scope.addFieldSegment.value, func: 'mean'});
-      _.extend($scope.addFieldSegment, uiSegmentSrv.newPlusButton());
-    };
-
-    $scope.fieldChanged = function(field) {
-      if (field.name === '-- remove from select --') {
-        $scope.target.fields = _.without($scope.target.fields, field);
-      }
-      $scope.get_data();
-    };
-
     $scope.getTagOptions = function() {
-      var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
-
-      return $scope.datasource.metricFindQuery(query)
-      .then($scope.transformToSegments(false))
-      .then(null, $scope.handleQueryError);
-    };
+   };
 
     $scope.setFill = function(fill) {
       $scope.target.fill = fill;

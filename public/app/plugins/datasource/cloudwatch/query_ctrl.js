@@ -15,7 +15,7 @@ function (angular, _) {
       target.metricName = target.metricName || '';
       target.statistics = target.statistics || ['Average'];
       target.dimensions = target.dimensions || {};
-      target.period = target.period || 60;
+      target.period = target.period || '';
       target.region = target.region || $scope.datasource.getDefaultRegion();
 
       $scope.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
@@ -76,7 +76,7 @@ function (angular, _) {
       }
     };
 
-    $scope.getDimSegments = function(segment) {
+    $scope.getDimSegments = function(segment, $index) {
       if (segment.type === 'operator') { return $q.when([]); }
 
       var target = $scope.target;
@@ -85,7 +85,8 @@ function (angular, _) {
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace);
       } else if (segment.type === 'value')  {
-        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, {});
+        var dimensionKey = $scope.dimSegments[$index-2].value;
+        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, {});
       }
 
       return query.then($scope.transformToSegments(true)).then(function(results) {
