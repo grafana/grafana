@@ -60,6 +60,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Text: "Data Sources",
 			Icon: "fa fa-fw fa-database",
 			Href: "/datasources",
+		}, &dtos.NavLink{
+			Text: "Plugins",
+			Icon: "fa fa-fw fa-cubes",
+			Href: "/plugins",
 		})
 	}
 
