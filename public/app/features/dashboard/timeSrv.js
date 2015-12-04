@@ -21,6 +21,7 @@ define([
 
       this._initTimeFromUrl();
       this._parseTime();
+      console.log(dashboard.time);
 
       if(this.dashboard.refresh) {
         this.setAutoRefresh(this.dashboard.refresh);
@@ -47,8 +48,9 @@ define([
       if (value.length === 15) {
         return moment.utc(value, 'YYYYMMDDTHHmmss');
       }
-      var epoch = parseInt(value);
-      if (!_.isNaN(epoch)) {
+
+      if (!isNaN(value)) {
+        var epoch = parseInt(value);
         return moment(epoch);
       }
 
