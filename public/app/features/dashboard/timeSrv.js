@@ -21,7 +21,6 @@ define([
 
       this._initTimeFromUrl();
       this._parseTime();
-      console.log(dashboard.time);
 
       if(this.dashboard.refresh) {
         this.setAutoRefresh(this.dashboard.refresh);

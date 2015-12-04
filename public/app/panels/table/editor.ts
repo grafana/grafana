@@ -50,6 +50,7 @@ export class TablePanelEditorCtrl {
 
       var plusButton = uiSegmentSrv.newPlusButton();
       $scope.addColumnSegment.html = plusButton.html;
+      $scope.addColumnSegment.value = plusButton.value;
     };
 
     $scope.transformChanged = function() {
