@@ -22,14 +22,6 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
-  it('with raw query', function() {
-    var query = builder.build({
-      rawQuery: '{"query": "$lucene_query"}',
-    });
-
-    expect(query.query).to.be("$lucene_query");
-  });
-
   it('with multiple bucket aggs', function() {
     var query = builder.build({
       metrics: [{type: 'count', id: '1'}],
@@ -42,6 +34,39 @@ describe('ElasticQueryBuilder', function() {
 
     expect(query.aggs["2"].terms.field).to.be("@host");
     expect(query.aggs["2"].aggs["3"].date_histogram.field).to.be("@timestamp");
+  });
+
+  it('with es1.x and es2.x date histogram queries check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 2
+    });
+
+    var query_params = {
+      metrics: [],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '1'}
+      ],
+    };
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.build(query_params)["aggs"]["1"]["date_histogram"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.build(query_params)["aggs"]["1"]["date_histogram"]["format"]).to.be("epoch_millis");
+  });
+
+  it('with es1.x and es2.x range filter check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 2
+    });
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.getRangeFilter()["@timestamp"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.getRangeFilter()["@timestamp"]["format"]).to.be("epoch_millis");
   });
 
   it('with select field', function() {
@@ -118,6 +143,16 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["2"].filters.filters["@metric:cpu"].query.query_string.query).to.be("@metric:cpu");
     expect(query.aggs["2"].filters.filters["@metric:logins.count"].query.query_string.query).to.be("@metric:logins.count");
     expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
+  });
+
+  it('with raw_document metric', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1'}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(500);
   });
 
 });

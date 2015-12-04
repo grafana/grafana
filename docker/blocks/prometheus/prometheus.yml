@@ -4,10 +4,6 @@ global:
   evaluation_interval: 10s # By default, scrape targets every 15 seconds.
   # scrape_timeout is set to the global default (10s).
 
-  # Attach these extra labels to all timeseries collected by this Prometheus instance.
-  labels:
-      monitor: 'codelab-monitor'
-
 # Load and evaluate rules in this file every 'evaluation_interval' seconds.
 rule_files:
   # - "first.rules"

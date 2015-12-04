@@ -3,16 +3,16 @@ define([
   'lodash',
   'app/core/utils/datemath',
   './influx_series',
-  './query_builder',
+  './influx_query',
   './directives',
   './query_ctrl',
 ],
-function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
+function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('InfluxDatasource', function($q, $http, templateSrv) {
+  module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
 
     function InfluxDatasource(datasource) {
       this.type = 'influxdb';
@@ -41,8 +41,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         queryTargets.push(target);
 
         // build query
-        var queryBuilder = new InfluxQueryBuilder(target);
-        var query =  queryBuilder.build();
+        var queryModel = new InfluxQuery(target);
+        var query =  queryModel.render();
         query = query.replace(/\$interval/g, (target.interval || options.interval));
         return query;
 
@@ -53,6 +53,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
 
       // replace templated variables
       allQueries = templateSrv.replace(allQueries, options.scopedVars);
+
       return this._seriesQuery(allQueries).then(function(data) {
         if (!data || !data.results) {
           return [];
@@ -63,13 +64,26 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           var result = data.results[i];
           if (!result || !result.series) { continue; }
 
-          var alias = (queryTargets[i] || {}).alias;
+          var target = queryTargets[i];
+          var alias = target.alias;
           if (alias) {
-            alias = templateSrv.replace(alias, options.scopedVars);
+            alias = templateSrv.replace(target.alias, options.scopedVars);
           }
-          var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
-          for (y = 0; y < targetSeries.length; y++) {
-            seriesList.push(targetSeries[y]);
+
+          var influxSeries = new InfluxSeries({ series: data.results[i].series, alias: alias });
+
+          switch(target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
+            }
+            default: {
+              var timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
 
@@ -77,16 +91,16 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ range: rangeUnparsed });
-      var query = annotation.query.replace('$timeFilter', timeFilter);
+    InfluxDatasource.prototype.annotationQuery = function(options) {
+      var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
+      var query = options.annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
       return this._seriesQuery(query).then(function(data) {
         if (!data || !data.results || !data.results[0]) {
           throw { message: 'No results in response from InfluxDB' };
         }
-        return new InfluxSeries({ series: data.results[0].series, annotation: annotation }).getAnnotations();
+        return new InfluxSeries({series: data.results[0].series, annotation: options.annotation}).getAnnotations();
       });
     };
 
@@ -161,7 +175,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         options.headers.Authorization = self.basicAuth;
       }
 
-      return $http(options).then(function(result) {
+      return backendSrv.datasourceRequest(options).then(function(result) {
         return result.data;
       }, function(err) {
         if (err.status !== 0 || err.status >= 300) {
@@ -169,7 +183,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
             throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
           }
           else {
-            throw { messsage: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+            throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
           }
         }
       });
@@ -192,8 +206,12 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         if (date === 'now') {
           return 'now()';
         }
-        if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-          return date.replace('now', 'now()').replace('-', ' - ');
+
+        var parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
+        if (parts) {
+          var amount = parseInt(parts[1]);
+          var unit = parts[2];
+          return 'now() - ' + amount + unit;
         }
         date = dateMath.parse(date, roundUp);
       }
