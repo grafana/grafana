@@ -164,30 +164,31 @@
               <div class="clearfix"></div>
             </div>
 					</div>
-
-					<!--Show Regex-->
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 100px;">
-								Type
-							</li>
-							<li>
-								<select class="input-medium tight-form-input" ng-model="current.datasourceType" ng-options="f for f in ['prometheus', 'elasticsearch']" ng-change="runQuery()"></select>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 100px;">
-								Regex
-								<tip>Optional, if you want to filter using regexp.</tip>
-							</li>
-							<li>
-								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.datasourceRegexp' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
+					<div ng-show="current.type === 'datasource'">
+						<!--Show Regex-->
+						<div class="tight-form">
+							<ul class="tight-form-list">
+								<li class="tight-form-item" style="width: 100px;">
+									Type
+								</li>
+								<li>
+									<select class="input-medium tight-form-input" ng-model="current.datasourceType" ng-options="f for f in ['prometheus', 'elasticsearch']" ng-change="runQuery()"></select>
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+						<div class="tight-form">
+							<ul class="tight-form-list">
+								<li class="tight-form-item" style="width: 100px;">
+									Regex
+									<tip>Optional, if you want to filter using regexp.</tip>
+								</li>
+								<li>
+									<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.datasourceRegexp' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()">
+								</li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
 					</div>
 
 					<div ng-show="current.type === 'query'">
