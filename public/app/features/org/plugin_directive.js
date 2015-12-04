@@ -11,13 +11,18 @@ function (angular) {
       restrict: 'E',
       link: function(scope, elem) {
         var directive = 'grafana-plugin-core';
-        if (scope.current.module) {
-          directive = 'grafana-plugin-'+scope.current.type;
-        }
-        scope.require([scope.current.module], function () {
-          var panelEl = angular.element(document.createElement(directive));
-          elem.append(panelEl);
-          $compile(panelEl)(scope);
+        //wait for the parent scope to be applied.
+        scope.$watch("current", function(newVal) {
+          if (newVal) {
+            if (newVal.module) {
+              directive = 'grafana-plugin-'+newVal.type;
+            }
+            scope.require([newVal.module], function () {
+              var panelEl = angular.element(document.createElement(directive));
+              elem.append(panelEl);
+              $compile(panelEl)(scope);
+            });
+          }
         });
       }
     };
@@ -28,8 +33,7 @@ function (angular) {
       restrict: 'E',
       templateUrl: 'app/features/org/partials/pluginConfigCore.html',
       transclude: true,
-      link: function(scope, elem) {
-        console.log("grafana plugin core", scope, elem);
+      link: function(scope) {
         scope.update = function() {
           //Perform custom save events to the plugins own backend if needed.
 
