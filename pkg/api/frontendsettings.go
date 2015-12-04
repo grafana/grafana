@@ -106,16 +106,24 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		defaultDatasource = "-- Grafana --"
 	}
 
+	buildInfo := map[string]interface{}{
+		"version":    "",
+		"commit":     "",
+		"buildstamp": 0,
+	}
+
+	if setting.ShowBuildInfo == true {
+		buildInfo["version"] = setting.BuildVersion
+		buildInfo["commit"] = setting.BuildCommit
+		buildInfo["buildstamp"] = setting.BuildStamp
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"buildInfo": map[string]interface{}{
-			"version":    setting.BuildVersion,
-			"commit":     setting.BuildCommit,
-			"buildstamp": setting.BuildStamp,
-		},
+		"buildInfo":         buildInfo,
 	}
 
 	return jsonObj, nil
