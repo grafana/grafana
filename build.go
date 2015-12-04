@@ -315,6 +315,8 @@ func build(pkg string, tags []string) {
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 	setBuildEnv()
+
+	runPrint("go", "version")
 	runPrint("go", args...)
 
 	// Create an md5 checksum of the binary, to be included in the archive for
