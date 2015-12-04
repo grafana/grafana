@@ -79,7 +79,7 @@ func main() {
 		case "pkg-rpm":
 			grunt("release")
 			createRpmPackages()
-      
+
 		case "pkg-deb":
 			grunt("release")
 			createDebPackages()
@@ -154,6 +154,7 @@ type linuxPackageOptions struct {
 
 	depends []string
 }
+
 func createDebPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
