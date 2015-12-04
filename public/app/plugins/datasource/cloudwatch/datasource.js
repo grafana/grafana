@@ -129,7 +129,7 @@ function (angular, _) {
         .pluck('Dimensions')
         .flatten()
         .filter(function(dimension) {
-          return dimension.Name === dimensionKey;
+          return dimension !== null && dimension.Name === dimensionKey;
         })
         .pluck('Value')
         .uniq()
