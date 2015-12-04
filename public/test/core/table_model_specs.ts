@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import {TableModel} from '../table_model';
+import TableModel = require('app/core/table_model');
 
 describe('when sorting table desc', () => {
   var table;

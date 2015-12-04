@@ -103,6 +103,12 @@
 			<li>
 				<input type="text" class="tight-form-clear-input input-xlarge" ng-model="target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="get_data()">
 			</li>
+			<li class="tight-form-item">
+				Format as
+			</li>
+			<li>
+				<select class="input-small tight-form-input" style="width: 104px" ng-model="target.resultFormat" ng-options="f.value as f.text for f in resultFormats" ng-change="get_data()"></select>
+			</li>
 		</ul>
 		<div class="clearfix"></div>
 	</div>
