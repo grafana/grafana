@@ -37,7 +37,7 @@
 	<div class="tight-form-inner-box" ng-if="agg.type === 'date_histogram'">
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 94px">
+				<li class="tight-form-item" style="width: 140px">
 					Interval
 				</li>
 				<li>
@@ -46,13 +46,29 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 94px">
+				<li class="tight-form-item" style="width: 140px">
 					Min Doc Count
 				</li>
 				<li>
-					<input type="number" class="tight-form-input" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()"></input>
+					<input type="number" class="tight-form-input" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 140px">
+					Drop first &amp; last value
+				</li>
+				<li class="tight-form-item">
+					<input class="cr1" type="checkbox" id="agg[{{agg.id}}].settings.dropFirstLast"
+					ng-model="agg.settings.dropFirstLast" ng-checked="agg.settings.dropFirstLast" ng-change="onChangeInternal()">
+					<label for="agg[{{agg.id}}].settings.dropFirstLast" class="cr1"></label>
+				</li>
+				<li class="tight-form-item last">
+					<i class="fa fa-question-circle" bs-tooltip="'Ignore the first and last values of the dataset'" data-placement="right"></i>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
