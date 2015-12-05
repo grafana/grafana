@@ -10,7 +10,11 @@
 			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment>
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
-			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
+			<a ng-click="toggleOptions()">
+				<i class="fa fa-caret-down" ng-show="showOptions"></i>
+				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+				{{settingsLinkText}}
+			</a>
 		</li>
 	</ul>
 
@@ -27,7 +31,7 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box">
-		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
+		<div class="tight-form" ng-if="agg.type === 'percentiles'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
 					Percentiles
@@ -51,7 +55,7 @@
 				<div class="clearfix"></div>
 			</div>
 		</div>
-		<div class="tight-form last" ng-if="agg.type === 'extended_stats'">
+		<div class="tight-form" ng-if="agg.type === 'extended_stats'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 100px">
 					Sigma
@@ -61,6 +65,30 @@
 				</li>
 			</ul>
 			<div class="clearfix"></div>
+		</div>
+		<div ng-if="aggDef.allowsScript">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Script
+					</li>
+					<li>
+						<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.script.script" placeholder="_value * _value / $intervalMs" ng-blur="onChange()"></input>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form last">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						Language
+					</li>
+					<li>
+						<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.script.lang" placeholder="expression" ng-blur="onChange()"></input>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
 		</div>
 	</div>
 </div>

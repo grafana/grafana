@@ -61,6 +61,29 @@ function (angular, _, queryDef) {
           $scope.target.bucketAggs = [];
         }
       }
+
+      // Metric scripts
+      if ($scope.aggDef.allowsScript) {
+        if ($scope.settingsLinkText.length > 0) {
+          $scope.settingsLinkText += ", ";
+        }
+
+        $scope.settingsLinkText += "Script: ";
+        if($scope.agg.script && $scope.agg.script.script && $scope.agg.script.script.length) {
+          var script = { script: $scope.agg.script.script };
+          $scope.agg.settings.script = script;
+
+          if ($scope.agg.script.lang) {
+            script.lang = $scope.agg.script.lang;
+          }
+
+          $scope.settingsLinkText += '"' + $scope.agg.script.script + '"';
+        }
+        else {
+          delete $scope.agg.settings.script;
+          $scope.settingsLinkText += "none";
+        }
+      }
     };
 
     $scope.toggleOptions = function() {
@@ -70,6 +93,7 @@ function (angular, _, queryDef) {
     $scope.onTypeChange = function() {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
+      $scope.agg.script = {};
       $scope.showOptions = false;
       $scope.onChange();
     };
