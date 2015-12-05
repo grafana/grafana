@@ -96,6 +96,9 @@ function (angular, _, queryDef) {
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
           settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+          if (settings.dropFirstLast) {
+            settingsLinkText += ', Drop first & last value';
+          }
         }
       }
 
