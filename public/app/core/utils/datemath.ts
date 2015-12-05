@@ -91,8 +91,8 @@ function parseDateMath(mathString, time, roundUp?) {
     }
 
     if (type === 0) {
-      // rounding is only allowed on whole, single, units (eg M or 1M, not 0.5M or 2M)
-      if (num !== 1) {
+      // rounding is only allowed on whole units (eg M or 1M, not 0.5M or 2M)
+      if (num % 1 !== 0) {
         return undefined;
       }
     }
@@ -104,9 +104,11 @@ function parseDateMath(mathString, time, roundUp?) {
       if (type === 0) {
         if (roundUp) {
           dateTime.endOf(unit);
+          dateTime.set(unit, Math.ceil(dateTime.get(unit) / num) * num);
         }
         else {
           dateTime.startOf(unit);
+          dateTime.set(unit, Math.floor(dateTime.get(unit) / num) * num);
         }
       } else if (type === 1) {
         dateTime.add(num, unit);
