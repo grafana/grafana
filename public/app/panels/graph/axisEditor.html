@@ -181,6 +181,13 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
+				<li ng-if="panel.legend.rightSide" class="tight-form-item">
+					Side width
+				</li>
+				<li ng-if="panel.legend.rightSide" style="width: 105px">
+					<input type="number" class="input-small tight-form-input" placeholder="250" bs-tooltip="'Set a min-width for the legend side table/block'" data-placement="right"
+					ng-model="panel.legend.sideWidth" ng-change="render()" ng-model-onblur>
+				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
