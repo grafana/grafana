@@ -23,19 +23,5 @@ function (angular) {
         },
       }, $scope);
     });
-
-/*
-    _.each(datasourceSrv.getAll(), function(ds) {
-      if (ds.type === 'opentsdb') {
-        datasourceSrv.get(ds.name).then(function(datasource) {
-          self.queryMetrics(datasource);
-        });
-      }
-    });
-
-    this.queryMetrics = function(datasource) {
-      $scope.refreshData(datasource);
-    };*/
-
   });
 });
