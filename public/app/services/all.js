@@ -1,6 +1,8 @@
 define([
   './alertMgrSrv',
   './alertSrv',
+  './oncallerMgrSrv',
+  './oncallerSrv',
   './utilSrv',
   './datasourceSrv',
   './contextSrv',

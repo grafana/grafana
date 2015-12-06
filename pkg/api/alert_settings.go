@@ -10,11 +10,11 @@ import (
 )
 
 func AlertSource(c *middleware.Context) {
-  log.Info("Alert Url: %v", setting.Alert.Url)
+  log.Info("Alert Url: %v", setting.Alert.AlertUrlRoot)
 
   alert := make(map[string]interface{})
   jsonAlertUrl := make(map[string]interface{})
-  jsonAlertUrl["alert_url"] = setting.Alert.Url
+  jsonAlertUrl["alert_urlroot"] = setting.Alert.AlertUrlRoot
   alert["alert"] = jsonAlertUrl
 
   c.JSON(200, alert)

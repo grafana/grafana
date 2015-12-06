@@ -70,6 +70,21 @@ define([
         controller : 'AlertEditCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/oncallers', {
+        templateUrl: 'app/features/org/partials/oncallers.html',
+        controller : 'OnCallersCtrl',
+        resolve: loadOrgBundle,
+      })
+      .when('/oncallers/edit/:id', {
+        templateUrl: 'app/features/org/partials/oncallerEdit.html',
+        controller : 'OnCallerEditCtrl',
+        resolve: loadOrgBundle,
+      })
+      .when('/oncallers/new', {
+        templateUrl: 'app/features/org/partials/oncallerEdit.html',
+        controller : 'OnCallerEditCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',

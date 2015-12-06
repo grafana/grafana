@@ -35,6 +35,13 @@ function (angular, _, $, config) {
         icon: "fa fa-fw fa-bell",
         href: $scope.getUrl("/alerts"),
       });
+
+      $scope.mainLinks.push({
+        text: "OnCallers",
+        icon: "fa fa-fw fa-phone",
+        href: $scope.getUrl("/oncallers"),
+      });
+
     };
 
     $scope.loadOrgs = function() {

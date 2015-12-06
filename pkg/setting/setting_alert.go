@@ -1,10 +1,10 @@
 package setting
 
 type AlertSettings struct {
-	Url        string
+	AlertUrlRoot string
 }
 
 func readAlertSettings() {
 	alert := Cfg.Section("alert")
-  Alert.Url = alert.Key("alert_url").String()
+  Alert.AlertUrlRoot = alert.Key("alert_urlroot").String()
 }

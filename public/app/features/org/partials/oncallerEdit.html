@@ -1,0 +1,70 @@
+<topnav title="OnCallers" icon="fa fa-fw fa-phone" subnav="true">
+  <ul class="nav">
+    <li><a href="oncallers">Overview</a></li>
+    <li ng-class="{active: isNew}"><a href="alerts/new">Add new</a></li>
+    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">Edit</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page">
+    <h2 ng-show="isNew">Add OnCaller</h2>
+    <h2 ng-show="!isNew">Edit OnCaller</h2>
+
+    <form name="editForm">
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Name</li>
+          <li><input type="text" class="input-xlarge tight-form-input"
+                         ng-model="oncallerDef.primaryName" placeholder="name" required>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Email</li>
+          <li><input type="text" class="input-xlarge tight-form-input"
+                         ng-model="oncallDef.primaryEmail" placeholder="email" required>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Phone</li>
+          <li><input type="text" class="input-xlarge tight-form-input"
+                     ng-model="oncallerDef.primaryPhone" placeholder="phone" required>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Carrier</li>
+          <li><input type="text" class="input-xlarge tight-form-input"
+                     ng-model="oncallerDef.primaryCarrier" placeholder="carrier" required>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form last">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Service</li>
+          <li><input type="text" class="input-xlarge tight-form-input"
+                     ng-model="oncallerDef.service" placeholder="service" required>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <br>
+      <div class="pull-right" style="margin-top: 35px">
+        <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
+        <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
+        <a class="btn btn-inverse" href="alerts">Cancel</a>
+      </div>
+      <br>
+    </form>
+  </div>
+</div>

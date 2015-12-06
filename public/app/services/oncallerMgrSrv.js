@@ -8,54 +8,53 @@ function (angular) {
 
   var module = angular.module('grafana.services');
 
-  module.service('alertMgrSrv', function($http, alertSrv, backendSrv) {
-    this.alertDefMap = {};
+  module.service('oncallerMgrSrv', function($http, oncallerSrv, backendSrv) {
+    this.oncallerDefMap = {};
     var self = this;
-    var alertUrl = "";
-    //var alertUrl = "http://0.0.0.0:5001/alert/definition";
+    var oncallerUrl = "";
 
     this.init = function() {
-      backendSrv.get('/api/alertsource').then(function(result) {
-        alertUrl = result.alert.alert_url ;
+      backendSrv.get('/api/oncallersource').then(function(result) {
+        oncallerUrl = result.oncaller.oncaller_url;
       });
     };
 
     this.load = function() {
       return $http({
         method: "get",
-        url: alertUrl,
+        url: oncallerUrl,
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
-          var theAlertDef = response.data[i];
-          self.alertDefMap[theAlertDef.id] = theAlertDef;
+          var theoncallerDef = response.data[i];
+          self.oncallerDefMap[theoncallerDef.id] = theoncallerDef;
         }
         return response;
       }, function onFailed(response) {
-        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 5000);
+        oncallerSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 5000);
         return response;
       });
     };
 
-    this.save = function(alertDef) {
+    this.save = function(oncallerDef) {
       return $http({
         method: "post",
-        url: alertUrl,
-        data: angular.toJson(alertDef),
+        url: oncallerUrl,
+        data: angular.toJson(oncallerDef),
         headers: {'Content-Type': 'text/plain'},
       });
     };
 
-    this.remove = function(alertId) {
+    this.remove = function(oncallerId) {
       return $http({
         method: "delete",
-        url: alertUrl,
-        params: {id: alertId},
+        url: oncallerUrl,
+        params: {id: oncallerId},
         headers: {'Content-Type': 'text/plain'},
       });
     };
 
     this.get = function(id) {
-      return self.alertDefMap[id];
+      return self.oncallerDefMap[id];
     };
 
     this.init();
