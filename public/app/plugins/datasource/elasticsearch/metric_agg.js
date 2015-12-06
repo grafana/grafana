@@ -13,6 +13,7 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.scriptedMetricOptions = queryDef.scriptedMetricOptions;
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
@@ -30,7 +31,7 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (!$scope.agg.field) {
+      if (!$scope.agg.field && $scope.aggDef.requiresField) {
         $scope.agg.field = 'select field';
       }
 
@@ -59,6 +60,16 @@ function (angular, _, queryDef) {
         case 'raw_document': {
           $scope.target.metrics = [$scope.agg];
           $scope.target.bucketAggs = [];
+          break;
+        }
+        case 'scripted_metric' : {
+          $scope.settingsLinkText = 'Settings';
+
+          for (var key in queryDef.scriptedMetricOptions) {
+            var opt = queryDef.scriptedMetricOptions[key];
+            $scope.agg.settings[opt.value] = $scope.agg.settings[opt.value] || '';
+          }
+
         }
       }
     };
@@ -71,6 +82,11 @@ function (angular, _, queryDef) {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+
+      if ($scope.agg.type === 'scripted_metric') {
+        delete $scope.agg.field;
+      }
+
       $scope.onChange();
     };
 
