@@ -25,7 +25,7 @@ function (angular, _) {
       var end = convertToCloudWatchTime(options.range.to);
 
       var queries = [];
-      options = _.clone(options);
+      options = angular.copy(options);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
