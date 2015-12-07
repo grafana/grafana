@@ -1,0 +1,226 @@
+<div class="tight-form">
+  <ul class="tight-form-list pull-right">
+    <li class="tight-form-item small" ng-show="target.datasource">
+      <em>{{target.datasource}}</em>
+    </li>
+    <li class="tight-form-item">
+      <div class="dropdown">
+        <a class="pointer dropdown-toggle"
+           data-toggle="dropdown"
+           tabindex="1">
+          <i class="fa fa-bars"></i>
+        </a>
+        <ul class="dropdown-menu pull-right" role="menu">
+          <!-- Switch editor mode -->
+          <li role="menuitem" ng-show="target.mode">
+            <a class="pointer" tabindex="1"
+               ng-click="switchEditorMode(0)">Numeric metrics</a>
+          </li>
+          <li role="menuitem" ng-show="target.mode != 1">
+            <a class="pointer" tabindex="1"
+               ng-click="switchEditorMode(1)">IT services</a>
+          </li>
+          <li role="menuitem" ng-show="target.mode != 2">
+            <a class="pointer" tabindex="1"
+               ng-click="switchEditorMode(2)">Text metrics</a>
+          </li>
+          <li class="divider" role="menuitem"></li>
+          <li role="menuitem"><a tabindex="1" ng-click="duplicate()">Duplicate</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index-1)">Move up</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveMetricQuery($index, $index+1)">Move down</a></li>
+        </ul>
+      </div>
+    </li>
+    <li class="tight-form-item last">
+      <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+  </ul>
+
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="min-width: 15px; text-align: center">
+      {{target.refId}}
+    </li>
+    <li>
+      <a class="tight-form-item"
+         ng-click="target.hide = !target.hide; get_data();"
+         role="menuitem">
+        <i class="fa fa-eye"></i>
+      </a>
+    </li>
+  </ul>
+
+  <!-- IT Service editor -->
+  <ul class="tight-form-list" role="menu" ng-show="target.mode == 1">
+    <li class="tight-form-item input-small">IT Service</li>
+    <li>
+      <select class="tight-form-input input-large"
+              ng-change="selectITService()"
+              ng-model="target.itservice"
+              bs-tooltip="target.itservice.name.length > 25 ? target.itservice.name : ''"
+              ng-options="itservice.name for itservice in itserviceList track by itservice.name">
+        <option value="">-- Select IT service --</option>
+      </select>
+    </li>
+    <li class="tight-form-item input-medium">IT service property</li>
+    <li>
+      <select class="tight-form-input input-medium"
+              ng-change="selectITService()"
+              ng-model="target.slaProperty"
+              ng-options="slaProperty.name for slaProperty in slaPropertyList track by slaProperty.name">
+        <option value="">-- Property --</option>
+      </select>
+    </li>
+  </ul>
+
+  <ul class="tight-form-list" role="menu" ng-hide="target.mode == 1">
+    <!-- Alias -->
+    <li>
+      <input type="text"
+             class="tight-form-input input-medium"
+             ng-model="target.alias"
+             spellcheck='false'
+             placeholder="Alias"
+             ng-blur="targetBlur()">
+    </li>
+    <!-- Select Host Group -->
+    <li class="tight-form-item input-small" style="width: 5em">Group</li>
+    <li>
+      <select class="tight-form-input input-large"
+              ng-change="selectHostGroup()"
+              ng-model="target.group"
+              bs-tooltip="target.group.name.length > 25 ? target.group.name : ''"
+              ng-options="group.visible_name ? group.visible_name : group.name for group in metric.groupList track by group.name">
+        <option value="">-- Select host group --</option>
+      </select>
+      <a bs-tooltip="target.errors.metric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.metric">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+    <!-- Select Host -->
+    <li class="tight-form-item input-small" style="width: 3em">Host</li>
+    <li>
+      <select class="tight-form-input input-large"
+              ng-change="selectHost()"
+              ng-model="target.host"
+              bs-tooltip="target.host.name.length > 25 ? target.host.name : ''"
+              ng-options="host.visible_name ? host.visible_name : host.name for host in metric.hostList track by host.name">
+        <option value="">-- Select host --</option>
+      </select>
+      <a bs-tooltip="target.errors.metric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.metric">
+        <i class="icon-warning-sign"></i>
+      </a>
+    </li>
+    <!-- Host filter -->
+    <li class="tight-form-item" ng-hide="target.mode == 2">
+      Filter
+      <i class="fa fa-question-circle"
+         bs-tooltip="'Filtering hosts by regex. Select All in items and specify regex for host names.'"></i>
+    </li>
+    <li ng-hide="target.mode == 2">
+      <input type="text"
+             class="tight-form-input input-large"
+             ng-model="target.hostFilter"
+             spellcheck='false'
+             placeholder="Host filter (regex)"
+             ng-blur="targetBlur()">
+    </li>
+    <!-- Downsampling function -->
+    <li class="tight-form-item input-medium" ng-hide="target.mode == 2">
+      Downsampling
+    </li>
+    <li ng-hide="target.mode == 2">
+      <select class="tight-form-input input-small"
+              ng-change="targetBlur()"
+              ng-model="target.downsampleFunction"
+              bs-tooltip="'Downsampling function'"
+              ng-options="func.name for func in downsampleFunctionList track by func.name">
+      </select>
+      <a bs-tooltip="target.errors.metric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.metric">
+        <i class="icon-warning-sign"></i>
+      </a>
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
+
+<div class="tight-form" ng-hide="target.mode == 1">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item" style="min-width: 15px; text-align: center">&nbsp</li>
+    <li class="tight-form-item">
+      <i class="fa fa-eye invisible"></i>
+    </li>
+    <li class="tight-form-item" style="width: 135px">&nbsp</li>
+
+    <!-- Select Application -->
+    <li class="tight-form-item input-small" style="width: 5em">Application</li>
+    <li>
+      <select class="tight-form-input input-large"
+              ng-change="selectApplication()"
+              ng-model="target.application"
+              bs-tooltip="target.application.name.length > 15 ? target.application.name : ''"
+              ng-options="app.visible_name ? app.visible_name : app.name for app in metric.applicationList track by app.name">
+        <option value="">-- Select application --</option>
+      </select>
+      <a bs-tooltip="target.errors.metric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.metric">
+        <i class="icon-warning-sign"></i>
+      </a>
+    </li>
+    <!-- Select Item -->
+    <li class="tight-form-item input-small" style="width: 3em">Item</li>
+    <li>
+      <select class="tight-form-input input-large"
+              ng-change="selectItem()"
+              ng-model="target.item"
+              bs-tooltip="target.item.name.length > 25 ? target.item.name : ''"
+              ng-options="item.name for item in metric.itemList track by item.name">
+        <option value="">-- Select item --</option>
+      </select>
+      <a bs-tooltip="target.errors.metric"
+         style="color: rgb(229, 189, 28)"
+         ng-show="target.errors.metric">
+        <i class="icon-warning-sign"></i>
+      </a>
+    </li>
+    <!-- Item filter -->
+    <li class="tight-form-item" ng-hide="target.mode == 2">
+      Filter
+      <i class="fa fa-question-circle"
+         bs-tooltip="'Filtering items by regex. Select All in items and specify regex for item names.'"></i>
+    </li>
+    <li ng-hide="target.mode == 2">
+      <input type="text"
+             class="tight-form-input input-large"
+             ng-model="target.itemFilter"
+             spellcheck='false'
+             placeholder="Item filter (regex)"
+             ng-blur="targetBlur()">
+    </li>
+    <!-- Scale -->
+    <li class="tight-form-item" ng-hide="target.mode == 2">
+      Scale
+      <i class="fa fa-question-circle"
+         bs-tooltip="'Set a custom multiplier for series values, for example -1 to invert series'"></i>
+    </li>
+    <li ng-hide="target.mode == 2">
+      <input type="text"
+             class="tight-form-input input-small"
+             ng-model="target.scale"
+             spellcheck='false'
+             placeholder="1"
+             ng-blur="targetBlur()">
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>

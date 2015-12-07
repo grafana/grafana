@@ -52,6 +52,9 @@ function (angular, _) {
           case "pipe": {
             return value.join('|');
           }
+          case "plain": {
+            return value.join(',');
+          }
           default:  {
             return '{' + value.join(',') + '}';
           }

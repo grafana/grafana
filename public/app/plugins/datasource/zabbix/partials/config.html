@@ -1,0 +1,53 @@
+<div ng-include="httpConfigPartialSrc"></div>
+
+<br>
+
+<h5>Zabbix API details</h5>
+
+<div class="tight-form">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 80px">
+      User
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-large" ng-model='current.jsonData.username' placeholder=""></input>
+    </li>
+    <li class="tight-form-item">
+      Password
+    </li>
+    <li>
+      <input type="password" class="tight-form-input input-large" ng-model='current.jsonData.password' placeholder=""></input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 80px">
+      Trends
+    </li>
+    <li class="tight-form-item">
+      Enable&nbsp;
+      <input class="cr1" id="current.jsonData.trends" type="checkbox" ng-model="current.jsonData.trends" ng-checked="current.jsonData.trends">
+      <label for="current.jsonData.trends" class="cr1"></label>
+    </li>
+    <li class="tight-form-item" ng-if="current.jsonData.trends">
+      Use trends from
+    </li>
+    <li ng-if="current.jsonData.trends">
+      <input type="text" class="tight-form-input input-small" ng-model='current.basicAuthUser' placeholder="7d"></input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="width: 80px">
+      Metrics limit
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-small" ng-model='current.jsonData.limitMetrics' placeholder="100"></input>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>

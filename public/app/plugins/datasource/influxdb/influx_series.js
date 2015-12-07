@@ -56,7 +56,7 @@ function (_, TableModel) {
   };
 
   p._getSeriesName = function(series, index) {
-    var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    var regex = /\$(\w+(?:\S+)?)|\[\[([\s\S]+?)\]\]/g;
     var segments = series.name.split('.');
 
     return this.alias.replace(regex, function(match, g1, g2) {
@@ -68,9 +68,14 @@ function (_, TableModel) {
       if (!isNaN(segIndex)) { return segments[segIndex]; }
       if (group.indexOf('tag_') !== 0) { return match; }
 
-      var tag = group.replace('tag_', '');
+      var alias = group.replace('tag_', '');
       if (!series.tags) { return match; }
-      return series.tags[tag];
+      var tags = alias.split(',');
+      var aliases = '';
+      for (var x in tags) {
+        aliases += series.tags[tags[x]] + " ";
+      }
+      return aliases.replace(/ $/,'');
     });
   };
 

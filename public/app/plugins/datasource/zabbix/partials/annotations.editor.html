@@ -1,0 +1,16 @@
+<div class="editor-row">
+	<div class="section">
+		<h5>Zabbix trigger <tip>Example: Lack of free swap space</tip></h5>
+		<div class="editor-option">
+			<input type="text" class="span10" ng-model="currentAnnotation.query" placeholder="Lack of free swap space"></input>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+  <div class="section">
+    <h5>Options</h5>
+    <input type="checkbox" class="cr1" id="currentAnnotation.showOkEvents" ng-model="currentAnnotation.showOkEvents" ng-checked="currentAnnotation.showOkEvents">
+    <label for="currentAnnotation.showOkEvents" class="cr1">Show OK events <tip>Show events, generated when trigger release to OK state</tip></label>
+  </div>
+</div>
