@@ -174,6 +174,9 @@ func applyEnvVariableOverrides() {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
+				if strings.Contains(envKey, "PASSWORD") {
+					envValue = "*********"
+				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
 		}
@@ -188,6 +191,9 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
+				if strings.Contains(keyString, "password") {
+					value = "*********"
+				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
 		}

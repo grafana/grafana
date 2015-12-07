@@ -45,11 +45,17 @@ export class TablePanelEditorCtrl {
     };
 
     $scope.addColumn = function() {
-      $scope.panel.columns.push({text: $scope.addColumnSegment.value, value: $scope.addColumnSegment.value});
-      $scope.render();
+      var columns = transformers[$scope.panel.transform].getColumns($scope.dataRaw);
+      var column = _.findWhere(columns, {text: $scope.addColumnSegment.value});
+
+      if (column) {
+        $scope.panel.columns.push(column);
+        $scope.render();
+      }
 
       var plusButton = uiSegmentSrv.newPlusButton();
       $scope.addColumnSegment.html = plusButton.html;
+      $scope.addColumnSegment.value = plusButton.value;
     };
 
     $scope.transformChanged = function() {

@@ -205,7 +205,7 @@ describe('when generating timeseries from influxdb response', function() {
 
       expect(table.type).to.be('table');
       expect(table.columns.length).to.be(3);
-      expect(table.rows[0]).to.eql([1431946625000, 'America', 10]);;
+      expect(table.rows[0]).to.eql([1431946625000, 'America', 10]);
     });
   });
 
