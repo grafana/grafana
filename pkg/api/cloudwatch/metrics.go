@@ -3,13 +3,26 @@ package cloudwatch
 import (
 	"encoding/json"
 	"sort"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var metricsMap map[string][]string
 var dimensionsMap map[string][]string
+var customMetricsMetricsMap map[string][]string
+var customMetricsDimensionsMap map[string][]string
+var lock sync.RWMutex
 
 func init() {
 	metricsMap = map[string][]string{
@@ -85,6 +98,84 @@ func init() {
 		"AWS/WAF":              {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 	}
+	customMetricsMetricsMap = map[string][]string{}
+	customMetricsDimensionsMap = map[string][]string{}
+
+	go updateCustomMetrics()
+}
+
+func updateCustomMetrics() {
+	region := "ap-northeast-1" // TODO
+
+	sess := session.New()
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			//&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database}, // TODO
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
+		})
+	cfg := &aws.Config{
+		Region:      aws.String(region),
+		Credentials: creds,
+	}
+	svc := cloudwatch.New(session.New(cfg), cfg)
+	params := &cloudwatch.ListMetricsInput{}
+
+	isDuplicate := func(nameList []string, target string) bool {
+		for _, name := range nameList {
+			if name == target {
+				return true
+			}
+		}
+		return false
+	}
+
+	t := time.NewTimer(1 * time.Minute)
+	for {
+		select {
+		case <-t.C:
+			t.Reset(1 * time.Hour)
+
+			var result cloudwatch.ListMetricsOutput
+			err := svc.ListMetricsPages(params,
+				func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+					metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+					for _, metric := range metrics {
+						result.Metrics = append(result.Metrics, metric.(*cloudwatch.Metric))
+					}
+					return !lastPage
+				})
+			if err != nil {
+				// TODO: logging
+				return
+			}
+
+			lock.Lock()
+			customMetricsMetricsMap = make(map[string][]string)
+			for _, metric := range result.Metrics {
+				namespace := *metric.Namespace
+				if !isCustomMetrics(namespace) {
+					continue
+				}
+
+				if _, ok := customMetricsMetricsMap[namespace]; !ok {
+					customMetricsMetricsMap[namespace] = make([]string, 0)
+				}
+				customMetricsMetricsMap[namespace] = append(customMetricsMetricsMap[namespace], *metric.MetricName)
+
+				if _, ok := customMetricsDimensionsMap[namespace]; !ok {
+					customMetricsDimensionsMap[namespace] = make([]string, 0)
+				}
+				for _, dimension := range metric.Dimensions {
+					if isDuplicate(customMetricsDimensionsMap[namespace], *dimension.Name) {
+						continue
+					}
+					customMetricsDimensionsMap[namespace] = append(customMetricsDimensionsMap[namespace], *dimension.Name)
+				}
+			}
+			lock.Unlock()
+		}
+	}
 }
 
 // Whenever this list is updated, frontend list should also be updated.
@@ -104,8 +195,14 @@ func handleGetRegions(req *cwRequest, c *middleware.Context) {
 }
 
 func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	keys := []string{}
 	for key := range metricsMap {
+		keys = append(keys, key)
+	}
+	for key := range customMetricsMetricsMap {
 		keys = append(keys, key)
 	}
 	sort.Sort(sort.StringSlice(keys))
@@ -119,6 +216,9 @@ func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
 }
 
 func handleGetMetrics(req *cwRequest, c *middleware.Context) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	reqParam := &struct {
 		Parameters struct {
 			Namespace string `json:"namespace"`
@@ -127,7 +227,13 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	namespaceMetrics, exists := metricsMap[reqParam.Parameters.Namespace]
+	var namespaceMetrics []string
+	var exists bool
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		namespaceMetrics, exists = metricsMap[reqParam.Parameters.Namespace]
+	} else {
+		namespaceMetrics, exists = customMetricsMetricsMap[reqParam.Parameters.Namespace]
+	}
 	if !exists {
 		c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
 		return
@@ -143,6 +249,9 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleGetDimensions(req *cwRequest, c *middleware.Context) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	reqParam := &struct {
 		Parameters struct {
 			Namespace string `json:"namespace"`
@@ -151,7 +260,13 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	dimensionValues, exists := dimensionsMap[reqParam.Parameters.Namespace]
+	var dimensionValues []string
+	var exists bool
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		dimensionValues, exists = dimensionsMap[reqParam.Parameters.Namespace]
+	} else {
+		dimensionValues, exists = customMetricsDimensionsMap[reqParam.Parameters.Namespace]
+	}
 	if !exists {
 		c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
 		return
@@ -164,4 +279,8 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	}
 
 	c.JSON(200, result)
+}
+
+func isCustomMetrics(namespace string) bool {
+	return strings.Index(namespace, "AWS/") != 0
 }
