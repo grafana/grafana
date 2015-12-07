@@ -50,12 +50,23 @@ function () {
     return queryNode;
   };
 
-  ElasticQueryBuilder.prototype.getInterval = function(agg) {
-    if (agg.settings && agg.settings.interval !== 'auto') {
-      return agg.settings.interval;
-    } else {
-      return '$interval';
+  ElasticQueryBuilder.prototype.getDateHistogramAgg = function(aggDef) {
+    var esAgg = {};
+    var settings = aggDef.settings || {};
+    esAgg.interval = settings.interval;
+    esAgg.field = this.timeField;
+    esAgg.min_doc_count = settings.min_doc_count || 0;
+    esAgg.extended_bounds = {min: "$timeFrom", max: "$timeTo"};
+
+    if (esAgg.interval === 'auto') {
+      esAgg.interval = "$interval";
     }
+
+    if (this.esVersion >= 2) {
+      esAgg.format = "epoch_millis";
+    }
+
+    return esAgg;
   };
 
   ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
@@ -130,15 +141,7 @@ function () {
 
       switch(aggDef.type) {
         case 'date_histogram': {
-          esAgg["date_histogram"] = {
-            "interval": this.getInterval(aggDef),
-            "field": this.timeField,
-            "min_doc_count": 0,
-            "extended_bounds": { "min": "$timeFrom", "max": "$timeTo" }
-          };
-          if (this.esVersion >= 2) {
-            esAgg["date_histogram"]["format"] = "epoch_millis";
-          }
+          esAgg["date_histogram"] = this.getDateHistogramAgg(aggDef);
           break;
         }
         case 'filters': {

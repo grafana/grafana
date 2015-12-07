@@ -23,7 +23,6 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.resultFormats = [
          {text: 'Time series', value: 'time_series'},
          {text: 'Table', value: 'table'},
-         {text: 'JSON field', value: 'json_field'},
       ];
 
       if (!$scope.target.measurement) {
