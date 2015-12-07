@@ -55,12 +55,12 @@
 				<metric-segment segment="segment" get-options="getTagsOrValues(segment, $index)" on-change="tagSegmentUpdated(segment, $index)"></metric-segment>
 			</li>
 		</ul>
-		<div class="clearfix"></div>
 
-		<div style="padding: 10px" ng-if="target.rawQuery">
-			<textarea ng-model="target.query" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="get_data()"></textarea>
+		<div class="tight-form-flex-wrapper" ng-show="target.rawQuery">
+			<input type="text" class="tight-form-clear-input" ng-model="target.query" spellcheck="false" style="width: 100%;" ng-blur="get_data()"></input>
 		</div>
 
+		<div class="clearfix"></div>
 	</div>
 
 	<div ng-hide="target.rawQuery">
