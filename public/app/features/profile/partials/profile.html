@@ -72,8 +72,8 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="org in orgs">
-					<td><strong>Name: </strong> {{org.name}}</td>
-					<td><strong>Role: </strong> {{org.role}}</td>
+					<td>{{org.name}}</td>
+					<td>{{org.role}}</td>
 					<td class="text-right">
 						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
 							Current
