@@ -85,7 +85,7 @@
 		</div>
 
 		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
+			<div class="version-footer text-center small" ng-if="showBuildInfo">
 				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
 				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
 			</div>

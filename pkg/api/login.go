@@ -28,6 +28,7 @@ func LoginView(c *middleware.Context) {
 	settings["googleAuthEnabled"] = setting.OAuthService.Google
 	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
 	settings["disableUserSignUp"] = !setting.AllowUserSignUp
+	settings["showBuildInfo"] = setting.ShowBuildInfo
 
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, VIEW_INDEX)

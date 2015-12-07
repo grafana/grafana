@@ -75,6 +75,7 @@ var (
 	DisableGravatar       bool
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
+	ShowBuildInfo         bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -419,6 +420,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	ShowBuildInfo = security.Key("show_build_info").MustBool(true)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)

@@ -18,6 +18,7 @@ function (angular, coreModule, config) {
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
     $scope.disableUserSignUp = config.disableUserSignUp;
+    $scope.showBuildInfo     = config.showBuildInfo;
 
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';
@@ -34,11 +35,13 @@ function (angular, coreModule, config) {
     };
 
     // build info view model
-    $scope.buildInfo = {
-      version: config.buildInfo.version,
-      commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000)
-    };
+    if (config.showBuildInfo) {
+      $scope.buildInfo = {
+        version: config.buildInfo.version,
+        commit: config.buildInfo.commit,
+        buildstamp: new Date(config.buildInfo.buildstamp * 1000)
+      };
+    }
 
     $scope.submit = function() {
       if ($scope.loginMode) {
