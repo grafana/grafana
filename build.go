@@ -76,6 +76,14 @@ func main() {
 			grunt("release")
 			createLinuxPackages()
 
+		case "pkg-rpm":
+			grunt("release")
+			createRpmPackages()
+
+		case "pkg-deb":
+			grunt("release")
+			createDebPackages()
+
 		case "latest":
 			makeLatestDistCopies()
 
@@ -147,7 +155,7 @@ type linuxPackageOptions struct {
 	depends []string
 }
 
-func createLinuxPackages() {
+func createDebPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
@@ -167,7 +175,9 @@ func createLinuxPackages() {
 
 		depends: []string{"adduser", "libfontconfig"},
 	})
+}
 
+func createRpmPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",
 		homeDir:                "/usr/share/grafana",
@@ -187,6 +197,11 @@ func createLinuxPackages() {
 
 		depends: []string{"initscripts", "fontconfig"},
 	})
+}
+
+func createLinuxPackages() {
+	createDebPackages()
+	createRpmPackages()
 }
 
 func createPackage(options linuxPackageOptions) {
@@ -315,6 +330,8 @@ func build(pkg string, tags []string) {
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
 	setBuildEnv()
+
+	runPrint("go", "version")
 	runPrint("go", args...)
 
 	// Create an md5 checksum of the binary, to be included in the archive for

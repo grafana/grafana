@@ -61,7 +61,7 @@
 }
 
 code, pre {
-  background-color: @grayLighter;
+  background-color: @codeTagBackground;
 }
 
 div.editor-row {
@@ -587,8 +587,10 @@ div.flot-text {
 
 // pre
 code, pre {
-  background-color: @grafanaPanelBackground;
+  background-color: @codeTagBackground;
   color: @textColor;
+  border: 1px solid darken(@codeTagBackground, 15%);
+  padding: 2px;
 }
 
 .dropdown-menu {

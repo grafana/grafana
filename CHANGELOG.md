@@ -1,4 +1,9 @@
-# 2.6.0 (unreleased)
+# 2.6.0 (2015-12-04)
+
+### Bug Fixes
+* **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
+
+# 2.6.0-Beta1 (2015-12-04)
 
 ### New Table Panel
 * **table**:  New powerful and flexible table panel, closes [#215](https://github.com/grafana/grafana/issues/215)
@@ -6,6 +11,7 @@
 ### Enhancements
 * **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
 * **Elasticsearch**: Support for dynamic daily indices for annotations, closes [#3061](https://github.com/grafana/grafana/issues/3061)
+* **Elasticsearch**: Support for setting min_doc_count for date histogram, closes [#3416](https://github.com/grafana/grafana/issues/3416)
 * **Graph Panel**: Option to hide series with all zeroes from legend and tooltip, closes [#1381](https://github.com/grafana/grafana/issues/1381), [#3336](https://github.com/grafana/grafana/issues/3336)
 
 ### Bug Fixes
