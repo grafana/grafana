@@ -11,19 +11,22 @@ function (angular) {
   module.service('alertMgrSrv', function($http, alertSrv, backendSrv) {
     this.alertDefMap = {};
     var self = this;
-    var alertUrl = "";
-    //var alertUrl = "http://0.0.0.0:5001/alert/definition";
+    var alertUrlRoot = "";
+    var alertDefUrl = "";
+    var alertStatusUrl = "";
 
     this.init = function() {
       backendSrv.get('/api/alertsource').then(function(result) {
-        alertUrl = result.alert.alert_url ;
+        alertUrlRoot = result.alert.alert_urlroot;
+        alertDefUrl = alertUrlRoot + "/alert/" + "definition";
+        alertStatusUrl = alertUrlRoot + "/alert/" + "status";
       });
     };
 
     this.load = function() {
       return $http({
         method: "get",
-        url: alertUrl,
+        url: alertDefUrl,
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
           var theAlertDef = response.data[i];
@@ -39,7 +42,7 @@ function (angular) {
     this.save = function(alertDef) {
       return $http({
         method: "post",
-        url: alertUrl,
+        url: alertDefUrl,
         data: angular.toJson(alertDef),
         headers: {'Content-Type': 'text/plain'},
       });
@@ -48,7 +51,7 @@ function (angular) {
     this.remove = function(alertId) {
       return $http({
         method: "delete",
-        url: alertUrl,
+        url: alertDefUrl,
         params: {id: alertId},
         headers: {'Content-Type': 'text/plain'},
       });
@@ -56,6 +59,14 @@ function (angular) {
 
     this.get = function(id) {
       return self.alertDefMap[id];
+    };
+
+    this.loadTriggeredAlerts = function() {
+      return $http({
+        method: "get",
+        url: alertStatusUrl,
+        params: {service: "com.test"}
+      });
     };
 
     this.init();
