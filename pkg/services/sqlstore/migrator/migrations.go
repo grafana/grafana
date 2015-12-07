@@ -64,6 +64,10 @@ type AddColumnMigration struct {
 	column    *Column
 }
 
+func NewAddColumnMigration(table Table, col *Column) *AddColumnMigration {
+  return &AddColumnMigration{tableName: table.Name, column: col}
+}
+
 func (m *AddColumnMigration) Table(tableName string) *AddColumnMigration {
 	m.tableName = tableName
 	return m
