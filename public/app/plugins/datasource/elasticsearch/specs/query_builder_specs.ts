@@ -159,14 +159,10 @@ describe('ElasticQueryBuilder', function() {
     var query = builder.build({
       metrics: [
         {
-          id: '1',
-          type: 'sum',
-          field: '@value',
-        },
-        {
           id: '2',
           type: 'moving_avg',
-          field: 'sum'
+          field: '@value',
+          aggregation: 'sum'
         }
       ],
       bucketAggs: [
@@ -175,8 +171,9 @@ describe('ElasticQueryBuilder', function() {
     });
 
     var firstLevel = query.aggs["3"];
+    console.log(JSON.stringify(query));
     expect(firstLevel.aggs["2"]).not.to.be(undefined);
     expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
-    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("1");
+    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("99");
   });
 });

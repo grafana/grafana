@@ -10,7 +10,7 @@
 			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
 		</li>
 		<li ng-if="aggDef.requiresBucketsPath">
-			<metric-segment-model property="agg.field" get-options="getMetrics()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
+			<metric-segment-model property="agg.aggregation" get-options="getMetrics()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>

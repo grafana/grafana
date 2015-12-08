@@ -167,36 +167,28 @@ function () {
         continue;
       }
 
-      var metricAgg = {field: metric.field};
+      var aggField = {};
+      var metricAgg = null;
+      if (metric.type === 'moving_avg') {
+        var subBucket = metric.id + "_mavg";
+
+        var af = {};
+        af[metric.aggregation] = {field: metric.field};
+        nestedAggs.aggs[subBucket] = af;
+
+        metricAgg = { buckets_path: subBucket };
+      } else {
+        metricAgg = {field: metric.field};
+      }
+
       for (var prop in metric.settings) {
         if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
       }
 
-      var aggField = {};
-      if (metric.type === 'moving_avg') {
-        var pipeAgg = '';
-        for(var aggname in nestedAggs.aggs) {
-          var agg = nestedAggs.aggs[aggname];
-          for(prop in agg) {
-            if (agg.hasOwnProperty(prop) && agg[prop] !== null) {
-              if (metric.field === prop) {
-                pipeAgg = aggname;
-                break;
-              }
-            }
-          }
-        }
-
-        if (pipeAgg !== '') {
-          aggField[metric.type] = { buckets_path: pipeAgg };
-          nestedAggs.aggs[metric.id] = aggField;
-        }
-      } else {
-        aggField[metric.type] = metricAgg;
-        nestedAggs.aggs[metric.id] = aggField;
-      }
+      aggField[metric.type] = metricAgg;
+      nestedAggs.aggs[metric.id] = aggField;
     }
 
     return query;

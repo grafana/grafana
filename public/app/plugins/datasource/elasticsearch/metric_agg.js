@@ -35,6 +35,10 @@ function (angular, _, queryDef) {
       }
 
       switch($scope.agg.type) {
+        case 'moving_avg': {
+          $scope.agg.aggregation = $scope.agg.aggregation || 'sum';
+          break;
+        }
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
           $scope.settingsLinkText = 'values: ' + $scope.agg.settings.percents.join(',');
@@ -79,19 +83,9 @@ function (angular, _, queryDef) {
     };
 
     $scope.getMetrics = function() {
-      console.log($scope.target.metrics);
+      var aggs = [{ text: 'Sum', type: 'sum'}, { text: 'Average', type: 'avg'}];
 
-      var mets = _.filter($scope.target.metrics, function(x) {
-        return x.type !== 'moving_avg';
-      });
-
-      mets = _.map(mets, function(m) {
-        return { text: m.type, type: m.id };
-      });
-
-      console.log(mets);
-
-      return $q.when(mets)
+      return $q.when(aggs)
         .then(uiSegmentSrv.transformToSegments(false));
     };
 
