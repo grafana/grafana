@@ -78,6 +78,23 @@ function (angular, _, queryDef) {
       return $scope.getFields({$fieldType: 'number'});
     };
 
+    $scope.getMetrics = function() {
+      console.log($scope.target.metrics);
+
+      var mets = _.filter($scope.target.metrics, function(x) {
+        return x.type !== 'moving_avg';
+      });
+
+      mets = _.map(mets, function(m) {
+        return { text: m.type, type: m.id };
+      });
+
+      console.log(mets);
+
+      return $q.when(mets)
+        .then(uiSegmentSrv.transformToSegments(false));
+    };
+
     $scope.addMetricAgg = function() {
       var addIndex = metricAggs.length;
 
