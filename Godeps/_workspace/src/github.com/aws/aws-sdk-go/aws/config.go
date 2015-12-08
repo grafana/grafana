@@ -12,6 +12,9 @@ import (
 // is nil also.
 const UseServiceDefaultRetries = -1
 
+// RequestRetryer is an alias for a type that implements the request.Retryer interface.
+type RequestRetryer interface{}
+
 // A Config provides service configuration for service clients. By default,
 // all clients will use the {defaults.DefaultConfig} structure.
 type Config struct {
@@ -58,6 +61,21 @@ type Config struct {
 	// Defaults to -1, which defers the max retry setting to the service specific
 	// configuration.
 	MaxRetries *int
+
+	// Retryer guides how HTTP requests should be retried in case of recoverable failures.
+	//
+	// When nil or the value does not implement the request.Retryer interface,
+	// the request.DefaultRetryer will be used.
+	//
+	// When both Retryer and MaxRetries are non-nil, the former is used and
+	// the latter ignored.
+	//
+	// To set the Retryer field in a type-safe manner and with chaining, use
+	// the request.WithRetryer helper function:
+	//
+	//   cfg := request.WithRetryer(aws.NewConfig(), myRetryer)
+	//
+	Retryer RequestRetryer
 
 	// Disables semantic parameter validation, which validates input for missing
 	// required fields and/or other semantic request input errors.
@@ -215,6 +233,10 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.MaxRetries != nil {
 		dst.MaxRetries = other.MaxRetries
+	}
+
+	if other.Retryer != nil {
+		dst.Retryer = other.Retryer
 	}
 
 	if other.DisableParamValidation != nil {
