@@ -473,7 +473,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 func readSessionConfig() {
 	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
-	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres"})
+	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
 	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl

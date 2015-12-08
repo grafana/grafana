@@ -8,6 +8,7 @@ import (
 	_ "github.com/macaron-contrib/session/mysql"
 	_ "github.com/macaron-contrib/session/postgres"
 	_ "github.com/macaron-contrib/session/redis"
+	_ "github.com/macaron-contrib/session/memcache"
 )
 
 const (
