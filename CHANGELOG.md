@@ -2,6 +2,7 @@
 
 ### Bug Fixes
 * **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
+* **influxdb**: Fixed issue showing Group By label only on first query, fixes [#3453](https://github.com/grafana/grafana/issues/3453)
 
 # 2.6.0-Beta1 (2015-12-04)
 
