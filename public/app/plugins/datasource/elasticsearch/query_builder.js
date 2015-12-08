@@ -175,8 +175,28 @@ function () {
       }
 
       var aggField = {};
-      aggField[metric.type] = metricAgg;
-      nestedAggs.aggs[metric.id] = aggField;
+      if (metric.type === 'moving_avg') {
+        var pipeAgg = '';
+        for(var aggname in nestedAggs.aggs) {
+          var agg = nestedAggs.aggs[aggname];
+          for(prop in agg) {
+            if (agg.hasOwnProperty(prop) && agg[prop] !== null) {
+              if (metric.field === prop) {
+                pipeAgg = aggname;
+                break;
+              }
+            }
+          }
+        }
+
+        if (pipeAgg !== '') {
+          aggField[metric.type] = { buckets_path: pipeAgg };
+          nestedAggs.aggs[metric.id] = aggField;
+        }
+      } else {
+        aggField[metric.type] = metricAgg;
+        nestedAggs.aggs[metric.id] = aggField;
+      }
     }
 
     return query;
@@ -217,5 +237,4 @@ function () {
   };
 
   return ElasticQueryBuilder;
-
 });
