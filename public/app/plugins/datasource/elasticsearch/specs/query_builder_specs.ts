@@ -155,4 +155,28 @@ describe('ElasticQueryBuilder', function() {
     expect(query.size).to.be(500);
   });
 
+  it('with moving average', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '1',
+          type: 'sum',
+          field: '@value',
+        },
+        {
+          id: '2',
+          type: 'moving_avg',
+          field: 'sum'
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.aggs["2"]).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("1");
+  });
 });
