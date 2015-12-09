@@ -37,7 +37,7 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (!$scope.agg.field && $scope.agg.type !== 'moving_avg') {
+      if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
 

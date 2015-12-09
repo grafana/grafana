@@ -171,7 +171,11 @@ function () {
       var metricAgg = null;
 
       if (metric.type === 'moving_avg') {
-        metricAgg = {buckets_path: "1"};
+        if (metric.mavgSource && /^\d*$/.test(metric.mavgSource)) {
+          metricAgg = { buckets_path: metric.mavgSource };
+        } else {
+          continue;
+        }
       } else {
         metricAgg = {field: metric.field};
       }
