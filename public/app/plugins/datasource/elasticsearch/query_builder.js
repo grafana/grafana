@@ -169,14 +169,9 @@ function () {
 
       var aggField = {};
       var metricAgg = null;
+
       if (metric.type === 'moving_avg') {
-        var subBucket = metric.id + "_mavg";
-
-        var af = {};
-        af[metric.aggregation] = {field: metric.field};
-        nestedAggs.aggs[subBucket] = af;
-
-        metricAgg = { buckets_path: subBucket };
+        metricAgg = {buckets_path: "1"};
       } else {
         metricAgg = {field: metric.field};
       }
