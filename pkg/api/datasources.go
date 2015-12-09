@@ -65,6 +65,7 @@ func GetDataSourceById(c *middleware.Context) Response {
 		BasicAuth:         ds.BasicAuth,
 		BasicAuthUser:     ds.BasicAuthUser,
 		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,
 	})

@@ -23,6 +23,7 @@ function (angular, _, moment, dateMath) {
       this.url = datasource.url;
       this.directUrl = datasource.directUrl;
       this.basicAuth = datasource.basicAuth;
+      this.withCredentials = datasource.withCredentials;
       this.lastErrors = {};
     }
 
@@ -32,8 +33,10 @@ function (angular, _, moment, dateMath) {
         method: method
       };
 
-      if (this.basicAuth) {
+      if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
+      }
+      if (this.basicAuth) {
         options.headers = {
           "Authorization": this.basicAuth
         };
