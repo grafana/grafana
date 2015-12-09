@@ -197,7 +197,10 @@ function (_, queryDef) {
       });
     }
 
-    if (series.field) {
+    if (series.field && series.metric === 'moving_avg') {
+      var appliedAgg = _.findWhere(target.metrics, { id: series.field });
+      metricName += ' ' + queryDef.describeMetric(appliedAgg);
+    } else if (series.field) {
       metricName += ' ' + series.field;
     }
 
