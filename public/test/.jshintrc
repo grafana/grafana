@@ -32,6 +32,7 @@
     "define": true,
     "module": true,
     "beforeEach": true,
+    "after": true,
     "inject": true,
     "require": true,
     "setImmediate": true

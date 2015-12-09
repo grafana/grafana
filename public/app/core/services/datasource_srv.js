@@ -14,6 +14,7 @@ function (angular, _, coreModule, config) {
       this.datasources = {};
       this.metricSources = [];
       this.annotationSources = [];
+      this.idMapSources = [];
 
       _.each(config.datasources, function(value, key) {
         if (value.meta && value.meta.metrics) {
@@ -25,6 +26,9 @@ function (angular, _, coreModule, config) {
         }
         if (value.meta && value.meta.annotations) {
           self.annotationSources.push(value);
+        }
+        if (value.meta && value.meta.mapIds) {
+          self.idMapSources.push(value);
         }
       });
 
@@ -79,6 +83,10 @@ function (angular, _, coreModule, config) {
 
     this.getAnnotationSources = function() {
       return this.annotationSources;
+    };
+
+    this.getIdMapSources = function() {
+      return this.idMapSources;
     };
 
     this.getMetricSources = function() {

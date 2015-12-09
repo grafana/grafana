@@ -14,5 +14,6 @@
 
   "defaultMatchFormat": "lucene",
   "annotations": true,
+  "mapIds": true,
   "metrics": true
 }

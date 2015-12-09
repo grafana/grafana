@@ -10,7 +10,7 @@ define([
     var ctx = new helpers.ServiceTestContext();
 
     beforeEach(module('grafana.services'));
-    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
+    beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location', 'idMapSrv']));
     beforeEach(ctx.createService('templateValuesSrv'));
 
     describe('update interval variable options', function() {
@@ -357,6 +357,25 @@ define([
 
       it('should add pipe delimited string', function() {
         expect(scenario.variable.options[0].value).to.be('backend1|backend2|backend3');
+      });
+    });
+
+    describeUpdateVariable('with id mapping enabled', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', mapIds: true };
+        scenario.queryResult = [{text: 'id1'}, {text: 'id2'}];
+        var idMap = {id1: 'name1'};
+        ctx.idMapSrv.getTemplateVariableIDMap = sinon.stub().returns(ctx.$q.when(idMap));
+      });
+
+      it('should update map display text to name', function() {
+        expect(scenario.variable.options[0].text).to.be('name1');
+        expect(scenario.variable.options[0].value).to.be('id1');
+      });
+
+      it('should leave values not present in the idMap unchanged', function() {
+        expect(scenario.variable.options[1].text).to.be('id2');
+        expect(scenario.variable.options[1].value).to.be('id2');
       });
     });
 

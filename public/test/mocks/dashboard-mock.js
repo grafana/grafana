@@ -19,6 +19,10 @@ define([],
         templating: {
           list: []
         },
+        idMapping: {
+            enabled: true,
+            datasource: 'dummysource'
+        },
         refresh: '10s',
       };
     }

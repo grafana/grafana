@@ -8,10 +8,10 @@ function (angular, $, _) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile, linkSrv) {
+    .directive('panelMenu', function($compile, linkSrv, templateSrv, idMapSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-title-text drag-handle"></span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
           '</span>';
@@ -78,6 +78,28 @@ function (angular, $, _) {
           var $menu = null;
 
           elem.append($link);
+
+          function watchTitle() {
+            var $panelTitleText = $link.find(".panel-title-text");
+
+            function updateTitleMapping() {
+              updateTitle($scope.panel.title);
+            }
+
+            function updateTitle(newTitle) {
+              var titleTemplateVarsReplaced = templateSrv.replaceWithText(newTitle, $scope.panel.scopedVars);
+              idMapSrv.mapIDsInText(titleTemplateVarsReplaced, $scope.dashboard.idMapping)
+                .then(function(titleIDsMapped) {
+                  $panelTitleText.text(titleIDsMapped);
+                });
+            }
+
+            $scope.$watch('panel.title', updateTitle);
+            $scope.$watch('dashboard.idMapping', updateTitleMapping, true);
+            $scope.$on('refresh', updateTitleMapping);
+          }
+
+          watchTitle();
 
           $scope.$watchCollection('panel.links', function(newValue) {
             var showIcon = (newValue ? newValue.length > 0 : false) && $scope.panel.title !== '';

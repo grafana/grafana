@@ -112,4 +112,42 @@ describe('ElasticDatasource', function() {
     });
   });
 
+  describe('When issuing id mapping query', function() {
+    var requestOptions;
+    var esReply = { data: { hits: { hits: [{ _source: { idfieldname: "id1", namefield: "name1" } }] } } };
+    var result;
+    beforeEach(function() {
+      ctx.ds = new ctx.service({
+        url: 'http://es.com',
+        index: 'idmap',
+        jsonData: { interval: 'Daily' }
+      });
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when(esReply);
+      };
+
+      ctx.ds.mapIdQuery('id1', 'idfieldname', 'namefield').then(function(r) {
+        result = r;
+      });
+
+      ctx.$rootScope.$apply();
+    });
+
+    it('should query the search URL', function() {
+      expect(requestOptions.url).to.be("http://es.com/idmap/_search");
+    });
+
+    it('should send query for the requested id and idfield', function() {
+      expect(requestOptions.data).to.eql({
+        query: { "term": { idfieldname: "id1" } },
+        size: 1
+      });
+    });
+
+    it('should return the correct name for the id based on the specified namefield', function() {
+      expect(result).to.be("name1");
+    });
+  });
 });

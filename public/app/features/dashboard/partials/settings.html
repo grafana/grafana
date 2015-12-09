@@ -5,7 +5,7 @@
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker', 'ID mapping']" data-title="{{tab}}">
 		</div>
 	</div>
 
@@ -112,6 +112,10 @@
 
 	<div ng-if="editor.index == 3">
 		<gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
+	</div>
+
+	<div ng-if="editor.index == 4">
+		<gf-id-map-settings dashboard="dashboard"></gf-alias-map-settings>
 	</div>
 
 </div>
