@@ -5,6 +5,7 @@ import _ from 'lodash';
 import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
+import PrometheusMetricFindQuery from './metric_find_query';
 
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
@@ -90,7 +91,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
         delete self.lastErrors.query;
 
         _.each(response.data.data.result, function(metricData) {
-          result.push(transformMetricData(metricData, options.targets[index], start, end));
+          result.push(self.transformMetricData(metricData, options.targets[index], start, end));
         });
       });
 
@@ -123,69 +124,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return $q.reject(err);
     }
 
-    var label_values_regex = /^label_values\(([^,]+)(?:,\s*(.+))?\)$/;
-    var metric_names_regex = /^metrics\((.+)\)$/;
-
-    var url;
-    var label_values_query = interpolated.match(label_values_regex);
-    if (label_values_query) {
-      if (!label_values_query[2]) {
-        // return label values globally
-        url = '/api/v1/label/' + label_values_query[1] + '/values';
-
-        return this._request('GET', url).then(function(result) {
-          return _.map(result.data.data, function(value) {
-            return {text: value};
-          });
-        });
-      } else {
-        url = '/api/v1/series?match[]=' + encodeURIComponent(label_values_query[1]);
-
-        return this._request('GET', url)
-        .then(function(result) {
-          return _.map(result.data.data, function(metric) {
-            return {
-              text: metric[label_values_query[2]],
-              expandable: true
-            };
-          });
-        });
-      }
-    }
-
-    var metric_names_query = interpolated.match(metric_names_regex);
-    if (metric_names_query) {
-      url = '/api/v1/label/__name__/values';
-
-      return this._request('GET', url)
-      .then(function(result) {
-        return _.chain(result.data.data)
-        .filter(function(metricName) {
-          var r = new RegExp(metric_names_query[1]);
-          return r.test(metricName);
-        })
-        .map(function(matchedMetricName) {
-          return {
-            text: matchedMetricName,
-            expandable: true
-          };
-        })
-        .value();
-      });
-    } else {
-      // if query contains full metric name, return metric name and label list
-      url = '/api/v1/series?match[]=' + encodeURIComponent(interpolated);
-
-      return this._request('GET', url)
-      .then(function(result) {
-        return _.map(result.data.data, function(metric) {
-          return {
-            text: getOriginalMetricName(metric),
-            expandable: true
-          };
-        });
-      });
-    }
+    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
+    return metricFindQuery.process();
   };
 
   this.annotationQuery = function(options) {
@@ -210,6 +150,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     };
     var start = getPrometheusTime(options.range.from, false);
     var end = getPrometheusTime(options.range.to, true);
+    var self = this;
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
@@ -225,9 +166,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
             var event = {
               annotation: annotation,
               time: Math.floor(value[0]) * 1000,
-              title: renderTemplate(titleFormat, series.metric),
+              title: self.renderTemplate(titleFormat, series.metric),
               tags: tags,
-              text: renderTemplate(textFormat, series.metric)
+              text: self.renderTemplate(textFormat, series.metric)
             };
 
             eventList.push(event);
@@ -245,7 +186,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     });
   };
 
-  PrometheusDatasource.prototype.calculateInterval = function(interval, intervalFactor) {
+  this.calculateInterval = function(interval, intervalFactor) {
     var m = interval.match(durationSplitRegexp);
     var dur = moment.duration(parseInt(m[1]), m[2]);
     var sec = dur.asSeconds();
@@ -256,11 +197,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return Math.ceil(sec * intervalFactor);
   };
 
-  function transformMetricData(md, options, start, end) {
+  this.transformMetricData = function(md, options, start, end) {
     var dps = [],
       metricLabel = null;
 
-    metricLabel = createMetricLabel(md.metric, options);
+    metricLabel = this.createMetricLabel(md.metric, options);
 
     var stepMs = parseInt(options.step) * 1000;
     var baseTimestamp = start * 1000;
@@ -284,17 +225,17 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     return { target: metricLabel, datapoints: dps };
-  }
+  };
 
-  function createMetricLabel(labelData, options) {
+  this.createMetricLabel = function(labelData, options) {
     if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      return getOriginalMetricName(labelData);
+      return this.getOriginalMetricName(labelData);
     }
 
-    return renderTemplate(options.legendFormat, labelData) || '{}';
-  }
+    return this.renderTemplate(options.legendFormat, labelData) || '{}';
+  };
 
-  function renderTemplate(format, data) {
+  this.renderTemplate = function(format, data) {
     var originalSettings = _.templateSettings;
     _.templateSettings = {
       interpolate: /\{\{(.+?)\}\}/g
@@ -311,16 +252,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     _.templateSettings = originalSettings;
 
     return result;
-  }
+  };
 
-  function getOriginalMetricName(labelData) {
+  this.getOriginalMetricName = function(labelData) {
     var metricName = labelData.__name__ || '';
     delete labelData.__name__;
     var labelPart = _.map(_.pairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
-  }
+  };
 
   function getPrometheusTime(date, roundUp): number {
     if (_.isString(date)) {
