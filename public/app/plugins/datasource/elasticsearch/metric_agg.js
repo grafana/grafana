@@ -13,14 +13,21 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.mavgOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
+      $scope.updateMavgOptions();
+    };
+
+    $scope.updateMavgOptions = function() {
+      $scope.mavgOptions = queryDef.getMovingAverageSourceOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
+      $scope.updateMavgOptions();
       $scope.validateModel();
     }, $scope);
 
@@ -30,14 +37,15 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (!$scope.agg.field) {
+      if (!$scope.agg.field && $scope.agg.type !== 'moving_avg') {
         $scope.agg.field = 'select field';
       }
 
       switch($scope.agg.type) {
         case 'moving_avg': {
-          $scope.agg.mavgSource = $scope.agg.mavgSource || 'Basec on metric';
+          $scope.agg.mavgSource = $scope.agg.mavgSource || 'Metric to apply moving average';
           $scope.settingsLinkText = 'Moving average options';
+          $scope.agg.field = $scope.agg.mavgSource;
           break;
         }
         case 'percentiles': {
@@ -70,7 +78,7 @@ function (angular, _, queryDef) {
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
-      $scope.updateMovingAverageOptions();
+      $scope.updateMavgOptions();
     };
 
     $scope.onChangeInternal = function() {
@@ -86,11 +94,6 @@ function (angular, _, queryDef) {
 
     $scope.getFieldsInternal = function() {
       return $scope.getFields({$fieldType: 'number'});
-    };
-
-    $scope.mavgSourceOptions = function() {
-      return $q.when(queryDef.getMovingAverageSourceOptions($scope.target))
-        .then(uiSegmentSrv.transformToSegments(false));
     };
 
     $scope.addMetricAgg = function() {
