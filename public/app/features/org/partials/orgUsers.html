@@ -54,20 +54,20 @@
 					<tbody ng-repeat="invite in pendingInvites">
 						<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
 							<td>{{invite.email}}</td>
-							<td ng-show="invite.name">{{invite.name}}</td>
+							<td>{{invite.name}}</td>
 							<td class="text-right">
 								<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)">
 									<i class="fa fa-clipboard"></i> Copy Invite
 								</button>
 								&nbsp;
-								<a class="pointer">
+								<button class="btn btn-inverse btn-mini">
+									Details
 									<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
 									<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
-								</a>
+								</button>
 							</td>
 						</tr>
 						<tr ng-show="invite.expanded">
-							<td></td>
 							<td colspan="3">
 								<a href="{{invite.url}}">{{invite.url}}</a><br><br>
 								<button class="btn btn-inverse btn-mini">
