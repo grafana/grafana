@@ -22,7 +22,7 @@ function (angular, _, queryDef) {
     };
 
     $scope.updateMavgOptions = function() {
-      $scope.mavgOptions = queryDef.getMovingAverageSourceOptions($scope.target);
+      $scope.mavgOptions = queryDef.getMovingAverageOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
@@ -43,9 +43,9 @@ function (angular, _, queryDef) {
 
       switch($scope.agg.type) {
         case 'moving_avg': {
-          $scope.agg.mavgSource = $scope.agg.mavgSource || 'Metric to apply moving average';
+          $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'Metric to apply moving average';
           $scope.settingsLinkText = 'Moving average options';
-          $scope.agg.field = $scope.agg.mavgSource;
+          $scope.agg.field = $scope.agg.pipelineAgg;
           break;
         }
         case 'percentiles': {

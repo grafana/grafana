@@ -171,8 +171,8 @@ function () {
       var metricAgg = null;
 
       if (metric.type === 'moving_avg') {
-        if (metric.mavgSource && /^\d*$/.test(metric.mavgSource)) {
-          metricAgg = { buckets_path: metric.mavgSource };
+        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+          metricAgg = { buckets_path: metric.pipelineAgg };
         } else {
           continue;
         }
