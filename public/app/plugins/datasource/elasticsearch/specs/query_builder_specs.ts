@@ -167,7 +167,7 @@ describe('ElasticQueryBuilder', function() {
           id: '2',
           type: 'moving_avg',
           field: '3',
-          mavgSource: '3'
+          pipelineAgg: '3'
         }
       ],
       bucketAggs: [
@@ -194,13 +194,13 @@ describe('ElasticQueryBuilder', function() {
                   id: '2',
                   type: 'moving_avg',
                   field: '3',
-                  mavgSource: '3'
+                  pipelineAgg: '3'
               },
               {
                   id: '4',
                   type: 'moving_avg',
                   field: '3',
-                  mavgSource: 'Metric to apply moving average'
+                  pipelineAgg: 'Metric to apply moving average'
               }
           ],
           bucketAggs: [

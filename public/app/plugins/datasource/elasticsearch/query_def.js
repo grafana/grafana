@@ -67,7 +67,17 @@ function (_) {
       {text: '1d', value: '1d'},
     ],
 
-    getMovingAverageSourceOptions: function(targets) {
+    pipelineAggs: ['moving_avg'],
+
+    isPipelineAgg: function(metric) {
+      if (metric.type) {
+        return this.pipelineAggs.indexOf(metric.type) > -1;
+      }
+
+      return false;
+    },
+
+    getMovingAverageOptions: function(targets) {
       var self = this;
       var result = [];
       _.each(targets.metrics, function(metric) {

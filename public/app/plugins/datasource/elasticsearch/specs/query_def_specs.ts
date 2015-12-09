@@ -8,41 +8,61 @@ declare var QueryDef: any;
 
 describe('ElasticQueryDef', function() {
 
-  describe('with zero targets', function() {
-    var response = QueryDef.getMovingAverageSourceOptions([]);
+  describe('getMovingAverageOptions', function() {
+    describe('with zero targets', function() {
+      var response = QueryDef.getMovingAverageOptions([]);
 
-    it('should return zero', function() {
-      expect(response.length).to.be(0);
+      it('should return zero', function() {
+        expect(response.length).to.be(0);
+      });
+    });
+
+    describe('with count and sum targets', function() {
+      var targets = {
+        metrics: [
+          { type: 'count', field: '@value' },
+          { type: 'sum', field: '@value' }
+        ]
+      };
+
+      var response = QueryDef.getMovingAverageOptions(targets);
+
+      it('should return zero', function() {
+        expect(response.length).to.be(2);
+      });
+    });
+
+    describe('with count and moving average targets', function() {
+      var targets = {
+        metrics: [
+          { type: 'count', field: '@value' },
+          { type: 'moving_avg', field: '@value' }
+        ]
+      };
+
+      var response = QueryDef.getMovingAverageOptions(targets);
+
+      it('should return zero', function() {
+        expect(response.length).to.be(1);
+      });
     });
   });
 
-  describe('with count and sum targets', function() {
-    var targets = {
-      metrics: [
-        { type: 'count', field: '@value' },
-        { type: 'sum', field: '@value' }
-      ]
-    };
+  describe('isPipelineMetric', function() {
+    describe('moving_avg', function() {
+      var result = QueryDef.isPipelineAgg({ type: 'moving_avg' });
 
-    var response = QueryDef.getMovingAverageSourceOptions(targets);
-
-    it('should return zero', function() {
-      expect(response.length).to.be(2);
+      it('is pipe line metric', function() {
+        expect(result).to.be(true);
+      });
     });
-  });
 
-  describe('with count and moving average targets', function() {
-    var targets = {
-      metrics: [
-        { type: 'count', field: '@value' },
-        { type: 'moving_avg', field: '@value' }
-      ]
-    };
+    describe('count', function() {
+      var result = QueryDef.isPipelineAgg({ type: 'count' });
 
-    var response = QueryDef.getMovingAverageSourceOptions(targets);
-
-    it('should return zero', function() {
-      expect(response.length).to.be(1);
+      it('is not pipe line metric', function() {
+        expect(result).to.be(false);
+      });
     });
   });
 });
