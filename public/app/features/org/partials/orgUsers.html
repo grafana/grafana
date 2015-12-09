@@ -4,8 +4,8 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 
 		<h2>Organization users</h2>
 
@@ -18,21 +18,23 @@
 
 		<tabset>
 			<tab heading="Users ({{users.length}})">
-				<table class="grafana-options-table form-inline">
-					<tr>
-						<th>Login</th>
-						<th>Email</th>
-						<th>Role</th>
-						<th></th>
-					</tr>
+				<table class="filter-table form-inline">
+					<thead>
+						<tr>
+							<th>Login</th>
+							<th>Email</th>
+							<th>Role</th>
+							<th style="width: 34px;"></th>
+						</tr>
+					</thead>
 					<tr ng-repeat="user in users">
 						<td>{{user.login}}</td>
-						<td>{{user.email}}</td>
+						<td><span class="ellipsis">{{user.email}}</span></td>
 						<td>
 							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
 							</select>
 						</td>
-						<td style="width: 1%">
+						<td>
 							<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
 								<i class="fa fa-remove"></i>
 							</a>
@@ -41,36 +43,49 @@
 				</table>
 			</tab>
 			<tab heading="Pending Invitations ({{pendingInvites.length}})">
-				<div class="grafana-list-item" ng-repeat="invite in pendingInvites" ng-click="invite.expanded = !invite.expanded">
-					{{invite.email}}
-					<span ng-show="invite.name" style="padding-left: 20px"> {{invite.name}}</span>
-					<span class="pull-right">
-						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)">
-							<i class="fa fa-clipboard"></i> Copy Invite
-						</button>
-						&nbsp;
-						<a class="pointer">
-							<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
-							<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
-						</a>
-					</span>
-					<div ng-show="invite.expanded">
-						<a href="{{invite.url}}">{{invite.url}}</a><br>
-						<button class="btn btn-inverse btn-mini">
-							<i class="fa fa-envelope-o"></i> Resend invite
-						</button>
-						&nbsp;
-						<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
-							<i class="fa fa-remove" style="color: red"></i> Revoke invite
-						</button>
-						<span style="padding-left: 15px">
-							Invited: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
-						</span>
-					<div>
-				</div>
+				<table class="filter-table form-inline">
+					<thead>
+						<tr>
+							<th>Email</th>
+							<th>Name</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody ng-repeat="invite in pendingInvites">
+						<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
+							<td>{{invite.email}}</td>
+							<td ng-show="invite.name">{{invite.name}}</td>
+							<td class="text-right">
+								<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)">
+									<i class="fa fa-clipboard"></i> Copy Invite
+								</button>
+								&nbsp;
+								<a class="pointer">
+									<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
+									<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
+								</a>
+							</td>
+						</tr>
+						<tr ng-show="invite.expanded">
+							<td></td>
+							<td colspan="3">
+								<a href="{{invite.url}}">{{invite.url}}</a><br><br>
+								<button class="btn btn-inverse btn-mini">
+									<i class="fa fa-envelope-o"></i> Resend invite
+								</button>
+								&nbsp;
+								<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
+									<i class="fa fa-remove" style="color: red"></i> Revoke invite
+								</button>
+								<span style="padding-left: 15px">
+									Invited: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
+								</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</tab>
 		</tabset>
-
 	</div>
 </div>
 
