@@ -159,10 +159,15 @@ describe('ElasticQueryBuilder', function() {
     var query = builder.build({
       metrics: [
         {
+          id: '3',
+          type: 'sum',
+          field: '@value'
+        },
+        {
           id: '2',
           type: 'moving_avg',
-          field: '@value',
-          aggregation: 'sum'
+          field: '3',
+          mavgSource: '3'
         }
       ],
       bucketAggs: [
@@ -171,9 +176,43 @@ describe('ElasticQueryBuilder', function() {
     });
 
     var firstLevel = query.aggs["3"];
-    console.log(JSON.stringify(query));
+
     expect(firstLevel.aggs["2"]).not.to.be(undefined);
     expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
-    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("99");
+    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+  });
+
+  it('with broken moving average', function() {
+      var query = builder.build({
+          metrics: [
+              {
+                  id: '3',
+                  type: 'sum',
+                  field: '@value'
+              },
+              {
+                  id: '2',
+                  type: 'moving_avg',
+                  field: '3',
+                  mavgSource: '3'
+              },
+              {
+                  id: '4',
+                  type: 'moving_avg',
+                  field: '3',
+                  mavgSource: 'Metric to apply moving average'
+              }
+          ],
+          bucketAggs: [
+              { type: 'date_histogram', field: '@timestamp', id: '3' }
+          ],
+      });
+
+      var firstLevel = query.aggs["3"];
+
+      expect(firstLevel.aggs["2"]).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+      expect(firstLevel.aggs["4"]).to.be(undefined);
   });
 });
