@@ -13,7 +13,7 @@ function (_) {
       {text: "Min",  value: 'min', requiresField: true},
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
-      {text: "Moving Avg",  value: 'moving_avg', requiresField: true, requiresBucketsPath: true},
+      {text: "Moving Avg",  value: 'moving_avg', requiresField: false, requiresBucketsPath: true},
       {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
@@ -66,6 +66,18 @@ function (_) {
       {text: '1h', value: '1h'},
       {text: '1d', value: '1d'},
     ],
+
+    getMovingAverageSourceOptions: function(targets) {
+      var self = this;
+      var result = [];
+      _.each(targets.metrics, function(metric) {
+        if (metric.type !== 'moving_avg') {
+          result.push({text: self.describeMetric(metric), value: metric.id });
+        }
+      });
+
+      return result;
+    },
 
     getOrderByOptions: function(target) {
       var self = this;
