@@ -13,7 +13,6 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
-    $scope.mavgSourceOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
@@ -23,7 +22,6 @@ function (angular, _, queryDef) {
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
       $scope.validateModel();
-      $scope.updateMovingAverageOptions();
     }, $scope);
 
     $scope.validateModel = function() {
@@ -38,7 +36,7 @@ function (angular, _, queryDef) {
 
       switch($scope.agg.type) {
         case 'moving_avg': {
-          $scope.agg.mavgSource = $scope.agg.mavgSource || '';
+          $scope.agg.mavgSource = $scope.agg.mavgSource || 'Basec on metric';
           $scope.settingsLinkText = 'Moving average options';
           break;
         }
@@ -90,6 +88,11 @@ function (angular, _, queryDef) {
       return $scope.getFields({$fieldType: 'number'});
     };
 
+    $scope.mavgSourceOptions = function() {
+      return $q.when(queryDef.getMovingAverageSourceOptions($scope.target))
+        .then(uiSegmentSrv.transformToSegments(false));
+    };
+
     $scope.addMetricAgg = function() {
       var addIndex = metricAggs.length;
 
@@ -99,10 +102,6 @@ function (angular, _, queryDef) {
 
       metricAggs.splice(addIndex, 0, {type: "count", field: "select field", id: (id+1).toString()});
       $scope.onChange();
-    };
-
-    $scope.updateMovingAverageOptions = function() {
-      $scope.mvagSourceOptions = queryDef.getMovingAverageSourceOptions($scope.target);
     };
 
     $scope.removeMetricAgg = function() {
