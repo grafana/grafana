@@ -13,14 +13,21 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.mavgOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
+      $scope.updateMavgOptions();
+    };
+
+    $scope.updateMavgOptions = function() {
+      $scope.mavgOptions = queryDef.getMovingAverageOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
+      $scope.updateMavgOptions();
       $scope.validateModel();
     }, $scope);
 
@@ -35,6 +42,12 @@ function (angular, _, queryDef) {
       }
 
       switch($scope.agg.type) {
+        case 'moving_avg': {
+          $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'Metric to apply moving average';
+          $scope.settingsLinkText = 'Moving average options';
+          $scope.agg.field = $scope.agg.pipelineAgg;
+          break;
+        }
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
           $scope.settingsLinkText = 'values: ' + $scope.agg.settings.percents.join(',');
@@ -65,6 +78,11 @@ function (angular, _, queryDef) {
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
+      $scope.updateMavgOptions();
+    };
+
+    $scope.onChangeInternal = function() {
+      $scope.onChange();
     };
 
     $scope.onTypeChange = function() {
