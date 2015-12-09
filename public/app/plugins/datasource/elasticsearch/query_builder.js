@@ -167,14 +167,25 @@ function () {
         continue;
       }
 
-      var metricAgg = {field: metric.field};
+      var aggField = {};
+      var metricAgg = null;
+
+      if (metric.type === 'moving_avg') {
+        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+          metricAgg = { buckets_path: metric.pipelineAgg };
+        } else {
+          continue;
+        }
+      } else {
+        metricAgg = {field: metric.field};
+      }
+
       for (var prop in metric.settings) {
         if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
       }
 
-      var aggField = {};
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
     }
@@ -217,5 +228,4 @@ function () {
   };
 
   return ElasticQueryBuilder;
-
 });
