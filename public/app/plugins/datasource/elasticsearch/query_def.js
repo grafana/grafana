@@ -13,7 +13,7 @@ function (_) {
       {text: "Min",  value: 'min', requiresField: true},
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
-      {text: "Moving Avg",  value: 'moving_avg', requiresField: false, requiresBucketsPath: true},
+      {text: "Moving Avg",  value: 'moving_avg', requiresField: false },
       {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
