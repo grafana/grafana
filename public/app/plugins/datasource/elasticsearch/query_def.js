@@ -76,16 +76,16 @@ function (_) {
     },
 
     getPipelineOptions: function(metric) {
-      if (!this.isPipelineAgg(metric)) {
+      if (!this.isPipelineAgg(metric.type)) {
         return [];
       }
 
       return this.pipelineOptions[metric.type];
     },
 
-    isPipelineAgg: function(metric) {
-      if (metric.type) {
-        var po = this.pipelineOptions[metric.type];
+    isPipelineAgg: function(metricType) {
+      if (metricType) {
+        var po = this.pipelineOptions[metricType];
         return po !== null && po !== undefined;
       }
 
@@ -96,7 +96,7 @@ function (_) {
       var self = this;
       var result = [];
       _.each(targets.metrics, function(metric) {
-        if (!self.isPipelineAgg(metric)) {
+        if (!self.isPipelineAgg(metric.type)) {
           result.push({text: self.describeMetric(metric), value: metric.id });
         }
       });

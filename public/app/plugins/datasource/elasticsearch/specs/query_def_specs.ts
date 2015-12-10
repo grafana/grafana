@@ -64,7 +64,7 @@ describe('ElasticQueryDef', function() {
 
   describe('isPipelineMetric', function() {
     describe('moving_avg', function() {
-      var result = QueryDef.isPipelineAgg({ type: 'moving_avg' });
+      var result = QueryDef.isPipelineAgg('moving_avg');
 
       it('is pipe line metric', function() {
         expect(result).to.be(true);
@@ -72,7 +72,7 @@ describe('ElasticQueryDef', function() {
     });
 
     describe('count', function() {
-      var result = QueryDef.isPipelineAgg({ type: 'count' });
+      var result = QueryDef.isPipelineAgg('count');
 
       it('is not pipe line metric', function() {
         expect(result).to.be(false);

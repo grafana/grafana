@@ -197,7 +197,7 @@ function (_, queryDef) {
       });
     }
 
-    if (series.field && series.metric === 'moving_avg') {
+    if (series.field && queryDef.isPipelineAgg(series.metric)) {
       var appliedAgg = _.findWhere(target.metrics, { id: series.field });
       if (appliedAgg) {
         metricName += ' ' + queryDef.describeMetric(appliedAgg);
