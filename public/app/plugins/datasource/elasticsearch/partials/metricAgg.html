@@ -34,9 +34,9 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box">
-		<div class="tight-form last" ng-if="agg.pipelineAgg !== undefined">
+		<div class="tight-form first" ng-if="agg.pipelineAgg !== undefined">
 			<ul class="tight-form-list">
-				<li class="tight-form-item">
+				<li class="tight-form-item" style="width: 75px;">
 					Based on
 				</li>
 				<li>
@@ -45,18 +45,16 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div ng-if="agg.pipelineAgg !== undefined">
-			<div class="tight-form" ng-repeat="setting in agg.pipelineSettings">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						{{stat.text}}
-					</li>
-					<li class="tight-form-item last">
-						<editor-checkbox text="" model="agg.meta.{{stat.value}}" change="onChange()"></editor-checkbox>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+		<div class="tight-form last" ng-if="agg.settings.window !== undefined">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Window
+				</li>
+				<li>
+					<input type="number" class="input-medium tight-form-input" ng-change="onChangeInternal()" ng-model="agg.settings.window" blur="onChange()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
 		</div>
 		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
 			<ul class="tight-form-list">

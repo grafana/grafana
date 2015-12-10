@@ -68,24 +68,25 @@ function (_) {
       {text: '1d', value: '1d'},
     ],
 
-    pipelineAggs: ['moving_avg', 'derivative'],
-
-    pipelineSettings: {
-      'moving_avg' : ['model', 'gap_policy', 'window', 'minimize'],
+    pipelineOptions: {
+      'moving_avg' : [
+        {text: 'window', default: 5}
+      ],
       'derivative': []
     },
 
-    getPipelineSettings: function(metric) {
-      if (this.isPipelineAgg(metric) === false) {
+    getPipelineOptions: function(metric) {
+      if (!this.isPipelineAgg(metric)) {
         return [];
       }
 
-      return this.pipelineSettings[metric.type];
+      return this.pipelineOptions[metric.type];
     },
 
     isPipelineAgg: function(metric) {
       if (metric.type) {
-        return this.pipelineAggs.indexOf(metric.type) > -1;
+        var po = this.pipelineOptions[metric.type];
+        return po !== null && po !== undefined;
       }
 
       return false;
