@@ -13,21 +13,21 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
-    $scope.mavgOptions = [];
+    $scope.pipelineAggOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
-      $scope.updateMavgOptions();
+      $scope.updatePipelineAggOptions();
     };
 
-    $scope.updateMavgOptions = function() {
-      $scope.mavgOptions = queryDef.getMovingAverageOptions($scope.target);
+    $scope.updatePipelineAggOptions = function() {
+      $scope.pipelineAggOptions = queryDef.getMovingAverageOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
-      $scope.updateMavgOptions();
+      $scope.updatePipelineAggOptions();
       $scope.validateModel();
     }, $scope);
 
@@ -78,7 +78,7 @@ function (angular, _, queryDef) {
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
-      $scope.updateMavgOptions();
+      $scope.updatePipelineAggOptions();
     };
 
     $scope.onChangeInternal = function() {
