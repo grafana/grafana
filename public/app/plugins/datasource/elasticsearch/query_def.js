@@ -70,6 +70,19 @@ function (_) {
 
     pipelineAggs: ['moving_avg', 'derivative'],
 
+    pipelineSettings: {
+      'moving_avg' : ['model', 'gap_policy', 'window', 'minimize'],
+      'derivative': []
+    },
+
+    getPipelineSettings: function(metric) {
+      if (this.isPipelineAgg(metric) === false) {
+        return [];
+      }
+
+      return this.pipelineSettings[metric.type];
+    },
+
     isPipelineAgg: function(metric) {
       if (metric.type) {
         return this.pipelineAggs.indexOf(metric.type) > -1;
