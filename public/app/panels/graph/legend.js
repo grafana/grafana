@@ -151,7 +151,7 @@ function (angular, _, $) {
             html += '</div>';
 
             html += '<div class="graph-legend-alias">';
-            html += '<a>' + series.label + '</a>';
+            html += '<a>' + _.escape(series.label) + '</a>';
             html += '</div>';
 
             if (panel.legend.values) {
