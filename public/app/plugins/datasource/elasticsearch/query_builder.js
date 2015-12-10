@@ -173,9 +173,7 @@ function (queryDef) {
 
       if (queryDef.isPipelineAgg(metric)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = {
-            buckets_path: metric.pipelineAgg,
-          };
+          metricAgg = { buckets_path: metric.pipelineAgg };
         } else {
           continue;
         }

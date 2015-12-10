@@ -91,6 +91,7 @@ function (angular, _, queryDef) {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+      $scope.updatePipelineAggOptions();
       $scope.onChange();
     };
 
