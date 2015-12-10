@@ -41,13 +41,13 @@ function (angular, _, queryDef) {
         $scope.agg.field = 'select field';
       }
 
+      if (queryDef.isPipelineAgg($scope.agg)) {
+        $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
+        $scope.agg.field = $scope.agg.pipelineAgg;
+        $scope.settingsLinkText = 'Options';
+      }
+
       switch($scope.agg.type) {
-        case 'moving_avg': {
-          $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'Metric to apply moving average';
-          $scope.settingsLinkText = 'Moving average options';
-          $scope.agg.field = $scope.agg.pipelineAgg;
-          break;
-        }
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
           $scope.settingsLinkText = 'values: ' + $scope.agg.settings.percents.join(',');
