@@ -13,15 +13,12 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
-    $scope.pipelineSettings = [];
-
     $scope.pipelineAggOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
       $scope.updatePipelineAggOptions();
-      $scope.pipelineSettings = queryDef.getPipelineSettings($scope.agg);
     };
 
     $scope.updatePipelineAggOptions = function() {
@@ -44,7 +41,11 @@ function (angular, _, queryDef) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
         $scope.settingsLinkText = 'Options';
-        delete $scope.agg.field;
+
+        _.each(queryDef.getPipelineOptions($scope.agg), function(opt) {
+          $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+        });
+
       } else if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
