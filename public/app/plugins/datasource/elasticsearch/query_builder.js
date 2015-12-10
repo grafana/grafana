@@ -171,7 +171,7 @@ function (queryDef) {
       var aggField = {};
       var metricAgg = null;
 
-      if (queryDef.isPipelineAgg(metric)) {
+      if (queryDef.isPipelineAgg(metric.type)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
           metricAgg = { buckets_path: metric.pipelineAgg };
         } else {

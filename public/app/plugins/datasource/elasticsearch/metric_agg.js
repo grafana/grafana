@@ -37,7 +37,7 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (queryDef.isPipelineAgg($scope.agg)) {
+      if (queryDef.isPipelineAgg($scope.agg.type)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
         $scope.settingsLinkText = 'Options';
