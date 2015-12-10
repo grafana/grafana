@@ -9,8 +9,15 @@
 		<li ng-if="aggDef.requiresField">
 			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
 		</li>
+		<li class="tight-form-item" ng-if="!aggDef.requiresField" style="width: 200px">
+			&nbsp;
+		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
-			<a ng-click="toggleOptions()">{{settingsLinkText}}</a>
+			<a ng-click="toggleOptions()">
+				<i class="fa fa-caret-down" ng-show="showOptions"></i>
+				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+				{{settingsLinkText}}
+			</a>
 		</li>
 	</ul>
 
