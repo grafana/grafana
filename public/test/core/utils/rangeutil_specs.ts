@@ -46,7 +46,7 @@ describe("rangeUtil", () => {
 
     it('should handle now/w', () => {
       var info = rangeUtil.describeTextRange('now/w');
-      expect(info.display).to.be('Week so far');
+      expect(info.display).to.be('This week so far');
     });
   });
 
