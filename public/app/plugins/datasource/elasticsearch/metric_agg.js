@@ -37,14 +37,13 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (!$scope.agg.field) {
-        $scope.agg.field = 'select field';
-      }
-
       if (queryDef.isPipelineAgg($scope.agg)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
         $scope.settingsLinkText = 'Options';
+        delete $scope.agg.field;
+      } else if (!$scope.agg.field) {
+        $scope.agg.field = 'select field';
       }
 
       switch($scope.agg.type) {

@@ -1,6 +1,7 @@
 define([
+  './query_def'
 ],
-function () {
+function (queryDef) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
@@ -170,9 +171,11 @@ function () {
       var aggField = {};
       var metricAgg = null;
 
-      if (metric.type === 'moving_avg') {
+      if (queryDef.isPipelineAgg(metric)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
+          metricAgg = {
+            buckets_path: metric.pipelineAgg,
+          };
         } else {
           continue;
         }
