@@ -13,12 +13,15 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.pipelineSettings = [];
+
     $scope.pipelineAggOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
       $scope.updatePipelineAggOptions();
+      $scope.pipelineSettings = queryDef.getPipelineSettings($scope.agg);
     };
 
     $scope.updatePipelineAggOptions = function() {
