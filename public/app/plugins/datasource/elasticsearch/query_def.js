@@ -14,6 +14,7 @@ function (_) {
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
       {text: "Moving Average",  value: 'moving_avg', requiresField: false },
+      {text: "Derivative",  value: 'derivative', requiresField: false },
       {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
@@ -67,7 +68,7 @@ function (_) {
       {text: '1d', value: '1d'},
     ],
 
-    pipelineAggs: ['moving_avg'],
+    pipelineAggs: ['moving_avg', 'derivative'],
 
     isPipelineAgg: function(metric) {
       if (metric.type) {
