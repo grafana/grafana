@@ -8,9 +8,9 @@ declare var QueryDef: any;
 
 describe('ElasticQueryDef', function() {
 
-  describe('getMovingAverageOptions', function() {
+  describe('getPipelineAggOptions', function() {
     describe('with zero targets', function() {
-      var response = QueryDef.getMovingAverageOptions([]);
+      var response = QueryDef.getPipelineAggOptions([]);
 
       it('should return zero', function() {
         expect(response.length).to.be(0);
@@ -25,7 +25,7 @@ describe('ElasticQueryDef', function() {
         ]
       };
 
-      var response = QueryDef.getMovingAverageOptions(targets);
+      var response = QueryDef.getPipelineAggOptions(targets);
 
       it('should return zero', function() {
         expect(response.length).to.be(2);
@@ -40,7 +40,7 @@ describe('ElasticQueryDef', function() {
         ]
       };
 
-      var response = QueryDef.getMovingAverageOptions(targets);
+      var response = QueryDef.getPipelineAggOptions(targets);
 
       it('should return zero', function() {
         expect(response.length).to.be(1);
