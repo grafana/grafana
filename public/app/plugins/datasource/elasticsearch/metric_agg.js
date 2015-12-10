@@ -22,7 +22,7 @@ function (angular, _, queryDef) {
     };
 
     $scope.updatePipelineAggOptions = function() {
-      $scope.pipelineAggOptions = queryDef.getMovingAverageOptions($scope.target);
+      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {

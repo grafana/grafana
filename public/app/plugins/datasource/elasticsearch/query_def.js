@@ -92,7 +92,7 @@ function (_) {
       return false;
     },
 
-    getMovingAverageOptions: function(targets) {
+    getPipelineAggOptions: function(targets) {
       var self = this;
       var result = [];
       _.each(targets.metrics, function(metric) {
