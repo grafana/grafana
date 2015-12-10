@@ -14,6 +14,7 @@ function (_) {
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
       {text: "Unique Count", value: "cardinality", requiresField: true},
+      {text: "Scripted Metric",      value: "scripted_metric", requiresField: false},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
 
@@ -53,6 +54,13 @@ function (_) {
       {text: 'Std Dev', value: 'std_deviation'},
       {text: 'Std Dev Upper', value: 'std_deviation_bounds_upper'},
       {text: 'Std Dev Lower', value: 'std_deviation_bounds_lower'},
+    ],
+
+    scriptedMetricOptions: [
+      {text: 'Init', value: 'init_script'},
+      {text: 'Map', value: 'map_script'},
+      {text: 'Combine', value: 'combine_script'},
+      {text: 'Reduce', value: 'reduce_script'}
     ],
 
     intervalOptions: [

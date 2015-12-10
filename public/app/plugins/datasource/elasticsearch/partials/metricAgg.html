@@ -27,6 +27,7 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box">
+
 		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
@@ -38,6 +39,7 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+
 		<div ng-if="agg.type === 'extended_stats'">
 			<div class="tight-form" ng-repeat="stat in extendedStats">
 				<ul class="tight-form-list">
@@ -51,6 +53,7 @@
 				<div class="clearfix"></div>
 			</div>
 		</div>
+
 		<div class="tight-form last" ng-if="agg.type === 'extended_stats'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 100px">
@@ -62,5 +65,20 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+
+		<div ng-if="agg.type === 'scripted_metric'">
+			<div class="tight-form" ng-repeat="option in scriptedMetricOptions" ng-class="{last: $last}">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						{{option.text}}
+					</li>
+					<li>
+						<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.settings[option.value]" ng-blur="onChange()"></input>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
 	</div>
 </div>
