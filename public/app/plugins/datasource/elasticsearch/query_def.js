@@ -96,7 +96,7 @@ function (_) {
       var self = this;
       var result = [];
       _.each(targets.metrics, function(metric) {
-        if (metric.type !== 'moving_avg') {
+        if (!self.isPipelineAgg(metric)) {
           result.push({text: self.describeMetric(metric), value: metric.id });
         }
       });

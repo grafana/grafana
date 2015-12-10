@@ -42,8 +42,22 @@ describe('ElasticQueryDef', function() {
 
       var response = QueryDef.getPipelineAggOptions(targets);
 
-      it('should return zero', function() {
+      it('should return one', function() {
         expect(response.length).to.be(1);
+      });
+    });
+
+    describe('with derivatives targets', function() {
+      var targets = {
+        metrics: [
+          { type: 'derivative', field: '@value' }
+        ]
+      };
+
+      var response = QueryDef.getPipelineAggOptions(targets);
+
+      it('should return zero', function() {
+        expect(response.length).to.be(0);
       });
     });
   });
