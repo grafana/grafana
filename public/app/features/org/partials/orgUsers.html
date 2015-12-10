@@ -70,9 +70,6 @@
 						<tr ng-show="invite.expanded">
 							<td colspan="3">
 								<a href="{{invite.url}}">{{invite.url}}</a><br><br>
-								<button class="btn btn-inverse btn-mini">
-									<i class="fa fa-envelope-o"></i> Resend invite
-								</button>
 								&nbsp;
 								<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
 									<i class="fa fa-remove" style="color: red"></i> Revoke invite
