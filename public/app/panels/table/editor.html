@@ -132,6 +132,9 @@
 						<spectrum-picker ng-model="style.colors[1]" ng-change="render()" ></spectrum-picker>
 						<spectrum-picker ng-model="style.colors[2]" ng-change="render()" ></spectrum-picker>
 					</li>
+					<li class="tight-form-item last">
+						<a class="pointer" ng-click="invertColorOrder($index)">invert order</a>
+					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
