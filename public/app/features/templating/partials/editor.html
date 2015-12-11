@@ -170,9 +170,9 @@
 					<input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
 				</div>
 				<div class="gf-form">
-					<span class="gf-form-label width-7">Update</span>
-					<editor-checkbox text="On Dashboard Load" model="current.refresh"></editor-checkbox>
-					<tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time</tip>
+					<span class="gf-form-label width-7">Refresh</span>
+					<select class="input-large tight-form-input" ng-model="current.refresh" ng-options="f for f in ['Never', 'On Dashboard Load', 'On Time Change']"></select>
+					<tip>When to update the values of this template, will slow down dashboard load / time change</tip>
 				</div>
 			</div>
 
