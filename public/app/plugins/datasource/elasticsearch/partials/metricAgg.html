@@ -34,7 +34,7 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box">
-		<div class="tight-form first" ng-if="agg.pipelineAgg !== undefined">
+		<div class="tight-form first" ng-if="agg.pipelineAgg !== undefined" ng-class="{ 'last': agg.type === 'derivative'}">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 75px;">
 					Based on
