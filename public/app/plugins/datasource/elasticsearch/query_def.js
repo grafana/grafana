@@ -6,15 +6,15 @@ function (_) {
 
   return {
     metricAggTypes: [
-      {text: "Count",   value: 'count', requiresField: false},
-      {text: "Average",  value: 'avg', requiresField: true},
-      {text: "Sum",  value: 'sum', requiresField: true},
-      {text: "Max",  value: 'max', requiresField: true},
-      {text: "Min",  value: 'min', requiresField: true},
-      {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
-      {text: "Percentiles",  value: 'percentiles', requiresField: true},
-      {text: "Unique Count", value: "cardinality", requiresField: true},
-      {text: "Raw Document", value: "raw_document", requiresField: false}
+      {text: "Count",   value: 'count', requiresField: false, allowsScript: false},
+      {text: "Average",  value: 'avg', requiresField: true, allowsScript: true},
+      {text: "Sum",  value: 'sum', requiresField: true, allowsScript: true},
+      {text: "Max",  value: 'max', requiresField: true, allowsScript: true},
+      {text: "Min",  value: 'min', requiresField: true, allowsScript: true},
+      {text: "Extended Stats",  value: 'extended_stats', requiresField: true, allowsScript: true},
+      {text: "Percentiles",  value: 'percentiles', requiresField: true, allowsScript: true},
+      {text: "Unique Count", value: "cardinality", requiresField: true, allowsScript: true},
+      {text: "Raw Document", value: "raw_document", requiresField: false, allowsScript: false}
     ],
 
     bucketAggTypes: [
