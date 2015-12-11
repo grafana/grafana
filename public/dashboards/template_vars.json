@@ -259,5 +259,6 @@
     "enable": false
   },
   "refresh": false,
+  "refreshOnTimeChange": false,
   "version": 6
 }

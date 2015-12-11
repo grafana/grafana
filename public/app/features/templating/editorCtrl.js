@@ -13,6 +13,7 @@ function (angular, _) {
       type: 'query',
       datasource: null,
       refresh: false,
+      refreshOnTimeChange: false,
       name: '',
       options: [],
       includeAll: false,

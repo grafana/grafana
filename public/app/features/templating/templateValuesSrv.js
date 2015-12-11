@@ -20,6 +20,17 @@ function (angular, _, kbn) {
       }
     }, $rootScope);
 
+    $rootScope.onAppEvent('refresh', function() {
+      var promises = [];
+      for (var i = 0; i < self.variables.length; i++) {
+        var variable = self.variables[i];
+        if (variable.refreshOnTimeChange) {
+          promises.push(self.updateOptions(variable));
+        }
+      }
+      return $q.all(promises);
+    }, $rootScope);
+
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
