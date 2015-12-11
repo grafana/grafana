@@ -155,4 +155,89 @@ describe('ElasticQueryBuilder', function() {
     expect(query.size).to.be(500);
   });
 
+  it('with moving average', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'sum',
+          field: '@value'
+        },
+        {
+          id: '2',
+          type: 'moving_avg',
+          field: '3',
+          pipelineAgg: '3'
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+
+    expect(firstLevel.aggs["2"]).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+  });
+
+  it('with broken moving average', function() {
+      var query = builder.build({
+          metrics: [
+              {
+                  id: '3',
+                  type: 'sum',
+                  field: '@value'
+              },
+              {
+                  id: '2',
+                  type: 'moving_avg',
+                  pipelineAgg: '3'
+              },
+              {
+                  id: '4',
+                  type: 'moving_avg',
+                  pipelineAgg: 'Metric to apply moving average'
+              }
+          ],
+          bucketAggs: [
+              { type: 'date_histogram', field: '@timestamp', id: '3' }
+          ],
+      });
+
+      var firstLevel = query.aggs["3"];
+
+      expect(firstLevel.aggs["2"]).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+      expect(firstLevel.aggs["4"]).to.be(undefined);
+  });
+
+  it('with derivative', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'sum',
+          field: '@value'
+        },
+        {
+          id: '2',
+          type: 'derivative',
+          pipelineAgg: '3'
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+
+    expect(firstLevel.aggs["2"]).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].derivative).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
+  });
+
 });
