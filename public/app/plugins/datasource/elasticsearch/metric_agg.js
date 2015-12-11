@@ -40,12 +40,17 @@ function (angular, _, queryDef) {
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
-        $scope.settingsLinkText = 'Options';
 
         _.each(queryDef.getPipelineOptions($scope.agg), function(opt) {
           $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
         });
 
+        var appliedAgg = _.findWhere(metricAggs, { id: $scope.agg.pipelineAgg });
+        if (appliedAgg) {
+          $scope.settingsLinkText = 'Options: Based on => ' + queryDef.describeMetric(appliedAgg);
+        } else {
+          $scope.settingsLinkText = 'Options';
+        }
       } else if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
