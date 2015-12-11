@@ -101,6 +101,14 @@ export class TablePanelEditorCtrl {
       });
     };
 
+    $scope.invertColorOrder = function(index) {
+      var ref = $scope.panel.styles[index].colors;
+      var copy = ref[0];
+      ref[0] = ref[2];
+      ref[2] = copy;
+      $scope.render();
+    };
+
   }
 }
 
