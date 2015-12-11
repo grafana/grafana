@@ -82,6 +82,7 @@ var (
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
+	LoginHint          string
 
 	// Http auth
 	AdminUser     string
@@ -436,6 +437,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+	LoginHint = users.Key("login_hint").String()
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
