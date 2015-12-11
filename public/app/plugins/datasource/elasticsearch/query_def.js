@@ -7,15 +7,15 @@ function (_) {
   return {
     metricAggTypes: [
       {text: "Count",   value: 'count', requiresField: false},
-      {text: "Average",  value: 'avg', requiresField: true},
-      {text: "Sum",  value: 'sum', requiresField: true},
-      {text: "Max",  value: 'max', requiresField: true},
-      {text: "Min",  value: 'min', requiresField: true},
-      {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
-      {text: "Percentiles",  value: 'percentiles', requiresField: true},
+      {text: "Average",  value: 'avg', requiresField: true, supportsInlineScript: true, supportsMissing: true},
+      {text: "Sum",  value: 'sum', requiresField: true, supportsInlineScript: true, supportsMissing: true},
+      {text: "Max",  value: 'max', requiresField: true, supportsInlineScript: true, supportsMissing: true},
+      {text: "Min",  value: 'min', requiresField: true, supportsInlineScript: true, supportsMissing: true},
+      {text: "Extended Stats",  value: 'extended_stats', requiresField: true, supportsMissing: true, supportsInlineScript: true},
+      {text: "Percentiles",  value: 'percentiles', requiresField: true, supportsMissing: true, supportsInlineScript: true},
+      {text: "Unique Count", value: "cardinality", requiresField: true, supportsMissing: true},
       {text: "Moving Average",  value: 'moving_avg', requiresField: false, isPipelineAgg: true },
       {text: "Derivative",  value: 'derivative', requiresField: false, isPipelineAgg: true },
-      {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
 
