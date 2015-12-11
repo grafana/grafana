@@ -35,7 +35,6 @@ require.config({
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
-    'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
   },
 
   shim: {
