@@ -13,14 +13,21 @@ function (angular, _, queryDef) {
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.pipelineAggOptions = [];
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
       $scope.validateModel();
+      $scope.updatePipelineAggOptions();
+    };
+
+    $scope.updatePipelineAggOptions = function() {
+      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.index = _.indexOf(metricAggs, $scope.agg);
+      $scope.updatePipelineAggOptions();
       $scope.validateModel();
     }, $scope);
 
@@ -30,7 +37,18 @@ function (angular, _, queryDef) {
       $scope.settingsLinkText = '';
       $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
 
-      if (!$scope.agg.field) {
+      if (queryDef.isPipelineAgg($scope.agg.type)) {
+        $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
+        $scope.agg.field = $scope.agg.pipelineAgg;
+
+        var pipelineOptions = queryDef.getPipelineOptions($scope.agg);
+        if (pipelineOptions.length > 0) {
+          _.each(pipelineOptions, function(opt) {
+            $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+          });
+          $scope.settingsLinkText = 'Options';
+        }
+      } else if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
 
@@ -65,12 +83,18 @@ function (angular, _, queryDef) {
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
+      $scope.updatePipelineAggOptions();
+    };
+
+    $scope.onChangeInternal = function() {
+      $scope.onChange();
     };
 
     $scope.onTypeChange = function() {
       $scope.agg.settings = {};
       $scope.agg.meta = {};
       $scope.showOptions = false;
+      $scope.updatePipelineAggOptions();
       $scope.onChange();
     };
 
@@ -91,6 +115,14 @@ function (angular, _, queryDef) {
 
     $scope.removeMetricAgg = function() {
       metricAggs.splice($scope.index, 1);
+      $scope.onChange();
+    };
+
+    $scope.toggleShowMetric = function() {
+      $scope.agg.hide = !$scope.agg.hide;
+      if (!$scope.agg.hide) {
+        delete $scope.agg.hide;
+      }
       $scope.onChange();
     };
 

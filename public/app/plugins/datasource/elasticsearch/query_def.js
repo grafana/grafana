@@ -13,6 +13,8 @@ function (_) {
       {text: "Min",  value: 'min', requiresField: true},
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
+      {text: "Moving Average",  value: 'moving_avg', requiresField: false, isPipelineAgg: true },
+      {text: "Derivative",  value: 'derivative', requiresField: false, isPipelineAgg: true },
       {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
@@ -65,6 +67,43 @@ function (_) {
       {text: '1h', value: '1h'},
       {text: '1d', value: '1d'},
     ],
+
+    pipelineOptions: {
+      'moving_avg' : [
+        {text: 'window', default: 5},
+        {text: 'model', default: 'simple'}
+      ],
+      'derivative': []
+    },
+
+    getPipelineOptions: function(metric) {
+      if (!this.isPipelineAgg(metric.type)) {
+        return [];
+      }
+
+      return this.pipelineOptions[metric.type];
+    },
+
+    isPipelineAgg: function(metricType) {
+      if (metricType) {
+        var po = this.pipelineOptions[metricType];
+        return po !== null && po !== undefined;
+      }
+
+      return false;
+    },
+
+    getPipelineAggOptions: function(targets) {
+      var self = this;
+      var result = [];
+      _.each(targets.metrics, function(metric) {
+        if (!self.isPipelineAgg(metric.type)) {
+          result.push({text: self.describeMetric(metric), value: metric.id });
+        }
+      });
+
+      return result;
+    },
 
     getOrderByOptions: function(target) {
       var self = this;
