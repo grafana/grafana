@@ -55,10 +55,15 @@ function (angular, _, queryDef) {
       switch($scope.agg.type) {
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
-          $scope.settingsLinkText = 'values: ' + $scope.agg.settings.percents.join(',');
+          $scope.settingsLinkText = 'Values: ' + $scope.agg.settings.percents.join(',');
           break;
         }
         case 'extended_stats': {
+          if (_.keys($scope.agg.meta).length === 0)  {
+            $scope.agg.meta.std_deviation_bounds_lower = true;
+            $scope.agg.meta.std_deviation_bounds_upper = true;
+          }
+
           var stats = _.reduce($scope.agg.meta, function(memo, val, key) {
             if (val) {
               var def = _.findWhere($scope.extendedStats, {value: key});
@@ -66,17 +71,29 @@ function (angular, _, queryDef) {
             }
             return memo;
           }, []);
-          $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
 
-          if (stats.length === 0)  {
-            $scope.agg.meta.std_deviation_bounds_lower = true;
-            $scope.agg.meta.std_deviation_bounds_upper = true;
-          }
+          $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
           break;
         }
         case 'raw_document': {
           $scope.target.metrics = [$scope.agg];
           $scope.target.bucketAggs = [];
+          break;
+        }
+      }
+
+      if ($scope.aggDef.supportsInlineScript) {
+        // I know this stores the inline script twice
+        // but having it like this simplifes the query_builder
+        var inlineScript = $scope.agg.inlineScript;
+        if (inlineScript) {
+          $scope.agg.settings.script = {inline: inlineScript};
+        } else {
+          delete $scope.agg.settings.script;
+        }
+
+        if ($scope.settingsLinkText === '') {
+          $scope.settingsLinkText = 'Options';
         }
       }
     };
