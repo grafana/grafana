@@ -15,6 +15,9 @@ function (_, queryDef) {
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
+      if (metric.hide) {
+        continue;
+      }
 
       switch(metric.type) {
         case 'count': {

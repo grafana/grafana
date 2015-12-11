@@ -1,7 +1,11 @@
-<div class="tight-form">
+<div class="tight-form" ng-class="{'tight-form-disabled': agg.hide}">
 	<ul class="tight-form-list">
 		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
 			Metric
+			&nbsp; <a ng-click="toggleShowMetric()" bs-tooltip="Click to toggle show/hide metric">
+				<i class="fa fa-eye" ng-hide="agg.hide"></i>
+				<i class="fa fa-eye-slash" ng-show="agg.hide"></i>
+			</a>
 		</li>
 		<li>
 			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
@@ -9,8 +13,8 @@
 		<li ng-if="aggDef.requiresField">
 			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
 		</li>
-		<li class="tight-form-item" ng-if="!aggDef.requiresField" style="width: 200px">
-			&nbsp;
+		<li ng-if="aggDef.isPipelineAgg">
+			<metric-segment-model property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="tight-form-item-xxlarge"></metric-segment-model>
 		</li>
 		<li class="tight-form-item last" ng-if="settingsLinkText">
 			<a ng-click="toggleOptions()">
@@ -33,36 +37,25 @@
 </div>
 
 <div class="tight-form" ng-if="showOptions">
-	<div class="tight-form-inner-box">
-		<div class="tight-form first" ng-if="agg.pipelineAgg !== undefined" ng-class="{ 'last': agg.type === 'derivative'}">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 75px;">
-					Based on
-				</li>
-				<li>
-					<metric-segment-model property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" css-class="last"></metric-segment-model>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form" ng-if="agg.settings.window !== undefined">
+	<div class="tight-form-inner-box tight-form-container">
+		<div class="tight-form" ng-if="agg.type === 'moving_avg'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 75px;">
 					Window
 				</li>
 				<li>
-					<input type="number" class="input-medium tight-form-input" ng-change="onChangeInternal()" ng-model="agg.settings.window" blur="onChange()" spellcheck='false'>
+					<input type="number" class="input-medium tight-form-input last" ng-model="agg.settings.window" ng-blur="onChangeInternal()" spellcheck='false'>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last" ng-if="agg.settings.model !== undefined">
+		<div class="tight-form" ng-if="agg.type === 'moving_avg'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 75px;">
 					Model
 				</li>
 				<li>
-					<input type="text" class="input-medium tight-form-input" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
+					<input type="text" class="input-medium tight-form-input last" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
