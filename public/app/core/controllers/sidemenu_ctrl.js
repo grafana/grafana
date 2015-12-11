@@ -28,6 +28,12 @@ function (angular, _, $, coreModule, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+
+      $scope.mainLinks.push({
+        text: "Metrics",
+        icon: "fa fa-fw fa-search",
+        href: $scope.getUrl("/dashboard/metrics"),
+      });
     };
 
     $scope.loadOrgs = function() {
