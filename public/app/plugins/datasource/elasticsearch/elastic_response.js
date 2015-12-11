@@ -76,8 +76,10 @@ function (_, queryDef) {
           newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
-            value = bucket[metric.id].value;
-            newSeries.datapoints.push([value, bucket.key]);
+            if (typeof bucket[metric.id] !== 'undefined') {
+              value = bucket[metric.id].value;
+              newSeries.datapoints.push([value, bucket.key]);
+            }
           }
           seriesList.push(newSeries);
           break;
