@@ -70,7 +70,8 @@ function (_) {
 
     pipelineOptions: {
       'moving_avg' : [
-        {text: 'window', default: 5}
+        {text: 'window', default: 5},
+        {text: 'model', default: 'simple'}
       ],
       'derivative': []
     },

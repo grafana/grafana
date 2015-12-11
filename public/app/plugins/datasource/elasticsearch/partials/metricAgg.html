@@ -45,13 +45,24 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last" ng-if="agg.settings.window !== undefined">
+		<div class="tight-form" ng-if="agg.settings.window !== undefined">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 75px;">
 					Window
 				</li>
 				<li>
 					<input type="number" class="input-medium tight-form-input" ng-change="onChangeInternal()" ng-model="agg.settings.window" blur="onChange()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last" ng-if="agg.settings.model !== undefined">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Model
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
