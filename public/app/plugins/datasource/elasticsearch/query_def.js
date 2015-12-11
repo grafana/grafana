@@ -13,8 +13,8 @@ function (_) {
       {text: "Min",  value: 'min', requiresField: true},
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
-      {text: "Moving Average",  value: 'moving_avg', requiresField: false },
-      {text: "Derivative",  value: 'derivative', requiresField: false },
+      {text: "Moving Average",  value: 'moving_avg', requiresField: false, isPipelineAgg: true },
+      {text: "Derivative",  value: 'derivative', requiresField: false, isPipelineAgg: true },
       {text: "Unique Count", value: "cardinality", requiresField: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],

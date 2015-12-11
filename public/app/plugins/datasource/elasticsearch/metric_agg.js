@@ -41,14 +41,11 @@ function (angular, _, queryDef) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
         $scope.agg.field = $scope.agg.pipelineAgg;
 
-        _.each(queryDef.getPipelineOptions($scope.agg), function(opt) {
-          $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
-        });
-
-        var appliedAgg = _.findWhere(metricAggs, { id: $scope.agg.pipelineAgg });
-        if (appliedAgg) {
-          $scope.settingsLinkText = 'Options: Based on => ' + queryDef.describeMetric(appliedAgg);
-        } else {
+        var pipelineOptions = queryDef.getPipelineOptions($scope.agg);
+        if (pipelineOptions.length > 0) {
+          _.each(pipelineOptions, function(opt) {
+            $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+          });
           $scope.settingsLinkText = 'Options';
         }
       } else if (!$scope.agg.field) {
@@ -118,6 +115,14 @@ function (angular, _, queryDef) {
 
     $scope.removeMetricAgg = function() {
       metricAggs.splice($scope.index, 1);
+      $scope.onChange();
+    };
+
+    $scope.toggleShowMetric = function() {
+      $scope.agg.hide = !$scope.agg.hide;
+      if (!$scope.agg.hide) {
+        delete $scope.agg.hide;
+      }
       $scope.onChange();
     };
 
