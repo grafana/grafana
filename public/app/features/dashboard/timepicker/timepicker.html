@@ -17,13 +17,12 @@
 			<span ng-show="ctrl.dashboard.refresh" class="text-warning">
 				&nbsp;
 				&nbsp;
-				<i class="fa fa-refresh"></i>
 				Refresh every {{ctrl.dashboard.refresh}}
 			</span>
 		</a>
 	</li>
 
-	<li class="grafana-menu-refresh" ng-show="!ctrl.dashboard.refresh">
+	<li class="grafana-menu-refresh">
 		<a ng-click="ctrl.timeSrv.refreshDashboard()">
 			<i class="fa fa-refresh"></i>
 		</a>
