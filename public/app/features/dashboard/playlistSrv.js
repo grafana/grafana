@@ -8,16 +8,26 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('playlistSrv', function($location, $rootScope, $timeout) {
+  module.service('playlistSrv', function($route, $location, $rootScope, $timeout) {
     var self = this;
 
     this.next = function() {
       $timeout.cancel(self.cancelPromise);
 
       angular.element(window).unbind('resize');
-      var dash = self.dashboards[self.index % self.dashboards.length];
+      var playlist = self.playlists[self.index % self.playlists.length];
 
-      $location.url('dashboard/' + dash.uri);
+      if(self.playlistType === "dashboards") {
+        $location.url('dashboard/' + playlist.uri);
+      } else if(self.playlistType === "variables") {
+        var urlParameters = "";
+        for(var i=0; i<playlist.list.length; i++) {
+          urlParameters += 'var-' + playlist.list[i].tagName + "=" + playlist.list[i].tagValue + "&";
+        }
+        urlParameters = urlParameters.substring(0, urlParameters.length - 1);
+        $location.url('dashboard/' + playlist.uri + '?' + urlParameters);
+        $route.reload();
+      }
 
       self.index++;
       self.cancelPromise = $timeout(self.next, self.interval);
@@ -28,13 +38,16 @@ function (angular, _, kbn) {
       self.next();
     };
 
-    this.start = function(dashboards, timespan) {
+    this.start = function(playlistType, playlists, timespan) {
       self.stop();
 
       self.index = 0;
       self.interval = kbn.interval_to_ms(timespan);
 
-      self.dashboards = dashboards;
+      self.playlistType = playlistType;
+
+      self.playlists = playlists;
+
       $rootScope.playlistSrv = this;
 
       self.cancelPromise = $timeout(self.next, self.interval);
