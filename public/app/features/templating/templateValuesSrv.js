@@ -20,6 +20,17 @@ function (angular, _, kbn) {
       }
     }, $rootScope);
 
+    $rootScope.onAppEvent('refresh', function() {
+      var promises = [];
+      for (var i = 0; i < self.variables.length; i++) {
+        var variable = self.variables[i];
+        if (variable.refresh === 'On Time Change') {
+          promises.push(self.updateOptions(variable));
+        }
+      }
+      return $q.all(promises);
+    }, $rootScope);
+
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
@@ -60,7 +71,7 @@ function (angular, _, kbn) {
         if (urlValue !== void 0) {
           return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
         }
-        else if (variable.refresh) {
+        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change') {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
               console.log("setting current for %s", variable.name);
