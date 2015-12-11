@@ -132,6 +132,7 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
 		return
 	}
+	sort.Sort(sort.StringSlice(namespaceMetrics))
 
 	result := []interface{}{}
 	for _, name := range namespaceMetrics {
@@ -155,6 +156,7 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
 		return
 	}
+	sort.Sort(sort.StringSlice(dimensionValues))
 
 	result := []interface{}{}
 	for _, name := range dimensionValues {
