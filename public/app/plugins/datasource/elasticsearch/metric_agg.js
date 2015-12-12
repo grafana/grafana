@@ -12,6 +12,13 @@ function (angular, _, queryDef) {
     var metricAggs = $scope.target.metrics;
 
     $scope.metricAggTypes = queryDef.metricAggTypes;
+
+    if (!$scope.datasource.experimentalFeatures) {
+      $scope.metricAggTypes = _.filter($scope.metricAggTypes, function (agg) {
+        return typeof agg.experimental === 'undefined' || agg.experimental === false;
+      });
+    }
+
     $scope.extendedStats = queryDef.extendedStats;
     $scope.scriptedMetricOptions = queryDef.scriptedMetricOptions;
 

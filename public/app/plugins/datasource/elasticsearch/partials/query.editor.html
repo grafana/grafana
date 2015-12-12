@@ -64,7 +64,7 @@
 <div ng-hide="target.rawQuery">
 	<div ng-repeat="agg in target.metrics">
 		<elastic-metric-agg
-			target="target" index="$index"
+			target="target" index="$index" datasource="datasource"
 			get-fields="getFields($fieldType)"
 			on-change="queryUpdated()">
 		</elastic-metric-agg>

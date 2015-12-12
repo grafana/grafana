@@ -14,7 +14,7 @@ function (_) {
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true},
       {text: "Unique Count", value: "cardinality", requiresField: true},
-      {text: "Scripted Metric",      value: "scripted_metric", requiresField: false},
+      {text: "Scripted", value: "scripted_metric", requiresField: false, experimental: true},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
 

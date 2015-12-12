@@ -24,6 +24,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       this.index = datasource.index;
       this.timeField = datasource.jsonData.timeField;
       this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
+      this.experimentalFeatures = datasource.jsonData.experimentalFeatures;
       this.queryBuilder = new ElasticQueryBuilder({
         timeField: this.timeField
       });

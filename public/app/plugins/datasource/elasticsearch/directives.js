@@ -27,6 +27,7 @@ function (angular) {
       restrict: 'E',
       scope: {
         target: "=",
+        datasource: "=",
         index: "=",
         onChange: "&",
         getFields: "&",

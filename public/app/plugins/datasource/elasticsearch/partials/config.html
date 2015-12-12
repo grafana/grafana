@@ -20,13 +20,24 @@
 	</ul>
 	<div class="clearfix"></div>
 </div>
-<div class="tight-form last">
+<div class="tight-form">
 	<ul class="tight-form-list">
 		<li class="tight-form-item" style="width: 144px">
 			Time field name
 		</li>
 		<li>
 			<input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.timeField' placeholder="" required ng-init="current.jsonData.timeField = current.jsonData.timeField || '@timestamp'"></input>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+<div class="tight-form last">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 144px">
+			Advanced
+		</li>
+		<li class="tight-form-item">
+			<editor-checkbox text="Experimental Features" model="current.jsonData.experimentalFeatures"></editor-checkbox>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
