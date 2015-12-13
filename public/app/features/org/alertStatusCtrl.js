@@ -17,7 +17,7 @@ function (angular) {
       $scope.initDashboard({
         meta: { canStar: false, canShare: false, canEdit: false },
         dashboard: {
-          title: "alert-name",
+          title: "Triggered Alerts",
           rows: alertRows,
           time: {from: "now-2h", to: "now"}
         },

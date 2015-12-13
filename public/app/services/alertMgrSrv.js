@@ -14,12 +14,14 @@ function (angular) {
     var alertUrlRoot = "";
     var alertDefUrl = "";
     var alertStatusUrl = "";
+    var alertAssociationUrl = "";
 
     this.init = function() {
-      backendSrv.get('/api/alertsource').then(function(result) {
+     backendSrv.get('/api/alertsource').then(function(result) {
         alertUrlRoot = result.alert.alert_urlroot;
         alertDefUrl = alertUrlRoot + "/alert/" + "definition";
         alertStatusUrl = alertUrlRoot + "/alert/" + "status";
+        alertAssociationUrl = alertUrlRoot + "/alert/" + "association";
       });
     };
 
@@ -68,6 +70,15 @@ function (angular) {
         params: {service: "com.test"}
       });
     };
+
+    this.loadAssociatedMetrics = function(alertId) {
+      return $http({
+        method: "get",
+        url: alertAssociationUrl,
+        params: {alertid: alertId}
+      });
+    };
+
 
     this.init();
 

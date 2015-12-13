@@ -75,6 +75,11 @@ define([
         controller : 'AlertStatusCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/alerts/association/:id', {
+        templateUrl: 'app/features/org/partials/alertAssociation.html',
+        controller : 'AlertAssociationCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/oncallers', {
         templateUrl: 'app/features/org/partials/oncallers.html',
         controller : 'OnCallersCtrl',

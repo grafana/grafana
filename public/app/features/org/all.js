@@ -2,6 +2,7 @@ define([
   './alertsCtrl',
   './alertEditCtrl',
   './alertStatusCtrl',
+  './alertAssociationCtrl',
   './oncallersCtrl',
   './oncallerEditCtrl',
   './datasourcesCtrl',
