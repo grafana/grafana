@@ -29,7 +29,14 @@ function (angular, _) {
       {text: 'Public on the web', value: 3},
     ];
 
-    $scope.externalUrl = '//snapshots-origin.raintank.io';
+    $scope.init = function() {
+      backendSrv.get('/api/snapshot/shared-options').then(function(options) {
+        $scope.externalUrl = options['externalSnapshotURL'];
+        $scope.sharingButtonText = options['externalSnapshotName'];
+        $scope.externalEnabled = options['externalEnabled'];
+      });
+    };
+
     $scope.apiUrl = '/api/snapshots';
 
     $scope.createSnapshot = function(external) {
