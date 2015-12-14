@@ -40,6 +40,9 @@
   &.avg:before {
     content: "Avg: "
   }
+  &.percent:before {
+    content: "Percent: "
+  }
 }
 
 .graph-legend-icon .fa {
@@ -105,7 +108,7 @@
   }
 
   .graph-legend-value {
-    &.current, &.max, &.min, &.total, &.avg {
+    &.current, &.max, &.min, &.total, &.avg, &.percent {
       &:before {
         content: '';
       }
@@ -271,5 +274,3 @@
   text-align: center;
   font-size: 12px;
 }
-
-

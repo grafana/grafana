@@ -1,11 +1,12 @@
 define([
   'angular',
+  'app/core/utils/kbn',
   'lodash',
   'jquery',
   'jquery.flot',
-  'jquery.flot.time',
+  'jquery.flot.time'
 ],
-function (angular, _, $) {
+function (angular, kbn, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -88,6 +89,24 @@ function (angular, _, $) {
           return html + '</th>';
         }
 
+        function getSumTotal(getSeriesStack) {
+          var sumTotal = 0;
+          for (i = 0; i < seriesList.length; i++) {
+            var series = seriesList[i];
+            if (getSeriesStack(series)) {
+              sumTotal += series.stats.total;
+            }
+          }
+
+          return sumTotal;
+        }
+
+        function getSeriesStack(stack, series) {
+          series.applySeriesOverrides(panel.seriesOverrides);
+          var seriesStack = typeof series.stack === 'undefined' || series.stack === true;
+          return stack && seriesStack;
+        }
+
         function render() {
           if (firstRender) {
             elem.append($container);
@@ -111,6 +130,7 @@ function (angular, _, $) {
               header += getTableHeaderHtml('max');
               header += getTableHeaderHtml('avg');
               header += getTableHeaderHtml('current');
+              header += getTableHeaderHtml('percent');
               header += getTableHeaderHtml('total');
             }
             header += '</tr>';
@@ -125,6 +145,12 @@ function (angular, _, $) {
               seriesList = seriesList.reverse();
             }
           }
+
+          var stack = panel.percentage ? null : panel.stack ? true : null;
+
+          var sumTotal = getSumTotal(function (series) {
+            return getSeriesStack(stack, series);
+          });
 
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
@@ -160,11 +186,16 @@ function (angular, _, $) {
               var min = series.formatValue(series.stats.min);
               var max = series.formatValue(series.stats.max);
               var total = series.formatValue(series.stats.total);
+              var percent = '-';
+              if (getSeriesStack(stack, series)) {
+                percent = kbn.valueFormats.percent(100 * series.stats.total / sumTotal, 1);
+              }
 
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
               if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
               if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
+              if (panel.legend.percent) { html += '<div class="graph-legend-value percent">' + percent + '</div>'; }
               if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
             }
 
