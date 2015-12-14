@@ -1,3 +1,5 @@
+//+build !windows,!nacl,!plan9
+
 package log
 
 import (
