@@ -19,13 +19,16 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
       this.basicAuth = datasource.basicAuth;
+      this.withCredentials = datasource.withCredentials;
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
       this.timeField = datasource.jsonData.timeField;
+      this.esVersion = datasource.jsonData.esVersion;
       this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
       this.queryBuilder = new ElasticQueryBuilder({
-        timeField: this.timeField
+        timeField: this.timeField,
+        esVersion: this.esVersion,
       });
     }
 
@@ -36,8 +39,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         data: data
       };
 
-      if (this.basicAuth) {
+      if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
+      }
+      if (this.basicAuth) {
         options.headers = {
           "Authorization": this.basicAuth
         };
@@ -94,7 +99,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
 
-      return this._post('/_msearch', payload).then(function(res) {
+      return this._post('_msearch', payload).then(function(res) {
         var list = [];
         var hits = res.responses[0].hits.hits;
 
@@ -107,7 +112,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           for (var i = 0; i < fieldNames.length; i++) {
             fieldValue = fieldValue[fieldNames[i]];
             if (!fieldValue) {
-              console.log('could not find field in annotatation: ', fieldName);
+              console.log('could not find field in annotation: ', fieldName);
               return '';
             }
           }
@@ -183,12 +188,16 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         sentTargets.push(target);
       }
 
+      if (sentTargets.length === 0) {
+        return $q.when([]);
+      }
+
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      return this._post('/_msearch', payload).then(function(res) {
+      return this._post('_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
     };

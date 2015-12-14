@@ -129,7 +129,7 @@
 									<editor-checkbox text="Include auto interval" model="current.auto" change="runQuery()"></editor-checkbox>
 								</li>
 								<li class="tight-form-item" ng-show="current.auto">
-									Auto interval steps <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
+									Auto interval steps <tip>How many times should the current time range be divided to calculate the value</tip>
 								</li>
 								<li>
 									<select class="input-mini tight-form-input last" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>

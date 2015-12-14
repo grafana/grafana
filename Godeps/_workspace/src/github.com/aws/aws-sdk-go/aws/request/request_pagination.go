@@ -44,11 +44,18 @@ func (r *Request) nextPageTokens() []interface{} {
 	}
 
 	tokens := []interface{}{}
+	tokenAdded := false
 	for _, outToken := range r.Operation.OutputTokens {
 		v, _ := awsutil.ValuesAtPath(r.Data, outToken)
 		if len(v) > 0 {
 			tokens = append(tokens, v[0])
+			tokenAdded = true
+		} else {
+			tokens = append(tokens, nil)
 		}
+	}
+	if !tokenAdded {
+		return nil
 	}
 
 	return tokens
@@ -85,9 +92,10 @@ func (r *Request) NextPage() *Request {
 // return true to keep iterating or false to stop.
 func (r *Request) EachPage(fn func(data interface{}, isLastPage bool) (shouldContinue bool)) error {
 	for page := r; page != nil; page = page.NextPage() {
-		page.Send()
-		shouldContinue := fn(page.Data, !page.HasNextPage())
-		if page.Error != nil || !shouldContinue {
+		if err := page.Send(); err != nil {
+			return err
+		}
+		if getNextPage := fn(page.Data, !page.HasNextPage()); !getNextPage {
 			return page.Error
 		}
 	}

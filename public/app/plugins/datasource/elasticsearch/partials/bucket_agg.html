@@ -35,13 +35,24 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box" ng-if="agg.type === 'date_histogram'">
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 60px">
+				<li class="tight-form-item" style="width: 94px">
 					Interval
 				</li>
 				<li>
 					<metric-segment-model property="agg.settings.interval" get-options="getIntervalOptions()" on-change="onChangeInternal()" css-class="last" custom="true"></metric-segment-model>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 94px">
+					Min Doc Count
+				</li>
+				<li>
+					<input type="number" class="tight-form-input" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()"></input>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

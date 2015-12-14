@@ -13,11 +13,11 @@ var indexRe = regexp.MustCompile(`(.+)\[(-?\d+)?\]$`)
 
 // rValuesAtPath returns a slice of values found in value v. The values
 // in v are explored recursively so all nested values are collected.
-func rValuesAtPath(v interface{}, path string, create bool, caseSensitive bool) []reflect.Value {
+func rValuesAtPath(v interface{}, path string, createPath, caseSensitive, nilTerm bool) []reflect.Value {
 	pathparts := strings.Split(path, "||")
 	if len(pathparts) > 1 {
 		for _, pathpart := range pathparts {
-			vals := rValuesAtPath(v, pathpart, create, caseSensitive)
+			vals := rValuesAtPath(v, pathpart, createPath, caseSensitive, nilTerm)
 			if len(vals) > 0 {
 				return vals
 			}
@@ -76,7 +76,16 @@ func rValuesAtPath(v interface{}, path string, create bool, caseSensitive bool) 
 				return false
 			})
 
-			if create && value.Kind() == reflect.Ptr && value.IsNil() {
+			if nilTerm && value.Kind() == reflect.Ptr && len(components[1:]) == 0 {
+				if !value.IsNil() {
+					value.Set(reflect.Zero(value.Type()))
+				}
+				return []reflect.Value{value}
+			}
+
+			if createPath && value.Kind() == reflect.Ptr && value.IsNil() {
+				// TODO if the value is the terminus it should not be created
+				// if the value to be set to its position is nil.
 				value.Set(reflect.New(value.Type().Elem()))
 				value = value.Elem()
 			} else {
@@ -84,7 +93,7 @@ func rValuesAtPath(v interface{}, path string, create bool, caseSensitive bool) 
 			}
 
 			if value.Kind() == reflect.Slice || value.Kind() == reflect.Map {
-				if !create && value.IsNil() {
+				if !createPath && value.IsNil() {
 					value = reflect.ValueOf(nil)
 				}
 			}
@@ -116,7 +125,7 @@ func rValuesAtPath(v interface{}, path string, create bool, caseSensitive bool) 
 				// pull out index
 				i := int(*index)
 				if i >= value.Len() { // check out of bounds
-					if create {
+					if createPath {
 						// TODO resize slice
 					} else {
 						continue
@@ -127,7 +136,7 @@ func rValuesAtPath(v interface{}, path string, create bool, caseSensitive bool) 
 				value = reflect.Indirect(value.Index(i))
 
 				if value.Kind() == reflect.Slice || value.Kind() == reflect.Map {
-					if !create && value.IsNil() {
+					if !createPath && value.IsNil() {
 						value = reflect.ValueOf(nil)
 					}
 				}
@@ -176,8 +185,11 @@ func ValuesAtPath(i interface{}, path string) ([]interface{}, error) {
 // SetValueAtPath sets a value at the case insensitive lexical path inside
 // of a structure.
 func SetValueAtPath(i interface{}, path string, v interface{}) {
-	if rvals := rValuesAtPath(i, path, true, false); rvals != nil {
+	if rvals := rValuesAtPath(i, path, true, false, v == nil); rvals != nil {
 		for _, rval := range rvals {
+			if rval.Kind() == reflect.Ptr && rval.IsNil() {
+				continue
+			}
 			setValue(rval, v)
 		}
 	}

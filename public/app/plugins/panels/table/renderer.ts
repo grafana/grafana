@@ -112,7 +112,7 @@ export class TableRenderer {
     // this hack adds header content to cell (not visible)
     var widthHack = '';
     if (addWidthHack) {
-      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '<div>';
+      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
     }
 
     return '<td' + style + '>' + value + widthHack + '</td>';

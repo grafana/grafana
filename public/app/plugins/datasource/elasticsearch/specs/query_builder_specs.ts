@@ -22,14 +22,6 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
-  it('with raw query', function() {
-    var query = builder.build({
-      rawQuery: '{"query": "$lucene_query"}',
-    });
-
-    expect(query.query).to.be("$lucene_query");
-  });
-
   it('with multiple bucket aggs', function() {
     var query = builder.build({
       metrics: [{type: 'count', id: '1'}],
@@ -42,6 +34,39 @@ describe('ElasticQueryBuilder', function() {
 
     expect(query.aggs["2"].terms.field).to.be("@host");
     expect(query.aggs["2"].aggs["3"].date_histogram.field).to.be("@timestamp");
+  });
+
+  it('with es1.x and es2.x date histogram queries check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 2
+    });
+
+    var query_params = {
+      metrics: [],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '1'}
+      ],
+    };
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.build(query_params)["aggs"]["1"]["date_histogram"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.build(query_params)["aggs"]["1"]["date_histogram"]["format"]).to.be("epoch_millis");
+  });
+
+  it('with es1.x and es2.x range filter check time format', function() {
+    var builder_2x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 2
+    });
+
+    // format should not be specified in 1.x queries
+    expect("format" in builder.getRangeFilter()["@timestamp"]).to.be(false);
+
+    // 2.x query should specify format to be "epoch_millis"
+    expect(builder_2x.getRangeFilter()["@timestamp"]["format"]).to.be("epoch_millis");
   });
 
   it('with select field', function() {
@@ -128,6 +153,91 @@ describe('ElasticQueryBuilder', function() {
     });
 
     expect(query.size).to.be(500);
+  });
+
+  it('with moving average', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'sum',
+          field: '@value'
+        },
+        {
+          id: '2',
+          type: 'moving_avg',
+          field: '3',
+          pipelineAgg: '3'
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+
+    expect(firstLevel.aggs["2"]).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+  });
+
+  it('with broken moving average', function() {
+      var query = builder.build({
+          metrics: [
+              {
+                  id: '3',
+                  type: 'sum',
+                  field: '@value'
+              },
+              {
+                  id: '2',
+                  type: 'moving_avg',
+                  pipelineAgg: '3'
+              },
+              {
+                  id: '4',
+                  type: 'moving_avg',
+                  pipelineAgg: 'Metric to apply moving average'
+              }
+          ],
+          bucketAggs: [
+              { type: 'date_histogram', field: '@timestamp', id: '3' }
+          ],
+      });
+
+      var firstLevel = query.aggs["3"];
+
+      expect(firstLevel.aggs["2"]).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg).not.to.be(undefined);
+      expect(firstLevel.aggs["2"].moving_avg.buckets_path).to.be("3");
+      expect(firstLevel.aggs["4"]).to.be(undefined);
+  });
+
+  it('with derivative', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '3',
+          type: 'sum',
+          field: '@value'
+        },
+        {
+          id: '2',
+          type: 'derivative',
+          pipelineAgg: '3'
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+
+    expect(firstLevel.aggs["2"]).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].derivative).not.to.be(undefined);
+    expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
 });
