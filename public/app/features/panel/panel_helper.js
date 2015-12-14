@@ -11,7 +11,7 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelHelper', function(timeSrv, $rootScope) {
+  module.service('panelHelper', function(timeSrv, $rootScope, $q) {
     var self = this;
 
     this.setTimeQueryStart = function(scope) {
@@ -103,6 +103,10 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
     };
 
     this.issueMetricQuery = function(scope, datasource) {
+      if (!scope.panel.targets || scope.panel.targets.length === 0) {
+        return $q.when([]);
+      }
+
       var metricsQuery = {
         range: scope.range,
         rangeRaw: scope.rangeRaw,
