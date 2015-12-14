@@ -25,10 +25,16 @@ function (angular, _) {
       $scope.mode = 'list';
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn;
+        return !ds.meta.builtIn && !ds.meta.dynamic;
       });
 
       $scope.variables = templateSrv.variables;
+
+      $scope.dtsSelection = [];
+      $scope.dtsSelector = _.map($scope.datasources, function(ds) {
+        return ds.name;
+      });
+
       $scope.reset();
 
       $scope.$watch('mode', function(val) {
@@ -49,8 +55,26 @@ function (angular, _) {
       });
     };
 
+    $scope.toggleDtsSelection = function(dts) {
+      var idx = $scope.dtsSelection.indexOf(dts);
+
+      if (idx > -1) {
+        $scope.dtsSelection.splice(idx, 1);
+      }
+      else {
+        $scope.dtsSelection.push(dts);
+      }
+
+      $scope.current.query = $scope.dtsSelection.join(',');
+      $scope.runQuery();
+    };
+
     $scope.add = function() {
       if ($scope.isValid()) {
+        if ($scope.current.type === 'datasource') {
+          datasourceSrv.addDynamicDatasource($scope.current.name, $scope.dtsSelection[0]);
+        }
+
         $scope.variables.push($scope.current);
         $scope.update();
         $scope.updateSubmenuVisibility();
@@ -94,6 +118,10 @@ function (angular, _) {
         $scope.current.type = 'query';
         $scope.current.allFormat = 'glob';
       }
+
+      if (variable.type === 'datasource' && variable.query) {
+        $scope.dtsSelection = variable.query.split(",");
+      }
     };
 
     $scope.duplicate = function(variable) {
@@ -129,6 +157,11 @@ function (angular, _) {
     $scope.removeVariable = function(variable) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
+
+      if (variable && variable.type === 'datasource') {
+        datasourceSrv.removeDynamicDatasource(variable.name);
+      }
+
       $scope.updateSubmenuVisibility();
     };
 

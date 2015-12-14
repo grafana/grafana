@@ -144,6 +144,13 @@ function (angular, _, config) {
         $scope.$on("refresh", $scope.get_data);
       }
 
+      $scope.$on("dynamic-datasource-updated", function(e, info) {
+        if ($scope.datasource && $scope.datasource.name === info.name) {
+          $scope.datasource = null;
+          $scope.get_data();
+        }
+      });
+
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
