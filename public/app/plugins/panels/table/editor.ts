@@ -44,11 +44,17 @@ export class TablePanelEditorCtrl {
     };
 
     $scope.addColumn = function() {
-      $scope.panel.columns.push({text: $scope.addColumnSegment.value, value: $scope.addColumnSegment.value});
-      $scope.render();
+      var columns = transformers[$scope.panel.transform].getColumns($scope.dataRaw);
+      var column = _.findWhere(columns, {text: $scope.addColumnSegment.value});
+
+      if (column) {
+        $scope.panel.columns.push(column);
+        $scope.render();
+      }
 
       var plusButton = uiSegmentSrv.newPlusButton();
       $scope.addColumnSegment.html = plusButton.html;
+      $scope.addColumnSegment.value = plusButton.value;
     };
 
     $scope.transformChanged = function() {
@@ -93,6 +99,15 @@ export class TablePanelEditorCtrl {
         return col.text;
       });
     };
+
+    $scope.invertColorOrder = function(index) {
+      var ref = $scope.panel.styles[index].colors;
+      var copy = ref[0];
+      ref[0] = ref[2];
+      ref[2] = copy;
+      $scope.render();
+    };
+
   }
 }
 

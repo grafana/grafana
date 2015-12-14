@@ -141,6 +141,9 @@ define([
         controller: 'PluginEditCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/global-alerts', {
+        templateUrl: 'app/features/dashboard/partials/globalAlerts.html',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

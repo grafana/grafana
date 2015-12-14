@@ -69,6 +69,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
 			}
+			if ds.WithCredentials {
+				dsMap["withCredentials"] = ds.WithCredentials
+			}
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User

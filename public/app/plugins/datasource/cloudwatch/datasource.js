@@ -25,7 +25,7 @@ function (angular, _) {
       var end = convertToCloudWatchTime(options.range.to);
 
       var queries = [];
-      options = _.clone(options);
+      options = angular.copy(options);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -113,23 +113,28 @@ function (angular, _) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensions) {
+    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       var request = {
         region: templateSrv.replace(region),
         action: 'ListMetrics',
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(dimensions, {}),
+          dimensions: convertDimensionFormat(filterDimensions, {}),
         }
       };
 
       return this.awsRequest(request).then(function(result) {
-        return _.chain(result.Metrics).map(function(metric) {
-          return _.pluck(metric.Dimensions, 'Value');
-        }).flatten().uniq().sortBy(function(name) {
-          return name;
-        }).map(function(value) {
+        return _.chain(result.Metrics)
+        .pluck('Dimensions')
+        .flatten()
+        .filter(function(dimension) {
+          return dimension !== null && dimension.Name === dimensionKey;
+        })
+        .pluck('Value')
+        .uniq()
+        .sortBy()
+        .map(function(value) {
           return {value: value, text: value};
         }).value();
       });
@@ -174,25 +179,14 @@ function (angular, _) {
         return this.getDimensionKeys(dimensionKeysQuery[1]);
       }
 
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?([^)]*))?\)/);
+      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
         region = templateSrv.replace(dimensionValuesQuery[1]);
         namespace = templateSrv.replace(dimensionValuesQuery[2]);
         metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionPart = templateSrv.replace(dimensionValuesQuery[5]);
+        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
 
-        var dimensions = {};
-        if (!_.isEmpty(dimensionPart)) {
-          _.each(dimensionPart.split(','), function(v) {
-            var t = v.split('=');
-            if (t.length !== 2) {
-              throw new Error('Invalid query format');
-            }
-            dimensions[t[0]] = t[1];
-          });
-        }
-
-        return this.getDimensionValues(region, namespace, metricName, dimensions);
+        return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
@@ -222,7 +216,7 @@ function (angular, _) {
       var metricName = 'EstimatedCharges';
       var dimensions = {};
 
-      return this.getDimensionValues(region, namespace, metricName, dimensions).then(function () {
+      return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
     };

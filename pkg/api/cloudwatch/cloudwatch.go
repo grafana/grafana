@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -119,7 +120,15 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 		Dimensions: reqParam.Parameters.Dimensions,
 	}
 
-	resp, err := svc.ListMetrics(params)
+	var resp cloudwatch.ListMetricsOutput
+	err := svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
@@ -160,7 +169,15 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 		params.InstanceIds = reqParam.Parameters.InstanceIds
 	}
 
-	resp, err := svc.DescribeInstances(params)
+	var resp ec2.DescribeInstancesOutput
+	err := svc.DescribeInstancesPages(params,
+		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
+			for _, reservation := range reservations {
+				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
+			}
+			return !lastPage
+		})
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
