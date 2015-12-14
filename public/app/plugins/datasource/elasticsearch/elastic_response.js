@@ -82,7 +82,11 @@ function (_, queryDef) {
 
             value = bucket[metric.id];
             if (value !== undefined) {
-              newSeries.datapoints.push([value.value, bucket.key]);
+              if (value.normalized_value) {
+                newSeries.datapoints.push([value.normalized_value, bucket.key]);
+              } else {
+                newSeries.datapoints.push([value.value, bucket.key]);
+              }
             }
 
           }

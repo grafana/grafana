@@ -73,7 +73,9 @@ function (_) {
         {text: 'window', default: 5},
         {text: 'model', default: 'simple'}
       ],
-      'derivative': []
+      'derivative': [
+        {text: 'unit', default: undefined},
+      ]
     },
 
     getMetricAggTypes: function(esVersion) {
