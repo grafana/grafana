@@ -1,4 +1,4 @@
-# 2.6.0 (2015-12-04)
+# 2.6.0 (2015-12-14)
 
 ### New Features
 * **Elasticsearch**: Support for pipeline aggregations Moving average and derivative, closes [#2715](https://github.com/grafana/grafana/issues/2715)
