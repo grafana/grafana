@@ -30,6 +30,7 @@ function (angular) {
         index: "=",
         onChange: "&",
         getFields: "&",
+        esVersion: '='
       }
     };
   });

@@ -79,4 +79,24 @@ describe('ElasticQueryDef', function() {
       });
     });
   });
+
+  describe('pipeline aggs depending on esverison', function() {
+      describe('using esversion undefined', function() {
+          it('should not get pipeline aggs', function() {
+              expect(QueryDef.getMetricAggTypes(undefined).length).to.be(9);
+          });
+      });
+
+      describe('using esversion 1', function() {
+          it('should not get pipeline aggs', function() {
+              expect(QueryDef.getMetricAggTypes(1).length).to.be(9);
+          });
+      });
+
+      describe('using esversion 2', function() {
+          it('should get pipeline aggs', function() {
+              expect(QueryDef.getMetricAggTypes(2).length).to.be(11);
+          });
+      });
+  });
 });
