@@ -331,7 +331,8 @@ function (angular, _, dateMath, kbn) {
       }
 
       if (target.tags) {
-        query.tags = angular.copy(target.tags);
+        query.tags = {};
+        angular.copy(target.tags, query.tags);
         _.forOwn(query.tags, function(value, key) {
           query.tags[key] = _.map(value, function(tag) { return templateSrv.replace(tag); });
         });
