@@ -1,3 +1,8 @@
+# 2.6.1
+
+### New Features
+* **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
+
 # 2.6.0 (2015-12-14)
 
 ### New Features
