@@ -23,19 +23,19 @@
       <tr ng-repeat="oncallerDef in oncallerDefList">
         <td style="width:1%">
           <i class="fa fa-phone"></i> &nbsp;
-          {{oncallerDef.primaryName}}
+          {{oncallerDef.name}}
         </td>
         <td style="width:90%">
           {{oncallerDef.service}}
         </td>
         <td style="width: 1%">
-          <a href="oncallers/edit/{{oncallerDef.id}}" class="btn btn-inverse btn-mini">
+          <a href="oncallers/edit/{{oncallerDef.service}}" class="btn btn-inverse btn-mini">
             <i class="fa fa-edit"></i>
             Edit
           </a>
         </td>
         <td style="width: 1%">
-          <a ng-click="remove(oncallerDef.id)" class="btn btn-danger btn-mini">
+          <a ng-click="remove(oncallerDef.service)" class="btn btn-danger btn-mini">
             <i class="fa fa-remove"></i>
           </a>
         </td>

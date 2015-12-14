@@ -1,8 +1,8 @@
 <topnav title="OnCallers" icon="fa fa-fw fa-phone" subnav="true">
   <ul class="nav">
     <li><a href="oncallers">Overview</a></li>
-    <li ng-class="{active: isNew}"><a href="alerts/new">Add new</a></li>
-    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">Edit</a></li>
+    <li ng-class="{active: isNew}"><a href="oncallers/new">Add new</a></li>
+    <li class="active" ng-show="!isNew"><a href="oncallers/edit/{{current.name}}">Edit</a></li>
   </ul>
 </topnav>
 
@@ -16,7 +16,7 @@
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Name</li>
           <li><input type="text" class="input-xlarge tight-form-input"
-                         ng-model="oncallerDef.primaryName" placeholder="name" required>
+                         ng-model="oncallerDef.name" placeholder="name" required>
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -25,7 +25,7 @@
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Email</li>
           <li><input type="text" class="input-xlarge tight-form-input"
-                         ng-model="oncallDef.primaryEmail" placeholder="email" required>
+                         ng-model="oncallerDef.email" placeholder="email" required>
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -34,7 +34,7 @@
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Phone</li>
           <li><input type="text" class="input-xlarge tight-form-input"
-                     ng-model="oncallerDef.primaryPhone" placeholder="phone" required>
+                     ng-model="oncallerDef.tel" placeholder="phone" required>
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -43,7 +43,7 @@
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Carrier</li>
           <li><input type="text" class="input-xlarge tight-form-input"
-                     ng-model="oncallerDef.primaryCarrier" placeholder="carrier" required>
+                     ng-model="oncallerDef.carrier" placeholder="carrier" required>
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -62,7 +62,7 @@
       <div class="pull-right" style="margin-top: 35px">
         <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
         <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
-        <a class="btn btn-inverse" href="alerts">Cancel</a>
+        <a class="btn btn-inverse" href="oncallers">Cancel</a>
       </div>
       <br>
     </form>

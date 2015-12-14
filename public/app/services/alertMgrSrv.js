@@ -17,7 +17,7 @@ function (angular) {
     var alertAssociationUrl = "";
 
     this.init = function() {
-     backendSrv.get('/api/alertsource').then(function(result) {
+      backendSrv.get('/api/alertsource').then(function(result) {
         alertUrlRoot = result.alert.alert_urlroot;
         alertDefUrl = alertUrlRoot + "/alert/" + "definition";
         alertStatusUrl = alertUrlRoot + "/alert/" + "status";
@@ -78,7 +78,6 @@ function (angular) {
         params: {alertid: alertId}
       });
     };
-
 
     this.init();
 

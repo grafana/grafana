@@ -11,11 +11,14 @@ function (angular) {
   module.service('oncallerMgrSrv', function($http, oncallerSrv, backendSrv) {
     this.oncallerDefMap = {};
     var self = this;
+    var alertUrlRoot = "";
     var oncallerUrl = "";
 
     this.init = function() {
-      backendSrv.get('/api/oncallersource').then(function(result) {
-        oncallerUrl = result.oncaller.oncaller_url;
+      backendSrv.get('/api/alertsource').then(function(result) {
+        //alertUrlRoot = result.alert.alert_urlroot;
+        //oncallerUrl = alertUrlRoot + "/oncaller/" + "definition";
+        oncallerUrl = "http://10.0.0.117:5001/oncaller/definition";
       });
     };
 
@@ -26,7 +29,7 @@ function (angular) {
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
           var theoncallerDef = response.data[i];
-          self.oncallerDefMap[theoncallerDef.id] = theoncallerDef;
+          self.oncallerDefMap[theoncallerDef.name] = theoncallerDef;
         }
         return response;
       }, function onFailed(response) {
@@ -44,17 +47,17 @@ function (angular) {
       });
     };
 
-    this.remove = function(oncallerId) {
+    this.remove = function(oncallerService) {
       return $http({
         method: "delete",
         url: oncallerUrl,
-        params: {id: oncallerId},
+        params: {service: oncallerService},
         headers: {'Content-Type': 'text/plain'},
       });
     };
 
-    this.get = function(id) {
-      return self.oncallerDefMap[id];
+    this.get = function(name) {
+      return self.oncallerDefMap[name];
     };
 
     this.init();
