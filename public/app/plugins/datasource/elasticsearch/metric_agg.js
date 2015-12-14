@@ -11,7 +11,7 @@ function (angular, _, queryDef) {
   module.controller('ElasticMetricAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var metricAggs = $scope.target.metrics;
 
-    $scope.metricAggTypes = queryDef.metricAggTypes;
+    $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
 
