@@ -26,6 +26,10 @@ define([
         templateUrl: 'app/features/panel/partials/soloPanel.html',
         controller : 'SoloPanelCtrl',
       })
+      .when('/panel-adHoc/:type', {
+        templateUrl: 'app/features/panel/partials/adHocPanel.html',
+        controller : 'AdHocPanelCtrl',
+      })
       .when('/dashboard-import/:file', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'DashFromImportCtrl',
