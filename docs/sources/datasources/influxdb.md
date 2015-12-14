@@ -69,7 +69,7 @@ SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
 
 #### Select multiple fields
 Use the plus button and select Field > field to add another SELECT clause. You can also
-specify a `asterix` to select all fields.
+specify an asterix `*` to select all fields.
 
 ### Group By
 To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
