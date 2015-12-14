@@ -76,6 +76,11 @@ var (
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
 
+	// Snapshots
+	ExternalSnapshotUrl  string
+	ExternalSnapshotName string
+	ExternalEnabled      bool
+
 	// User settings
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
@@ -420,6 +425,12 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
+	// read snapshots settings
+	snapshots := Cfg.Section("snapshots")
+	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
+	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
+	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
