@@ -1,4 +1,10 @@
-# 2.6.1
+# 3.0.0 (unrelased master branch)
+
+
+### Breaking changes
+**InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via plugin system, closes #3523
+
+# 2.6.1 (unrelased, 2.6.x branch)
 
 ### New Features
 * **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
