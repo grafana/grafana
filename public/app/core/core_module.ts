@@ -2,4 +2,4 @@
 
 import angular = require('angular');
 
-export = angular.module('grafana.core', ['ngRoute']);
+export default angular.module('grafana.core', ['ngRoute']);

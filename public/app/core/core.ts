@@ -21,7 +21,13 @@
 ///<amd-dependency path="./jquery_extended" />
 ///<amd-dependency path="./partials" />
 
-export * from './directives/array_join'
-export * from './directives/give_focus'
-export * from './filters/filters'
+import {arrayJoin} from './directives/array_join';
+import * as test from './controllers/all';
 
+// export * from './directives/give_focus'
+// export * from './filters/filters'
+//
+// import {Component} from 'angular2/angular2';
+// console.log(Component);
+
+export {arrayJoin, test};

@@ -6,7 +6,7 @@ module.exports = function() {
       src: ['public/**/*.ts', 'public/test/**/*.ts', "!public/vendor/**/*.ts"],
       dest: 'public_gen/',
       options: {
-        module: 'amd', //or commonjs
+        module: 'system', //or commonjs
         target: 'es5', //or es3
         rootDir: 'public/',
         sourceRoot: 'public/',

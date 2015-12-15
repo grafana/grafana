@@ -34,7 +34,7 @@ System.config({
     "angular": "github:angular/bower-angular@1.4.5",
     "angular-route": "github:angular/bower-angular-route@1.4.5",
     "angular-sanitize": "github:angular/bower-angular-sanitize@1.4.5",
-    "angular2": "npm:angular2@2.0.0-alpha.54",
+    "angular2/angular2": "npm:angular2@2.0.0-alpha.54/bundles/angular2.dev",
     "babel": "npm:babel-core@5.8.34",
     "babel-runtime": "npm:babel-runtime@5.8.34",
     "core-js": "npm:core-js@1.2.6",
