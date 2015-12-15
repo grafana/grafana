@@ -1,0 +1,6 @@
+{
+  "registry": "npm",
+  "dependencies": {
+    "constants-browserify": "0.0.1"
+  }
+}

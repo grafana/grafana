@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "noImplicitAny": true,
+    "sourceMap": true
+  },
+  "files": [
+    "Reflect.ts"
+  ]
+}

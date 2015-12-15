@@ -1,0 +1,441 @@
+﻿<meta charset="utf8">
+<title>Decorators</title>
+<link rel="stylesheet" href="./css/elements.css"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css"> 
+<emu-biblio href="./biblio.json"></emu-biblio> 
+
+<h1>Decorators Proposal - TypeScript</h1>
+<emu-intro id="introduction">
+  <h1>Introduction</h1>
+  <p>Proposal to add Decorators to TypeScript.</p>
+  <p>For the ECMAScript specific proposal, see <a href="index.html">http://rbuckton.github.io/reflectdecorators/index.html</a></p>
+</emu-intro>
+
+<emu-clause id="proposal-terms">
+  <h1>Terms</h1>
+  <emu-clause id="proposal-terms-decorator">
+    <h1>Decorator</h1>
+    <emu-note>This section is non-normative.</emu-note>
+    <p>A <em>decorator</em> is an expression that is evaluated after a class has been defined, that can be used to annotate or modify the class in some fashion. This expression must evaluate to a <code>function</code>, which is executed by the runtime to apply the decoration.</p>
+    <pre><code class="typescript">@decoratorExpression
+class C {
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-classdecoratorfunction">
+    <h1>Class Decorator Function</h1>
+    <emu-note>This section is non-normative.</emu-note>
+    <p>A <em>class decorator function</em> is a function that accepts a constructor function as its argument, and returns either <code>undefined</code>, the provided constructor function, or a new constructor function. Returning <code>undefined</code> is equivalent to returning the provided constructor function.</p>
+    <pre><code class="typescript">// A class decorator function
+function dec(target) {  
+ // modify, annotate, or replace target...
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-propertydecoratorfunction">
+    <h1>Property/Method Decorator Function</h1>
+    <emu-note>This section is non-normative.</emu-note>
+    <p>A <em>property decorator function</em> is a function that accepts three arguments: The object that owns the property, the key for the property (a <code>string</code> or a <code>symbol</code>), and optionally the property descriptor of the property. The function must return either <code>undefined</code>, the provided property descriptor, or a new property descriptor. Returning <code>undefined</code> is equivalent to returning the provided property descriptor.</p>
+    <pre><code class="typescript">// A property (or method/accessor) decorator function
+function dec(target, key, descriptor) {
+  // annotate the target and key; or modify or replace the descriptor...
+}
+    </code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-parameterdecoratorfunction">
+    <h1>Parameter Decorator Function</h1>
+    <emu-note>This section is non-normative.</emu-note>
+    <p>A <em>parameter decorator function</em> is a function that accepts three arguments: The function that contains the decorated parameter, the property key of the member (or <code>undefined</code> for a parameter of the constructor), and the ordinal index of the parameter. The return value of this decorator is ignored.</p>
+    <pre><code class="typescript">
+// A parameter decorator
+function dec(target, paramIndex) {
+    // annotate the target and index
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-decoratorfactory">
+    <h1>Decorator Factory</h1>
+    <emu-note>This section is non-normative.</emu-note>
+    <p>A <em>decorator factory</em> is a function that can accept any number of arguments, and must return one of the above types of decorator function.</p>
+    <pre><code class="typescript">// a class decorator factory function
+function dec(x, y) {
+  // the class decorator function
+  return function (target) {
+      // modify, annotate, or replace target...
+  }
+}
+</code></pre>
+  </emu-clause>
+</emu-clause>
+<emu-clause id="proposal-decoratortargets">
+  <h1>Decorator Targets</h1>
+  <emu-note>This section is non-normative.</emu-note>
+  <p>A <em>decorator</em> <strong>can</strong> be legally applied to any of the following:</p>
+  <ul>
+    <li>A class declaration</li>
+    <li>A class property initializer (static or prototype)</li>
+    <li>A class method declaration (static or prototype)</li>
+    <li>A class get or set accessor declaration (static or prototype)</li>
+    <li>A parameter of a class constructor</li>
+    <li>A parameter of a class method (static or prototype)</li>
+    <li>A parameter of a class get or set accessor (static or prototype)</li>
+  </ul>
+  <p>Please note that a <em>decorator</em> currently <strong>cannot</strong> be legally applied to any of the following:</p>
+  <ul>
+    <li>A class constructor - This is to reduce ambiguity between where you can apply a decorator (on the class or on its constructor) and which of the above decorator function forms is called.</li>
+    <li>A function declaration - Decorators on a function declaration would introduce a TDZ (Temporal Dead Zone), which would make the function unreachable until its declaration is executed. This could cause confusion as an undecorated function declaration is hoisted and can be used in a statement preceeding the declaration.</li>
+    <li>A function expression - This is to reduce confusion and maintain parity with disallowing decorators on a function declaration.</li>
+    <li>An arrow function - This is to reduce confusion and maintain parity with disallowing decorators on a function expression.</li>
+  </ul>
+  <p>This list may change in the future.</p>
+</emu-clause>
+<emu-clause id="proposal-decoratoreval">
+  <h1>Decorator Evaluation and Application Order</h1>
+  <emu-note>This section is non-normative.</emu-note>
+  <p>Decorators are <em>evaluated</em> in the order they appear preceeding their target declaration, to preserve side-effects due to evaluation order. Decorators are <em>applied</em> to their target declaration in reverse order, starting with the decorator closest to the declaration. This behavior is specified to preserve the expected behavior of decorators without a declarative syntax.</p>
+  <pre><code class="typescript">@F
+@G
+class C {   
+}
+</code></pre>
+  <p>For example, the above listing could be approximately written without decorators in the following fashion:</p>
+  <pre><code class="typescript">C = F(G(C))</code></pre>
+  <p>In the above example, the expression <code>F</code> is evaluated first, followed by the expression <code>G</code>. <code>G</code> is then called with the constructor function as its argument, followed by calling <code>F</code> with the result. The actual process of applying decorators is more complex than the above example however, though you may still imperatively apply decorators with a reflection API.</p>
+  <p>If a class declaration has decorators on both the class and any of its members or parameters, the decorators are applied using the following pseudocode:</p>
+  <pre>
+for each member M of class C
+  if M is an accessor then
+      let accessor = first accessor (get or set, in declaration order) of M
+      let memberDecorators = decorators of accessor
+      for each parameter of accessor
+          let paramDecorators = decorators of parameter           
+          let paramIndex = ordinal index of parameter
+          Reflect.decorate(paramDecorators, accessor, paramIndex)
+      next parameter
+
+      let accessor = second accessor (get or set, in declaration order) of M
+      if accessor then
+          let memberDecorators = memberDecorators + decorators of accessor
+          for each parameter of accessor
+              let paramDecorators = decorators of parameter           
+              let paramIndex = ordinal index of parameter
+              Reflect.decorate(paramDecorators, accessor, paramIndex)
+          next parameter
+      end if
+  else if M is a method
+      let memberDecorators = decorators of M
+      for each parameter of M
+          let paramDecorators = decorators of parameter           
+          let paramIndex = ordinal index of parameter
+          Reflect.decorate(paramDecorators, M, paramIndex)
+      next parameter
+  else
+      let memberDecorators = decorators of M
+  end if
+
+  let name = name of M
+  let target = C.prototype if M is on the prototype; otherwise, C if M is static  
+  Reflect.decorate(memberDecorators, C, name)
+next member
+
+for each parameter of C
+  let paramDecorators = decorators of parameter
+  let paramIndex = ordinal index of parameter
+  Reflect.decorate(paramDecorators, C, paramIndex)
+next parameter
+
+let classDecorators = decorators of C
+let C = Reflect.decorate(classDecorators, C)
+  </pre>
+</emu-clause>
+
+<emu-clause id="reflect">
+  <h1>Reflect API</h1>
+  <emu-note>This section is non-normative.</emu-note>
+  <p>In addition to a declarative approach to defining decorators, it is necessary to also include an imperative API capable of applying decorators, as well as defining, reflecting over, and removing decorator metadata from an object, property, or parameter.</p>
+  <p>A shim for this API can be found here: <a href="https://github.com/rbuckton/ReflectDecorators">https://github.com/rbuckton/ReflectDecorators</a></p>
+  <pre><code class="typescript">Reflect.decorate(decorators, target, propertyKey?, descriptor?)</code></pre>  
+</emu-clause>
+
+<emu-clause id="transpile">
+  <h1>Transformation</h1>
+  <p>The following are examples of how decorators can be desugared to ES6 (through a transpiler such as TypeScript). These examples levarage an imperative reflection API.</p>
+  <emu-clause id="transpile-class">
+    <h1>Class Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">@F("color")
+@G
+class C {  
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">let C = class {
+}
+Object.defineProperty(C, "name", { value: "C", configurable: true });
+C = __decorate([F("color"), G], C);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-exportclass">
+    <h1>Class Declaration (Exported)</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">@F("color")
+@G
+export class C {
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">export let C = class {
+}
+Object.defineProperty(C, "name", { value: "C", configurable: true });
+C = __decorate([F("color"), G], C);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-exportdefaultclass">
+    <h1>Class Declaration (Default, Exported)</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">@F("color")
+@G
+export default class C {
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">let C = class {
+}
+Object.defineProperty(C, "name", { value: "C", configurable: true });
+C = __decorate([F("color"), G], C);
+export default C;
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classmethod">
+    <h1>Class Method Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    @F("color")
+    @G
+    method() { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    method() { }
+}
+Object.defineProperty(C.prototype, "method", 
+    __decorate([F("color"), G], C.prototype, "method", Object.getOwnPropertyDescriptor(C.prototype, "method")));
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classaccessor">
+    <h1>Class Accessor Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    @F("color")
+    @G
+    get accessor() { }
+    set accessor(value) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    get accessor() { }
+    set accessor(value) { }
+}
+Object.defineProperty(C.prototype, "accessor", 
+    __decorate([F("color"), G], C.prototype, "accessor", Object.getOwnPropertyDescriptor(C.prototype, "accessor")));
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classproperty">
+    <h1>Class Property Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    @F("color")
+    @G
+    property = 1;
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    constructor() {
+        this.property = 1;
+    }
+}
+__decorate([F("color"), G], C.prototype, "property");
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classconstructorparameter">
+    <h1>Class Constructor Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    constructor(@F("color") @G p) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    constructor(p) { }
+}
+__decorate([F("color"), G], C, void 0, 0);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classmethodparameter">
+    <h1>Class Method Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    method(@F("color") @G p) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    method(p) { }
+}
+__decorate([F("color"), G], C.prototype, "method", 0);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classaccessorparameter">
+    <h1>Class Set Accessor Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript">class C {
+    set accessor(@F("color") @G p) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript">class C {
+    set accessor(p) { }
+}
+__decorate([F("color"), G], C.prototype, "accessor", 0);
+    </code></pre>
+  </emu-clause>
+
+</emu-clause>
+
+<emu-annex id="grammar">
+  <h1>Grammar</h1>
+  <emu-annex id="grammar-expressions">
+    <h1>Expressions</h1>
+    <emu-production id="grammar-memberexpression" name="MemberExpression" params="Yield, Decorator">
+      <emu-rhs><emu-nt params="?Yield">PrimaryExpression</emu-nt></emu-rhs>
+      <emu-rhs constraints="~Decorator"><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt><emu-t>[</emu-t><emu-nt params="In, ?Yield">Expression</emu-nt><emu-t>]</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt><emu-t>.</emu-t><emu-nt>IdentifierName</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt><emu-nt params="?Yield">TemplateLiteral</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">SuperProperty</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>MetaProperty</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>new</emu-t><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt><emu-nt params="?Yield">Arguments</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-superproperty" name="SuperProperty" params="Yield, Decorator">
+      <emu-rhs constraints="~Decorator"><emu-t>super</emu-t><emu-t>[</emu-t><emu-nt params="In, ?Yield">Expression</emu-nt><emu-t>]</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-newexpression" name="NewExpression" params="Yield, Decorator">
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>new</emu-t><emu-nt params="?Yield, ?Decorator">NewExpression</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-callexpression" name="CallExpression" params="Yield, Decorator">
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression</emu-nt> <emu-nt params="?Yield">Arguments</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield">SuperCall</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression</emu-nt> <emu-nt params="?Yield">Arguments</emu-nt></emu-rhs>
+      <emu-rhs constraints="~Decorator"><emu-nt params="?Yield">CallExpression</emu-nt> <emu-t>[</emu-t> <emu-nt params="In, ?Yield">Expression</emu-nt> <emu-t>]</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression</emu-nt> <emu-t>.</emu-t> <emu-nt>IdentifierName</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression</emu-nt> <emu-nt params="?Yield">TemplateLiteral</emu-nt></emu-rhs>      
+    </emu-production>
+    <emu-production id="grammar-lefthandsideexpression" name="LeftHandSideExpression" params="Yield, Decorator">
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">NewExpression</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression</emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+
+  <emu-annex id="functions-and-classes">
+    <h1>Functions and Classes</h1>
+    <emu-production id="grammar-strictformalparameters" name="StrictFormalParameters" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameters</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameters" name="FormalParameters" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-rhs><emu-prose>[empty]</emu-prose></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameterList</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameterlist" name="FormalParameterList" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield, ?ClassParameter">FunctionRestParameter</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList</emu-nt><emu-t>,</emu-t><emu-nt params="?Yield, ?ClassParameter">FunctionRestParameter</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalslist" name="FormalsList" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameter</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList</emu-nt><emu-t>,</emu-t><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameter</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-functionrestparameter" name="FunctionRestParameter" params="Yield, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield">BindingRestElement</emu-nt></emu-rhs>
+      <emu-rhs constraints="+ClassParameter"><emu-nt>DecoratorList</emu-nt><emu-nt params="?Yield">BindingRestElement</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameter" name="FormalParameter" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter">BindingElement</emu-nt></emu-rhs>
+      <emu-rhs constraints="+ClassParameter"><emu-nt>DecoratorList</emu-nt><emu-nt params="?Yield, ?GeneratorParameter">BindingElement</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-methoddefinition" name="MethodDefinition" params="Yield, ClassParameter">
+      <emu-rhs><emu-nt params="?Yield">PropertyName</emu-nt> <emu-t>(</emu-t> <emu-nt params="?ClassParameter">StrictFormalParameters</emu-nt> <emu-t>)</emu-t> <emu-t>{</emu-t> <emu-nt>FunctionBody</emu-nt> <emu-t>}</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?ClassParameter">GeneratorMethod</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>get</emu-t><emu-nt params="?Yield">PropertyName</emu-nt> <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> <emu-nt>FunctionBody</emu-nt> <emu-t>}</emu-t></emu-rhs>
+      <emu-rhs><emu-t>set</emu-t><emu-nt params="?Yield">PropertyName</emu-nt> <emu-t>(</emu-t> <emu-nt params="?ClassParameter">PropertySetParameterList</emu-nt> <emu-t>)</emu-t> <emu-t>{</emu-t> <emu-nt>FunctionBody</emu-nt> <emu-t>}</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-generatormethod" name="GeneratorMethod" params="Yield, ClassParameter">
+      <emu-rhs><emu-t>*</emu-t><emu-nt params="?Yield">PropertyName</emu-nt> <emu-t>(</emu-t> <emu-nt params="Yield, GeneratorParameter, ?ClassParameter">StrictFormalParameters</emu-nt> <emu-t>)</emu-t> <emu-t>{</emu-t> <emu-nt>GeneratorBody</emu-nt> <emu-t>}</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classdeclaration" name="ClassDeclaration" params="Yield, Default">
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-t>class</emu-t> <emu-nt params="?Yield">BindingIdentifier</emu-nt> <emu-nt params="?Yield">ClassTail</emu-nt></emu-rhs>
+      <emu-rhs constraints="+Default"><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-t>class</emu-t> <emu-nt params="?Yield">ClassTail</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classexpression" name="ClassExpression" params="Yield, GeneratorParameter">
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-t>class</emu-t> <emu-nt params="?Yield" optional>BindingIdentifier</emu-nt> <emu-nt params="?Yield, ?GeneratorParameter">ClassTail</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classelement" name="ClassElement" params="Yield">
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-nt params="ClassParameter, ?Yield">MethodDefinition</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-t>static</emu-t> <emu-nt params="ClassParameter, ?Yield">MethodDefinition</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-t optional>static</emu-t> <emu-nt>PropertyName</emu-nt> <emu-nt params="In, ?Yield" optional>Initializer</emu-nt> <emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>;</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-decoratorlist" name="DecoratorList" params="Yield">
+      <emu-rhs><emu-nt params="?Yield" optional>DecoratorList</emu-nt> <emu-nt params="?Yield">Decorator</emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-decorator" name="Decorator" params="Yield">
+      <emu-rhs><emu-t>@</emu-t> <emu-nt params="Decorator, ?Yield">LeftHandSideExpression</emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+
+  <emu-annex id="scripts-and-modules">
+    <h1>Scripts and Modules</h1>
+    <emu-production id="grammar-exportdeclaration" name="ExportDeclaration">
+      <emu-rhs><emu-t>export</emu-t> <emu-t>*</emu-t> <emu-nt>FromClause</emu-nt> <emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-nt>ExportClause</emu-nt> <emu-nt>FromClause</emu-nt> <emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-nt>ExportClause</emu-nt> <emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-nt>VariableStatement</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-gann>lookahead ≠ <emu-t>@</emu-t></emu-gann> <emu-nt>Declaration</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-t>default</emu-t> <emu-nt params="Default">HoistableDeclaration</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-t>default</emu-t> <emu-gann>lookahead ≠ <emu-t>@</emu-t></emu-gann> <emu-nt params="Default">ClassDeclaration</emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t> <emu-t>default</emu-t> <emu-gann>lookahead ∉ { <emu-t>function</emu-t>, <emu-t>class</emu-t>, <emu-t>@</emu-t> }</emu-gann> <emu-nt>AssignmentExpression</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>DecoratorList</emu-nt> <emu-t>export</emu-t> <emu-gann>lookahead ≠ <emu-t>@</emu-t></emu-gann> <emu-nt>ClassDeclaration</emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>DecoratorList</emu-nt> <emu-t>export</emu-t> <emu-t>default</emu-t> <emu-gann>lookahead ≠ <emu-t>@</emu-t></emu-gann> <emu-nt params="Default">ClassDeclaration</emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+</emu-annex>
+<emu-annex id="typescript">
+  <h1>TypeScript</h1>
+  <emu-annex id="typescript-definitions">
+    <h1>TypeScript Definitions</h1>
+    <pre><code class="typescript">interface TypedPropertyDescriptor&lt;T&gt; {  
+    enumerable?: boolean;  
+    configurable?: boolean;  
+    writable?: boolean;  
+    value?: T;  
+    get?: () =&gt; T;  
+    set?: (value: T) =&gt; void;  
+}  
+
+type ClassDecorator = &lt;TFunction extends Function&gt;(target: TFunction): TFunction | void;
+type MethodDecorator = &lt;T&gt;(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor&lt;T&gt;): TypedPropertyDescriptor&lt;T&gt; | void;
+type PropertyDecorator = (target: Object, propertyKey: string | symbol): void;
+type ParameterDecorator = (target: Object, propertyKey: string | symbol, parameterIndex: number): void;
+</code></pre>
+  </emu-annex>  
+</emu-annex>

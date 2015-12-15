@@ -61,13 +61,15 @@ function (angular, _, coreModule, config) {
 
       var pluginDef = dsConfig.meta;
 
-      $rootScope.require([pluginDef.module], function() {
+      System.import(pluginDef.module).then(function() {
         var AngularService = $injector.get(pluginDef.serviceName);
         var instance = new AngularService(dsConfig, pluginDef);
         instance.meta = pluginDef;
         instance.name = name;
         self.datasources[name] = instance;
         deferred.resolve(instance);
+      }).catch(function(err) {
+        console.log('Failed to load data source: ' + err);
       });
 
       return deferred.promise;

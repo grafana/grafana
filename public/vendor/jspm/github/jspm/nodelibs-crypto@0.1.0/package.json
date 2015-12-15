@@ -1,0 +1,6 @@
+{
+  "registry": "npm",
+  "dependencies": {
+    "crypto-browserify": "^3.7.2"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "jquery",
+  "version": "2.1.4",
+  "description": "jQuery component",
+  "keywords": [
+    "jquery",
+    "component"
+  ],
+  "main": "jquery.js",
+  "license": "MIT"
+}

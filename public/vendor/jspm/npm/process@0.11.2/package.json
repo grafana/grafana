@@ -1,0 +1,25 @@
+{
+  "author": "Roman Shtylman <shtylman@gmail.com>",
+  "name": "process",
+  "description": "process information for node.js and browsers",
+  "keywords": [
+    "process"
+  ],
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "version": "0.11.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/shtylman/node-process.git"
+  },
+  "license": "MIT",
+  "browser": "./browser.js",
+  "main": "./index.js",
+  "engines": {
+    "node": ">= 0.6.0"
+  },
+  "devDependencies": {
+    "mocha": "2.2.1"
+  }
+}

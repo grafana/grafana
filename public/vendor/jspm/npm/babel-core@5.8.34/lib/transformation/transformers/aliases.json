@@ -1,0 +1,6 @@
+{
+  "useStrict": "strict",
+  "es5.runtime": "runtime",
+  "es6.runtime": "runtime",
+  "minification.inlineExpressions": "minification.constantFolding"
+}

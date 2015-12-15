@@ -67,5 +67,24 @@
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
     "sinon": "1.16.1"
+  },
+  "jspm": {
+    "directories": {
+      "packages": "public/vendor/jspm",
+      "src": "public"
+    },
+    "configFile": "public/app/jspm.conf.js",
+    "dependencies": {
+      "angular": "github:angular/bower-angular@^1.4.5",
+      "angular-route": "github:angular/bower-angular-route@^1.4.5",
+      "angular-sanitize": "github:angular/bower-angular-sanitize@^1.4.5",
+      "angular2": "npm:angular2@^2.0.0-alpha.54",
+      "es6-promise": "npm:es6-promise@^3.0.2",
+      "es6-shim": "npm:es6-shim@^0.33.13",
+      "jquery": "github:components/jquery@^2.1.4",
+      "lodash": "npm:lodash@^3.10.1",
+      "moment": "github:moment/moment@^2.10.6"
+    },
+    "devDependencies": {}
   }
 }

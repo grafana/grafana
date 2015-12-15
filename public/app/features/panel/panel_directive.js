@@ -15,7 +15,7 @@ function (angular, $, config) {
         var getter = $parse(attr.type), panelType = getter(scope);
         var module = config.panels[panelType].module;
 
-        scope.require([module], function () {
+        System.import(module).then(function() {
           var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
           elem.append(panelEl);
           $compile(panelEl)(scope);

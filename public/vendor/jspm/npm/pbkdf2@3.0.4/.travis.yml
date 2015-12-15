@@ -1,0 +1,13 @@
+language: node_js
+before_install:
+  - "npm install npm -g"
+node_js:
+  - "0.10"
+  - "0.11"
+  - "0.12"
+  - "iojs"
+env:
+  - TEST_SUITE=test
+  - TEST_SUITE=coveralls
+  - TEST_SUITE=standard
+script: "npm run-script $TEST_SUITE"

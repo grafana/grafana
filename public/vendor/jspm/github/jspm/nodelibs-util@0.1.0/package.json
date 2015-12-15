@@ -1,0 +1,6 @@
+{
+  "registry": "npm",
+  "dependencies": {
+    "util": "^0.10.3"
+  }
+}

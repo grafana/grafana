@@ -1,0 +1,1 @@
+module.exports = require("npm:hash.js@1.0.3/lib/hash.js");

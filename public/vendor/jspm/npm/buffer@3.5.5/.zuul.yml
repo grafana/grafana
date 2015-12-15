@@ -1,0 +1,20 @@
+ui: tape
+scripts:
+  - "./test/_polyfill.js"
+browsers:
+  - name: chrome
+    version: -2..latest
+  - name: firefox
+    version: -2..latest
+  - name: safari
+    version: [6, 7, 8, 9..latest]
+  - name: ie
+    version: 8..latest
+  - name: opera
+    version: 11..latest
+  - name: iphone
+    version: [5.1, 6.1, 7.1, 8.4, 9.1..latest]
+  - name: ipad
+    version: [5.1, 6.1, 7.1, 8.4, 9.1..latest]
+  - name: android
+    version: 4.0..latest

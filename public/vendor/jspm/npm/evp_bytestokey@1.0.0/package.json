@@ -1,0 +1,31 @@
+{
+  "name": "evp_bytestokey",
+  "version": "1.0.0",
+  "description": "he super secure key derivation algorithm from openssl",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && node test.js | tspec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crypto-browserify/EVP_BytesToKey.git"
+  },
+  "keywords": [
+    "crypto",
+    "openssl"
+  ],
+  "author": "Calvin Metcalf <calvin.metcalf@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/crypto-browserify/EVP_BytesToKey/issues"
+  },
+  "homepage": "https://github.com/crypto-browserify/EVP_BytesToKey",
+  "dependencies": {
+    "create-hash": "^1.1.1"
+  },
+  "devDependencies": {
+    "standard": "^5.3.1",
+    "tap-spec": "^4.1.0",
+    "tape": "^4.2.0"
+  }
+}

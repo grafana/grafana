@@ -1,0 +1,1 @@
+module.exports = require("github:jspm/nodelibs-crypto@0.1.0/index");

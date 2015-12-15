@@ -14,6 +14,7 @@ function (angular, _, $, config, dateMath) {
 
   var module = angular.module('grafana.services');
 
+  console.log('module.factory(GraphiteDatasource');
   module.factory('GraphiteDatasource', function($q, backendSrv, templateSrv) {
 
     function GraphiteDatasource(datasource) {

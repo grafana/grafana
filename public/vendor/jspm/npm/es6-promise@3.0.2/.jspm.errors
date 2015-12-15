@@ -1,0 +1,123 @@
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:4:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:6:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:6:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:8:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:239:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/-internal.js:239:8: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:1:16: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:1:21: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:2:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:2:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:2:17: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise.umd.js:2:22: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:6:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:6:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:22:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:22:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:26:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/asap.js:26:8: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:4:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:6:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:6:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:14:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:55:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:55:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:55:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/enumerator.js:55:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:2:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:2:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:2:16: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:2:21: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:4:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:4:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:4:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/polyfill.js:4:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:3:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:5:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:5:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:12:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:14:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:14:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:18:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:20:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:20:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:20:12: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:20:17: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:21:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:21:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:21:13: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:21:18: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:22:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:22:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:22:16: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:22:21: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:23:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:23:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:23:15: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:23:20: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:35:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:35:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:35:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise.js:35:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:1:19: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:1:24: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:50:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:50:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:50:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/all.js:50:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:3:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:5:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:5:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:11:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:78:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:78:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:78:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/race.js:78:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:3:10: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:3:13: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:4:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:40:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:40:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:40:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/reject.js:40:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:1:1: Unexpected reserved word import
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:3:11: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:3:14: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:4:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:37:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:37:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:37:8: Unexpected reserved word default
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/promise/resolve.js:37:16: Semi-colon expected
+
+MultipleErrors: /home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:1:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:1:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:5:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:5:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:9:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:9:8: Semi-colon expected
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:22:1: Unexpected reserved word export
+/home/torkel/.jspm/packages/npm/es6-promise@3.0.2/lib/es6-promise/utils.js:22:8: Semi-colon expected

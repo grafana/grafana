@@ -1,0 +1,15 @@
+{
+  "selfContained": "runtime",
+  "unicode-regex": "regex.unicode",
+  "spec.typeofSymbol": "es6.spec.symbols",
+  "es6.symbols": "es6.spec.symbols",
+  "es6.blockScopingTDZ": "es6.spec.blockScoping",
+
+  "utility.inlineExpressions": "minification.constantFolding",
+  "utility.deadCodeElimination": "minification.deadCodeElimination",
+  "utility.removeConsoleCalls": "minification.removeConsole",
+  "utility.removeDebugger": "minification.removeDebugger",
+
+  "es6.parameters.rest": "es6.parameters",
+  "es6.parameters.default": "es6.parameters"
+}

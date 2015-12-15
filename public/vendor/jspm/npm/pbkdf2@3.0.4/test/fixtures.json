@@ -1,0 +1,171 @@
+{
+  "valid": [
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": 32,
+      "results": {
+        "sha1": "0c60c80f961f0e71f3a9b524af6012062fe037a6e0f0eb94fe8fc46bdc637164",
+        "sha256": "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b",
+        "sha512": "867f70cf1ade02cff3752599a3a53dc4af34c7a669815ae5d513554e1c8cf252",
+        "sha224": "3c198cbdb9464b7857966bd05b7bc92bc1cc4e6e63155d4e490557fd85989497",
+        "sha384": "c0e14f06e49e32d73f9f52ddf1d0c5c7191609233631dadd76a567db42b78676"
+      }
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 2,
+      "dkLen": 32,
+      "results": {
+        "sha1": "ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957cae93136266537a8d7bf4b76",
+        "sha256": "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43",
+        "sha512": "e1d9c16aa681708a45f5c7c4e215ceb66e011a2e9f0040713f18aefdb866d53c",
+        "sha224": "93200ffa96c5776d38fa10abdf8f5bfc0054b9718513df472d2331d2d1e66a3f",
+        "sha384": "54f775c6d790f21930459162fc535dbf04a939185127016a04176a0730c6f1f4"
+      }
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": 64,
+      "results": {
+        "sha1": "0c60c80f961f0e71f3a9b524af6012062fe037a6e0f0eb94fe8fc46bdc637164ac2e7a8e3f9d2e83ace57e0d50e5e1071367c179bc86c767fc3f78ddb561363f",
+        "sha256": "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b4dbf3a2f3dad3377264bb7b8e8330d4efc7451418617dabef683735361cdc18c",
+        "sha512": "867f70cf1ade02cff3752599a3a53dc4af34c7a669815ae5d513554e1c8cf252c02d470a285a0501bad999bfe943c08f050235d7d68b1da55e63f73b60a57fce",
+        "sha224": "3c198cbdb9464b7857966bd05b7bc92bc1cc4e6e63155d4e490557fd859894978ab846d52a1083ac610c36c2c5ea8ce4a024dd691064d5453bd17b15ea1ac194",
+        "sha384": "c0e14f06e49e32d73f9f52ddf1d0c5c7191609233631dadd76a567db42b78676b38fc800cc53ddb642f5c74442e62be44d727702213e3bb9223c53b767fbfb5d"
+      }
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 2,
+      "dkLen": 64,
+      "results": {
+        "sha1": "ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957cae93136266537a8d7bf4b76c51094cc1ae010b19923ddc4395cd064acb023ffd1edd5ef4be8ffe61426c28e",
+        "sha256": "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43830651afcb5c862f0b249bd031f7a67520d136470f5ec271ece91c07773253d9",
+        "sha512": "e1d9c16aa681708a45f5c7c4e215ceb66e011a2e9f0040713f18aefdb866d53cf76cab2868a39b9f7840edce4fef5a82be67335c77a6068e04112754f27ccf4e",
+        "sha224": "93200ffa96c5776d38fa10abdf8f5bfc0054b9718513df472d2331d2d1e66a3f97b510224f700ce72581ffb10a1c99ec99a8cc1b951851a71f30d9265fccf912",
+        "sha384": "54f775c6d790f21930459162fc535dbf04a939185127016a04176a0730c6f1f4fb48832ad1261baadd2cedd50814b1c806ad1bbf43ebdc9d047904bf7ceafe1e"
+      }
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 4096,
+      "dkLen": 32,
+      "results": {
+        "sha1": "4b007901b765489abead49d926f721d065a429c12e463f6c4cd79401085b03db",
+        "sha256": "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a",
+        "sha512": "d197b1b33db0143e018b12f3d1d1479e6cdebdcc97c5c0f87f6902e072f457b5",
+        "sha224": "218c453bf90635bd0a21a75d172703ff6108ef603f65bb821aedade1d6961683",
+        "sha384": "559726be38db125bc85ed7895f6e3cf574c7a01c080c3447db1e8a76764deb3c"
+      }
+    },
+    {
+      "key": "passwordPASSWORDpassword",
+      "salt": "saltSALTsaltSALTsaltSALTsaltSALTsalt",
+      "iterations": 4096,
+      "dkLen": 40,
+      "results": {
+        "sha1": "3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038b6b89a48612c5a25284e6605e12329",
+        "sha256": "348c89dbcbd32b2f32d814b8116e84cf2b17347ebc1800181c4e2a1fb8dd53e1c635518c7dac47e9",
+        "sha512": "8c0511f4c6e597c6ac6315d8f0362e225f3c501495ba23b868c005174dc4ee71115b59f9e60cd953",
+        "sha224": "056c4ba438ded91fc14e0594e6f52b87e1f3690c0dc0fbc05784ed9a754ca780e6c017e80c8de278",
+        "sha384": "819143ad66df9a552559b9e131c52ae6c5c1b0eed18f4d283b8c5c9eaeb92b392c147cc2d2869d58"
+      }
+    },
+    {
+      "key": "pass\u00000word",
+      "salt": "sa\u00000lt",
+      "iterations": 4096,
+      "dkLen": 16,
+      "results": {
+        "sha1": "345cbad979dfccb90cac5257bea6ea46",
+        "sha256": "1df6274d3c0bd2fc7f54fb46f149dda4",
+        "sha512": "336d14366099e8aac2c46c94a8f178d2",
+        "sha224": "0aca9ca9634db6ef4927931f633c6453",
+        "sha384": "b6ab6f8f6532fd9c5c30a79e1f93dcc6"
+      }
+    },
+    {
+      "keyHex": "63ffeeddccbbaa",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": 32,
+      "results": {
+        "sha1": "f6635023b135a57fb8caa89ef8ad93a29d9debb1b011e6e88bffbb212de7c01c",
+        "sha256": "dadd4a2638c1cf90a220777bc85d81859459513eb83063e3fce7d081490f259a",
+        "sha512": "f69de451247225a7b30cc47632899572bb980f500d7c606ac9b1c04f928a3488",
+        "sha224": "9cdee023b5d5e06ccd6c5467463e34fe461a7ed43977f8237f97b0bc7ebfd280",
+        "sha384": "25c72b6f0e052c883a9273a54cfd41fab86759fa3b33eb7920b923abaad62f99"
+      }
+    },
+    {
+      "key": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+      "saltHex": "6d6e656d6f6e6963e383a1e383bce38388e383abe382abe38299e3838fe38299e382a6e38299e382a1e381afe3829ae381afe38299e3818fe38299e3829de38299e381a1e381a1e38299e58d81e4babae58d81e889b2",
+      "iterations": 2048,
+      "dkLen": 64,
+      "results": {
+        "sha1": "7e042a2f41ba17e2235fbc794e22a150816b0f54a1dfe113919fccb7a056066a109385e538f183c92bad896ae8b7d8e0f4cd66df359c77c8c7785cd1001c9a2c",
+        "sha256": "0b57118f2b6b079d9371c94da3a8315c3ada87a1e819b40c4c4e90b36ff2d3c8fd7555538b5119ac4d3da7844aa4259d92f9dd2188e78ac33c4b08d8e6b5964b",
+        "sha512": "ba553eedefe76e67e2602dc20184c564010859faada929a090dd2c57aacb204ceefd15404ab50ef3e8dbeae5195aeae64b0def4d2eead1cdc728a33ced520ffd",
+        "sha224": "d76474c525616ce2a527d23df8d6f6fcc4251cc3535cae4e955810a51ead1ec6acbe9c9619187ca5a3c4fd636de5b5fe58d031714731290bbc081dbf0fcb8fc1",
+        "sha384": "15010450f456769467e834db7fa93dd9d353e8bb733b63b0621090f96599ac3316908eb64ac9366094f0787cd4bfb2fea25be41dc271a19309710db6144f9b34"
+      }
+    },
+    {
+      "key": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+      "salt": "mnemonicメートルガバヴァぱばぐゞちぢ十人十色",
+      "iterations": 2048,
+      "dkLen": 64,
+      "results": {
+        "sha1": "d85d14adcb7bdb5d976160e504f520a98cf71aca4cd5fceadf37759743bd6e1d2ff78bdd4403552aef7658094384b341ede80fffd334182be076f9d988a0a40f",
+        "sha256": "b86b5b900c29ed2724359afd793e10ffc1eb0e7d6f624fc9c85b8ac1785d9a2f0575af52a2338e611f2e6cffdee544adfff6f3d4f43be2ba0e2bd7e917b38a14",
+        "sha512": "3a863fa00f2e97a83fa9b18805e0047a6282cbae0ff48438b33a14475771c52d05137daa12e364cb34d84547ac07568b801c5c7f8dd4baaeee18a67a5c6a3377",
+        "sha224": "95727793842437774ad9ae27b8154a6f37f208b75a03d3a4d4a2443422bb6bc85efcfa92aa4376926ea89a8f5a63118eecdb58c8ca28ab31007da79437e0a1ef",
+        "sha384": "1a7e02e8ba0e357269a55642024b85738b95238d6cdc49bc440204995aefeff499e22cba76d4c7e96b7d4a9596a70e744f53fa94f3547e7dc506fcaf16ceb4a2"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": "NaN",
+      "dkLen": 16,
+      "exception": "Iterations not a number"
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": -1,
+      "dkLen": 16,
+      "exception": "Bad iterations"
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": "NaN",
+      "exception": "Key length not a number"
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": -1,
+      "exception": "Bad key length"
+    },
+    {
+      "key": "password",
+      "salt": "salt",
+      "iterations": 1,
+      "dkLen": 4073741824,
+      "exception": "Bad key length"
+    }
+  ]
+}

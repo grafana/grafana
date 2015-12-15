@@ -1,0 +1,1 @@
+module.exports = require("npm:buffer-xor@1.0.3/index.js");

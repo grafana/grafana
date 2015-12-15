@@ -1,0 +1,441 @@
+<!doctype html>
+<head><meta charset="utf8">
+<title>Decorators</title>
+<link rel="stylesheet" href="./css/elements.css"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css"> 
+</head><body><emu-biblio href="./biblio.json"></emu-biblio> 
+
+<h1>Decorators Proposal - TypeScript</h1>
+<div><h2>Table of Contents</h2><ol class="toc"><li><a href="#introduction"><span class="secnum"></span> Introduction</a></li><li><a href="#proposal-terms"><span class="secnum">1</span> Terms</a><ol class="toc"><li><a href="#proposal-terms-decorator"><span class="secnum">1.1</span> Decorator</a></li><li><a href="#proposal-terms-classdecoratorfunction"><span class="secnum">1.2</span> Class Decorator Function</a></li><li><a href="#proposal-terms-propertydecoratorfunction"><span class="secnum">1.3</span> Property/Method Decorator Function</a></li><li><a href="#proposal-terms-parameterdecoratorfunction"><span class="secnum">1.4</span> Parameter Decorator Function</a></li><li><a href="#proposal-terms-decoratorfactory"><span class="secnum">1.5</span> Decorator Factory</a></li></ol></li><li><a href="#proposal-decoratortargets"><span class="secnum">2</span> Decorator Targets</a></li><li><a href="#proposal-decoratoreval"><span class="secnum">3</span> Decorator Evaluation and Application Order</a></li><li><a href="#reflect"><span class="secnum">4</span> Reflect API</a></li><li><a href="#transpile"><span class="secnum">5</span> Transformation</a><ol class="toc"><li><a href="#transpile-class"><span class="secnum">5.1</span> Class Declaration</a></li><li><a href="#transpile-exportclass"><span class="secnum">5.2</span> Class Declaration (Exported)</a></li><li><a href="#transpile-exportdefaultclass"><span class="secnum">5.3</span> Class Declaration (Default, Exported)</a></li><li><a href="#transpile-classmethod"><span class="secnum">5.4</span> Class Method Declaration</a></li><li><a href="#transpile-classaccessor"><span class="secnum">5.5</span> Class Accessor Declaration</a></li><li><a href="#transpile-classproperty"><span class="secnum">5.6</span> Class Property Declaration</a></li><li><a href="#transpile-classconstructorparameter"><span class="secnum">5.7</span> Class Constructor Parameter Declaration</a></li><li><a href="#transpile-classmethodparameter"><span class="secnum">5.8</span> Class Method Parameter Declaration</a></li><li><a href="#transpile-classaccessorparameter"><span class="secnum">5.9</span> Class Set Accessor Parameter Declaration</a></li></ol></li><li><a href="#grammar"><span class="secnum">A</span> Grammar</a><ol class="toc"><li><a href="#grammar-expressions"><span class="secnum">A.1</span> Expressions</a></li><li><a href="#functions-and-classes"><span class="secnum">A.2</span> Functions and Classes</a></li><li><a href="#scripts-and-modules"><span class="secnum">A.3</span> Scripts and Modules</a></li></ol></li><li><a href="#typescript"><span class="secnum">B</span> TypeScript</a><ol class="toc"><li><a href="#typescript-definitions"><span class="secnum">B.1</span> TypeScript Definitions</a></li></ol></li></ol></div><emu-intro id="introduction">
+  <h1><span class="secnum"></span>Introduction</h1>
+  <p>Proposal to add Decorators to TypeScript.</p>
+  <p>For the ECMAScript specific proposal, see <a href="index.html">http://rbuckton.github.io/reflectdecorators/index.html</a></p>
+</emu-intro>
+
+<emu-clause id="proposal-terms">
+  <h1><span class="secnum">1</span>Terms</h1>
+  <emu-clause id="proposal-terms-decorator">
+    <h1><span class="secnum">1.1</span>Decorator</h1>
+    <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+    <p>A <em>decorator</em> is an expression that is evaluated after a class has been defined, that can be used to annotate or modify the class in some fashion. This expression must evaluate to a <code>function</code>, which is executed by the runtime to apply the decoration.</p>
+    <pre><code class="typescript hljs">@decoratorExpression
+<span class="hljs-keyword">class</span> C {
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-classdecoratorfunction">
+    <h1><span class="secnum">1.2</span>Class Decorator Function</h1>
+    <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+    <p>A <em>class decorator function</em> is a function that accepts a constructor function as its argument, and returns either <code>undefined</code>, the provided constructor function, or a new constructor function. Returning <code>undefined</code> is equivalent to returning the provided constructor function.</p>
+    <pre><code class="typescript hljs"><span class="hljs-comment">// A class decorator function</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dec</span><span class="hljs-params">(target)</span> </span>{  
+ <span class="hljs-comment">// modify, annotate, or replace target...</span>
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-propertydecoratorfunction">
+    <h1><span class="secnum">1.3</span>Property/Method Decorator Function</h1>
+    <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+    <p>A <em>property decorator function</em> is a function that accepts three arguments: The object that owns the property, the key for the property (a <code>string</code> or a <code>symbol</code>), and optionally the property descriptor of the property. The function must return either <code>undefined</code>, the provided property descriptor, or a new property descriptor. Returning <code>undefined</code> is equivalent to returning the provided property descriptor.</p>
+    <pre><code class="typescript hljs"><span class="hljs-comment">// A property (or method/accessor) decorator function</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dec</span><span class="hljs-params">(target, key, descriptor)</span> </span>{
+  <span class="hljs-comment">// annotate the target and key; or modify or replace the descriptor...</span>
+}
+    </code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-parameterdecoratorfunction">
+    <h1><span class="secnum">1.4</span>Parameter Decorator Function</h1>
+    <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+    <p>A <em>parameter decorator function</em> is a function that accepts three arguments: The function that contains the decorated parameter, the property key of the member (or <code>undefined</code> for a parameter of the constructor), and the ordinal index of the parameter. The return value of this decorator is ignored.</p>
+    <pre><code class="typescript hljs">
+<span class="hljs-comment">// A parameter decorator</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dec</span><span class="hljs-params">(target, paramIndex)</span> </span>{
+    <span class="hljs-comment">// annotate the target and index</span>
+}
+</code></pre>
+  </emu-clause>
+  <emu-clause id="proposal-terms-decoratorfactory">
+    <h1><span class="secnum">1.5</span>Decorator Factory</h1>
+    <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+    <p>A <em>decorator factory</em> is a function that can accept any number of arguments, and must return one of the above types of decorator function.</p>
+    <pre><code class="typescript hljs"><span class="hljs-comment">// a class decorator factory function</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">dec</span><span class="hljs-params">(x, y)</span> </span>{
+  <span class="hljs-comment">// the class decorator function</span>
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(target)</span> </span>{
+      <span class="hljs-comment">// modify, annotate, or replace target...</span>
+  }
+}
+</code></pre>
+  </emu-clause>
+</emu-clause>
+<emu-clause id="proposal-decoratortargets">
+  <h1><span class="secnum">2</span>Decorator Targets</h1>
+  <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+  <p>A <em>decorator</em> <strong>can</strong> be legally applied to any of the following:</p>
+  <ul>
+    <li>A class declaration</li>
+    <li>A class property initializer (static or prototype)</li>
+    <li>A class method declaration (static or prototype)</li>
+    <li>A class get or set accessor declaration (static or prototype)</li>
+    <li>A parameter of a class constructor</li>
+    <li>A parameter of a class method (static or prototype)</li>
+    <li>A parameter of a class get or set accessor (static or prototype)</li>
+  </ul>
+  <p>Please note that a <em>decorator</em> currently <strong>cannot</strong> be legally applied to any of the following:</p>
+  <ul>
+    <li>A class constructor - This is to reduce ambiguity between where you can apply a decorator (on the class or on its constructor) and which of the above decorator function forms is called.</li>
+    <li>A function declaration - Decorators on a function declaration would introduce a TDZ (Temporal Dead Zone), which would make the function unreachable until its declaration is executed. This could cause confusion as an undecorated function declaration is hoisted and can be used in a statement preceeding the declaration.</li>
+    <li>A function expression - This is to reduce confusion and maintain parity with disallowing decorators on a function declaration.</li>
+    <li>An arrow function - This is to reduce confusion and maintain parity with disallowing decorators on a function expression.</li>
+  </ul>
+  <p>This list may change in the future.</p>
+</emu-clause>
+<emu-clause id="proposal-decoratoreval">
+  <h1><span class="secnum">3</span>Decorator Evaluation and Application Order</h1>
+  <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+  <p>Decorators are <em>evaluated</em> in the order they appear preceeding their target declaration, to preserve side-effects due to evaluation order. Decorators are <em>applied</em> to their target declaration in reverse order, starting with the decorator closest to the declaration. This behavior is specified to preserve the expected behavior of decorators without a declarative syntax.</p>
+  <pre><code class="typescript hljs">@F
+@G
+<span class="hljs-keyword">class</span> C {   
+}
+</code></pre>
+  <p>For example, the above listing could be approximately written without decorators in the following fashion:</p>
+  <pre><code class="typescript hljs">C = F(G(C))</code></pre>
+  <p>In the above example, the expression <code>F</code> is evaluated first, followed by the expression <code>G</code>. <code>G</code> is then called with the constructor function as its argument, followed by calling <code>F</code> with the result. The actual process of applying decorators is more complex than the above example however, though you may still imperatively apply decorators with a reflection API.</p>
+  <p>If a class declaration has decorators on both the class and any of its members or parameters, the decorators are applied using the following pseudocode:</p>
+  <pre>for each member M of class C
+  if M is an accessor then
+      let accessor = first accessor (get or set, in declaration order) of M
+      let memberDecorators = decorators of accessor
+      for each parameter of accessor
+          let paramDecorators = decorators of parameter           
+          let paramIndex = ordinal index of parameter
+          Reflect.decorate(paramDecorators, accessor, paramIndex)
+      next parameter
+
+      let accessor = second accessor (get or set, in declaration order) of M
+      if accessor then
+          let memberDecorators = memberDecorators + decorators of accessor
+          for each parameter of accessor
+              let paramDecorators = decorators of parameter           
+              let paramIndex = ordinal index of parameter
+              Reflect.decorate(paramDecorators, accessor, paramIndex)
+          next parameter
+      end if
+  else if M is a method
+      let memberDecorators = decorators of M
+      for each parameter of M
+          let paramDecorators = decorators of parameter           
+          let paramIndex = ordinal index of parameter
+          Reflect.decorate(paramDecorators, M, paramIndex)
+      next parameter
+  else
+      let memberDecorators = decorators of M
+  end if
+
+  let name = name of M
+  let target = C.prototype if M is on the prototype; otherwise, C if M is static  
+  Reflect.decorate(memberDecorators, C, name)
+next member
+
+for each parameter of C
+  let paramDecorators = decorators of parameter
+  let paramIndex = ordinal index of parameter
+  Reflect.decorate(paramDecorators, C, paramIndex)
+next parameter
+
+let classDecorators = decorators of C
+let C = Reflect.decorate(classDecorators, C)
+  </pre>
+</emu-clause>
+
+<emu-clause id="reflect">
+  <h1><span class="secnum">4</span>Reflect API</h1>
+  <emu-note><span class="note">Note</span>This section is non-normative.</emu-note>
+  <p>In addition to a declarative approach to defining decorators, it is necessary to also include an imperative API capable of applying decorators, as well as defining, reflecting over, and removing decorator metadata from an object, property, or parameter.</p>
+  <p>A shim for this API can be found here: <a href="https://github.com/rbuckton/ReflectDecorators">https://github.com/rbuckton/ReflectDecorators</a></p>
+  <pre><code class="typescript hljs">Reflect.decorate(decorators, target, propertyKey?, descriptor?)</code></pre>  
+</emu-clause>
+
+<emu-clause id="transpile">
+  <h1><span class="secnum">5</span>Transformation</h1>
+  <p>The following are examples of how decorators can be desugared to ES6 (through a transpiler such as TypeScript). These examples levarage an imperative reflection API.</p>
+  <emu-clause id="transpile-class">
+    <h1><span class="secnum">5.1</span>Class Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs">@F(<span class="hljs-string">"color"</span>)
+@G
+<span class="hljs-keyword">class</span> C {  
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">let</span> C = <span class="hljs-keyword">class</span> {
+}
+<span class="hljs-built_in">Object</span>.defineProperty(C, <span class="hljs-string">"name"</span>, { value: <span class="hljs-string">"C"</span>, configurable: <span class="hljs-literal">true</span> });
+C = __decorate([F(<span class="hljs-string">"color"</span>), G], C);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-exportclass">
+    <h1><span class="secnum">5.2</span>Class Declaration (Exported)</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs">@F(<span class="hljs-string">"color"</span>)
+@G
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">class</span> C {
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs">export <span class="hljs-keyword">let</span> C = <span class="hljs-keyword">class</span> {
+}
+<span class="hljs-built_in">Object</span>.defineProperty(C, <span class="hljs-string">"name"</span>, { value: <span class="hljs-string">"C"</span>, configurable: <span class="hljs-literal">true</span> });
+C = __decorate([F(<span class="hljs-string">"color"</span>), G], C);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-exportdefaultclass">
+    <h1><span class="secnum">5.3</span>Class Declaration (Default, Exported)</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs">@F(<span class="hljs-string">"color"</span>)
+@G
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">class</span> C {
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">let</span> C = <span class="hljs-keyword">class</span> {
+}
+<span class="hljs-built_in">Object</span>.defineProperty(C, <span class="hljs-string">"name"</span>, { value: <span class="hljs-string">"C"</span>, configurable: <span class="hljs-literal">true</span> });
+C = __decorate([F(<span class="hljs-string">"color"</span>), G], C);
+export <span class="hljs-keyword">default</span> C;
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classmethod">
+    <h1><span class="secnum">5.4</span>Class Method Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    @F(<span class="hljs-string">"color"</span>)
+    @G
+    method() { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    method() { }
+}
+<span class="hljs-built_in">Object</span>.defineProperty(C.prototype, <span class="hljs-string">"method"</span>, 
+    __decorate([F(<span class="hljs-string">"color"</span>), G], C.prototype, <span class="hljs-string">"method"</span>, <span class="hljs-built_in">Object</span>.getOwnPropertyDescriptor(C.prototype, <span class="hljs-string">"method"</span>)));
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classaccessor">
+    <h1><span class="secnum">5.5</span>Class Accessor Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    @F(<span class="hljs-string">"color"</span>)
+    @G
+    <span class="hljs-keyword">get</span> accessor() { }
+    <span class="hljs-keyword">set</span> accessor(value) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    get accessor() { }
+    set accessor(value) { }
+}
+<span class="hljs-built_in">Object</span>.defineProperty(C.prototype, <span class="hljs-string">"accessor"</span>, 
+    __decorate([F(<span class="hljs-string">"color"</span>), G], C.prototype, <span class="hljs-string">"accessor"</span>, <span class="hljs-built_in">Object</span>.getOwnPropertyDescriptor(C.prototype, <span class="hljs-string">"accessor"</span>)));
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classproperty">
+    <h1><span class="secnum">5.6</span>Class Property Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    @F(<span class="hljs-string">"color"</span>)
+    @G
+    property = <span class="hljs-number">1</span>;
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    constructor() {
+        <span class="hljs-keyword">this</span>.property = <span class="hljs-number">1</span>;
+    }
+}
+__decorate([F(<span class="hljs-string">"color"</span>), G], C.prototype, <span class="hljs-string">"property"</span>);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classconstructorparameter">
+    <h1><span class="secnum">5.7</span>Class Constructor Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    <span class="hljs-constructor"><span class="hljs-keyword">constructor</span>(@F("color") @G p) </span>{ }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    constructor(p) { }
+}
+__decorate([F(<span class="hljs-string">"color"</span>), G], C, <span class="hljs-keyword">void</span> <span class="hljs-number">0</span>, <span class="hljs-number">0</span>);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classmethodparameter">
+    <h1><span class="secnum">5.8</span>Class Method Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    method(@F(<span class="hljs-string">"color"</span>) @G p) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    method(p) { }
+}
+__decorate([F(<span class="hljs-string">"color"</span>), G], C.prototype, <span class="hljs-string">"method"</span>, <span class="hljs-number">0</span>);
+    </code></pre>
+  </emu-clause>
+
+  <emu-clause id="transpile-classaccessorparameter">
+    <h1><span class="secnum">5.9</span>Class Set Accessor Parameter Declaration</h1>
+    <h2>Syntax</h2>
+    <pre><code class="typescript hljs"><span class="hljs-keyword">class</span> C {
+    <span class="hljs-keyword">set</span> accessor(@F(<span class="hljs-string">"color"</span>) @G p) { }
+}
+    </code></pre>
+    <h2>ES6 Transformation</h2>
+    <pre><code class="javascript hljs"><span class="hljs-keyword">class</span> C {
+    set accessor(p) { }
+}
+__decorate([F(<span class="hljs-string">"color"</span>), G], C.prototype, <span class="hljs-string">"accessor"</span>, <span class="hljs-number">0</span>);
+    </code></pre>
+  </emu-clause>
+
+</emu-clause>
+
+<emu-annex id="grammar">
+  <h1><span class="secnum">A</span>Grammar</h1>
+  <emu-annex id="grammar-expressions">
+    <h1><span class="secnum">A.1</span>Expressions</h1>
+    <emu-production id="grammar-memberexpression" name="MemberExpression" params="Yield, Decorator">
+      <emu-nt>MemberExpression<emu-mods> [Yield, Decorator]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield">PrimaryExpression<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs constraints="~Decorator"><emu-constraints>[~Decorator]</emu-constraints><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-t>[</emu-t><emu-nt params="In, ?Yield">Expression<emu-mods> [In, ?Yield]</emu-mods></emu-nt><emu-t>]</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-t>.</emu-t><emu-nt>IdentifierName<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-nt params="?Yield">TemplateLiteral<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">SuperProperty<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>MetaProperty<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>new</emu-t><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-nt params="?Yield">Arguments<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-superproperty" name="SuperProperty" params="Yield, Decorator">
+      <emu-nt>SuperProperty<emu-mods> [Yield, Decorator]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs constraints="~Decorator"><emu-constraints>[~Decorator]</emu-constraints><emu-t>super</emu-t><emu-t>[</emu-t><emu-nt params="In, ?Yield">Expression<emu-mods> [In, ?Yield]</emu-mods></emu-nt><emu-t>]</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-newexpression" name="NewExpression" params="Yield, Decorator">
+      <emu-nt>NewExpression<emu-mods> [Yield, Decorator]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>new</emu-t><emu-nt params="?Yield, ?Decorator">NewExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-callexpression" name="CallExpression" params="Yield, Decorator">
+      <emu-nt>CallExpression<emu-mods> [Yield, Decorator]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?Decorator">MemberExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-nt params="?Yield">Arguments<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield">SuperCall<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-nt params="?Yield">Arguments<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs constraints="~Decorator"><emu-constraints>[~Decorator]</emu-constraints><emu-nt params="?Yield">CallExpression<emu-mods> [?Yield]</emu-mods></emu-nt><emu-t>[</emu-t><emu-nt params="In, ?Yield">Expression<emu-mods> [In, ?Yield]</emu-mods></emu-nt><emu-t>]</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-t>.</emu-t><emu-nt>IdentifierName<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt><emu-nt params="?Yield">TemplateLiteral<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>      
+    </emu-production>
+    <emu-production id="grammar-lefthandsideexpression" name="LeftHandSideExpression" params="Yield, Decorator">
+      <emu-nt>LeftHandSideExpression<emu-mods> [Yield, Decorator]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?Decorator">NewExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?Decorator">CallExpression<emu-mods> [?Yield, ?Decorator]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+
+  <emu-annex id="functions-and-classes">
+    <h1><span class="secnum">A.2</span>Functions and Classes</h1>
+    <emu-production id="grammar-strictformalparameters" name="StrictFormalParameters" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-nt>StrictFormalParameters<emu-mods> [Yield, GeneratorParameter, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameters<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameters" name="FormalParameters" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-nt>FormalParameters<emu-mods> [Yield, GeneratorParameter, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-prose>[empty]</emu-prose></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameterList<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameterlist" name="FormalParameterList" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-nt>FormalParameterList<emu-mods> [Yield, GeneratorParameter, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?ClassParameter">FunctionRestParameter<emu-mods> [?Yield, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt><emu-t>,</emu-t><emu-nt params="?Yield, ?ClassParameter">FunctionRestParameter<emu-mods> [?Yield, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalslist" name="FormalsList" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-nt>FormalsList<emu-mods> [Yield, GeneratorParameter, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameter<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalsList<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt><emu-t>,</emu-t><emu-nt params="?Yield, ?GeneratorParameter, ?ClassParameter">FormalParameter<emu-mods> [?Yield, ?GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-functionrestparameter" name="FunctionRestParameter" params="Yield, ClassParameter">
+      <emu-nt>FunctionRestParameter<emu-mods> [Yield, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield">BindingRestElement<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs constraints="+ClassParameter"><emu-constraints>[+ClassParameter]</emu-constraints><emu-nt>DecoratorList<emu-mods></emu-mods></emu-nt><emu-nt params="?Yield">BindingRestElement<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-formalparameter" name="FormalParameter" params="Yield, GeneratorParameter, ClassParameter">
+      <emu-nt>FormalParameter<emu-mods> [Yield, GeneratorParameter, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield, ?GeneratorParameter">BindingElement<emu-mods> [?Yield, ?GeneratorParameter]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs constraints="+ClassParameter"><emu-constraints>[+ClassParameter]</emu-constraints><emu-nt>DecoratorList<emu-mods></emu-mods></emu-nt><emu-nt params="?Yield, ?GeneratorParameter">BindingElement<emu-mods> [?Yield, ?GeneratorParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-methoddefinition" name="MethodDefinition" params="Yield, ClassParameter">
+      <emu-nt>MethodDefinition<emu-mods> [Yield, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield">PropertyName<emu-mods> [?Yield]</emu-mods></emu-nt><emu-t>(</emu-t><emu-nt params="?ClassParameter">StrictFormalParameters<emu-mods> [?ClassParameter]</emu-mods></emu-nt><emu-t>)</emu-t><emu-t>{</emu-t><emu-nt>FunctionBody<emu-mods></emu-mods></emu-nt><emu-t>}</emu-t></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield, ?ClassParameter">GeneratorMethod<emu-mods> [?Yield, ?ClassParameter]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>get</emu-t><emu-nt params="?Yield">PropertyName<emu-mods> [?Yield]</emu-mods></emu-nt><emu-t>(</emu-t><emu-t>)</emu-t><emu-t>{</emu-t><emu-nt>FunctionBody<emu-mods></emu-mods></emu-nt><emu-t>}</emu-t></emu-rhs>
+      <emu-rhs><emu-t>set</emu-t><emu-nt params="?Yield">PropertyName<emu-mods> [?Yield]</emu-mods></emu-nt><emu-t>(</emu-t><emu-nt params="?ClassParameter">PropertySetParameterList<emu-mods> [?ClassParameter]</emu-mods></emu-nt><emu-t>)</emu-t><emu-t>{</emu-t><emu-nt>FunctionBody<emu-mods></emu-mods></emu-nt><emu-t>}</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-generatormethod" name="GeneratorMethod" params="Yield, ClassParameter">
+      <emu-nt>GeneratorMethod<emu-mods> [Yield, ClassParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-t>*</emu-t><emu-nt params="?Yield">PropertyName<emu-mods> [?Yield]</emu-mods></emu-nt><emu-t>(</emu-t><emu-nt params="Yield, GeneratorParameter, ?ClassParameter">StrictFormalParameters<emu-mods> [Yield, GeneratorParameter, ?ClassParameter]</emu-mods></emu-nt><emu-t>)</emu-t><emu-t>{</emu-t><emu-nt>GeneratorBody<emu-mods></emu-mods></emu-nt><emu-t>}</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classdeclaration" name="ClassDeclaration" params="Yield, Default">
+      <emu-nt>ClassDeclaration<emu-mods> [Yield, Default]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-t>class</emu-t><emu-nt params="?Yield">BindingIdentifier<emu-mods> [?Yield]</emu-mods></emu-nt><emu-nt params="?Yield">ClassTail<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs constraints="+Default"><emu-constraints>[+Default]</emu-constraints><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-t>class</emu-t><emu-nt params="?Yield">ClassTail<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classexpression" name="ClassExpression" params="Yield, GeneratorParameter">
+      <emu-nt>ClassExpression<emu-mods> [Yield, GeneratorParameter]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-t>class</emu-t><emu-nt params="?Yield" optional="">BindingIdentifier<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-nt params="?Yield, ?GeneratorParameter">ClassTail<emu-mods> [?Yield, ?GeneratorParameter]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-classelement" name="ClassElement" params="Yield">
+      <emu-nt>ClassElement<emu-mods> [Yield]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-nt params="ClassParameter, ?Yield">MethodDefinition<emu-mods> [ClassParameter, ?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-t>static</emu-t><emu-nt params="ClassParameter, ?Yield">MethodDefinition<emu-mods> [ClassParameter, ?Yield]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-t optional="">static</emu-t><emu-nt>PropertyName<emu-mods></emu-mods></emu-nt><emu-nt params="In, ?Yield" optional="">Initializer<emu-mods> [In, ?Yield] opt</emu-mods></emu-nt><emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>;</emu-t></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-decoratorlist" name="DecoratorList" params="Yield">
+      <emu-nt>DecoratorList<emu-mods> [Yield]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-nt params="?Yield" optional="">DecoratorList<emu-mods> [?Yield] opt</emu-mods></emu-nt><emu-nt params="?Yield">Decorator<emu-mods> [?Yield]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+    <emu-production id="grammar-decorator" name="Decorator" params="Yield">
+      <emu-nt>Decorator<emu-mods> [Yield]</emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-t>@</emu-t><emu-nt params="Decorator, ?Yield">LeftHandSideExpression<emu-mods> [Decorator, ?Yield]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+
+  <emu-annex id="scripts-and-modules">
+    <h1><span class="secnum">A.3</span>Scripts and Modules</h1>
+    <emu-production id="grammar-exportdeclaration" name="ExportDeclaration">
+      <emu-nt>ExportDeclaration<emu-mods></emu-mods><emu-mods></emu-mods></emu-nt><emu-geq>:</emu-geq><emu-rhs><emu-t>export</emu-t><emu-t>*</emu-t><emu-nt>FromClause<emu-mods></emu-mods></emu-nt><emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-nt>ExportClause<emu-mods></emu-mods></emu-nt><emu-nt>FromClause<emu-mods></emu-mods></emu-nt><emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-nt>ExportClause<emu-mods></emu-mods></emu-nt><emu-t>;</emu-t></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-nt>VariableStatement<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-gann>[lookahead ≠ <emu-t>@</emu-t>]</emu-gann><emu-nt>Declaration<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-t>default</emu-t><emu-nt params="Default">HoistableDeclaration<emu-mods> [Default]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-t>default</emu-t><emu-gann>[lookahead ≠ <emu-t>@</emu-t>]</emu-gann><emu-nt params="Default">ClassDeclaration<emu-mods> [Default]</emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-t>export</emu-t><emu-t>default</emu-t><emu-gann>[lookahead ∉ { <emu-t>function</emu-t>, <emu-t>class</emu-t>, <emu-t>@</emu-t> }]</emu-gann><emu-nt>AssignmentExpression<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>DecoratorList<emu-mods></emu-mods></emu-nt><emu-t>export</emu-t><emu-gann>[lookahead ≠ <emu-t>@</emu-t>]</emu-gann><emu-nt>ClassDeclaration<emu-mods></emu-mods></emu-nt></emu-rhs>
+      <emu-rhs><emu-nt>DecoratorList<emu-mods></emu-mods></emu-nt><emu-t>export</emu-t><emu-t>default</emu-t><emu-gann>[lookahead ≠ <emu-t>@</emu-t>]</emu-gann><emu-nt params="Default">ClassDeclaration<emu-mods> [Default]</emu-mods></emu-nt></emu-rhs>
+    </emu-production>
+  </emu-annex>
+</emu-annex>
+<emu-annex id="typescript">
+  <h1><span class="secnum">B</span>TypeScript</h1>
+  <emu-annex id="typescript-definitions">
+    <h1><span class="secnum">B.1</span>TypeScript Definitions</h1>
+    <pre><code class="typescript hljs"><span class="hljs-interface"><span class="hljs-keyword">interface</span> TypedPropertyDescriptor&lt;T&gt; </span>{  
+    enumerable?: <span class="hljs-built_in">boolean</span>;  
+    configurable?: <span class="hljs-built_in">boolean</span>;  
+    writable?: <span class="hljs-built_in">boolean</span>;  
+    value?: T;  
+    <span class="hljs-keyword">get</span>?: () =&gt; T;  
+    <span class="hljs-keyword">set</span>?: (value: T) =&gt; <span class="hljs-built_in">void</span>;  
+}  
+
+type ClassDecorator = <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">TFunction</span> <span class="hljs-attribute">extends</span> <span class="hljs-attribute">Function</span>&gt;</span>(target: TFunction): TFunction | void;
+type MethodDecorator = <span class="hljs-tag">&lt;<span class="hljs-title">T</span>&gt;</span>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<span class="hljs-tag">&lt;<span class="hljs-title">T</span>&gt;</span>): TypedPropertyDescriptor<span class="hljs-tag">&lt;<span class="hljs-title">T</span>&gt;</span> | void;
+type PropertyDecorator = (target: Object, propertyKey: string | symbol): void;
+type ParameterDecorator = (target: Object, propertyKey: string | symbol, parameterIndex: number): void;
+</span></code></pre>
+  </emu-annex>  
+</emu-annex></body>
