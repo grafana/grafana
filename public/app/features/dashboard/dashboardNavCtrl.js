@@ -49,7 +49,7 @@ function (angular, _) {
       $scope.appEvent('hide-dash-search');
     };
 
-    $scope.makeEditable = function(evt) {
+    $scope.makeEditable = function() {
       $scope.dashboard.editable = true;
 
       var clone = $scope.dashboard.getSaveModelClone();
