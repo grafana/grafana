@@ -65,7 +65,8 @@ function (angular, _) {
     };
 
     $scope.saveDashboard = function(options) {
-      if ($scope.dashboardMeta.canSave === false) {
+      if ($scope.dashboardMeta.canSave === false && $scope.dashboard.editable === false) {
+        $scope.appEvent('alert-warning', ['Not Editable', 'Cannot save ' + $scope.dashboard.title]);
         return;
       }
 
