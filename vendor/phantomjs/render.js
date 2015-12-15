@@ -36,7 +36,8 @@ page.open(params.url, function (status) {
     var canvas = page.evaluate(function() {
       var body = angular.element(document.body);   // 1
       var rootScope = body.scope().$root;
-      return rootScope.performance.panelsRendered > 0;
+      var panels = angular.element('div.panel').length;
+      return rootScope.performance.panelsRendered >= panels;
     });
 
     if (canvas || tries === 1000) {
