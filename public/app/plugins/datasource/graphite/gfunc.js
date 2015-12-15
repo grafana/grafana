@@ -43,7 +43,7 @@ function (_, $) {
   addFuncDef({
     name: 'perSecond',
     category: categories.Transform,
-    params: [],
+    params: [{ name: "max value", type: "int", optional: true }],
     defaultParams: [],
   });
 
