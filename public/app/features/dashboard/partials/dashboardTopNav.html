@@ -8,7 +8,7 @@
 					<i class="fa fa-bars"></i>
 				</a>
 
-				<div class="top-nav-dashboards-btn">
+				<div class="top-nav-dashboards-btn" ng-show="!dashboardMeta.topNavHidden">
 					<a class="pointer" ng-click="openSearch()">
 						<i class="fa fa-th-large"></i>
 						<span class="dashboard-title">{{dashboard.title}}</span>
@@ -29,7 +29,7 @@
 				<li ng-show="dashboardMeta.canSave">
 					<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 				</li>
-				<li class="dropdown">
+				<li class="dropdown" ng-show="dashboardMeta.canSave">
 					<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 					<ul class="dropdown-menu">
 						<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>

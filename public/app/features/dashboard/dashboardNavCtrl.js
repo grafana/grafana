@@ -69,6 +69,11 @@ function (angular, _) {
         return;
       }
 
+      if(_.isEmpty($scope.dashboard.title)){
+        $scope.appEvent('alert-warning', ['Dashboard save failed', 'Title must not be empty']);
+        return ;
+      }
+
       var clone = $scope.dashboard.getSaveModelClone();
 
       backendSrv.saveDashboard(clone, options).then(function(data) {

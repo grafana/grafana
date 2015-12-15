@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('RowCtrl', function($scope, $rootScope, $timeout) {
+  module.controller('RowCtrl', function($scope, $rootScope, $timeout, $location) {
     var _d = {
       title: "Row",
       height: "150px",
@@ -21,6 +21,27 @@ function (angular, _, config) {
 
     $scope.init = function() {
       $scope.editor = {index: 0};
+      if ($location.path() === '/dashboard/metrics') {
+        var defaultSpan = 12;
+        var _as = 12 - $scope.dashboard.rowSpan($scope.row);
+
+        var panel = {
+          title: config.new_panel_title,
+          error: false,
+          span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+          editable: true,
+          type: 'graph'
+        };
+
+        $scope.addPanel(panel);
+
+        $scope.dashboardViewState.update({fullscreen: true, edit: panel, panelId: 1});
+        $scope.dashboardMeta.canEdit = true;
+        $scope.dashboardMeta.canShare = false;
+        $scope.dashboardMeta.canSave = false;
+        $scope.dashboardMeta.canStar = false;
+        $scope.dashboardMeta.topNavHidden = true;
+      }
     };
 
     $scope.togglePanelMenu = function(posX) {
