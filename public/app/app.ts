@@ -20,27 +20,37 @@ import angular = require('angular');
 import config = require('app/core/config');
 
 class GrafanaApp {
-  register_fns: any = {};
+  registerFunctions: any;
+  ngModuleDependencies: any[];
+  preBootModules: any[];
 
   useModule(module) {
-    _.extend(module, this.register_fns);
+    if (this.preBootModules) {
+      this.preBootModules.push(module);
+    } else {
+      _.extend(module, this.registerFunctions);
+    }
+    this.ngModuleDependencies.push(module.name);
     return module;
   }
 
   init() {
+    this.registerFunctions = {};
+    this.preBootModules = [];
+
     var app = angular.module('grafana', []);
     app.constant('grafanaVersion', "@grafanaVersion@");
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
       console.log('app config');
-      this.register_fns.controller = $controllerProvider.register;
-      this.register_fns.directive  = $compileProvider.directive;
-      this.register_fns.factory    = $provide.factory;
-      this.register_fns.service    = $provide.service;
-      this.register_fns.filter     = $filterProvider.register;
+      this.registerFunctions.controller = $controllerProvider.register;
+      this.registerFunctions.directive  = $compileProvider.directive;
+      this.registerFunctions.factory    = $provide.factory;
+      this.registerFunctions.service    = $provide.service;
+      this.registerFunctions.filter     = $filterProvider.register;
     });
 
-    var apps_deps = [
+    this.ngModuleDependencies = [
       'grafana.core',
       'ngRoute',
       'ngSanitize',
@@ -54,9 +64,8 @@ class GrafanaApp {
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
     _.each(module_types, type => {
-      var module_name = 'grafana.' + type;
-      this.useModule(angular.module(module_name, []));
-      apps_deps.push(module_name);
+      var moduleName = 'grafana.' + type;
+      this.useModule(angular.module(moduleName, []));
     });
 
     var preBootRequires = [System.import('app/features/all')];
@@ -67,13 +76,17 @@ class GrafanaApp {
       preBootRequires.push(System.import(pluginModules[i]));
     }
 
-    Promise.all(preBootRequires).then(function() {
+    Promise.all(preBootRequires).then(() => {
       // disable tool tip animation
       $.fn.tooltip.defaults.animation = false;
       // bootstrap the app
-      var asd = angular.bootstrap(document, apps_deps).invoke(['$rootScope', function ($rootScope) {
-        console.log('bootstrap');
-      }]);
+      angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+        _.each(this.preBootModules, module => {
+          _.extend(module, this.registerFunctions);
+        });
+
+        this.preBootModules = null;
+      });
     }).catch(function(err) {
       console.log('Application boot failed: ' + err);
     });
