@@ -41,13 +41,23 @@ function (angular, _, config) {
       $scope.dashboard.addPanel(panel, $scope.row);
     };
 
+
     $scope.deleteRow = function() {
+      function delete_row() {
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+      }
+
+      if (!$scope.row.panels.length) {
+        delete_row();
+        return;
+      }
+
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+          delete_row();
         }
       });
     };
