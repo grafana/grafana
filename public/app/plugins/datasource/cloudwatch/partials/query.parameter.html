@@ -1,0 +1,53 @@
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+			Metric
+		</li>
+		<li>
+			<metric-segment segment="regionSegment" get-options="getRegions()" on-change="regionChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="namespaceSegment" get-options="getNamespaces()" on-change="namespaceChanged()"></metric-segment>
+		</li>
+		<li>
+			<metric-segment segment="metricSegment" get-options="getMetrics()" on-change="metricChanged()"></metric-segment>
+		</li>
+		<li class="tight-form-item query-keyword">
+			Stats
+		</li>
+		<li ng-repeat="segment in statSegments">
+			<metric-segment segment="segment" get-options="getStatSegments(segment, $index)" on-change="statSegmentChanged(segment, $index)"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+			Dimensions
+		</li>
+		<li ng-repeat="segment in dimSegments">
+			<metric-segment segment="segment" get-options="getDimSegments(segment, $index)" on-change="dimSegmentChanged(segment, $index)"></metric-segment>
+		</li>
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form">
+	<ul class="tight-form-list" role="menu">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 100px">
+			Period
+			<tip>Interval between points in seconds</tip>
+		</li>
+		<li>
+			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="refreshMetricData()" />
+		</li>
+
+	</ul>
+
+	<div class="clearfix"></div>
+</div>
+
