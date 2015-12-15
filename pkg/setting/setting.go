@@ -48,9 +48,10 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath string
-	HomePath string
-	DataPath string
+	LogsPath    string
+	HomePath    string
+	DataPath    string
+	PluginsPath string
 
 	// Log settings.
 	LogModes   []string
@@ -393,6 +394,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
+	PluginsPath = Cfg.Section("paths").Key("plugins").String()
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -626,6 +628,7 @@ func LogConfigurationInfo() {
 	text.WriteString(fmt.Sprintf("  home: %s\n", HomePath))
 	text.WriteString(fmt.Sprintf("  data: %s\n", DataPath))
 	text.WriteString(fmt.Sprintf("  logs: %s\n", LogsPath))
+	text.WriteString(fmt.Sprintf("  plugins: %s\n", PluginsPath))
 
 	log.Info(text.String())
 }

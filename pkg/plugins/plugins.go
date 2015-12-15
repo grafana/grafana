@@ -29,7 +29,9 @@ func Init() error {
 	Panels = make(map[string]PanelPlugin)
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
+	scan(path.Join(setting.PluginsPath))
 	checkExternalPluginPaths()
+
 	return nil
 }
 
