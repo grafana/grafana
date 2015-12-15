@@ -101,6 +101,10 @@ function (angular, _, $) {
 
           $container.empty();
 
+          // Set min-width if side style and there is a value, otherwise remove the CSS propery
+          var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + "px" : "";
+          $container.css("min-width", width);
+
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
           if (panel.legend.alignAsTable) {
