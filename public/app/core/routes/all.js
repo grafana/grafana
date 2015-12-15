@@ -10,6 +10,7 @@ define([
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+    console.log('routing');
 
     $routeProvider
       .when('/', {

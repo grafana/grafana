@@ -1,0 +1,12 @@
+{
+  "name": "indexof",
+  "description": "Microsoft sucks",
+  "version": "0.0.1",
+  "keywords": ["index", "array", "indexOf"],
+  "dependencies": {},
+  "component": {
+    "scripts": {
+      "indexof/index.js": "index.js"
+    }
+  }
+}

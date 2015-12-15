@@ -3,7 +3,7 @@ module.exports = function() {
 
   return {
     build: {
-      src: ['public/**/*.ts', 'public/test/**/*.ts'],
+      src: ['public/**/*.ts', 'public/test/**/*.ts', "!public/vendor/**/*.ts"],
       dest: 'public_gen/',
       options: {
         module: 'amd', //or commonjs

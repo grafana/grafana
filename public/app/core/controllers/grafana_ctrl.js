@@ -10,6 +10,7 @@ function (angular, _, $, coreModule, config, store) {
   "use strict";
 
   coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
+    console.log('grafana ctrl');
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;

@@ -1,0 +1,1 @@
+module.exports = require("npm:cipher-base@1.0.2/index.js");

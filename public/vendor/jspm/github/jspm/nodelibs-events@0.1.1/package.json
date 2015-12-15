@@ -1,0 +1,6 @@
+{
+  "registry": "npm",
+  "dependencies": {
+    "events": "1.0.2"
+  }
+}

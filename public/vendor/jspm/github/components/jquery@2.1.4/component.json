@@ -1,0 +1,15 @@
+{
+  "name": "jquery",
+  "repo": "components/jquery",
+  "version": "2.1.4",
+  "description": "jQuery component",
+  "keywords": [
+    "jquery",
+    "component"
+  ],
+  "main": "jquery.js",
+  "scripts": [
+    "jquery.js"
+  ],
+  "license": "MIT"
+}

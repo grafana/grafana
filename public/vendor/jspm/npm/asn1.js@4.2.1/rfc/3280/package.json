@@ -1,0 +1,24 @@
+{
+  "name": "asn1.js-rfc3280",
+  "version": "4.0.0",
+  "description": "RFC3280 structures for asn1.js",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:indutny/asn1.js"
+  },
+  "keywords": [
+    "asn1",
+    "rfc3280",
+    "der"
+  ],
+  "author": "Fedor Indutny",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indutny/asn1.js/issues"
+  },
+  "homepage": "https://github.com/indutny/asn1.js",
+  "peerDependencies": {
+    "asn1.js": "^4.0.0"
+  }
+}

@@ -1,0 +1,1 @@
+module.exports = require("npm:reflect-metadata@0.1.2/Reflect.js");

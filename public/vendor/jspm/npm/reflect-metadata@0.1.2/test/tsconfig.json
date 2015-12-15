@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "module": "commonjs",
+    "outDir": "../temp/"
+  },
+  "files": [
+    "../Reflect.ts",
+    "../typings/node.d.ts",
+    "reflect/reflect-decorate.ts",
+    "reflect/reflect-metadata.ts",
+    "reflect/reflect-definemetadata.ts",
+    "reflect/reflect-hasownmetadata.ts",
+    "reflect/reflect-hasmetadata.ts",
+    "reflect/reflect-getownmetadata.ts",
+    "reflect/reflect-getmetadata.ts",
+    "reflect/reflect-getownmetadatakeys.ts",
+    "reflect/reflect-getmetadatakeys.ts",
+    "reflect/reflect-deletemetadata.ts",
+    "harness.ts",
+    "spec.ts",
+    "run.ts"
+  ]
+}

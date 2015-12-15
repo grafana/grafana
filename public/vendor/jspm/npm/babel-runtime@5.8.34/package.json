@@ -1,0 +1,15 @@
+{
+  "name": "babel-runtime",
+  "version": "5.8.34",
+  "description": "babel selfContained runtime",
+  "license": "MIT",
+  "repository": "babel/babel",
+  "author": "Sebastian McKenzie <sebmck@gmail.com>",
+  "dependencies": {
+    "core-js": "^1.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-runtime": "^1.0.7",
+    "regenerator": "^0.8.34"
+  }
+}

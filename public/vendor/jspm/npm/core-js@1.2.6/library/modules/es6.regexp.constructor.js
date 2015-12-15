@@ -1,0 +1,2 @@
+/* */ 
+require('./$.set-species')('RegExp');

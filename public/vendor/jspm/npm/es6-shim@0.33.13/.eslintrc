@@ -1,0 +1,49 @@
+{
+	"root": true,
+
+	"extends": "@ljharb",
+
+	"ecmaFeatures": {
+		"regexYFlag": true,
+		"regexUFlag": true
+	},
+
+	"rules": {
+		"callback-return": [0],
+		"complexity": [1],
+		"consistent-return": [1],
+		"dot-notation": [2, { "allowKeywords": false }],
+		"eqeqeq": [2, "allow-null"],
+		"global-require": [0],
+		"id-length": [2, { "min": 1, "max": 40 }],
+		"max-depth": [2, 5],
+		"max-params": [2, 4],
+		"max-nested-callbacks": [2, 5],
+		"max-statements": [1, 25],
+		"new-cap": [2, { "capIsNewExceptions": ["Call", "Construct", "CreateHTML", "GetIterator", "GetMethod", "IsCallable", "IsConstructor", "IsPromise", "IteratorClose", "IteratorComplete", "IteratorNext", "IteratorStep", "Map", "OrigNumber", "RequireObjectCoercible", "SameValue", "SameValueZero", "Set", "SpeciesConstructor", "ToInteger", "ToLength", "ToNumber", "ToObject", "ToUint32", "TypeIsObject"] }],
+		"no-constant-condition": [1],
+		"no-continue": [1],
+		"no-extend-native": [2, { "exceptions": ["Set"] }],
+		"no-extra-parens": [0],
+		"no-func-assign": [1],
+		"no-implicit-coercion": [2, {
+			"boolean": false,
+			"number": false,
+			"string": true
+		}],
+		"no-invalid-this": [0],
+		"no-magic-numbers": [0],
+		"no-native-reassign": [2, { "exceptions": ["Number", "Promise", "RegExp"] }],
+		"no-negated-condition": [1],
+		"no-plusplus": [1],
+		"no-restricted-syntax": [2, "DebuggerStatement", "LabeledStatement", "WithStatement"],
+		"no-shadow": [1],
+		"no-underscore-dangle": [0],
+		"no-unused-vars": [1, { "vars": "all", "args": "after-used" }],
+		"no-use-before-define": [1],
+		"no-useless-call": [0],
+		"operator-linebreak": [2, "after"],
+		"spaced-comment": [0],
+		"strict": [0]
+	}
+}

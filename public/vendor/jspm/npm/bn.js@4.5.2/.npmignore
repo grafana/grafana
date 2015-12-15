@@ -1,0 +1,6 @@
+benchmarks/
+coverage/
+node_modules/
+npm-debug.log
+1.js
+logo.png
