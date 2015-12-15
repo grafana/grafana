@@ -49,6 +49,21 @@ function (angular, _) {
       $scope.appEvent('hide-dash-search');
     };
 
+    $scope.makeEditable = function(evt) {
+      $scope.dashboard.editable = true;
+
+      var clone = $scope.dashboard.getSaveModelClone();
+
+      backendSrv.saveDashboard(clone, {overwrite: false}).then(function(data) {
+        $scope.dashboard.version = data.version;
+        $scope.appEvent('dashboard-saved', $scope.dashboard);
+        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+
+        //force refresh whole page
+        window.location.href = window.location.href;
+      }, $scope.handleSaveDashError);
+    };
+
     $scope.saveDashboard = function(options) {
       if ($scope.dashboardMeta.canSave === false) {
         return;
