@@ -19,7 +19,7 @@ define([
           ctx.scope.row = ctx.scope.dashboard.rows[0];
           ctx.scope.appEvent = sinon.spy();
 
-          ctx.scope.delete_row();
+          ctx.scope.deleteRow();
         });
 
         it('should NOT ask for confirmation', function () {

@@ -41,7 +41,6 @@ function (angular, _, config) {
       $scope.dashboard.addPanel(panel, $scope.row);
     };
 
-
     $scope.deleteRow = function() {
       function delete_row() {
         $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
