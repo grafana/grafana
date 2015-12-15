@@ -17,6 +17,7 @@ function (angular, _) {
       target.dimensions = target.dimensions || {};
       target.period = target.period || '';
       target.region = target.region || $scope.datasource.getDefaultRegion();
+      target.expressions = [];
 
       $scope.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
 

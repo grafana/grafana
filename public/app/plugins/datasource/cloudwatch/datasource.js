@@ -256,12 +256,38 @@ function (angular, _) {
           return dp.Timestamp;
         })
         .each(function(dp) {
+          var value = dp[stat];
+          if (options.expressions.length > 0) {
+            value = _.reduce(options.expressions, function(memo, v) {
+              if (v === "") {
+                return; // skip
+              }
+
+              var e = v.split(' ');
+              if (e.length !== 2 || isNaN(e[1])) {
+                throw new Error('Invalid expression');
+              }
+              switch (e[0]) {
+              case '+':
+                return memo + e[1];
+              case '-':
+                return memo - e[1];
+              case '*':
+                return memo * e[1];
+              case '/':
+                return memo / e[1];
+              default:
+                throw new Error('Invalid expression');
+              }
+            }, value);
+          }
+
           var timestamp = new Date(dp.Timestamp).getTime();
           if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
             dps.push([null, lastTimestamp + periodMs]);
           }
           lastTimestamp = timestamp;
-          dps.push([dp[stat], timestamp]);
+          dps.push([value, timestamp]);
         });
 
         aliasData.stat = stat;

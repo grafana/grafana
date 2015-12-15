@@ -85,6 +85,12 @@
 		<li>
 			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="refreshMetricData()" />
 		</li>
+		<li class="tight-form-item query-keyword">
+			Expression
+		</li>
+		<li>
+			<input type="text" class="input-small tight-form-input" ng-model="target.expressions[0]" spellcheck='false' placeholder="expression" ng-model-onblur ng-change="refreshMetricData()" />
+		</li>
 
 	</ul>
 
