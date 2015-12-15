@@ -1,5 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
+///<reference path="../../../headers/common.d.ts" />
 
 import angular = require('angular');
 import $ = require('jquery');
@@ -122,4 +121,3 @@ export function tablePanelEditor($q, uiSegmentSrv) {
     controller: TablePanelEditorCtrl,
   };
 }
-

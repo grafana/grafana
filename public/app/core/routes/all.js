@@ -131,6 +131,16 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
+      .when('/plugins', {
+        templateUrl: 'app/features/org/partials/plugins.html',
+        controller: 'PluginsCtrl',
+        resolve: loadOrgBundle,
+      })
+      .when('/plugins/edit/:type', {
+        templateUrl: 'app/features/org/partials/pluginEdit.html',
+        controller: 'PluginEditCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/global-alerts', {
         templateUrl: 'app/features/dashboard/partials/globalAlerts.html',
       })

@@ -29,6 +29,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
+	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&orgBundles)
+	if err != nil {
+		return nil, err
+	}
+	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
@@ -42,7 +49,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"url":  url,
 		}
 
-		meta, exists := plugins.DataSources[ds.Type]
+		meta, exists := enabledPlugins.DataSourcePlugins[ds.Type]
 		if !exists {
 			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
@@ -109,9 +116,18 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		defaultDatasource = "-- Grafana --"
 	}
 
+	panels := map[string]interface{}{}
+	for _, panel := range enabledPlugins.PanelPlugins {
+		panels[panel.Type] = map[string]interface{}{
+			"module": panel.Module,
+			"name":   panel.Name,
+		}
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
+		"panels":            panels,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":  setting.AuthProxyEnabled,

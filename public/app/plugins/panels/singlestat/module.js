@@ -16,7 +16,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
   module.directive('grafanaPanelSinglestat', function() {
     return {
       controller: 'SingleStatCtrl',
-      templateUrl: 'app/panels/singlestat/module.html',
+      templateUrl: 'app/plugins/panels/singlestat/module.html',
     };
   });
 
@@ -31,7 +31,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
 
     $scope.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
 
-    $scope.panelMeta.addEditorTab('Options', 'app/panels/singlestat/editor.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panels/singlestat/editor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     // Set and populate defaults

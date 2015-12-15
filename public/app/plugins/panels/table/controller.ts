@@ -1,4 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import angular = require('angular');
 import _ = require('lodash');
@@ -21,7 +21,7 @@ export class TablePanelCtrl {
       metricsEditor: true,
     });
 
-    $scope.panelMeta.addEditorTab('Options', 'app/panels/table/options.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panels/table/options.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     var panelDefaults = {
