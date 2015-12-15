@@ -156,12 +156,6 @@ func Register(r *macaron.Macaron) {
 			r.Get("/plugins", GetDataSourcePlugins)
 		}, reqOrgAdmin)
 
-		// PluginBundles
-		r.Group("/plugins", func() {
-			r.Get("/", wrap(GetPluginBundles))
-			r.Post("/", bind(m.UpdatePluginBundleCmd{}), wrap(UpdatePluginBundle))
-		}, reqOrgAdmin)
-
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
@@ -196,8 +190,6 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
-
-	InitExternalPluginRoutes(r)
 
 	r.NotFound(NotFoundHandler)
 }
