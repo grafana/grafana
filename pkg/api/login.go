@@ -19,19 +19,19 @@ const (
 )
 
 func LoginView(c *middleware.Context) {
-	if err := setIndexViewData(c); err != nil {
+	viewData, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
 	}
 
-	settings := c.Data["Settings"].(map[string]interface{})
-	settings["googleAuthEnabled"] = setting.OAuthService.Google
-	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
-	settings["disableUserSignUp"] = !setting.AllowUserSignUp
-	settings["loginHint"] = setting.LoginHint
+	viewData.Settings["googleAuthEnabled"] = setting.OAuthService.Google
+	viewData.Settings["githubAuthEnabled"] = setting.OAuthService.GitHub
+	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
+	viewData.Settings["loginHint"] = setting.LoginHint
 
 	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX)
+		c.HTML(200, VIEW_INDEX, viewData)
 		return
 	}
 

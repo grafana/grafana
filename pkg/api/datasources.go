@@ -117,8 +117,15 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 func GetDataSourcePlugins(c *middleware.Context) {
 	dsList := make(map[string]interface{})
 
-	for key, value := range plugins.DataSources {
-		if value.(map[string]interface{})["builtIn"] == nil {
+	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&orgBundles)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get org plugin Bundles", err)
+	}
+	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+
+	for key, value := range enabledPlugins.DataSourcePlugins {
+		if !value.BuiltIn {
 			dsList[key] = value
 		}
 	}

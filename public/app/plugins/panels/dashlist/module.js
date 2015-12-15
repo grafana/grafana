@@ -14,7 +14,7 @@ function (angular, app, _, config, PanelMeta) {
   module.directive('grafanaPanelDashlist', function() {
     return {
       controller: 'DashListPanelCtrl',
-      templateUrl: 'app/panels/dashlist/module.html',
+      templateUrl: 'app/plugins/panels/dashlist/module.html',
     };
   });
 
@@ -26,7 +26,7 @@ function (angular, app, _, config, PanelMeta) {
       fullscreen: true,
     });
 
-    $scope.panelMeta.addEditorTab('Options', 'app/panels/dashlist/editor.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panels/dashlist/editor.html');
 
     var defaults = {
       mode: 'starred',
