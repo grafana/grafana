@@ -5,13 +5,35 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/text/language"
+	"strings"
 )
+
+func getPreferedLanguages(c *middleware.Context) string {
+	default_lang := "en"
+	//if set in config get default from config
+	if len(setting.DefaultLocale) != 0 {
+		default_lang = setting.DefaultLocale
+	}
+	var lang_list []string
+	//if config get locale from browser we will build a language list
+	if setting.LocaleFromBrowser {
+		t, _, _ := language.ParseAcceptLanguage(c.Req.Header.Get("Accept-Language"))
+		for _, element := range t {
+			lang_list = append(lang_list, element.String())
+		}
+	}
+	lang_list = append(lang_list, default_lang)
+	return strings.Join(lang_list, " ")
+}
 
 func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
 	}
+
+	var prefered_languages = getPreferedLanguages(c)
 
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -32,6 +54,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		AppSubUrl:          setting.AppSubUrl,
 		GoogleAnalyticsId:  setting.GoogleAnalyticsId,
 		GoogleTagManagerId: setting.GoogleTagManagerId,
+		PreferedLocales:    prefered_languages,
 	}
 
 	if setting.DisableGravatar {

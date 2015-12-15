@@ -37,7 +37,8 @@ export class TimePickerCtrl {
     $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
-
+    //initialize starting day  of the week from moment locales
+    $scope.ctrl.startingDay = moment().startOf("week").day();
     this.init();
   }
 

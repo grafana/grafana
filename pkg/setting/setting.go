@@ -68,6 +68,11 @@ var (
 	EnableGzip         bool
 	EnforceDomain      bool
 
+	//Locale Options
+
+	DefaultLocale     string
+	LocaleFromBrowser bool
+
 	// Security settings.
 	SecretKey             string
 	LogInRememberDays     int
@@ -417,6 +422,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	if err := validateStaticRootPath(); err != nil {
 		return err
 	}
+	//read locale settings
+	locale := Cfg.Section("locale")
+	DefaultLocale = locale.Key("set_default").String()
+	LocaleFromBrowser = locale.Key("enabled").MustBool(true)
 
 	// read security settings
 	security := Cfg.Section("security")

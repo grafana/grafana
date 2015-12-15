@@ -2,7 +2,7 @@
   'use strict';
 
   System.import('app/app').then(function(app) {
-    app.init();
+    app.init(window.grafanaBootData);
   }).catch(function(err) {
     console.log('Loading app module failed: ', err);
   });
