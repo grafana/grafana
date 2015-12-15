@@ -109,8 +109,7 @@ in combination with the new Table panel to show raw log data stored in InfluxDB.
 
 If you have Elasticsearch 2.x and Grafana 2.6 or above then you can use pipeline metric aggregations like
 **Moving Average** and **Derivative**. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric
-to hide metrics from appearing in the graph. This is useful for metrics you only have in the query to be used
-in a pipeline metric.
+to hide metrics from appearing in the graph.
 
 ![](/img/elasticsearch/pipeline_metrics_editor.png)
 
