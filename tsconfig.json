@@ -2,30 +2,15 @@
     "compilerOptions": {
         "sourceMap": true,
         "declaration": true,
-        "outDir": "public_gen/app",
-        "target": "ES5",
-        "rootDir": "public/app",
-        "module": "amd",
+        "outDir": "public_gen",
+        "noImplicitAny": false,
+        "target": "es5",
+        "rootDir": "public/",
+        "module": "system",
+        "moduleResolution": 2,
         "noEmitOnError": true
     },
     "files": [
-        "public/app/components/panelmeta.ts",
-        "public/app/controllers/signupCtrl.ts",
-        "public/app/core/core.ts",
-        "public/app/core/core_module.ts",
-        "public/app/core/directives/array_join.ts",
-        "public/app/core/directives/give_focus.ts",
-        "public/app/core/filters/filters.ts",
-        "public/app/core/routes/bundle_loader.ts",
-        "public/app/core/utils/datemath.ts",
-        "public/app/features/dashboard/timepicker/timepicker.ts",
-        "public/app/features/dashboard/timepicker/timerange.ts",
-        "public/app/headers/angularjs/angularjs.d.ts",
-        "public/app/headers/common.d.ts",
-        "public/app/headers/jquery/jquery.d.ts",
-        "public/app/headers/lodash/lodash.d.ts",
-        "public/app/headers/moment/moment-node.d.ts",
-        "public/app/headers/moment/moment.d.ts",
-        "public/app/headers/require/require.d.ts"
+        "public/app/core/core_module.ts"
     ]
 }

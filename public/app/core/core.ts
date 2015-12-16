@@ -1,4 +1,5 @@
 ///<reference path="../headers/common.d.ts" />
+///<reference path="./mod_defs.d.ts" />
 
 ///<amd-dependency path="./directives/annotation_tooltip" />
 ///<amd-dependency path="./directives/body_class" />
@@ -26,9 +27,10 @@ import * as routes from 'app/core/routes/all';
 
 // export * from './directives/give_focus'
 // export * from './filters/filters'
-//
+
 import {Component} from 'angular2/core';
 console.log(Component);
-// console.log(Component);
+//  console.log(Component);
+// // console.log(Component);
 
 export {arrayJoin, controllers, services, routes};

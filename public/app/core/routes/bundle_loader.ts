@@ -1,4 +1,3 @@
-///<reference path="../../headers/require/require.d.ts" />
 ///<reference path="../../headers/common.d.ts" />
 
 export class BundleLoader {

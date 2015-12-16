@@ -19,7 +19,7 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
-        'angular2/bundles/**/*',
+        'angular2/**/*',
         'systemjs/**/*',
         'es6-promise/**/*',
         'es6-shim/**/*',

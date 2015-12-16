@@ -6044,7 +6044,6 @@ declare module "angular2/angular2" {
 }
 
 
-
 declare module ngWorker {
 
   /**

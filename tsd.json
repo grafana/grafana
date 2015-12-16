@@ -22,6 +22,12 @@
     },
     "angular2/angular2.d.ts": {
       "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "es6-shim/es6-shim.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
     }
   }
 }
