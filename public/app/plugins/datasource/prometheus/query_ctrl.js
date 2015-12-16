@@ -38,12 +38,6 @@ function (angular, _) {
       $scope.metric = '';
     };
 
-    $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource
-        .performSuggestQuery(query)
-        .then(callback);
-    };
-
     $scope.linkToPrometheus = function() {
       var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
       var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
