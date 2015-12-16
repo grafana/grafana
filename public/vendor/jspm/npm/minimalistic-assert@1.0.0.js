@@ -1,1 +1,0 @@
-module.exports = require("npm:minimalistic-assert@1.0.0/index.js");

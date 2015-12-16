@@ -1,3 +1,5 @@
+///<reference path="../headers/common.d.ts" />
+
 ///<amd-dependency path="./directives/annotation_tooltip" />
 ///<amd-dependency path="./directives/body_class" />
 ///<amd-dependency path="./directives/config_modal" />
@@ -14,20 +16,19 @@
 ///<amd-dependency path="./directives/tags" />
 ///<amd-dependency path="./directives/topnav" />
 ///<amd-dependency path="./directives/value_select_dropdown" />
-///<amd-dependency path="./routes/all" />
-
-///<amd-dependency path="./controllers/all" />
-///<amd-dependency path="./services/all" />
 ///<amd-dependency path="./jquery_extended" />
 ///<amd-dependency path="./partials" />
 
 import {arrayJoin} from './directives/array_join';
-import * as test from './controllers/all';
+import * as controllers from 'app/core/controllers/all';
+import * as services from 'app/core/services/all';
+import * as routes from 'app/core/routes/all';
 
 // export * from './directives/give_focus'
 // export * from './filters/filters'
 //
-// import {Component} from 'angular2/angular2';
+import {Component} from 'angular2/core';
+console.log(Component);
 // console.log(Component);
 
-export {arrayJoin, test};
+export {arrayJoin, controllers, services, routes};

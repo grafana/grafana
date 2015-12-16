@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.service('datasourceSrv', function($q, $injector, $rootScope) {
+  coreModule.default.service('datasourceSrv', function($q, $injector) {
     var self = this;
 
     this.init = function() {

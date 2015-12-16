@@ -33,7 +33,7 @@
     "grunt-ng-annotate": "^0.9.2",
     "grunt-string-replace": "~0.2.4",
     "grunt-tslint": "^2.5.0",
-    "grunt-typescript": "^0.7.0",
+    "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
     "karma": "~0.12.31",
@@ -50,7 +50,14 @@
     "mocha": "2.2.4",
     "requirejs": "2.1.17",
     "rjs-build-analysis": "0.0.3",
-    "tslint": "^2.5.0-beta"
+    "tslint": "^2.5.0-beta",
+    "angular2": "2.0.0-beta.0",
+    "systemjs": "0.19.6",
+    "es6-promise": "^3.0.2",
+    "es6-shim": "^0.33.3",
+    "reflect-metadata": "0.1.2",
+    "rxjs": "5.0.0-beta.0",
+    "zone.js": "0.5.10"
   },
   "engines": {
     "node": "0.4.x",
@@ -66,25 +73,7 @@
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
-    "sinon": "1.16.1"
-  },
-  "jspm": {
-    "directories": {
-      "packages": "public/vendor/jspm",
-      "src": "public"
-    },
-    "configFile": "public/app/jspm.conf.js",
-    "dependencies": {
-      "angular": "github:angular/bower-angular@^1.4.5",
-      "angular-route": "github:angular/bower-angular-route@^1.4.5",
-      "angular-sanitize": "github:angular/bower-angular-sanitize@^1.4.5",
-      "angular2": "npm:angular2@^2.0.0-alpha.54",
-      "es6-promise": "npm:es6-promise@^3.0.2",
-      "es6-shim": "npm:es6-shim@^0.33.13",
-      "jquery": "github:components/jquery@^2.1.4",
-      "lodash": "npm:lodash@^3.10.1",
-      "moment": "github:moment/moment@^2.10.6"
-    },
-    "devDependencies": {}
+    "sinon": "1.16.1",
+    "typescript": "^1.7.5"
   }
 }

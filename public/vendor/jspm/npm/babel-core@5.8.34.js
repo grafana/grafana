@@ -1,1 +1,0 @@
-module.exports = require("npm:babel-core@5.8.34/browser.js");

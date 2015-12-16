@@ -1,9 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ = require('lodash');
-import queryPart = require('./query_part');
+import queryPart from './query_part';
 
-class InfluxQuery {
+export default class InfluxQuery {
   target: any;
   selectModels: any[];
   groupByParts: any;
@@ -212,5 +212,3 @@ measurement = '"' + measurement+ '"';
     return query;
   }
 }
-
-export = InfluxQuery;

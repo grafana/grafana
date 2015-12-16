@@ -1,7 +1,0 @@
-.DS_Store
-node_modules/
-test/
-components
-build
-.travis.yml
-testling.html

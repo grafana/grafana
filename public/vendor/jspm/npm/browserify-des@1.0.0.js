@@ -1,1 +1,0 @@
-module.exports = require("npm:browserify-des@1.0.0/index.js");

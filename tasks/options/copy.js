@@ -13,6 +13,21 @@ module.exports = function(config) {
       expand: true,
       src: ['**/*', '!**/*.less'],
       dest: '<%= genDir %>'
+    },
+
+    node_modules: {
+      cwd: './node_modules',
+      expand: true,
+      src: [
+        'angular2/bundles/**/*',
+        'systemjs/**/*',
+        'es6-promise/**/*',
+        'es6-shim/**/*',
+        'reflect-metadata/**/*',
+        'rxjs/**/*',
+        'zone/**/*',
+      ],
+      dest: '<%= srcDir %>/vendor/jspm'
     }
 
   };

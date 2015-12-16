@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
+  </head>
+  <body>
+
+    <h1 id="qunit-header">SystemJS Test Suite</h1>
+
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-test-area"></div>
+
+    <script src="../dist/system.src.js" type="text/javascript"></script>
+
+    <script src="../bower_components/qunit/qunit/qunit.js"></script>
+
+    <script>
+      System.paths.traceur = '../node_modules/traceur/bin/traceur.js';
+
+      QUnit.config.testTimeout = 2000;
+
+      QUnit.module("SystemJS Tracer");
+
+      function err(e) {
+        setTimeout(function() {
+          throw e.stack || e;
+          start();
+        });  
+      }
+
+      // enable tracing
+      System.pluginLoader = new System.constructor();
+      System.pluginLoader.paths = System.paths;
+      System.pluginLoader.baseURL = System.baseURL;
+      System.trace = true;
+      // System.execute = false;
+
+      asyncTest('ES6 Circular', function() {
+        System['import']('tests/es6-circular1.js').then(function(m) {
+          ok(System.loads[System.normalizeSync('tests/es6-circular1.js')].deps[0] == './es6-circular2.js');
+          start();
+        }, err);
+      });
+
+      asyncTest('AMD & CJS circular, ES6 Circular', function() {
+        System['import']('tests/all-circular1.js').then(function(m) {
+          ok(System.loads[System.normalizeSync('tests/all-circular1.js')].deps[0] == './all-circular2.js');
+          start();
+        }, err);
+      });
+
+      asyncTest('AMD -> System.register circular -> ES6', function() {
+        System['import']('tests/all-layers1.js').then(function(m) {
+          ok(System.loads[System.normalizeSync('tests/all-layers1.js')].deps[0] == './all-layers2.js');
+          start();
+        }, err);
+      });
+
+      asyncTest('Advanced compiler plugin', function() {
+        System['import']('tests/compiler-test.coffee!tests/advanced-plugin.js').then(function(m) {
+          ok(true);
+          start();
+        }, err);
+      });
+
+    </script>
+  </body>
+</html>

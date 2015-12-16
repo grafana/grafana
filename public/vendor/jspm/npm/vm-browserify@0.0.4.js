@@ -1,1 +1,0 @@
-module.exports = require("npm:vm-browserify@0.0.4/index.js");

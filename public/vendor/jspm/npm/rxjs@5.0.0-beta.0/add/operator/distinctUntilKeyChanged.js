@@ -1,5 +1,0 @@
-/* */ 
-var Observable_1 = require('../../Observable');
-var distinctUntilKeyChanged_1 = require('../../operator/distinctUntilKeyChanged');
-var observableProto = Observable_1.Observable.prototype;
-observableProto.distinctUntilKeyChanged = distinctUntilKeyChanged_1.distinctUntilKeyChanged;

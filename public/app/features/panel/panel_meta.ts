@@ -1,4 +1,4 @@
-class PanelMeta {
+export default class PanelMeta {
   description: any;
   fullscreen: any;
   editIcon: any;
@@ -46,4 +46,3 @@ class PanelMeta {
   }
 }
 
-export = PanelMeta;

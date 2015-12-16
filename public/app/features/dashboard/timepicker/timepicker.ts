@@ -5,8 +5,9 @@ import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
 import kbn = require('app/core/utils/kbn');
-import dateMath = require('app/core/utils/datemath');
-import rangeUtil = require('app/core/utils/rangeutil');
+
+import * as dateMath from 'app/core/utils/datemath';
+import * as rangeUtil from 'app/core/utils/rangeutil';
 
 declare var inputDate: any;
 

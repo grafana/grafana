@@ -1,1 +1,0 @@
-module.exports = require("npm:brorand@1.0.5/index.js");
