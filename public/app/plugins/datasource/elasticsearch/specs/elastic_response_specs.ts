@@ -416,7 +416,7 @@ describe('ElasticResponse', function() {
       targets = [{
         refId: 'A',
         metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
-        bucketAggs: [{ id: '2', type: 'date_histogram', field: 'host', settings: { dropFirstLast: true} }],
+        bucketAggs: [{ id: '2', type: 'date_histogram', field: 'host', settings: { trimEdges: 1} }],
       }];
 
       response = {
