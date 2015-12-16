@@ -10,8 +10,9 @@ function (_, queryDef) {
     this.response = response;
   }
 
-  ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, props) {
+  ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, props, dropFirstLast) {
     var metric, y, i, newSeries, bucket, value;
+    dropFirstLast = dropFirstLast ? 1 : 0;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -22,7 +23,7 @@ function (_, queryDef) {
       switch(metric.type) {
         case 'count': {
           newSeries = { datapoints: [], metric: 'count', props: props};
-          for (i = 0; i < esAgg.buckets.length; i++) {
+          for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
             newSeries.datapoints.push([value, bucket.key]);
@@ -31,17 +32,17 @@ function (_, queryDef) {
           break;
         }
         case 'percentiles': {
-          if (esAgg.buckets.length === 0) {
+          if (esAgg.buckets.length - dropFirstLast * 2 <= 0) {
             break;
           }
 
-          var firstBucket = esAgg.buckets[0];
+          var firstBucket = esAgg.buckets[dropFirstLast];
           var percentiles = firstBucket[metric.id].values;
 
           for (var percentileName in percentiles) {
             newSeries = {datapoints: [], metric: 'p' + percentileName, props: props, field: metric.field};
 
-            for (i = 0; i < esAgg.buckets.length; i++) {
+            for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
               bucket = esAgg.buckets[i];
               var values = bucket[metric.id].values;
               newSeries.datapoints.push([values[percentileName], bucket.key]);
@@ -59,7 +60,7 @@ function (_, queryDef) {
 
             newSeries = {datapoints: [], metric: statName, props: props, field: metric.field};
 
-            for (i = 0; i < esAgg.buckets.length; i++) {
+            for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
               bucket = esAgg.buckets[i];
               var stats = bucket[metric.id];
 
@@ -77,7 +78,7 @@ function (_, queryDef) {
         }
         default: {
           newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
-          for (i = 0; i < esAgg.buckets.length; i++) {
+          for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
             bucket = esAgg.buckets[i];
 
             value = bucket[metric.id];
@@ -158,7 +159,7 @@ function (_, queryDef) {
 
       if (depth === maxDepth) {
         if (aggDef.type === 'date_histogram')  {
-          this.processMetrics(esAgg, target, seriesList, props);
+          this.processMetrics(esAgg, target, seriesList, props, aggDef.settings && aggDef.settings.dropFirstLast);
         } else {
           this.processAggregationDocs(esAgg, aggDef, target, docs, props);
         }
