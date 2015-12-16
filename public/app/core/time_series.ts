@@ -18,7 +18,7 @@ function translateFillOption(fill) {
   return fill === 0 ? 0.001 : fill/10;
 }
 
-class TimeSeries {
+export default class TimeSeries {
   datapoints: any;
   id: string;
   label: string;
@@ -168,5 +168,3 @@ class TimeSeries {
     return this.valueFormater(value, this.decimals, this.scaledDecimals);
   }
 }
-
-export = TimeSeries;

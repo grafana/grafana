@@ -1,5 +1,5 @@
 
-class TableModel {
+export default class TableModel {
   columns: any[];
   rows: any[];
   type: string;
@@ -35,5 +35,3 @@ class TableModel {
     }
   }
 }
-
-export = TableModel;

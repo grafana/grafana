@@ -1,16 +1,15 @@
 ///<reference path="headers/common.d.ts" />
 
-///<amd-dependency path="bootstrap" />
-///<amd-dependency path="angular-strap" />
-///<amd-dependency path="angular-route" />
-///<amd-dependency path="angular-sanitize" />
-///<amd-dependency path="angular-dragdrop" />
-///<amd-dependency path="angular-bindonce" />
-///<amd-dependency path="angular-ui" />
-///<amd-dependency path="app/core/core" />
-
 import 'es6-shim';
 import 'es6-promise';
+import 'bootstrap';
+import 'angular-strap';
+import 'angular-route';
+import 'angular-sanitize';
+import 'angular-dragdrop';
+import 'angular-bindonce';
+import 'angular-ui';
+import 'app/core/core';
 
 import _ = require('lodash');
 import $ = require('jquery');
@@ -88,14 +87,14 @@ class GrafanaApp {
         this.preBootModules = null;
       });
     }).catch(function(err) {
-      console.log('Application boot failed: ' + err);
+      console.log('Application boot failed:', err);
     });
   }
  }
 
  var grafanaApp = new GrafanaApp();
 
- export = {
+ export default {
    init: function() {
      grafanaApp.init();
    },

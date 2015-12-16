@@ -1,0 +1,3 @@
+define({
+  dep: 'hi'
+})

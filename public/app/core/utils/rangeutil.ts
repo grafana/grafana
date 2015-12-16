@@ -2,8 +2,8 @@
 
 import moment = require('moment');
 import _ = require('lodash');
-import dateMath = require('app/core/utils/datemath');
 import angular = require('angular');
+import * as dateMath from 'app/core/utils/datemath';
 
 var spans = {
   's': {display: 'second'},
@@ -56,95 +56,89 @@ _.each(rangeOptions, function (frame) {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
-  function getRelativeTimesList(timepickerSettings, currentDisplay) {
-    var groups = _.groupBy(rangeOptions, (option: any) => {
-      option.active = option.display === currentDisplay;
-      return option.section;
-    });
+export  function getRelativeTimesList(timepickerSettings, currentDisplay) {
+  var groups = _.groupBy(rangeOptions, (option: any) => {
+    option.active = option.display === currentDisplay;
+    return option.section;
+  });
 
-    // _.each(timepickerSettings.time_options, (duration: string) => {
-    //   let info = describeTextRange(duration);
-    //   if (info.section) {
-    //     groups[info.section].push(info);
-    //   }
-    // });
+  // _.each(timepickerSettings.time_options, (duration: string) => {
+  //   let info = describeTextRange(duration);
+  //   if (info.section) {
+  //     groups[info.section].push(info);
+  //   }
+  // });
 
-    return groups;
+  return groups;
+}
+
+function formatDate(date) {
+  return date.format(absoluteFormat);
+}
+
+// handles expressions like
+// 5m
+// 5m to now/d
+// now/d to now
+// now/d
+// if no to <expr> then to now is assumed
+export function describeTextRange(expr: any) {
+  if (expr.indexOf('now') === -1) {
+    expr = 'now-' + expr;
   }
 
-  function formatDate(date) {
-    return date.format(absoluteFormat);
-  }
-
-  // handles expressions like
-  // 5m
-  // 5m to now/d
-  // now/d to now
-  // now/d
-  // if no to <expr> then to now is assumed
-  function describeTextRange(expr: any) {
-    if (expr.indexOf('now') === -1) {
-      expr = 'now-' + expr;
-    }
-
-    let opt = rangeIndex[expr + ' to now'];
-    if (opt) {
-      return opt;
-    }
-
-    opt = {from: expr, to: 'now'};
-
-    let parts = /^now-(\d+)(\w)/.exec(expr);
-    if (parts) {
-      let unit = parts[2];
-      let amount = parseInt(parts[1]);
-      let span = spans[unit];
-      if (span) {
-        opt.display = 'Last ' + amount + ' ' + span.display;
-        opt.section = span.section;
-        if (amount > 1) {
-          opt.display += 's';
-        }
-      }
-    } else {
-      opt.display = opt.from + ' to ' + opt.to;
-      opt.invalid = true;
-    }
-
+  let opt = rangeIndex[expr + ' to now'];
+  if (opt) {
     return opt;
   }
 
-  function describeTimeRange(range) {
-    var option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
-    if (option) {
-      return option.display;
-    }
+  opt = {from: expr, to: 'now'};
 
-    if (moment.isMoment(range.from) && moment.isMoment(range.to)) {
-      return formatDate(range.from) + ' to ' + formatDate(range.to);
+  let parts = /^now-(\d+)(\w)/.exec(expr);
+  if (parts) {
+    let unit = parts[2];
+    let amount = parseInt(parts[1]);
+    let span = spans[unit];
+    if (span) {
+      opt.display = 'Last ' + amount + ' ' + span.display;
+      opt.section = span.section;
+      if (amount > 1) {
+        opt.display += 's';
+      }
     }
-
-    if (moment.isMoment(range.from)) {
-      var toMoment = dateMath.parse(range.to, true);
-      return formatDate(range.from) + ' to ' + toMoment.fromNow();
-    }
-
-    if (moment.isMoment(range.to)) {
-      var from = dateMath.parse(range.from, false);
-      return from.fromNow() + ' to ' + formatDate(range.to);
-    }
-
-    if (range.to.toString() === 'now') {
-      var res = describeTextRange(range.from);
-      return res.display;
-    }
-
-    return range.from.toString() + ' to ' + range.to.toString();
+  } else {
+    opt.display = opt.from + ' to ' + opt.to;
+    opt.invalid = true;
   }
 
-export = {
-  getRelativeTimesList: getRelativeTimesList,
-  describeTextRange: describeTextRange,
-  describeTimeRange: describeTimeRange,
+  return opt;
+}
+
+export function describeTimeRange(range) {
+  var option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+  if (option) {
+    return option.display;
+  }
+
+  if (moment.isMoment(range.from) && moment.isMoment(range.to)) {
+    return formatDate(range.from) + ' to ' + formatDate(range.to);
+  }
+
+  if (moment.isMoment(range.from)) {
+    var toMoment = dateMath.parse(range.to, true);
+    return formatDate(range.from) + ' to ' + toMoment.fromNow();
+  }
+
+  if (moment.isMoment(range.to)) {
+    var from = dateMath.parse(range.from, false);
+    return from.fromNow() + ' to ' + formatDate(range.to);
+  }
+
+  if (range.to.toString() === 'now') {
+    var res = describeTextRange(range.from);
+    return res.display;
+  }
+
+  return range.from.toString() + ' to ' + range.to.toString();
 }
 

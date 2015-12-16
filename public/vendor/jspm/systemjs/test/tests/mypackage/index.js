@@ -1,0 +1,1 @@
+this.mapDep = 'bar';

@@ -3,7 +3,7 @@
 import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
-import PanelMeta = require('app/features/panel/panel_meta');
+import PanelMeta from 'app/features/panel/panel_meta';
 
 import {transformDataToTable} from './transformers';
 
@@ -128,4 +128,3 @@ export class TablePanelCtrl {
     $scope.init();
   }
 }
-

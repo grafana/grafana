@@ -3,14 +3,13 @@ module.exports = function() {
 
   return {
     build: {
-      src: ['public/**/*.ts', 'public/test/**/*.ts', "!public/vendor/**/*.ts"],
+      src: ['public/app/**/*.ts', "!public/vendor/**/*.ts", "!**/*_specs.ts"],
       dest: 'public_gen/',
       options: {
         module: 'system', //or commonjs
         target: 'es5', //or es3
-        rootDir: 'public/',
-        sourceRoot: 'public/',
         declaration: true,
+        "moduleResolution": "node",
         emitDecoratorMetadata: true,
         experimentalDecorators: true,
         sourceMap: true,

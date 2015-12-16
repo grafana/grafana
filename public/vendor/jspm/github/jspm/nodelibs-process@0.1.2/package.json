@@ -1,6 +1,0 @@
-{
-  "registry": "jspm",
-  "dependencies": {
-    "process": "npm:process@^0.11.0"
-  }
-}

@@ -1,0 +1,1 @@
+require('./deep-dep');

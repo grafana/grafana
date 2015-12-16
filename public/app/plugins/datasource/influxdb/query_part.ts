@@ -421,7 +421,7 @@ class QueryPart {
   }
 }
 
-export = {
+export default {
   create: function(part): any {
     return new QueryPart(part);
   },

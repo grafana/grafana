@@ -1,0 +1,5 @@
+{
+  "depCache": {
+    "./dir2/index.json": ["./depcache-test"]
+  }
+}

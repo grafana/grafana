@@ -1,6 +1,0 @@
-{
-  "registry": "npm",
-  "dependencies": {
-    "path-browserify": "0.0.0"
-  }
-}

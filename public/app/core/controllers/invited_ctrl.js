@@ -6,7 +6,7 @@ define([
 function (angular, coreModule, config) {
   'use strict';
 
-  coreModule.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
+  coreModule.default.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
 

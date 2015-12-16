@@ -1,0 +1,25 @@
+{
+  "README": "This is not encouraging a system.json, which is a bad idea.",
+
+  "main": ["wrong-main"],
+  "basePath": "lib",
+  "format": "cjs",
+  "defaultExtension": "js",
+  "meta": {
+    "*.json": { "loader": "./json.js" },
+    "noext": { "alias": "./json.json" },
+    "test.ts": true
+  },
+  "map": {
+    "./json": "./json.json",
+    "./dir/": "./dir/index",
+    "./dir2": "./dir2/index.json",
+    "./dir/test": "global-test",
+    "./env-module": {
+      "browser": "./env-module-browser.js"
+    },
+    "p": "./polate.js",
+    "./conditional1": "./interpolate.js#?p",
+    "./conditional2": "./inter#{p}.js"
+  }
+}

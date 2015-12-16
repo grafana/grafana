@@ -1,6 +1,0 @@
-{
-  "registry": "npm",
-  "dependencies": {
-    "stream-browserify": "^1.0.0"
-  }
-}

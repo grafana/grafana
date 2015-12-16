@@ -58,13 +58,18 @@
 	</script>
 
 	<!-- build:js [[.AppSubUrl]]/public/app/app.js -->
-	<script src="[[.AppSubUrl]]/public/vendor/jspm/system.js"></script>
+	<script src="[[.AppSubUrl]]/public/vendor/jspm/angular2/bundles/angular2-polyfills.js"></script>
+	<script src="[[.AppSubUrl]]/public/vendor/jspm/systemjs/dist/system.src.js"></script>
+	<script src="[[.AppSubUrl]]/public/vendor/jspm/rxjs/bundles/Rx.js"></script>
+	<script src="[[.AppSubUrl]]/public/vendor/jspm/angular2/bundles/angular2.dev.js"></script>
 	<script src="[[.AppSubUrl]]/public/app/jspm.conf.js"></script>
 	<!-- endbuild -->
 
 	<script>
 		System.import('app/app').then(function(app) {
-			app.init();
+			app.default.init();
+		}).catch(function(err) {
+			console.log('Loading app module failed: ', err);
 		});
 	</script>
 

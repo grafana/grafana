@@ -1,6 +1,0 @@
-{
-  "registry": "npm",
-  "dependencies": {
-    "vm-browserify": "0.0.4"
-  }
-}

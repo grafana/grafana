@@ -15,4 +15,5 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('test', ['default', 'karma:test']);
+
 };

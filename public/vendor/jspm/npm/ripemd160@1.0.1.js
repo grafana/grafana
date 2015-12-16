@@ -1,1 +1,0 @@
-module.exports = require("npm:ripemd160@1.0.1/lib/ripemd160.js");
