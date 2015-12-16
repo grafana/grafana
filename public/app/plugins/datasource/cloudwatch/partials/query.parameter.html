@@ -52,6 +52,9 @@
 		<li>
 			<input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="onChange()">
 		</li>
+		<li class="tight-form-item query-keyword">
+			Sum / Period <editor-checkbox text="" model="target.divideSumByPeriod" change="onChange()"></editor-checkbox>
+		</li>
 	</ul>
 	<div class="clearfix"></div>
 </div>
