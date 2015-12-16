@@ -43,14 +43,14 @@
 			<tip>Interval between points in seconds</tip>
 		</li>
 		<li>
-			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="refreshMetricData()" />
+			<input type="text" class="input-mini tight-form-input" ng-model="target.period" spellcheck='false' placeholder="auto" ng-model-onblur ng-change="onChange()" />
 		</li>
 		<li class="tight-form-item query-keyword">
 			Alias
 			<tip>{{metric}} {{stat}} {{namespace}} {{region}} {{DIMENSION_NAME}}</tip>
 		</li>
 		<li>
-			<input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="refreshMetricData()">
+			<input type="text" class="input-xlarge tight-form-input"  ng-model="target.alias" spellcheck='false' ng-model-onblur ng-change="onChange()">
 		</li>
 	</ul>
 	<div class="clearfix"></div>
