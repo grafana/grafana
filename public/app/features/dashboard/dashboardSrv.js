@@ -214,9 +214,7 @@ function (angular, $, _, moment) {
     };
 
     p.formatDate = function(date, format) {
-
-      date = this.checkDate(date);
-
+      date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
@@ -225,19 +223,11 @@ function (angular, $, _, moment) {
     };
 
     p.getRelativeTime = function(date) {
-
-      date = this.checkDate(date);
+      date = moment.isMoment(date) ? date : moment(date);
 
       return this.timezone === 'browser' ?
         moment(date).fromNow() :
         moment.utc(date).fromNow();
-    };
-
-    p.checkDate = function(date) {
-      if (!moment.isMoment(date)) {
-        date = moment(date);
-      }
-      return date;
     };
 
     p._updateSchema = function(old) {
