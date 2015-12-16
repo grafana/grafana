@@ -330,9 +330,6 @@ function (angular, _, moment, dateMath) {
             dps.push([null, lastTimestamp + periodMs]);
           }
           lastTimestamp = timestamp;
-          if (options.divideSumByPeriod && stat === 'Sum') {
-            dp[stat] = dp[stat] / options.period;
-          }
           dps.push([dp[stat], timestamp]);
         });
 
