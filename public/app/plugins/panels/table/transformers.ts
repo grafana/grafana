@@ -2,9 +2,9 @@
 
 import moment = require('moment');
 import _ = require('lodash');
-import flatten from 'app/core/utils/flatten';
-import TimeSeries from 'app/core/time_series';
-import TableModel from 'app/core/table_model';
+import flatten from '../../../core/utils/flatten';
+import TimeSeries from '../../../core/time_series';
+import TableModel from '../../../core/table_model';
 
 var transformers = {};
 

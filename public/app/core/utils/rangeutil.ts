@@ -3,7 +3,7 @@
 import moment = require('moment');
 import _ = require('lodash');
 import angular = require('angular');
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from './datemath';
 
 var spans = {
   's': {display: 'second'},

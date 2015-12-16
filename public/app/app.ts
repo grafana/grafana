@@ -1,8 +1,7 @@
 ///<reference path="headers/common.d.ts" />
 
-import 'es6-shim';
-import 'es6-promise';
 import 'bootstrap';
+import 'lodash-src';
 import 'angular-strap';
 import 'angular-route';
 import 'angular-sanitize';

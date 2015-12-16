@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import angular = require('angular');
-import _ = require('lodash');
+import $ = require('jquery');
 import config = require('app/core/config');
 import store = require('app/core/store');
 import coreModule from '../core_module';

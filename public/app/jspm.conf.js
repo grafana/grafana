@@ -3,15 +3,18 @@ System.config({
   defaultJSExtensions: true,
   transpiler: false,
   paths: {
-    "github:*": "public/vendor/jspm/github/*",
-    "npm:*": "public/vendor/jspm/npm/*",
-    "angular": "vendor/jquery/dist/jquery.js",
-    "jquery": "vendor/angular/angular.js",
+    moment:   'vendor/moment',
+    "jquery": "vendor/jquery/dist/jquery.js",
+    'lodash-src': 'vendor/lodash',
+    "lodash": 'app/core/lodash_extended',
+    "angular": "vendor/angular/angular.js",
     "bootstrap": "vendor/bootstrap/bootstrap.js",
-    "angular-ui": "vendor/angular-ui/ui-bootstrap-tpls.js",
-    "angular-strap": "vendor/angular-other/angular-strap.js",
-    "angular-dragdrop": "vendor/angular-native-dragdrop/draganddrop.js",
-    "angular-bindonce": "vendor/angular-bindonce/bindonce.js",
+    'angular-route':          'vendor/angular-route/angular-route',
+    'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
+    "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
+    "angular-strap":          "vendor/angular-other/angular-strap.js",
+    "angular-dragdrop":       "vendor/angular-native-dragdrop/draganddrop.js",
+    "angular-bindonce":       "vendor/angular-bindonce/bindonce.js",
     "spectrum": "vendor/spectrum.js",
     "filesaver": "vendor/filesaver.js",
     "bootstrap-tagsinput": "vendor/tagsinput/bootstrap-tagsinput.js",
@@ -33,5 +36,15 @@ System.config({
   },
 
   map: {
+  },
+
+  meta: {
+    'vendor/angular/angular.js': {
+      format: 'amd',
+      deps: ['jquery'],
+      exports: 'angular',
+    }
+
   }
+
 });
