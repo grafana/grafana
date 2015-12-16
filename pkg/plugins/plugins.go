@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -53,7 +54,7 @@ func scan(pluginDir string) error {
 		pluginPath: pluginDir,
 	}
 
-	if err := filepath.Walk(pluginDir, scanner.walker); err != nil {
+	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		return err
 	}
 
