@@ -63,9 +63,9 @@
 					Drop first &amp; last value
 				</li>
 				<li class="tight-form-item">
-					<input class="cr1" type="checkbox" id="agg[{{agg.id}}].settings.dropFirstLast"
+					<input class="cr1" type="checkbox" id="{{$id}}.dropFirstLast"
 					ng-model="agg.settings.dropFirstLast" ng-checked="agg.settings.dropFirstLast" ng-change="onChangeInternal()">
-					<label for="agg[{{agg.id}}].settings.dropFirstLast" class="cr1"></label>
+					<label for="{{$id}}.dropFirstLast" class="cr1"></label>
 				</li>
 				<li class="tight-form-item last">
 					<i class="fa fa-question-circle" bs-tooltip="'Ignore the first and last values of the dataset'" data-placement="right"></i>
