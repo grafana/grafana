@@ -517,6 +517,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "grep",
+    category: categories.Filter,
+    params: [{ name: "grep", type: 'string' }],
+    defaultParams: ['grep']
+  });
+
+  addFuncDef({
     name: 'highestCurrent',
     category: categories.Filter,
     params: [{ name: "count", type: "int" }],
