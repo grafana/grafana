@@ -10,9 +10,8 @@ function (_, queryDef) {
     this.response = response;
   }
 
-  ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, props, dropFirstLast) {
+  ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, props) {
     var metric, y, i, newSeries, bucket, value;
-    dropFirstLast = dropFirstLast ? 1 : 0;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -23,7 +22,7 @@ function (_, queryDef) {
       switch(metric.type) {
         case 'count': {
           newSeries = { datapoints: [], metric: 'count', props: props};
-          for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
+          for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
             newSeries.datapoints.push([value, bucket.key]);
@@ -32,17 +31,17 @@ function (_, queryDef) {
           break;
         }
         case 'percentiles': {
-          if (esAgg.buckets.length - dropFirstLast * 2 <= 0) {
+          if (esAgg.buckets.length === 0) {
             break;
           }
 
-          var firstBucket = esAgg.buckets[dropFirstLast];
+          var firstBucket = esAgg.buckets[0];
           var percentiles = firstBucket[metric.id].values;
 
           for (var percentileName in percentiles) {
             newSeries = {datapoints: [], metric: 'p' + percentileName, props: props, field: metric.field};
 
-            for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
+            for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
               var values = bucket[metric.id].values;
               newSeries.datapoints.push([values[percentileName], bucket.key]);
@@ -60,7 +59,7 @@ function (_, queryDef) {
 
             newSeries = {datapoints: [], metric: statName, props: props, field: metric.field};
 
-            for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
+            for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
               var stats = bucket[metric.id];
 
@@ -78,7 +77,7 @@ function (_, queryDef) {
         }
         default: {
           newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
-          for (i = dropFirstLast; i < esAgg.buckets.length - dropFirstLast; i++) {
+          for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
 
             value = bucket[metric.id];
@@ -159,7 +158,7 @@ function (_, queryDef) {
 
       if (depth === maxDepth) {
         if (aggDef.type === 'date_histogram')  {
-          this.processMetrics(esAgg, target, seriesList, props, aggDef.settings && aggDef.settings.dropFirstLast);
+          this.processMetrics(esAgg, target, seriesList, props);
         } else {
           this.processAggregationDocs(esAgg, aggDef, target, docs, props);
         }
@@ -270,6 +269,20 @@ function (_, queryDef) {
     seriesList.push(series);
   };
 
+  ElasticResponse.prototype.dropFirstLast = function(aggregations, target) {
+    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+
+    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.dropFirstLast;
+    if (shouldDropFirstAndLast) {
+      for(var prop in aggregations) {
+        var points = aggregations[prop];
+        if (points.datapoints.length > 2) {
+          points.datapoints = points.datapoints.slice(1, points.datapoints.length-1);
+        }
+      }
+    }
+  };
+
   ElasticResponse.prototype.getTimeSeries = function() {
     var seriesList = [];
 
@@ -290,6 +303,7 @@ function (_, queryDef) {
         var docs = [];
 
         this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
+        this.dropFirstLast(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
         for (var y = 0; y < tmpSeriesList.length; y++) {
