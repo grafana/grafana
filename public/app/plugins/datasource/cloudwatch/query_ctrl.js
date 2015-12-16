@@ -10,6 +10,7 @@ function (angular, _) {
   module.controller('CloudWatchQueryCtrl', function($scope) {
 
     $scope.init = function() {
+      $scope.target.divideSumByPeriod = $scope.target.divideSumByPeriod || false;
       $scope.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
     };
 
