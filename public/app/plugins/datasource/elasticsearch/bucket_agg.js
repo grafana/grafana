@@ -95,7 +95,10 @@ function (angular, _, queryDef) {
           settings.min_doc_count = settings.min_doc_count || 0;
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
-          settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+          }
 
           if (settings.trimEdges === undefined || settings.trimEdges < 0) {
             settings.trimEdges = 0;
