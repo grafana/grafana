@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	DataSources     map[string]DataSourcePlugin
-	Panels          map[string]PanelPlugin
-	ExternalPlugins map[string]ExternalPlugin
-	StaticRoutes    []*StaticRootConfig
-	Bundles         map[string]PluginBundle
+	DataSources  map[string]*DataSourcePlugin
+	Panels       map[string]*PanelPlugin
+	ApiPlugins   map[string]*ApiPlugin
+	StaticRoutes []*StaticRootConfig
+	Apps         map[string]*AppPlugin
 )
 
 type PluginScanner struct {
@@ -27,39 +27,39 @@ type PluginScanner struct {
 }
 
 func Init() error {
-	DataSources = make(map[string]DataSourcePlugin)
-	ExternalPlugins = make(map[string]ExternalPlugin)
+	DataSources = make(map[string]*DataSourcePlugin)
+	ApiPlugins = make(map[string]*ApiPlugin)
 	StaticRoutes = make([]*StaticRootConfig, 0)
-	Panels = make(map[string]PanelPlugin)
-	Bundles = make(map[string]PluginBundle)
+	Panels = make(map[string]*PanelPlugin)
+	Apps = make(map[string]*AppPlugin)
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
-	checkExternalPluginPaths()
+	checkPluginPaths()
 	checkDependencies()
 	return nil
 }
 
 func checkDependencies() {
-	for bundleType, bundle := range Bundles {
-		for _, reqPanel := range bundle.PanelPlugins {
+	for appType, app := range Apps {
+		for _, reqPanel := range app.PanelPlugins {
 			if _, ok := Panels[reqPanel]; !ok {
-				log.Fatal(4, "Bundle %s requires Panel type %s, but it is not present.", bundleType, reqPanel)
+				log.Fatal(4, "App %s requires Panel type %s, but it is not present.", appType, reqPanel)
 			}
 		}
-		for _, reqDataSource := range bundle.DatasourcePlugins {
+		for _, reqDataSource := range app.DatasourcePlugins {
 			if _, ok := DataSources[reqDataSource]; !ok {
-				log.Fatal(4, "Bundle %s requires DataSource type %s, but it is not present.", bundleType, reqDataSource)
+				log.Fatal(4, "App %s requires DataSource type %s, but it is not present.", appType, reqDataSource)
 			}
 		}
-		for _, reqExtPlugin := range bundle.ExternalPlugins {
-			if _, ok := ExternalPlugins[reqExtPlugin]; !ok {
-				log.Fatal(4, "Bundle %s requires DataSource type %s, but it is not present.", bundleType, reqExtPlugin)
+		for _, reqApiPlugin := range app.ApiPlugins {
+			if _, ok := ApiPlugins[reqApiPlugin]; !ok {
+				log.Fatal(4, "App %s requires ApiPlugin type %s, but it is not present.", appType, reqApiPlugin)
 			}
 		}
 	}
 }
 
-func checkExternalPluginPaths() error {
+func checkPluginPaths() error {
 	for _, section := range setting.Cfg.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
@@ -146,7 +146,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 			return errors.New("Did not find type property in plugin.json")
 		}
 
-		DataSources[p.Type] = p
+		DataSources[p.Type] = &p
 		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
@@ -161,12 +161,12 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 			return errors.New("Did not find type property in plugin.json")
 		}
 
-		Panels[p.Type] = p
+		Panels[p.Type] = &p
 		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
-	if pluginType == "external" {
-		p := ExternalPlugin{}
+	if pluginType == "api" {
+		p := ApiPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
@@ -174,12 +174,11 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		if p.Type == "" {
 			return errors.New("Did not find type property in plugin.json")
 		}
-		ExternalPlugins[p.Type] = p
-		addStaticRoot(p.StaticRootConfig, currentDir)
+		ApiPlugins[p.Type] = &p
 	}
 
-	if pluginType == "bundle" {
-		p := PluginBundle{}
+	if pluginType == "app" {
+		p := AppPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
@@ -187,44 +186,81 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		if p.Type == "" {
 			return errors.New("Did not find type property in plugin.json")
 		}
-		Bundles[p.Type] = p
+		Apps[p.Type] = &p
+		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
 	return nil
 }
 
-func GetEnabledPlugins(orgBundles []*models.PluginBundle) EnabledPlugins {
+func GetEnabledPlugins(orgApps []*models.AppPlugin) EnabledPlugins {
 	enabledPlugins := NewEnabledPlugins()
 
-	orgBundlesMap := make(map[string]*models.PluginBundle)
-	for _, orgBundle := range orgBundles {
-		orgBundlesMap[orgBundle.Type] = orgBundle
+	orgAppsMap := make(map[string]*models.AppPlugin)
+	for _, orgApp := range orgApps {
+		orgAppsMap[orgApp.Type] = orgApp
 	}
+	seenPanels := make(map[string]bool)
+	seenApi := make(map[string]bool)
 
-	for bundleType, bundle := range Bundles {
-		enabled := bundle.Enabled
-		// check if the bundle is stored in the DB.
-		if b, ok := orgBundlesMap[bundleType]; ok {
+	for appType, app := range Apps {
+		// start with enabled set to the default state listed in the json config.
+		enabled := app.Enabled
+
+		// check if the app is stored in the DB for this org and if so, use the
+		// enabled state stored there.
+		if b, ok := orgAppsMap[appType]; ok {
 			enabled = b.Enabled
 		}
 
 		if enabled {
-			for _, d := range bundle.DatasourcePlugins {
+			for _, d := range app.DatasourcePlugins {
 				if ds, ok := DataSources[d]; ok {
-					enabledPlugins.DataSourcePlugins[d] = &ds
+					enabledPlugins.DataSourcePlugins[d] = ds
 				}
 			}
-			for _, p := range bundle.PanelPlugins {
+			for _, p := range app.PanelPlugins {
 				if panel, ok := Panels[p]; ok {
-					enabledPlugins.PanelPlugins = append(enabledPlugins.PanelPlugins, &panel)
+					if _, ok := seenPanels[p]; !ok {
+						seenPanels[p] = true
+						enabledPlugins.PanelPlugins = append(enabledPlugins.PanelPlugins, panel)
+					}
 				}
 			}
-			for _, e := range bundle.ExternalPlugins {
-				if external, ok := ExternalPlugins[e]; ok {
-					enabledPlugins.ExternalPlugins = append(enabledPlugins.ExternalPlugins, &external)
+			for _, a := range app.ApiPlugins {
+				if api, ok := ApiPlugins[a]; ok {
+					if _, ok := seenApi[a]; !ok {
+						seenApi[a] = true
+						enabledPlugins.ApiPlugins = append(enabledPlugins.ApiPlugins, api)
+					}
 				}
+			}
+			enabledPlugins.AppPlugins = append(enabledPlugins.AppPlugins, app)
+		}
+	}
+
+	// add all plugins that are not part of an App.
+	for d, installedDs := range DataSources {
+		if installedDs.App == "" {
+			enabledPlugins.DataSourcePlugins[d] = installedDs
+		}
+	}
+	for p, panel := range Panels {
+		if panel.App == "" {
+			if _, ok := seenPanels[p]; !ok {
+				seenPanels[p] = true
+				enabledPlugins.PanelPlugins = append(enabledPlugins.PanelPlugins, panel)
 			}
 		}
 	}
+	for a, api := range ApiPlugins {
+		if api.App == "" {
+			if _, ok := seenApi[a]; !ok {
+				seenApi[a] = true
+				enabledPlugins.ApiPlugins = append(enabledPlugins.ApiPlugins, api)
+			}
+		}
+	}
+
 	return enabledPlugins
 }

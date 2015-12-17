@@ -157,8 +157,8 @@ func Register(r *macaron.Macaron) {
 
 		// PluginBundles
 		r.Group("/plugins", func() {
-			r.Get("/", wrap(GetPluginBundles))
-			r.Post("/", bind(m.UpdatePluginBundleCmd{}), wrap(UpdatePluginBundle))
+			r.Get("/", wrap(GetAppPlugins))
+			r.Post("/", bind(m.UpdateAppPluginCmd{}), wrap(UpdateAppPlugin))
 		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
@@ -196,7 +196,7 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
-	InitExternalPluginRoutes(r)
+	InitApiPluginRoutes(r)
 
 	r.NotFound(NotFoundHandler)
 }

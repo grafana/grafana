@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -114,14 +115,14 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 }
 
 func GetDataSourcePlugins(c *middleware.Context) {
-	dsList := make(map[string]interface{})
+	dsList := make(map[string]*plugins.DataSourcePlugin)
 
-	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
-	err := bus.Dispatch(&orgBundles)
+	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&orgApps)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get org plugin Bundles", err)
 	}
-	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
 	for key, value := range enabledPlugins.DataSourcePlugins {
 		if !value.BuiltIn {

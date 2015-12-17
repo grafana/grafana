@@ -12,6 +12,7 @@ type DataSourcePlugin struct {
 	Annotations        bool                   `json:"annotations"`
 	Metrics            bool                   `json:"metrics"`
 	BuiltIn            bool                   `json:"builtIn"`
+	App                string                 `json:"app"`
 	StaticRootConfig   *StaticRootConfig      `json:"staticRoot"`
 }
 
@@ -20,6 +21,7 @@ type PanelPlugin struct {
 	Name             string            `json:"name"`
 	Module           string            `json:"module"`
 	StaticRootConfig *StaticRootConfig `json:"staticRoot"`
+	App              string            `json:"app"`
 }
 
 type StaticRootConfig struct {
@@ -27,59 +29,63 @@ type StaticRootConfig struct {
 	Path string `json:"path"`
 }
 
-type ExternalPluginRoute struct {
+type ApiPluginRoute struct {
 	Path            string          `json:"path"`
 	Method          string          `json:"method"`
 	ReqSignedIn     bool            `json:"reqSignedIn"`
 	ReqGrafanaAdmin bool            `json:"reqGrafanaAdmin"`
 	ReqRole         models.RoleType `json:"reqRole"`
 	Url             string          `json:"url"`
+	App             string          `json:"app"`
 }
 
-type ExternalPluginJs struct {
+type AppPluginJs struct {
 	Module string `json:"module"`
 }
 
-type ExternalPluginNavLink struct {
+type AppPluginNavLink struct {
 	Text    string          `json:"text"`
 	Icon    string          `json:"icon"`
 	Href    string          `json:"href"`
 	ReqRole models.RoleType `json:"reqRole"`
 }
 
-type ExternalPluginCss struct {
+type AppPluginCss struct {
 	Light string `json:"light"`
 	Dark  string `json:"dark"`
 }
 
-type ExternalPlugin struct {
-	Type             string                   `json:"type"`
-	Routes           []*ExternalPluginRoute   `json:"routes"`
-	Js               []*ExternalPluginJs      `json:"js"`
-	Css              []*ExternalPluginCss     `json:"css"`
-	MainNavLinks     []*ExternalPluginNavLink `json:"mainNavLinks"`
-	StaticRootConfig *StaticRootConfig        `json:"staticRoot"`
+type ApiPlugin struct {
+	Type   string            `json:"type"`
+	Routes []*ApiPluginRoute `json:"routes"`
+	App    string            `json:"app"`
 }
 
-type PluginBundle struct {
-	Type              string   `json:"type"`
-	Enabled           bool     `json:"enabled"`
-	PanelPlugins      []string `json:"panelPlugins"`
-	DatasourcePlugins []string `json:"datasourcePlugins"`
-	ExternalPlugins   []string `json:"externalPlugins"`
-	Module            string   `json:"module"`
+type AppPlugin struct {
+	Type              string              `json:"type"`
+	Enabled           bool                `json:"enabled"`
+	PanelPlugins      []string            `json:"panelPlugins"`
+	DatasourcePlugins []string            `json:"datasourcePlugins"`
+	ApiPlugins        []string            `json:"apiPlugins"`
+	Module            string              `json:"module"`
+	Js                []*AppPluginJs      `json:"js"`
+	Css               []*AppPluginCss     `json:"css"`
+	MainNavLinks      []*AppPluginNavLink `json:"mainNavLinks"`
+	StaticRootConfig  *StaticRootConfig   `json:"staticRoot"`
 }
 
 type EnabledPlugins struct {
 	PanelPlugins      []*PanelPlugin
 	DataSourcePlugins map[string]*DataSourcePlugin
-	ExternalPlugins   []*ExternalPlugin
+	ApiPlugins        []*ApiPlugin
+	AppPlugins        []*AppPlugin
 }
 
 func NewEnabledPlugins() EnabledPlugins {
 	return EnabledPlugins{
 		PanelPlugins:      make([]*PanelPlugin, 0),
 		DataSourcePlugins: make(map[string]*DataSourcePlugin),
-		ExternalPlugins:   make([]*ExternalPlugin, 0),
+		ApiPlugins:        make([]*ApiPlugin, 0),
+		AppPlugins:        make([]*AppPlugin, 0),
 	}
 }

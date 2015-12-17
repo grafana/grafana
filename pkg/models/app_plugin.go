@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type PluginBundle struct {
+type AppPlugin struct {
 	Id       int64
 	Type     string
 	OrgId    int64
@@ -17,7 +17,7 @@ type PluginBundle struct {
 // COMMANDS
 
 // Also acts as api DTO
-type UpdatePluginBundleCmd struct {
+type UpdateAppPluginCmd struct {
 	Type     string                 `json:"type" binding:"Required"`
 	Enabled  bool                   `json:"enabled"`
 	JsonData map[string]interface{} `json:"jsonData"`
@@ -28,7 +28,7 @@ type UpdatePluginBundleCmd struct {
 
 // ---------------------
 // QUERIES
-type GetPluginBundlesQuery struct {
+type GetAppPluginsQuery struct {
 	OrgId  int64
-	Result []*PluginBundle
+	Result []*AppPlugin
 }

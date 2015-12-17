@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func InitExternalPluginRoutes(r *macaron.Macaron) {
-	for _, plugin := range plugins.ExternalPlugins {
-		log.Info("Plugin: Adding proxy routes for backend plugin")
+func InitApiPluginRoutes(r *macaron.Macaron) {
+	for _, plugin := range plugins.ApiPlugins {
+		log.Info("Plugin: Adding proxy routes for api plugin")
 		for _, route := range plugin.Routes {
 			url := util.JoinUrlFragments("/api/plugin-proxy/", route.Path)
 			handlers := make([]macaron.Handler, 0)
@@ -33,14 +33,14 @@ func InitExternalPluginRoutes(r *macaron.Macaron) {
 					handlers = append(handlers, middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN))
 				}
 			}
-			handlers = append(handlers, ExternalPlugin(route.Url))
+			handlers = append(handlers, ApiPlugin(route.Url))
 			r.Route(url, route.Method, handlers...)
 			log.Info("Plugin: Adding route %s", url)
 		}
 	}
 }
 
-func ExternalPlugin(routeUrl string) macaron.Handler {
+func ApiPlugin(routeUrl string) macaron.Handler {
 	return func(c *middleware.Context) {
 		path := c.Params("*")
 
@@ -51,13 +51,13 @@ func ExternalPlugin(routeUrl string) macaron.Handler {
 			return
 		}
 		targetUrl, _ := url.Parse(routeUrl)
-		proxy := NewExternalPluginProxy(string(ctx), path, targetUrl)
+		proxy := NewApiPluginProxy(string(ctx), path, targetUrl)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.RW(), c.Req.Request)
 	}
 }
 
-func NewExternalPluginProxy(ctx string, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx string, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host
