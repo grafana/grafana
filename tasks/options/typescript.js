@@ -11,7 +11,6 @@ module.exports = function() {
         rootDir: 'public/',
         sourceRoot: 'public/',
         declaration: true,
-        moduleResolution: 2,
         emitDecoratorMetadata: true,
         experimentalDecorators: true,
         sourceMap: true,
