@@ -10,11 +10,11 @@ import 'angular-bindonce';
 import 'angular-ui';
 import 'app/core/core';
 
+import $ from 'jquery';
+import angular from 'angular';
 import _ = require('lodash');
-import $ = require('jquery');
 import bootstrap = require('bootstrap');
 import kbn = require('app/core/utils/kbn');
-import angular = require('angular');
 import config = require('app/core/config');
 
 export class GrafanaApp {
@@ -66,8 +66,7 @@ export class GrafanaApp {
       this.useModule(angular.module(moduleName, []));
     });
 
-    //var preBootRequires = [System.import('app/features/all')];
-    var preBootRequires = [];
+    var preBootRequires = [System.import('app/features/all')];
     var pluginModules = config.bootData.pluginModules || [];
 
     // add plugin modules

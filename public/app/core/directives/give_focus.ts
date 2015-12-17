@@ -3,7 +3,7 @@
 import angular = require('angular');
 import coreModule from '../core_module';
 
-coreModule.directive('giveFocus', function() {
+coreModule.default.directive('giveFocus', function() {
   return function(scope, element, attrs) {
     element.click(function(e) {
       e.stopPropagation();

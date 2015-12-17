@@ -6,7 +6,7 @@ define([
 function (angular, coreModule, kbn) {
   'use strict';
 
-  coreModule.directive('tip', function($compile) {
+  coreModule.default.directive('tip', function($compile) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -18,7 +18,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('watchChange', function() {
+  coreModule.default.directive('watchChange', function() {
     return {
       scope: { onchange: '&watchChange' },
       link: function(scope, element) {
@@ -31,7 +31,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('editorOptBool', function($compile) {
+  coreModule.default.directive('editorOptBool', function($compile) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -51,7 +51,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('editorCheckbox', function($compile, $interpolate) {
+  coreModule.default.directive('editorCheckbox', function($compile, $interpolate) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -73,7 +73,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('gfDropdown', function ($parse, $compile, $timeout) {
+  coreModule.default.directive('gfDropdown', function ($parse, $compile, $timeout) {
     function buildTemplate(items, placement) {
       var upclass = placement === 'top' ? 'dropup' : '';
       var ul = [

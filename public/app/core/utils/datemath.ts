@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ = require('lodash');
-import moment = require('moment');
+import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 var unitsAsc = _.sortBy(units, function (unit) {
