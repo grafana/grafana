@@ -12,5 +12,6 @@
     "query": "app/plugins/datasource/cloudwatch/partials/query.editor.html"
   },
 
-  "metrics": true
+  "metrics": true,
+  "annotations": true
 }

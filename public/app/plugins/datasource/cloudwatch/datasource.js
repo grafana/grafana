@@ -2,10 +2,11 @@ define([
   'angular',
   'lodash',
   'moment',
+  'app/core/utils/datemath',
   './query_ctrl',
   './directives',
 ],
-function (angular, _) {
+function (angular, _, moment, dateMath) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -21,11 +22,11 @@ function (angular, _) {
     }
 
     CloudWatchDatasource.prototype.query = function(options) {
-      var start = convertToCloudWatchTime(options.range.from);
-      var end = convertToCloudWatchTime(options.range.to);
+      var start = convertToCloudWatchTime(options.range.from, false);
+      var end = convertToCloudWatchTime(options.range.to, true);
 
       var queries = [];
-      options = _.clone(options);
+      options = angular.copy(options);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -209,6 +210,74 @@ function (angular, _) {
       return $q.when([]);
     };
 
+    CloudWatchDatasource.prototype.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarmsForMetric',
+        parameters: { namespace: namespace, metricName: metricName, dimensions: dimensions, statistic: statistic, period: period }
+      });
+    };
+
+    CloudWatchDatasource.prototype.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarmHistory',
+        parameters: { alarmName: alarmName, startDate: startDate, endDate: endDate }
+      });
+    };
+
+    CloudWatchDatasource.prototype.annotationQuery = function(options) {
+      var annotation = options.annotation;
+      var region = templateSrv.replace(annotation.region);
+      var namespace = templateSrv.replace(annotation.namespace);
+      var metricName = templateSrv.replace(annotation.metricName);
+      var dimensions = convertDimensionFormat(annotation.dimensions);
+      var statistics = _.map(annotation.statistics, function(s) { return templateSrv.replace(s); });
+      var period = annotation.period || '300';
+      period = parseInt(period, 10);
+
+      if (!region || !namespace || !metricName || _.isEmpty(statistics)) { return $q.when([]); }
+
+      var d = $q.defer();
+      var self = this;
+      var allQueryPromise = _.map(statistics, function(statistic) {
+        return self.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period);
+      });
+      $q.all(allQueryPromise).then(function(alarms) {
+        var eventList = [];
+
+        var start = convertToCloudWatchTime(options.range.from, false);
+        var end = convertToCloudWatchTime(options.range.to, true);
+        _.chain(alarms)
+        .pluck('MetricAlarms')
+        .flatten()
+        .each(function(alarm) {
+          if (!alarm) {
+            d.resolve(eventList);
+            return;
+          }
+
+          self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
+            _.each(history.AlarmHistoryItems, function(h) {
+              var event = {
+                annotation: annotation,
+                time: Date.parse(h.Timestamp),
+                title: h.AlarmName,
+                tags: [h.HistoryItemType],
+                text: h.HistorySummary
+              };
+
+              eventList.push(event);
+            });
+
+            d.resolve(eventList);
+          });
+        });
+      });
+
+      return d.promise;
+    };
+
     CloudWatchDatasource.prototype.testDatasource = function() {
       /* use billing metrics for test */
       var region = this.defaultRegion;
@@ -276,7 +345,10 @@ function (angular, _) {
       });
     }
 
-    function convertToCloudWatchTime(date) {
+    function convertToCloudWatchTime(date, roundUp) {
+      if (_.isString(date)) {
+        date = dateMath.parse(date, roundUp);
+      }
       return Math.round(date.valueOf() / 1000);
     }
 

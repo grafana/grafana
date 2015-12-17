@@ -4,6 +4,7 @@ module.exports = function(config) {
   return {
     release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
     gen: ['<%= genDir %>'],
-    temp: ['<%= tempDir %>']
+    temp: ['<%= tempDir %>'],
+    css: ['<%= genDir %>/css']
   };
 };

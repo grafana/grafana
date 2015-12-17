@@ -44,7 +44,7 @@
 			Query
 		</li>
 		<li>
-			<input type="text" class="tight-form-input" style="width: 345px;" ng-model="target.query" spellcheck='false' placeholder="Lucence query" ng-blur="get_data()">
+			<input type="text" class="tight-form-input" style="width: 345px;" ng-model="target.query" spellcheck='false' placeholder="Lucene query" ng-blur="get_data()">
 		</li>
 		<li class="tight-form-item query-keyword">
 			Alias
@@ -65,7 +65,8 @@
 		<elastic-metric-agg
 			target="target" index="$index"
 			get-fields="getFields($fieldType)"
-			on-change="queryUpdated()">
+			on-change="queryUpdated()"
+			es-version="esVersion">
 		</elastic-metric-agg>
 	</div>
 
