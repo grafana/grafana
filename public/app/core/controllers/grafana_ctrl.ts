@@ -1,9 +1,10 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular = require('angular');
-import $ = require('jquery');
 import config = require('app/core/config');
 import store = require('app/core/store');
+
+import angular from 'angular';
+import $ from 'jquery';
 import coreModule from '../core_module';
 
 coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {

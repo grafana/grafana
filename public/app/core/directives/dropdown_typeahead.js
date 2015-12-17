@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('dropdownTypeahead', function($compile) {
+  coreModule.default.directive('dropdownTypeahead', function($compile) {
 
     var inputTemplate = '<input type="text"'+
       ' class="tight-form-input input-medium tight-form-input"' +

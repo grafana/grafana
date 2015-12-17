@@ -1,5 +1,4 @@
 ///<reference path="lodash/lodash.d.ts" />
-///<reference path="moment/moment.d.ts" />
 ///<reference path="../../vendor/npm/angular2/typings/tsd.d.ts" />
 ///<reference path="../../vendor/npm/angular2/manual_typings/globals.d.ts" />
 
@@ -11,18 +10,23 @@ declare module 'app/core/config' {
 
 declare var System: any;
 
+declare module 'moment' {
+  var moment : any;
+  export default moment;
+}
+
 declare module 'angular' {
-  var angular : any;
-  export = angular;
+  var angular: any;
+  export default angular;
 }
 
 declare module 'jquery' {
-  var jquery : any;
-  export = jquery;
+  var jquery: any;
+  export default jquery;
 }
 
 declare module 'app/core/utils/kbn' {
-  var kbn : any;
+  var kbn: any;
   export = kbn;
 }
 

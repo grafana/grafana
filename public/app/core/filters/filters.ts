@@ -1,9 +1,10 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular = require('angular');
 import jquery = require('jquery');
-import moment = require('moment');
 import _ = require('lodash');
+
+import angular from 'angular';
+import moment from 'moment';
 import coreModule from '../core_module';
 
 coreModule.filter('stringSort', function() {

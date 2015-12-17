@@ -1,7 +1,7 @@
 System.config({
   defaultJSExtenions: true,
   paths: {
-    moment:   'public/vendor/moment.js',
+    'moment': 'public/vendor/moment.js',
     "jquery": "public/vendor/jquery/dist/jquery.js",
     'lodash-src': 'public/vendor/lodash.js',
     "lodash": 'public/app/core/lodash_extended.js',
@@ -14,7 +14,6 @@ System.config({
     "angular-dragdrop":       "public/vendor/angular-native-dragdrop/draganddrop.js",
     "angular-bindonce":       "public/vendor/angular-bindonce/bindonce.js",
     "spectrum": "public/vendor/spectrum.js",
-    "filesaver": "public/vendor/filesaver.js",
     "bootstrap-tagsinput": "public/vendor/tagsinput/bootstrap-tagsinput.js",
     "jquery.flot": "vendor/flot/jquery.flot",
     "jquery.flot.pie": "vendor/flot/jquery.flot.pie",
@@ -31,6 +30,9 @@ System.config({
     app: {
       defaultExtension: 'js',
     },
+    vendor: {
+      defaultExtension: 'js',
+    },
   },
 
   map: {
@@ -44,8 +46,7 @@ System.config({
       format: 'amd',
       deps: ['jquery'],
       exports: 'angular',
-    }
-
+    },
   }
 
 });
