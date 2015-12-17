@@ -10,12 +10,12 @@ function (angular) {
     return {
       restrict: 'E',
       link: function(scope, elem) {
-        var directive = 'grafana-plugin-core';
+        var directive = 'grafana-app-core';
         //wait for the parent scope to be applied.
         scope.$watch("current", function(newVal) {
           if (newVal) {
             if (newVal.module) {
-              directive = 'grafana-plugin-'+newVal.type;
+              directive = 'grafana-app-'+newVal.type;
             }
             scope.require([newVal.module], function () {
               var panelEl = angular.element(document.createElement(directive));
@@ -28,10 +28,10 @@ function (angular) {
     };
   });
 
-  module.directive('grafanaPluginCore', function() {
+  module.directive('grafanaAppCore', function() {
     return {
       restrict: 'E',
-      templateUrl: 'app/features/org/partials/pluginConfigCore.html',
+      templateUrl: 'app/features/org/partials/appConfigCore.html',
       transclude: true,
       link: function(scope) {
         scope.update = function() {
