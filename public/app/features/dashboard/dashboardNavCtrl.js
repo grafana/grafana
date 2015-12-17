@@ -20,6 +20,10 @@ function (angular, _) {
       $location.search(search);
     };
 
+    $scope.showSettingsMenu = function() {
+      return $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
+    };
+
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
         backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
