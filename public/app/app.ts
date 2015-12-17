@@ -17,6 +17,9 @@ import kbn = require('app/core/utils/kbn');
 import angular = require('angular');
 import config = require('app/core/config');
 
+import mod from 'app/core/core_module';
+console.log(mod);
+
 class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
@@ -66,7 +69,8 @@ class GrafanaApp {
       this.useModule(angular.module(moduleName, []));
     });
 
-    var preBootRequires = [System.import('app/features/all')];
+    //var preBootRequires = [System.import('app/features/all')];
+    var preBootRequires = [];
     var pluginModules = config.bootData.pluginModules || [];
 
     // add plugin modules
@@ -76,7 +80,7 @@ class GrafanaApp {
 
     Promise.all(preBootRequires).then(() => {
       // disable tool tip animation
-      $.fn.tooltip.defaults.animation = false;
+      //$.fn.tooltip.defaults.animation = false;
       // bootstrap the app
       angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
         _.each(this.preBootModules, module => {

@@ -1,16 +1,15 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "module": "system",
-        "moduleResolution": 2,
-        "noEmitOnError": true
-    },
-    "files": [
-        "public/app/core/core_module.ts"
-    ]
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "sourceMap": true,
+      "declaration": true,
+      "outDir": "public_gen",
+      "noImplicitAny": false,
+      "target": "es5",
+      "rootDir": "public",
+      "module": "system",
+      "noEmitOnError": true,
+      "moduleResolution": "classic"
+    }
 }
