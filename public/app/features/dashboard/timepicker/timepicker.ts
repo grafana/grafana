@@ -6,8 +6,8 @@ import _ = require('lodash');
 import moment = require('moment');
 import kbn = require('app/core/utils/kbn');
 
-import * as dateMath from '../../../core/utils/datemath';
-import * as rangeUtil from '../../../core/utils/rangeutil';
+import * as dateMath from 'app/core/utils/datemath';
+import * as rangeUtil from 'app/core/utils/rangeutil';
 
 declare var inputDate: any;
 
