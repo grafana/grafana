@@ -34,7 +34,7 @@ System.config({
   },
 
   map: {
-    'vendor/jspm/angular2': 'angular2',
+    'vendor/npm/angular2': 'angular2',
     app: 'public/app',
     vendor: 'public/vendor',
   },
