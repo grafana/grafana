@@ -28,7 +28,7 @@ import * as routes from 'app/core/routes/all';
 // export * from './directives/give_focus'
 // export * from './filters/filters'
 
-import {Component} from 'vendor/jspm/angular2/core';
+import {Component} from 'vendor/npm/angular2/core';
 console.log(Component);
 
 //  console.log(Component);

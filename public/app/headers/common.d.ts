@@ -1,7 +1,7 @@
 ///<reference path="lodash/lodash.d.ts" />
 ///<reference path="moment/moment.d.ts" />
-///<reference path="../../vendor/jspm/angular2/typings/tsd.d.ts" />
-///<reference path="../../vendor/jspm/angular2/manual_typings/globals.d.ts" />
+///<reference path="../../vendor/npm/angular2/typings/tsd.d.ts" />
+///<reference path="../../vendor/npm/angular2/manual_typings/globals.d.ts" />
 
 // dummy modules
 declare module 'app/core/config' {

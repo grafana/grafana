@@ -27,7 +27,7 @@ module.exports = function(config) {
         'rxjs/**/*',
         'zone/**/*',
       ],
-      dest: '<%= srcDir %>/vendor/jspm'
+      dest: '<%= srcDir %>/vendor/npm'
     }
 
   };
