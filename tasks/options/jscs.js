@@ -4,7 +4,6 @@ module.exports = function(config) {
       'Gruntfile.js',
       '<%= srcDir %>/app/**/*.js',
       '<%= srcDir %>/plugins/**/*.js',
-      '!<%= srcDir %>/app/panels/*/{lib,leaflet}/*',
       '!<%= srcDir %>/app/dashboards/*'
     ],
     options: {

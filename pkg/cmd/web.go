@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,12 +29,18 @@ func newMacaron() *macaron.Macaron {
 		m.Use(middleware.Gziper())
 	}
 
-	mapStatic(m, "", "public")
-	mapStatic(m, "app", "app")
-	mapStatic(m, "css", "css")
-	mapStatic(m, "img", "img")
-	mapStatic(m, "fonts", "fonts")
-	mapStatic(m, "robots.txt", "robots.txt")
+	for _, route := range plugins.StaticRoutes {
+		pluginRoute := path.Join("/public/plugins/", route.Url)
+		log.Info("Plugin: Adding static route %s -> %s", pluginRoute, route.Path)
+		mapStatic(m, route.Path, "", pluginRoute)
+	}
+
+	mapStatic(m, setting.StaticRootPath, "", "public")
+	mapStatic(m, setting.StaticRootPath, "app", "app")
+	mapStatic(m, setting.StaticRootPath, "css", "css")
+	mapStatic(m, setting.StaticRootPath, "img", "img")
+	mapStatic(m, setting.StaticRootPath, "fonts", "fonts")
+	mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -51,7 +58,7 @@ func newMacaron() *macaron.Macaron {
 	return m
 }
 
-func mapStatic(m *macaron.Macaron, dir string, prefix string) {
+func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
@@ -63,7 +70,7 @@ func mapStatic(m *macaron.Macaron, dir string, prefix string) {
 	}
 
 	m.Use(httpstatic.Static(
-		path.Join(setting.StaticRootPath, dir),
+		path.Join(rootDir, dir),
 		httpstatic.StaticOptions{
 			SkipLogging: true,
 			Prefix:      prefix,

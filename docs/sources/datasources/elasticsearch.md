@@ -53,6 +53,35 @@ a time pattern for the index name or a wildcard.
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add / remove
 metrics or group bys. Some metrics and group by have options, click the option text to expand the the row to view and edit metric or group by options.
 
+## Pipeline metrics
+
+If you have Elasticsearch 2.x and Grafana 2.6 or above then you can use pipeline metric aggregations like
+**Moving Average** and **Derivative**. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric
+to hide metrics from appearing in the graph. This is useful for metrics you only have in the query to be used
+in a pipeline metric.
+
+![](/img/elasticsearch/pipeline_metrics_editor.png)
+
+## Templating
+
+The Elasticsearch datasource supports two types of queries you can use to fill template variables with values.
+
+### Possible values for a field
+
+```json
+{"find": "terms", "field": "@hostname"}
+```
+
+### Fields filtered by type
+```json
+{"find": "fields", "type": "string"}
+```
+
+### Multi format / All format
+Use lucene format.
+
+
+
 ## Annotations
 TODO
 

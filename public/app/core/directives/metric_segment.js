@@ -55,8 +55,8 @@ function (_, $, coreModule) {
           });
         };
 
-        $scope.switchToLink = function() {
-          if (linkMode) { return; }
+        $scope.switchToLink = function(fromClick) {
+          if (linkMode && !fromClick) { return; }
 
           clearTimeout(cancelBlur);
           cancelBlur = null;
@@ -69,7 +69,7 @@ function (_, $, coreModule) {
         $scope.inputBlur = function() {
           // happens long before the click event on the typeahead options
           // need to have long delay because the blur
-          cancelBlur = setTimeout($scope.switchToLink, 100);
+          cancelBlur = setTimeout($scope.switchToLink, 200);
         };
 
         $scope.source = function(query, callback) {
@@ -100,7 +100,7 @@ function (_, $, coreModule) {
           }
 
           $input.val(value);
-          $scope.switchToLink();
+          $scope.switchToLink(true);
 
           return value;
         };

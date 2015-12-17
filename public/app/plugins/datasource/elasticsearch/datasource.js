@@ -19,12 +19,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
       this.basicAuth = datasource.basicAuth;
+      this.withCredentials = datasource.withCredentials;
       this.url = datasource.url;
       this.name = datasource.name;
       this.index = datasource.index;
       this.timeField = datasource.jsonData.timeField;
       this.esVersion = datasource.jsonData.esVersion;
       this.indexPattern = new IndexPattern(datasource.index, datasource.jsonData.interval);
+      this.interval = datasource.jsonData.timeInterval;
       this.queryBuilder = new ElasticQueryBuilder({
         timeField: this.timeField,
         esVersion: this.esVersion,
@@ -38,8 +40,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         data: data
       };
 
-      if (this.basicAuth) {
+      if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
+      }
+      if (this.basicAuth) {
         options.headers = {
           "Authorization": this.basicAuth
         };
@@ -109,7 +113,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           for (var i = 0; i < fieldNames.length; i++) {
             fieldValue = fieldValue[fieldNames[i]];
             if (!fieldValue) {
-              console.log('could not find field in annotatation: ', fieldName);
+              console.log('could not find field in annotation: ', fieldName);
               return '';
             }
           }

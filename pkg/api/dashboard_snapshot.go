@@ -12,6 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+func GetSharingOptions(c *middleware.Context) {
+	c.JSON(200, util.DynMap{
+		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
+		"externalSnapshotName": setting.ExternalSnapshotName,
+		"externalEnabled":      setting.ExternalEnabled,
+	})
+}
+
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
 	if cmd.External {
 		// external snapshot ref requires key and delete key

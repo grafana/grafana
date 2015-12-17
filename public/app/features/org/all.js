@@ -6,4 +6,8 @@ define([
   './userInviteCtrl',
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
+  './pluginsCtrl',
+  './pluginEditCtrl',
+  './plugin_srv',
+  './plugin_directive',
 ], function () {});

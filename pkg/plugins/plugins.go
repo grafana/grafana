@@ -6,18 +6,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-type PluginMeta struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
-}
-
 var (
-	DataSources map[string]interface{}
+	DataSources  map[string]DataSourcePlugin
+	Panels       map[string]PanelPlugin
+	StaticRoutes []*StaticRootConfig
 )
 
 type PluginScanner struct {
@@ -25,18 +24,37 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Init() {
+func Init() error {
+	DataSources = make(map[string]DataSourcePlugin)
+	StaticRoutes = make([]*StaticRootConfig, 0)
+	Panels = make(map[string]PanelPlugin)
+
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
+	scan(path.Join(setting.PluginsPath))
+	checkExternalPluginPaths()
+
+	return nil
+}
+
+func checkExternalPluginPaths() error {
+	for _, section := range setting.Cfg.Sections() {
+		if strings.HasPrefix(section.Name(), "plugin.") {
+			path := section.Key("path").String()
+			if path != "" {
+				log.Info("Plugin: Scaning dir %s", path)
+				scan(path)
+			}
+		}
+	}
+	return nil
 }
 
 func scan(pluginDir string) error {
-	DataSources = make(map[string]interface{})
-
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
 	}
 
-	if err := filepath.Walk(pluginDir, scanner.walker); err != nil {
+	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		return err
 	}
 
@@ -47,7 +65,7 @@ func scan(pluginDir string) error {
 	return nil
 }
 
-func (scanner *PluginScanner) walker(path string, f os.FileInfo, err error) error {
+func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
@@ -57,17 +75,25 @@ func (scanner *PluginScanner) walker(path string, f os.FileInfo, err error) erro
 	}
 
 	if f.Name() == "plugin.json" {
-		err := scanner.loadPluginJson(path)
+		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			log.Error(3, "Failed to load plugin json file: %v,  err: %v", path, err)
+			log.Error(3, "Failed to load plugin json file: %v,  err: %v", currentPath, err)
 			scanner.errors = append(scanner.errors, err)
 		}
 	}
 	return nil
 }
 
-func (scanner *PluginScanner) loadPluginJson(path string) error {
-	reader, err := os.Open(path)
+func addStaticRoot(staticRootConfig *StaticRootConfig, currentDir string) {
+	if staticRootConfig != nil {
+		staticRootConfig.Path = path.Join(currentDir, staticRootConfig.Path)
+		StaticRoutes = append(StaticRoutes, staticRootConfig)
+	}
+}
+
+func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
+	currentDir := filepath.Dir(pluginJsonFilePath)
+	reader, err := os.Open(pluginJsonFilePath)
 	if err != nil {
 		return err
 	}
@@ -87,11 +113,33 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 	}
 
 	if pluginType == "datasource" {
-		datasourceType, exists := pluginJson["type"]
-		if !exists {
+		p := DataSourcePlugin{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+
+		if p.Type == "" {
 			return errors.New("Did not find type property in plugin.json")
 		}
-		DataSources[datasourceType.(string)] = pluginJson
+
+		DataSources[p.Type] = p
+		addStaticRoot(p.StaticRootConfig, currentDir)
+	}
+
+	if pluginType == "panel" {
+		p := PanelPlugin{}
+		reader.Seek(0, 0)
+		if err := jsonParser.Decode(&p); err != nil {
+			return err
+		}
+
+		if p.Type == "" {
+			return errors.New("Did not find type property in plugin.json")
+		}
+
+		Panels[p.Type] = p
+		addStaticRoot(p.StaticRootConfig, currentDir)
 	}
 
 	return nil

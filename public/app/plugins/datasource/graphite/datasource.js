@@ -37,6 +37,9 @@ function (angular, _, $, config, dateMath) {
         };
 
         var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+        if (params.length === 0) {
+          return $q.when([]);
+        }
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -235,6 +238,7 @@ function (angular, _, $, config, dateMath) {
       var target, targetValue, i;
       var regex = /\#([A-Z])/g;
       var intervalFormatFixRegex = /'(\d+)m'/gi;
+      var hasTargets = false;
 
       if (options.format !== 'png') {
         options['format'] = 'json';
@@ -274,6 +278,7 @@ function (angular, _, $, config, dateMath) {
         targets[target.refId] = targetValue;
 
         if (!target.hide) {
+          hasTargets = true;
           clean_options.push("target=" + encodeURIComponent(targetValue));
         }
       }
@@ -284,6 +289,10 @@ function (angular, _, $, config, dateMath) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
       });
+
+      if (!hasTargets) {
+        return [];
+      }
 
       return clean_options;
     };
