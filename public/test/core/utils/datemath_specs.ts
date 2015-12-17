@@ -24,8 +24,8 @@ describe("DateMath", () => {
       expect(dateMath.parse('now+5f')).to.be(undefined);
     });
 
-    it('should return undefined if rounding unit is not 1', () => {
-      expect(dateMath.parse('now/2y')).to.be(undefined);
+    it('should return undefined if rounding unit is not an intiger', () => {
+      expect(dateMath.parse('now/1.9y')).to.be(undefined);
       expect(dateMath.parse('now/0.5y')).to.be(undefined);
     });
 
@@ -42,8 +42,31 @@ describe("DateMath", () => {
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    var startOfDay = dateMath.parse('now/d', false).valueOf()
+    var startOfDay = dateMath.parse('now/d', false).valueOf();
     expect(startOfDay).to.be(expected.getTime());
+  });
+
+  it("now/2m should set to the closest (preceding) even minute", () => {
+    var expected = new Date();
+    var min = expected.getMinutes();
+    min = Math.floor(min / 2) * 2;
+    expected.setMinutes(min);
+    expected.setSeconds(0);
+    expected.setMilliseconds(0);
+
+    var evenMinute = dateMath.parse('now/2m', false).valueOf();
+    expect(evenMinute).to.be(expected.getTime());
+  });
+
+  it("now/10s should set to start of current 10s interval", () => {
+    var expected = new Date();
+    var sec = expected.getSeconds();
+    sec = Math.floor(sec / 10) * 10;
+    expected.setSeconds(sec);
+    expected.setMilliseconds(0);
+
+    var interval10s = dateMath.parse('now/10s', false).valueOf();
+    expect(interval10s).to.be(expected.getTime());
   });
 
   describe('subtraction', () => {
