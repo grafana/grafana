@@ -31,13 +31,29 @@
 	</ul>
 	<div class="clearfix"></div>
 </div>
-<div class="tight-form last">
+<div class="tight-form">
 	<ul class="tight-form-list">
 		<li class="tight-form-item" style="width: 144px">
 			Version
 		</li>
 		<li>
 			<select class="input-medium tight-form-input" ng-model="current.jsonData.esVersion" ng-options="f.value as f.name for f in esVersions"></select>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form last">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 144px">
+			Group by time interval
+		</li>
+		<li>
+			<input type="text" class="input-medium tight-form-input input-xlarge" ng-model="current.jsonData.timeInterval"
+						 spellcheck='false' placeholder="example: >10s">
+		</li>
+		<li class="tight-form-item">
+			<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
