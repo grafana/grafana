@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/service"
+	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/private/protocol/ec2query"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -67,7 +67,7 @@ func BenchmarkEC2QueryBuild_Simple_ec2AttachNetworkInterface(b *testing.B) {
 }
 
 func benchEC2QueryBuild(b *testing.B, opName string, params interface{}) {
-	svc := service.New(nil)
+	svc := awstesting.NewClient()
 	svc.ServiceName = "ec2"
 	svc.APIVersion = "2015-04-15"
 

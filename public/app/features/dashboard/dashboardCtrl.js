@@ -1,10 +1,10 @@
 define([
   'angular',
   'jquery',
-  'config',
-  'lodash',
+  'app/core/config',
+  'moment',
 ],
-function (angular, $, config) {
+function (angular, $, config, moment) {
   "use strict";
 
   var module = angular.module('grafana.controllers');
@@ -148,6 +148,10 @@ function (angular, $, config) {
       $scope.$on('$destroy', function() {
         angular.element(window).unbind('resize');
       });
+    };
+
+    $scope.formatDate = function(date) {
+      return moment(date).format('MMM Do YYYY, h:mm:ss a');
     };
 
   });

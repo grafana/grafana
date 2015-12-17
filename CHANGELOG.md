@@ -1,4 +1,51 @@
-# 2.5 (unreleased)
+# 3.0.0 (unrelased master branch)
+
+
+### Breaking changes
+**InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via improved plugin system, closes #3523
+**KairosDB** The data source is no longer included in default builds. Can easily be installed via improved plugin system, closes #3524
+
+# 2.6.1 (unrelased, 2.6.x branch)
+
+### New Features
+* **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
+
+# 2.6.0 (2015-12-14)
+
+### New Features
+* **Elasticsearch**: Support for pipeline aggregations Moving average and derivative, closes [#2715](https://github.com/grafana/grafana/issues/2715)
+* **Elasticsearch**: Support for inline script and missing options for metrics, closes [#3500](https://github.com/grafana/grafana/issues/3500)
+* **Syslog**: Support for syslog logging, closes [#3161](https://github.com/grafana/grafana/pull/3161)
+* **Timepicker**: Always show refresh button even with refresh rate, closes [#3498](https://github.com/grafana/grafana/pull/3498)
+* **Login**: Make it possible to change the login hint on the login page, closes [#2571](https://github.com/grafana/grafana/pull/2571)
+
+### Bug Fixes
+* **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
+* **influxdb**: Fixed issue showing Group By label only on first query, fixes [#3453](https://github.com/grafana/grafana/issues/3453)
+* **logging**: Add more verbose info logging for http reqeusts, closes [#3405](https://github.com/grafana/grafana/pull/3405)
+
+# 2.6.0-Beta1 (2015-12-04)
+
+### New Table Panel
+* **table**:  New powerful and flexible table panel, closes [#215](https://github.com/grafana/grafana/issues/215)
+
+### Enhancements
+* **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
+* **Elasticsearch**: Support for dynamic daily indices for annotations, closes [#3061](https://github.com/grafana/grafana/issues/3061)
+* **Elasticsearch**: Support for setting min_doc_count for date histogram, closes [#3416](https://github.com/grafana/grafana/issues/3416)
+* **Graph Panel**: Option to hide series with all zeroes from legend and tooltip, closes [#1381](https://github.com/grafana/grafana/issues/1381), [#3336](https://github.com/grafana/grafana/issues/3336)
+
+### Bug Fixes
+* **cloudwatch**: fix for handling of period for long time ranges, fixes [#3086](https://github.com/grafana/grafana/issues/3086)
+* **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
+* **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
+* **graph**: layout fix for color picker when right side legend was enabled, fixes [#3093](https://github.com/grafana/grafana/issues/3093)
+* **elasticsearch**: disabling elastic query (via eye) caused error, fixes [#3300](https://github.com/grafana/grafana/issues/3300)
+
+### Breaking changes
+* **elasticsearch**: Manual json edited queries are not supported any more (They very barely worked in 2.5)
+
+# 2.5 (2015-10-28)
 
 **New Feature: Mix data sources**
 - A built in data source is now available named `-- Mixed --`, When picked in the metrics tab,
@@ -11,12 +58,12 @@ it allows you to add queries of differnet data source types & instances to the s
 
 **New Feature: New and much improved time picker**
 - Support for quick ranges like `Today`, `This day last week`, `This week`, `The day so far`, etc.
-- Muck improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
+- Improved UI and improved support for UTC, [Issue #2761](https://github.com/grafana/grafana/issues/2761) for more info.
 
 **User Onboarding**
 - Org admin can now send email invites (or invite links) to people who are not yet Grafana users
 - Sign up flow now supports email verification (if enabled)
-- See [Issue #2353](https://github.com/grafana/grafana/issues/2354) for more info.
+- See [Issue #2353](https://github.com/grafana/grafana/issues/2353) for more info.
 
 **Other new Features && Enhancements**
 - [Pull  #2720](https://github.com/grafana/grafana/pull/2720). Admin: Initial basic quota support (per Org)

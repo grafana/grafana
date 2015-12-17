@@ -17,9 +17,9 @@ var spans = {
 
 var rangeOptions = [
   { from: 'now/d',    to: 'now/d',    display: 'Today',                 section: 2 },
-  { from: 'now/d',    to: 'now',      display: 'The day so far',        section: 2 },
+  { from: 'now/d',    to: 'now',      display: 'Today so far',          section: 2 },
   { from: 'now/w',    to: 'now/w',    display: 'This week',             section: 2 },
-  { from: 'now/w',    to: 'now',      display: 'Week to date',          section: 2 },
+  { from: 'now/w',    to: 'now',      display: 'This week so far',           section: 2 },
   { from: 'now/M',    to: 'now/M',    display: 'This month',            section: 2 },
   { from: 'now/y',    to: 'now/y',    display: 'This year',             section: 2 },
 
@@ -34,11 +34,12 @@ var rangeOptions = [
   { from: 'now-15m',  to: 'now',      display: 'Last 15 minutes',       section: 3 },
   { from: 'now-30m',  to: 'now',      display: 'Last 30 minutes',       section: 3 },
   { from: 'now-1h',   to: 'now',      display: 'Last 1 hour',           section: 3 },
+  { from: 'now-3h',   to: 'now',      display: 'Last 3 hours',          section: 3 },
   { from: 'now-6h',   to: 'now',      display: 'Last 6 hours',          section: 3 },
   { from: 'now-12h',  to: 'now',      display: 'Last 12 hours',         section: 3 },
   { from: 'now-24h',  to: 'now',      display: 'Last 24 hours',         section: 3 },
-  { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 3 },
 
+  { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 0 },
   { from: 'now-30d',  to: 'now',      display: 'Last 30 days',          section: 0 },
   { from: 'now-60d',  to: 'now',      display: 'Last 60 days',          section: 0 },
   { from: 'now-90d',  to: 'now',      display: 'Last 90 days',          section: 0 },
@@ -133,8 +134,12 @@ _.each(rangeOptions, function (frame) {
       return from.fromNow() + ' to ' + formatDate(range.to);
     }
 
-    var res = describeTextRange(range.from);
-    return res.display;
+    if (range.to.toString() === 'now') {
+      var res = describeTextRange(range.from);
+      return res.display;
+    }
+
+    return range.from.toString() + ' to ' + range.to.toString();
   }
 
 export = {

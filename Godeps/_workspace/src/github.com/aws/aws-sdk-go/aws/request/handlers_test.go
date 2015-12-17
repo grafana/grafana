@@ -35,8 +35,8 @@ func TestMultipleHandlers(t *testing.T) {
 
 func TestNamedHandlers(t *testing.T) {
 	l := request.HandlerList{}
-	named := request.NamedHandler{"Name", func(r *request.Request) {}}
-	named2 := request.NamedHandler{"NotName", func(r *request.Request) {}}
+	named := request.NamedHandler{Name: "Name", Fn: func(r *request.Request) {}}
+	named2 := request.NamedHandler{Name: "NotName", Fn: func(r *request.Request) {}}
 	l.PushBackNamed(named)
 	l.PushBackNamed(named)
 	l.PushBackNamed(named2)

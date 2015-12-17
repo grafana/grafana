@@ -15,7 +15,6 @@ function (angular, _, queryDef) {
     $scope.bucketAggTypes = queryDef.bucketAggTypes;
     $scope.orderOptions = queryDef.orderOptions;
     $scope.sizeOptions = queryDef.sizeOptions;
-    $scope.intervalOptions = queryDef.intervalOptions;
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
@@ -93,8 +92,10 @@ function (angular, _, queryDef) {
         }
         case 'date_histogram': {
           settings.interval = settings.interval || 'auto';
+          settings.min_doc_count = settings.min_doc_count || 0;
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
+          settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
         }
       }
 
@@ -126,6 +127,10 @@ function (angular, _, queryDef) {
       } else {
         return $scope.getFields();
       }
+    };
+
+    $scope.getIntervalOptions = function() {
+      return $q.when(uiSegmentSrv.transformToSegments(true, 'interval')(queryDef.intervalOptions));
     };
 
     $scope.addBucketAgg = function() {

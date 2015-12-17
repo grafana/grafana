@@ -1,8 +1,8 @@
 define([
   './helpers',
-  'app/features/panel/panelSrv',
-  'app/features/panel/panelHelper',
-  'app/panels/singlestat/module'
+  'app/features/panel/panel_srv',
+  'app/features/panel/panel_helper',
+  'app/plugins/panels/singlestat/module'
 ], function(helpers) {
   'use strict';
 

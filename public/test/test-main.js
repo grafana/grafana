@@ -2,12 +2,7 @@ require.config({
   baseUrl: 'http://localhost:9876/base/',
 
   paths: {
-    config:                'app/components/config',
-    kbn:                   'app/components/kbn',
-    store:                 'app/components/store',
-
-    settings:              'app/components/settings',
-    lodash:                'app/components/lodash.extended',
+    lodash:                'app/core/lodash_extended',
     'lodash-src':          'vendor/lodash',
 
     moment:                'vendor/moment',
@@ -26,7 +21,6 @@ require.config({
     bindonce:                 'vendor/angular-bindonce/bindonce',
     crypto:                   'vendor/crypto.min',
     spectrum:                 'vendor/spectrum',
-
     jquery:                   'vendor/jquery/dist/jquery',
 
     bootstrap:                'vendor/bootstrap/bootstrap',
@@ -45,7 +39,6 @@ require.config({
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 
     modernizr:                'vendor/modernizr-2.6.1',
-    'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
   },
 
   shim: {
@@ -58,7 +51,7 @@ require.config({
     },
 
     angular: {
-      deps: ['jquery', 'config'],
+      deps: ['jquery'],
       exports: 'angular'
     },
 
@@ -101,6 +94,8 @@ function file2moduleName(filePath) {
     .replace(/^\/base\//, '')
     .replace(/\.\w*$/, '');
 }
+
+window.grafanaBootData = {settings: {}};
 
 require([
   'lodash',

@@ -241,7 +241,7 @@
       {
         "type": "query",
         "datasource": null,
-        "refresh_on_load": false,
+        "refresh": false,
         "name": "metric",
         "options": [],
         "includeAll": true,

@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'jquery',
-  'config',
+  'app/core/config',
   'app/core/utils/datemath',
   './directives',
   './query_ctrl',
@@ -37,6 +37,9 @@ function (angular, _, $, config, dateMath) {
         };
 
         var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+        if (params.length === 0) {
+          return $q.when([]);
+        }
 
         if (options.format === 'png') {
           return $q.when(this.url + '/render' + '?' + params.join('&'));
@@ -70,12 +73,12 @@ function (angular, _, $, config, dateMath) {
       return result;
     };
 
-    GraphiteDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
+    GraphiteDatasource.prototype.annotationQuery = function(options) {
       // Graphite metric as annotation
-      if (annotation.target) {
-        var target = templateSrv.replace(annotation.target);
+      if (options.annotation.target) {
+        var target = templateSrv.replace(options.annotation.target);
         var graphiteQuery = {
-          rangeRaw: rangeUnparsed,
+          rangeRaw: options.rangeRaw,
           targets: [{ target: target }],
           format: 'json',
           maxDataPoints: 100
@@ -93,7 +96,7 @@ function (angular, _, $, config, dateMath) {
                 if (!datapoint[0]) { continue; }
 
                 list.push({
-                  annotation: annotation,
+                  annotation: options.annotation,
                   time: datapoint[1],
                   title: target.target
                 });
@@ -105,15 +108,15 @@ function (angular, _, $, config, dateMath) {
       }
       // Graphite event as annotation
       else {
-        var tags = templateSrv.replace(annotation.tags);
-        return this.events({ range: rangeUnparsed, tags: tags })
+        var tags = templateSrv.replace(options.annotation.tags);
+        return this.events({range: options.rangeRaw, tags: tags})
           .then(function(results) {
             var list = [];
             for (var i = 0; i < results.data.length; i++) {
               var e = results.data[i];
 
               list.push({
-                annotation: annotation,
+                annotation: options.annotation,
                 time: e.when * 1000,
                 title: e.what,
                 tags: e.tags,
@@ -235,6 +238,7 @@ function (angular, _, $, config, dateMath) {
       var target, targetValue, i;
       var regex = /\#([A-Z])/g;
       var intervalFormatFixRegex = /'(\d+)m'/gi;
+      var hasTargets = false;
 
       if (options.format !== 'png') {
         options['format'] = 'json';
@@ -274,6 +278,7 @@ function (angular, _, $, config, dateMath) {
         targets[target.refId] = targetValue;
 
         if (!target.hide) {
+          hasTargets = true;
           clean_options.push("target=" + encodeURIComponent(targetValue));
         }
       }
@@ -284,6 +289,10 @@ function (angular, _, $, config, dateMath) {
           clean_options.push(key + "=" + encodeURIComponent(value));
         }
       });
+
+      if (!hasTargets) {
+        return [];
+      }
 
       return clean_options;
     };
