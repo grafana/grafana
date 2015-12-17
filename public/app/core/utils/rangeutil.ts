@@ -1,8 +1,9 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import moment = require('moment');
 import _ = require('lodash');
-import angular = require('angular');
+
+import angular from 'angular';
+import moment from 'moment';
 import * as dateMath from './datemath';
 
 var spans = {

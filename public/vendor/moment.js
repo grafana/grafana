@@ -2788,7 +2788,6 @@
             globalScope.moment = moment;
         }
     }
-    debugger;
 
     // CommonJS module is defined
     if (hasModule) {

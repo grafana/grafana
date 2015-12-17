@@ -2,7 +2,7 @@
 
 import _ = require('lodash');
 import kbn = require('app/core/utils/kbn');
-import moment = require('moment');
+import moment from 'moment';
 
 export class TableRenderer {
   formaters: any[];
