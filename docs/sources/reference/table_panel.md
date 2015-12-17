@@ -9,7 +9,7 @@ page_keywords: grafana, table, panel, documentation
 <img src="/img/v2/table-panel.png">
 
 The new table panel is very flexible, supporting both multiple modes for time series as well as for
-table, annotation and raw JSON data. It also provides date formating and value formating and coloring options.
+table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
 
 To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](http://play.grafana.org/dashboard/db/table-panel-showcase).
 
@@ -21,7 +21,7 @@ The table panel has many ways to manipulate your data for optimal presentation.
 
 1. `Data`: Control how your query is transformed into a table.
 2. `Table Display`: Table display options.
-3. `Column Styles`: Column value formating and display options.
+3. `Column Styles`: Column value formatting and display options.
 
 ## Data to Table
 

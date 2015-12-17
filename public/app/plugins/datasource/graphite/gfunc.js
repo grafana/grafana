@@ -279,7 +279,9 @@ function (_, $) {
 
   addFuncDef({
     name: 'sortByName',
-    category: categories.Special
+    category: categories.Special,
+    params: [{ name: "natural", type: "select", options: ["true", "false"], optional: true }],
+    defaultParams: ["false"]
   });
 
   addFuncDef({
