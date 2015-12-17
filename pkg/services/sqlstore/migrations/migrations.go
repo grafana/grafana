@@ -18,7 +18,7 @@ func AddMigrations(mg *Migrator) {
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
 	addQuotaMigration(mg)
-	addPluginBundleMigration(mg)
+	addAppPluginMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

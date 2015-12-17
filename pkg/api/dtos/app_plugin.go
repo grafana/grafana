@@ -1,6 +1,6 @@
 package dtos
 
-type PluginBundle struct {
+type AppPlugin struct {
 	Type     string                 `json:"type"`
 	Enabled  bool                   `json:"enabled"`
 	Module   string                 `json:"module"`

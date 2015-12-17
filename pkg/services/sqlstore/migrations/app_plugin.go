@@ -2,10 +2,10 @@ package migrations
 
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-func addPluginBundleMigration(mg *Migrator) {
+func addAppPluginMigration(mg *Migrator) {
 
-	var pluginBundleV1 = Table{
-		Name: "plugin_bundle",
+	var appPluginV1 = Table{
+		Name: "app_plugin",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
@@ -19,8 +19,8 @@ func addPluginBundleMigration(mg *Migrator) {
 			{Cols: []string{"org_id", "type"}, Type: UniqueIndex},
 		},
 	}
-	mg.AddMigration("create plugin_bundle table v1", NewAddTableMigration(pluginBundleV1))
+	mg.AddMigration("create app_plugin table v1", NewAddTableMigration(appPluginV1))
 
 	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", pluginBundleV1)
+	addTableIndicesMigrations(mg, "v1", appPluginV1)
 }

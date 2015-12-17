@@ -67,14 +67,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		})
 	}
 
-	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
-	err = bus.Dispatch(&orgBundles)
+	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
+	err = bus.Dispatch(&orgApps)
 	if err != nil {
 		return nil, err
 	}
-	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
-	for _, plugin := range enabledPlugins.ExternalPlugins {
+	for _, plugin := range enabledPlugins.AppPlugins {
 		for _, js := range plugin.Js {
 			data.PluginJs = append(data.PluginJs, js.Module)
 		}

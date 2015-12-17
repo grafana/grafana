@@ -29,12 +29,12 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
-	orgBundles := m.GetPluginBundlesQuery{OrgId: c.OrgId}
-	err := bus.Dispatch(&orgBundles)
+	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
+	err := bus.Dispatch(&orgApps)
 	if err != nil {
 		return nil, err
 	}
-	enabledPlugins := plugins.GetEnabledPlugins(orgBundles.Result)
+	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
