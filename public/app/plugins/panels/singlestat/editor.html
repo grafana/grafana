@@ -1,0 +1,189 @@
+<div class="editor-row">
+	<div class="section tight-form-container" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Big value</strong>
+				</li>
+				<li class="tight-form-item">
+					Prefix
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input"
+					ng-model="panel.prefix" ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item">
+					Value
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Postfix
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input last"
+					ng-model="panel.postfix" ng-change="render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Font size</strong>
+				</li>
+				<li class="tight-form-item">
+					Prefix
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="panel.prefixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Value
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="panel.valueFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Postfix
+				</li>
+				<li>
+					<select class="input-small tight-form-input last" ng-model="panel.postfixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Unit</strong>
+				</li>
+				<li class="dropdown" style="width: 266px;"
+					ng-model="panel.format"
+					dropdown-typeahead="unitFormats"
+					dropdown-typeahead-on-select="setUnitFormat($subItem)">
+				</li>
+				<li class="tight-form-item">
+					Decimals
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
+					ng-model="panel.decimals" ng-change="render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Coloring</strong>
+				</li>
+				<li class="tight-form-item">
+					Background&nbsp;
+					<input class="cr1" id="panel.colorBackground" type="checkbox"
+					ng-model="panel.colorBackground" ng-checked="panel.colorBackground" ng-change="render()">
+					<label for="panel.colorBackground" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Value&nbsp;
+					<input class="cr1" id="panel.colorValue" type="checkbox"
+					ng-model="panel.colorValue" ng-checked="panel.colorValue" ng-change="render()">
+					<label for="panel.colorValue" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Thresholds<tip>Comma seperated values</tip>
+				</li>
+				<li>
+					<input type="text" class="input-large tight-form-input" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
+				</li>
+				<li class="tight-form-item">
+					Colors
+				</li>
+				<li class="tight-form-item">
+					<spectrum-picker ng-model="panel.colors[0]" ng-change="render()" ></spectrum-picker>
+					<spectrum-picker ng-model="panel.colors[1]" ng-change="render()" ></spectrum-picker>
+					<spectrum-picker ng-model="panel.colors[2]" ng-change="render()" ></spectrum-picker>
+				</li>
+				<li class="tight-form-item last">
+					<a class="pointer" ng-click="invertColorOrder()">invert order</a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Spark lines</strong>
+				</li>
+				<li class="tight-form-item">
+					Show&nbsp;
+					<input class="cr1" id="panel.sparkline.show" type="checkbox"
+					ng-model="panel.sparkline.show" ng-checked="panel.sparkline.show" ng-change="render()">
+					<label for="panel.sparkline.show" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Background mode&nbsp;
+					<input class="cr1" id="panel.sparkline.full" type="checkbox"
+					ng-model="panel.sparkline.full" ng-checked="panel.sparkline.full" ng-change="render()">
+					<label for="panel.sparkline.full" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Line Color
+				</li>
+				<li class="tight-form-item">
+					<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
+				</li>
+				<li class="tight-form-item">
+					Fill Color
+				</li>
+				<li class="tight-form-item last">
+					<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					<strong>Value to text mapping</strong>
+				</li>
+				<li class="tight-form-item"  ng-repeat-start="map in panel.valueMaps">
+					<i class="fa fa-remove pointer" ng-click="removeValueMap(map)"></i>
+				</li>
+				<li>
+					<input type="text" ng-model="map.value" placeholder="value" class="input-mini tight-form-input" ng-blur="render()">
+				</li>
+				<li class="tight-form-item">
+					<i class="fa fa-arrow-right"></i>
+				</li>
+				<li ng-repeat-end>
+					<input type="text" placeholder="text" ng-model="map.text" class="input-mini tight-form-input" ng-blur="render()">
+				</li>
+
+				<li>
+					<a class="pointer tight-form-item last" ng-click="addValueMap();">
+						<i class="fa fa-plus"></i>
+					</a>
+				</li>
+
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>

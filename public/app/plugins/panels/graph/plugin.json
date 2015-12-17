@@ -1,0 +1,8 @@
+{
+  "pluginType": "panel",
+
+  "name": "Graph",
+  "type": "graph",
+
+  "module": "app/plugins/panels/graph/module"
+}

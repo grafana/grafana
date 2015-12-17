@@ -38,29 +38,47 @@ Password | Database user's password
  > Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
 
 
-## InfluxDB 0.9.x
+## Query Editor
 
-![](/img/influxdb/InfluxDB_09_editor.png)
+![](/img/influxdb/editor_v3.png)
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
 
-### Editor tag filters
+### Filter data (WHERE)
 To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
 the tag key and select `--remove tag filter--`.
 
-### Regex matching
+**Regex matching**
+
 You can type in regex patterns for metric names or tag filter values, be sure to wrap the regex pattern in forward slashes (`/`). Grafana
 will automatically adjust the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
-### Editor group by
-To group by a tag click the plus icon after the `GROUP BY ($interval)` text. Pick a tag from the dropdown that appears.
-You can remove the group by by clicking on the tag and then select `--remove group by--` from the dropdown.
+### Field & Aggregation functions
+In the `SELECT` row you can specify what fields and functions you want to use. If you have a
+group by time you need an aggregation function. Some functions like derivative require an aggregation function.
 
-### Editor RAW Query
-You can switch to raw query mode by pressing the pen icon.
+The editor tries simplify and unify this part of the query. For example:
+![](/img/influxdb/select_editor.png)
 
-> If you use Raw Query be sure your query at minimum have `WHERE $timeFilter` clause and ends with `order by asc`.
+The above will generate the following InfluxDB `SELECT` clause:
+
+```sql
+SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
+```
+
+#### Select multiple fields
+Use the plus button and select Field > field to add another SELECT clause. You can also
+specify an asterix `*` to select all fields.
+
+### Group By
+To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
+You can remove the group by by clicking on the `tag` and then click on the x icon.
+
+### Text Editor Mode (RAW)
+You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.
+
+> If you use Raw Query be sure your query at minimum have `WHERE $timeFilter`
 > Also please always have a group by time and an aggregation function, otherwise InfluxDB can easily return hundreds of thousands
 > of data points that will hang the browser.
 
@@ -72,7 +90,15 @@ You can switch to raw query mode by pressing the pen icon.
 - $tag_hostname = replaced with the value of the hostname tag
 - You can also use [[tag_hostname]] pattern replacement syntax
 
-### Templating
+### Table query / raw data
+
+![](/img/influxdb/raw_data.png)
+
+You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
+change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
+
+
+## Templating
 You can create a template variable in Grafana and have that variable filled with values from any InfluxDB metric exploration query.
 You can then use this variable in your InfluxDB metric queries.
 
@@ -93,7 +119,7 @@ SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 
 ![](/img/influxdb/templating_simple_ex1.png)
 
-### Annotations
+## Annotations
 Annotations allows you to overlay rich event information on top of graphs.
 
 An example query:
@@ -101,11 +127,5 @@ An example query:
 ```SQL
 SELECT title, description from events WHERE $timeFilter order asc
 ```
-
-### InfluxDB 0.8.x
-
-![](/img/v1/influxdb_editor.png)
-
-
 
 

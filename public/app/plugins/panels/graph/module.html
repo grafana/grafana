@@ -1,0 +1,25 @@
+<grafana-panel>
+
+	<div class="graph-wrapper" ng-class="{'graph-legend-rightside': panel.legend.rightSide}">
+		<div class="graph-canvas-wrapper">
+
+			<div ng-if="datapointsWarning" class="datapoints-warning">
+				<span class="small" ng-show="!datapointsCount">
+					No datapoints <tip>No datapoints returned from metric query</tip>
+				</span>
+				<span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+			</div>
+
+			<div grafana-graph class="histogram-chart">
+			</div>
+
+		</div>
+
+		<div class="graph-legend-wrapper" ng-if="panel.legend.show" graph-legend></div>
+	</div>
+
+	<div class="clearfix"></div>
+
+</grafana-panel>
+
+

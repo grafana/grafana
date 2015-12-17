@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'require',
-  'config',
+  'app/core/config',
 ],
 function (angular, _, require, config) {
   'use strict';
@@ -84,9 +84,9 @@ function (angular, _, require, config) {
 
   module.directive('clipboardButton',function() {
     return function(scope, elem) {
-      require(['ZeroClipboard'], function(ZeroClipboard) {
+      require(['vendor/zero_clipboard'], function(ZeroClipboard) {
         ZeroClipboard.config({
-          swfPath: config.appSubUrl + '/public/vendor/ZeroClipboard.swf'
+          swfPath: config.appSubUrl + '/public/vendor/zero_clipboard.swf'
         });
         new ZeroClipboard(elem[0]);
       });

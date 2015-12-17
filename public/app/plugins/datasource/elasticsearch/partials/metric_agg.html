@@ -1,0 +1,138 @@
+<div class="tight-form" ng-class="{'tight-form-disabled': agg.hide}">
+	<ul class="tight-form-list">
+		<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
+			Metric
+			&nbsp;
+			<a ng-click="toggleShowMetric()" bs-tooltip="'Click to toggle show / hide metric'">
+				<i class="fa fa-eye" ng-hide="agg.hide"></i>
+				<i class="fa fa-eye-slash" ng-show="agg.hide"></i>
+			</a>
+		</li>
+		<li>
+			<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="tight-form-item-large"></metric-segment-model>
+		</li>
+		<li ng-if="aggDef.requiresField">
+			<metric-segment-model property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="tight-form-item-xxlarge"></metric-segment-model>
+		</li>
+		<li ng-if="aggDef.isPipelineAgg">
+			<metric-segment-model property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="tight-form-item-xxlarge"></metric-segment-model>
+		</li>
+		<li class="tight-form-item last" ng-if="settingsLinkText">
+			<a ng-click="toggleOptions()">
+				<i class="fa fa-caret-down" ng-show="showOptions"></i>
+				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+				{{settingsLinkText}}
+			</a>
+		</li>
+	</ul>
+
+	<ul class="tight-form-list pull-right">
+		<li class="tight-form-item last" ng-if="isFirst">
+			<a class="pointer" ng-click="addMetricAgg()"><i class="fa fa-plus"></i></a>
+		</li>
+		<li class="tight-form-item last" ng-if="!isSingle">
+			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form" ng-if="showOptions">
+	<div class="tight-form-inner-box tight-form-container">
+		<div class="tight-form" ng-if="agg.type === 'derivative'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Unit
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input last" ng-model="agg.settings.unit" ng-blur="onChangeInternal()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-if="agg.type === 'moving_avg'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Window
+				</li>
+				<li>
+					<input type="number" class="input-medium tight-form-input last" ng-model="agg.settings.window" ng-blur="onChangeInternal()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form" ng-if="agg.type === 'moving_avg'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Model
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input last" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last" ng-if="agg.type === 'percentiles'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item">
+					Percentiles
+				</li>
+				<li>
+					<input type="text" class="input-xlarge tight-form-input last" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div ng-if="agg.type === 'extended_stats'">
+			<div class="tight-form" ng-repeat="stat in extendedStats">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						{{stat.text}}
+					</li>
+					<li class="tight-form-item last">
+						<editor-checkbox text="" model="agg.meta.{{stat.value}}" change="onChange()"></editor-checkbox>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+		<div class="tight-form" ng-if="agg.type === 'extended_stats'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px">
+					Sigma
+				</li>
+				<li>
+					<input type="number" class="input-mini tight-form-input last" placeholder="3" ng-model="agg.settings.sigma" ng-blur="onChange()"></input>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-if="aggDef.supportsInlineScript">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px;">
+					Script
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input last" empty-to-null ng-model="agg.inlineScript" ng-blur="onChangeInternal()" spellcheck='false' placeholder="_value * 1">
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+		<div class="tight-form" ng-if="aggDef.supportsMissing">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px;">
+					Missing
+					<tip>The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value</tip>
+				</li>
+				<li>
+					<input type="number" class="input-medium tight-form-input last" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
+	</div>
+</div>

@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'config'
+  'app/core/config'
 ],
 function (angular, _, config) {
   'use strict';
@@ -42,12 +42,21 @@ function (angular, _, config) {
     };
 
     $scope.deleteRow = function() {
+      function delete_row() {
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+      }
+
+      if (!$scope.row.panels.length) {
+        delete_row();
+        return;
+      }
+
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+          delete_row();
         }
       });
     };
@@ -91,13 +100,14 @@ function (angular, _, config) {
         error: false,
         span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: true,
-        type: type
+        type: type,
+        isNew: true,
       };
 
       $scope.addPanel(panel);
 
       $timeout(function() {
-        $scope.$broadcast('render');
+        $scope.dashboardViewState.update({fullscreen: true, edit: true, panelId: panel.id });
       });
     };
 

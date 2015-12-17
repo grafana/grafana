@@ -39,7 +39,7 @@
 		<div ng-if="mode === 'list'">
 
 			<div class="editor-row row">
-				<div class="span8">
+				<div style="max-width: 1024px">
 					<div ng-if="variables.length === 0">
 						<em>No template variables defined</em>
 					</div>
@@ -59,6 +59,11 @@
 									Edit
 								</a>
 							</td>
+              <td style="width: 1%">
+                <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small">
+                  Duplicate
+                </a>
+              </td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 							<td style="width: 1%">
@@ -124,7 +129,7 @@
 									<editor-checkbox text="Include auto interval" model="current.auto" change="runQuery()"></editor-checkbox>
 								</li>
 								<li class="tight-form-item" ng-show="current.auto">
-									Auto interval steps <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
+									Auto interval steps <tip>How many times should the current time range be divided to calculate the value</tip>
 								</li>
 								<li>
 									<select class="input-mini tight-form-input last" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
@@ -146,6 +151,23 @@
 							</ul>
 							<div class="clearfix"></div>
 						</div>
+            <div class="tight-form">
+              <ul class="tight-form-list">
+                <li class="tight-form-item" style="width: 100px;">
+                  <editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
+                </li>
+                <li ng-show="current.includeAll">
+                  <input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
+                </li>
+                <li class="tight-form-item" ng-show="current.includeAll">
+                  All format
+                </li>
+                <li ng-show="current.includeAll">
+                  <select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
 					</div>
 
 					<div ng-show="current.type === 'query'">

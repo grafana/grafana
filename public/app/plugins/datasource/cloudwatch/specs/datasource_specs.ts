@@ -2,16 +2,20 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import moment = require('moment');
 
 declare var helpers: any;
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
+
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
   beforeEach(ctx.createService('CloudWatchDatasource'));
+
   beforeEach(function() {
     ctx.ds = new ctx.service({
       jsonData: {
@@ -45,6 +49,14 @@ describe('CloudWatchDatasource', function() {
         {
           Average: 1,
           Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
+        },
+        {
+          Average: 2,
+          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
+        },
+        {
+          Average: 5,
+          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
         }
       ],
       Label: 'CPUUtilization'
@@ -75,6 +87,14 @@ describe('CloudWatchDatasource', function() {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).to.be('CPUUtilization_Average');
         expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average']);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+
+    it('should return null for missing data point', function(done) {
+      ctx.ds.query(query).then(function(result) {
+        expect(result.data[0].datapoints[2][0]).to.be(null);
         done();
       });
       ctx.$rootScope.$apply();
@@ -146,7 +166,7 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization)', scenario => {
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
         Metrics: [
@@ -170,4 +190,60 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
+  describe('When performing annotationQuery', function() {
+    var parameter = {
+      annotation: {
+        region: 'us-east-1',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678'
+        },
+        statistics: ['Average'],
+        period: 300
+      },
+      range: {
+        from: moment(1443438674760),
+        to: moment(1443460274760)
+      }
+    };
+    var alarmResponse = {
+      MetricAlarms: [
+        {
+          AlarmName: 'test_alarm_name'
+        }
+      ]
+    };
+    var historyResponse = {
+      AlarmHistoryItems: [
+        {
+          Timestamp: '2015-01-01T00:00:00.000Z',
+          HistoryItemType: 'StateUpdate',
+          AlarmName: 'test_alarm_name',
+          HistoryData: '{}',
+          HistorySummary: 'test_history_summary'
+        }
+      ]
+    };
+    beforeEach(function() {
+      ctx.backendSrv.datasourceRequest = function(params) {
+        switch (params.data.action) {
+        case 'DescribeAlarmsForMetric':
+          return ctx.$q.when({data: alarmResponse});
+          break;
+        case 'DescribeAlarmHistory':
+          return ctx.$q.when({data: historyResponse});
+          break;
+        }
+      };
+    });
+    it('should return annotation list', function(done) {
+      ctx.ds.annotationQuery(parameter).then(function(result) {
+        expect(result[0].title).to.be('test_alarm_name');
+        expect(result[0].text).to.be('test_history_summary');
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+  });
 });

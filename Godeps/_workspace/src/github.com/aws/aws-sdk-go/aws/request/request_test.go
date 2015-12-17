@@ -7,15 +7,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/service"
-	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-sdk-go/awstesting"
 )
 
 type testData struct {
@@ -74,7 +76,7 @@ func TestRequestRecoverRetry5xx(t *testing.T) {
 		{StatusCode: 200, Body: body(`{"data":"valid"}`)},
 	}
 
-	s := service.New(aws.NewConfig().WithMaxRetries(10))
+	s := awstesting.NewClient(aws.NewConfig().WithMaxRetries(10))
 	s.Handlers.Validate.Clear()
 	s.Handlers.Unmarshal.PushBack(unmarshal)
 	s.Handlers.UnmarshalError.PushBack(unmarshalError)
@@ -100,7 +102,7 @@ func TestRequestRecoverRetry4xxRetryable(t *testing.T) {
 		{StatusCode: 200, Body: body(`{"data":"valid"}`)},
 	}
 
-	s := service.New(aws.NewConfig().WithMaxRetries(10))
+	s := awstesting.NewClient(aws.NewConfig().WithMaxRetries(10))
 	s.Handlers.Validate.Clear()
 	s.Handlers.Unmarshal.PushBack(unmarshal)
 	s.Handlers.UnmarshalError.PushBack(unmarshalError)
@@ -119,7 +121,7 @@ func TestRequestRecoverRetry4xxRetryable(t *testing.T) {
 
 // test that retries don't occur for 4xx status codes with a response type that can't be retried
 func TestRequest4xxUnretryable(t *testing.T) {
-	s := service.New(aws.NewConfig().WithMaxRetries(10))
+	s := awstesting.NewClient(aws.NewConfig().WithMaxRetries(10))
 	s.Handlers.Validate.Clear()
 	s.Handlers.Unmarshal.PushBack(unmarshal)
 	s.Handlers.UnmarshalError.PushBack(unmarshalError)
@@ -155,7 +157,7 @@ func TestRequestExhaustRetries(t *testing.T) {
 		{StatusCode: 500, Body: body(`{"__type":"UnknownError","message":"An error occurred."}`)},
 	}
 
-	s := service.New(aws.NewConfig().WithMaxRetries(aws.DefaultRetries).WithSleepDelay(sleepDelay))
+	s := awstesting.NewClient(aws.NewConfig().WithSleepDelay(sleepDelay))
 	s.Handlers.Validate.Clear()
 	s.Handlers.Unmarshal.PushBack(unmarshal)
 	s.Handlers.UnmarshalError.PushBack(unmarshalError)
@@ -193,7 +195,7 @@ func TestRequestRecoverExpiredCreds(t *testing.T) {
 		{StatusCode: 200, Body: body(`{"data":"valid"}`)},
 	}
 
-	s := service.New(&aws.Config{MaxRetries: aws.Int(10), Credentials: credentials.NewStaticCredentials("AKID", "SECRET", "")})
+	s := awstesting.NewClient(&aws.Config{MaxRetries: aws.Int(10), Credentials: credentials.NewStaticCredentials("AKID", "SECRET", "")})
 	s.Handlers.Validate.Clear()
 	s.Handlers.Unmarshal.PushBack(unmarshal)
 	s.Handlers.UnmarshalError.PushBack(unmarshalError)
@@ -202,12 +204,12 @@ func TestRequestRecoverExpiredCreds(t *testing.T) {
 	credExpiredAfterRetry := false
 
 	s.Handlers.AfterRetry.PushBack(func(r *request.Request) {
-		credExpiredAfterRetry = r.Service.Config.Credentials.IsExpired()
+		credExpiredAfterRetry = r.Config.Credentials.IsExpired()
 	})
 
 	s.Handlers.Sign.Clear()
 	s.Handlers.Sign.PushBack(func(r *request.Request) {
-		r.Service.Config.Credentials.Get()
+		r.Config.Credentials.Get()
 	})
 	s.Handlers.Send.Clear() // mock sending
 	s.Handlers.Send.PushBack(func(r *request.Request) {
@@ -225,4 +227,35 @@ func TestRequestRecoverExpiredCreds(t *testing.T) {
 
 	assert.Equal(t, 1, int(r.RetryCount))
 	assert.Equal(t, "valid", out.Data)
+}
+
+func TestMakeAddtoUserAgentHandler(t *testing.T) {
+	fn := request.MakeAddToUserAgentHandler("name", "version", "extra1", "extra2")
+	r := &request.Request{HTTPRequest: &http.Request{Header: http.Header{}}}
+	r.HTTPRequest.Header.Set("User-Agent", "foo/bar")
+	fn(r)
+
+	assert.Equal(t, "foo/bar name/version (extra1; extra2)", r.HTTPRequest.Header.Get("User-Agent"))
+}
+
+func TestMakeAddtoUserAgentFreeFormHandler(t *testing.T) {
+	fn := request.MakeAddToUserAgentFreeFormHandler("name/version (extra1; extra2)")
+	r := &request.Request{HTTPRequest: &http.Request{Header: http.Header{}}}
+	r.HTTPRequest.Header.Set("User-Agent", "foo/bar")
+	fn(r)
+
+	assert.Equal(t, "foo/bar name/version (extra1; extra2)", r.HTTPRequest.Header.Get("User-Agent"))
+}
+
+func TestRequestUserAgent(t *testing.T) {
+	s := awstesting.NewClient(&aws.Config{Region: aws.String("us-east-1")})
+	//	s.Handlers.Validate.Clear()
+
+	req := s.NewRequest(&request.Operation{Name: "Operation"}, nil, &testData{})
+	req.HTTPRequest.Header.Set("User-Agent", "foo/bar")
+	assert.NoError(t, req.Build())
+
+	expectUA := fmt.Sprintf("foo/bar %s/%s (%s; %s; %s)",
+		aws.SDKName, aws.SDKVersion, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+	assert.Equal(t, expectUA, req.HTTPRequest.Header.Get("User-Agent"))
 }

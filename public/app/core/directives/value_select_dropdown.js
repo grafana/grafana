@@ -156,7 +156,7 @@ function (angular, _, coreModule) {
     vm.selectionsChanged = function(commitChange) {
       vm.selectedValues = _.filter(vm.options, {selected: true});
 
-      if (vm.selectedValues.length > 1 && vm.selectedValues.length !== vm.options.length) {
+      if (vm.selectedValues.length > 1) {
         if (vm.selectedValues[0].text === 'All') {
           vm.selectedValues[0].selected = false;
           vm.selectedValues = vm.selectedValues.slice(1, vm.selectedValues.length);

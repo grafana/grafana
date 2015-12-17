@@ -54,4 +54,21 @@ Value to text mapping allows you to translate the value of the summary stat into
 
 <img class="no-shadow" src="/img/v1/Singlestat-ValueMapping.png">
 
+## Troubleshooting
 
+### Multiple Series Error
+
+<img class="no-shadow" src="/img/v2/Singlestat-MultiSeriesError.png">
+
+
+Grafana 2.5 introduced stricter checking for multiple-series on singlestat panels. In previous versions, the panel logic did not verify that only a single series was used, and instead, displayed the first series encountered. Depending on your data source, this could have lead to inconsistent data being shown and/or a general confusion about which metric was being displayed.
+
+To fix your singlestat panel:
+
+- Edit your panel by clicking the Panel Title and selecting *Edit*.
+
+- Do you have multiple queries in the metrics tab?
+    - Solution: Select a single query to visualize. You can toggle whether a query is visualized by clicking the eye icon on each line. If the error persists, continue to the next solution.
+
+- Do you have one query?
+    - Solution: This likely means your query is returning multiple series. You will want to reduce this down to a single series. This can be accomplished in many ways, depending on your data source. Some common practices include summing the series, averaging or any number of other functions. Consult the documentation for your data source for additional information.

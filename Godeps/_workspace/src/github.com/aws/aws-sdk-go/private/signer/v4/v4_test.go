@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/service"
-	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-sdk-go/awstesting"
 )
 
 func buildSigner(serviceName string, region string, signTime time.Time, expireTime time.Duration, body string) signer {
@@ -118,7 +119,7 @@ func TestSignPrecomputedBodyChecksum(t *testing.T) {
 }
 
 func TestAnonymousCredentials(t *testing.T) {
-	svc := service.New(&aws.Config{Credentials: credentials.AnonymousCredentials})
+	svc := awstesting.NewClient(&aws.Config{Credentials: credentials.AnonymousCredentials})
 	r := svc.NewRequest(
 		&request.Operation{
 			Name:       "BatchGetItem",
@@ -142,7 +143,7 @@ func TestAnonymousCredentials(t *testing.T) {
 }
 
 func TestIgnoreResignRequestWithValidCreds(t *testing.T) {
-	svc := service.New(&aws.Config{
+	svc := awstesting.NewClient(&aws.Config{
 		Credentials: credentials.NewStaticCredentials("AKID", "SECRET", "SESSION"),
 		Region:      aws.String("us-west-2"),
 	})
@@ -164,7 +165,7 @@ func TestIgnoreResignRequestWithValidCreds(t *testing.T) {
 }
 
 func TestIgnorePreResignRequestWithValidCreds(t *testing.T) {
-	svc := service.New(&aws.Config{
+	svc := awstesting.NewClient(&aws.Config{
 		Credentials: credentials.NewStaticCredentials("AKID", "SECRET", "SESSION"),
 		Region:      aws.String("us-west-2"),
 	})
@@ -188,7 +189,7 @@ func TestIgnorePreResignRequestWithValidCreds(t *testing.T) {
 
 func TestResignRequestExpiredCreds(t *testing.T) {
 	creds := credentials.NewStaticCredentials("AKID", "SECRET", "SESSION")
-	svc := service.New(&aws.Config{Credentials: creds})
+	svc := awstesting.NewClient(&aws.Config{Credentials: creds})
 	r := svc.NewRequest(
 		&request.Operation{
 			Name:       "BatchGetItem",
@@ -208,9 +209,13 @@ func TestResignRequestExpiredCreds(t *testing.T) {
 }
 
 func TestPreResignRequestExpiredCreds(t *testing.T) {
-	provider := &credentials.StaticProvider{credentials.Value{"AKID", "SECRET", "SESSION"}}
+	provider := &credentials.StaticProvider{Value: credentials.Value{
+		AccessKeyID:     "AKID",
+		SecretAccessKey: "SECRET",
+		SessionToken:    "SESSION",
+	}}
 	creds := credentials.NewCredentials(provider)
-	svc := service.New(&aws.Config{Credentials: creds})
+	svc := awstesting.NewClient(&aws.Config{Credentials: creds})
 	r := svc.NewRequest(
 		&request.Operation{
 			Name:       "BatchGetItem",

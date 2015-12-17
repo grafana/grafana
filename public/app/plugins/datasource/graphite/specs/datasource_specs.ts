@@ -7,10 +7,12 @@ declare var helpers: any;
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
 
+  beforeEach(ctx.providePhase(['backendSrv']));
   beforeEach(ctx.createService('GraphiteDatasource'));
+
   beforeEach(function() {
     ctx.ds = new ctx.service({ url: [''] });
   });
@@ -64,6 +66,12 @@ describe('graphiteDatasource', function() {
   });
 
   describe('building graphite params', function() {
+    it('should return empty array if no targets', function() {
+      var results = ctx.ds.buildGraphiteParams({
+        targets: [{}]
+      });
+      expect(results.length).to.be(0);
+    });
 
     it('should uri escape targets', function() {
       var results = ctx.ds.buildGraphiteParams({
