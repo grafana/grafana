@@ -1,11 +1,11 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular = require('angular');
-import $ = require('jquery');
 import _ = require('lodash');
 import kbn = require('app/core/utils/kbn');
-import moment = require('moment');
 
+import $ from 'jquery';
+import moment from 'moment';
+import angular from 'angular';
 import {transformers} from './transformers';
 
 export class TablePanelEditorCtrl {
