@@ -60,6 +60,7 @@ export class GrafanaApp {
       'grafana',
       'pasvaz.bindonce',
       'ui.bootstrap.tabs',
+      'ui.bootstrap.tpls',
     ];
 
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
