@@ -117,7 +117,7 @@ export function tablePanelEditor($q, uiSegmentSrv) {
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'app/panels/table/editor.html',
+    templateUrl: 'app/plugins/panels/table/editor.html',
     controller: TablePanelEditorCtrl,
   };
 }
