@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -59,8 +60,7 @@ func GetDashboard(c *middleware.Context) {
 			CanEdit:   canEditDashboard(c.OrgRole),
 			Created:   dash.Created,
 			Updated:   dash.Updated,
-			CreatedBy: dash.CreatedBy,
-			UpdatedBy: dash.UpdatedBy,
+			UpdatedBy: strconv.FormatInt(dash.UpdatedBy, 10),
 		},
 	}
 
@@ -89,6 +89,7 @@ func DeleteDashboard(c *middleware.Context) {
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
+	cmd.UpdatedBy = c.UserId
 
 	dash := cmd.GetDashboardModel()
 	if dash.Id == 0 {
