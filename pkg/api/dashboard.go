@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -49,6 +48,20 @@ func GetDashboard(c *middleware.Context) {
 	}
 
 	dash := query.Result
+
+	// Finding the last updater of the dashboard
+	updater := "Anonymous"
+	if dash.UpdatedBy != 0 {
+		userQuery := m.GetUserByIdQuery{Id: dash.UpdatedBy}
+		userErr := bus.Dispatch(&userQuery)
+		if userErr != nil {
+			updater = "Unknown"
+		} else {
+			user := userQuery.Result
+			updater = user.Login
+		}
+	}
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta: dtos.DashboardMeta{
@@ -60,7 +73,7 @@ func GetDashboard(c *middleware.Context) {
 			CanEdit:   canEditDashboard(c.OrgRole),
 			Created:   dash.Created,
 			Updated:   dash.Updated,
-			UpdatedBy: strconv.FormatInt(dash.UpdatedBy, 10),
+			UpdatedBy: updater,
 		},
 	}
 
@@ -89,7 +102,12 @@ func DeleteDashboard(c *middleware.Context) {
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
-	cmd.UpdatedBy = c.UserId
+
+	if !c.IsSignedIn {
+		cmd.UpdatedBy = 0
+	} else {
+		cmd.UpdatedBy = c.UserId
+	}
 
 	dash := cmd.GetDashboardModel()
 	if dash.Id == 0 {
