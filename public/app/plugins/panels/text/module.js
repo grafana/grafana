@@ -11,7 +11,7 @@ function (angular, app, _, require, PanelMeta) {
   var converter;
 
   var module = angular.module('grafana.panels.text', []);
-  app.default.useModule(module);
+  app.useModule(module);
 
   module.directive('grafanaPanelText', function() {
     return {

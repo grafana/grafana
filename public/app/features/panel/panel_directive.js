@@ -20,6 +20,7 @@ function (angular, $, config) {
           elem.append(panelEl);
           $compile(panelEl)(scope);
         }).catch(function(err) {
+          console.log('Failed to load panel:', err);
           scope.appEvent('alert-error', ['Panel Load Error', 'Failed to load panel ' + panelType + ', ' + err]);
         });
       }
