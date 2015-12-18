@@ -9,7 +9,7 @@ function (angular, app, _, config, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.dashlist', []);
-  app.useModule(module);
+  app.default.useModule(module);
 
   module.directive('grafanaPanelDashlist', function() {
     return {

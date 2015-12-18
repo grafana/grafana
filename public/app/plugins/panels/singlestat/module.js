@@ -11,7 +11,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat');
-  app.useModule(module);
+  app.default.useModule(module);
 
   module.directive('grafanaPanelSinglestat', function() {
     return {

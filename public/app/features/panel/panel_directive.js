@@ -19,6 +19,8 @@ function (angular, $, config) {
           var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
           elem.append(panelEl);
           $compile(panelEl)(scope);
+        }).catch(function(err) {
+          scope.appEvent('alert-error', ['Panel Load Error', 'Failed to load panel ' + panelType + ', ' + err]);
         });
       }
     };

@@ -9,7 +9,7 @@ function (angular, app, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.singlestat', []);
-  app.useModule(module);
+  app.default.useModule(module);
 
   module.directive('singlestatPanel', function($location, linkSrv, $timeout, templateSrv) {
 
