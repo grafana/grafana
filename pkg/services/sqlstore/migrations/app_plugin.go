@@ -11,6 +11,7 @@ func addAppPluginMigration(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
 			{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
+			{Name: "pin_nav_links", Type: DB_Bool, Nullable: false},
 			{Name: "json_data", Type: DB_Text, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},

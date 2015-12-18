@@ -26,7 +26,7 @@ function (angular, _, config) {
 
     $scope._update = function() {
       appSrv.update($scope.current).then(function() {
-        window.location.href = config.appSubUrl + "plugins";
+        window.location.href = config.appSubUrl + "org/apps";
       });
     };
 
