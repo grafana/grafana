@@ -214,15 +214,20 @@ function (angular, $, _, moment) {
     };
 
     p.formatDate = function(date, format) {
-      if (!moment.isMoment(date)) {
-        date = moment(date);
-      }
-
+      date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
         moment(date).format(format) :
         moment.utc(date).format(format);
+    };
+
+    p.getRelativeTime = function(date) {
+      date = moment.isMoment(date) ? date : moment(date);
+
+      return this.timezone === 'browser' ?
+        moment(date).fromNow() :
+        moment.utc(date).fromNow();
     };
 
     p._updateSchema = function(old) {

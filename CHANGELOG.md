@@ -1,7 +1,28 @@
-# 2.6.0 (2015-12-04)
+# 3.0.0 (unrelased master branch)
+
+
+### Breaking changes
+**InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via improved plugin system, closes #3523
+**KairosDB** The data source is no longer included in default builds. Can easily be installed via improved plugin system, closes #3524
+
+# 2.6.1 (unrelased, 2.6.x branch)
+
+### New Features
+* **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
+
+# 2.6.0 (2015-12-14)
+
+### New Features
+* **Elasticsearch**: Support for pipeline aggregations Moving average and derivative, closes [#2715](https://github.com/grafana/grafana/issues/2715)
+* **Elasticsearch**: Support for inline script and missing options for metrics, closes [#3500](https://github.com/grafana/grafana/issues/3500)
+* **Syslog**: Support for syslog logging, closes [#3161](https://github.com/grafana/grafana/pull/3161)
+* **Timepicker**: Always show refresh button even with refresh rate, closes [#3498](https://github.com/grafana/grafana/pull/3498)
+* **Login**: Make it possible to change the login hint on the login page, closes [#2571](https://github.com/grafana/grafana/pull/2571)
 
 ### Bug Fixes
 * **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
+* **influxdb**: Fixed issue showing Group By label only on first query, fixes [#3453](https://github.com/grafana/grafana/issues/3453)
+* **logging**: Add more verbose info logging for http reqeusts, closes [#3405](https://github.com/grafana/grafana/pull/3405)
 
 # 2.6.0-Beta1 (2015-12-04)
 

@@ -3,65 +3,74 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setIndexViewData(c *middleware.Context) error {
+func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	currentUser := &dtos.CurrentUser{
-		Id:             c.UserId,
-		IsSignedIn:     c.IsSignedIn,
-		Login:          c.Login,
-		Email:          c.Email,
-		Name:           c.Name,
-		LightTheme:     c.Theme == "light",
-		OrgId:          c.OrgId,
-		OrgName:        c.OrgName,
-		OrgRole:        c.OrgRole,
-		GravatarUrl:    dtos.GetGravatarUrl(c.Email),
-		IsGrafanaAdmin: c.IsGrafanaAdmin,
+	var data = dtos.IndexViewData{
+		User: &dtos.CurrentUser{
+			Id:             c.UserId,
+			IsSignedIn:     c.IsSignedIn,
+			Login:          c.Login,
+			Email:          c.Email,
+			Name:           c.Name,
+			LightTheme:     c.Theme == "light",
+			OrgId:          c.OrgId,
+			OrgName:        c.OrgName,
+			OrgRole:        c.OrgRole,
+			GravatarUrl:    dtos.GetGravatarUrl(c.Email),
+			IsGrafanaAdmin: c.IsGrafanaAdmin,
+		},
+		Settings:           settings,
+		AppUrl:             setting.AppUrl,
+		AppSubUrl:          setting.AppSubUrl,
+		GoogleAnalyticsId:  setting.GoogleAnalyticsId,
+		GoogleTagManagerId: setting.GoogleTagManagerId,
 	}
 
 	if setting.DisableGravatar {
-		currentUser.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
+		data.User.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
 	}
 
-	if len(currentUser.Name) == 0 {
-		currentUser.Name = currentUser.Login
+	if len(data.User.Name) == 0 {
+		data.User.Name = data.User.Login
 	}
 
 	themeUrlParam := c.Query("theme")
 	if themeUrlParam == "light" {
-		currentUser.LightTheme = true
+		data.User.LightTheme = true
 	}
 
-	c.Data["User"] = currentUser
-	c.Data["Settings"] = settings
-	c.Data["AppUrl"] = setting.AppUrl
-	c.Data["AppSubUrl"] = setting.AppSubUrl
+	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+		Text: "Dashboards",
+		Icon: "fa fa-fw fa-th-large",
+		Href: "/",
+	})
 
-	if setting.GoogleAnalyticsId != "" {
-		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId
+	if c.OrgRole == m.ROLE_ADMIN {
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "Data Sources",
+			Icon: "fa fa-fw fa-database",
+			Href: "/datasources",
+		})
 	}
 
-	if setting.GoogleTagManagerId != "" {
-		c.Data["GoogleTagManagerId"] = setting.GoogleTagManagerId
-	}
-
-	return nil
+	return &data, nil
 }
 
 func Index(c *middleware.Context) {
-	if err := setIndexViewData(c); err != nil {
+	if data, err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
+	} else {
+		c.HTML(200, "index", data)
 	}
-
-	c.HTML(200, "index")
 }
 
 func NotFoundHandler(c *middleware.Context) {
@@ -70,10 +79,10 @@ func NotFoundHandler(c *middleware.Context) {
 		return
 	}
 
-	if err := setIndexViewData(c); err != nil {
+	if data, err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
+	} else {
+		c.HTML(404, "index", data)
 	}
-
-	c.HTML(404, "index")
 }
