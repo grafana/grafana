@@ -71,6 +71,7 @@ type AppPlugin struct {
 	Js                []*AppPluginJs      `json:"js"`
 	Css               []*AppPluginCss     `json:"css"`
 	MainNavLinks      []*AppPluginNavLink `json:"mainNavLinks"`
+	PinNavLinks       bool                `json:"pinNavLinks"`
 	StaticRootConfig  *StaticRootConfig   `json:"staticRoot"`
 }
 

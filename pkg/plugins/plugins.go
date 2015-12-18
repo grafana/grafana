@@ -203,17 +203,18 @@ func GetEnabledPlugins(orgApps []*models.AppPlugin) EnabledPlugins {
 	seenPanels := make(map[string]bool)
 	seenApi := make(map[string]bool)
 
-	for appType, app := range Apps {
-		// start with enabled set to the default state listed in the json config.
-		enabled := app.Enabled
+	for appType, installedApp := range Apps {
+		var app AppPlugin
+		app = *installedApp
 
 		// check if the app is stored in the DB for this org and if so, use the
-		// enabled state stored there.
+		// state stored there.
 		if b, ok := orgAppsMap[appType]; ok {
-			enabled = b.Enabled
+			app.Enabled = b.Enabled
+			app.PinNavLinks = b.PinNavLinks
 		}
 
-		if enabled {
+		if app.Enabled {
 			for _, d := range app.DatasourcePlugins {
 				if ds, ok := DataSources[d]; ok {
 					enabledPlugins.DataSourcePlugins[d] = ds
@@ -235,7 +236,7 @@ func GetEnabledPlugins(orgApps []*models.AppPlugin) EnabledPlugins {
 					}
 				}
 			}
-			enabledPlugins.AppPlugins = append(enabledPlugins.AppPlugins, app)
+			enabledPlugins.AppPlugins = append(enabledPlugins.AppPlugins, &app)
 		}
 	}
 
