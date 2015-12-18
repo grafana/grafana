@@ -40,6 +40,14 @@ function (angular, _, $, coreModule, config) {
           text: "API Keys",
           href: $scope.getUrl("/org/apikeys"),
         });
+        $scope.orgMenu.push({
+          text: "Datasources",
+          href: $scope.getUrl("/datasources"),
+        });
+        $scope.orgMenu.push({
+          text: "Apps",
+          href: $scope.getUrl("/org/apps"),
+        });
       }
 
       if ($scope.orgMenu.length > 0) {

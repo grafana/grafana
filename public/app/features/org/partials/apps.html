@@ -1,6 +1,6 @@
 <topnav title="Plugins" icon="fa fa-fw fa-cubes" subnav="true">
 	<ul class="nav">
-		<li class="active" ><a href="plugins">Overview</a></li>
+		<li class="active" ><a href="org/apps">Overview</a></li>
 	</ul>
 </topnav>
 
@@ -8,23 +8,23 @@
 	<div class="page">
 		<h2>Plugins</h2>
 
-		<div ng-if="!plugins">
-			<em>No plugins defined</em>
+		<div ng-if="!apps">
+			<em>No apps defined</em>
 		</div>
 
-		<table class="grafana-options-table" ng-if="plugins">
+		<table class="grafana-options-table" ng-if="apps">
 			<tr>
 				<td><strong>Type</strong></td>
 				<td></td>
 				<td></td>
 			</tr>
-			<tr ng-repeat="(type, p) in plugins">
+			<tr ng-repeat="(type, p) in apps">
 				<td style="width:1%">
 					<i class="fa fa-cubes"></i> &nbsp;
 					{{p.type}}
 				</td>
 				<td style="width: 1%">
-					<a href="plugins/edit/{{p.type}}" class="btn btn-inverse btn-mini">
+					<a href="org/apps/edit/{{p.type}}" class="btn btn-inverse btn-mini">
 						<i class="fa fa-edit"></i>
 						Edit
 					</a>

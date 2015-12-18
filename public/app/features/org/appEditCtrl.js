@@ -8,14 +8,14 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PluginEditCtrl', function($scope, pluginSrv, $routeParams) {
+  module.controller('AppEditCtrl', function($scope, appSrv, $routeParams) {
     $scope.init = function() {
       $scope.current = {};
-      $scope.getPlugins();
+      $scope.getApps();
     };
 
-    $scope.getPlugins = function() {
-      pluginSrv.get($routeParams.type).then(function(result) {
+    $scope.getApps = function() {
+      appSrv.get($routeParams.type).then(function(result) {
         $scope.current = _.clone(result);
       });
     };
@@ -25,7 +25,7 @@ function (angular, _, config) {
     };
 
     $scope._update = function() {
-      pluginSrv.update($scope.current).then(function() {
+      appSrv.update($scope.current).then(function() {
         window.location.href = config.appSubUrl + "plugins";
       });
     };
