@@ -55,14 +55,4 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Postgres("SELECT 0;").
 		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard MEDIUMTEXT;"))
 
-	// add column to store creator of a dashboard snapshot
-	mg.AddMigration("Add column created_by in dashboard_snapshot", NewAddColumnMigration(snapshotV5, &Column{
-		Name: "created_by", Type: DB_BigInt, Nullable: true,
-	}))
-
-	// add column to store updater of a dashboard snapshot
-	mg.AddMigration("Add column updated_by in dashboard_snapshot", NewAddColumnMigration(snapshotV5, &Column{
-		Name: "updated_by", Type: DB_BigInt, Nullable: true,
-	}))
-
 }
