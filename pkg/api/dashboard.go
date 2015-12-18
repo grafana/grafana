@@ -59,6 +59,8 @@ func GetDashboard(c *middleware.Context) {
 			CanEdit:   canEditDashboard(c.OrgRole),
 			Created:   dash.Created,
 			Updated:   dash.Updated,
+			CreatedBy: dash.CreatedBy,
+			UpdatedBy: dash.UpdatedBy,
 		},
 	}
 

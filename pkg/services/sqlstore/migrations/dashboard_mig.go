@@ -94,12 +94,12 @@ func addDashboardMigration(mg *Migrator) {
 		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
 
 	// add column to store creator of a dashboard
-	mg.AddMigration("Add column created_by", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "created_by", Type: DB_BigInt, Nullable: true,
+	mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "created_by", Type: DB_NVarchar, Length: 255, Nullable: false, Default: "Anonymous",
 	}))
 
 	// add column to store updater of a dashboard
-	mg.AddMigration("Add column updated_by", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "updated_by", Type: DB_BigInt, Nullable: true,
+	mg.AddMigration("Add column updated_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "updated_by", Type: DB_NVarchar, Length: 255, Nullable: false, Default: "Anonymous",
 	}))
 }
