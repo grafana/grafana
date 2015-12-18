@@ -131,14 +131,14 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
-      .when('/plugins', {
-        templateUrl: 'app/features/org/partials/plugins.html',
-        controller: 'PluginsCtrl',
+      .when('/org/apps', {
+        templateUrl: 'app/features/org/partials/apps.html',
+        controller: 'AppsCtrl',
         resolve: loadOrgBundle,
       })
-      .when('/plugins/edit/:type', {
-        templateUrl: 'app/features/org/partials/pluginEdit.html',
-        controller: 'PluginEditCtrl',
+      .when('/org/apps/edit/:type', {
+        templateUrl: 'app/features/org/partials/appEdit.html',
+        controller: 'AppEditCtrl',
         resolve: loadOrgBundle,
       })
       .otherwise({

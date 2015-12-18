@@ -98,7 +98,6 @@ function (angular, app, _, require, PanelMeta) {
         console.log('Text panel error: ', e);
         $scope.content = $sce.trustAsHtml(html);
       }
-
       if(!$scope.$$phase) {
         $scope.$digest();
       }

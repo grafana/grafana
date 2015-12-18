@@ -41,8 +41,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 
-	r.Get("/plugins", reqSignedIn, Index)
-	r.Get("/plugins/edit/*", reqSignedIn, Index)
+	r.Get("/org/apps", reqSignedIn, Index)
+	r.Get("/org/apps/edit/*", reqSignedIn, Index)
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
@@ -116,6 +116,10 @@ func Register(r *macaron.Macaron) {
 			r.Get("/invites", wrap(GetPendingOrgInvites))
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
+
+			// apps
+			r.Get("/apps", wrap(GetAppPlugins))
+			r.Post("/apps", bind(m.UpdateAppPluginCmd{}), wrap(UpdateAppPlugin))
 		}, reqOrgAdmin)
 
 		// create new org
@@ -153,12 +157,6 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/plugins", GetDataSourcePlugins)
-		}, reqOrgAdmin)
-
-		// PluginBundles
-		r.Group("/plugins", func() {
-			r.Get("/", wrap(GetAppPlugins))
-			r.Post("/", bind(m.UpdateAppPluginCmd{}), wrap(UpdateAppPlugin))
 		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
