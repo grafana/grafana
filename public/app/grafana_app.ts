@@ -17,7 +17,7 @@ import bootstrap = require('bootstrap');
 import kbn = require('app/core/utils/kbn');
 import config = require('app/core/config');
 
-// import {Component} from 'vendor/npm/angular2/core';
+//  import {Component} from 'angular2/core';
 // console.log(Component);
 
 export class GrafanaApp {
