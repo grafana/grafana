@@ -54,5 +54,4 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Sqlite("SELECT 0 WHERE 0;").
 		Postgres("SELECT 0;").
 		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard MEDIUMTEXT;"))
-
 }
