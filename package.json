@@ -57,7 +57,6 @@
     "rjs-build-analysis": "0.0.3",
     "rxjs": "5.0.0-beta.0",
     "systemjs": "0.19.6",
-    "tslint": "^2.5.0-beta",
     "zone.js": "0.5.10"
   },
   "engines": {
@@ -76,6 +75,7 @@
     "lodash": "^2.4.1",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.14.15",
+    "tslint": "^3.2.0",
     "typescript": "^1.7.5"
   }
 }

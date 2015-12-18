@@ -12,7 +12,7 @@ module.exports = function(grunt) {
     console.log('Starting systemjs-builder');
 
     builder
-      .bundle('app/app', 'public_gen/app/app.js')
+      .bundle('app/app + app/features/all', 'public_gen/app/app.js')
       .then(function() {
         console.log('Build complete');
         done();
