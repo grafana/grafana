@@ -7,7 +7,7 @@ export default class PanelMeta {
   editorTabs: any;
   extendedMenu: any;
 
-  constructor(options : any) {
+  constructor(options: any) {
     this.description = options.description;
     this.fullscreen = options.fullscreen;
     this.editIcon = options.editIcon;

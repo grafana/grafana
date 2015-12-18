@@ -7,7 +7,7 @@ define([
   'use strict';
 
   var module = angular.module('grafana.panels.graph', []);
-  app.useModule(module);
+  app.default.useModule(module);
 
   module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv) {
     $scope.overrideMenu = [];

@@ -3,7 +3,7 @@
 import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
-import PanelMeta from '../../../features/panel/panel_meta';
+import PanelMeta from 'app/features/panel/panel_meta2';
 
 import {transformDataToTable} from './transformers';
 
