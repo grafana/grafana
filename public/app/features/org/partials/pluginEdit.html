@@ -1,0 +1,42 @@
+<topnav title="Plugins" icon="fa fa-fw fa-cubes" subnav="true">
+	<ul class="nav">
+		<li ><a href="plugins">Overview</a></li>
+		<li class="active" ><a href="plugins/edit/{{current.type}}">Edit</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+	<div class="page">
+		<h2>Edit Plugin</h2>
+
+
+		<form name="editForm">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 80px">
+						Type
+					</li>
+					<li>
+						<li>
+							<input type="text" disabled="disabled" class="input-xlarge tight-form-input" ng-model="current.type">
+						</li>
+					</li>
+					<li class="tight-form-item">
+						Default&nbsp;
+						<input class="cr1" id="current.enabled" type="checkbox" ng-model="current.enabled" ng-checked="current.enabled">
+						<label for="current.enabled" class="cr1"></label>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<br>
+			<plugin-config-loader plugin="current"></plugin-config-loader>
+			<div class="pull-right" style="margin-top: 35px">
+				<button type="submit" class="btn btn-success" ng-click="update()">Save</button>
+				<a class="btn btn-inverse" href="plugins">Cancel</a>
+			</div>
+			<br>
+		</form>
+
+	</div>
+</div>

@@ -66,6 +66,12 @@ describe('graphiteDatasource', function() {
   });
 
   describe('building graphite params', function() {
+    it('should return empty array if no targets', function() {
+      var results = ctx.ds.buildGraphiteParams({
+        targets: [{}]
+      });
+      expect(results.length).to.be(0);
+    });
 
     it('should uri escape targets', function() {
       var results = ctx.ds.buildGraphiteParams({
