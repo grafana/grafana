@@ -22,6 +22,7 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/"),
       });
 
+      /*
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({
           text: "Data Sources",
@@ -29,6 +30,7 @@ function (angular, _, $, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+      */
 
       $scope.mainLinks.push({
         text: "Alerts",

@@ -131,6 +131,9 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
+  // DataSource settings
+  DataSource DataSourceSettings
+
   // Alert settings
   Alert AlertSettings
 )
@@ -466,6 +469,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readSmtpSettings()
 	readQuotaSettings()
 
+  readDataSourceSettings()
   readAlertSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {

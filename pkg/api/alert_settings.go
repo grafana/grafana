@@ -1,15 +1,12 @@
 package api
 
 import (
-	"github.com/wangy1931/grafana/pkg/api/dtos"
-	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/middleware"
-	m "github.com/wangy1931/grafana/pkg/models"
   "github.com/wangy1931/grafana/pkg/setting"
   "github.com/wangy1931/grafana/pkg/log"
 )
 
-func AlertSource(c *middleware.Context) {
+func GetAlertSource(c *middleware.Context) {
   log.Info("Alert Url: %v", setting.Alert.AlertUrlRoot)
 
   alert := make(map[string]interface{})
@@ -20,6 +17,7 @@ func AlertSource(c *middleware.Context) {
   c.JSON(200, alert)
 }
 
+/*
 func GetAlertSource(c *middleware.Context) {
 	query := m.GetAlertSourceQuery{OrgId: c.OrgId}
 
@@ -34,4 +32,6 @@ func GetAlertSource(c *middleware.Context) {
     OrgId:             ds.OrgId,
     Url:               ds.Url,
   })
+
 }
+*/

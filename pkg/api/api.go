@@ -154,7 +154,7 @@ func Register(r *macaron.Macaron) {
 
 		// Alert source
 		r.Group("/alertsource", func() {
-			r.Get("/", AlertSource)
+			r.Get("/", GetAlertSource)
 		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
