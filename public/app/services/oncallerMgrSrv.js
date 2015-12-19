@@ -16,9 +16,8 @@ function (angular) {
 
     this.init = function() {
       backendSrv.get('/api/alertsource').then(function(result) {
-        //alertUrlRoot = result.alert.alert_urlroot;
-        //oncallerUrl = alertUrlRoot + "/oncaller/" + "definition";
-        oncallerUrl = "http://10.0.0.117:5001/oncaller/definition";
+        alertUrlRoot = result.alert.alert_urlroot;
+        oncallerUrl = alertUrlRoot + "/oncaller/" + "definition";
       });
     };
 
@@ -29,7 +28,7 @@ function (angular) {
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
           var theoncallerDef = response.data[i];
-          self.oncallerDefMap[theoncallerDef.name] = theoncallerDef;
+          self.oncallerDefMap[theoncallerDef.service] = theoncallerDef;
         }
         return response;
       }, function onFailed(response) {
@@ -56,11 +55,9 @@ function (angular) {
       });
     };
 
-    this.get = function(name) {
-      return self.oncallerDefMap[name];
+    this.get = function(service) {
+      return self.oncallerDefMap[service];
     };
-
-    this.init();
 
   });
 });
