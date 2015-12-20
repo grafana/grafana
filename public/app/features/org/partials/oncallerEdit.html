@@ -11,47 +11,48 @@
     <h2 ng-show="isNew">Add OnCaller</h2>
     <h2 ng-show="!isNew">Edit OnCaller</h2>
 
-    <form name="editForm">
+    <form name="oncallerForm">
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Name</li>
-          <li><input type="text" class="input-xlarge tight-form-input"
+          <li class="tight-form-item" style="width: 100px">Name</li>
+          <li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="oncallerDef.name" placeholder="name" required>
           </li>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Email</li>
-          <li><input type="text" class="input-xlarge tight-form-input"
+          <li class="tight-form-item" style="width: 100px">Email</li>
+          <li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="oncallerDef.email" placeholder="email" required>
           </li>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Phone</li>
-          <li><input type="text" class="input-xlarge tight-form-input"
+          <li class="tight-form-item" style="width: 100px">Phone</li>
+          <li><input type="text" class="input-xxlarge tight-form-input last"
                      ng-model="oncallerDef.tel" placeholder="phone" required>
           </li>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Carrier</li>
-          <li><input type="text" class="input-xlarge tight-form-input"
+          <li class="tight-form-item" style="width: 100px">Carrier</li>
+          <select type="text" class="input-xxlarge tight-form-input last"
+                     ng-options="f for f in ['att', 'tmobile', 'verizon', 'sprint', 'cricket', 'metro pcs']"
                      ng-model="oncallerDef.carrier" placeholder="carrier" required>
-          </li>
+          </select>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Service</li>
-          <li><input type="text" class="input-xlarge tight-form-input"
+          <li class="tight-form-item" style="width: 100px">Service</li>
+          <li><input type="text" class="input-xxlarge tight-form-input last"
                      ng-model="oncallerDef.service" placeholder="service" required>
           </li>
         </ul>

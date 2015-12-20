@@ -16,15 +16,22 @@ function (angular) {
     });
 
     $scope.remove = function(alertId) {
-      alertMgrSrv.remove(alertId).then(function onSuccess() {
-        for (var i = $scope.alertDefList.length - 1; i >= 0; i--) {
-          if (alertId === $scope.alertDefList[i].id) {
-            $scope.alertDefList.splice(i, 1);
-            break;
-          }
+      $scope.appEvent('confirm-modal', {
+        title: 'Are you sure you want to delete this alert?',
+        icon: 'fa-trash',
+        yesText: 'Delete',
+        onConfirm: function() {
+          alertMgrSrv.remove(alertId).then(function onSuccess() {
+            for (var i = $scope.alertDefList.length - 1; i >= 0; i--) {
+              if (alertId === $scope.alertDefList[i].id) {
+                $scope.alertDefList.splice(i, 1);
+                break;
+              }
+            }
+          }, function onFailed(response) {
+            alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
+          });
         }
-      }, function onFailed(response) {
-        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
     };
   });

@@ -16,16 +16,16 @@
       <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Name</li>
-          <li><li><input type="text" class="input-xlarge tight-form-input"
+          <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.name" placeholder="alert name" required>
           </li></li>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Description</li>
-          <li><li><input type="text" class="input-xlarge tight-form-input"
+          <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.description" placeholder="alert description" required>
           </li></li>
         </ul>
@@ -50,7 +50,7 @@
             Aggregator <tip>Select how to round up data point to a minute granularity</tip>
           </li>
           <li>
-            <select class="input-medium tight-form-input"
+            <select class="input-medium tight-form-input last"
                     ng-model="alertDef.alertDetails.hostQuery.metricQueries[0].aggregator"
                     ng-options="f for f in ['AVG', 'MIN', 'MAX', 'SUM', 'P99', 'P999']">
             </select>
@@ -58,7 +58,7 @@
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
             Critical
@@ -74,13 +74,13 @@
             DurationInMinutes
           </li>
           <li>
-            <input type="text" class="tight-form-input input-medium"
+            <input type="text" class="tight-form-input input-medium last"
                    ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="critical duration" required />
           </li>
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form last">
+      <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
             Warning
@@ -96,7 +96,7 @@
             DurationInMinutes
           </li>
           <li>
-            <input type="text" class="tight-form-input input-medium"
+            <input type="text" class="tight-form-input input-medium last"
                    ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="warn duration" required />
           </li>
         </ul>

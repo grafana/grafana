@@ -8,7 +8,7 @@ function (angular) {
 
   var module = angular.module('grafana.services');
 
-  module.service('oncallerMgrSrv', function($http, oncallerSrv, backendSrv) {
+  module.service('oncallerMgrSrv', function($http, alertSrv, backendSrv) {
     this.oncallerDefMap = {};
     var self = this;
     var alertUrlRoot = "";
@@ -32,7 +32,7 @@ function (angular) {
         }
         return response;
       }, function onFailed(response) {
-        oncallerSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 5000);
+        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 5000);
         return response;
       });
     };

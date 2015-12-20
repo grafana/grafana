@@ -7,6 +7,10 @@
 </topnav>
 
 <div class="main-view-container">
+  <div ng-if="dashboard.rows.length === 0">
+    <h2 align="center">Everthing looks good!</h2>
+  </div>
+
   <div class="grafana-row" ng-controller="RowCtrl" ng-init="createAlertGraphPanel(row.triggeredAlert)" ng-repeat="(row_name, row) in dashboard.rows" row-height>
     <div class="row-control">
       <div class="row-control-inner">
