@@ -8,7 +8,9 @@
 </topnav>
 
 <div class="main-view-container">
-  <div class="grafana-row" ng-controller="RowCtrl" ng-init="createAssociatedMetricGraphPanel(row.associatedMetric)" ng-repeat="(row_name, row) in dashboard.rows" row-height>
+  <div class="grafana-row" ng-controller="RowCtrl"
+       ng-init="createAssociatedMetricGraphPanel(row.associatedMetric)"
+       ng-repeat="(row_name, row) in dashboard.rows" row-height>
     <div class="row-control">
       <div class="row-control-inner">
         <div class="row-close" ng-show="row.collapse" data-placement="bottom" >

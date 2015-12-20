@@ -146,7 +146,14 @@ function (angular, _, config) {
         editable: false,
         type: "graph",
         targets: [{aggregator: "avg", metric: triggeredMetric, downsampleAggregator: "avg", downsampleInterval: "1m"}],
-        links: [{targetBlank: "true", title: "Associated Metrics", type: "absolute", url: "alerts/association/" + triggeredAlert.id}]
+        links: [
+          {
+            targetBlank: "true",
+            title: "Associated Metrics",
+            type: "absolute",
+            url: "alerts/association/" + triggeredAlert.id
+          }
+        ]
       };
 
       $scope.addPanel(panel);
@@ -160,14 +167,32 @@ function (angular, _, config) {
     $scope.createAssociatedMetricGraphPanel = function(associatedMetric) {
       var defaultSpan = 12;
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
+      var hostTag = "*";
+
+      if (associatedMetric.hosts.length > 0) {
+        hostTag = associatedMetric.hosts[0];
+        for (var i = 1; i < associatedMetric.hosts.length; i++) {
+          hostTag += "|" + associatedMetric.hosts[i];
+        }
+      }
 
       var panel = {
-        title: associatedMetric,
+        title: associatedMetric.metric,
         error: false,
         span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: false,
         type: "graph",
-        targets: [{aggregator: "avg", metric: associatedMetric, downsampleAggregator: "avg", downsampleInterval: "1m"}],
+        targets: [
+          {
+            aggregator: "avg",
+            metric: associatedMetric.metric,
+            downsampleAggregator: "avg",
+            downsampleInterval: "1m",
+            tags: {
+              host: hostTag
+            }
+          }
+        ],
       };
 
       $scope.addPanel(panel);

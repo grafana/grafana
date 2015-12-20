@@ -21,7 +21,7 @@ function (angular) {
         alertUrlRoot = result.alert.alert_urlroot;
         alertDefUrl = alertUrlRoot + "/alert/" + "definition";
         alertStatusUrl = alertUrlRoot + "/alert/" + "status";
-        alertAssociationUrl = alertUrlRoot + "/alert/" + "association";
+        alertAssociationUrl = alertUrlRoot + "/correlation/" + "alert";
       });
     };
 
@@ -75,7 +75,7 @@ function (angular) {
       return $http({
         method: "get",
         url: alertAssociationUrl,
-        params: {alertid: alertId}
+        params: {id: alertId}
       });
     };
 

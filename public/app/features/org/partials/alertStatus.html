@@ -2,13 +2,14 @@
   <ul class="nav">
     <li><a href="alerts">Overview</a></li>
     <li><a href="alerts/new">Add new</a></li>
-    <li class="active"><a href="alerts/status">Status</a></li>
+    <li class="active"><a href="alerts/status" style="color:red" ng-if="dashboard.rows.length > 0">Status</a></li>
+    <li class="active"><a href="alerts/status" ng-if="dashboard.rows.length === 0">Status</a></li>
   </ul>
 </topnav>
 
 <div class="main-view-container">
   <div ng-if="dashboard.rows.length === 0">
-    <h2 align="center">Everthing looks good!</h2>
+    <h2 align="center">Everything looks good!</h2>
   </div>
 
   <div class="grafana-row" ng-controller="RowCtrl" ng-init="createAlertGraphPanel(row.triggeredAlert)" ng-repeat="(row_name, row) in dashboard.rows" row-height>
