@@ -41,7 +41,7 @@ System.config({
 
   meta: {
     'vendor/angular/angular.js': {
-      format: 'amd',
+      format: 'global',
       deps: ['jquery'],
       exports: 'angular',
     },

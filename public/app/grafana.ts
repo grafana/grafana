@@ -93,5 +93,6 @@ export class GrafanaApp {
       console.log('Application boot failed:', err);
     });
   }
- }
+}
 
+export default new GrafanaApp();

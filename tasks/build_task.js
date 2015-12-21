@@ -10,20 +10,19 @@ module.exports = function(grunt) {
     'clean:release',
     'copy:public_to_gen',
     'typescript:build',
-    'karma:test',
+    // 'karma:test',
     'phantomjs',
     'css',
-    // 'htmlmin:build',
+    'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
-    'requirejs:build',
+    'systemjs:build',
     'concat:js',
-    'clean:temp',
-    'filerev',
-    'remapFilerev',
+    // 'filerev',
+    // 'remapFilerev',
     'usemin',
-    'uglify:genDir'
+    // 'uglify:genDir'
   ]);
 
   // task to add [[.AppSubUrl]] to reved path
