@@ -8,7 +8,6 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
-  console.log('grafana ctrl');
 
   $scope.init = function() {
     $scope.contextSrv = contextSrv;

@@ -19,10 +19,10 @@ module.exports = function(grunt) {
     'ngAnnotate:build',
     'systemjs:build',
     'concat:js',
-    // 'filerev',
-    // 'remapFilerev',
+    'filerev',
+    'remapFilerev',
     'usemin',
-    // 'uglify:genDir'
+    'uglify:genDir'
   ]);
 
   // task to add [[.AppSubUrl]] to reved path

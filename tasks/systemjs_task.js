@@ -13,10 +13,10 @@ module.exports = function(grunt) {
     var modules = [
       'app/app',
       'app/features/all',
-      'app/plugins/panels/**/*',
-      'app/plugins/datasource/graphite/**/*',
-      'app/plugins/datasource/influxdb/**/*',
-      'app/plugins/datasource/elasticsearch/**/*',
+      'app/plugins/panels/**/module',
+      'app/plugins/datasource/graphite/datasource',
+      'app/plugins/datasource/influxdb/datasource',
+      'app/plugins/datasource/elasticsearch/datasource',
     ];
 
     var expression = modules.join(' + ');
@@ -31,7 +31,7 @@ module.exports = function(grunt) {
       .catch(function(err) {
         console.log('Build error');
         console.log(err);
-        done();
+        done(false);
       });
   });
 };

@@ -17,9 +17,6 @@ import bootstrap = require('bootstrap');
 import kbn = require('app/core/utils/kbn');
 import config = require('app/core/config');
 
-//  import {Component} from 'angular2/core';
-// console.log(Component);
-
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
@@ -46,7 +43,6 @@ export class GrafanaApp {
     app.constant('grafanaVersion', "@grafanaVersion@");
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
-      console.log('app config');
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;
       this.registerFunctions.factory    = $provide.factory;

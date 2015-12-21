@@ -34,6 +34,9 @@ System.config({
     vendor: {
       defaultExtension: 'js',
     },
+    test: {
+      defaultExtension: 'js',
+    },
   },
 
   map: {
