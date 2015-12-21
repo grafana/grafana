@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import TableModel = require('app/core/table_model');
+import TableModel from 'app/core/table_model';
 import {TableRenderer} from '../renderer';
 
 describe('when rendering table', () => {

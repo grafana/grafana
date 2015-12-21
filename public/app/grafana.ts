@@ -25,6 +25,12 @@ export class GrafanaApp {
   ngModuleDependencies: any[];
   preBootModules: any[];
 
+  constructor() {
+    this.preBootModules = [];
+    this.registerFunctions = {};
+    this.ngModuleDependencies = [];
+  }
+
   useModule(module) {
     if (this.preBootModules) {
       this.preBootModules.push(module);
@@ -36,9 +42,6 @@ export class GrafanaApp {
   }
 
   init() {
-    this.registerFunctions = {};
-    this.preBootModules = [];
-
     var app = angular.module('grafana', []);
     app.constant('grafanaVersion', "@grafanaVersion@");
 

@@ -9,14 +9,13 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'vendor/npm/es5-shim/es5-shim.js',
+      'vendor/npm/es5-shim/es5-sham.js',
       'vendor/npm/es6-shim/es6-shim.js',
       'vendor/npm/es6-promise/dist/es6-promise.js',
       'vendor/npm/systemjs/dist/system.src.js',
       'test/test-main.js',
 
-      {pattern: 'app/**/*.js', included: false},
-      {pattern: 'vendor/**/*.js', included: false},
-      {pattern: 'test/**/*.js', included: false}
+      {pattern: '**/*.js', included: false},
     ],
 
     // list of files to exclude
@@ -28,7 +27,7 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['PhantomJS'],
-    captureTimeout: 60000,
+    captureTimeout: 2000,
     singleRun: true,
     autoWatchBatchDelay: 1000,
 

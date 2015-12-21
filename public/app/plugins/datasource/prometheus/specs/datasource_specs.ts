@@ -1,9 +1,7 @@
-///<amd-dependency path="app/plugins/datasource/prometheus/datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
-
+import '../datasource';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import moment  = require('moment');
-declare var helpers: any;
+import moment from 'moment';
+import helpers from 'test/specs/helpers';
 
 describe('PrometheusDatasource', function() {
 

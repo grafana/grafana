@@ -1,11 +1,9 @@
-///<amd-dependency path="../datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
+import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import moment  = require('moment');
-import angular = require('angular');
-
-declare var helpers: any;
+import moment from 'moment';
+import angular from 'angular';
+import helpers from 'test/specs/helpers';
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
