@@ -69,6 +69,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "es5-shim": "^4.4.1",
     "grunt-jscs": "~1.5.x",
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",

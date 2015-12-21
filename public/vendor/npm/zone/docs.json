@@ -1,6 +1,0 @@
-{ 
-  "content": [
-    {"title": "Zone API", "depth": 2},
-    "lib/zone.js"
-  ]
-}

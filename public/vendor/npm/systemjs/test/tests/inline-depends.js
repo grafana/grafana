@@ -1,1 +1,0 @@
-window.dep = window.depValue;

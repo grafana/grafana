@@ -1,1 +1,0 @@
-export {someExport} from './cjs-named-export.js';

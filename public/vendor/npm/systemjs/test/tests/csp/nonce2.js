@@ -1,3 +1,0 @@
-module.exports = {
-  nonce: 'ab'
-};
