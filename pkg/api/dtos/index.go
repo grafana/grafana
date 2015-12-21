@@ -8,9 +8,9 @@ type IndexViewData struct {
 	GoogleAnalyticsId  string
 	GoogleTagManagerId string
 
-	PluginCss    []*PluginCss
-	PluginJs     []string
-	MainNavLinks []*NavLink
+	PluginCss     []*PluginCss
+	PluginModules []string
+	MainNavLinks  []*NavLink
 }
 
 type PluginCss struct {
@@ -21,5 +21,5 @@ type PluginCss struct {
 type NavLink struct {
 	Text string `json:"text"`
 	Icon string `json:"icon"`
-	Href string `json:"href"`
+	Url  string `json:"url"`
 }

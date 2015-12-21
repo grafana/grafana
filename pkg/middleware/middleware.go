@@ -253,3 +253,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 	ctx.JSON(status, resp)
 }
+
+func (ctx *Context) hasUserRole(role m.RoleType) bool {
+	return ctx.OrgRole.Includes(role)
+}
