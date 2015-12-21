@@ -46,5 +46,4 @@ System.config({
       exports: 'angular',
     },
   }
-
 });

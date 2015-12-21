@@ -1,8 +1,6 @@
-///<amd-dependency path="../elastic_response" name="ElasticResponse"/>
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var ElasticResponse: any;
+import ElasticResponse from '../elastic_response';
 
 describe('ElasticResponse', function() {
   var targets;

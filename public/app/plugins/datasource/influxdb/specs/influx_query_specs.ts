@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import InfluxQuery = require('../influx_query');
+import InfluxQuery from '../influx_query';
 
 describe('InfluxQuery', function() {
 

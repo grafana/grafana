@@ -1,8 +1,7 @@
-///<amd-dependency path="app/plugins/datasource/graphite/datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
+import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-declare var helpers: any;
+import helpers from 'test/specs/helpers';
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();

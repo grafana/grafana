@@ -20,7 +20,7 @@ function bootstrap() {(function(__global) {
     }
     return -1;
   };
-  
+
   var defineProperty;
   (function () {
     try {
@@ -54,7 +54,7 @@ function bootstrap() {(function(__global) {
     else {
       newErr = err + '\n\t' + msg;
     }
-      
+
     return newErr;
   }
 
@@ -629,7 +629,7 @@ function logloads(loads) {
     var loader = linkSet.loader;
     var requests;
 
-    checkError: 
+    checkError:
     if (load) {
       if (linkSet.loads[0].name == load.name) {
         exc = addToError(exc, 'Error loading ' + load.name);
@@ -1323,10 +1323,10 @@ var __exec;
 
     return (wrap ? '(function(System) {' : '') + load.source + (wrap ? '\n})(System);' : '')
         // adds the sourceURL comment if not already present
-        + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL=' 
+        + (load.source.substr(lastLineIndex, 15) != '\n//# sourceURL='
           ? '\n//# sourceURL=' + load.address + (load.metadata.sourceMap ? '!transpiled' : '') : '')
         // add sourceMappingURL if load.metadata.sourceMap is set
-        + (load.metadata.sourceMap && hasBtoa && 
+        + (load.metadata.sourceMap && hasBtoa &&
           '\n//# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(load.metadata.sourceMap))) || '')
   }
 
@@ -1407,7 +1407,7 @@ var __exec;
 
 })();/*
   SystemJS map support
-  
+
   Provides map configuration through
     System.map['jquery'] = 'some/module/map'
 
@@ -1445,7 +1445,7 @@ hook('normalize', function() {
       if (bestMatch)
         name = this.map[bestMatch] + name.substr(bestMatch.length);
     }
-    
+
     // map is the first normalizer
     return name;
   };
@@ -1492,8 +1492,8 @@ hookConstructor(function(constructor) {
 
     // Default settings for globalEvaluationScope:
     // Disabled for WebWorker, Chrome Extensions and jsdom
-    if (isWorker 
-        || isBrowser && window.chrome && window.chrome.extension 
+    if (isWorker
+        || isBrowser && window.chrome && window.chrome.extension
         || isBrowser && navigator.userAgent.match(/^Node\.js/))
       this.globalEvaluationScope = false;
 
@@ -1515,13 +1515,13 @@ hookConstructor(function(constructor) {
   defines the `normalizeSync` function and normalizes everything into
   a URL.
 
-  The final normalization 
+  The final normalization
  */
 hook('normalize', function(normalize) {
   return function(name, parentName) {
     // first run map config
     name = normalize.apply(this, arguments);
-    
+
     // relative URL-normalization
     if (name[0] == '.' || name[0] == '/') {
       if (parentName)
@@ -1559,7 +1559,7 @@ hook('fetch', function() {
 
 /*
   __useDefault
-  
+
   When a module object looks like:
   newModule(
     __useDefault: true,
@@ -1665,8 +1665,8 @@ SystemJSLoader.prototype.config = function(cfg) {
         // if a package main, revert it
         var pkgMatch = '';
         for (var pkg in this.packages) {
-          if (normalized.substr(0, pkg.length) == pkg 
-              && (!normalized[pkg.length] || normalized[pkg.length] == '/') 
+          if (normalized.substr(0, pkg.length) == pkg
+              && (!normalized[pkg.length] || normalized[pkg.length] == '/')
               && pkgMatch.split('/').length < pkg.split('/').length)
             pkgMatch = pkg;
         }
@@ -1765,7 +1765,7 @@ SystemJSLoader.prototype.config = function(cfg) {
   }
 };/*
  * Paths extension
- * 
+ *
  * Applies paths and normalizes to a full URL
  */
 hook('normalize', function(normalize) {
@@ -1835,7 +1835,7 @@ hook('normalize', function(normalize) {
  *       // import 'package/index.js' loads in parallel package/lib/test.js,package/vendor/sizzle.js
  *       './index.js': ['./test'],
  *       './test.js': ['sizzle']
- *     } 
+ *     }
  *   }
  * };
  *
@@ -1856,13 +1856,13 @@ hook('normalize', function(normalize) {
  *
  * In addition, the following modules properties will be allowed to be package
  * -relative as well in the package module config:
- *   
+ *
  *   - loader
  *   - alias
  *
  *
  * Package Configuration Loading
- * 
+ *
  * Not all packages may already have their configuration present in the System config
  * For these cases, a list of packageConfigPaths can be provided, which when matched against
  * a request, will first request a ".json" file by the package name to derive the package
@@ -1870,7 +1870,7 @@ hook('normalize', function(normalize) {
  * case in SystemJS.
  *
  * Example:
- * 
+ *
  *   System.packageConfigPaths = ['packages/test/package.json', 'packages/*.json'];
  *
  *   // will first request 'packages/new-package/package.json' for the package config
@@ -1885,11 +1885,11 @@ hook('normalize', function(normalize) {
  * The package name itself is taken to be the match up to and including the last wildcard
  * or trailing slash.
  * Package config paths are ordered - matching is done based on the first match found.
- * Any existing package configurations for the package will deeply merge with the 
+ * Any existing package configurations for the package will deeply merge with the
  * package config, with the existing package configurations taking preference.
  * To opt-out of the package configuration request for a package that matches
  * packageConfigPaths, use the { configured: true } package config option.
- * 
+ *
  */
 (function() {
 
@@ -1918,7 +1918,7 @@ hook('normalize', function(normalize) {
 
   function applyMap(map, name) {
     var bestMatch, bestMatchLength = 0;
-    
+
     for (var p in map) {
       if (name.substr(0, p.length) == p && (name.length == p.length || name[p.length] == '/')) {
         var curMatchLength = p.split('/').length;
@@ -1945,11 +1945,11 @@ hook('normalize', function(normalize) {
   }
 
   // given the package subpath, return the resultant combined path
-  // defaultExtension is only added if the path does not have 
+  // defaultExtension is only added if the path does not have
   // loader package meta or exact package meta
   // We also re-incorporate package-level conditional syntax at this point
   // allowing package map and package mains to point to conditionals
-  // when conditionals are present, 
+  // when conditionals are present,
   function toPackagePath(loader, pkgName, pkg, basePath, subPath, sync, isPlugin) {
     // skip if its a plugin call already, or we have boolean / interpolation conditional syntax in subPath
     var skipExtension = !!(isPlugin || subPath.indexOf('#?') != -1 || subPath.match(interpolationRegEx));
@@ -2013,7 +2013,7 @@ hook('normalize', function(normalize) {
         return toPackagePath(loader, pkgName, pkg, basePath, mapped.substr(2), sync, isPlugin);
       // global package map
       else
-        return (sync ? loader.normalizeSync : loader.normalize).call(loader, mapped); 
+        return (sync ? loader.normalizeSync : loader.normalize).call(loader, mapped);
     }
 
     // apply non-environment map match
@@ -2041,7 +2041,7 @@ hook('normalize', function(normalize) {
 
         if (!negate && value || negate && !value)
           return mapped[e] + subPath.substr(map.length);
-      }        
+      }
     })
     .then(function(mapped) {
       // no environment match
@@ -2055,11 +2055,11 @@ hook('normalize', function(normalize) {
   function createPackageNormalize(normalize, sync) {
     return function(name, parentName, isPlugin) {
       isPlugin = isPlugin === true;
-      
+
       // apply contextual package map first
       if (parentName)
-        var parentPackage = getPackage.call(this, parentName) || 
-            this.defaultJSExtensions && parentName.substr(parentName.length - 3, 3) == '.js' && 
+        var parentPackage = getPackage.call(this, parentName) ||
+            this.defaultJSExtensions && parentName.substr(parentName.length - 3, 3) == '.js' &&
             getPackage.call(this, parentName.substr(0, parentName.length - 3));
 
       if (parentPackage) {
@@ -2144,7 +2144,7 @@ hook('normalize', function(normalize) {
           return pkgBundleLoads.promise;
         }
       })
-      
+
       // having loaded any bundles, attempt a package resolution now
       .then(function() {
         return packageResolution(normalized, pkgConfigMatch.pkgName);
@@ -2177,7 +2177,7 @@ hook('normalize', function(normalize) {
     for (var i = 0; i < loader.packageConfigPaths.length; i++) {
       var p = loader.packageConfigPaths[i];
       var pPkgLen = Math.max(p.lastIndexOf('*') + 1, p.lastIndexOf('/'));
-      var match = normalized.match(packageConfigPathsRegExps[p] || 
+      var match = normalized.match(packageConfigPathsRegExps[p] ||
           (packageConfigPathsRegExps[p] = new RegExp('^(' + p.substr(0, pPkgLen).replace(/\*/g, '[^\\/]+') + ')(\/|$)')));
       if (match && (!pkgPath || pkgPath == match[1])) {
         pkgPath = match[1];
@@ -2299,7 +2299,7 @@ hook('normalize', function(normalize) {
           var pkg = loader.packages[pkgName];
           var basePath = getBasePath(pkg);
           var subPath = load.name.substr(pkgName.length + basePath.length + 1);
-          
+
           // format
           if (pkg.format)
             load.metadata.format = load.metadata.format || pkg.format;
@@ -2353,7 +2353,7 @@ hook('normalize', function(normalize) {
 
   // if doing worker executing, this is set to the load record being executed
   var workerLoad = null;
-  
+
   // interactive mode handling method courtesy RequireJS
   var ieEvents = head && (function() {
     var s = document.createElement('script');
@@ -2375,7 +2375,7 @@ hook('normalize', function(normalize) {
         return interactiveScript.load;
       }
   }
-  
+
   // System.register, System.registerDynamic, AMD define pipeline
   // this is called by the above methods when they execute
   // we then run the reduceRegister_ collection function either immediately
@@ -2450,9 +2450,9 @@ hook('normalize', function(normalize) {
 
       return new Promise(function(resolve, reject) {
         var s = document.createElement('script');
-        
+
         s.async = true;
-        
+
         if (load.metadata.integrity)
           s.setAttribute('integrity', load.metadata.integrity);
 
@@ -2541,7 +2541,7 @@ hook('normalize', function(normalize) {
  *
  *
  * The code here replicates the ES6 linking groups algorithm to ensure that
- * circular ES6 compiled into System.register can work alongside circular AMD 
+ * circular ES6 compiled into System.register can work alongside circular AMD
  * and CommonJS, identically to the actual ES6 loader.
  *
  */
@@ -2551,7 +2551,7 @@ hook('normalize', function(normalize) {
  * Registry side table entries in loader.defined
  * Registry Entry Contains:
  *    - name
- *    - deps 
+ *    - deps
  *    - declare for declarative modules
  *    - execute for dynamic modules, different to declarative execute on module
  *    - executingRequire indicates require drives execution for circularity of dynamic modules
@@ -2569,7 +2569,7 @@ hook('normalize', function(normalize) {
  *    For dynamic we track the es module with:
  *    - esModule actual es module value
  *    - esmExports whether to extend the esModule with named exports
- *      
+ *
  *    Then for declarative only we track dynamic bindings with the 'module' records:
  *      - name
  *      - exports
@@ -2606,7 +2606,7 @@ function createEntry() {
    *    see https://github.com/ModuleLoader/es6-module-loader/wiki/System.register-Explained
    *
    * 2. System.registerDynamic for dynamic modules (3-4 params) - System.registerDynamic([name, ]deps, executingRequire, execute)
-   * the true or false statement 
+   * the true or false statement
    *
    * this extension implements the linking algorithm for the two variations identical to the spec
    * allowing compiled ES6 circular references to work alongside AMD and CJS circular references.
@@ -2625,7 +2625,7 @@ function createEntry() {
       return this.registerDynamic.apply(this, arguments);
 
     var entry = createEntry();
-    // ideally wouldn't apply map config to bundle names but 
+    // ideally wouldn't apply map config to bundle names but
     // dependencies go through map regardless so we can't restrict
     // could reconsider in shift to new spec
     entry.name = name && (this.normalizeSync || this.normalize).call(this, name);
@@ -2711,17 +2711,17 @@ function createEntry() {
     for (var i = 0, l = entry.normalizedDeps.length; i < l; i++) {
       var depName = entry.normalizedDeps[i];
       var depEntry = loader.defined[depName];
-      
+
       // not in the registry means already linked / ES6
       if (!depEntry || depEntry.evaluated)
         continue;
-      
+
       // now we know the entry is in our unlinked linkage group
       var depGroupIndex = entry.groupIndex + (depEntry.declarative != entry.declarative);
 
       // the group index of an entry is always the maximum
       if (depEntry.groupIndex === null || depEntry.groupIndex < depGroupIndex) {
-        
+
         // if already in a group, remove from the old group
         if (depEntry.groupIndex !== null) {
           groups[depEntry.groupIndex].splice(indexOf.call(groups[depEntry.groupIndex], depEntry), 1);
@@ -2763,7 +2763,7 @@ function createEntry() {
         else
           linkDynamicModule(entry, loader);
       }
-      curGroupDeclarative = !curGroupDeclarative; 
+      curGroupDeclarative = !curGroupDeclarative;
     }
   }
 
@@ -2815,7 +2815,7 @@ function createEntry() {
       module.locked = false;
       return value;
     });
-    
+
     module.setters = declaration.setters;
     module.execute = declaration.execute;
 
@@ -2858,7 +2858,7 @@ function createEntry() {
       else {
         module.dependencies.push(null);
       }
-      
+
       // run setters for all entries with the matching dependency name
       var originalIndices = entry.originalIndices[i];
       for (var j = 0, len = originalIndices.length; j < len; ++j) {
@@ -2884,7 +2884,7 @@ function createEntry() {
     else {
       if (entry.declarative)
         ensureEvaluated(name, [], loader);
-    
+
       else if (!entry.evaluated)
         linkDynamicModule(entry, loader);
 
@@ -2893,7 +2893,7 @@ function createEntry() {
 
     if ((!entry || entry.declarative) && exports && exports.__useDefault)
       return exports['default'];
-    
+
     return exports;
   }
 
@@ -2926,7 +2926,7 @@ function createEntry() {
       }
       throw new Error('Module ' + name + ' not declared as a dependency.');
     }, exports, module);
-    
+
     if (output)
       module.exports = output;
 
@@ -2950,7 +2950,7 @@ function createEntry() {
    *  (unless one is a circular dependency already in the list of seen
    *  modules, in which case we execute it)
    *
-   * Then we evaluate the module itself depth-first left to right 
+   * Then we evaluate the module itself depth-first left to right
    * execution to match ES6 modules
    */
   function ensureEvaluated(moduleName, seen, loader) {
@@ -3002,12 +3002,12 @@ function createEntry() {
         load.metadata.format = 'defined';
         return '';
       }
-      
+
       if (load.metadata.format == 'register' && !load.metadata.authorization && load.metadata.scriptLoad !== false)
         load.metadata.scriptLoad = true;
 
       load.metadata.deps = load.metadata.deps || [];
-      
+
       return fetch.call(this, load);
     };
   });
@@ -3046,9 +3046,9 @@ function createEntry() {
 
       // Contains System.register calls
       // (dont run bundles in the builder)
-      else if (!(loader.builder && load.metadata.bundle) 
+      else if (!(loader.builder && load.metadata.bundle)
           && (load.metadata.format == 'register' || load.metadata.format == 'esm' || load.metadata.format == 'es6')) {
-        
+
         if (typeof __exec != 'undefined')
           __exec.call(loader, load);
 
@@ -3071,9 +3071,9 @@ function createEntry() {
 
       // place this module onto defined for circular references
       loader.defined[load.name] = entry;
-      
+
       var grouped = group(entry.deps);
-      
+
       entry.deps = grouped.names;
       entry.originalIndices = grouped.indices;
       entry.name = load.name;
@@ -3091,7 +3091,7 @@ function createEntry() {
         return {
           deps: entry.deps,
           execute: function() {
-            // recursively ensure that the module and all its 
+            // recursively ensure that the module and all its
             // dependencies are linked (with dependency group handling)
             link(load.name, loader);
 
@@ -3236,7 +3236,7 @@ hook('fetch', function(fetch) {
     // A global with exports, no globals and no deps
     // can be loaded via a script tag
     if (load.metadata.format == 'global' && !load.metadata.authorization
-        && load.metadata.exports && !load.metadata.globals 
+        && load.metadata.exports && !load.metadata.globals
         && (!load.metadata.deps || load.metadata.deps.length == 0)
         && load.metadata.scriptLoad !== false)
       load.metadata.scriptLoad = true;
@@ -3289,7 +3289,7 @@ hook('instantiate', function(instantiate) {
           for (var g in load.metadata.globals)
             globals[g] = require(load.metadata.globals[g]);
         }
-        
+
         var exportName = load.metadata.exports;
 
         if (exportName)
@@ -3346,7 +3346,7 @@ hookConstructor(function(constructor) {
       prepareGlobal: function(moduleName, exportName, globals) {
         // disable module detection
         var curDefine = __global.define;
-        
+
         __global.define = undefined;
         __global.exports = undefined;
         if (__global.module && __global.module.exports)
@@ -3434,7 +3434,7 @@ hookConstructor(function(constructor) {
 
     var match;
 
-    // track string and comment locations for unminified source    
+    // track string and comment locations for unminified source
     var stringLocations = [], commentLocations = [];
 
     function inLocation(locations, match, starts) {
@@ -3448,7 +3448,7 @@ hookConstructor(function(constructor) {
     if (source.length / source.split('\n').length < 200) {
       while (match = stringRegEx.exec(source))
         stringLocations.push([match.index, match.index + match[0].length]);
-      
+
       while (match = commentRegEx.exec(source)) {
         // only track comments not starting in strings
         if (!inLocation(stringLocations, match, true))
@@ -3472,9 +3472,9 @@ hookConstructor(function(constructor) {
   if (typeof require != 'undefined' && require.resolve && typeof process != 'undefined')
     SystemJSLoader.prototype._nodeRequire = require;
 
-  var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console', 'constants', 
-      'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'https', 'module', 'net', 'os', 'path', 
-      'process', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers', 
+  var nodeCoreModules = ['assert', 'buffer', 'child_process', 'cluster', 'console', 'constants',
+      'crypto', 'dgram', 'dns', 'domain', 'events', 'fs', 'http', 'https', 'module', 'net', 'os', 'path',
+      'process', 'punycode', 'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers',
       'tls', 'tty', 'url', 'util', 'vm', 'zlib'];
 
   hook('normalize', function(normalize) {
@@ -3582,7 +3582,7 @@ hookConstructor(function(constructor) {
     var cjsRequirePost = "\\s*\\(\\s*(\"([^\"]+)\"|'([^']+)')\\s*\\)";
     var fnBracketRegEx = /\(([^\)]*)\)/;
     var wsRegEx = /^\s+|\s+$/g;
-    
+
     var requireRegExs = {};
 
     function getCJSDeps(source, requireIndex) {
@@ -3664,9 +3664,9 @@ hookConstructor(function(constructor) {
 
       // remove system dependencies
       var requireIndex, exportsIndex, moduleIndex;
-      
+
       if ((requireIndex = indexOf.call(deps, 'require')) != -1) {
-        
+
         deps.splice(requireIndex, 1);
 
         // only trace cjs requires for non-named
@@ -3677,7 +3677,7 @@ hookConstructor(function(constructor) {
 
       if ((exportsIndex = indexOf.call(deps, 'exports')) != -1)
         deps.splice(exportsIndex, 1);
-      
+
       if ((moduleIndex = indexOf.call(deps, 'module')) != -1)
         deps.splice(moduleIndex, 1);
 
@@ -3693,10 +3693,10 @@ hookConstructor(function(constructor) {
         // add back in system dependencies
         if (moduleIndex != -1)
           depValues.splice(moduleIndex, 0, module);
-        
+
         if (exportsIndex != -1)
           depValues.splice(exportsIndex, 0, exports);
-        
+
         if (requireIndex != -1) {
           function contextualRequire(names, callback, errback) {
             if (typeof names == 'string' && typeof callback != 'function')
@@ -3762,12 +3762,12 @@ hookConstructor(function(constructor) {
           // already defined anonymously -> throw
           if (curMeta.entry)
             throw new TypeError('Multiple defines for anonymous module ' + load.name);
-          
+
           curMeta.entry = entry;
         }
         // named define
         else {
-          // if we don't have any other defines, 
+          // if we don't have any other defines,
           // then let this be an anonymous define
           // this is just to support single modules of the form:
           // define('jquery')
@@ -3830,8 +3830,8 @@ hookConstructor(function(constructor) {
 
   hook('fetch', function(fetch) {
     return function(load) {
-      if (load.metadata.format === 'amd' 
-          && !load.metadata.authorization 
+      if (load.metadata.format === 'amd'
+          && !load.metadata.authorization
           && load.metadata.scriptLoad !== false)
         load.metadata.scriptLoad = true;
       // script load implies define global leak
@@ -3844,10 +3844,10 @@ hookConstructor(function(constructor) {
   hook('instantiate', function(instantiate) {
     return function(load) {
       var loader = this;
-      
+
       if (load.metadata.format == 'amd' || !load.metadata.format && load.source.match(amdRegEx)) {
         load.metadata.format = 'amd';
-        
+
         if (!loader.builder && loader.execute !== false) {
           var removeDefine = this.get('@@amd-helpers').createDefine();
 
@@ -4094,13 +4094,13 @@ hookConstructor(function(constructor) {
  *
  *     import $ from 'jquery/#{browser}';
  *
- *   Will first load the module 'browser' via `System.import('browser')` and 
+ *   Will first load the module 'browser' via `System.import('browser')` and
  *   take the default export of that module.
  *   If the default export is not a string, an error is thrown.
- * 
+ *
  *   We then substitute the string into the require to get the conditional resolution
  *   enabling environment-specific variations like:
- * 
+ *
  *     import $ from 'jquery/ie'
  *     import $ from 'jquery/firefox'
  *     import $ from 'jquery/chrome'
@@ -4122,7 +4122,7 @@ hookConstructor(function(constructor) {
  *     import 'es5-shim#?./conditions.js|needs-es5shim'
  *
  *   These conditions can also be negated via:
- *     
+ *
  *     import 'es5-shim#?~./conditions.js|es6'
  *
  */
@@ -4429,7 +4429,7 @@ hookConstructor(function(constructor) {
 /*
   System bundles
 
-  Allows a bundle module to be specified which will be dynamically 
+  Allows a bundle module to be specified which will be dynamically
   loaded before trying to load a given module.
 
   For example:
@@ -4497,10 +4497,10 @@ function getBundleFor(loader, name) {
 })();
 /*
  * Dependency Tree Cache
- * 
- * Allows a build to pre-populate a dependency trace tree on the loader of 
+ *
+ * Allows a build to pre-populate a dependency trace tree on the loader of
  * the expected dependency tree, to be loaded upfront when requesting the
- * module, avoinding the n round trips latency of module loading, where 
+ * module, avoinding the n round trips latency of module loading, where
  * n is the dependency tree depth.
  *
  * eg:
@@ -4509,8 +4509,8 @@ function getBundleFor(loader, name) {
  *  'normalized': ['another'],
  *  'deps': ['tree']
  * };
- * 
- * System.import('app') 
+ *
+ * System.import('app')
  * // simultaneously starts loading all of:
  * // 'normalized', 'deps', 'another', 'tree'
  * // before "app" source is even loaded
@@ -4537,7 +4537,7 @@ function getBundleFor(loader, name) {
     };
   });
 })();
-  
+
 System = new SystemJSLoader();
 System.version = '0.19.6 Standard';
   // -- exporting --

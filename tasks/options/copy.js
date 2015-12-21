@@ -21,6 +21,8 @@ module.exports = function(config) {
       src: [
         'angular2/bundles/*.js',
         'angular2/*.d.ts',
+        'angular2/typings/**/*',
+        'angular2/manual_typings/**/*',
         'systemjs/dist/*.js',
         'es6-promise/**/*',
         'es5-shim/*.js',

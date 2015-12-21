@@ -1,6 +1,11 @@
 (function() {
   "use strict";
 
+  // Tun on full stack traces in errors to help debugging
+  Error.stackTraceLimit=Infinity;
+
+  window.__karma__.loaded = function() {};
+
   System.config({
     baseURL: '/base/',
     defaultJSExtensions: true,
@@ -49,7 +54,7 @@
         deps: ['jquery'],
         exports: 'angular',
       },
-      'vendor/angular/angular-mocks.js': {
+      'vendor/angular-mocks/angular-mocks.js': {
         format: 'global',
         deps: ['angular'],
       }
@@ -63,23 +68,24 @@
   }
 
   function onlySpecFiles(path) {
-    return /_specs\.js$/.test(path);
+    return /specs.*/.test(path);
   }
 
   window.grafanaBootData = {settings: {}};
 
-  var modules = ['lodash', 'angular', 'angular-mocks', 'app/app'];
+  var modules = ['angular', 'angular-mocks', 'app/app'];
+  var promises = modules.map(function(name) {
+    return System.import(name);
+  });
 
-  Promise.all(
-    modules.map(function(moduleName) {
-      return System.import(moduleName);
-    })
-  ).then(function(deps) {
-    var angular = deps[1];
+  Promise.all(promises).then(function(deps) {
+    var angular = deps[0];
 
     angular.module('grafana', ['ngRoute']);
     angular.module('grafana.services', ['ngRoute', '$strap.directives']);
     angular.module('grafana.panels', []);
+    angular.module('grafana.controllers', []);
+    angular.module('grafana.directives', []);
     angular.module('grafana.filters', []);
     angular.module('grafana.routes', ['ngRoute']);
 
@@ -89,11 +95,14 @@
       .filter(onlySpecFiles)
       .map(file2moduleName)
       .map(function(path) {
+        console.log(path);
         return System.import(path);
       }));
   }).then(function()  {
     window.__karma__.start();
   }, function(error) {
+    window.__karma__.error(error.stack || error);
+  }).catch(function(error) {
     window.__karma__.error(error.stack || error);
   });
 

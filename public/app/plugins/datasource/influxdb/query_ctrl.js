@@ -11,6 +11,9 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
   var module = angular.module('grafana.controllers');
 
+  InfluxQuery = InfluxQuery.default;
+  queryPart = queryPart.default;
+
   module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
