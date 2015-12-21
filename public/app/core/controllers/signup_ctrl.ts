@@ -6,6 +6,7 @@ import coreModule from '../core_module';
 
 export class SignUpCtrl {
 
+  /** @ngInject */
   constructor(
       private $scope : any,
       private $location : any,

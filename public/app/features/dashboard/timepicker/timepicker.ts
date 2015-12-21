@@ -30,6 +30,7 @@ export class TimePickerCtrl {
   isOpen: boolean;
   isUtc: boolean;
 
+  /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
