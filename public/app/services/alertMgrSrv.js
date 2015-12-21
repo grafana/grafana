@@ -21,7 +21,7 @@ function (angular) {
         alertUrlRoot = result.alert.alert_urlroot;
         alertDefUrl = alertUrlRoot + "/alert/" + "definition";
         alertStatusUrl = alertUrlRoot + "/alert/" + "status";
-        alertAssociationUrl = alertUrlRoot + "/correlation/" + "alert";
+        alertAssociationUrl = alertUrlRoot + "/alert/" + "correlation";
       });
     };
 
