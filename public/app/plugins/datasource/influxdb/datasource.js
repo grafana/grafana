@@ -10,6 +10,8 @@ define([
 function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
+  InfluxQuery = InfluxQuery.default;
+
   var module = angular.module('grafana.services');
 
   module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
