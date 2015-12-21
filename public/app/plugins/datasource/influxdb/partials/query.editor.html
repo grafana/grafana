@@ -55,12 +55,12 @@
 				<metric-segment segment="segment" get-options="getTagsOrValues(segment, $index)" on-change="tagSegmentUpdated(segment, $index)"></metric-segment>
 			</li>
 		</ul>
-		<div class="clearfix"></div>
 
-		<div style="padding: 10px" ng-if="target.rawQuery">
-			<textarea ng-model="target.query" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="get_data()"></textarea>
+		<div class="tight-form-flex-wrapper" ng-show="target.rawQuery">
+			<input type="text" class="tight-form-clear-input" ng-model="target.query" spellcheck="false" style="width: 100%;" ng-blur="get_data()"></input>
 		</div>
 
+		<div class="clearfix"></div>
 	</div>
 
 	<div ng-hide="target.rawQuery">
@@ -82,7 +82,7 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-					<span ng-show="$index === 0">GROUP BY</span>
+					<span>GROUP BY</span>
 				</li>
 				<li ng-repeat="part in queryModel.groupByParts">
 					<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="removeGroupByPart(part, $index)" part-updated="get_data();" get-options="getPartOptions(part)"></influx-query-part-editor>
@@ -102,6 +102,12 @@
 			</li>
 			<li>
 				<input type="text" class="tight-form-clear-input input-xlarge" ng-model="target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="get_data()">
+			</li>
+			<li class="tight-form-item">
+				Format as
+			</li>
+			<li>
+				<select class="input-small tight-form-input" style="width: 104px" ng-model="target.resultFormat" ng-options="f.value as f.text for f in resultFormats" ng-change="get_data()"></select>
 			</li>
 		</ul>
 		<div class="clearfix"></div>

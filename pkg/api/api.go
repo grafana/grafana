@@ -68,6 +68,7 @@ func Register(r *macaron.Macaron) {
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/dashboard/snapshot/*", Index)
 
+	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
 

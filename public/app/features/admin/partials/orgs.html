@@ -4,33 +4,35 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 		<h2>
 			Organizations
 		</h2>
-
-		<table class="grafana-options-table">
-			<tr>
-				<th style="text-align:left">Id</th>
-				<th>Name</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="org in orgs">
-        <td>{{org.id}}</td>
-				<td>{{org.name}}</td>
-				<td style="width: 1%">
-					<a href="admin/orgs/edit/{{org.id}}" class="btn btn-inverse btn-small">
-						<i class="fa fa-edit"></i>
-						Edit
-					</a>
-					&nbsp;&nbsp;
-					<a ng-click="deleteOrg(org)" class="btn btn-danger btn-small">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
+    <table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>Id</th>
+					<th>Name</th>
+          <th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="org in orgs">
+          <td>{{org.id}}</td>
+					<td>{{org.name}}</td>
+					<td class="text-right">
+						<a href="admin/orgs/edit/{{org.id}}" class="btn btn-inverse btn-small">
+							<i class="fa fa-edit"></i>
+							Edit
+						</a>
+						&nbsp;&nbsp;
+						<a ng-click="deleteOrg(org)" class="btn btn-danger btn-small">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
-
 	</div>
 </div>

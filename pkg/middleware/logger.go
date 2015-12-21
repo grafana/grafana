@@ -29,10 +29,15 @@ func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
 
+		uname := c.GetCookie(setting.CookieUserName)
+		if len(uname) == 0 {
+			uname = "-"
+		}
+
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
 
 		switch rw.Status() {
 		case 200, 304:

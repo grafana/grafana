@@ -7,7 +7,7 @@ define([
 function (angular, _, $, coreModule) {
   'use strict';
 
-  coreModule.service('popoverSrv', function($templateCache, $timeout, $q, $http, $compile) {
+  coreModule.default.service('popoverSrv', function($templateCache, $timeout, $q, $http, $compile) {
 
     this.getTemplate = function(url) {
       return $q.when($templateCache.get(url) || $http.get(url, {cache: true}));

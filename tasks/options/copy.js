@@ -13,6 +13,27 @@ module.exports = function(config) {
       expand: true,
       src: ['**/*', '!**/*.less'],
       dest: '<%= genDir %>'
+    },
+
+    node_modules: {
+      cwd: './node_modules',
+      expand: true,
+      src: [
+        'angular2/bundles/*.js',
+        'angular2/*.d.ts',
+        'angular2/typings/**/*',
+        'angular2/manual_typings/**/*',
+        'systemjs/dist/*.js',
+        'es6-promise/**/*',
+        'es5-shim/*.js',
+        'es6-shim/*.js',
+        'reflect-metadata/*.js',
+        'reflect-metadata/*.ts',
+        'reflect-metadata/*.d.ts',
+        'rxjs/bundles/*.js',
+        'rxjs/Rx.d.ts',
+      ],
+      dest: '<%= srcDir %>/vendor/npm'
     }
 
   };

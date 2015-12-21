@@ -1,8 +1,6 @@
-///<amd-dependency path="../elastic_response" name="ElasticResponse"/>
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var ElasticResponse: any;
+import ElasticResponse from '../elastic_response';
 
 describe('ElasticResponse', function() {
   var targets;
@@ -411,6 +409,49 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('with dropfirst and last aggregation', function() {
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
+        bucketAggs: [{ id: '2', type: 'date_histogram', field: 'host', settings: { trimEdges: 1} }],
+      }];
+
+      response = {
+        responses: [{
+          aggregations: {
+            "2": {
+              buckets: [
+                {
+                  "1": { value: 1000 },
+                  key: 1,
+                  doc_count: 369,
+                },
+                {
+                  "1": { value: 2000 },
+                  key: 2,
+                  doc_count: 200,
+                },
+                {
+                  "1": { value: 2000 },
+                  key: 3,
+                  doc_count: 200,
+                },
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should remove first and last value', function() {
+      expect(result.data.length).to.be(2);
+      expect(result.data[0].datapoints.length).to.be(1);
+    });
+  });
+
   describe('No group by time', function() {
     beforeEach(function() {
       targets = [{
@@ -454,6 +495,11 @@ describe('ElasticResponse', function() {
       expect(result.data[0].datapoints[1].host).to.be("server-2");
       expect(result.data[0].datapoints[1].Average).to.be(2000);
     });
+  });
+
+  describe('', function() {
+
+
   });
 
   describe('Raw documents query', function() {

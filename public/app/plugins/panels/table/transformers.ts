@@ -2,8 +2,9 @@
 
 import moment = require('moment');
 import _ = require('lodash');
-import flatten = require('app/core/utils/flatten');
-import TimeSeries = require('app/core/time_series');
+import flatten from '../../../core/utils/flatten';
+import TimeSeries from '../../../core/time_series2';
+import TableModel from '../../../core/table_model';
 
 var transformers = {};
 
@@ -136,6 +137,27 @@ transformers['annotations'] = {
   }
 };
 
+transformers['table'] = {
+  description: 'Table',
+  getColumns: function(data) {
+    if (!data || data.length === 0) {
+      return [];
+    }
+  },
+  transform: function(data, panel, model) {
+    if (!data || data.length === 0) {
+      return;
+    }
+
+    if (data[0].type !== 'table') {
+      throw {message: 'Query result is not in table format, try using another transform.'};
+    }
+
+    model.columns = data[0].columns;
+    model.rows = data[0].rows;
+  }
+};
+
 transformers['json'] = {
   description: 'JSON Data',
   getColumns: function(data) {
@@ -197,4 +219,20 @@ transformers['json'] = {
   }
 };
 
-export {transformers}
+function transformDataToTable(data, panel) {
+  var model = new TableModel();
+
+  if (!data || data.length === 0) {
+    return model;
+  }
+
+  var transformer = transformers[panel.transform];
+  if (!transformer) {
+    throw {message: 'Transformer ' + panel.transformer + ' not found'};
+  }
+
+  transformer.transform(data, panel, model);
+  return model;
+}
+
+export {transformers, transformDataToTable}

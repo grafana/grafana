@@ -1,9 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ = require('lodash');
-import queryPart = require('./query_part');
+import queryPart from './query_part';
 
-class InfluxQuery {
+export default class InfluxQuery {
   target: any;
   selectModels: any[];
   groupByParts: any;
@@ -12,6 +12,8 @@ class InfluxQuery {
   constructor(target) {
     this.target = target;
 
+    target.dsType = 'influxdb';
+    target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
       {type: 'time', params: ['$interval']},
@@ -210,5 +212,3 @@ measurement = '"' + measurement+ '"';
     return query;
   }
 }
-
-export = InfluxQuery;

@@ -1,10 +1,8 @@
-///<amd-dependency path="../index_pattern" name="IndexPattern"/>
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-import moment  = require('moment');
-
-declare var IndexPattern: any;
+import moment from 'moment';
+import IndexPattern from '../index_pattern';
 
 describe('IndexPattern', function() {
 

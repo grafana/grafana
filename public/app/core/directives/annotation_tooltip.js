@@ -6,7 +6,7 @@ define([
 function ($, _, coreModule) {
   'use strict';
 
-  coreModule.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+  coreModule.default.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
 
     function sanitizeString(str) {
       try {

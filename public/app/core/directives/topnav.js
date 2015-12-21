@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.directive('topnav', function($rootScope, contextSrv) {
+  coreModule.default.directive('topnav', function($rootScope, contextSrv) {
     return {
       restrict: 'E',
       transclude: true,

@@ -1,7 +1,7 @@
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import queryPart = require('../query_part');
+import queryPart from '../query_part';
 
 describe('InfluxQueryPart', () => {
 

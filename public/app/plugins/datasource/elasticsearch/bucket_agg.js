@@ -92,8 +92,21 @@ function (angular, _, queryDef) {
         }
         case 'date_histogram': {
           settings.interval = settings.interval || 'auto';
+          settings.min_doc_count = settings.min_doc_count || 0;
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+          }
+
+          if (settings.trimEdges === undefined || settings.trimEdges < 0) {
+            settings.trimEdges = 0;
+          }
+
+          if (settings.trimEdges && settings.trimEdges > 0) {
+            settingsLinkText += ', Trim edges: ' + settings.trimEdges;
+          }
         }
       }
 

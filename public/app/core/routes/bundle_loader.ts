@@ -1,4 +1,4 @@
-///<reference path="../../headers/require/require.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 export class BundleLoader {
   lazy: any;
@@ -12,7 +12,7 @@ export class BundleLoader {
 
       this.loadingDefer = $q.defer();
 
-      require([bundleName], () => {
+      System.import(bundleName).then(() => {
         this.loadingDefer.resolve();
       });
 

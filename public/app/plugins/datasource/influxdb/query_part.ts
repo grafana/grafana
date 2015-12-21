@@ -227,7 +227,7 @@ QueryPartDef.register({
   type: 'derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
   renderer: functionRenderer,
 });
@@ -236,7 +236,7 @@ QueryPartDef.register({
   type: 'non_negative_derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5min', '10m', '15m', '1h']}],
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
   renderer: functionRenderer,
 });
@@ -421,7 +421,7 @@ class QueryPart {
   }
 }
 
-export = {
+export default {
   create: function(part): any {
     return new QueryPart(part);
   },

@@ -69,6 +69,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
 			}
+			if ds.WithCredentials {
+				dsMap["withCredentials"] = ds.WithCredentials
+			}
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
@@ -127,6 +130,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"panels":            panels,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":  setting.AuthProxyEnabled,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,

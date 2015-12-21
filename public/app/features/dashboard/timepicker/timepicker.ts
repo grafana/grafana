@@ -1,12 +1,13 @@
 ///<reference path="../../../headers/common.d.ts" />
 ///<amd-dependency path="./input_date" name="inputDate" />
 
-import angular = require('angular');
 import _ = require('lodash');
-import moment = require('moment');
 import kbn = require('app/core/utils/kbn');
-import dateMath = require('app/core/utils/datemath');
-import rangeUtil = require('app/core/utils/rangeutil');
+
+import angular from 'angular';
+import moment from 'moment';
+import * as dateMath from 'app/core/utils/datemath';
+import * as rangeUtil from 'app/core/utils/rangeutil';
 
 declare var inputDate: any;
 
@@ -29,6 +30,7 @@ export class TimePickerCtrl {
   isOpen: boolean;
   isUtc: boolean;
 
+  /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 

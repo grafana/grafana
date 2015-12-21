@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ = require('lodash');
-import moment = require('moment');
+import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 var unitsAsc = _.sortBy(units, function (unit) {
@@ -10,7 +10,7 @@ var unitsAsc = _.sortBy(units, function (unit) {
 
 var unitsDesc = unitsAsc.reverse();
 
-function parse(text, roundUp?) {
+export function parse(text, roundUp?) {
   if (!text) { return undefined; }
   if (moment.isMoment(text)) { return text; }
   if (_.isDate(text)) { return moment(text); }
@@ -43,7 +43,7 @@ function parse(text, roundUp?) {
   return parseDateMath(mathString, time, roundUp);
 }
 
-function isValid(text) {
+export function isValid(text) {
   var date = parse(text);
   if (!date) {
     return false;
@@ -56,7 +56,7 @@ function isValid(text) {
   return false;
 }
 
-function parseDateMath(mathString, time, roundUp?) {
+export function parseDateMath(mathString, time, roundUp?) {
   var dateTime = time;
   var i = 0;
   var len = mathString.length;
@@ -118,8 +118,3 @@ function parseDateMath(mathString, time, roundUp?) {
   return dateTime;
 }
 
-export = {
-  parse: parse,
-  parseDateMath: parseDateMath,
-  isValid: isValid
-};

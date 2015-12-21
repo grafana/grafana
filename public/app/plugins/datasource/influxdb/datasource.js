@@ -10,6 +10,8 @@ define([
 function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
+  InfluxQuery = InfluxQuery.default;
+
   var module = angular.module('grafana.services');
 
   module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
@@ -53,6 +55,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
 
       // replace templated variables
       allQueries = templateSrv.replace(allQueries, options.scopedVars);
+
       return this._seriesQuery(allQueries).then(function(data) {
         if (!data || !data.results) {
           return [];
@@ -63,13 +66,26 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
           var result = data.results[i];
           if (!result || !result.series) { continue; }
 
-          var alias = (queryTargets[i] || {}).alias;
+          var target = queryTargets[i];
+          var alias = target.alias;
           if (alias) {
-            alias = templateSrv.replace(alias, options.scopedVars);
+            alias = templateSrv.replace(target.alias, options.scopedVars);
           }
-          var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
-          for (y = 0; y < targetSeries.length; y++) {
-            seriesList.push(targetSeries[y]);
+
+          var influxSeries = new InfluxSeries({ series: data.results[i].series, alias: alias });
+
+          switch(target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
+            }
+            default: {
+              var timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
 

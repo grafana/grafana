@@ -3,8 +3,7 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-
-declare var helpers: any;
+import helpers from 'test/specs/helpers';
 
 describe('ElasticQueryCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
