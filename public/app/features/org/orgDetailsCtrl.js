@@ -17,12 +17,13 @@ function (angular) {
         $scope.org = org;
         $scope.address = org.address;
         contextSrv.user.orgName = org.name;
+        contextSrv.user.shared = org.shared;
       });
     };
 
     $scope.update = function() {
       if (!$scope.orgForm.$valid) { return; }
-      var data = {name: $scope.org.name};
+      var data = {name: $scope.org.name, shared: $scope.org.shared};
       backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 

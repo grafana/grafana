@@ -81,12 +81,28 @@ func UpdateOrg(c *middleware.Context, form dtos.UpdateOrgForm) Response {
 }
 
 func updateOrgHelper(form dtos.UpdateOrgForm, orgId int64) Response {
-	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgId}
+	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgId, Shared: form.Shared}
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
 			return ApiError(400, "Organization name taken", err)
 		}
 		return ApiError(500, "Failed to update organization", err)
+	}
+
+	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to fetch users", err)
+	}
+
+	for _, user := range query.Result {
+		cmd := m.AddOrgUserCommand{OrgId: orgId, UserId: user.Id, Role: m.ROLE_VIEWER}
+		if err := bus.Dispatch(&cmd); err != nil {
+			if err == m.ErrOrgUserAlreadyAdded {
+				continue
+			} else {
+				return ApiError(500, "Can't update user org", err)
+			}
+		}
 	}
 
 	return ApiSuccess("Organization updated")

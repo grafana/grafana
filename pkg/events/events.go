@@ -60,6 +60,7 @@ type OrgUpdated struct {
 	Timestamp time.Time `json:"timestamp"`
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
+	Shared    bool      `json:"shared"`
 }
 
 type UserCreated struct {

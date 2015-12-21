@@ -1,7 +1,8 @@
 package dtos
 
 type UpdateOrgForm struct {
-	Name string `json:"name" binding:"Required"`
+	Name   string `json:"name" binding:"Required"`
+	Shared bool   `json:"shared" binding:"Required"`
 }
 
 type UpdateOrgAddressForm struct {
