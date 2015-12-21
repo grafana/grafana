@@ -26,6 +26,17 @@ func (r RoleType) IsValid() bool {
 	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR
 }
 
+func (r RoleType) Includes(other RoleType) bool {
+	if r == ROLE_ADMIN {
+		return true
+	}
+	if r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR {
+		return other != ROLE_ADMIN
+	}
+
+	return r == other
+}
+
 type OrgUser struct {
 	Id      int64
 	OrgId   int64

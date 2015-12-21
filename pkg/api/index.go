@@ -60,40 +60,25 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
-	for _, plugin := range enabledPlugins.AppPlugins {
-		for _, js := range plugin.Js {
-			data.PluginJs = append(data.PluginJs, js.Module)
-		}
-		for _, css := range plugin.Css {
-			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: css.Light, Dark: css.Dark})
+	for _, plugin := range enabledPlugins.Apps {
+		if plugin.Module != "" {
+			data.PluginModules = append(data.PluginModules, plugin.Module)
 		}
 
-		if plugin.PinNavLinks {
-			for _, item := range plugin.MainNavLinks {
-				// only show menu items for the specified roles.
-				var validRoles []m.RoleType
-				if string(item.ReqRole) == "" || item.ReqRole == m.ROLE_VIEWER {
-					validRoles = []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR, m.ROLE_VIEWER}
-				} else if item.ReqRole == m.ROLE_EDITOR {
-					validRoles = []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR}
-				} else if item.ReqRole == m.ROLE_ADMIN {
-					validRoles = []m.RoleType{m.ROLE_ADMIN}
-				}
-				ok := true
-				if len(validRoles) > 0 {
-					ok = false
-					for _, role := range validRoles {
-						if role == c.OrgRole {
-							ok = true
-							break
-						}
-					}
-				}
-				if ok {
-					data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: item.Text, Href: item.Href, Icon: item.Icon})
-				}
+		if plugin.Css != nil {
+			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
+		}
+
+		if plugin.Pinned && plugin.Page != nil {
+			if c.userHasRole(plugin.Page.reqRole) {
+				data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+					Text: plugin.Page.Text,
+					Url:  plugin.Page.Url,
+					Icon: plugin.Page.Icon,
+				})
 			}
 		}
 	}

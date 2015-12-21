@@ -121,7 +121,7 @@ func GetDataSourcePlugins(c *middleware.Context) {
 	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
 	err := bus.Dispatch(&orgApps)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to get org plugin Bundles", err)
+		c.JsonApiErr(500, "Failed to get org apps", err)
 	}
 	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 

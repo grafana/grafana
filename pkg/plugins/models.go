@@ -15,20 +15,20 @@ type DataSourcePlugin struct {
 	Metrics            bool                   `json:"metrics"`
 	BuiltIn            bool                   `json:"builtIn"`
 	App                string                 `json:"app"`
-	StaticRootConfig   *StaticRootConfig      `json:"staticRoot"`
+	PublicContent      *PublicContent         `json:"public"`
 }
 
 type PanelPlugin struct {
-	Type             string            `json:"type"`
-	Name             string            `json:"name"`
-	Module           string            `json:"module"`
-	StaticRootConfig *StaticRootConfig `json:"staticRoot"`
-	App              string            `json:"app"`
+	Type          string         `json:"type"`
+	Name          string         `json:"name"`
+	Module        string         `json:"module"`
+	PublicContent *PublicContent `json:"public"`
+	App           string         `json:"app"`
 }
 
-type StaticRootConfig struct {
-	Url  string `json:"url"`
-	Path string `json:"path"`
+type PublicContent struct {
+	UrlFragment string `json:"urlFragment"`
+	Dir         string `json:"dir"`
 }
 
 type ApiPluginRoute struct {
@@ -41,14 +41,10 @@ type ApiPluginRoute struct {
 	App             string          `json:"app"`
 }
 
-type AppPluginJs struct {
-	Module string `json:"module"`
-}
-
-type AppPluginNavLink struct {
+type AppPluginPage struct {
 	Text    string          `json:"text"`
 	Icon    string          `json:"icon"`
-	Href    string          `json:"href"`
+	Href    string          `json:"url"`
 	ReqRole models.RoleType `json:"reqRole"`
 }
 
@@ -64,31 +60,27 @@ type ApiPlugin struct {
 }
 
 type AppPlugin struct {
-	Type              string              `json:"type"`
-	Enabled           bool                `json:"enabled"`
-	PanelPlugins      []string            `json:"panelPlugins"`
-	DatasourcePlugins []string            `json:"datasourcePlugins"`
-	ApiPlugins        []string            `json:"apiPlugins"`
-	Module            string              `json:"module"`
-	Js                []*AppPluginJs      `json:"js"`
-	Css               []*AppPluginCss     `json:"css"`
-	MainNavLinks      []*AppPluginNavLink `json:"mainNavLinks"`
-	PinNavLinks       bool                `json:"pinNavLinks"`
-	StaticRootConfig  *StaticRootConfig   `json:"staticRoot"`
+	Type          string         `json:"type"`
+	Enabled       bool           `json:"enabled"`
+	Pinned        bool           `json:"pinned"`
+	Module        string         `json:"module"`
+	Css           *AppPluginCss  `json:"css"`
+	Page          *AppPluginPage `json:"page"`
+	PublicContent *PublicContent `json:"public"`
 }
 
 type EnabledPlugins struct {
-	PanelPlugins      []*PanelPlugin
-	DataSourcePlugins map[string]*DataSourcePlugin
-	ApiPlugins        []*ApiPlugin
-	AppPlugins        []*AppPlugin
+	Panels      []*PanelPlugin
+	DataSources map[string]*DataSourcePlugin
+	ApiList     []*ApiPlugin
+	Apps        []*AppPlugin
 }
 
 func NewEnabledPlugins() EnabledPlugins {
 	return EnabledPlugins{
-		PanelPlugins:      make([]*PanelPlugin, 0),
-		DataSourcePlugins: make(map[string]*DataSourcePlugin),
-		ApiPlugins:        make([]*ApiPlugin, 0),
-		AppPlugins:        make([]*AppPlugin, 0),
+		Panels:      make([]*PanelPlugin, 0),
+		DataSources: make(map[string]*DataSourcePlugin),
+		ApiList:     make([]*ApiPlugin, 0),
+		Apps:        make([]*AppPlugin, 0),
 	}
 }
