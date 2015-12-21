@@ -6,7 +6,7 @@ define([
 ], function(angular, coreModule, BundleLoader) {
   "use strict";
 
-  coreModule.config(function($routeProvider, $locationProvider) {
+  coreModule.default.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
@@ -140,6 +140,9 @@ define([
         templateUrl: 'app/features/org/partials/appEdit.html',
         controller: 'AppEditCtrl',
         resolve: loadOrgBundle,
+      })
+      .when('/global-alerts', {
+        templateUrl: 'app/features/dashboard/partials/globalAlerts.html',
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',

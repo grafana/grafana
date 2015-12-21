@@ -1,6 +1,8 @@
 package plugins
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"github.com/grafana/grafana/pkg/models"
+)
 
 type DataSourcePlugin struct {
 	Type               string                 `json:"type"`

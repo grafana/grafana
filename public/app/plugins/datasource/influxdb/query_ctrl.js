@@ -11,6 +11,9 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
   var module = angular.module('grafana.controllers');
 
+  InfluxQuery = InfluxQuery.default;
+  queryPart = queryPart.default;
+
   module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
@@ -20,6 +23,10 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       $scope.queryModel = new InfluxQuery($scope.target);
       $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
       $scope.groupBySegment = uiSegmentSrv.newPlusButton();
+      $scope.resultFormats = [
+         {text: 'Time series', value: 'time_series'},
+         {text: 'Table', value: 'table'},
+      ];
 
       if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();

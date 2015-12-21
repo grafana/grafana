@@ -8,7 +8,7 @@ define([
 function (angular, _, $, coreModule, config) {
   'use strict';
 
-  coreModule.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
+  coreModule.default.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
@@ -122,6 +122,7 @@ function (angular, _, $, coreModule, config) {
     };
 
     $scope.init = function() {
+      $scope.showSignout = contextSrv.isSignedIn && !config['authProxyEnabled'];
       $scope.updateMenu();
       $scope.$on('$routeChangeSuccess', $scope.updateMenu);
     };

@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('metricSegment', function($compile, $sce) {
+  coreModule.default.directive('metricSegment', function($compile, $sce) {
     var inputTemplate = '<input type="text" data-provide="typeahead" ' +
       ' class="tight-form-clear-input input-medium"' +
       ' spellcheck="false" style="display:none"></input>';
@@ -55,8 +55,8 @@ function (_, $, coreModule) {
           });
         };
 
-        $scope.switchToLink = function() {
-          if (linkMode) { return; }
+        $scope.switchToLink = function(fromClick) {
+          if (linkMode && !fromClick) { return; }
 
           clearTimeout(cancelBlur);
           cancelBlur = null;
@@ -69,7 +69,7 @@ function (_, $, coreModule) {
         $scope.inputBlur = function() {
           // happens long before the click event on the typeahead options
           // need to have long delay because the blur
-          cancelBlur = setTimeout($scope.switchToLink, 100);
+          cancelBlur = setTimeout($scope.switchToLink, 200);
         };
 
         $scope.source = function(query, callback) {
@@ -100,7 +100,7 @@ function (_, $, coreModule) {
           }
 
           $input.val(value);
-          $scope.switchToLink();
+          $scope.switchToLink(true);
 
           return value;
         };
@@ -157,7 +157,7 @@ function (_, $, coreModule) {
     };
   });
 
-  coreModule.directive('metricSegmentModel', function(uiSegmentSrv, $q) {
+  coreModule.default.directive('metricSegmentModel', function(uiSegmentSrv, $q) {
     return {
       template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()"></metric-segment>',
       restrict: 'E',

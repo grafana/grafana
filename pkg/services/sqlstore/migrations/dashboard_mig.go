@@ -92,4 +92,9 @@ func addDashboardMigration(mg *Migrator) {
 		Sqlite("SELECT 0 WHERE 0;").
 		Postgres("SELECT 0;").
 		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
+
+	// add column to store updater of a dashboard
+	mg.AddMigration("Add column updated_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "updated_by", Type: DB_Int, Nullable: true,
+	}))
 }

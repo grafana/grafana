@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.service('utilSrv', function($rootScope, $modal, $q) {
+  coreModule.default.service('utilSrv', function($rootScope, $modal, $q) {
 
     this.init = function() {
       $rootScope.onAppEvent('show-modal', this.showModal, $rootScope);

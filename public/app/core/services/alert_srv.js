@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
+  coreModule.default.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
     var self = this;
 
     this.init = function() {

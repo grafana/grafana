@@ -1,28 +1,31 @@
-///<amd-dependency path="./directives/annotation_tooltip" />
-///<amd-dependency path="./directives/body_class" />
-///<amd-dependency path="./directives/config_modal" />
-///<amd-dependency path="./directives/confirm_click" />
-///<amd-dependency path="./directives/dash_edit_link" />
-///<amd-dependency path="./directives/dash_upload" />
-///<amd-dependency path="./directives/dropdown_typeahead" />
-///<amd-dependency path="./directives/grafana_version_check" />
-///<amd-dependency path="./directives/metric_segment" />
-///<amd-dependency path="./directives/misc" />
-///<amd-dependency path="./directives/ng_model_on_blur" />
-///<amd-dependency path="./directives/password_strenght" />
-///<amd-dependency path="./directives/spectrum_picker" />
-///<amd-dependency path="./directives/tags" />
-///<amd-dependency path="./directives/topnav" />
-///<amd-dependency path="./directives/value_select_dropdown" />
-///<amd-dependency path="./routes/all" />
+///<reference path="../headers/common.d.ts" />
+///<reference path="./mod_defs.d.ts" />
 
-///<amd-dependency path="./controllers/all" />
-///<amd-dependency path="./services/all" />
-///<amd-dependency path="./jquery_extended" />
-///<amd-dependency path="./partials" />
+import "./directives/annotation_tooltip";
+import "./directives/body_class";
+import "./directives/config_modal";
+import "./directives/confirm_click";
+import "./directives/dash_edit_link";
+import "./directives/dash_upload";
+import "./directives/dropdown_typeahead";
+import "./directives/grafana_version_check";
+import "./directives/metric_segment";
+import "./directives/misc";
+import "./directives/ng_model_on_blur";
+import "./directives/password_strenght";
+import "./directives/spectrum_picker";
+import "./directives/tags";
+import "./directives/topnav";
+import "./directives/value_select_dropdown";
+import './jquery_extended';
+import './partials';
 
-export * from './directives/array_join'
-export * from './directives/give_focus'
-export * from './filters/filters'
+import {arrayJoin} from './directives/array_join';
+import * as controllers from 'app/core/controllers/all';
+import * as services from 'app/core/services/all';
+import * as routes from 'app/core/routes/all';
+import './filters/filters';
 
+// export * from './directives/give_focus'
 
+export {arrayJoin, controllers, services, routes};

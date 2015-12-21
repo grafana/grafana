@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('bodyClass', function() {
+  coreModule.default.directive('bodyClass', function() {
     return {
       link: function($scope, elem) {
 

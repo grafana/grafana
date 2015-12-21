@@ -20,6 +20,10 @@ function (angular, _) {
       $location.search(search);
     };
 
+    $scope.showSettingsMenu = function() {
+      return $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
+    };
+
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
         backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
@@ -47,6 +51,21 @@ function (angular, _) {
     $scope.hideTooltip = function(evt) {
       angular.element(evt.currentTarget).tooltip('hide');
       $scope.appEvent('hide-dash-search');
+    };
+
+    $scope.makeEditable = function() {
+      $scope.dashboard.editable = true;
+
+      var clone = $scope.dashboard.getSaveModelClone();
+
+      backendSrv.saveDashboard(clone, {overwrite: false}).then(function(data) {
+        $scope.dashboard.version = data.version;
+        $scope.appEvent('dashboard-saved', $scope.dashboard);
+        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+
+        //force refresh whole page
+        window.location.href = window.location.href;
+      }, $scope.handleSaveDashError);
     };
 
     $scope.saveDashboard = function(options) {

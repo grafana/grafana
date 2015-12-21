@@ -1,8 +1,8 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
-import rangeUtil = require('app/core/utils/rangeutil')
-import _  = require('lodash')
-import moment  = require('moment')
+import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as _ from 'lodash';
+import moment from 'moment';
 
 describe("rangeUtil", () => {
 
@@ -41,12 +41,12 @@ describe("rangeUtil", () => {
 
     it('should handle now/d', () => {
       var info = rangeUtil.describeTextRange('now/d');
-      expect(info.display).to.be('The day so far');
+      expect(info.display).to.be('Today so far');
     });
 
     it('should handle now/w', () => {
       var info = rangeUtil.describeTextRange('now/w');
-      expect(info.display).to.be('Week to date');
+      expect(info.display).to.be('This week so far');
     });
   });
 

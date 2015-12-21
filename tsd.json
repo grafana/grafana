@@ -2,20 +2,32 @@
   "version": "v4",
   "repo": "angular/DefinitelyTyped",
   "ref": "master",
-  "path": "typings",
-  "bundle": "typings/tsd.d.ts",
+  "path": "public/app/headers",
+  "bundle": "public/app/headers/tsd.d.ts",
   "installed": {
     "es6-promise/es6-promise.d.ts": {
-      "commit": "be0b6b394f77a59e192ad7cfec18078706e44db5"
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
     },
     "mocha/mocha.d.ts": {
       "commit": "055b3172e8eb374a75826710c4d08677872620d3"
     },
-    "node/node.d.ts": {
-      "commit": "51738fdf1643d269067861b405e87503b7479236"
-    },
     "zone/zone.d.ts": {
       "commit": "055b3172e8eb374a75826710c4d08677872620d3"
+    },
+    "rx/rx.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "rx/rx-lite.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "angular2/angular2.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "es6-shim/es6-shim.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "31e7317c9a0793857109236ef7c7f223305a8aa9"
     }
   }
 }

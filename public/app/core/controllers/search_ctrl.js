@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
+  coreModule.default.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;

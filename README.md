@@ -90,7 +90,7 @@ Replace X.Y.Z by actual version number.
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
-godep go run build.go build
+go run build.go build
 ```
 
 ### Building frontend assets

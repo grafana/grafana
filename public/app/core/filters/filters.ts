@@ -1,10 +1,11 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular = require('angular');
 import jquery = require('jquery');
-import moment = require('moment');
 import _ = require('lodash');
-import coreModule = require('../core_module');
+
+import angular from 'angular';
+import moment from 'moment';
+import coreModule from '../core_module';
 
 coreModule.filter('stringSort', function() {
   return function(input) {
@@ -71,4 +72,4 @@ coreModule.filter('interpolateTemplateVars', function (templateSrv) {
   return filterFunc;
 });
 
-export {};
+export default {};
