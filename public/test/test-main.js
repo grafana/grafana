@@ -95,7 +95,7 @@
       .filter(onlySpecFiles)
       .map(file2moduleName)
       .map(function(path) {
-        console.log(path);
+        // console.log(path);
         return System.import(path);
       }));
   }).then(function()  {

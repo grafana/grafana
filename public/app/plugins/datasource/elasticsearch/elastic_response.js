@@ -269,6 +269,21 @@ function (_, queryDef) {
     seriesList.push(series);
   };
 
+  ElasticResponse.prototype.trimDatapoints = function(aggregations, target) {
+    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+
+    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
+    if (shouldDropFirstAndLast) {
+      var trim = histogram.settings.trimEdges;
+      for(var prop in aggregations) {
+        var points = aggregations[prop];
+        if (points.datapoints.length > trim * 2) {
+          points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
+        }
+      }
+    }
+  };
+
   ElasticResponse.prototype.getTimeSeries = function() {
     var seriesList = [];
 
@@ -289,6 +304,7 @@ function (_, queryDef) {
         var docs = [];
 
         this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
         for (var y = 0; y < tmpSeriesList.length; y++) {

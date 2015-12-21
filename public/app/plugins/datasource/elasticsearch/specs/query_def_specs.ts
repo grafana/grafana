@@ -1,7 +1,7 @@
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import * as queryDef from '../query_def';
+import queryDef from '../query_def';
 
 describe('ElasticQueryDef', function() {
 

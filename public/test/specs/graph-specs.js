@@ -215,6 +215,17 @@ define([
       });
     });
 
+    graphScenario('when stack and percent', function(ctx) {
+      ctx.setup(function(scope) {
+        scope.panel.percentage = true;
+        scope.panel.stack = true;
+      });
+
+      it('should show percentage', function() {
+        var axis = ctx.plotOptions.yaxes[0];
+        expect(axis.tickFormatter(100, axis)).to.be("100%");
+      });
+    });
   });
 });
 
