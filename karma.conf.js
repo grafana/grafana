@@ -4,11 +4,16 @@ module.exports = function(config) {
   config.set({
     basePath: __dirname + '/public_gen',
 
-    frameworks: ['mocha', 'requirejs', 'expect', 'sinon'],
+    frameworks: ['mocha', 'expect', 'sinon'],
 
     // list of files / patterns to load in the browser
     files: [
+      'vendor/npm/es5-shim/es5-shim.js',
+      'vendor/npm/es6-shim/es6-shim.js',
+      'vendor/npm/es6-promise/dist/es6-promise.js',
+      'vendor/npm/systemjs/dist/system.src.js',
       'test/test-main.js',
+
       {pattern: 'app/**/*.js', included: false},
       {pattern: 'vendor/**/*.js', included: false},
       {pattern: 'test/**/*.js', included: false}

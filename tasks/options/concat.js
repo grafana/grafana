@@ -31,7 +31,7 @@ module.exports = function(config) {
         '<%= genDir %>/vendor/npm/es6-shim/es6-shim.js',
         '<%= genDir %>/vendor/npm/es6-promise/es6-promise.js',
         '<%= genDir %>/vendor/npm/systemjs/dist/system.js',
-        '<%= genDir %>/app/systemjs.conf.js',
+        '<%= genDir %>/app/system.conf.js',
         '<%= genDir %>/app/boot.js',
       ],
       dest: '<%= genDir %>/app/boot.js'

@@ -1,1 +1,0 @@
-﻿exports.foo = "bar";

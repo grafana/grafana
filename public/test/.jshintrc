@@ -25,6 +25,8 @@
   "maxlen": 140,
 
   "globals": {
+    "Promise": true,
+    "System": true,
     "expect": true,
     "it": true,
     "describe": true,

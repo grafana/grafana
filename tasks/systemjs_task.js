@@ -7,7 +7,7 @@ module.exports = function(grunt) {
 
     // optional constructor options
     // sets the baseURL and loads the configuration file
-    var builder = new Builder('public_gen', 'public_gen/app/systemjs.conf.js');
+    var builder = new Builder('public_gen', 'public_gen/app/system.conf.js');
     console.log('Starting systemjs-builder');
 
     var modules = [

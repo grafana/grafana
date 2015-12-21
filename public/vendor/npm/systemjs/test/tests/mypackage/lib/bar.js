@@ -1,2 +1,0 @@
-bar = 'bar';
-exports = {};

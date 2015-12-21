@@ -1,127 +1,100 @@
-require.config({
-  baseUrl: 'http://localhost:9876/base/',
+(function() {
+  "use strict";
 
-  paths: {
-    lodash:                'app/core/lodash_extended',
-    'lodash-src':          'vendor/lodash',
-
-    moment:                'vendor/moment',
-    chromath:              'vendor/chromath',
-    filesaver:             'vendor/filesaver',
-
-    angular:                  'vendor/angular/angular',
-    'angular-route':          'vendor/angular-route/angular-route',
-    'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
-    angularMocks:             'vendor/angular-mocks/angular-mocks',
-    'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
-    'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
-    'angular-strap':          'vendor/angular-other/angular-strap',
-    timepicker:               'vendor/angular-other/timepicker',
-    datepicker:               'vendor/angular-other/datepicker',
-    bindonce:                 'vendor/angular-bindonce/bindonce',
-    crypto:                   'vendor/crypto.min',
-    spectrum:                 'vendor/spectrum',
-    jquery:                   'vendor/jquery/dist/jquery',
-
-    bootstrap:                'vendor/bootstrap/bootstrap',
-    'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
-
-    'extend-jquery':          'app/components/extend-jquery',
-
-    'jquery.flot':             'vendor/flot/jquery.flot',
-    'jquery.flot.pie':         'vendor/flot/jquery.flot.pie',
-    'jquery.flot.events':      'vendor/flot/jquery.flot.events',
-    'jquery.flot.selection':   'vendor/flot/jquery.flot.selection',
-    'jquery.flot.stack':       'vendor/flot/jquery.flot.stack',
-    'jquery.flot.stackpercent':'vendor/flot/jquery.flot.stackpercent',
-    'jquery.flot.time':        'vendor/flot/jquery.flot.time',
-    'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
-    'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
-
-    modernizr:                'vendor/modernizr-2.6.1',
-  },
-
-  shim: {
-    bootstrap: {
-      deps: ['jquery']
+  System.config({
+    baseURL: '/base/',
+    defaultJSExtensions: true,
+    paths: {
+      'moment': 'vendor/moment.js',
+      "jquery": "vendor/jquery/dist/jquery.js",
+      'lodash-src': 'vendor/lodash.js',
+      "lodash": 'app/core/lodash_extended.js',
+      "angular": 'vendor/angular/angular.js',
+      'angular-mocks': 'vendor/angular-mocks/angular-mocks.js',
+      "bootstrap":  "vendor/bootstrap/bootstrap.js",
+      'angular-route':          'vendor/angular-route/angular-route.js',
+      'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize.js',
+      "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
+      "angular-strap":          "vendor/angular-other/angular-strap.js",
+      "angular-dragdrop":       "vendor/angular-native-dragdrop/draganddrop.js",
+      "angular-bindonce":       "vendor/angular-bindonce/bindonce.js",
+      "spectrum": "vendor/spectrum.js",
+      "bootstrap-tagsinput": "vendor/tagsinput/bootstrap-tagsinput.js",
+      "jquery.flot": "vendor/flot/jquery.flot",
+      "jquery.flot.pie": "vendor/flot/jquery.flot.pie",
+      "jquery.flot.events": "vendor/flot/jquery.flot.events",
+      "jquery.flot.selection": "vendor/flot/jquery.flot.selection",
+      "jquery.flot.stack": "vendor/flot/jquery.flot.stack",
+      "jquery.flot.stackpercent": "vendor/flot/jquery.flot.stackpercent",
+      "jquery.flot.time": "vendor/flot/jquery.flot.time",
+      "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
+      "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow"
     },
 
-    modernizr: {
-      exports: 'Modernizr'
+    packages: {
+      app: {
+        defaultExtension: 'js',
+      },
+      vendor: {
+        defaultExtension: 'js',
+      },
     },
 
-    angular: {
-      deps: ['jquery'],
-      exports: 'angular'
+    map: {
     },
 
-    angularMocks: {
-      deps: ['angular'],
-    },
-
-    crypto: {
-      exports: 'Crypto'
-    },
-
-    'jquery.flot':          ['jquery'],
-    'jquery.flot.pie':      ['jquery', 'jquery.flot'],
-    'jquery.flot.events':   ['jquery', 'jquery.flot'],
-    'jquery.flot.selection':['jquery', 'jquery.flot'],
-    'jquery.flot.stack':    ['jquery', 'jquery.flot'],
-    'jquery.flot.stackpercent':['jquery', 'jquery.flot'],
-    'jquery.flot.time':     ['jquery', 'jquery.flot'],
-    'jquery.flot.crosshair':['jquery', 'jquery.flot'],
-    'jquery.flot.fillbelow':['jquery', 'jquery.flot'],
-
-    'angular-route':        ['angular'],
-    'angular-sanitize':     ['angular'],
-    'angular-ui':           ['angular'],
-    'angular-dragdrop':     ['jquery', 'angular'],
-    'angular-mocks':        ['angular'],
-    'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
-    'bindonce':             ['angular'],
-
-    'bootstrap-tagsinput':          ['jquery'],
-
-    timepicker:             ['jquery', 'bootstrap'],
-    datepicker:             ['jquery', 'bootstrap'],
-  }
-});
-
-function file2moduleName(filePath) {
-  'use strict';
-  return filePath.replace(/\\/g, '/')
-    .replace(/^\/base\//, '')
-    .replace(/\.\w*$/, '');
-}
-
-window.grafanaBootData = {settings: {}};
-
-require([
-  'lodash',
-  'angular',
-  'angularMocks',
-  'app/app',
-], function(_, angular) {
-  'use strict';
-
-  var specs = [];
-
-  for (var file in window.__karma__.files) {
-    if (/specs.*/.test(file)) {
-      file = file2moduleName(file);
-      specs.push(file);
+    meta: {
+      'vendor/angular/angular.js': {
+        format: 'global',
+        deps: ['jquery'],
+        exports: 'angular',
+      },
+      'vendor/angular/angular-mocks.js': {
+        format: 'global',
+        deps: ['angular'],
+      }
     }
-  }
-
-  angular.module('grafana', ['ngRoute']);
-  angular.module('grafana.services', ['ngRoute', '$strap.directives']);
-  angular.module('grafana.panels', []);
-  angular.module('grafana.filters', []);
-  angular.module('grafana.routes', ['ngRoute']);
-
-  require(specs, function() {
-    window.__karma__.start();
   });
 
-});
+  function file2moduleName(filePath) {
+    return filePath.replace(/\\/g, '/')
+    .replace(/^\/base\//, '')
+      .replace(/\.\w*$/, '');
+  }
+
+  function onlySpecFiles(path) {
+    return /_specs\.js$/.test(path);
+  }
+
+  window.grafanaBootData = {settings: {}};
+
+  var modules = ['lodash', 'angular', 'angular-mocks', 'app/app'];
+
+  Promise.all(
+    modules.map(function(moduleName) {
+      return System.import(moduleName);
+    })
+  ).then(function(deps) {
+    var angular = deps[1];
+
+    angular.module('grafana', ['ngRoute']);
+    angular.module('grafana.services', ['ngRoute', '$strap.directives']);
+    angular.module('grafana.panels', []);
+    angular.module('grafana.filters', []);
+    angular.module('grafana.routes', ['ngRoute']);
+
+    // load specs
+    return Promise.all(
+      Object.keys(window.__karma__.files) // All files served by Karma.
+      .filter(onlySpecFiles)
+      .map(file2moduleName)
+      .map(function(path) {
+        return System.import(path);
+      }));
+  }).then(function()  {
+    window.__karma__.start();
+  }, function(error) {
+    window.__karma__.error(error.stack || error);
+  });
+
+})();

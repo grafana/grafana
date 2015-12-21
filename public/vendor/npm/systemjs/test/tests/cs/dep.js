@@ -1,1 +1,0 @@
-# language_global = 'cs';

@@ -68,7 +68,7 @@
   "homepage": "https://github.com/jakearchibald/ES6-Promises#readme",
   "_id": "es6-promise@3.0.2",
   "_shasum": "010d5858423a5f118979665f46486a95c6ee2bb6",
-  "_from": "es6-promise@*",
+  "_from": "es6-promise@>=3.0.2 <4.0.0",
   "_npmVersion": "2.13.4",
   "_nodeVersion": "2.2.1",
   "_npmUser": {
