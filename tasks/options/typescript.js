@@ -3,7 +3,7 @@ module.exports = function() {
 
   return {
     build: {
-      src: ['public/app/**/*.ts', "!public/vendor/**/*", "!**/*.d.ts"],
+      src: ['public/**/*.ts', "!public/vendor/**/*", "!**/*.d.ts"],
       dest: 'public_gen/',
       options: {
         module: 'system', //or commonjs

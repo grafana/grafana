@@ -1,8 +1,8 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
-import rangeUtil = require('app/core/utils/rangeutil')
-import _  = require('lodash')
-import moment  = require('moment')
+import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as _ from 'lodash';
+import moment from 'moment';
 
 describe("rangeUtil", () => {
 

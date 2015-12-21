@@ -3,7 +3,7 @@ import '../query_ctrl';
 import 'app/core/services/segment_srv';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import * as gfunc from '../gfunc';
+import gfunc from '../gfunc';
 import helpers from 'test/specs/helpers';
 
 describe('GraphiteQueryCtrl', function() {

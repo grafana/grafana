@@ -50,14 +50,10 @@
 			Alias
 		</li>
 		<li>
-			<input type="text" class="tight-form-input" style="width: 260px;" ng-model="target.alias" spellcheck='false' placeholder="alias patterns (empty = auto)" ng-blur="get_data()">
+			<input type="text" class="tight-form-input" style="width: 200px;" ng-model="target.alias" spellcheck='false' placeholder="alias patterns (empty = auto)" ng-blur="get_data()">
 		</li>
 	</ul>
 	<div class="clearfix"></div>
-
-	<div style="padding: 10px" ng-if="target.rawQuery">
-		<textarea ng-model="target.rawQuery" rows="8" spellcheck="false" style="width: 100%; box-sizing: border-box;" ng-blur="queryUpdated()"></textarea>
-	</div>
 </div>
 
 <div ng-hide="target.rawQuery">
