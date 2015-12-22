@@ -17,7 +17,7 @@ func makeCert(tlsPoolName string, config MySQLConfig) (*tls.Config, error) {
 		return nil, err
 	}
 	clientCert := make([]tls.Certificate, 0, 1)
-	if (config.ClientCertPath != "" && config.ClientKeyPath != "") {
+	if config.ClientCertPath != "" && config.ClientKeyPath != "" {
 
 		certs, err := tls.LoadX509KeyPair(config.ClientCertPath, config.ClientKeyPath)
 		if err != nil {
@@ -34,7 +34,7 @@ func makeCert(tlsPoolName string, config MySQLConfig) (*tls.Config, error) {
 		tlsConfig.InsecureSkipVerify = true
 	}
 	// Return more meaningful error before it is too late
-	if config.ServerCertName == "" && !tlsConfig.InsecureSkipVerify{
+	if config.ServerCertName == "" && !tlsConfig.InsecureSkipVerify {
 		return nil, fmt.Errorf("server_cert_name is missing. Consider using ssl_mode = skip-verify.")
 	}
 	return tlsConfig, nil
