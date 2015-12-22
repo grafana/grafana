@@ -34,6 +34,9 @@ System.config({
     vendor: {
       defaultExtension: 'js',
     },
+    plugins: {
+      defaultExtension: 'js',
+    },
     test: {
       defaultExtension: 'js',
     },
