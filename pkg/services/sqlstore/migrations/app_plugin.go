@@ -4,7 +4,7 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addAppPluginMigration(mg *Migrator) {
 
-	var appPluginV1 = Table{
+	var appPluginV2 = Table{
 		Name: "app_plugin",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -20,8 +20,9 @@ func addAppPluginMigration(mg *Migrator) {
 			{Cols: []string{"org_id", "type"}, Type: UniqueIndex},
 		},
 	}
-	mg.AddMigration("create app_plugin table v1", NewAddTableMigration(appPluginV1))
+
+	mg.AddMigration("create app_plugin table v2", NewAddTableMigration(appPluginV2))
 
 	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v1", appPluginV1)
+	addTableIndicesMigrations(mg, "v2", appPluginV2)
 }

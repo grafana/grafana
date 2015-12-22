@@ -18,11 +18,11 @@ func GetAppPlugins(c *middleware.Context) Response {
 	installedAppsMap := make(map[string]*dtos.AppPlugin)
 	for t, a := range plugins.Apps {
 		installedAppsMap[t] = &dtos.AppPlugin{
-			Type:        a.Type,
-			Enabled:     a.Enabled,
-			PinNavLinks: a.PinNavLinks,
-			Module:      a.Module,
-			JsonData:    make(map[string]interface{}),
+			Type:     a.Type,
+			Enabled:  a.Enabled,
+			Pinned:   a.Pinned,
+			Module:   a.Module,
+			JsonData: make(map[string]interface{}),
 		}
 	}
 
@@ -32,11 +32,11 @@ func GetAppPlugins(c *middleware.Context) Response {
 	for _, b := range query.Result {
 		if def, ok := installedAppsMap[b.Type]; ok {
 			result = append(result, &dtos.AppPlugin{
-				Type:        b.Type,
-				Enabled:     b.Enabled,
-				PinNavLinks: b.PinNavLinks,
-				Module:      def.Module,
-				JsonData:    b.JsonData,
+				Type:     b.Type,
+				Enabled:  b.Enabled,
+				Pinned:   b.Pinned,
+				Module:   def.Module,
+				JsonData: b.JsonData,
 			})
 			seenApps[b.Type] = true
 		}
