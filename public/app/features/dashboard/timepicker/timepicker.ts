@@ -1,11 +1,11 @@
 ///<reference path="../../../headers/common.d.ts" />
 ///<amd-dependency path="./input_date" name="inputDate" />
 
-import _ = require('lodash');
-import kbn = require('app/core/utils/kbn');
-
+import _ from 'lodash';
+import kbn  from 'app/core/utils/kbn';
 import angular from 'angular';
 import moment from 'moment';
+
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 

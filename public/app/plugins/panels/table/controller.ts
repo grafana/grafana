@@ -1,10 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular = require('angular');
-import _ = require('lodash');
-import moment = require('moment');
+import angular from 'angular';
+import _ from 'lodash';
+import moment from 'moment';
 import PanelMeta from 'app/features/panel/panel_meta2';
-
 import {transformDataToTable} from './transformers';
 
 export class TablePanelCtrl {

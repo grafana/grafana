@@ -1,7 +1,7 @@
 ///<reference path="../headers/common.d.ts" />
 
-import _ = require('lodash');
-import kbn = require('app/core/utils/kbn');
+import kbn from 'app/core/utils/kbn';
+import _ from 'lodash';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) { return false; }

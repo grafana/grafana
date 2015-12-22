@@ -1,8 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import jquery = require('jquery');
-import _ = require('lodash');
-
+import jquery from 'jquery';
+import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 import coreModule from '../core_module';
