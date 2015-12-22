@@ -14,16 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/go-sql-driver/mysql"
 )
 
 type MySQLConfig struct {
-	SslMode string
-	CaCertPath string
+	SslMode        string
+	CaCertPath     string
 	ClientKeyPath  string
 	ClientCertPath string
 	ServerCertName string
