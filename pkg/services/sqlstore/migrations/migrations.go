@@ -19,6 +19,7 @@ func AddMigrations(mg *Migrator) {
 	addDashboardSnapshotMigrations(mg)
 	addQuotaMigration(mg)
 	addPluginBundleMigration(mg)
+	addPlaylistMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
