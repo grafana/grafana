@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config = require('app/core/config');
-import store = require('app/core/store');
-
+import config from 'app/core/config';
+import store from 'app/core/store';
+import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
 import coreModule from '../core_module';

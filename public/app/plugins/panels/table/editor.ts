@@ -1,12 +1,13 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ = require('lodash');
-import kbn = require('app/core/utils/kbn');
 
+import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
 import angular from 'angular';
+
 import {transformers} from './transformers';
+import kbn from 'app/core/utils/kbn';
 
 export class TablePanelEditorCtrl {
 
