@@ -30,10 +30,10 @@ export class AppSrv {
     }
 
     return this.backendSrv.get('api/org/apps').then(results => {
-      this.apps = results.reduce((prev, current) => {
+      return results.reduce((prev, current) => {
         prev[current.type] = current;
-      }, {});
-      return this.apps;
+        return prev;
+      }, this.apps);
     });
   }
 
