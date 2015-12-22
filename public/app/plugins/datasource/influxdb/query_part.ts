@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ = require('lodash');
+import _ from 'lodash';
 
 var index = [];
 var categories = {

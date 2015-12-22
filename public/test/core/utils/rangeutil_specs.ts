@@ -1,7 +1,7 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import moment from 'moment';
 
 describe("rangeUtil", () => {
