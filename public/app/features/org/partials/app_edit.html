@@ -1,34 +1,22 @@
 <topnav title="Apps" icon="fa fa-fw fa-cubes" subnav="true">
 	<ul class="nav">
 		<li ><a href="org/apps">Overview</a></li>
-		<li class="active" ><a href="org/apps/edit/{{current.type}}">Edit</a></li>
+		<li class="active" ><a href="org/apps/edit/{{ctrl.current.type}}">Edit</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container" style="background: transparent; border: 0;">
   <div class="page-wide" ng-init="ctrl.init()">
-		<h2>{{ctrl.appModel.type}}</h2>
+		<h2>{{ctrl.appModel.name}}</h2>
 
 		<form name="editForm">
 			<div class="tight-form">
 				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 80px">
-						Type
-					</li>
-					<li>
-						<li>
-							<input type="text" disabled="disabled" class="input-xlarge tight-form-input" ng-model="current.type">
-						</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="enabledChanged()"></editor-checkbox>
 					</li>
 					<li class="tight-form-item">
-						Default&nbsp;
-						<input class="cr1" id="current.enabled" type="checkbox" ng-model="current.enabled" ng-checked="current.enabled">
-						<label for="current.enabled" class="cr1"></label>
-					</li>
-					<li class="tight-form-item">
-						Pin To Menu&nbsp;
-						<input class="cr1" id="current.pin_nav_links" type="checkbox" ng-model="current.pin_nav_links" ng-checked="current.pin_nav_links">
-						<label for="current.pin_nav_links" class="cr1"></label>
+						<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="enabledChanged()"></editor-checkbox>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
