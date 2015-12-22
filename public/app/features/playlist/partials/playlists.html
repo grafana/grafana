@@ -1,0 +1,43 @@
+<topnav icon="fa fa-fw fa-list" title="Playlists"></topnav>
+
+<div class="page-container">
+  <div class="page">
+    <button type="submit" class="btn btn-success" ng-click="createPlaylist()">Create playlist</button>
+
+    <br>
+    <br>
+
+    <div ng-if="playlists.length === 0">
+      <em>No saved playlists</em>
+    </div>
+
+    <table class="grafana-options-table" ng-if="playlists.length > 0">
+      <tr>
+        <td><strong>Title</strong></td>
+        <td><strong>Url</strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr ng-repeat="playlist in playlists">
+        <td style="width:1%">
+          {{playlist.title}}
+        </td>
+        <td style="width:90%">
+          <a href="{{ playlistUrl(playlist) }}">{{ playlistUrl(playlist) }}</a>
+        </td>
+        <td style="width: 1%">
+          <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-edit"></i>
+            Edit
+          </a>
+        </td>
+        <td style="width: 1%">
+          <a ng-click="removePlaylist(playlist)" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+</div>
