@@ -138,6 +138,10 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
         });
     };
 
+    $scope.zoomOut = function(evt) {
+      $scope.appEvent('zoom-out', evt);
+    };
+
     $scope.loadSnapshot = function(snapshotData) {
       panelHelper.updateTimeRange($scope);
       $scope.annotationsPromise = $q.when([]);
