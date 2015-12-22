@@ -44,7 +44,7 @@ type ApiPluginRoute struct {
 type AppPluginPage struct {
 	Text    string          `json:"text"`
 	Icon    string          `json:"icon"`
-	Href    string          `json:"url"`
+	Url     string          `json:"url"`
 	ReqRole models.RoleType `json:"reqRole"`
 }
 

@@ -125,7 +125,7 @@ func GetDataSourcePlugins(c *middleware.Context) {
 	}
 	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
-	for key, value := range enabledPlugins.DataSourcePlugins {
+	for key, value := range enabledPlugins.DataSources {
 		if !value.BuiltIn {
 			dsList[key] = value
 		}

@@ -1,14 +1,13 @@
-define([
-  'angular',
-  'lodash',
-  'app/core/config',
-],
-function (angular, _, config) {
-  'use strict';
+///<reference path="../../headers/common.d.ts" />
 
-  var module = angular.module('grafana.controllers');
+import config = require('app/core/config');
+import angular from 'angular';
 
-  module.controller('AppEditCtrl', function($scope, appSrv, $routeParams) {
+export class AppEditCtrl {
+
+  /** @ngInject */
+  constructor(private $scope: any, private appSrv: any, private $routeParams: any) {
+
     $scope.init = function() {
       $scope.current = {};
       $scope.getApps();
@@ -31,5 +30,8 @@ function (angular, _, config) {
     };
 
     $scope.init();
-  });
-});
+  }
+
+}
+
+angular.module('grafana.controllers').controller('AppEditCtrl', AppEditCtrl);

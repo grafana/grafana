@@ -52,7 +52,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Dashboards",
 		Icon: "fa fa-fw fa-th-large",
-		Href: "/",
+		Url:  "/",
 	})
 
 	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
@@ -73,7 +73,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		}
 
 		if plugin.Pinned && plugin.Page != nil {
-			if c.userHasRole(plugin.Page.reqRole) {
+			if c.HasUserRole(plugin.Page.ReqRole) {
 				data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 					Text: plugin.Page.Text,
 					Url:  plugin.Page.Url,
