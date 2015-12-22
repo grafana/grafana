@@ -7,7 +7,6 @@
 #define MyAppGroupName "AdRem GrafCrunch"
 #define MyAppUninstallKey "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\" + MyAppID + "_is1"
 #define MyAppGettingStartedArticle "http://www.adremsoft.com/blog/view/blog:v1/5338024126755"
-#define MyAppCopyright 2015 (c) AdRem Software Inc., all rights reserved
 
 #define LICENSE "..\..\LICENSE.md"
 #define NOTICE "..\..\NOTICE.md"
@@ -39,7 +38,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-AppCopyright={#MyAppCopyright}
+AppCopyright=2015 (c) AdRem Software Inc., all rights reserved
 LicenseFile={#LICENSE}
 DefaultDirName={pf64}\AdRem\GrafCrunch
 DefaultGroupName={#MyAppGroupName}
