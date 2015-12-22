@@ -23,7 +23,6 @@ export class AppSrv {
     });
   }
 
-
   getAll() {
     if (!_.isEmpty(this.apps)) {
       return this.$q.when(this.apps);

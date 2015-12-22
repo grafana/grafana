@@ -2,36 +2,26 @@
 
 import config = require('app/core/config');
 import angular from 'angular';
+import * as _ from 'lodash';
 
 export class AppEditCtrl {
+  appModel: any;
 
   /** @ngInject */
-  constructor(private $scope: any, private appSrv: any, private $routeParams: any) {
+  constructor(private appSrv: any, private $routeParams: any) {}
 
-    $scope.init = function() {
-      $scope.current = {};
-      $scope.getApps();
-    };
-
-    $scope.getApps = function() {
-      appSrv.get($routeParams.type).then(function(result) {
-        $scope.current = _.clone(result);
-      });
-    };
-
-    $scope.update = function() {
-      $scope._update();
-    };
-
-    $scope._update = function() {
-      appSrv.update($scope.current).then(function() {
-        window.location.href = config.appSubUrl + "org/apps";
-      });
-    };
-
-    $scope.init();
+  init() {
+    this.appModel = {};
+    this.appSrv.get(this.$routeParams.type).then(result => {
+      this.appModel = _.clone(result);
+    });
   }
 
+  update() {
+    this.appSrv.update(this.appModel).then(function() {
+      window.location.href = config.appSubUrl + "org/apps";
+    });
+  }
 }
 
 angular.module('grafana.controllers').controller('AppEditCtrl', AppEditCtrl);
