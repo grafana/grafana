@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config = require('app/core/config');
+import _ from 'lodash';
 import angular from 'angular';
 
 export class AppSrv {

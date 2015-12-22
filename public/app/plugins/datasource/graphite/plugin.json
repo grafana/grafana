@@ -1,10 +1,9 @@
 {
   "pluginType": "datasource",
   "name": "Graphite",
-
   "type": "graphite",
-  "serviceName": "GraphiteDatasource",
 
+  "serviceName": "GraphiteDatasource",
   "module": "app/plugins/datasource/graphite/datasource",
 
   "partials": {

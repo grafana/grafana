@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config = require('app/core/config');
+import config from 'app/core/config';
 import angular from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 export class AppEditCtrl {
   appModel: any;
@@ -25,3 +25,4 @@ export class AppEditCtrl {
 }
 
 angular.module('grafana.controllers').controller('AppEditCtrl', AppEditCtrl);
+
