@@ -132,12 +132,12 @@ define([
         controller : 'ResetPasswordCtrl',
       })
       .when('/org/apps', {
-        templateUrl: 'app/features/org/partials/apps.html',
-        controller: 'AppsCtrl',
+        templateUrl: 'app/features/org/partials/app_list.html',
+        controller: 'AppListCtrl',
         resolve: loadOrgBundle,
       })
       .when('/org/apps/edit/:type', {
-        templateUrl: 'app/features/org/partials/appEdit.html',
+        templateUrl: 'app/features/org/partials/app_edit.html',
         controller: 'AppEditCtrl',
         resolve: loadOrgBundle,
       })

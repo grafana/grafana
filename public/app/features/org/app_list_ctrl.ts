@@ -1,13 +1,12 @@
-define([
-  'angular',
-  'app/core/config',
-],
-function (angular, config) {
-  'use strict';
+///<reference path="../../headers/common.d.ts" />
 
-  var module = angular.module('grafana.controllers');
+import config = require('app/core/config');
+import angular from 'angular';
 
-  module.controller('AppsCtrl', function($scope, $location, appSrv) {
+export class AppListCtrl {
+
+  /** @ngInject */
+  constructor($scope: any, appSrv: any, $location: any) {
 
     $scope.init = function() {
       $scope.apps = {};
@@ -27,6 +26,7 @@ function (angular, config) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('AppListCtrl', AppListCtrl);

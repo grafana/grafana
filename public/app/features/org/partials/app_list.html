@@ -14,25 +14,20 @@
 
 		<table class="grafana-options-table" ng-if="apps">
 			<tr>
-				<td><strong>Type</strong></td>
+				<td><strong>Name</strong></td>
 				<td></td>
 				<td></td>
 			</tr>
 			<tr ng-repeat="(type, p) in apps">
-				<td style="width:1%">
+				<td style="width:99%">
 					<i class="fa fa-cubes"></i> &nbsp;
 					{{p.type}}
 				</td>
 				<td style="width: 1%">
 					<a href="org/apps/edit/{{p.type}}" class="btn btn-inverse btn-mini">
 						<i class="fa fa-edit"></i>
-						Edit
+						Configure
 					</a>
-				</td>
-				<td style="width: 1%">
-					Enabled&nbsp;
-					<input  id="p.enabled" type="checkbox" ng-model="p.enabled" ng-checked="p.enabled" ng-change="update(p)">
-					<label for="p.enabled"></label>
 				</td>
 			</tr>
 		</table>
