@@ -5,10 +5,9 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
-		<h2>Edit App</h2>
-
+<div class="page-container" style="background: transparent; border: 0;">
+  <div class="page-wide" ng-init="ctrl.init()">
+		<h2>{{ctrl.appModel.type}}</h2>
 
 		<form name="editForm">
 			<div class="tight-form">
@@ -34,13 +33,8 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-			<br>
+
 			<app-config-loader></app-config-loader>
-			<div class="pull-right" style="margin-top: 35px">
-				<button type="submit" class="btn btn-success" ng-click="update()">Save</button>
-				<a class="btn btn-inverse" href="org/apps">Cancel</a>
-			</div>
-			<br>
 		</form>
 
 	</div>

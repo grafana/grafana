@@ -134,11 +134,13 @@ define([
       .when('/org/apps', {
         templateUrl: 'app/features/org/partials/app_list.html',
         controller: 'AppListCtrl',
+        controllerAs: 'ctrl',
         resolve: loadOrgBundle,
       })
       .when('/org/apps/edit/:type', {
         templateUrl: 'app/features/org/partials/app_edit.html',
         controller: 'AppEditCtrl',
+        controllerAs: 'ctrl',
         resolve: loadOrgBundle,
       })
       .when('/global-alerts', {

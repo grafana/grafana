@@ -4,33 +4,32 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
-		<h2>Apps</h2>
+<div class="page-container" style="background: transparent; border: 0;">
+  <div class="page-wide" ng-init="ctrl.init()">
+    <h2>Apps</h2>
 
-		<div ng-if="!apps">
+		<div ng-if="!ctrl.apps">
 			<em>No apps defined</em>
 		</div>
 
-		<table class="grafana-options-table" ng-if="apps">
-			<tr>
-				<td><strong>Name</strong></td>
-				<td></td>
-				<td></td>
-			</tr>
-			<tr ng-repeat="(type, p) in apps">
-				<td style="width:99%">
-					<i class="fa fa-cubes"></i> &nbsp;
-					{{p.type}}
-				</td>
-				<td style="width: 1%">
-					<a href="org/apps/edit/{{p.type}}" class="btn btn-inverse btn-mini">
-						<i class="fa fa-edit"></i>
-						Configure
-					</a>
-				</td>
-			</tr>
-		</table>
-
+		<ul class="filter-list">
+      <li ng-repeat="app in ctrl.apps">
+        <ul class="filter-list-card">
+          <li>
+            <div class="filter-list-card-controls">
+              <div class="filter-list-card-config">
+								<a href="org/apps/edit/{{app.type}}">
+									<i class="fa fa-cog"></i>
+								</a>
+              </div>
+            </div>
+						<span class="filter-list-card-title">Litmus{{app.type}}</span>
+            <span class="filter-list-card-status">
+              <span class="filter-list-card-state">Dashboards: 1</span>
+            </span>
+          </li>
+        </ul>
+      </li>
+		</ul>
 	</div>
 </div>
