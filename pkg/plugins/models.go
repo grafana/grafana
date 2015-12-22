@@ -4,6 +4,23 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type PluginInfo struct {
+	Author      PluginAuthor `json:"author"`
+	Description string       `json:"description"`
+	Homepage    string       `json:"homepage"`
+	Logos       PluginLogos  `json:"logos"`
+}
+
+type PluginAuthor struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
+type PluginLogos struct {
+	Small string `json:"small"`
+	Large string `json:"large"`
+}
+
 type DataSourcePlugin struct {
 	Type               string                 `json:"type"`
 	Name               string                 `json:"name"`
@@ -61,12 +78,14 @@ type ApiPlugin struct {
 
 type AppPlugin struct {
 	Type          string         `json:"type"`
+	Name          string         `json:"name"`
 	Enabled       bool           `json:"enabled"`
 	Pinned        bool           `json:"pinned"`
 	Module        string         `json:"module"`
 	Css           *AppPluginCss  `json:"css"`
 	Page          *AppPluginPage `json:"page"`
 	PublicContent *PublicContent `json:"public"`
+	Info          *PluginInfo    `json:"info"`
 }
 
 type EnabledPlugins struct {
