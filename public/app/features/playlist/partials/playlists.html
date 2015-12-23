@@ -11,19 +11,29 @@
       <em>No saved playlists</em>
     </div>
 
+    <div ng-if="playlists.length > 0">
+      <em>Saved playlists</em>
+    </div>
+
+    <br>
+
     <table class="grafana-options-table" ng-if="playlists.length > 0">
       <tr>
         <td><strong>Title</strong></td>
-        <td><strong>Url</strong></td>
-        <td></td>
-        <td></td>
+        <td colspan="0"><strong>Url</strong></td>
       </tr>
       <tr ng-repeat="playlist in playlists">
         <td style="width:1%">
           {{playlist.title}}
         </td>
         <td style="width:90%">
-          <a href="{{ playlistUrl(playlist) }}">{{ playlistUrl(playlist) }}</a>
+          {{ playlistUrl(playlist) }}
+        </td>
+        <td style="width: 1%">
+          <a href="{{ playlistUrl(playlist) }}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-play"></i>
+            Play
+          </a>
         </td>
         <td style="width: 1%">
           <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-mini">
