@@ -167,10 +167,18 @@
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
 		},
-    {
-      "ImportPath": "github.com/bradfitz/gomemcache/memcache",
-      "Comment": "release.r60-40-g72a6864",
-      "Rev": "72a68649ba712ee7c4b5b4a943a626bcd7d90eb8"
-    }
+		{
+			"ImportPath": "github.com/bradfitz/gomemcache/memcache",
+			"Comment": "release.r60-40-g72a6864",
+			"Rev": "72a68649ba712ee7c4b5b4a943a626bcd7d90eb8"
+		},
+		{
+			"ImportPath": "golang.org/x/text/internal/tag",
+			"Rev": "cf4986612c83df6c55578ba198316d1684a9a287"
+		},
+		{
+			"ImportPath": "golang.org/x/text/language",
+			"Rev": "cf4986612c83df6c55578ba198316d1684a9a287"
+		}
 	]
 }
