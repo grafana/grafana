@@ -79,6 +79,10 @@ function (angular, config, _) {
         });
     };
 
+    $scope.startPlaylist = function(playlist, dashboards) {
+      playlistSrv.start(dashboards, playlist.timespan);
+    };
+
     $scope.isPlaylistEmpty = function() {
       return !dashboards.length;
     };

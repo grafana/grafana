@@ -104,6 +104,10 @@
       <button type="button"
               class="btn btn-success"
               ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
+              ng-click="startPlaylist(playlist, dashboards)">Start</button>
+      <button type="button"
+              class="btn btn-success"
+              ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
               ng-click="savePlaylist(playlist, dashboards)">Save</button>
       <button type="button"
               class="btn btn-default"
