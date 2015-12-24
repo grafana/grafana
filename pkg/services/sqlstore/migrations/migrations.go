@@ -20,7 +20,7 @@ func AddMigrations(mg *Migrator) {
 	addQuotaMigration(mg)
 	addPluginBundleMigration(mg)
 	addSessionMigration(mg)
-  addPlaylistMigrations(mg)
+	addPlaylistMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
