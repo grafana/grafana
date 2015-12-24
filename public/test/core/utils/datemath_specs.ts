@@ -1,8 +1,8 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
 import * as dateMath from 'app/core/utils/datemath';
-import * as _ from 'lodash';
 import moment from 'moment';
+import _ from 'lodash';
 
 describe("DateMath", () => {
   var spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];

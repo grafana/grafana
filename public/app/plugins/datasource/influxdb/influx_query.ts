@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ = require('lodash');
+import _ from 'lodash';
 import queryPart from './query_part';
 
 export default class InfluxQuery {

@@ -12,10 +12,8 @@ import 'app/core/core';
 
 import $ from 'jquery';
 import angular from 'angular';
-import _ = require('lodash');
-import bootstrap = require('bootstrap');
-import kbn = require('app/core/utils/kbn');
-import config = require('app/core/config');
+import config from 'app/core/config';
+import _ from 'lodash';
 
 export class GrafanaApp {
   registerFunctions: any;

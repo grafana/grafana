@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ = require('lodash');
+import _ from 'lodash';
 import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];

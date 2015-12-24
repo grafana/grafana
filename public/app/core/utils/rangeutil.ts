@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ = require('lodash');
-
+import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 import * as dateMath from './datemath';
