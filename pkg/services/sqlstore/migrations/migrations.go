@@ -19,6 +19,7 @@ func AddMigrations(mg *Migrator) {
 	addDashboardSnapshotMigrations(mg)
 	addQuotaMigration(mg)
 	addPluginBundleMigration(mg)
+	addSessionMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
