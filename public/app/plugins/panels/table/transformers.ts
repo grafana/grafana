@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import moment = require('moment');
-import _ = require('lodash');
+import _ from 'lodash';
+import moment from 'moment';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';
 import TableModel from '../../../core/table_model';
