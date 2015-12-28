@@ -13,6 +13,7 @@ function (angular, _) {
     $location,
     backendSrv
   ) {
+
     $scope.playlists = playlists;
 
     $scope.playlistUrl = function(playlist) {
@@ -40,10 +41,13 @@ function (angular, _) {
         src: './app/features/playlist/partials/playlist-remove.html',
         scope: modalScope
       });
+
     };
 
     $scope.createPlaylist = function() {
       $location.path('/playlists/create');
     };
+
   });
+
 });

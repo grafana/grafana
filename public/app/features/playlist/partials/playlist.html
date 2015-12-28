@@ -2,6 +2,7 @@
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
+    <h4>Creating new playlist</h4><br><br>
     <div class="row" style="margin-bottom: 10px;">
       <div>
         <div class="tight-form">
@@ -34,7 +35,7 @@
         <div class="tight-form">
           <ul class="tight-form-list">
             <li class="tight-form-item">
-              Search
+              Search <tip>Search dashboards by their titles to add to the playlist</tip>
             </li>
             <li>
               <input type="text"
@@ -49,14 +50,12 @@
         </div>
       </div>
     </div>
-    <div class="span6">
-      <h5>Playlist dashboards</h5>
-    </div>
   </div>
 
   <div class="row">
-    <div class="span6">
-      <table class="grafana-options-table">
+    <div class="span5">
+      <h5>Search results</h5>
+       <table class="grafana-options-table">
         <tr ng-repeat="dashboard in filteredDashboards">
           <td style="white-space: nowrap;">
             {{dashboard.title}}
@@ -75,12 +74,13 @@
         </tr>
         <tr ng-if="isSearchQueryEmpty() && isPlaylistEmpty()">
           <td colspan="2">
-            <i class="fa fa-warning"></i> Playlist empty
+            <i class="fa fa-warning"></i> Search results empty
           </td>
         </tr>
       </table>
     </div>
-    <div class="span6">
+    <div class="span5">
+      <h5>Playlist dashboards</h5>
       <table class="grafana-options-table">
         <tr ng-repeat="dashboard in dashboards">
           <td style="white-space: nowrap;">
