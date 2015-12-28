@@ -1,0 +1,119 @@
+<topnav icon="fa fa-fw fa-list" title="Playlists"></topnav>
+
+<div class="page-container" ng-form="playlistEditForm">
+  <div class="page">
+    <div class="row" style="margin-bottom: 10px;">
+      <div>
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px">
+              <strong>Title</strong>
+            </li>
+            <li>
+              <input type="text" required ng-model="playlist.title" class="input-xxlarge tight-form-input last">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px">
+              <strong>Timespan</strong>
+            </li>
+            <li>
+              <input type="text" required ng-model="playlist.timespan" class="input-xxlarge tight-form-input last">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+
+      <br>
+
+      <div style="display: inline-block">
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li class="tight-form-item">
+              Search
+            </li>
+            <li>
+              <input type="text"
+                     class="tight-form-input input-xlarge last"
+                     ng-model="searchQuery"
+                     placeholder="dashboard title"
+                     ng-trim="true"
+                     ng-change="search()">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+    </div>
+    <div class="span6">
+      <h5>Playlist dashboards</h5>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="span6">
+      <table class="grafana-options-table">
+        <tr ng-repeat="dashboard in filteredDashboards">
+          <td style="white-space: nowrap;">
+            {{dashboard.title}}
+          </td>
+          <td style="text-align: center">
+            <button class="btn btn-inverse btn-mini pull-right" ng-click="addDashboard(dashboard)">
+              <i class="fa fa-plus"></i>
+              Add to playlist
+            </button>
+          </td>
+        </tr>
+        <tr ng-if="isSearchResultsEmpty() && !isSearchQueryEmpty()">
+          <td colspan="2">
+            <i class="fa fa-warning"></i> No dashboards found
+          </td>
+        </tr>
+        <tr ng-if="isSearchQueryEmpty() && isPlaylistEmpty()">
+          <td colspan="2">
+            <i class="fa fa-warning"></i> Playlist empty
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="span6">
+      <table class="grafana-options-table">
+        <tr ng-repeat="dashboard in dashboards">
+          <td style="white-space: nowrap;">
+            {{dashboard.title}}
+          </td>
+          <td style="text-align: center">
+            <button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
+              <i class="fa fa-remove"></i>
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <br>
+  <br>
+
+  <div class="pull-left">
+    <div class="tight-form">
+      <button type="button"
+              class="btn btn-success"
+              ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
+              ng-click="startPlaylist(playlist, dashboards)">Start</button>
+      <button type="button"
+              class="btn btn-success"
+              ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
+              ng-click="savePlaylist(playlist, dashboards)">Save</button>
+      <button type="button"
+              class="btn btn-default"
+              ng-click="backToList()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="clearfix"></div>
+</div>
