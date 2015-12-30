@@ -86,7 +86,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             graphHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
 
             graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
-
             elem.css('height', graphHeight + 'px');
 
             return true;

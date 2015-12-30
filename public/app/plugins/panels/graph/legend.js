@@ -89,6 +89,15 @@ function (angular, _, $) {
         }
 
         function render() {
+          if (panel.legend.rightSide && scope.panel.legend.fixedLegendHeight) {
+            var panelheight = scope.height || scope.panel.height || scope.row.height;
+            $container.css("height", panelheight);
+            $container.toggleClass('graph-legend-fixed-height', true);
+          } else {
+            $container.toggleClass('graph-legend-fixed-height', false);
+            $container.css("height", "");
+          }
+
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
