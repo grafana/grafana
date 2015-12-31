@@ -46,7 +46,7 @@ function (angular, _) {
 
     $scope.linkToPrometheus = function() {
       var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
-      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
+      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:mm');
       var expr = {
         expr: templateSrv.replace($scope.target.expr, $scope.panel.scopedVars),
         range_input: range + 's',
