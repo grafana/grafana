@@ -9,7 +9,7 @@
 
 <div class="main-view-container">
   <div class="grafana-row" ng-controller="RowCtrl"
-       ng-init="createAssociatedMetricGraphPanel(row.associatedMetric)"
+       ng-init="createAssociatedMetricGraphPanel(row.associatedMetrics)"
        ng-repeat="(row_name, row) in dashboard.rows" row-height>
     <div class="row-control">
       <div class="row-control-inner">

@@ -16,15 +16,35 @@ function (angular) {
 
       for (var host in correlationOfAlertMap) {
         var correlatedMetrics = correlationOfAlertMap[host].metrics;
+        var normalizedMetricMap = {};
+
         for (var m in correlatedMetrics) {
-          associatedMetricRows.push(
-            { height: '250px',
-              panels:[],
-              associatedMetric: {
+          var s = m.split(".");
+          var postfix = s[s.length-1];
+          if (postfix === 'min' ||
+              postfix === 'max' ||
+              postfix === 'p99' ||
+              postfix === 'p999') {
+            normalizedMetricMap[s[0]].push(
+              {
                 metric: m,
                 hosts: correlatedMetrics[m]
-              }
-            });
+              });
+          } else {
+            normalizedMetricMap[m] = [
+              {
+                metric: m,
+                hosts: correlatedMetrics[m]
+              }];
+          }
+        }
+
+        for (var metric in normalizedMetricMap) {
+          var oneRow = {};
+          oneRow.height = '250px';
+          oneRow.panels = [];
+          oneRow.associatedMetrics = normalizedMetricMap[metric];
+          associatedMetricRows.push(oneRow);
         }
       }
 

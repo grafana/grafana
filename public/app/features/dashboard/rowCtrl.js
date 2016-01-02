@@ -148,7 +148,7 @@ function (angular, _, config) {
         targets: [{aggregator: "avg", metric: triggeredMetric, downsampleAggregator: "avg", downsampleInterval: "1m"}],
         links: [
           {
-            targetBlank: "true",
+            targetBlank: "false",
             title: "Associated Metrics",
             type: "absolute",
             url: "alerts/association/" + triggeredAlert.id
@@ -164,35 +164,37 @@ function (angular, _, config) {
 
     };
 
-    $scope.createAssociatedMetricGraphPanel = function(associatedMetric) {
+    $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
       var defaultSpan = 12;
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
       var hostTag = "*";
 
-      if (associatedMetric.hosts.length > 0) {
-        hostTag = associatedMetric.hosts[0];
-        for (var i = 1; i < associatedMetric.hosts.length; i++) {
-          hostTag += "|" + associatedMetric.hosts[i];
+      var targetMetrics = [];
+      for (var k = 0; k < associatedMetrics.length; k++) {
+        var oneMetric = {};
+        oneMetric.aggregator = "avg";
+        oneMetric.downsampleAggregator = "avg";
+        oneMetric.downsampleInterval = "1m";
+        oneMetric.metric = associatedMetrics[k].metric;
+        if (associatedMetrics[k].hosts.length > 0) {
+          hostTag = associatedMetrics[k].hosts[0];
+          for (var i = 1; i < associatedMetrics[k].hosts.length; i++) {
+            hostTag += "|" + associatedMetrics[k].hosts[i];
+          }
         }
+        oneMetric.tags = {
+          host: hostTag
+        };
+        targetMetrics.push(oneMetric);
       }
 
       var panel = {
-        title: associatedMetric.metric,
+        title: associatedMetrics[0].metric,
         error: false,
         span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
         editable: false,
         type: "graph",
-        targets: [
-          {
-            aggregator: "avg",
-            metric: associatedMetric.metric,
-            downsampleAggregator: "avg",
-            downsampleInterval: "1m",
-            tags: {
-              host: hostTag
-            }
-          }
-        ],
+        targets: targetMetrics,
       };
 
       $scope.addPanel(panel);
