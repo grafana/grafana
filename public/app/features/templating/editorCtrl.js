@@ -25,7 +25,7 @@ function (angular, _) {
       $scope.mode = 'list';
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn && !ds.meta.dynamic;
+        return !ds.meta.builtIn;
       });
 
       $scope.variables = templateSrv.variables;
@@ -53,20 +53,6 @@ function (angular, _) {
           });
         }
       });
-    };
-
-    $scope.toggleDtsSelection = function(dts) {
-      var idx = $scope.dtsSelection.indexOf(dts);
-
-      if (idx > -1) {
-        $scope.dtsSelection.splice(idx, 1);
-      }
-      else {
-        $scope.dtsSelection.push(dts);
-      }
-
-      $scope.current.query = $scope.dtsSelection.join(',');
-      $scope.runQuery();
     };
 
     $scope.add = function() {
@@ -101,8 +87,13 @@ function (angular, _) {
       return true;
     };
 
+    // This makes sure our dynamic datasource still works
+    function updateDtsSelection() {
+      $scope.dtsSelection = $scope.current.query.split(",");
+    }
+
     $scope.runQuery = function() {
-      return templateValuesSrv.updateOptions($scope.current).then(null, function(err) {
+      return templateValuesSrv.updateOptions($scope.current).then(updateDtsSelection, function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });

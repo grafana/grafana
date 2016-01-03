@@ -106,6 +106,16 @@ function (angular, _, kbn) {
         if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
+        // If our datasource is dynamic, get the new datasource
+        if (otherVariable.datasource && otherVariable.datasource[0] === '$'){
+          datasourceSrv.get(otherVariable.datasource).then(function(x) {
+            self.updateOptionsFromMetricFindQuery(otherVariable,x);
+
+            // Update our dropdown values
+            $rootScope.$emit('template-variable-value-updated');
+          });
+          return;
+        }
       });
 
       return $q.all(promises);
@@ -127,7 +137,39 @@ function (angular, _, kbn) {
 
     };
 
+    // This creates a query based on the type we've chosen. Also parses regex. The end result is options is filled
+    this._updateDataSourceVariable = function(variable) {
+      // Fix regex
+      var re = null;
+      if (variable.datasourceRegexp) {
+        re = new RegExp(variable.datasourceRegexp);
+      }
+      var filterFn = function(source) {
+        if (re) {
+          return (source.meta.type === variable.datasourceType) && re.test(source.name);
+        } else {
+          return source.meta.type === variable.datasourceType;
+        }
+      };
+      var datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.builtIn && !ds.meta.dynamic;
+      });
+      var temp = _.filter(datasources, filterFn);
+      variable.query = _.map(temp, function (source) {return source.name;}).join(',');
+      // extract options in comma seperated string
+      variable.options = _.map(variable.query.split(/[,]+/), function(text) {
+        return { text: text.trim(), value: text.trim() };
+      });
+    };
+
     this.updateOptions = function(variable) {
+      if (variable.type === 'datasource') {
+        self._updateDataSourceVariable(variable);
+        self._updateNonQueryVariable(variable);
+        self.validateVariableSelectionState(variable);
+        return $q.when([]);
+      }
+
       if (variable.type !== 'query') {
         self._updateNonQueryVariable(variable);
         self.setVariableValue(variable, variable.options[0]);
