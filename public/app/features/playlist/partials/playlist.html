@@ -2,8 +2,12 @@
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
-    <h2>Create new playlist</h2><br><br>
-    <div class="row" style="margin-bottom: 10px;">
+    <h2 ng-show="isNew()">New playlist</h2>
+    <h2 ng-show="!isNew()">Edit playlist</h2>
+
+    <h5>1. Name and interval</h5>
+
+    <div style="margin-bottom: 10px;">
       <div>
         <div class="tight-form">
           <ul class="tight-form-list">
@@ -19,7 +23,7 @@
         <div class="tight-form last">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 100px">
-              <strong>Timespan</strong>
+              <strong>Interval</strong>
             </li>
             <li>
               <input type="text" required ng-model="playlist.timespan" placeholder="5m" class="input-xlarge tight-form-input">
@@ -30,9 +34,10 @@
       </div>
 
       <br>
+      <h5>2. Add dashboards</h5>
 
       <div style="display: inline-block">
-        <div class="tight-form">
+        <div class="tight-form last">
           <ul class="tight-form-list">
             <li class="tight-form-item">
               Search <tip>Search dashboards by their titles to add to the playlist</tip>
@@ -41,7 +46,7 @@
               <input type="text"
                      class="tight-form-input input-xlarge last"
                      ng-model="searchQuery"
-                     placeholder="dashboard title"
+                     placeholder="dashboard query"
                      ng-trim="true"
                      ng-change="search()">
             </li>
@@ -52,8 +57,8 @@
     </div>
   </div>
 
-  <div class="row">
-    <div class="span5">
+  <div>
+    <div class="span5 pull-left">
       <h5>Search results</h5>
        <table class="grafana-options-table">
         <tr ng-repeat="dashboard in filteredDashboards">
@@ -79,7 +84,7 @@
         </tr>
       </table>
     </div>
-    <div class="span5">
+    <div class="span5 pull-left">
       <h5>Playlist dashboards</h5>
       <table class="grafana-options-table">
         <tr ng-repeat="dashboard in dashboards">
@@ -96,11 +101,10 @@
     </div>
   </div>
 
-  <br>
-  <br>
+  <div class="clearfix"></div>
 
-  <div class="pull-left">
-    <div class="tight-form">
+  <div class="pull-left" style="margin-top: 25px;">
+    <!-- <div class="tight-form"> -->
       <button type="button"
               class="btn btn-success"
               ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
@@ -112,7 +116,7 @@
       <button type="button"
               class="btn btn-default"
               ng-click="backToList()">Cancel</button>
-    </div>
+    <!-- </div> -->
   </div>
 
   <div class="clearfix"></div>
