@@ -25,17 +25,34 @@ function (angular) {
               postfix === 'max' ||
               postfix === 'p99' ||
               postfix === 'p999') {
-            normalizedMetricMap[s[0]].push(
-              {
-                metric: m,
-                hosts: correlatedMetrics[m]
-              });
-          } else {
-            normalizedMetricMap[m] = [
+            var normalizedMetric = s.slice(0, s.length-1).join(".");
+            if (normalizedMetric in normalizedMetricMap) {
+              normalizedMetricMap[normalizedMetric].push(
+                {
+                  metric: m,
+                  hosts: correlatedMetrics[m]
+                });
+            } else {
+              normalizedMetricMap[normalizedMetric] = [
               {
                 metric: m,
                 hosts: correlatedMetrics[m]
               }];
+            }
+          } else {
+            if (m in normalizedMetricMap) {
+              normalizedMetricMap[m].push(
+                {
+                  metric: m,
+                  hosts: correlatedMetrics[m]
+                });
+            } else {
+              normalizedMetricMap[m] = [
+                {
+                  metric: m,
+                  hosts: correlatedMetrics[m]
+                }];
+            }
           }
         }
 
