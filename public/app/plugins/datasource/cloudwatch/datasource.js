@@ -204,6 +204,14 @@ function (angular, _, moment, dateMath) {
       return $q.when([]);
     };
 
+    this.performDescribeAlarms = function(region, actionPrefix, alarmNamePrefix, alarmNames, stateValue) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarms',
+        parameters: { actionPrefix: actionPrefix, alarmNamePrefix: alarmNamePrefix, alarmNames: alarmNames, stateValue: stateValue }
+      });
+    };
+
     this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
       return this.awsRequest({
         region: region,
