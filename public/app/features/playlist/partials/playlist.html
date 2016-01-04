@@ -2,7 +2,7 @@
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
-    <h4>Creating new playlist</h4><br><br>
+    <h2>Create new playlist</h2><br><br>
     <div class="row" style="margin-bottom: 10px;">
       <div>
         <div class="tight-form">
@@ -11,18 +11,18 @@
               <strong>Title</strong>
             </li>
             <li>
-              <input type="text" required ng-model="playlist.title" class="input-xxlarge tight-form-input last">
+              <input type="text" required ng-model="playlist.title" class="input-xlarge tight-form-input">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
-        <div class="tight-form">
+        <div class="tight-form last">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 100px">
               <strong>Timespan</strong>
             </li>
             <li>
-              <input type="text" required ng-model="playlist.timespan" class="input-xxlarge tight-form-input last">
+              <input type="text" required ng-model="playlist.timespan" placeholder="5m" class="input-xlarge tight-form-input">
             </li>
           </ul>
           <div class="clearfix"></div>

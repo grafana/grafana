@@ -24,9 +24,7 @@ function (angular, config, _) {
         controller : 'PlaylistEditCtrl',
         resolve: {
           playlist: function() {
-            return {
-              timespan: '1m'
-            };
+            return {};
           },
           dashboards: function() {
             return [];
