@@ -91,7 +91,7 @@ function (angular, _, moment, dateMath) {
           delete self.lastErrors.query;
 
           _.each(response.data.data.result, function(metricData) {
-            result.push(transformMetricData(metricData, options.targets[index]));
+            result.push(transformMetricData(metricData, options.targets[index], start, end));
           });
         });
 
@@ -207,14 +207,14 @@ function (angular, _, moment, dateMath) {
       return Math.ceil(sec * intervalFactor);
     };
 
-    function transformMetricData(md, options) {
+    function transformMetricData(md, options, start, end) {
       var dps = [],
           metricLabel = null;
 
       metricLabel = createMetricLabel(md.metric, options);
 
       var stepMs = parseInt(options.step) * 1000;
-      var lastTimestamp = null;
+      var baseTimestamp = start * 1000;
       _.each(md.values, function(value) {
         var dp_value = parseFloat(value[1]);
         if (_.isNaN(dp_value)) {
@@ -222,12 +222,17 @@ function (angular, _, moment, dateMath) {
         }
 
         var timestamp = value[0] * 1000;
-        if (lastTimestamp && (timestamp - lastTimestamp) > stepMs) {
-          dps.push([null, lastTimestamp + stepMs]);
+        for (var t = baseTimestamp; t < timestamp; t += stepMs) {
+          dps.push([null, t]);
         }
-        lastTimestamp = timestamp;
+        baseTimestamp = timestamp + stepMs;
         dps.push([dp_value, timestamp]);
       });
+
+      var endTimestamp = end * 1000;
+      for (var t = baseTimestamp; t < endTimestamp; t += stepMs) {
+        dps.push([null, t]);
+      }
 
       return { target: metricLabel, datapoints: dps };
     }
