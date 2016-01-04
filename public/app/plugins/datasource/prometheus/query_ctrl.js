@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PrometheusQueryCtrl', function($scope) {
+  module.controller('PrometheusQueryCtrl', function($scope, templateSrv) {
 
     $scope.init = function() {
       var target = $scope.target;
@@ -46,9 +46,9 @@ function (angular, _) {
 
     $scope.linkToPrometheus = function() {
       var range = Math.ceil(($scope.range.to.valueOf() - $scope.range.from.valueOf()) / 1000);
-      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:MM');
+      var endTime = $scope.range.to.utc().format('YYYY-MM-DD HH:mm');
       var expr = {
-        expr: $scope.target.expr,
+        expr: templateSrv.replace($scope.target.expr, $scope.panel.scopedVars),
         range_input: range + 's',
         end_input: endTime,
         step_input: '',
