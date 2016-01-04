@@ -39,16 +39,16 @@
       <div style="display: inline-block">
         <div class="tight-form last">
           <ul class="tight-form-list">
-            <li class="tight-form-item">
-              Search <tip>Search dashboards by their titles to add to the playlist</tip>
-            </li>
             <li>
               <input type="text"
                      class="tight-form-input input-xlarge last"
                      ng-model="searchQuery"
-                     placeholder="dashboard query"
+                     placeholder="dashboard search term"
                      ng-trim="true"
                      ng-change="search()">
+            </li>
+            <li class="tight-form-item last" style="padding: 5px 4px">
+              <button ng-click="search()" class="btn btn-mini btn-inverse">Search</button>
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -59,7 +59,7 @@
 
   <div>
     <div class="span5 pull-left">
-      <h5>Search results</h5>
+      <h5>Search results ({{filteredDashboards.length}})</h5>
        <table class="grafana-options-table">
         <tr ng-repeat="dashboard in filteredDashboards">
           <td style="white-space: nowrap;">
@@ -72,12 +72,7 @@
             </button>
           </td>
         </tr>
-        <tr ng-if="isSearchResultsEmpty() && !isSearchQueryEmpty()">
-          <td colspan="2">
-            <i class="fa fa-warning"></i> No dashboards found
-          </td>
-        </tr>
-        <tr ng-if="isSearchQueryEmpty() && isPlaylistEmpty()">
+        <tr ng-if="isSearchResultsEmpty() || isSearchQueryEmpty()">
           <td colspan="2">
             <i class="fa fa-warning"></i> Search results empty
           </td>
