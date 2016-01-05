@@ -220,6 +220,26 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			}
 		}
 
+		var playlists = make(m.Playlists, 0)
+		err = sess.Where("data LIKE ?", fmt.Sprintf("%%%v%%", dashboard.Id)).Find(&playlists)
+		if err != nil {
+			return err
+		}
+
+		for _, playlist := range playlists {
+			filteredData := make([]int64, 0)
+			for _, plDashboardId := range playlist.Data {
+				if plDashboardId != dashboard.Id {
+					filteredData = append(filteredData, plDashboardId)
+				}
+			}
+			playlist.Data = filteredData
+			_, err = sess.Id(playlist.Id).Cols("data").Update(playlist)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }

@@ -12,12 +12,12 @@ var (
 
 // Playlist model
 type Playlist struct {
-	Id       int64  `json:"id"`
-	Title    string `json:"title"`
-	Type     string `json:"type"`
-	Timespan string `json:"timespan"`
-	Data     []int  `json:"data"`
-	OrgId    int64  `json:"-"`
+	Id       int64   `json:"id"`
+	Title    string  `json:"title"`
+	Type     string  `json:"type"`
+	Timespan string  `json:"timespan"`
+	Data     []int64 `json:"data"`
+	OrgId    int64   `json:"-"`
 }
 
 type PlaylistDashboard struct {
@@ -49,7 +49,7 @@ type UpdatePlaylistQuery struct {
 	Title    string
 	Type     string
 	Timespan string
-	Data     []int
+	Data     []int64
 
 	Result *Playlist
 }
@@ -58,7 +58,7 @@ type CreatePlaylistQuery struct {
 	Title    string
 	Type     string
 	Timespan string
-	Data     []int
+	Data     []int64
 	OrgId    int64
 
 	Result *Playlist
