@@ -77,6 +77,11 @@ The Elasticsearch datasource supports two types of queries you can use to fill t
 {"find": "fields", "type": "string"}
 ```
 
+### Fields filtered by type, with filter
+```json
+{"find": "fields", "type": "string", "query": <lucene query>}
+```
+
 ### Multi format / All format
 Use lucene format.
 
