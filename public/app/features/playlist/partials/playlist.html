@@ -86,8 +86,14 @@
           <td style="white-space: nowrap;">
             {{dashboard.title}}
           </td>
-          <td style="text-align: center">
-            <button class="btn btn-inverse btn-mini pull-right" ng-click="removeDashboard(dashboard)">
+          <td style="text-align: right">
+            <button class="btn btn-inverse btn-mini" ng-click="moveDashboardUp(dashboard)">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button class="btn btn-inverse btn-mini" ng-click="moveDashboardDown(dashboard)">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            <button class="btn btn-inverse btn-mini" ng-click="removeDashboard(dashboard)">
               <i class="fa fa-remove"></i>
             </button>
           </td>

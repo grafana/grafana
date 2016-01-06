@@ -107,6 +107,24 @@ function (angular, config, _) {
       return $scope.loading;
     };
 
+    $scope.moveDashboard = function(dashboard, offset) {
+      var currentPosition = dashboards.indexOf(dashboard);
+      var newPosition = currentPosition + offset;
+
+      if (newPosition >= 0 && newPosition < dashboards.length) {
+        dashboards.splice(currentPosition, 1);
+        dashboards.splice(newPosition, 0, dashboard);
+      }
+    };
+
+    $scope.moveDashboardUp = function(dashboard) {
+      $scope.moveDashboard(dashboard, -1);
+    };
+
+    $scope.moveDashboardDown = function(dashboard) {
+      $scope.moveDashboard(dashboard, 1);
+    };
+
     $scope.playlist = playlist;
     $scope.dashboards = dashboards;
     $scope.timespan = config.playlist_timespan;
