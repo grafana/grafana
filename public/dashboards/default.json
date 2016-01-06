@@ -1,5 +1,5 @@
 {
-  "title": "Grafana",
+  "title": "CloudInsight",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "title": "Welcome to Grafana",
+      "title": "Welcome to CloudInsight",
       "height": "210px",
       "collapse": false,
       "editable": true,
