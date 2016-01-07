@@ -1,0 +1,11 @@
+{
+  "pluginType": "datasource",
+  "name": "Sample",
+  "builtIn": true,
+
+  "type": "sample",
+  "serviceName": "SampleDatasource",
+
+  "module": "app/plugins/datasource/sample/datasource",
+  "metrics": true
+}
