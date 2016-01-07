@@ -148,7 +148,6 @@ function (angular, _, config) {
         targets: [{aggregator: "avg", metric: triggeredMetric, downsampleAggregator: "avg", downsampleInterval: "1m"}],
         links: [
           {
-            targetBlank: "false",
             title: "Associated Metrics",
             type: "absolute",
             url: "alerts/association/" + triggeredAlert.id
