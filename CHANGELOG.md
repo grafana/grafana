@@ -7,6 +7,7 @@
 
 ### Enhancements ###
 * **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/pull/3458)
+* **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/pull/3584)
 
 # 2.6.1 (unrelased, 2.6.x branch)
 
