@@ -14,6 +14,9 @@
 ### New Features
 * **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
 
+### Bug fixes
+* **Graph Panel**: Fixed typehead when adding series style override, closes [#3554](https://github.com/grafana/grafana/issues/3554)
+
 # 2.6.0 (2015-12-14)
 
 ### New Features
