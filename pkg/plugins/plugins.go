@@ -55,7 +55,9 @@ func scan(pluginDir string) error {
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
-		log.Warn("Failed to scan dir \"%v\" error: %s", pluginDir, err)
+		if pluginDir != "data/plugins" {
+			log.Warn("Could not scan dir \"%v\" error: %s", pluginDir, err)
+		}
 		return err
 	}
 
