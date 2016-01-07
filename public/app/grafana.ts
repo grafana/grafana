@@ -56,7 +56,7 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap.tabs',
+      'ui.bootstrap',
       'ui.bootstrap.tpls',
     ];
 
