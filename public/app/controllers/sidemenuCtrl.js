@@ -103,11 +103,13 @@ function (angular, _, $, config) {
       $scope.systemSection = true;
       $scope.grafanaVersion = config.buildInfo.version;
 
+      /*
       $scope.mainLinks.push({
         text: "System info",
         icon: "fa fa-fw fa-info",
         href: $scope.getUrl("/admin/settings"),
       });
+      */
 
       $scope.mainLinks.push({
         text: "Global Users",
