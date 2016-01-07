@@ -126,10 +126,7 @@ function ($) {
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
 
-	// Dynamically reorder the hovercard for the current time point.
-        seriesHoverInfo.sort(function(a, b) {
-          return parseFloat(b.value) - parseFloat(a.value);
-        });
+        seriesHoverInfo.sort(byToolTipValue);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -177,6 +174,10 @@ function ($) {
         $tooltip.detach();
       }
     });
+  }
+
+  function byToolTipValue(a, b) {
+    return parseFloat(b.value) - parseFloat(a.value);
   }
 
   return GraphTooltip;
