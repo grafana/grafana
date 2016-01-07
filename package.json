@@ -38,6 +38,7 @@
     "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
+    "phantomjs": "~1.9",
     "karma": "~0.13.15",
     "karma-chrome-launcher": "~0.2.2",
     "karma-coverage": "0.5.3",
