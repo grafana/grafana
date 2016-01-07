@@ -74,11 +74,10 @@ function (_, $, coreModule) {
           updater: function (value) {
             var result = {};
             _.each($scope.menuItems, function(menuItem) {
-              result.$item = menuItem;
-
               _.each(menuItem.submenu, function(submenuItem) {
                 if (value === (menuItem.text + ' ' + submenuItem.text)) {
                   result.$subItem = submenuItem;
+                  result.$item = menuItem;
                 }
               });
             });
