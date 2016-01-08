@@ -1,8 +1,8 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "Prometheus",
+  "id": "prometheus",
 
-  "type": "prometheus",
   "serviceName": "PrometheusDatasource",
 
   "module": "app/plugins/datasource/prometheus/datasource",

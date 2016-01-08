@@ -1,8 +1,7 @@
 {
-  "pluginType": "panel",
-
+  "type": "panel",
   "name": "Dashboard list",
-  "type": "dashlist",
+  "id": "dashlist",
 
   "module": "app/plugins/panels/dashlist/module"
 }

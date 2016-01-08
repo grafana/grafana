@@ -1,8 +1,8 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "Elasticsearch",
+  "id": "elasticsearch",
 
-  "type": "elasticsearch",
   "serviceName": "ElasticDatasource",
 
   "module": "app/plugins/datasource/elasticsearch/datasource",

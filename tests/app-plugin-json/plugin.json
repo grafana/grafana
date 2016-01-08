@@ -1,25 +1,7 @@
 {
-  "pluginType": "app",
   "name": "App Example",
-  "type": "app-test",
-
-  "plugins": [],
-
-  "css": {
-    "light":  "plugin.dark.css",
-    "dark":   "plugin.light.css"
-  },
-
-  "module": "app",
-
-  "pages": [
-    {"name": "Example1", "url": "/app-example", "reqRole": "Editor"}
-  ],
-
-  "public": {
-    "urlFragment": "app-example",
-    "path": "./public"
-  },
+  "id": "app-test",
+  "type": "app",
 
   "info": {
     "description": "Example Grafana App",
@@ -38,6 +20,22 @@
     ],
     "version": "1.0.0",
     "updated": "2015-02-10"
+  },
+
+  "css": {
+    "light":  "plugin.dark.css",
+    "dark":   "plugin.light.css"
+  },
+
+  "module": "app",
+
+  "pages": [
+    {"name": "Example1", "url": "/app-example", "reqRole": "Editor"}
+  ],
+
+  "public": {
+    "urlFragment": "app-example",
+    "path": "./public"
   },
 
   "dependencies": {

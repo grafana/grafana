@@ -1,10 +1,9 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "OpenTSDB",
+  "id": "opentsdb",
 
-  "type": "opentsdb",
   "serviceName": "OpenTSDBDatasource",
-
   "module": "app/plugins/datasource/opentsdb/datasource",
 
   "partials": {
