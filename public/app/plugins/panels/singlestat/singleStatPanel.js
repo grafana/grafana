@@ -97,7 +97,8 @@ function (angular, app, _, $) {
             plotCss.bottom = '5px';
             plotCss.left = '-5px';
             plotCss.width = (width - 10) + 'px';
-            plotCss.height = (height - 45) + 'px';
+            var dynamicHeightMargin = height <= 100 ? 5 : (Math.round((height/100)) * 15) + 5;
+            plotCss.height = (height - dynamicHeightMargin) + 'px';
           }
           else {
             plotCss.bottom = "0px";

@@ -1,5 +1,4 @@
 ///<reference path="../../../headers/common.d.ts" />
-///<amd-dependency path="./input_date" name="inputDate" />
 
 import _ from 'lodash';
 import kbn  from 'app/core/utils/kbn';
@@ -8,8 +7,6 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-
-declare var inputDate: any;
 
 export class TimePickerCtrl {
 
@@ -179,3 +176,6 @@ export function timePickerDirective() {
 
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
+
+import {inputDateDirective} from './input_date';
+angular.module("grafana.directives").directive('inputDatetime', inputDateDirective);
