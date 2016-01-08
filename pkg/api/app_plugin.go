@@ -22,6 +22,7 @@ func GetAppPlugins(c *middleware.Context) Response {
 			Enabled: app.Enabled,
 			Pinned:  app.Pinned,
 			Module:  app.Module,
+			Info:    app.Info,
 		}
 	}
 

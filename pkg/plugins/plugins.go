@@ -1,12 +1,15 @@
 package plugins
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -118,6 +121,28 @@ func addPublicContent(public *PublicContent, currentDir string) {
 	}
 }
 
+func interpolatePluginJson(reader io.Reader) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(reader)
+	jsonStr := buf.String() //
+
+	tmpl, err := template.New("json").Parse(jsonStr)
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]interface{}{
+		"PluginPublicRoot": "HAHAHA",
+	}
+
+	var resultBuffer bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&resultBuffer, "json", data); err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(resultBuffer.Bytes()), nil
+}
+
 func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	currentDir := filepath.Dir(pluginJsonFilePath)
 	reader, err := os.Open(pluginJsonFilePath)
@@ -128,7 +153,6 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	defer reader.Close()
 
 	jsonParser := json.NewDecoder(reader)
-
 	pluginJson := make(map[string]interface{})
 	if err := jsonParser.Decode(&pluginJson); err != nil {
 		return err
@@ -139,9 +163,16 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		return errors.New("Did not find pluginType property in plugin.json")
 	}
 
+	reader.Seek(0, 0)
+
+	if newReader, err := interpolatePluginJson(reader); err != nil {
+		return err
+	} else {
+		jsonParser = json.NewDecoder(newReader)
+	}
+
 	if pluginType == "datasource" {
 		p := DataSourcePlugin{}
-		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}

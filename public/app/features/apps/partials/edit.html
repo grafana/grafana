@@ -6,8 +6,20 @@
 </topnav>
 
 <div class="page-container" style="background: transparent; border: 0;">
+	<div class="apps-side-box">
+		<img class="apps-ide-box-logo" src="{{ctrl.appModel.info.logos.large}}">
+		</img>
+		<ul class="app-side-box-links">
+			<li ng-repeat="link in ctrl.appModel.info.links">
+				<a href="{{link.url}}">{{link.name}}</a>
+			</li>
+		</ul>
+	</div>
   <div class="page-wide" ng-init="ctrl.init()">
 		<h2>{{ctrl.appModel.name}}</h2>
+		<em>
+			{{ctrl.appModel.info.description}}
+		</em>
 
 		<form name="editForm">
 			<div class="tight-form">
@@ -24,6 +36,5 @@
 
 			<app-config-loader></app-config-loader>
 		</form>
-
 	</div>
 </div>
