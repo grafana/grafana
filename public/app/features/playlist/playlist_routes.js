@@ -12,12 +12,7 @@ function (angular, config, _) {
     $routeProvider
       .when('/playlists', {
         templateUrl: 'app/features/playlist/partials/playlists.html',
-        controller : 'PlaylistsCtrl',
-        resolve: {
-          playlists: function (backendSrv) {
-            return backendSrv.get('/api/playlists');
-          }
-        }
+        controller : 'PlaylistsCtrl'
       })
       .when('/playlists/create', {
         templateUrl: 'app/features/playlist/partials/playlist.html',
