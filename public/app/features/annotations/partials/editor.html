@@ -44,7 +44,7 @@
 				<table class="grafana-options-table">
 					<tr ng-repeat="annotation in annotations">
 						<td style="width:90%">
-							<i class="fa fa-bolt"></i> &nbsp;
+                            <i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
 							{{annotation.name}}
 						</td>
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
