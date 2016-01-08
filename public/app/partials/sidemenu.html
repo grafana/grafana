@@ -8,6 +8,38 @@
 			</a>
 		</li>
 
+		<li class="sidemenu-org-section dropdown" ng-if="contextSrv.user.isSignedIn">
+			<div class="sidemenu-org" data-toggle="dropdown" ng-click="loadOrgs()">
+				<div class="sidemenu-org-avatar">
+					<img ng-src="{{contextSrv.user.gravatarUrl}}">
+				</div>
+				<div class="sidemenu-org-details">
+					<span class="sidemenu-org-user">{{contextSrv.user.name}}</span>
+					<span class="sidemenu-org-name">{{contextSrv.user.orgName}}</span>
+				</div>
+				<i class="fa fa-caret-down small"></i>
+			</div>
+			<ul class="dropdown-menu" role="menu">
+				<li class="dropdown-menu-title"><span>You</span></li>
+				<li>
+					<a href="profile" class="sidemenu-item">
+						Update profile
+					</a>
+				</li>
+				<li class="dropdown-menu-title"><span>{{contextSrv.user.orgName}}</span></li>
+				<li ng-repeat="menuItem in orgMenu" ng-class="menuItem.cssClass">
+					<a href="{{menuItem.href}}" ng-if="menuItem.href">
+						<i class="{{menuItem.icon}}" ng-if="menuItem.icon"></i>
+						{{menuItem.text}}
+					</a>
+					<a ng-click="menuItem.click()" ng-if="menuItem.click">
+						<i class="{{menuItem.icon}}"></i>
+						{{menuItem.text}}
+					</a>
+				</li>
+			</ul>
+		</li>
+
 		<li class="sidemenu-system-section" ng-if="systemSection">
 			<div class="sidemenu-system-section-inner">
 				<i class="fa fa-fw fa-cubes"></i>
@@ -28,14 +60,14 @@
 
 	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="!systemSection">
 
-		<li ng-if="contextSrv.user.isSignedIn">
+		<!-- <li ng-if="contextSrv.user.isSignedIn">
 			<a href="profile" class="sidemenu-item">
 				<img ng-src="{{contextSrv.user.gravatarUrl}}">
 				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
 	   	</a>
-		</li>
+		</li> -->
 
-		<li class="dropdown">
+		<!-- <li class="dropdown">
 			<a class="sidemenu-item pointer" data-toggle="dropdown" ng-click="loadOrgs()" tabindex="0">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
 				<span class="sidemenu-item-text">{{contextSrv.user.orgName}}</span><i class="fa fa-caret-down small"></i>
@@ -52,7 +84,7 @@
 					</a>
 				</li>
 			</ul>
-		</li>
+		</li> -->
 
 		<li ng-if="contextSrv.isGrafanaAdmin">
 			<a href="admin/settings" class="sidemenu-item">
