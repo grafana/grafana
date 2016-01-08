@@ -3,7 +3,7 @@ define([
   'app/core/config',
   'lodash'
 ],
-function (angular, config, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.routes');
