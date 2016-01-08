@@ -16,31 +16,11 @@ function (angular, config, _) {
       })
       .when('/playlists/create', {
         templateUrl: 'app/features/playlist/partials/playlist.html',
-        controller : 'PlaylistEditCtrl',
-        resolve: {
-          playlist: function() {
-            return {};
-          },
-          dashboards: function() {
-            return [];
-          }
-        }
+        controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/edit/:id', {
         templateUrl: 'app/features/playlist/partials/playlist.html',
-        controller : 'PlaylistEditCtrl',
-        resolve: {
-          playlist: function(backendSrv, $route) {
-            var playlistId = $route.current.params.id;
-
-            return backendSrv.get('/api/playlists/' + playlistId);
-          },
-          dashboards: function(backendSrv, $route) {
-            var playlistId = $route.current.params.id;
-
-            return backendSrv.get('/api/playlists/' + playlistId + '/dashboards');
-          }
-        }
+        controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/play/:id', {
         templateUrl: 'app/partials/dashboard.html',
