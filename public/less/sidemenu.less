@@ -33,7 +33,6 @@
 }
 
 .sidemenu {
-  font-size: 16px;
   font-weight: @baseFontWeight;
   list-style: none;
   margin: 0;
@@ -48,32 +47,11 @@
     top: 2px;
     font-size: 90%;
   }
-
-  &.sidemenu-small {
-    font-size: 14px;
-
-    .icon-circle {
-      border-radius: 50%;
-      background: @iconContainerBackground;
-      box-shadow: @iconContainerShadow;
-      border: @iconContainerBorder;
-      width: 28px;
-      height: 28px;
-      i {
-        top: 1px;
-        left: 4px;
-        font-size: 110%;
-      }
-    }
-
-    .sidemenu-item {
-      // color: @textColor;
-      line-height: 28px;
-      padding-left: 25px;
-    }
-  }
 }
 
+.sidemenu-main-link {
+  font-size: 16px;
+}
 
 .sidemenu-item-text {
   width: 110px;
@@ -162,6 +140,7 @@
     padding: 0 15px;
   }
 }
+
 .sidemenu-section-tagline {
   font-style: italic;
   font-size: 75%;
@@ -171,3 +150,80 @@
 .sidemenu-section-text-wrapper {
   padding-top: 4px;
 }
+
+.sidemenu-org-section .dropdown-menu {
+  top: 51%;
+  left: 100px;
+}
+
+.sidemenu-org-section .dropdown-menu-title {
+  margin: 0 10px 0 6px;
+  padding: 10px 0 0;
+  overflow: hidden;
+  color: @dropdownTitle;
+  font-weight: bold;
+}
+
+.sidemenu-org-section .dropdown-menu-title > span {
+  display: inline-block;
+  position: relative;
+
+  &:after {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 100%;
+    width: 200px;
+    height: 1px;
+    margin-left: 5px;
+    background: @dropdownDivider;
+    content: '';
+  }
+}
+
+.sidemenu-org {
+  display: table;
+  position: relative;
+  width: 159px;
+  padding: 2px 10px 20px 21px;
+  border-bottom: 1px solid @sideMenuOrgBorder;
+  cursor: pointer;
+}
+
+.sidemenu-org .fa-caret-down {
+  position: absolute;
+  top: 33px;
+  right: 2px;
+}
+
+.sidemenu-org-avatar,
+.sidemenu-org-details {
+  display: table-cell;
+  vertical-align: top;
+}
+
+.sidemenu-org-avatar {
+  width: 44px;
+}
+
+.sidemenu-org-avatar > img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.sidemenu-org-details {
+  padding-left: 12px;
+  color: @linkColor;
+}
+
+.sidemenu-org-user,
+.sidemenu-org-name {
+  display: block;
+}
+
+.sidemenu-org-user {
+  font-size: 14px;
+}
+

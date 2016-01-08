@@ -13,7 +13,7 @@
 		<ul class="tight-form-list" ng-if="dashboard.annotations.list.length > 0">
 			<li ng-repeat="annotation in dashboard.annotations.list" class="submenu-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
 				<a ng-click="disableAnnotation(annotation)">
-					<i class="fa fa-bolt"></i>
+                    <i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i>
 					{{annotation.name}}
 					<input class="cr1" id="hideYAxis" type="checkbox" ng-model="annotation.enable" ng-checked="annotation.enable">
 					<label for="hideYAxis" class="cr1"></label>
