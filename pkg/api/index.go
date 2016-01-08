@@ -55,6 +55,20 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Url:  "/",
 	})
 
+	if c.OrgRole == m.ROLE_ADMIN {
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "Data Sources",
+			Icon: "fa fa-fw fa-database",
+			Url:  "/datasources",
+		})
+
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "Apps",
+			Icon: "fa fa-fw fa-cubes",
+			Url:  "/apps",
+		})
+	}
+
 	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
 	err = bus.Dispatch(&orgApps)
 	if err != nil {
