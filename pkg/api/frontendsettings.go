@@ -119,7 +119,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
-		panels[panel.Type] = map[string]interface{}{
+		panels[panel.Id] = map[string]interface{}{
 			"module": panel.Module,
 			"name":   panel.Name,
 		}

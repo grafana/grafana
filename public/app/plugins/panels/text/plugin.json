@@ -1,8 +1,7 @@
 {
-  "pluginType": "panel",
-
+  "type": "panel",
   "name": "Text",
-  "type": "text",
+  "id": "text",
 
   "module": "app/plugins/panels/text/module"
 }

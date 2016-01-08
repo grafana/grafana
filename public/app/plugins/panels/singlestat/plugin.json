@@ -1,8 +1,7 @@
 {
-  "pluginType": "panel",
-
+  "type": "panel",
   "name": "Singlestat",
-  "type": "singlestat",
+  "id": "singlestat",
 
   "module": "app/plugins/panels/singlestat/module"
 }

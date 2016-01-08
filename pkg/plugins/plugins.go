@@ -121,7 +121,7 @@ func addPublicContent(public *PublicContent, currentDir string) {
 	}
 }
 
-func interpolatePluginJson(reader io.Reader) (io.Reader, error) {
+func interpolatePluginJson(reader io.Reader, pluginCommon *PluginCommon) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(reader)
 	jsonStr := buf.String() //
@@ -132,7 +132,7 @@ func interpolatePluginJson(reader io.Reader) (io.Reader, error) {
 	}
 
 	data := map[string]interface{}{
-		"PluginPublicRoot": "HAHAHA",
+		"PluginPublicRoot": "public/plugins/" + pluginCommon.Id,
 	}
 
 	var resultBuffer bytes.Buffer
@@ -153,76 +153,59 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	defer reader.Close()
 
 	jsonParser := json.NewDecoder(reader)
-	pluginJson := make(map[string]interface{})
-	if err := jsonParser.Decode(&pluginJson); err != nil {
+	pluginCommon := PluginCommon{}
+	if err := jsonParser.Decode(&pluginCommon); err != nil {
 		return err
 	}
 
-	pluginType, exists := pluginJson["pluginType"]
-	if !exists {
-		return errors.New("Did not find pluginType property in plugin.json")
+	if pluginCommon.Id == "" || pluginCommon.Type == "" {
+		return errors.New("Did not find type and id property in plugin.json")
 	}
 
 	reader.Seek(0, 0)
 
-	if newReader, err := interpolatePluginJson(reader); err != nil {
+	if newReader, err := interpolatePluginJson(reader, &pluginCommon); err != nil {
 		return err
 	} else {
 		jsonParser = json.NewDecoder(newReader)
 	}
 
-	if pluginType == "datasource" {
+	switch pluginCommon.Type {
+	case "datasource":
 		p := DataSourcePlugin{}
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
 
-		if p.Type == "" {
-			return errors.New("Did not find type property in plugin.json")
-		}
-
-		DataSources[p.Type] = &p
+		DataSources[p.Id] = &p
 		addPublicContent(p.PublicContent, currentDir)
-	}
 
-	if pluginType == "panel" {
+	case "panel":
 		p := PanelPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
 
-		if p.Type == "" {
-			return errors.New("Did not find type property in plugin.json")
-		}
-
-		Panels[p.Type] = &p
+		Panels[p.Id] = &p
 		addPublicContent(p.PublicContent, currentDir)
-	}
-
-	if pluginType == "api" {
+	case "api":
 		p := ApiPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
-		if p.Type == "" {
-			return errors.New("Did not find type property in plugin.json")
-		}
-		ApiPlugins[p.Type] = &p
-	}
-
-	if pluginType == "app" {
+		ApiPlugins[p.Id] = &p
+	case "app":
 		p := AppPlugin{}
 		reader.Seek(0, 0)
 		if err := jsonParser.Decode(&p); err != nil {
 			return err
 		}
-		if p.Type == "" {
-			return errors.New("Did not find type property in plugin.json")
-		}
-		Apps[p.Type] = &p
+		Apps[p.Id] = &p
 		addPublicContent(p.PublicContent, currentDir)
+	default:
+		return errors.New("Unkown plugin type " + pluginCommon.Type)
 	}
 
 	return nil

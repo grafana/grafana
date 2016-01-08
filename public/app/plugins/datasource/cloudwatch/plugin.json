@@ -1,8 +1,8 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "CloudWatch",
+  "id": "cloudwatch",
 
-  "type": "cloudwatch",
   "serviceName": "CloudWatchDatasource",
 
   "module": "app/plugins/datasource/cloudwatch/datasource",

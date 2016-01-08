@@ -4,6 +4,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type PluginCommon struct {
+	Type string     `json:"type"`
+	Name string     `json:"name"`
+	Id   string     `json:"id"`
+	Info PluginInfo `json:"info"`
+}
+
 type PluginInfo struct {
 	Author      PluginInfoLink   `json:"author"`
 	Description string           `json:"description"`
@@ -22,10 +29,9 @@ type PluginLogos struct {
 }
 
 type DataSourcePlugin struct {
-	Type               string                 `json:"type"`
-	Name               string                 `json:"name"`
-	ServiceName        string                 `json:"serviceName"`
+	PluginCommon
 	Module             string                 `json:"module"`
+	ServiceName        string                 `json:"serviceName"`
 	Partials           map[string]interface{} `json:"partials"`
 	DefaultMatchFormat string                 `json:"defaultMatchFormat"`
 	Annotations        bool                   `json:"annotations"`
@@ -36,8 +42,7 @@ type DataSourcePlugin struct {
 }
 
 type PanelPlugin struct {
-	Type          string         `json:"type"`
-	Name          string         `json:"name"`
+	PluginCommon
 	Module        string         `json:"module"`
 	PublicContent *PublicContent `json:"public"`
 	App           string         `json:"app"`
@@ -71,21 +76,19 @@ type AppPluginCss struct {
 }
 
 type ApiPlugin struct {
-	Type   string            `json:"type"`
+	PluginCommon
 	Routes []*ApiPluginRoute `json:"routes"`
 	App    string            `json:"app"`
 }
 
 type AppPlugin struct {
-	Type          string         `json:"type"`
-	Name          string         `json:"name"`
+	PluginCommon
 	Enabled       bool           `json:"enabled"`
 	Pinned        bool           `json:"pinned"`
 	Module        string         `json:"module"`
 	Css           *AppPluginCss  `json:"css"`
 	Page          *AppPluginPage `json:"page"`
 	PublicContent *PublicContent `json:"public"`
-	Info          *PluginInfo    `json:"info"`
 }
 
 type EnabledPlugins struct {
