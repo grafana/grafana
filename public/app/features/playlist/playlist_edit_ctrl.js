@@ -8,14 +8,29 @@ function (angular, config, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PlaylistEditCtrl', function(
-    playlist,
-    dashboards,
-    $scope,
-    playlistSrv,
-    backendSrv,
-    $location
-  ) {
+  module.controller('PlaylistEditCtrl', function($scope, playlistSrv, backendSrv, $location, $route) {
+    $scope.timespan = config.playlist_timespan;
+    $scope.filteredDashboards = [];
+    $scope.foundDashboards = [];
+    $scope.searchQuery = '';
+    $scope.loading = false;
+    $scope.playlist = {};
+    $scope.dashboards = [];
+
+    if ($route.current.params.id) {
+      var playlistId = $route.current.params.id;
+
+      backendSrv.get('/api/playlists/' + playlistId)
+        .then(function(result) {
+          $scope.playlist = result;
+        });
+
+      backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
+        .then(function(result) {
+          $scope.dashboards = result;
+        });
+    }
+
     $scope.search = function() {
       var query = {starred: true, limit: 10};
 
@@ -38,19 +53,19 @@ function (angular, config, _) {
 
     $scope.filterFoundDashboards = function() {
       $scope.filteredDashboards = _.reject($scope.foundDashboards, function(dashboard) {
-        return _.findWhere(dashboards, function(listDashboard) {
+        return _.findWhere($scope.dashboards, function(listDashboard) {
           return listDashboard.id === dashboard.id;
         });
       });
     };
 
     $scope.addDashboard = function(dashboard) {
-      dashboards.push(dashboard);
+      $scope.dashboards.push(dashboard);
       $scope.filterFoundDashboards();
     };
 
     $scope.removeDashboard = function(dashboard) {
-      _.remove(dashboards, function(listedDashboard) {
+      _.remove($scope.dashboards, function(listedDashboard) {
         return dashboard === listedDashboard;
       });
       $scope.filterFoundDashboards();
@@ -80,7 +95,7 @@ function (angular, config, _) {
     };
 
     $scope.isNew = function() {
-      return !playlist.id;
+      return !$scope.playlist.id;
     };
 
     $scope.startPlaylist = function(playlist, dashboards) {
@@ -88,7 +103,7 @@ function (angular, config, _) {
     };
 
     $scope.isPlaylistEmpty = function() {
-      return !dashboards.length;
+      return !$scope.dashboards.length;
     };
 
     $scope.isSearchResultsEmpty = function() {
@@ -108,12 +123,12 @@ function (angular, config, _) {
     };
 
     $scope.moveDashboard = function(dashboard, offset) {
-      var currentPosition = dashboards.indexOf(dashboard);
+      var currentPosition = $scope.dashboards.indexOf(dashboard);
       var newPosition = currentPosition + offset;
 
-      if (newPosition >= 0 && newPosition < dashboards.length) {
-        dashboards.splice(currentPosition, 1);
-        dashboards.splice(newPosition, 0, dashboard);
+      if (newPosition >= 0 && newPosition < $scope.dashboards.length) {
+        $scope.dashboards.splice(currentPosition, 1);
+        $scope.dashboards.splice(newPosition, 0, dashboard);
       }
     };
 
@@ -125,13 +140,6 @@ function (angular, config, _) {
       $scope.moveDashboard(dashboard, 1);
     };
 
-    $scope.playlist = playlist;
-    $scope.dashboards = dashboards;
-    $scope.timespan = config.playlist_timespan;
-    $scope.filteredDashboards = [];
-    $scope.foundDashboards = [];
-    $scope.searchQuery = '';
-    $scope.loading = false;
     $scope.search();
   });
 });

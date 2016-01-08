@@ -12,7 +12,10 @@ function (angular, _) {
     $location,
     backendSrv
   ) {
-    $scope.playlists = backendSrv.get('/api/playlists');
+    backendSrv.get('/api/playlists')
+      .then(function(result) {
+        $scope.playlists = result;
+      });
 
     $scope.playlistUrl = function(playlist) {
       return '/playlists/play/' + playlist.id;
