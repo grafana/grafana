@@ -63,7 +63,17 @@ func GetPlaylistDashboards(c *middleware.Context) Response {
 		return ApiError(500, "Playlist not found", err)
 	}
 
-	return Json(200, query.Result)
+	dtos := make([]m.PlaylistDashboardDto, 0)
+	for _, item := range *query.Result {
+		dtos = append(dtos, m.PlaylistDashboardDto{
+			Id:    item.Id,
+			Slug:  item.Slug,
+			Title: item.Title,
+			Uri:   "db/" + item.Slug,
+		})
+	}
+
+	return Json(200, dtos)
 }
 
 func DeletePlaylist(c *middleware.Context) Response {

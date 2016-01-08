@@ -33,9 +33,6 @@ function (angular, config, _) {
               .then(function(playlist) {
                 return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
                   .then(function(dashboards) {
-                    _.each(dashboards, function(dashboard) {
-                      dashboard.uri = 'db/' + dashboard.slug;
-                    });
                     playlistSrv.start(dashboards, playlist.timespan);
                   });
               });

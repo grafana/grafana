@@ -105,6 +105,7 @@ func GetPlaylistDashboards(query *m.GetPlaylistDashboardsQuery) error {
 	var playlist = m.Playlist{}
 
 	hasPlaylist, err := x.Id(query.Id).Get(&playlist)
+
 	query.Result = &dashboards
 
 	if err != nil {
