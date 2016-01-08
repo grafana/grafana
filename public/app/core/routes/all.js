@@ -10,6 +10,7 @@ define([
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+    var loadAppsBundle = new BundleLoader.BundleLoader('app/features/apps/all');
 
     $routeProvider
       .when('/', {
@@ -131,17 +132,17 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
-      .when('/org/apps', {
-        templateUrl: 'app/features/org/partials/app_list.html',
+      .when('/apps', {
+        templateUrl: 'app/features/apps/partials/list.html',
         controller: 'AppListCtrl',
         controllerAs: 'ctrl',
-        resolve: loadOrgBundle,
+        resolve: loadAppsBundle,
       })
-      .when('/org/apps/edit/:type', {
-        templateUrl: 'app/features/org/partials/app_edit.html',
+      .when('/apps/edit/:type', {
+        templateUrl: 'app/features/apps/partials/edit.html',
         controller: 'AppEditCtrl',
         controllerAs: 'ctrl',
-        resolve: loadOrgBundle,
+        resolve: loadAppsBundle,
       })
       .when('/global-alerts', {
         templateUrl: 'app/features/dashboard/partials/globalAlerts.html',

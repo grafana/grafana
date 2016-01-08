@@ -19,7 +19,7 @@ function (angular, _, $, coreModule, config) {
         $scope.mainLinks.push({
           text: item.text,
           icon: item.icon,
-          href: $scope.getUrl(item.href)
+          url: $scope.getUrl(item.url)
         });
       });
     };
@@ -39,14 +39,6 @@ function (angular, _, $, coreModule, config) {
         $scope.orgMenu.push({
           text: "API Keys",
           href: $scope.getUrl("/org/apikeys"),
-        });
-        $scope.orgMenu.push({
-          text: "Datasources",
-          href: $scope.getUrl("/datasources"),
-        });
-        $scope.orgMenu.push({
-          text: "Apps",
-          href: $scope.getUrl("/org/apps"),
         });
       }
 
