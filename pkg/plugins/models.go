@@ -5,13 +5,13 @@ import (
 )
 
 type PluginInfo struct {
-	Author      PluginAuthor `json:"author"`
-	Description string       `json:"description"`
-	Homepage    string       `json:"homepage"`
-	Logos       PluginLogos  `json:"logos"`
+	Author      PluginInfoLink   `json:"author"`
+	Description string           `json:"description"`
+	Links       []PluginInfoLink `json:"links"`
+	Logos       PluginLogos      `json:"logos"`
 }
 
-type PluginAuthor struct {
+type PluginInfoLink struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
 }

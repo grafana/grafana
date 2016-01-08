@@ -18,5 +18,18 @@ func TestPluginScans(t *testing.T) {
 
 		So(err, ShouldBeNil)
 		So(len(DataSources), ShouldBeGreaterThan, 1)
+		So(len(Panels), ShouldBeGreaterThan, 1)
 	})
+
+	Convey("When reading app plugin definition", t, func() {
+		setting.Cfg = ini.Empty()
+		sec, _ := setting.Cfg.NewSection("plugin.app-test")
+		sec.NewKey("path", "../../tests/app-plugin-json")
+		err := Init()
+
+		So(err, ShouldBeNil)
+		So(len(Apps), ShouldBeGreaterThan, 0)
+		So(Apps["app-test"].Info.Logos.Large, ShouldEqual, "plugins/app-exampl/img/logo_large.png")
+	})
+
 }
