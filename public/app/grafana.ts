@@ -14,6 +14,7 @@ import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
+import moment from 'moment';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -36,7 +37,7 @@ export class GrafanaApp {
     return module;
   }
 
-  init() {
+  init(grafanaBootData) {
     var app = angular.module('grafana', []);
     app.constant('grafanaVersion', "@grafanaVersion@");
 
@@ -89,6 +90,13 @@ export class GrafanaApp {
     }).catch(function(err) {
       console.log('Application boot failed:', err);
     });
+    //initialize locale from browser preferences
+    if (typeof(grafanaBootData) !== 'undefined' && grafanaBootData.languages) {
+      //choosing availabre languages from list
+      console.log("All requested languages from server :"+grafanaBootData.languages);
+      var selected = moment.locale(grafanaBootData.languages.split(" "));
+      console.log("selected language :"+selected);
+    }
   }
 }
 

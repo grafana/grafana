@@ -7,6 +7,7 @@ type IndexViewData struct {
 	AppSubUrl          string
 	GoogleAnalyticsId  string
 	GoogleTagManagerId string
+	PreferedLocales    string
 
 	PluginCss    []*PluginCss
 	PluginJs     []string
