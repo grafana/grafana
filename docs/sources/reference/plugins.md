@@ -8,7 +8,7 @@ page_keywords: grafana, plugins, documentation
 
 !Plugin support for panels is only available in nightly!
 
-Adding support for all datasources and suggested panels would bloat grafana and make it impossible to maintain. Thats why we implemented a plugin system that makes it possible for anyone to develop support for a datasource or custom panel without adding it to Grafana itself.
+Adding support for all datasources and suggested panels would bloat grafana and make it impossible to maintain. That's why we implemented a plugin system that makes it possible for anyone to develop support for a datasource or custom panel without adding it to Grafana itself.
 
 ## Installing plugins
 
