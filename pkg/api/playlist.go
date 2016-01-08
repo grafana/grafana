@@ -22,7 +22,7 @@ func ValidateOrgPlaylist(c *middleware.Context) {
 	}
 }
 
-func SearchPlaylists(c *middleware.Context) {
+func SearchPlaylists(c *middleware.Context) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
@@ -38,66 +38,60 @@ func SearchPlaylists(c *middleware.Context) {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		c.JsonApiErr(500, "Search failed", err)
-		return
+		return ApiError(500, "Search failed", err)
 	}
 
-	c.JSON(200, searchQuery.Result)
+	return Json(200, searchQuery.Result)
 }
 
-func GetPlaylist(c *middleware.Context) {
+func GetPlaylist(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 	cmd := m.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Playlist not found", err)
-		return
+		return ApiError(500, "Playlist not found", err)
 	}
 
-	c.JSON(200, cmd.Result)
+	return Json(200, cmd.Result)
 }
 
-func GetPlaylistDashboards(c *middleware.Context) {
+func GetPlaylistDashboards(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	query := m.GetPlaylistDashboardsQuery{Id: id}
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Playlist not found", err)
-		return
+		return ApiError(500, "Playlist not found", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func DeletePlaylist(c *middleware.Context) {
+func DeletePlaylist(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := m.DeletePlaylistQuery{Id: id}
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "Failed to delete playlist", err)
-		return
+		return ApiError(500, "Failed to delete playlist", err)
 	}
 
-	c.JSON(200, "")
+	return Json(200, "")
 }
 
-func CreatePlaylist(c *middleware.Context, query m.CreatePlaylistQuery) {
+func CreatePlaylist(c *middleware.Context, query m.CreatePlaylistQuery) Response {
 	query.OrgId = c.OrgId
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to create playlist", err)
-		return
+		return ApiError(500, "Failed to create playlist", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
 
-func UpdatePlaylist(c *middleware.Context, query m.UpdatePlaylistQuery) {
+func UpdatePlaylist(c *middleware.Context, query m.UpdatePlaylistQuery) Response {
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to save playlist", err)
-		return
+		return ApiError(500, "Failed to save playlist", err)
 	}
 
-	c.JSON(200, query.Result)
+	return Json(200, query.Result)
 }
