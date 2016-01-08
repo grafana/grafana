@@ -174,12 +174,12 @@ func Register(r *macaron.Macaron) {
 
 		// Playlist
 		r.Group("/playlists", func() {
-			r.Get("/", SearchPlaylists)
-			r.Get("/:id", ValidateOrgPlaylist, GetPlaylist)
-			r.Get("/:id/dashboards", ValidateOrgPlaylist, GetPlaylistDashboards)
-			r.Delete("/:id", reqEditorRole, ValidateOrgPlaylist, DeletePlaylist)
-			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistQuery{}), ValidateOrgPlaylist, UpdatePlaylist)
-			r.Post("/", reqEditorRole, bind(m.CreatePlaylistQuery{}), CreatePlaylist)
+			r.Get("/", wrap(SearchPlaylists))
+			r.Get("/:id", ValidateOrgPlaylist, wrap(GetPlaylist))
+			r.Get("/:id/dashboards", ValidateOrgPlaylist, wrap(GetPlaylistDashboards))
+			r.Delete("/:id", reqEditorRole, ValidateOrgPlaylist, wrap(DeletePlaylist))
+			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistQuery{}), ValidateOrgPlaylist, wrap(UpdatePlaylist))
+			r.Post("/", reqEditorRole, bind(m.CreatePlaylistQuery{}), wrap(CreatePlaylist))
 		})
 
 		// Search
