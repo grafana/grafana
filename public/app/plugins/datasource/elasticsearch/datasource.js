@@ -12,6 +12,7 @@ define([
 function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticResponse) {
   'use strict';
 
+  /** @ngInject */
   function ElasticDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;

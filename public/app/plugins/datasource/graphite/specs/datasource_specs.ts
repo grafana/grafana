@@ -1,19 +1,24 @@
 
-import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
+import {Datasource} from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings: any = {url:['']};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-
   beforeEach(ctx.providePhase(['backendSrv']));
-  beforeEach(ctx.createService('GraphiteDatasource'));
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.$injector = $injector;
+  }));
 
   beforeEach(function() {
-    ctx.ds = new ctx.service({ url: [''] });
+    ctx.ds = ctx.$injector.instantiate(Datasource, {instanceSettings: instanceSettings});
   });
 
   describe('When querying influxdb with one target using query editor target spec', function() {
