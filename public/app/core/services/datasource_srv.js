@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.default.service('datasourceSrv', function($q, $injector) {
+  coreModule.default.service('datasourceSrv', function($q, $injector, $rootScope) {
     var self = this;
 
     this.init = function() {
@@ -60,7 +60,6 @@ function (angular, _, coreModule, config) {
       var deferred = $q.defer();
       var pluginDef = dsConfig.meta;
 
-      console.log(pluginDef);
       System.import(pluginDef.module).then(function(plugin) {
         // check if its in cache now
         if (self.datasources[name]) {
@@ -70,7 +69,7 @@ function (angular, _, coreModule, config) {
 
         // plugin module needs to export a constructor function named Datasource
         if (!plugin.Datasource) {
-          return;
+          throw "Plugin module is missing Datasource constructor";
         }
 
         var instance = $injector.instantiate(plugin.Datasource, {instanceSettings: dsConfig});
@@ -79,7 +78,7 @@ function (angular, _, coreModule, config) {
         self.datasources[name] = instance;
         deferred.resolve(instance);
       }).catch(function(err) {
-        console.log('Failed to load data source: ' + err);
+        $rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
       });
 
       return deferred.promise;

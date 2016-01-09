@@ -46,6 +46,10 @@ function (angular, _, coreModule) {
         }, timeout);
       }
 
+      if (!$rootScope.$$phase) {
+        $rootScope.$digest();
+      }
+
       return(newAlert);
     };
 
