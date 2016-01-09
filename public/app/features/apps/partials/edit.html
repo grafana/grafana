@@ -7,34 +7,30 @@
 
 <div class="page-container" style="background: transparent; border: 0;">
 	<div class="apps-side-box">
-		<img class="apps-ide-box-logo" src="{{ctrl.appModel.info.logos.large}}">
-		</img>
+		<div class="apps-side-box-logo" >
+			<img src="{{ctrl.appModel.info.logos.large}}">
+		</div>
 		<ul class="app-side-box-links">
+			<li>
+				By <a href="{{ctrl.appModel.info.author.url}}" class="external-link" target="_blank">{{ctrl.appModel.info.author.name}}</a>
+			</li>
 			<li ng-repeat="link in ctrl.appModel.info.links">
-				<a href="{{link.url}}">{{link.name}}</a>
+				<a href="{{link.url}}" class="external-link" target="_blank">{{link.name}}</a>
 			</li>
 		</ul>
 	</div>
-  <div class="page-wide" ng-init="ctrl.init()">
+
+  <div class="page-wide-margined" ng-init="ctrl.init()">
 		<h2>{{ctrl.appModel.name}}</h2>
 		<em>
 			{{ctrl.appModel.info.description}}
 		</em>
 
-		<form name="editForm">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="enabledChanged()"></editor-checkbox>
-					</li>
-					<li class="tight-form-item">
-						<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="enabledChanged()"></editor-checkbox>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+		<div class="form-inline">
+			<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="enabledChanged()"></editor-checkbox>
+			<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="enabledChanged()"></editor-checkbox>
+		</div>
 
 			<app-config-loader></app-config-loader>
-		</form>
 	</div>
 </div>

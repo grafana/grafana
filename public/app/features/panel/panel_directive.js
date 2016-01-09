@@ -90,7 +90,7 @@ function (angular, $, config) {
               scope.target.refId = 'A';
             }
 
-            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
+            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.id));
             elem.append(panelEl);
             $compile(panelEl)(editorScope);
           });
