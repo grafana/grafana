@@ -1,3 +1,3 @@
 declare var Datasource: any;
-export {Datasource};
+export default Datasource;
 

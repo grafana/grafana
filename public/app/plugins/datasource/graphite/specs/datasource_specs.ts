@@ -1,7 +1,7 @@
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import {Datasource} from "../datasource";
+import Datasource from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();

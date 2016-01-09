@@ -9,9 +9,11 @@ function (angular, _, config) {
   var module = angular.module('grafana.controllers');
   var datasourceTypes = [];
 
-  module.controller('DataSourceEditCtrl', function($scope, $q, backendSrv, $routeParams, $location, datasourceSrv) {
+  module.directive('datasourceHttpSettings', function() {
+    return {templateUrl: 'app/features/datasources/partials/http_settings.html'};
+  });
 
-    $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
+  module.controller('DataSourceEditCtrl', function($scope, $q, backendSrv, $routeParams, $location, datasourceSrv) {
 
     var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {}};
 
@@ -114,6 +116,5 @@ function (angular, _, config) {
     };
 
     $scope.init();
-
   });
 });

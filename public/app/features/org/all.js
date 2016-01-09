@@ -1,9 +1,8 @@
 define([
-  './datasourcesCtrl',
-  './datasourceEditCtrl',
   './orgUsersCtrl',
   './newOrgCtrl',
   './userInviteCtrl',
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
+  '../datasources/all',
 ], function () {});

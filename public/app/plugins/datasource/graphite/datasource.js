@@ -4,7 +4,6 @@ define([
   'jquery',
   'app/core/config',
   'app/core/utils/datemath',
-  './directives',
   './query_ctrl',
   './func_editor',
   './add_graphite_func',
@@ -293,7 +292,5 @@ function (angular, _, $, config, dateMath) {
     };
   }
 
-  return {
-    Datasource: GraphiteDatasource
-  };
+  return GraphiteDatasource;
 });
