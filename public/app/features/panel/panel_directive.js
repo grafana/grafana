@@ -56,8 +56,8 @@ function (angular, $, config) {
             return;
           }
 
-          System.import(scope.dsMeta.module).then(function(module) {
-            console.log('datasourceCustomSettingsView', module);
+          System.import(scope.dsMeta.module).then(function() {
+            elem.empty();
             var panelEl = angular.element(document.createElement('datasource-custom-settings-view-' + scope.dsMeta.id));
             elem.append(panelEl);
             $compile(panelEl)(scope);
@@ -65,6 +65,45 @@ function (angular, $, config) {
             console.log('Failed to load plugin:', err);
             scope.appEvent('alert-error', ['Plugin Load Error', 'Failed to load plugin ' + scope.dsMeta.id + ', ' + err]);
           });
+        });
+      }
+    };
+  });
+
+  module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
+    var self = this;
+
+    this.addDirective = function(options, type, editorScope) {
+      var panelEl = angular.element(document.createElement(options.name + '-' + type));
+      options.parentElem.append(panelEl);
+      $compile(panelEl)(editorScope);
+    };
+
+    this.define = function(options) {
+      var editorScope;
+      options.scope.$watch(options.datasourceProperty, function(newVal) {
+        if (editorScope) {
+          editorScope.$destroy();
+          options.parentElem.empty();
+        }
+
+        editorScope = options.scope.$new();
+        datasourceSrv.get(newVal).then(function(ds) {
+          self.addDirective(options, ds.meta.id, editorScope);
+        });
+      });
+    };
+  });
+
+  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
+    return {
+      restrict: 'E',
+      link: function(scope, elem, attrs) {
+        dynamicDirectiveSrv.define({
+          datasourceProperty: attrs.datasource,
+          name: attrs.name,
+          scope: scope,
+          parentElem: elem,
         });
       }
     };
