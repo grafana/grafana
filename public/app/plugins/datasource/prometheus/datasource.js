@@ -3,31 +3,25 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
-  './directives',
   './query_ctrl',
 ],
 function (angular, _, moment, dateMath) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
   var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
-  module.factory('PrometheusDatasource', function($q, backendSrv, templateSrv) {
+  function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.type = 'prometheus';
+    this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
+    this.name = instanceSettings.name;
+    this.supportMetrics = true;
+    this.url = instanceSettings.url;
+    this.directUrl = instanceSettings.directUrl;
+    this.basicAuth = instanceSettings.basicAuth;
+    this.withCredentials = instanceSettings.withCredentials;
+    this.lastErrors = {};
 
-    function PrometheusDatasource(datasource) {
-      this.type = 'prometheus';
-      this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
-      this.name = datasource.name;
-      this.supportMetrics = true;
-      this.url = datasource.url;
-      this.directUrl = datasource.directUrl;
-      this.basicAuth = datasource.basicAuth;
-      this.withCredentials = datasource.withCredentials;
-      this.lastErrors = {};
-    }
-
-    PrometheusDatasource.prototype._request = function(method, url) {
+    this._request = function(method, url) {
       var options = {
         url: this.url + url,
         method: method
@@ -46,7 +40,7 @@ function (angular, _, moment, dateMath) {
     };
 
     // Called once per panel (graph)
-    PrometheusDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       var start = getPrometheusTime(options.range.from, false);
       var end = getPrometheusTime(options.range.to, true);
 
@@ -86,31 +80,31 @@ function (angular, _, moment, dateMath) {
 
       var self = this;
       return $q.all(allQueryPromise)
-        .then(function(allResponse) {
-          var result = [];
+      .then(function(allResponse) {
+        var result = [];
 
-          _.each(allResponse, function(response, index) {
-            if (response.status === 'error') {
-              self.lastErrors.query = response.error;
-              throw response.error;
-            }
-            delete self.lastErrors.query;
+        _.each(allResponse, function(response, index) {
+          if (response.status === 'error') {
+            self.lastErrors.query = response.error;
+            throw response.error;
+          }
+          delete self.lastErrors.query;
 
-            _.each(response.data.data.result, function(metricData) {
-              result.push(transformMetricData(metricData, options.targets[index]));
-            });
+          _.each(response.data.data.result, function(metricData) {
+            result.push(transformMetricData(metricData, options.targets[index]));
           });
-
-          return { data: result };
         });
+
+        return { data: result };
+      });
     };
 
-    PrometheusDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
+    this.performTimeSeriesQuery = function(query, start, end) {
       var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
       return this._request('GET', url);
     };
 
-    PrometheusDatasource.prototype.performSuggestQuery = function(query) {
+    this.performSuggestQuery = function(query) {
       var url = '/api/v1/label/__name__/values';
 
       return this._request('GET', url).then(function(result) {
@@ -120,7 +114,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    PrometheusDatasource.prototype.metricFindQuery = function(query) {
+    this.metricFindQuery = function(query) {
       if (!query) { return $q.when([]); }
 
       var interpolated;
@@ -196,7 +190,7 @@ function (angular, _, moment, dateMath) {
       }
     };
 
-    PrometheusDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       return this.metricFindQuery('metrics(.*)').then(function() {
         return { status: 'success', message: 'Data source is working', title: 'Success' };
       });
@@ -276,8 +270,7 @@ function (angular, _, moment, dateMath) {
       }
       return (date.valueOf() / 1000).toFixed(0);
     }
+  }
 
-    return PrometheusDatasource;
-  });
-
+  return PrometheusDatasource;
 });

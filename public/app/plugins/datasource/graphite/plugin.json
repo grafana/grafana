@@ -3,8 +3,6 @@
   "type": "datasource",
   "id": "graphite",
 
-  "module": "app/plugins/datasource/graphite/module",
-
   "defaultMatchFormat": "glob",
   "metrics": true,
   "annotations": true

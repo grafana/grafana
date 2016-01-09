@@ -3,8 +3,6 @@
   "name": "InfluxDB 0.9.x",
   "id": "influxdb",
 
-  "module": "app/plugins/datasource/influxdb/module",
-
   "defaultMatchFormat": "regex values",
   "metrics": true,
   "annotations": true

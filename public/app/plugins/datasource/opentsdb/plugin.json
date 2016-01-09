@@ -3,8 +3,6 @@
   "name": "OpenTSDB",
   "id": "opentsdb",
 
-  "module": "app/plugins/datasource/opentsdb/module",
-
   "metrics": true,
   "defaultMatchFormat": "pipe"
 }

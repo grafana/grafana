@@ -3,8 +3,6 @@
   "name": "Grafana",
   "id": "grafana",
 
-  "module": "app/plugins/datasource/grafana/module",
-
   "builtIn": true,
   "metrics": true
 }

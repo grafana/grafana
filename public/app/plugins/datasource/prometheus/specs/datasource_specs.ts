@@ -1,17 +1,20 @@
-import '../datasource';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
+import Datasource from '../datasource';
 
 describe('PrometheusDatasource', function() {
-
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' };
+
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.createService('PrometheusDatasource'));
-  beforeEach(function() {
-    ctx.ds = new ctx.service({ url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' });
-  });
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.ds = $injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+  }));
 
   describe('When querying prometheus with one target using query editor target spec', function() {
     var results;

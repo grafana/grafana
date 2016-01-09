@@ -1,15 +1,22 @@
 package plugins
 
 import (
+	"encoding/json"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type PluginCommon struct {
-	Type       string     `json:"type"`
-	Name       string     `json:"name"`
-	Id         string     `json:"id"`
-	StaticRoot string     `json:"staticRoot"`
-	Info       PluginInfo `json:"info"`
+type PluginLoader interface {
+	Load(decoder *json.Decoder, pluginDir string) error
+}
+
+type PluginBase struct {
+	Type      string     `json:"type"`
+	Name      string     `json:"name"`
+	Id        string     `json:"id"`
+	App       string     `json:"app"`
+	Info      PluginInfo `json:"info"`
+	PluginDir string     `json:"-"`
 }
 
 type PluginInfo struct {
@@ -29,28 +36,9 @@ type PluginLogos struct {
 	Large string `json:"large"`
 }
 
-type DataSourcePlugin struct {
-	PluginCommon
-	Module             string                 `json:"module"`
-	ServiceName        string                 `json:"serviceName"`
-	Partials           map[string]interface{} `json:"partials"`
-	DefaultMatchFormat string                 `json:"defaultMatchFormat"`
-	Annotations        bool                   `json:"annotations"`
-	Metrics            bool                   `json:"metrics"`
-	BuiltIn            bool                   `json:"builtIn"`
-	Mixed              bool                   `json:"mixed"`
-	App                string                 `json:"app"`
-}
-
 type PluginStaticRoute struct {
 	Directory string
 	PluginId  string
-}
-
-type PanelPlugin struct {
-	PluginCommon
-	Module string `json:"module"`
-	App    string `json:"app"`
 }
 
 type ApiPluginRoute struct {
@@ -60,34 +48,11 @@ type ApiPluginRoute struct {
 	ReqGrafanaAdmin bool            `json:"reqGrafanaAdmin"`
 	ReqRole         models.RoleType `json:"reqRole"`
 	Url             string          `json:"url"`
-	App             string          `json:"app"`
-}
-
-type AppPluginPage struct {
-	Text    string          `json:"text"`
-	Icon    string          `json:"icon"`
-	Url     string          `json:"url"`
-	ReqRole models.RoleType `json:"reqRole"`
-}
-
-type AppPluginCss struct {
-	Light string `json:"light"`
-	Dark  string `json:"dark"`
 }
 
 type ApiPlugin struct {
-	PluginCommon
+	PluginBase
 	Routes []*ApiPluginRoute `json:"routes"`
-	App    string            `json:"app"`
-}
-
-type AppPlugin struct {
-	PluginCommon
-	Enabled bool           `json:"enabled"`
-	Pinned  bool           `json:"pinned"`
-	Module  string         `json:"module"`
-	Css     *AppPluginCss  `json:"css"`
-	Page    *AppPluginPage `json:"page"`
 }
 
 type EnabledPlugins struct {
