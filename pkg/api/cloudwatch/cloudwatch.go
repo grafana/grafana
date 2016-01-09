@@ -144,17 +144,9 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
-	sess := session.New()
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
-		})
-
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: creds,
+		Credentials: getCredentials(req.DataSource.Database),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
