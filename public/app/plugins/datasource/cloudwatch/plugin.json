@@ -3,9 +3,7 @@
   "name": "CloudWatch",
   "id": "cloudwatch",
 
-  "serviceName": "CloudWatchDatasource",
-
-  "module": "app/plugins/datasource/cloudwatch/datasource",
+  "module": "app/plugins/datasource/cloudwatch/module",
 
   "partials": {
     "config": "app/plugins/datasource/cloudwatch/partials/config.html",

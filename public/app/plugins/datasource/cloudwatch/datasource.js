@@ -4,24 +4,19 @@ define([
   'moment',
   'app/core/utils/datemath',
   './query_ctrl',
-  './directives',
 ],
 function (angular, _, moment, dateMath) {
   'use strict';
 
-  var module = angular.module('grafana.services');
+  /** @ngInject */
+  function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.type = 'cloudwatch';
+    this.name = instanceSettings.name;
+    this.supportMetrics = true;
+    this.proxyUrl = instanceSettings.url;
+    this.defaultRegion = instanceSettings.jsonData.defaultRegion;
 
-  module.factory('CloudWatchDatasource', function($q, backendSrv, templateSrv) {
-
-    function CloudWatchDatasource(datasource) {
-      this.type = 'cloudwatch';
-      this.name = datasource.name;
-      this.supportMetrics = true;
-      this.proxyUrl = datasource.url;
-      this.defaultRegion = datasource.jsonData.defaultRegion;
-    }
-
-    CloudWatchDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       var start = convertToCloudWatchTime(options.range.from, false);
       var end = convertToCloudWatchTime(options.range.to, true);
 
@@ -72,7 +67,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.performTimeSeriesQuery = function(query, start, end) {
+    this.performTimeSeriesQuery = function(query, start, end) {
       return this.awsRequest({
         region: query.region,
         action: 'GetMetricStatistics',
@@ -88,15 +83,15 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.getRegions = function() {
+    this.getRegions = function() {
       return this.awsRequest({action: '__GetRegions'});
     };
 
-    CloudWatchDatasource.prototype.getNamespaces = function() {
+    this.getNamespaces = function() {
       return this.awsRequest({action: '__GetNamespaces'});
     };
 
-    CloudWatchDatasource.prototype.getMetrics = function(namespace) {
+    this.getMetrics = function(namespace) {
       return this.awsRequest({
         action: '__GetMetrics',
         parameters: {
@@ -105,7 +100,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensionKeys = function(namespace) {
+    this.getDimensionKeys = function(namespace) {
       return this.awsRequest({
         action: '__GetDimensions',
         parameters: {
@@ -114,7 +109,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
+    this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       var request = {
         region: templateSrv.replace(region),
         action: 'ListMetrics',
@@ -141,7 +136,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.performEC2DescribeInstances = function(region, filters, instanceIds) {
+    this.performEC2DescribeInstances = function(region, filters, instanceIds) {
       return this.awsRequest({
         region: region,
         action: 'DescribeInstances',
@@ -149,7 +144,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.metricFindQuery = function(query) {
+    this.metricFindQuery = function(query) {
       var region;
       var namespace;
       var metricName;
@@ -210,7 +205,7 @@ function (angular, _, moment, dateMath) {
       return $q.when([]);
     };
 
-    CloudWatchDatasource.prototype.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
+    this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
       return this.awsRequest({
         region: region,
         action: 'DescribeAlarmsForMetric',
@@ -218,7 +213,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
+    this.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
       return this.awsRequest({
         region: region,
         action: 'DescribeAlarmHistory',
@@ -226,7 +221,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.annotationQuery = function(options) {
+    this.annotationQuery = function(options) {
       var annotation = options.annotation;
       var region = templateSrv.replace(annotation.region);
       var namespace = templateSrv.replace(annotation.namespace);
@@ -278,7 +273,7 @@ function (angular, _, moment, dateMath) {
       return d.promise;
     };
 
-    CloudWatchDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       /* use billing metrics for test */
       var region = this.defaultRegion;
       var namespace = 'AWS/Billing';
@@ -290,7 +285,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.awsRequest = function(data) {
+    this.awsRequest = function(data) {
       var options = {
         method: 'POST',
         url: this.proxyUrl,
@@ -302,7 +297,7 @@ function (angular, _, moment, dateMath) {
       });
     };
 
-    CloudWatchDatasource.prototype.getDefaultRegion = function() {
+    this.getDefaultRegion = function() {
       return this.defaultRegion;
     };
 
@@ -361,7 +356,7 @@ function (angular, _, moment, dateMath) {
       });
     }
 
-    return CloudWatchDatasource;
-  });
+  }
 
+  return CloudWatchDatasource;
 });
