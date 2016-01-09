@@ -1,7 +1,0 @@
-{
-  "type": "panel",
-  "name": "Table",
-  "id": "table",
-
-  "module": "app/plugins/panels/table/module"
-}
