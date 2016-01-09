@@ -38,6 +38,7 @@ type DataSourcePlugin struct {
 	Annotations        bool                   `json:"annotations"`
 	Metrics            bool                   `json:"metrics"`
 	BuiltIn            bool                   `json:"builtIn"`
+	Mixed              bool                   `json:"mixed"`
 	App                string                 `json:"app"`
 }
 
