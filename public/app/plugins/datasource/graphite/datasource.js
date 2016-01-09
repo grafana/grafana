@@ -12,20 +12,16 @@ define([
 function (angular, _, $, config, dateMath) {
   'use strict';
 
-  var module = angular.module('grafana.services');
+  /** @ngInject */
+  function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.basicAuth = instanceSettings.basicAuth;
+    this.url = instanceSettings.url;
+    this.name = instanceSettings.name;
+    this.cacheTimeout = instanceSettings.cacheTimeout;
+    this.withCredentials = instanceSettings.withCredentials;
+    this.render_method = instanceSettings.render_method || 'POST';
 
-  module.factory('GraphiteDatasource', function($q, backendSrv, templateSrv) {
-
-    function GraphiteDatasource(datasource) {
-      this.basicAuth = datasource.basicAuth;
-      this.url = datasource.url;
-      this.name = datasource.name;
-      this.cacheTimeout = datasource.cacheTimeout;
-      this.withCredentials = datasource.withCredentials;
-      this.render_method = datasource.render_method || 'POST';
-    }
-
-    GraphiteDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       try {
         var graphOptions = {
           from: this.translateTime(options.rangeRaw.from, false),
@@ -62,7 +58,7 @@ function (angular, _, $, config, dateMath) {
       }
     };
 
-    GraphiteDatasource.prototype.convertDataPointsToMs = function(result) {
+    this.convertDataPointsToMs = function(result) {
       if (!result || !result.data) { return []; }
       for (var i = 0; i < result.data.length; i++) {
         var series = result.data[i];
@@ -73,7 +69,7 @@ function (angular, _, $, config, dateMath) {
       return result;
     };
 
-    GraphiteDatasource.prototype.annotationQuery = function(options) {
+    this.annotationQuery = function(options) {
       // Graphite metric as annotation
       if (options.annotation.target) {
         var target = templateSrv.replace(options.annotation.target);
@@ -85,50 +81,49 @@ function (angular, _, $, config, dateMath) {
         };
 
         return this.query(graphiteQuery)
-          .then(function(result) {
-            var list = [];
+        .then(function(result) {
+          var list = [];
 
-            for (var i = 0; i < result.data.length; i++) {
-              var target = result.data[i];
+          for (var i = 0; i < result.data.length; i++) {
+            var target = result.data[i];
 
-              for (var y = 0; y < target.datapoints.length; y++) {
-                var datapoint = target.datapoints[y];
-                if (!datapoint[0]) { continue; }
+            for (var y = 0; y < target.datapoints.length; y++) {
+              var datapoint = target.datapoints[y];
+              if (!datapoint[0]) { continue; }
 
-                list.push({
-                  annotation: options.annotation,
-                  time: datapoint[1],
-                  title: target.target
-                });
-              }
+              list.push({
+                annotation: options.annotation,
+                time: datapoint[1],
+                title: target.target
+              });
             }
+          }
 
-            return list;
-          });
+          return list;
+        });
       }
       // Graphite event as annotation
       else {
         var tags = templateSrv.replace(options.annotation.tags);
-        return this.events({range: options.rangeRaw, tags: tags})
-          .then(function(results) {
-            var list = [];
-            for (var i = 0; i < results.data.length; i++) {
-              var e = results.data[i];
+        return this.events({range: options.rangeRaw, tags: tags}).then(function(results) {
+          var list = [];
+          for (var i = 0; i < results.data.length; i++) {
+            var e = results.data[i];
 
-              list.push({
-                annotation: options.annotation,
-                time: e.when * 1000,
-                title: e.what,
-                tags: e.tags,
-                text: e.data
-              });
-            }
-            return list;
-          });
+            list.push({
+              annotation: options.annotation,
+              time: e.when * 1000,
+              title: e.what,
+              tags: e.tags,
+              text: e.data
+            });
+          }
+          return list;
+        });
       }
     };
 
-    GraphiteDatasource.prototype.events = function(options) {
+    this.events = function(options) {
       try {
         var tags = '';
         if (options.tags) {
@@ -146,7 +141,7 @@ function (angular, _, $, config, dateMath) {
       }
     };
 
-    GraphiteDatasource.prototype.translateTime = function(date, roundUp) {
+    this.translateTime = function(date, roundUp) {
       if (_.isString(date)) {
         if (date === 'now') {
           return 'now';
@@ -178,7 +173,7 @@ function (angular, _, $, config, dateMath) {
       return date.unix();
     };
 
-    GraphiteDatasource.prototype.metricFindQuery = function(query) {
+    this.metricFindQuery = function(query) {
       var interpolated;
       try {
         interpolated = encodeURIComponent(templateSrv.replace(query));
@@ -198,24 +193,24 @@ function (angular, _, $, config, dateMath) {
       });
     };
 
-    GraphiteDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       return this.metricFindQuery('*').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
-    GraphiteDatasource.prototype.listDashboards = function(query) {
+    this.listDashboards = function(query) {
       return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
       .then(function(results) {
         return results.data.dashboards;
       });
     };
 
-    GraphiteDatasource.prototype.loadDashboard = function(dashName) {
+    this.loadDashboard = function(dashName) {
       return this.doGraphiteRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
     };
 
-    GraphiteDatasource.prototype.doGraphiteRequest = function(options) {
+    this.doGraphiteRequest = function(options) {
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
@@ -230,9 +225,9 @@ function (angular, _, $, config, dateMath) {
       return backendSrv.datasourceRequest(options);
     };
 
-    GraphiteDatasource.prototype._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    GraphiteDatasource.prototype.buildGraphiteParams = function(options, scopedVars) {
+    this.buildGraphiteParams = function(options, scopedVars) {
       var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
       var clean_options = [], targets = {};
       var target, targetValue, i;
@@ -296,12 +291,9 @@ function (angular, _, $, config, dateMath) {
 
       return clean_options;
     };
-
-    return GraphiteDatasource;
-
-  });
+  }
 
   return {
-    serviceName: "GraphiteDatasource"
+    Datasource: GraphiteDatasource
   };
 });
