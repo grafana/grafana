@@ -60,6 +60,7 @@ function (angular, _, coreModule, config) {
       var deferred = $q.defer();
       var pluginDef = dsConfig.meta;
 
+      console.log(pluginDef);
       System.import(pluginDef.module).then(function(plugin) {
         // check if its in cache now
         if (self.datasources[name]) {

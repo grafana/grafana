@@ -3,14 +3,7 @@
   "name": "Elasticsearch",
   "id": "elasticsearch",
 
-  "serviceName": "ElasticDatasource",
-
-  "module": "app/plugins/datasource/elasticsearch/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/elasticsearch/partials/config.html",
-    "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
-  },
+  "module": "app/plugins/datasource/elasticsearch/module",
 
   "defaultMatchFormat": "lucene",
   "annotations": true,

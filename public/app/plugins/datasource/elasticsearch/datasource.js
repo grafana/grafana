@@ -7,7 +7,6 @@ define([
   './index_pattern',
   './elastic_response',
   './query_ctrl',
-  './directives'
 ],
 function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticResponse) {
   'use strict';
@@ -305,7 +304,5 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
   }
 
-  return {
-    Datasource: ElasticDatasource,
-  };
+  return ElasticDatasource;
 });
