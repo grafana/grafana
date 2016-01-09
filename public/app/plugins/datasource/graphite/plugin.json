@@ -3,11 +3,7 @@
   "type": "datasource",
   "id": "graphite",
 
-  "module": "app/plugins/datasource/graphite/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/graphite/partials/config.html"
-  },
+  "module": "app/plugins/datasource/graphite/module",
 
   "defaultMatchFormat": "glob",
   "metrics": true,

@@ -6,7 +6,7 @@ module.exports = function(config, grunt) {
 
     grunt.log.writeln('File Changed: ' + filepath);
 
-    if (/(\.html)$/.test(filepath)) {
+    if (/(\.html)|(\.json)$/.test(filepath)) {
       newPath = filepath.replace(/^public/, 'public_gen');
       grunt.log.writeln('Copying to ' + newPath);
       grunt.file.copy(filepath, newPath);

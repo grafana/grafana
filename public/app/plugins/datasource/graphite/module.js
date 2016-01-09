@@ -1,7 +1,8 @@
 define([
   'angular',
+  './datasource',
 ],
-function (angular) {
+function (angular, GraphiteDatasource) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -18,4 +19,7 @@ function (angular) {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/annotations.editor.html'};
   });
 
+  return {
+    Datasource: GraphiteDatasource,
+  };
 });
