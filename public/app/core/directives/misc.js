@@ -18,6 +18,17 @@ function (angular, coreModule, kbn) {
     };
   });
 
+  coreModule.default.directive('dtip', function($compile) {
+    return {
+      restrict: 'E',
+      link: function(scope, elem, attrs) {
+        var _t = '<i class="grafana-tip fa fa-'+(attrs.icon||'question-circle')+'" bs-tooltip="'+
+          kbn.addslashes(elem.text())+'"></i>';
+        elem.replaceWith($compile(angular.element(_t))(scope));
+      }
+    };
+  });
+
   coreModule.default.directive('watchChange', function() {
     return {
       scope: { onchange: '&watchChange' },
