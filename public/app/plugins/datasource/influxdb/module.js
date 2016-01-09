@@ -1,7 +1,8 @@
 define([
   'angular',
+  './datasource',
 ],
-function (angular) {
+function (angular, InfluxDatasource) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -18,4 +19,11 @@ function (angular) {
     return {templateUrl: 'app/plugins/datasource/influxdb/partials/annotations.editor.html'};
   });
 
+  module.directive('datasourceCustomSettingsViewInfluxdb', function() {
+    return {templateUrl: 'app/plugins/datasource/influxdb/partials/config.html'};
+  });
+
+  return {
+    Datasource: InfluxDatasource
+  };
 });
