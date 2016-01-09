@@ -17,7 +17,7 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
   module.directive('grafanaPanelGraph', function() {
     return {
       controller: 'GraphCtrl',
-      templateUrl: 'app/plugins/panels/graph/module.html',
+      templateUrl: 'app/plugins/panel/graph/module.html',
     };
   });
 
@@ -30,8 +30,8 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
       metricsEditor: true,
     });
 
-    $scope.panelMeta.addEditorTab('Axes & Grid', 'app/plugins/panels/graph/axisEditor.html');
-    $scope.panelMeta.addEditorTab('Display Styles', 'app/plugins/panels/graph/styleEditor.html');
+    $scope.panelMeta.addEditorTab('Axes & Grid', 'app/plugins/panel/graph/axisEditor.html');
+    $scope.panelMeta.addEditorTab('Display Styles', 'app/plugins/panel/graph/styleEditor.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');

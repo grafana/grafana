@@ -16,7 +16,7 @@ function (angular, app, _, require, PanelMeta) {
   module.directive('grafanaPanelText', function() {
     return {
       controller: 'TextPanelCtrl',
-      templateUrl: 'app/plugins/panels/text/module.html',
+      templateUrl: 'app/plugins/panel/text/module.html',
     };
   });
 
@@ -28,7 +28,7 @@ function (angular, app, _, require, PanelMeta) {
       fullscreen: true,
     });
 
-    $scope.panelMeta.addEditorTab('Edit text', 'app/plugins/panels/text/editor.html');
+    $scope.panelMeta.addEditorTab('Edit text', 'app/plugins/panel/text/editor.html');
 
     // Set and populate defaults
     var _d = {

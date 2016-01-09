@@ -14,7 +14,7 @@ export function tablePanel() {
   'use strict';
   return {
     restrict: 'E',
-    templateUrl: 'app/plugins/panels/table/module.html',
+    templateUrl: 'app/plugins/panel/table/module.html',
     controller: TablePanelCtrl,
     link: function(scope, elem) {
       var data;
