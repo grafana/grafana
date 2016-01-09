@@ -3,6 +3,7 @@ package plugins
 import (
 	"net/url"
 	"path"
+	"path/filepath"
 )
 
 type FrontendPluginBase struct {
@@ -14,7 +15,7 @@ type FrontendPluginBase struct {
 func (fp *FrontendPluginBase) initFrontendPlugin() {
 	if fp.StaticRoot != "" {
 		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
-			Directory: fp.StaticRoot,
+			Directory: filepath.Join(fp.PluginDir, fp.StaticRoot),
 			PluginId:  fp.Id,
 		})
 	}
@@ -31,7 +32,7 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 	}
 
 	if fp.StaticRoot != "" {
-		fp.Module = path.Join("plugins", fp.Type, fp.Id, "module")
+		fp.Module = path.Join("plugins", fp.Id, "module")
 		return
 	}
 
