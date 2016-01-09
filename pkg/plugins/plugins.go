@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,7 +22,7 @@ var (
 	DataSources  map[string]*DataSourcePlugin
 	Panels       map[string]*PanelPlugin
 	ApiPlugins   map[string]*ApiPlugin
-	StaticRoutes []*PublicContent
+	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
 )
 
@@ -33,7 +34,7 @@ type PluginScanner struct {
 func Init() error {
 	DataSources = make(map[string]*DataSourcePlugin)
 	ApiPlugins = make(map[string]*ApiPlugin)
-	StaticRoutes = make([]*PublicContent, 0)
+	StaticRoutes = make([]*PluginStaticRoute, 0)
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
 
@@ -114,11 +115,24 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	return nil
 }
 
-func addPublicContent(public *PublicContent, currentDir string) {
-	if public != nil {
-		public.Dir = path.Join(currentDir, public.Dir)
-		StaticRoutes = append(StaticRoutes, public)
+func evalRelativePluginUrlPath(pathStr string, pluginId string) string {
+	u, _ := url.Parse(pathStr)
+	if u.IsAbs() {
+		return pathStr
 	}
+	return path.Join("public/plugins", pluginId, pathStr)
+}
+
+func addPublicContent(plugin *PluginCommon, currentDir string) {
+	if plugin.StaticRoot != "" {
+		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
+			Directory: path.Join(currentDir, plugin.StaticRoot),
+			PluginId:  plugin.Id,
+		})
+	}
+
+	plugin.Info.Logos.Small = evalRelativePluginUrlPath(plugin.Info.Logos.Small, plugin.Id)
+	plugin.Info.Logos.Large = evalRelativePluginUrlPath(plugin.Info.Logos.Large, plugin.Id)
 }
 
 func interpolatePluginJson(reader io.Reader, pluginCommon *PluginCommon) (io.Reader, error) {
@@ -178,7 +192,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 
 		DataSources[p.Id] = &p
-		addPublicContent(p.PublicContent, currentDir)
+		addPublicContent(&p.PluginCommon, currentDir)
 
 	case "panel":
 		p := PanelPlugin{}
@@ -188,7 +202,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 		}
 
 		Panels[p.Id] = &p
-		addPublicContent(p.PublicContent, currentDir)
+		addPublicContent(&p.PluginCommon, currentDir)
 	case "api":
 		p := ApiPlugin{}
 		reader.Seek(0, 0)
@@ -203,7 +217,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 			return err
 		}
 		Apps[p.Id] = &p
-		addPublicContent(p.PublicContent, currentDir)
+		addPublicContent(&p.PluginCommon, currentDir)
 	default:
 		return errors.New("Unkown plugin type " + pluginCommon.Type)
 	}

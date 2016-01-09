@@ -5,10 +5,11 @@ import (
 )
 
 type PluginCommon struct {
-	Type string     `json:"type"`
-	Name string     `json:"name"`
-	Id   string     `json:"id"`
-	Info PluginInfo `json:"info"`
+	Type       string     `json:"type"`
+	Name       string     `json:"name"`
+	Id         string     `json:"id"`
+	StaticRoot string     `json:"staticRoot"`
+	Info       PluginInfo `json:"info"`
 }
 
 type PluginInfo struct {
@@ -38,19 +39,17 @@ type DataSourcePlugin struct {
 	Metrics            bool                   `json:"metrics"`
 	BuiltIn            bool                   `json:"builtIn"`
 	App                string                 `json:"app"`
-	PublicContent      *PublicContent         `json:"public"`
+}
+
+type PluginStaticRoute struct {
+	Directory string
+	PluginId  string
 }
 
 type PanelPlugin struct {
 	PluginCommon
-	Module        string         `json:"module"`
-	PublicContent *PublicContent `json:"public"`
-	App           string         `json:"app"`
-}
-
-type PublicContent struct {
-	UrlFragment string `json:"urlFragment"`
-	Dir         string `json:"dir"`
+	Module string `json:"module"`
+	App    string `json:"app"`
 }
 
 type ApiPluginRoute struct {
@@ -83,12 +82,11 @@ type ApiPlugin struct {
 
 type AppPlugin struct {
 	PluginCommon
-	Enabled       bool           `json:"enabled"`
-	Pinned        bool           `json:"pinned"`
-	Module        string         `json:"module"`
-	Css           *AppPluginCss  `json:"css"`
-	Page          *AppPluginPage `json:"page"`
-	PublicContent *PublicContent `json:"public"`
+	Enabled bool           `json:"enabled"`
+	Pinned  bool           `json:"pinned"`
+	Module  string         `json:"module"`
+	Css     *AppPluginCss  `json:"css"`
+	Page    *AppPluginPage `json:"page"`
 }
 
 type EnabledPlugins struct {

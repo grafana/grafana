@@ -1,7 +1,19 @@
 {
-  "name": "App Example",
-  "id": "app-test",
   "type": "app",
+  "name": "App Example",
+  "id": "app-example",
+
+  "staticRoot":" ./public",
+  "module": "app",
+
+  "pages": [
+    {"name": "Example1", "url": "/app-example", "reqRole": "Editor"}
+  ],
+
+  "css": {
+    "light":  "css/plugin.dark.css",
+    "dark":   "css/plugin.light.css"
+  },
 
   "info": {
     "description": "Example Grafana App",
@@ -11,8 +23,8 @@
     },
     "keywords": ["example"],
     "logos": {
-      "small": "{{.PluginPublicRoot}}/img/logo_small.png",
-      "large": "{{.PluginPublicRoot}}/logo_large.png"
+      "small": "img/logo_small.png",
+      "large": "img/logo_large.png"
     },
     "links": [
       {"name": "Project site", "url": "http://project.com"},
@@ -20,22 +32,6 @@
     ],
     "version": "1.0.0",
     "updated": "2015-02-10"
-  },
-
-  "css": {
-    "light":  "plugin.dark.css",
-    "dark":   "plugin.light.css"
-  },
-
-  "module": "app",
-
-  "pages": [
-    {"name": "Example1", "url": "/app-example", "reqRole": "Editor"}
-  ],
-
-  "public": {
-    "urlFragment": "app-example",
-    "path": "./public"
   },
 
   "dependencies": {

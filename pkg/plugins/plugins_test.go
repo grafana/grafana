@@ -29,7 +29,7 @@ func TestPluginScans(t *testing.T) {
 
 		So(err, ShouldBeNil)
 		So(len(Apps), ShouldBeGreaterThan, 0)
-		So(Apps["app-test"].Info.Logos.Large, ShouldEqual, "public/plugins/app-test/logo_large.png")
+		So(Apps["app-example"].Info.Logos.Large, ShouldEqual, "public/plugins/app-example/img/logo_large.png")
 	})
 
 }
