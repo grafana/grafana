@@ -1,8 +1,9 @@
 define([
   'angular',
+  './datasource',
   './query_parameter_ctrl',
 ],
-function (angular) {
+function (angular, CloudWatchDatasource) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -28,4 +29,11 @@ function (angular) {
     };
   });
 
+  module.directive('datasourceCustomSettingsViewCloudwatch', function() {
+    return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/edit_view.html'};
+  });
+
+  return  {
+    Datasource: CloudWatchDatasource
+  };
 });
