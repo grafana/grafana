@@ -42,17 +42,17 @@ define([
         controller : 'DashboardImportCtrl',
       })
       .when('/datasources', {
-        templateUrl: 'app/features/org/partials/datasources.html',
+        templateUrl: 'app/features/datasources/partials/list.html',
         controller : 'DataSourcesCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/edit/:id', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/new', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })

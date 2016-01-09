@@ -1,7 +1,8 @@
 define([
   'angular',
+  './datasource',
 ],
-function (angular) {
+function (angular, OpenTsDatasource) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -13,4 +14,11 @@ function (angular) {
     };
   });
 
+  module.directive('datasourceCustomSettingsViewOpentsdb', function() {
+    return {templateUrl: 'app/plugins/datasource/opentsdb/partials/config.html'};
+  });
+
+  return {
+    Datasource: OpenTsDatasource
+  };
 });
