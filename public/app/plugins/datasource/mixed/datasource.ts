@@ -30,8 +30,3 @@ class MixedDatasource {
 }
 
 export {MixedDatasource, MixedDatasource as Datasource}
-
-// var module = angular.module('grafana.services');
-// module.factory('MixedDatasource', MixedDatasource);
-//
-
