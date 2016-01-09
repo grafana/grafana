@@ -19,6 +19,10 @@ func TestPluginScans(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(len(DataSources), ShouldBeGreaterThan, 1)
 		So(len(Panels), ShouldBeGreaterThan, 1)
+
+		Convey("Should set module automatically", func() {
+			So(DataSources["graphite"].Module, ShouldEqual, "app/plugins/datasource/graphite/module")
+		})
 	})
 
 	Convey("When reading app plugin definition", t, func() {

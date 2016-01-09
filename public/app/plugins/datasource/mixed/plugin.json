@@ -5,9 +5,5 @@
 
   "builtIn": true,
   "mixed": true,
-
-  "serviceName": "MixedDatasource",
-
-  "module": "app/plugins/datasource/mixed/datasource",
   "metrics": true
 }

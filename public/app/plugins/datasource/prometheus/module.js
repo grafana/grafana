@@ -1,7 +1,8 @@
 define([
   'angular',
+  './datasource',
 ],
-function (angular) {
+function (angular, PromDatasource) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -10,4 +11,11 @@ function (angular) {
     return {controller: 'PrometheusQueryCtrl', templateUrl: 'app/plugins/datasource/prometheus/partials/query.editor.html'};
   });
 
+  module.directive('datasourceCustomSettingsViewPrometheus', function() {
+    return {templateUrl: 'app/plugins/datasource/prometheus/partials/config.html'};
+  });
+
+  return {
+    Datasource: PromDatasource
+  };
 });

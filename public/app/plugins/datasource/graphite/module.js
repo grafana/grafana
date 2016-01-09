@@ -19,6 +19,10 @@ function (angular, GraphiteDatasource) {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/annotations.editor.html'};
   });
 
+  module.directive('datasourceCustomSettingsViewGraphite', function() {
+    return {templateUrl: 'app/plugins/datasource/graphite/partials/config.html'};
+  });
+
   return {
     Datasource: GraphiteDatasource,
   };
