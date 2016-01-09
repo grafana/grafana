@@ -301,4 +301,7 @@ function (angular, _, $, config, dateMath) {
 
   });
 
+  return {
+    serviceName: "GraphiteDatasource"
+  };
 });
