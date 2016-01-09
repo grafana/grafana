@@ -42,7 +42,7 @@
 				<div class="clearfix"></div>
 			</div>
 
-			<div ng-include="datasourceMeta.partials.config" ng-if="datasourceMeta.partials.config"></div>
+			<datasource-custom-settings-view ds-meta="datasourceMeta" current="current"></datasource-custom-settings-view>
 
 			<div ng-if="testing" style="margin-top: 25px">
 				<h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>

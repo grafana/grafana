@@ -15,20 +15,6 @@ function (angular, _, config) {
 
     var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {}};
 
-    $scope.indexPatternTypes = [
-      {name: 'No pattern',  value: undefined},
-      {name: 'Hourly',      value: 'Hourly',  example: '[logstash-]YYYY.MM.DD.HH'},
-      {name: 'Daily',       value: 'Daily',   example: '[logstash-]YYYY.MM.DD'},
-      {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
-      {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
-      {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
-    ];
-
-    $scope.esVersions = [
-      {name: '1.x', value: 1},
-      {name: '2.x', value: 2},
-    ];
-
     $scope.init = function() {
       $scope.isNew = true;
       $scope.datasources = [];
@@ -59,7 +45,7 @@ function (angular, _, config) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
         $scope.isNew = false;
         $scope.current = ds;
-        $scope.typeChanged();
+        return $scope.typeChanged();
       });
     };
 
@@ -125,11 +111,6 @@ function (angular, _, config) {
           $location.path('datasources/edit/' + result.id);
         });
       }
-    };
-
-    $scope.indexPatternTypeChanged = function() {
-      var def = _.findWhere($scope.indexPatternTypes, {value: $scope.current.jsonData.interval});
-      $scope.current.database = def.example || 'es-index-name';
     };
 
     $scope.init();

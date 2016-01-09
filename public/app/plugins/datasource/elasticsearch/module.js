@@ -1,9 +1,11 @@
 define([
   'angular',
+  './datasource',
+  './edit_view',
   './bucket_agg',
   './metric_agg',
 ],
-function (angular) {
+function (angular, ElasticDatasource, editView) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -18,10 +20,6 @@ function (angular) {
 
   module.directive('annotationsQueryEditorElasticsearch', function() {
     return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
-  });
-
-  module.directive('datasourceCustomSettingsViewElasticsearch', function() {
-    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/config.html'};
   });
 
   module.directive('elasticMetricAgg', function() {
@@ -52,5 +50,11 @@ function (angular) {
       }
     };
   });
+
+  module.directive('datasourceCustomSettingsViewElasticsearch', editView.default);
+
+  return {
+    Datasource: ElasticDatasource,
+  };
 
 });

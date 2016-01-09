@@ -3,7 +3,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 import moment from 'moment';
 import angular from 'angular';
 import helpers from 'test/specs/helpers';
-import {Datasource} from "../datasource";
+import Datasource from "../datasource";
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();

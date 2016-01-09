@@ -3,7 +3,6 @@
   "type": "datasource",
   "id": "graphite",
 
-  "serviceName": "GraphiteDatasource",
   "module": "app/plugins/datasource/graphite/datasource",
 
   "partials": {
