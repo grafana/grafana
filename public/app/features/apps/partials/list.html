@@ -15,10 +15,13 @@
 		<ul class="filter-list">
       <li ng-repeat="app in ctrl.apps">
         <ul class="filter-list-card">
+					<li class="filter-list-card-image">
+						<img src="{{app.info.logos.small}}">
+					</li>
           <li>
             <div class="filter-list-card-controls">
               <div class="filter-list-card-config">
-								<a href="apps/edit/{{app.type}}">
+								<a href="apps/edit/{{app.appId}}">
 									<i class="fa fa-cog"></i>
 								</a>
               </div>

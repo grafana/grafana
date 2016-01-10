@@ -2,9 +2,9 @@ package models
 
 import "time"
 
-type AppPlugin struct {
+type AppSettings struct {
 	Id       int64
-	Type     string
+	AppId    string
 	OrgId    int64
 	Enabled  bool
 	Pinned   bool
@@ -18,19 +18,18 @@ type AppPlugin struct {
 // COMMANDS
 
 // Also acts as api DTO
-type UpdateAppPluginCmd struct {
-	Type     string                 `json:"type" binding:"Required"`
+type UpdateAppSettingsCmd struct {
 	Enabled  bool                   `json:"enabled"`
 	Pinned   bool                   `json:"pinned"`
 	JsonData map[string]interface{} `json:"jsonData"`
 
-	Id    int64 `json:"-"`
-	OrgId int64 `json:"-"`
+	AppId string `json:"-"`
+	OrgId int64  `json:"-"`
 }
 
 // ---------------------
 // QUERIES
-type GetAppPluginsQuery struct {
+type GetAppSettingsQuery struct {
 	OrgId  int64
-	Result []*AppPlugin
+	Result []*AppSettings
 }

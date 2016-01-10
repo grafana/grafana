@@ -8,27 +8,27 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetAppPlugins)
-	bus.AddHandler("sql", UpdateAppPlugin)
+	bus.AddHandler("sql", GetAppSettings)
+	bus.AddHandler("sql", UpdateAppSettings)
 }
 
-func GetAppPlugins(query *m.GetAppPluginsQuery) error {
+func GetAppSettings(query *m.GetAppSettingsQuery) error {
 	sess := x.Where("org_id=?", query.OrgId)
 
-	query.Result = make([]*m.AppPlugin, 0)
+	query.Result = make([]*m.AppSettings, 0)
 	return sess.Find(&query.Result)
 }
 
-func UpdateAppPlugin(cmd *m.UpdateAppPluginCmd) error {
+func UpdateAppSettings(cmd *m.UpdateAppSettingsCmd) error {
 	return inTransaction2(func(sess *session) error {
-		var app m.AppPlugin
+		var app m.AppSettings
 
-		exists, err := sess.Where("org_id=? and type=?", cmd.OrgId, cmd.Type).Get(&app)
+		exists, err := sess.Where("org_id=? and app_id=?", cmd.OrgId, cmd.AppId).Get(&app)
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {
-			app = m.AppPlugin{
-				Type:     cmd.Type,
+			app = m.AppSettings{
+				AppId:    cmd.AppId,
 				OrgId:    cmd.OrgId,
 				Enabled:  cmd.Enabled,
 				Pinned:   cmd.Pinned,

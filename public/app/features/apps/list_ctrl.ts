@@ -7,11 +7,11 @@ export class AppListCtrl {
   apps: any[];
 
   /** @ngInject */
-  constructor(private appSrv: any) {}
+  constructor(private backendSrv: any) {}
 
   init() {
-    this.appSrv.getAll().then(result => {
-      this.apps = result;
+    this.backendSrv.get('api/org/apps').then(apps => {
+      this.apps = apps;
     });
   }
 }

@@ -1,7 +1,7 @@
 <topnav title="Apps" icon="fa fa-fw fa-cubes" subnav="true">
 	<ul class="nav">
-		<li ><a href="org/apps">Overview</a></li>
-		<li class="active" ><a href="org/apps/edit/{{ctrl.current.type}}">Edit</a></li>
+		<li ><a href="apps">Overview</a></li>
+		<li class="active" ><a href="apps/edit/{{ctrl.current.type}}">Edit</a></li>
 	</ul>
 </topnav>
 
@@ -25,10 +25,12 @@
 		<em>
 			{{ctrl.appModel.info.description}}
 		</em>
+		<br><br>
 
 		<div class="form-inline">
-			<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="enabledChanged()"></editor-checkbox>
-			<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="enabledChanged()"></editor-checkbox>
+			<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="ctrl.toggleEnabled()"></editor-checkbox>
+			&nbsp; &nbsp; &nbsp;
+			<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="ctrl.togglePinned()"></editor-checkbox>
 		</div>
 
 			<app-config-loader></app-config-loader>

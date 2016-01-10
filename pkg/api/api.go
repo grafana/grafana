@@ -41,8 +41,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 
-	r.Get("/org/apps", reqSignedIn, Index)
-	r.Get("/org/apps/edit/*", reqSignedIn, Index)
+	r.Get("/apps", reqSignedIn, Index)
+	r.Get("/apps/edit/*", reqSignedIn, Index)
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
@@ -119,8 +119,9 @@ func Register(r *macaron.Macaron) {
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 
 			// apps
-			r.Get("/apps", wrap(GetAppPlugins))
-			r.Post("/apps", bind(m.UpdateAppPluginCmd{}), wrap(UpdateAppPlugin))
+			r.Get("/apps", wrap(GetOrgAppsList))
+			r.Get("/apps/:appId/settings", wrap(GetAppSettingsById))
+			r.Post("/apps/:appId/settings", bind(m.UpdateAppSettingsCmd{}), wrap(UpdateAppSettings))
 		}, reqOrgAdmin)
 
 		// create new org
