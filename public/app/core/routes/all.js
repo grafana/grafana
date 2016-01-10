@@ -138,7 +138,7 @@ define([
         controllerAs: 'ctrl',
         resolve: loadAppsBundle,
       })
-      .when('/apps/edit/:type', {
+      .when('/apps/edit/:appId', {
         templateUrl: 'app/features/apps/partials/edit.html',
         controller: 'AppEditCtrl',
         controllerAs: 'ctrl',

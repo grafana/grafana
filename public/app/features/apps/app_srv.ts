@@ -15,9 +15,6 @@ export class AppSrv {
   }
 
   get(type) {
-    if (this.apps[type]) {
-      return this.$q.when(this.apps[type]);
-    }
     return this.getAll().then(() => {
       return this.apps[type];
     });
@@ -38,7 +35,7 @@ export class AppSrv {
 
   update(app) {
     return this.backendSrv.post('api/org/apps', app).then(resp => {
-      this.apps[app.type] = app;
+
     });
   }
 }

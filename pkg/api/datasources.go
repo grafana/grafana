@@ -118,18 +118,17 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 func GetDataSourcePlugins(c *middleware.Context) {
 	dsList := make(map[string]*plugins.DataSourcePlugin)
 
-	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
-	err := bus.Dispatch(&orgApps)
-	if err != nil {
+	if enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId); err != nil {
 		c.JsonApiErr(500, "Failed to get org apps", err)
-	}
-	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
+		return
+	} else {
 
-	for key, value := range enabledPlugins.DataSources {
-		if !value.BuiltIn {
-			dsList[key] = value
+		for key, value := range enabledPlugins.DataSources {
+			if !value.BuiltIn {
+				dsList[key] = value
+			}
 		}
-	}
 
-	c.JSON(200, dsList)
+		c.JSON(200, dsList)
+	}
 }

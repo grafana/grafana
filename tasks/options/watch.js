@@ -33,6 +33,9 @@ module.exports = function(config, grunt) {
       grunt.config(option, result);
       grunt.task.run('typescript:build');
       grunt.task.run('tslint');
+      // copy ts file also used by source maps
+      newPath = filepath.replace(/^public/, 'public_gen');
+      grunt.file.copy(filepath, newPath);
     }
   });
 

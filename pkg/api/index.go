@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -69,13 +68,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		})
 	}
 
-	orgApps := m.GetAppPluginsQuery{OrgId: c.OrgId}
-	err = bus.Dispatch(&orgApps)
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
-
-	enabledPlugins := plugins.GetEnabledPlugins(orgApps.Result)
 
 	for _, plugin := range enabledPlugins.Apps {
 		if plugin.Module != "" {
