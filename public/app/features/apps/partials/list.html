@@ -26,7 +26,15 @@
 								</a>
               </div>
             </div>
-						<span class="filter-list-card-title">{{app.name}}</span>
+						<span class="filter-list-card-title">
+							<a href="apps/edit/{{app.appId}}">
+								{{app.name}}
+							</a>
+							&nbsp; &nbsp;
+							<span class="label label-info" ng-if="app.enabled">
+								enabled
+							</span>
+						</span>
             <span class="filter-list-card-status">
               <span class="filter-list-card-state">Dashboards: 1</span>
             </span>
