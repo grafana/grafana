@@ -20,10 +20,11 @@ type AppPluginCss struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Enabled bool           `json:"enabled"`
-	Pinned  bool           `json:"pinned"`
-	Css     *AppPluginCss  `json:"css"`
-	Page    *AppPluginPage `json:"page"`
+	Css  *AppPluginCss  `json:"css"`
+	Page *AppPluginPage `json:"page"`
+
+	Pinned  bool `json:"-"`
+	Enabled bool `json:"-"`
 }
 
 func (p *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
