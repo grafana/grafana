@@ -46,7 +46,10 @@
 
 		<li ng-repeat="item in mainLinks">
 			<a href="{{item.url}}" class="sidemenu-item sidemenu-main-link" target="{{item.target}}">
-				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="icon-circle sidemenu-icon">
+					<i class="{{item.icon}}" ng-show="item.icon"></i>
+					<img src="{{item.img}}" ng-show="item.img">
+				</span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 			</a>
 		</li>

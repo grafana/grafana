@@ -82,14 +82,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
 		}
 
-		if plugin.Pinned && plugin.Page != nil {
-			if c.HasUserRole(plugin.Page.ReqRole) {
-				data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-					Text: plugin.Page.Text,
-					Url:  plugin.Page.Url,
-					Icon: plugin.Page.Icon,
-				})
-			}
+		if plugin.Pinned {
+			data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+				Text: plugin.Name,
+				Url:  setting.AppSubUrl + "/apps/edit/" + plugin.Id,
+				Img:  plugin.Info.Logos.Small,
+			})
 		}
 	}
 

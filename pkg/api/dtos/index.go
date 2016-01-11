@@ -21,5 +21,6 @@ type PluginCss struct {
 type NavLink struct {
 	Text string `json:"text"`
 	Icon string `json:"icon"`
+	Img  string `json:"img"`
 	Url  string `json:"url"`
 }
