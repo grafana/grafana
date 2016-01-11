@@ -102,13 +102,17 @@ function (angular, _) {
         panel.datasource = null;
       });
       // remove annotation queries
-      dash.annotations.list = _.map(dash.annotations.list, function(annotation) {
+      dash.annotations.list = _.chain(dash.annotations.list)
+      .filter(function(annotation) {
+        return annotation.enable;
+      })
+      .map(function(annotation) {
         return {
           name: annotation.name,
           enable: annotation.enable,
           snapshotData: annotation.snapshotData
         };
-      });
+      }).value();
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";

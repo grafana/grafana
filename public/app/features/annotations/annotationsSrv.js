@@ -46,9 +46,9 @@ define([
           var query = {range: range, rangeRaw: rangeRaw, annotation: annotation};
           return datasource.annotationQuery(query)
             .then(self.receiveAnnotationResults)
-            .then(function(options) {
+            .then(function(results) {
               if (dashboard.snapshot) {
-                annotation.snapshotData = angular.copy(options);
+                annotation.snapshotData = angular.copy(results);
               }
             })
             .then(null, errorHandler);
