@@ -8,7 +8,6 @@ import (
 
 type AppPluginPage struct {
 	Text    string          `json:"text"`
-	Icon    string          `json:"icon"`
 	Url     string          `json:"url"`
 	ReqRole models.RoleType `json:"reqRole"`
 }
@@ -20,8 +19,8 @@ type AppPluginCss struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Css  *AppPluginCss  `json:"css"`
-	Page *AppPluginPage `json:"page"`
+	Css  *AppPluginCss    `json:"css"`
+	Page []*AppPluginPage `json:"page"`
 
 	Pinned  bool `json:"-"`
 	Enabled bool `json:"-"`

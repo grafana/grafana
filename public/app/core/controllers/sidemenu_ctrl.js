@@ -19,6 +19,7 @@ function (angular, _, $, coreModule, config) {
         $scope.mainLinks.push({
           text: item.text,
           icon: item.icon,
+          img: item.img,
           url: $scope.getUrl(item.url)
         });
       });

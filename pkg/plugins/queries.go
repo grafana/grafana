@@ -30,41 +30,20 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 	seenPanels := make(map[string]bool)
 	seenApi := make(map[string]bool)
 
-	for appType, installedApp := range Apps {
+	for appId, installedApp := range Apps {
 		var app AppPlugin
 		app = *installedApp
 
 		// check if the app is stored in the DB for this org and if so, use the
 		// state stored there.
-		if b, ok := orgApps[appType]; ok {
+		if b, ok := orgApps[appId]; ok {
 			app.Enabled = b.Enabled
 			app.Pinned = b.Pinned
 		}
 
-		// if app.Enabled {
-		// 	for _, d := range app.DatasourcePlugins {
-		// 		if ds, ok := DataSources[d]; ok {
-		// 			enabledPlugins.DataSourcePlugins[d] = ds
-		// 		}
-		// 	}
-		// 	for _, p := range app.PanelPlugins {
-		// 		if panel, ok := Panels[p]; ok {
-		// 			if _, ok := seenPanels[p]; !ok {
-		// 				seenPanels[p] = true
-		// 				enabledPlugins.PanelPlugins = append(enabledPlugins.PanelPlugins, panel)
-		// 			}
-		// 		}
-		// 	}
-		// 	for _, a := range app.ApiPlugins {
-		// 		if api, ok := ApiPlugins[a]; ok {
-		// 			if _, ok := seenApi[a]; !ok {
-		// 				seenApi[a] = true
-		// 				enabledPlugins.ApiPlugins = append(enabledPlugins.ApiPlugins, api)
-		// 			}
-		// 		}
-		// 	}
-		// 	enabledPlugins.AppPlugins = append(enabledPlugins.AppPlugins, &app)
-		// }
+		if app.Enabled {
+			enabledPlugins.Apps = append(enabledPlugins.Apps, &app)
+		}
 	}
 
 	// add all plugins that are not part of an App.
