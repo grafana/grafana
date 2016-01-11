@@ -84,6 +84,7 @@ func UpdatePlaylist(query *m.UpdatePlaylistQuery) error {
 	}
 
 	playlistItems := make([]m.PlaylistItem, 0)
+
 	for _, item := range query.Items {
 		playlistItems = append(playlistItems, m.PlaylistItem{
 			PlaylistId: playlist.Id,
