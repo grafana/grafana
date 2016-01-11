@@ -230,7 +230,7 @@ function (angular, _, moment, dateMath) {
       });
 
       var endTimestamp = end * 1000;
-      for (var t = baseTimestamp; t < endTimestamp; t += stepMs) {
+      for (var t = baseTimestamp; t <= endTimestamp; t += stepMs) {
         dps.push([null, t]);
       }
 
