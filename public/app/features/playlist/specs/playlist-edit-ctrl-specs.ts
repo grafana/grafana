@@ -38,7 +38,7 @@ describe('PlaylistEditCtrl', function() {
         ctx.scope.$digest();
     });
 
-    describe.only('searchresult returns 2 dashboards', function() {
+    describe('searchresult returns 2 dashboards', function() {
         it('found dashboard should be 2', function() {
             expect(ctx.scope.foundPlaylistItems.length).to.be(2);
         });
