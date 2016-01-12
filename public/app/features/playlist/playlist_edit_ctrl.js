@@ -25,7 +25,7 @@ function (angular, config, _) {
             $scope.playlist = result;
           });
 
-        backendSrv.get('/api/playlists/' + playlistId + '/playlistitems')
+        backendSrv.get('/api/playlists/' + playlistId + '/items')
           .then(function(result) {
             $scope.playlistItems = result;
           });
