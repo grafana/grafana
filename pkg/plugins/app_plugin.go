@@ -26,13 +26,18 @@ type AppPlugin struct {
 	Enabled bool `json:"-"`
 }
 
-func (p *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
-	if err := decoder.Decode(&p); err != nil {
+func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
+	if err := decoder.Decode(&app); err != nil {
 		return err
 	}
 
-	p.PluginDir = pluginDir
-	p.initFrontendPlugin()
-	Apps[p.Id] = p
+	if app.Css != nil {
+		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
+		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
+	}
+
+	app.PluginDir = pluginDir
+	app.initFrontendPlugin()
+	Apps[app.Id] = app
 	return nil
 }

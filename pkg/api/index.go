@@ -85,7 +85,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		if plugin.Pinned {
 			data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 				Text: plugin.Name,
-				Url:  setting.AppSubUrl + "/apps/edit/" + plugin.Id,
+				Url:  "/apps/edit/" + plugin.Id,
 				Img:  plugin.Info.Logos.Small,
 			})
 		}
