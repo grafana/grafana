@@ -47,6 +47,9 @@ func Register(r *macaron.Macaron) {
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 
+	r.Get("/playlists/", reqSignedIn, Index)
+	r.Get("/playlists/*", reqSignedIn, Index)
+
 	// sign up
 	r.Get("/signup", Index)
 	r.Get("/api/user/signup/options", wrap(GetSignUpOptions))
@@ -167,6 +170,17 @@ func Register(r *macaron.Macaron) {
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
+		})
+
+		// Playlist
+		r.Group("/playlists", func() {
+			r.Get("/", wrap(SearchPlaylists))
+			r.Get("/:id", ValidateOrgPlaylist, wrap(GetPlaylist))
+			r.Get("/:id/items", ValidateOrgPlaylist, wrap(GetPlaylistItems))
+			r.Get("/:id/dashboards", ValidateOrgPlaylist, wrap(GetPlaylistDashboards))
+			r.Delete("/:id", reqEditorRole, ValidateOrgPlaylist, wrap(DeletePlaylist))
+			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistQuery{}), ValidateOrgPlaylist, wrap(UpdatePlaylist))
+			r.Post("/", reqEditorRole, bind(m.CreatePlaylistQuery{}), wrap(CreatePlaylist))
 		})
 
 		// Search

@@ -4,6 +4,7 @@ define([
   './annotations/annotationsSrv',
   './templating/templateSrv',
   './dashboard/all',
+  './playlist/all',
   './panel/all',
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
