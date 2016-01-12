@@ -31,7 +31,7 @@ function (angular) {
 
             return backendSrv.get('/api/playlists/' + playlistId)
               .then(function(playlist) {
-                return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
+                return backendSrv.get('/api/playlists/' + playlistId + '/playlistdashboards')
                   .then(function(dashboards) {
                     playlistSrv.start(dashboards, playlist.timespan);
                   });
