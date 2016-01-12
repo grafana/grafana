@@ -333,5 +333,24 @@ define([
       });
     });
 
+    describe('Formatting epoch timestamp when timezone is set as utc', function() {
+
+      var dashboard;
+
+      beforeEach(function() {
+        dashboard = _dashboardSrv.create({
+          timezone: 'utc',
+        });
+      });
+
+      it('Should format timestamp with second resolution by default', function() {
+        expect(dashboard.formatDate(1234567890000)).to.be('2009-02-13 23:31:30');
+      });
+
+      it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
+        expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss.SSS')).to.be('2009-02-13 23:31:30.007');
+      });
+    });
+
   });
 });

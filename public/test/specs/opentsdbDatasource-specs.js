@@ -13,7 +13,7 @@ define([
 
     beforeEach(ctx.createService('OpenTSDBDatasource'));
     beforeEach(function() {
-      ctx.ds = new ctx.service({ url: [''] });
+      ctx.ds = new ctx.service({ url: [''], jsonData: {} });
     });
 
     describe('When performing metricFindQuery', function() {
