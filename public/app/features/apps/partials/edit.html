@@ -21,9 +21,15 @@
 	</div>
 
   <div class="page-wide-margined" ng-init="ctrl.init()">
-		<h1>{{ctrl.appModel.name}}</h1>
+		<h1>
+			{{ctrl.appModel.name}}
+		</h1>
 		<em>
-			{{ctrl.appModel.info.description}}
+			{{ctrl.appModel.info.description}}<br>
+			<span style="small">
+			Version: {{ctrl.appModel.info.version}} &nbsp; &nbsp; Updated: {{ctrl.appModel.info.updated}}
+		</span>
+
 		</em>
 		<br><br>
 
@@ -42,8 +48,7 @@
 						Dashboards
 					</div>
 					<ul>
-						<li>Test</li>
-						<li>Test2</li>
+						<li><em class="small">None</em></li>
 					</ul>
 				</div>
 				<div class="simple-box-body simple-box-column">
@@ -52,8 +57,7 @@
 						Panels
 					</div>
 					<ul>
-						<li>Test</li>
-						<li>Test2</li>
+						<li><em class="small">None</em></li>
 					</ul>
 				</div>
 				<div class="simple-box-body simple-box-column">
@@ -62,8 +66,7 @@
 						Datasources
 					</div>
 					<ul>
-						<li>Test</li>
-						<li>Test2</li>
+						<li><em class="small">None</em></li>
 					</ul>
 				</div>
 				<div class="simple-box-body simple-box-column">
@@ -72,8 +75,9 @@
 						Pages
 					</div>
 					<ul>
-						<li>Test</li>
-						<li>Test2</li>
+						<li ng-repeat="page in ctrl.appModel.pages">
+							<a href="{{page.url}}" class="external-link">{{page.name}}</a>
+						</li>
 					</ul>
 				</div>
 
