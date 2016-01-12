@@ -9,7 +9,6 @@ function (angular, config, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('PlaylistEditCtrl', function($scope, playlistSrv, backendSrv, $location, $route) {
-    $scope.timespan = config.playlist_timespan;
     $scope.filteredPlaylistItems = [];
     $scope.foundPlaylistItems = [];
     $scope.searchQuery = '';
@@ -17,19 +16,23 @@ function (angular, config, _) {
     $scope.playlist = {};
     $scope.playlistItems = [];
 
-    if ($route.current.params.id) {
-      var playlistId = $route.current.params.id;
+    $scope.init = function() {
+      if ($route.current.params.id) {
+        var playlistId = $route.current.params.id;
 
-      backendSrv.get('/api/playlists/' + playlistId)
-        .then(function(result) {
-          $scope.playlist = result;
-        });
+        backendSrv.get('/api/playlists/' + playlistId)
+          .then(function(result) {
+            $scope.playlist = result;
+          });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/playlistitems')
-        .then(function(result) {
-          $scope.playlistItems = result;
-        });
-    }
+        backendSrv.get('/api/playlists/' + playlistId + '/playlistitems')
+          .then(function(result) {
+            $scope.playlistItems = result;
+          });
+      }
+
+      $scope.search();
+    };
 
     $scope.search = function() {
       var query = {starred: true, limit: 10};
@@ -136,6 +139,6 @@ function (angular, config, _) {
       $scope.moveDashboard(playlistItem, 1);
     };
 
-    $scope.search();
+    $scope.init();
   });
 });
