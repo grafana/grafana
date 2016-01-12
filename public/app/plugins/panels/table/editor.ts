@@ -112,7 +112,7 @@ export class TablePanelEditorCtrl {
   }
 }
 
-
+/** @ngInject */
 export function tablePanelEditor($q, uiSegmentSrv) {
   'use strict';
   return {
