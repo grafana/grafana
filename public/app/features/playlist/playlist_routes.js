@@ -33,7 +33,7 @@ function (angular) {
               .then(function(playlist) {
                 return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
                   .then(function(dashboards) {
-                    playlistSrv.start(dashboards, playlist.timespan);
+                    playlistSrv.start(dashboards, playlist.interval);
                   });
               });
           }
