@@ -24,6 +24,8 @@ type PluginInfo struct {
 	Description string           `json:"description"`
 	Links       []PluginInfoLink `json:"links"`
 	Logos       PluginLogos      `json:"logos"`
+	Version     string           `json:"version"`
+	Updated     string           `json:"updated"`
 }
 
 type PluginInfoLink struct {
