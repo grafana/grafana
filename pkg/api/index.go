@@ -57,7 +57,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Playlists",
 		Icon: "fa fa-fw fa-list",
-		Href: "/playlists",
+		Url:  "/playlists",
 	})
 
 	if c.OrgRole == m.ROLE_ADMIN {
