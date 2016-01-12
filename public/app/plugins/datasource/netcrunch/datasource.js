@@ -14,6 +14,7 @@ define([
   'config',
   'jquery',
   'kbn',
+  './services/netCrunchConnectionProvider',
   './services/networkDataProvider',
   './services/countersDataProvider',
   './services/trendDataProvider',
@@ -34,7 +35,8 @@ function (angular, _, moment, config, $, kbn) {
                                                  netCrunchRemoteSession, networkDataProvider,
                                                  atlasTree, countersDataProvider, trendDataProvider,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
-                                                 netCrunchNodesFilter, processingDataWorker) {
+                                                 netCrunchNodesFilter, processingDataWorker,
+                                                 netCrunchConnectionProvider, netCrunchConnectionProviderConsts) {
 
     var THREAD_WORKER_NODES_NUMBER = 1000,
         RAW_DATA_MAX_RANGE = {
@@ -55,7 +57,8 @@ function (angular, _, moment, config, $, kbn) {
           equal : 'Equal',
           distr : 'Distr'
         },
-        PERIODS = Object.create(null);
+        PERIODS = Object.create(null),
+        CONNECTION_ERROR_MESSAGES = netCrunchConnectionProviderConsts.ERROR_MESSAGES;
 
     PERIODS[trendDataProvider.PERIOD_TYPE.tpMinutes] = 'minutes';
     PERIODS[trendDataProvider.PERIOD_TYPE.tpHours] = 'hours';
@@ -90,6 +93,8 @@ function (angular, _, moment, config, $, kbn) {
       var initTask = $q.defer(),
           nodesReady = $q.defer(),
           networkAtlasReady = $q.defer(),
+          netCrunchLogin,
+          netCrunchConnection,
           self = this;
 
       this.id = datasource.id;
@@ -102,45 +107,30 @@ function (angular, _, moment, config, $, kbn) {
       this.networkAtlas = networkAtlasReady.promise;
       this.cache = this.createQueryCache();
 
-      netCrunchRemoteSession.init().then(
+      if (datasource.url != null) {
+        netCrunchLogin = netCrunchConnectionProvider.getConnection(datasource);
+        netCrunchLogin.then(
+          function(connection) {
+            netCrunchConnection = connection;
 
-        function(status) {
-          var LOGIN_STATUS_ID = 0;
+//************
 
-          if (status[LOGIN_STATUS_ID] === true) {
-            networkDataProvider.init().then(function() {
+            initTask.resolve();
 
-              $rootScope.$on('host-data-changed', function() {
-                var nodes = atlasTree.nodes;
+//************
 
-                nodes.table = [];
-                Object.keys(nodes).forEach(function(nodeId) {
-                  nodes.table.push(nodes[nodeId]);
-                });
-
-                self.updateNodeList(nodes.table).then(function(updated) {
-                  nodesReady.resolve(updated);
-                  $rootScope.$broadcast('netCrunch-datasource-hosts-changed');
-                });
-              });
-
-              $rootScope.$on('network-data-changed', function() {
-                networkAtlasReady.resolve(atlasTree.tree);
-                $rootScope.$broadcast('netCrunch-datasource-network-atlas-changed');
-              });
-
-              initTask.resolve();
-            });
-          } else {
-            console.log('NetCrunch datasource: login failed');
-            alertSrv.set('NetCrunch datasource' ,'Can\'t connect to the server', 'error');
+          },
+          function(error) {
+            alertSrv.set(datasource.name, CONNECTION_ERROR_MESSAGES[error], 'error');
+            console.log('');
+            console.log('NetCrunch datasource');
+            console.log(datasource.name + ': ' + CONNECTION_ERROR_MESSAGES[error]);
             initTask.reject();
           }
-        },
-
-        function() {
-          initTask.reject();
-        });
+        );
+      } else {
+        initTask.reject();
+      }
     }
 
     NetCrunchDatasource.prototype.createQueryCache = function() {
