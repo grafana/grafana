@@ -1,0 +1,48 @@
+<topnav icon="fa fa-fw fa-list" title="Playlists"></topnav>
+
+<div class="page-container" style="background: transparent; border: 0;">
+  <div class="page-wide">
+    <h2>Saved playlists</h2>
+
+    <button type="submit" class="btn btn-success pull-right" ng-click="createPlaylist()">
+    <i class="fa fa-plus"></i> New playlist</button>
+    <br />
+
+    <table class="filter-table" style="margin-top: 20px">
+      <thead>
+        <th><strong>Title</strong></th>
+        <th><strong>Url</strong></th>
+        <th style="width: 61px"></th>
+        <th style="width: 61px"></th>
+        <th style="width: 25px"></th>
+
+      </thead>
+      <tr ng-repeat="playlist in playlists">
+        <td >
+          {{playlist.title}}
+        </td>
+        <td >
+          <a href="{{ playlistUrl(playlist) }}">{{ playlistUrl(playlist) }}</a>
+        </td>
+        <td class="text-center">
+          <a href="{{ playlistUrl(playlist) }}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-play"></i>
+            Play
+          </a>
+        </td>
+        <td  class="text-right">
+          <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-edit"></i>
+            Edit
+          </a>
+        </td>
+        <td  class="text-right">
+          <a ng-click="removePlaylist(playlist)" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+</div>
