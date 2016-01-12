@@ -10,12 +10,12 @@ function (angular, config, _) {
 
   module.controller('PlaylistEditCtrl', function($scope, playlistSrv, backendSrv, $location, $route) {
     $scope.timespan = config.playlist_timespan;
-    $scope.filteredDashboards = [];
-    $scope.foundDashboards = [];
+    $scope.filteredPlaylistItems = [];
+    $scope.foundPlaylistItems = [];
     $scope.searchQuery = '';
     $scope.loading = false;
     $scope.playlist = {};
-    $scope.dashboards = [];
+    $scope.playlistItems = [];
 
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
@@ -25,9 +25,9 @@ function (angular, config, _) {
           $scope.playlist = result;
         });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
+      backendSrv.get('/api/playlists/' + playlistId + '/playlistitems')
         .then(function(result) {
-          $scope.dashboards = result;
+          $scope.playlistItems = result;
         });
     }
 
@@ -43,43 +43,43 @@ function (angular, config, _) {
 
       backendSrv.search(query)
         .then(function(results) {
-          $scope.foundDashboards = results;
-          $scope.filterFoundDashboards();
+          $scope.foundPlaylistItems = results;
+          $scope.filterFoundPlaylistItems();
         })
         .finally(function() {
           $scope.loading = false;
         });
     };
 
-    $scope.filterFoundDashboards = function() {
-      $scope.filteredDashboards = _.reject($scope.foundDashboards, function(dashboard) {
-        return _.findWhere($scope.dashboards, function(listDashboard) {
-          return listDashboard.id === dashboard.id;
+    $scope.filterFoundPlaylistItems = function() {
+      $scope.filteredPlaylistItems = _.reject($scope.foundPlaylistItems, function(playlistItem) {
+        return _.findWhere($scope.playlistItems, function(listPlaylistItem) {
+          return parseInt(listPlaylistItem.value) === playlistItem.id;
         });
       });
     };
 
-    $scope.addDashboard = function(dashboard) {
-      $scope.dashboards.push(dashboard);
-      $scope.filterFoundDashboards();
+    $scope.addPlaylistItem = function(playlistItem) {
+      playlistItem.value = playlistItem.id.toString();
+      playlistItem.type = 'dashboard_by_id';
+      playlistItem.order = $scope.playlistItems.length + 1;
+
+      $scope.playlistItems.push(playlistItem);
+      $scope.filterFoundPlaylistItems();
+
     };
 
-    $scope.removeDashboard = function(dashboard) {
-      _.remove($scope.dashboards, function(listedDashboard) {
-        return dashboard === listedDashboard;
+    $scope.removePlaylistItem = function(playlistItem) {
+      _.remove($scope.playlistItems, function(listedPlaylistItem) {
+        return playlistItem === listedPlaylistItem;
       });
-      $scope.filterFoundDashboards();
+      $scope.filterFoundPlaylistItems();
     };
 
-    $scope.savePlaylist = function(playlist, dashboards) {
+    $scope.savePlaylist = function(playlist, playlistItems) {
       var savePromise;
 
-      playlist.data = dashboards.map(function(dashboard) {
-        return dashboard.id;
-      });
-
-      // Hardcoding playlist type for this iteration
-      playlist.type = "dashboards";
+      playlist.items = playlistItems;
 
       savePromise = playlist.id
         ? backendSrv.put('/api/playlists/' + playlist.id, playlist)
@@ -90,7 +90,7 @@ function (angular, config, _) {
           $scope.appEvent('alert-success', ['Playlist saved', '']);
           $location.path('/playlists');
         }, function() {
-          $scope.appEvent('alert-success', ['Unable to save playlist', '']);
+          $scope.appEvent('alert-error', ['Unable to save playlist', '']);
         });
     };
 
@@ -98,16 +98,12 @@ function (angular, config, _) {
       return !$scope.playlist.id;
     };
 
-    $scope.startPlaylist = function(playlist, dashboards) {
-      playlistSrv.start(dashboards, playlist.timespan);
-    };
-
     $scope.isPlaylistEmpty = function() {
-      return !$scope.dashboards.length;
+      return !$scope.playlistItems.length;
     };
 
     $scope.isSearchResultsEmpty = function() {
-      return !$scope.foundDashboards.length;
+      return !$scope.foundPlaylistItems.length;
     };
 
     $scope.isSearchQueryEmpty = function() {
@@ -122,22 +118,22 @@ function (angular, config, _) {
       return $scope.loading;
     };
 
-    $scope.moveDashboard = function(dashboard, offset) {
-      var currentPosition = $scope.dashboards.indexOf(dashboard);
+    $scope.movePlaylistItem = function(playlistItem, offset) {
+      var currentPosition = $scope.playlistItems.indexOf(playlistItem);
       var newPosition = currentPosition + offset;
 
-      if (newPosition >= 0 && newPosition < $scope.dashboards.length) {
-        $scope.dashboards.splice(currentPosition, 1);
-        $scope.dashboards.splice(newPosition, 0, dashboard);
+      if (newPosition >= 0 && newPosition < $scope.playlistItems.length) {
+        $scope.playlistItems.splice(currentPosition, 1);
+        $scope.playlistItems.splice(newPosition, 0, playlistItem);
       }
     };
 
-    $scope.moveDashboardUp = function(dashboard) {
-      $scope.moveDashboard(dashboard, -1);
+    $scope.movePlaylistItemUp = function(playlistItem) {
+      $scope.moveDashboard(playlistItem, -1);
     };
 
-    $scope.moveDashboardDown = function(dashboard) {
-      $scope.moveDashboard(dashboard, 1);
+    $scope.movePlaylistItemDown = function(playlistItem) {
+      $scope.moveDashboard(playlistItem, 1);
     };
 
     $scope.search();
