@@ -55,23 +55,7 @@ func GetPlaylist(c *middleware.Context) Response {
 		return ApiError(500, "Playlist not found", err)
 	}
 
-	itemQuery := m.GetPlaylistItemsByIdQuery{PlaylistId: id}
-	if err := bus.Dispatch(&itemQuery); err != nil {
-		log.Warn("itemQuery failed: %v", err)
-		return ApiError(500, "Playlist items not found", err)
-	}
-
-	playlistDTOs := make([]m.PlaylistItemDTO, 0)
-
-	for _, item := range *itemQuery.Result {
-		playlistDTOs = append(playlistDTOs, m.PlaylistItemDTO{
-			Id:         item.Id,
-			PlaylistId: item.PlaylistId,
-			Type:       item.Type,
-			Value:      item.Value,
-			Order:      item.Order,
-		})
-	}
+	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
 
 	dto := &m.PlaylistDTO{
 		Id:       cmd.Result.Id,
@@ -82,6 +66,29 @@ func GetPlaylist(c *middleware.Context) Response {
 	}
 
 	return Json(200, dto)
+}
+
+func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
+	playlistitems, err := LoadPlaylistItems(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	playlistDTOs := make([]m.PlaylistItemDTO, 0)
+
+	for _, item := range playlistitems {
+		playlistDTOs = append(playlistDTOs, m.PlaylistItemDTO{
+			Id:         item.Id,
+			PlaylistId: item.PlaylistId,
+			Type:       item.Type,
+			Value:      item.Value,
+			Order:      item.Order,
+			Title:      item.Title,
+		})
+	}
+
+	return playlistDTOs, nil
 }
 
 func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
@@ -130,23 +137,10 @@ func LoadPlaylistDashboards(id int64) ([]m.PlaylistDashboardDto, error) {
 func GetPlaylistItems(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
-	items, err := LoadPlaylistItems(id)
+	playlistDTOs, err := LoadPlaylistItemDTOs(id)
 
 	if err != nil {
 		return ApiError(500, "Could not load playlist items", err)
-	}
-
-	playlistDTOs := make([]m.PlaylistItemDTO, 0)
-
-	for _, item := range items {
-		playlistDTOs = append(playlistDTOs, m.PlaylistItemDTO{
-			Id:         item.Id,
-			PlaylistId: item.PlaylistId,
-			Type:       item.Type,
-			Value:      item.Value,
-			Order:      item.Order,
-			Title:      item.Title,
-		})
 	}
 
 	return Json(200, playlistDTOs)
@@ -190,20 +184,7 @@ func UpdatePlaylist(c *middleware.Context, query m.UpdatePlaylistQuery) Response
 		return ApiError(500, "Failed to save playlist", err)
 	}
 
-	items, err := LoadPlaylistItems(query.Id)
-
-	playlistDTOs := make([]m.PlaylistItemDTO, 0)
-
-	for _, item := range items {
-		playlistDTOs = append(playlistDTOs, m.PlaylistItemDTO{
-			Id:         item.Id,
-			PlaylistId: item.PlaylistId,
-			Type:       item.Type,
-			Value:      item.Value,
-			Order:      item.Order,
-		})
-	}
-
+	playlistDTOs, err := LoadPlaylistItemDTOs(query.Id)
 	if err != nil {
 		return ApiError(500, "Failed to save playlist", err)
 	}
