@@ -5,7 +5,7 @@ import helpers from 'test/specs/helpers';
 describe('PlaylistEditCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
 
-    var dashboards = [
+    var searchResult = [
         {
             id: 2,
             title: 'dashboard: 2'
@@ -19,7 +19,7 @@ describe('PlaylistEditCtrl', function() {
     var playlistSrv = {};
     var backendSrv = {
       search: (query) => {
-        return ctx.$q.when(dashboards);
+        return ctx.$q.when(searchResult);
       }
     };
 
