@@ -98,10 +98,6 @@ function (angular, config, _) {
       return !$scope.playlist.id;
     };
 
-    $scope.startPlaylist = function(playlist, dashboards) {
-      playlistSrv.start(dashboards, playlist.timespan);
-    };
-
     $scope.isPlaylistEmpty = function() {
       return !$scope.playlistItems.length;
     };
