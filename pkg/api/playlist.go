@@ -94,8 +94,7 @@ func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
 func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	itemQuery := m.GetPlaylistItemsByIdQuery{PlaylistId: id}
 	if err := bus.Dispatch(&itemQuery); err != nil {
-		log.Warn("itemQuery failed: %v", err)
-		return nil, errors.New("Playlist not found")
+		return nil, err
 	}
 
 	return *itemQuery.Result, nil
