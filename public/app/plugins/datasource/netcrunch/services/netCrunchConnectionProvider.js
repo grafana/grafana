@@ -237,7 +237,7 @@ define([
     }
 
     module
-      .factory('netCrunchConnectionProvider', function ($q, adrem, backendSrv, alertSrv,
+      .factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
                                                         netCrunchConnectionProviderConsts) {
 
         var connectionPool = Object.create(null);
@@ -381,6 +381,10 @@ define([
               trendQuery = new serverConnection.ncSrv.ITrendQuery();
             }
             return callApi(trendQuery.AnalyzeGetData, arguments);
+          }
+
+          function getNetworkDataProvider() {
+            return new NetworkDataProvider(adrem, serverConnection, $q, $rootScope);
           }
 
           function callApi (apiCall, args, acceptEmpty) {
