@@ -19,7 +19,8 @@ function (angular, _, $, coreModule, config) {
         $scope.mainLinks.push({
           text: item.text,
           icon: item.icon,
-          href: $scope.getUrl(item.href)
+          img: item.img,
+          url: $scope.getUrl(item.url)
         });
       });
     };

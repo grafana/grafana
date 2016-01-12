@@ -62,12 +62,13 @@ function (angular, coreModule, kbn) {
         var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' +
           text + tip + '</label>';
 
-        var template = '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
+        var template =
+          '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
           '       ng-model="' + model + '"' + ngchange +
           '       ng-checked="' + model + '"></input>' +
           ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
-        template = label + template;
+        template = template + label;
         elem.replaceWith($compile(angular.element(template))(scope));
       }
     };

@@ -3,25 +3,19 @@ define([
   'lodash',
   'app/core/utils/datemath',
   'moment',
-  './directives',
   './queryCtrl',
 ],
 function (angular, _, dateMath) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
-
-    function OpenTSDBDatasource(datasource) {
-      this.type = 'opentsdb';
-      this.url = datasource.url;
-      this.name = datasource.name;
-      this.supportMetrics = true;
-    }
+  function OpenTSDBDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.type = 'opentsdb';
+    this.url = instanceSettings.url;
+    this.name = instanceSettings.name;
+    this.supportMetrics = true;
 
     // Called once per panel (graph)
-    OpenTSDBDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
@@ -60,7 +54,7 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
+    this.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         start: start,
         queries: queries
@@ -80,13 +74,13 @@ function (angular, _, dateMath) {
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype._performSuggestQuery = function(query, type) {
+    this._performSuggestQuery = function(query, type) {
       return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
+    this._performMetricKeyValueLookup = function(metric, key) {
       if(!metric || !key) {
         return $q.when([]);
       }
@@ -105,7 +99,7 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
+    this._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
       return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
@@ -122,7 +116,7 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype._get = function(relativeUrl, params) {
+    this._get = function(relativeUrl, params) {
       return backendSrv.datasourceRequest({
         method: 'GET',
         url: this.url + relativeUrl,
@@ -130,7 +124,7 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
+    this.metricFindQuery = function(query) {
       if (!query) { return $q.when([]); }
 
       var interpolated;
@@ -181,14 +175,14 @@ function (angular, _, dateMath) {
       return $q.when([]);
     };
 
-    OpenTSDBDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
     var aggregatorsPromise = null;
-    OpenTSDBDatasource.prototype.getAggregators = function() {
+    this.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
 
       aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
@@ -311,7 +305,7 @@ function (angular, _, dateMath) {
       return date.valueOf();
     }
 
-    return OpenTSDBDatasource;
-  });
+  }
 
+  return OpenTSDBDatasource;
 });

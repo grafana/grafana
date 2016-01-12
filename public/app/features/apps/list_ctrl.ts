@@ -1,0 +1,19 @@
+///<reference path="../../headers/common.d.ts" />
+
+import config = require('app/core/config');
+import angular from 'angular';
+
+export class AppListCtrl {
+  apps: any[];
+
+  /** @ngInject */
+  constructor(private backendSrv: any) {}
+
+  init() {
+    this.backendSrv.get('api/org/apps').then(apps => {
+      this.apps = apps;
+    });
+  }
+}
+
+angular.module('grafana.controllers').controller('AppListCtrl', AppListCtrl);

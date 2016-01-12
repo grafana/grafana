@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,7 +51,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Dashboards",
 		Icon: "fa fa-fw fa-th-large",
-		Href: "/",
+		Url:  "/",
 	})
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -63,8 +64,37 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Data Sources",
 			Icon: "fa fa-fw fa-database",
-			Href: "/datasources",
+			Url:  "/datasources",
 		})
+
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "Apps",
+			Icon: "fa fa-fw fa-cubes",
+			Url:  "/apps",
+		})
+	}
+
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, plugin := range enabledPlugins.Apps {
+		if plugin.Module != "" {
+			data.PluginModules = append(data.PluginModules, plugin.Module)
+		}
+
+		if plugin.Css != nil {
+			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
+		}
+
+		if plugin.Pinned {
+			data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+				Text: plugin.Name,
+				Url:  "/apps/edit/" + plugin.Id,
+				Img:  plugin.Info.Logos.Small,
+			})
+		}
 	}
 
 	return &data, nil

@@ -43,6 +43,33 @@ function (angular, $, config) {
     };
   });
 
+  module.directive('datasourceCustomSettingsView', function($compile) {
+    return {
+      restrict: 'E',
+      scope: {
+        dsMeta: "=",
+        current: "=",
+      },
+      link: function(scope, elem) {
+        scope.$watch("dsMeta.module", function() {
+          if (!scope.dsMeta) {
+            return;
+          }
+
+          System.import(scope.dsMeta.module).then(function() {
+            elem.empty();
+            var panelEl = angular.element(document.createElement('datasource-custom-settings-view-' + scope.dsMeta.id));
+            elem.append(panelEl);
+            $compile(panelEl)(scope);
+          }).catch(function(err) {
+            console.log('Failed to load plugin:', err);
+            scope.appEvent('alert-error', ['Plugin Load Error', 'Failed to load plugin ' + scope.dsMeta.id + ', ' + err]);
+          });
+        });
+      }
+    };
+  });
+
   module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
     var self = this;
 
@@ -62,9 +89,23 @@ function (angular, $, config) {
 
         editorScope = options.scope.$new();
         datasourceSrv.get(newVal).then(function(ds) {
-          self.addDirective(options, ds.meta.type, editorScope);
+          self.addDirective(options, ds.meta.id, editorScope);
         });
       });
+    };
+  });
+
+  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
+    return {
+      restrict: 'E',
+      link: function(scope, elem, attrs) {
+        dynamicDirectiveSrv.define({
+          datasourceProperty: attrs.datasource,
+          name: attrs.name,
+          scope: scope,
+          parentElem: elem,
+        });
+      }
     };
   });
 
@@ -90,24 +131,10 @@ function (angular, $, config) {
               scope.target.refId = 'A';
             }
 
-            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.type));
+            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.id));
             elem.append(panelEl);
             $compile(panelEl)(editorScope);
           });
-        });
-      }
-    };
-  });
-
-  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem, attrs) {
-        dynamicDirectiveSrv.define({
-          datasourceProperty: attrs.datasource,
-          name: attrs.name,
-          scope: scope,
-          parentElem: elem,
         });
       }
     };

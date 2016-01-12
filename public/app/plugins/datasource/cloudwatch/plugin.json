@@ -1,16 +1,7 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "CloudWatch",
-
-  "type": "cloudwatch",
-  "serviceName": "CloudWatchDatasource",
-
-  "module": "app/plugins/datasource/cloudwatch/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/cloudwatch/partials/config.html",
-    "query": "app/plugins/datasource/cloudwatch/partials/query.editor.html"
-  },
+  "id": "cloudwatch",
 
   "metrics": true,
   "annotations": true

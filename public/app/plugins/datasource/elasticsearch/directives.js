@@ -20,6 +20,10 @@ function (angular) {
     return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
   });
 
+  module.directive('elastic', function() {
+    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/config.html'};
+  });
+
   module.directive('elasticMetricAgg', function() {
     return {
       templateUrl: 'app/plugins/datasource/elasticsearch/partials/metric_agg.html',
