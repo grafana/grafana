@@ -21,7 +21,7 @@
 	</div>
 
   <div class="page-wide-margined" ng-init="ctrl.init()">
-		<h2>{{ctrl.appModel.name}}</h2>
+		<h1>{{ctrl.appModel.name}}</h1>
 		<em>
 			{{ctrl.appModel.info.description}}
 		</em>
@@ -33,6 +33,66 @@
 			<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="ctrl.togglePinned()"></editor-checkbox>
 		</div>
 
-			<app-config-loader></app-config-loader>
+		<section class="simple-box">
+			<h3 class="simple-box-header">Included with app:</h3>
+			<div class="flex-container">
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-th-large"></i>
+						Dashboards
+					</div>
+					<ul>
+						<li>Test</li>
+						<li>Test2</li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-line-chart"></i>
+						Panels
+					</div>
+					<ul>
+						<li>Test</li>
+						<li>Test2</li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-database"></i>
+						Datasources
+					</div>
+					<ul>
+						<li>Test</li>
+						<li>Test2</li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-files-o"></i>
+						Pages
+					</div>
+					<ul>
+						<li>Test</li>
+						<li>Test2</li>
+					</ul>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="simple-box">
+			<h3 class="simple-box-header">Dependencies:</h3>
+			<div class="simple-box-body">
+				Grafana 2.6.x
+			</div>
+		</section>
+
+		<section class="simple-box">
+			<h3 class="simple-box-header">Configuration:</h3>
+			<div class="simple-box-body">
+			</div>
+		</section>
+
+		<app-config-loader></app-config-loader>
 	</div>
 </div>

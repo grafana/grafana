@@ -1,0 +1,46 @@
+
+@simpleBoxBorderWidth:  0.2rem;
+@simpleBoxMargin:  1.5rem;
+@simpleBoxBodyPadding:  0.5rem 0 0.5rem 1rem;
+
+.simple-box {
+  margin-top: @simpleBoxMargin;
+  background: @grafanaPanelBackground;
+}
+
+.simple-box-header {
+  font-weight: normal;
+  line-height: 2.5rem;
+  color: @textColor;
+  margin: 0;
+  padding-left: 1rem;
+  border-bottom: @simpleBoxBorderWidth solid @bodyBackground;
+}
+
+.simple-box-column {
+  flex-direction: row;
+  width: 25%;
+  border-right: @simpleBoxBorderWidth solid @bodyBackground;
+  ul {
+    margin: 0.7rem 0 1rem 1.2rem;
+  }
+}
+
+.simple-box-column:last-child {
+  border: none;
+}
+
+.simple-box-column-header {
+  font-size: @fontSizeLarge;
+  i {
+    padding-right: 0.3rem;
+  }
+}
+
+.simple-box-body {
+  padding: @simpleBoxBodyPadding;
+}
+
+.flex-container {
+  display: flex;
+}
