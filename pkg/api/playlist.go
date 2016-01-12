@@ -60,7 +60,7 @@ func GetPlaylist(c *middleware.Context) Response {
 	dto := &m.PlaylistDTO{
 		Id:       cmd.Result.Id,
 		Title:    cmd.Result.Title,
-		Timespan: cmd.Result.Timespan,
+		Interval: cmd.Result.Interval,
 		OrgId:    cmd.Result.OrgId,
 		Items:    playlistDTOs,
 	}

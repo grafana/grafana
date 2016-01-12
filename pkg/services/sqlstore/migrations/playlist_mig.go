@@ -8,7 +8,7 @@ func addPlaylistMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "timespan", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 		},
 	}
