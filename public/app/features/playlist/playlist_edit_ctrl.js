@@ -54,7 +54,7 @@ function (angular, config, _) {
     $scope.filterFoundPlaylistItems = function() {
       $scope.filteredPlaylistItems = _.reject($scope.foundPlaylistItems, function(playlistItem) {
         return _.findWhere($scope.playlistItems, function(listPlaylistItem) {
-          return listPlaylistItem === playlistItem;
+          return parseInt(listPlaylistItem.value) === playlistItem.id;
         });
       });
     };
