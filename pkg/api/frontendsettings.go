@@ -47,6 +47,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
         dsMap["username"] = ds.User
         dsMap["password"] = ds.Password
         dsMap["url"] = url
+        dsMap["serverUrl"] = ds.Url
       }
     }
 
@@ -83,13 +84,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 				dsMap["database"] = ds.Database
 				dsMap["url"] = url
 			}
-
-      if ds.Type == m.DS_NETCRUNCH {
-        dsMap["id"] = ds.Id
-        dsMap["username"] = ds.User
-        dsMap["password"] = ds.Password
-        dsMap["url"] = url
-      }
 		}
 
 		if ds.Type == m.DS_ES {
