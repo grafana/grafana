@@ -12,18 +12,42 @@ var (
 
 // Playlist model
 type Playlist struct {
-	Id       int64   `json:"id"`
-	Title    string  `json:"title"`
-	Type     string  `json:"type"`
-	Timespan string  `json:"timespan"`
-	Data     []int64 `json:"data"`
-	OrgId    int64   `json:"-"`
+	Id       int64  `json:"id"`
+	Title    string `json:"title"`
+	Timespan string `json:"timespan"`
+	OrgId    int64  `json:"-"`
+}
+
+type PlaylistDTO struct {
+	Id       int64             `json:"id"`
+	Title    string            `json:"title"`
+	Timespan string            `json:"timespan"`
+	OrgId    int64             `json:"-"`
+	Items    []PlaylistItemDTO `json:"items"`
+}
+
+type PlaylistItemDTO struct {
+	Id         int64  `json:"id"`
+	PlaylistId int64  `json:"playlistid"`
+	Type       string `json:"type"`
+	Title      string `json:"title"`
+	Value      string `json:"value"`
+	Order      int    `json:"order"`
 }
 
 type PlaylistDashboard struct {
 	Id    int64  `json:"id"`
 	Slug  string `json:"slug"`
 	Title string `json:"title"`
+}
+
+type PlaylistItem struct {
+	Id         int64
+	PlaylistId int64
+	Type       string
+	Value      string
+	Order      int
+	Title      string
 }
 
 func (this PlaylistDashboard) TableName() string {
@@ -60,9 +84,9 @@ type UpdatePlaylistQuery struct {
 	Title    string
 	Type     string
 	Timespan string
-	Data     []int64
+	Items    []PlaylistItemDTO
 
-	Result *Playlist
+	Result *PlaylistDTO
 }
 
 type CreatePlaylistQuery struct {
@@ -71,6 +95,7 @@ type CreatePlaylistQuery struct {
 	Timespan string
 	Data     []int64
 	OrgId    int64
+	Items    []PlaylistItemDTO
 
 	Result *Playlist
 }
@@ -80,9 +105,14 @@ type GetPlaylistByIdQuery struct {
 	Result *Playlist
 }
 
+type GetPlaylistItemsByIdQuery struct {
+	PlaylistId int64
+	Result     *[]PlaylistItem
+}
+
 type GetPlaylistDashboardsQuery struct {
-	Id     int64
-	Result *PlaylistDashboards
+	DashboardIds []int64
+	Result       *PlaylistDashboards
 }
 
 type DeletePlaylistQuery struct {

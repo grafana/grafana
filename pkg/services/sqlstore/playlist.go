@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -14,6 +15,7 @@ func init() {
 	bus.AddHandler("sql", SearchPlaylists)
 	bus.AddHandler("sql", GetPlaylist)
 	bus.AddHandler("sql", GetPlaylistDashboards)
+	bus.AddHandler("sql", GetPlaylistItem)
 }
 
 func CreatePlaylist(query *m.CreatePlaylistQuery) error {
@@ -21,13 +23,26 @@ func CreatePlaylist(query *m.CreatePlaylistQuery) error {
 
 	playlist := m.Playlist{
 		Title:    query.Title,
-		Type:     query.Type,
-		Data:     query.Data,
 		Timespan: query.Timespan,
 		OrgId:    query.OrgId,
 	}
 
 	_, err = x.Insert(&playlist)
+
+	fmt.Printf("%v", playlist.Id)
+
+	playlistItems := make([]m.PlaylistItem, 0)
+	for _, item := range query.Items {
+		playlistItems = append(playlistItems, m.PlaylistItem{
+			PlaylistId: playlist.Id,
+			Type:       item.Type,
+			Value:      item.Value,
+			Order:      item.Order,
+			Title:      item.Title,
+		})
+	}
+
+	_, err = x.Insert(&playlistItems)
 
 	query.Result = &playlist
 	return err
@@ -39,8 +54,6 @@ func UpdatePlaylist(query *m.UpdatePlaylistQuery) error {
 	playlist := m.Playlist{
 		Id:       query.Id,
 		Title:    query.Title,
-		Type:     query.Type,
-		Data:     query.Data,
 		Timespan: query.Timespan,
 	}
 
@@ -50,9 +63,40 @@ func UpdatePlaylist(query *m.UpdatePlaylistQuery) error {
 		return m.ErrPlaylistNotFound
 	}
 
-	_, err = x.Id(query.Id).Cols("id", "title", "data", "timespan").Update(&playlist)
+	query.Result = &m.PlaylistDTO{
+		Id:       playlist.Id,
+		OrgId:    playlist.OrgId,
+		Title:    playlist.Title,
+		Timespan: playlist.Timespan,
+	}
 
-	query.Result = &playlist
+	_, err = x.Id(query.Id).Cols("id", "title", "timespan").Update(&playlist)
+
+	if err != nil {
+		return err
+	}
+
+	rawSql := "DELETE FROM playlist_item WHERE playlist_id = ?"
+	_, err = x.Exec(rawSql, query.Id)
+
+	if err != nil {
+		return err
+	}
+
+	playlistItems := make([]m.PlaylistItem, 0)
+
+	for _, item := range query.Items {
+		playlistItems = append(playlistItems, m.PlaylistItem{
+			PlaylistId: playlist.Id,
+			Type:       item.Type,
+			Value:      item.Value,
+			Order:      item.Order,
+			Title:      item.Title,
+		})
+	}
+
+	_, err = x.Insert(&playlistItems)
+
 	return err
 }
 
@@ -63,6 +107,7 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 
 	playlist := m.Playlist{}
 	_, err := x.Id(query.Id).Get(&playlist)
+
 	query.Result = &playlist
 
 	return err
@@ -74,9 +119,17 @@ func DeletePlaylist(query *m.DeletePlaylistQuery) error {
 	}
 
 	return inTransaction(func(sess *xorm.Session) error {
-		var rawSql = "DELETE FROM playlist WHERE id = ?"
-		_, err := sess.Exec(rawSql, query.Id)
-		return err
+		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ?"
+		_, err := sess.Exec(rawPlaylistSql, query.Id)
+
+		if err != nil {
+			return err
+		}
+
+		var rawItemSql = "DELETE FROM playlist_item WHERE playlist_id = ?"
+		_, err2 := sess.Exec(rawItemSql, query.Id)
+
+		return err2
 	})
 }
 
@@ -96,27 +149,28 @@ func SearchPlaylists(query *m.PlaylistQuery) error {
 	return err
 }
 
+func GetPlaylistItem(query *m.GetPlaylistItemsByIdQuery) error {
+	if query.PlaylistId == 0 {
+		return m.ErrCommandValidationFailed
+	}
+
+	var playlistItems = make([]m.PlaylistItem, 0)
+	err := x.Where("playlist_id=?", query.PlaylistId).Find(&playlistItems)
+
+	query.Result = &playlistItems
+
+	return err
+}
+
 func GetPlaylistDashboards(query *m.GetPlaylistDashboardsQuery) error {
-	if query.Id == 0 {
+	if len(query.DashboardIds) == 0 {
 		return m.ErrCommandValidationFailed
 	}
 
 	var dashboards = make(m.PlaylistDashboards, 0)
-	var playlist = m.Playlist{}
 
-	hasPlaylist, err := x.Id(query.Id).Get(&playlist)
-
+	err := x.In("id", query.DashboardIds).Find(&dashboards)
 	query.Result = &dashboards
-
-	if err != nil {
-		return err
-	}
-
-	if !hasPlaylist || len(playlist.Data) == 0 {
-		return nil
-	}
-
-	err = x.In("id", playlist.Data).Find(&dashboards)
 
 	if err != nil {
 		return err
