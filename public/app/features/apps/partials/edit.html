@@ -1,0 +1,102 @@
+<topnav title="Apps" icon="fa fa-fw fa-cubes" subnav="true">
+	<ul class="nav">
+		<li ><a href="apps">Overview</a></li>
+		<li class="active" ><a href="apps/edit/{{ctrl.current.type}}">Edit</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="apps-side-box">
+		<div class="apps-side-box-logo" >
+			<img src="{{ctrl.appModel.info.logos.large}}">
+		</div>
+		<ul class="app-side-box-links">
+			<li>
+				By <a href="{{ctrl.appModel.info.author.url}}" class="external-link" target="_blank">{{ctrl.appModel.info.author.name}}</a>
+			</li>
+			<li ng-repeat="link in ctrl.appModel.info.links">
+				<a href="{{link.url}}" class="external-link" target="_blank">{{link.name}}</a>
+			</li>
+		</ul>
+	</div>
+
+  <div class="page-wide-margined" ng-init="ctrl.init()">
+		<h1>
+			{{ctrl.appModel.name}}
+		</h1>
+		<em>
+			{{ctrl.appModel.info.description}}<br>
+			<span style="small">
+			Version: {{ctrl.appModel.info.version}} &nbsp; &nbsp; Updated: {{ctrl.appModel.info.updated}}
+		</span>
+
+		</em>
+		<br><br>
+
+		<div class="form-inline">
+			<editor-checkbox text="Enabled" model="ctrl.appModel.enabled" change="ctrl.toggleEnabled()"></editor-checkbox>
+			&nbsp; &nbsp; &nbsp;
+			<editor-checkbox text="Pinned" model="ctrl.appModel.pinned" change="ctrl.togglePinned()"></editor-checkbox>
+		</div>
+
+		<section class="simple-box">
+			<h3 class="simple-box-header">Included with app:</h3>
+			<div class="flex-container">
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-th-large"></i>
+						Dashboards
+					</div>
+					<ul>
+						<li><em class="small">None</em></li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-line-chart"></i>
+						Panels
+					</div>
+					<ul>
+						<li><em class="small">None</em></li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-database"></i>
+						Datasources
+					</div>
+					<ul>
+						<li><em class="small">None</em></li>
+					</ul>
+				</div>
+				<div class="simple-box-body simple-box-column">
+					<div class="simple-box-column-header">
+						<i class="fa fa-files-o"></i>
+						Pages
+					</div>
+					<ul>
+						<li ng-repeat="page in ctrl.appModel.pages">
+							<a href="{{page.url}}" class="external-link">{{page.name}}</a>
+						</li>
+					</ul>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="simple-box">
+			<h3 class="simple-box-header">Dependencies:</h3>
+			<div class="simple-box-body">
+				Grafana 2.6.x
+			</div>
+		</section>
+
+		<section class="simple-box">
+			<h3 class="simple-box-header">Configuration:</h3>
+			<div class="simple-box-body">
+			</div>
+		</section>
+
+		<app-config-loader></app-config-loader>
+	</div>
+</div>

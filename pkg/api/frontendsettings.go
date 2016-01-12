@@ -29,6 +29,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
@@ -42,7 +47,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"url":  url,
 		}
 
-		meta, exists := plugins.DataSources[ds.Type]
+		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
 			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
@@ -110,8 +115,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	panels := map[string]interface{}{}
-	for _, panel := range plugins.Panels {
-		panels[panel.Type] = map[string]interface{}{
+	for _, panel := range enabledPlugins.Panels {
+		panels[panel.Id] = map[string]interface{}{
 			"module": panel.Module,
 			"name":   panel.Name,
 		}

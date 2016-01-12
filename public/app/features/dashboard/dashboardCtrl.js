@@ -106,14 +106,6 @@ function (angular, $, config, moment) {
       };
     };
 
-    $scope.panelEditorPath = function(type) {
-      return 'app/' + config.panels[type].path + '/editor.html';
-    };
-
-    $scope.pulldownEditorPath = function(type) {
-      return 'app/panels/'+type+'/editor.html';
-    };
-
     $scope.showJsonEditor = function(evt, options) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;

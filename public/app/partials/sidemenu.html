@@ -34,13 +34,6 @@
 			</ul>
 		</li>
 
-		<li ng-if="!contextSrv.isSignedIn">
-			<a href="login" class="sidemenu-item" target="_self">
-				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
-				<span class="sidemenu-item-text">Sign in</span>
-			</a>
-		</li>
-
 		<li class="sidemenu-system-section" ng-if="systemSection">
 			<div class="sidemenu-system-section-inner">
 				<i class="fa fa-fw fa-cubes"></i>
@@ -52,8 +45,11 @@
 		</li>
 
 		<li ng-repeat="item in mainLinks">
-			<a href="{{item.href}}" class="sidemenu-item sidemenu-main-link" target="{{item.target}}">
-				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
+			<a href="{{item.url}}" class="sidemenu-item sidemenu-main-link" target="{{item.target}}">
+				<span class="icon-circle sidemenu-icon">
+					<i class="{{item.icon}}" ng-show="item.icon"></i>
+					<img ng-src="{{item.img}}" ng-show="item.img">
+				</span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 			</a>
 		</li>

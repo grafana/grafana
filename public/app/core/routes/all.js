@@ -10,6 +10,7 @@ define([
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+    var loadAppsBundle = new BundleLoader.BundleLoader('app/features/apps/all');
 
     $routeProvider
       .when('/', {
@@ -41,17 +42,17 @@ define([
         controller : 'DashboardImportCtrl',
       })
       .when('/datasources', {
-        templateUrl: 'app/features/org/partials/datasources.html',
+        templateUrl: 'app/features/datasources/partials/list.html',
         controller : 'DataSourcesCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/edit/:id', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/new', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
@@ -131,15 +132,17 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
-      .when('/plugins', {
-        templateUrl: 'app/features/org/partials/plugins.html',
-        controller: 'PluginsCtrl',
-        resolve: loadOrgBundle,
+      .when('/apps', {
+        templateUrl: 'app/features/apps/partials/list.html',
+        controller: 'AppListCtrl',
+        controllerAs: 'ctrl',
+        resolve: loadAppsBundle,
       })
-      .when('/plugins/edit/:type', {
-        templateUrl: 'app/features/org/partials/pluginEdit.html',
-        controller: 'PluginEditCtrl',
-        resolve: loadOrgBundle,
+      .when('/apps/edit/:appId', {
+        templateUrl: 'app/features/apps/partials/edit.html',
+        controller: 'AppEditCtrl',
+        controllerAs: 'ctrl',
+        resolve: loadAppsBundle,
       })
       .when('/global-alerts', {
         templateUrl: 'app/features/dashboard/partials/globalAlerts.html',

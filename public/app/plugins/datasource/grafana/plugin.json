@@ -1,11 +1,8 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "Grafana",
+  "id": "grafana",
+
   "builtIn": true,
-
-  "type": "grafana",
-  "serviceName": "GrafanaDatasource",
-
-  "module": "app/plugins/datasource/grafana/datasource",
   "metrics": true
 }

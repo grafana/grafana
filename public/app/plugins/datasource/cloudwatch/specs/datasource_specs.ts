@@ -3,25 +3,25 @@ import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
+import Datasource from "../datasource";
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings = {
+    jsonData: {defaultRegion: 'us-east-1', access: 'proxy'},
+  };
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
-
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
-  beforeEach(ctx.createService('CloudWatchDatasource'));
 
-  beforeEach(function() {
-    ctx.ds = new ctx.service({
-      jsonData: {
-        defaultRegion: 'us-east-1',
-        access: 'proxy'
-      }
-    });
-  });
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.ds = $injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+  }));
 
   describe('When performing CloudWatch query', function() {
     var requestParams;

@@ -3,7 +3,7 @@ define([
   'angular',
   'jquery',
   'app/core/time_series',
-  'app/plugins/panels/graph/graph'
+  'app/plugins/panel/graph/graph'
 ], function(helpers, angular, $, TimeSeries) {
   'use strict';
 

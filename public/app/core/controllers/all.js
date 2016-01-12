@@ -1,9 +1,3 @@
-// import grafanaCtrl from './grafana_ctrl';
-//
-// import * as asd from './sidemenu_ctrl';
-//
-// export {grafanaCtrl};
-
 define([
   './grafana_ctrl',
   './search_ctrl',
