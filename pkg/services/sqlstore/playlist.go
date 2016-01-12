@@ -23,7 +23,7 @@ func CreatePlaylist(query *m.CreatePlaylistQuery) error {
 
 	playlist := m.Playlist{
 		Title:    query.Title,
-		Timespan: query.Timespan,
+		Interval: query.Interval,
 		OrgId:    query.OrgId,
 	}
 
@@ -54,7 +54,7 @@ func UpdatePlaylist(query *m.UpdatePlaylistQuery) error {
 	playlist := m.Playlist{
 		Id:       query.Id,
 		Title:    query.Title,
-		Timespan: query.Timespan,
+		Interval: query.Interval,
 	}
 
 	existingPlaylist := x.Where("id = ?", query.Id).Find(m.Playlist{})
@@ -67,7 +67,7 @@ func UpdatePlaylist(query *m.UpdatePlaylistQuery) error {
 		Id:       playlist.Id,
 		OrgId:    playlist.OrgId,
 		Title:    playlist.Title,
-		Timespan: playlist.Timespan,
+		Interval: playlist.Interval,
 	}
 
 	_, err = x.Id(query.Id).Cols("id", "title", "timespan").Update(&playlist)

@@ -11,7 +11,6 @@ define([
   './dashboardSrv',
   './keybindings',
   './viewStateSrv',
-  './playlistSrv',
   './timeSrv',
   './unsavedChangesSrv',
   './directives/dashSearchView',

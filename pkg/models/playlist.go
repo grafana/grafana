@@ -14,14 +14,14 @@ var (
 type Playlist struct {
 	Id       int64  `json:"id"`
 	Title    string `json:"title"`
-	Timespan string `json:"timespan"`
+	Interval string `json:"interval"`
 	OrgId    int64  `json:"-"`
 }
 
 type PlaylistDTO struct {
 	Id       int64             `json:"id"`
 	Title    string            `json:"title"`
-	Timespan string            `json:"timespan"`
+	Interval string            `json:"interval"`
 	OrgId    int64             `json:"-"`
 	Items    []PlaylistItemDTO `json:"items"`
 }
@@ -83,7 +83,7 @@ type UpdatePlaylistQuery struct {
 	Id       int64
 	Title    string
 	Type     string
-	Timespan string
+	Interval string
 	Items    []PlaylistItemDTO
 
 	Result *PlaylistDTO
@@ -92,7 +92,7 @@ type UpdatePlaylistQuery struct {
 type CreatePlaylistQuery struct {
 	Title    string
 	Type     string
-	Timespan string
+	Interval string
 	Data     []int64
 	OrgId    int64
 	Items    []PlaylistItemDTO

@@ -28,11 +28,11 @@ function (angular, _, kbn) {
       self.next();
     };
 
-    this.start = function(dashboards, timespan) {
+    this.start = function(dashboards, interval) {
       self.stop();
 
       self.index = 0;
-      self.interval = kbn.interval_to_ms(timespan);
+      self.interval = kbn.interval_to_ms(interval);
 
       self.dashboards = dashboards;
       $rootScope.playlistSrv = this;
