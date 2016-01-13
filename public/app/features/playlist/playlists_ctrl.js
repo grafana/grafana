@@ -7,19 +7,11 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('PlaylistsCtrl', function(
-    $scope,
-    $location,
-    backendSrv
-  ) {
+  module.controller('PlaylistsCtrl', function($scope, $location, backendSrv) {
     backendSrv.get('/api/playlists')
       .then(function(result) {
         $scope.playlists = result;
       });
-
-    $scope.playlistUrl = function(playlist) {
-      return '/playlists/play/' + playlist.id;
-    };
 
     $scope.removePlaylist = function(playlist) {
       var modalScope = $scope.$new(true);
