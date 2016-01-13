@@ -21,11 +21,9 @@ import './jquery_extended';
 import './partials';
 
 import {arrayJoin} from './directives/array_join';
-import * as controllers from 'app/core/controllers/all';
-import * as services from 'app/core/services/all';
-import * as routes from 'app/core/routes/all';
+import 'app/core/controllers/all';
+import 'app/core/services/all';
+import 'app/core/routes/all';
 import './filters/filters';
 
-// export * from './directives/give_focus'
-
-export {arrayJoin, controllers, services, routes};
+export {arrayJoin};

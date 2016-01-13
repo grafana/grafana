@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config = require('app/core/config');
 import angular from 'angular';
 
 export class AppListCtrl {

@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular = require('angular');
 import coreModule from '../core_module';
 
 coreModule.default.directive('giveFocus', function() {
