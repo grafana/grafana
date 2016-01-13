@@ -3,12 +3,12 @@ package middleware
 import (
 	"time"
 
-	"gopkg.in/macaron.v1"
 	"github.com/go-macaron/session"
 	_ "github.com/go-macaron/session/memcache"
 	_ "github.com/go-macaron/session/mysql"
 	_ "github.com/go-macaron/session/postgres"
 	_ "github.com/go-macaron/session/redis"
+	"gopkg.in/macaron.v1"
 )
 
 const (

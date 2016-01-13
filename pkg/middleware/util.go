@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"gopkg.in/macaron.v1"
 	"github.com/go-macaron/gzip"
+	"gopkg.in/macaron.v1"
 )
 
 func Gziper() macaron.Handler {
