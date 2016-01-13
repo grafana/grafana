@@ -147,6 +147,11 @@ func Register(r *macaron.Macaron) {
 			r.Put("/quotas/:target", bind(m.UpdateOrgQuotaCmd{}), wrap(UpdateOrgQuota))
 		}, reqGrafanaAdmin)
 
+		// orgs (admin routes)
+		r.Group("/orgs/name/:name", func() {
+			r.Get("/", wrap(GetOrgByName))
+		}, reqGrafanaAdmin)
+
 		// auth api keys
 		r.Group("/auth/keys", func() {
 			r.Get("/", wrap(GetApiKeys))
