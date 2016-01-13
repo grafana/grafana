@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/macaron-contrib/session"
+	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/log"
