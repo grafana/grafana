@@ -9,11 +9,12 @@
 
 define([
     'angular',
+    'jquery',
     'NCObjects',
     'remoteDataLists'
   ],
 
-  function (angular) {
+  function (angular, $) {
 
     'use strict';
 
@@ -133,7 +134,7 @@ define([
               performMapList(mapTree[''].children, 1, 'root');
               return mapList;
             }
-          }
+          };
         }
 
         function NetworkDataProvider(adrem, netCrunchServerConnection) {
@@ -241,7 +242,7 @@ define([
               initialized = $q.all([hostsData, networkData]);
               return initialized;
             }
-          }
+          };
         }
 
         function NetCrunchConnection(datasourceURL, datasourceName) {
