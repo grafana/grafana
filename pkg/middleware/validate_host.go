@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"gopkg.in/macaron.v1"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 func ValidateHostHeader(domain string) macaron.Handler {
