@@ -9,6 +9,7 @@ EnvironmentFile=/etc/sysconfig/grafana-server
 User=grafana
 Group=grafana
 Type=simple
+Restart=on-failure
 WorkingDirectory=/usr/share/grafana
 ExecStart=/usr/sbin/grafana-server                                \
                             --config=${CONF_FILE}                 \
