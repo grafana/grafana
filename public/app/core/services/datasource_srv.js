@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.default.service('datasourceSrv', function($q, $injector, $rootScope) {
+  coreModule.default.service('datasourceSrv', function($q, $injector, $rootScope, templateSrv) {
     var self = this;
 
     this.init = function() {
@@ -43,6 +43,8 @@ function (angular, _, coreModule, config) {
       if (!name) {
         return this.get(config.defaultDatasource);
       }
+
+      name = templateSrv.replace(name);
 
       if (this.datasources[name]) {
         return $q.when(this.datasources[name]);
