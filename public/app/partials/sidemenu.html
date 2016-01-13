@@ -62,6 +62,14 @@
 				</a>
 			</li>
 		</ul>
+
+		<li ng-if="!contextSrv.isSignedIn">
+			<a href="login" class="sidemenu-item" target="_self">
+				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
+				<span class="sidemenu-item-text">Sign in</span>
+	   	</a>
+		</li>
+
 	</ul>
 
 </div>
