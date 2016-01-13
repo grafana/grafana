@@ -8,7 +8,8 @@
  ****************************************************************/
 
 define([
-    'angular'
+    'angular',
+    './netCrunchCounters'
   ],
 
   function (angular) {

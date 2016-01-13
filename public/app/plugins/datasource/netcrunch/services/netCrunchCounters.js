@@ -25,14 +25,13 @@ function (angular) {
       knownMSCounters = ['load time', 'check time', 'round trip time'];
 
   module
-    .factory('netCrunchCounters', function ($q, netCrunchRemoteSession, netCrunchCounterConsts,
-                                            netCrunchCounterTypes) {
+    .factory('netCrunchCounters', function ($q, netCrunchCounterConsts, netCrunchCounterTypes) {
       var snmpMibData = null,
           shortOidPathsCache = Object.create(null),
           fullOidPathsCache = Object.create(null),
           cn_SCT = 'Check Time',
           cn_RTT = 'Round Trip Time',
-          client = netCrunchRemoteSession,
+          resources = Object.create(null),
           counterTypes = netCrunchCounterTypes,
           counterConsts = netCrunchCounterConsts;
 
@@ -469,10 +468,10 @@ function (angular) {
       function isBytesCounter(displayName) {
         var result = '', cnt = displayName.toLowerCase();
 
-        if (contains(cnt, client.res.metrics.bytes) || contains(cnt, client.res.metrics.memory) || contains(cnt, "octet")) {
-          if (contains(cnt, client.res.metrics.mbytes) || contains(cnt, 'mega')) {
+        if (contains(cnt, resources.metrics.bytes) || contains(cnt, resources.metrics.memory) || contains(cnt, "octet")) {
+          if (contains(cnt, resources.metrics.mbytes) || contains(cnt, 'mega')) {
             result = 'M';
-          } else if (contains(cnt, client.res.metrics.kbytes) || contains(cnt, 'kilo')) {
+          } else if (contains(cnt, resources.metrics.kbytes) || contains(cnt, 'kilo')) {
             result = 'K';
           }
           return result;
