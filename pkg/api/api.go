@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/Unknwon/macaron"
+	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/macaron-contrib/binding"
+	"gopkg.in/macaron.v1"
 )
 
 // Register adds http routes

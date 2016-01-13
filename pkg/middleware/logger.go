@@ -20,9 +20,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Unknwon/macaron"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 func Logger() macaron.Handler {
