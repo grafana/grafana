@@ -9,25 +9,31 @@ class DynamicDirectiveSrv {
   constructor(private $compile, private $parse) {}
 
   addDirective(element, name, scope) {
+    var child = angular.element(document.createElement(name));
+    this.$compile(child)(scope);
+
     element.empty();
-    element.append(angular.element(document.createElement(name)));
-    this.$compile(element)(scope);
+    element.append(child);
   }
 
   create(options) {
     let directiveDef = {
       restrict: 'E',
       scope: options.scope,
-      link: function(scope, elem) {
+      link: (scope, elem, attrs) => {
         options.directive(scope).then(directiveInfo => {
           if (!directiveInfo) {
             return;
           }
 
-          if (directiveInfo.fn.hasBeenRegistered) {
-            coreModule.directive(directiveInfo.name, directiveInfo.fn);
-            directiveInfo.fn.hasBeenRegistered = true;
+          if (!directiveInfo.fn.registered) {
+            coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
+            directiveInfo.fn.registered = true;
           }
+
+          this.addDirective(elem, directiveInfo.name, scope);
+        }).catch(function(err) {
+          console.log('Dynamic directive load error: ', err);
         });
       }
     };
