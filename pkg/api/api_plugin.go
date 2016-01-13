@@ -6,7 +6,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -53,7 +54,7 @@ func ApiPlugin(routeUrl string) macaron.Handler {
 		targetUrl, _ := url.Parse(routeUrl)
 		proxy := NewApiPluginProxy(string(ctx), path, targetUrl)
 		proxy.Transport = dataProxyTransport
-		proxy.ServeHTTP(c.RW(), c.Req.Request)
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}
 }
 
