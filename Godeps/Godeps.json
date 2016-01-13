@@ -123,6 +123,10 @@
 			"Rev": "3433f3ea46d9f8019119e7dd41274e112a2359a9"
 		},
 		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
+		},
+		{
 			"ImportPath": "github.com/klauspost/compress/flate",
 			"Rev": "7b02889a2005228347aef0e76beeaee564d82f8c"
 		},
@@ -150,6 +154,11 @@
 		{
 			"ImportPath": "github.com/rainycape/unidecode",
 			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-356-gfbc0a1c",
+			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
 		},
 		{
 			"ImportPath": "github.com/streadway/amqp",

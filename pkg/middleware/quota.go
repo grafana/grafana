@@ -3,11 +3,11 @@ package middleware
 import (
 	"fmt"
 
-	"gopkg.in/macaron.v1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 func Quota(target string) macaron.Handler {
