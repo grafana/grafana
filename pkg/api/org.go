@@ -20,7 +20,7 @@ func GetOrgById(c *middleware.Context) Response {
 	return getOrgHelper(c.ParamsInt64(":orgId"))
 }
 
-// Get /api/orgs/:name
+// Get /api/orgs/name/:name
 func GetOrgByName(c *middleware.Context) Response {
 	query := m.GetOrgByNameQuery{Name: c.Params(":name")}
 	if err := bus.Dispatch(&query); err != nil {
