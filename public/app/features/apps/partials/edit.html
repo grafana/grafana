@@ -97,6 +97,11 @@
 			</div>
 		</section>
 
-		<app-config-loader></app-config-loader>
+		<nginx-config></nginx-config>
+
+		<div ng-if="ctrl.appModel.appId">
+			<app-config-loader app-model="ctrl.appModel"></app-config-loader>
+		</div>
+
 	</div>
 </div>

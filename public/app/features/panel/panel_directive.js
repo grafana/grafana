@@ -70,31 +70,6 @@ function (angular, $, config) {
     };
   });
 
-  module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
-    var self = this;
-
-    this.addDirective = function(options, type, editorScope) {
-      var panelEl = angular.element(document.createElement(options.name + '-' + type));
-      options.parentElem.append(panelEl);
-      $compile(panelEl)(editorScope);
-    };
-
-    this.define = function(options) {
-      var editorScope;
-      options.scope.$watch(options.datasourceProperty, function(newVal) {
-        if (editorScope) {
-          editorScope.$destroy();
-          options.parentElem.empty();
-        }
-
-        editorScope = options.scope.$new();
-        datasourceSrv.get(newVal).then(function(ds) {
-          self.addDirective(options, ds.meta.id, editorScope);
-        });
-      });
-    };
-  });
-
   module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
     return {
       restrict: 'E',
