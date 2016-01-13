@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
