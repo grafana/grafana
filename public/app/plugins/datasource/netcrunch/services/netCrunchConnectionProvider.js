@@ -252,7 +252,9 @@ define([
               netCrunchClient,
               loginInProgress = false,
               loginInProgressPromise,
-              trendQuery;
+              networkAtlasReady = $q.defer(),
+              trendQuery,
+              self = this;
 
           function getServerApi() {
             var serverApi = $q.defer();
@@ -358,7 +360,7 @@ define([
             return loginProcess;
           }
 
-          function login(userName, password) {
+          function login(userName, password, ignoreDownloadNetworkAtlas) {
             if (serverVersion == null) {
               serverVersion = checkServerVersion();
             }
@@ -367,7 +369,14 @@ define([
                 serverConnectionReady = establishConnection();
               }
               return serverConnectionReady.then(function() {
-                return authenticateUser(userName, password);
+                return authenticateUser(userName, password).then(function() {
+                  self.networkAtlas = getNetworkDataProvider();
+                  if (ignoreDownloadNetworkAtlas !== true) {
+                    self.networkAtlas.init().then(function(){
+                      networkAtlasReady.resolve(self.networkAtlas);
+                    });
+                  }
+                });
               });
             });
           }
@@ -402,6 +411,8 @@ define([
           }
 
           this.login = login;
+          this.networkAtlas = Object.create(null);
+          this.networkAtlasReady = networkAtlasReady.promise;
           this.queryTrendData = queryTrendData;
         }
 
