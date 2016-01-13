@@ -25,5 +25,6 @@ import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/all';
 import './filters/filters';
+import coreModule from './core_module';
 
-export {arrayJoin};
+export {arrayJoin, coreModule};

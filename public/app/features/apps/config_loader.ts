@@ -11,8 +11,8 @@ function appConfigLoader(dynamicDirectiveSrv) {
     directive: scope => {
       return System.import(scope.appModel.module).then(function(appModule) {
         return {
-          name: 'appConfigLoader' + scope.appModel.appId,
-          fn: scope.appModel.directives.configView,
+          name: 'app-config-' + scope.appModel.appId,
+          fn: appModule.configView,
         };
       });
     },
