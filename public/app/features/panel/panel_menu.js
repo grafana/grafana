@@ -9,13 +9,14 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile, linkSrv) {
-      var mainTemplateStart = '<span class="panel-title drag-handle pointer">';
 
-      var linkTemplate = '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
-          '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
-          '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>';
-
-      var mainTemplateEnd = '</span>';
+      var linkTemplate =
+          '<span class="panel-title drag-handle pointer">' +
+            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-tooltip"><i class="grafana-tip fa fa-question-circle" bs-tooltip="panel.helpText"></i></span>' +
+            '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
+            '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
+          '</span>';
 
       function createExternalLinkMenu($scope) {
         var template = '<div class="panel-menu small">';
@@ -27,11 +28,6 @@ function (angular, $, _) {
             template += '<a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a>';
           });
         }
-        return template;
-      }
-
-      function getHelpText($scope) {
-        var template = '<span class="panel-tooltip"><tip>' + $scope.panel.helpText + '</tip></span>';
         return template;
       }
 
@@ -77,7 +73,7 @@ function (angular, $, _) {
       return {
         restrict: 'A',
         link: function($scope, elem) {
-          var $link = $(mainTemplateStart + linkTemplate + getHelpText($scope) + mainTemplateEnd);
+          var $link = $(linkTemplate);
           var $panelLinksBtn = $link.find(".panel-links-btn");
           var $panelHelpText = $link.find(".panel-tooltip");
           var $panelContainer = elem.parents(".panel-container");
