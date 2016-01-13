@@ -52,8 +52,7 @@ transformers['timeseries_to_columns'] = {
         if (!points[timeKey]) {
           points[timeKey] = {time: dp[1]};
           points[timeKey][i] = dp[0];
-        }
-        else {
+        } else {
           points[timeKey][i] = dp[0];
         }
       }

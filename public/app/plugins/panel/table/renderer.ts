@@ -96,13 +96,12 @@ export class TableRenderer {
   }
 
   renderCell(columnIndex, value, addWidthHack = false) {
-    var value = this.formatColumnValue(columnIndex, value);
+    value = this.formatColumnValue(columnIndex, value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
       this.colorState.cell = null;
-    }
-    else if (this.colorState.value) {
+    } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
       this.colorState.value = null;
     }

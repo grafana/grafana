@@ -126,9 +126,7 @@ function addMathStrategy(selectParts, partModel) {
     if (selectParts[partCount-2].def.type === 'math') {
       selectParts[partCount-2] = partModel;
       return;
-    }
-    // if last is alias add it before
-    else if (selectParts[partCount-1].def.type === 'alias') {
+    } else if (selectParts[partCount-1].def.type === 'alias') { // if last is alias add it before
       selectParts.splice(partCount-1, 0, partModel);
       return;
     }
@@ -399,8 +397,7 @@ class QueryPart {
 
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
-    }
-    else {
+    } else {
       this.params[index] = strValue;
     }
 
