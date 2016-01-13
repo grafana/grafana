@@ -49,8 +49,10 @@ define([
           }
 
           function getMapIconUrl (iconId, size) {
+            var iconUrl;
             size = size || 32;
-            return netCrunchServerConnection.ncSrv.IMapIcons.GetIcon.asURL(iconId, size);
+            iconUrl = netCrunchServerConnection.ncSrv.IMapIcons.GetIcon.asURL(iconId, size);
+            return netCrunchServerConnection.Client.urlFilter(iconUrl);
           }
 
           function pushUniqueChildToMap (map, child) {

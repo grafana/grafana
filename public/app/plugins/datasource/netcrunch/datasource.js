@@ -15,7 +15,6 @@ define([
   'jquery',
   'kbn',
   './services/netCrunchConnectionProvider',
-  './services/networkDataProvider',
   './services/countersDataProvider',
   './services/trendDataProvider',
   './services/processingDataWorker',
@@ -32,8 +31,8 @@ function (angular, _, moment, config, $, kbn) {
 
   module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem,
                                                  netCrunchTrendDataProviderConsts,
-                                                 netCrunchRemoteSession, networkDataProvider,
-                                                 atlasTree, countersDataProvider, trendDataProvider,
+                                                 netCrunchRemoteSession,
+                                                 countersDataProvider, trendDataProvider,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
                                                  netCrunchNodesFilter, processingDataWorker,
                                                  netCrunchConnectionProvider, netCrunchConnectionProviderConsts) {
@@ -107,18 +106,35 @@ function (angular, _, moment, config, $, kbn) {
       this.networkAtlas = networkAtlasReady.promise;
       this.cache = this.createQueryCache();
 
+      function initUpdateNodes(networkAtlas) {
+        $rootScope.$on('netcrunch-host-data-changed', function() {
+          var nodes = networkAtlas.networkNodes;
+
+          nodes.table = [];
+          Object.keys(nodes).forEach(function(nodeId) {
+            nodes.table.push(nodes[nodeId]);
+          });
+
+          self.updateNodeList(nodes.table).then(function(updated) {
+            nodesReady.resolve(updated);
+          });
+        });
+      }
+
+      function initUpdateAtlas(networkAtlas) {
+        $rootScope.$on('netcrunch-network-data-changed', function() {
+          networkAtlasReady.resolve(networkAtlas);
+        });
+      }
+
       if (datasource.url != null) {
         netCrunchLogin = netCrunchConnectionProvider.getConnection(datasource);
         netCrunchLogin.then(
           function(connection) {
             netCrunchConnection = connection;
-
-//************
-
+            initUpdateNodes(connection.networkAtlas);
+            initUpdateAtlas(connection.networkAtlas);
             initTask.resolve();
-
-//************
-
           },
           function(error) {
             alertSrv.set(datasource.name, CONNECTION_ERROR_MESSAGES[error], 'error');
@@ -523,10 +539,6 @@ function (angular, _, moment, config, $, kbn) {
       alertSrv.set(TEMPLATES_NOT_SUPPORTED_INFO);
       return $q.when([]);
     };
-
-    $rootScope.$on('netCrunch-datasource-hosts-changed', function() {});
-
-    $rootScope.$on('netCrunch-datasource-network-atlas-changed', function() {});
 
     return NetCrunchDatasource;
   });
