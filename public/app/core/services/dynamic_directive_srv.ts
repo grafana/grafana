@@ -1,14 +1,12 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
 
 class DynamicDirectiveSrv {
 
   /** @ngInject */
-  constructor(private $compile, private $parse, private datasourceSrv) {
-  }
+  constructor(private $compile, private $parse) {}
 
   addDirective(element, name, scope) {
     element.empty();
@@ -16,19 +14,25 @@ class DynamicDirectiveSrv {
     this.$compile(element)(scope);
   }
 
-  define(options) {
-    var editorScope;
-    options.scope.$watch(options.datasourceProperty, newVal => {
-      if (editorScope) {
-        editorScope.$destroy();
-        options.parentElem.empty();
-      }
+  create(options) {
+    let directiveDef = {
+      restrict: 'E',
+      scope: options.scope,
+      link: function(scope, elem) {
+        options.directive(scope).then(directiveInfo => {
+          if (!directiveInfo) {
+            return;
+          }
 
-      editorScope = options.scope.$new();
-      this.datasourceSrv.get(newVal).then(ds => {
-        this.addDirective(options.parentElem, options.name + '-' + ds.meta.id, editorScope);
-      });
-    });
+          if (directiveInfo.fn.hasBeenRegistered) {
+            coreModule.directive(directiveInfo.name, directiveInfo.fn);
+            directiveInfo.fn.hasBeenRegistered = true;
+          }
+        });
+      }
+    };
+
+    return directiveDef;
   }
 }
 

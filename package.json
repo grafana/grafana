@@ -34,7 +34,7 @@
     "grunt-ng-annotate": "^1.0.1",
     "grunt-string-replace": "~1.2.1",
     "grunt-systemjs-builder": "^0.2.5",
-    "grunt-tslint": "^2.5.0",
+    "grunt-tslint": "^3.0.1",
     "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",

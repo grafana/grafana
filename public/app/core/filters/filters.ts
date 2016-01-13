@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import jquery from 'jquery';
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
@@ -59,7 +58,7 @@ coreModule.filter('noXml', function() {
 });
 
 coreModule.filter('interpolateTemplateVars', function (templateSrv) {
-  var filterFunc : any = function (text, scope) {
+  var filterFunc: any = function(text, scope) {
     if (scope.panel) {
       return templateSrv.replaceWithText(text, scope.panel.scopedVars);
     } else {

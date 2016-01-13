@@ -4,11 +4,6 @@ import _ from 'lodash';
 import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
-var unitsAsc = _.sortBy(units, function (unit) {
-  return moment.duration(1, unit).valueOf();
-});
-
-var unitsDesc = unitsAsc.reverse();
 
 export function parse(text, roundUp?) {
   if (!text) { return undefined; }
@@ -104,8 +99,7 @@ export function parseDateMath(mathString, time, roundUp?) {
       if (type === 0) {
         if (roundUp) {
           dateTime.endOf(unit);
-        }
-        else {
+        } else {
           dateTime.startOf(unit);
         }
       } else if (type === 1) {
