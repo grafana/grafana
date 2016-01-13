@@ -9,13 +9,13 @@ function (angular, $, _) {
   angular
     .module('grafana.directives')
     .directive('panelMenu', function($compile, linkSrv) {
-      var linkTemplate =
-          '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-tooltip"><dtip>panel.helpText</dtip></span>' +
-            '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
-            '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
-          '</span>';
+      var mainTemplateStart = '<span class="panel-title drag-handle pointer">';
+
+      var linkTemplate = '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
+          '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
+          '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>';
+
+      var mainTemplateEnd = '</span>';
 
       function createExternalLinkMenu($scope) {
         var template = '<div class="panel-menu small">';
@@ -29,6 +29,12 @@ function (angular, $, _) {
         }
         return template;
       }
+
+      function getHelpText($scope) {
+        var template = '<span class="panel-tooltip"><tip>' + $scope.panel.helpText + '</tip></span>';
+        return template;
+      }
+
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
 
@@ -71,7 +77,7 @@ function (angular, $, _) {
       return {
         restrict: 'A',
         link: function($scope, elem) {
-          var $link = $(linkTemplate);
+          var $link = $(mainTemplateStart + linkTemplate + getHelpText($scope) + mainTemplateEnd);
           var $panelLinksBtn = $link.find(".panel-links-btn");
           var $panelHelpText = $link.find(".panel-tooltip");
           var $panelContainer = elem.parents(".panel-container");
