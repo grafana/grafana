@@ -70,7 +70,7 @@
     "lodash": "^2.4.1",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.14.15",
-    "tslint": "^3.2.0",
+    "tslint": "^5.2.0",
     "typescript": "^1.7.5"
   }
 }

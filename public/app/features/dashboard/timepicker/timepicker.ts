@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import angular from 'angular';
-import moment from 'moment'
+import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
