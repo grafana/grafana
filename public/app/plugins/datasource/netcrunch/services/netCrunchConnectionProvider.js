@@ -10,12 +10,13 @@
 define([
     'angular',
     'jquery',
+    'moment',
     'NCObjects',
     'remoteDataLists',
     './netCrunchCounters'
   ],
 
-  function (angular, $) {
+  function (angular, $, moment) {
 
     'use strict';
 
@@ -352,7 +353,7 @@ define([
               });
               return deferred.promise;
             }
-          }
+          };
         }
 
         function TrendDataProvider(netCrunchConnection) {

@@ -13,8 +13,6 @@ define([
 
 function (angular) {
 
-  /* global adrem */
-
   'use strict';
 
   var module = angular.module('grafana.services'),
@@ -640,7 +638,7 @@ function (angular) {
           removePerSec: removePerSec,
           getSNMPDisplayPath: getSNMPDisplayPath,
           counterPathToDisplayStr: counterPathToDisplayStr
-        }
+        };
       }
 
       return {

@@ -27,10 +27,10 @@ function (angular, _, moment, config, $, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem, netCrunchTrendDataProviderConsts,
+  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, netCrunchConnectionProvider,
+                                                 netCrunchConnectionProviderConsts, netCrunchTrendDataProviderConsts,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
-                                                 netCrunchNodesFilter, processingDataWorker,
-                                                 netCrunchConnectionProvider, netCrunchConnectionProviderConsts) {
+                                                 netCrunchNodesFilter, processingDataWorker) {
 
     var THREAD_WORKER_NODES_NUMBER = 1000,
         RAW_DATA_MAX_RANGE = {
@@ -149,16 +149,18 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.testDatasource = function() {
-      var defer = $q.defer();
 
-      if ((adrem.ncSrv != null) && (adrem.Client.loggedIn === true)) {
-        defer.resolve({ status: "success", message: "Data source connection is working",
-                        title: "Success" });
-        return defer.promise;
-      } else {
-        return $q.when({ status: "error", message: "Data source connection is not working",
-                         title: "Error" });
-      }
+      //TODO: reimplement this code
+      //var defer = $q.defer();
+      //
+      //if ((adrem.ncSrv != null) && (adrem.Client.loggedIn === true)) {
+      //  defer.resolve({ status: "success", message: "Data source connection is working",
+      //                  title: "Success" });
+      //  return defer.promise;
+      //} else {
+      //  return $q.when({ status: "error", message: "Data source connection is not working",
+      //                   title: "Error" });
+      //}
     };
 
     NetCrunchDatasource.prototype.getNodeById = function (nodeID) {
