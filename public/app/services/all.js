@@ -7,7 +7,6 @@ define([
   './keyboardManager',
   './analytics',
   './popoverSrv',
-  './backendSrv',
-  './netCrunchRemoteClient'
+  './backendSrv'
 ],
 function () {});

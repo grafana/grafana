@@ -11,21 +11,22 @@ define([
     'angular',
     'jquery',
     'moment',
+    'client',
     'NCObjects',
     'remoteDataLists',
     './netCrunchCounters'
   ],
 
-  function (angular, $, moment) {
+  function (angular, $, moment, adrem) {
 
     'use strict';
 
     var module = angular.module('grafana.services');
 
-    module
-      .factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
-                                                        netCrunchConnectionProviderConsts, netCrunchCounters,
-                                                        netCrunchCounterConsts, netCrunchTrendDataProviderConsts) {
+    module.factory('adrem', function(){ return adrem; });
+    module.factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
+                                                            netCrunchConnectionProviderConsts, netCrunchCounters,
+                                                            netCrunchCounterConsts, netCrunchTrendDataProviderConsts) {
 
         var connectionPool = Object.create(null);
 
