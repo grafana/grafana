@@ -55,6 +55,7 @@ function (angular, ElasticDatasource, editView) {
 
   return {
     Datasource: ElasticDatasource,
+    configView: editView.default,
   };
 
 });

@@ -43,33 +43,6 @@ function (angular, $, config) {
     };
   });
 
-  module.directive('datasourceCustomSettingsView', function($compile) {
-    return {
-      restrict: 'E',
-      scope: {
-        dsMeta: "=",
-        current: "=",
-      },
-      link: function(scope, elem) {
-        scope.$watch("dsMeta.module", function() {
-          if (!scope.dsMeta) {
-            return;
-          }
-
-          System.import(scope.dsMeta.module).then(function() {
-            elem.empty();
-            var panelEl = angular.element(document.createElement('datasource-custom-settings-view-' + scope.dsMeta.id));
-            elem.append(panelEl);
-            $compile(panelEl)(scope);
-          }).catch(function(err) {
-            console.log('Failed to load plugin:', err);
-            scope.appEvent('alert-error', ['Plugin Load Error', 'Failed to load plugin ' + scope.dsMeta.id + ', ' + err]);
-          });
-        });
-      }
-    };
-  });
-
   module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
     return {
       restrict: 'E',

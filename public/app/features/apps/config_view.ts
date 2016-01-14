@@ -3,7 +3,7 @@
 import angular from 'angular';
 
 /** @ngInject */
-function appConfigLoader(dynamicDirectiveSrv) {
+function appConfigView(dynamicDirectiveSrv) {
   return dynamicDirectiveSrv.create({
     scope: {
       appModel: "="
@@ -20,4 +20,4 @@ function appConfigLoader(dynamicDirectiveSrv) {
 }
 
 
-angular.module('grafana.directives').directive('appConfigLoader', appConfigLoader);
+angular.module('grafana.directives').directive('appConfigView', appConfigView);
