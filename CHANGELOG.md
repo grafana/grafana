@@ -2,6 +2,7 @@
 
 ### New Features ###
 * **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/pull/3655)
+* **Metadata**: Settings panel now shows dashboard metadata, closes [#3304](https://github.com/grafana/grafana/issues/3304)
 
 ### Breaking changes
 **InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via improved plugin system, closes #3523
