@@ -11,6 +11,10 @@ function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
       return datasourceSrv.get(datasource).then(ds => {
         scope.datasource = ds;
 
+        if (!scope.target.refId) {
+          scope.target.refId = 'A';
+        }
+
         return System.import(ds.meta.module).then(dsModule => {
           return {
             name: 'metrics-query-editor-' + ds.meta.id,
