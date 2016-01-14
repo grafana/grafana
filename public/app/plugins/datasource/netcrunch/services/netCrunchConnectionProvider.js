@@ -249,7 +249,7 @@ define([
 
         function CountersDataProvider(adrem, netCrunchServerConnection) {
 
-          var ncCounters = netCrunchCounters,
+          var ncCounters = netCrunchCounters.getNetCrunchCounters(adrem, netCrunchServerConnection),
               counterConsts = netCrunchCounterConsts,
               trendDB = null;
 
@@ -366,7 +366,6 @@ define([
               loginInProgress = false,
               loginInProgressPromise,
               networkAtlasReady = $q.defer(),
-              counters,
               trendQuery,
               self = this;
 
