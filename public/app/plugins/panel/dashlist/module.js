@@ -11,14 +11,8 @@ function (angular, app, _, config, PanelMeta) {
   var module = angular.module('grafana.panels.dashlist', []);
   app.useModule(module);
 
-  module.directive('grafanaPanelDashlist', function() {
-    return {
-      controller: 'DashListPanelCtrl',
-      templateUrl: 'app/plugins/panel/dashlist/module.html',
-    };
-  });
-
-  module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv) {
+  /** @ngInject */
+  function DashListPanelCtrl($scope, panelSrv, backendSrv) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Dashboard list',
@@ -73,5 +67,16 @@ function (angular, app, _, config, PanelMeta) {
     };
 
     $scope.init();
-  });
+  }
+
+  function dashListPanelDirective() {
+    return {
+      controller: DashListPanelCtrl,
+      templateUrl: 'app/plugins/panel/dashlist/module.html',
+    };
+  }
+
+  return {
+    panel: dashListPanelDirective
+  };
 });

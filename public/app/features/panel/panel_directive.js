@@ -1,31 +1,11 @@
 define([
   'angular',
   'jquery',
-  'app/core/config',
 ],
-function (angular, $, config) {
+function (angular, $) {
   'use strict';
 
   var module = angular.module('grafana.directives');
-
-  module.directive('panelLoader', function($compile, $parse) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem, attr) {
-        var getter = $parse(attr.type), panelType = getter(scope);
-        var module = config.panels[panelType].module;
-
-        System.import(module).then(function() {
-          var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
-          elem.append(panelEl);
-          $compile(panelEl)(scope);
-        }).catch(function(err) {
-          console.log('Failed to load panel:', err);
-          scope.appEvent('alert-error', ['Panel Load Error', 'Failed to load panel ' + panelType + ', ' + err]);
-        });
-      }
-    };
-  });
 
   module.directive('grafanaPanel', function() {
     return {
