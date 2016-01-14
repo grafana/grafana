@@ -3,13 +3,28 @@ package cloudwatch
 import (
 	"encoding/json"
 	"sort"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var metricsMap map[string][]string
 var dimensionsMap map[string][]string
+
+type CustomMetricsCache struct {
+	Expire time.Time
+	Cache  []string
+}
+
+var customMetricsMetricsMap map[string]map[string]map[string]*CustomMetricsCache
+var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
 
 func init() {
 	metricsMap = map[string][]string{
@@ -85,6 +100,9 @@ func init() {
 		"AWS/WAF":              {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 	}
+
+	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
+	customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
 }
 
 // Whenever this list is updated, frontend list should also be updated.
@@ -127,10 +145,19 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	namespaceMetrics, exists := metricsMap[reqParam.Parameters.Namespace]
-	if !exists {
-		c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
-		return
+	var namespaceMetrics []string
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		var exists bool
+		if namespaceMetrics, exists = metricsMap[reqParam.Parameters.Namespace]; !exists {
+			c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
+			return
+		}
+	} else {
+		var err error
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req, reqParam.Parameters.Namespace); err != nil {
+			c.JsonApiErr(500, "Unable to call AWS API", err)
+			return
+		}
 	}
 	sort.Sort(sort.StringSlice(namespaceMetrics))
 
@@ -151,10 +178,19 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	dimensionValues, exists := dimensionsMap[reqParam.Parameters.Namespace]
-	if !exists {
-		c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
-		return
+	var dimensionValues []string
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		var exists bool
+		if dimensionValues, exists = dimensionsMap[reqParam.Parameters.Namespace]; !exists {
+			c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
+			return
+		}
+	} else {
+		var err error
+		if dimensionValues, err = getDimensionsForCustomMetrics(req, reqParam.Parameters.Namespace); err != nil {
+			c.JsonApiErr(500, "Unable to call AWS API", err)
+			return
+		}
 	}
 	sort.Sort(sort.StringSlice(dimensionValues))
 
@@ -164,4 +200,127 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	}
 
 	c.JSON(200, result)
+}
+
+func getAllMetrics(req *cwRequest, namespace string) (cloudwatch.ListMetricsOutput, error) {
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.DataSource.Database),
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
+	params := &cloudwatch.ListMetricsInput{
+		Namespace: aws.String(namespace),
+	}
+
+	var resp cloudwatch.ListMetricsOutput
+	err := svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+var metricsCacheLock sync.Mutex
+
+func getMetricsForCustomMetrics(req *cwRequest, namespace string) ([]string, error) {
+	result, err := getAllMetrics(req, namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	metricsCacheLock.Lock()
+	defer metricsCacheLock.Unlock()
+
+	database := req.DataSource.Database
+	region := req.Region
+	if _, ok := customMetricsMetricsMap[database]; !ok {
+		customMetricsMetricsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[database][region]; !ok {
+		customMetricsMetricsMap[database][region] = make(map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[database][region][namespace]; !ok {
+		customMetricsMetricsMap[database][region][namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
+	}
+
+	if customMetricsMetricsMap[database][region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[database][region][namespace].Cache, nil
+	}
+	customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+
+	for _, metric := range result.Metrics {
+		if isDuplicate(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName) {
+			continue
+		}
+		customMetricsMetricsMap[database][region][namespace].Cache = append(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName)
+	}
+
+	return customMetricsMetricsMap[database][region][namespace].Cache, nil
+}
+
+var dimensionsCacheLock sync.Mutex
+
+func getDimensionsForCustomMetrics(req *cwRequest, namespace string) ([]string, error) {
+	result, err := getAllMetrics(req, namespace)
+	if err != nil {
+		return []string{}, err
+	}
+
+	dimensionsCacheLock.Lock()
+	defer dimensionsCacheLock.Unlock()
+
+	database := req.DataSource.Database
+	region := req.Region
+	if _, ok := customMetricsDimensionsMap[database]; !ok {
+		customMetricsDimensionsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[database][region]; !ok {
+		customMetricsDimensionsMap[database][region] = make(map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[database][region][namespace]; !ok {
+		customMetricsDimensionsMap[database][region][namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
+	}
+
+	if customMetricsDimensionsMap[database][region][namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+	}
+	customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+
+	for _, metric := range result.Metrics {
+		for _, dimension := range metric.Dimensions {
+			if isDuplicate(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name) {
+				continue
+			}
+			customMetricsDimensionsMap[database][region][namespace].Cache = append(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name)
+		}
+	}
+
+	return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+}
+
+func isDuplicate(nameList []string, target string) bool {
+	for _, name := range nameList {
+		if name == target {
+			return true
+		}
+	}
+	return false
+}
+
+func isCustomMetrics(namespace string) bool {
+	return strings.Index(namespace, "AWS/") != 0
 }
