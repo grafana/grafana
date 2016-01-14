@@ -1,12 +1,6 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 
 	<ul class="sidemenu sidemenu-main">
-		<li style="margin-bottom: 15px;">
-			<a class="pointer sidemenu-top-btn" ng-click="contextSrv.toggleSideMenu()">
-				<img class="logo-icon" src="img/fav32.png"></img>
-				<i class="pull-right fa fa-angle-left"></i>
-			</a>
-		</li>
 
 		<li class="sidemenu-org-section dropdown" ng-if="contextSrv.isSignedIn">
 			<div class="sidemenu-org" data-toggle="dropdown" ng-click="openUserDropdown()">
@@ -17,7 +11,7 @@
 					<span class="sidemenu-org-user sidemenu-item-text">{{contextSrv.user.name}}</span>
 					<span class="sidemenu-org-name sidemenu-item-text">{{contextSrv.user.orgName}}</span>
 				</div>
-				<i class="fa fa-caret-down small"></i>
+				<i class="fa fa-caret-right small"></i>
 			</div>
 			<ul class="dropdown-menu" role="menu">
 				<li ng-repeat="menuItem in orgMenu" ng-class="menuItem.cssClass">
