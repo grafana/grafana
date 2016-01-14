@@ -3,12 +3,16 @@
 		<div class="container-fluid">
 
 			<div class="top-nav">
-				<a class="pointer top-nav-menu-btn" ng-if="!contextSrv.sidemenu" ng-click="contextSrv.toggleSideMenu()">
-					<img class="logo-icon" src="img/fav32.png"></img>
-					<i class="fa fa-bars"></i>
-				</a>
+				<div class="top-nav-btn top-nav-menu-btn">
+					<a class="pointer" ng-click="openSearch()">
+						<span class="top-nav-logo-background">
+							<img class="logo-icon" src="img/fav32.png"></img>
+						</span>
+						<i class="fa fa-caret-down"></i>
+					</a>
+				</div>
 
-				<div class="top-nav-dashboards-btn">
+				<div class="top-nav-btn top-nav-dashboards-btn">
 					<a class="pointer" ng-click="openSearch()">
 						<i class="fa fa-th-large"></i>
 						<span class="dashboard-title">{{dashboard.title}}</span>

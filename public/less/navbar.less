@@ -20,76 +20,103 @@
   color: @textColor;
 }
 
-.top-nav-menu-btn {
-  border: 1px solid @bodyBackground;
-  border-radius: 50%;
-  background: @iconContainerBackground;
-  display: block;
-  position: relative;
-  float: left;
-  width: 30px;
-  height: 30px;
-  padding: 4px;
-  margin: 6px 6px 3px 9px;
-  .fa {
-    color: @textColor;
-    width: 30px;
-    height: 30px;
-    left: 9px;
-    top: 7px;
-    font-size: 150%;
-    opacity: 0;
-    position: absolute;
-    transition: opacity .20s ease-in-out;
-  }
-  img {
-    width: 30px;
-    position: absolute;
-    opacity: 1;
-    transition: opacity .20s ease-in-out;
-  }
-  &:hover {
-    .fa {
-      opacity: .7;
-    }
-    img {
-      opacity: 0;
-    }
-  }
-}
+// .top-nav-menu-btn {
+//   float: left;
+//   .top-nav-menu-circle {
+//     border: 1px solid @bodyBackground;
+//     margin: 6px 6px 3px 9px;
+//     display: inline-block;
+//     padding: 4px;
+//     border-radius: 50%;
+//     background: @iconContainerBackground;
+//     width: 30px;
+//     height: 30px;
+//     float: left;
+//   }
+//   .fa-bars {
+//     color: @textColor;
+//     width: 30px;
+//     height: 30px;
+//     left: 9px;
+//     top: 7px;
+//     font-size: 150%;
+//     opacity: 0;
+//     position: absolute;
+//     transition: opacity .20s ease-in-out;
+//   }
+//   .fa-caret-down {
+//     position: relative;
+//     font-size: 80%;
+//   }
+//   img {
+//     width: 30px;
+//     position: absolute;
+//     opacity: 1;
+//     transition: opacity .20s ease-in-out;
+//   }
+//   &:hover {
+//     .fa {
+//       opacity: .7;
+//     }
+//     img {
+//       opacity: 0;
+//     }
+//   }
+// }
 
-.top-nav-dashboards-btn {
+.top-nav-btn {
   display: block;
   float: left;
-  margin: 9px 18px 5px 14px;
-  border-radius: 3px;
+  margin: 0;
   font-size: 1.4em;
   color: #a2a2a2;
-  border: @grafanaTriggerBorder;
-  a {
-    background-color: @grafanaTargetFuncBackground;
-    display: inline-block;
-    padding: 5px 15px 5px 10px;
-    border-radius: 3px;
-    color: #a2a2a2;
-
-    &:hover {
-      background: @grafanaTargetFuncBackground;
-      .fa {
-        color: @linkColor;
-      }
-    }
-  }
-
-  .fa-th-large {
-    position: relative;
-    top: 2px;
-  }
+  border-right: 1px solid black;
 
   .fa-caret-down {
     font-size: 60%;
     position: relative;
     top: 4px;
+  }
+
+  a {
+    background-color: darken(@grafanaTargetFuncBackground, 2%);
+    display: inline-block;
+    color: #a2a2a2;
+    &:hover {
+      background: @grafanaTargetFuncBackground;
+      color: @linkColor;
+      border-bottom: 1px solid @blue;
+    }
+  }
+}
+
+.top-nav-menu-btn {
+  a {
+    padding: 6px 15px 6px 10px;
+  }
+  img {
+    width: 30px;
+    position: relative;
+  }
+  .top-nav-logo-background {
+    display: inline-block;
+    border: 1px solid @bodyBackground;
+    padding: 4px;
+    border-radius: 50%;
+    background: @iconContainerBackground;
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.top-nav-dashboards-btn {
+  a {
+    padding: 14px 15px 14px 10px;
+  }
+
+  .fa-th-large {
+    position: relative;
+    top: 2px;
   }
 }
 
