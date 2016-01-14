@@ -31,10 +31,10 @@ function (angular, _, $) {
     };
 
     $scope.datasourceChanged = function() {
-      $scope.currentDatasource = _.findWhere($scope.datasources, { name: $scope.currentAnnotation.datasource });
-      if (!$scope.currentDatasource) {
-        $scope.currentDatasource = $scope.datasources[0];
-      }
+      datasourceSrv.get($scope.currentAnnotation.datasource).then(function(ds) {
+        $scope.currentDatasource = ds;
+        $scope.currentAnnotation.datasource = ds.name;
+      });
     };
 
     $scope.edit = function(annotation) {
@@ -50,7 +50,6 @@ function (angular, _, $) {
       $scope.currentAnnotation = angular.copy(annotationDefaults);
       $scope.currentIsNew = true;
       $scope.datasourceChanged();
-      $scope.currentAnnotation.datasource = $scope.currentDatasource.name;
     };
 
     $scope.update = function() {

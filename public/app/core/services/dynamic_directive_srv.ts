@@ -28,7 +28,7 @@ class DynamicDirectiveSrv {
         directiveInfo.fn.registered = true;
       }
 
-      this.addDirective(elem, directiveInfo.name, directiveInfo.scope || scope);
+      this.addDirective(elem, directiveInfo.name, scope);
     }).catch(err => {
       console.log('Plugin load:', err);
       this.$rootScope.appEvent('alert-error', ['Plugin error', err.toString()]);
@@ -41,7 +41,14 @@ class DynamicDirectiveSrv {
       scope: options.scope,
       link: (scope, elem, attrs) => {
         if (options.watch) {
-          scope.$watch(options.watch,() => this.link(scope, elem, attrs, options));
+          let childScope = null;
+          scope.$watch(options.watch, () => {
+            if (childScope) {
+              childScope.$destroy();
+            }
+            childScope = scope.$new();
+            this.link(childScope, elem, attrs, options);
+          });
         } else {
           this.link(scope, elem, attrs, options);
         }

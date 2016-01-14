@@ -1,14 +1,14 @@
 <div class="editor-row">
-	<div class="section" ng-if="currentAnnotation.index">
+	<div class="section" ng-if="annotation.index">
 		<h5>Index name</h5>
 		<div class="editor-option">
-			<input type="text" class="span4" ng-model='currentAnnotation.index' placeholder="events-*"></input>
+			<input type="text" class="span4" ng-model='annotation.index' placeholder="events-*"></input>
 		</div>
 	</div>
 	<div class="section">
 		<h5>Search query (lucene) <tip>Use [[filterName]] in query to replace part of the query with a filter value</tip></h5>
 		<div class="editor-option">
-			<input type="text" class="span6" ng-model='currentAnnotation.query' placeholder="tags:deploy"></input>
+			<input type="text" class="span6" ng-model='annotation.query' placeholder="tags:deploy"></input>
 		</div>
 	</div>
 </div>
@@ -18,22 +18,22 @@
 		<h5>Field mappings</h5>
 		<div class="editor-option">
 			<label class="small">Time</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.timeField' placeholder="@timestamp"></input>
+			<input type="text" class="input-small" ng-model='annotation.timeField' placeholder="@timestamp"></input>
 		</div>
 
 		<div class="editor-option">
 			<label class="small">Title</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.titleField' placeholder="desc"></input>
+			<input type="text" class="input-small" ng-model='annotation.titleField' placeholder="desc"></input>
 		</div>
 
 		<div class="editor-option">
 			<label class="small">Tags</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.tagsField' placeholder="tags"></input>
+			<input type="text" class="input-small" ng-model='annotation.tagsField' placeholder="tags"></input>
 		</div>
 
 		<div class="editor-option">
 			<label class="small">Text</label>
-			<input type="text" class="input-small" ng-model='currentAnnotation.textField' placeholder=""></input>
+			<input type="text" class="input-small" ng-model='annotation.textField' placeholder=""></input>
 		</div>
 	</div>
 </div>
