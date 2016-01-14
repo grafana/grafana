@@ -1,5 +1,5 @@
 
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, beforeEach, it, expect} from 'test/lib/common';
 import ElasticResponse from '../elastic_response';
 
 describe('ElasticResponse', function() {
@@ -495,11 +495,6 @@ describe('ElasticResponse', function() {
       expect(result.data[0].datapoints[1].host).to.be("server-2");
       expect(result.data[0].datapoints[1].Average).to.be(2000);
     });
-  });
-
-  describe('', function() {
-
-
   });
 
   describe('Raw documents query', function() {

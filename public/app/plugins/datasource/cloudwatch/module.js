@@ -1,39 +1,27 @@
 define([
-  'angular',
   './datasource',
   './query_parameter_ctrl',
+  './query_ctrl',
 ],
-function (angular, CloudWatchDatasource) {
+function (CloudWatchDatasource) {
   'use strict';
 
-  var module = angular.module('grafana.directives');
-
-  module.directive('metricQueryEditorCloudwatch', function() {
+  function metricsQueryEditor() {
     return {controller: 'CloudWatchQueryCtrl', templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.editor.html'};
-  });
+  }
 
-  module.directive('annotationsQueryEditorCloudwatch', function() {
+  function annotationsQueryEditor() {
     return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/annotations.editor.html'};
-  });
+  }
 
-  module.directive('cloudwatchQueryParameter', function() {
-    return {
-      templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.parameter.html',
-      controller: 'CloudWatchQueryParameterCtrl',
-      restrict: 'E',
-      scope: {
-        target: "=",
-        datasourceName: "@",
-        onChange: "&",
-      }
-    };
-  });
-
-  module.directive('datasourceCustomSettingsViewCloudwatch', function() {
+  function configView() {
     return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/edit_view.html'};
-  });
+  }
 
   return  {
-    Datasource: CloudWatchDatasource
+    Datasource: CloudWatchDatasource,
+    configView: configView,
+    annotationsQueryEditor: annotationsQueryEditor,
+    metricsQueryEditor: metricsQueryEditor,
   };
 });

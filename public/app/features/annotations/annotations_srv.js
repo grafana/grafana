@@ -1,7 +1,8 @@
 define([
   'angular',
   'lodash',
-  './editorCtrl'
+  './editor_ctrl',
+  './query_editor'
 ], function (angular, _) {
   'use strict';
 

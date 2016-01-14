@@ -52,7 +52,7 @@ function(angular, $) {
         scope.appEvent('save-dashboard', evt);
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+r', function() {
+      keyboardManager.bind('r', function() {
         scope.broadcastRefresh();
       }, { inputDisabled: true });
 

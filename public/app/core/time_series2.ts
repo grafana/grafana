@@ -132,7 +132,7 @@ export default class TimeSeries {
         }
       }
 
-      if (currentValue != 0) {
+      if (currentValue !== 0) {
         this.allIsZero = false;
       }
 

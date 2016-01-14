@@ -8,6 +8,20 @@ function (angular, _, queryDef) {
 
   var module = angular.module('grafana.directives');
 
+  module.directive('elasticBucketAgg', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+      controller: 'ElasticBucketAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+      }
+    };
+  });
+
   module.controller('ElasticBucketAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var bucketAggs = $scope.target.bucketAggs;
 
