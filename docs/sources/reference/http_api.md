@@ -500,6 +500,64 @@ Proxies all calls to the actual datasource.
       "name":"Main Org."
     }
 
+### Get Organisation by Id
+
+`GET /api/orgs/:orgId`
+
+**Example Request**:
+
+    GET /api/orgs/1 HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "id":1,
+      "name":"Main Org.",
+      "address":{
+        "address1":"",
+        "address2":"",
+        "city":"",
+        "zipCode":"",
+        "state":"",
+        "country":""
+      }
+    }
+
+### Get Organisation by Name
+
+`GET /api/orgs/name/:orgName`
+
+**Example Request**:
+
+    GET /api/orgs/name/Main%20Org%2E HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "id":1,
+      "name":"Main Org.",
+      "address":{
+        "address1":"",
+        "address2":"",
+        "city":"",
+        "zipCode":"",
+        "state":"",
+        "country":""
+      }
+    }
+
 ### Update current Organisation
 
 `PUT /api/org`
