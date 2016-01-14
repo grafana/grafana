@@ -102,7 +102,7 @@ function (angular, _) {
       var query = $q.when([]);
 
       if (segment.type === 'key' || segment.type === 'plus-button') {
-        query = $scope.datasource.getDimensionKeys($scope.target.namespace);
+        query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value')  {
         var dimensionKey = $scope.dimSegments[$index-2].value;
         query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, {});
@@ -160,7 +160,7 @@ function (angular, _) {
     };
 
     $scope.getMetrics = function() {
-      return $scope.datasource.metricFindQuery('metrics(' + $scope.target.namespace + ')')
+      return $scope.datasource.metricFindQuery('metrics(' + $scope.target.namespace + ',' + $scope.target.region + ')')
       .then($scope.transformToSegments(true));
     };
 
