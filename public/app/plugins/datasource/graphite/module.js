@@ -1,19 +1,16 @@
 define([
-  'angular',
   './datasource',
 ],
-function (angular, GraphiteDatasource) {
+function (GraphiteDatasource) {
   'use strict';
 
-  var module = angular.module('grafana.directives');
-
-  module.directive('metricQueryEditorGraphite', function() {
+  function metricsQueryEditor() {
     return {controller: 'GraphiteQueryCtrl', templateUrl: 'app/plugins/datasource/graphite/partials/query.editor.html'};
-  });
+  }
 
-  module.directive('metricQueryOptionsGraphite', function() {
+  function metricsQueryOptions() {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/query.options.html'};
-  });
+  }
 
   function annotationsQueryEditor() {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/annotations.editor.html'};
@@ -27,5 +24,7 @@ function (angular, GraphiteDatasource) {
     Datasource: GraphiteDatasource,
     configView: configView,
     annotationsQueryEditor: annotationsQueryEditor,
+    metricsQueryEditor: metricsQueryEditor,
+    metricsQueryOptions: metricsQueryOptions,
   };
 });

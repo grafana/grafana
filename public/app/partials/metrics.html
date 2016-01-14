@@ -1,8 +1,8 @@
 <div class="editor-row">
 
 	<div class="tight-form-container">
-		<query-editor-loader ng-repeat="target in panel.targets" ng-class="{'tight-form-disabled': target.hide}" >
-		</query-editor-loader>
+		<metrics-query-editor ng-repeat="target in panel.targets" ng-class="{'tight-form-disabled': target.hide}" >
+		</metrics-query-editor>
 	</div>
 
 	<div style="margin: 20px 0 0 0">
@@ -26,7 +26,7 @@
 
 	</div>
 
-	<datasource-editor-view datasource="panel.datasource" name="metric-query-options"></datasource-editor-view>
+	<metrics-query-options></metrics-query-options>
 </div>
 
 <div class="editor-row" style="margin-top: 30px">
