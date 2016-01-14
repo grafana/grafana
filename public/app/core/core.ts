@@ -17,15 +17,15 @@ import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/topnav";
 import "./directives/value_select_dropdown";
+import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
 
 import {arrayJoin} from './directives/array_join';
-import * as controllers from 'app/core/controllers/all';
-import * as services from 'app/core/services/all';
-import * as routes from 'app/core/routes/all';
+import 'app/core/controllers/all';
+import 'app/core/services/all';
+import 'app/core/routes/all';
 import './filters/filters';
+import coreModule from './core_module';
 
-// export * from './directives/give_focus'
-
-export {arrayJoin, controllers, services, routes};
+export {arrayJoin, coreModule};

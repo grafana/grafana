@@ -12,16 +12,8 @@ define([
 function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
   'use strict';
 
-  var module = angular.module('grafana.panels.graph');
-
-  module.directive('grafanaPanelGraph', function() {
-    return {
-      controller: 'GraphCtrl',
-      templateUrl: 'app/plugins/panel/graph/module.html',
-    };
-  });
-
-  module.controller('GraphCtrl', function($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
+  /** @ngInject */
+  function GraphCtrl($scope, $rootScope, panelSrv, annotationsSrv, panelHelper) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Graph',
@@ -294,7 +286,17 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
     };
 
     panelSrv.init($scope);
+  }
 
-  });
+  function graphPanelDirective() {
+    return {
+      controller: GraphCtrl,
+      templateUrl: 'app/plugins/panel/graph/module.html',
+    };
+  }
 
+  return {
+    GraphCtrl: GraphCtrl,
+    panel: graphPanelDirective,
+  };
 });

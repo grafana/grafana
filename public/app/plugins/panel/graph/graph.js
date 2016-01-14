@@ -4,7 +4,7 @@ define([
   'moment',
   'lodash',
   'app/core/utils/kbn',
-  './graph.tooltip',
+  './graph_tooltip',
   'jquery.flot',
   'jquery.flot.events',
   'jquery.flot.selection',

@@ -29,7 +29,6 @@
 			<span style="small">
 			Version: {{ctrl.appModel.info.version}} &nbsp; &nbsp; Updated: {{ctrl.appModel.info.updated}}
 		</span>
-
 		</em>
 		<br><br>
 
@@ -94,9 +93,12 @@
 		<section class="simple-box">
 			<h3 class="simple-box-header">Configuration:</h3>
 			<div class="simple-box-body">
+				<div ng-if="ctrl.appModel.appId">
+					<app-config-view app-model="ctrl.appModel"></app-config-view>
+				</div>
 			</div>
 		</section>
 
-		<app-config-loader></app-config-loader>
+
 	</div>
 </div>

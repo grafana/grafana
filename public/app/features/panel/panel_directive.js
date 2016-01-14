@@ -1,31 +1,11 @@
 define([
   'angular',
   'jquery',
-  'app/core/config',
 ],
-function (angular, $, config) {
+function (angular, $) {
   'use strict';
 
   var module = angular.module('grafana.directives');
-
-  module.directive('panelLoader', function($compile, $parse) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem, attr) {
-        var getter = $parse(attr.type), panelType = getter(scope);
-        var module = config.panels[panelType].module;
-
-        System.import(module).then(function() {
-          var panelEl = angular.element(document.createElement('grafana-panel-' + panelType));
-          elem.append(panelEl);
-          $compile(panelEl)(scope);
-        }).catch(function(err) {
-          console.log('Failed to load panel:', err);
-          scope.appEvent('alert-error', ['Panel Load Error', 'Failed to load panel ' + panelType + ', ' + err]);
-        });
-      }
-    };
-  });
 
   module.directive('grafanaPanel', function() {
     return {
@@ -38,103 +18,6 @@ function (angular, $, config) {
         scope.$watchGroup(['fullscreen', 'height', 'panel.height', 'row.height'], function() {
           panelContainer.css({ minHeight: scope.height || scope.panel.height || scope.row.height, display: 'block' });
           elem.toggleClass('panel-fullscreen', scope.fullscreen ? true : false);
-        });
-      }
-    };
-  });
-
-  module.directive('datasourceCustomSettingsView', function($compile) {
-    return {
-      restrict: 'E',
-      scope: {
-        dsMeta: "=",
-        current: "=",
-      },
-      link: function(scope, elem) {
-        scope.$watch("dsMeta.module", function() {
-          if (!scope.dsMeta) {
-            return;
-          }
-
-          System.import(scope.dsMeta.module).then(function() {
-            elem.empty();
-            var panelEl = angular.element(document.createElement('datasource-custom-settings-view-' + scope.dsMeta.id));
-            elem.append(panelEl);
-            $compile(panelEl)(scope);
-          }).catch(function(err) {
-            console.log('Failed to load plugin:', err);
-            scope.appEvent('alert-error', ['Plugin Load Error', 'Failed to load plugin ' + scope.dsMeta.id + ', ' + err]);
-          });
-        });
-      }
-    };
-  });
-
-  module.service('dynamicDirectiveSrv', function($compile, $parse, datasourceSrv) {
-    var self = this;
-
-    this.addDirective = function(options, type, editorScope) {
-      var panelEl = angular.element(document.createElement(options.name + '-' + type));
-      options.parentElem.append(panelEl);
-      $compile(panelEl)(editorScope);
-    };
-
-    this.define = function(options) {
-      var editorScope;
-      options.scope.$watch(options.datasourceProperty, function(newVal) {
-        if (editorScope) {
-          editorScope.$destroy();
-          options.parentElem.empty();
-        }
-
-        editorScope = options.scope.$new();
-        datasourceSrv.get(newVal).then(function(ds) {
-          self.addDirective(options, ds.meta.id, editorScope);
-        });
-      });
-    };
-  });
-
-  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem, attrs) {
-        dynamicDirectiveSrv.define({
-          datasourceProperty: attrs.datasource,
-          name: attrs.name,
-          scope: scope,
-          parentElem: elem,
-        });
-      }
-    };
-  });
-
-  module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem) {
-        var editorScope;
-
-        scope.$watch("panel.datasource", function() {
-          var datasource = scope.target.datasource || scope.panel.datasource;
-
-          datasourceSrv.get(datasource).then(function(ds) {
-            if (editorScope) {
-              editorScope.$destroy();
-              elem.empty();
-            }
-
-            editorScope = scope.$new();
-            editorScope.datasource = ds;
-
-            if (!scope.target.refId) {
-              scope.target.refId = 'A';
-            }
-
-            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.id));
-            elem.append(panelEl);
-            $compile(panelEl)(editorScope);
-          });
         });
       }
     };

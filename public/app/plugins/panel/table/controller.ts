@@ -20,7 +20,7 @@ export class TablePanelCtrl {
       metricsEditor: true,
     });
 
-    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panels/table/options.html');
+    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panel/table/options.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
 
     var panelDefaults = {

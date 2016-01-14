@@ -10,17 +10,7 @@ function (angular, app, _, require, PanelMeta) {
 
   var converter;
 
-  var module = angular.module('grafana.panels.text', []);
-  app.useModule(module);
-
-  module.directive('grafanaPanelText', function() {
-    return {
-      controller: 'TextPanelCtrl',
-      templateUrl: 'app/plugins/panel/text/module.html',
-    };
-  });
-
-  module.controller('TextPanelCtrl', function($scope, templateSrv, $sce, panelSrv) {
+  function TextPanelCtrl($scope, templateSrv, $sce, panelSrv) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Text',
@@ -107,5 +97,16 @@ function (angular, app, _, require, PanelMeta) {
     };
 
     $scope.init();
-  });
+  }
+
+  function textPanel() {
+    return {
+      controller: TextPanelCtrl,
+      templateUrl: 'app/plugins/panel/text/module.html',
+    };
+  }
+
+  return {
+    panel: textPanel,
+  };
 });

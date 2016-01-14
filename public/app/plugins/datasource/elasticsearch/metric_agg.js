@@ -8,6 +8,21 @@ function (angular, _, queryDef) {
 
   var module = angular.module('grafana.directives');
 
+  module.directive('elasticMetricAgg', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/metric_agg.html',
+      controller: 'ElasticMetricAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+        esVersion: '='
+      }
+    };
+  });
+
   module.controller('ElasticMetricAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var metricAggs = $scope.target.metrics;
 

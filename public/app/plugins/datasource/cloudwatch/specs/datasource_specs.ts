@@ -228,10 +228,8 @@ describe('CloudWatchDatasource', function() {
         switch (params.data.action) {
         case 'DescribeAlarmsForMetric':
           return ctx.$q.when({data: alarmResponse});
-          break;
         case 'DescribeAlarmHistory':
           return ctx.$q.when({data: historyResponse});
-          break;
         }
       };
     });

@@ -10,7 +10,9 @@ import {TablePanelCtrl} from './controller';
 import {TableRenderer} from './renderer';
 import {tablePanelEditor} from './editor';
 
-export function tablePanel() {
+angular.module('grafana.directives').directive('grafanaPanelTableEditor', tablePanelEditor);
+
+function tablePanel() {
   'use strict';
   return {
     restrict: 'E',
@@ -102,5 +104,4 @@ export function tablePanel() {
   };
 }
 
-angular.module('grafana.directives').directive('grafanaPanelTable', tablePanel);
-angular.module('grafana.directives').directive('grafanaPanelTableEditor', tablePanelEditor);
+export {tablePanel as panel};
