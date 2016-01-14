@@ -91,10 +91,8 @@
 				</div>
 			</div>
 
-			<annnotations-ds-query-editor
-				datasource="currentAnnotation.datasource"
-				current-annotation="currentAnnotation"></annotations-ds-query-editor>
-			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
+			<annotations-query-editor datasource="currentDatasource" annotation="currentAnnotation">
+			</annotations-query-editor>
 
 			<br>
 			<button ng-show="mode === 'new'" type="button" class="btn btn-success" ng-click="add()">Add</button>

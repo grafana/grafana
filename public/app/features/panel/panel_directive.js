@@ -43,20 +43,6 @@ function (angular, $, config) {
     };
   });
 
-  module.directive('datasourceEditorView', function(dynamicDirectiveSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem, attrs) {
-        dynamicDirectiveSrv.define({
-          datasourceProperty: attrs.datasource,
-          name: attrs.name,
-          scope: scope,
-          parentElem: elem,
-        });
-      }
-    };
-  });
-
   module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
     return {
       restrict: 'E',
