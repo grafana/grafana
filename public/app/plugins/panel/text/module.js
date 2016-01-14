@@ -10,6 +10,7 @@ function (angular, app, _, require, PanelMeta) {
 
   var converter;
 
+  /** @ngInject */
   function TextPanelCtrl($scope, templateSrv, $sce, panelSrv) {
 
     $scope.panelMeta = new PanelMeta({
