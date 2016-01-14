@@ -4,12 +4,11 @@
 
 .sidemenu-wrapper {
   position: absolute;
-  display: none;
-  top: 0;
+  top: 51px;
   bottom: 0;
   left: 0;
   width: 200px;
-  background: @bodyBackground;
+  background-color: darken(@grafanaTargetFuncBackground, 2%);
   min-height: 100%;
   z-index: 101;
 
@@ -39,7 +38,6 @@
   padding: 0;
 
   >li {
-    margin-bottom: 9px;
   }
 
   .fa-caret-down {
@@ -59,25 +57,6 @@
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sidemenu-top-btn {
-  display: block;
-  padding: 8px 0 4px 22px;
-  background-color: @navbarBackground;
-  img {
-    border-radius: 50%;
-    background: @iconContainerBackground;
-    border: 1px solid @bodyBackground;
-    width: 30px;
-    padding: 4px;
-  }
-  i {
-    padding-right: 5px;
-    padding-top: 5px;
-    font-size: 170%;
-    color: @linkColor;
-  }
 }
 
 .icon-circle {
@@ -100,10 +79,13 @@
 
 .sidemenu-item {
   color: @linkColor;
-  line-height: 40px;
+  line-height: 45px;
   padding: 0px 10px 0px 20px;
   display: block;
   white-space: nowrap;
+  &:hover {
+    background-color: @grafanaTargetFuncBackground;
+  }
 
   .sidemenu-item-text {
     padding-left: 11px;
@@ -186,19 +168,28 @@
   }
 }
 
+.sidemenu-org-section {
+  box-shadow: inset 0 4px 15px -4px #161616;
+  border-bottom: 2px solid @sideMenuOrgBorder;
+  padding: 17px 10px 15px 21px;
+  cursor: pointer;
+  &:hover {
+    background-color: @grafanaTargetFuncBackground;
+  }
+}
+
 .sidemenu-org {
   display: table;
   position: relative;
   width: 159px;
-  padding: 2px 10px 20px 21px;
-  border-bottom: 1px solid @sideMenuOrgBorder;
-  cursor: pointer;
 }
 
-.sidemenu-org .fa-caret-down {
+.sidemenu-org .fa-caret-right {
   position: absolute;
-  top: 33px;
-  right: 2px;
+  top: 17px;
+  right: -12px;
+  font-size: 80%;
+  color: @linkColor;
 }
 
 .sidemenu-org-avatar,
@@ -212,22 +203,25 @@
 }
 
 .sidemenu-org-avatar > img {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  position: absolute;
 }
 
 .sidemenu-org-details {
-  padding-left: 12px;
+  padding-left: 16px;
   color: @linkColor;
 }
 
-.sidemenu-org-user,
 .sidemenu-org-name {
   display: block;
+  font-size: 13px;
+  color: @linkColorDisabled;
 }
 
+
 .sidemenu-org-user {
-  font-size: 14px;
+  display: block;
 }
 
