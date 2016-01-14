@@ -15,7 +15,6 @@ define([
   'jquery',
   'kbn',
   './services/netCrunchConnectionProvider',
-  './services/trendDataProvider',
   './services/processingDataWorker',
   './controllers/netCrunchQueryCtrl',
   './controllers/netCrunchOptionsCtrl',
@@ -28,10 +27,7 @@ function (angular, _, moment, config, $, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem,
-                                                 netCrunchTrendDataProviderConsts,
-                                                 netCrunchRemoteSession,
-                                                 trendDataProvider,
+  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem, netCrunchTrendDataProviderConsts,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
                                                  netCrunchNodesFilter, processingDataWorker,
                                                  netCrunchConnectionProvider, netCrunchConnectionProviderConsts) {
@@ -58,10 +54,10 @@ function (angular, _, moment, config, $, kbn) {
         PERIODS = Object.create(null),
         CONNECTION_ERROR_MESSAGES = netCrunchConnectionProviderConsts.ERROR_MESSAGES;
 
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpMinutes] = 'minutes';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpHours] = 'hours';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpDays] = 'days';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpMonths] = 'months';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpMinutes] = 'minutes';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpHours] = 'hours';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpDays] = 'days';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpMonths] = 'months';
 
     function QueryCache(datasource) {
       this.datasource = datasource;
@@ -330,15 +326,17 @@ function (angular, _, moment, config, $, kbn) {
       }
 
       function calculateTimeRange(rangeFrom, rangeTo, maxDataPoints) {
-        var period = trendDataProvider.calculateChartDataInterval(rangeFrom, rangeTo, maxDataPoints);
+        var trends = self.netCrunchConnection.trends,
+            period = trends.calculateChartDataInterval(rangeFrom, rangeTo, maxDataPoints);
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
       function calculateRAWTimeRange(rangeFrom, rangeTo) {
-        var period = {
-          periodInterval : 1,
-          periodType : trendDataProvider.PERIOD_TYPE.tpMinutes
-        };
+        var trends = self.netCrunchConnection.trends,
+            period = {
+              periodInterval : 1,
+              periodType : trends.PERIOD_TYPE.tpMinutes
+            };
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
@@ -410,14 +408,14 @@ function (angular, _, moment, config, $, kbn) {
       }
 
       function prepareSeriesDataQuery (target, range, series){
+        var trends = self.netCrunchConnection.trends;
 
         if (self.seriesTypesSelected(series) === false) {
           return $q.when([]);
         }
 
-        return trendDataProvider.getCounterTrendData(target.nodeID, target.counterName, range.from,
-                                                     range.to, range.periodType, range.periodInterval,
-                                                     series)
+        return trends.getCounterTrendData(target.nodeID, target.counterName, range.from, range.to, range.periodType,
+                                          range.periodInterval, series)
           .then(function (dataPoints) {
             var seriesData = [];
 
@@ -461,7 +459,9 @@ function (angular, _, moment, config, $, kbn) {
       }
 
       function prepareChartData(targetsChartData, rawData) {
-        var counterSeries = Object.create(null);
+        var
+          counterSeries = Object.create(null),
+          trends = self.netCrunchConnection.trends;
 
         function extendCounterName(baseCounterName, seriesType) {
           return baseCounterName + '\\' + SERIES_TYPES_DISPLAY_NAMES[seriesType];
@@ -485,7 +485,7 @@ function (angular, _, moment, config, $, kbn) {
                 }
                 counterSeries.data.push({
                   target: counterName,
-                  datapoints: trendDataProvider.grafanaDataConverter(serie.dataPoints)
+                  datapoints: trends.grafanaDataConverter(serie.dataPoints)
                 });
               });
             }
