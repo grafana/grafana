@@ -22,7 +22,7 @@ class DynamicDirectiveSrv {
       scope: options.scope,
       link: (scope, elem, attrs) => {
         options.directive(scope).then(directiveInfo => {
-          if (!directiveInfo) {
+          if (!directiveInfo || !directiveInfo.fn) {
             return;
           }
 
