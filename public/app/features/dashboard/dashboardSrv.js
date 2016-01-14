@@ -33,6 +33,10 @@ function (angular, $, _, moment) {
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.timepicker = data.timepicker || {};
       this.templating = this._ensureListExist(data.templating);
+      if (typeof this.templating.dashboard_autoupdate === 'undefined') {
+        //old dashboard version without autoupdate option
+        this.templating.dashboard_autoupdate=true;
+      }
       this.annotations = this._ensureListExist(data.annotations);
       this.refresh = data.refresh;
       this.snapshot = data.snapshot;

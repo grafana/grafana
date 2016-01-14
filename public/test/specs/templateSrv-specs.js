@@ -20,7 +20,7 @@ define([
 
     describe('init', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'oogle' } }], dashboard_autoupdate: true });
       });
 
       it('should initialize template data', function() {
@@ -31,7 +31,7 @@ define([
 
     describe('replace can pass scoped vars', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'oogle' } }],dashboard_autoupdate: true });
       });
 
       it('should replace $test with scoped value', function() {
@@ -95,7 +95,7 @@ define([
 
     describe('can check if variable exists', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'oogle' } }], dashboard_autoupdate: true });
       });
 
       it('should return true if exists', function() {
@@ -106,7 +106,7 @@ define([
 
     describe('can hightlight variables in string', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'oogle' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'oogle' } }], dashboard_autoupdate: true });
       });
 
       it('should insert html', function() {
@@ -128,7 +128,7 @@ define([
 
     describe('when checking if a string contains a variable', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'muuuu' } }], dashboard_autoupdate: true });
       });
 
       it('should find it with $var syntax', function() {
@@ -145,7 +145,7 @@ define([
 
     describe('updateTemplateData with simple value', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: 'muuuu' } }]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: 'muuuu' } }], dashboard_autoupdate: true });
       });
 
       it('should set current value and update template data', function() {
@@ -156,7 +156,7 @@ define([
 
     describe('fillVariableValuesForUrl with multi value', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+        _templateSrv.init({ list : [{ name: 'test', current: { value: ['val1', 'val2'] }}], dashboard_autoupdate: true });
       });
 
       it('should set multiple url params', function() {
@@ -168,7 +168,7 @@ define([
 
     describe('fillVariableValuesForUrl with multi value and scopedVars', function() {
       beforeEach(function() {
-        _templateSrv.init([{ name: 'test', current: { value: ['val1', 'val2'] }}]);
+        _templateSrv.init({ list: [{ name: 'test', current: { value: ['val1', 'val2'] }}], dashboard_autoupdate: true });
       });
 
       it('should set multiple url params', function() {
@@ -180,10 +180,10 @@ define([
 
     describe('replaceWithText', function() {
       beforeEach(function() {
-        _templateSrv.init([
+        _templateSrv.init({ list :[
           { name: 'server', current: { value: '{asd,asd2}', text: 'All' } },
           { name: 'period', current: { value: '$__auto_interval', text: 'auto' } }
-        ]);
+        ],  dashboard_autoupdate: true });
         _templateSrv.setGrafanaVariable('$__auto_interval', '13m');
         _templateSrv.updateTemplateData();
       });

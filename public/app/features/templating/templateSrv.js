@@ -1,4 +1,4 @@
-define([
+  define([
   'angular',
   'lodash',
   './editorCtrl',
@@ -17,11 +17,11 @@ function (angular, _) {
     this._texts = {};
     this._grafanaVariables = {};
 
-    this.init = function(variables) {
-      this.variables = variables;
+    this.init = function(templating) {
+      this.variables = templating.list;
+      this.dashboard_autoupdate = templating.dashboard_autoupdate ;
       this.updateTemplateData();
     };
-
     this.updateTemplateData = function() {
       this._values = {};
       this._texts = {};

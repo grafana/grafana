@@ -60,11 +60,15 @@ coreModule.filter('noXml', function() {
 
 coreModule.filter('interpolateTemplateVars', function (templateSrv) {
   var filterFunc : any = function (text, scope) {
-    if (scope.panel) {
-      return templateSrv.replaceWithText(text, scope.panel.scopedVars);
-    } else {
-      return templateSrv.replaceWithText(text, scope.row.scopedVars);
+    if (!templateSrv.dashboard_autoupdate && scope.lastValidTitle !== '') {
+     return scope.lastValidTitle;
     }
+    if (scope.panel) {
+      scope.lastValidTitle = templateSrv.replaceWithText(text, scope.panel.scopedVars);
+    } else {
+      scope.lastValidTitle = templateSrv.replaceWithText(text, scope.row.scopedVars);
+    }
+    return scope.lastValidTitle;
   };
 
   filterFunc.$stateful = true;
