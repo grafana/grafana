@@ -11,7 +11,6 @@ function annotationsQueryEditor(dynamicDirectiveSrv) {
     },
     watch: "datasource.type",
     directive: scope => {
-      console.log(scope.datasource);
       return System.import(scope.datasource.meta.module).then(function(dsModule) {
         return {
           name: 'annotation-query-editor-' + scope.datasource.meta.id,

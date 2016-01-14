@@ -23,37 +23,6 @@ function (angular, $) {
     };
   });
 
-  module.directive('queryEditorLoader', function($compile, $parse, datasourceSrv) {
-    return {
-      restrict: 'E',
-      link: function(scope, elem) {
-        var editorScope;
-
-        scope.$watch("panel.datasource", function() {
-          var datasource = scope.target.datasource || scope.panel.datasource;
-
-          datasourceSrv.get(datasource).then(function(ds) {
-            if (editorScope) {
-              editorScope.$destroy();
-              elem.empty();
-            }
-
-            editorScope = scope.$new();
-            editorScope.datasource = ds;
-
-            if (!scope.target.refId) {
-              scope.target.refId = 'A';
-            }
-
-            var panelEl = angular.element(document.createElement('metric-query-editor-' + ds.meta.id));
-            elem.append(panelEl);
-            $compile(panelEl)(editorScope);
-          });
-        });
-      }
-    };
-  });
-
   module.directive('panelResizer', function($rootScope) {
     return {
       restrict: 'E',

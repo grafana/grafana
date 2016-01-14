@@ -28,7 +28,7 @@ class DynamicDirectiveSrv {
         directiveInfo.fn.registered = true;
       }
 
-      this.addDirective(elem, directiveInfo.name, scope);
+      this.addDirective(elem, directiveInfo.name, directiveInfo.scope || scope);
     }).catch(err => {
       console.log('Plugin load:', err);
       this.$rootScope.appEvent('alert-error', ['Plugin error', err.toString()]);

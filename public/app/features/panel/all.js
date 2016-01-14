@@ -5,4 +5,5 @@ define([
   './panel_helper',
   './solo_panel_ctrl',
   './panel_loader',
+  './query_editor',
 ], function () {});

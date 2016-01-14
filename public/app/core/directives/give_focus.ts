@@ -2,7 +2,7 @@
 
 import coreModule from '../core_module';
 
-coreModule.default.directive('giveFocus', function() {
+coreModule.directive('giveFocus', function() {
   return function(scope, element, attrs) {
     element.click(function(e) {
       e.stopPropagation();
