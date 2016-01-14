@@ -3,7 +3,6 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
-  './query_ctrl',
 ],
 function (angular, _, moment, dateMath) {
   'use strict';

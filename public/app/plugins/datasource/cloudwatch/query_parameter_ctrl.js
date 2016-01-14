@@ -7,6 +7,19 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
+  module.directive('cloudwatchQueryParameter', function() {
+    return {
+      templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.parameter.html',
+      controller: 'CloudWatchQueryParameterCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        datasource: "=",
+        onChange: "&",
+      }
+    };
+  });
+
   module.controller('CloudWatchQueryParameterCtrl', function($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
 
     $scope.init = function() {
@@ -38,12 +51,9 @@ function (angular, _) {
       $scope.removeDimSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove dimension --'});
       $scope.removeStatSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove stat --'});
 
-      datasourceSrv.get($scope.datasourceName).then(function(datasource) {
-        $scope.datasource = datasource;
-        if (_.isEmpty($scope.target.region)) {
-          $scope.target.region = $scope.datasource.getDefaultRegion();
-        }
-      });
+      if (_.isEmpty($scope.target.region)) {
+        $scope.target.region = $scope.datasource.getDefaultRegion();
+      }
 
       if (!$scope.onChange) {
         $scope.onChange = function() {};
