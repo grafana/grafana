@@ -10,18 +10,6 @@ function (angular, ElasticDatasource, editView) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('metricQueryEditorElasticsearch', function() {
-    return {controller: 'ElasticQueryCtrl', templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.editor.html'};
-  });
-
-  module.directive('metricQueryOptionsElasticsearch', function() {
-    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.options.html'};
-  });
-
-  module.directive('annotationsQueryEditorElasticsearch', function() {
-    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
-  });
-
   module.directive('elasticMetricAgg', function() {
     return {
       templateUrl: 'app/plugins/datasource/elasticsearch/partials/metric_agg.html',
@@ -51,11 +39,22 @@ function (angular, ElasticDatasource, editView) {
     };
   });
 
-  module.directive('datasourceCustomSettingsViewElasticsearch', editView.default);
+  module.directive('metricQueryEditorElasticsearch', function() {
+    return {controller: 'ElasticQueryCtrl', templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.editor.html'};
+  });
+
+  module.directive('metricQueryOptionsElasticsearch', function() {
+    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.options.html'};
+  });
+
+  function annotationsQueryEditor() {
+    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
+  }
 
   return {
     Datasource: ElasticDatasource,
     configView: editView.default,
+    annotationsQueryEditor: annotationsQueryEditor,
   };
 
 });

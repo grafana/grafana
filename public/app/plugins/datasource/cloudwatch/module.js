@@ -29,11 +29,12 @@ function (angular, CloudWatchDatasource) {
     };
   });
 
-  module.directive('datasourceCustomSettingsViewCloudwatch', function() {
+  function configView() {
     return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/edit_view.html'};
-  });
+  }
 
   return  {
-    Datasource: CloudWatchDatasource
+    Datasource: CloudWatchDatasource,
+    configView: configView,
   };
 });

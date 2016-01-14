@@ -15,15 +15,17 @@ function (angular, GraphiteDatasource) {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/query.options.html'};
   });
 
-  module.directive('annotationsQueryEditorGraphite', function() {
+  function annotationsQueryEditor() {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/annotations.editor.html'};
-  });
+  }
 
-  module.directive('datasourceCustomSettingsViewGraphite', function() {
+  function configView() {
     return {templateUrl: 'app/plugins/datasource/graphite/partials/config.html'};
-  });
+  }
 
   return {
     Datasource: GraphiteDatasource,
+    configView: configView,
+    annotationsQueryEditor: annotationsQueryEditor,
   };
 });
