@@ -1,24 +1,23 @@
 define([
-  'angular',
   './datasource',
 ],
-function (angular, OpenTsDatasource) {
+function (OpenTsDatasource) {
   'use strict';
 
-  var module = angular.module('grafana.directives');
-
-  module.directive('metricQueryEditorOpentsdb', function() {
+  function metricsQueryEditor() {
     return {
       controller: 'OpenTSDBQueryCtrl',
       templateUrl: 'app/plugins/datasource/opentsdb/partials/query.editor.html',
     };
-  });
+  }
 
-  module.directive('datasourceCustomSettingsViewOpentsdb', function() {
+  function configView() {
     return {templateUrl: 'app/plugins/datasource/opentsdb/partials/config.html'};
-  });
+  }
 
   return {
-    Datasource: OpenTsDatasource
+    Datasource: OpenTsDatasource,
+    metricsQueryEditor: metricsQueryEditor,
+    configView: configView,
   };
 });
