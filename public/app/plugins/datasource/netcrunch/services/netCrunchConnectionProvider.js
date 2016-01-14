@@ -11,7 +11,8 @@ define([
     'angular',
     'jquery',
     'NCObjects',
-    'remoteDataLists'
+    'remoteDataLists',
+    './netCrunchCounters'
   ],
 
   function (angular, $) {
@@ -22,7 +23,8 @@ define([
 
     module
       .factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
-                                                        netCrunchConnectionProviderConsts) {
+                                                        netCrunchConnectionProviderConsts, netCrunchCounters,
+                                                        netCrunchCounterConsts) {
 
         var connectionPool = Object.create(null);
 
@@ -245,6 +247,114 @@ define([
           };
         }
 
+        function CountersDataProvider(adrem, netCrunchServerConnection) {
+
+          var ncCounters = netCrunchCounters,
+              counterConsts = netCrunchCounterConsts,
+              trendDB = null;
+
+          return {
+            prepareCountersForMonitors: function (counters) {
+              var monitors = Object.create(null),
+                  counterPromises = [],
+                  self = this;
+
+              function createCounterObject (counter) {
+                return self.convertCounterPathToDisplay(counter[1]).then(function(displayName) {
+                  return {
+                    name: counter[1],
+                    displayName: displayName
+                  };
+                });
+              }
+
+              function compareCounters (counterA, counterB) {
+                if (counterA.displayName < counterB.displayName) { return -1; }
+                if (counterA.displayName > counterB.displayName) { return 1; }
+                if (counterA.displayName === counterB.displayName) { return 0; }
+              }
+
+              function sortCounters (monitors){
+                Object.keys(monitors).forEach(function(monitorId) {
+                  monitors[monitorId].counters.sort(compareCounters);
+                });
+                return monitors;
+              }
+
+              function updateMonitorNames (monitors){
+                return self.getMonitors().then(function(monitorsMap) {
+                  Object.keys(monitors).forEach(function(monitorId) {
+                    if (monitorsMap[monitorId] != null){
+                      monitors[monitorId].name = monitorsMap[monitorId].counterGroup;
+                    }
+                  });
+                  return monitors;
+                });
+              }
+
+              counters.forEach(function (counter) {
+                if (monitors[counter[0]] == null) {
+                  monitors[counter[0]] = Object.create(null);
+                  monitors[counter[0]].counters = [];
+                }
+
+                monitors[counter[0]].counters.push(createCounterObject(counter));
+              });
+
+              Object.keys(monitors).forEach(function(monitorId) {
+                counterPromises.push($q.all(monitors[monitorId].counters).then(function(counters) {
+                  monitors[monitorId].counters = counters;
+                }));
+              });
+
+              return $q.all(counterPromises).then(function() {
+                monitors = sortCounters(monitors);
+                return updateMonitorNames(monitors);
+              });
+            },
+
+            getCounters: function (machineId) {
+              if (trendDB == null) {
+                trendDB = new adrem.NetCrunch.TrendDB('ncSrv', '', function(){}, netCrunchServerConnection);
+              }
+
+              return $q(function (resolve) {
+                trendDB.getCounters({machineId: machineId}, function (counters) {
+
+                  // counters are in form [ "<monitorId>=<counter>", ... ]
+
+                  counters = counters.map(function(counter) {
+                    return counter.split('=');
+                  });
+                  resolve(counters);
+                });
+              });
+            },
+
+            convertCounterPathToDisplay: function (counterPath) {
+              var parsedCounterPath = ncCounters.parseCounterPath(counterPath),
+                  counterPathObject;
+
+              if (ncCounters.isMIBCnt(parsedCounterPath.obj, parsedCounterPath.cnt) === true) {
+                counterPathObject = ncCounters.counterPathObject(counterPath, counterConsts.CNT_TYPE.cstMIB);
+                return ncCounters.counterPathToDisplayStr(counterPathObject, true, true);
+              } else {
+                return ncCounters.counterPathToDisplayStr(counterPath, true, true);
+              }
+            },
+
+            getMonitors: function () {
+              var monitorMgrInf = new adrem.NetCrunch.MonitorMgrIntf('ncSrv', function(){}, netCrunchServerConnection),
+                  deferred = $q.defer();
+
+              monitorMgrInf.getMonitorsInfo({}, function(monitors) {
+                deferred.resolve(monitorMgrInf.convertMonitorsInfoListToMap(monitors));
+              });
+              return deferred.promise;
+            }
+          }
+        }
+
         function NetCrunchConnection(datasourceURL, datasourceName) {
           var apiName = netCrunchConnectionProviderConsts.API_NAME,
               apiURL = datasourceURL + apiName,
@@ -256,6 +366,7 @@ define([
               loginInProgress = false,
               loginInProgressPromise,
               networkAtlasReady = $q.defer(),
+              counters,
               trendQuery,
               self = this;
 
@@ -374,6 +485,7 @@ define([
               return serverConnectionReady.then(function() {
                 return authenticateUser(userName, password).then(function() {
                   self.networkAtlas = getNetworkDataProvider();
+                  self.counters = getCountersDataProvider();
                   if (ignoreDownloadNetworkAtlas !== true) {
                     self.networkAtlas.init().then(function(){
                       networkAtlasReady.resolve(self.networkAtlas);
@@ -399,6 +511,10 @@ define([
             return new NetworkDataProvider(adrem, serverConnection);
           }
 
+          function getCountersDataProvider() {
+            return new CountersDataProvider(adrem, serverConnection);
+          }
+
           function callApi (apiCall, args, acceptEmpty) {
             var def = $q.defer();
             acceptEmpty = (acceptEmpty === undefined) ? true : acceptEmpty;
@@ -413,6 +529,7 @@ define([
             return def.promise;
           }
 
+          this.counters = Object.create(null);
           this.login = login;
           this.networkAtlas = Object.create(null);
           this.networkAtlasReady = networkAtlasReady.promise;

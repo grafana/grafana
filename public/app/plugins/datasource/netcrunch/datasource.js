@@ -15,7 +15,6 @@ define([
   'jquery',
   'kbn',
   './services/netCrunchConnectionProvider',
-  './services/countersDataProvider',
   './services/trendDataProvider',
   './services/processingDataWorker',
   './controllers/netCrunchQueryCtrl',
@@ -32,7 +31,7 @@ function (angular, _, moment, config, $, kbn) {
   module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem,
                                                  netCrunchTrendDataProviderConsts,
                                                  netCrunchRemoteSession,
-                                                 countersDataProvider, trendDataProvider,
+                                                 trendDataProvider,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
                                                  netCrunchNodesFilter, processingDataWorker,
                                                  netCrunchConnectionProvider, netCrunchConnectionProviderConsts) {
@@ -93,7 +92,6 @@ function (angular, _, moment, config, $, kbn) {
           nodesReady = $q.defer(),
           networkAtlasReady = $q.defer(),
           netCrunchLogin,
-          netCrunchConnection,
           self = this;
 
       this.id = datasource.id;
@@ -101,6 +99,7 @@ function (angular, _, moment, config, $, kbn) {
       this.url = datasource.url;
       this.username = datasource.username;
       this.password = datasource.password;
+      this.netCrunchConnection = Object.create(null);
       this.ready = initTask.promise;
       this.nodes = nodesReady.promise;
       this.networkAtlas = networkAtlasReady.promise;
@@ -131,7 +130,7 @@ function (angular, _, moment, config, $, kbn) {
         netCrunchLogin = netCrunchConnectionProvider.getConnection(datasource);
         netCrunchLogin.then(
           function(connection) {
-            netCrunchConnection = connection;
+            self.netCrunchConnection = connection;
             initUpdateNodes(connection.networkAtlas);
             initUpdateAtlas(connection.networkAtlas);
             initTask.resolve();
@@ -173,9 +172,12 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.getCounters = function (nodeId) {
+      var
+        countersApi = this.netCrunchConnection.counters;
+
       return this.ready.then(function() {
-        return countersDataProvider.getCounters(nodeId).then(function(counters) {
-          return countersDataProvider.prepareCountersForMonitors(counters).then(function(counters) {
+        return countersApi.getCounters(nodeId).then(function(counters) {
+          return countersApi.prepareCountersForMonitors(counters).then(function(counters) {
 
             counters.table = [];
             Object.keys(counters).forEach(function(monitorID) {
