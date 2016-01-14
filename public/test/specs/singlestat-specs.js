@@ -1,10 +1,13 @@
 define([
+  'angular',
   './helpers',
+  'app/plugins/panel/singlestat/controller',
   'app/features/panel/panel_srv',
   'app/features/panel/panel_helper',
-  'app/plugins/panel/singlestat/module'
-], function(helpers) {
+], function(angular, helpers, SingleStatCtrl) {
   'use strict';
+
+  angular.module('grafana.controllers').controller('SingleStatCtrl', SingleStatCtrl);
 
   describe('SingleStatCtrl', function() {
     var ctx = new helpers.ControllerTestContext();
@@ -16,7 +19,7 @@ define([
         ctx.setup = function (setupFunc) {
 
           beforeEach(module('grafana.services'));
-          beforeEach(module('grafana.panels.singlestat'));
+          beforeEach(module('grafana.controllers'));
 
           beforeEach(ctx.providePhase());
           beforeEach(ctx.createControllerPhase('SingleStatCtrl'));
@@ -24,7 +27,7 @@ define([
           beforeEach(function() {
             setupFunc();
             ctx.datasource.query = sinon.stub().returns(ctx.$q.when({
-              data: [ { target: 'test.cpu1', datapoints: ctx.datapoints } ]
+              data: [{target: 'test.cpu1', datapoints: ctx.datapoints}]
             }));
 
             ctx.scope.refreshData(ctx.datasource);
