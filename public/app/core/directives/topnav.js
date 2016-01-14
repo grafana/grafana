@@ -17,10 +17,14 @@ function (coreModule) {
       template:
         '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
         '<div class="top-nav">' +
-        '<a class="top-nav-menu-btn pointer" ng-if="!contextSrv.sidemenu" ng-click="toggle()">' +
-        '<img class="logo-icon" src="img/fav32.png"></img> ' +
-        '<i class="fa fa-bars"></i>' +
-        '</a>' +
+				'<div class="top-nav-btn top-nav-menu-btn">' +
+					'<a class="pointer" ng-click="toggle()">' +
+						'<span class="top-nav-logo-background">' +
+							'<img class="logo-icon" src="img/fav32.png"></img>' +
+						'</span>' +
+						'<i class="fa fa-caret-down"></i>' +
+					'</a>' +
+				'</div>' +
 
         '<span class="icon-circle top-nav-icon">' +
         '<i ng-class="icon"></i>' +
