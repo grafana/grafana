@@ -11,7 +11,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
 
   /** @ngInject */
   function SingleStatCtrl($scope, panelSrv, panelHelper) {
-    console.log('controller');
 
     $scope.panelMeta = new PanelMeta({
       panelName: 'Singlestat',
