@@ -35,11 +35,10 @@ function (angular, config, _) {
     };
 
     $scope.search = function() {
-      var query = {starred: true, limit: 10};
+      var query = {limit: 10};
 
       if ($scope.searchQuery) {
         query.query = $scope.searchQuery;
-        query.starred = false;
       }
 
       $scope.loading = true;

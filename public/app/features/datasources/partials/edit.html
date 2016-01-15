@@ -1,8 +1,7 @@
-<topnav title="Data sources" icon="fa fa-fw fa-database" subnav="true">
+<topnav title="Data sources" title-url="datasources" icon="fa fa-fw fa-database" subnav="true">
 	<ul class="nav">
-		<li><a href="datasources">Overview</a></li>
-		<li ng-class="{active: isNew}"><a href="datasources/new">Add new</a></li>
-		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">Edit</a></li>
+		<li ng-class="{active: isNew}" ng-show="isNew"><a href="datasources/new">Add new</a></li>
+		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">{{current.name}}</a></li>
 	</ul>
 </topnav>
 
@@ -59,7 +58,7 @@
 				<button type="submit" class="btn btn-inverse" ng-show="!isNew" ng-click="saveChanges(true)">
 					Test Connection
 				</button>
-				<a class="btn btn-inverse" ng-show="!isNew" href="datasources">Cancel</a>
+				<a class="btn btn-inverse" href="datasources">Cancel</a>
 			</div>
 			<br>
 		</form>

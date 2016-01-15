@@ -11,7 +11,7 @@ function (coreModule) {
       scope: {
         title: "@",
         section: "@",
-        titleAction: "&",
+        titleUrl: "@",
         subnav: "=",
       },
       template:
@@ -35,7 +35,7 @@ function (coreModule) {
         '<i class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
         '</span>' +
 
-        '<a ng-click="titleAction()" class="top-nav-title">' +
+        '<a ng-href="{{titleUrl}}" class="top-nav-title">' +
         '{{title}}' +
         '</a>' +
         '<i ng-show="subnav" class="top-nav-breadcrumb-icon fa fa-angle-right"></i>' +
@@ -45,7 +45,7 @@ function (coreModule) {
         scope.contextSrv = contextSrv;
 
         scope.toggle = function() {
-          $rootScope.appEvent('toggle-sidemenu');
+          contextSrv.toggleSideMenu();
         };
       }
     };
