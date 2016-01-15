@@ -274,7 +274,7 @@ function (angular) {
 
         function initSnmpMibData () {
           if (snmpMibData == null) {
-            snmpMibData = new adrem.NetCrunch.SnmpMibData('ncSrv', function(){}, netCrunchServerConnection);
+            snmpMibData = new adrem.NetCrunch.SnmpMibData('ncSrv', function() {}, netCrunchServerConnection);
           }
         }
 

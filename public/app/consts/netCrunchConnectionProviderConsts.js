@@ -30,4 +30,4 @@ define([
         'Authentication failed'
       ]
     });
-});
+  });

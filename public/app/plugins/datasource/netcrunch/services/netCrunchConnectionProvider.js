@@ -23,7 +23,7 @@ define([
 
     var module = angular.module('grafana.services');
 
-    module.factory('adrem', function(){ return adrem; });
+    module.factory('adrem', function() { return adrem; });
     module.factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
                                                             netCrunchConnectionProviderConsts, netCrunchCounters,
                                                             netCrunchCounterConsts, netCrunchTrendDataProviderConsts) {
@@ -317,7 +317,7 @@ define([
 
           getCounters: function (machineId) {
             if (trendDB == null) {
-              trendDB = new adrem.NetCrunch.TrendDB('ncSrv', '', function(){}, netCrunchServerConnection);
+              trendDB = new adrem.NetCrunch.TrendDB('ncSrv', '', function() {}, netCrunchServerConnection);
             }
 
             return $q(function (resolve) {
@@ -346,7 +346,7 @@ define([
           },
 
           getMonitors: function () {
-            var monitorMgrInf = new adrem.NetCrunch.MonitorMgrIntf('ncSrv', function(){}, netCrunchServerConnection),
+            var monitorMgrInf = new adrem.NetCrunch.MonitorMgrIntf('ncSrv', function() {}, netCrunchServerConnection),
                 deferred = $q.defer();
 
             monitorMgrInf.getMonitorsInfo({}, function(monitors) {
@@ -711,7 +711,7 @@ define([
                 self.counters = getCountersDataProvider();
                 self.trends = getTrendDataProvider();
                 if (ignoreDownloadNetworkAtlas !== true) {
-                  self.networkAtlas.init().then(function(){
+                  self.networkAtlas.init().then(function() {
                     networkAtlasReady.resolve(self.networkAtlas);
                   });
                 }
@@ -790,4 +790,4 @@ define([
         getConnection : getConnection
       };
     });
-});
+  });
