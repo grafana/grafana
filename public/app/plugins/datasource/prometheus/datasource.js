@@ -10,6 +10,7 @@ function (angular, _, moment, dateMath) {
 
   var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
+  /** @ngInject */
   function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';

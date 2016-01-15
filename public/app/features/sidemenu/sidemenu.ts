@@ -38,8 +38,13 @@ class SideMenuCtrl {
  openUserDropdown() {
    this.orgMenu = [
      {section: 'You', cssClass: 'dropdown-menu-title'},
-     {text: 'Profile', url: this.getUrl('/profile')},
+     {text: 'Preferences', url: this.getUrl('/profile')},
+     {text: 'Account', url: this.getUrl('/profile')},
    ];
+
+   if (this.isSignedIn) {
+     this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
+   }
 
    if (this.contextSrv.hasRole('Admin')) {
      this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
@@ -82,9 +87,6 @@ class SideMenuCtrl {
 
      if (this.contextSrv.isGrafanaAdmin) {
        this.orgMenu.push({text: "Server admin", url: this.getUrl("/admin/settings")});
-     }
-     if (this.isSignedIn) {
-       this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
      }
    });
  }
