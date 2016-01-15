@@ -159,7 +159,10 @@
 
 // Sidemenu
 // -------------------------
-@sideMenuOrgBorder:             rgb(37,37,37);
+@sideMenuTopShadow:             inset 0 4px 15px -4px @black;
+@sideMenuBorder:             1px solid @bodyBackground;
+@sideMenuBackground:         @grayDark;
+@sideMenuBackgroundHighlight: lighten(@grayDark, 4%);
 
 // Dropdowns
 // -------------------------
@@ -239,6 +242,8 @@
 @navbarBrandColor:                @linkColor;
 @navbarDropdownShadow:            inset 0px 4px 10px -4px @bodyBackground;
 
+@navbarButtonBackground:          lighten(@navbarBackground, 3%);
+@navbarButtonBackgroundHighlight: lighten(@navbarBackground, 5%);
 
 // Pagination
 // -------------------------

@@ -144,7 +144,6 @@ export class TimePickerCtrl {
 }
 
 export function settingsDirective() {
-  'use strict';
   return {
     restrict: 'E',
     templateUrl: 'app/features/dashboard/timepicker/settings.html',
@@ -158,7 +157,6 @@ export function settingsDirective() {
 }
 
 export function timePickerDirective() {
-  'use strict';
   return {
     restrict: 'E',
     templateUrl: 'app/features/dashboard/timepicker/timepicker.html',
