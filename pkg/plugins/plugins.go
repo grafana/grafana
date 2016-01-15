@@ -45,7 +45,7 @@ func Init() error {
 	}
 
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
-	scan(path.Join(setting.StaticRootPath, setting.PluginsPath))
+	scan(setting.PluginsPath)
 	checkPluginPaths()
 	// checkDependencies()
 	return nil
