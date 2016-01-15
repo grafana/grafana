@@ -2,24 +2,26 @@
 
 <div class="page-container" style="background: transparent; border: 0;">
   <div class="page-wide">
+
+		<button type="submit" class="btn btn-inverse pull-right" ng-click="createPlaylist()">
+			<i class="fa fa-plus"></i>
+			New playlist
+		</button>
+
     <h2>Saved playlists</h2>
 
-    <button type="submit" class="btn btn-success pull-right" ng-click="createPlaylist()">
-    <i class="fa fa-plus"></i> New playlist</button>
-    <br />
-
-    <table class="filter-table" style="margin-top: 20px">
+     <table class="filter-table" style="margin-top: 20px">
       <thead>
-        <th><strong>Title</strong></th>
-        <th><strong>Url</strong></th>
+        <th><strong>Name</strong></th>
+        <th><strong>Start url</strong></th>
         <th style="width: 61px"></th>
         <th style="width: 61px"></th>
         <th style="width: 25px"></th>
 
       </thead>
       <tr ng-repeat="playlist in playlists">
-        <td >
-          {{playlist.title}}
+        <td>
+					<a href="playlists/edit/{{playlist.id}}">{{playlist.title}}</a>
         </td>
         <td >
 					<a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>

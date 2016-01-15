@@ -1,18 +1,23 @@
-<topnav icon="fa fa-fw fa-list" title="Playlists"></topnav>
+<topnav icon="fa fa-fw fa-list" title="Playlists" title-url="playlists" subnav="true">
+	<ul class="nav">
+		<li ng-class="{active: isNew()}" ng-show="isNew()"><a href="datasources/create">New</a></li>
+		<li class="active" ng-show="!isNew()"><a href="playlists/edit/{{playlist.id}}">{{playlist.title}}</a></li>
+	</ul>
+</topnav>
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
     <h2 ng-show="isNew()">New playlist</h2>
     <h2 ng-show="!isNew()">Edit playlist</h2>
 
-    <h5>1. Name and interval</h5>
+    <h4>Name and interval</h4>
 
     <div style="margin-bottom: 10px;">
       <div>
         <div class="tight-form">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 100px">
-              <strong>Title</strong>
+              Name
             </li>
             <li>
               <input type="text" required ng-model="playlist.title" class="input-xlarge tight-form-input">
@@ -23,7 +28,7 @@
         <div class="tight-form last">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 100px">
-              <strong>Interval</strong>
+              Interval
             </li>
             <li>
               <input type="text" required ng-model="playlist.interval" placeholder="5m" class="input-xlarge tight-form-input">
@@ -34,11 +39,14 @@
       </div>
 
       <br>
-      <h5>2. Add dashboards</h5>
+      <h4>Add dashboards</h4>
 
       <div style="display: inline-block">
         <div class="tight-form last">
           <ul class="tight-form-list">
+						<li class="tight-form-item">
+							Search
+						</li>
             <li>
               <input type="text"
                      class="tight-form-input input-xlarge last"
@@ -47,9 +55,6 @@
                      ng-trim="true"
                      ng-change="search()">
             </li>
-            <li class="tight-form-item last" style="padding: 5px 4px">
-              <button ng-click="search()" class="btn btn-mini btn-inverse">Search</button>
-            </li>
           </ul>
           <div class="clearfix"></div>
         </div>
@@ -57,9 +62,9 @@
     </div>
   </div>
 
-  <div>
+  <div class="row">
     <div class="span5 pull-left">
-      <h5>Search results ({{filteredPlaylistItems.length}})</h5>
+			<h5>Search results ({{filteredPlaylistItems.length}})</h5>
        <table class="grafana-options-table">
         <tr ng-repeat="playlistItem in filteredPlaylistItems">
           <td style="white-space: nowrap;">
@@ -72,7 +77,7 @@
             </button>
           </td>
         </tr>
-        <tr ng-if="isSearchResultsEmpty() || isSearchQueryEmpty()">
+        <tr ng-if="isSearchResultsEmpty()">
           <td colspan="2">
             <i class="fa fa-warning"></i> Search results empty
           </td>
@@ -80,7 +85,7 @@
       </table>
     </div>
     <div class="span5 pull-left">
-      <h5>Playlist dashboards</h5>
+      <h5>Added dashboards</h5>
       <table class="grafana-options-table">
         <tr ng-repeat="playlistItem in playlistItems">
           <td style="white-space: nowrap;">
@@ -111,7 +116,7 @@
               ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
               ng-click="savePlaylist(playlist, playlistItems)">Save</button>
       <button type="button"
-              class="btn btn-default"
+              class="btn btn-inverse"
               ng-click="backToList()">Cancel</button>
     <!-- </div> -->
   </div>
