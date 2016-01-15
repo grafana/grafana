@@ -350,7 +350,12 @@ define([
                 deferred = $q.defer();
 
             monitorMgrInf.getMonitorsInfo({}, function(monitors) {
-              deferred.resolve(monitorMgrInf.convertMonitorsInfoListToMap(monitors));
+              var monitorsMap = Object.create(null);
+
+              monitors.forEach(function(monitor) {
+                monitorsMap[monitor.monitorId] = monitor;
+              });
+              deferred.resolve(monitorsMap);
             });
             return deferred.promise;
           }
@@ -742,7 +747,7 @@ define([
           var def = $q.defer();
           acceptEmpty = (acceptEmpty === undefined) ? true : acceptEmpty;
           args = Array.prototype.slice.call(args, 0);       // convert arguments to Array
-          apiCall.apply(this, args.concat([function (data) {
+          apiCall.apply(self, args.concat([function (data) {
             if (data !== undefined || acceptEmpty) {
               def.resolve(data);
             } else {
