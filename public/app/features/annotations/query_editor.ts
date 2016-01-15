@@ -9,7 +9,7 @@ function annotationsQueryEditor(dynamicDirectiveSrv) {
       annotation: "=",
       datasource: "="
     },
-    watch: "datasource.type",
+    watchPath: "datasource.type",
     directive: scope => {
       return System.import(scope.datasource.meta.module).then(function(dsModule) {
         return {
