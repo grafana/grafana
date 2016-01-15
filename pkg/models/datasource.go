@@ -11,6 +11,7 @@ const (
 	DS_INFLUXDB_08   = "influxdb_08"
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
+	DS_OPENFALCON    = "openfalcon"
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
