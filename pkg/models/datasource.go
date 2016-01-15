@@ -24,25 +24,25 @@ var (
 type DsAccess string
 
 type DataSource struct {
-	Id      int64
-	OrgId   int64
-	Version int
+	Id      int64                             `json:"id"`
+	OrgId   int64                             `json:"orgId"`
+	Version int                               `json:"version"`
 
-	Name              string
-	Type              string
-	Access            DsAccess
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	IsDefault         bool
-	JsonData          map[string]interface{}
+	Name              string                  `json:"name"`
+	Type              string                  `json:"type"`
+	Access            DsAccess                `json:"access"`
+	Url               string                  `json:"url"`
+	Password          string                  `json:"password"`
+	User              string                  `json:"user"`
+	Database          string                  `json:"database"`
+	BasicAuth         bool                    `json:"basicAuth"`
+	BasicAuthUser     string                  `json:"basicAuthUser"`
+	BasicAuthPassword string                  `json:"basicAuthPassword"`
+	IsDefault         bool                    `json:"isDefault"`
+	JsonData          map[string]interface{}  `json:"jsonData"`
 
-	Created time.Time
-	Updated time.Time
+	Created time.Time                         `json:"created"`
+	Updated time.Time                         `json:"updated"`
 }
 
 // ----------------------

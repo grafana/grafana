@@ -1,13 +1,13 @@
 define([
   'angular',
-  'lodash',
+  'lodash'
 ],
 function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DataSourcesCtrl', function($scope, $http, backendSrv, datasourceSrv) {
+  module.controller('DataSourcesCtrl', function($scope, $http, $q, backendSrv, datasourceSrv) {
 
     $scope.init = function() {
       $scope.datasources = [];
@@ -15,7 +15,15 @@ function (angular) {
     };
 
     $scope.getDatasources = function() {
-      backendSrv.get('/api/datasources').then(function(results) {
+      var
+        netCrunchDefaultDatasource = backendSrv.get('api/datasources/netcrunch'),
+        otherDatasources = backendSrv.get('/api/datasources');
+
+      $q.all([netCrunchDefaultDatasource, otherDatasources]).then(function(datasources) {
+        var results;
+
+        results = datasources[1];
+        results.unshift(datasources[0]);
         $scope.datasources = results;
       });
     };
