@@ -173,7 +173,10 @@
 
 // Sidemenu
 // -------------------------
-@sideMenuOrgBorder:             #555;
+@sideMenuTopShadow:             @navbarDropdownShadow;
+@sideMenuBorder:                1px solid @grafanaTargetBorder;
+@sideMenuBackground:            @grafanaPanelBackground;
+@sideMenuBackgroundHighlight:   darken(@sideMenuBackground, 4%);
 
 // Dropdowns
 // -------------------------
@@ -254,6 +257,9 @@
 @navbarDropdownShadow:            inset 0px 4px 10px -4px darken(@bodyBackground, 20%);
 
 @navbarBrandColor:                @navbarLinkColor;
+
+@navbarButtonBackground:          lighten(@navbarBackground, 3%);
+@navbarButtonBackgroundHighlight: lighten(@navbarBackground, 5%);
 
 
 // Pagination

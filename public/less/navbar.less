@@ -20,70 +20,28 @@
   color: @textColor;
 }
 
-// .top-nav-menu-btn {
-//   float: left;
-//   .top-nav-menu-circle {
-//     border: 1px solid @bodyBackground;
-//     margin: 6px 6px 3px 9px;
-//     display: inline-block;
-//     padding: 4px;
-//     border-radius: 50%;
-//     background: @iconContainerBackground;
-//     width: 30px;
-//     height: 30px;
-//     float: left;
-//   }
-//   .fa-bars {
-//     color: @textColor;
-//     width: 30px;
-//     height: 30px;
-//     left: 9px;
-//     top: 7px;
-//     font-size: 150%;
-//     opacity: 0;
-//     position: absolute;
-//     transition: opacity .20s ease-in-out;
-//   }
-//   .fa-caret-down {
-//     position: relative;
-//     font-size: 80%;
-//   }
-//   img {
-//     width: 30px;
-//     position: absolute;
-//     opacity: 1;
-//     transition: opacity .20s ease-in-out;
-//   }
-//   &:hover {
-//     .fa {
-//       opacity: .7;
-//     }
-//     img {
-//       opacity: 0;
-//     }
-//   }
-// }
-
 .top-nav-btn {
   display: block;
+  position: relative;
   float: left;
   margin: 0;
   font-size: 1.4em;
-  color: #a2a2a2;
-  border-right: 1px solid black;
+  border-right: 1px solid @grafanaTargetBorder;
 
   .fa-caret-down {
-    font-size: 60%;
-    position: relative;
-    top: 4px;
+    font-size: 50%;
+    position: absolute;
+    right: 7px;
+    top: 21px;
   }
 
   a {
-    background-color: darken(@grafanaTargetFuncBackground, 2%);
+    color: darken(@linkColor, 5%);
+    background-color: @navbarButtonBackground;
+    border-bottom: 1px solid @navbarButtonBackground;
     display: inline-block;
-    color: #a2a2a2;
     &:hover {
-      background: @grafanaTargetFuncBackground;
+      background: @navbarButtonBackgroundHighlight;
       color: @linkColor;
       border-bottom: 1px solid @blue;
     }
@@ -92,7 +50,7 @@
 
 .top-nav-menu-btn {
   a {
-    padding: 6px 15px 6px 10px;
+    padding: 6px 20px 6px 13px;
   }
   img {
     width: 30px;
@@ -111,7 +69,7 @@
 
 .top-nav-dashboards-btn {
   a {
-    padding: 14px 15px 14px 10px;
+    padding: 14px 17px 14px 13px;
   }
 
   .fa-th-large {
@@ -122,7 +80,6 @@
 
 .dashboard-title {
   padding: 0px 6px 5px 5px;
-  color: @linkColorHover;
   font-size: 17px;
 }
 

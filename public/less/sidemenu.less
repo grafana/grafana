@@ -3,12 +3,13 @@
 }
 
 .sidemenu-wrapper {
-  position: absolute;
-  top: 51px;
+  position: fixed;
+  top: 53px;
   bottom: 0;
   left: 0;
   width: 200px;
-  background-color: darken(@grafanaTargetFuncBackground, 2%);
+  background-color: @sideMenuBackground;
+  border: @sideMenuBorder;
   min-height: 100%;
   z-index: 101;
 
@@ -83,18 +84,15 @@
   padding: 0px 10px 0px 20px;
   display: block;
   white-space: nowrap;
+
   &:hover {
-    background-color: @grafanaTargetFuncBackground;
+    background-color: @sideMenuBackgroundHighlight;
   }
 
   .sidemenu-item-text {
     padding-left: 11px;
-    transition: color 100ms ease-out;
-
-    &.no-icon {
-      padding-left: 59px;
-    }
   }
+
   img {
     border-radius: 50%;
     width: 28px;
@@ -169,8 +167,8 @@
 }
 
 .sidemenu-org-section {
-  box-shadow: inset 0 4px 15px -4px #161616;
-  border-bottom: 2px solid @sideMenuOrgBorder;
+  box-shadow: @sideMenuTopShadow;
+  border-bottom: @sideMenuBorder;
   padding: 17px 10px 15px 21px;
   cursor: pointer;
   &:hover {
