@@ -3,8 +3,9 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
+  './annotation_query',
 ],
-function (angular, _, moment, dateMath) {
+function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -15,9 +16,10 @@ function (angular, _, moment, dateMath) {
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
 
+    var self = this;
     this.query = function(options) {
-      var start = convertToCloudWatchTime(options.range.from, false);
-      var end = convertToCloudWatchTime(options.range.to, true);
+      var start = self.convertToCloudWatchTime(options.range.from, false);
+      var end = self.convertToCloudWatchTime(options.range.to, true);
 
       var queries = [];
       options = angular.copy(options);
@@ -30,7 +32,7 @@ function (angular, _, moment, dateMath) {
         query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = convertDimensionFormat(target.dimensions, options.scopedVars);
+        query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
 
         var range = end - start;
@@ -115,7 +117,7 @@ function (angular, _, moment, dateMath) {
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(filterDimensions, {}),
+          dimensions: this.convertDimensionFormat(filterDimensions, {}),
         }
       };
 
@@ -229,91 +231,8 @@ function (angular, _, moment, dateMath) {
     };
 
     this.annotationQuery = function(options) {
-      var annotation = options.annotation;
-      var usePrefixMatch = annotation.prefixMatching;
-      var region = templateSrv.replace(annotation.region);
-      var namespace = templateSrv.replace(annotation.namespace);
-      var metricName = templateSrv.replace(annotation.metricName);
-      var dimensions = convertDimensionFormat(annotation.dimensions);
-      var statistics = _.map(annotation.statistics, function(s) { return templateSrv.replace(s); });
-      var defaultPeriod = usePrefixMatch ? '' : '300';
-      var period = annotation.period || defaultPeriod;
-      period = parseInt(period, 10);
-      var actionPrefix = annotation.actionPrefix || '';
-      var alarmNamePrefix = annotation.alarmNamePrefix || '';
-
-      var d = $q.defer();
-      var self = this;
-      var allQueryPromise;
-      if (usePrefixMatch) {
-        allQueryPromise = [
-          this.performDescribeAlarms(region, actionPrefix, alarmNamePrefix, [], '').then(function(alarms) {
-            alarms.MetricAlarms = _.filter(alarms.MetricAlarms, function(alarm) {
-              if (!_.isEmpty(namespace) && alarm.Namespace !== namespace) {
-                return false;
-              }
-              if (!_.isEmpty(metricName) && alarm.MetricName !== metricName) {
-                return false;
-              }
-              var sd = function(d) {
-                return d.Name;
-              };
-              var isSameDimensions = JSON.stringify(_.sortBy(alarm.Dimensions, sd)) === JSON.stringify(_.sortBy(dimensions, sd));
-              if (!_.isEmpty(dimensions) && !isSameDimensions) {
-                return false;
-              }
-              if (!_.isEmpty(statistics) && !_.contains(statistics, alarm.Statistic)) {
-                return false;
-              }
-              if (!_.isNaN(period) && alarm.Period !== period) {
-                return false;
-              }
-              return true;
-            });
-
-            return alarms;
-          })
-        ];
-      } else {
-        if (!region || !namespace || !metricName || _.isEmpty(statistics)) { return $q.when([]); }
-
-        allQueryPromise = _.map(statistics, function(statistic) {
-          return self.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period);
-        });
-      }
-      $q.all(allQueryPromise).then(function(alarms) {
-        var eventList = [];
-
-        var start = convertToCloudWatchTime(options.range.from, false);
-        var end = convertToCloudWatchTime(options.range.to, true);
-        _.chain(alarms)
-        .pluck('MetricAlarms')
-        .flatten()
-        .each(function(alarm) {
-          if (!alarm) {
-            d.resolve(eventList);
-            return;
-          }
-
-          self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
-            _.each(history.AlarmHistoryItems, function(h) {
-              var event = {
-                annotation: annotation,
-                time: Date.parse(h.Timestamp),
-                title: h.AlarmName,
-                tags: [h.HistoryItemType],
-                text: h.HistorySummary
-              };
-
-              eventList.push(event);
-            });
-
-            d.resolve(eventList);
-          });
-        });
-      });
-
-      return d.promise;
+      var annotationQuery = new CloudWatchAnnotationQuery(this, options.annotation, $q, templateSrv);
+      return annotationQuery.process(options.range.from, options.range.to);
     };
 
     this.testDatasource = function() {
@@ -383,21 +302,21 @@ function (angular, _, moment, dateMath) {
       });
     }
 
-    function convertToCloudWatchTime(date, roundUp) {
+    this.convertToCloudWatchTime = function(date, roundUp) {
       if (_.isString(date)) {
         date = dateMath.parse(date, roundUp);
       }
       return Math.round(date.valueOf() / 1000);
-    }
+    };
 
-    function convertDimensionFormat(dimensions, scopedVars) {
+    this.convertDimensionFormat = function(dimensions, scopedVars) {
       return _.map(dimensions, function(value, key) {
         return {
           Name: templateSrv.replace(key, scopedVars),
           Value: templateSrv.replace(value, scopedVars)
         };
       });
-    }
+    };
 
   }
 
