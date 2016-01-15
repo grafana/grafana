@@ -100,11 +100,18 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"meta": grafanaDatasourceMeta,
 	}
 
-  // add NetCrunch backend data source
+  // add NetCrunch default backend data source
   if (netcrunch.NetCrunchServerSettings.Enable == true) {
     netcrunchDatasourceMeta, _ := plugins.DataSources["netcrunch"]
-    datasources["NetCrunch"] = map[string]interface{}{
+    netCrunchDatasource := netcrunch.GetNetCrunchDataSource()
+    datasources["NetCrunch"] = map[string]interface{} {
+      "id" : netCrunchDatasource.Id,
       "type" : "netcrunch",
+      "name" : netCrunchDatasource.Name,
+      "url" : "api/datasources/proxy/netcrunch",
+      "username" : netCrunchDatasource.User,
+      "password" : netCrunchDatasource.Password,
+      "serverUrl" : netCrunchDatasource.Url,
       "meta" : netcrunchDatasourceMeta,
     }
 
