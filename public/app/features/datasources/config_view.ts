@@ -9,7 +9,7 @@ function dsConfigView(dynamicDirectiveSrv) {
       dsMeta: "=",
       current: "="
     },
-    watch: "dsMeta.module",
+    watchPath: "dsMeta.module",
     directive: scope => {
       return System.import(scope.dsMeta.module).then(function(dsModule) {
         return {
