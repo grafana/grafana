@@ -64,7 +64,7 @@ type DataSource struct {
 	BasicAuthPassword string                 `json:"basicAuthPassword"`
 	WithCredentials   bool                   `json:"withCredentials"`
 	IsDefault         bool                   `json:"isDefault"`
-	JsonData          map[string]interface{} `json:"jsonData"`
+	JsonData          map[string]interface{} `json:"jsonData,omitempty"`
 }
 
 type MetricQueryResultDto struct {
