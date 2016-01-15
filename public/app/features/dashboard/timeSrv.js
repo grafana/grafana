@@ -68,11 +68,56 @@ define([
     this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
-        var _i = kbn.interval_to_ms(interval);
+        var _i = this.setup_panel_refresh(interval);
         this.start_scheduled_refresh(_i);
       } else {
         this.cancel_scheduled_refresh();
       }
+    };
+    this.panel_iterator = function(callback) {
+      for(var r = 0; r !== this.dashboard.rows.length; ++r) {
+        var row = this.dashboard.rows[r];
+        for(var p = 0; p !== row.panels.length; ++p) {
+          var panel = row.panels[p];
+          callback(row, panel);
+        }
+      }
+    };
+    this.setup_panel_refresh = function (interval) {
+      // http://stackoverflow.com/questions/17445231/js-how-to-find-the-greatest-common-divisor
+      var gcd = function(a, b) {
+        if (!b) {
+          return a;
+        }
+        return gcd(b, a % b);
+      };
+      var gdcMax = null;
+      $rootScope._refreshMng = {
+        panels: {}
+      };
+      this.panel_iterator(function(row, panel) {
+        var rowRefreshShift = row.refreshShift;
+        var panelRefreshShiftms = kbn.interval_to_ms(panel.refreshShift || rowRefreshShift || interval);
+        $rootScope._refreshMng.panels[panel.id] = {
+          row: row,
+          panel: panel,
+          rowRefreshShift: rowRefreshShift,
+          panelRefreshShiftms: panelRefreshShiftms,
+          refreshShiftCurrentTicks: 1,
+          refreshShiftTicks: null
+        };
+        if(gdcMax === null) {
+          gdcMax = panel.refreshShiftms;
+        }else {
+          gdcMax = gcd(gdcMax, panel.refreshShiftms);
+        }
+      });
+      // After iterating all panels already have the highest common factor
+      // Set each panel with the number of "refresh ticks"
+      this.panel_iterator(function(row, panel) {
+        $rootScope._refreshMng.panels[panel.id].refreshShiftTicks = $rootScope._refreshMng.panels[panel.id].panelRefreshShiftms / gdcMax;
+      });
+      return gdcMax;
     };
 
     this.refreshDashboard = function() {
