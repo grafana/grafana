@@ -40,9 +40,9 @@ class DynamicDirectiveSrv {
       restrict: 'E',
       scope: options.scope,
       link: (scope, elem, attrs) => {
-        if (options.watch) {
+        if (options.watchPath) {
           let childScope = null;
-          scope.$watch(options.watch, () => {
+          scope.$watch(options.watchPath, () => {
             if (childScope) {
               childScope.$destroy();
             }

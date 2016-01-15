@@ -5,7 +5,7 @@ import angular from 'angular';
 /** @ngInject */
 function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
   return dynamicDirectiveSrv.create({
-    watch: "panel.datasource",
+    watchPath: "panel.datasource",
     directive: scope => {
       let datasource = scope.target.datasource || scope.panel.datasource;
       return datasourceSrv.get(datasource).then(ds => {
@@ -29,7 +29,7 @@ function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
 /** @ngInject */
 function metricsQueryOptions(dynamicDirectiveSrv, datasourceSrv) {
   return dynamicDirectiveSrv.create({
-    watch: "panel.datasource",
+    watchPath: "panel.datasource",
     directive: scope => {
       return datasourceSrv.get(scope.panel.datasource).then(ds => {
         return System.import(ds.meta.module).then(dsModule => {
