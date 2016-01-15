@@ -25,11 +25,11 @@
 
 	</head>
 
-	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenuPinned}">
+	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
 		<div class="sidemenu-canvas">
 
-			<aside class="sidemenu-wrapper" ng-if="contextSrv.sidemenu" >
-				<sidemenu></sidemenu>
+			<aside class="sidemenu-wrapper">
+				<sidemenu ng-if="contextSrv.sidemenu"></sidemenu>
 			</aside>
 
 			<div class="page-alert-list">

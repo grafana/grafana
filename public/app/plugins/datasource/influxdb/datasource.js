@@ -11,6 +11,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
 
   InfluxQuery = InfluxQuery.default;
 
+  /** @ngInject */
   function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), function(url) {

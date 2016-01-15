@@ -8,6 +8,7 @@ define([
 function (angular, _, dateMath) {
   'use strict';
 
+  /** @ngInject */
   function OpenTSDBDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     this.type = 'opentsdb';
     this.url = instanceSettings.url;

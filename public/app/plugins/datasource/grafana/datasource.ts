@@ -2,6 +2,7 @@
 
 class GrafanaDatasource {
 
+  /** @ngInject */
   constructor(private backendSrv) {}
 
   query(options) {
