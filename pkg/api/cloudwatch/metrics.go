@@ -154,7 +154,7 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = getMetricsForCustomMetrics(req, reqParam.Parameters.Namespace); err != nil {
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -187,7 +187,7 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if dimensionValues, err = getDimensionsForCustomMetrics(req, reqParam.Parameters.Namespace); err != nil {
+		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -202,10 +202,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(req *cwRequest, namespace string) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database),
+		Region:      aws.String(region),
+		Credentials: getCredentials(database),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -232,8 +232,8 @@ func getAllMetrics(req *cwRequest, namespace string) (cloudwatch.ListMetricsOutp
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(req *cwRequest, namespace string) ([]string, error) {
-	result, err := getAllMetrics(req, namespace)
+func getMetricsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database)
 	if err != nil {
 		return []string{}, err
 	}
@@ -241,8 +241,6 @@ func getMetricsForCustomMetrics(req *cwRequest, namespace string) ([]string, err
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	database := req.DataSource.Database
-	region := req.Region
 	if _, ok := customMetricsMetricsMap[database]; !ok {
 		customMetricsMetricsMap[database] = make(map[string]map[string]*CustomMetricsCache)
 	}
@@ -272,8 +270,8 @@ func getMetricsForCustomMetrics(req *cwRequest, namespace string) ([]string, err
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(req *cwRequest, namespace string) ([]string, error) {
-	result, err := getAllMetrics(req, namespace)
+func getDimensionsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database)
 	if err != nil {
 		return []string{}, err
 	}
@@ -281,8 +279,6 @@ func getDimensionsForCustomMetrics(req *cwRequest, namespace string) ([]string, 
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	database := req.DataSource.Database
-	region := req.Region
 	if _, ok := customMetricsDimensionsMap[database]; !ok {
 		customMetricsDimensionsMap[database] = make(map[string]map[string]*CustomMetricsCache)
 	}
