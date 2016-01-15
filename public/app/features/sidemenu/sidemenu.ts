@@ -22,7 +22,9 @@ class SideMenuCtrl {
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
     this.updateMenu();
-    this.$scope.$on('$routeChangeSuccess', () => this.updateMenu());
+    this.$scope.$on('$routeChangeSuccess', () => {
+      this.contextSrv.sidemenu = false;
+    });
   }
 
  getUrl(url) {
@@ -64,8 +66,8 @@ class SideMenuCtrl {
 
    this.orgMenu.push({cssClass: "divider"});
 
-   if (config.allowOrgCreate) {
-     this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
+   if (this.contextSrv.isGrafanaAdmin) {
+     this.orgMenu.push({text: "Grafana adminstration", icon: "fa fa-fw fa-cogs", url: this.getUrl("/admin/settings")});
    }
 
    this.backendSrv.get('/api/user/orgs').then(orgs => {
@@ -81,13 +83,11 @@ class SideMenuCtrl {
            this.switchOrg(org.orgId);
          }
        });
+
+       if (config.allowOrgCreate) {
+         this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
+       }
      });
-
-     this.orgMenu.push({cssClass: "divider"});
-
-     if (this.contextSrv.isGrafanaAdmin) {
-       this.orgMenu.push({text: "Server admin", url: this.getUrl("/admin/settings")});
-     }
    });
  }
 
@@ -104,19 +104,19 @@ class SideMenuCtrl {
    this.mainLinks.push({
      text: "System info",
      icon: "fa fa-fw fa-info",
-     href: this.getUrl("/admin/settings"),
+     url: this.getUrl("/admin/settings"),
    });
 
    this.mainLinks.push({
      text: "Global Users",
      icon: "fa fa-fw fa-user",
-     href: this.getUrl("/admin/users"),
+     url: this.getUrl("/admin/users"),
    });
 
    this.mainLinks.push({
      text: "Global Orgs",
      icon: "fa fa-fw fa-users",
-     href: this.getUrl("/admin/orgs"),
+     url: this.getUrl("/admin/orgs"),
    });
  }
 

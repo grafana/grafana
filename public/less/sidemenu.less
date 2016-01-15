@@ -82,7 +82,7 @@
 
 .sidemenu-item {
   color: @linkColor;
-  line-height: 45px;
+  line-height: 47px;
   padding: 0px 10px 0px 20px;
   display: block;
   white-space: nowrap;
@@ -162,26 +162,24 @@
   }
 }
 
-.sidemenu-org-section {
-  box-shadow: @sideMenuTopShadow;
+.sidemenu-org {
   border-bottom: @sideMenuBorder;
+  box-shadow: @sideMenuTopShadow;
   padding: 17px 10px 15px 21px;
+  box-sizing: border-box;
   cursor: pointer;
   &:hover {
     background-color: @grafanaTargetFuncBackground;
   }
-}
-
-.sidemenu-org {
   display: table;
   position: relative;
-  width: 159px;
+  width: 100%;
 }
 
 .sidemenu-org .fa-caret-right {
   position: absolute;
-  top: 17px;
-  right: -12px;
+  top: 50%;
+  right: 4px;
   font-size: 80%;
   color: @linkColor;
 }
@@ -204,7 +202,7 @@
 }
 
 .sidemenu-org-details {
-  padding-left: 16px;
+  padding-left: 10px;
   color: @linkColor;
 }
 
