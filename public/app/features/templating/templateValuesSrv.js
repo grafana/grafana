@@ -180,9 +180,13 @@ function (angular, _, kbn) {
 
     this.updateOptionsFromMetricFindQuery = function(variable, datasource) {
       return datasource.metricFindQuery(variable.query).then(function (results) {
+        var currentAllValue = '';
+        if (variable.options) {
+          currentAllValue = variable.options[0].value;
+        }
         variable.options = self.metricNamesToVariableValues(variable, results);
         if (variable.includeAll) {
-          self.addAllOption(variable);
+          self.addAllOption(variable, currentAllValue);
         }
         if (!variable.options.length) {
           variable.options.push(getNoneOption());
@@ -244,9 +248,13 @@ function (angular, _, kbn) {
       return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
     };
 
-    this.addAllOption = function(variable) {
+    this.addAllOption = function(variable, currentAllValue) {
       var allValue = '';
       switch(variable.allFormat) {
+        case 'custom': {
+          allValue = currentAllValue;
+          break;
+        }
         case 'wildcard': {
           allValue = '*';
           break;
