@@ -48,7 +48,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         scope.onAppEvent('setTooltip', function(event, info) {
           // do not need to to this if event is from this panel or edit mode
           if (info.scope === scope ||
-            scope.dashboardViewState.state.edit) {
+            scope.dashboardViewState.state.edit ||
+            scope.dashboardViewState.state.fullscreen) {
             return;
           }
           // info.pos -> canvas pos

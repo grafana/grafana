@@ -40,7 +40,7 @@ function ($) {
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex;
       var results = [];
-
+      results.outOfScope = true;
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
 
@@ -59,8 +59,11 @@ function ($) {
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
-
-        if (series.stack) {
+        if(pos.x >= series.data[0][0] && pos.x <= series.data[series.data.length-1][0]) {
+          results.outOfScope = false;
+        }
+        
+		if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
           } else if (!series.stack) {
@@ -127,7 +130,10 @@ function ($) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
-
+        if(seriesHoverInfo.outOfScope) {
+          $tooltip.detach();
+          return;
+        }
         seriesHtml = '';
 
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
