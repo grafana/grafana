@@ -238,7 +238,7 @@ func createPackage(options linuxPackageOptions) {
 		"-C", packageRoot,
 		"--vendor", "Grafana",
 		"--url", "http://grafana.org",
-		"--license", "Apache 2.0",
+		"--license", "\"Apache 2.0\"",
 		"--maintainer", "contact@grafana.org",
 		"--config-files", options.configFilePath,
 		"--config-files", options.ldapFilePath,

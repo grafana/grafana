@@ -52,7 +52,7 @@ class SideMenuCtrl {
    if (this.contextSrv.hasRole('Admin')) {
      this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
      this.orgMenu.push({
-       text: "Settings",
+       text: "Preferences",
        url: this.getUrl("/org"),
      });
      this.orgMenu.push({
