@@ -43,6 +43,12 @@ function(angular, $) {
         scope.broadcastRefresh();
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+i', function() {
+        var current = scope.dashboard.sharedTooltip;
+        scope.dashboard.sharedTooltip = !current;
+        scope.broadcastRefresh();
+      }, { inputDisabled: true });
+
       keyboardManager.bind('ctrl+h', function() {
         var current = scope.dashboard.hideControls;
         scope.dashboard.hideControls = !current;

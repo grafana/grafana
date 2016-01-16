@@ -7,7 +7,7 @@ function ($) {
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
 
-    var $tooltip = $('<div id="tooltip">');
+    var $tooltip = $('<div>');
 
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
@@ -100,9 +100,16 @@ function ($) {
       if (dashboard.sharedCrosshair) {
         scope.appEvent('clearCrosshair');
       }
+      if (dashboard.sharedTooltip) {
+        scope.appEvent('clearTooltip', { scope: scope });
+      }
     });
 
-    elem.bind("plothover", function (event, pos, item) {
+    elem.bind('clearTooltip', function() {
+      $tooltip.detach();
+    });
+
+    elem.bind("plothover", function (event, pos, item, isEcho) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
@@ -146,6 +153,13 @@ function ($) {
         }
 
         self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
+
+        if(dashboard.sharedTooltip && !isEcho) {
+          var parentPos = elem.parents('.panel.ng-scope').position();
+          var yd = (pos.pageY - parentPos.top) * 100 / elem.height();
+          var xd = (pos.pageX - parentPos.left) * 100 / elem.width();
+          scope.appEvent('setTooltip', { pos: pos, source: elem, offset: { yd: yd, xd: xd}, scope: scope });
+        }
       }
       // single series tooltip
       else if (item) {
