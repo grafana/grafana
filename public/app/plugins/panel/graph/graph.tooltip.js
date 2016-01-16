@@ -62,8 +62,8 @@ function ($) {
         if(pos.x >= series.data[0][0] && pos.x <= series.data[series.data.length-1][0]) {
           results.outOfScope = false;
         }
-        
-		if (series.stack) {
+
+        if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
           } else if (!series.stack) {
