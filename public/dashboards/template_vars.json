@@ -258,7 +258,6 @@
   "annotations": {
     "enable": false
   },
-  "refresh": false,
-  "refreshOnTimeChange": false,
+  "refresh": "Never",
   "version": 6
 }

@@ -12,8 +12,7 @@ function (angular, _) {
     var replacementDefaults = {
       type: 'query',
       datasource: null,
-      refresh: false,
-      refreshOnTimeChange: false,
+      refresh: 'Never',
       name: '',
       options: [],
       includeAll: false,
