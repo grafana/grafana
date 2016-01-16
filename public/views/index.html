@@ -25,9 +25,8 @@
 
 	</head>
 
-	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
-		<div class="sidemenu-canvas">
-
+	<body ng-cloak>
+		<grafana-app>
 			<aside class="sidemenu-wrapper">
 				<sidemenu ng-if="contextSrv.sidemenu"></sidemenu>
 			</aside>
@@ -43,9 +42,7 @@
 			</div>
 
 			<div ng-view class="main-view"></div>
-
-		</div>
-
+		</grafana-app>
   </body>
 
 	<script>

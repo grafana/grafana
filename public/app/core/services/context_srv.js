@@ -20,12 +20,8 @@ function (angular, _, coreModule, store, config) {
       return this.user.orgRole === role;
     };
 
-    this.setSideMenuState = function(state) {
-      this.sidemenu = state;
-    };
-
     this.toggleSideMenu = function() {
-      this.setSideMenuState(!this.sidemenu);
+      this.sidemenu = !this.sidemenu;
     };
 
     this.version = config.buildInfo.version;

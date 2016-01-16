@@ -21,6 +21,7 @@ import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
 
+import {grafanaAppDirective} from './components/grafana_app';
 import {arrayJoin} from './directives/array_join';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
@@ -28,4 +29,4 @@ import 'app/core/routes/all';
 import './filters/filters';
 import coreModule from './core_module';
 
-export {arrayJoin, coreModule};
+export {arrayJoin, coreModule, grafanaAppDirective};

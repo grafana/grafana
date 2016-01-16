@@ -18,7 +18,7 @@ function (coreModule) {
         '<div class="navbar navbar-static-top"><div class="navbar-inner"><div class="container-fluid">' +
         '<div class="top-nav">' +
 				'<div class="top-nav-btn top-nav-menu-btn">' +
-					'<a class="pointer" ng-click="toggle()">' +
+					'<a class="pointer" ng-click="contextSrv.toggleSideMenu()">' +
 						'<span class="top-nav-logo-background">' +
 							'<img class="logo-icon" src="img/fav32.png"></img>' +
 						'</span>' +
@@ -43,10 +43,6 @@ function (coreModule) {
       link: function(scope, elem, attrs) {
         scope.icon = attrs.icon;
         scope.contextSrv = contextSrv;
-
-        scope.toggle = function() {
-          contextSrv.toggleSideMenu();
-        };
       }
     };
   });
