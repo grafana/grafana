@@ -1,12 +1,11 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import store from 'app/core/store';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
+import coreModule from '../../core_module';
 
-class SideMenuCtrl {
+export class SideMenuCtrl {
   isSignedIn: boolean;
   showSignout: boolean;
   user: any;
@@ -135,7 +134,7 @@ class SideMenuCtrl {
  };
 }
 
-function sideMenuDirective() {
+export function sideMenuDirective() {
   return {
     restrict: 'E',
     templateUrl: 'app/features/sidemenu/sidemenu.html',
@@ -146,4 +145,4 @@ function sideMenuDirective() {
   };
 }
 
-angular.module('grafana.directives').directive('sidemenu', sideMenuDirective);
+coreModule.directive('sidemenu', sideMenuDirective);

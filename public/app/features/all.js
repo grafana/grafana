@@ -1,6 +1,5 @@
 define([
   './panellinks/module',
-  './sidemenu/sidemenu',
   './dashlinks/module',
   './annotations/annotations_srv',
   './templating/templateSrv',
