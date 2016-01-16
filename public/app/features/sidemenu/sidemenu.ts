@@ -16,6 +16,7 @@ class SideMenuCtrl {
   grafanaVersion: any;
   appSubUrl: string;
 
+  /** @ngInject */
   constructor(private $scope, private $location, private contextSrv, private backendSrv) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
