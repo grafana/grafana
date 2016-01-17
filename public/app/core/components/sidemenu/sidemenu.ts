@@ -41,7 +41,7 @@ export class SideMenuCtrl {
    this.orgMenu = [
      {section: 'You', cssClass: 'dropdown-menu-title'},
      {text: 'Preferences', url: this.getUrl('/profile')},
-     {text: 'Account', url: this.getUrl('/profile')},
+     {text: 'Profile', url: this.getUrl('/profile')},
    ];
 
    if (this.isSignedIn) {
