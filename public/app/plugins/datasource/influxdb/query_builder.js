@@ -62,6 +62,9 @@ function (_) {
     } else if (type === 'FIELDS') {
       query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
       return query;
+    } else if (type === 'RETENTION POLICIES') {
+      query = 'SHOW RETENTION POLICIES';
+      return query;
     }
 
     if (measurement) {
