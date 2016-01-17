@@ -12,11 +12,6 @@ function (_, $, coreModule) {
 
         var lastHideControlsVal;
 
-        // tooltip removal fix
-        $scope.$on("$routeChangeSuccess", function() {
-          $("#tooltip, .tooltip").remove();
-        });
-
         $scope.$watch('dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;

@@ -158,6 +158,11 @@ export function grafanaAppDirective() {
         }
       });
 
+      // tooltip removal fix
+      scope.$on("$routeChangeSuccess", function() {
+        $("#tooltip, .tooltip").remove();
+      });
+
       // handle document clicks that should hide things
       elem.click(function(evt) {
         if ($(evt.target).parents().length === 0) {
