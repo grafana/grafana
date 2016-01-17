@@ -70,6 +70,10 @@ describe('InfluxQueryBuilder', function() {
       expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
     });
 
+    it('should build show retention policies query', function() {
+      var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: []});
+      var query = builder.buildExploreQuery('RETENTION POLICIES');
+      expect(query).to.be('SHOW RETENTION POLICIES');
+    });
   });
-
 });

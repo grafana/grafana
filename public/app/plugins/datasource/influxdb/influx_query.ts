@@ -12,6 +12,7 @@ export default class InfluxQuery {
   constructor(target) {
     this.target = target;
 
+    target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
