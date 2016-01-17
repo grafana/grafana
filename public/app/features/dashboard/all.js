@@ -1,8 +1,7 @@
 define([
   './dashboardCtrl',
   './dashboardLoaderSrv',
-  './dashboardNavCtrl',
-  './snapshotTopNavCtrl',
+  './dashnav/dashnav',
   './saveDashboardAsCtrl',
   './rowCtrl',
   './shareModalCtrl',
