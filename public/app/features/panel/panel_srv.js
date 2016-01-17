@@ -114,19 +114,7 @@ function (angular, _, config) {
         $rootScope.performance.panelsRendered++;
       };
 
-      $scope.must_refresh = function() {
-        var panel = $rootScope._refreshMng.panels[$scope.panel.id];
-        panel.refreshShiftCurrentTicks--;
-        var res = panel.refreshShiftCurrentTicks === 0;
-        if(res) {
-          panel.refreshShiftCurrentTicks = panel.refreshShiftTicks;
-        }
-        return res;
-      };
       $scope.get_data = function() {
-        if(!$scope.must_refresh()) {
-          return;
-        }
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
         if ($scope.panel.snapshotData) {
