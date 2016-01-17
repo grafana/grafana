@@ -1,7 +1,6 @@
-<div body-class class="dashboard">
+<div body-class class="dashboard" ng-if="dashboard">
 
-	<div ng-include src="topNavPartial">
-	</div>
+	<dashnav></dashnav>
 
 	<div dash-editor-view></div>
 	<div dash-search-view></div>

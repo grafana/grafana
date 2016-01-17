@@ -6,11 +6,8 @@ import $ from 'jquery';
 import coreModule from '../../core_module';
 
 export class NavbarCtrl {
-  contextSrv: any;
-
   /** @ngInject */
-  constructor(private $scope, contextSrv) {
-    this.contextSrv = contextSrv;
+  constructor(private $scope, private contextSrv) {
   }
 }
 
@@ -26,9 +23,9 @@ export function navbarDirective() {
       title: "@",
       titleUrl: "@",
     },
-    link: function(scope, elem, attrs) {
-      scope.icon = attrs.icon;
-      scope.subnav = attrs.subnav;
+    link: function(scope, elem, attrs, ctrl) {
+      ctrl.icon = attrs.icon;
+      ctrl.subnav = attrs.subnav;
     }
   };
 }

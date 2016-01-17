@@ -137,7 +137,7 @@ export class SideMenuCtrl {
 export function sideMenuDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/sidemenu/sidemenu.html',
+    templateUrl: 'app/core/components/sidemenu/sidemenu.html',
     controller: SideMenuCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

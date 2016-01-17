@@ -1,18 +1,28 @@
-define([
-  'angular',
-  'lodash',
-  'vendor/filesaver'
-],
-function (angular, _) {
-  'use strict';
+///<reference path="../../../headers/common.d.ts" />
 
-  var module = angular.module('grafana.controllers');
+import _ from 'lodash';
+import moment from 'moment';
+import angular from 'angular';
 
-  module.controller('DashboardNavCtrl', function($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+export class DashNavCtrl {
+
+  /** @ngInject */
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
+
+      $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
+
+      if ($scope.dashboardMeta.isSnapshot) {
+        $scope.showSettingsMenu = false;
+        var meta = $scope.dashboardMeta;
+        $scope.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
+        if (meta.expires) {
+          $scope.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
+        }
+      }
     };
 
     $scope.openEditView = function(editview) {
@@ -20,17 +30,12 @@ function (angular, _) {
       $location.search(search);
     };
 
-    $scope.showSettingsMenu = function() {
-      return $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
-    };
-
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
         backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
           $scope.dashboardMeta.isStarred = false;
         });
-      }
-      else {
+      } else {
         backendSrv.post('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
           $scope.dashboardMeta.isStarred = true;
         });
@@ -63,7 +68,7 @@ function (angular, _) {
         $scope.appEvent('dashboard-saved', $scope.dashboard);
         $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
 
-        //force refresh whole page
+        // force refresh whole page
         window.location.href = window.location.href;
       }, $scope.handleSaveDashError);
     };
@@ -152,7 +157,8 @@ function (angular, _) {
     $scope.exportDashboard = function() {
       var clone = $scope.dashboard.getSaveModelClone();
       var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
-      window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
+      var wnd: any = window;
+      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
 
     $scope.snapshot = function() {
@@ -176,6 +182,17 @@ function (angular, _) {
       playlistSrv.stop(1);
     };
 
-  });
+    $scope.init();
+  }
+}
 
-});
+export function dashNavDirective() {
+  return {
+    restrict: 'E',
+    templateUrl: 'app/features/dashboard/dashnav/dashnav.html',
+    controller: DashNavCtrl,
+    transclude: true,
+  };
+}
+
+angular.module('grafana.directives').directive('dashnav', dashNavDirective);
