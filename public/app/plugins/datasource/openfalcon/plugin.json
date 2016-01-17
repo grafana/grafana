@@ -1,18 +1,9 @@
 {
-  "pluginType": "datasource",
-  "name": "Open-Falcon",
+  "name": "OpenFalcon",
+  "type": "datasource",
+  "id": "openfalcon",
 
-  "type": "openfalcon",
-  "serviceName": "OpenfalconDatasource",
-
-  "module": "app/plugins/datasource/openfalcon/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/openfalcon/partials/config.html",
-    "query": "app/plugins/datasource/openfalcon/partials/query.editor.html",
-    "annotations": "app/plugins/datasource/openfalcon/partials/annotations.editor.html"
-  },
-
+  "defaultMatchFormat": "glob",
   "metrics": true,
   "annotations": true
 }

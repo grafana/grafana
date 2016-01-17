@@ -1,20 +1,20 @@
+///<amd-dependency path="app/plugins/datasource/openfalcon/gfunc" name="gfunc"/>
+///<amd-dependency path="app/plugins/datasource/openfalcon/query_ctrl" />
+///<amd-dependency path="app/services/uiSegmentSrv" />
+///<amd-dependency path="test/specs/helpers" name="helpers" />
 
-import '../query_ctrl';
-import 'app/core/services/segment_srv';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import gfunc from '../gfunc';
-import helpers from 'test/specs/helpers';
+declare var gfunc: any;
+declare var helpers: any;
 
-describe('OpenFalconQueryCtrl', function() {
+describe('OpenfalconQueryCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
 
-  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
-
   beforeEach(ctx.providePhase());
-  beforeEach(ctx.createControllerPhase('OpenFalconQueryCtrl'));
+  beforeEach(ctx.createControllerPhase('OpenfalconQueryCtrl'));
 
   beforeEach(function() {
     ctx.scope.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};

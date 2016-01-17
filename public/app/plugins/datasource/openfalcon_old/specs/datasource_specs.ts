@@ -1,24 +1,18 @@
+///<amd-dependency path="app/plugins/datasource/openfalcon/datasource" />
+///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import helpers from 'test/specs/helpers';
-import Datasource from "../datasource";
+declare var helpers: any;
 
 describe('openfalconDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings: any = {url: ['']};
 
-  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['backendSrv']));
-  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-    ctx.$q = $q;
-    ctx.$httpBackend =  $httpBackend;
-    ctx.$rootScope = $rootScope;
-    ctx.$injector = $injector;
-  }));
 
+  beforeEach(ctx.createService('openfalconDatasource'));
   beforeEach(function() {
-    ctx.ds = ctx.$injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = new ctx.service({ url: [''] });
   });
 
   describe('When querying influxdb with one target using query editor target spec', function() {
@@ -70,57 +64,51 @@ describe('openfalconDatasource', function() {
   });
 
   describe('building openfalcon params', function() {
-    it('should return empty array if no targets', function() {
-      var results = ctx.ds.buildOpenFalconParams({
-        targets: [{}]
-      });
-      expect(results.length).to.be(0);
-    });
 
     it('should uri escape targets', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: 'prod1.{test,test2}'}, {target: 'prod2.count'}]
       });
       expect(results).to.contain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: 'series1'}, {target: 'series2'}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: 'series1', hide: true}, {target: 'sumSeries(#A)', hide: true}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: 'series1'}, {target: 'sumSeries(#A)'}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[2]).to.be('target=' + encodeURIComponent("asPercent(series1,sumSeries(series1))"));
     });
 
     it('should fix wrong minute interval parameters', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: "summarize(prod.25m.count, '25m', 'sum')" }]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: "summarize(prod.5M.count, '5M', 'sum')" }]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', function() {
-      var results = ctx.ds.buildOpenFalconParams({
+      var results = ctx.ds.buildOpenfalconParams({
       targets: [{target: 'series1'}, {target: ''}]
       });
       expect(results.length).to.be(2);

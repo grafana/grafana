@@ -1,6 +1,8 @@
+///<amd-dependency path="app/plugins/datasource/openfalcon/gfunc" name="gfunc" />
 
-import {describe, it, expect} from 'test/lib/common';
-import gfunc from '../gfunc';
+import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+
+declare var gfunc: any;
 
 describe('when creating func instance from func names', function() {
   it('should return func instance', function() {

@@ -12,7 +12,7 @@
 				<input type="text"
 					class="input-mini tight-form-input"
 					ng-model="panel.cacheTimeout"
-					bs-tooltip="'OpenFalcon parameter to override memcache default timeout (unit is seconds)'"
+					bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
 					data-placement="right"
 					spellcheck='false'
 					placeholder="60"></input>
@@ -84,8 +84,8 @@
 		<div class="grafana-info-box span8" ng-if="editorHelpIndex === 2">
 			<h5>Series as parameter</h5>
 			<ul>
-				<li>Some openfalcon functions allow you to have many series arguments</li>
-				<li>Use #[A-Z] to use a openfalcon query as parameter to a function</li>
+				<li>Some graphite functions allow you to have many series arguments</li>
+				<li>Use #[A-Z] to use a graphite query as parameter to a function</li>
 				<li>
 					Examples:
 					<ul>
@@ -119,11 +119,11 @@
 		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 5">
 			<h5>Max data points</h5>
 			<ul>
-				<li>Every openfalcon request is issued with a maxDataPoints parameter</li>
-				<li>OpenFalcon uses this parameter to consolidate the real number of values down to this number</li>
+				<li>Every graphite request is issued with a maxDataPoints parameter</li>
+				<li>Graphite uses this parameter to consolidate the real number of values down to this number</li>
 				<li>If there are more real values, then by default they will be consolidated using averages</li>
 				<li>This could hide real peaks and max values in your series</li>
-				<li>You can change how point consolidation is made using the consolidateBy openfalcon function</li>
+				<li>You can change how point consolidation is made using the consolidateBy graphite function</li>
 				<li>Point consolidation will effect series legend values (min,max,total,current)</li>
 				<li>If you override maxDataPoint and set a high value performance can be severely effected</li>
 			</ul>

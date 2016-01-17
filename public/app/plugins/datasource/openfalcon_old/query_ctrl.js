@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'app/core/config',
+  'config',
   './gfunc',
   './parser'
 ],
@@ -10,7 +10,7 @@ function (angular, _, config, gfunc, Parser) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OpenFalconQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
+  module.controller('OpenfalconQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
 
     $scope.init = function() {
       if ($scope.target) {
@@ -30,7 +30,6 @@ function (angular, _, config, gfunc, Parser) {
       $scope.functions = [];
       $scope.segments = [];
       delete $scope.parserError;
-
       if ($scope.target.textEditor) {
         //fix "." back to "#"
         $scope.target.target = $scope.target.target.replace(/\./g, "#");
@@ -56,15 +55,13 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       try {
-        parseTargeRecursive(astNode);
+        parseTargetRecursive(astNode);
       }
       catch (err) {
         console.log('error parsing target:', err.message);
         $scope.parserError = err.message;
         $scope.target.textEditor = true;
       }
-
-      checkOtherSegments($scope.segments.length - 1);
     }
 
     function addFunctionParameter(func, value, index, shiftBack) {
@@ -74,7 +71,7 @@ function (angular, _, config, gfunc, Parser) {
       func.params[index] = value;
     }
 
-    function parseTargeRecursive(astNode, func, index) {
+    function parseTargetRecursive(astNode, func, index) {
       if (astNode === null) {
         return null;
       }
@@ -84,7 +81,7 @@ function (angular, _, config, gfunc, Parser) {
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
 
         _.each(astNode.params, function(param, index) {
-          parseTargeRecursive(param, innerFunc, index);
+          parseTargetRecursive(param, innerFunc, index);
         });
 
         innerFunc.updateText();
@@ -139,10 +136,10 @@ function (angular, _, config, gfunc, Parser) {
               $scope.segments = $scope.segments.splice(0, fromIndex);
               $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
-          } else {
-            if ($scope.segments.length === fromIndex) {
-              $scope.segments.push(uiSegmentSrv.newSelectMetric());
-            }
+            return;
+          }
+          if ($scope.segments.length === fromIndex) {
+            $scope.segments.push(uiSegmentSrv.newSelectMetric());
           }
         })
         .then(null, function(err) {
@@ -164,36 +161,36 @@ function (angular, _, config, gfunc, Parser) {
 
       var query = "";
       if(index === 0) {
-        query = hostname || ".*";
+        query = hostname || "";
       }
       else{
         query = getSegmentPathUpTo(index) + '#.*';
       }
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
-        var altSegments = _.map(segments, function(segment) {
-          return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+          var altSegments = _.map(segments, function(segment) {
+            return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+          });
+
+          if (altSegments.length === 0) { return altSegments; }
+
+          // add template variables
+          _.each(templateSrv.variables, function(variable) {
+            altSegments.unshift(uiSegmentSrv.newSegment({
+              type: 'template',
+              value: '$' + variable.name,
+              expandable: true,
+            }));
+          });
+
+          // add wildcard option
+          altSegments.unshift(uiSegmentSrv.newSegment('*'));
+          return altSegments;
+        })
+        .then(null, function(err) {
+          $scope.parserError = err.message || 'Failed to issue metric query';
+          return [];
         });
-
-        if (altSegments.length === 0) { return altSegments; }
-
-        // add template variables
-        _.each(templateSrv.variables, function(variable) {
-          altSegments.unshift(uiSegmentSrv.newSegment({
-            type: 'template',
-            value: '$' + variable.name,
-            expandable: true,
-          }));
-        });
-
-        // add wildcard option
-        altSegments.unshift(uiSegmentSrv.newSegment('*'));
-        return altSegments;
-      })
-      .then(null, function(err) {
-        $scope.parserError = err.message || 'Failed to issue metric query';
-        return [];
-      });
     };
 
     $scope.segmentValueChanged = function (segment, segmentIndex) {
@@ -204,10 +201,11 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       if (segment.expandable) {
-        return checkOtherSegments(segmentIndex + 1).then(function() {
-          setSegmentFocus(segmentIndex + 1);
-          $scope.targetChanged();
-        });
+        return checkOtherSegments(segmentIndex + 1)
+          .then(function () {
+            setSegmentFocus(segmentIndex + 1);
+            $scope.targetChanged();
+          });
       }
       else {
         $scope.segments = $scope.segments.splice(0, segmentIndex + 1);
@@ -228,13 +226,12 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var oldTarget = $scope.target.target;
+
       var target = getSegmentPathUpTo($scope.segments.length);
       $scope.target.target = _.reduce($scope.functions, wrapFunction, target);
 
       if ($scope.target.target !== oldTarget) {
-        if ($scope.segments[$scope.segments.length - 1].value !== 'select metric') {
-          $scope.$parent.get_data();
-        }
+        $scope.$parent.get_data();
       }
     };
 
@@ -263,8 +260,8 @@ function (angular, _, config, gfunc, Parser) {
     $scope.moveAliasFuncLast = function() {
       var aliasFunc = _.find($scope.functions, function(func) {
         return func.def.name === 'alias' ||
-          func.def.name === 'aliasByNode' ||
-          func.def.name === 'aliasByMetric';
+               func.def.name === 'aliasByNode' ||
+               func.def.name === 'aliasByMetric';
       });
 
       if (aliasFunc) {

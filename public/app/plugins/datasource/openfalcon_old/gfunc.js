@@ -43,7 +43,7 @@ function (_, $) {
   addFuncDef({
     name: 'perSecond',
     category: categories.Transform,
-    params: [{ name: "max value", type: "int", optional: true }],
+    params: [],
     defaultParams: [],
   });
 
@@ -279,9 +279,7 @@ function (_, $) {
 
   addFuncDef({
     name: 'sortByName',
-    category: categories.Special,
-    params: [{ name: "natural", type: "select", options: ["true", "false"], optional: true }],
-    defaultParams: ["false"]
+    category: categories.Special
   });
 
   addFuncDef({
@@ -516,13 +514,6 @@ function (_, $) {
     category: categories.Filter,
     params: [{ name: "exclude", type: 'string' }],
     defaultParams: ['exclude']
-  });
-
-  addFuncDef({
-    name: "grep",
-    category: categories.Filter,
-    params: [{ name: "grep", type: 'string' }],
-    defaultParams: ['grep']
   });
 
   addFuncDef({
