@@ -139,7 +139,8 @@ export class GrafanaCtrl {
   }
 }
 
-export function grafanaAppDirective() {
+/** @ngInject */
+export function grafanaAppDirective(playlistSrv) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -165,21 +166,32 @@ export function grafanaAppDirective() {
 
       // handle document clicks that should hide things
       elem.click(function(evt) {
-        if ($(evt.target).parents().length === 0) {
+        var target = $(evt.target);
+        if (target.parents().length === 0) {
           return;
+        }
+
+        if (target.parents('.dash-playlist-actions').length === 0) {
+            playlistSrv.stop();
         }
 
         // hide search
         if (elem.find('.search-container').length > 0) {
-          if ($(evt.target).parents('.search-container').length === 0) {
+          if (target.parents('.search-container').length === 0) {
             scope.appEvent('hide-dash-search');
           }
         }
         // hide sidemenu
         if (!ignoreSideMenuHide &&  elem.find('.sidemenu').length > 0) {
-          if ($(evt.target).parents('.sidemenu').length === 0) {
+          if (target.parents('.sidemenu').length === 0) {
             scope.$apply(() => scope.contextSrv.toggleSideMenu());
           }
+        }
+
+        // hide popovers
+        var popover = elem.find('.popover');
+        if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
+          popover.hide();
         }
       });
     }

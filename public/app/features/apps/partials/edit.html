@@ -1,9 +1,8 @@
-<topnav title="Apps" icon="fa fa-fw fa-cubes" subnav="true">
+<navbar title="Apps" title-url="apps" icon="fa fa-fw fa-cubes" subnav="true">
 	<ul class="nav">
-		<li ><a href="apps">Overview</a></li>
-		<li class="active" ><a href="apps/edit/{{ctrl.current.type}}">Edit</a></li>
+		<li class="active" ><a href="apps/edit/{{ctrl.current.type}}">{{ctrl.appModel.name}}</a></li>
 	</ul>
-</topnav>
+</navbar>
 
 <div class="page-container">
 	<div class="apps-side-box">

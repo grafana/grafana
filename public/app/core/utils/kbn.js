@@ -352,9 +352,15 @@ function($, _) {
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
 
   // Data Rate
-  kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
-  kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
-  kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+  kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
+  kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
+  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
+  kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
+  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bits', 1);
+  kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
+  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bits', 2);
+  kbn.valueFormats.GBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
+  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bits', 3);
 
   // Throughput
   kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
@@ -595,6 +601,12 @@ function($, _) {
           {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec',    value: 'bps'},
           {text: 'bytes/sec',   value: 'Bps'},
+          {text: 'kilobites/sec', value: 'Kbits'},
+          {text: 'kilobytes/sec',    value: 'KBs'},
+          {text: 'megabites/sec', value: 'Mbits'},
+          {text: 'megabytes/sec',    value: 'MBs'},
+          {text: 'gigabytes/sec',   value: 'GBs'},
+          {text: 'gigabites/sec',   value: 'Gbits'},
         ]
       },
       {
