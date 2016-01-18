@@ -5,3 +5,6 @@ if [ $? -gt 0 ]; then
     echo "Some files aren't formatted, please run 'go fmt ./pkg/...' to format your source code before committing"
     exit 1
 fi
+
+
+grunt test
