@@ -3,6 +3,7 @@
 ### New Features ###
 * **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/pull/3655)
 * **Metadata**: Settings panel now shows dashboard metadata, closes [#3304](https://github.com/grafana/grafana/issues/3304)
+* **InfluxDB**: Support for policy selection in query editor, closes [#2018](https://github.com/grafana/grafana/issues/2018)
 
 ### Breaking changes
 **Plugin API**: Both datasource and panel plugin api (and plugin.json schema) as been updated, requiring a minor update to plugins. See [plugin api](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md) for more info.
