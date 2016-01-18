@@ -1,12 +1,12 @@
-<topnav icon="fa fa-fw fa-list" title="Playlists"></topnav>
+<navbar icon="fa fa-fw fa-list" title="Playlists"></navbar>
 
 <div class="page-container">
   <div class="page-wide">
 
-		<button type="submit" class="btn btn-inverse pull-right" ng-click="createPlaylist()">
+		<a class="btn btn-inverse pull-right" href="playlists/create">
 			<i class="fa fa-plus"></i>
 			New playlist
-		</button>
+		</a>
 
     <h2>Saved playlists</h2>
 
@@ -21,7 +21,7 @@
       </thead>
       <tr ng-repeat="playlist in playlists">
         <td>
-					<a href="playlists/edit/{{playlist.id}}">{{playlist.title}}</a>
+					<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
         </td>
         <td >
 					<a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>

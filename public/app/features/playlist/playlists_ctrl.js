@@ -13,31 +13,31 @@ function (angular, _) {
         $scope.playlists = result;
       });
 
-    $scope.removePlaylist = function(playlist) {
-      var modalScope = $scope.$new(true);
+    $scope.removePlaylistConfirmed = function(playlist) {
+      _.remove($scope.playlists, {id: playlist.id});
 
-      modalScope.playlist = playlist;
-      modalScope.removePlaylist = function() {
-        modalScope.dismiss();
-        _.remove($scope.playlists, {id: playlist.id});
-
-        backendSrv.delete('/api/playlists/' + playlist.id)
-          .then(function() {
-            $scope.appEvent('alert-success', ['Playlist deleted', '']);
-          }, function() {
-            $scope.appEvent('alert-error', ['Unable to delete playlist', '']);
-            $scope.playlists.push(playlist);
-          });
-      };
-
-      $scope.appEvent('show-modal', {
-        src: './app/features/playlist/partials/playlist-remove.html',
-        scope: modalScope
+      backendSrv.delete('/api/playlists/' + playlist.id)
+      .then(function() {
+        $scope.appEvent('alert-success', ['Playlist deleted', '']);
+      }, function() {
+        $scope.appEvent('alert-error', ['Unable to delete playlist', '']);
+        $scope.playlists.push(playlist);
       });
     };
 
-    $scope.createPlaylist = function() {
-      $location.path('/playlists/create');
+    $scope.removePlaylist = function(playlist) {
+
+      $scope.appEvent('confirm-modal', {
+        title: 'Confirm delete playlist',
+        text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
+        yesText: "Delete",
+        icon: "fa-warning",
+        onConfirm: function() {
+          $scope.removePlaylistConfirmed(playlist);
+        }
+      });
+
     };
+
   });
 });
