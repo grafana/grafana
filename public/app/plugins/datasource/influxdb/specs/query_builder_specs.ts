@@ -71,9 +71,9 @@ describe('InfluxQueryBuilder', function() {
     });
 
     it('should build show retention policies query', function() {
-      var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: []});
+      var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: []}, 'site');
       var query = builder.buildExploreQuery('RETENTION POLICIES');
-      expect(query).to.be('SHOW RETENTION POLICIES');
+      expect(query).to.be('SHOW RETENTION POLICIES on "site"');
     });
   });
 });

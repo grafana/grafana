@@ -4,17 +4,9 @@ define([
 function (_) {
   'use strict';
 
-  function InfluxQueryBuilder(target, queryModel) {
+  function InfluxQueryBuilder(target, database) {
     this.target = target;
-    this.model = queryModel;
-
-    if (target.groupByTags) {
-      target.groupBy = [{type: 'time', interval: 'auto'}];
-      for (var i in target.groupByTags) {
-        target.groupBy.push({type: 'tag', key: target.groupByTags[i]});
-      }
-      delete target.groupByTags;
-    }
+    this.database = database;
   }
 
   function renderTagCondition (tag, index) {
@@ -63,7 +55,7 @@ function (_) {
       query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
       return query;
     } else if (type === 'RETENTION POLICIES') {
-      query = 'SHOW RETENTION POLICIES';
+      query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
     }
 
