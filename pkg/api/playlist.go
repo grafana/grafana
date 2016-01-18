@@ -180,6 +180,7 @@ func CreatePlaylist(c *middleware.Context, cmd m.CreatePlaylistCommand) Response
 
 func UpdatePlaylist(c *middleware.Context, cmd m.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to save playlist", err)
 	}
