@@ -19,7 +19,9 @@ class PlaylistSrv {
 
     angular.element(window).unbind('resize');
 
-    if (this.index > this.dashboards.length -1) {
+    var playedAllDashboards = this.index > this.dashboards.length - 1;
+
+    if (playedAllDashboards) {
       this.start(this.playlistId);
     } else {
       var dash = this.dashboards[this.index];
