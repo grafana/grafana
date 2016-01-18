@@ -1,7 +1,7 @@
 <navbar title="Playlists" title-url="playlists" icon="fa fa-fw fa-list" subnav="true">
 	<ul class="nav">
 		<li ng-class="{active: isNew()}" ng-show="isNew()"><a href="datasources/create">New</a></li>
-		<li class="active" ng-show="!isNew()"><a href="playlists/edit/{{playlist.id}}">{{playlist.title}}</a></li>
+		<li class="active" ng-show="!isNew()"><a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a></li>
 	</ul>
 </navbar>
 
@@ -20,7 +20,7 @@
               Name
             </li>
             <li>
-              <input type="text" required ng-model="playlist.title" class="input-xlarge tight-form-input">
+              <input type="text" required ng-model="playlist.name" class="input-xlarge tight-form-input">
             </li>
           </ul>
           <div class="clearfix"></div>

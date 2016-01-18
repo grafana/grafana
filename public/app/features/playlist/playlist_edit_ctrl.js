@@ -13,7 +13,9 @@ function (angular, config, _) {
     $scope.foundPlaylistItems = [];
     $scope.searchQuery = '';
     $scope.loading = false;
-    $scope.playlist = {};
+    $scope.playlist = {
+      interval: '10m',
+    };
     $scope.playlistItems = [];
 
     $scope.init = function() {
@@ -68,7 +70,6 @@ function (angular, config, _) {
 
       $scope.playlistItems.push(playlistItem);
       $scope.filterFoundPlaylistItems();
-
     };
 
     $scope.removePlaylistItem = function(playlistItem) {
