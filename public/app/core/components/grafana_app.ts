@@ -139,6 +139,7 @@ export class GrafanaCtrl {
   }
 }
 
+/** @ngInject */
 export function grafanaAppDirective(playlistSrv) {
   return {
     restrict: 'E',
