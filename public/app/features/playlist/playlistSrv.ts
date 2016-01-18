@@ -12,7 +12,7 @@ class PlaylistSrv {
   private playlistId: number;
 
   /** @ngInject */
-  constructor(private $rootScope:any, private $location:any, private $timeout:any, private backendSrv:any) { }
+  constructor(private $rootScope: any, private $location: any, private $timeout: any, private backendSrv: any) { }
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
