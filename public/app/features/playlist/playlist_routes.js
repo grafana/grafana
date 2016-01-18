@@ -26,16 +26,10 @@ function (angular) {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
         resolve: {
-          init: function(backendSrv, playlistSrv, $route) {
+          init: function(playlistSrv, $route) {
             var playlistId = $route.current.params.id;
 
-            return backendSrv.get('/api/playlists/' + playlistId)
-              .then(function(playlist) {
-                return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
-                  .then(function(dashboards) {
-                    playlistSrv.start(dashboards, playlist.interval);
-                  });
-              });
+            playlistSrv.start(playlistId);
           }
         }
       });
