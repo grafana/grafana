@@ -11,7 +11,11 @@ class PlaylistSrv {
   private interval: any
 
   /** @ngInject */
-  constructor(private $rootScope:any, private $location:any, private $timeout:any) {
+  constructor(
+    private $rootScope:any,
+    private $location:any,
+    private $timeout:any,
+    private backendSrv:any) {
   }
 
   next() {
@@ -31,17 +35,24 @@ class PlaylistSrv {
     this.next();
   }
 
-  start(dashboards, interval) {
+  start(playlistId) {
     this.stop();
 
     this.index = 0;
-    this.interval = kbn.interval_to_ms(interval);
 
-    this.dashboards = dashboards;
     this.$rootScope.playlistSrv = this;
 
-    this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
-    this.next();
+    this.backendSrv.get('/api/playlists/' + playlistId)
+      .then((playlist) => {
+        this.backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
+          .then((dashboards) => {
+            this.dashboards = dashboards;
+            this.interval = kbn.interval_to_ms(playlist.interval);
+            this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
+
+            this.next();
+          });
+      });
   }
 
   stop() {
