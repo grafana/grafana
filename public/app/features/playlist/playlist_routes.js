@@ -29,6 +29,8 @@ function (angular) {
           init: function(backendSrv, playlistSrv, $route) {
             var playlistId = $route.current.params.id;
 
+            playlistSrv.start(playlistId)
+            /*
             return backendSrv.get('/api/playlists/' + playlistId)
               .then(function(playlist) {
                 return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
@@ -36,6 +38,7 @@ function (angular) {
                     playlistSrv.start(dashboards, playlist.interval);
                   });
               });
+            */
           }
         }
       });
