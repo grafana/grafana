@@ -139,7 +139,7 @@ export class GrafanaCtrl {
   }
 }
 
-export function grafanaAppDirective() {
+export function grafanaAppDirective(playlistSrv) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -168,6 +168,10 @@ export function grafanaAppDirective() {
         var target = $(evt.target);
         if (target.parents().length === 0) {
           return;
+        }
+
+        if (target.parents('.dash-playlist-actions').length === 0) {
+            playlistSrv.stop();
         }
 
         // hide search
