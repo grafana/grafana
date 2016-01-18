@@ -23,6 +23,7 @@ function (SingleStatCtrl, _, $) {
               elem = inner;
               $panelContainer = elem.parents('.panel-container');
               firstRender = false;
+              hookupDrilldownLinkTooltip();
             }
           }
 
@@ -186,41 +187,44 @@ function (SingleStatCtrl, _, $) {
           }
         }
 
-        // drilldown link tooltip
-        var drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
+        function hookupDrilldownLinkTooltip() {
+          // drilldown link tooltip
+          var drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
 
-        elem.mouseleave(function() {
-          if (panel.links.length === 0) { return;}
-          drilldownTooltip.detach();
-        });
+          elem.mouseleave(function() {
+            if (panel.links.length === 0) { return;}
+            drilldownTooltip.detach();
+          });
 
-        elem.click(function() {
-          if (!linkInfo) { return; }
+          elem.click(function(evt) {
+            if (!linkInfo) { return; }
+            // ignore title clicks in title
+            if ($(evt).parents('.panel-header').length > 0) { return; }
 
-          if (linkInfo.target === '_blank') {
-            var redirectWindow = window.open(linkInfo.href, '_blank');
-            redirectWindow.location;
-            return;
-          }
+            if (linkInfo.target === '_blank') {
+              var redirectWindow = window.open(linkInfo.href, '_blank');
+              redirectWindow.location;
+              return;
+            }
 
-          if (linkInfo.href.indexOf('http') === 0) {
-            window.location.href = linkInfo.href;
-          } else {
-            $timeout(function() {
-              $location.url(linkInfo.href);
-            });
-          }
+            if (linkInfo.href.indexOf('http') === 0) {
+              window.location.href = linkInfo.href;
+            } else {
+              $timeout(function() {
+                $location.url(linkInfo.href);
+              });
+            }
 
-          drilldownTooltip.detach();
-        });
+            drilldownTooltip.detach();
+          });
 
-        elem.mousemove(function(e) {
-          if (!linkInfo) { return;}
+          elem.mousemove(function(e) {
+            if (!linkInfo) { return;}
 
-          drilldownTooltip.text('click to go to: ' + linkInfo.title);
-
-          drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
-        });
+            drilldownTooltip.text('click to go to: ' + linkInfo.title);
+            drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
+          });
+        }
       }
     };
   }
