@@ -185,7 +185,6 @@ export function grafanaAppDirective() {
 
         // hide popovers
         var popover = elem.find('.popover');
-        console.log(target.parents('.graph-legend').length);
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
         }

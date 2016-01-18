@@ -17,9 +17,7 @@ class PlaylistSrv {
   next() {
     this.$timeout.cancel(this.cancelPromise);
 
-    angular.element(window).unbind('resize');
-
-    if (this.index > this.dashboards.length -1) {
+    if (this.index > this.dashboards.length - 1) {
       this.start(this.playlistId);
     } else {
       var dash = this.dashboards[this.index];
@@ -27,11 +25,11 @@ class PlaylistSrv {
       this.$location.url('dashboard/' + dash.uri);
 
       this.index++;
-      this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
+      this.cancelPromise = this.$timeout(() => this.next(), this.interval);
     }
   }
 
-  prevfunction() {
+  prev() {
     this.index = Math.max(this.index - 2, 0);
     this.next();
   }
@@ -41,20 +39,15 @@ class PlaylistSrv {
 
     this.index = 0;
     this.playlistId = playlistId;
-
     this.$rootScope.playlistSrv = this;
 
-    this.backendSrv.get('/api/playlists/' + playlistId)
-      .then((playlist) => {
-        this.backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
-          .then((dashboards) => {
-            this.dashboards = dashboards;
-            this.interval = kbn.interval_to_ms(playlist.interval);
-            this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
-
-            this.next();
-          });
+    this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
+      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
+        this.dashboards = dashboards;
+        this.interval = kbn.interval_to_ms(playlist.interval);
+        this.next();
       });
+    });
   }
 
   stop() {
@@ -62,7 +55,7 @@ class PlaylistSrv {
     this.playlistId = 0;
 
     if (this.cancelPromise) {
-        this.$timeout.cancel(this.cancelPromise);
+      this.$timeout.cancel(this.cancelPromise);
     }
 
     this.$rootScope.playlistSrv = null;
