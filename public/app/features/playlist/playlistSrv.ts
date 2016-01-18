@@ -9,6 +9,7 @@ class PlaylistSrv {
   private dashboards: any
   private index: number
   private interval: any
+  private playlistId: number
 
   /** @ngInject */
   constructor(
@@ -22,12 +23,17 @@ class PlaylistSrv {
     this.$timeout.cancel(this.cancelPromise);
 
     angular.element(window).unbind('resize');
-    var dash = this.dashboards[this.index % this.dashboards.length];
 
-    this.$location.url('dashboard/' + dash.uri);
+    if (this.index > this.dashboards.length -1) {
+      this.start(this.playlistId);
+    } else {
+      var dash = this.dashboards[this.index];
 
-    this.index++;
-    this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
+      this.$location.url('dashboard/' + dash.uri);
+
+      this.index++;
+      this.cancelPromise = this.$timeout(() => { this.next(); }, this.interval);
+    }
   }
 
   prevfunction() {
@@ -39,6 +45,7 @@ class PlaylistSrv {
     this.stop();
 
     this.index = 0;
+    this.playlistId = playlistId;
 
     this.$rootScope.playlistSrv = this;
 
@@ -57,6 +64,7 @@ class PlaylistSrv {
 
   stop() {
     this.index = 0;
+    this.playlistId = 0;
 
     if (this.cancelPromise) {
         this.$timeout.cancel(this.cancelPromise);
