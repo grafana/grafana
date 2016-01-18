@@ -16,7 +16,7 @@ function (angular, config) {
       name: '',
       url: '',
       access: 'proxy',
-      type: 'elasticsearch'
+      type: 'netcrunch'
     };
 
     $scope.init = function() {
@@ -45,9 +45,7 @@ function (angular, config) {
         $scope.filteredTypes = {};
 
         Object.keys($scope.types).forEach(function(typeKey) {
-          if (typeKey !== 'netcrunch') {
-            $scope.filteredTypes[typeKey] = $scope.types[typeKey];
-          }
+          $scope.filteredTypes[typeKey] = $scope.types[typeKey];
         });
       });
     };
@@ -62,8 +60,7 @@ function (angular, config) {
           $scope.current.isSSL = false;
           $scope.current.isSSL = (ds.url.indexOf('https://') === 0);
           simpleUrl = simpleUrlRegexp.exec(ds.url);
-          $scope.current.simpleUrl = ((simpleUrl != null) && (simpleUrl.length > 1)) ? simpleUrl[1] :
-                                     'localhost';
+          $scope.current.simpleUrl = ((simpleUrl != null) && (simpleUrl.length > 1)) ? simpleUrl[1] : 'localhost';
         }
         $scope.typeChanged();
       });
@@ -115,14 +112,14 @@ function (angular, config) {
     };
 
     $scope.saveChanges = function(test) {
-      var protocol = ($scope.current.isSSL === false) ? 'http://' : 'https://';
+      var protocol = ($scope.current.isSSL === true) ? 'https://' : 'http://';
 
       if (!$scope.editForm.$valid) {
         return;
       }
 
       if ($scope.current.type === 'netcrunch') {
-        $scope.current.url = protocol + $scope.current.simpleUrl + '/ncapi/';
+        $scope.current.url = protocol + $scope.current.simpleUrl;
       }
 
       if ($scope.current.id) {
