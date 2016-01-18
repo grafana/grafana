@@ -179,7 +179,7 @@ export default class InfluxQuery {
 
     var measurement = target.measurement;
     if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-measurement = '"' + measurement+ '"';
+      measurement = '"' + measurement+ '"';
     }
 
     query += ' FROM ' + measurement + ' WHERE ';

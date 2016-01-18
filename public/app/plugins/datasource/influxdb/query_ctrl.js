@@ -21,7 +21,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
       $scope.target = $scope.target;
       $scope.queryModel = new InfluxQuery($scope.target);
-      $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
+      $scope.queryBuilder = new InfluxQueryBuilder($scope.target, $scope.datasource.database);
       $scope.groupBySegment = uiSegmentSrv.newPlusButton();
       $scope.resultFormats = [
          {text: 'Time series', value: 'time_series'},
