@@ -5,19 +5,14 @@ import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 
 class PlaylistSrv {
-  private cancelPromise: any
-  private dashboards: any
-  private index: number
-  private interval: any
-  private playlistId: number
+  private cancelPromise: any;
+  private dashboards: any;
+  private index: number;
+  private interval: any;
+  private playlistId: number;
 
   /** @ngInject */
-  constructor(
-    private $rootScope:any,
-    private $location:any,
-    private $timeout:any,
-    private backendSrv:any) {
-  }
+  constructor(private $rootScope:any, private $location:any, private $timeout:any, private backendSrv:any) { }
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -74,4 +69,4 @@ class PlaylistSrv {
   }
 }
 
-coreModule.service('playlistSrv', PlaylistSrv)
+coreModule.service('playlistSrv', PlaylistSrv);
