@@ -25,6 +25,7 @@ type DashboardSnapshot struct {
 
 type CreateDashboardSnapshotCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
+	Name      string                 `json:"name" binding:"Required"`
 	Expires   int64                  `json:"expires"`
 
 	// these are passed when storing an external snapshot ref
