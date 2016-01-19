@@ -73,3 +73,12 @@ func NewEnabledPlugins() EnabledPlugins {
 		Apps:        make([]*AppPlugin, 0),
 	}
 }
+
+func (app *ApiPlugin) Load(decoder *json.Decoder, pluginDir string) error {
+	if err := decoder.Decode(&app); err != nil {
+		return err
+	}
+
+	ApiPlugins[app.Id] = app
+	return nil
+}
