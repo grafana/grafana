@@ -2,8 +2,9 @@ define([
   'angular',
   'lodash',
   'app/core/config',
+  'app/core/utils/kbn'
 ],
-function (angular, _, config) {
+function (angular, _, config, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -114,17 +115,21 @@ function (angular, _, config) {
         $rootScope.performance.panelsRendered++;
       };
 
-      $scope.must_refresh = function() {
-        var panel = $rootScope._refreshMng.panels[$scope.panel.id];
-        panel.refreshShiftCurrentTicks--;
-        var res = panel.refreshShiftCurrentTicks === 0;
-        if(res) {
-          panel.refreshShiftCurrentTicks = panel.refreshShiftTicks;
+      $scope.must_refresh = function(tick) {
+        if(!tick) {
+          // first or refreshed on-demand
+          $scope.panelRefreshCount = 0;
+        } else if(!$scope.panelRefreshCount) {
+          var panelRefresh = $scope.panel.refresh || $scope.row.refresh || $scope.dashboard.refresh;
+          var refreshTime = kbn.interval_to_ms(panelRefresh);
+          $scope.panelRefreshCount = (refreshTime / tick) - 1;
+        } else {
+          $scope.panelRefreshCount--;
         }
-        return res;
+        return $scope.panelRefreshCount === 0;
       };
-      $scope.get_data = function() {
-        if(!$scope.must_refresh()) {
+      $scope.get_data = function(event, tick) {
+        if(!$scope.must_refresh(tick)) {
           return;
         }
         if ($scope.otherPanelInFullscreenMode()) { return; }

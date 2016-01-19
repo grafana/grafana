@@ -83,7 +83,7 @@ define([
         }
       }
     };
-    this.setup_panel_refresh = function (interval) {
+    this.setup_panel_refresh = function (refresh) {
       // http://stackoverflow.com/questions/17445231/js-how-to-find-the-greatest-common-divisor
       var gcd = function(a, b) {
         if (!b) {
@@ -92,43 +92,22 @@ define([
         return gcd(b, a % b);
       };
       var gdcMax = null;
-      $rootScope._refreshMng = {
-        panels: {}
-      };
       this.panel_iterator(function(row, panel) {
-        var rowRefreshShift = row.refreshShift;
-        var panelRefreshShiftms = kbn.interval_to_ms(panel.refreshShift || rowRefreshShift || interval);
-        $rootScope._refreshMng.panels[panel.id] = {
-          row: row,
-          panel: panel,
-          rowRefreshShift: rowRefreshShift,
-          panelRefreshShiftms: panelRefreshShiftms,
-          refreshShiftCurrentTicks: 1,
-          refreshShiftTicks: null
-        };
-        if(gdcMax === null) {
-          gdcMax = panel.refreshShiftms;
-        }else {
-          gdcMax = gcd(gdcMax, panel.refreshShiftms);
-        }
-      });
-      // After iterating all panels already have the highest common factor
-      // Set each panel with the number of "refresh ticks"
-      this.panel_iterator(function(row, panel) {
-        $rootScope._refreshMng.panels[panel.id].refreshShiftTicks = $rootScope._refreshMng.panels[panel.id].panelRefreshShiftms / gdcMax;
+        var panelRefreshms = kbn.interval_to_ms(panel.refresh || row.refresh || refresh);
+        gdcMax = gcd(panelRefreshms, gdcMax);
       });
       return gdcMax;
     };
 
-    this.refreshDashboard = function() {
-      $rootScope.$broadcast('refresh');
+    this.refreshDashboard = function(tick) {
+      $rootScope.$broadcast('refresh', tick);
     };
 
     this.start_scheduled_refresh = function (after_ms) {
       self.cancel_scheduled_refresh();
       self.refresh_timer = timer.register($timeout(function () {
         self.start_scheduled_refresh(after_ms);
-        self.refreshDashboard();
+        self.refreshDashboard(after_ms);
       }, after_ms));
     };
 
