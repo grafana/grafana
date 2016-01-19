@@ -12,17 +12,19 @@ type AppSettings struct {
 	Pinned   bool                     `json:"pinned"`
 	Module   string                   `json:"module"`
 	Info     *plugins.PluginInfo      `json:"info"`
-	Pages    []*plugins.AppPluginPage `json:"pages"`
+	Pages    []plugins.AppPluginPage  `json:"pages"`
+	Includes []plugins.AppIncludeInfo `json:"includes"`
 	JsonData map[string]interface{}   `json:"jsonData"`
 }
 
 func NewAppSettingsDto(def *plugins.AppPlugin, data *models.AppSettings) *AppSettings {
 	dto := &AppSettings{
-		AppId:  def.Id,
-		Name:   def.Name,
-		Info:   &def.Info,
-		Module: def.Module,
-		Pages:  def.Pages,
+		AppId:    def.Id,
+		Name:     def.Name,
+		Info:     &def.Info,
+		Module:   def.Module,
+		Pages:    def.Pages,
+		Includes: def.Includes,
 	}
 
 	if data != nil {

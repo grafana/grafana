@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -17,10 +18,17 @@ type AppPluginCss struct {
 	Dark  string `json:"dark"`
 }
 
+type AppIncludeInfo struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Id   string `json:"id"`
+}
+
 type AppPlugin struct {
 	FrontendPluginBase
-	Css   *AppPluginCss    `json:"css"`
-	Pages []*AppPluginPage `json:"pages"`
+	Css      *AppPluginCss    `json:"css"`
+	Pages    []AppPluginPage  `json:"pages"`
+	Includes []AppIncludeInfo `json:"-"`
 
 	Pinned  bool `json:"-"`
 	Enabled bool `json:"-"`
@@ -38,6 +46,19 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	app.PluginDir = pluginDir
 	app.initFrontendPlugin()
+
+	// check if we have child panels
+	for _, panel := range Panels {
+		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
+			panel.IncludedInAppId = app.Id
+			app.Includes = append(app.Includes, AppIncludeInfo{
+				Name: panel.Name,
+				Id:   panel.Id,
+				Type: panel.Type,
+			})
+		}
+	}
+
 	Apps[app.Id] = app
 	return nil
 }

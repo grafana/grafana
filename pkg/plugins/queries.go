@@ -27,8 +27,7 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 		return nil, err
 	}
 
-	seenPanels := make(map[string]bool)
-	seenApi := make(map[string]bool)
+	enabledApps := make(map[string]bool)
 
 	for appId, installedApp := range Apps {
 		var app AppPlugin
@@ -42,32 +41,36 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 		}
 
 		if app.Enabled {
+			enabledApps[app.Id] = true
 			enabledPlugins.Apps = append(enabledPlugins.Apps, &app)
 		}
 	}
 
+	isPluginEnabled := func(appId string) bool {
+		if appId == "" {
+			return true
+		}
+
+		_, ok := enabledApps[appId]
+		return ok
+	}
+
 	// add all plugins that are not part of an App.
-	for d, installedDs := range DataSources {
-		if installedDs.App == "" {
-			enabledPlugins.DataSources[d] = installedDs
+	for dsId, ds := range DataSources {
+		if isPluginEnabled(ds.IncludedInAppId) {
+			enabledPlugins.DataSources[dsId] = ds
 		}
 	}
 
-	for p, panel := range Panels {
-		if panel.App == "" {
-			if _, ok := seenPanels[p]; !ok {
-				seenPanels[p] = true
-				enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
-			}
+	for _, panel := range Panels {
+		if isPluginEnabled(panel.IncludedInAppId) {
+			enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
 		}
 	}
 
-	for a, api := range ApiPlugins {
-		if api.App == "" {
-			if _, ok := seenApi[a]; !ok {
-				seenApi[a] = true
-				enabledPlugins.ApiList = append(enabledPlugins.ApiList, api)
-			}
+	for _, api := range ApiPlugins {
+		if isPluginEnabled(api.IncludedInAppId) {
+			enabledPlugins.ApiList = append(enabledPlugins.ApiList, api)
 		}
 	}
 
