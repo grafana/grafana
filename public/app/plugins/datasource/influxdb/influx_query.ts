@@ -151,7 +151,7 @@ export default class InfluxQuery {
   }
 
   getMeasurementAndPolicy() {
-    var policy = this.target.policy
+    var policy = this.target.policy;
     var measurement = this.target.measurement;
 
     if (!measurement.match('^/.*/')) {
