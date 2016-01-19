@@ -24,6 +24,7 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 		}
 
 		snapshot := &m.DashboardSnapshot{
+      Name:      cmd.Name,
 			Key:       cmd.Key,
 			DeleteKey: cmd.DeleteKey,
 			OrgId:     cmd.OrgId,
