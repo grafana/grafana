@@ -11,12 +11,13 @@ type PluginLoader interface {
 }
 
 type PluginBase struct {
-	Type      string     `json:"type"`
-	Name      string     `json:"name"`
-	Id        string     `json:"id"`
-	App       string     `json:"app"`
-	Info      PluginInfo `json:"info"`
-	PluginDir string     `json:"-"`
+	Type string     `json:"type"`
+	Name string     `json:"name"`
+	Id   string     `json:"id"`
+	Info PluginInfo `json:"info"`
+
+	IncludedInAppId string `json:"-"`
+	PluginDir       string `json:"-"`
 }
 
 type PluginInfo struct {
