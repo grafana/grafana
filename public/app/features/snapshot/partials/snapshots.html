@@ -1,0 +1,39 @@
+<navbar icon="fa fa-fw fa-camera-retro" title="Dashboard snapshots"></navbar>
+
+<div class="page-container">
+  <div class="page-wide">
+
+    <h2>Available snapshots</h2>
+
+     <table class="filter-table" style="margin-top: 20px">
+      <thead>
+        <th><strong>Name</strong></th>
+        <th><strong>Snapshot url</strong></th>
+        <th style="width: 70px"></th>
+        <th style="width: 25px"></th>
+     
+     </thead>
+      
+      <tr ng-repeat="snapshot in snapshots">
+        <td>
+					<a href="dashboard/snapshot/{{snapshot.Key}}">{{snapshot.Name}}</a>
+        </td>
+        <td >
+          <a href="dashboard/snapshot/{{snapshot.Key}}">dashboard/snapshot/{{snapshot.Key}}</a>
+        </td>
+        <td class="text-center">
+          <a href="dashboard/snapshot/{{snapshot.Key}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-eye"></i>
+            View
+          </a>
+        </td>
+        <td  class="text-right">
+          <a ng-click="removeSnapshot(snapshot)" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+</div>
