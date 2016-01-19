@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 )
