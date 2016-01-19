@@ -60,6 +60,7 @@ function (angular, _) {
 
       var cmdData = {
         dashboard: dash,
+        name: dash.title,
         expires: $scope.snapshot.expires,
       };
 
