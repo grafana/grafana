@@ -101,23 +101,23 @@ func DeleteDashboardSnapshot(c *middleware.Context) {
 }
 
 func SearchDashboardSnapshots(c *middleware.Context) Response {
-  query := c.Query("query")
-  limit := c.QueryInt("limit")
+	query := c.Query("query")
+	limit := c.QueryInt("limit")
 
-  if limit == 0 {
-    limit = 1000
-  }
+	if limit == 0 {
+		limit = 1000
+	}
 
-  searchQuery := m.GetDashboardSnapshotsQuery{
-    Name:  query,
-    Limit: limit,
-    OrgId: c.OrgId,
-  }
+	searchQuery := m.GetDashboardSnapshotsQuery{
+		Name:  query,
+		Limit: limit,
+		OrgId: c.OrgId,
+	}
 
-  err := bus.Dispatch(&searchQuery)
-  if err != nil {
-    return ApiError(500, "Search failed", err)
-  }
+	err := bus.Dispatch(&searchQuery)
+	if err != nil {
+		return ApiError(500, "Search failed", err)
+	}
 
-  return Json(200, searchQuery.Result)
+	return Json(200, searchQuery.Result)
 }
