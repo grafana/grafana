@@ -68,9 +68,11 @@ func Register(r *macaron.Macaron) {
 	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), wrap(ResetPassword))
 
 	// dashboard snapshots
-	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
-	r.Get("/dashboard/snapshot/*", Index)
+  r.Get("/dashboard/snapshot/*", Index)
+  r.Get("/dashboard/snapshots/", reqSignedIn, Index) 
 
+  // api for dashboard snapshots
+  r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
@@ -181,6 +183,11 @@ func Register(r *macaron.Macaron) {
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
 		})
+
+    // dashboard snapshots
+    r.Group("/dashboard/snapshots", func() {
+      r.Get("/", wrap(SearchDashboardSnapshots))
+    })
 
 		// Playlist
 		r.Group("/playlists", func() {
