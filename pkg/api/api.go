@@ -69,6 +69,7 @@ func Register(r *macaron.Macaron) {
 
 	// dashboard snapshots
   r.Get("/dashboard/snapshot/*", Index)
+  r.Get("/dashboard/snapshots/", reqSignedIn, Index)
 
   // api for dashboard snapshots
   r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

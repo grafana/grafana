@@ -68,7 +68,7 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 func SearchDashboardSnapshots(query *m.GetDashboardSnapshotsQuery) error {
   var snapshots = make(m.DashboardSnapshots, 0)
 
-  sess := x.Cols("name,key,delete_key").Limit(query.Limit)
+  sess := x.Limit(query.Limit)
 
   if query.Name != "" {
     sess.Where("name LIKE ?", query.Name)
