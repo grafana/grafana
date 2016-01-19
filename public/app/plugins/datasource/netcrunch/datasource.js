@@ -90,6 +90,7 @@ function (angular, _, moment, config, $, kbn) {
           netCrunchLogin,
           self = this;
 
+      this.datasource = datasource;
       this.id = datasource.id;
       this.name = datasource.name;
       this.url = datasource.url;
@@ -149,18 +150,13 @@ function (angular, _, moment, config, $, kbn) {
     };
 
     NetCrunchDatasource.prototype.testDatasource = function() {
+      var testResult = $q.defer();
 
       //TODO: reimplement this code
-      //var defer = $q.defer();
-      //
-      //if ((adrem.ncSrv != null) && (adrem.Client.loggedIn === true)) {
-      //  defer.resolve({ status: "success", message: "Data source connection is working",
-      //                  title: "Success" });
-      //  return defer.promise;
-      //} else {
-      //  return $q.when({ status: "error", message: "Data source connection is not working",
-      //                   title: "Error" });
-      //}
+
+      testResult.resolve({ status: "info", message: "This feature is not supported for NetCrunch datasource",
+                           title: "Information" });
+      return testResult.promise;
     };
 
     NetCrunchDatasource.prototype.getNodeById = function (nodeID) {

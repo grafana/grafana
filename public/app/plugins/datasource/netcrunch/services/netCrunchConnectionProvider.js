@@ -720,6 +720,25 @@ define([
           });
         }
 
+        function logout() {
+          if (serverConnectionReady != null) {
+            return serverConnectionReady.then(
+              function() {
+                var loggedOut = $q.defer();
+                netCrunchClient.logout(function() {
+                  loggedOut.resolve();
+                });
+                return loggedOut.promise;
+              },
+              function() {
+                return $q.when();
+              }
+            );
+          } else {
+            return $q.when();
+          }
+        }
+
         function loggedIn() {
           return ((netCrunchClient != null) && ('Session' in netCrunchClient) && (netCrunchClient.status.logged === true));
         }
@@ -759,6 +778,7 @@ define([
 
         this.counters = Object.create(null);
         this.login = login;
+        this.logout = logout;
         this.networkAtlas = Object.create(null);
         this.networkAtlasReady = networkAtlasReady.promise;
         this.queryTrendData = queryTrendData;
