@@ -63,7 +63,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
   data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
     Text: "Snapshots",
     Icon: "fa fa-fw fa-camera-retro",
-    Url:  "/dashboard/snapshots",
+    Url:  "/snapshots",
   })
 
 	if c.OrgRole == m.ROLE_ADMIN {
