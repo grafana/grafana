@@ -36,7 +36,7 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 		cmd.DeleteKey = util.GetRandomString(32)
 		cmd.OrgId = c.OrgId
 		cmd.UserId = c.UserId
-    cmd.Name = c.Name
+		cmd.Name = c.Name
 		metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
 	}
 
