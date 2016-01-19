@@ -52,9 +52,9 @@ type GetDashboardSnapshotQuery struct {
 type DashboardSnapshots []*DashboardSnapshot
 
 type GetDashboardSnapshotsQuery struct {
-  Name  string
-  Limit int
-  OrgId int64
+	Name  string
+	Limit int
+	OrgId int64
 
-  Result DashboardSnapshots
+	Result DashboardSnapshots
 }
