@@ -7,10 +7,9 @@ export class AppEditCtrl {
   appModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv: any, private $routeParams: any) {}
-
-  init() {
+  constructor(private backendSrv: any, private $routeParams: any) {
     this.appModel = {};
+
     this.backendSrv.get(`/api/org/apps/${this.$routeParams.appId}/settings`).then(result => {
       this.appModel = result;
     });
