@@ -14,7 +14,7 @@
      
      </thead>
       
-      <tr ng-repeat="snapshot in snapshots">
+      <tr ng-repeat="snapshot in ctrl.snapshots">
         <td>
 					<a href="dashboard/snapshot/{{snapshot.key}}">{{snapshot.name}}</a>
         </td>
@@ -28,7 +28,7 @@
           </a>
         </td>
         <td  class="text-right">
-          <a ng-click="removeSnapshot(snapshot)" class="btn btn-danger btn-mini">
+          <a ng-click="ctrl.removeSnapshot(snapshot)" class="btn btn-danger btn-mini">
             <i class="fa fa-remove"></i>
           </a>
         </td>
