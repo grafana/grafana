@@ -5,39 +5,38 @@ import _ from 'lodash';
 
 export class SnapshotsCtrl {
 
+  snapshots: any;
+
   /** @ngInject */
-  constructor(backendSrv, $scope) {
-    $scope.init = function() {
-      backendSrv.get('/api/dashboard/snapshots').then(function(result) {
-        $scope.snapshots = result;
-      });
-    };
-
-    $scope.removeSnapshot = function(snapshot) {
-      $scope.appEvent('confirm-modal', {
-        title: 'Confirm delete snapshot',
-        text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
-        yesText: "Delete",
-        icon: "fa-warning",
-        onConfirm: function() {
-          $scope.removeSnapshotConfirmed(snapshot);
-        }
-      });
-    };
-
-    $scope.removeSnapshotConfirmed = function(snapshot) {
-      _.remove($scope.snapshots, {key: snapshot.key});
-      backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey)
-      .then(function() {
-        $scope.appEvent('alert-success', ['Snapshot deleted', '']);
-      }, function() {
-        $scope.appEvent('alert-error', ['Unable to delete snapshot', '']);
-        $scope.snapshots.push(snapshot);
-      });
-    };
-
-    $scope.init();
+  constructor(private $rootScope, private backendSrv) {
+    this.backendSrv.get('/api/dashboard/snapshots').then(result => {
+      this.snapshots = result;
+    });
   }
+
+  removeSnapshotConfirmed(snapshot) {
+    _.remove(this.snapshots, {key: snapshot.key});
+    this.backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey)
+    .then(() => {
+      this.$rootScope.appEvent('alert-success', ['Snapshot deleted', '']);
+    }, () => {
+      this.$rootScope.appEvent('alert-error', ['Unable to delete snapshot', '']);
+      this.snapshots.push(snapshot);
+    });
+  }
+
+  removeSnapshot(snapshot) {
+    this.$rootScope.appEvent('confirm-modal', {
+      title: 'Confirm delete snapshot',
+      text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
+      yesText: "Delete",
+      icon: "fa-warning",
+      onConfirm: () => {
+        this.removeSnapshotConfirmed(snapshot);
+      }
+    });
+  }
+
 }
-  
+
 angular.module('grafana.controllers').controller('SnapshotsCtrl', SnapshotsCtrl);
