@@ -16,7 +16,7 @@ export class SnapshotsCtrl {
     $scope.removeSnapshot = function(snapshot) {
       $scope.appEvent('confirm-modal', {
         title: 'Confirm delete snapshot',
-        text: 'Are you sure you want to delete snapshot ' + snapshot.Name + '?',
+        text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
         yesText: "Delete",
         icon: "fa-warning",
         onConfirm: function() {
@@ -26,8 +26,8 @@ export class SnapshotsCtrl {
     };
 
     $scope.removeSnapshotConfirmed = function(snapshot) {
-      _.remove($scope.snapshots, {Key: snapshot.Key});
-      backendSrv.get('/api/snapshots-delete/' + snapshot.DeleteKey)
+      _.remove($scope.snapshots, {key: snapshot.key});
+      backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey)
       .then(function() {
         $scope.appEvent('alert-success', ['Snapshot deleted', '']);
       }, function() {
