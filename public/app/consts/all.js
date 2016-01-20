@@ -10,6 +10,7 @@
 define([
     './netCrunchCounterConsts',
     './netCrunchCounterTypes',
-    './netCrunchTrendDataProviderConsts'
+    './netCrunchTrendDataProviderConsts',
+    './netCrunchConnectionProviderConsts'
   ],
   function () {});

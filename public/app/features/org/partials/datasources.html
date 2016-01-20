@@ -27,8 +27,7 @@
 					{{ds.name}}
 				</td>
 				<td style="width:90%">
-					<span ng-if = "ds.type != 'netcrunch'">{{ds.url}}</span>
-          <span ng-if = "ds.type == 'netcrunch'">{{ds.url}}</span>
+					<span>{{ds.url}}</span>
 				</td>
 				<td style="width:2%" class="text-center">
 					<span ng-if="ds.isDefault">
@@ -36,14 +35,16 @@
 					</span>
 				</td>
 				<td style="width: 1%">
-					<a href="datasources/edit/{{ds.id}}" class="btn btn-inverse btn-mini">
+					<a ng-hide="ds.id === -1"
+             href="datasources/edit/{{ds.id}}"
+             class="btn btn-inverse btn-mini">
 						<i class="fa fa-edit"></i>
 						Edit
 					</a>
 				</td>
 				<td style="width: 1%">
 					<a ng-click="remove(ds)"
-             ng-hide="ds.type == 'netcrunch'"
+             ng-hide="ds.id === -1"
              class="btn btn-danger btn-mini">
 						<i class="fa fa-remove"></i>
 					</a>

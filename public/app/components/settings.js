@@ -13,7 +13,7 @@ function (_) {
      */
     var defaults = {
       datasources                   : {},
-      window_title_prefix           : 'Grafana - ',
+      window_title_prefix           : 'GrafCrunch - ',
       panels                        : {
         'graph':      { path: 'app/panels/graph',      name: 'Graph' },
         'singlestat': { path: 'app/panels/singlestat', name: 'Single stat' },

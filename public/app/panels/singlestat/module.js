@@ -50,7 +50,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
         { value: 'null', op: '=', text: 'N/A' }
       ],
       nullPointMode: 'connected',
-      valueName: 'avg',
+      valueName: 'current',
       prefixFontSize: '50%',
       valueFontSize: '80%',
       postfixFontSize: '50%',

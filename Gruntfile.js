@@ -8,6 +8,7 @@ module.exports = function (grunt) {
     srcDir: 'public',
     genDir: 'public_gen',
     destDir: 'dist',
+    windowsDestDir: 'packaging/windows/dest',
     tempDir: 'tmp',
     arch: os.arch(),
     platform: process.platform.replace('win32', 'windows'),

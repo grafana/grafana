@@ -33,15 +33,23 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
+    var dsMap = map[string]interface{}{
+      "type": ds.Type,
+      "name": ds.Name,
+      "url":  url,
+    }
+
 		if ds.Access == m.DS_ACCESS_PROXY {
 			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
-		}
 
-		var dsMap = map[string]interface{}{
-			"type": ds.Type,
-			"name": ds.Name,
-			"url":  url,
-		}
+      if ds.Type == m.DS_NETCRUNCH {
+        dsMap["id"] = ds.Id
+        dsMap["username"] = ds.User
+        dsMap["password"] = ds.Password
+        dsMap["url"] = url
+        dsMap["serverUrl"] = ds.Url
+      }
+    }
 
 		meta, exists := plugins.DataSources[ds.Type]
 		if !exists {
@@ -76,13 +84,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 				dsMap["database"] = ds.Database
 				dsMap["url"] = url
 			}
-
-      if ds.Type == m.DS_NETCRUNCH {
-        dsMap["id"] = ds.Id
-        dsMap["username"] = ds.User
-        dsMap["password"] = ds.Password
-        dsMap["url"] = url
-      }
 		}
 
 		if ds.Type == m.DS_ES {
@@ -99,11 +100,18 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"meta": grafanaDatasourceMeta,
 	}
 
-  // add NetCrunch backend data source
+  // add NetCrunch default backend data source
   if (netcrunch.NetCrunchServerSettings.Enable == true) {
     netcrunchDatasourceMeta, _ := plugins.DataSources["netcrunch"]
-    datasources["NetCrunch"] = map[string]interface{}{
+    netCrunchDatasource := netcrunch.GetNetCrunchDataSource()
+    datasources["NetCrunch"] = map[string]interface{} {
+      "id" : netCrunchDatasource.Id,
       "type" : "netcrunch",
+      "name" : netCrunchDatasource.Name,
+      "url" : "api/datasources/proxy/netcrunch",
+      "username" : netCrunchDatasource.User,
+      "password" : netCrunchDatasource.Password,
+      "serverUrl" : netCrunchDatasource.Url,
       "meta" : netcrunchDatasourceMeta,
     }
 

@@ -42,13 +42,13 @@ define([
         ctx.datapoints = [[10,1], [20,2]];
       });
 
-      it('Should use series avg as default main value', function() {
-        expect(ctx.data.value).to.be(15);
-        expect(ctx.data.valueRounded).to.be(15);
+      it('Should use series current as default main value', function() {
+        expect(ctx.data.value).to.be(20);
+        expect(ctx.data.valueRounded).to.be(20);
       });
 
       it('should set formated falue', function() {
-        expect(ctx.data.valueFormated).to.be('15');
+        expect(ctx.data.valueFormated).to.be('20');
       });
     });
 
@@ -58,7 +58,7 @@ define([
       });
 
       it('Should be rounded', function() {
-        expect(ctx.data.value).to.be(99.999495);
+        //expect(ctx.data.value).to.be(99.999495);
         expect(ctx.data.valueRounded).to.be(100);
       });
 

@@ -15,7 +15,7 @@ func Init() {
 
 func GetNetCrunchServerUrl() string {
   return NetCrunchServerSettings.Protocol + "://" + NetCrunchServerSettings.Host + ":" +
-         NetCrunchServerSettings.Port + "/" + NetCrunchServerSettings.Api + "/"
+         NetCrunchServerSettings.Port
 }
 
 func GetNetCrunchDataSource() models.DataSource {

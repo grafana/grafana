@@ -18,25 +18,32 @@ define([
     var module = angular.module('grafana.services');
 
     module.factory('processingDataWorker', function ($q) {
-      var defer = null,
+      var taskQueue = [],
+          taskProcessed,
           workerFile = 'public/app/plugins/datasource/netcrunch/workers/netCrunchProcessingDataWorker.js',
           webWorker = new Worker(workerFile);
 
       webWorker.addEventListener('message', function(event) {
-        if (defer != null) {
-          defer.resolve(event.data.result);
-          defer = null;
+        if (taskProcessed != null) {
+          taskProcessed.defer.resolve(event.data.result);
+          taskProcessed = null;
+          processTask();
         }
       });
 
-      function executeWorkerTask(data){
-        if (defer == null) {
-          defer = $q.defer();
-          webWorker.postMessage(data);
-          return defer.promise;
-        } else {
-          return $q.reject('Processing data worker busy.');
+      function processTask() {
+        if ((taskQueue.length > 0) && (taskProcessed == null)) {
+          taskProcessed = taskQueue.shift();
+          webWorker.postMessage(taskProcessed.data);
         }
+      }
+
+      function executeWorkerTask(data){
+        var defer = $q.defer();
+
+        taskQueue.push({defer: defer, data: data});
+        processTask();
+        return defer.promise;
       }
 
       return {

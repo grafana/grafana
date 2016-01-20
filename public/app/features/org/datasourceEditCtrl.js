@@ -13,7 +13,12 @@ function (angular, config, _) {
 
     $scope.httpConfigPartialSrc = 'app/features/org/partials/datasourceHttpConfig.html';
 
-    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy' };
+    var defaults = {
+      name: '',
+      url: '',
+      access: 'proxy',
+      type: 'netcrunch'
+    };
 
     $scope.indexPatternTypes = [
       {name: 'No pattern',  value: undefined},
@@ -50,17 +55,23 @@ function (angular, config, _) {
         $scope.filteredTypes = {};
 
         Object.keys($scope.types).forEach(function(typeKey) {
-          if (typeKey !== 'netcrunch') {
-            $scope.filteredTypes[typeKey] = $scope.types[typeKey];
-          }
+          $scope.filteredTypes[typeKey] = $scope.types[typeKey];
         });
       });
     };
 
     $scope.getDatasourceById = function(id) {
       backendSrv.get('/api/datasources/' + id).then(function(ds) {
+        var simpleUrlRegexp = /^[h][t][t][p][s]?[:][\/][\/](.[^\/]+).*$/,
+            simpleUrl;
         $scope.isNew = false;
         $scope.current = ds;
+        if (ds.type === 'netcrunch') {
+          $scope.current.isSSL = false;
+          $scope.current.isSSL = (ds.url.indexOf('https://') === 0);
+          simpleUrl = simpleUrlRegexp.exec(ds.url);
+          $scope.current.simpleUrl = ((simpleUrl != null) && (simpleUrl.length > 1)) ? simpleUrl[1] : 'localhost';
+        }
         $scope.typeChanged();
       });
     };
@@ -107,8 +118,14 @@ function (angular, config, _) {
     };
 
     $scope.saveChanges = function(test) {
+      var protocol = ($scope.current.isSSL === true) ? 'https://' : 'http://';
+
       if (!$scope.editForm.$valid) {
         return;
+      }
+
+      if ($scope.current.type === 'netcrunch') {
+        $scope.current.url = protocol + $scope.current.simpleUrl;
       }
 
       if ($scope.current.id) {

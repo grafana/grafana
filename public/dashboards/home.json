@@ -18,7 +18,7 @@
           "editable": true,
           "type": "text",
           "mode": "html",
-          "content": "<div class=\"text-center\" style=\"padding: 10px 0 20px 0\">\n<img src=\"img/logo_transparent_200x.png\" width=\"170px\"> \n</div>",
+          "content": "<div class=\"text-center\" style=\"padding: 10px 0 5px 0\">\n<img src=\"img/logo_transparent_200x.png\"> \n</div>",
           "style": {},
           "title": ""
         }

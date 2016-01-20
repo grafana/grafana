@@ -1,13 +1,13 @@
 {
   "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "name": "AdRem Software",
+    "company": "AdRem Software"
   },
-  "name": "grafana",
+  "name": "GrafCrunch",
   "version": "2.5.0-pre1",
   "repository": {
     "type": "git",
-    "url": "http://github.com/torkelo/grafana.git"
+    "url": "https://github.com/adremsoft/NetCrunch-grafana"
   },
   "devDependencies": {
     "expect.js": "~0.2.0",
@@ -60,7 +60,7 @@
     "test": "grunt test",
     "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
-  "license": "Apache-2.0",
+  "license": "Apache License",
   "dependencies": {
     "grunt-jscs": "~1.5.x",
     "grunt-sync": "^0.4.1",

@@ -1,10 +1,9 @@
 package api
 
 import (
-  "net/url"
-
   "github.com/grafana/grafana/pkg/middleware"
   "github.com/grafana/grafana/pkg/netcrunch"
+  "github.com/grafana/grafana/pkg/setting"
 )
 
 func GetNetCrunchServerSettings(c *middleware.Context) {
@@ -18,10 +17,11 @@ func GetNetCrunchDatasource(c *middleware.Context) {
 func ProxyNetCrunchServerRequest(c *middleware.Context) {
 
   datasource := netcrunch.GetNetCrunchDataSource()
-  url, _ := url.Parse(datasource.Url)
+  NetCrunchServerSettings := setting.NetCrunch
+  datasource.Url = datasource.Url + "/" + NetCrunchServerSettings.Api + "/"
 
   proxyPath := c.Params("*")
-  proxy := NewReverseProxy(&datasource, proxyPath, url)
+  proxy := NewReverseProxy(&datasource, proxyPath)
   proxy.Transport = dataProxyTransport
   proxy.ServeHTTP(c.RW(), c.Req.Request)
 }

@@ -70,13 +70,6 @@ func Register(r *macaron.Macaron) {
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", quota("session"), LoginApiPing)
 
-  // NetCrunch api for Grafana client
-  r.Get("/api/netcrunch", reqSignedIn, GetNetCrunchServerSettings)
-
-  // NetCrunch server api for remote client
-  r.Any("/" + netcrunch.NetCrunchServerSettings.Api + "/", reqSignedIn, ProxyNetCrunchServerRequest)
-  r.Any("/" + netcrunch.NetCrunchServerSettings.Api + "/*", reqSignedIn, ProxyNetCrunchServerRequest)
-
 	// authed api
 	r.Group("/api", func() {
 
@@ -162,6 +155,12 @@ func Register(r *macaron.Macaron) {
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
+
+    // Proxy for default NetCrunch datasource
+    r.Any("/datasources/proxy/netcrunch/" + netcrunch.NetCrunchServerSettings.Api + "/", reqSignedIn,
+          ProxyNetCrunchServerRequest)
+    r.Any("/datasources/proxy/netcrunch/" + netcrunch.NetCrunchServerSettings.Api + "/*", reqSignedIn,
+          ProxyNetCrunchServerRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {

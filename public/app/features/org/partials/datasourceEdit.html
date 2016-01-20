@@ -12,15 +12,17 @@
 		<h2 ng-show="!isNew">Edit data source</h2>
 
 		<form name="editForm">
-			<div class="tight-form"
-           ng-class = "{last : (current.type == 'netcrunch')}" >
+			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 80px">
 						Name
 					</li>
 					<li>
 						<li>
-							<input type="text" class="input-xlarge tight-form-input" ng-model="current.name" placeholder="my data source name" required>
+							<input type="text" class="input-xlarge tight-form-input"
+                     ng-model="current.name"
+                     ng-pattern="/^(?!NetCrunch$).*/"
+                     placeholder="my data source name" required>
 						</li>
 					</li>
 					<li class="tight-form-item" ng-hide = "true">
@@ -31,7 +33,7 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-			<div class="tight-form last" ng-hide = "(current.type == 'netcrunch')">
+			<div class="tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 80px">
 						Type

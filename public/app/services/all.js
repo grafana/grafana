@@ -7,10 +7,6 @@ define([
   './keyboardManager',
   './analytics',
   './popoverSrv',
-  './uiSegmentSrv',
-  './backendSrv',
-  './netCrunchRemoteClient',
-  './netCrunchRemoteSession',
-  './netCrunchCounters'
+  './backendSrv'
 ],
 function () {});

@@ -14,26 +14,21 @@ define([
   'config',
   'jquery',
   'kbn',
-  './directives/netCrunchMetricQuery',
-  './services/networkDataProvider',
-  './services/countersDataProvider',
-  './services/trendDataProvider',
+  './services/netCrunchConnectionProvider',
   './services/processingDataWorker',
   './controllers/netCrunchQueryCtrl',
   './controllers/netCrunchOptionsCtrl',
   './filters/netCrunchFilters'
 ],
 
-function (angular, _, moment) {
+function (angular, _, moment, config, $, kbn) {
 
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, adrem,
-                                                 netCrunchTrendDataProviderConsts,
-                                                 netCrunchRemoteSession, networkDataProvider,
-                                                 atlasTree, countersDataProvider, trendDataProvider,
+  module.factory('NetCrunchDatasource', function($q, $rootScope, alertSrv, netCrunchConnectionProvider,
+                                                 netCrunchConnectionProviderConsts, netCrunchTrendDataProviderConsts,
                                                  netCrunchOrderNodesFilter, netCrunchMapNodesFilter,
                                                  netCrunchNodesFilter, processingDataWorker) {
 
@@ -56,12 +51,13 @@ function (angular, _, moment) {
           equal : 'Equal',
           distr : 'Distr'
         },
-        PERIODS = Object.create(null);
+        PERIODS = Object.create(null),
+        CONNECTION_ERROR_MESSAGES = netCrunchConnectionProviderConsts.ERROR_MESSAGES;
 
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpMinutes] = 'minutes';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpHours] = 'hours';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpDays] = 'days';
-    PERIODS[trendDataProvider.PERIOD_TYPE.tpMonths] = 'months';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpMinutes] = 'minutes';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpHours] = 'hours';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpDays] = 'days';
+    PERIODS[netCrunchTrendDataProviderConsts.PERIOD_TYPE.tpMonths] = 'months';
 
     function QueryCache(datasource) {
       this.datasource = datasource;
@@ -91,57 +87,62 @@ function (angular, _, moment) {
       var initTask = $q.defer(),
           nodesReady = $q.defer(),
           networkAtlasReady = $q.defer(),
+          netCrunchLogin,
           self = this;
 
+      this.datasource = datasource;
       this.id = datasource.id;
       this.name = datasource.name;
       this.url = datasource.url;
       this.username = datasource.username;
       this.password = datasource.password;
+      this.netCrunchConnection = Object.create(null);
       this.ready = initTask.promise;
       this.nodes = nodesReady.promise;
       this.networkAtlas = networkAtlasReady.promise;
       this.cache = this.createQueryCache();
 
-      netCrunchRemoteSession.init().then(
+      function initUpdateNodes(networkAtlas) {
+        $rootScope.$on('netcrunch-host-data-changed', function() {
+          var nodes = networkAtlas.networkNodes;
 
-        function(status) {
-          var LOGIN_STATUS_ID = 0;
+          nodes.table = [];
+          Object.keys(nodes).forEach(function(nodeId) {
+            nodes.table.push(nodes[nodeId]);
+          });
 
-          if (status[LOGIN_STATUS_ID] === true) {
-            networkDataProvider.init().then(function() {
+          self.updateNodeList(nodes.table).then(function(updated) {
+            nodesReady.resolve(updated);
+          });
+        });
+      }
 
-              $rootScope.$on('host-data-changed', function() {
-                var nodes = atlasTree.nodes;
+      function initUpdateAtlas(networkAtlas) {
+        $rootScope.$on('netcrunch-network-data-changed', function() {
+          networkAtlasReady.resolve(networkAtlas);
+        });
+      }
 
-                nodes.table = [];
-                Object.keys(nodes).forEach(function(nodeId) {
-                  nodes.table.push(nodes[nodeId]);
-                });
-
-                self.updateNodeList(nodes.table).then(function(updated) {
-                  nodesReady.resolve(updated);
-                  $rootScope.$broadcast('netCrunch-datasource-hosts-changed');
-                });
-              });
-
-              $rootScope.$on('network-data-changed', function() {
-                networkAtlasReady.resolve(atlasTree.tree);
-                $rootScope.$broadcast('netCrunch-datasource-network-atlas-changed');
-              });
-
-              initTask.resolve();
-            });
-          } else {
-            console.log('NetCrunch datasource: login failed');
-            alertSrv.set('NetCrunch datasource' ,'Can\'t connect to the server', 'error');
+      if (datasource.url != null) {
+        netCrunchLogin = netCrunchConnectionProvider.getConnection(datasource);
+        netCrunchLogin.then(
+          function(connection) {
+            self.netCrunchConnection = connection;
+            initUpdateNodes(connection.networkAtlas);
+            initUpdateAtlas(connection.networkAtlas);
+            initTask.resolve();
+          },
+          function(error) {
+            alertSrv.set(datasource.name, CONNECTION_ERROR_MESSAGES[error], 'error');
+            console.log('');
+            console.log('NetCrunch datasource');
+            console.log(datasource.name + ': ' + CONNECTION_ERROR_MESSAGES[error]);
             initTask.reject();
           }
-        },
-
-        function() {
-          initTask.reject();
-        });
+        );
+      } else {
+        initTask.reject();
+      }
     }
 
     NetCrunchDatasource.prototype.createQueryCache = function() {
@@ -149,16 +150,13 @@ function (angular, _, moment) {
     };
 
     NetCrunchDatasource.prototype.testDatasource = function() {
-      var defer = $q.defer();
+      var testResult = $q.defer();
 
-      if ((adrem.ncSrv != null) && (adrem.Client.loggedIn === true)) {
-        defer.resolve({ status: "success", message: "Data source connection is working",
-                        title: "Success" });
-        return defer.promise;
-      } else {
-        return $q.when({ status: "error", message: "Data source connection is not working",
-                         title: "Error" });
-      }
+      //TODO: reimplement this code
+
+      testResult.resolve({ status: "info", message: "This feature is not supported for NetCrunch datasource",
+                           title: "Information" });
+      return testResult.promise;
     };
 
     NetCrunchDatasource.prototype.getNodeById = function (nodeID) {
@@ -168,9 +166,12 @@ function (angular, _, moment) {
     };
 
     NetCrunchDatasource.prototype.getCounters = function (nodeId) {
+      var
+        countersApi = this.netCrunchConnection.counters;
+
       return this.ready.then(function() {
-        return countersDataProvider.getCounters(nodeId).then(function(counters) {
-          return countersDataProvider.prepareCountersForMonitors(counters).then(function(counters) {
+        return countersApi.getCounters(nodeId).then(function(counters) {
+          return countersApi.prepareCountersForMonitors(counters).then(function(counters) {
 
             counters.table = [];
             Object.keys(counters).forEach(function(monitorID) {
@@ -323,15 +324,17 @@ function (angular, _, moment) {
       }
 
       function calculateTimeRange(rangeFrom, rangeTo, maxDataPoints) {
-        var period = trendDataProvider.calculateChartDataInterval(rangeFrom, rangeTo, maxDataPoints);
+        var trends = self.netCrunchConnection.trends,
+            period = trends.calculateChartDataInterval(rangeFrom, rangeTo, maxDataPoints);
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
       function calculateRAWTimeRange(rangeFrom, rangeTo) {
-        var period = {
-          periodInterval : 1,
-          periodType : trendDataProvider.PERIOD_TYPE.tpMinutes
-        };
+        var trends = self.netCrunchConnection.trends,
+            period = {
+              periodInterval : 1,
+              periodType : trends.PERIOD_TYPE.tpMinutes
+            };
         return addMarginsToTimeRange(rangeFrom, rangeTo, period);
       }
 
@@ -403,14 +406,14 @@ function (angular, _, moment) {
       }
 
       function prepareSeriesDataQuery (target, range, series){
+        var trends = self.netCrunchConnection.trends;
 
         if (self.seriesTypesSelected(series) === false) {
           return $q.when([]);
         }
 
-        return trendDataProvider.getCounterTrendData(target.nodeID, target.counterName, range.from,
-                                                     range.to, range.periodType, range.periodInterval,
-                                                     series)
+        return trends.getCounterTrendData(target.nodeID, target.counterName, range.from, range.to, range.periodType,
+                                          range.periodInterval, series)
           .then(function (dataPoints) {
             var seriesData = [];
 
@@ -454,7 +457,9 @@ function (angular, _, moment) {
       }
 
       function prepareChartData(targetsChartData, rawData) {
-        var counterSeries = Object.create(null);
+        var
+          counterSeries = Object.create(null),
+          trends = self.netCrunchConnection.trends;
 
         function extendCounterName(baseCounterName, seriesType) {
           return baseCounterName + '\\' + SERIES_TYPES_DISPLAY_NAMES[seriesType];
@@ -478,7 +483,7 @@ function (angular, _, moment) {
                 }
                 counterSeries.data.push({
                   target: counterName,
-                  datapoints: trendDataProvider.grafanaDataConverter(serie.dataPoints)
+                  datapoints: trends.grafanaDataConverter(serie.dataPoints)
                 });
               });
             }
@@ -498,8 +503,8 @@ function (angular, _, moment) {
               maxDataPoints = (scopedVars.maxDataPoints == null) ?
                                netCrunchTrendDataProviderConsts.DEFAULT_MAX_SAMPLE_COUNT :
                                scopedVars.maxDataPoints,
-              rangeFrom = options.range.from.startOf('minute'),
-              rangeTo = options.range.to.startOf('minute'),
+              rangeFrom = moment(kbn.parseDate(options.range.from)).startOf('minute'),
+              rangeTo = moment(kbn.parseDate(options.range.to)).startOf('minute'),
               rangeMaxDataPoints = calculateMaxDataPoints(setMaxDataPoints, maxDataPoints),
               range = prepareTimeRange(rangeFrom, rangeTo, rawData, rangeMaxDataPoints),
               dataQueries = [];
@@ -534,10 +539,6 @@ function (angular, _, moment) {
       alertSrv.set(TEMPLATES_NOT_SUPPORTED_INFO);
       return $q.when([]);
     };
-
-    $rootScope.$on('netCrunch-datasource-hosts-changed', function() {});
-
-    $rootScope.$on('netCrunch-datasource-network-atlas-changed', function() {});
 
     return NetCrunchDatasource;
   });

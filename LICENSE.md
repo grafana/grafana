@@ -1,4 +1,4 @@
-Copyright 2014-2015 Torkel Ödegaard, Raintank Inc.
+Copyright 2015 AdRem Software, Inc., New York, NY
 
 Licensed under the Apache License, Version 2.0 (the "License"); you
 may not use this file except in compliance with the License. You may
