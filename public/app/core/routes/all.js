@@ -134,7 +134,8 @@ define([
       })
       .when('/dashboard/snapshots', {
         templateUrl: 'app/features/snapshot/partials/snapshots.html',
-        controller : 'SnapshotsCtrl'
+        controller : 'SnapshotsCtrl',
+        controllerAs: 'ctrl',
       })
       .when('/apps', {
         templateUrl: 'app/features/apps/partials/list.html',
