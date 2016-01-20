@@ -126,7 +126,9 @@ function (angular, _, config, kbn) {
           var interval = kbn.interval_to_ms(panelRefresh);
           $scope.refresh_timer = timer.register($timeout(function () {
             $scope.start_scheduled_refresh($scope, interval);
-            $scope.get_data();
+            if($scope.dashboard.refresh !== false) {
+              $scope.get_data();
+            }
           }, interval));
         }
       };
