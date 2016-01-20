@@ -4,16 +4,39 @@ import angular from 'angular';
 import _ from 'lodash';
 
 export class SnapshotsCtrl {
-  snapshots: any[];
 
   /** @ngInject */
-  constructor(private backendSrv: any) {}
+  constructor(backendSrv, $scope) {
+    $scope.init = function() {
+      backendSrv.get('/api/dashboard/snapshots').then(function(result) {
+        $scope.snapshots = result;
+      });
+    };
 
-  init() {
-    this.backendSrv.get('/api/dashboard/snapshots').then(snapshots => {
-      this.snapshots = snapshots;
-    });
-    console.log(this.snapshots);
+    $scope.removeSnapshot = function(snapshot) {
+      $scope.appEvent('confirm-modal', {
+        title: 'Confirm delete snapshot',
+        text: 'Are you sure you want to delete snapshot ' + snapshot.Name + '?',
+        yesText: "Delete",
+        icon: "fa-warning",
+        onConfirm: function() {
+          $scope.removeSnapshotConfirmed(snapshot);
+        }
+      });
+    };
+
+    $scope.removeSnapshotConfirmed = function(snapshot) {
+      _.remove($scope.snapshots, {Key: snapshot.Key});
+      backendSrv.get('/api/snapshots-delete/' + snapshot.DeleteKey)
+      .then(function() {
+        $scope.appEvent('alert-success', ['Snapshot deleted', '']);
+      }, function() {
+        $scope.appEvent('alert-error', ['Unable to delete snapshot', '']);
+        $scope.snapshots.push(snapshot);
+      });
+    };
+
+    $scope.init();
   }
 }
   
