@@ -15,7 +15,6 @@ class PanelBaseCtrl {
 }
 
 class TestPanelCtrl extends PanelBaseCtrl {
-
   constructor($scope) {
     super($scope);
     $scope.panelMeta.panelName = "Test";
@@ -32,7 +31,8 @@ function testPanelDirective() {
       </div>
     </grafana-panel>
     `,
-    controller: TestPanelCtrl
+    controller: TestPanelCtrl,
+    controllerAs: 'ctrl',
   };
 }
 

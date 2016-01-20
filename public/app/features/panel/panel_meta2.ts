@@ -23,7 +23,6 @@ export default class PanelMeta {
     this.addMenuItem('Edit', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
     this.addMenuItem('Duplicate', 'icon-copy', 'duplicatePanel()', 'Editor');
     this.addMenuItem('Share', 'icon-share', 'sharePanel(); dismiss();');
-
     this.addEditorTab('General', 'app/partials/panelgeneral.html');
 
     if (options.metricsEditor) {
