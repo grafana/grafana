@@ -45,40 +45,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         });
 
-        scope.onAppEvent('setTooltip', function(event, info) {
-          // do not need to to this if event is from this panel or edit mode
-          if (info.scope === scope ||
-            scope.dashboardViewState.state.edit ||
-            scope.dashboardViewState.state.fullscreen) {
-            return;
-          }
-          // info.pos -> canvas pos
-          var plot = elem.data().plot;
-          if(plot !== null){
-            var parentPos = elem.parents('.panel.ng-scope').position();
-            var newPos = {
-              pageX: parentPos.left + plot.p2c(info.pos).left,
-              pageY: parentPos.top + (elem.height() / 100 * info.offset.yd),
-              y: info.pos.y,
-              y1: info.pos.y1,
-              x: info.pos.x,
-              x1: info.pos.x1
-            };
-            elem.trigger('plothover', [newPos, null, true]);
-          }
-        });
         scope.onAppEvent('clearCrosshair', function() {
           var plot = elem.data().plot;
           if (plot) {
             plot.clearCrosshair();
           }
-        });
-        scope.onAppEvent('clearTooltip', function(event, info) {
-          // do not need to to this if event is from this panel
-          if (info.scope === scope) {
-            return;
-          }
-          elem.trigger('clearTooltip');
         });
 
         // Receive render events

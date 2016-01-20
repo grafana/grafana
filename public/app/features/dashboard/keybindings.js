@@ -48,6 +48,7 @@ function(angular, $) {
         scope.dashboard.sharedTooltip = !current;
         scope.broadcastRefresh();
       }, { inputDisabled: true });
+      
       keyboardManager.bind('ctrl+h', function() {
         var current = scope.dashboard.hideControls;
         scope.dashboard.hideControls = !current;

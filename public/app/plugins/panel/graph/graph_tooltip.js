@@ -160,9 +160,7 @@ function ($) {
         self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
         if(dashboard.sharedTooltip && !isSharedTooltip) {
           var parentPos = elem.parents('.panel.ng-scope').position();
-          var yd = (pos.pageY - parentPos.top) * 100 / elem.height();
-          var xd = (pos.pageX - parentPos.left) * 100 / elem.width();
-          scope.appEvent('setTooltip', { pos: pos, source: elem, offset: { yd: yd, xd: xd}, scope: scope });
+          scope.appEvent('shareTooltip', { pos: pos, scope: scope });
         }
       }
       // single series tooltip
@@ -190,6 +188,36 @@ function ($) {
       // no hit
       else {
         $tooltip.detach();
+      }
+    });
+
+    scope.onAppEvent('shareTooltip', function(event, info) {
+      // do not need to to this if event is from this panel or edit mode
+      if (info.scope === scope ||
+        scope.dashboardViewState.state.edit ||
+        scope.dashboardViewState.state.fullscreen) {
+        return;
+      }
+      // info.pos -> canvas pos
+      var plot = elem.data().plot;
+      if(plot !== null){
+        var parentPos = elem.parents('.panel.ng-scope').position();
+        var newPos = {
+          pageX: parentPos.left + plot.p2c(info.pos).left,
+          pageY: parentPos.top,
+          y: info.pos.y,
+          y1: info.pos.y1,
+          x: info.pos.x,
+          x1: info.pos.x1
+        };
+        elem.trigger('plothover', [newPos, null, true]);
+      }
+    });
+
+    scope.onAppEvent('clearTooltip', function(event, info) {
+      // do not need to to this if event is from this panel
+      if (info.scope !== scope) {
+        elem.trigger('clearTooltip');
       }
     });
   }
