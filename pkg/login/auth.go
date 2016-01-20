@@ -41,6 +41,15 @@ func AuthenticateUser(query *LoginUserQuery) error {
 		}
 	}
 
+	if setting.KeystoneEnabled {
+		auther := NewKeystoneAuthenticator(setting.KeystoneURL,
+			setting.KeystoneV3)
+		err = auther.login(query)
+		if err == nil || err != ErrInvalidCredentials {
+			return err
+		}
+	}
+
 	return err
 }
 
