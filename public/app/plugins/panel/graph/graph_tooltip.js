@@ -7,7 +7,7 @@ function ($) {
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
 
-    var $tooltip = $('<div id="tooltip">');
+    var $tooltip = $('<div>');
 
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
@@ -40,7 +40,7 @@ function ($) {
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex;
       var results = [];
-
+      results.outOfScope = true;
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
 
@@ -59,6 +59,9 @@ function ($) {
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
+        if(pos.x >= series.data[0][0] && pos.x <= series.data[series.data.length-1][0]) {
+          results.outOfScope = false;
+        }
 
         if (series.stack) {
           if (scope.panel.tooltip.value_type === 'individual') {
@@ -100,9 +103,15 @@ function ($) {
       if (dashboard.sharedCrosshair) {
         scope.appEvent('clearCrosshair');
       }
+      if (dashboard.sharedTooltip) {
+        scope.appEvent('clearTooltip', { scope: scope });
+      }
     });
 
-    elem.bind("plothover", function (event, pos, item) {
+    elem.bind('clearTooltip', function() {
+      $tooltip.detach();
+    });
+    elem.bind("plothover", function (event, pos, item, isSharedTooltip) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
@@ -120,7 +129,10 @@ function ($) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
-
+        if(seriesHoverInfo.outOfScope) {
+          $tooltip.detach();
+          return;
+        }
         seriesHtml = '';
 
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
@@ -146,6 +158,12 @@ function ($) {
         }
 
         self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
+        if(dashboard.sharedTooltip && !isSharedTooltip) {
+          var parentPos = elem.parents('.panel.ng-scope').position();
+          var yd = (pos.pageY - parentPos.top) * 100 / elem.height();
+          var xd = (pos.pageX - parentPos.left) * 100 / elem.width();
+          scope.appEvent('setTooltip', { pos: pos, source: elem, offset: { yd: yd, xd: xd}, scope: scope });
+        }
       }
       // single series tooltip
       else if (item) {
