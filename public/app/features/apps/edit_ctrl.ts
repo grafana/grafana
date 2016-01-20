@@ -5,6 +5,7 @@ import _ from 'lodash';
 
 export class AppEditCtrl {
   appModel: any;
+  includedPanels: any;
 
   /** @ngInject */
   constructor(private backendSrv: any, private $routeParams: any) {
@@ -12,6 +13,7 @@ export class AppEditCtrl {
 
     this.backendSrv.get(`/api/org/apps/${this.$routeParams.appId}/settings`).then(result => {
       this.appModel = result;
+      this.includedPanels = _.where(result.includes, {type: 'panel'});
     });
   }
 

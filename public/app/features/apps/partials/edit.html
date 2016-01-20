@@ -56,7 +56,10 @@
 					Panels
 				</div>
 				<ul>
-					<li><em class="small">None</em></li>
+					<li ng-show="!ctrl.includedPanels.length"><em class="small">None</em></li>
+					<li ng-repeat="panel in ctrl.includedPanels">
+						{{panel.name}}
+					</li>
 				</ul>
 			</div>
 			<div class="simple-box-body simple-box-column">

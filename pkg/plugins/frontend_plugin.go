@@ -8,21 +8,22 @@ import (
 
 type FrontendPluginBase struct {
 	PluginBase
-	Module     string `json:"module"`
-	StaticRoot string `json:"staticRoot"`
+	Module        string `json:"module"`
+	StaticRoot    string `json:"staticRoot"`
+	StaticRootAbs string `json:"-"`
 }
 
 func (fp *FrontendPluginBase) initFrontendPlugin() {
 	if fp.StaticRoot != "" {
+		fp.StaticRootAbs = filepath.Join(fp.PluginDir, fp.StaticRoot)
 		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
-			Directory: filepath.Join(fp.PluginDir, fp.StaticRoot),
+			Directory: fp.StaticRootAbs,
 			PluginId:  fp.Id,
 		})
 	}
 
 	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.Id)
 	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.Id)
-
 	fp.handleModuleDefaults()
 }
 
