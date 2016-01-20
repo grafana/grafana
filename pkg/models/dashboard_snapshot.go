@@ -43,7 +43,8 @@ type DeleteDashboardSnapshotCommand struct {
 }
 
 type GetDashboardSnapshotQuery struct {
-	Key string
+	Key   string
+	OrgId int64
 
 	Result *DashboardSnapshot
 }

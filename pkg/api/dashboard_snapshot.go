@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -47,17 +48,21 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 	c.JSON(200, util.DynMap{
 		"key":       cmd.Key,
 		"deleteKey": cmd.DeleteKey,
-		"url":       setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key),
+		"url":       setting.ToAbsUrl("dashboard/snapshot/" + string(c.OrgId) + "/" + cmd.Key),
 		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
 	})
 }
 
 func GetDashboardSnapshot(c *middleware.Context) {
-
 	key := c.Params(":key")
-	query := &m.GetDashboardSnapshotQuery{Key: key}
+	org, err := strconv.ParseInt(c.Params(":org"), 10, 64)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to parse org id", err)
+	}
 
-	err := bus.Dispatch(query)
+	query := &m.GetDashboardSnapshotQuery{Key: key, OrgId: org}
+
+	err = bus.Dispatch(query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get dashboard snapshot", err)
 		return

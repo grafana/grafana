@@ -17,7 +17,7 @@ define([
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
-      .when('/dashboard/:type/:slug', {
+      .when('/dashboard/:type/:org/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,

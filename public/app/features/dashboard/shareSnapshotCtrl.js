@@ -80,7 +80,7 @@ function (angular, _) {
             baseUrl = baseUrl.replace(url, '') + '/';
           }
 
-          $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.key;
+          $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.org + '/' + results.key;
           $scope.deleteUrl = baseUrl + 'api/snapshots-delete/' + results.deleteKey;
         }
 
