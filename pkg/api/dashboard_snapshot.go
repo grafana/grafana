@@ -118,5 +118,23 @@ func SearchDashboardSnapshots(c *middleware.Context) Response {
 		return ApiError(500, "Search failed", err)
 	}
 
-	return Json(200, searchQuery.Result)
+	dtos := make([]*m.DashboardSnapshotDTO, len(searchQuery.Result))
+	for i, snapshot := range searchQuery.Result {
+		dtos[i] = &m.DashboardSnapshotDTO{
+			Id:          snapshot.Id,
+			Name:        snapshot.Name,
+			Key:         snapshot.Key,
+			DeleteKey:   snapshot.DeleteKey,
+			OrgId:       snapshot.OrgId,
+			UserId:      snapshot.UserId,
+			External:    snapshot.External,
+			ExternalUrl: snapshot.ExternalUrl,
+			Expires:     snapshot.Expires,
+			Created:     snapshot.Created,
+			Updated:     snapshot.Updated,
+		}
+	}
+
+	return Json(200, dtos)
+	//return Json(200, searchQuery.Result)
 }
