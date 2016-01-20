@@ -9,10 +9,9 @@ function (angular, _, config, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, timer) {
 
     this.init = function($scope) {
-
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
       $scope.inspector = {};
@@ -115,23 +114,33 @@ function (angular, _, config, kbn) {
         $rootScope.performance.panelsRendered++;
       };
 
-      $scope.must_refresh = function(tick) {
-        if(!tick) {
-          // first or refreshed on-demand
-          $scope.panelRefreshCount = 0;
-        } else if(!$scope.panelRefreshCount) {
-          var panelRefresh = $scope.panel.refresh || $scope.row.refresh || $scope.dashboard.refresh;
-          var refreshTime = kbn.interval_to_ms(panelRefresh);
-          $scope.panelRefreshCount = (refreshTime / tick) - 1;
-        } else {
-          $scope.panelRefreshCount--;
-        }
-        return $scope.panelRefreshCount === 0;
+      $scope.refresh_changed = function() {
+        $scope.start_scheduled_refresh();
+        $scope.get_data();
       };
-      $scope.get_data = function(event, tick) {
-        if(!$scope.must_refresh(tick)) {
-          return;
+
+      $scope.start_scheduled_refresh = function () {
+        $scope.cancel_scheduled_refresh();
+        var panelRefresh = $scope.panel.refresh || $scope.row.refresh;
+        if(panelRefresh) {
+          var interval = kbn.interval_to_ms(panelRefresh);
+          $scope.refresh_timer = timer.register($timeout(function () {
+            $scope.start_scheduled_refresh($scope, interval);
+            $scope.get_data();
+          }, interval));
         }
+      };
+
+      $scope.cancel_scheduled_refresh = function () {
+        if($scope.refresh_timer) {
+          timer.cancel($scope.refresh_timer);
+          $scope.refresh_timer = null;
+        }
+      };
+
+      $scope.start_scheduled_refresh();
+
+      $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
         if ($scope.panel.snapshotData) {
@@ -158,9 +167,18 @@ function (angular, _, config, kbn) {
       };
 
       if ($scope.refreshData) {
-        $scope.$on("refresh", $scope.get_data);
+        $scope.$on("refresh", function() {
+          if(!$scope.refresh_timer) {
+            $scope.get_data();
+          }
+        });
       }
 
+      $scope.$on('row_refresh_changed', function(event, row) {
+        if(row === $scope.row) {
+          $scope.refresh_changed();
+        }
+      });
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
@@ -175,5 +193,4 @@ function (angular, _, config, kbn) {
       }
     };
   });
-
 });

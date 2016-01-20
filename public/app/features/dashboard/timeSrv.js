@@ -68,46 +68,22 @@ define([
     this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
-        var _i = this.setup_panel_refresh(interval);
+        var _i = kbn.interval_to_ms(interval);
         this.start_scheduled_refresh(_i);
       } else {
         this.cancel_scheduled_refresh();
       }
     };
-    this.panel_iterator = function(callback) {
-      for(var r = 0; r !== this.dashboard.rows.length; ++r) {
-        var row = this.dashboard.rows[r];
-        for(var p = 0; p !== row.panels.length; ++p) {
-          var panel = row.panels[p];
-          callback(row, panel);
-        }
-      }
-    };
-    this.setup_panel_refresh = function (refresh) {
-      // http://stackoverflow.com/questions/17445231/js-how-to-find-the-greatest-common-divisor
-      var gcd = function(a, b) {
-        if (!b) {
-          return a;
-        }
-        return gcd(b, a % b);
-      };
-      var gdcMax = null;
-      this.panel_iterator(function(row, panel) {
-        var panelRefreshms = kbn.interval_to_ms(panel.refresh || row.refresh || refresh);
-        gdcMax = gcd(panelRefreshms, gdcMax);
-      });
-      return gdcMax;
-    };
 
-    this.refreshDashboard = function(tick) {
-      $rootScope.$broadcast('refresh', tick);
+    this.refreshDashboard = function() {
+      $rootScope.$broadcast('refresh');
     };
 
     this.start_scheduled_refresh = function (after_ms) {
       self.cancel_scheduled_refresh();
       self.refresh_timer = timer.register($timeout(function () {
         self.start_scheduled_refresh(after_ms);
-        self.refreshDashboard(after_ms);
+        self.refreshDashboard();
       }, after_ms));
     };
 

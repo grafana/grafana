@@ -67,12 +67,12 @@
 						Override refresh time
 					</li>
 					<li>
-						<input type="text" class="input-small tight-form-input" ng-model='row.refresh' placeholder="5m"></input>
+						<input type="text" class="input-small tight-form-input" empty-to-null ng-model='row.refresh' 
+						valid-time-span ng-change="refresh_changed()" placeholder="5m"  ng-model-onblur></input>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
 		</div>
 	</div>
-
 </div>

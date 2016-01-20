@@ -144,6 +144,10 @@ function (angular, _, config) {
       });
     };
 
+    $scope.refresh_changed = function() {
+      $scope.$broadcast('row_refresh_changed', $scope.row);
+    };
+
     $scope.init();
 
   });
