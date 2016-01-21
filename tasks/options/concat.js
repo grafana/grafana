@@ -28,6 +28,7 @@ module.exports = function(config) {
 
     js: {
       src: [
+        '<%= genDir %>/vendor/npm/es6-shim/es5-shim.js',
         '<%= genDir %>/vendor/npm/es6-shim/es6-shim.js',
         '<%= genDir %>/vendor/npm/es6-promise/es6-promise.js',
         '<%= genDir %>/vendor/npm/systemjs/dist/system.js',
