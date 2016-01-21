@@ -43,9 +43,7 @@ define([
         },
 
         link: function($scope, $element) {
-          var input = angular.element($scope.inputElement),
-              content = angular.element($scope.contentElement),
-              keysMap = Object.create(null);
+          var keysMap = Object.create(null);
 
           function doNothing(event) {
             event.preventDefault();
@@ -86,6 +84,8 @@ define([
 
           $element.bind("keydown keypress", function(event) {
             var source = angular.element(event.target || event.srcElement),
+                input = angular.element($scope.inputElement),
+                content = angular.element($scope.contentElement),
                 isInputEvent = (source[0] === input[0]),
                 firstContentElement;
 
