@@ -31,6 +31,8 @@ func (app *ApiPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
+	app.PluginDir = pluginDir
+
 	ApiPlugins[app.Id] = app
 	return nil
 }
