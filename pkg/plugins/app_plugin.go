@@ -59,6 +59,18 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		}
 	}
 
+	// check if we have child apiPlugins
+	for _, plugin := range ApiPlugins {
+		if strings.HasPrefix(plugin.PluginDir, app.PluginDir) {
+			plugin.IncludedInAppId = app.Id
+			app.Includes = append(app.Includes, AppIncludeInfo{
+				Name: plugin.Name,
+				Id:   plugin.Id,
+				Type: plugin.Type,
+			})
+		}
+	}
+
 	Apps[app.Id] = app
 	return nil
 }
