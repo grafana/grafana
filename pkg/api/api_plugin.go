@@ -1,13 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"text/template"
 
 	"gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -34,32 +38,28 @@ func InitApiPluginRoutes(r *macaron.Macaron) {
 					handlers = append(handlers, middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN))
 				}
 			}
-			handlers = append(handlers, ApiPlugin(route.Url))
+			handlers = append(handlers, ApiPlugin(route, plugin.IncludedInAppId))
 			r.Route(url, route.Method, handlers...)
 			log.Info("Plugin: Adding route %s", url)
 		}
 	}
 }
 
-func ApiPlugin(routeUrl string) macaron.Handler {
+func ApiPlugin(route *plugins.ApiPluginRoute, includedInAppId string) macaron.Handler {
 	return func(c *middleware.Context) {
 		path := c.Params("*")
 
-		//Create a HTTP header with the context in it.
-		ctx, err := json.Marshal(c.SignedInUser)
-		if err != nil {
-			c.JsonApiErr(500, "failed to marshal context to json.", err)
-			return
-		}
-		targetUrl, _ := url.Parse(routeUrl)
-		proxy := NewApiPluginProxy(string(ctx), path, targetUrl)
+		proxy := NewApiPluginProxy(c, path, route, includedInAppId)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}
 }
 
-func NewApiPluginProxy(ctx string, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.ApiPluginRoute, includedInAppId string) *httputil.ReverseProxy {
+	targetUrl, _ := url.Parse(route.Url)
+
 	director := func(req *http.Request) {
+
 		req.URL.Scheme = targetUrl.Scheme
 		req.URL.Host = targetUrl.Host
 		req.Host = targetUrl.Host
@@ -69,7 +69,46 @@ func NewApiPluginProxy(ctx string, proxyPath string, targetUrl *url.URL) *httput
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
-		req.Header.Add("Grafana-Context", ctx)
+
+		//Create a HTTP header with the context in it.
+		ctxJson, err := json.Marshal(ctx.SignedInUser)
+		if err != nil {
+			ctx.JsonApiErr(500, "failed to marshal context to json.", err)
+			return
+		}
+
+		req.Header.Add("Grafana-Context", string(ctxJson))
+		// add custom headers defined in the plugin config.
+		for _, header := range route.Headers {
+			var contentBuf bytes.Buffer
+			t, err := template.New("content").Parse(header.Content)
+			if err != nil {
+				ctx.JsonApiErr(500, fmt.Sprintf("could not parse header content template for header %s.", header.Name), err)
+				return
+			}
+
+			jsonData := make(map[string]interface{})
+
+			if includedInAppId != "" {
+				//lookup appSettings
+				query := m.GetAppSettingByAppIdQuery{OrgId: ctx.OrgId, AppId: includedInAppId}
+
+				if err := bus.Dispatch(&query); err != nil {
+					ctx.JsonApiErr(500, "failed to get AppSettings of includedAppId.", err)
+					return
+				}
+
+				jsonData = query.Result.JsonData
+			}
+
+			err = t.Execute(&contentBuf, jsonData)
+			if err != nil {
+				ctx.JsonApiErr(500, fmt.Sprintf("failed to execute header content template for header %s.", header.Name), err)
+				return
+			}
+			log.Debug("Adding header to proxy request. %s: %s", header.Name, contentBuf.String())
+			req.Header.Add(header.Name, contentBuf.String())
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director}
