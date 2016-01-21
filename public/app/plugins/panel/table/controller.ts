@@ -23,7 +23,6 @@ export class TablePanelCtrl {
 
     $scope.panelMeta.addEditorTab('Options', 'app/plugins/panel/table/options.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
-
     $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
 
     var panelDefaults = {
