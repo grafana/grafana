@@ -3,7 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
+import * as FileExport from 'app/core/utils/file_export';
 import PanelMeta from 'app/features/panel/panel_meta2';
 import {transformDataToTable} from './transformers';
 
@@ -128,7 +128,7 @@ export class TablePanelCtrl {
     };
 
     $scope.exportCsv = function() {
-      kbn.exportTableDataToCsv($scope.table);
+      FileExport.exportTableDataToCsv($scope.table);
     };
 
     $scope.init();
