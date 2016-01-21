@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func InitApiPluginRoutes(r *macaron.Macaron) {
-	for _, plugin := range plugins.ApiPlugins {
-		log.Info("Plugin: Adding proxy routes for api plugin")
+func InitAppPluginRoutes(r *macaron.Macaron) {
+	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
+			log.Info("Plugin: Adding proxy route for app plugin")
 			url := util.JoinUrlFragments("/api/plugin-proxy/", route.Path)
 			handlers := make([]macaron.Handler, 0)
 			if route.ReqSignedIn {
@@ -38,24 +38,24 @@ func InitApiPluginRoutes(r *macaron.Macaron) {
 					handlers = append(handlers, middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN))
 				}
 			}
-			handlers = append(handlers, ApiPlugin(route, plugin.IncludedInAppId))
+			handlers = append(handlers, AppPluginRoute(route, plugin.Id))
 			r.Route(url, route.Method, handlers...)
 			log.Info("Plugin: Adding route %s", url)
 		}
 	}
 }
 
-func ApiPlugin(route *plugins.ApiPluginRoute, includedInAppId string) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appId string) macaron.Handler {
 	return func(c *middleware.Context) {
 		path := c.Params("*")
 
-		proxy := NewApiPluginProxy(c, path, route, includedInAppId)
+		proxy := NewApiPluginProxy(c, path, route, appId)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}
 }
 
-func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.ApiPluginRoute, includedInAppId string) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
 	targetUrl, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {
@@ -87,21 +87,15 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 				return
 			}
 
-			jsonData := make(map[string]interface{})
+			//lookup appSettings
+			query := m.GetAppSettingByAppIdQuery{OrgId: ctx.OrgId, AppId: appId}
 
-			if includedInAppId != "" {
-				//lookup appSettings
-				query := m.GetAppSettingByAppIdQuery{OrgId: ctx.OrgId, AppId: includedInAppId}
-
-				if err := bus.Dispatch(&query); err != nil {
-					ctx.JsonApiErr(500, "failed to get AppSettings of includedAppId.", err)
-					return
-				}
-
-				jsonData = query.Result.JsonData
+			if err := bus.Dispatch(&query); err != nil {
+				ctx.JsonApiErr(500, "failed to get AppSettings.", err)
+				return
 			}
 
-			err = t.Execute(&contentBuf, jsonData)
+			err = t.Execute(&contentBuf, query.Result.JsonData)
 			if err != nil {
 				ctx.JsonApiErr(500, fmt.Sprintf("failed to execute header content template for header %s.", header.Name), err)
 				return
