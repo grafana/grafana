@@ -272,6 +272,10 @@ function (angular, _, dateMath) {
         }
 
         query.downsample = interval + "-" + target.downsampleAggregator;
+
+        if (target.downsampleFillPolicy !== "none") {
+          query.downsample += "-" + target.downsampleFillPolicy;
+        }
       }
 
       query.tags = angular.copy(target.tags);
