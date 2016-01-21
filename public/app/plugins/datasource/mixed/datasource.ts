@@ -5,6 +5,7 @@ import _ from 'lodash';
 
 class MixedDatasource {
 
+  /** @ngInject */
   constructor(private $q, private datasourceSrv) {
   }
 

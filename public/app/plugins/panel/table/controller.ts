@@ -3,6 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
+import * as FileExport from 'app/core/utils/file_export';
 import PanelMeta from 'app/features/panel/panel_meta2';
 import {transformDataToTable} from './transformers';
 
@@ -22,6 +23,7 @@ export class TablePanelCtrl {
 
     $scope.panelMeta.addEditorTab('Options', 'app/plugins/panel/table/options.html');
     $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
+    $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
 
     var panelDefaults = {
       targets: [{}],
@@ -122,6 +124,10 @@ export class TablePanelCtrl {
       $scope.table = transformDataToTable($scope.dataRaw, $scope.panel);
       $scope.table.sort($scope.panel.sort);
       panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
+    };
+
+    $scope.exportCsv = function() {
+      FileExport.exportTableDataToCsv($scope.table);
     };
 
     $scope.init();

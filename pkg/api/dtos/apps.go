@@ -31,6 +31,7 @@ func NewAppSettingsDto(def *plugins.AppPlugin, data *models.AppSettings) *AppSet
 		dto.Enabled = data.Enabled
 		dto.Pinned = data.Pinned
 		dto.Info = &def.Info
+		dto.JsonData = data.JsonData
 	}
 
 	return dto
