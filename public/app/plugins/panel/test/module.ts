@@ -3,14 +3,17 @@
 import PanelMeta from 'app/features/panel/panel_meta2';
 
 class PanelBaseCtrl {
+  panelMeta: any;
+  panel: any;
+  dashboard: any;
+
   constructor(private $scope) {
-    $scope.panelMeta = new PanelMeta({
+    this.panelMeta = new PanelMeta({
       panelName: 'Table',
       editIcon:  "fa fa-table",
       fullscreen: true,
       metricsEditor: true,
     });
-    $scope.testProp = "hello";
   }
 }
 
@@ -18,26 +21,27 @@ class TestPanelCtrl extends PanelBaseCtrl {
 
   constructor($scope) {
     super($scope);
-    $scope.panelMeta.panelName = "Test";
   }
 }
 
-function testPanelDirective() {
-  return {
-    restrict: 'E',
-    template: `
-    <grafana-panel>
+var testPanelComponent = {
+  template: `
+    <grafana-panel ctrl="ctrl">
       <div class="text-center" style="padding-top: 2rem">
-        <h2>Test Panel, {{testProp}}</h2>
+        <h2>Test Panel</h2>
       </div>
     </grafana-panel>
     `,
-    controller: TestPanelCtrl
-  };
-}
+  controller: TestPanelCtrl,
+  controllerAs: 'ctrl',
+  bindings: {
+    dashboard: "=",
+    panel: "=",
+  }
+};
 
 export {
   PanelBaseCtrl,
   TestPanelCtrl,
-  testPanelDirective as panel
+  testPanelComponent as component,
 }
