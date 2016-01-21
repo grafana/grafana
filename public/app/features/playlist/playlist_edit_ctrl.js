@@ -132,11 +132,11 @@ function (angular, config, _) {
     };
 
     $scope.movePlaylistItemUp = function(playlistItem) {
-      $scope.moveDashboard(playlistItem, -1);
+      $scope.movePlaylistItem(playlistItem, -1);
     };
 
     $scope.movePlaylistItemDown = function(playlistItem) {
-      $scope.moveDashboard(playlistItem, 1);
+      $scope.movePlaylistItem(playlistItem, 1);
     };
 
     $scope.init();
