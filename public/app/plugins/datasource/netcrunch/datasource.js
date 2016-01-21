@@ -18,6 +18,7 @@ define([
   './services/processingDataWorker',
   './controllers/netCrunchQueryCtrl',
   './controllers/netCrunchOptionsCtrl',
+  './directives/netCrunchMetricQuery',
   './filters/netCrunchFilters'
 ],
 
