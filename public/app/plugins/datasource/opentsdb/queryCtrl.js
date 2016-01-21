@@ -13,6 +13,7 @@ function (angular, _, kbn) {
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);
       $scope.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
+      $scope.fillPolicies = ['none', 'nan', 'null', 'zero'];
 
       if (!$scope.target.aggregator) {
         $scope.target.aggregator = 'sum';
@@ -20,6 +21,10 @@ function (angular, _, kbn) {
 
       if (!$scope.target.downsampleAggregator) {
         $scope.target.downsampleAggregator = 'avg';
+      }
+
+      if (!$scope.target.downsampleFillPolicy) {
+        $scope.target.downsampleFillPolicy = 'none';
       }
 
       $scope.datasource.getAggregators().then(function(aggs) {
