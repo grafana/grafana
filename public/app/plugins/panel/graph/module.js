@@ -3,13 +3,14 @@ define([
   'lodash',
   'moment',
   'app/core/utils/kbn',
+  'app/core/utils/file_export',
   'app/core/time_series',
   'app/features/panel/panel_meta',
   './seriesOverridesCtrl',
   './graph',
   './legend',
 ],
-function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
+function (angular, _, moment, kbn, fileExport, TimeSeries, PanelMeta) {
   'use strict';
 
   /** @ngInject */
@@ -282,7 +283,7 @@ function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
     };
 
     $scope.exportCsv = function() {
-      kbn.exportSeriesListToCsv($scope.seriesList);
+      fileExport.exportSeriesListToCsv($scope.seriesList);
     };
 
     panelSrv.init($scope);

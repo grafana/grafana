@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import angular from 'angular';
+import config from 'app/core/config';
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 
@@ -20,10 +21,9 @@ class PlaylistSrv {
     var playedAllDashboards = this.index > this.dashboards.length - 1;
 
     if (playedAllDashboards) {
-      this.start(this.playlistId);
+      window.location.href = `${config.appSubUrl}/playlists/play/${this.playlistId}`;
     } else {
       var dash = this.dashboards[this.index];
-
       this.$location.url('dashboard/' + dash.uri);
 
       this.index++;

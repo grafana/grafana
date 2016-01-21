@@ -2,8 +2,6 @@ package plugins
 
 import (
 	"encoding/json"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type PluginLoader interface {
@@ -42,20 +40,6 @@ type PluginLogos struct {
 type PluginStaticRoute struct {
 	Directory string
 	PluginId  string
-}
-
-type ApiPluginRoute struct {
-	Path            string          `json:"path"`
-	Method          string          `json:"method"`
-	ReqSignedIn     bool            `json:"reqSignedIn"`
-	ReqGrafanaAdmin bool            `json:"reqGrafanaAdmin"`
-	ReqRole         models.RoleType `json:"reqRole"`
-	Url             string          `json:"url"`
-}
-
-type ApiPlugin struct {
-	PluginBase
-	Routes []*ApiPluginRoute `json:"routes"`
 }
 
 type EnabledPlugins struct {
