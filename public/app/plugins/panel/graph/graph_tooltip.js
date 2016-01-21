@@ -159,7 +159,6 @@ function ($) {
 
         self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
         if(dashboard.sharedTooltip && !isSharedTooltip) {
-          var parentPos = elem.parents('.panel.ng-scope').position();
           scope.appEvent('shareTooltip', { pos: pos, scope: scope });
         }
       }
