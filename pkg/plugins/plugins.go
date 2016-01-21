@@ -17,7 +17,6 @@ import (
 var (
 	DataSources  map[string]*DataSourcePlugin
 	Panels       map[string]*PanelPlugin
-	ApiPlugins   map[string]*ApiPlugin
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
 	PluginTypes  map[string]interface{}
@@ -30,14 +29,12 @@ type PluginScanner struct {
 
 func Init() error {
 	DataSources = make(map[string]*DataSourcePlugin)
-	ApiPlugins = make(map[string]*ApiPlugin)
 	StaticRoutes = make([]*PluginStaticRoute, 0)
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
-		"api":        ApiPlugin{},
 		"app":        AppPlugin{},
 	}
 
