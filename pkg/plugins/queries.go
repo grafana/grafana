@@ -68,11 +68,5 @@ func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 		}
 	}
 
-	for _, api := range ApiPlugins {
-		if isPluginEnabled(api.IncludedInAppId) {
-			enabledPlugins.ApiList = append(enabledPlugins.ApiList, api)
-		}
-	}
-
 	return &enabledPlugins, nil
 }
