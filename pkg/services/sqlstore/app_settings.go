@@ -9,6 +9,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetAppSettings)
+	bus.AddHandler("sql", GetAppSettingByAppId)
 	bus.AddHandler("sql", UpdateAppSettings)
 }
 
@@ -17,6 +18,18 @@ func GetAppSettings(query *m.GetAppSettingsQuery) error {
 
 	query.Result = make([]*m.AppSettings, 0)
 	return sess.Find(&query.Result)
+}
+
+func GetAppSettingByAppId(query *m.GetAppSettingByAppIdQuery) error {
+	appSetting := m.AppSettings{OrgId: query.OrgId, AppId: query.AppId}
+	has, err := x.Get(&appSetting)
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrAppSettingNotFound
+	}
+	query.Result = &appSetting
+	return nil
 }
 
 func UpdateAppSettings(cmd *m.UpdateAppSettingsCmd) error {
