@@ -1,6 +1,13 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrAppSettingNotFound = errors.New("AppSetting not found")
+)
 
 type AppSettings struct {
 	Id       int64
@@ -32,4 +39,10 @@ type UpdateAppSettingsCmd struct {
 type GetAppSettingsQuery struct {
 	OrgId  int64
 	Result []*AppSettings
+}
+
+type GetAppSettingByAppIdQuery struct {
+	AppId  string
+	OrgId  int64
+	Result *AppSettings
 }
