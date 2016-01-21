@@ -11,16 +11,16 @@ function (angular, $, _) {
     .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text drag-handle">{{panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-title-text drag-handle">{{ctrl.panel.title}}</span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
-            '<span class="panel-time-info" ng-show="panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
+            '<span class="panel-time-info" ng-show="ctrl.panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{panelMeta.timeInfo}}</span>' +
           '</span>';
 
       function createExternalLinkMenu($scope) {
         var template = '<div class="panel-menu small">';
         template += '<div class="panel-menu-row">';
 
-        if ($scope.panel.links) {
+        if ($scope.ctrl.panel.links) {
           _.each($scope.panel.links, function(link) {
             var info = linkSrv.getPanelLinkAnchorInfo(link, $scope.panel.scopedVars);
             template += '<a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a>';
@@ -31,7 +31,7 @@ function (angular, $, _) {
       function createMenuTemplate($scope) {
         var template = '<div class="panel-menu small">';
 
-        if ($scope.dashboardMeta.canEdit) {
+        if ($scope.ctrl.dashboard.meta.canEdit) {
           template += '<div class="panel-menu-inner">';
           template += '<div class="panel-menu-row">';
           template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
@@ -44,9 +44,9 @@ function (angular, $, _) {
         template += '<div class="panel-menu-row">';
         template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="fa fa-bars"></i></a>';
 
-        _.each($scope.panelMeta.menu, function(item) {
+        _.each($scope.ctrl.panelMeta.menu, function(item) {
           // skip edit actions if not editor
-          if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
+          if (item.role === 'Editor' && !$scope.ctrl.dashboard.meta.canEdit) {
             return;
           }
 
@@ -64,7 +64,7 @@ function (angular, $, _) {
       }
 
       function getExtendedMenu($scope) {
-        return angular.copy($scope.panelMeta.extendedMenu);
+        return angular.copy($scope.ctrl.panelMeta.extendedMenu);
       }
 
       return {
