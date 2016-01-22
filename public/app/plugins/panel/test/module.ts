@@ -1,47 +1,22 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import PanelMeta from 'app/features/panel/panel_meta2';
+import {PanelCtrl} from '../../../features/panel/panel_ctrl';
 
-class PanelBaseCtrl {
-  panelMeta: any;
-  panel: any;
-  dashboard: any;
-
-  constructor(private $scope) {
-    this.panelMeta = new PanelMeta({
-      panelName: 'Table',
-      editIcon:  "fa fa-table",
-      fullscreen: true,
-      metricsEditor: true,
-    });
-  }
-}
-
-class TestPanelCtrl extends PanelBaseCtrl {
-
+class TestPanelCtrl extends PanelCtrl {
   constructor($scope) {
     super($scope);
   }
 }
 
-var testPanelComponent = {
-  template: `
-    <grafana-panel ctrl="ctrl">
-      <div class="text-center" style="padding-top: 2rem">
-        <h2>Test Panel</h2>
-      </div>
-    </grafana-panel>
-    `,
+var panel = {
+  templateUrl: `app/plugins/panel/test/module.html`,
   controller: TestPanelCtrl,
-  controllerAs: 'ctrl',
-  bindings: {
-    dashboard: "=",
-    panel: "=",
+  link: function(scope, elem) {
+    console.log('panel link');
   }
 };
 
 export {
-  PanelBaseCtrl,
   TestPanelCtrl,
-  testPanelComponent as component,
+  panel,
 }

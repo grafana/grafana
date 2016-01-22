@@ -15,9 +15,10 @@ function (angular, $) {
       scope: { ctrl: "=" },
       link: function(scope, elem) {
         var panelContainer = elem.find('.panel-container');
-        scope.$watchGroup(['fullscreen', 'height', 'panel.height', 'row.height'], function() {
-          panelContainer.css({ minHeight: scope.height || scope.panel.height || scope.row.height, display: 'block' });
-          elem.toggleClass('panel-fullscreen', scope.fullscreen ? true : false);
+        var ctrl = scope.ctrl;
+        scope.$watchGroup(['ctrl.fullscreen', 'ctrl.height', 'ctrl.panel.height', 'ctrl.row.height'], function() {
+          panelContainer.css({ minHeight: ctrl.height || ctrl.panel.height || ctrl.row.height, display: 'block' });
+          elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
         });
       }
     };
