@@ -94,8 +94,15 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 				ctx.JsonApiErr(500, "failed to get AppSettings.", err)
 				return
 			}
-
-			err = t.Execute(&contentBuf, query.Result.JsonData)
+			type templateData struct {
+				JsonData       map[string]interface{}
+				SecureJsonData map[string]string
+			}
+			data := templateData{
+				JsonData:       query.Result.JsonData,
+				SecureJsonData: query.Result.SecureJsonData.Decrypt(),
+			}
+			err = t.Execute(&contentBuf, data)
 			if err != nil {
 				ctx.JsonApiErr(500, fmt.Sprintf("failed to execute header content template for header %s.", header.Name), err)
 				return

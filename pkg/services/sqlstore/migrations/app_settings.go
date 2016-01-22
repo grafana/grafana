@@ -13,6 +13,7 @@ func addAppSettingsMigration(mg *Migrator) {
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "pinned", Type: DB_Bool, Nullable: false},
 			{Name: "json_data", Type: DB_Text, Nullable: true},
+			{Name: "secure_json_data", Type: DB_Text, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
