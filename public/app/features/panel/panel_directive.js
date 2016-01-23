@@ -17,6 +17,7 @@ function (angular, $) {
         var panelContainer = elem.find('.panel-container');
         var ctrl = scope.ctrl;
         scope.$watchGroup(['ctrl.fullscreen', 'ctrl.height', 'ctrl.panel.height', 'ctrl.row.height'], function() {
+          console.log('height: ', ctrl.height);
           panelContainer.css({ minHeight: ctrl.height || ctrl.panel.height || ctrl.row.height, display: 'block' });
           elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
         });
@@ -31,6 +32,7 @@ function (angular, $) {
       link: function(scope, elem) {
         var resizing = false;
         var lastPanel = false;
+        var ctrl = scope.ctrl;
         var handleOffset;
         var originalHeight;
         var originalWidth;
@@ -41,31 +43,31 @@ function (angular, $) {
           resizing = true;
 
           handleOffset = $(e.target).offset();
-          originalHeight = parseInt(scope.row.height);
-          originalWidth = scope.panel.span;
+          originalHeight = parseInt(ctrl.row.height);
+          originalWidth = ctrl.panel.span;
           maxWidth = $(document).width();
 
-          lastPanel = scope.row.panels[scope.row.panels.length - 1];
+          lastPanel = ctrl.row.panels[ctrl.row.panels.length - 1];
 
           $('body').on('mousemove', moveHandler);
           $('body').on('mouseup', dragEndHandler);
         }
 
         function moveHandler(e) {
-          scope.row.height = originalHeight + (e.pageY - handleOffset.top);
-          scope.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
-          scope.panel.span = Math.min(Math.max(scope.panel.span, 1), 12);
+          ctrl.row.height = originalHeight + (e.pageY - handleOffset.top);
+          ctrl.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
+          ctrl.panel.span = Math.min(Math.max(ctrl.panel.span, 1), 12);
 
-          var rowSpan = scope.dashboard.rowSpan(scope.row);
+          var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
 
           // auto adjust other panels
           if (Math.floor(rowSpan) < 14) {
             // last panel should not push row down
-            if (lastPanel === scope.panel && rowSpan > 12) {
+            if (lastPanel === ctrl.panel && rowSpan > 12) {
               lastPanel.span -= rowSpan - 12;
             }
             // reduce width of last panel so total in row is 12
-            else if (lastPanel !== scope.panel) {
+            else if (lastPanel !== ctrl.panel) {
               lastPanel.span = lastPanel.span - (rowSpan - 12);
               lastPanel.span = Math.min(Math.max(lastPanel.span, 1), 12);
             }
@@ -78,7 +80,7 @@ function (angular, $) {
 
         function dragEndHandler() {
           // if close to 12
-          var rowSpan = scope.dashboard.rowSpan(scope.row);
+          var rowSpan = ctrl.dashboard.rowSpan(scope.row);
           if (rowSpan < 12 && rowSpan > 11) {
             lastPanel.span +=  12 - rowSpan;
           }

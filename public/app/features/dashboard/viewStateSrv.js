@@ -31,6 +31,14 @@ function (angular, _, $) {
         }
       });
 
+      $scope.onAppEvent('panel-change-view', function(evt, payload) {
+        self.update(payload);
+      });
+
+      $scope.onAppEvent('panel-instantiated', function(evt, payload) {
+        self.registerPanel(payload.scope);
+      });
+
       this.update(this.getQueryStringState(), true);
       this.expandRowForPanel();
     }
@@ -105,23 +113,24 @@ function (angular, _, $) {
 
     DashboardViewState.prototype.getPanelScope = function(id) {
       return _.find(this.panelScopes, function(panelScope) {
-        return panelScope.panel.id === id;
+        return panelScope.ctrl.panel.id === id;
       });
     };
 
     DashboardViewState.prototype.leaveFullscreen = function(render) {
       var self = this;
+      var ctrl = self.fullscreenPanel.ctrl;
 
-      self.fullscreenPanel.editMode = false;
-      self.fullscreenPanel.fullscreen = false;
-      delete self.fullscreenPanel.height;
+      ctrl.editMode = false;
+      ctrl.fullscreen = false;
+      delete ctrl.height;
 
-      this.$scope.appEvent('panel-fullscreen-exit', {panelId: this.fullscreenPanel.panel.id});
+      this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
       if (!render) { return false;}
 
       $timeout(function() {
-        if (self.oldTimeRange !== self.fullscreenPanel.range) {
+        if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
         }
         else {
@@ -135,17 +144,18 @@ function (angular, _, $) {
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.3);
       var fullscreenHeight = Math.floor(docHeight * 0.7);
+      var ctrl = panelScope.ctrl;
 
-      panelScope.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
-      panelScope.height = panelScope.editMode ? editHeight : fullscreenHeight;
+      ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
+      ctrl.height = ctrl.editMode ? editHeight : fullscreenHeight;
 
-      this.oldTimeRange = panelScope.range;
+      this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
 
       $(window).scrollTop(0);
 
       panelScope.fullscreen = true;
-      this.$scope.appEvent('panel-fullscreen-enter', {panelId: panelScope.panel.id});
+      this.$scope.appEvent('panel-fullscreen-enter', {panelId: ctrl.panel.id});
 
       $timeout(function() {
         panelScope.$broadcast('render');
@@ -156,7 +166,7 @@ function (angular, _, $) {
       var self = this;
       self.panelScopes.push(panelScope);
 
-      if (self.state.panelId === panelScope.panel.id) {
+      if (self.state.panelId === panelScope.ctrl.panel.id) {
         self.enterFullscreen(panelScope);
       }
 
