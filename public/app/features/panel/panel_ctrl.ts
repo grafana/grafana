@@ -3,19 +3,13 @@
 import PanelMeta from './panel_meta2';
 
 export class PanelCtrl {
-  panelMeta: any;
+  meta: any;
   panel: any;
   row: any;
   dashboard: any;
 
   constructor(private scope) {
-    this.panelMeta = new PanelMeta({
-      panelName: 'Table',
-      editIcon:  "fa fa-table",
-      fullscreen: true,
-      metricsEditor: true,
-    });
-
+    this.meta = new PanelMeta(this.panel);
     this.publishAppEvent('panel-instantiated', {scope: scope});
   }
 
@@ -23,10 +17,22 @@ export class PanelCtrl {
     this.scope.$root.appEvent(evtName, evt);
   }
 
-  editPanel() {
+  changeView(fullscreen, edit) {
     this.publishAppEvent('panel-change-view', {
-      fullscreen: true, edit: true, panelId: this.panel.id
+      fullscreen: fullscreen, edit: edit, panelId: this.panel.id
     });
+  }
+
+  viewPanel() {
+    this.changeView(true, false);
+  }
+
+  editPanel() {
+    this.changeView(true, true);
+  }
+
+  exitFullscreen() {
+    this.changeView(false, false);
   }
 }
 
