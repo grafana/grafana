@@ -19,12 +19,12 @@
 	<panel-resizer></panel-resizer>
 </div>
 
-<div class="panel-full-edit" ng-if="editMode">
+<div class="panel-full-edit" ng-if="ctrl.editMode">
 	<div class="gf-box">
 		<div class="gf-box-header">
 			<div class="gf-box-title">
 				<i ng-class="panelMeta.editIcon"></i>
-				{{panelMeta.panelName}}
+				{{ctrl.panelMeta.panelName}}
 			</div>
 
 			<div ng-model="editor.index" bs-tabs>

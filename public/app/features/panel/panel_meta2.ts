@@ -17,12 +17,12 @@ export default class PanelMeta {
     this.extendedMenu = [];
 
     if (options.fullscreen) {
-      this.addMenuItem('View', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
+      this.addMenuItem('View', 'icon-eye-open', 'ctrl.viewPanel(); dismiss();');
     }
 
-    this.addMenuItem('Edit', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
-    this.addMenuItem('Duplicate', 'icon-copy', 'duplicatePanel()', 'Editor');
-    this.addMenuItem('Share', 'icon-share', 'sharePanel(); dismiss();');
+    this.addMenuItem('Edit', 'icon-cog', 'ctrl.editPanel(); dismiss();', 'Editor');
+    this.addMenuItem('Duplicate', 'icon-copy', 'ctrl.duplicate()', 'Editor');
+    this.addMenuItem('Share', 'icon-share', 'ctrl.share(); dismiss();');
 
     this.addEditorTab('General', 'app/partials/panelgeneral.html');
 
@@ -30,7 +30,7 @@ export default class PanelMeta {
       this.addEditorTab('Metrics', 'app/partials/metrics.html');
     }
 
-    this.addExtendedMenuItem('Panel JSON', '', 'editPanelJson(); dismiss();');
+    this.addExtendedMenuItem('Panel JSON', '', 'ctrl.editPanelJson(); dismiss();');
   }
 
   addMenuItem (text, icon, click, role?) {
