@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
+  "github.com/grafana/grafana/pkg/bus"
+  m "github.com/grafana/grafana/pkg/models"
 )
 
 func AdminGetSettings(c *middleware.Context) {
@@ -26,4 +28,16 @@ func AdminGetSettings(c *middleware.Context) {
 	}
 
 	c.JSON(200, settings)
+}
+
+func AdminGetStats(c *middleware.Context) {
+
+  statsQuery := m.GetAdminStatsQuery{}
+  
+  if err := bus.Dispatch(&statsQuery); err != nil {
+    c.JsonApiErr(500, "Failed to get admin stats from database", err)
+    return
+  }
+
+  c.JSON(200, statsQuery.Result)
 }
