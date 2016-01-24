@@ -167,7 +167,11 @@ function (angular, _, $) {
       self.panelScopes.push(panelScope);
 
       if (self.state.panelId === panelScope.ctrl.panel.id) {
-        self.enterFullscreen(panelScope);
+        if (self.state.edit) {
+          panelScope.ctrl.editPanel();
+        } else {
+          panelScope.ctrl.viewPanel();
+        }
       }
 
       panelScope.$on('$destroy', function() {

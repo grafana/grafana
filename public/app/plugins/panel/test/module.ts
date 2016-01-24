@@ -12,15 +12,6 @@ class TestPanelCtrl extends PanelCtrl {
 class TestPanel extends PanelDirective {
   templateUrl = `app/plugins/panel/test/module.html`;
   controller = TestPanelCtrl;
-
-  constructor($http) {
-    super();
-    console.log('panel ctor: ', $http);
-  }
-
-  link(scope) {
-    console.log('panel link: ', scope.ctrl.panel.id);
-  }
 }
 
 export {
