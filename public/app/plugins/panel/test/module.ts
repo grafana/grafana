@@ -1,20 +1,19 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import {PanelDirective, PanelCtrl} from '../../../features/panel/panel';
+import {PanelDirective, MetricsPanelCtrl} from '../../../features/panel/panel';
 
 function optionsTab() {
-  return {
-    template: '<h2>options!</h2>'
-  };
+  return {template: '<h2>options!</h2>' };
 }
 
-export class TestPanelCtrl extends PanelCtrl {
+export class TestPanelCtrl extends MetricsPanelCtrl {
   constructor($scope) {
     super($scope);
   }
 
-  getEditorTabs() {
-    return [{title: 'Options', directiveFn: optionsTab}];
+  initEditorTabs() {
+    super.initEditorTabs();
+    this.editorTabs.push({title: 'Options', directiveFn: optionsTab});
   }
 }
 
