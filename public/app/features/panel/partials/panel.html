@@ -23,12 +23,12 @@
 	<div class="gf-box">
 		<div class="gf-box-header">
 			<div class="gf-box-title">
-				<i ng-class="panelMeta.editIcon"></i>
-				{{ctrl.panelMeta.panelName}}
+				<i ng-class="ctrl.meta.icon"></i>
+				{{ctrl.meta.name}}
 			</div>
 
-			<div ng-model="editor.index" bs-tabs>
-				<div ng-repeat="tab in panelMeta.editorTabs" data-title="{{tab.title}}">
+			<div ng-model="ctrl.tabIndex" bs-tabs>
+				<div ng-repeat="tab in ctrl.meta.editorTabs" data-title="{{tab.title}}">
 				</div>
 			</div>
 
@@ -38,8 +38,8 @@
 		</div>
 
 		<div class="gf-box-body">
-			<div ng-repeat="tab in panelMeta.editorTabs" ng-if="editor.index === $index">
-				<div ng-include src="tab.src"></div>
+			<div ng-repeat="tab in ctrl.meta.editorTabs" ng-if="ctrl.tabIndex === $index">
+				<panel-editor-tab editor-tab="tab" panel-ctrl="ctrl"></panel-editor-tab>
 			</div>
 		</div>
 	</div>

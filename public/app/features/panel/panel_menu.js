@@ -11,9 +11,9 @@ function (angular, $, _) {
     .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
-            '<span class="panel-title-text drag-handle">{{ctrl.panel.title}}</span>' +
+            '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
-            '<span class="panel-time-info" ng-show="ctrl.panelMeta.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.panelMeta.timeInfo}}</span>' +
+            '<span class="panel-time-info" ng-show="ctrl.meta.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.panelMeta.timeInfo}}</span>' +
           '</span>';
 
       function createExternalLinkMenu(ctrl) {
@@ -44,7 +44,7 @@ function (angular, $, _) {
         template += '<div class="panel-menu-row">';
         template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="fa fa-bars"></i></a>';
 
-        _.each(ctrl.panelMeta.menu, function(item) {
+        _.each(ctrl.meta.menu, function(item) {
           // skip edit actions if not editor
           if (item.role === 'Editor' && !ctrl.dashboard.meta.canEdit) {
             return;
@@ -64,7 +64,7 @@ function (angular, $, _) {
       }
 
       function getExtendedMenu(ctrl) {
-        return angular.copy(ctrl.panelMeta.extendedMenu);
+        return angular.copy(ctrl.meta.extendedMenu);
       }
 
       return {
@@ -80,7 +80,7 @@ function (angular, $, _) {
 
           elem.append($link);
 
-          $scope.$watchCollection('panel.links', function(newValue) {
+          $scope.$watchCollection('ctrl.panel.links', function(newValue) {
             var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
             $panelLinksBtn.toggle(showIcon);
           });

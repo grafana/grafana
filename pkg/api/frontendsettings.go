@@ -123,6 +123,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		panels[panel.Id] = map[string]interface{}{
 			"module": panel.Module,
 			"name":   panel.Name,
+			"info":   panel.Info,
 		}
 	}
 
