@@ -1,17 +1,26 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import PanelMeta from './panel_meta3';
+import config from 'app/core/config';
+
+function generalOptionsTabEditorTab() {
+  return {templateUrl: 'public/app/partials/panelgeneral.html'};
+}
 
 export class PanelCtrl {
-  meta: any;
   panel: any;
   row: any;
   dashboard: any;
-  tabIndex: number;
+  editorTabIndex: number;
+  name: string;
+  icon: string;
+  editorTabs: any;
 
   constructor(private scope) {
-    this.meta = new PanelMeta(this.panel);
-    this.tabIndex = 0;
+    var plugin = config.panels[this.panel.type];
+
+    this.name = plugin.name;
+    this.icon = plugin.info.icon;
+    this.editorTabIndex = 0;
     this.publishAppEvent('panel-instantiated', {scope: scope});
   }
 
@@ -30,11 +39,29 @@ export class PanelCtrl {
   }
 
   editPanel() {
+    if (!this.editorTabs) {
+      this.initEditorTabs();
+    }
+
     this.changeView(true, true);
   }
 
   exitFullscreen() {
     this.changeView(false, false);
+  }
+
+  initEditorTabs() {
+    this.editorTabs = [];
+    this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
+  }
+
+  getMenu() {
+    let menu = [];
+    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
+    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
+    menu.push({text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    menu.push({text: 'Share', click: 'ctrl.share(); dismiss();'});
+    return menu;
   }
 }
 
