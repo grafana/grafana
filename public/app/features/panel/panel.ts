@@ -14,18 +14,20 @@ export class PanelCtrl {
   name: string;
   icon: string;
   editorTabs: any;
+  $scope: any;
 
-  constructor(private scope) {
+  constructor($scope) {
     var plugin = config.panels[this.panel.type];
 
+    this.$scope = $scope;
     this.name = plugin.name;
     this.icon = plugin.info.icon;
     this.editorTabIndex = 0;
-    this.publishAppEvent('panel-instantiated', {scope: scope});
+    this.publishAppEvent('panel-instantiated', {scope: $scope});
   }
 
   publishAppEvent(evtName, evt) {
-    this.scope.$root.appEvent(evtName, evt);
+    this.$scope.$root.appEvent(evtName, evt);
   }
 
   changeView(fullscreen, edit) {
@@ -53,7 +55,10 @@ export class PanelCtrl {
   initEditorTabs() {
     this.editorTabs = [];
     this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
+    this.editorTabs = this.editorTabs.concat(this.getEditorTabs());
   }
+
+  getEditorTabs() { return [];}
 
   getMenu() {
     let menu = [];
@@ -74,6 +79,10 @@ export class PanelDirective {
   controllerAs: string;
 
   getDirective() {
+    if (!this.controller) {
+      this.controller = PanelCtrl;
+    }
+
     return {
       template: this.template,
       templateUrl: this.templateUrl,
