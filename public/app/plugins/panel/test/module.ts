@@ -2,20 +2,25 @@
 
 import {PanelDirective, PanelCtrl} from '../../../features/panel/panel';
 
-class TestPanelCtrl extends PanelCtrl {
+function optionsTab() {
+  return {
+    template: '<h2>options!</h2>'
+  };
+}
+
+export class TestPanelCtrl extends PanelCtrl {
   constructor($scope) {
     super($scope);
   }
-}
 
+  getEditorTabs() {
+    return [{title: 'Options', directiveFn: optionsTab}];
+  }
+}
 
 class TestPanel extends PanelDirective {
   templateUrl = `app/plugins/panel/test/module.html`;
   controller = TestPanelCtrl;
 }
 
-export {
-  TestPanelCtrl,
-  // testPanelDirective as panel,
-  TestPanel as Panel,
-}
+export {TestPanel as Panel}
