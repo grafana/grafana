@@ -1,10 +1,13 @@
-<topnav icon="fa fa-fw fa-bar-chart" title="Grafana stats">
+<topnav icon="fa fa-fw fa-bar-chart" title="Grafana stats"  subnav="true">
+  <ul class="nav">
+    <li class="active"><a href="admin/stats">Overview</a></li>
+  </ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page-wide">
 		<h1>
-			Stats
+			Overview
 		</h1>
 
     <table class="filter-table form-inline">
@@ -22,6 +25,10 @@
         <tr>
           <td>Total users</td>
           <td>{{stats.user_count}}</td>
+        </tr>
+        <tr>
+          <td>Total grafana admins</td>
+          <td>{{stats.grafana_admin_count}}</td>
         </tr>
         <tr>
           <td>Total organizations</td>

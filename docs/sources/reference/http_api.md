@@ -1446,7 +1446,8 @@ Keys:
       "db_tag_count":6,
       "data_source_count":1,
       "playlist_count":1,
-      "starred_db_count":2
+      "starred_db_count":2,
+      "grafana_admin_count":2
     }
 
 ### Global Users
