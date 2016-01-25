@@ -29,7 +29,7 @@ class PanelDirective {
     };
   }
 
-  link(scope) {
+  link(scope, elem) {
     return null;
   }
 }

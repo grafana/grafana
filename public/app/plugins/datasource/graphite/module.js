@@ -5,7 +5,10 @@ function (GraphiteDatasource) {
   'use strict';
 
   function metricsQueryEditor() {
-    return {controller: 'GraphiteQueryCtrl', templateUrl: 'app/plugins/datasource/graphite/partials/query.editor.html'};
+    return {
+      controller: 'GraphiteQueryCtrl',
+      templateUrl: 'app/plugins/datasource/graphite/partials/query.editor.html'
+    };
   }
 
   function metricsQueryOptions() {

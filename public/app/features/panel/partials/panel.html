@@ -1,4 +1,4 @@
-<div class="panel-container" ng-class="{'panel-transparent': panel.transparent}">
+<div class="panel-container" ng-class="{'panel-transparent': ctrl.panel.transparent}">
 	<div class="panel-header">
 		<span class="alert-error panel-error small pointer" config-modal="app/partials/inspector.html" ng-if="ctrl.error">
 			<span data-placement="top" bs-tooltip="ctrl.error">
@@ -39,7 +39,7 @@
 
 		<div class="gf-box-body">
 			<div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
-				<panel-editor-tab editor-tab="tab" panel-ctrl="ctrl"></panel-editor-tab>
+				<panel-editor-tab editor-tab="tab" ctrl="ctrl"></panel-editor-tab>
 			</div>
 		</div>
 	</div>

@@ -3,18 +3,64 @@
 import config from 'app/core/config';
 import {PanelCtrl} from './panel_ctrl';
 
-function metricsEditorTab() {
-  return {templateUrl: 'public/app/partials/metrics.html'};
-}
-
 class MetricsPanelCtrl extends PanelCtrl {
-  constructor($scope) {
+  error: boolean;
+  loading: boolean;
+  datasource: any;
+
+  constructor($scope, private $q, private datasourceSrv) {
     super($scope);
+    this.editorTabIndex = 1;
+
+    if (!this.panel.targets) {
+      this.panel.targets = [{}];
+    }
   }
 
   initEditorTabs() {
-    super.initEditorTabs();
-    this.editorTabs.push({title: 'Metrics', directiveFn: metricsEditorTab});
+    this.addEditorTab('Metrics', () => {
+      return { templateUrl: 'public/app/partials/metrics.html' };
+    });
+  }
+
+  refresh() {
+    this.getData();
+  }
+
+  refreshData(data) {
+    // null op
+    return data;
+  }
+
+  loadSnapshot(data) {
+    // null op
+    return data;
+  }
+
+  getData() {
+    if (this.otherPanelInFullscreenMode()) { return; }
+
+    if (this.panel.snapshotData) {
+      if (this.loadSnapshot) {
+        this.loadSnapshot(this.panel.snapshotData);
+      }
+      return;
+    }
+
+    delete this.error;
+    this.loading = true;
+
+    this.datasourceSrv.get(this.panel.datasource).then(datasource => {
+      this.datasource = datasource;
+      return this.refreshData(this.datasource) || this.$q.when({});
+    }).then(() => {
+      this.loading = false;
+    }, err => {
+      console.log('Panel data error:', err);
+      this.loading = false;
+      this.error = err.message || "Timeseries data request error";
+      this.inspector = {error: err};
+    });
   }
 }
 

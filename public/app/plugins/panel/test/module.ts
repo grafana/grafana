@@ -7,19 +7,28 @@ function optionsTab() {
 }
 
 export class TestPanelCtrl extends MetricsPanelCtrl {
-  constructor($scope) {
-    super($scope);
+  data: any;
+
+  constructor($scope, $q, datasourceSrv) {
+    super($scope, $q, datasourceSrv);
   }
 
   initEditorTabs() {
     super.initEditorTabs();
-    this.editorTabs.push({title: 'Options', directiveFn: optionsTab});
+  }
+
+  refreshData(data) {
+    console.log('refreshData: ', data);
   }
 }
 
 class TestPanel extends PanelDirective {
   templateUrl = `app/plugins/panel/test/module.html`;
   controller = TestPanelCtrl;
+
+  link(scope, elem) {
+    console.log('test panel linking:', scope);
+  }
 }
 
 export {TestPanel as Panel}

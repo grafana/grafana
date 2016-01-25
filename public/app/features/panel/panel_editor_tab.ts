@@ -9,7 +9,7 @@ var directiveModule = angular.module('grafana.directives');
 function panelEditorTab(dynamicDirectiveSrv) {
   return dynamicDirectiveSrv.create({
     scope: {
-      panelCtrl: "=",
+      ctrl: "=",
       editorTab: "=",
     },
     directive: scope => {

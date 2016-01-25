@@ -48,14 +48,14 @@
 			{{target.refId}}
 		</li>
 		<li>
-			<a class="tight-form-item" ng-click="target.hide = !target.hide; get_data();" role="menuitem">
+			<a class="tight-form-item" ng-click="target.hide = !target.hide; panelCtrl.getData();" role="menuitem">
 				<i class="fa fa-eye"></i>
 			</a>
 		</li>
 	</ul>
 
 	<span style="display: block; overflow: hidden;">
-		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
+		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="panelCtrl.getData()" ng-show="target.textEditor"></input>
 	</span>
 
 	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">

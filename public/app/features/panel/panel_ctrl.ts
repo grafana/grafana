@@ -15,7 +15,8 @@ export class PanelCtrl {
   icon: string;
   editorTabs: any;
   $scope: any;
-  isMetricsPanel: boolean;
+  fullscreen: boolean;
+  inspector: any;
 
   constructor($scope) {
     var plugin = config.panels[this.panel.type];
@@ -76,5 +77,9 @@ export class PanelCtrl {
     menu.push({text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
     menu.push({text: 'Share', click: 'ctrl.share(); dismiss();'});
     return menu;
+  }
+
+  otherPanelInFullscreenMode() {
+    return this.dashboard.meta.fullscreen && !this.fullscreen;
   }
 }
