@@ -6,16 +6,16 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminStatsCtrl', function($scope) {
+  module.controller('AdminStatsCtrl', function($scope, backendSrv) {
 
     $scope.init = function() {
       $scope.getStats();
     };
 
     $scope.getStats = function() {
-//      backendSrv.get('/api/admin/stats').then(function(stats) {
-//        $scope.stats = stats;
-//      });
+      backendSrv.get('/api/admin/stats').then(function(stats) {
+        $scope.stats = stats;
+      });
     };
 
     $scope.init();
