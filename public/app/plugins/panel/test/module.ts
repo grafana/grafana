@@ -9,8 +9,8 @@ function optionsTab() {
 export class TestPanelCtrl extends MetricsPanelCtrl {
   data: any;
 
-  constructor($scope, $q, datasourceSrv) {
-    super($scope, $q, datasourceSrv);
+  constructor($scope, $injector) {
+    super($scope, $injector);
   }
 
   initEditorTabs() {

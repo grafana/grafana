@@ -15,12 +15,14 @@ export class PanelCtrl {
   icon: string;
   editorTabs: any;
   $scope: any;
+  $injector: any;
   fullscreen: boolean;
   inspector: any;
 
-  constructor($scope) {
+  constructor($scope, $injector) {
     var plugin = config.panels[this.panel.type];
 
+    this.$injector = $injector;
     this.$scope = $scope;
     this.name = plugin.name;
     this.icon = plugin.info.icon;

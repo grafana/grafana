@@ -7,9 +7,11 @@ class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
   datasource: any;
+  $q: any;
+  datasourceSrv: any;
 
-  constructor($scope, private $q, private datasourceSrv) {
-    super($scope);
+  constructor($scope, $injector) {
+    super($scope, $injector);
     this.editorTabIndex = 1;
 
     if (!this.panel.targets) {
