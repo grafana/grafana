@@ -60,11 +60,7 @@ func encryptionKeyToBytes(secret string) []byte {
 	keyBytes := []byte(secret)
 	secretLength := len(keyBytes)
 	for i := 0; i < 32; i++ {
-		if secretLength > i {
-			key[i] = keyBytes[i]
-		} else {
-			key[i] = 0
-		}
+		key[i] = keyBytes[i%secretLength]
 	}
 	return key
 }
