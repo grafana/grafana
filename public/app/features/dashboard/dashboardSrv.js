@@ -234,9 +234,9 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 8;
+      this.schemaVersion = 9;
 
-      if (oldVersion === 8) {
+      if (oldVersion === 9) {
         return;
       }
 
@@ -388,6 +388,15 @@ function (angular, $, _, moment) {
             }
           });
         });
+      }
+
+      if (oldVersion < 9) {
+        // update template variables
+        for (i = 0 ; i < this.templating.list.length; i++) {
+          var templateVariable = this.templating.list[i];
+          if (templateVariable.refresh) { templateVariable.refresh = 'On Dashboard Load'; }
+          if (!templateVariable.refresh) { templateVariable.refresh = 'Never'; }
+        }
       }
 
       if (panelUpgrades.length === 0) {

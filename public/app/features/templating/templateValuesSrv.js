@@ -20,6 +20,17 @@ function (angular, _, kbn) {
       }
     }, $rootScope);
 
+    $rootScope.onAppEvent('refresh', function() {
+      var promises = [];
+      for (var i = 0; i < self.variables.length; i++) {
+        var variable = self.variables[i];
+        if (variable.refresh === 'On Time Change') {
+          promises.push(self.updateOptions(variable));
+        }
+      }
+      return $q.all(promises);
+    }, $rootScope);
+
     this.init = function(dashboard) {
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
@@ -33,7 +44,7 @@ function (angular, _, kbn) {
         if (urlValue !== void 0) {
           promises.push(this.setVariableFromUrl(variable, urlValue));
         }
-        else if (variable.refresh) {
+        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change') {
           promises.push(this.updateOptions(variable));
         }
         else if (variable.type === 'interval') {
