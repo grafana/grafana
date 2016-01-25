@@ -25,11 +25,14 @@ class PanelDirective {
       controllerAs: 'ctrl',
       bindToController: true,
       scope: {dashboard: "=", panel: "=", row: "="},
-      link: this.link
+      link: (scope, elem, attrs, ctrl) => {
+        ctrl.init();
+        this.link(scope, elem, attrs, ctrl);
+      }
     };
   }
 
-  link(scope, elem) {
+  link(scope, elem, attrs, ctrl) {
     return null;
   }
 }
