@@ -27,9 +27,12 @@ export class PanelCtrl {
     this.name = plugin.name;
     this.icon = plugin.info.icon;
     this.editorTabIndex = 0;
-    this.publishAppEvent('panel-instantiated', {scope: $scope});
 
     $scope.$on("refresh", () => this.refresh());
+  }
+
+  init() {
+    this.publishAppEvent('panel-instantiated', {scope: this.$scope});
   }
 
   refresh() {

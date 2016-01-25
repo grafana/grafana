@@ -18,7 +18,7 @@
 			</button>
 
 			<ul class="dropdown-menu" role="menu">
-				<li ng-repeat="datasource in ctrl.getMetricSources()" role="menuitem" ng-hide="ctrl.datasource.meta.builtIn">
+				<li ng-repeat="datasource in ctrl.datasources" role="menuitem" ng-hide="ctrl.datasource.meta.builtIn">
 					<a ng-click="ctrl.addDataQuery(datasource);">{{datasource.name}}</a>
 				</li>
 			</ul>
@@ -38,7 +38,7 @@
 		</button>
 
 		<ul class="dropdown-menu" role="menu">
-			<li ng-repeat="datasource in ctrl.getMetricSources()" role="menuitem">
+			<li ng-repeat="datasource in ctrl.datasources" role="menuitem">
 				<a ng-click="ctrl.setDatasource(datasource);">{{datasource.name}}</a>
 			</li>
 		</ul>

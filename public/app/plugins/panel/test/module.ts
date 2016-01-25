@@ -13,12 +13,13 @@ export class TestPanelCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
   }
 
-  initEditorTabs() {
-    super.initEditorTabs();
-  }
-
   refreshData(data) {
-    console.log('refreshData: ', data);
+    return this.issueQueries().then(res => {
+      this.data = res.data[0].target;
+      console.log('issueQueries', res);
+    }).catch(err => {
+      console.log('Errrrr! in test panel', err);
+    });
   }
 }
 
