@@ -54,21 +54,12 @@ function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
           return valueString;
         }
 
-        var color = getColorForValue(value);
+        var color = getColorForValue(data, value);
         if (color) {
           return '<span style="color:' + color + '">'+ valueString + '</span>';
         }
 
         return valueString;
-      }
-
-      function getColorForValue(value) {
-        for (var i = data.thresholds.length - 1; i >= 0 ; i--) {
-          if (value >= data.thresholds[i]) {
-            return data.colorMap[i];
-          }
-        }
-        return null;
       }
 
       function getSpan(className, fontSize, value)  {
@@ -157,7 +148,7 @@ function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
         var body = getBigValueHtml();
 
         if (panel.colorBackground && !isNaN(data.valueRounded)) {
-          var color = getColorForValue(data.valueRounded);
+          var color = getColorForValue(data, data.valueRounded);
           if (color) {
             $panelContainer.css('background-color', color);
             if (scope.fullscreen) {
@@ -228,4 +219,14 @@ function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
   };
 }
 
-export {singleStatPanel as panel};
+function getColorForValue(data, value) {
+  for (var i = data.thresholds.length; i > 0; i--) {
+    if (value >= data.thresholds[i]) {
+      return data.colorMap[i];
+    }
+  }
+
+  return _.first(data.colorMap);
+}
+
+export {singleStatPanel as panel, getColorForValue};

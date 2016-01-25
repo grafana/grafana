@@ -141,6 +141,7 @@ define([
     describe('when creating dashboard with old schema', function() {
       var model;
       var graph;
+      var singlestat;
 
       beforeEach(function() {
         model = _dashboardSrv.create({
@@ -155,6 +156,10 @@ define([
                 {
                   type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
                   targets: [{refId: 'A'}, {}],
+                },
+                {
+                  type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  targets: [{refId: 'A'}, {}],
                 }
               ]
             }
@@ -162,6 +167,7 @@ define([
         });
 
         graph = model.rows[0].panels[0];
+        singlestat = model.rows[0].panels[1];
       });
 
       it('should have title', function() {
@@ -179,6 +185,10 @@ define([
 
       it('graphite panel should change name too graph', function() {
         expect(graph.type).to.be('graph');
+      });
+
+      it('single stat panel should have two thresholds', function() {
+        expect(singlestat.thresholds).to.be('20,30');
       });
 
       it('queries without refId should get it', function() {
@@ -204,7 +214,7 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(8);
+        expect(model.schemaVersion).to.be(9);
       });
 
     });
