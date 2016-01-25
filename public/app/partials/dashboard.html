@@ -23,7 +23,7 @@
 						<div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
 					</div>
 					<div class="row-open" ng-show="!row.collapse">
-						<div class='row-tab bgSuccess dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboardViewState.fullscreen">
+						<div class='row-tab bgSuccess dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboard.meta.fullscreen">
 							<span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
 								<i class="fa fa-bars"></i>
 							</span>
@@ -79,7 +79,7 @@
 					<div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
 					</div>
 
-					<div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
+					<div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboard.meta.fullscreen" drag="panel.id"
 						ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
 						<panel-loader class="panel-margin" dashboard="dashboard" row="row" panel="panel">
 						</panel-loader>
@@ -98,7 +98,7 @@
 			</div>
 		</div>
 
-		<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboardViewState.fullscreen">
+		<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboard.meta.fullscreen">
 			<div class="span12" style="text-align:right;">
 				<span style="margin-right: 10px;" ng-click="addRowDefault()" class="pointer btn btn-info btn-small">
 					<span><i class="fa fa-plus"></i> ADD ROW</span>

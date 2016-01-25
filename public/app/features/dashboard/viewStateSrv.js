@@ -17,6 +17,7 @@ function (angular, _, $) {
       self.state = {};
       self.panelScopes = [];
       self.$scope = $scope;
+      self.dashboard = $scope.dashboard;
 
       $scope.exitFullscreen = function() {
         if (self.state.fullscreen) {
@@ -74,7 +75,7 @@ function (angular, _, $) {
 
     DashboardViewState.prototype.update = function(state, skipUrlSync) {
       _.extend(this.state, state);
-      this.fullscreen = this.state.fullscreen;
+      this.dashboard.meta.fullscreen = this.state.fullscreen;
 
       if (!this.state.fullscreen) {
         this.state.panelId = null;
@@ -92,7 +93,7 @@ function (angular, _, $) {
     DashboardViewState.prototype.syncState = function() {
       if (this.panelScopes.length === 0) { return; }
 
-      if (this.fullscreen) {
+      if (this.dashboard.meta.fullscreen) {
         if (this.fullscreenPanel) {
           this.leaveFullscreen(false);
         }
@@ -148,13 +149,13 @@ function (angular, _, $) {
 
       ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
       ctrl.height = ctrl.editMode ? editHeight : fullscreenHeight;
+      ctrl.fullscreen = true;
 
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
 
       $(window).scrollTop(0);
 
-      panelScope.fullscreen = true;
       this.$scope.appEvent('panel-fullscreen-enter', {panelId: ctrl.panel.id});
 
       $timeout(function() {
