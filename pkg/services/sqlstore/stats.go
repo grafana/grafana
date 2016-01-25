@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
