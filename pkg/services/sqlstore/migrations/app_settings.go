@@ -27,5 +27,5 @@ func addAppSettingsMigration(mg *Migrator) {
 	mg.AddMigration("create app_settings table v2", NewAddTableMigration(appSettingsV2))
 
 	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v3", appSettingsV1)
+	addTableIndicesMigrations(mg, "v3", appSettingsV2)
 }
