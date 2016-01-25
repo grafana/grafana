@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -34,7 +36,11 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("dashboard") + `
-      ) AS dashboard_count
+      ) AS dashboard_count,
+      (
+        SELECT COUNT(*)
+        FROM ` + dialect.Quote("playlist") + `
+      ) AS playlist_count
 			`
 
 	var stats m.SystemStats

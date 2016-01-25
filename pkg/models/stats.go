@@ -4,6 +4,7 @@ type SystemStats struct {
 	DashboardCount int
 	UserCount      int
 	OrgCount       int
+	PlaylistCount  int
 }
 
 type DataSourceStats struct {
