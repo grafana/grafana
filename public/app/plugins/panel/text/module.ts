@@ -3,10 +3,6 @@
 import _ from 'lodash';
 import {PanelDirective, PanelCtrl} from '../../../features/panel/panel';
 
-function optionsEditorTab() {
-  return {templateUrl: 'public/app/plugins/panel/text/editor.html'};
-}
-
  // Set and populate defaults
 var panelDefaults = {
   mode    : "markdown", // 'html', 'markdown', 'text'
@@ -26,8 +22,9 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   initEditorTabs() {
-    super.initEditorTabs();
-    this.editorTabs.push({title: 'Options', directiveFn: optionsEditorTab});
+    this.addEditorTab('Options', () => {
+      return { templateUrl: 'public/app/plugins/panel/text/editor.html' };
+    });
   }
 
   render() {
@@ -41,7 +38,7 @@ export class TextPanelCtrl extends PanelCtrl {
     // this.panelRenderingComplete();
   }
 
-  refreshData() {
+  refresh() {
     this.render();
   }
 
@@ -65,7 +62,9 @@ export class TextPanelCtrl extends PanelCtrl {
     } else {
       System.import('vendor/showdown').then(Showdown => {
         this.converter = new Showdown.converter();
-        this.updateContent(this.converter.makeHtml(text));
+        this.$scope.$apply(() => {
+          this.updateContent(this.converter.makeHtml(text));
+        });
       });
     }
   }
@@ -76,10 +75,6 @@ export class TextPanelCtrl extends PanelCtrl {
     } catch (e) {
       console.log('Text panel error: ', e);
       this.content = this.$sce.trustAsHtml(html);
-    }
-
-    if (!this.$scope.$$phase) {
-      this.$scope.$digest();
     }
   }
 }

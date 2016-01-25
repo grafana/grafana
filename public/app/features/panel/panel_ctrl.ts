@@ -25,6 +25,12 @@ export class PanelCtrl {
     this.icon = plugin.info.icon;
     this.editorTabIndex = 0;
     this.publishAppEvent('panel-instantiated', {scope: $scope});
+
+    $scope.$on("refresh", () => this.refresh());
+  }
+
+  refresh() {
+    return;
   }
 
   publishAppEvent(evtName, evt) {
@@ -43,6 +49,8 @@ export class PanelCtrl {
 
   editPanel() {
     if (!this.editorTabs) {
+      this.editorTabs = [];
+      this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
       this.initEditorTabs();
     }
 
@@ -54,8 +62,11 @@ export class PanelCtrl {
   }
 
   initEditorTabs() {
-    this.editorTabs = [];
-    this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
+    return;
+  }
+
+  addEditorTab(title, directiveFn) {
+    this.editorTabs.push({title: title, directiveFn: directiveFn});
   }
 
   getMenu() {
