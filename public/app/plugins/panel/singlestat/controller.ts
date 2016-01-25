@@ -1,17 +1,15 @@
-define([
-  'angular',
-  'app/app',
-  'lodash',
-  'app/core/utils/kbn',
-  'app/core/time_series',
-  'app/features/panel/panel_meta',
-],
-function (angular, app, _, kbn, TimeSeries, PanelMeta) {
-  'use strict';
+///<reference path="../../../headers/common.d.ts" />
+
+import angular from 'angular';
+import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
+import PanelMeta from 'app/features/panel/panel_meta2';
+import TimeSeries from '../../../core/time_series2';
+
+export class SingleStatCtrl {
 
   /** @ngInject */
-  function SingleStatCtrl($scope, panelSrv, panelHelper) {
-
+  constructor($scope, panelSrv, panelHelper) {
     $scope.panelMeta = new PanelMeta({
       panelName: 'Singlestat',
       editIcon:  "fa fa-dashboard",
@@ -57,6 +55,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     };
 
     _.defaults($scope.panel, _d);
+
     $scope.unitFormats = kbn.getUnitFormats();
 
     $scope.setUnitFormat = function(subItem) {
@@ -104,8 +103,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       if (options.background) {
         $scope.panel.colorValue = false;
         $scope.panel.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
-      }
-      else {
+      } else {
         $scope.panel.colorBackground = false;
         $scope.panel.colors = ['rgba(50, 172, 45, 0.97)', 'rgba(237, 129, 40, 0.89)', 'rgba(245, 54, 54, 0.9)'];
       }
@@ -151,7 +149,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       // reduce starting decimals if not needed
       if (Math.floor(value) === value) { dec = 0; }
 
-      var result = {};
+      var result: any = {};
       result.decimals = Math.max(0, dec);
       result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
@@ -159,7 +157,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     };
 
     $scope.render = function() {
-      var data = {};
+      var data: any = {};
 
       $scope.setValues(data);
 
@@ -176,7 +174,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     $scope.setValues = function(data) {
       data.flotpairs = [];
 
-      if($scope.series.length > 1) {
+      if ($scope.series.length > 1) {
         $scope.inspector.error = new Error();
         $scope.inspector.error.message = 'Multiple Series Error';
         $scope.inspector.error.data = 'Metric query returns ' + $scope.series.length +
@@ -204,7 +202,7 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
       }
 
       // check value to text mappings
-      for(var i = 0; i < $scope.panel.valueMaps.length; i++) {
+      for (var i = 0; i < $scope.panel.valueMaps.length; i++) {
         var map = $scope.panel.valueMaps[i];
         // special null case
         if (map.value === 'null') {
@@ -239,7 +237,6 @@ function (angular, app, _, kbn, TimeSeries, PanelMeta) {
     };
 
     $scope.init();
-  }
 
-  return SingleStatCtrl;
-});
+  }
+}
