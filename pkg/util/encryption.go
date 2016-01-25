@@ -4,13 +4,17 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"io"
 
 	"github.com/grafana/grafana/pkg/log"
 )
 
+const saltLength = 8
+
 func Decrypt(payload []byte, secret string) []byte {
-	key := encryptionKeyToBytes(secret)
+	salt := payload[:saltLength]
+	key := encryptionKeyToBytes(secret, string(salt))
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -22,8 +26,8 @@ func Decrypt(payload []byte, secret string) []byte {
 	if len(payload) < aes.BlockSize {
 		log.Fatal(4, "payload too short")
 	}
-	iv := payload[:aes.BlockSize]
-	payload = payload[aes.BlockSize:]
+	iv := payload[saltLength : saltLength+aes.BlockSize]
+	payload = payload[saltLength+aes.BlockSize:]
 
 	stream := cipher.NewCFBDecrypter(block, iv)
 
@@ -33,8 +37,9 @@ func Decrypt(payload []byte, secret string) []byte {
 }
 
 func Encrypt(payload []byte, secret string) []byte {
-	key := encryptionKeyToBytes(secret)
+	salt := GetRandomString(saltLength)
 
+	key := encryptionKeyToBytes(secret, salt)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(4, err.Error())
@@ -42,25 +47,20 @@ func Encrypt(payload []byte, secret string) []byte {
 
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
-	ciphertext := make([]byte, aes.BlockSize+len(payload))
-	iv := ciphertext[:aes.BlockSize]
+	ciphertext := make([]byte, saltLength+aes.BlockSize+len(payload))
+	copy(ciphertext[:saltLength], []byte(salt))
+	iv := ciphertext[saltLength : saltLength+aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		log.Fatal(4, err.Error())
 	}
 
 	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], payload)
+	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
 	return ciphertext
 }
 
 // Key needs to be 32bytes
-func encryptionKeyToBytes(secret string) []byte {
-	key := make([]byte, 32, 32)
-	keyBytes := []byte(secret)
-	secretLength := len(keyBytes)
-	for i := 0; i < 32; i++ {
-		key[i] = keyBytes[i%secretLength]
-	}
-	return key
+func encryptionKeyToBytes(secret, salt string) []byte {
+	return PBKDF2([]byte(secret), []byte(salt), 10000, 32, sha256.New)
 }
