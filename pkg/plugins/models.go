@@ -45,7 +45,6 @@ type PluginStaticRoute struct {
 type EnabledPlugins struct {
 	Panels      []*PanelPlugin
 	DataSources map[string]*DataSourcePlugin
-	ApiList     []*ApiPlugin
 	Apps        []*AppPlugin
 }
 
@@ -53,7 +52,6 @@ func NewEnabledPlugins() EnabledPlugins {
 	return EnabledPlugins{
 		Panels:      make([]*PanelPlugin, 0),
 		DataSources: make(map[string]*DataSourcePlugin),
-		ApiList:     make([]*ApiPlugin, 0),
 		Apps:        make([]*AppPlugin, 0),
 	}
 }

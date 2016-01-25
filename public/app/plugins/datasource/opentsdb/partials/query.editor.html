@@ -104,8 +104,20 @@
 			</select>
 		</li>
 
-		<li class="tight-form-item query-keyword">
-			Disable downsampling <editor-checkbox text="" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
+    <li class="tight-form-item query-keyword">
+      Fill policy
+      <tip>Available since OpenTSDB 2.2</tip>
+    </li>
+
+    <li>
+      <select ng-model="target.downsampleFillPolicy" class="tight-form-input input-small"
+              ng-options="agg for agg in fillPolicies"
+              ng-change="targetBlur()">
+      </select>
+    </li>
+
+    <li class="tight-form-item query-keyword">
+      Disable downsampling <editor-checkbox text="" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
 		</li>
 
 	</ul>
