@@ -35,6 +35,10 @@ export class PanelCtrl {
     this.publishAppEvent('panel-instantiated', {scope: this.$scope});
   }
 
+  renderingCompleted() {
+    this.$scope.$root.performance.panelsRendered++;
+  }
+
   refresh() {
     return;
   }
