@@ -8,7 +8,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
-  bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandler("sql", GetAdminStats)
 }
 
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
@@ -49,7 +49,7 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 }
 
 func GetAdminStats(query *m.GetAdminStatsQuery) error {
-  var rawSql = `SELECT
+	var rawSql = `SELECT
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("user") + `
@@ -73,23 +73,23 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("data_source") + `
-      ) AS datasource_count,
+      ) AS data_source_count,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("playlist") + `
       ) AS playlist_count,
       (
-        SELECT DISTINCT(dashboard_id)
+        SELECT COUNT (DISTINCT ` + dialect.Quote("dashboard_id") + ` )
         FROM ` + dialect.Quote("star") + `
       ) AS starred_db_count
       `
 
-  var stats m.AdminStats
-  _, err := x.Sql(rawSql).Get(&stats)
-  if err != nil {
-    return err
-  }
+	var stats m.AdminStats
+	_, err := x.Sql(rawSql).Get(&stats)
+	if err != nil {
+		return err
+	}
 
-  query.Result = &stats
-  return err
+	query.Result = &stats
+	return err
 }

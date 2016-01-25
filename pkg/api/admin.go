@@ -3,10 +3,10 @@ package api
 import (
 	"strings"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-  "github.com/grafana/grafana/pkg/bus"
-  m "github.com/grafana/grafana/pkg/models"
 )
 
 func AdminGetSettings(c *middleware.Context) {
@@ -32,12 +32,12 @@ func AdminGetSettings(c *middleware.Context) {
 
 func AdminGetStats(c *middleware.Context) {
 
-  statsQuery := m.GetAdminStatsQuery{}
-  
-  if err := bus.Dispatch(&statsQuery); err != nil {
-    c.JsonApiErr(500, "Failed to get admin stats from database", err)
-    return
-  }
+	statsQuery := m.GetAdminStatsQuery{}
 
-  c.JSON(200, statsQuery.Result)
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		c.JsonApiErr(500, "Failed to get admin stats from database", err)
+		return
+	}
+
+	c.JSON(200, statsQuery.Result)
 }
