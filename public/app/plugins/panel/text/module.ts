@@ -14,8 +14,8 @@ export class TextPanelCtrl extends PanelCtrl {
   content: string;
 
   /** @ngInject */
-  constructor($scope, private templateSrv, private $sce) {
-    super($scope);
+  constructor($scope, $injector, private templateSrv, private $sce) {
+    super($scope, $injector);
 
     _.defaults(this.panel, panelDefaults);
     this.render();
@@ -35,7 +35,7 @@ export class TextPanelCtrl extends PanelCtrl {
     } else if (this.panel.mode === 'text') {
       this.renderText(this.panel.content);
     }
-    // this.panelRenderingComplete();
+    this.renderingCompleted();
   }
 
   refresh() {
