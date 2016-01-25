@@ -20,16 +20,16 @@ type GetDataSourceStatsQuery struct {
 }
 
 type AdminStats struct {
-  UserCount       int
-  OrgCount        int
-  DashboardCount  int 
-  DBSnapshotCount int
-  DBTagCount      int
-  DataSourceCount int
-  PlaylistCount   int
-  StarredDBCount  int
+	UserCount       int `json:"user_count"`
+	OrgCount        int `json:"org_count"`
+	DashboardCount  int `json:"dashboard_count"`
+	DbSnapshotCount int `json:"db_snapshot_count"`
+	DbTagCount      int `json:"db_tag_count"`
+	DataSourceCount int `json:"data_source_count"`
+	PlaylistCount   int `json:"playlist_count"`
+	StarredDbCount  int `json:"starred_db_count"`
 }
 
 type GetAdminStatsQuery struct {
-  Result *AdminStats
+	Result *AdminStats
 }
