@@ -81,7 +81,11 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
       (
         SELECT COUNT (DISTINCT ` + dialect.Quote("dashboard_id") + ` )
         FROM ` + dialect.Quote("star") + `
-      ) AS starred_db_count
+      ) AS starred_db_count,
+      (
+        SELECT SUM ( ` + dialect.Quote("is_admin") + ` )
+        FROM ` + dialect.Quote("user") + `
+      ) AS grafana_admin_count
       `
 
 	var stats m.AdminStats
