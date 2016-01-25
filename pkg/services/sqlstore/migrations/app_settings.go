@@ -4,7 +4,7 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addAppSettingsMigration(mg *Migrator) {
 
-	appSettingsV1 := Table{
+	appSettingsV2 := Table{
 		Name: "app_settings",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -22,7 +22,9 @@ func addAppSettingsMigration(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create app_settings table v1", NewAddTableMigration(appSettingsV1))
+	mg.AddMigration("Drop old table app_settings v1", NewDropTableMigration("app_settings"))
+
+	mg.AddMigration("create app_settings table v2", NewAddTableMigration(appSettingsV2))
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v3", appSettingsV1)
