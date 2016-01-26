@@ -14,6 +14,7 @@ export class SearchCtrl {
   currentSearchId: number;
   tagsMode: boolean;
   showImport: boolean;
+  dismiss: any;
 
   /** @ngInject */
   constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
@@ -32,7 +33,7 @@ export class SearchCtrl {
 
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      this.$scope.dismiss();
+      this.dismiss();
     }
     if (evt.keyCode === 40) {
       this.moveSelection(1);
@@ -137,7 +138,9 @@ export function searchDirective() {
     controller: SearchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {},
+    scope: {
+      dismiss: '&'
+    },
   };
 }
 

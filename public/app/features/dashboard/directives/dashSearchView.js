@@ -29,7 +29,7 @@ function (angular, $) {
               editorScope = null;
             };
 
-            var view = $('<search class="search-container"></search>');
+            var view = $('<search class="search-container" dismiss="dismiss()"></search>');
 
             elem.append(view);
             $compile(elem.contents())(editorScope);
