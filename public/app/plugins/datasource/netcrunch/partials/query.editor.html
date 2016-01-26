@@ -88,7 +88,7 @@
     <ng-type-ahead class="nodes-selection-container"
                    input-element="#node-input{{$index}}"
                    content-element="#nodes-list{{$index}}"
-                   on-esc = "closeNodeSelectionTypeAhead()"
+                   on-esc="closeNodeSelectionTypeAhead()"
                    ng-show="nodeSelectionShow">
       <input type="text"
              class="tight-form-clear-input node-input"
@@ -149,6 +149,43 @@
         tabindex="1">
       {{target.localVars.counterDisplayName}}
     </li>
+    <ng-type-ahead class="counter-selection-container"
+                   input-element="#counter-input{{$index}}"
+                   content-element="#counters-list{{$index}}"
+                   on-esc="closeCounterSelectionTypeAhead()"
+                   ng-show="counterSelectionShow">
+      <input type="text"
+             class="tight-form-clear-input counter-input"
+             ng-focus-me="counterSelectionFocus"
+             spellcheck="false"
+             ng-model="counterNamePattern"
+             tabindex="1"
+             id="counter-input{{$index}}">
+      <div class="close-type-ahead-button"
+           ng-click="closeCounterSelectionTypeAhead()">
+        <i class="fa fa-remove"></i>
+      </div>
+      <div class="counters-ahead dropdown-menu" id="counters-panel{{$index}}">
+        <ng-spinner class = "net-crunch-container spinner"
+                    spinner-show-trigger = "processingCounters"
+                    spinner-state = "countersSpinner"
+                    spinner-delay = "350">
+          <img src = "img/load_big.gif">
+        </ng-spinner>
+        <div class="counters-levels" id="counters-list{{$index}}"
+             ng-hide="countersSpinner"
+             ng-tree="counter in counters | netCrunchCounter : counterNamePattern"
+             ng-tree-class="counter-level"
+             ng-tree-scroll-parent="counters-panel{{$index}}"
+             ng-tree-config="counterListConfig">
+          <div ng-tree-inner-level="counter.innerLevel"
+               ng-click="selectCounter(counter)"
+               tabindex="{{counter.tabIndex}}">
+            {{counter.displayName}}
+          </div>
+        </div>
+      </div>
+    </ng-type-ahead>
 
     <!-- Series options -->
     <li class="tight-form-item" ng-hide="panel.scopedVars.rawData">
