@@ -1,5 +1,4 @@
 define([
-  './search_ctrl',
   './inspect_ctrl',
   './json_editor_ctrl',
   './login_ctrl',
