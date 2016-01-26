@@ -19,9 +19,11 @@ export class TextPanelCtrl extends PanelCtrl {
 
     _.defaults(this.panel, panelDefaults);
     this.render();
+
   }
 
   initEditorTabs() {
+    this.icon = 'fa fa-text-width';
     this.addEditorTab('Options', () => {
       return { templateUrl: 'public/app/plugins/panel/text/editor.html' };
     });
