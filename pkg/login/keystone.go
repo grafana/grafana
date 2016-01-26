@@ -13,6 +13,7 @@ import (
 type keystoneAuther struct {
     server            string
     v3                bool
+    userdomainname    string
     token             string
     tenants           []v2_tenant_struct
 }
@@ -67,12 +68,26 @@ type v3_auth_post_struct struct {
 }
 
 type v3_auth_struct struct {
-    PasswordCredentials v3_credentials_struct  `json:"passwordCredentials"`
+    PasswordCredentials v3_identity_struct  `json:"identity"`
 }
 
-type v3_credentials_struct struct {
-    Username string `json:"username"`
+type v3_identity_struct struct {
+    Methods string  `json:"methods"`
+    PasswordMethod v3_passwordmethod_struct  `json:"password"`
+}
+
+type v3_passwordmethod_struct struct {
+    User v3_user_struct `json:"user"`
+}
+
+type v3_user_struct struct {
+    Name string `json:"username"`
     Password string `json:"password"`
+    Domain v3_userdomain_struct `json:"domain"`
+}
+
+type v3_userdomain_struct struct {
+    Name string `json:"name"`
 }
 
 type v3_project_response_struct struct{
@@ -83,8 +98,8 @@ type v3_project_struct struct {
     Name string
 }
 
-func NewKeystoneAuthenticator(server string, v3 bool) *keystoneAuther {
-    return &keystoneAuther{server: server, v3: v3}
+func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname) *keystoneAuther {
+    return &keystoneAuther{server: server, v3: v3, userdomainname: userdomainaname}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
@@ -152,8 +167,10 @@ func (a *keystoneAuther) authenticateV2(username, password string) error {
 
 func (a *keystoneAuther) authenticateV3(username, password string) error {
     var auth_post v3_auth_post_struct
-    auth_post.Auth.PasswordCredentials.Username = username
-    auth_post.Auth.PasswordCredentials.Password = password
+    auth_post.Auth.PasswordCredentials.Methods = "password"
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Name = username
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Password = password
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Domain.Name = a.userdomainname
     b, _ := json.Marshal(auth_post)
 
     request, err := http.NewRequest("POST", a.server + "/v3/auth/tokens", bytes.NewBuffer(b))
