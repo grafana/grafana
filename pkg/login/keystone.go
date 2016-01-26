@@ -175,6 +175,9 @@ func (a *keystoneAuther) authenticateV3(username, password string) error {
     if err != nil {
         return err
     }
+
+    a.token = auth_response.Access.Token.Id
+    return nil
 }
 
 func (a *keystoneAuther) getGrafanaUserFor(username string) (*m.User, error) {
