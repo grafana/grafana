@@ -1,13 +1,16 @@
 <div class="tight-form net-crunch-tight-form"
      ng-class="{'tight-form-disabled': target.hide}">
 
+  <!-- Right side menu -->
   <ul class="tight-form-list pull-right">
-
     <li ng-show = "target.localVars.counterError" class = "tight-form-item">
       <a bs-tooltip = "target.localVars.counterErrorMessage"
          style = "color: rgb(229, 189, 28)" role = "menuitem">
         <i class = "fa fa-warning"></i>
       </a>
+    </li>
+    <li class="tight-form-item small" ng-show="target.datasource">
+      <em>{{target.datasource}}</em>
     </li>
     <li class="tight-form-item">
       <div class="dropdown">
@@ -39,12 +42,12 @@
         <i class="fa fa-remove"></i>
       </a>
     </li>
-
   </ul>
 
+  <!-- Left side options -->
   <ul class="tight-form-list">
     <li class="tight-form-item" style="min-width: 15px; text-align: center">
-      {{counterLetters[$index]}}
+      {{target.refId}}
     </li>
     <li>
       <a class="tight-form-item"
@@ -56,6 +59,8 @@
   </ul>
 
   <ul class="tight-form-list">
+
+    <!-- Node selection -->
     <li class="tight-form-item tile spinner"
         ng-show="target.localVars.nodeSpinner"
         tabindex="1">
@@ -66,12 +71,11 @@
       </ng-spinner>
     </li>
     <li class="tight-form-item tile"
-        node-type-ahead={{$index}}
         ng-focus-me="target.localVars.nodeFocus"
         ng-hide="target.localVars.nodeSpinner"
         ng-enter-click
         ng-down-arrow-click
-        ng-click="nodeSelectionTypeAhead($index)"
+        ng-click="nodeSelectionTypeAhead()"
         tabindex="1">
       <div class="node-icon">
         <img ng-src={{target.localVars.nodeIcon}}>
@@ -81,7 +85,51 @@
         <div class="node-address">{{target.localVars.nodeAddress}}</div>
       </div>
     </li>
+    <ng-type-ahead class="nodes-selection-container"
+                   input-element="#node-input{{$index}}"
+                   content-element="#nodes-list{{$index}}"
+                   on-esc = "closeNodeSelectionTypeAhead()"
+                   ng-show="nodeSelectionShow">
+      <input type="text"
+             class="tight-form-clear-input node-input"
+             ng-focus-me="nodeSelectionFocus"
+             spellcheck="false"
+             ng-model="nodeNamePattern"
+             tabindex="1"
+             id="node-input{{$index}}">
+      <div class="close-type-ahead-button"
+           ng-click="closeNodeSelectionTypeAhead()">
+        <i class="fa fa-remove"></i>
+      </div>
+      <div class="nodes-ahead dropdown-menu" id="nodes-panel{{$index}}">
+        <ng-spinner class = "net-crunch-container spinner"
+                    spinner-show-trigger = "processingNodes"
+                    spinner-state = "nodesSpinner"
+                    spinner-delay = "350">
+          <img src = "img/load_big.gif">
+        </ng-spinner>
+        <div class="net-crunch-container" id="nodes-list{{$index}}"
+             ng-virtual-scroll-list
+             ng-virtual-scroll-list-parent="#nodes-panel{{$index}}"
+             ng-hide="nodesSpinner">
+          <div class="tile-list-element"
+               ng-repeat="node in nodes | netCrunchNodes : nodeNamePattern track by node.values.Id"
+               ng-virtual-scroll-list-element-height="40"
+               tabindex="{{node.local.tabIndex}}"
+               ng-click="selectNode(node)">
+            <div class="node-icon">
+              <img ng-src={{node.local.iconUrl}}>
+            </div>
+            <div class="tile-description">
+              <div class="node-name">{{node.values.Name}}</div>
+              <div class="node-address">{{node.values.Address}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-type-ahead>
 
+    <!-- Counter selection -->
     <li class="tight-form-item counter spinner"
         ng-show="target.localVars.counterSpinner"
         tabindex="1">
@@ -93,38 +141,35 @@
       </ng-spinner>
     </li>
     <li class="tight-form-item counter"
-        counter-type-ahead={{$index}}
         ng-focus-me="target.localVars.counterFocus"
         ng-hide="target.localVars.counterSpinner"
         ng-enter-click
         ng-down-arrow-click
-        ng-click="counterSelectionTypeAhead($index)"
+        ng-click="counterSelectionTypeAhead()"
         tabindex="1">
       {{target.localVars.counterDisplayName}}
     </li>
 
+    <!-- Series options -->
     <li class="tight-form-item" ng-hide="panel.scopedVars.rawData">
-      <input class="cr1" id="min{{$index}}" type="checkbox"
+      <input class="cr1" id="netCrunchMin{{$index}}" type="checkbox"
              ng-model="target.series.min"
-             ng-change="seriesChange(target)">
-      <label for="min{{$index}}" class="cr1">Min</label>
+             ng-change="seriesChange()">
+      <label for="netCrunchMin{{$index}}" class="cr1">Min</label>
     </li>
-
     <li class="tight-form-item" ng-hide="panel.scopedVars.rawData">
-      <input class="cr1" id="avg{{$index}}" type="checkbox"
+      <input class="cr1" id="netCrunchAvg{{$index}}" type="checkbox"
              ng-model="target.series.avg"
-             ng-change="seriesChange(target)">
-      <label for="avg{{$index}}" class="cr1">Avg</label>
+             ng-change="seriesChange()">
+      <label for="netCrunchAvg{{$index}}" class="cr1">Avg</label>
     </li>
-
     <li class="tight-form-item" ng-hide="panel.scopedVars.rawData">
-      <input class="cr1" id="max{{$index}}" type="checkbox"
+      <input class="cr1" id="netCrunchMax{{$index}}" type="checkbox"
              ng-model="target.series.max"
-             ng-change="seriesChange(target)">
-      <label for="max{{$index}}" class="cr1">Max</label>
+             ng-change="seriesChange()">
+      <label for="netCrunchMax{{$index}}" class="cr1">Max</label>
     </li>
   </ul>
-
 
   <div class="clearfix"></div>
 </div>
