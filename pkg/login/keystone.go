@@ -50,6 +50,39 @@ type v2_tenant_struct struct {
     Name string
 }
 
+type v3_auth_response_struct struct {
+    Access v3_access_struct
+}
+
+type v3_access_struct struct {
+    Token v3_token_struct
+}
+
+type v3_token_struct struct {
+    Id string
+}
+
+type v3_auth_post_struct struct {
+    Auth v3_auth_struct  `json:"auth"`
+}
+
+type v3_auth_struct struct {
+    PasswordCredentials v3_credentials_struct  `json:"passwordCredentials"`
+}
+
+type v3_credentials_struct struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+}
+
+type v3_project_response_struct struct{
+    Tenants []v3_project_struct
+}
+
+type v3_project_struct struct {
+    Name string
+}
+
 func NewKeystoneAuthenticator(server string, v3 bool) *keystoneAuther {
     return &keystoneAuther{server: server, v3: v3}
 }
@@ -118,8 +151,30 @@ func (a *keystoneAuther) authenticateV2(username, password string) error {
 }
 
 func (a *keystoneAuther) authenticateV3(username, password string) error {
-    // TODO implement
-    return errors.New("Keystone v3 authentication not implemented")
+    var auth_post v3_auth_post_struct
+    auth_post.Auth.PasswordCredentials.Username = username
+    auth_post.Auth.PasswordCredentials.Password = password
+    b, _ := json.Marshal(auth_post)
+
+    request, err := http.NewRequest("POST", a.server + "/v3/auth/tokens", bytes.NewBuffer(b))
+    if err != nil {
+        return err
+    }
+
+    client := &http.Client{}
+    resp, err := client.Do(request)
+    if err != nil {
+        return err
+    } else if resp.StatusCode != 200 {
+        return errors.New("Keystone authentication failed: " + resp.Status)
+    }
+
+    decoder := json.NewDecoder(resp.Body)
+    var auth_response v3_auth_response_struct
+    err = decoder.Decode(&auth_response)
+    if err != nil {
+        return err
+    }
 }
 
 func (a *keystoneAuther) getGrafanaUserFor(username string) (*m.User, error) {
