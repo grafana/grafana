@@ -4,6 +4,7 @@ import {GraphCtrl} from './graph_ctrl';
 
 import './graph';
 import './legend';
+import './seriesOverridesCtrl';
 
 class GraphPanel extends PanelDirective {
   controller = GraphCtrl;
