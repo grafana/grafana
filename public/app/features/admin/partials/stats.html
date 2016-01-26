@@ -5,7 +5,7 @@
 </topnav>
 
 <div class="page-container">
-	<div class="page-wide">
+	<div class="page-wide" ng-init="ctrl.init()">
 		<h1>
 			Overview
 		</h1>
@@ -20,39 +20,39 @@
 			<tbody>
         <tr>
 					<td>Total dashboards</td>
-					<td>{{stats.dashboard_count}}</td>
+					<td>{{ctrl.stats.dashboard_count}}</td>
 				</tr>
         <tr>
           <td>Total users</td>
-          <td>{{stats.user_count}}</td>
+          <td>{{ctrl.stats.user_count}}</td>
         </tr>
         <tr>
           <td>Total grafana admins</td>
-          <td>{{stats.grafana_admin_count}}</td>
+          <td>{{ctrl.stats.grafana_admin_count}}</td>
         </tr>
         <tr>
           <td>Total organizations</td>
-          <td>{{stats.org_count}}</td>
+          <td>{{ctrl.stats.org_count}}</td>
         </tr>
         <tr>
           <td>Total datasources</td>
-          <td>{{stats.data_source_count}}</td>
+          <td>{{ctrl.stats.data_source_count}}</td>
         </tr>
         <tr>
           <td>Total playlists</td>
-          <td>{{stats.playlist_count}}</td>
+          <td>{{ctrl.stats.playlist_count}}</td>
         </tr>
         <tr>
           <td>Total snapshots</td>
-          <td>{{stats.db_snapshot_count}}</td>
+          <td>{{ctrl.stats.db_snapshot_count}}</td>
         </tr>
         <tr>
           <td>Total dashboard tags</td>
-          <td>{{stats.db_tag_count}}</td>
+          <td>{{ctrl.stats.db_tag_count}}</td>
         </tr>
         <tr>
           <td>Total starred dashboards</td>
-          <td>{{stats.starred_db_count}}</td>
+          <td>{{ctrl.stats.starred_db_count}}</td>
         </tr>
 			</tbody>
 		</table>

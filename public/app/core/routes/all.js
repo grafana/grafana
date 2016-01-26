@@ -115,6 +115,7 @@ define([
       .when('/admin/stats', {
         templateUrl: 'app/features/admin/partials/stats.html',
         controller : 'AdminStatsCtrl',
+        controllerAs: 'ctrl',
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
