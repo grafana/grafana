@@ -192,7 +192,43 @@ class MetricsPanelCtrl extends PanelCtrl {
       return results;
     });
   }
+
+  addDataQuery(datasource) {
+    this.dashboard.addDataQueryTo(this.panel, datasource);
+  }
+
+  removeDataQuery(query) {
+    this.dashboard.removeDataQuery(this.panel, query);
+    this.refresh();
+  };
+
+  duplicateDataQuery(query) {
+    this.dashboard.duplicateDataQuery(this.panel, query);
+  }
+
+  moveDataQuery(fromIndex, toIndex) {
+    this.dashboard.moveDataQuery(this.panel, fromIndex, toIndex);
+  }
+
+  setDatasource(datasource) {
+    // switching to mixed
+    if (datasource.meta.mixed) {
+      _.each(this.panel.targets, target => {
+        target.datasource = this.panel.datasource;
+        if (target.datasource === null) {
+          target.datasource = config.defaultDatasource;
+        }
+      });
+    } else if (this.datasource && this.datasource.meta.mixed) {
+      _.each(this.panel.targets, target => {
+        delete target.datasource;
+      });
+    }
+
+    this.panel.datasource = datasource.value;
+    this.datasource = null;
+    this.refresh();
+  }
 }
 
 export {MetricsPanelCtrl};
-

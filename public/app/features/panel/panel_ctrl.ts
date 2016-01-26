@@ -16,6 +16,7 @@ export class PanelCtrl {
   fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
+  editorHelpIndex: number;
 
   constructor($scope, $injector) {
     var plugin = config.panels[this.panel.type];
@@ -100,4 +101,13 @@ export class PanelCtrl {
   broadcastRender(arg1?, arg2?) {
     this.$scope.$broadcast('render', arg1, arg2);
   }
+
+ toggleEditorHelp(index) {
+   if (this.editorHelpIndex === index) {
+     this.editorHelpIndex = null;
+     return;
+   }
+   this.editorHelpIndex = index;
+ }
+
 }
