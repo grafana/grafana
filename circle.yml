@@ -12,6 +12,7 @@ dependencies:
     - mkdir -p ${GOPATH}/src/${ORG_PATH}
     - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
+    - npm install -g npm
     - npm install
 
 test:
