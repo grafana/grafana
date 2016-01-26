@@ -39,7 +39,7 @@
 
 		<div class="gf-box-body">
 			<div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
-				<panel-editor-tab editor-tab="tab" ctrl="ctrl"></panel-editor-tab>
+				<panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
 			</div>
 		</div>
 	</div>
