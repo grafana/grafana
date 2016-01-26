@@ -45,18 +45,19 @@ define([
       }
 
       $scope.updateCurrentOverrides();
-      $scope.render();
+      $scope.ctrl.render();
     };
 
     $scope.colorSelected = function(color) {
       $scope.override['color'] = color;
       $scope.updateCurrentOverrides();
-      $scope.render();
+      $scope.ctrl.render();
     };
 
     $scope.openColorSelector = function() {
       var popoverScope = $scope.$new();
       popoverScope.colorSelected = $scope.colorSelected;
+      popoverScope.colors = $scope.ctrl.colors;
 
       popoverSrv.show({
         element: $element.find(".dropdown"),
@@ -69,11 +70,11 @@ define([
     $scope.removeOverride = function(option) {
       delete $scope.override[option.propertyName];
       $scope.updateCurrentOverrides();
-      $scope.render();
+      $scope.ctrl.render();
     };
 
     $scope.getSeriesNames = function() {
-      return _.map($scope.seriesList, function(series) {
+      return _.map($scope.ctrl.seriesList, function(series) {
         return series.alias;
       });
     };
@@ -107,7 +108,5 @@ define([
     $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
     $scope.addOverrideOption('Legend', 'legend', [true, false]);
     $scope.updateCurrentOverrides();
-
   });
-
 });
