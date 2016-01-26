@@ -19,7 +19,7 @@
         <th style="width: 25px"></th>
 
       </thead>
-      <tr ng-repeat="playlist in playlists">
+      <tr ng-repeat="playlist in ctrl.playlists">
         <td>
 					<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
         </td>
@@ -39,7 +39,7 @@
           </a>
         </td>
         <td  class="text-right">
-          <a ng-click="removePlaylist(playlist)" class="btn btn-danger btn-mini">
+          <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-mini">
             <i class="fa fa-remove"></i>
           </a>
         </td>
