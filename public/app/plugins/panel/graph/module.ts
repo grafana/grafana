@@ -3,6 +3,7 @@ import {PanelDirective} from '../../../features/panel/panel';
 import {GraphCtrl} from './graph_ctrl';
 
 import './graph';
+import './legend';
 
 class GraphPanel extends PanelDirective {
   controller = GraphCtrl;
