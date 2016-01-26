@@ -48,7 +48,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }, 30);;
   }
 
-  initEditorTabs() {
+  initEditMode() {
     this.addEditorTab('Metrics', () => {
       return { templateUrl: 'public/app/partials/metrics.html' };
     });

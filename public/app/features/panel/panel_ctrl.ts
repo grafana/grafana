@@ -33,6 +33,7 @@ export class PanelCtrl {
 
   init() {
     this.publishAppEvent('panel-instantiated', {scope: this.$scope});
+    this.refresh();
   }
 
   renderingCompleted() {
@@ -61,7 +62,7 @@ export class PanelCtrl {
     if (!this.editorTabs) {
       this.editorTabs = [];
       this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
-      this.initEditorTabs();
+      this.initEditMode();
     }
 
     this.changeView(true, true);
@@ -71,7 +72,7 @@ export class PanelCtrl {
     this.changeView(false, false);
   }
 
-  initEditorTabs() {
+  initEditMode() {
     return;
   }
 

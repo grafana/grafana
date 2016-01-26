@@ -18,15 +18,17 @@ export class TextPanelCtrl extends PanelCtrl {
     super($scope, $injector);
 
     _.defaults(this.panel, panelDefaults);
-    this.render();
-
   }
 
-  initEditorTabs() {
+  initEditMode() {
     this.icon = 'fa fa-text-width';
     this.addEditorTab('Options', () => {
       return { templateUrl: 'public/app/plugins/panel/text/editor.html' };
     });
+  }
+
+  refresh() {
+    this.render();
   }
 
   render() {
@@ -38,10 +40,6 @@ export class TextPanelCtrl extends PanelCtrl {
       this.renderText(this.panel.content);
     }
     this.renderingCompleted();
-  }
-
-  refresh() {
-    this.render();
   }
 
   renderText(content) {
