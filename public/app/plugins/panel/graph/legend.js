@@ -8,7 +8,7 @@ define([
 function (angular, _, $) {
   'use strict';
 
-  var module = angular.module('grafana.panels.graph');
+  var module = angular.module('grafana.directives');
 
   module.directive('graphLegend', function(popoverSrv) {
 
@@ -16,13 +16,14 @@ function (angular, _, $) {
       link: function(scope, elem) {
         var $container = $('<section class="graph-legend"></section>');
         var firstRender = true;
-        var panel = scope.panel;
+        var ctrl = scope.ctrl;
+        var panel = ctrl.panel;
         var data;
         var seriesList;
         var i;
 
         scope.$on('render', function() {
-          data = scope.seriesList;
+          data = ctrl.seriesList;
           if (data) {
             render();
           }
@@ -54,7 +55,7 @@ function (angular, _, $) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
-          scope.toggleSeries(seriesInfo, e);
+          ctrl.toggleSeries(seriesInfo, e);
         }
 
         function sortLegend(e) {
@@ -148,7 +149,7 @@ function (angular, _, $) {
 
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' pull-right'; }
-            if (scope.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
+            if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
