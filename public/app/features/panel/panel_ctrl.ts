@@ -2,29 +2,28 @@
 
 import config from 'app/core/config';
 
-function generalOptionsTabEditorTab() {
-  return {templateUrl: 'public/app/partials/panelgeneral.html'};
-}
-
 export class PanelCtrl {
   panel: any;
   row: any;
   dashboard: any;
   editorTabIndex: number;
-  name: string;
+  pluginName: string;
+  pluginId: string;
   icon: string;
   editorTabs: any;
   $scope: any;
   $injector: any;
   fullscreen: boolean;
   inspector: any;
+  editModeInitiated: boolean;
 
   constructor($scope, $injector) {
     var plugin = config.panels[this.panel.type];
 
     this.$injector = $injector;
     this.$scope = $scope;
-    this.name = plugin.name;
+    this.pluginName = plugin.name;
+    this.pluginId = plugin.id;
     this.icon = plugin.info.icon;
     this.editorTabIndex = 0;
 
@@ -59,9 +58,9 @@ export class PanelCtrl {
   }
 
   editPanel() {
-    if (!this.editorTabs) {
+    if (!this.editModeInitiated) {
       this.editorTabs = [];
-      this.editorTabs.push({title: 'General', directiveFn: generalOptionsTabEditorTab});
+      this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
       this.initEditMode();
     }
 
@@ -76,8 +75,13 @@ export class PanelCtrl {
     return;
   }
 
-  addEditorTab(title, directiveFn) {
-    this.editorTabs.push({title: title, directiveFn: directiveFn});
+  addEditorTab(title, templateUrl) {
+    this.editorTabs.push({
+      title: title,
+      directiveFn: function() {
+        return {templateUrl: templateUrl};
+      }
+    });
   }
 
   getMenu() {
@@ -91,5 +95,9 @@ export class PanelCtrl {
 
   otherPanelInFullscreenMode() {
     return this.dashboard.meta.fullscreen && !this.fullscreen;
+  }
+
+  broadcastRender(arg1?, arg2?) {
+    this.$scope.$broadcast('render', arg1, arg2);
   }
 }

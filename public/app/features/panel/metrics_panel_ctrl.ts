@@ -49,9 +49,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   initEditMode() {
-    this.addEditorTab('Metrics', () => {
-      return { templateUrl: 'public/app/partials/metrics.html' };
-    });
+    this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
@@ -106,15 +104,6 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   setTimeQueryEnd() {
     this.timing.queryEnd = new Date().getTime();
-  }
-
-  setTimeRenderStart() {
-    this.timing = this.timing || {};
-    this.timing.renderStart = new Date().getTime();
-  }
-
-  setTimeRenderEnd() {
-    this.timing.renderEnd = new Date().getTime();
   }
 
   updateTimeRange() {
