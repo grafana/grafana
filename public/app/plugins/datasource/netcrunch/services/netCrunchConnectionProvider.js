@@ -753,7 +753,7 @@ define([
         }
 
         function getNetworkDataProvider() {
-          return new NetworkDataProvider(adrem, serverConnection, datasourceName);
+          return new NetworkDataProvider(adrem, serverConnection, datasourceURL);
         }
 
         function getCountersDataProvider() {
