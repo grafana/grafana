@@ -68,11 +68,11 @@ function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
       // fill factor
       fill          : 1,
       // line width in pixels
-      linewidth     : 2,
+      linewidth     : 1,
       // show hide points
-      points        : false,
+      points        : true,
       // point radius in pixels
-      pointradius   : 5,
+      pointradius   : 1,
       // show hide bars
       bars          : false,
       // enable/disable stacking
