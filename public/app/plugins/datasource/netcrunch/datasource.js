@@ -269,8 +269,7 @@ function (angular, _, moment) {
           scopedVars = (panel.scopedVars == null) ? Object.create(null) : panel.scopedVars,
           rawData = (scopedVars.rawData == null) ? false : scopedVars.rawData,
           setMaxDataPoints = (scopedVars.setMaxDataPoints == null) ? false : scopedVars.setMaxDataPoints,
-          maxDataPoints = (scopedVars.maxDataPoints == null) ? MAX_SAMPLE_COUNT :
-                           scopedVars.maxDataPoints;
+          maxDataPoints = (scopedVars.maxDataPoints == null) ? MAX_SAMPLE_COUNT : scopedVars.maxDataPoints;
 
       panel.scopedVars = scopedVars;
       panel.scopedVars.rawData = rawData;

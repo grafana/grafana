@@ -9,19 +9,20 @@
 
 define([
     'angular',
-    '../directives/netCrunchSpinner'
-],
-
-//TODO: netCrunchQueryCtrl.js and query.editor.html must be deeply refactored to new datasource plugin architecture.
+    '../filters/netCrunchFilters',
+    '../directives/netCrunchSpinner',
+    '../directives/netCrunchFocusMe',
+    '../directives/netCrunchKeyClick',
+    '../directives/netCrunchTypeAhead',
+    '../directives/netCrunchTree',
+    '../directives/netCrunchVirtualScrollList'
+  ],
 
 function (angular) {
 
   'use strict';
 
-  var module = angular.module('grafana.controllers'),
-      COUNTER_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-      NODES_TAB_INDEX = 25000,
-      COUNTERS_TAB_INDEX = 75000;
+  var module = angular.module('grafana.controllers');
 
   module.controller('netCrunchQueryCtrl', function($scope, $q, $sce, $timeout) {
 
@@ -33,8 +34,7 @@ function (angular) {
         ERROR_COUNTER_MESSAGE = DEFAULT_COUNTER_DISPLAY_NAME;
 
     var initTask = $q.defer(),
-        ctrlReady = initTask.promise,
-        currentTargetIndex = null;
+        ctrlReady = initTask.promise;
 
     $scope.counterListConfig = {
       1: {
@@ -63,7 +63,7 @@ function (angular) {
     $scope.nodeSelectionPosition = null;
     $scope.nodeSelectionShow = false;
     $scope.nodeSelectionFocus = false;
-    $scope.currentNodeId = null;
+    $scope.target.nodeID = ($scope.target.nodeID == null) ? null : $scope.target.nodeID;
 
     $scope.processingCounters = true;
     $scope.counters = [];
@@ -72,9 +72,17 @@ function (angular) {
     $scope.counterSelectionShow = false;
     $scope.counterSelectionFocus = false;
 
+    function getNodesTabIndex() {
+      return $scope.$id * 100000;
+    }
+
+    function getCountersTabIndex() {
+      return getNodesTabIndex() + 50000;
+    }
+
     function prepareCounterList(counters) {
       var counterList = [],
-        tabIndex = COUNTERS_TAB_INDEX;
+          tabIndex = getCountersTabIndex();
 
       Object.keys(counters).forEach(function(monitorId) {
 
@@ -226,8 +234,8 @@ function (angular) {
 
     function updateStatus (target) {
       var nodeUpdated = target.localVars.nodeUpdated,
-        counterUpdated = target.localVars.counterUpdated,
-        errorMessage = '';
+          counterUpdated = target.localVars.counterUpdated,
+          errorMessage = '';
 
       if ((nodeUpdated !== true) || (counterUpdated !== true)) {
         if (nodeUpdated === false) {
@@ -246,7 +254,7 @@ function (angular) {
         target.counterDataComplete = true;
       }
 
-      $scope.get_data();    //Refresh data on graph
+      $scope.get_data();            //Refresh data on graph
     }
 
     function updateTarget (target) {
@@ -258,6 +266,15 @@ function (angular) {
       });
     }
 
+    function collapseTypeAheadNotifyToControllers() {
+      var graphControllerScope = $scope.$parent.$parent;
+      graphControllerScope.$broadcast('netCrunch-collapse-typeAhead', $scope.$id);
+    }
+
+    function nodeFocus () {
+      $scope.target.localVars.nodeFocus = true;
+    }
+
     function nodeSelectionTypeAheadShow() {
       $scope.nodeSelectionShow = true;
       $scope.nodeNamePattern = '';
@@ -267,23 +284,27 @@ function (angular) {
     function nodeSelectionTypeAheadHide(setNodeFocus) {
       $scope.nodeSelectionShow = false;
       if (setNodeFocus === true) {
-        nodeFocus(currentTargetIndex);
+        nodeFocus();
       }
+    }
+
+    function counterFocus () {
+      $scope.target.localVars.counterFocus = true;
     }
 
     function counterSelectionTypeAheadShow() {
       $scope.counterSelectionShow = true;
       $scope.counterNamePattern = '';
       $timeout(function() {
-        $scope.$broadcast('ngTreeRedraw(counters-list)');
+        $scope.$broadcast('ngTreeRedraw(counters-list' + $scope.$index + ')');
       }, 0);
       $scope.counterSelectionFocus = true;
     }
 
-    function counterSelectionTypeAheadHide(setCounterFocus){
+    function counterSelectionTypeAheadHide(setCounterFocus) {
       $scope.counterSelectionShow = false;
       if (setCounterFocus === true) {
-        counterFocus(currentTargetIndex);
+        counterFocus();
       }
     }
 
@@ -292,77 +313,18 @@ function (angular) {
       counterSelectionTypeAheadHide(false);
     }
 
-    function nodeFocus (targetIndex) {
-      $scope.panel.targets[targetIndex].localVars.nodeFocus = true;
-    }
-
-    function counterFocus (targetIndex) {
-      $scope.panel.targets[targetIndex].localVars.counterFocus = true;
-    }
-
-    $scope.init = function() {
-      var panelTargets = $scope.panel.targets,
-          updateTargets = [];
-
-      $scope.panel = $scope.datasource.updatePanel($scope.panel);
-      $scope.counterLetters = COUNTER_LETTERS;
-      $scope.datasource.nodes.then(function(nodes) {
-        $scope.nodes = nodes.map(function(node, $index) {
-          node.local.tabIndex = NODES_TAB_INDEX + $index;
-          return node;
-        });
-        $scope.processingNodes = false;
-      });
-
-      panelTargets.forEach(function(target) {
-        target.counterDataComplete = true;
-        updateTargets.push(updateTarget(target));
-      });
-
-      $q.all(updateTargets).then(function() {
-        if (panelTargets.length > 0) {
-          panelTargets[0].localVars.nodeFocus = true;
-        }
-        initTask.resolve();
-      });
-    };
-
-    //$scope.duplicateCounterQuery = function (index) {
-    //  var clone = angular.copy($scope.panel.targets[index]);
-    //  typeAheadsHide();
-    //  $scope.panel.targets.push(clone);
-    //};
-    //
-    //$scope.moveCounterQuery = function (indexFrom, indexTo) {
-    //  typeAheadsHide();
-    //  _.move($scope.panel.targets, indexFrom, indexTo);
-    //};
-    //
-    //$scope.seriesChange = function() {
-    //  $scope.get_data();
-    //};
-
-    $scope.nodeSelectionTypeAhead = function(targetIndex) {
+    $scope.nodeSelectionTypeAhead = function() {
       ctrlReady.then(function() {
-        currentTargetIndex = targetIndex;
+        collapseTypeAheadNotifyToControllers();
         counterSelectionTypeAheadHide(false);
-        $scope.nodeSelectionPosition = targetIndex;
         nodeSelectionTypeAheadShow();
       });
     };
 
-    $scope.counterSelectionTypeAhead = function(targetIndex) {
-      var target = $scope.panel.targets[targetIndex];
-
+    $scope.counterSelectionTypeAhead = function() {
       ctrlReady.then(function() {
-        currentTargetIndex = targetIndex;
-
-        if (($scope.currentNodeId !== target.nodeID) && (target.nodeID !== null)) {
-          $scope.currentNodeId = target.nodeID;
-        }
-
+        collapseTypeAheadNotifyToControllers();
         nodeSelectionTypeAheadHide(false);
-        $scope.counterSelectionPosition = targetIndex;
         counterSelectionTypeAheadShow();
       });
     };
@@ -375,49 +337,73 @@ function (angular) {
       counterSelectionTypeAheadHide(true);
     };
 
-    $scope.selectNode = function(node) {
-      var currentTarget = $scope.panel.targets[currentTargetIndex];
+    $scope.init = function() {
 
-      currentTarget.nodeID = node.values.Id;
-      $scope.currentNodeId = node.values.Id;
-      updateTarget(currentTarget).then(function() {
-        if (currentTarget.localVars.counterUpdated === true) {
-          nodeFocus(currentTargetIndex);
+      $scope.datasource.nodes.then(function(nodes) {
+        $scope.nodes = nodes.map(function(node, $index) {
+          var NODES_TAB_INDEX = getNodesTabIndex(),
+              updatedNode;
+          updatedNode = angular.copy(node);
+          updatedNode.local.tabIndex = NODES_TAB_INDEX + $index;
+          return updatedNode;
+        });
+        $scope.processingNodes = false;
+      });
+
+      $scope.target.counterDataComplete = true;
+      updateTarget($scope.target).then(function() {
+        initTask.resolve();
+      });
+    };
+
+    $scope.seriesChange = function() {
+      $scope.get_data();
+    };
+
+    $scope.selectNode = function(node) {
+      var target = $scope.target;
+      target.nodeID = node.values.Id;
+      updateTarget(target).then(function() {
+        if (target.localVars.counterUpdated === true) {
+          nodeFocus();
         } else {
-          $scope.counterSelectionTypeAhead(currentTargetIndex);
+          $scope.counterSelectionTypeAhead();
         }
       });
       nodeSelectionTypeAheadHide(false);
     };
 
     $scope.selectCounter = function (counter) {
-      var currentTarget = $scope.panel.targets[currentTargetIndex];
-
-      currentTarget.counterName = counter.name;
-      updateTarget(currentTarget).then(function() {
-        counterFocus(currentTargetIndex);
+      var target = $scope.target;
+      target.counterName = counter.name;
+      updateTarget(target).then(function() {
+        counterFocus();
       });
       counterSelectionTypeAheadHide(false);
     };
 
-    $scope.$watch('currentNodeId', function() {
+    $scope.$watch('target.nodeID', function() {
       resetCountersList();
-      updateCountersList($scope.currentNodeId);
+      ctrlReady.then(function() {
+        if ($scope.target.nodeID != null) {
+          updateCountersList($scope.target.nodeID);
+        }
+      });
     });
 
-    $scope.$on('addDataQuery', function(event, args) {
-      var addedTarget = $scope.panel.targets[args.targetID];
+    $scope.$on('addDataQuery', function() {
       typeAheadsHide();
-      updateTarget(addedTarget);
-      addedTarget.localVars.nodeFocus = true;
     });
 
     $scope.$on('removeDataQuery', function() {
       typeAheadsHide();
     });
 
-    console.log('netcrunch query ctrl init');
-    console.log($scope);
+    $scope.$on('netCrunch-collapse-typeAhead', function(event, scopeId) {
+      if (scopeId !== $scope.$id) {
+        typeAheadsHide();
+      }
+    });
 
     $scope.init();
   });
