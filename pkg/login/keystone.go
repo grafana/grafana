@@ -182,7 +182,7 @@ func (a *keystoneAuther) authenticateV3(username, password string) error {
     resp, err := client.Do(request)
     if err != nil {
         return err
-    } else if resp.StatusCode != 200 {
+    } else if resp.StatusCode != 201 {
         return errors.New("Keystone authentication failed: " + resp.Status)
     }
 
