@@ -127,10 +127,6 @@ function (angular, _, config) {
       });
     };
 
-    $scope.updatePanelSpan = function(panel, span) {
-      panel.span = Math.min(Math.max(Math.floor(panel.span + span), 1), 12);
-    };
-
     $scope.replacePanel = function(newPanel, oldPanel) {
       var row = $scope.row;
       var index = _.indexOf(row.panels, oldPanel);

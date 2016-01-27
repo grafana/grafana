@@ -32,7 +32,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     // make metrics tab the default
     this.editorTabIndex = 1;
     this.$q = $injector.get('$q');
-    this.$timeout = $injector.get('$timeout');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
 
