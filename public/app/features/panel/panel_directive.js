@@ -17,7 +17,6 @@ function (angular, $) {
         var panelContainer = elem.find('.panel-container');
         var ctrl = scope.ctrl;
         scope.$watchGroup(['ctrl.fullscreen', 'ctrl.height', 'ctrl.panel.height', 'ctrl.row.height'], function() {
-          console.log('height: ', ctrl.height);
           panelContainer.css({ minHeight: ctrl.height || ctrl.panel.height || ctrl.row.height, display: 'block' });
           elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
         });
@@ -80,7 +79,7 @@ function (angular, $) {
 
         function dragEndHandler() {
           // if close to 12
-          var rowSpan = ctrl.dashboard.rowSpan(scope.row);
+          var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
           if (rowSpan < 12 && rowSpan > 11) {
             lastPanel.span +=  12 - rowSpan;
           }
