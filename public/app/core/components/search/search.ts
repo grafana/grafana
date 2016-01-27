@@ -108,9 +108,12 @@ export class SearchCtrl {
 
   getTags() {
     return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-      this.tagsMode = true;
+      this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
+      if ( !this.tagsMode ) {
+        this.search();
+      }
     });
   };
 
