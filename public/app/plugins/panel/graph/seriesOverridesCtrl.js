@@ -1,13 +1,11 @@
 define([
   'angular',
   'jquery',
-  'app/app',
   'lodash',
-], function(angular, jquery, app, _) {
+], function(angular, jquery, _) {
   'use strict';
 
-  var module = angular.module('grafana.panels.graph', []);
-  app.useModule(module);
+  var module = angular.module('grafana.controllers');
 
   module.controller('SeriesOverridesCtrl', function($scope, $element, popoverSrv) {
     $scope.overrideMenu = [];

@@ -14,13 +14,19 @@ describe('GraphiteQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.services'));
 
   beforeEach(ctx.providePhase());
-  beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
+  beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
+    ctx.$q = $q;
+    ctx.scope = $rootScope.$new();
+    ctx.scope.ctrl = {panel: ctx.panel};
+    ctx.panelCtrl = ctx.scope.ctrl;
+    ctx.controller = $controller('GraphiteQueryCtrl', {$scope: ctx.scope});
+  }));
 
   beforeEach(function() {
     ctx.scope.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
 
-    ctx.scope.datasource = ctx.datasource;
-    ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+    ctx.panelCtrl.datasource = ctx.datasource;
+    ctx.panelCtrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
   });
 
   describe('init', function() {
@@ -30,7 +36,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should validate metric key exists', function() {
-      expect(ctx.scope.datasource.metricFindQuery.getCall(0).args[0]).to.be('test.prod.*');
+      expect(ctx.panelCtrl.datasource.metricFindQuery.getCall(0).args[0]).to.be('test.prod.*');
     });
 
     it('should delete last segment if no metrics are found', function() {
@@ -45,11 +51,11 @@ describe('GraphiteQueryCtrl', function() {
   describe('when adding function', function() {
     beforeEach(function() {
       ctx.scope.target.target = 'test.prod.*.count';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));
       ctx.scope.init();
       ctx.scope.$digest();
 
-      ctx.scope.$parent = { get_data: sinon.spy() };
+      ctx.panelCtrl.refresh = sinon.spy();
       ctx.scope.addFunction(gfunc.getFuncDef('aliasByNode'));
     });
 
@@ -61,19 +67,17 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.scope.target.target).to.be('aliasByNode(test.prod.*.count, 2)');
     });
 
-    it('should call get_data', function() {
-      expect(ctx.scope.$parent.get_data.called).to.be(true);
+    it('should call refresh', function() {
+      expect(ctx.panelCtrl.refresh.called).to.be(true);
     });
   });
 
   describe('when adding function before any metric segment', function() {
     beforeEach(function() {
       ctx.scope.target.target = '';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: true}]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: true}]));
       ctx.scope.init();
       ctx.scope.$digest();
-
-      ctx.scope.$parent = { get_data: sinon.spy() };
       ctx.scope.addFunction(gfunc.getFuncDef('asPercent'));
     });
 
@@ -85,10 +89,9 @@ describe('GraphiteQueryCtrl', function() {
   describe('when initalizing target without metric expression and only function', function() {
     beforeEach(function() {
       ctx.scope.target.target = 'asPercent(#A, #B)';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should not add select metric segment', function() {
@@ -104,10 +107,9 @@ describe('GraphiteQueryCtrl', function() {
   describe('when initializing a target with single param func using variable', function() {
     beforeEach(function() {
       ctx.scope.target.target = 'movingAverage(prod.count, $var)';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should add 2 segments', function() {
@@ -123,7 +125,7 @@ describe('GraphiteQueryCtrl', function() {
   describe('when initalizing target without metric expression and function with series-ref', function() {
     beforeEach(function() {
       ctx.scope.target.target = 'asPercent(metric.node.count, #A)';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.$digest();
       ctx.scope.$parent = { get_data: sinon.spy() };
@@ -141,13 +143,12 @@ describe('GraphiteQueryCtrl', function() {
   describe('when getting altSegments and metricFindQuery retuns empty array', function() {
     beforeEach(function() {
       ctx.scope.target.target = 'test.count';
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.getAltSegments(1).then(function(results) {
         ctx.altSegments = results;
       });
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should have no segments', function() {
@@ -158,11 +159,11 @@ describe('GraphiteQueryCtrl', function() {
 
   describe('targetChanged', function() {
     beforeEach(function() {
-      ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));
+      ctx.panelCtrl.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: false}]));
       ctx.scope.init();
       ctx.scope.$digest();
 
-      ctx.scope.$parent = { get_data: sinon.spy() };
+      ctx.panelCtrl.refresh = sinon.spy();
       ctx.scope.target.target = '';
       ctx.scope.targetChanged();
     });
@@ -171,8 +172,8 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.scope.target.target).to.be('aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
     });
 
-    it('should call get_data', function() {
-      expect(ctx.scope.$parent.get_data.called).to.be(true);
+    it('should call panelCtrl.refresh', function() {
+      expect(ctx.panelCtrl.refresh.called).to.be(true);
     });
   });
 });

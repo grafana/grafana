@@ -43,7 +43,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // hookup initial data fetch
     this.$timeout(() => {
       if (!this.skipDataOnInit) {
-        this.getData();
+        this.refresh();
       }
     }, 30);;
   }
@@ -163,7 +163,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
     };
 
-  issueQueries() {
+  issueQueries(datasource) {
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
     }
@@ -182,7 +182,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    return this.datasource.query(metricsQuery).then(results => {
+    return datasource.query(metricsQuery).then(results => {
       this.setTimeQueryEnd();
 
       if (this.dashboard.snapshot) {
