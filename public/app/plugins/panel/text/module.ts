@@ -22,9 +22,7 @@ export class TextPanelCtrl extends PanelCtrl {
 
   initEditMode() {
     this.icon = 'fa fa-text-width';
-    this.addEditorTab('Options', () => {
-      return { templateUrl: 'public/app/plugins/panel/text/editor.html' };
-    });
+    this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
   }
 
   refresh() {
