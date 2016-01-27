@@ -146,7 +146,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return { status: "success", message: "Data source is working", title: "Success" };
       }, function(err) {
         if (err.data && err.data.error) {
-          return { status: "error", message: err.data.error, title: "Error" };
+          return { status: "error", message: angular.toJson(err.data.error), title: "Error" };
         } else {
           return { status: "error", message: err.status, title: "Error" };
         }
