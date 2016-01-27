@@ -24,7 +24,7 @@ define([
     var module = angular.module('grafana.services');
 
     module.factory('adrem', function() { return adrem; });
-    module.factory('netCrunchConnectionProvider', function ($q, $rootScope, adrem, backendSrv, alertSrv,
+    module.factory('netCrunchConnectionProvider', function ($q, $rootScope, $timeout, adrem, backendSrv, alertSrv,
                                                             netCrunchConnectionProviderConsts, netCrunchCounters,
                                                             netCrunchCounterConsts, netCrunchTrendDataProviderConsts) {
 
@@ -673,23 +673,55 @@ define([
         }
 
         function authenticateUser(userName, password) {
-          var loginDefer = $q.defer(),
+          var MAX_LOGIN_ATTEMPTS = 3,
+              BASE_LOGIN_TIMEOUT = 5000,
+              loginDefer = $q.defer(),
               loginProcess;
+
+          function loginTimeout(attempt) {
+            return (MAX_LOGIN_ATTEMPTS - attempt + 1) * BASE_LOGIN_TIMEOUT;
+          }
+
+          function tryAuthenticate(userName, password, attempt) {
+            var result = $q.defer();
+
+            netCrunchClient.login(userName, password, function(status) {
+              if (status === true) {
+                result.resolve();
+              } else {
+                if (attempt > 1) {
+                  $timeout(function() {
+                    tryAuthenticate(userName, password, attempt - 1).then(
+                      function() { result.resolve(); },
+                      function() { result.reject(); }
+                    )
+                  }, loginTimeout(attempt));
+                } else {
+                  result.reject();
+                }
+              }
+            });
+            return result.promise;
+          }
 
           if (loggedIn() === false) {
             if (loginInProgress === false) {
               loginInProgress = true;
               loginProcess = loginDefer.promise;
               loginInProgressPromise = loginProcess;
-              netCrunchClient.login(userName, password, function(status) {
-                loginInProgress = false;
-                loginInProgressPromise = null;
-                if (status === true) {
+
+              tryAuthenticate(userName, password, MAX_LOGIN_ATTEMPTS).then(
+                function() {
+                  loginInProgress = false;
+                  loginInProgressPromise = null;
                   loginDefer.resolve();
-                } else {
+                },
+                function() {
+                  loginInProgress = false;
+                  loginInProgressPromise = null;
                   loginDefer.reject(netCrunchConnectionProviderConsts.ERROR_AUTHENTICATION);
                 }
-              });
+              );
             } else {
               loginProcess = loginInProgressPromise;
             }
