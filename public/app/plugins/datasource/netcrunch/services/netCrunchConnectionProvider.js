@@ -141,7 +141,7 @@ define([
         };
       }
 
-      function NetworkDataProvider(adrem, netCrunchServerConnection) {
+      function NetworkDataProvider(adrem, netCrunchServerConnection, connectionTag) {
 
         var networkData,
             hostsData,
@@ -208,6 +208,8 @@ define([
           return record;
         }
 
+        connectionTag = (connectionTag == null) ? '' : connectionTag;
+
         return {
           networkNodes : atlasTree.nodes,
           networkTree : atlasTree.tree,
@@ -232,7 +234,7 @@ define([
             if (initialized != null) { return initialized; }
 
             hostsData = openRemoteData('Hosts', 'Select Id, Name, Address, DeviceType, GlobalDataNode ',
-                                       processHostsData, 'netcrunch-host-data-changed');
+                                       processHostsData, 'netcrunch-host-data-changed(' + connectionTag + ')');
 
             networkData = openRemoteData('Networks', 'Select NetIntId, DisplayName, HostMapData, IconId, ' +
               'MapType, NetworkData, MapClassTag ' +
@@ -241,7 +243,7 @@ define([
               '(MapClassTag != \'issuesnet\') && (MapClassTag != \'all\') && ' +
               '(NetIntId != ' + performanceViewsNetIntId + ') && ' +
               '(NetIntId != ' + monitoringPacksNetIntId + ')',
-              processMapData, 'netcrunch-network-data-changed');
+              processMapData, 'netcrunch-network-data-changed(' + connectionTag + ')');
 
             initialized = $q.all([hostsData, networkData]);
             return initialized;
@@ -751,7 +753,7 @@ define([
         }
 
         function getNetworkDataProvider() {
-          return new NetworkDataProvider(adrem, serverConnection);
+          return new NetworkDataProvider(adrem, serverConnection, datasourceName);
         }
 
         function getCountersDataProvider() {

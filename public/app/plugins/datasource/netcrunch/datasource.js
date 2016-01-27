@@ -104,7 +104,7 @@ function (angular, _, moment) {
       this.cache = this.createQueryCache();
 
       function initUpdateNodes(networkAtlas) {
-        $rootScope.$on('netcrunch-host-data-changed', function() {
+        $rootScope.$on('netcrunch-host-data-changed(' + self.name + ')', function() {
           var nodes = networkAtlas.networkNodes;
 
           nodes.table = [];
@@ -114,12 +114,13 @@ function (angular, _, moment) {
 
           self.updateNodeList(nodes.table).then(function(updated) {
             nodesReady.resolve(updated);
+            $rootScope.$broadcast(self.name + '(hosts-updated)', updated);
           });
         });
       }
 
       function initUpdateAtlas(networkAtlas) {
-        $rootScope.$on('netcrunch-network-data-changed', function() {
+        $rootScope.$on('netcrunch-network-data-changed(' + self.name + ')', function() {
           networkAtlasReady.resolve(networkAtlas);
         });
       }
