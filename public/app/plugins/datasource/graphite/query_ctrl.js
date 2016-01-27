@@ -209,7 +209,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.targetTextChanged = function() {
       parseTarget();
-      $scope.ctrl.getData();
+      panelCtrl.refresh();
     };
 
     $scope.targetChanged = function() {
@@ -223,7 +223,7 @@ function (angular, _, config, gfunc, Parser) {
 
       if ($scope.target.target !== oldTarget) {
         if ($scope.segments[$scope.segments.length - 1].value !== 'select metric') {
-          $scope.ctrl.getData();
+          panelCtrl.refresh();
         }
       }
     };

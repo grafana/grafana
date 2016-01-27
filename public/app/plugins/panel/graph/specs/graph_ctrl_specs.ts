@@ -2,14 +2,9 @@
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
-import 'app/features/panel/panel_srv';
-import 'app/features/panel/panel_helper';
-
 import angular from 'angular';
-import {GraphCtrl} from '../module';
+import {GraphCtrl} from '../graph_ctrl';
 import helpers from '../../../../../test/specs/helpers';
-
-angular.module('grafana.controllers').controller('GraphCtrl', GraphCtrl);
 
 describe('GraphCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
@@ -18,7 +13,7 @@ describe('GraphCtrl', function() {
   beforeEach(angularMocks.module('grafana.controllers'));
 
   beforeEach(ctx.providePhase());
-  beforeEach(ctx.createControllerPhase('GraphCtrl'));
+  beforeEach(ctx.createPanelController(GraphCtrl));
 
   describe('get_data with 2 series', function() {
     beforeEach(function() {
@@ -29,25 +24,23 @@ describe('GraphCtrl', function() {
           { target: 'test.cpu2', datapoints: [[1, 10]]}
         ]
       }));
-      ctx.scope.render = sinon.spy();
-      ctx.scope.refreshData(ctx.datasource);
+      ctx.ctrl.render = sinon.spy();
+      ctx.ctrl.refreshData(ctx.datasource);
       ctx.scope.$digest();
     });
 
     it('should send time series to render', function() {
-      var data = ctx.scope.render.getCall(0).args[0];
+      var data = ctx.ctrl.render.getCall(0).args[0];
       expect(data.length).to.be(2);
     });
 
     describe('get_data failure following success', function() {
       beforeEach(function() {
         ctx.datasource.query = sinon.stub().returns(ctx.$q.reject('Datasource Error'));
-        ctx.scope.refreshData(ctx.datasource);
+        ctx.ctrl.refreshData(ctx.datasource);
         ctx.scope.$digest();
       });
 
     });
-
   });
-
 });

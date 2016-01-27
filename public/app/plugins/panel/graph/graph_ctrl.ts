@@ -129,7 +129,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   refreshData(datasource) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
 
-    return this.issueQueries()
+    return this.issueQueries(datasource)
     .then(res => this.dataHandler(res))
     .catch(err => {
       this.seriesList = [];
