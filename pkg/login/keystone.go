@@ -72,7 +72,7 @@ type v3_auth_struct struct {
 }
 
 type v3_identity_struct struct {
-    Methods string  `json:"methods"`
+    Methods []string  `json:"methods"`
     PasswordMethod v3_passwordmethod_struct  `json:"password"`
 }
 
@@ -81,7 +81,7 @@ type v3_passwordmethod_struct struct {
 }
 
 type v3_user_struct struct {
-    Name string `json:"username"`
+    Name string `json:"name"`
     Password string `json:"password"`
     Domain v3_userdomain_struct `json:"domain"`
 }
@@ -98,7 +98,7 @@ type v3_project_struct struct {
     Name string
 }
 
-func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname) *keystoneAuther {
+func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname string) *keystoneAuther {
     return &keystoneAuther{server: server, v3: v3, userdomainname: userdomainaname}
 }
 
@@ -167,7 +167,7 @@ func (a *keystoneAuther) authenticateV2(username, password string) error {
 
 func (a *keystoneAuther) authenticateV3(username, password string) error {
     var auth_post v3_auth_post_struct
-    auth_post.Auth.PasswordCredentials.Methods = "password"
+    auth_post.Auth.PasswordCredentials.Methods = []string{"password"}
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Name = username
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Password = password
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Domain.Name = a.userdomainname
