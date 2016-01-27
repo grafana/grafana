@@ -7,12 +7,13 @@ import angular from 'angular';
 import $ from 'jquery';
 import helpers from '../../../../../test/specs/helpers';
 import TimeSeries from '../../../../core/time_series2';
+import moment from 'moment';
 
 describe('grafanaGraph', function() {
 
   beforeEach(angularMocks.module('grafana.directives'));
 
-  function graphScenario(desc, func)  {
+  function graphScenario(desc, func, elementWidth = 500)  {
     describe(desc, function() {
       var ctx: any = {};
 
@@ -26,7 +27,7 @@ describe('grafanaGraph', function() {
           var ctrl: any = {};
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
-          var element = angular.element("<div style='width:500px' grafana-graph><div>");
+          var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
 
           ctrl.height = '200px';
           ctrl.panel = {
@@ -45,8 +46,8 @@ describe('grafanaGraph', function() {
           ctrl.hiddenSeries = {};
           ctrl.dashboard = { timezone: 'browser' };
           ctrl.range = {
-            from: new Date('2014-08-09 10:00:00'),
-            to: new Date('2014-09-09 13:00:00')
+            from: moment([2015, 1, 1, 10]),
+            to: moment([2015, 1, 1, 22]),
           };
           ctx.data = [];
           ctx.data.push(new TimeSeries({
@@ -229,4 +230,31 @@ describe('grafanaGraph', function() {
       expect(axis.tickFormatter(100, axis)).to.be("100%");
     });
   });
+
+  graphScenario('when panel too narrow to show x-axis dates in same granularity as wide panels', function(ctx) {
+    describe('and the range is less than 24 hours', function() {
+      ctx.setup(function(ctrl) {
+        ctrl.range.from = moment([2015, 1, 1, 10]);
+        ctrl.range.to = moment([2015, 1, 1, 22]);
+      });
+
+      it('should format dates as hours minutes', function() {
+        var axis = ctx.plotOptions.xaxis;
+        expect(axis.timeformat).to.be('%H:%M');
+      });
+    });
+
+    describe('and the range is less than one year', function() {
+      ctx.setup(function(scope) {
+        scope.range.from = moment([2015, 1, 1]);
+        scope.range.to = moment([2015, 11, 20]);
+      });
+
+      it('should format dates as month days', function() {
+        var axis = ctx.plotOptions.xaxis;
+        expect(axis.timeformat).to.be('%m/%d');
+      });
+    });
+
+  }, 10);
 });

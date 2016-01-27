@@ -4,4 +4,5 @@ define([
   './adminEditOrgCtrl',
   './adminEditUserCtrl',
   './adminSettingsCtrl',
+  './adminStatsCtrl',
 ], function () {});
