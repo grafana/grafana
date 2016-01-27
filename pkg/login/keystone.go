@@ -15,6 +15,7 @@ type keystoneAuther struct {
     v3                bool
     userdomainname    string
     token             string
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
     tenants           []v2_tenant_struct
 }
 
@@ -44,23 +45,13 @@ type v2_credentials_struct struct {
 }
 
 type v2_tenant_response_struct struct{
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
     Tenants []v2_tenant_struct
 }
 
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
 type v2_tenant_struct struct {
     Name string
-}
-
-type v3_auth_response_struct struct {
-    Access v3_access_struct
-}
-
-type v3_access_struct struct {
-    Token v3_token_struct
-}
-
-type v3_token_struct struct {
-    Id string
 }
 
 type v3_auth_post_struct struct {
@@ -91,11 +82,8 @@ type v3_userdomain_struct struct {
 }
 
 type v3_project_response_struct struct{
-    Tenants []v3_project_struct
-}
-
-type v3_project_struct struct {
-    Name string
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
+    Projects []v2_tenant_struct
 }
 
 func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname string) *keystoneAuther {
@@ -170,6 +158,7 @@ func (a *keystoneAuther) authenticateV3(username, password string) error {
     auth_post.Auth.PasswordCredentials.Methods = []string{"password"}
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Name = username
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Password = password
+    // the user domain name is currently hardcoded via a config setting - this should change to an extra domain field in the login dialog later
     auth_post.Auth.PasswordCredentials.PasswordMethod.User.Domain.Name = a.userdomainname
     b, _ := json.Marshal(auth_post)
 
@@ -186,14 +175,9 @@ func (a *keystoneAuther) authenticateV3(username, password string) error {
         return errors.New("Keystone authentication failed: " + resp.Status)
     }
 
-    decoder := json.NewDecoder(resp.Body)
-    var auth_response v3_auth_response_struct
-    err = decoder.Decode(&auth_response)
-    if err != nil {
-        return err
-    }
+    // in keystone v3 the token is in the response header
+    a.token = resp.Header.Get("X-Subject-Token")
 
-    a.token = auth_response.Access.Token.Id
     return nil
 }
 
@@ -320,7 +304,7 @@ func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
 
 func (a *keystoneAuther) getTenantList() error {
     if a.v3 {
-        if err := a.getTenantListV3(); err != nil {
+        if err := a.getProjectListV3(); err != nil {
             return err
         }
     } else {
@@ -356,8 +340,27 @@ func (a *keystoneAuther) getTenantListV2() error {
     return nil
 }
 
-func (a *keystoneAuther) getTenantListV3() error {
-    // TODO implement
-    a.tenants = make([]v2_tenant_struct,0)
+func (a *keystoneAuther) getProjectListV3() error {
+    request, err := http.NewRequest("GET", a.server + "/v3/auth/projects", nil)
+    if err != nil {
+        return err
+    }
+    request.Header.Add("X-Auth-Token", a.token)
+
+    client := &http.Client{}
+    resp, err := client.Do(request)
+    if err != nil {
+        return err
+    } else if resp.StatusCode != 200 {
+        return errors.New("Keystone project-list failed: " + resp.Status)
+    }
+
+    decoder := json.NewDecoder(resp.Body)
+    var project_response v3_project_response_struct
+    err = decoder.Decode(&project_response)
+    if err != nil {
+        return err
+    }
+    a.tenants = project_response.Projects
     return nil
 }
