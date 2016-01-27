@@ -41,6 +41,7 @@ function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector) {
       function addPanel(name, Panel) {
         if (Panel.registered) {
           addPanelAndCompile(name);
+          return;
         }
 
         if (Panel.promise) {
@@ -62,14 +63,13 @@ function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector) {
           Panel.registered = true;
           addPanelAndCompile(name);
         });
-
-        return;
       }
 
       var panelElemName = 'panel-directive-' + scope.panel.type;
       let panelInfo = config.panels[scope.panel.type];
       if (!panelInfo) {
         addPanel(panelElemName, UnknownPanel);
+        return;
       }
 
       System.import(panelInfo.module).then(function(panelModule) {

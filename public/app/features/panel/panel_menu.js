@@ -64,7 +64,7 @@ function (angular, $, _) {
       }
 
       function getExtendedMenu(ctrl) {
-        return angular.copy(ctrl.extendedMenu);
+        return ctrl.getExtendedMenu();
       }
 
       return {

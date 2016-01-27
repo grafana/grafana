@@ -2,10 +2,15 @@
 
 import {PanelDirective} from '../../../features/panel/panel';
 
-export class UnknownPanel extends PanelDirective {
+class UnknownPanel extends PanelDirective {
   template = `<div class="text-center" style="padding-top: 2rem">
                 Unknown panel type: <strong>{{ctrl.panel.type}}</strong>
               </div>`;
 }
 
+
+export {
+  UnknownPanel,
+  UnknownPanel as Panel
+}
 

@@ -21,15 +21,16 @@ export class PanelCtrl {
   editorHelpIndex: number;
 
   constructor($scope, $injector) {
-    var plugin = config.panels[this.panel.type];
-
     this.$injector = $injector;
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
-    this.pluginName = plugin.name;
-    this.pluginId = plugin.id;
-    this.icon = plugin.info.icon;
     this.editorTabIndex = 0;
+
+    var plugin = config.panels[this.panel.type];
+    if (plugin) {
+      this.pluginId = plugin.id;
+      this.pluginName = plugin.name;
+    }
 
     $scope.$on("refresh", () => this.refresh());
   }
@@ -97,6 +98,10 @@ export class PanelCtrl {
     return menu;
   }
 
+  getExtendedMenu() {
+    return [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+  }
+
   otherPanelInFullscreenMode() {
     return this.dashboard.meta.fullscreen && !this.fullscreen;
   }
@@ -135,4 +140,23 @@ export class PanelCtrl {
     });
   }
 
+  editPanelJson() {
+    this.publishAppEvent('show-json-editor', {
+      object: this.panel,
+      updateHandler: this.replacePanel.bind(this)
+    });
+  }
+
+  replacePanel(newPanel, oldPanel) {
+    var row = this.row;
+    var index = _.indexOf(this.row.panels, oldPanel);
+    this.row.panels.splice(index, 1);
+
+    // adding it back needs to be done in next digest
+    this.$timeout(() => {
+      newPanel.id = oldPanel.id;
+      newPanel.span = oldPanel.span;
+      this.row.panels.splice(index, 0, newPanel);
+    });
+  }
 }
