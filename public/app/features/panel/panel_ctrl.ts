@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
+import _ from 'lodash';
 
 export class PanelCtrl {
   panel: any;
@@ -13,6 +14,7 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: any;
+  $timeout: any;
   fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
@@ -23,6 +25,7 @@ export class PanelCtrl {
 
     this.$injector = $injector;
     this.$scope = $scope;
+    this.$timeout = $injector.get('$timeout');
     this.pluginName = plugin.name;
     this.pluginId = plugin.id;
     this.icon = plugin.info.icon;
@@ -102,12 +105,34 @@ export class PanelCtrl {
     this.$scope.$broadcast('render', arg1, arg2);
   }
 
- toggleEditorHelp(index) {
-   if (this.editorHelpIndex === index) {
-     this.editorHelpIndex = null;
-     return;
-   }
-   this.editorHelpIndex = index;
- }
+  toggleEditorHelp(index) {
+    if (this.editorHelpIndex === index) {
+      this.editorHelpIndex = null;
+      return;
+    }
+    this.editorHelpIndex = index;
+  }
+
+  duplicate() {
+    this.dashboard.duplicatePanel(this.panel, this.row);
+  }
+
+  updateColumnSpan(span) {
+    this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
+    this.$timeout(() => {
+      this.broadcastRender();
+    });
+  }
+
+  removePanel() {
+    this.publishAppEvent('confirm-modal', {
+      title: 'Are you sure you want to remove this panel?',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.row.panels = _.without(this.row.panels, this.panel);
+      }
+    });
+  }
 
 }

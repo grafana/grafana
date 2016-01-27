@@ -34,9 +34,9 @@ function (angular, $, _) {
         if (ctrl.dashboard.meta.canEdit) {
           template += '<div class="panel-menu-inner">';
           template += '<div class="panel-menu-row">';
-          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
-          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
-          template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
+          template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
+          template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
+          template += '<a class="panel-menu-icon pull-right" ng-click="ctrl.removePanel()"><i class="fa fa-remove"></i></a>';
           template += '<div class="clearfix"></div>';
           template += '</div>';
         }
@@ -96,7 +96,7 @@ function (angular, $, _) {
 
             // if hovering or draging pospone close
             if (force !== true) {
-              if ($menu.is(':hover') || $scope.dashboard.$$panelDragging) {
+              if ($menu.is(':hover') || $scope.ctrl.dashboard.$$panelDragging) {
                 dismiss(2200);
                 return;
               }
