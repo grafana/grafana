@@ -97,10 +97,10 @@
 					<label for="panel.colorValue" class="cr1"></label>
 				</li>
 				<li class="tight-form-item">
-					Thresholds<tip>Comma seperated values</tip>
+					Thresholds<tip>Define two threshold values&lt;br /&gt; 50,80 will produce: &lt;50 = Green, 50:80 = Yellow, &gt;80 = Red</tip>
 				</li>
 				<li>
-					<input type="text" class="input-large tight-form-input" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
+					<input type="text" class="input-large tight-form-input" ng-model="panel.thresholds" ng-blur="render()" placeholder="50,80"></input>
 				</li>
 				<li class="tight-form-item">
 					Colors
