@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.controller('ValueSelectDropdownCtrl', function($q) {
+  coreModule.default.controller('ValueSelectDropdownCtrl', function($q) {
     var vm = this;
 
     vm.show = function() {
@@ -224,7 +224,7 @@ function (angular, _, coreModule) {
 
   });
 
-  coreModule.directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
+  coreModule.default.directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
     return {
       scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
       templateUrl: 'app/partials/valueSelectDropdown.html',

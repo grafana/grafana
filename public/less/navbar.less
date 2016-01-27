@@ -1,15 +1,11 @@
-.navbar-inner {
+.navbar .navbar-inner {
   padding-left: 0px;
+  border: none;
 }
 
 .navbar .nav>li>a {
   padding: 17px 15px 13px;
   .fa { font-size: 115%; }
-}
-
-.top-nav {
-  float: left;
-  font-size: 16px;
 }
 
 .fa.top-nav-breadcrumb-icon {
@@ -19,82 +15,66 @@
   color: @textColor;
 }
 
-.top-nav-menu-btn {
-  border: 1px solid @bodyBackground;
-  border-radius: 50%;
-  background: @iconContainerBackground;
+.top-nav-btn {
   display: block;
   position: relative;
   float: left;
-  width: 30px;
-  height: 30px;
-  padding: 4px;
-  margin: 6px 6px 3px 9px;
-  .fa {
-    color: @textColor;
-    width: 30px;
-    height: 30px;
-    left: 9px;
-    top: 7px;
-    font-size: 150%;
-    opacity: 0;
+  margin: 0;
+  font-size: 1.4em;
+  border-right: 1px solid @grafanaTargetBorder;
+
+  .fa-caret-down {
+    font-size: 55%;
     position: absolute;
-    transition: opacity .20s ease-in-out;
+    right: 8px;
+    top: 23px;
   }
-  img {
-    width: 30px;
-    position: absolute;
-    opacity: 1;
-    transition: opacity .20s ease-in-out;
-  }
-  &:hover {
-    .fa {
-      opacity: .7;
-    }
-    img {
-      opacity: 0;
+
+  a {
+    color: darken(@linkColor, 5%);
+    background-color: @navbarButtonBackground;
+    border-bottom: 1px solid @navbarButtonBackground;
+    display: inline-block;
+    &:hover {
+      background: @navbarButtonBackgroundHighlight;
+      color: @linkColor;
+      border-bottom: 1px solid @blue;
     }
   }
 }
 
-.top-nav-dashboards-btn {
-  display: block;
-  float: left;
-  margin: 9px 18px 5px 14px;
-  border-radius: 3px;
-  font-size: 1.4em;
-  color: #a2a2a2;
-  border: @grafanaTriggerBorder;
+.top-nav-menu-btn {
   a {
-    background-color: @grafanaTargetFuncBackground;
+    padding: 6px 20px 6px 13px;
+  }
+  img {
+    width: 30px;
+    position: relative;
+  }
+  .top-nav-logo-background {
     display: inline-block;
-    padding: 5px 15px 5px 10px;
-    border-radius: 3px;
-    color: #a2a2a2;
+    border: 1px solid @bodyBackground;
+    padding: 4px;
+    border-radius: 50%;
+    background: @iconContainerBackground;
+    width: 30px;
+    height: 30px;
+  }
+}
 
-    &:hover {
-      background: @grafanaTargetFuncBackground;
-      .fa {
-        color: @linkColor;
-      }
-    }
+.top-nav-dashboards-btn {
+  a {
+    padding: 15px 17px 14px 13px;
   }
 
   .fa-th-large {
     position: relative;
     top: 2px;
   }
-
-  .fa-caret-down {
-    font-size: 60%;
-    position: relative;
-    top: 4px;
-  }
 }
 
 .dashboard-title {
   padding: 0px 6px 5px 5px;
-  color: @linkColorHover;
   font-size: 17px;
 }
 

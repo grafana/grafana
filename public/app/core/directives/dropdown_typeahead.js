@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('dropdownTypeahead', function($compile) {
+  coreModule.default.directive('dropdownTypeahead', function($compile) {
 
     var inputTemplate = '<input type="text"'+
       ' class="tight-form-input input-medium tight-form-input"' +
@@ -74,11 +74,10 @@ function (_, $, coreModule) {
           updater: function (value) {
             var result = {};
             _.each($scope.menuItems, function(menuItem) {
-              result.$item = menuItem;
-
               _.each(menuItem.submenu, function(submenuItem) {
                 if (value === (menuItem.text + ' ' + submenuItem.text)) {
                   result.$subItem = submenuItem;
+                  result.$item = menuItem;
                 }
               });
             });

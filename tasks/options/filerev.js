@@ -14,7 +14,7 @@ module.exports = function(config) {
       dest: '<%= genDir %>/css'
     },
     js: {
-      src: '<%= genDir %>/app/app.js',
+      src: '<%= genDir %>/app/boot.js',
       dest: '<%= genDir %>/app'
     }
   };

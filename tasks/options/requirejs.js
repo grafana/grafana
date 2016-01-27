@@ -62,11 +62,11 @@ module.exports = function(config,grunt) {
     ];
 
     var fs = require('fs');
-    var panelPath = config.srcDir + '/app/panels';
+    var panelPath = config.srcDir + '/app/plugins/panel';
 
-    // create a module for each directory in public/app/panels/
+    // create a module for each directory in public/app/panel/
     fs.readdirSync(panelPath).forEach(function (panelName) {
-      requireModules[0].include.push('app/panels/'+panelName+'/module');
+      requireModules[0].include.push('app/plugins/panel/'+panelName+'/module');
     });
 
     return { options: options };

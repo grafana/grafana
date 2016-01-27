@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import InfluxQuery = require('../influx_query');
+import InfluxQuery from '../influx_query';
 
 describe('InfluxQuery', function() {
 
@@ -12,6 +12,18 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
       expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+    });
+  });
+
+  describe('render series with policy only', function() {
+    it('should generate correct query', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        policy: '5m_avg'
+      });
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "5m_avg"."cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
     });
   });
 

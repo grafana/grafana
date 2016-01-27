@@ -1,0 +1,94 @@
+{
+  "name": "es6-promise",
+  "namespace": "es6-promise",
+  "version": "3.0.2",
+  "description": "A lightweight library that provides tools for organizing asynchronous code",
+  "main": "dist/es6-promise.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "dist",
+    "lib",
+    "!dist/test"
+  ],
+  "devDependencies": {
+    "bower": "^1.3.9",
+    "brfs": "0.0.8",
+    "broccoli-es3-safe-recast": "0.0.8",
+    "broccoli-es6-module-transpiler": "^0.5.0",
+    "broccoli-jshint": "^0.5.1",
+    "broccoli-merge-trees": "^0.1.4",
+    "broccoli-replace": "^0.2.0",
+    "broccoli-stew": "0.0.6",
+    "broccoli-uglify-js": "^0.1.3",
+    "broccoli-watchify": "^0.2.0",
+    "ember-cli": "0.2.3",
+    "ember-publisher": "0.0.7",
+    "git-repo-version": "0.0.2",
+    "json3": "^3.3.2",
+    "minimatch": "^2.0.1",
+    "mocha": "^1.20.1",
+    "promises-aplus-tests-phantom": "^2.1.0-revise",
+    "release-it": "0.0.10"
+  },
+  "scripts": {
+    "build": "ember build",
+    "start": "ember s",
+    "test": "ember test",
+    "test:server": "ember test --server",
+    "test:node": "ember build && mocha ./dist/test/browserify",
+    "lint": "jshint lib",
+    "prepublish": "ember build --environment production",
+    "dry-run-release": "ember build --environment production && release-it --dry-run --non-interactive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jakearchibald/ES6-Promises.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jakearchibald/ES6-Promises/issues"
+  },
+  "browser": {
+    "vertx": false
+  },
+  "keywords": [
+    "promises",
+    "futures"
+  ],
+  "author": {
+    "name": "Yehuda Katz, Tom Dale, Stefan Penner and contributors",
+    "url": "Conversion to ES6 API by Jake Archibald"
+  },
+  "license": "MIT",
+  "spm": {
+    "main": "dist/es6-promise.js"
+  },
+  "gitHead": "6c49ef79609737bac2b496d508806a3d5e37303e",
+  "homepage": "https://github.com/jakearchibald/ES6-Promises#readme",
+  "_id": "es6-promise@3.0.2",
+  "_shasum": "010d5858423a5f118979665f46486a95c6ee2bb6",
+  "_from": "es6-promise@>=3.0.2 <4.0.0",
+  "_npmVersion": "2.13.4",
+  "_nodeVersion": "2.2.1",
+  "_npmUser": {
+    "name": "stefanpenner",
+    "email": "stefan.penner@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "jaffathecake",
+      "email": "jaffathecake@gmail.com"
+    },
+    {
+      "name": "stefanpenner",
+      "email": "stefan.penner@gmail.com"
+    }
+  ],
+  "dist": {
+    "shasum": "010d5858423a5f118979665f46486a95c6ee2bb6",
+    "tarball": "http://registry.npmjs.org/es6-promise/-/es6-promise-3.0.2.tgz"
+  },
+  "_resolved": "https://registry.npmjs.org/es6-promise/-/es6-promise-3.0.2.tgz",
+  "readme": "ERROR: No README data found!"
+}

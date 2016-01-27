@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
+  coreModule.default.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
     var self = this;
 
     this.init = function() {
@@ -44,6 +44,10 @@ function (angular, _, coreModule) {
         $timeout(function() {
           self.list = _.without(self.list,newAlert);
         }, timeout);
+      }
+
+      if (!$rootScope.$$phase) {
+        $rootScope.$digest();
       }
 
       return(newAlert);

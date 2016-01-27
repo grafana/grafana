@@ -11,6 +11,9 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
   var module = angular.module('grafana.controllers');
 
+  InfluxQuery = InfluxQuery.default;
+  queryPart = queryPart.default;
+
   module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
 
     $scope.init = function() {
@@ -18,12 +21,14 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
       $scope.target = $scope.target;
       $scope.queryModel = new InfluxQuery($scope.target);
-      $scope.queryBuilder = new InfluxQueryBuilder($scope.target);
+      $scope.queryBuilder = new InfluxQueryBuilder($scope.target, $scope.datasource.database);
       $scope.groupBySegment = uiSegmentSrv.newPlusButton();
       $scope.resultFormats = [
          {text: 'Time series', value: 'time_series'},
          {text: 'Table', value: 'table'},
       ];
+
+      $scope.policySegment = uiSegmentSrv.newSegment($scope.target.policy);
 
       if (!$scope.target.measurement) {
         $scope.measurementSegment = uiSegmentSrv.newSelectMeasurement();
@@ -125,6 +130,18 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
+      $scope.get_data();
+    };
+
+    $scope.getPolicySegments = function() {
+      var policiesQuery = $scope.queryBuilder.buildExploreQuery('RETENTION POLICIES');
+      return $scope.datasource.metricFindQuery(policiesQuery)
+      .then($scope.transformToSegments(false))
+      .then(null, $scope.handleQueryError);
+    };
+
+    $scope.policyChanged = function() {
+      $scope.target.policy = $scope.policySegment.value;
       $scope.get_data();
     };
 

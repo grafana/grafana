@@ -1,8 +1,5 @@
-///<amd-dependency path="app/plugins/datasource/influxdb/influx_series" name="InfluxSeries"/>
-
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var InfluxSeries: any;
+import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', function() {
 

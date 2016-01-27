@@ -6,14 +6,17 @@ module.exports = function(config) {
       configFile: 'karma.conf.js',
       singleRun: false,
     },
+
     debug: {
       configFile: 'karma.conf.js',
       singleRun: false,
       browsers: ['Chrome']
     },
+
     test: {
       configFile: 'karma.conf.js',
     },
+
     coveralls: {
       configFile: 'karma.conf.js',
       reporters: ['dots','coverage','coveralls'],

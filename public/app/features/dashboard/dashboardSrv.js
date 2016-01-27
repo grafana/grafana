@@ -214,10 +214,7 @@ function (angular, $, _, moment) {
     };
 
     p.formatDate = function(date, format) {
-      if (!moment.isMoment(date)) {
-        date = moment(date);
-      }
-
+      date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
 
       return this.timezone === 'browser' ?
@@ -225,13 +222,21 @@ function (angular, $, _, moment) {
         moment.utc(date).format(format);
     };
 
+    p.getRelativeTime = function(date) {
+      date = moment.isMoment(date) ? date : moment(date);
+
+      return this.timezone === 'browser' ?
+        moment(date).fromNow() :
+        moment.utc(date).fromNow();
+    };
+
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 8;
+      this.schemaVersion = 9;
 
-      if (oldVersion === 8) {
+      if (oldVersion === this.schemaVersion) {
         return;
       }
 
@@ -382,6 +387,23 @@ function (angular, $, _, moment) {
               }
             }
           });
+        });
+      }
+
+      // schema version 9 changes
+      if (oldVersion < 9) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'singlestat' && panel.thresholds !== "") { return; }
+
+          if (panel.thresholds) {
+            var k = panel.thresholds.split(",");
+
+            if (k.length >= 3) {
+              k.shift();
+              panel.thresholds = k.join(",");
+            }
+          }
         });
       }
 

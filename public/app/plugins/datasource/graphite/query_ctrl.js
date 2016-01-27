@@ -132,9 +132,7 @@ function (angular, _, config, gfunc, Parser) {
               $scope.segments = $scope.segments.splice(0, fromIndex);
               $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
-            return;
-          }
-          if (segments[0].expandable) {
+          } else if (segments[0].expandable) {
             if ($scope.segments.length === fromIndex) {
               $scope.segments.push(uiSegmentSrv.newSelectMetric());
             }
@@ -162,29 +160,29 @@ function (angular, _, config, gfunc, Parser) {
       var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
       return $scope.datasource.metricFindQuery(query).then(function(segments) {
-          var altSegments = _.map(segments, function(segment) {
-            return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
-          });
-
-          if (altSegments.length === 0) { return altSegments; }
-
-          // add template variables
-          _.each(templateSrv.variables, function(variable) {
-            altSegments.unshift(uiSegmentSrv.newSegment({
-              type: 'template',
-              value: '$' + variable.name,
-              expandable: true,
-            }));
-          });
-
-          // add wildcard option
-          altSegments.unshift(uiSegmentSrv.newSegment('*'));
-          return altSegments;
-        })
-        .then(null, function(err) {
-          $scope.parserError = err.message || 'Failed to issue metric query';
-          return [];
+        var altSegments = _.map(segments, function(segment) {
+          return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
         });
+
+        if (altSegments.length === 0) { return altSegments; }
+
+        // add template variables
+        _.each(templateSrv.variables, function(variable) {
+          altSegments.unshift(uiSegmentSrv.newSegment({
+            type: 'template',
+            value: '$' + variable.name,
+            expandable: true,
+          }));
+        });
+
+        // add wildcard option
+        altSegments.unshift(uiSegmentSrv.newSegment('*'));
+        return altSegments;
+      })
+      .then(null, function(err) {
+        $scope.parserError = err.message || 'Failed to issue metric query';
+        return [];
+      });
     };
 
     $scope.segmentValueChanged = function (segment, segmentIndex) {
@@ -195,11 +193,10 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       if (segment.expandable) {
-        return checkOtherSegments(segmentIndex + 1)
-          .then(function () {
-            setSegmentFocus(segmentIndex + 1);
-            $scope.targetChanged();
-          });
+        return checkOtherSegments(segmentIndex + 1).then(function() {
+          setSegmentFocus(segmentIndex + 1);
+          $scope.targetChanged();
+        });
       }
       else {
         $scope.segments = $scope.segments.splice(0, segmentIndex + 1);
@@ -220,12 +217,13 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var oldTarget = $scope.target.target;
-
       var target = getSegmentPathUpTo($scope.segments.length);
       $scope.target.target = _.reduce($scope.functions, wrapFunction, target);
 
       if ($scope.target.target !== oldTarget) {
-        $scope.$parent.get_data();
+        if ($scope.segments[$scope.segments.length - 1].value !== 'select metric') {
+          $scope.$parent.get_data();
+        }
       }
     };
 
@@ -254,8 +252,8 @@ function (angular, _, config, gfunc, Parser) {
     $scope.moveAliasFuncLast = function() {
       var aliasFunc = _.find($scope.functions, function(func) {
         return func.def.name === 'alias' ||
-               func.def.name === 'aliasByNode' ||
-               func.def.name === 'aliasByMetric';
+          func.def.name === 'aliasByNode' ||
+          func.def.name === 'aliasByMetric';
       });
 
       if (aliasFunc) {

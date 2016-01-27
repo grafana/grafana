@@ -3,11 +3,12 @@ package middleware
 import (
 	"strings"
 
-	"github.com/Unknwon/macaron"
+	"github.com/go-macaron/gzip"
+	"gopkg.in/macaron.v1"
 )
 
 func Gziper() macaron.Handler {
-	macaronGziper := macaron.Gziper()
+	macaronGziper := gzip.Gziper()
 
 	return func(ctx *macaron.Context) {
 		requestPath := ctx.Req.URL.RequestURI()

@@ -1,0 +1,125 @@
+<navbar title="Playlists" title-url="playlists" icon="fa fa-fw fa-list" subnav="true">
+	<ul class="nav">
+		<li ng-class="{active: isNew()}" ng-show="isNew()"><a href="datasources/create">New</a></li>
+		<li class="active" ng-show="!isNew()"><a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a></li>
+	</ul>
+</navbar>
+
+<div class="page-container" ng-form="playlistEditForm">
+  <div class="page">
+    <h2 ng-show="isNew()">New playlist</h2>
+    <h2 ng-show="!isNew()">Edit playlist</h2>
+
+    <h4>Name and interval</h4>
+
+    <div style="margin-bottom: 10px;">
+      <div>
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px">
+              Name
+            </li>
+            <li>
+              <input type="text" required ng-model="playlist.name" class="input-xlarge tight-form-input">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tight-form last">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px">
+              Interval
+            </li>
+            <li>
+              <input type="text" required ng-model="playlist.interval" placeholder="5m" class="input-xlarge tight-form-input">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+
+      <br>
+      <h4>Add dashboards</h4>
+
+      <div style="display: inline-block">
+        <div class="tight-form last">
+          <ul class="tight-form-list">
+						<li class="tight-form-item">
+							Search
+						</li>
+            <li>
+              <input type="text"
+                     class="tight-form-input input-xlarge last"
+                     ng-model="searchQuery"
+                     placeholder="dashboard search term"
+                     ng-trim="true"
+                     ng-change="search()">
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="span5 pull-left">
+			<h5>Search results ({{filteredPlaylistItems.length}})</h5>
+       <table class="grafana-options-table">
+        <tr ng-repeat="playlistItem in filteredPlaylistItems">
+          <td style="white-space: nowrap;">
+            {{playlistItem.title}}
+          </td>
+          <td style="text-align: center">
+            <button class="btn btn-inverse btn-mini pull-right" ng-click="addPlaylistItem(playlistItem)">
+              <i class="fa fa-plus"></i>
+              Add to playlist
+            </button>
+          </td>
+        </tr>
+        <tr ng-if="isSearchResultsEmpty()">
+          <td colspan="2">
+            <i class="fa fa-warning"></i> Search results empty
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="span5 pull-left">
+      <h5>Added dashboards</h5>
+      <table class="grafana-options-table">
+        <tr ng-repeat="playlistItem in playlistItems">
+          <td style="white-space: nowrap;">
+            {{playlistItem.title}}
+          </td>
+          <td style="text-align: right">
+            <button class="btn btn-inverse btn-mini" ng-hide="$first" ng-click="movePlaylistItemUp(playlistItem)">
+              <i class="fa fa-arrow-up"></i>
+            </button>
+            <button class="btn btn-inverse btn-mini" ng-hide="$last" ng-click="movePlaylistItemDown(playlistItem)">
+              <i class="fa fa-arrow-down"></i>
+            </button>
+            <button class="btn btn-inverse btn-mini" ng-click="removePlaylistItem(playlistItem)">
+              <i class="fa fa-remove"></i>
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="clearfix"></div>
+
+  <div class="pull-left" style="margin-top: 25px;">
+    <!-- <div class="tight-form"> -->
+      <button type="button"
+              class="btn btn-success"
+              ng-disabled="playlistEditForm.$invalid || isPlaylistEmpty()"
+              ng-click="savePlaylist(playlist, playlistItems)">Save</button>
+      <button type="button"
+              class="btn btn-inverse"
+              ng-click="backToList()">Cancel</button>
+    <!-- </div> -->
+  </div>
+
+  <div class="clearfix"></div>
+</div>

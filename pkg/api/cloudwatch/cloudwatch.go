@@ -31,28 +31,41 @@ type cwRequest struct {
 
 func init() {
 	actionHandlers = map[string]actionHandler{
-		"GetMetricStatistics": handleGetMetricStatistics,
-		"ListMetrics":         handleListMetrics,
-		"DescribeInstances":   handleDescribeInstances,
-		"__GetRegions":        handleGetRegions,
-		"__GetNamespaces":     handleGetNamespaces,
-		"__GetMetrics":        handleGetMetrics,
-		"__GetDimensions":     handleGetDimensions,
+		"GetMetricStatistics":     handleGetMetricStatistics,
+		"ListMetrics":             handleListMetrics,
+		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
+		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
+		"DescribeInstances":       handleDescribeInstances,
+		"__GetRegions":            handleGetRegions,
+		"__GetNamespaces":         handleGetNamespaces,
+		"__GetMetrics":            handleGetMetrics,
+		"__GetDimensions":         handleGetDimensions,
 	}
 }
 
-func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
+var awsCredentials map[string]*credentials.Credentials = make(map[string]*credentials.Credentials)
+
+func getCredentials(profile string) *credentials.Credentials {
+	if _, ok := awsCredentials[profile]; ok {
+		return awsCredentials[profile]
+	}
+
 	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
 			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
+	awsCredentials[profile] = creds
 
+	return creds
+}
+
+func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: creds,
+		Credentials: getCredentials(req.DataSource.Database),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -90,17 +103,9 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
-	sess := session.New()
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
-		})
-
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: creds,
+		Credentials: getCredentials(req.DataSource.Database),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -137,18 +142,86 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, resp)
 }
 
-func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
-	sess := session.New()
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
-		})
-
+func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: creds,
+		Credentials: getCredentials(req.DataSource.Database),
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
+	reqParam := &struct {
+		Parameters struct {
+			Namespace  string                  `json:"namespace"`
+			MetricName string                  `json:"metricName"`
+			Dimensions []*cloudwatch.Dimension `json:"dimensions"`
+			Statistic  string                  `json:"statistic"`
+			Period     int64                   `json:"period"`
+		} `json:"parameters"`
+	}{}
+	json.Unmarshal(req.Body, reqParam)
+
+	params := &cloudwatch.DescribeAlarmsForMetricInput{
+		Namespace:  aws.String(reqParam.Parameters.Namespace),
+		MetricName: aws.String(reqParam.Parameters.MetricName),
+		Period:     aws.Int64(reqParam.Parameters.Period),
+	}
+	if len(reqParam.Parameters.Dimensions) != 0 {
+		params.Dimensions = reqParam.Parameters.Dimensions
+	}
+	if reqParam.Parameters.Statistic != "" {
+		params.Statistic = aws.String(reqParam.Parameters.Statistic)
+	}
+
+	resp, err := svc.DescribeAlarmsForMetric(params)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.DataSource.Database),
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
+	reqParam := &struct {
+		Parameters struct {
+			AlarmName       string `json:"alarmName"`
+			HistoryItemType string `json:"historyItemType"`
+			StartDate       int64  `json:"startDate"`
+			EndDate         int64  `json:"endDate"`
+		} `json:"parameters"`
+	}{}
+	json.Unmarshal(req.Body, reqParam)
+
+	params := &cloudwatch.DescribeAlarmHistoryInput{
+		AlarmName: aws.String(reqParam.Parameters.AlarmName),
+		StartDate: aws.Time(time.Unix(reqParam.Parameters.StartDate, 0)),
+		EndDate:   aws.Time(time.Unix(reqParam.Parameters.EndDate, 0)),
+	}
+	if reqParam.Parameters.HistoryItemType != "" {
+		params.HistoryItemType = aws.String(reqParam.Parameters.HistoryItemType)
+	}
+
+	resp, err := svc.DescribeAlarmHistory(params)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.DataSource.Database),
 	}
 
 	svc := ec2.New(session.New(cfg), cfg)

@@ -9,6 +9,11 @@
 			<em>{{target.datasource}}</em>
 		</li>
 		<li class="tight-form-item">
+			<a class="pointer" tabindex="1" ng-click="toggleEditorMode()">
+				<i class="fa fa-pencil"></i>
+			</a>
+		</li>
+		<li class="tight-form-item">
 			<div class="dropdown">
 				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
 					<i class="fa fa-bars"></i>
@@ -49,7 +54,9 @@
 		</li>
 	</ul>
 
-	<input type="text" class="tight-form-clear-input span10" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
+	<span style="display: block; overflow: hidden;">
+		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="get_data()" ng-show="target.textEditor"></input>
+	</span>
 
 	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
 		<li ng-repeat="segment in segments" role="menuitem">

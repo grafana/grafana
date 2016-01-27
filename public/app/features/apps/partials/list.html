@@ -1,0 +1,51 @@
+<topnav title="Apps" icon="fa fa-fw fa-cubes" subnav="true">
+	<ul class="nav">
+		<li class="active" ><a href="org/apps">Overview</a></li>
+	</ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page-wide" ng-init="ctrl.init()">
+    <h1>Apps</h1>
+
+		<div ng-if="!ctrl.apps">
+			<em>No apps defined</em>
+		</div>
+
+		<ul class="filter-list">
+      <li ng-repeat="app in ctrl.apps">
+        <ul class="filter-list-card">
+					<li class="filter-list-card-image">
+						<img ng-src="{{app.info.logos.small}}">
+					</li>
+          <li>
+            <div class="filter-list-card-controls">
+              <div class="filter-list-card-config">
+								<a href="apps/edit/{{app.appId}}">
+									<i class="fa fa-cog"></i>
+								</a>
+              </div>
+            </div>
+						<span class="filter-list-card-title">
+							<a href="apps/edit/{{app.appId}}">
+								{{app.name}}
+							</a>
+							&nbsp; &nbsp;
+							<span class="label label-info" ng-if="app.enabled">
+								Enabled
+							</span>
+							&nbsp;
+							<span class="label label-info" ng-if="app.pinned">
+								Pinned
+							</span>
+
+						</span>
+            <span class="filter-list-card-status">
+              <span class="filter-list-card-state">Dashboards: 1</span>
+            </span>
+          </li>
+        </ul>
+      </li>
+		</ul>
+	</div>
+</div>

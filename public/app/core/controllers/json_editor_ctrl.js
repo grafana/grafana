@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.controller('JsonEditorCtrl', function($scope) {
+  coreModule.default.controller('JsonEditorCtrl', function($scope) {
 
     $scope.json = angular.toJson($scope.object, true);
     $scope.canUpdate = $scope.updateHandler !== void 0;

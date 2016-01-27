@@ -15,6 +15,9 @@ function (_, queryDef) {
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
+      if (metric.hide) {
+        continue;
+      }
 
       switch(metric.type) {
         case 'count': {
@@ -76,8 +79,16 @@ function (_, queryDef) {
           newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
-            value = bucket[metric.id].value;
-            newSeries.datapoints.push([value, bucket.key]);
+
+            value = bucket[metric.id];
+            if (value !== undefined) {
+              if (value.normalized_value) {
+                newSeries.datapoints.push([value.normalized_value, bucket.key]);
+              } else {
+                newSeries.datapoints.push([value.value, bucket.key]);
+              }
+            }
+
           }
           seriesList.push(newSeries);
           break;
@@ -193,7 +204,14 @@ function (_, queryDef) {
       });
     }
 
-    if (series.field) {
+    if (series.field && queryDef.isPipelineAgg(series.metric)) {
+      var appliedAgg = _.findWhere(target.metrics, { id: series.field });
+      if (appliedAgg) {
+        metricName += ' ' + queryDef.describeMetric(appliedAgg);
+      } else {
+        metricName = 'Unset';
+      }
+    } else if (series.field) {
       metricName += ' ' + series.field;
     }
 
@@ -251,6 +269,21 @@ function (_, queryDef) {
     seriesList.push(series);
   };
 
+  ElasticResponse.prototype.trimDatapoints = function(aggregations, target) {
+    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+
+    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
+    if (shouldDropFirstAndLast) {
+      var trim = histogram.settings.trimEdges;
+      for(var prop in aggregations) {
+        var points = aggregations[prop];
+        if (points.datapoints.length > trim * 2) {
+          points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
+        }
+      }
+    }
+  };
+
   ElasticResponse.prototype.getTimeSeries = function() {
     var seriesList = [];
 
@@ -271,6 +304,7 @@ function (_, queryDef) {
         var docs = [];
 
         this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
         for (var y = 0; y < tmpSeriesList.length; y++) {

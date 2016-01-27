@@ -15,3 +15,5 @@ CONF_DIR=/etc/grafana
 CONF_FILE=/etc/grafana/grafana.ini
 
 RESTART_ON_UPGRADE=false
+
+PLUGINS_DIR=/var/lib/grafana/plugins

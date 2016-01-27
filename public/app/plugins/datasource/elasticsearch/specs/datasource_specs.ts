@@ -1,30 +1,32 @@
-///<amd-dependency path="../datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import moment  = require('moment');
-import angular = require('angular');
-
-declare var helpers: any;
+import moment from 'moment';
+import angular from 'angular';
+import helpers from 'test/specs/helpers';
+import Datasource from "../datasource";
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings: any = {jsonData: {}};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
-  beforeEach(ctx.createService('ElasticDatasource'));
-  beforeEach(function() {
-    ctx.ds = new ctx.service({jsonData: {}});
-  });
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.$injector = $injector;
+  }));
+
+  function createDatasource(instanceSettings) {
+    instanceSettings.jsonData = instanceSettings.jsonData || {};
+    ctx.ds = ctx.$injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+  }
 
   describe('When testing datasource with index pattern', function() {
     beforeEach(function() {
-      ctx.ds = new ctx.service({
-        url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily' }
-      });
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
     });
 
     it('should translate index pattern to current day', function() {
@@ -46,11 +48,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      ctx.ds = new ctx.service({
-        url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily' }
-      });
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
@@ -85,7 +83,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      ctx.ds = new ctx.service({url: 'http://es.com', index: 'test', jsonData: {}});
+      createDatasource({url: 'http://es.com', index: 'test'});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;

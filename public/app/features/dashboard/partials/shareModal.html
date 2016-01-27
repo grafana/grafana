@@ -107,7 +107,7 @@
 </script>
 
 <script type="text/ng-template" id="shareSnapshot.html">
-	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl">
+	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl" ng-init="init()">
 		<div class="share-modal-big-icon">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
 			<i ng-if="!loading" class="gf-icon gf-icon-snap-multi"></i>
@@ -175,10 +175,9 @@
 				<i class="fa fa-save"></i>
 				Local Snapshot
 			</button>
-
-			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
+			<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
 				<i class="fa fa-cloud-upload"></i>
-				Publish to snapshot.raintank.io
+				{{sharingButtonText}}
 			</button>
 		</div>
 

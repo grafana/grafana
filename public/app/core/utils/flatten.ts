@@ -1,7 +1,7 @@
 // Copyright (c) 2014, Hugh Kennedy
 // Based on code from https://github.com/hughsk/flat/blob/master/index.js
 //
-function flatten(target, opts): any {
+export default function flatten(target, opts): any {
   opts = opts || {};
 
   var delimiter = opts.delimiter || '.';
@@ -35,5 +35,3 @@ function flatten(target, opts): any {
 
   return output;
 }
-
-export = flatten;

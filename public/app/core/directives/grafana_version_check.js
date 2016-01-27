@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.directive('grafanaVersionCheck', function($http, contextSrv) {
+  coreModule.default.directive('grafanaVersionCheck', function($http, contextSrv) {
     return {
       restrict: 'A',
       link: function(scope, elem) {

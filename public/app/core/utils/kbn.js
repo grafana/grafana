@@ -179,17 +179,6 @@ function($, _) {
       .replace(/ +/g,'-');
   };
 
-  kbn.exportSeriesListToCsv = function(seriesList) {
-    var text = 'Series;Time;Value\n';
-    _.each(seriesList, function(series) {
-      _.each(series.datapoints, function(dp) {
-        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
-      });
-    });
-    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-    window.saveAs(blob, 'grafana_data_export.csv');
-  };
-
   kbn.stringToJsRegex = function(str) {
     if (str[0] !== '/') {
       return new RegExp('^' + str + '$');
@@ -352,9 +341,15 @@ function($, _) {
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
 
   // Data Rate
-  kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
-  kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
-  kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+  kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
+  kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
+  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
+  kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
+  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bits', 1);
+  kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
+  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bits', 2);
+  kbn.valueFormats.GBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
+  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bits', 3);
 
   // Throughput
   kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
@@ -399,6 +394,7 @@ function($, _) {
   // Volume
   kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
   kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
+  kbn.valueFormats.m3     = kbn.formatBuilders.decimalSIPrefix('m3');
 
   // Time
   kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -594,6 +590,12 @@ function($, _) {
           {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec',    value: 'bps'},
           {text: 'bytes/sec',   value: 'Bps'},
+          {text: 'kilobites/sec', value: 'Kbits'},
+          {text: 'kilobytes/sec',    value: 'KBs'},
+          {text: 'megabites/sec', value: 'Mbits'},
+          {text: 'megabytes/sec',    value: 'MBs'},
+          {text: 'gigabytes/sec',   value: 'GBs'},
+          {text: 'gigabites/sec',   value: 'Gbits'},
         ]
       },
       {
@@ -626,8 +628,9 @@ function($, _) {
       {
         text: 'volume',
         submenu: [
-          {text: 'millilitre', value: 'mlitre'},
-          {text: 'litre',      value: 'litre' },
+          {text: 'millilitre',  value: 'mlitre'},
+          {text: 'litre',       value: 'litre' },
+          {text: 'cubic metre', value: 'm3'    },
         ]
       },
       {

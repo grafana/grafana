@@ -27,6 +27,7 @@
   "maxlen": 140,
 
   "globals": {
+    "System": true,
     "define": true,
     "require": true,
     "Chromath": false,

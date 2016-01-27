@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('configModal', function($modal, $q, $timeout) {
+  coreModule.default.directive('configModal', function($modal, $q, $timeout) {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {

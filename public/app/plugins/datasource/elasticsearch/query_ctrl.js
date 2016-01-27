@@ -7,6 +7,7 @@ function (angular) {
   var module = angular.module('grafana.controllers');
 
   module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv) {
+    $scope.esVersion = $scope.datasource.esVersion;
 
     $scope.init = function() {
       var target = $scope.target;

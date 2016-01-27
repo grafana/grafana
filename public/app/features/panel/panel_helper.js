@@ -11,7 +11,7 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelHelper', function(timeSrv, $rootScope) {
+  module.service('panelHelper', function(timeSrv, $rootScope, $q) {
     var self = this;
 
     this.setTimeQueryStart = function(scope) {
@@ -59,7 +59,9 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
         scope.resolution = Math.ceil($(window).width() * (scope.panel.span / 12));
       }
 
-      scope.interval = kbn.calculateInterval(scope.range, scope.resolution, scope.panel.interval);
+      var panelInterval = scope.panel.interval;
+      var datasourceInterval = (scope.datasource || {}).interval;
+      scope.interval = kbn.calculateInterval(scope.range, scope.resolution, panelInterval || datasourceInterval);
     };
 
     this.applyPanelTimeOverrides = function(scope) {
@@ -103,6 +105,10 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
     };
 
     this.issueMetricQuery = function(scope, datasource) {
+      if (!scope.panel.targets || scope.panel.targets.length === 0) {
+        return $q.when([]);
+      }
+
       var metricsQuery = {
         range: scope.range,
         rangeRaw: scope.rangeRaw,

@@ -1,0 +1,60 @@
+<topnav title="Data sources" icon="fa fa-fw fa-database" subnav="false">
+</topnav>
+
+<div class="page-container">
+	<div class="page-wide">
+
+		<a type="submit" class="btn btn-inverse pull-right" href="datasources/new">
+			<i class="fa fa-plus"></i>
+			Add data source
+		</a>
+
+		<h1>Data sources</h1>
+		<br>
+
+		<div ng-if="datasources.length === 0">
+			<em>No data sources defined</em>
+		</div>
+
+		<table class="filter-table" ng-if="datasources.length > 0">
+			<thead>
+				<tr>
+					<th><strong>Name</strong></th>
+					<th><strong>Url</strong></th>
+					<th style="width: 60px;"></th>
+					<th style="width: 65px;"></th>
+					<th style="width: 34px;"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="ds in datasources">
+					<td>
+						<a href="datasources/edit/{{ds.id}}">
+							<i class="fa fa-database"></i> &nbsp; {{ds.name}}
+						</a>
+					</td>
+					<td>
+						<span class="ellipsis">{{ds.url}}</span>
+					</td>
+					<td class="text-center">
+						<span ng-if="ds.isDefault">
+							<span class="label label-info">default</span>
+						</span>
+					</td>
+					<td class="text-right">
+						<a href="datasources/edit/{{ds.id}}" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							Edit
+						</a>
+					</td>
+					<td class="text-right">
+						<a ng-click="remove(ds)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+</div>

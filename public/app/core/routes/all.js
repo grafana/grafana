@@ -6,10 +6,11 @@ define([
 ], function(angular, coreModule, BundleLoader) {
   "use strict";
 
-  coreModule.config(function($routeProvider, $locationProvider) {
+  coreModule.default.config(function($routeProvider, $locationProvider) {
     $locationProvider.html5Mode(true);
 
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+    var loadAppsBundle = new BundleLoader.BundleLoader('app/features/apps/all');
 
     $routeProvider
       .when('/', {
@@ -41,17 +42,17 @@ define([
         controller : 'DashboardImportCtrl',
       })
       .when('/datasources', {
-        templateUrl: 'app/features/org/partials/datasources.html',
+        templateUrl: 'app/features/datasources/partials/list.html',
         controller : 'DataSourcesCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/edit/:id', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
       .when('/datasources/new', {
-        templateUrl: 'app/features/org/partials/datasourceEdit.html',
+        templateUrl: 'app/features/datasources/partials/edit.html',
         controller : 'DataSourceEditCtrl',
         resolve: loadOrgBundle,
       })
@@ -130,6 +131,18 @@ define([
       .when('/user/password/reset', {
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
+      })
+      .when('/apps', {
+        templateUrl: 'app/features/apps/partials/list.html',
+        controller: 'AppListCtrl',
+        controllerAs: 'ctrl',
+        resolve: loadAppsBundle,
+      })
+      .when('/apps/edit/:appId', {
+        templateUrl: 'app/features/apps/partials/edit.html',
+        controller: 'AppEditCtrl',
+        controllerAs: 'ctrl',
+        resolve: loadAppsBundle,
       })
       .when('/global-alerts', {
         templateUrl: 'app/features/dashboard/partials/globalAlerts.html',

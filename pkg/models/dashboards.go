@@ -33,6 +33,8 @@ type Dashboard struct {
 	Created time.Time
 	Updated time.Time
 
+	UpdatedBy int64
+
 	Title string
 	Data  map[string]interface{}
 }
@@ -90,6 +92,7 @@ func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
 	dash.OrgId = cmd.OrgId
+	dash.UpdatedBy = cmd.UpdatedBy
 	dash.UpdateSlug()
 	return dash
 }
@@ -113,6 +116,7 @@ type SaveDashboardCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
 	Overwrite bool                   `json:"overwrite"`
 	OrgId     int64                  `json:"-"`
+	UpdatedBy int64                  `json:"-"`
 
 	Result *Dashboard
 }

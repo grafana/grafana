@@ -44,7 +44,7 @@
 				<table class="grafana-options-table">
 					<tr ng-repeat="annotation in annotations">
 						<td style="width:90%">
-							<i class="fa fa-bolt"></i> &nbsp;
+							<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
 							{{annotation.name}}
 						</td>
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
@@ -91,7 +91,8 @@
 				</div>
 			</div>
 
-			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
+			<annotations-query-editor datasource="currentDatasource" annotation="currentAnnotation">
+			</annotations-query-editor>
 
 			<br>
 			<button ng-show="mode === 'new'" type="button" class="btn btn-success" ng-click="add()">Add</button>

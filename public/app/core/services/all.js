@@ -9,5 +9,6 @@ define([
   './popover_srv',
   './segment_srv',
   './backend_srv',
+  './dynamic_directive_srv',
 ],
 function () {});

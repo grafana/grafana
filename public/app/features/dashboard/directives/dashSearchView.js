@@ -7,29 +7,12 @@ function (angular, $) {
 
   angular
     .module('grafana.directives')
-    .directive('dashSearchView', function($compile, $timeout) {
+    .directive('dashSearchView', function($compile) {
       return {
         restrict: 'A',
         link: function(scope, elem) {
           var editorScope;
-
-          function hookUpHideWhenClickedOutside() {
-            $timeout(function() {
-              $(document).bind('click.hide-search', function(evt) {
-                // some items can be inside container
-                // but then removed
-                if ($(evt.target).parents().length === 0) {
-                  return;
-                }
-
-                if ($(evt.target).parents('.search-container').length === 0) {
-                  if (editorScope) {
-                    editorScope.dismiss();
-                  }
-                }
-              });
-            });
-          }
+          var ignoreHide;
 
           function showSearch() {
             if (editorScope) {
@@ -37,25 +20,27 @@ function (angular, $) {
               return;
             }
 
+            ignoreHide = true;
             editorScope = scope.$new();
             editorScope.dismiss = function() {
               editorScope.$destroy();
               elem.empty();
               elem.unbind();
               editorScope = null;
-              $(document).unbind('click.hide-search');
             };
 
-            var view = $('<div class="search-container" ng-include="\'app/partials/search.html\'"></div>');
+            var view = $('<search class="search-container" dismiss="dismiss()"></search>');
 
             elem.append(view);
             $compile(elem.contents())(editorScope);
 
-            hookUpHideWhenClickedOutside();
+            setTimeout(function() {
+              ignoreHide = false;
+            }, 300);
           }
 
           function hideSearch() {
-            if (editorScope) {
+            if (editorScope && !ignoreHide) {
               editorScope.dismiss();
             }
           }

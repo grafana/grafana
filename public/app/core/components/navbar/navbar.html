@@ -1,0 +1,26 @@
+<div class="navbar navbar-static-top">
+	<div class="navbar-inner"><div class="container-fluid">
+			<div class="top-nav-btn top-nav-menu-btn">
+				<a class="pointer" ng-click="ctrl.contextSrv.toggleSideMenu()">
+					<span class="top-nav-logo-background">
+						<img class="logo-icon" src="img/fav32.png"></img>
+					</span>
+					<i class="fa fa-caret-down"></i>
+				</a>
+			</div>
+
+			<span ng-if="ctrl.title">
+				<span class="icon-circle top-nav-icon">
+					<i ng-class="ctrl.icon"></i>
+				</span>
+				<a ng-href="{{ctrl.titleUrl}}" class="top-nav-title">
+					{{ctrl.title}}
+				</a>
+				<i ng-show="ctrl.subnav" class="top-nav-breadcrumb-icon fa fa-angle-right"></i>
+			</span>
+
+			<div ng-transclude></div>
+		</div>
+	</div>
+</div>
+

@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.controller('ErrorCtrl', function($scope, contextSrv) {
+  coreModule.default.controller('ErrorCtrl', function($scope, contextSrv) {
 
     var showSideMenu = contextSrv.sidemenu;
     contextSrv.sidemenu = false;

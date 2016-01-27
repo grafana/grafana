@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-version=2.5.0
+version=2.6.0
 
 wget https://grafanarel.s3.amazonaws.com/builds/grafana_${version}_amd64.deb
 

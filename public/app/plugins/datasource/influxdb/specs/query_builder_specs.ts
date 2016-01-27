@@ -1,8 +1,5 @@
-///<amd-dependency path="app/plugins/datasource/influxdb/query_builder" name="InfluxQueryBuilder"/>
-
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var InfluxQueryBuilder: any;
+import InfluxQueryBuilder from '../query_builder';
 
 describe('InfluxQueryBuilder', function() {
 
@@ -73,6 +70,10 @@ describe('InfluxQueryBuilder', function() {
       expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
     });
 
+    it('should build show retention policies query', function() {
+      var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: []}, 'site');
+      var query = builder.buildExploreQuery('RETENTION POLICIES');
+      expect(query).to.be('SHOW RETENTION POLICIES on "site"');
+    });
   });
-
 });

@@ -11,7 +11,7 @@ function ($, coreModule) {
     'templating':  { src: 'app/features/templating/partials/editor.html', title: "Templating" }
   };
 
-  coreModule.directive('dashEditorLink', function($timeout) {
+  coreModule.default.directive('dashEditorLink', function($timeout) {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {
@@ -27,7 +27,7 @@ function ($, coreModule) {
     };
   });
 
-  coreModule.directive('dashEditorView', function($compile, $location) {
+  coreModule.default.directive('dashEditorView', function($compile, $location) {
     return {
       restrict: 'A',
       link: function(scope, elem) {

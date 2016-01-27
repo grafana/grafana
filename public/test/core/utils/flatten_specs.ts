@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
 
-import flatten = require('app/core/utils/flatten')
+import flatten from 'app/core/utils/flatten';
 
 describe("flatten", () => {
 

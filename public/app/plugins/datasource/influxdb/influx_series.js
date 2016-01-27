@@ -110,7 +110,7 @@ function (_, TableModel) {
   };
 
   p.getTable = function() {
-    var table = new TableModel();
+    var table = new TableModel.default();
     var self = this;
     var i, j;
 

@@ -1,12 +1,10 @@
-///<amd-dependency path="app/plugins/datasource/graphite/gfunc" name="gfunc"/>
-///<amd-dependency path="app/plugins/datasource/graphite/query_ctrl" />
-///<amd-dependency path="app/core/services/segment_srv" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
+import '../query_ctrl';
+import 'app/core/services/segment_srv';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-declare var gfunc: any;
-declare var helpers: any;
+import gfunc from '../gfunc';
+import helpers from 'test/specs/helpers';
 
 describe('GraphiteQueryCtrl', function() {
   var ctx = new helpers.ControllerTestContext();

@@ -1,8 +1,44 @@
-# 2.6.0 (2015-12-04)
+# 3.0.0 (unrelased master branch)
+
+### New Features
+* **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/pull/3655)
+* **Metadata**: Settings panel now shows dashboard metadata, closes [#3304](https://github.com/grafana/grafana/issues/3304)
+* **InfluxDB**: Support for policy selection in query editor, closes [#2018](https://github.com/grafana/grafana/issues/2018)
+
+### Breaking changes
+**Plugin API**: Both datasource and panel plugin api (and plugin.json schema) as been updated, requiring a minor update to plugins. See [plugin api](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md) for more info.
+**InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via improved plugin system, closes #3523
+**KairosDB** The data source is no longer included in default builds. Can easily be installed via improved plugin system, closes #3524
+
+### Enhancements
+* **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/pull/3458)
+* **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/pull/3584)
+* **snapshot**: Annotations are now included in snapshots, closes [#3635](https://github.com/grafana/grafana/pull/3635)
+
+### Bug fixes
+* **Playlist**: Fix for memory leak when running a playlist, closes [#3794](https://github.com/grafana/grafana/pull/3794)
+
+# 2.6.1 (unrelased, 2.6.x branch)
+
+### New Features
+* **Elasticsearch**: Support for derivative unit option, closes [#3512](https://github.com/grafana/grafana/issues/3512)
+
+### Bug fixes
+* **Graph Panel**: Fixed typehead when adding series style override, closes [#3554](https://github.com/grafana/grafana/issues/3554)
+
+# 2.6.0 (2015-12-14)
+
+### New Features
+* **Elasticsearch**: Support for pipeline aggregations Moving average and derivative, closes [#2715](https://github.com/grafana/grafana/issues/2715)
+* **Elasticsearch**: Support for inline script and missing options for metrics, closes [#3500](https://github.com/grafana/grafana/issues/3500)
+* **Syslog**: Support for syslog logging, closes [#3161](https://github.com/grafana/grafana/pull/3161)
+* **Timepicker**: Always show refresh button even with refresh rate, closes [#3498](https://github.com/grafana/grafana/pull/3498)
+* **Login**: Make it possible to change the login hint on the login page, closes [#2571](https://github.com/grafana/grafana/pull/2571)
 
 ### Bug Fixes
 * **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
 * **influxdb**: Fixed issue showing Group By label only on first query, fixes [#3453](https://github.com/grafana/grafana/issues/3453)
+* **logging**: Add more verbose info logging for http reqeusts, closes [#3405](https://github.com/grafana/grafana/pull/3405)
 
 # 2.6.0-Beta1 (2015-12-04)
 

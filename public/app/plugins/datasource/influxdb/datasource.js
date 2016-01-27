@@ -4,33 +4,30 @@ define([
   'app/core/utils/datemath',
   './influx_series',
   './influx_query',
-  './directives',
   './query_ctrl',
 ],
 function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
-  var module = angular.module('grafana.services');
+  InfluxQuery = InfluxQuery.default;
 
-  module.factory('InfluxDatasource', function($q, backendSrv, templateSrv) {
+  /** @ngInject */
+  function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.type = 'influxdb';
+    this.urls = _.map(instanceSettings.url.split(','), function(url) {
+      return url.trim();
+    });
 
-    function InfluxDatasource(datasource) {
-      this.type = 'influxdb';
-      this.urls = _.map(datasource.url.split(','), function(url) {
-        return url.trim();
-      });
+    this.username = instanceSettings.username;
+    this.password = instanceSettings.password;
+    this.name = instanceSettings.name;
+    this.database = instanceSettings.database;
+    this.basicAuth = instanceSettings.basicAuth;
 
-      this.username = datasource.username;
-      this.password = datasource.password;
-      this.name = datasource.name;
-      this.database = datasource.database;
-      this.basicAuth = datasource.basicAuth;
+    this.supportAnnotations = true;
+    this.supportMetrics = true;
 
-      this.supportAnnotations = true;
-      this.supportMetrics = true;
-    }
-
-    InfluxDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       var timeFilter = getTimeFilter(options);
       var queryTargets = [];
       var i, y;
@@ -91,7 +88,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
       });
     };
 
-    InfluxDatasource.prototype.annotationQuery = function(options) {
+    this.annotationQuery = function(options) {
       var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
       var query = options.annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
@@ -104,7 +101,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
       });
     };
 
-    InfluxDatasource.prototype.metricFindQuery = function (query) {
+    this.metricFindQuery = function (query) {
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -120,28 +117,29 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
         if (!influxResults.series) {
           return [];
         }
+
         var series = influxResults.series[0];
-
-        if (query.indexOf('SHOW MEASUREMENTS') === 0) {
-          return _.map(series.values, function(value) { return { text: value[0], expandable: true }; });
-        }
-
-        var flattenedValues = _.flatten(series.values);
-        return _.map(flattenedValues, function(value) { return { text: value, expandable: true }; });
+        return _.map(series.values, function(value) {
+          if (_.isArray(value)) {
+            return { text: value[0] };
+          } else {
+            return { text: value };
+          }
+        });
       });
     };
 
-    InfluxDatasource.prototype._seriesQuery = function(query) {
+    this._seriesQuery = function(query) {
       return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
     };
 
-    InfluxDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
-    InfluxDatasource.prototype._influxRequest = function(method, url, data) {
+    this._influxRequest = function(method, url, data) {
       var self = this;
 
       var currentUrl = self.urls.shift();
@@ -217,9 +215,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
       }
       return (date.valueOf() / 1000).toFixed(0) + 's';
     }
+  }
 
-    return InfluxDatasource;
-
-  });
+  return InfluxDatasource;
 
 });

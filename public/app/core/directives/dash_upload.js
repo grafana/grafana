@@ -5,7 +5,7 @@ define([
 function (coreModule, kbn) {
   'use strict';
 
-  coreModule.directive('dashUpload', function(timer, alertSrv, $location) {
+  coreModule.default.directive('dashUpload', function(timer, alertSrv, $location) {
     return {
       restrict: 'A',
       link: function(scope) {

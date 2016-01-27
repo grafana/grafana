@@ -1,9 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ = require('lodash');
-import queryPart = require('./query_part');
+import _ from 'lodash';
+import queryPart from './query_part';
 
-class InfluxQuery {
+export default class InfluxQuery {
   target: any;
   selectModels: any[];
   groupByParts: any;
@@ -12,6 +12,7 @@ class InfluxQuery {
   constructor(target) {
     this.target = target;
 
+    target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
@@ -149,6 +150,23 @@ class InfluxQuery {
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
+  getMeasurementAndPolicy() {
+    var policy = this.target.policy;
+    var measurement = this.target.measurement;
+
+    if (!measurement.match('^/.*/')) {
+      measurement = '"' + measurement+ '"';
+    }
+
+    if (policy !== 'default') {
+      policy = '"' + this.target.policy + '".';
+    } else {
+      policy = "";
+    }
+
+    return policy + measurement;
+  }
+
   render() {
     var target = this.target;
 
@@ -176,12 +194,7 @@ class InfluxQuery {
       query += selectText;
     }
 
-    var measurement = target.measurement;
-    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-measurement = '"' + measurement+ '"';
-    }
-
-    query += ' FROM ' + measurement + ' WHERE ';
+    query += ' FROM ' + this.getMeasurementAndPolicy() + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index);
     });
@@ -212,5 +225,3 @@ measurement = '"' + measurement+ '"';
     return query;
   }
 }
-
-export = InfluxQuery;
