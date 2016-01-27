@@ -14,6 +14,7 @@ export class SearchCtrl {
   currentSearchId: number;
   tagsMode: boolean;
   showImport: boolean;
+  dismiss: any;
 
   /** @ngInject */
   constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
@@ -32,7 +33,7 @@ export class SearchCtrl {
 
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      this.$scope.dismiss();
+      this.dismiss();
     }
     if (evt.keyCode === 40) {
       this.moveSelection(1);
@@ -107,9 +108,12 @@ export class SearchCtrl {
 
   getTags() {
     return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-      this.tagsMode = true;
+      this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
+      if ( !this.tagsMode ) {
+        this.search();
+      }
     });
   };
 
@@ -137,7 +141,9 @@ export function searchDirective() {
     controller: SearchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {},
+    scope: {
+      dismiss: '&'
+    },
   };
 }
 
