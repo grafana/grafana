@@ -2,7 +2,7 @@ import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import {getColorForValue} from '../module';
 
-describe.only('grafanaSingleStat', function() {
+describe('grafanaSingleStat', function() {
   describe('legacy thresholds', () => {
     describe('positive thresholds', () => {
       var data: any = {
