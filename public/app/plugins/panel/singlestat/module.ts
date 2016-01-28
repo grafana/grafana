@@ -230,8 +230,6 @@ function getColorForValue(data, value) {
       return data.colorMap[i];
     }
   }
-
-  console.log('first');
   return _.first(data.colorMap);
 }
 
