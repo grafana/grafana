@@ -26,12 +26,6 @@ export class PlaylistSearchCtrl {
     this.tagsMode = false;
     var prom: any = {};
 
-    /*
-    prom.promise = this.backendSrv.search(this.query).then((results) => {
-      console.log('playlist_search_ctrl: ', results);
-      return results;
-    });
-    */
     prom.promise = this.backendSrv.search(this.query).then((result) => {
       return {
         dashboardResult: result,
@@ -41,6 +35,11 @@ export class PlaylistSearchCtrl {
 
     this.searchStarted(prom);
   }
+
+  showStarred() {
+    this.query.starred = !this.query.starred;
+    this.searchDashboards();
+  };
 
   queryHasNoFilters() {
     return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
@@ -66,16 +65,6 @@ export class PlaylistSearchCtrl {
     });
 
     this.searchStarted(prom);
-    /*
-    this.searchStarted(prom);
-
-    return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-      this.tagsMode = true;
-
-
-      console.log(results);
-    });
-    */
   };
 }
 
