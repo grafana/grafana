@@ -3,9 +3,7 @@
 import {PanelDirective} from '../../../features/panel/panel';
 
 class UnknownPanel extends PanelDirective {
-  template = `<div class="text-center" style="padding-top: 2rem">
-                Unknown panel type: <strong>{{ctrl.panel.type}}</strong>
-              </div>`;
+  templateUrl = 'public/app/plugins/panel/unknown/module.html';
 }
 
 
