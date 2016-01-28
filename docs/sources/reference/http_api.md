@@ -1422,6 +1422,34 @@ Keys:
       }
     }
 
+### Grafana Stats
+
+`GET /api/admin/stats`
+
+**Example Request**:
+
+    GET /api/admin/stats
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "user_count":2,
+      "org_count":1,
+      "dashboard_count":4,
+      "db_snapshot_count":2,
+      "db_tag_count":6,
+      "data_source_count":1,
+      "playlist_count":1,
+      "starred_db_count":2,
+      "grafana_admin_count":2
+    }
+
 ### Global Users
 
 `POST /api/admin/users`

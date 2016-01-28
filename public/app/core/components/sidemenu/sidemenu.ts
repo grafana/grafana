@@ -108,6 +108,12 @@ export class SideMenuCtrl {
    });
 
    this.mainLinks.push({
+     text: "Grafana stats",
+     icon: "fa fa-fw fa-bar-chart",
+     url: this.getUrl("/admin/stats"),
+   });
+
+   this.mainLinks.push({
      text: "Global Users",
      icon: "fa fa-fw fa-user",
      url: this.getUrl("/admin/users"),
@@ -118,6 +124,7 @@ export class SideMenuCtrl {
      icon: "fa fa-fw fa-users",
      url: this.getUrl("/admin/orgs"),
    });
+
  }
 
  updateMenu() {
