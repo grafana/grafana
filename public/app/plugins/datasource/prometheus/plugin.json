@@ -1,0 +1,15 @@
+{
+  "pluginType": "datasource",
+  "name": "Prometheus",
+
+  "type": "prometheus",
+  "serviceName": "PrometheusDatasource",
+
+  "module": "app/plugins/datasource/prometheus/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/prometheus/partials/config.html"
+  },
+
+  "metrics": true
+}

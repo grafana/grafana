@@ -33,7 +33,7 @@ function(angular, $) {
 
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+f', function() {
+      keyboardManager.bind('f', function() {
         scope.appEvent('show-dash-search');
       }, { inputDisabled: true });
 

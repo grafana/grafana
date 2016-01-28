@@ -9,7 +9,7 @@ function (coreModule) {
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
         var meta = result.meta;
-        meta.canSave = meta.canShare = meta.canEdit = meta.canStar = false;
+        meta.canSave = meta.canShare = meta.canStar = false;
         $scope.initDashboard(result, $scope);
       });
       return;

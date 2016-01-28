@@ -2,8 +2,10 @@ package login
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -24,18 +26,37 @@ func NewLdapAuthenticator(server *LdapServerConf) *ldapAuther {
 }
 
 func (a *ldapAuther) Dial() error {
-	address := fmt.Sprintf("%s:%d", a.server.Host, a.server.Port)
 	var err error
-	if a.server.UseSSL {
-		tlsCfg := &tls.Config{
-			InsecureSkipVerify: a.server.SkipVerifySSL,
-			ServerName:         a.server.Host,
+	var certPool *x509.CertPool
+	if a.server.RootCACert != "" {
+		certPool := x509.NewCertPool()
+		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
+			if pem, err := ioutil.ReadFile(caCertFile); err != nil {
+				return err
+			} else {
+				if !certPool.AppendCertsFromPEM(pem) {
+					return errors.New("Failed to append CA certficate " + caCertFile)
+				}
+			}
 		}
-		a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
-	} else {
-		a.conn, err = ldap.Dial("tcp", address)
 	}
+	for _, host := range strings.Split(a.server.Host, " ") {
+		address := fmt.Sprintf("%s:%d", host, a.server.Port)
+		if a.server.UseSSL {
+			tlsCfg := &tls.Config{
+				InsecureSkipVerify: a.server.SkipVerifySSL,
+				ServerName:         host,
+				RootCAs:            certPool,
+			}
+			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+		} else {
+			a.conn, err = ldap.Dial("tcp", address)
+		}
 
+		if err == nil {
+			return nil
+		}
+	}
 	return err
 }
 
@@ -290,18 +311,56 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		return nil, errors.New("Ldap search matched more than one entry, please review your filter setting")
 	}
 
+	var memberOf []string
+	if a.server.GroupSearchFilter == "" {
+		memberOf = getLdapAttrArray(a.server.Attr.MemberOf, searchResult)
+	} else {
+		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
+		var groupSearchResult *ldap.SearchResult
+		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
+			filter := strings.Replace(a.server.GroupSearchFilter, "%s", username, -1)
+
+			if ldapCfg.VerboseLogging {
+				log.Info("LDAP: Searching for user's groups: %s", filter)
+			}
+
+			groupSearchReq := ldap.SearchRequest{
+				BaseDN:       groupSearchBase,
+				Scope:        ldap.ScopeWholeSubtree,
+				DerefAliases: ldap.NeverDerefAliases,
+				Attributes: []string{
+					// Here MemberOf would be the thing that identifies the group, which is normally 'cn'
+					a.server.Attr.MemberOf,
+				},
+				Filter: filter,
+			}
+
+			groupSearchResult, err = a.conn.Search(&groupSearchReq)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(groupSearchResult.Entries) > 0 {
+				for i := range groupSearchResult.Entries {
+					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+				}
+				break
+			}
+		}
+	}
+
 	return &ldapUserInfo{
 		DN:        searchResult.Entries[0].DN,
 		LastName:  getLdapAttr(a.server.Attr.Surname, searchResult),
 		FirstName: getLdapAttr(a.server.Attr.Name, searchResult),
 		Username:  getLdapAttr(a.server.Attr.Username, searchResult),
 		Email:     getLdapAttr(a.server.Attr.Email, searchResult),
-		MemberOf:  getLdapAttrArray(a.server.Attr.MemberOf, searchResult),
+		MemberOf:  memberOf,
 	}, nil
 }
 
-func getLdapAttr(name string, result *ldap.SearchResult) string {
-	for _, attr := range result.Entries[0].Attributes {
+func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
+	for _, attr := range result.Entries[n].Attributes {
 		if attr.Name == name {
 			if len(attr.Values) > 0 {
 				return attr.Values[0]
@@ -309,6 +368,10 @@ func getLdapAttr(name string, result *ldap.SearchResult) string {
 		}
 	}
 	return ""
+}
+
+func getLdapAttr(name string, result *ldap.SearchResult) string {
+	return getLdapAttrN(name, result, 0)
 }
 
 func getLdapAttrArray(name string, result *ldap.SearchResult) []string {

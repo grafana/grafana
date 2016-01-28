@@ -11,7 +11,7 @@ Dashboards can be searched by the dashboard name, filtered by one (or many) tags
 <img class="no-shadow" src="/img/v2/dashboard_search.png">
 
 1. `Dashboard Picker`: The Dashboard Picker is your primary navigation tool to move between dashboards. It is present on all dashboards, and open the Dashboard Search. The dashboard picker also doubles as the title of the current dashboard.
-2. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashbaords in real-time.
+2. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
 3. `Starred`: The starred link allows you to filter the list to display only starred dashboards. 
 4. `Tags`: The tags filter allows you to filter the list by dashboard tags. 
 
@@ -25,14 +25,14 @@ To search and load dashboards click the open folder icon in the header or use th
 
 Dashboard search is:
 - Real-time
-- *Not* case senstitive
+- *Not* case sensitive
 - Functional across stored *and* file based dashboards. 
 
 ## Filter by Tag(s)
 
-Tags are a great way to organize your dashboards, especially as the number of dashbaords grow. Tags can be added and managed in the dashboard `Settings`.
+Tags are a great way to organize your dashboards, especially as the number of dashboards grow. Tags can be added and managed in the dashboard `Settings`.
 
-To filter the dashboard list by tag, click on any tag appearing in the right column. The list may be further filtered by cliking on additional tags: 
+To filter the dashboard list by tag, click on any tag appearing in the right column. The list may be further filtered by clicking on additional tags: 
 
 <img class="no-shadow" src="/img/v2/dashboard_search_tag_filtering.gif">
 
@@ -40,7 +40,7 @@ Alternately, to see a list of all available tags, click the tags link in the sea
 
 <img class="no-shadow" src="/img/v2/dashboard_search_tags_all_filtering.gif">
 
-When using only a keybaord: `tab` to focus on the *tags* link, `▼` down arrow key to find a tag and select with the `Enter` key.
+When using only a keyboard: `tab` to focus on the *tags* link, `▼` down arrow key to find a tag and select with the `Enter` key.
 
 **Note**: When multiple tags are selected, Grafana will show dashboards that include **all**. 
 
@@ -51,4 +51,4 @@ Starring is a great way to organize and find commonly used dashboards. To show o
 
 <img class="no-shadow" src="/img/v2/dashboard_search_starred_filtering.gif">
 
-When using only a keybaord: `tab` to focus on the *stars* link, `▼` down arrow key to find a tag and select with the `Enter` key.
+When using only a keyboard: `tab` to focus on the *stars* link, `▼` down arrow key to find a tag and select with the `Enter` key.

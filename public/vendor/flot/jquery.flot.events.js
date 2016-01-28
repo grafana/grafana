@@ -50,7 +50,7 @@
             height: 10
         };
 
-        var _events = [], _types, _eventsEnabled = false, lastRange;
+        var _events = [], _types, _eventsEnabled = false;
 
         plot.getEvents = function(){
             return _events;
@@ -93,8 +93,6 @@
 
                 // check for first run
                 if (_events.length < 1) {
-
-                    _lastRange = xaxis.max - xaxis.min;
 
                     // check for clustering
                     if (options.events.clustering) {

@@ -4,59 +4,61 @@
 package cloudwatchiface
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
 // CloudWatchAPI is the interface type for cloudwatch.CloudWatch.
 type CloudWatchAPI interface {
-	DeleteAlarmsRequest(*cloudwatch.DeleteAlarmsInput) (*aws.Request, *cloudwatch.DeleteAlarmsOutput)
+	DeleteAlarmsRequest(*cloudwatch.DeleteAlarmsInput) (*request.Request, *cloudwatch.DeleteAlarmsOutput)
 
 	DeleteAlarms(*cloudwatch.DeleteAlarmsInput) (*cloudwatch.DeleteAlarmsOutput, error)
 
-	DescribeAlarmHistoryRequest(*cloudwatch.DescribeAlarmHistoryInput) (*aws.Request, *cloudwatch.DescribeAlarmHistoryOutput)
+	DescribeAlarmHistoryRequest(*cloudwatch.DescribeAlarmHistoryInput) (*request.Request, *cloudwatch.DescribeAlarmHistoryOutput)
 
 	DescribeAlarmHistory(*cloudwatch.DescribeAlarmHistoryInput) (*cloudwatch.DescribeAlarmHistoryOutput, error)
 
 	DescribeAlarmHistoryPages(*cloudwatch.DescribeAlarmHistoryInput, func(*cloudwatch.DescribeAlarmHistoryOutput, bool) bool) error
 
-	DescribeAlarmsRequest(*cloudwatch.DescribeAlarmsInput) (*aws.Request, *cloudwatch.DescribeAlarmsOutput)
+	DescribeAlarmsRequest(*cloudwatch.DescribeAlarmsInput) (*request.Request, *cloudwatch.DescribeAlarmsOutput)
 
 	DescribeAlarms(*cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error)
 
 	DescribeAlarmsPages(*cloudwatch.DescribeAlarmsInput, func(*cloudwatch.DescribeAlarmsOutput, bool) bool) error
 
-	DescribeAlarmsForMetricRequest(*cloudwatch.DescribeAlarmsForMetricInput) (*aws.Request, *cloudwatch.DescribeAlarmsForMetricOutput)
+	DescribeAlarmsForMetricRequest(*cloudwatch.DescribeAlarmsForMetricInput) (*request.Request, *cloudwatch.DescribeAlarmsForMetricOutput)
 
 	DescribeAlarmsForMetric(*cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error)
 
-	DisableAlarmActionsRequest(*cloudwatch.DisableAlarmActionsInput) (*aws.Request, *cloudwatch.DisableAlarmActionsOutput)
+	DisableAlarmActionsRequest(*cloudwatch.DisableAlarmActionsInput) (*request.Request, *cloudwatch.DisableAlarmActionsOutput)
 
 	DisableAlarmActions(*cloudwatch.DisableAlarmActionsInput) (*cloudwatch.DisableAlarmActionsOutput, error)
 
-	EnableAlarmActionsRequest(*cloudwatch.EnableAlarmActionsInput) (*aws.Request, *cloudwatch.EnableAlarmActionsOutput)
+	EnableAlarmActionsRequest(*cloudwatch.EnableAlarmActionsInput) (*request.Request, *cloudwatch.EnableAlarmActionsOutput)
 
 	EnableAlarmActions(*cloudwatch.EnableAlarmActionsInput) (*cloudwatch.EnableAlarmActionsOutput, error)
 
-	GetMetricStatisticsRequest(*cloudwatch.GetMetricStatisticsInput) (*aws.Request, *cloudwatch.GetMetricStatisticsOutput)
+	GetMetricStatisticsRequest(*cloudwatch.GetMetricStatisticsInput) (*request.Request, *cloudwatch.GetMetricStatisticsOutput)
 
 	GetMetricStatistics(*cloudwatch.GetMetricStatisticsInput) (*cloudwatch.GetMetricStatisticsOutput, error)
 
-	ListMetricsRequest(*cloudwatch.ListMetricsInput) (*aws.Request, *cloudwatch.ListMetricsOutput)
+	ListMetricsRequest(*cloudwatch.ListMetricsInput) (*request.Request, *cloudwatch.ListMetricsOutput)
 
 	ListMetrics(*cloudwatch.ListMetricsInput) (*cloudwatch.ListMetricsOutput, error)
 
 	ListMetricsPages(*cloudwatch.ListMetricsInput, func(*cloudwatch.ListMetricsOutput, bool) bool) error
 
-	PutMetricAlarmRequest(*cloudwatch.PutMetricAlarmInput) (*aws.Request, *cloudwatch.PutMetricAlarmOutput)
+	PutMetricAlarmRequest(*cloudwatch.PutMetricAlarmInput) (*request.Request, *cloudwatch.PutMetricAlarmOutput)
 
 	PutMetricAlarm(*cloudwatch.PutMetricAlarmInput) (*cloudwatch.PutMetricAlarmOutput, error)
 
-	PutMetricDataRequest(*cloudwatch.PutMetricDataInput) (*aws.Request, *cloudwatch.PutMetricDataOutput)
+	PutMetricDataRequest(*cloudwatch.PutMetricDataInput) (*request.Request, *cloudwatch.PutMetricDataOutput)
 
 	PutMetricData(*cloudwatch.PutMetricDataInput) (*cloudwatch.PutMetricDataOutput, error)
 
-	SetAlarmStateRequest(*cloudwatch.SetAlarmStateInput) (*aws.Request, *cloudwatch.SetAlarmStateOutput)
+	SetAlarmStateRequest(*cloudwatch.SetAlarmStateInput) (*request.Request, *cloudwatch.SetAlarmStateOutput)
 
 	SetAlarmState(*cloudwatch.SetAlarmStateInput) (*cloudwatch.SetAlarmStateOutput, error)
 }
+
+var _ CloudWatchAPI = (*cloudwatch.CloudWatch)(nil)

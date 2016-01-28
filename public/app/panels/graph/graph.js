@@ -1,9 +1,9 @@
 define([
   'angular',
   'jquery',
-  'kbn',
   'moment',
   'lodash',
+  'app/core/utils/kbn',
   './graph.tooltip',
   'jquery.flot',
   'jquery.flot.events',
@@ -14,7 +14,7 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair'
 ],
-function (angular, $, kbn, moment, _, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -227,7 +227,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             series.applySeriesOverrides(panel.seriesOverrides);
-            series.data = series.getFlotPairs(panel.nullPointMode, panel.y_formats);
+            series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack
             if (scope.hiddenSeries[series.alias]) {

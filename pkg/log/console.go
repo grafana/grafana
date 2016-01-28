@@ -45,15 +45,17 @@ var (
 
 // ConsoleWriter implements LoggerInterface and writes messages to terminal.
 type ConsoleWriter struct {
-	lg    *log.Logger
-	Level int `json:"level"`
+	lg         *log.Logger
+	Level      int  `json:"level"`
+	Formatting bool `json:"formatting"`
 }
 
 // create ConsoleWriter returning as LoggerInterface.
 func NewConsole() LoggerInterface {
 	return &ConsoleWriter{
-		lg:    log.New(os.Stderr, "", log.Ldate|log.Ltime),
-		Level: TRACE,
+		lg:         log.New(os.Stderr, "", log.Ldate|log.Ltime),
+		Level:      TRACE,
+		Formatting: true,
 	}
 }
 
@@ -65,7 +67,7 @@ func (cw *ConsoleWriter) WriteMsg(msg string, skip, level int) error {
 	if cw.Level > level {
 		return nil
 	}
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || !cw.Formatting {
 		cw.lg.Println(msg)
 	} else {
 		cw.lg.Println(colors[level](msg))

@@ -8,7 +8,7 @@ page_keywords: grafana, dashlist, panel, documentation
 
 ## Overview
 
-The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashbaords, a search query and/or dashboard tags. 
+The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, a search query and/or dashboard tags. 
 
 <img class="no-shadow" src="/img/v2/dashboard_list_panels.png">
 

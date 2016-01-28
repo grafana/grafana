@@ -5,7 +5,7 @@ page_keywords: grafana, sharing, guide, documentation
 ---
 
 # Sharing features
-Grafana provides a number of ways to share a dashboard or a specfic panel to other users within your
+Grafana provides a number of ways to share a dashboard or a specific panel to other users within your
 organization. It also provides ways to publish interactive snapshots that can be accessed by external partners.
 
 ## Share dashboard

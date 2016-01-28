@@ -113,7 +113,7 @@ func newRequestError(err Error, statusCode int, requestID string) *requestError 
 // Error returns the string representation of the error.
 // Satisfies the error interface.
 func (r requestError) Error() string {
-	extra := fmt.Sprintf("status code: %d, request id: [%s]",
+	extra := fmt.Sprintf("status code: %d, request id: %s",
 		r.statusCode, r.requestID)
 	return SprintError(r.Code(), r.Message(), extra, r.OrigErr())
 }

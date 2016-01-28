@@ -2,9 +2,10 @@ package aws
 
 import (
 	"io"
+	"sync"
 )
 
-// ReadSeekCloser wraps a io.Reader returning a ReaderSeakerCloser
+// ReadSeekCloser wraps a io.Reader returning a ReaderSeekerCloser
 func ReadSeekCloser(r io.Reader) ReaderSeekerCloser {
 	return ReaderSeekerCloser{r}
 }
@@ -52,4 +53,36 @@ func (r ReaderSeekerCloser) Close() error {
 		return t.Close()
 	}
 	return nil
+}
+
+// A WriteAtBuffer provides a in memory buffer supporting the io.WriterAt interface
+// Can be used with the s3manager.Downloader to download content to a buffer
+// in memory. Safe to use concurrently.
+type WriteAtBuffer struct {
+	buf []byte
+	m   sync.Mutex
+}
+
+// WriteAt writes a slice of bytes to a buffer starting at the position provided
+// The number of bytes written will be returned, or error. Can overwrite previous
+// written slices if the write ats overlap.
+func (b *WriteAtBuffer) WriteAt(p []byte, pos int64) (n int, err error) {
+	b.m.Lock()
+	defer b.m.Unlock()
+
+	expLen := pos + int64(len(p))
+	if int64(len(b.buf)) < expLen {
+		newBuf := make([]byte, expLen)
+		copy(newBuf, b.buf)
+		b.buf = newBuf
+	}
+	copy(b.buf[pos:], p)
+	return len(p), nil
+}
+
+// Bytes returns a slice of bytes written to the buffer.
+func (b *WriteAtBuffer) Bytes() []byte {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.buf[:len(b.buf):len(b.buf)]
 }

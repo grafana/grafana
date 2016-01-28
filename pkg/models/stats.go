@@ -6,6 +6,15 @@ type SystemStats struct {
 	OrgCount       int
 }
 
+type DataSourceStats struct {
+	Count int
+	Type  string
+}
+
 type GetSystemStatsQuery struct {
 	Result *SystemStats
+}
+
+type GetDataSourceStatsQuery struct {
+	Result []*DataSourceStats
 }

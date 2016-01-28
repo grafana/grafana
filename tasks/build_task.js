@@ -11,8 +11,9 @@ module.exports = function(grunt) {
     'copy:public_to_gen',
     'typescript:build',
     'karma:test',
+    'phantomjs',
     'css',
-    'htmlmin:build',
+    // 'htmlmin:build',
     'ngtemplates',
     'cssmin:build',
     'ngAnnotate:build',
@@ -22,7 +23,6 @@ module.exports = function(grunt) {
     'filerev',
     'remapFilerev',
     'usemin',
-    'clean:temp',
     'uglify:genDir'
   ]);
 
@@ -34,8 +34,8 @@ module.exports = function(grunt) {
 
     for(var key in summary){
       if(summary.hasOwnProperty(key)){
-        var orig = key.replace(root, root+'/[[.AppSubUrl]]');
-        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]');
+        var orig = key.replace(root, root+'/[[.AppSubUrl]]/public');
+        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]/public');
         fixed[orig] = revved;
       }
     }

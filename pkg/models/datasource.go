@@ -13,6 +13,8 @@ const (
 	DS_OPENTSDB      = "opentsdb"
 	DS_CLOUDWATCH    = "cloudwatch"
   DS_NETCRUNCH     = "netcrunch"
+	DS_KAIROSDB      = "kairosdb"
+	DS_PROMETHEUS    = "prometheus"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -39,11 +41,33 @@ type DataSource struct {
 	BasicAuth         bool                    `json:"basicAuth"`
 	BasicAuthUser     string                  `json:"basicAuthUser"`
 	BasicAuthPassword string                  `json:"basicAuthPassword"`
+  WithCredentials   bool                    `json:"withCredentials"`
 	IsDefault         bool                    `json:"isDefault"`
 	JsonData          map[string]interface{}  `json:"jsonData"`
 
 	Created time.Time                         `json:"created"`
 	Updated time.Time                         `json:"updated"`
+}
+
+var knownDatasourcePlugins map[string]bool = map[string]bool{
+	DS_ES:          true,
+	DS_GRAPHITE:    true,
+	DS_INFLUXDB:    true,
+	DS_INFLUXDB_08: true,
+	DS_KAIROSDB:    true,
+	DS_CLOUDWATCH:  true,
+	DS_PROMETHEUS:  true,
+	DS_OPENTSDB:    true,
+	"opennms":      true,
+	"druid":        true,
+	"dalmatinerdb": true,
+	"gnocci":       true,
+	"zabbix":       true,
+}
+
+func IsKnownDataSourcePlugin(dsType string) bool {
+	_, exists := knownDatasourcePlugins[dsType]
+	return exists
 }
 
 // ----------------------
@@ -61,6 +85,7 @@ type AddDataSourceCommand struct {
 	BasicAuth         bool                   `json:"basicAuth"`
 	BasicAuthUser     string                 `json:"basicAuthUser"`
 	BasicAuthPassword string                 `json:"basicAuthPassword"`
+	WithCredentials   bool                   `json:"withCredentials"`
 	IsDefault         bool                   `json:"isDefault"`
 	JsonData          map[string]interface{} `json:"jsonData"`
 
@@ -81,6 +106,7 @@ type UpdateDataSourceCommand struct {
 	BasicAuth         bool                   `json:"basicAuth"`
 	BasicAuthUser     string                 `json:"basicAuthUser"`
 	BasicAuthPassword string                 `json:"basicAuthPassword"`
+	WithCredentials   bool                   `json:"withCredentials"`
 	IsDefault         bool                   `json:"isDefault"`
 	JsonData          map[string]interface{} `json:"jsonData"`
 

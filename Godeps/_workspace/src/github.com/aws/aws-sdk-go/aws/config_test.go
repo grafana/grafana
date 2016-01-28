@@ -4,18 +4,11 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
-var testCredentials = credentials.NewChainCredentials([]credentials.Provider{
-	&credentials.EnvProvider{},
-	&credentials.SharedCredentialsProvider{
-		Filename: "TestFilename",
-		Profile:  "TestProfile"},
-	&credentials.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
-})
+var testCredentials = credentials.NewStaticCredentials("AKID", "SECRET", "SESSION")
 
 var copyTestConfig = Config{
 	Credentials:             testCredentials,
@@ -25,7 +18,7 @@ var copyTestConfig = Config{
 	HTTPClient:              http.DefaultClient,
 	LogLevel:                LogLevel(LogDebug),
 	Logger:                  NewDefaultLogger(),
-	MaxRetries:              Int(DefaultRetries),
+	MaxRetries:              Int(3),
 	DisableParamValidation:  Bool(true),
 	DisableComputeChecksums: Bool(true),
 	S3ForcePathStyle:        Bool(true),
@@ -37,6 +30,11 @@ func TestCopy(t *testing.T) {
 	if !reflect.DeepEqual(*got, want) {
 		t.Errorf("Copy() = %+v", got)
 		t.Errorf("    want %+v", want)
+	}
+
+	got.Region = String("other")
+	if got.Region == want.Region {
+		t.Errorf("Expect setting copy values not not reflect in source")
 	}
 }
 
@@ -76,7 +74,8 @@ var mergeTests = []struct {
 
 func TestMerge(t *testing.T) {
 	for i, tt := range mergeTests {
-		got := tt.cfg.Merge(tt.in)
+		got := tt.cfg.Copy()
+		got.MergeIn(tt.in)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("Config %d %+v", i, tt.cfg)
 			t.Errorf("   Merge(%+v)", tt.in)

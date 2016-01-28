@@ -7,14 +7,14 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('annotationsSrv', function(datasourceSrv, $q, alertSrv, $rootScope) {
+  module.service('annotationsSrv', function($rootScope, $q, datasourceSrv, alertSrv, timeSrv) {
     var promiseCached;
     var list = [];
     var self = this;
 
     this.init = function() {
       $rootScope.onAppEvent('refresh', this.clearCache, $rootScope);
-      $rootScope.onAppEvent('setup-dashboard', this.clearCache, $rootScope);
+      $rootScope.onAppEvent('dashboard-loaded', this.clearCache, $rootScope);
     };
 
     this.clearCache = function() {
@@ -22,7 +22,7 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(rangeUnparsed, dashboard) {
+    this.getAnnotations = function(dashboard) {
       if (dashboard.annotations.list.length === 0) {
         return $q.when(null);
       }
@@ -34,9 +34,13 @@ define([
       self.dashboard = dashboard;
       var annotations = _.where(dashboard.annotations.list, {enable: true});
 
+      var range = timeSrv.timeRange();
+      var rangeRaw = timeSrv.timeRange(false);
+
       var promises  = _.map(annotations, function(annotation) {
         return datasourceSrv.get(annotation.datasource).then(function(datasource) {
-          return datasource.annotationQuery(annotation, rangeUnparsed)
+          var query = {range: range, rangeRaw: rangeRaw, annotation: annotation};
+          return datasource.annotationQuery(query)
             .then(self.receiveAnnotationResults)
             .then(null, errorHandler);
         }, this);

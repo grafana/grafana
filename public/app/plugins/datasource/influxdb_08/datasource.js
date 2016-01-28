@@ -2,11 +2,11 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
-  './influxSeries',
-  './queryBuilder',
+  './influx_series',
+  './query_builder',
   './directives',
-  './queryCtrl',
-  './funcEditor',
+  './query_ctrl',
+  './func_editor',
 ],
 function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
   'use strict';
@@ -57,13 +57,13 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
       });
     };
 
-    InfluxDatasource.prototype.annotationQuery = function(annotation, rangeUnparsed) {
-      var timeFilter = getTimeFilter({ rangeRaw: rangeUnparsed });
-      var query = annotation.query.replace('$timeFilter', timeFilter);
+    InfluxDatasource.prototype.annotationQuery = function(options) {
+      var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
+      var query = options.annotation.query.replace('$timeFilter', timeFilter);
       query = templateSrv.replace(query);
 
       return this._seriesQuery(query).then(function(results) {
-        return new InfluxSeries({ seriesList: results, annotation: annotation }).getAnnotations();
+        return new InfluxSeries({seriesList: results, annotation: options.annotation}).getAnnotations();
       });
     };
 
@@ -266,13 +266,18 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
     }
 
     function getInfluxTime(date, roundUp) {
-      if (_.isString(date) && date.indexOf('/') === -1) {
+      if (_.isString(date)) {
         if (date === 'now') {
           return 'now()';
         }
-        if (date.indexOf('now-') >= 0) {
-          return date.replace('now', 'now()');
+
+        var parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
+        if (parts) {
+          var amount = parseInt(parts[1]);
+          var unit = parts[2];
+          return 'now()-' + amount + unit;
         }
+
         date = dateMath.parse(date, roundUp);
       }
       return (date.valueOf() / 1000).toFixed(0) + 's';

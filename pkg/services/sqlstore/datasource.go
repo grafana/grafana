@@ -114,12 +114,14 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
+			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			Updated:           time.Now(),
 		}
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
+		sess.UseBool("with_credentials")
 
 		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)
 		if err != nil {

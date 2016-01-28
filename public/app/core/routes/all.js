@@ -131,6 +131,9 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
+      .when('/global-alerts', {
+        templateUrl: 'app/features/dashboard/partials/globalAlerts.html',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

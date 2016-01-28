@@ -1,8 +1,8 @@
 define([
-  'kbn',
   '../core_module',
+  'app/core/utils/kbn',
 ],
-function (kbn, coreModule) {
+function (coreModule, kbn) {
   'use strict';
 
   coreModule.directive('dashUpload', function(timer, alertSrv, $location) {

@@ -1,0 +1,6 @@
+prometheus:
+  build: blocks/prometheus
+  ports:
+    - "9090:9090"
+  volumes:
+    - /var/docker/prometheus:/prometheus-data

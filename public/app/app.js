@@ -3,14 +3,12 @@ define([
   'jquery',
   'lodash',
   'require',
-  'config',
   'bootstrap',
   'angular-route',
   'angular-sanitize',
   'angular-strap',
   'angular-dragdrop',
   'angular-ui',
-  'extend-jquery',
   'bindonce',
   'app/core/core',
 ],
@@ -60,8 +58,7 @@ function (angular, $, _, appLevelRequire) {
     'ui.bootstrap.tpls',
   ];
 
-  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes',
-                      'const', 'values'];
+  var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes', 'const', 'values'];
 
   _.each(module_types, function (type) {
     var module_name = 'grafana.'+type;
@@ -73,10 +70,7 @@ function (angular, $, _, appLevelRequire) {
 
   var preBootRequires = [
     'app/consts/all',
-    'app/services/all',
     'app/features/all',
-    'app/controllers/all',
-    'app/components/partials',
   ];
 
   app.boot = function() {
@@ -102,12 +96,7 @@ function (angular, $, _, appLevelRequire) {
                 var $scope = this;
                 $scope.requireContext(deps, function () {
                   var deps = _.toArray(arguments);
-                  // Check that this is a valid scope.
-                  if($scope.$id) {
-                    $scope.$apply(function () {
-                      fn.apply($scope, deps);
-                    });
-                  }
+                  fn.apply($scope, deps);
                 });
               };
             }]);

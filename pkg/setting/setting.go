@@ -82,6 +82,7 @@ var (
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
+	LoginHint          string
 
 	// Http auth
 	AdminUser     string
@@ -143,7 +144,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0}`)
+	log.NewLogger(0, "console", `{"level": 0, "formatting":true}`)
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -177,6 +178,9 @@ func applyEnvVariableOverrides() {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
+				if strings.Contains(envKey, "PASSWORD") {
+					envValue = "*********"
+				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
 		}
@@ -191,6 +195,9 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
+				if strings.Contains(keyString, "password") {
+					value = "*********"
+				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
 		}
@@ -433,6 +440,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+	LoginHint = users.Key("login_hint").String()
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -531,7 +539,11 @@ func initLogging(args *CommandLineArgs) {
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			LogConfigs[i] = util.DynMap{"level": level}
+			formatting := sec.Key("formatting").MustBool(true)
+			LogConfigs[i] = util.DynMap{
+				"level":      level,
+				"formatting": formatting,
+			}
 		case "file":
 			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
@@ -566,6 +578,14 @@ func initLogging(args *CommandLineArgs) {
 				"level":  level,
 				"driver": sec.Key("driver").String(),
 				"conn":   sec.Key("conn").String(),
+			}
+		case "syslog":
+			LogConfigs[i] = util.DynMap{
+				"level":    level,
+				"network":  sec.Key("network").MustString(""),
+				"address":  sec.Key("address").MustString(""),
+				"facility": sec.Key("facility").MustString("local7"),
+				"tag":      sec.Key("tag").MustString(""),
 			}
 		}
 

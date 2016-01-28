@@ -18,20 +18,13 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/Unknwon/macaron"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-var isWindows bool
-
-func init() {
-	isWindows = runtime.GOOS == "windows"
-}
-
-// Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
@@ -39,21 +32,25 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
-		if !isWindows {
-			switch rw.Status() {
-			case 200:
-				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
-				return
-			case 304:
-				//content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
-				return
-			case 404:
-				content = fmt.Sprintf("\033[1;31m%s\033[0m", content)
-			case 500:
-				content = fmt.Sprintf("\033[1;36m%s\033[0m", content)
-			}
+		uname := c.GetCookie(setting.CookieUserName)
+		if len(uname) == 0 {
+			uname = "-"
 		}
+
+		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
+
+		switch rw.Status() {
+		case 200, 304:
+			content = fmt.Sprintf("%s", content)
+			if !setting.RouterLogging {
+				return
+			}
+		case 404:
+			content = fmt.Sprintf("%s", content)
+		case 500:
+			content = fmt.Sprintf("%s", content)
+		}
+
 		log.Info(content)
 	}
 }

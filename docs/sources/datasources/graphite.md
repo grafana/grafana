@@ -10,11 +10,11 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
-## Adding the data source to Grafana
+## Adding the data source
 ![](/img/v2/add_Graphite.jpg)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -29,7 +29,7 @@ Url | The http protocol, ip and port of you graphite-web or graphite-api install
 Access | Proxy = access via Grafana backend, Direct = access directory from browser.
 
 
-Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the brower.
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
 
 Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
 

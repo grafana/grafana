@@ -94,7 +94,7 @@ define([
 
       it('adding default should split span in half', function() {
         dashboard.rows = [{ panels: [{ span: 12, id: 7 }] }];
-        dashboard.add_panel({span: 4}, dashboard.rows[0]);
+        dashboard.addPanel({span: 4}, dashboard.rows[0]);
 
         expect(dashboard.rows[0].panels[0].span).to.be(6);
         expect(dashboard.rows[0].panels[1].span).to.be(6);
@@ -152,7 +152,10 @@ define([
           rows: [
             {
               panels: [
-                {type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 }}
+                {
+                  type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  targets: [{refId: 'A'}, {}],
+                }
               ]
             }
           ]
@@ -178,6 +181,10 @@ define([
         expect(graph.type).to.be('graph');
       });
 
+      it('queries without refId should get it', function() {
+        expect(graph.targets[1].refId).to.be('B');
+      });
+
       it('update legend setting', function() {
         expect(graph.legend.show).to.be(true);
       });
@@ -197,7 +204,7 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(7);
+        expect(model.schemaVersion).to.be(8);
       });
 
     });
@@ -241,5 +248,90 @@ define([
         expect(clone.meta).to.be(undefined);
       });
     });
+
+    describe('when loading dashboard with old influxdb query schema', function() {
+      var model;
+      var target;
+
+      beforeEach(function() {
+        model = _dashboardSrv.create({
+          rows: [{
+            panels: [{
+              type: 'graph',
+              targets: [{
+                "alias": "$tag_datacenter $tag_source $col",
+                "column": "value",
+                "measurement": "logins.count",
+                "fields": [
+                  {
+                    "func": "mean",
+                    "name": "value",
+                    "mathExpr": "*2",
+                    "asExpr": "value"
+                  },
+                  {
+                    "name": "one-minute",
+                    "func": "mean",
+                    "mathExpr": "*3",
+                    "asExpr": "one-minute"
+                  }
+                ],
+                "tags": [],
+                "fill": "previous",
+                "function": "mean",
+                "groupBy": [
+                  {
+                    "interval": "auto",
+                    "type": "time"
+                  },
+                  {
+                    "key": "source",
+                    "type": "tag"
+                  },
+                  {
+                    "type": "tag",
+                    "key": "datacenter"
+                  }
+                ],
+              }]
+            }]
+          }]
+        });
+
+        target = model.rows[0].panels[0].targets[0];
+      });
+
+      it('should update query schema', function() {
+        expect(target.fields).to.be(undefined);
+        expect(target.select.length).to.be(2);
+        expect(target.select[0].length).to.be(4);
+        expect(target.select[0][0].type).to.be('field');
+        expect(target.select[0][1].type).to.be('mean');
+        expect(target.select[0][2].type).to.be('math');
+        expect(target.select[0][3].type).to.be('alias');
+      });
+
+    });
+
+    describe('when creating dashboard model with missing list for annoations or templating', function() {
+      var model;
+
+      beforeEach(function() {
+        model = _dashboardSrv.create({
+          annotations: {
+            enable: true,
+          },
+          templating: {
+            enable: true
+          }
+        });
+      });
+
+      it('should add empty list', function() {
+        expect(model.annotations.list.length).to.be(0);
+        expect(model.templating.list.length).to.be(0);
+      });
+    });
+
   });
 });

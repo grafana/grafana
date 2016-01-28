@@ -1,0 +1,57 @@
+// ==========================================================================
+// FILTER TABLE
+// ==========================================================================
+
+
+
+// Table
+// --------------------------------------------------------------------------
+
+.filter-table * {
+  box-sizing: border-box;
+}
+
+.filter-table {
+  width: 100%;
+  border-collapse: collapse;
+  // table-layout: fixed;
+}
+
+.filter-table tr {
+  background: @grafanaPanelBackground;
+  border-bottom: 2px solid @bodyBackground;
+}
+
+.filter-table th {
+  width: auto;
+  padding: 10px 15px 10px 0;
+  text-align: left;
+
+  &:first-child {
+    padding-left: 15px;
+  }
+}
+
+.filter-table td {
+  padding: 15px 15px 15px 0;
+
+  &:first-child {
+    padding-left: 15px;
+  }
+}
+
+.filter-table .ellipsis {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-table .expanded {
+  border-color: @grafanaPanelBackground;
+}
+
+.filter-table .expanded > td {
+  padding-bottom: 0;
+}

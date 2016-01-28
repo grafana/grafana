@@ -3,9 +3,10 @@ module.exports = function(config) {
 
   return {
     on_start: ['<%= destDir %>', '<%= tempDir %>', '<%= windowsDestDir %>'],
-    temp: ['<%= tempDir %>'],
     windows: ['<%= windowsDestDir %>'],
     release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
-    gen: ['<%= genDir %>']
+    gen: ['<%= genDir %>'],
+    temp: ['<%= tempDir %>'],
+    css: ['<%= genDir %>/css']
   };
 };

@@ -4,12 +4,12 @@
 ///<reference path="moment/moment.d.ts" />
 
 // dummy modules
-declare module 'config' {
+declare module 'app/core/config' {
   var config : any;
   export = config;
 }
 
-declare module 'kbn' {
+declare module 'app/core/utils/kbn' {
   var kbn : any;
   export = kbn;
 }

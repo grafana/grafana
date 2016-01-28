@@ -1,7 +1,7 @@
 define([
-  './panelMenu',
-  './panelDirective',
-  './panelSrv',
-  './panelHelper',
-  './soloPanelCtrl',
+  './panel_menu',
+  './panel_directive',
+  './panel_srv',
+  './panel_helper',
+  './solo_panel_ctrl',
 ], function () {});

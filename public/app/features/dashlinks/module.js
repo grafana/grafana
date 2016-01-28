@@ -52,7 +52,7 @@ function (angular, _) {
         if (link.asDropdown) {
           template += '<ul class="dropdown-menu" role="menu">' +
             '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}"><i class="fa fa-th-large"></i> {{dash.title}}</a></li>' +
-            '</ul';
+            '</ul>';
         }
 
         elem.html(template);

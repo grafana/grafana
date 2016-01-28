@@ -7,9 +7,12 @@ define([
   describe('KairosDBDatasource', function() {
     var ctx = new helpers.ServiceTestContext();
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
+
     beforeEach(ctx.providePhase(['templateSrv']));
     beforeEach(ctx.createService('KairosDBDatasource'));
+
     beforeEach(function() {
       ctx.ds = new ctx.service({ url: ''});
     });

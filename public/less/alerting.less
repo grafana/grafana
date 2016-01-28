@@ -1,0 +1,42 @@
+.copy-query {
+  display: block;
+  width: 30px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent url(/img/CopyQuery.png) 50% 50% no-repeat;
+  cursor: pointer;
+}
+
+.alert-state {
+  display: inline-block;
+  padding-left: 30px;
+  background: 0 50% no-repeat;
+  background-size: 20px auto;
+}
+
+.alert-state-online {
+  background-image: url('/img/online.svg');
+}
+
+.alert-state-warning {
+  background-image: url('/img/warn-tiny.svg');
+}
+
+.alert-state-critical {
+  background-image: url('/img/critical.svg');
+}
+
+.alert-notify-emails {
+  width: 400px;
+  border-right: 1px solid @black;
+}
+
+.alert-notify-emails .bootstrap-tagsinput {
+  width: 394px; // offset for 8px left padding and border width
+}
+
+.alert-notify-emails .bootstrap-tagsinput input {
+  border: 0;
+}

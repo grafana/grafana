@@ -1,0 +1,101 @@
+.table-panel-wrapper {
+  .panel-content {
+    padding: 0;
+  }
+  .panel-title-container {
+    padding-bottom: 4px;
+  }
+}
+
+.table-panel-scroll {
+  overflow: auto;
+}
+
+.table-panel-container {
+  padding-top: 2.2em;
+  position: relative;
+}
+
+.table-panel-footer {
+  text-align: center;
+  font-size: 90%;
+  line-height: 2px;
+
+  ul {
+    position: relative;
+    display: inline-block;
+    margin-left: 0;
+    margin-bottom: 0;
+  }
+  ul > li {
+    display: inline; // Remove list-style and block-level defaults
+  }
+  ul > li > a {
+    float: left; // Collapse white-space
+    padding: 4px 12px;
+    text-decoration: none;
+    border-left-width: 0;
+
+    &:hover {
+      background-color: @grafanaTargetFuncBackground;
+    }
+
+    &.active {
+      font-weight: bold;
+      color: @blue;
+    }
+  }
+}
+
+.table-panel-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 0;
+
+    &:first-child {
+      .table-panel-table-header-inner {
+        padding-left: 15px;
+      }
+    }
+  }
+
+  td {
+    padding: 0.45em 0 0.45em 1.1em;
+    border-bottom: 2px solid @bodyBackground;
+    border-right: 2px solid @bodyBackground;
+
+    &:first-child {
+      padding-left: 15px;
+    }
+    &:last-child {
+      border-right: none;
+    }
+  }
+}
+
+.table-panel-header-bg {
+  background: @grafanaListAccent;
+  border-top: 2px solid @bodyBackground;
+  border-bottom: 2px solid @bodyBackground;
+  height: 2.0em;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.table-panel-table-header-inner {
+  padding: 0.45em 0 0.45em 1.1em;
+  text-align: left;
+  color: @blue;
+  position: absolute;
+  top: 0;
+}
+
+.table-panel-width-hack {
+  visibility: hidden;
+  height: 0px;
+  line-height: 0px;
+}

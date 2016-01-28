@@ -18,11 +18,11 @@
 				<div class="row-control-inner">
 					<div class="row-close" ng-show="row.collapse" data-placement="bottom" >
 						<div class="row-close-buttons">
-							<span class="row-button bgPrimary" ng-click="toggle_row(row)">
+							<span class="row-button bgPrimary" ng-click="toggleRow(row)">
 								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
 							</span>
 						</div>
-						<div class="row-text pointer" ng-click="toggle_row(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
+						<div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
 					</div>
 					<div class="row-open" ng-show="!row.collapse">
 						<div class='row-tab bgSuccess dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboardViewState.fullscreen">
@@ -31,44 +31,46 @@
 							</span>
 							<ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
 								<li>
-									<a ng-click="toggle_row(row)">Collapse row</a>
+									<a ng-click="toggleRow(row)">Collapse row</a>
 								</li>
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Add Panel</a>
 									<ul class="dropdown-menu">
 										<li bindonce ng-repeat="(key, value) in panels">
-											<a ng-click="add_panel_default(key)" bo-text="value.name"></a>
+											<a ng-click="addPanelDefault(key)" bo-text="value.name"></a>
 										</li>
 									</ul>
 								</li>
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Set height</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="set_height('25px')">25 px</a></li>
-										<li><a ng-click="set_height('100px')">100 px</a></li>
-										<li><a ng-click="set_height('150px')">150 px</a></li>
-										<li><a ng-click="set_height('200px')">200 px</a></li>
-										<li><a ng-click="set_height('250px')">250 px</a></li>
-										<li><a ng-click="set_height('300px')">300 px</a></li>
-										<li><a ng-click="set_height('350px')">350 px</a></li>
-										<li><a ng-click="set_height('450px')">450 px</a></li>
-										<li><a ng-click="set_height('500px')">500 px</a></li>
-										<li><a ng-click="set_height('600px')">600 px</a></li>
-										<li><a ng-click="set_height('700px')">700 px</a></li>
+										<li><a ng-click="setHeight('25px')">25 px</a></li>
+										<li><a ng-click="setHeight('100px')">100 px</a></li>
+										<li><a ng-click="setHeight('150px')">150 px</a></li>
+										<li><a ng-click="setHeight('200px')">200 px</a></li>
+										<li><a ng-click="setHeight('250px')">250 px</a></li>
+										<li><a ng-click="setHeight('300px')">300 px</a></li>
+										<li><a ng-click="setHeight('350px')">350 px</a></li>
+										<li><a ng-click="setHeight('450px')">450 px</a></li>
+										<li><a ng-click="setHeight('500px')">500 px</a></li>
+										<li><a ng-click="setHeight('600px')">600 px</a></li>
+										<li><a ng-click="setHeight('700px')">700 px</a></li>
 									</ul>
 								</li>
 								<li class="dropdown-submenu">
 									<a href="javascript:void(0);">Move</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="move_row(-1)">Up</a></li>
-										<li><a ng-click="move_row(1)">Down</a></li>
+										<li><a ng-click="moveRow('up')">Up</a></li>
+										<li><a ng-click="moveRow('down')">Down</a></li>
+                    <li><a ng-click="moveRow('top')">To top</a></li>
+                    <li><a ng-click="moveRow('bottom')">To Bottom</a></li>
 									</ul>
 								</li>
 								<li>
 									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
 								</li>
 								<li>
-									<a ng-click="delete_row()">Delete row</a>
+									<a ng-click="deleteRow()">Delete row</a>
 								</li>
 							</ul>
 						</div>
@@ -76,10 +78,10 @@
 				</div>
 
 				<div class="panels-wrapper" ng-if="!row.collapse">
-					<div class="row-text pointer" ng-click="toggle_row(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
+					<div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
 					</div>
 
-					<div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="{{!dashboardViewState.fullscreen}}" drag="panel.id"
+					<div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
 						ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
 						<panel-loader type="panel.type" class="panel-margin"></panel-loader>
 					</div>
@@ -99,7 +101,7 @@
 
 		<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboardViewState.fullscreen">
 			<div class="span12" style="text-align:right;">
-				<span style="margin-right: 10px;" ng-click="add_row_default()" class="pointer btn btn-info btn-small">
+				<span style="margin-right: 10px;" ng-click="addRowDefault()" class="pointer btn btn-info btn-small">
 					<span><i class="fa fa-plus"></i> ADD ROW</span>
 				</span>
 			</div>

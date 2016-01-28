@@ -24,11 +24,10 @@ module.exports = function(config) {
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
     },
-
     js: {
       src: [
         '<%= tempDir %>/vendor/requirejs/require.js',
-        '<%= tempDir %>/app/components/require.config.js',
+        '<%= tempDir %>/app/require_config.js',
         '<%= tempDir %>/app/app.js',
       ],
       dest: '<%= genDir %>/app/app.js'

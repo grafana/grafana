@@ -7,10 +7,15 @@ var it = _global.it;
 var sinon = _global.sinon;
 var expect = _global.expect;
 
+var angularMocks = {
+  module: _global.module,
+};
+
 export {
   beforeEach,
   describe,
   it,
   sinon,
-  expect
+  expect,
+  angularMocks,
 }

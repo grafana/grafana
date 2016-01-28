@@ -30,18 +30,23 @@ Open a graph in edit mode by click the title.
 ![](/img/v2/opentsdb_query_editor.png)
 
 ### Auto complete suggestions
-You should get auto complete suggestions for tags and tag values. If you do not you need to enable `tsd.core.meta.enable_realtime_ts` in
-the OpenTSDB server settings. 
+As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
 
- > Note: This is required for the OpenTSDB `lookup` api to work.
+ > Note: This is required for the OpenTSDB `suggest` api to work.
 
 ## Templating queries
 Grafana's OpenTSDB data source now supports template variable values queries. This means you can create template variables that fetch the values from OpenTSDB (for example metric names, tag names, or tag values). The query editor is also enhanced to limiting tags by metric.
 
 When using OpenTSDB with a template variable of `query` type you can use following syntax for lookup.
 
-    metrics()                     // returns metric names
+    metrics(prefix)               // returns metric names with specific prefix (can be empty)
     tag_names(cpu)                // return tag names (i.e. keys) for a specific cpu metric
     tag_values(cpu, hostname)     // return tag values for metric cpu and tag key hostname
+    suggest_tagk(prefix)          // return tag names (i.e. keys) for all metrics with specific prefix (can be empty)
+    suggest_tagv(prefix)          // return tag values for all metrics with specific prefix (can be empty)
+
+If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
+
+> Note: This is required for the OpenTSDB `lookup` api to work.
 
 For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)

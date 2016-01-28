@@ -6,29 +6,13 @@
 				<li class="tight-form-item" style="width: 80px">
 					Left Y
 				</li>
-				<li class="tight-form-item">
+				<li class="tight-form-item" style="width: 40px">
 					Unit
 				</li>
 				<li class="dropdown" style="width: 140px;"
 					ng-model="panel.y_formats[0]"
 					dropdown-typeahead="unitFormats"
 					dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
-				</li>
-				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMax"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Min
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMin"
-					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
 					Scale type
@@ -46,34 +30,42 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<i class="fa fa-remove invisible"></i>
+				</li>
+				<li class="tight-form-item">
+					Y-Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.leftMax"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item" style="width: 115px; text-align: right;">
+					Y-Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.leftMin"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
 					Right Y
 				</li>
-				<li class="tight-form-item">
+				<li class="tight-form-item" style="width: 40px">
 					Unit
 				</li>
 				<li class="dropdown" style="width: 140px"
 					ng-model="panel.y_formats[1]"
 					dropdown-typeahead="unitFormats"
 					dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
-				</li>
-				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMax"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Min
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMin"
-					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
 					Scale type
@@ -91,6 +83,31 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<i class="fa fa-remove invisible"></i>
+				</li>
+				<li class="tight-form-item">
+					Y-Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.rightMax"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item" style="width: 115px; text-align: right;">
+					Y-Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.rightMin"
+					ng-change="render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
 	</div>
 
 	<div class="section" style="margin-bottom: 20px">
@@ -150,9 +167,9 @@
 
 <div class="editor-row">
 	<div class="section">
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
+				<li class="tight-form-item" style="width: 80px">
 					Legend
 				</li>
 				<li class="tight-form-item">
@@ -164,18 +181,28 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					Hide series
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="With only nulls" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+				</li>
 				<li class="tight-form-item last">
-					<editor-checkbox text="Hide empty" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+					<editor-checkbox text="With only zeroes" model="panel.legend.hideZero" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-	</div>
-	<div class="section">
-		<div class="tight-form">
+
+		<div class="tight-form last">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					Legend values
+				<li class="tight-form-item" style="width: 80px">
+					Values
 				</li>
 				<li class="tight-form-item">
 					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
@@ -189,16 +216,11 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="Current" model="panel.legend.current" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
-				<li class="tight-form-item last">
+				<li class="tight-form-item">
 					<editor-checkbox text="Total" model="panel.legend.total" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 105px">
-					<strong>Decimals</strong>
+				<li class="tight-form-item">
+					Decimals
 				</li>
 				<li style="width: 105px">
 					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
@@ -207,7 +229,5 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-
-
 	</div>
 </div>

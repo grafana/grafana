@@ -91,7 +91,6 @@ func (scanner *PluginScanner) loadPluginJson(path string) error {
 		if !exists {
 			return errors.New("Did not find type property in plugin.json")
 		}
-
 		DataSources[datasourceType.(string)] = pluginJson
 	}
 

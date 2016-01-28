@@ -62,6 +62,15 @@ const (
 	// see the body content of requests and responses made while using the SDK
 	// Will also enable LogDebug.
 	LogDebugWithHTTPBody
+
+	// LogDebugWithRequestRetries states the SDK should log when service requests will
+	// be retried. This should be used to log when you want to log when service
+	// requests are being retried. Will also enable LogDebug.
+	LogDebugWithRequestRetries
+
+	// LogDebugWithRequestErrors states the SDK should log when service requests fail
+	// to build, send, validate, or unmarshal.
+	LogDebugWithRequestErrors
 )
 
 // A Logger is a minimalistic interface for the SDK to log messages to. Should

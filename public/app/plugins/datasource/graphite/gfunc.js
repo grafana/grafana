@@ -88,6 +88,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'multiplySeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
     name: 'asPercent',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],

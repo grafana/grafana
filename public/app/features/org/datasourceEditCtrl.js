@@ -1,9 +1,9 @@
 define([
   'angular',
-  'config',
   'lodash',
+  'app/core/config',
 ],
-function (angular, config, _) {
+function (angular, _, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -17,7 +17,8 @@ function (angular, config, _) {
       name: '',
       url: '',
       access: 'proxy',
-      type: 'netcrunch'
+      type: 'netcrunch',
+      jsonData: {}
     };
 
     $scope.indexPatternTypes = [
@@ -27,6 +28,11 @@ function (angular, config, _) {
       {name: 'Weekly',      value: 'Weekly',  example: '[logstash-]GGGG.WW'},
       {name: 'Monthly',     value: 'Monthly', example: '[logstash-]YYYY.MM'},
       {name: 'Yearly',      value: 'Yearly',  example: '[logstash-]YYYY'},
+    ];
+
+    $scope.esVersions = [
+      {name: '1.x', value: 1},
+      {name: '2.x', value: 2},
     ];
 
     $scope.init = function() {
@@ -52,11 +58,6 @@ function (angular, config, _) {
       return backendSrv.get('/api/datasources/plugins').then(function(plugins) {
         datasourceTypes = plugins;
         $scope.types = plugins;
-        $scope.filteredTypes = {};
-
-        Object.keys($scope.types).forEach(function(typeKey) {
-          $scope.filteredTypes[typeKey] = $scope.types[typeKey];
-        });
       });
     };
 

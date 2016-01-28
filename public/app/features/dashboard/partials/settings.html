@@ -77,28 +77,30 @@
 		<div class="editor-row">
 			<div class="tight-form-section">
 				<h5>Rows settings</h5>
-				<div class="tight-form" ng-repeat="row in dashboard.rows">
-					<ul class="tight-form-list">
-						<li class="tight-form-item">
-							Title
-						</li>
-						<li>
-							<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
-						</li>
-						<li class="tight-form-item">
-							<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
-						</li>
-						<li class="tight-form-item last">
-							<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
+				<div class="tight-form-container">
+					<div class="tight-form" ng-repeat="row in dashboard.rows">
+						<ul class="tight-form-list">
+							<li class="tight-form-item">
+								Title
+							</li>
+							<li>
+								<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
+							</li>
+							<li class="tight-form-item">
+								<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
+							</li>
+							<li class="tight-form-item last">
+								<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
+							</li>
+						</ul>
+						<div class="clearfix"></div>
+					</div>
 				</div>
 			</div>
 		</div>

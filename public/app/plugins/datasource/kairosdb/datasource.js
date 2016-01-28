@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
-  'kbn',
+  'app/core/utils/kbn',
   './queryCtrl',
   './directives',
 ],
@@ -284,6 +284,10 @@ function (angular, _, dateMath, kbn) {
       query.aggregators = [];
 
       if (target.downsampling !== '(NONE)') {
+        if (target.downsampling === undefined) {
+          target.downsampling = 'avg';
+          target.sampling = '10s';
+        }
         query.aggregators.push({
           name: target.downsampling,
           align_sampling: true,

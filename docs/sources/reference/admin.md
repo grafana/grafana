@@ -24,7 +24,7 @@ modify Organization details and options.
 
 <img src="/img/v2/admin_sidenav.png" class="right" style="margin-left: 15px">
 As a Grafana Administrator, you have complete access to any Organization or User in that instance of Grafana.
-When performing actions as a Grafana admin, the sidebar will change it's apperance as below to indicate you are performing global server administration.
+When performing actions as a Grafana admin, the sidebar will change it's appearance as below to indicate you are performing global server administration.
 
 From the Grafana Server Admin page, you can access the System Info page which summarizes all of the backend configuration settings of the Grafana server.
 

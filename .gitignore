@@ -1,4 +1,5 @@
 node_modules
+npm-debug.log
 coverage/
 .aws-config.json
 awsconfig
@@ -41,6 +42,7 @@ build-windows.cmd
 /emails/dist
 /public_gen
 /tmp
+vendor/phantomjs/phantomjs
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
@@ -64,3 +66,4 @@ conf/custom.ini
 fig.yml
 profile.cov
 grafana
+.notouch

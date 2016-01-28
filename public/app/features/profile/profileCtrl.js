@@ -1,6 +1,6 @@
 define([
   'angular',
-  'config',
+  'app/core/config',
 ],
 function (angular, config) {
   'use strict';

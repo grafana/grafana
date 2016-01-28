@@ -17,7 +17,7 @@ func AdminGetSettings(c *middleware.Context) {
 		for _, key := range section.Keys() {
 			keyName := key.Name()
 			value := key.Value()
-			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") || (strings.Contains(keyName, "provider_config") && strings.Contains(value, "@")) {
+			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") || (strings.Contains(keyName, "provider_config")) {
 				value = "************"
 			}
 
