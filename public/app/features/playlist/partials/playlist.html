@@ -39,34 +39,24 @@
       </div>
 
       <br>
-      <h4>Add dashboards</h4>
 
-      <div style="display: inline-block">
-        <div class="tight-form last">
-          <ul class="tight-form-list">
-						<li class="tight-form-item">
-							Search
-						</li>
-            <li>
-              <input type="text"
-                     class="tight-form-input input-xlarge last"
-                     ng-model="ctrl.searchQuery"
-                     placeholder="dashboard search term"
-                     ng-trim="true"
-                     ng-change="ctrl.search()">
-            </li>
-          </ul>
-          <div class="clearfix"></div>
-        </div>
-      </div>
     </div>
   </div>
 
   <div class="row">
     <div class="span5 pull-left">
-			<h5>Search results ({{ctrl.filteredPlaylistItems.length}})</h5>
+      <h5>Add dashboards</h5>
+      <div style="">
+        <playlist-search class="playlist-search-container" search-started="ctrl.searchStarted(promise)"></playlist-search>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="span5 pull-left" ng-if="ctrl.filteredDashboards.length > 0">
+			<h5>Search results ({{ctrl.filteredDashboards.length}})</h5>
        <table class="grafana-options-table">
-        <tr ng-repeat="playlistItem in ctrl.filteredPlaylistItems">
+        <tr ng-repeat="playlistItem in ctrl.filteredDashboards">
           <td style="white-space: nowrap;">
             {{playlistItem.title}}
           </td>
@@ -77,12 +67,21 @@
             </button>
           </td>
         </tr>
-        <tr ng-if="ctrl.isSearchResultsEmpty()">
-          <td colspan="2">
-            <i class="fa fa-warning"></i> Search results empty
-          </td>
-        </tr>
       </table>
+    </div>
+    <div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0">
+      <div class="row">
+        <div class="span6 offset1">
+          <div ng-repeat="tag in ctrl.filteredTags" class="pointer" style="width: 180px; float: left;"
+            ng-class="{'selected': $index === selectedIndex }"
+            ng-click="ctrl.addTagPlaylistItem(tag, $event)">
+            <a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
+              <i class="fa fa-tag"></i>
+              <span>{{tag.term}} &nbsp;({{tag.count}})</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="span5 pull-left">
       <h5>Added dashboards</h5>
