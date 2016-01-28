@@ -24,7 +24,9 @@ define([
       }
 
       $scope.init = function() {
-        $scope.panel = $scope.datasource.updatePanel($scope.panel);
+        if ($scope.datasource != null) {
+          $scope.panel = $scope.datasource.updatePanel($scope.panel);
+        }
       };
 
       $scope.metricOptionsChange = function () {
