@@ -59,7 +59,6 @@ export class TextPanelCtrl extends PanelCtrl {
       this.updateContent(this.converter.makeHtml(text));
     } else {
       System.import('vendor/showdown').then(Showdown => {
-        console.log(this);
         this.converter = new Showdown.converter();
         this.$scope.$apply(() => {
           this.updateContent(this.converter.makeHtml(text));

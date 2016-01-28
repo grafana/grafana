@@ -89,7 +89,9 @@ class TablePanel extends PanelDirective {
 
     scope.$on('render', function(event, renderData) {
       data = renderData || data;
-      renderPanel();
+      if (data) {
+        renderPanel();
+      }
     });
   }
 }

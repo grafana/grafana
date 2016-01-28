@@ -80,7 +80,7 @@ export class PanelCtrl {
     return;
   }
 
-  addEditorTab(title, directiveFn) {
+  addEditorTab(title, directiveFn, index?) {
     var editorTab = {title, directiveFn};
 
     if (_.isString(directiveFn)) {
@@ -88,8 +88,11 @@ export class PanelCtrl {
         return {templateUrl: directiveFn};
       };
     }
-
-    this.editorTabs.push(editorTab);
+    if (index) {
+      this.editorTabs.splice(index, 0, editorTab);
+    } else {
+      this.editorTabs.push(editorTab);
+    }
   }
 
   getMenu() {
