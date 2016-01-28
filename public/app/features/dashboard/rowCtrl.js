@@ -156,7 +156,7 @@ function (angular, _, config) {
             title: "Associated Log Info",
             type: "absolute",
             url: "http://localhost:5601/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),"+
-            "time:(from:now-30m,mode:quick,to:now))&_a=(columns:!(_source),index:'logstash-*',interval:auto,"+
+            "time:(from:now-30m,mode:quick,to:now))&_a=(columns:!(message,host),index:'logstash-*',interval:auto,"+
             "query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!('@timestamp',desc))"
           }
         ]
