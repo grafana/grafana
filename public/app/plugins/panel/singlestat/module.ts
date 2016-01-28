@@ -7,6 +7,7 @@ import {SingleStatCtrl} from './controller';
 
 angular.module('grafana.directives').directive('singleStatPanel', singleStatPanel);
 
+/** @ngInject */
 function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
   'use strict';
   return {
