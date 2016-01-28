@@ -5,6 +5,12 @@ import config from 'app/core/config';
 import {PanelCtrl} from './panel_ctrl';
 import {MetricsPanelCtrl} from './metrics_panel_ctrl';
 
+export class DefaultPanelCtrl extends PanelCtrl {
+  constructor($scope, $injector) {
+    super($scope, $injector);
+  }
+}
+
 class PanelDirective {
   template: string;
   templateUrl: string;
@@ -15,7 +21,7 @@ class PanelDirective {
 
   getDirective() {
     if (!this.controller) {
-      this.controller = PanelCtrl;
+      this.controller = DefaultPanelCtrl;
     }
 
     return {
