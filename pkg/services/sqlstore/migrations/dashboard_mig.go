@@ -98,8 +98,8 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "updated_by", Type: DB_Int, Nullable: true,
 	}))
 
-  // add column to store creator of a dashboard
-  mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
-    Name: "created_by", Type: DB_Int, Nullable: true,
-  }))
+	// add column to store creator of a dashboard
+	mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "created_by", Type: DB_Int, Nullable: true,
+	}))
 }
