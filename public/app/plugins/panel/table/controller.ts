@@ -4,132 +4,131 @@ import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
 import * as FileExport from 'app/core/utils/file_export';
-import PanelMeta from 'app/features/panel/panel_meta2';
+import {MetricsPanelCtrl} from '../../../features/panel/panel';
 import {transformDataToTable} from './transformers';
+import {tablePanelEditor} from './editor';
 
-export class TablePanelCtrl {
+var panelDefaults = {
+  targets: [{}],
+  transform: 'timeseries_to_columns',
+  pageSize: null,
+  showHeader: true,
+  styles: [
+    {
+      type: 'date',
+      pattern: 'Time',
+      dateFormat: 'YYYY-MM-DD HH:mm:ss',
+    },
+    {
+      unit: 'short',
+      type: 'number',
+      decimals: 2,
+      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+      colorMode: null,
+      pattern: '/.*/',
+      thresholds: [],
+    }
+  ],
+  columns: [],
+  scroll: true,
+  fontSize: '100%',
+  sort: {col: 0, desc: true},
+};
+
+export class TablePanelCtrl extends MetricsPanelCtrl {
+  pageIndex: number;
+  dataRaw: any;
+  table: any;
 
   /** @ngInject */
-  constructor($scope, $rootScope, $q, panelSrv, panelHelper, annotationsSrv) {
-    $scope.ctrl = this;
-    $scope.pageIndex = 0;
+  constructor($scope, $injector, private annotationsSrv) {
+    super($scope, $injector);
+    this.pageIndex = 0;
 
-    $scope.panelMeta = new PanelMeta({
-      panelName: 'Table',
-      editIcon:  "fa fa-table",
-      fullscreen: true,
-      metricsEditor: true,
-    });
+    if (this.panel.styles === void 0) {
+      this.panel.styles = this.panel.columns;
+      this.panel.columns = this.panel.fields;
+      delete this.panel.columns;
+      delete this.panel.fields;
+    }
 
-    $scope.panelMeta.addEditorTab('Options', 'app/plugins/panel/table/options.html');
-    $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
-    $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
+    _.defaults(this.panel, panelDefaults);
+  }
 
-    var panelDefaults = {
-      targets: [{}],
-      transform: 'timeseries_to_columns',
-      pageSize: null,
-      showHeader: true,
-      styles: [
-        {
-          type: 'date',
-          pattern: 'Time',
-          dateFormat: 'YYYY-MM-DD HH:mm:ss',
-        },
-        {
-          unit: 'short',
-          type: 'number',
-          decimals: 2,
-          colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-          colorMode: null,
-          pattern: '/.*/',
-          thresholds: [],
-        }
-      ],
-      columns: [],
-      scroll: true,
-      fontSize: '100%',
-      sort: {col: 0, desc: true},
-    };
+  initEditMode() {
+    super.initEditMode();
+    this.addEditorTab('Options', tablePanelEditor);
+    this.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
+  }
 
-    $scope.init = function() {
-      if ($scope.panel.styles === void 0) {
-        $scope.panel.styles = $scope.panel.columns;
-        $scope.panel.columns = $scope.panel.fields;
-        delete $scope.panel.columns;
-        delete $scope.panel.fields;
-      }
+  getExtendedMenu() {
+    var menu = super.getExtendedMenu();
+    menu.push({text: 'Export CSV', click: 'exportCsv()'});
+    return menu;
+  }
 
-      _.defaults($scope.panel, panelDefaults);
-      panelSrv.init($scope);
-    };
+  refreshData(datasource) {
+    this.pageIndex = 0;
 
-    $scope.refreshData = function(datasource) {
-      panelHelper.updateTimeRange($scope);
-
-      $scope.pageIndex = 0;
-
-      if ($scope.panel.transform === 'annotations') {
-        return annotationsSrv.getAnnotations($scope.dashboard).then(annotations => {
-          $scope.dataRaw = annotations;
-          $scope.render();
-        });
-      }
-
-      return panelHelper.issueMetricQuery($scope, datasource)
-      .then($scope.dataHandler, function(err) {
-        $scope.render();
-        throw err;
+    if (this.panel.transform === 'annotations') {
+      return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
+        this.dataRaw = annotations;
+        this.render();
       });
-    };
+    }
 
-    $scope.toggleColumnSort = function(col, colIndex) {
-      if ($scope.panel.sort.col === colIndex) {
-        if ($scope.panel.sort.desc) {
-          $scope.panel.sort.desc = false;
-        } else {
-          $scope.panel.sort.col = null;
-        }
+    return this.issueQueries(datasource)
+    .then(this.dataHandler.bind(this))
+    .catch(err => {
+      this.render();
+      throw err;
+    });
+  }
+
+  toggleColumnSort(col, colIndex) {
+    if (this.panel.sort.col === colIndex) {
+      if (this.panel.sort.desc) {
+        this.panel.sort.desc = false;
       } else {
-        $scope.panel.sort.col = colIndex;
-        $scope.panel.sort.desc = true;
+        this.panel.sort.col = null;
       }
+    } else {
+      this.panel.sort.col = colIndex;
+      this.panel.sort.desc = true;
+    }
 
-      $scope.render();
-    };
+    this.render();
+  }
 
-    $scope.dataHandler = function(results) {
-      $scope.dataRaw = results.data;
-      $scope.pageIndex = 0;
-      $scope.render();
-    };
+  dataHandler(results) {
+    this.dataRaw = results.data;
+    this.pageIndex = 0;
+    this.render();
+  }
 
-    $scope.render = function() {
-      // automatically correct transform mode
-      // based on data
-      if ($scope.dataRaw && $scope.dataRaw.length) {
-        if ($scope.dataRaw[0].type === 'table') {
-          $scope.panel.transform = 'table';
+  render() {
+    // automatically correct transform mode
+    // based on data
+    if (this.dataRaw && this.dataRaw.length) {
+      if (this.dataRaw[0].type === 'table') {
+        this.panel.transform = 'table';
+      } else {
+        if (this.dataRaw[0].type === 'docs') {
+          this.panel.transform = 'json';
         } else {
-          if ($scope.dataRaw[0].type === 'docs') {
-            $scope.panel.transform = 'json';
-          } else {
-            if ($scope.panel.transform === 'table' || $scope.panel.transform === 'json') {
-              $scope.panel.transform = 'timeseries_to_rows';
-            }
+          if (this.panel.transform === 'table' || this.panel.transform === 'json') {
+            this.panel.transform = 'timeseries_to_rows';
           }
         }
       }
+    }
 
-      $scope.table = transformDataToTable($scope.dataRaw, $scope.panel);
-      $scope.table.sort($scope.panel.sort);
-      panelHelper.broadcastRender($scope, $scope.table, $scope.dataRaw);
-    };
+    this.table = transformDataToTable(this.dataRaw, this.panel);
+    this.table.sort(this.panel.sort);
+    this.broadcastRender(this.table);
+  }
 
-    $scope.exportCsv = function() {
-      FileExport.exportTableDataToCsv($scope.table);
-    };
-
-    $scope.init();
+  exportCsv() {
+    FileExport.exportTableDataToCsv(this.table);
   }
 }
