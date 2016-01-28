@@ -62,8 +62,12 @@ function (angular, _, moment) {
 
     function QueryCache(datasource) {
       this.datasource = datasource;
-      this.cache = Object.create(null);
-      this.cache.counters = Object.create(null);
+      if (datasource.netCrunchConnection != null) {
+        this.cache = datasource.netCrunchConnection.cache;
+      } else {
+        this.cache = Object.create(null);
+        this.cache.counters = Object.create(null);
+      }
     }
 
     QueryCache.prototype.getCounters = function (nodeId) {
@@ -131,6 +135,7 @@ function (angular, _, moment) {
         netCrunchLogin.then(
           function(connection) {
             self.netCrunchConnection = connection;
+            self.cache = self.createQueryCache();
             initUpdateNodes(connection.networkAtlas);
             initUpdateAtlas(connection.networkAtlas);
             initTask.resolve();

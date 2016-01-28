@@ -593,6 +593,7 @@ define([
             loginInProgressPromise,
             networkAtlasReady = $q.defer(),
             trendQuery,
+            connectionCache,
             self = this;
 
         function getServerApi() {
@@ -810,6 +811,10 @@ define([
           return def.promise;
         }
 
+        connectionCache = Object.create(null);
+        connectionCache.counters = Object.create(null);
+
+        this.cache = connectionCache;
         this.counters = Object.create(null);
         this.login = login;
         this.logout = logout;
