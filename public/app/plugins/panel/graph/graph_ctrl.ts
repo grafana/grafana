@@ -104,13 +104,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     super.initEditMode();
 
     this.icon = "fa fa-bar-chart";
-    this.addEditorTab('Axes & Grid', 'public/app/plugins/panel/graph/axisEditor.html');
-    this.addEditorTab('Display Styles', 'public/app/plugins/panel/graph/styleEditor.html');
+    this.addEditorTab('Axes & Grid', 'public/app/plugins/panel/graph/axisEditor.html', 2);
+    this.addEditorTab('Display Styles', 'public/app/plugins/panel/graph/styleEditor.html', 3);
 
-    // $scope.panelMeta.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
-    // $scope.panelMeta.addExtendedMenuItem('Export CSV', '', 'exportCsv()');
-    // $scope.panelMeta.addExtendedMenuItem('Toggle legend', '', 'toggleLegend()');
-    //
     this.logScales = {
       'linear': 1,
       'log (base 2)': 2,
@@ -119,6 +115,13 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 1024)': 1024
     };
     this.unitFormats = kbn.getUnitFormats();
+  }
+
+  getExtendedMenu() {
+    var menu = super.getExtendedMenu();
+    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
+    menu.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
+    return menu;
   }
 
   setUnitFormat(axis, subItem) {

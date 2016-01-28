@@ -16,7 +16,6 @@ function panelEditorTab(dynamicDirectiveSrv) {
     directive: scope => {
       var pluginId = scope.ctrl.pluginId;
       var tabIndex = scope.index;
-      console.log('tab plugnId:', pluginId);
 
       return Promise.resolve({
         name: `panel-editor-tab-${pluginId}${tabIndex}`,

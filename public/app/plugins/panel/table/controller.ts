@@ -57,13 +57,12 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
   initEditMode() {
     super.initEditMode();
-    this.addEditorTab('Options', tablePanelEditor);
-    this.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
+    this.addEditorTab('Options', tablePanelEditor, 1);
   }
 
   getExtendedMenu() {
     var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV', click: 'exportCsv()'});
+    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
     return menu;
   }
 

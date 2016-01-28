@@ -52,12 +52,10 @@ export class SingleStatCtrl extends MetricsPanelCtrl {
 
 
   initEditMode() {
+    super.initEditMode();
     this.icon =  "fa fa-dashboard";
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
-
-    this.addEditorTab('Options', 'app/plugins/panel/singlestat/editor.html');
-    this.addEditorTab('Time range', 'app/features/panel/partials/panelTime.html');
-
+    this.addEditorTab('Options', 'app/plugins/panel/singlestat/editor.html', 2);
     this.unitFormats = kbn.getUnitFormats();
   }
 
