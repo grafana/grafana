@@ -70,15 +70,13 @@ Creates a new dashboard or updates an existing dashboard.
         "schemaVersion": 6,
         "version": 0
       },
-      "overwrite": false,
-      "userId:": 3
+      "overwrite": false
     }
 
 JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version or with same dashboard title.
-- **userId** - Set userId if you want to record who created or updated a dashboard.
 
 **Example Response**:
 

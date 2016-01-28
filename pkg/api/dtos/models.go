@@ -43,10 +43,10 @@ type DashboardMeta struct {
 	Updated      time.Time `json:"updated"`
 	UpdatedBy    string    `json:"updatedBy"`
 	CreatedBy    string    `json:"createdBy"`
-  TotalRows    int64     `json:"totalRows"`
-  TotalPanels  int64     `json:"totalPanels"`
-  TotalQueries int64     `json:"totalQueries"`
-  Version      int       `json:"version"`
+	TotalRows    int       `json:"totalRows"`
+	TotalPanels  int       `json:"totalPanels"`
+	TotalQueries int       `json:"totalQueries"`
+	Version      int       `json:"version"`
 }
 
 type DashboardFullWithMeta struct {
