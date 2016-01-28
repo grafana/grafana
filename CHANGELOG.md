@@ -14,6 +14,7 @@
 * **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/pull/3458)
 * **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/pull/3584)
 * **snapshot**: Annotations are now included in snapshots, closes [#3635](https://github.com/grafana/grafana/pull/3635)
+* **Admin**: Admin can now have global overview of Grafana setup, closes [#3812](https://github.com/grafana/grafana/issues/3812)
 
 ### Bug fixes
 * **Playlist**: Fix for memory leak when running a playlist, closes [#3794](https://github.com/grafana/grafana/pull/3794)

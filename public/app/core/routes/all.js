@@ -112,6 +112,11 @@ define([
         templateUrl: 'app/features/admin/partials/edit_org.html',
         controller : 'AdminEditOrgCtrl',
       })
+      .when('/admin/stats', {
+        templateUrl: 'app/features/admin/partials/stats.html',
+        controller : 'AdminStatsCtrl',
+        controllerAs: 'ctrl',
+      })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',

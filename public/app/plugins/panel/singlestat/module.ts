@@ -7,6 +7,7 @@ import {SingleStatCtrl} from './controller';
 
 angular.module('grafana.directives').directive('singleStatPanel', singleStatPanel);
 
+/** @ngInject */
 function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
   'use strict';
   return {
@@ -221,7 +222,7 @@ function singleStatPanel($location, linkSrv, $timeout, templateSrv) {
 
 function getColorForValue(data, value) {
   for (var i = data.thresholds.length; i > 0; i--) {
-    if (value >= data.thresholds[i]) {
+    if (value >= data.thresholds[i-1]) {
       return data.colorMap[i];
     }
   }
