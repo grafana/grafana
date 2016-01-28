@@ -52,11 +52,11 @@ func GetDashboard(c *middleware.Context) {
 	// Finding the last creator and updater of the dashboard
 	updater, creator := "Anonymous", "Anonymous"
 	if dash.UpdatedBy > 0 {
-	  updater = getUserLogin(dash.UpdatedBy)
-  }
-  if dash.CreatedBy > 0 {
-    creator = getUserLogin(dash.CreatedBy)
-  }
+		updater = getUserLogin(dash.UpdatedBy)
+	}
+	if dash.CreatedBy > 0 {
+		creator = getUserLogin(dash.CreatedBy)
+	}
 
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
@@ -70,7 +70,7 @@ func GetDashboard(c *middleware.Context) {
 			Created:   dash.Created,
 			Updated:   dash.Updated,
 			UpdatedBy: updater,
-      CreatedBy: creator,
+			CreatedBy: creator,
 		},
 	}
 
@@ -78,14 +78,14 @@ func GetDashboard(c *middleware.Context) {
 }
 
 func getUserLogin(userId int64) string {
-  query := m.GetUserByIdQuery{Id: userId}
-  err := bus.Dispatch(&query)
-    if err != nil {
-      return "Anonymous"
-    } else {
-      user := query.Result
-      return user.Login
-    }
+	query := m.GetUserByIdQuery{Id: userId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		return "Anonymous"
+	} else {
+		user := query.Result
+		return user.Login
+	}
 }
 
 func DeleteDashboard(c *middleware.Context) {
@@ -114,8 +114,8 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	if !c.IsSignedIn {
 		cmd.UserId = -1
 	} else {
-    cmd.UserId = c.UserId
-  }
+		cmd.UserId = c.UserId
+	}
 
 	dash := cmd.GetDashboardModel()
 	if dash.Id == 0 {

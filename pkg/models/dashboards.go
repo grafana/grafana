@@ -34,7 +34,7 @@ type Dashboard struct {
 	Updated time.Time
 
 	UpdatedBy int64
-  CreatedBy int64
+	CreatedBy int64
 
 	Title string
 	Data  map[string]interface{}
@@ -67,7 +67,7 @@ func (dash *Dashboard) GetTags() []string {
 	return b
 }
 
-func NewDashboardFromJson(data map[string]interface {}) *Dashboard {
+func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = data
 	dash.Title = dash.Data["title"].(string)
@@ -93,10 +93,10 @@ func NewDashboardFromJson(data map[string]interface {}) *Dashboard {
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
 	if dash.Data["version"] == 0 {
-    dash.CreatedBy = cmd.UserId
-  }
-  dash.UpdatedBy = cmd.UserId
-  dash.OrgId = cmd.OrgId
+		dash.CreatedBy = cmd.UserId
+	}
+	dash.UpdatedBy = cmd.UserId
+	dash.OrgId = cmd.OrgId
 	dash.UpdateSlug()
 	return dash
 }
@@ -118,9 +118,9 @@ func (dash *Dashboard) UpdateSlug() {
 
 type SaveDashboardCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
-  UserId    int64                  `json:"userId"`
+	UserId    int64                  `json:"userId"`
 	OrgId     int64                  `json:"-"`
-  Overwrite bool                   `json:"overwrite"`
+	Overwrite bool                   `json:"overwrite"`
 
 	Result *Dashboard
 }

@@ -42,7 +42,7 @@ type DashboardMeta struct {
 	Created    time.Time `json:"created"`
 	Updated    time.Time `json:"updated"`
 	UpdatedBy  string    `json:"updatedBy"`
-  CreatedBy  string    `json:"createdBy"`
+	CreatedBy  string    `json:"createdBy"`
 }
 
 type DashboardFullWithMeta struct {
