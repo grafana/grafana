@@ -35,8 +35,6 @@ export class PlaylistEditCtrl {
   }
 
   filterFoundPlaylistItems() {
-    console.log('filter !');
-    console.log(this.dashboardresult);
     this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
       return _.findWhere(this.playlistItems, (listPlaylistItem) => {
         return parseInt(listPlaylistItem.value) === playlistItem.id;
@@ -56,8 +54,6 @@ export class PlaylistEditCtrl {
   }
 
   addTagPlaylistItem(tag) {
-    console.log(tag);
-
     var playlistItem: any = {
       value: tag.term,
       type: 'dashboard_by_tag',
@@ -102,26 +98,12 @@ export class PlaylistEditCtrl {
     return !this.playlistItems.length;
   }
 
-  isSearchResultsEmpty() {
-    return !this.dashboardresult.length;
-  }
-
-  isSearchQueryEmpty() {
-    return this.searchQuery === '';
-  }
-
   backToList() {
     this.$location.path('/playlists');
   }
 
-  isLoading() {
-    return this.loading;
-  }
-
   searchStarted(promise) {
     promise.then((data) => {
-      console.log('searchStarted: ', data);
-
       this.dashboardresult = data.dashboardResult;
       this.tagresult = data.tagResult;
       this.filterFoundPlaylistItems();

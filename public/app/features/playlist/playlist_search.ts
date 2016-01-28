@@ -57,7 +57,6 @@ export class PlaylistSearchCtrl {
   getTags() {
     var prom: any = {};
     prom.promise = this.backendSrv.get('/api/dashboards/tags').then((result) => {
-      console.log('getTags: result', result);
       return {
         dashboardResult: [],
         tagResult: result
