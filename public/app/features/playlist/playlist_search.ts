@@ -39,11 +39,11 @@ export class PlaylistSearchCtrl {
   showStarred() {
     this.query.starred = !this.query.starred;
     this.searchDashboards();
-  };
+  }
 
   queryHasNoFilters() {
     return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
-  };
+  }
 
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
@@ -52,7 +52,7 @@ export class PlaylistSearchCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
-  };
+  }
 
   getTags() {
     var prom: any = {};
@@ -65,7 +65,7 @@ export class PlaylistSearchCtrl {
     });
 
     this.searchStarted(prom);
-  };
+  }
 }
 
 export function playlistSearchDirective() {

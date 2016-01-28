@@ -44,7 +44,7 @@ export class PlaylistEditCtrl {
     });
 
     this.filteredTags = this.tagresult;
-  };
+  }
 
   addPlaylistItem(playlistItem) {
     playlistItem.value = playlistItem.id.toString();
@@ -53,7 +53,7 @@ export class PlaylistEditCtrl {
 
     this.playlistItems.push(playlistItem);
     this.filterFoundPlaylistItems();
-  };
+  }
 
   addTagPlaylistItem(tag) {
     console.log(tag);
@@ -92,31 +92,31 @@ export class PlaylistEditCtrl {
       }, () => {
         this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
       });
-  };
+  }
 
   isNew() {
     return !this.playlist.id;
-  };
+  }
 
   isPlaylistEmpty() {
     return !this.playlistItems.length;
-  };
+  }
 
   isSearchResultsEmpty() {
     return !this.dashboardresult.length;
-  };
+  }
 
   isSearchQueryEmpty() {
     return this.searchQuery === '';
-  };
+  }
 
   backToList() {
     this.$location.path('/playlists');
-  };
+  }
 
   isLoading() {
     return this.loading;
-  };
+  }
 
   searchStarted(promise) {
     promise.then((data) => {
@@ -126,7 +126,7 @@ export class PlaylistEditCtrl {
       this.tagresult = data.tagResult;
       this.filterFoundPlaylistItems();
     });
-  };
+  }
 
   movePlaylistItem(playlistItem, offset) {
     var currentPosition = this.playlistItems.indexOf(playlistItem);
@@ -136,15 +136,15 @@ export class PlaylistEditCtrl {
       this.playlistItems.splice(currentPosition, 1);
       this.playlistItems.splice(newPosition, 0, playlistItem);
     }
-  };
+  }
 
   movePlaylistItemUp(playlistItem) {
     this.movePlaylistItem(playlistItem, -1);
-  };
+  }
 
   movePlaylistItemDown(playlistItem) {
     this.movePlaylistItem(playlistItem, 1);
-  };
+  }
 }
 
 coreModule.controller('PlaylistEditCtrl', PlaylistEditCtrl);

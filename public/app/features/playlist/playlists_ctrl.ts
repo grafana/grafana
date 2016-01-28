@@ -25,7 +25,7 @@ export class PlaylistsCtrl {
         this.$scope.appEvent('alert-error', ['Unable to delete playlist', '']);
         this.playlists.push(playlist);
       });
-  };
+  }
 
   removePlaylist(playlist) {
 
@@ -38,8 +38,7 @@ export class PlaylistsCtrl {
         this.removePlaylistConfirmed(playlist);
       }
     });
-
-  };
+  }
 }
 
 coreModule.controller('PlaylistsCtrl', PlaylistsCtrl);
