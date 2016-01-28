@@ -26,9 +26,15 @@
 			<tbody>
 				<tr ng-repeat="ds in datasources">
 					<td>
-						<a href="datasources/edit/{{ds.id}}">
+						<a ng-hide="ds.id === -1"
+               href="datasources/edit/{{ds.id}}">
 							<i class="fa fa-database"></i> &nbsp; {{ds.name}}
 						</a>
+						<span ng-show="ds.id === -1"
+                  class="ellipsis">
+							<i class="fa fa-database"></i> &nbsp;
+							{{ds.name}}
+						</span>
 					</td>
 					<td>
 						<span class="ellipsis">{{ds.url}}</span>
