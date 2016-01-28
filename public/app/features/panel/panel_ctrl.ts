@@ -100,7 +100,7 @@ export class PanelCtrl {
     menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
     menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
     menu.push({text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
-    menu.push({text: 'Share', click: 'ctrl.share(); dismiss();'});
+    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
     return menu;
   }
 
@@ -165,4 +165,15 @@ export class PanelCtrl {
       this.row.panels.splice(index, 0, newPanel);
     });
   }
+
+ sharePanel() {
+   var shareScope = this.$scope.$new();
+   shareScope.panel = this.panel;
+   shareScope.dashboard = this.dashboard;
+
+   this.publishAppEvent('show-modal', {
+     src: './app/features/dashboard/partials/shareModal.html',
+     scope: shareScope
+   });
+ }
 }
