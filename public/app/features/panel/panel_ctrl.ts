@@ -80,13 +80,16 @@ export class PanelCtrl {
     return;
   }
 
-  addEditorTab(title, templateUrl) {
-    this.editorTabs.push({
-      title: title,
-      directiveFn: function() {
-        return {templateUrl: templateUrl};
-      }
-    });
+  addEditorTab(title, directiveFn) {
+    var editorTab = {title, directiveFn};
+
+    if (_.isString(directiveFn)) {
+      editorTab.directiveFn = function() {
+        return {templateUrl: directiveFn};
+      };
+    }
+
+    this.editorTabs.push(editorTab);
   }
 
   getMenu() {
