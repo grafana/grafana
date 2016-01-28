@@ -8,15 +8,17 @@
 			</a>
 		</li>
 
+    <!--
 		<li class="sidemenu-system-section" ng-if="systemSection">
 			<div class="sidemenu-system-section-inner">
 				<i class="fa fa-fw fa-cubes"></i>
 				<div class="sidemenu-section-text-wrapper">
-					<div class="sidemenu-section-heading">Grafana Admin</div>
+					<div class="sidemenu-section-heading">CloudInsight Admin</div>
 					<div class="sidemenu-section-tagline">v {{grafanaVersion}}</div>
 				</div>
 			</div>
 		</li>
+		-->
 
 		<li ng-repeat="item in mainLinks">
 			<a href="{{item.href}}" class="sidemenu-item" target="{{item.target}}">
@@ -55,7 +57,7 @@
 		</li>
 
 		<li ng-if="contextSrv.isGrafanaAdmin">
-			<a href="admin/settings" class="sidemenu-item">
+			<a href="admin/users" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cog"></i></span>
 				<span class="sidemenu-item-text">Admin</span>
 	   	</a>
