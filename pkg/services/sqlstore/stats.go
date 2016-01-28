@@ -71,7 +71,7 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
         FROM ` + dialect.Quote("dashboard_snapshot") + `
       ) AS db_snapshot_count,
       (
-        SELECT COUNT(*)
+        SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
         FROM ` + dialect.Quote("dashboard_tag") + `
       ) AS db_tag_count,
       (
