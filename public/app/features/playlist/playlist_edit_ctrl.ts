@@ -6,14 +6,16 @@ import coreModule from '../../core/core_module';
 import config from 'app/core/config';
 
 export class PlaylistEditCtrl {
-  filteredPlaylistItems: any = [];
-  foundPlaylistItems: any = [];
+  filteredDashboards: any = [];
+  filteredTags: any = [];
   searchQuery: string = '';
   loading: boolean = false;
   playlist: any = {
     interval: '10m',
   };
   playlistItems: any = [];
+  dashboardresult: any = [];
+  tagresult: any = [];
 
   /** @ngInject */
   constructor(private $scope, private playlistSrv, private backendSrv, private $location, private $route) {
@@ -30,35 +32,18 @@ export class PlaylistEditCtrl {
           this.playlistItems = result;
         });
     }
-
-    this.search();
   }
 
-  search() {
-    var query: any = {limit: 10};
-
-    if (this.searchQuery) {
-      query.query = this.searchQuery;
-    }
-
-    this.loading = true;
-
-    this.backendSrv.search(query)
-      .then((results) => {
-        this.foundPlaylistItems = results;
-        this.filterFoundPlaylistItems();
-      })
-      .finally(() => {
-        this.loading = false;
-      });
-  };
-
   filterFoundPlaylistItems() {
-    this.filteredPlaylistItems = _.reject(this.foundPlaylistItems, (playlistItem) => {
+    console.log('filter !');
+    console.log(this.dashboardresult);
+    this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
       return _.findWhere(this.playlistItems, (listPlaylistItem) => {
         return parseInt(listPlaylistItem.value) === playlistItem.id;
       });
     });
+
+    this.filteredTags = this.tagresult;
   };
 
   addPlaylistItem(playlistItem) {
@@ -69,6 +54,20 @@ export class PlaylistEditCtrl {
     this.playlistItems.push(playlistItem);
     this.filterFoundPlaylistItems();
   };
+
+  addTagPlaylistItem(tag) {
+    console.log(tag);
+
+    var playlistItem: any = {
+      value: tag.term,
+      type: 'dashboard_by_tag',
+      order: this.playlistItems.length + 1,
+      title: tag.term
+    };
+
+    this.playlistItems.push(playlistItem);
+    this.filterFoundPlaylistItems();
+  }
 
   removePlaylistItem(playlistItem) {
     _.remove(this.playlistItems, (listedPlaylistItem) => {
@@ -104,7 +103,7 @@ export class PlaylistEditCtrl {
   };
 
   isSearchResultsEmpty() {
-    return !this.foundPlaylistItems.length;
+    return !this.dashboardresult.length;
   };
 
   isSearchQueryEmpty() {
@@ -117,6 +116,16 @@ export class PlaylistEditCtrl {
 
   isLoading() {
     return this.loading;
+  };
+
+  searchStarted(promise) {
+    promise.then((data) => {
+      console.log('searchStarted: ', data);
+
+      this.dashboardresult = data.dashboardResult;
+      this.tagresult = data.tagResult;
+      this.filterFoundPlaylistItems();
+    });
   };
 
   movePlaylistItem(playlistItem, offset) {
