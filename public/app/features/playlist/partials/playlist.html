@@ -87,9 +87,16 @@
       <h5>Added dashboards</h5>
       <table class="grafana-options-table">
         <tr ng-repeat="playlistItem in ctrl.playlistItems">
-          <td style="white-space: nowrap;">
+          <td style="white-space: nowrap;" ng-if="playlistItem.type === 'dashboard_by_id'">
             {{playlistItem.title}}
           </td>
+          <td style="white-space: nowrap;"  ng-if="playlistItem.type === 'dashboard_by_tag'">
+            <a class="search-result-tag label label-tag" tag-color-from-name="playlistItem.title">
+              <i class="fa fa-tag"></i>
+              <span>{{playlistItem.title}}</span>
+            </a>
+          </td>
+
           <td style="text-align: right">
             <button class="btn btn-inverse btn-mini" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
               <i class="fa fa-arrow-up"></i>
