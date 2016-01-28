@@ -194,6 +194,19 @@ function (angular) {
       return updatingTask.promise;
     }
 
+    function prepareNodes(nodes) {
+      $scope.processingNodes = true;
+      $scope.nodes = [];
+      $scope.nodes = nodes.map(function(node, $index) {
+        var NODES_TAB_INDEX = getNodesTabIndex(),
+            updatedNode;
+        updatedNode = angular.copy(node);
+        updatedNode.local.tabIndex = NODES_TAB_INDEX + $index;
+        return updatedNode;
+      });
+      $scope.processingNodes = false;
+    }
+
     function updateCounter (target) {
       var updatingTask = $q.defer();
 
@@ -338,16 +351,14 @@ function (angular) {
     };
 
     $scope.init = function() {
+      var connectionTag = 'hosts-updated(' + $scope.datasource.instanceId + ')';
 
       $scope.datasource.nodes.then(function(nodes) {
-        $scope.nodes = nodes.map(function(node, $index) {
-          var NODES_TAB_INDEX = getNodesTabIndex(),
-              updatedNode;
-          updatedNode = angular.copy(node);
-          updatedNode.local.tabIndex = NODES_TAB_INDEX + $index;
-          return updatedNode;
-        });
-        $scope.processingNodes = false;
+        prepareNodes(nodes);
+      });
+
+      $scope.$on(connectionTag, function(event, nodes) {
+        prepareNodes(nodes);
       });
 
       $scope.target.counterDataComplete = true;
@@ -389,14 +400,6 @@ function (angular) {
           updateCountersList($scope.target.nodeID);
         }
       });
-    });
-
-    $scope.$on('addDataQuery', function() {
-      typeAheadsHide();
-    });
-
-    $scope.$on('removeDataQuery', function() {
-      typeAheadsHide();
     });
 
     $scope.$on('netCrunch-collapse-typeAhead', function(event, scopeId) {

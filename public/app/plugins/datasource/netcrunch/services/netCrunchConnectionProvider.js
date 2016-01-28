@@ -694,7 +694,7 @@ define([
                     tryAuthenticate(userName, password, attempt - 1).then(
                       function() { result.resolve(); },
                       function() { result.reject(); }
-                    )
+                    );
                   }, loginTimeout(attempt));
                 } else {
                   result.reject();

@@ -102,6 +102,7 @@ function (angular, _, moment) {
       this.nodes = nodesReady.promise;
       this.networkAtlas = networkAtlasReady.promise;
       this.cache = this.createQueryCache();
+      this.instanceId = (new Date()).getTime();
 
       function initUpdateNodes(networkAtlas) {
         $rootScope.$on('netcrunch-host-data-changed(' + self.url + ')', function() {
@@ -114,7 +115,7 @@ function (angular, _, moment) {
 
           self.updateNodeList(nodes.table).then(function(updated) {
             nodesReady.resolve(updated);
-            $rootScope.$broadcast(self.url + '(hosts-updated)', updated);
+            $rootScope.$broadcast('hosts-updated(' + self.instanceId + ')', updated);
           });
         });
       }
