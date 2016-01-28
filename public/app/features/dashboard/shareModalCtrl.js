@@ -26,7 +26,7 @@ function (angular, _, require, config) {
         $scope.modalTitle = 'Share Dashboard';
       }
 
-      if (!$scope.dashboardMeta.isSnapshot) {
+      if (!$scope.dashboard.meta.isSnapshot) {
         $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
       }
 
