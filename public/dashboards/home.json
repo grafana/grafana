@@ -16,6 +16,7 @@
           "id": 1,
           "span": 12,
           "editable": true,
+          "transparent": true,
           "type": "text",
           "mode": "html",
           "content": "<div class=\"text-center\" style=\"padding: 10px 0 20px 0\">\n<img src=\"img/logo_transparent_200x.png\" width=\"170px\"> \n</div>",
@@ -25,7 +26,7 @@
       ]
     },
     {
-      "height": "610px",
+      "height": "510px",
       "panels": [
         {
           "id": 2,

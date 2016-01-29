@@ -15,7 +15,6 @@ import "./directives/ng_model_on_blur";
 import "./directives/password_strenght";
 import "./directives/spectrum_picker";
 import "./directives/tags";
-import "./directives/topnav";
 import "./directives/value_select_dropdown";
 import "./directives/give_focus";
 import './jquery_extended';
