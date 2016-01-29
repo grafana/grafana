@@ -119,8 +119,3 @@ type GetPlaylistItemsByIdQuery struct {
 	PlaylistId int64
 	Result     *[]PlaylistItem
 }
-
-type GetPlaylistDashboardsQuery struct {
-	DashboardIds []int64
-	Result       *PlaylistDashboards
-}
