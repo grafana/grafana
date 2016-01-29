@@ -83,7 +83,7 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
         FROM ` + dialect.Quote("playlist") + `
       ) AS playlist_count,
       (
-        SELECT COUNT (DISTINCT ` + dialect.Quote("dashboard_id") + ` )
+        SELECT COUNT(DISTINCT ` + dialect.Quote("dashboard_id") + ` )
         FROM ` + dialect.Quote("star") + `
       ) AS starred_db_count,
       (
