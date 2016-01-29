@@ -41,7 +41,11 @@ export class PlaylistEditCtrl {
       });
     });
 
-    this.filteredTags = this.tagresult;
+    this.filteredTags = _.reject(this.tagresult, (tag) => {
+      return _.findWhere(this.playlistItems, (listPlaylistItem) => {
+        return listPlaylistItem.value === tag.term;
+      });
+    });
   }
 
   addPlaylistItem(playlistItem) {
