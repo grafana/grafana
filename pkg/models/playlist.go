@@ -78,7 +78,6 @@ type UpdatePlaylistCommand struct {
 	Name     string            `json:"name" binding:"Required"`
 	Type     string            `json:"type"`
 	Interval string            `json:"interval"`
-	Data     []int64           `json:"data"`
 	Items    []PlaylistItemDTO `json:"items"`
 
 	Result *PlaylistDTO
@@ -86,7 +85,6 @@ type UpdatePlaylistCommand struct {
 
 type CreatePlaylistCommand struct {
 	Name     string            `json:"name" binding:"Required"`
-	Type     string            `json:"type"`
 	Interval string            `json:"interval"`
 	Data     []int64           `json:"data"`
 	Items    []PlaylistItemDTO `json:"items"`
