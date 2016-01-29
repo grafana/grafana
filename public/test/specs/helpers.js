@@ -44,7 +44,7 @@ define([
         self.$browser = $browser;
         self.$q = $q;
         self.panel = {type: 'test'};
-        self.dashboard = {};
+        self.dashboard = {meta: {}};
 
         $rootScope.appEvent = sinon.spy();
         $rootScope.onAppEvent = sinon.spy();
@@ -67,7 +67,7 @@ define([
         self.scope.contextSrv = {};
         self.scope.panel = {};
         self.scope.row = { panels:[] };
-        self.scope.dashboard = {};
+        self.scope.dashboard = {meta: {}};
         self.scope.dashboardMeta = {};
         self.scope.dashboardViewState = new DashboardViewStateStub();
         self.scope.appEvent = sinon.spy();
