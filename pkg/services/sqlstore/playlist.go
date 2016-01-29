@@ -15,7 +15,6 @@ func init() {
 	bus.AddHandler("sql", DeletePlaylist)
 	bus.AddHandler("sql", SearchPlaylists)
 	bus.AddHandler("sql", GetPlaylist)
-	bus.AddHandler("sql", GetPlaylistDashboards)
 	bus.AddHandler("sql", GetPlaylistItem)
 }
 
@@ -161,21 +160,4 @@ func GetPlaylistItem(query *m.GetPlaylistItemsByIdQuery) error {
 	query.Result = &playlistItems
 
 	return err
-}
-
-func GetPlaylistDashboards(query *m.GetPlaylistDashboardsQuery) error {
-	if len(query.DashboardIds) == 0 {
-		return m.ErrCommandValidationFailed
-	}
-
-	var dashboards = make(m.PlaylistDashboards, 0)
-
-	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = &dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
