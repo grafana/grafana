@@ -18,11 +18,11 @@ The Playlist feature can be accessed from Grafana's sidemenu. Click the 'Playlis
 
 Click on "New Playlist" button to create a new playlist. Firstly, name your playlist and configure a time interval for Grafana to wait on a particular Dashboard before advancing to the next one on the Playlist.
 
-You can search Dashboards by name (or use a regular expression), and add them to your Playlist. By default, your starred dashboards will appear as candidates for the Playlist.
+You can search Dashboards by name (or use a regular expression), and add them to your Playlist. Or you could add tags which will include all the dashboards that belongs to a tag when the playlist start playing. By default, your starred dashboards will appear as candidates for the Playlist.
 
 Be sure to click the "Add to dashboard" button next to the Dashboard name to add it to the Playlist. To remove a dashboard from the playlist click on "Remove[x]" button from the playlist.
 
-Since the Playlist is basically a list of Dashboards, ensure that all the Dashboards you want to appear in your Playlist are added here. 
+Since the Playlist is basically a list of Dashboards, ensure that all the Dashboards you want to appear in your Playlist are added here.
 
 ## Saving the playlist
 
