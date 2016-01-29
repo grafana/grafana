@@ -20,9 +20,22 @@ function (angular, _, coreModule, store, config) {
       return this.user.orgRole === role;
     };
 
+    this.setPinnedState = function(val) {
+      this.pinned = val;
+      store.set('grafana.sidemenu.pinned', val);
+    };
+
     this.toggleSideMenu = function() {
       this.sidemenu = !this.sidemenu;
+      if (!this.sidemenu) {
+        this.setPinnedState(false);
+      }
     };
+
+    this.pinned = store.getBool('grafana.sidemenu.pinned', false);
+    if (this.pinned) {
+      this.sidemenu = true;
+    }
 
     this.version = config.buildInfo.version;
     this.lightTheme = false;
