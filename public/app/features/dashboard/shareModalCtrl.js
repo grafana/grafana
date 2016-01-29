@@ -12,7 +12,7 @@ function (angular, _, require, config) {
   module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
 
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
-    $scope.editor = { index: 0 };
+    $scope.editor = { index: $scope.tabIndex || 0};
 
     $scope.init = function() {
       $scope.modeSharePanel = $scope.panel ? true : false;
