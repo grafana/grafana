@@ -123,7 +123,7 @@ function (angular, $, _) {
             }
 
             var menuTemplate;
-            if ($(e.target).hasClass('fa-external-link')) {
+            if ($(e.target).hasClass('fa-link')) {
               menuTemplate = createExternalLinkMenu($scope);
             } else {
               menuTemplate = createMenuTemplate($scope);
