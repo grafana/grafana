@@ -3,16 +3,14 @@
 }
 
 .sidemenu-wrapper {
-  position: fixed;
+  position: absolute;
   top: 53px;
-  bottom: 0;
   left: 0;
   width: 200px;
   background-color: @sideMenuBackground;
   border: @sideMenuBorder;
-  min-height: 100%;
   z-index: 101;
-  transform: translate3d(-100%, 0, 0);
+  transform: translate3d(0, -100%, 0);
   visibility: hidden;
 
   a:focus {
@@ -23,9 +21,20 @@
 .sidemenu-open {
   .sidemenu-wrapper {
     visibility: visible;
-    -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
     transition: all 0.2s;
+  }
+}
+
+.sidemenu-pinned {
+  .sidemenu-wrapper {
+    min-height: 100%;
+  }
+  .main-view-container {
+    padding-left: 210px;
+  }
+  .page-container {
+    padding-left: 210px;
   }
 }
 

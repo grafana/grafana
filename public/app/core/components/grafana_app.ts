@@ -150,12 +150,21 @@ export function grafanaAppDirective(playlistSrv) {
       scope.$watch('contextSrv.sidemenu', newVal => {
         if (newVal !== undefined) {
           elem.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
+          if (!newVal) {
+            scope.contextSrv.setPinnedState(false);
+          }
         }
         if (scope.contextSrv.sidemenu) {
           ignoreSideMenuHide = true;
           setTimeout(() => {
             ignoreSideMenuHide = false;
           }, 300);
+        }
+      });
+
+      scope.$watch('contextSrv.pinned', newVal => {
+        if (newVal !== undefined) {
+          elem.toggleClass('sidemenu-pinned', newVal);
         }
       });
 
@@ -182,7 +191,7 @@ export function grafanaAppDirective(playlistSrv) {
           }
         }
         // hide sidemenu
-        if (!ignoreSideMenuHide &&  elem.find('.sidemenu').length > 0) {
+        if (!ignoreSideMenuHide && !scope.contextSrv.pinned && elem.find('.sidemenu').length > 0) {
           if (target.parents('.sidemenu').length === 0) {
             scope.$apply(() => scope.contextSrv.toggleSideMenu());
           }

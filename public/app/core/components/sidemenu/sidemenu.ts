@@ -22,8 +22,11 @@ export class SideMenuCtrl {
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
     this.updateMenu();
+
     this.$scope.$on('$routeChangeSuccess', () => {
-      this.contextSrv.sidemenu = false;
+      if (!this.contextSrv.pinned) {
+        this.contextSrv.sidemenu = false;
+      }
     });
   }
 
