@@ -276,7 +276,7 @@ function (angular, _, dateMath) {
 
         query.downsample = interval + "-" + target.downsampleAggregator;
 
-        if (target.downsampleFillPolicy !== "none") {
+        if (target.downsampleFillPolicy && target.downsampleFillPolicy !== "none") {
           query.downsample += "-" + target.downsampleFillPolicy;
         }
       }
