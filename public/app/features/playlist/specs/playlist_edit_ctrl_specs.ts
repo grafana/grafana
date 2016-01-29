@@ -1,6 +1,5 @@
 import '../playlist_edit_ctrl';
-import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
-import helpers from 'test/specs/helpers';
+import {describe, beforeEach, it, expect} from 'test/lib/common';
 import {PlaylistEditCtrl} from '../playlist_edit_ctrl';
 
 describe.only('PlaylistEditCtrl', function() {
