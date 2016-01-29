@@ -41,6 +41,7 @@ export default class TimeSeries {
   nullPointMode: any;
   fillBelowTo: any;
   transform: any;
+  flotpairs: any;
 
   constructor(opts) {
     this.datapoints = opts.datapoints;

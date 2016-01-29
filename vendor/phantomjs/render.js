@@ -49,6 +49,15 @@
       });
 
       if (canvas || tries === 1000) {
+        var bb = page.evaluate(function () { 
+          return document.getElementsByClassName("main-view")[0].getBoundingClientRect(); 
+        });
+          page.clipRect = {
+          top:    bb.top,
+          left:   bb.left,
+          width:  bb.width,
+          height: bb.height
+        };
         page.render(params.png);
         phantom.exit();
       }
