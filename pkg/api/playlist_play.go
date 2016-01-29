@@ -14,7 +14,7 @@ func populateDashboardsById(dashboardByIds []int64) ([]m.PlaylistDashboardDto, e
 	result := make([]m.PlaylistDashboardDto, 0)
 
 	if len(dashboardByIds) > 0 {
-		dashboardQuery := m.GetPlaylistDashboardsQuery{DashboardIds: dashboardByIds}
+		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIds}
 		if err := bus.Dispatch(&dashboardQuery); err != nil {
 			return result, errors.New("Playlist not found") //TODO: dont swallow error
 		}

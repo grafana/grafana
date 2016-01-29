@@ -14,6 +14,7 @@ import (
 func init() {
 	bus.AddHandler("sql", SaveDashboard)
 	bus.AddHandler("sql", GetDashboard)
+	bus.AddHandler("sql", GetDashboards)
 	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
@@ -222,4 +223,21 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 
 		return nil
 	})
+}
+
+func GetDashboards(query *m.GetDashboardsQuery) error {
+	if len(query.DashboardIds) == 0 {
+		return m.ErrCommandValidationFailed
+	}
+
+	var dashboards = make([]m.Dashboard, 0)
+
+	err := x.In("id", query.DashboardIds).Find(&dashboards)
+	query.Result = &dashboards
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
