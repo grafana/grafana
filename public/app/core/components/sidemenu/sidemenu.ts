@@ -24,6 +24,7 @@ export class SideMenuCtrl {
     this.updateMenu();
 
     this.$scope.$on('$routeChangeSuccess', () => {
+      this.updateMenu();
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
@@ -86,11 +87,11 @@ export class SideMenuCtrl {
            this.switchOrg(org.orgId);
          }
        });
-
-       if (config.allowOrgCreate) {
-         this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
-       }
      });
+
+     if (config.allowOrgCreate) {
+       this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
+     }
    });
  }
 
@@ -111,19 +112,19 @@ export class SideMenuCtrl {
    });
 
    this.mainLinks.push({
-     text: "Grafana stats",
+     text: "Stats",
      icon: "fa fa-fw fa-bar-chart",
      url: this.getUrl("/admin/stats"),
    });
 
    this.mainLinks.push({
-     text: "Global Users",
+     text: "Users",
      icon: "fa fa-fw fa-user",
      url: this.getUrl("/admin/users"),
    });
 
    this.mainLinks.push({
-     text: "Global Orgs",
+     text: "Organizations",
      icon: "fa fa-fw fa-users",
      url: this.getUrl("/admin/orgs"),
    });
