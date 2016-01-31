@@ -15,6 +15,7 @@ function (angular, _, dateMath) {
     this.withCredentials = instanceSettings.withCredentials;
     this.basicAuth = instanceSettings.basicAuth;
     this.supportMetrics = true;
+    this.tagKeys = {};
 
     // Called once per panel (graph)
     this.query = function(options) {
@@ -50,10 +51,13 @@ function (angular, _, dateMath) {
           if (index === -1) {
             index = 0;
           }
+
+          this._saveTagKeys(metricData);
+
           return transformMetricData(metricData, groupByTags, options.targets[index], options);
-        });
+        }.bind(this));
         return { data: result };
-      });
+      }.bind(this));
     };
 
     this.performTimeSeriesQuery = function(queries, start, end) {
@@ -85,6 +89,19 @@ function (angular, _, dateMath) {
       // go as POST rather than OPTIONS+POST
       options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
       return backendSrv.datasourceRequest(options);
+    };
+
+    this.suggestTagKeys = function(metric) {
+      return $q.when(this.tagKeys[metric] || []);
+    };
+
+    this._saveTagKeys = function(metricData) {
+      var tagKeys = Object.keys(metricData.tags);
+      _.each(metricData.aggregateTags, function(tag) {
+        tagKeys.push(tag);
+      });
+
+      this.tagKeys[metricData.metric] = tagKeys;
     };
 
     this._performSuggestQuery = function(query, type) {
