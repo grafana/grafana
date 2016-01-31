@@ -5,7 +5,7 @@ import store from 'app/core/store';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
-import coreModule from '../core_module';
+import coreModule from 'app/core/core_module';
 
 export class GrafanaCtrl {
 
