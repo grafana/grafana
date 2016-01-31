@@ -1,19 +1,23 @@
 # 3.0.0 (unrelased master branch)
 
-### New Features ###
+### New Features
 * **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/pull/3655)
 * **Metadata**: Settings panel now shows dashboard metadata, closes [#3304](https://github.com/grafana/grafana/issues/3304)
 * **InfluxDB**: Support for policy selection in query editor, closes [#2018](https://github.com/grafana/grafana/issues/2018)
 
 ### Breaking changes
-**Plugin API**: Both datasource and panel plugin api (and plugin.json schema) as been updated, requiring a minor update to plugins. See [plugin api](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md) for more info.
-**InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds. Can easily be installed via improved plugin system, closes #3523
-**KairosDB** The data source is no longer included in default builds. Can easily be installed via improved plugin system, closes #3524
+* **Plugin API**: Both datasource and panel plugin api (and plugin.json schema) have been updated, requiring a minor update to plugins. See [plugin api](https://github.com/grafana/grafana/blob/master/public/app/plugins/plugin_api.md) for more info.
+* **InfluxDB 0.8.x** The data source for the old version of influxdb (0.8.x) is no longer included in default builds, but can easily be installed via improved plugin system, closes [#3523](https://github.com/grafana/grafana/issues/3523)
+* **KairosDB** The data source is no longer included in default builds, but can easily be installed via improved plugin system, closes [#3524](https://github.com/grafana/grafana/issues/3524)
 
-### Enhancements ###
+### Enhancements
 * **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/pull/3458)
 * **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/pull/3584)
 * **snapshot**: Annotations are now included in snapshots, closes [#3635](https://github.com/grafana/grafana/pull/3635)
+* **Admin**: Admin can now have global overview of Grafana setup, closes [#3812](https://github.com/grafana/grafana/issues/3812)
+
+### Bug fixes
+* **Playlist**: Fix for memory leak when running a playlist, closes [#3794](https://github.com/grafana/grafana/pull/3794)
 
 # 2.6.1 (unrelased, 2.6.x branch)
 

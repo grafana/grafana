@@ -98,6 +98,8 @@
 		<div class="simple-box-body">
 			<div ng-if="ctrl.appModel.appId">
 				<app-config-view app-model="ctrl.appModel"></app-config-view>
+				<div class="clearfix"></div>
+				<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
 			</div>
 		</div>
 	</section>

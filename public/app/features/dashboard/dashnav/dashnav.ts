@@ -42,10 +42,13 @@ export class DashNavCtrl {
       }
     };
 
-    $scope.shareDashboard = function() {
+    $scope.shareDashboard = function(tabIndex) {
+      var modalScope = $scope.$new();
+      modalScope.tabIndex = tabIndex;
+
       $scope.appEvent('show-modal', {
         src: './app/features/dashboard/partials/shareModal.html',
-        scope: $scope.$new(),
+        scope: modalScope
       });
     };
 

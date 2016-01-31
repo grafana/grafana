@@ -72,6 +72,9 @@ function (angular, _, dateMath) {
         data: reqBody
       };
 
+      // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
+      // go as POST rather than OPTIONS+POST
+      options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
       return backendSrv.datasourceRequest(options);
     };
 
@@ -272,6 +275,10 @@ function (angular, _, dateMath) {
         }
 
         query.downsample = interval + "-" + target.downsampleAggregator;
+
+        if (target.downsampleFillPolicy && target.downsampleFillPolicy !== "none") {
+          query.downsample += "-" + target.downsampleFillPolicy;
+        }
       }
 
       query.tags = angular.copy(target.tags);

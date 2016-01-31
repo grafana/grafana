@@ -26,12 +26,28 @@ type AppIncludeInfo struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Css      *AppPluginCss    `json:"css"`
-	Pages    []AppPluginPage  `json:"pages"`
-	Includes []AppIncludeInfo `json:"-"`
+	Css      *AppPluginCss     `json:"css"`
+	Pages    []AppPluginPage   `json:"pages"`
+	Routes   []*AppPluginRoute `json:"routes"`
+	Includes []AppIncludeInfo  `json:"-"`
 
 	Pinned  bool `json:"-"`
 	Enabled bool `json:"-"`
+}
+
+type AppPluginRoute struct {
+	Path            string                 `json:"path"`
+	Method          string                 `json:"method"`
+	ReqSignedIn     bool                   `json:"reqSignedIn"`
+	ReqGrafanaAdmin bool                   `json:"reqGrafanaAdmin"`
+	ReqRole         models.RoleType        `json:"reqRole"`
+	Url             string                 `json:"url"`
+	Headers         []AppPluginRouteHeader `json:"headers"`
+}
+
+type AppPluginRouteHeader struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {

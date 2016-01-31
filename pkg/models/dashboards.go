@@ -146,3 +146,8 @@ type GetDashboardTagsQuery struct {
 	OrgId  int64
 	Result []*DashboardTagCloudItem
 }
+
+type GetDashboardsQuery struct {
+	DashboardIds []int64
+	Result       *[]Dashboard
+}
