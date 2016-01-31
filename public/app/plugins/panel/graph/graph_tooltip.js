@@ -6,6 +6,8 @@ function ($) {
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
+    var ctrl = scope.ctrl;
+    var panel = ctrl.panel;
 
     var $tooltip = $('<div id="tooltip">');
 
@@ -47,12 +49,12 @@ function ($) {
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
-        if (!series.data.length || (scope.panel.legend.hideEmpty && series.allIsNull)) {
+        if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
           results.push({ hidden: true });
           continue;
         }
 
-        if (!series.data.length || (scope.panel.legend.hideZero && series.allIsZero)) {
+        if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
           results.push({ hidden: true });
           continue;
         }
@@ -61,7 +63,7 @@ function ($) {
         results.time = series.data[hoverIndex][0];
 
         if (series.stack) {
-          if (scope.panel.tooltip.value_type === 'individual') {
+          if (panel.tooltip.value_type === 'individual') {
             value = series.data[hoverIndex][1];
           } else if (!series.stack) {
             value = series.data[hoverIndex][1];
@@ -89,7 +91,7 @@ function ($) {
     };
 
     elem.mouseleave(function () {
-      if (scope.panel.tooltip.shared) {
+      if (panel.tooltip.shared) {
         var plot = elem.data().plot;
         if (plot) {
           $tooltip.detach();
@@ -98,7 +100,7 @@ function ($) {
       }
 
       if (dashboard.sharedCrosshair) {
-        scope.appEvent('clearCrosshair');
+        ctrl.publishAppEvent('clearCrosshair');
       }
     });
 
@@ -108,15 +110,15 @@ function ($) {
       var seriesList = getSeriesFn();
       var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml;
 
-      if(dashboard.sharedCrosshair){
-        scope.appEvent('setCrosshair', { pos: pos, scope: scope });
+      if (dashboard.sharedCrosshair) {
+        ctrl.publishAppEvent('setCrosshair', { pos: pos, scope: scope });
       }
 
       if (seriesList.length === 0) {
         return;
       }
 
-      if (scope.panel.tooltip.shared) {
+      if (panel.tooltip.shared) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
@@ -151,7 +153,7 @@ function ($) {
         group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
         group += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
 
-        if (scope.panel.stack && scope.panel.tooltip.value_type === 'individual') {
+        if (panel.stack && panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];
         }
         else {

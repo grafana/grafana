@@ -9,9 +9,9 @@
 					</li>
 					<li>
 						<select class="input-large tight-form-input"
-							ng-model="panel.transform"
-							ng-options="k as v.description for (k, v) in transformers"
-							ng-change="transformChanged()"></select>
+							ng-model="editor.panel.transform"
+							ng-options="k as v.description for (k, v) in editor.transformers"
+							ng-change="editor.transformChanged()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -21,14 +21,14 @@
 					<li class="tight-form-item" style="width: 140px">
 						Columns
 					</li>
-					<li class="tight-form-item" ng-repeat="column in panel.columns">
-						<i class="pointer fa fa-remove" ng-click="removeColumn(column)"></i>
+					<li class="tight-form-item" ng-repeat="column in editor.panel.columns">
+						<i class="pointer fa fa-remove" ng-click="editor.removeColumn(column)"></i>
 						<span>
 							{{column.text}}
 						</span>
 					</li>
 					<li>
-						<metric-segment segment="addColumnSegment" get-options="getColumnOptions()" on-change="addColumn()"></metric-segment>
+						<metric-segment segment="editor.addColumnSegment" get-options="editor.getColumnOptions()" on-change="editor.addColumn()"></metric-segment>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -46,16 +46,16 @@
 					</li>
 					<li>
 						<input type="number" class="input-small tight-form-input" placeholder="100"
-						empty-to-null ng-model="panel.pageSize" ng-change="render()" ng-model-onblur>
+						empty-to-null ng-model="editor.panel.pageSize" ng-change="editor.render()" ng-model-onblur>
 					</li>
 					<li class="tight-form-item">
-						<editor-checkbox text="Scroll" model="panel.scroll" change="render()"></editor-checkbox>
+						<editor-checkbox text="Scroll" model="editor.panel.scroll" change="editor.render()"></editor-checkbox>
 					</li>
 					<li class="tight-form-item">
 						Font size
 					</li>
 					<li>
-						<select class="input-small tight-form-input" ng-model="panel.fontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
+						<select class="input-small tight-form-input" ng-model="editor.panel.fontSize" ng-options="f for f in editor.fontSizes" ng-change="editor.render()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -68,11 +68,11 @@
 	<h5>Column Styles</h5>
 
 	<div class="tight-form-container">
-		<div ng-repeat="style in panel.styles">
+		<div ng-repeat="style in editor.panel.styles">
 			<div class="tight-form">
 				<ul class="tight-form-list pull-right">
 					<li class="tight-form-item last">
-						<i class="fa fa-remove pointer" ng-click="removeColumnStyle(style)"></i>
+						<i class="fa fa-remove pointer" ng-click="editor.removeColumnStyle(style)"></i>
 					</li>
 				</ul>
 
@@ -81,7 +81,7 @@
 						Name or regex
 					</li>
 					<li>
-						<input type="text" ng-model="style.pattern" bs-typeahead="getColumnNames" ng-blur="render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
+						<input type="text" ng-model="style.pattern" bs-typeahead="editor.getColumnNames" ng-blur="editor.render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
 					</li>
 					<li class="tight-form-item" style="width: 86px">
 						Type
@@ -89,8 +89,8 @@
 					<li>
 						<select class="input-small tight-form-input"
 							ng-model="style.type"
-							ng-options="c.value as c.text for c in columnTypes"
-							ng-change="render()"
+							ng-options="c.value as c.text for c in editor.columnTypes"
+							ng-change="editor.render()"
 							style="width: 150px"
 							></select>
 					</li>
@@ -100,7 +100,7 @@
 						Format
 					</li>
 					<li>
-						<metric-segment-model property="style.dateFormat" options="dateFormats" on-change="render()" custom="true"></metric-segment-model>
+						<metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -113,8 +113,8 @@
 					<li>
 						<select class="input-small tight-form-input"
 							ng-model="style.colorMode"
-							ng-options="c.value as c.text for c in colorModes"
-							ng-change="render()"
+							ng-options="c.value as c.text for c in editor.colorModes"
+							ng-change="editor.render()"
 							style="width: 150px"
 							></select>
 					</li>
@@ -122,18 +122,18 @@
 						Thresholds<tip>Comma seperated values</tip>
 					</li>
 					<li>
-						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="style.thresholds" ng-blur="render()" placeholder="0,50,80" array-join></input>
+						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="style.thresholds" ng-blur="editor.render()" placeholder="0,50,80" array-join></input>
 					</li>
 					<li class="tight-form-item" style="width: 60px">
 						Colors
 					</li>
 					<li class="tight-form-item">
-						<spectrum-picker ng-model="style.colors[0]" ng-change="render()" ></spectrum-picker>
-						<spectrum-picker ng-model="style.colors[1]" ng-change="render()" ></spectrum-picker>
-						<spectrum-picker ng-model="style.colors[2]" ng-change="render()" ></spectrum-picker>
+						<spectrum-picker ng-model="style.colors[0]" ng-change="editor.render()" ></spectrum-picker>
+						<spectrum-picker ng-model="style.colors[1]" ng-change="editor.render()" ></spectrum-picker>
+						<spectrum-picker ng-model="style.colors[2]" ng-change="editor.render()" ></spectrum-picker>
 					</li>
 					<li class="tight-form-item last">
-						<a class="pointer" ng-click="invertColorOrder($index)">invert order</a>
+						<a class="pointer" ng-click="editor.invertColorOrder($index)">invert order</a>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -145,8 +145,8 @@
 					</li>
 					<li class="dropdown" style="width: 150px"
 						ng-model="style.unit"
-						dropdown-typeahead="unitFormats"
-						dropdown-typeahead-on-select="setUnitFormat(style, $subItem)">
+						dropdown-typeahead="editor.unitFormats"
+						dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)">
 					</li>
 					<li class="tight-form-item" style="width: 86px">
 						Decimals
@@ -161,7 +161,7 @@
 		</div>
 	</div>
 
-	<button class="btn btn-inverse" style="margin-top: 20px" ng-click="addColumnStyle()">
+	<button class="btn btn-inverse" style="margin-top: 20px" ng-click="editor.addColumnStyle()">
 		Add column style rule
 	</button>
 </div>

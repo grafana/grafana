@@ -15,13 +15,15 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
   queryPart = queryPart.default;
 
   module.controller('InfluxQueryCtrl', function($scope, templateSrv, $q, uiSegmentSrv) {
+    var panelCtrl = $scope.ctrl;
+    $scope.panelCtrl = panelCtrl;
 
     $scope.init = function() {
       if (!$scope.target) { return; }
 
       $scope.target = $scope.target;
       $scope.queryModel = new InfluxQuery($scope.target);
-      $scope.queryBuilder = new InfluxQueryBuilder($scope.target, $scope.datasource.database);
+      $scope.queryBuilder = new InfluxQueryBuilder($scope.target, panelCtrl.datasource.database);
       $scope.groupBySegment = uiSegmentSrv.newPlusButton();
       $scope.resultFormats = [
          {text: 'Time series', value: 'time_series'},
@@ -75,7 +77,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
     $scope.getGroupByOptions = function() {
       var query = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
 
-      return $scope.datasource.metricFindQuery(query)
+      return panelCtrl.datasource.metricFindQuery(query)
       .then(function(tags) {
         var options = [];
         if (!$scope.queryModel.hasFill()) {
@@ -97,26 +99,26 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       var plusButton = uiSegmentSrv.newPlusButton();
       $scope.groupBySegment.value  = plusButton.value;
       $scope.groupBySegment.html  = plusButton.html;
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.removeGroupByPart = function(part, index) {
       $scope.queryModel.removeGroupByPart(part, index);
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.addSelectPart = function(selectParts, cat, subitem) {
       $scope.queryModel.addSelectPart(selectParts, subitem.value);
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.removeSelectPart = function(selectParts, part) {
       $scope.queryModel.removeSelectPart(selectParts, part);
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.selectPartUpdated = function() {
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.fixTagSegments = function() {
@@ -130,19 +132,19 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
     $scope.measurementChanged = function() {
       $scope.target.measurement = $scope.measurementSegment.value;
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.getPolicySegments = function() {
       var policiesQuery = $scope.queryBuilder.buildExploreQuery('RETENTION POLICIES');
-      return $scope.datasource.metricFindQuery(policiesQuery)
+      return panelCtrl.datasource.metricFindQuery(policiesQuery)
       .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
     };
 
     $scope.policyChanged = function() {
       $scope.target.policy = $scope.policySegment.value;
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.toggleQueryMode = function () {
@@ -151,19 +153,19 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
     $scope.getMeasurements = function () {
       var query = $scope.queryBuilder.buildExploreQuery('MEASUREMENTS');
-      return $scope.datasource.metricFindQuery(query)
+      return panelCtrl.datasource.metricFindQuery(query)
       .then($scope.transformToSegments(true), $scope.handleQueryError);
     };
 
     $scope.getPartOptions = function(part) {
       if (part.def.type === 'field') {
         var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
-        return $scope.datasource.metricFindQuery(fieldsQuery)
+        return panelCtrl.datasource.metricFindQuery(fieldsQuery)
         .then($scope.transformToSegments(true), $scope.handleQueryError);
       }
       if (part.def.type === 'tag') {
         var tagsQuery = $scope.queryBuilder.buildExploreQuery('TAG_KEYS');
-        return $scope.datasource.metricFindQuery(tagsQuery)
+        return panelCtrl.datasource.metricFindQuery(tagsQuery)
         .then($scope.transformToSegments(true), $scope.handleQueryError);
       }
     };
@@ -211,7 +213,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
         addTemplateVars = true;
       }
 
-      return $scope.datasource.metricFindQuery(query)
+      return panelCtrl.datasource.metricFindQuery(query)
       .then($scope.transformToSegments(addTemplateVars))
       .then(function(results) {
         if (segment.type === 'key') {
@@ -224,7 +226,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
     $scope.getFieldSegments = function() {
       var fieldsQuery = $scope.queryBuilder.buildExploreQuery('FIELDS');
-      return $scope.datasource.metricFindQuery(fieldsQuery)
+      return panelCtrl.datasource.metricFindQuery(fieldsQuery)
       .then($scope.transformToSegments(false))
       .then(null, $scope.handleQueryError);
     };
@@ -234,7 +236,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
 
     $scope.setFill = function(fill) {
       $scope.target.fill = fill;
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.tagSegmentUpdated = function(segment, index) {
@@ -300,7 +302,7 @@ function (angular, _, InfluxQueryBuilder, InfluxQuery, queryPart) {
       });
 
       $scope.target.tags = tags;
-      $scope.$parent.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.getTagValueOperator = function(tagValue, tagOperator) {

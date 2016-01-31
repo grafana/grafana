@@ -3,28 +3,82 @@
 import angular from 'angular';
 import config from 'app/core/config';
 
-import {unknownPanelDirective} from '../../plugins/panel/unknown/module';
+import {UnknownPanel} from '../../plugins/panel/unknown/module';
+
+var directiveModule = angular.module('grafana.directives');
 
 /** @ngInject */
-function panelLoader($parse, dynamicDirectiveSrv) {
-  return dynamicDirectiveSrv.create({
-    directive: scope => {
-      let panelInfo = config.panels[scope.panel.type];
-      if (!panelInfo) {
-        return Promise.resolve({
-          name: 'panel-directive-' + scope.panel.type,
-          fn: unknownPanelDirective
+function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector) {
+  return {
+    restrict: 'E',
+    scope: {
+      dashboard: "=",
+      row: "=",
+      panel: "="
+    },
+    link: function(scope, elem, attrs) {
+
+      function getTemplate(directive) {
+        if (directive.template) {
+          return $q.when(directive.template);
+        }
+        return $http.get(directive.templateUrl).then(res => {
+          return res.data;
         });
       }
 
-      return System.import(panelInfo.module).then(function(panelModule) {
-        return {
-          name: 'panel-directive-' + scope.panel.type,
-          fn: panelModule.panel,
-        };
+      function addPanelAndCompile(name) {
+        var child = angular.element(document.createElement(name));
+        child.attr('dashboard', 'dashboard');
+        child.attr('panel', 'panel');
+        child.attr('row', 'row');
+        $compile(child)(scope);
+
+        elem.empty();
+        elem.append(child);
+      }
+
+      function addPanel(name, Panel) {
+        if (Panel.registered) {
+          addPanelAndCompile(name);
+          return;
+        }
+
+        if (Panel.promise) {
+          Panel.promise.then(() => {
+            addPanelAndCompile(name);
+          });
+          return;
+        }
+
+        var panelInstance = $injector.instantiate(Panel);
+        var directive = panelInstance.getDirective();
+
+        Panel.promise = getTemplate(directive).then(template => {
+          directive.templateUrl = null;
+          directive.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
+          directiveModule.directive(attrs.$normalize(name), function() {
+            return directive;
+          });
+          Panel.registered = true;
+          addPanelAndCompile(name);
+        });
+      }
+
+      var panelElemName = 'panel-directive-' + scope.panel.type;
+      let panelInfo = config.panels[scope.panel.type];
+      if (!panelInfo) {
+        addPanel(panelElemName, UnknownPanel);
+        return;
+      }
+
+      System.import(panelInfo.module).then(function(panelModule) {
+        addPanel(panelElemName, panelModule.Panel);
+      }).catch(err => {
+        console.log('Panel err: ', err);
       });
-    },
-  });
+    }
+  };
 }
 
-angular.module('grafana.directives').directive('panelLoader', panelLoader);
+directiveModule.directive('panelLoader', panelLoader);

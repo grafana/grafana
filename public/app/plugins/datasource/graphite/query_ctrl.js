@@ -11,6 +11,7 @@ function (angular, _, config, gfunc, Parser) {
   var module = angular.module('grafana.controllers');
 
   module.controller('GraphiteQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
+    var panelCtrl = $scope.panelCtrl = $scope.ctrl;
 
     $scope.init = function() {
       if ($scope.target) {
@@ -125,7 +126,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return $scope.datasource.metricFindQuery(path)
+      return panelCtrl.datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
             if (path !== '') {
@@ -159,7 +160,7 @@ function (angular, _, config, gfunc, Parser) {
     $scope.getAltSegments = function (index) {
       var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
-      return $scope.datasource.metricFindQuery(query).then(function(segments) {
+      return panelCtrl.datasource.metricFindQuery(query).then(function(segments) {
         var altSegments = _.map(segments, function(segment) {
           return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
         });
@@ -208,7 +209,7 @@ function (angular, _, config, gfunc, Parser) {
 
     $scope.targetTextChanged = function() {
       parseTarget();
-      $scope.get_data();
+      panelCtrl.refresh();
     };
 
     $scope.targetChanged = function() {
@@ -222,7 +223,7 @@ function (angular, _, config, gfunc, Parser) {
 
       if ($scope.target.target !== oldTarget) {
         if ($scope.segments[$scope.segments.length - 1].value !== 'select metric') {
-          $scope.$parent.get_data();
+          panelCtrl.refresh();
         }
       }
     };
