@@ -234,9 +234,9 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 8;
+      this.schemaVersion = 9;
 
-      if (oldVersion === 8) {
+      if (oldVersion === this.schemaVersion) {
         return;
       }
 
@@ -387,6 +387,23 @@ function (angular, $, _, moment) {
               }
             }
           });
+        });
+      }
+
+      // schema version 9 changes
+      if (oldVersion < 9) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'singlestat' && panel.thresholds !== "") { return; }
+
+          if (panel.thresholds) {
+            var k = panel.thresholds.split(",");
+
+            if (k.length >= 3) {
+              k.shift();
+              panel.thresholds = k.join(",");
+            }
+          }
         });
       }
 

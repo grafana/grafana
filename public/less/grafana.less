@@ -8,6 +8,7 @@
 @import "bootstrap-tagsinput.less";
 @import "tables_lists.less";
 @import "search.less";
+@import "playlist.less";
 @import "panel.less";
 @import "forms.less";
 @import "tightform.less";
@@ -17,7 +18,7 @@
 @import "admin.less";
 @import "pagination.less";
 @import "validation.less";
-@import "fonts.less";
+@import "gf-fonts.less";
 @import "tabs.less";
 @import "timepicker.less";
 @import "alerting.less";
@@ -314,7 +315,7 @@
   }
 
   .share-modal-big-icon {
-    .fa, .gf-icon {
+    .fa, .icon-gf {
       font-size: 70px;
     }
   }
@@ -387,4 +388,15 @@
 
 .typeahead strong {
   color: @yellow;
+}
+
+.dashboard-header {
+  margin-top: 1rem;
+  font-family: "grafana-icons";
+  font-size: 22px;
+  padding-bottom: 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
+  border-image-slice: 1;
 }

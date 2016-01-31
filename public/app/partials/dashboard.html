@@ -1,6 +1,7 @@
 <div body-class class="dashboard" ng-if="dashboard">
-
 	<dashnav></dashnav>
+
+	<div class="main-view-container">
 
 	<div dash-editor-view></div>
 	<div dash-search-view></div>
@@ -10,7 +11,6 @@
 
 	<div class="clearfix"></div>
 
-	<div class="main-view-container">
 		<div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
 			<div class="row-control">
 				<div class="row-control-inner">

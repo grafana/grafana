@@ -79,9 +79,9 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex, color: series.color, label: series.label });
+          results.push({ value: value, hoverIndex: newhoverIndex });
         } else {
-          results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
+          results.push({ value: value, hoverIndex: hoverIndex });
         }
       }
 
@@ -126,8 +126,6 @@ function ($) {
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
 
-        seriesHoverInfo.sort(byToolTipValue);
-
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
 
@@ -140,7 +138,7 @@ function ($) {
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-          seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
+          seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }
@@ -174,10 +172,6 @@ function ($) {
         $tooltip.detach();
       }
     });
-  }
-
-  function byToolTipValue(a, b) {
-    return parseFloat(b.value) - parseFloat(a.value);
   }
 
   return GraphTooltip;

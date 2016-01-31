@@ -29,7 +29,7 @@ function (angular, $) {
               editorScope = null;
             };
 
-            var view = $('<div class="search-container" ng-include="\'app/partials/search.html\'"></div>');
+            var view = $('<search class="search-container" dismiss="dismiss()"></search>');
 
             elem.append(view);
             $compile(elem.contents())(editorScope);
