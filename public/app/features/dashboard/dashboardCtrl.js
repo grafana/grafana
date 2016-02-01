@@ -102,7 +102,7 @@ function (angular, $, config, moment) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;
       editScope.updateHandler = options.updateHandler;
-      $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+      $scope.appEvent('show-dash-editor', { src: 'public/app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {

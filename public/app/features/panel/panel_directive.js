@@ -10,7 +10,7 @@ function (angular, $) {
   module.directive('grafanaPanel', function() {
     return {
       restrict: 'E',
-      templateUrl: 'app/features/panel/partials/panel.html',
+      templateUrl: 'public/app/features/panel/partials/panel.html',
       transclude: true,
       scope: { ctrl: "=" },
       link: function(scope, elem) {

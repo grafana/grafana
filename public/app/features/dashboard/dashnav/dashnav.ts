@@ -47,7 +47,7 @@ export class DashNavCtrl {
       modalScope.tabIndex = tabIndex;
 
       $scope.appEvent('show-modal', {
-        src: './app/features/dashboard/partials/shareModal.html',
+        src: 'public/app/features/dashboard/partials/shareModal.html',
         scope: modalScope
       });
     };
@@ -152,7 +152,7 @@ export class DashNavCtrl {
       newScope.clone.hideControls = false;
 
       $scope.appEvent('show-modal', {
-        src: './app/features/dashboard/partials/saveDashboardAs.html',
+        src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
         scope: newScope,
       });
     };
@@ -192,7 +192,7 @@ export class DashNavCtrl {
 export function dashNavDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/dashboard/dashnav/dashnav.html',
+    templateUrl: 'public/app/features/dashboard/dashnav/dashnav.html',
     controller: DashNavCtrl,
     transclude: true,
   };

@@ -21,7 +21,7 @@ function (angular, _) {
     return {
       restrict: 'E',
       controller: 'DashLinkEditorCtrl',
-      templateUrl: 'app/features/dashlinks/editor.html',
+      templateUrl: 'public/app/features/dashlinks/editor.html',
       link: function() {
       }
     };

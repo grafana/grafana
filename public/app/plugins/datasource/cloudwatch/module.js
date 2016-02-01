@@ -7,15 +7,15 @@ function (CloudWatchDatasource) {
   'use strict';
 
   function metricsQueryEditor() {
-    return {controller: 'CloudWatchQueryCtrl', templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.editor.html'};
+    return {controller: 'CloudWatchQueryCtrl', templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.editor.html'};
   }
 
   function annotationsQueryEditor() {
-    return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/annotations.editor.html'};
+    return {templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/annotations.editor.html'};
   }
 
   function configView() {
-    return {templateUrl: 'app/plugins/datasource/cloudwatch/partials/edit_view.html'};
+    return {templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/edit_view.html'};
   }
 
   return  {

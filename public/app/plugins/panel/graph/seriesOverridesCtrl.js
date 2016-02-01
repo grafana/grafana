@@ -60,7 +60,7 @@ define([
       popoverSrv.show({
         element: $element.find(".dropdown"),
         placement: 'top',
-        templateUrl:  'app/partials/colorpicker.html',
+        templateUrl:  'public/app/partials/colorpicker.html',
         scope: popoverScope
       });
     };

@@ -31,7 +31,7 @@ class DashListCtrl extends PanelCtrl {
     this.modes = ['starred', 'search'];
     this.icon = "fa fa-star";
     this.addEditorTab('Options', () => {
-      return {templateUrl: 'app/plugins/panel/dashlist/editor.html'};
+      return {templateUrl: 'public/app/plugins/panel/dashlist/editor.html'};
     });
   }
 
