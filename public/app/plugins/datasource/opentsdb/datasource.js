@@ -73,7 +73,6 @@ function (angular, _, dateMath) {
         url: this.url + '/api/query',
         data: reqBody
       };
-      
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
