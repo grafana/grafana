@@ -13,7 +13,9 @@ import (
 type keystoneAuther struct {
     server            string
     v3                bool
+    userdomainname    string
     token             string
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
     tenants           []v2_tenant_struct
 }
 
@@ -43,15 +45,49 @@ type v2_credentials_struct struct {
 }
 
 type v2_tenant_response_struct struct{
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
     Tenants []v2_tenant_struct
 }
 
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
 type v2_tenant_struct struct {
     Name string
 }
 
-func NewKeystoneAuthenticator(server string, v3 bool) *keystoneAuther {
-    return &keystoneAuther{server: server, v3: v3}
+type v3_auth_post_struct struct {
+    Auth v3_auth_struct  `json:"auth"`
+}
+
+type v3_auth_struct struct {
+    PasswordCredentials v3_identity_struct  `json:"identity"`
+}
+
+type v3_identity_struct struct {
+    Methods []string  `json:"methods"`
+    PasswordMethod v3_passwordmethod_struct  `json:"password"`
+}
+
+type v3_passwordmethod_struct struct {
+    User v3_user_struct `json:"user"`
+}
+
+type v3_user_struct struct {
+    Name string `json:"name"`
+    Password string `json:"password"`
+    Domain v3_userdomain_struct `json:"domain"`
+}
+
+type v3_userdomain_struct struct {
+    Name string `json:"name"`
+}
+
+type v3_project_response_struct struct{
+// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
+    Projects []v2_tenant_struct
+}
+
+func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname string) *keystoneAuther {
+    return &keystoneAuther{server: server, v3: v3, userdomainname: userdomainaname}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
@@ -118,8 +154,31 @@ func (a *keystoneAuther) authenticateV2(username, password string) error {
 }
 
 func (a *keystoneAuther) authenticateV3(username, password string) error {
-    // TODO implement
-    return errors.New("Keystone v3 authentication not implemented")
+    var auth_post v3_auth_post_struct
+    auth_post.Auth.PasswordCredentials.Methods = []string{"password"}
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Name = username
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Password = password
+    // the user domain name is currently hardcoded via a config setting - this should change to an extra domain field in the login dialog later
+    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Domain.Name = a.userdomainname
+    b, _ := json.Marshal(auth_post)
+
+    request, err := http.NewRequest("POST", a.server + "/v3/auth/tokens", bytes.NewBuffer(b))
+    if err != nil {
+        return err
+    }
+
+    client := &http.Client{}
+    resp, err := client.Do(request)
+    if err != nil {
+        return err
+    } else if resp.StatusCode != 201 {
+        return errors.New("Keystone authentication failed: " + resp.Status)
+    }
+
+    // in keystone v3 the token is in the response header
+    a.token = resp.Header.Get("X-Subject-Token")
+
+    return nil
 }
 
 func (a *keystoneAuther) getGrafanaUserFor(username string) (*m.User, error) {
@@ -245,7 +304,7 @@ func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
 
 func (a *keystoneAuther) getTenantList() error {
     if a.v3 {
-        if err := a.getTenantListV3(); err != nil {
+        if err := a.getProjectListV3(); err != nil {
             return err
         }
     } else {
@@ -281,8 +340,27 @@ func (a *keystoneAuther) getTenantListV2() error {
     return nil
 }
 
-func (a *keystoneAuther) getTenantListV3() error {
-    // TODO implement
-    a.tenants = make([]v2_tenant_struct,0)
+func (a *keystoneAuther) getProjectListV3() error {
+    request, err := http.NewRequest("GET", a.server + "/v3/auth/projects", nil)
+    if err != nil {
+        return err
+    }
+    request.Header.Add("X-Auth-Token", a.token)
+
+    client := &http.Client{}
+    resp, err := client.Do(request)
+    if err != nil {
+        return err
+    } else if resp.StatusCode != 200 {
+        return errors.New("Keystone project-list failed: " + resp.Status)
+    }
+
+    decoder := json.NewDecoder(resp.Body)
+    var project_response v3_project_response_struct
+    err = decoder.Decode(&project_response)
+    if err != nil {
+        return err
+    }
+    a.tenants = project_response.Projects
     return nil
 }
