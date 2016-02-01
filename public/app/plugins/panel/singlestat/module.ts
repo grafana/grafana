@@ -7,7 +7,7 @@ import {SingleStatCtrl} from './controller';
 import {PanelDirective} from '../../../features/panel/panel';
 
 class SingleStatPanel extends PanelDirective {
-  templateUrl = 'app/plugins/panel/singlestat/module.html';
+  templateUrl = 'public/app/plugins/panel/singlestat/module.html';
   controller = SingleStatCtrl;
 
   /** @ngInject */

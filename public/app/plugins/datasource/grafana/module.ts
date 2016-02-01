@@ -4,7 +4,7 @@ import angular from 'angular';
 import {GrafanaDatasource} from './datasource';
 
 class GrafanaMetricsQueryEditor {
-  static templateUrl = 'app/plugins/datasource/grafana/partials/query.editor.html';
+  static templateUrl = 'public/app/plugins/datasource/grafana/partials/query.editor.html';
 }
 
 export {

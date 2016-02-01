@@ -11,17 +11,17 @@ function (angular) {
   module.config(function($routeProvider) {
     $routeProvider
       .when('/playlists', {
-        templateUrl: 'app/features/playlist/partials/playlists.html',
+        templateUrl: 'public/app/features/playlist/partials/playlists.html',
         controllerAs: 'ctrl',
         controller : 'PlaylistsCtrl'
       })
       .when('/playlists/create', {
-        templateUrl: 'app/features/playlist/partials/playlist.html',
+        templateUrl: 'public/app/features/playlist/partials/playlist.html',
         controllerAs: 'ctrl',
         controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/edit/:id', {
-        templateUrl: 'app/features/playlist/partials/playlist.html',
+        templateUrl: 'public/app/features/playlist/partials/playlist.html',
         controllerAs: 'ctrl',
         controller : 'PlaylistEditCtrl'
       })

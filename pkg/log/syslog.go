@@ -39,7 +39,7 @@ func (sw *SyslogWriter) Init(config string) error {
 	return nil
 }
 
-func (sw *SyslogWriter) WriteMsg(msg string, skip, level int) error {
+func (sw *SyslogWriter) WriteMsg(msg string, skip int, level LogLevel) error {
 	var err error
 
 	switch level {

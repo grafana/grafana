@@ -9,6 +9,7 @@ function (angular, _, kbn) {
   var module = angular.module('grafana.controllers');
 
   module.controller('OpenTSDBQueryCtrl', function($scope) {
+    $scope.panelCtrl = $scope.ctrl;
 
     $scope.init = function() {
       $scope.target.errors = validateTarget($scope.target);

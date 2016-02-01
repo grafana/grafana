@@ -12,6 +12,7 @@ function (angular, _, config, gfunc, Parser) {
 
   module.controller('GraphiteQueryCtrl', function($scope, uiSegmentSrv, templateSrv) {
     var panelCtrl = $scope.panelCtrl = $scope.ctrl;
+    var datasource = $scope.datasource;
 
     $scope.init = function() {
       if ($scope.target) {
@@ -126,7 +127,7 @@ function (angular, _, config, gfunc, Parser) {
       }
 
       var path = getSegmentPathUpTo(fromIndex + 1);
-      return panelCtrl.datasource.metricFindQuery(path)
+      return datasource.metricFindQuery(path)
         .then(function(segments) {
           if (segments.length === 0) {
             if (path !== '') {
@@ -160,7 +161,7 @@ function (angular, _, config, gfunc, Parser) {
     $scope.getAltSegments = function (index) {
       var query = index === 0 ?  '*' : getSegmentPathUpTo(index) + '.*';
 
-      return panelCtrl.datasource.metricFindQuery(query).then(function(segments) {
+      return datasource.metricFindQuery(query).then(function(segments) {
         var altSegments = _.map(segments, function(segment) {
           return uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
         });

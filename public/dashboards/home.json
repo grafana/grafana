@@ -12,10 +12,10 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "100px",
+      "height": "90px",
       "panels": [
         {
-          "content": "<div class=\"text-center dashboard-header\">\nHome Dashboard\n</div>",
+          "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
           "editable": true,
           "id": 1,
           "mode": "html",
@@ -23,7 +23,8 @@
           "style": {},
           "title": "",
           "transparent": true,
-          "type": "text"
+          "type": "text",
+          "links": []
         }
       ],
       "title": "New row"

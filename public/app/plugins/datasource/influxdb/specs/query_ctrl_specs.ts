@@ -15,6 +15,8 @@ describe('InfluxDBQueryCtrl', function() {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
     ctx.scope.ctrl = {panel: ctx.panel};
+    ctx.scope.datasource = ctx.datasource;
+    ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
     ctx.panelCtrl = ctx.scope.ctrl;
     ctx.controller = $controller('InfluxQueryCtrl', {$scope: ctx.scope});
   }));
@@ -22,8 +24,6 @@ describe('InfluxDBQueryCtrl', function() {
   beforeEach(function() {
     ctx.scope.target = {};
     ctx.panelCtrl.refresh = sinon.spy();
-    ctx.panelCtrl.datasource = ctx.datasource;
-    ctx.panelCtrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
   });
 
   describe('init', function() {

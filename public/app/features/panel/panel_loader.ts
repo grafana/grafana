@@ -8,7 +8,7 @@ import {UnknownPanel} from '../../plugins/panel/unknown/module';
 var directiveModule = angular.module('grafana.directives');
 
 /** @ngInject */
-function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector) {
+function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector, $templateCache) {
   return {
     restrict: 'E',
     scope: {
@@ -21,6 +21,10 @@ function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector) {
       function getTemplate(directive) {
         if (directive.template) {
           return $q.when(directive.template);
+        }
+        var cached = $templateCache.get(directive.templateUrl);
+        if (cached) {
+          return $q.when(cached);
         }
         return $http.get(directive.templateUrl).then(res => {
           return res.data;
