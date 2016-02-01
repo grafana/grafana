@@ -8,7 +8,7 @@
 				Group by time interval
 			</li>
 			<li>
-				<input type="text" class="input-medium tight-form-input" ng-model="panel.interval" ng-blur="get_data();"
+				<input type="text" class="input-medium tight-form-input" ng-model="ctrl.panel.interval" ng-blur="ctrl.refresh();"
 							 spellcheck='false' placeholder="example: >10s">
 			</li>
 			<li class="tight-form-item">
@@ -23,7 +23,7 @@
 				<i class="fa fa-info-circle"></i>
 			</li>
 			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+				<a ng-click="ctrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 					alias patterns
 				</a>
 			</li>
@@ -34,7 +34,7 @@
 
 <div class="editor-row">
 	<div class="pull-left" style="margin-top: 30px;">
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+		<div class="grafana-info-box span6" ng-if="ctrl.editorHelpIndex === 1">
 			<h5>Alias patterns</h5>
 			<ul ng-non-bindable>
 				<li>{{term fieldname}} = replaced with value of term group by</li>
