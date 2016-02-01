@@ -6,6 +6,7 @@ import {PanelCtrl} from './panel_ctrl';
 import {MetricsPanelCtrl} from './metrics_panel_ctrl';
 
 export class DefaultPanelCtrl extends PanelCtrl {
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
   }
