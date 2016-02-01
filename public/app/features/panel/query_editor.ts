@@ -30,6 +30,10 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
       case "metrics-query-editor": {
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
+          if (!scope.target.refId) {
+            scope.target.refId = 'A';
+          }
+
           return System.import(ds.meta.module).then(dsModule => {
             return {
               name: 'metrics-query-editor-' + ds.meta.id,
