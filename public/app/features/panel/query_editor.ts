@@ -9,7 +9,7 @@ function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
     directive: scope => {
       let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
       return datasourceSrv.get(datasource).then(ds => {
-        scope.ctrl.datasource = ds;
+        scope.datasource = ds;
 
         if (!scope.target.refId) {
           scope.target.refId = 'A';
