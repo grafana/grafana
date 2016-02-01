@@ -24,14 +24,16 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
       restrict: 'A',
       template: '<div> </div>',
       link: function(scope, elem) {
-        var dashboard = scope.dashboard;
+        var ctrl = scope.ctrl;
+        var dashboard = ctrl.dashboard;
+        var panel = ctrl.panel;
         var data, annotations;
         var sortedSeries;
         var graphHeight;
         var legendSideLastValue = null;
-        scope.crosshairEmiter = false;
+        var rootScope = scope.$root;
 
-        scope.onAppEvent('setCrosshair', function(event, info) {
+        rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
           if (info.scope === scope) {
             return;
@@ -43,20 +45,20 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
             }
           }
-        });
+        }, scope);
 
-        scope.onAppEvent('clearCrosshair', function() {
+        rootScope.onAppEvent('clearCrosshair', function() {
           var plot = elem.data().plot;
           if (plot) {
             plot.clearCrosshair();
           }
-        });
+        }, scope);
 
         // Receive render events
         scope.$on('render',function(event, renderData) {
           data = renderData || data;
           if (!data) {
-            scope.get_data();
+            ctrl.refresh();
             return;
           }
           annotations = data.annotations || annotations;
@@ -64,10 +66,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         });
 
         function getLegendHeight(panelHeight) {
-          if (!scope.panel.legend.show || scope.panel.legend.rightSide) {
+          if (!panel.legend.show || panel.legend.rightSide) {
             return 0;
           }
-          if (scope.panel.legend.alignAsTable) {
+          if (panel.legend.alignAsTable) {
             var total = 30 + (25 * data.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
@@ -77,14 +79,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function setElementHeight() {
           try {
-            graphHeight = scope.height || scope.panel.height || scope.row.height;
+            graphHeight = ctrl.height || panel.height || ctrl.row.height;
             if (_.isString(graphHeight)) {
               graphHeight = parseInt(graphHeight.replace('px', ''), 10);
             }
 
             graphHeight -= 5; // padding
-            graphHeight -= scope.panel.title ? 24 : 9; // subtract panel title bar
-
+            graphHeight -= panel.title ? 24 : 9; // subtract panel title bar
             graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
 
             elem.css('height', graphHeight + 'px');
@@ -100,7 +101,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return true;
           }
 
-          if ($rootScope.fullscreen && !scope.fullscreen) {
+          if (ctrl.otherPanelInFullscreenMode()) {
             return true;
           }
 
@@ -122,11 +123,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             var axis = yaxis[series.yaxis - 1];
-            var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
+            var formater = kbn.valueFormats[panel.y_formats[series.yaxis - 1]];
 
             // decimal override
-            if (_.isNumber(scope.panel.decimals)) {
-              series.updateLegendValues(formater, scope.panel.decimals, null);
+            if (_.isNumber(panel.decimals)) {
+              series.updateLegendValues(formater, panel.decimals, null);
             } else {
               // auto decimals
               // legend and tooltip gets one more decimal precision
@@ -135,22 +136,22 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
             }
 
-            if(!scope.$$phase) { scope.$digest(); }
+            if(!rootScope.$$phase) { scope.$digest(); }
           }
 
           // add left axis labels
-          if (scope.panel.leftYAxisLabel) {
+          if (panel.leftYAxisLabel) {
             var yaxisLabel = $("<div class='axisLabel left-yaxis-label'></div>")
-              .text(scope.panel.leftYAxisLabel)
+              .text(panel.leftYAxisLabel)
               .appendTo(elem);
 
             yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
           }
 
           // add right axis labels
-          if (scope.panel.rightYAxisLabel) {
+          if (panel.rightYAxisLabel) {
             var rightLabel = $("<div class='axisLabel right-yaxis-label'></div>")
-              .text(scope.panel.rightYAxisLabel)
+              .text(panel.rightYAxisLabel)
               .appendTo(elem);
 
             rightLabel.css("margin-top", rightLabel.width() / 2);
@@ -158,8 +159,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function processOffsetHook(plot, gridMargin) {
-          if (scope.panel.leftYAxisLabel) { gridMargin.left = 20; }
-          if (scope.panel.rightYAxisLabel) { gridMargin.right = 20; }
+          if (panel.leftYAxisLabel) { gridMargin.left = 20; }
+          if (panel.rightYAxisLabel) { gridMargin.right = 20; }
         }
 
         // Function for rendering panel
@@ -168,7 +169,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return;
           }
 
-          var panel = scope.panel;
           var stack = panel.stack ? true : null;
 
           // Populate element
@@ -230,7 +230,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack
-            if (scope.hiddenSeries[series.alias]) {
+            if (ctrl.hiddenSeries[series.alias]) {
               series.data = [];
               series.stack = false;
             }
@@ -255,7 +255,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
 
             if (incrementRenderCounter) {
-              scope.panelRenderingComplete();
+              ctrl.renderingCompleted();
             }
           }
 
@@ -285,12 +285,12 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function addTimeAxis(options) {
           var ticks = elem.width() / 100;
-          var min = _.isUndefined(scope.range.from) ? null : scope.range.from.valueOf();
-          var max = _.isUndefined(scope.range.to) ? null : scope.range.to.valueOf();
+          var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
+          var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
           options.xaxis = {
             timezone: dashboard.timezone,
-            show: scope.panel['x-axis'],
+            show: panel['x-axis'],
             mode: "time",
             min: min,
             max: max,
@@ -361,11 +361,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         function configureAxisOptions(data, options) {
           var defaults = {
             position: 'left',
-            show: scope.panel['y-axis'],
-            min: scope.panel.grid.leftMin,
+            show: panel['y-axis'],
+            min: panel.grid.leftMin,
             index: 1,
-            logBase: scope.panel.grid.leftLogBase || 1,
-            max: scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.leftMax,
+            logBase: panel.grid.leftLogBase || 1,
+            max: panel.percentage && panel.stack ? 100 : panel.grid.leftMax,
           };
 
           options.yaxes.push(defaults);
@@ -373,18 +373,18 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (_.findWhere(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
-            secondY.logBase = scope.panel.grid.rightLogBase || 1,
+            secondY.logBase = panel.grid.rightLogBase || 1,
             secondY.position = 'right';
-            secondY.min = scope.panel.grid.rightMin;
-            secondY.max = scope.panel.percentage && scope.panel.stack ? 100 : scope.panel.grid.rightMax;
+            secondY.min = panel.grid.rightMin;
+            secondY.max = panel.percentage && panel.stack ? 100 : panel.grid.rightMax;
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
-            configureAxisMode(options.yaxes[1], scope.panel.percentage && scope.panel.stack ? "percent" : scope.panel.y_formats[1]);
+            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1]);
           }
 
           applyLogScale(options.yaxes[0], data);
-          configureAxisMode(options.yaxes[0], scope.panel.percentage && scope.panel.stack ? "percent" : scope.panel.y_formats[0]);
+          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0]);
         }
 
         function applyLogScale(axis, data) {
@@ -466,18 +466,18 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
           url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
-          url += scope.panel.stack ? '&areaMode=stacked' : '';
-          url += scope.panel.fill !== 0 ? ('&areaAlpha=' + (scope.panel.fill/10).toFixed(1)) : '';
-          url += scope.panel.linewidth !== 0 ? '&lineWidth=' + scope.panel.linewidth : '';
-          url += scope.panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-          url += scope.panel.grid.leftMin !== null ? '&yMin=' + scope.panel.grid.leftMin : '';
-          url += scope.panel.grid.leftMax !== null ? '&yMax=' + scope.panel.grid.leftMax : '';
-          url += scope.panel.grid.rightMin !== null ? '&yMin=' + scope.panel.grid.rightMin : '';
-          url += scope.panel.grid.rightMax !== null ? '&yMax=' + scope.panel.grid.rightMax : '';
-          url += scope.panel['x-axis'] ? '' : '&hideAxes=true';
-          url += scope.panel['y-axis'] ? '' : '&hideYAxis=true';
+          url += panel.stack ? '&areaMode=stacked' : '';
+          url += panel.fill !== 0 ? ('&areaAlpha=' + (panel.fill/10).toFixed(1)) : '';
+          url += panel.linewidth !== 0 ? '&lineWidth=' + panel.linewidth : '';
+          url += panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
+          url += panel.grid.leftMin !== null ? '&yMin=' + panel.grid.leftMin : '';
+          url += panel.grid.leftMax !== null ? '&yMax=' + panel.grid.leftMax : '';
+          url += panel.grid.rightMin !== null ? '&yMin=' + panel.grid.rightMin : '';
+          url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
+          url += panel['x-axis'] ? '' : '&hideAxes=true';
+          url += panel['y-axis'] ? '' : '&hideYAxis=true';
 
-          switch(scope.panel.y_formats[0]) {
+          switch(panel.y_formats[0]) {
             case 'bytes':
               url += '&yUnitSystem=binary';
               break;
@@ -510,7 +510,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               break;
           }
 
-          switch(scope.panel.nullPointMode) {
+          switch(panel.nullPointMode) {
             case 'connected':
               url += '&lineMode=connected';
               break;
@@ -521,7 +521,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               break;
           }
 
-          url += scope.panel.steppedLine ? '&lineMode=staircase' : '';
+          url += panel.steppedLine ? '&lineMode=staircase' : '';
 
           elem.html('<img src="' + url + '"></img>');
         }
