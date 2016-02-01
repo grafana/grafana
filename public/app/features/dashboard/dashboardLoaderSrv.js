@@ -24,17 +24,31 @@ function (angular, moment, _, $, kbn, dateMath) {
     };
 
     this.loadDashboard = function(type, slug) {
+      if ($routeParams.org !== undefined && parseInt($routeParams.org) !== contextSrv.user.orgId) {
+        return backendSrv.post('/api/user/using/' + $routeParams.org).then(function() {
+          return backendSrv.get('/api/org').then(function(org) {
+            contextSrv.user.orgName = org.name;
+            contextSrv.user.orgId = org.id;
+            return self._loadDashboard(type, slug);
+          });
+        });
+      } else {
+        return this._loadDashboard(type, slug);
+      }
+    };
+
+    this._loadDashboard = function(type, slug) {
       if (type === 'script') {
         return this._loadScriptedDashboard(slug);
       }
 
       if (type === 'snapshot') {
-        return backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
+        return backendSrv.get('/api/snapshots/' + contextSrv.user.orgId + '/' + $routeParams.slug).catch(function() {
           return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
         });
       }
 
-      return backendSrv.getDashboard($routeParams.type, $routeParams.slug).catch(function() {
+      return backendSrv.getDashboard($routeParams.type, contextSrv.user.orgId, $routeParams.slug).catch(function() {
         return self._dashboardLoadFailed("Not found");
       });
     };

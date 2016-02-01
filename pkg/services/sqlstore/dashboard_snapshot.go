@@ -52,7 +52,7 @@ func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
 }
 
 func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
-	snapshot := m.DashboardSnapshot{Key: query.Key}
+	snapshot := m.DashboardSnapshot{Key: query.Key, OrgId: query.OrgId}
 	has, err := x.Get(&snapshot)
 
 	if err != nil {

@@ -119,6 +119,7 @@ type DashboardSearchProjection struct {
 	Title string
 	Slug  string
 	Term  string
+	OrgId string
 }
 
 func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
@@ -129,7 +130,8 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 					  dashboard.id,
 					  dashboard.title,
 					  dashboard.slug,
-					  dashboard_tag.term
+					  dashboard_tag.term,
+					  dashboard.org_id
 					FROM dashboard
 					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
 
@@ -168,7 +170,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 			hit = &search.Hit{
 				Id:    item.Id,
 				Title: item.Title,
-				Uri:   "db/" + item.Slug,
+				Uri:   "db/" + item.OrgId + "/" + item.Slug,
 				Type:  search.DashHitDB,
 				Tags:  []string{},
 			}

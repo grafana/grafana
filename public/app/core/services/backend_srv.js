@@ -122,8 +122,8 @@ function (angular, _, coreModule, config) {
       return this.get('/api/search', query);
     };
 
-    this.getDashboard = function(type, slug) {
-      return this.get('/api/dashboards/' + type + '/' + slug);
+    this.getDashboard = function(type, org, slug) {
+      return this.get('/api/dashboards/' + type + '/' + org + '/' + slug);
     };
 
     this.saveDashboard = function(dash, options) {

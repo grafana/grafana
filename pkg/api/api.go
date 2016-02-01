@@ -73,7 +73,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/dashboard/snapshot/*", Index)
 
 	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
-	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
+	r.Get("/api/snapshots/:org/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
 
 	// api renew session based on remember cookie
@@ -176,7 +176,7 @@ func Register(r *macaron.Macaron) {
 
 		// Dashboard
 		r.Group("/dashboards", func() {
-			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Combo("/db/:org/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
