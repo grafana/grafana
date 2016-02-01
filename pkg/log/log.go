@@ -99,7 +99,7 @@ func Close() {
 type LogLevel int
 
 const (
-	TRACE = iota
+	TRACE LogLevel = iota
 	DEBUG
 	INFO
 	WARN
@@ -111,7 +111,7 @@ const (
 // LoggerInterface represents behaviors of a logger provider.
 type LoggerInterface interface {
 	Init(config string) error
-	WriteMsg(msg string, skip, level int) error
+	WriteMsg(msg string, skip int, level LogLevel) error
 	Destroy()
 	Flush()
 }
@@ -132,8 +132,9 @@ func Register(name string, log loggerType) {
 }
 
 type logMsg struct {
-	skip, level int
-	msg         string
+	skip  int
+	level LogLevel
+	msg   string
 }
 
 // Logger is default logger in beego application.
@@ -141,7 +142,7 @@ type logMsg struct {
 type Logger struct {
 	adapter string
 	lock    sync.Mutex
-	level   int
+	level   LogLevel
 	msg     chan *logMsg
 	outputs map[string]LoggerInterface
 	quit    chan bool
@@ -188,7 +189,7 @@ func (l *Logger) DelLogger(adapter string) error {
 	return nil
 }
 
-func (l *Logger) writerMsg(skip, level int, msg string) error {
+func (l *Logger) writerMsg(skip int, level LogLevel, msg string) error {
 	if l.level > level {
 		return nil
 	}
