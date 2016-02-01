@@ -190,9 +190,6 @@ func (l *Logger) DelLogger(adapter string) error {
 }
 
 func (l *Logger) writerMsg(skip int, level LogLevel, msg string) error {
-	if l.level > level {
-		return nil
-	}
 	lm := &logMsg{
 		skip:  skip,
 		level: level,
@@ -267,36 +264,57 @@ func (l *Logger) Close() {
 }
 
 func (l *Logger) Trace(format string, v ...interface{}) {
+	if l.level > TRACE {
+		return
+	}
 	msg := fmt.Sprintf("[T] "+format, v...)
 	l.writerMsg(0, TRACE, msg)
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
+	if l.level > DEBUG {
+		return
+	}
 	msg := fmt.Sprintf("[D] "+format, v...)
 	l.writerMsg(0, DEBUG, msg)
 }
 
 func (l *Logger) Info(format string, v ...interface{}) {
+	if l.level > INFO {
+		return
+	}
 	msg := fmt.Sprintf("[I] "+format, v...)
 	l.writerMsg(0, INFO, msg)
 }
 
 func (l *Logger) Warn(format string, v ...interface{}) {
+	if l.level > WARN {
+		return
+	}
 	msg := fmt.Sprintf("[W] "+format, v...)
 	l.writerMsg(0, WARN, msg)
 }
 
 func (l *Logger) Error(skip int, format string, v ...interface{}) {
+	if l.level > ERROR {
+		return
+	}
 	msg := fmt.Sprintf("[E] "+format, v...)
 	l.writerMsg(skip, ERROR, msg)
 }
 
 func (l *Logger) Critical(skip int, format string, v ...interface{}) {
+	if l.level > CRITICAL {
+		return
+	}
 	msg := fmt.Sprintf("[C] "+format, v...)
 	l.writerMsg(skip, CRITICAL, msg)
 }
 
 func (l *Logger) Fatal(skip int, format string, v ...interface{}) {
+	if l.level > FATAL {
+		return
+	}
 	msg := fmt.Sprintf("[F] "+format, v...)
 	l.writerMsg(skip, FATAL, msg)
 	l.Close()
