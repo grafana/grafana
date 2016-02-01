@@ -8,6 +8,8 @@ function (angular, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('PrometheusQueryCtrl', function($scope, templateSrv) {
+    $scope.panelCtrl = $scope.ctrl;
+    $scope.panel = $scope.panelCtrl.panel;
 
     $scope.init = function() {
       var target = $scope.target;
@@ -29,7 +31,7 @@ function (angular, _) {
     $scope.refreshMetricData = function() {
       if (!_.isEqual($scope.oldTarget, $scope.target)) {
         $scope.oldTarget = angular.copy($scope.target);
-        $scope.get_data();
+        $scope.paneCtrl.refresh();
       }
     };
 

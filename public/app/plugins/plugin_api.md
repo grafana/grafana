@@ -37,7 +37,7 @@ Example:
 
 ```javascript
 function metricsQueryEditor() {
-  return {controller: 'ElasticQueryCtrl', templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.editor.html'};
+  return {controller: 'ElasticQueryCtrl', templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/query.editor.html'};
 }
 ```
 

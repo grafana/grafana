@@ -6,6 +6,7 @@ import $ from 'jquery';
 import {PanelCtrl} from './panel_ctrl';
 
 export class DefaultPanelCtrl extends PanelCtrl {
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
   }

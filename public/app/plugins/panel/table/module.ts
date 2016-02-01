@@ -10,7 +10,7 @@ import {TablePanelCtrl} from './controller';
 import {TableRenderer} from './renderer';
 
 class TablePanel extends PanelDirective {
-  templateUrl = 'app/plugins/panel/table/module.html';
+  templateUrl = 'public/app/plugins/panel/table/module.html';
   controller = TablePanelCtrl;
 
   link(scope, elem, attrs, ctrl) {

@@ -16,7 +16,7 @@ function (angular, _) {
     $scope.refreshMetricData = function() {
       if (!_.isEqual($scope.oldTarget, $scope.target)) {
         $scope.oldTarget = angular.copy($scope.target);
-        $scope.get_data();
+        $scope.ctrl.refresh();
       }
     };
 

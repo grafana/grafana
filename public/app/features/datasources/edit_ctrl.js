@@ -10,7 +10,7 @@ function (angular, _, config) {
   var datasourceTypes = [];
 
   module.directive('datasourceHttpSettings', function() {
-    return {templateUrl: 'app/features/datasources/partials/http_settings.html'};
+    return {templateUrl: 'public/app/features/datasources/partials/http_settings.html'};
   });
 
   module.controller('DataSourceEditCtrl', function($scope, $q, backendSrv, $routeParams, $location, datasourceSrv) {

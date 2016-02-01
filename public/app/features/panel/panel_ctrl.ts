@@ -172,7 +172,7 @@ export class PanelCtrl {
    shareScope.dashboard = this.dashboard;
 
    this.publishAppEvent('show-modal', {
-     src: './app/features/dashboard/partials/shareModal.html',
+     src: 'public/app/features/dashboard/partials/shareModal.html',
      scope: shareScope
    });
  }

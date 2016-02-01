@@ -6,9 +6,9 @@ function ($, coreModule) {
   'use strict';
 
   var editViewMap = {
-    'settings':    { src: 'app/features/dashboard/partials/settings.html', title: "Settings" },
-    'annotations': { src: 'app/features/annotations/partials/editor.html', title: "Annotations" },
-    'templating':  { src: 'app/features/templating/partials/editor.html', title: "Templating" }
+    'settings':    { src: 'public/app/features/dashboard/partials/settings.html', title: "Settings" },
+    'annotations': { src: 'public/app/features/annotations/partials/editor.html', title: "Annotations" },
+    'templating':  { src: 'public/app/features/templating/partials/editor.html', title: "Templating" }
   };
 
   coreModule.default.directive('dashEditorLink', function($timeout) {

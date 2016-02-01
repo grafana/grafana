@@ -10,7 +10,7 @@ function (angular, _, queryDef) {
 
   module.directive('elasticMetricAgg', function() {
     return {
-      templateUrl: 'app/plugins/datasource/elasticsearch/partials/metric_agg.html',
+      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
       controller: 'ElasticMetricAggCtrl',
       restrict: 'E',
       scope: {
