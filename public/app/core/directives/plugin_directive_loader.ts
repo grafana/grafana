@@ -56,7 +56,6 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
   }
 
   function appendAndCompile(scope, elem, componentInfo) {
-    console.log('compile', elem, componentInfo);
     var child = angular.element(document.createElement(componentInfo.name));
     _.each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
