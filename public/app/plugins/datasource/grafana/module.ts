@@ -6,7 +6,7 @@ import {GrafanaDatasource} from './datasource';
 var module = angular.module('grafana.directives');
 
 function grafanaMetricsQueryEditor() {
-  return {templateUrl: 'app/plugins/datasource/grafana/partials/query.editor.html'};
+  return {templateUrl: 'public/app/plugins/datasource/grafana/partials/query.editor.html'};
 }
 
 

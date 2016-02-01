@@ -19,9 +19,9 @@ module.exports = function(grunt) {
     'ngAnnotate:build',
     'systemjs:build',
     'concat:js',
-    'filerev',
-    'remapFilerev',
-    'usemin',
+    // 'filerev',
+    // 'remapFilerev',
+    // 'usemin',
     'uglify:genDir'
   ]);
 

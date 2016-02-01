@@ -15,7 +15,7 @@ function (angular, _) {
         },
         restrict: 'E',
         controller: 'PanelLinksEditorCtrl',
-        templateUrl: 'app/features/panellinks/module.html',
+        templateUrl: 'public/app/features/panellinks/module.html',
         link: function() {
         }
       };

@@ -54,7 +54,7 @@ function (angular) {
       };
 
       $scope.appEvent('show-modal', {
-        src: './app/features/org/partials/invite.html',
+        src: 'public/app/features/org/partials/invite.html',
         modalClass: 'modal-no-header invite-modal',
         scope: modalScope
       });

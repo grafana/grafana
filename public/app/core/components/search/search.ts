@@ -137,7 +137,7 @@ export class SearchCtrl {
 export function searchDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/core/components/search/search.html',
+    templateUrl: 'public/app/core/components/search/search.html',
     controller: SearchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

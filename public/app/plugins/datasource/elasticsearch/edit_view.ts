@@ -29,7 +29,7 @@ export class EditViewCtrl {
 
 function editViewDirective() {
   return {
-    templateUrl: 'app/plugins/datasource/elasticsearch/partials/edit_view.html',
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/edit_view.html',
     controller: EditViewCtrl,
   };
 };

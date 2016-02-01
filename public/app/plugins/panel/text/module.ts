@@ -78,7 +78,7 @@ export class TextPanelCtrl extends PanelCtrl {
 }
 
 class TextPanel extends PanelDirective {
-  templateUrl = `app/plugins/panel/text/module.html`;
+  templateUrl = `public/app/plugins/panel/text/module.html`;
   controller = TextPanelCtrl;
 }
 

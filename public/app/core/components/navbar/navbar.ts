@@ -14,7 +14,7 @@ export class NavbarCtrl {
 export function navbarDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/core/components/navbar/navbar.html',
+    templateUrl: 'public/app/core/components/navbar/navbar.html',
     controller: NavbarCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

@@ -34,7 +34,7 @@ export class SubmenuCtrl {
 export function submenuDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/dashboard/submenu/submenu.html',
+    templateUrl: 'public/app/features/dashboard/submenu/submenu.html',
     controller: SubmenuCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

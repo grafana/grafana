@@ -70,7 +70,7 @@ export class PlaylistSearchCtrl {
 export function playlistSearchDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/playlist/partials/playlist_search.html',
+    templateUrl: 'public/app/features/playlist/partials/playlist_search.html',
     controller: PlaylistSearchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
