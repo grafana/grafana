@@ -1,8 +1,8 @@
 <div class="editor-row">
 
 	<div class="tight-form-container">
-		<metrics-query-editor ng-repeat="target in ctrl.panel.targets" ng-class="{'tight-form-disabled': target.hide}" >
-		</metrics-query-editor>
+		<plugin-directive-loader type="metrics-query-editor" ng-repeat="target in ctrl.panel.targets" ng-class="{'tight-form-disabled': target.hide}">
+		</plugin-directive-loader>
 	</div>
 
 	<div style="margin: 20px 0 0 0">

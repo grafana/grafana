@@ -9,10 +9,23 @@ function grafanaMetricsQueryEditor() {
   return {templateUrl: 'app/plugins/datasource/grafana/partials/query.editor.html'};
 }
 
+export class MetricsQueryEditor {
+  panelCtrl: any;
+  target: any;
+}
+
+class GrafanaMetricsQueryEditor extends MetricsQueryEditor {
+  static templateUrl = 'app/plugins/datasource/grafana/partials/query.editor.html';
+
+  constructor() {
+    super();
+    console.log('this is a metrics editor', this.panelCtrl, this.target);
+  }
+}
 
 export {
   GrafanaDatasource,
   GrafanaDatasource as Datasource,
-  grafanaMetricsQueryEditor as metricsQueryEditor
+  GrafanaMetricsQueryEditor as MetricsQueryEditor,
 };
 
