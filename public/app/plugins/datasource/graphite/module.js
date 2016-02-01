@@ -23,11 +23,16 @@ function (GraphiteDatasource) {
     return {templateUrl: 'public/app/plugins/datasource/graphite/partials/config.html'};
   }
 
+  function ConfigView() {
+  }
+  ConfigView.templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
+
   return {
     Datasource: GraphiteDatasource,
     configView: configView,
     annotationsQueryEditor: annotationsQueryEditor,
     metricsQueryEditor: metricsQueryEditor,
     metricsQueryOptions: metricsQueryOptions,
+    ConfigView: ConfigView
   };
 });
