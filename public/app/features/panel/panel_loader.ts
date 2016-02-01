@@ -24,7 +24,7 @@ function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector, $templ
         }
         var cached = $templateCache.get(directive.templateUrl);
         if (cached) {
-          return cached;
+          return $q.when(cached);
         }
         return $http.get(directive.templateUrl).then(res => {
           return res.data;

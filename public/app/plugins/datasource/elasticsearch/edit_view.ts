@@ -5,6 +5,7 @@ import _ from 'lodash';
 
 export class EditViewCtrl {
 
+  /** @ngInject */
   constructor($scope) {
     $scope.indexPatternTypes = [
       {name: 'No pattern',  value: undefined},
