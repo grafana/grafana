@@ -2,16 +2,16 @@ define([
   'angular',
   'lodash',
   'app/core/config',
+  'app/core/utils/kbn'
 ],
-function (angular, _, config) {
+function (angular, _, config, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, timer) {
 
     this.init = function($scope) {
-
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
       $scope.inspector = {};
@@ -114,6 +114,34 @@ function (angular, _, config) {
         $rootScope.performance.panelsRendered++;
       };
 
+      $scope.refresh_changed = function() {
+        $scope.start_scheduled_refresh();
+        $scope.get_data();
+      };
+
+      $scope.start_scheduled_refresh = function () {
+        $scope.cancel_scheduled_refresh();
+        var panelRefresh = $scope.panel.refresh || $scope.row.refresh;
+        if(panelRefresh) {
+          var interval = kbn.interval_to_ms(panelRefresh);
+          $scope.refresh_timer = timer.register($timeout(function () {
+            $scope.start_scheduled_refresh($scope, interval);
+            if($scope.dashboard.refresh !== false) {
+              $scope.get_data();
+            }
+          }, interval));
+        }
+      };
+
+      $scope.cancel_scheduled_refresh = function () {
+        if($scope.refresh_timer) {
+          timer.cancel($scope.refresh_timer);
+          $scope.refresh_timer = null;
+        }
+      };
+
+      $scope.start_scheduled_refresh();
+
       $scope.get_data = function() {
         if ($scope.otherPanelInFullscreenMode()) { return; }
 
@@ -141,9 +169,18 @@ function (angular, _, config) {
       };
 
       if ($scope.refreshData) {
-        $scope.$on("refresh", $scope.get_data);
+        $scope.$on("refresh", function() {
+          if(!$scope.refresh_timer) {
+            $scope.get_data();
+          }
+        });
       }
 
+      $scope.$on('row_refresh_changed', function(event, row) {
+        if(row === $scope.row) {
+          $scope.refresh_changed();
+        }
+      });
       // Post init phase
       $scope.fullscreen = false;
       $scope.editor = { index: 1 };
@@ -158,5 +195,4 @@ function (angular, _, config) {
       }
     };
   });
-
 });
