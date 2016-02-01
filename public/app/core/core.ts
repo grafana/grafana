@@ -16,6 +16,8 @@ import "./directives/password_strenght";
 import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
+import "./directives/plugin_directive_loader";
+import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
