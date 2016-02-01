@@ -5,9 +5,9 @@ import angular from 'angular';
 /** @ngInject */
 function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
   return dynamicDirectiveSrv.create({
-    watchPath: "panel.datasource",
+    watchPath: "ctrl.panel.datasource",
     directive: scope => {
-      let datasource = scope.target.datasource || scope.panel.datasource;
+      let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
       return datasourceSrv.get(datasource).then(ds => {
         scope.datasource = ds;
 
@@ -29,9 +29,9 @@ function metricsQueryEditor(dynamicDirectiveSrv, datasourceSrv) {
 /** @ngInject */
 function metricsQueryOptions(dynamicDirectiveSrv, datasourceSrv) {
   return dynamicDirectiveSrv.create({
-    watchPath: "panel.datasource",
+    watchPath: "ctrl.panel.datasource",
     directive: scope => {
-      return datasourceSrv.get(scope.panel.datasource).then(ds => {
+      return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
         return System.import(ds.meta.module).then(dsModule => {
           return {
             name: 'metrics-query-options-' + ds.meta.id,

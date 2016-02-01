@@ -218,5 +218,4 @@ function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   }
 
   return InfluxDatasource;
-
 });

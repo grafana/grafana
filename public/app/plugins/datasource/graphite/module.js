@@ -5,19 +5,22 @@ function (GraphiteDatasource) {
   'use strict';
 
   function metricsQueryEditor() {
-    return {controller: 'GraphiteQueryCtrl', templateUrl: 'app/plugins/datasource/graphite/partials/query.editor.html'};
+    return {
+      controller: 'GraphiteQueryCtrl',
+      templateUrl: 'public/app/plugins/datasource/graphite/partials/query.editor.html'
+    };
   }
 
   function metricsQueryOptions() {
-    return {templateUrl: 'app/plugins/datasource/graphite/partials/query.options.html'};
+    return {templateUrl: 'public/app/plugins/datasource/graphite/partials/query.options.html'};
   }
 
   function annotationsQueryEditor() {
-    return {templateUrl: 'app/plugins/datasource/graphite/partials/annotations.editor.html'};
+    return {templateUrl: 'public/app/plugins/datasource/graphite/partials/annotations.editor.html'};
   }
 
   function configView() {
-    return {templateUrl: 'app/plugins/datasource/graphite/partials/config.html'};
+    return {templateUrl: 'public/app/plugins/datasource/graphite/partials/config.html'};
   }
 
   return {

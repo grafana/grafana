@@ -31,7 +31,7 @@ function (angular, _, $) {
     };
 
     $scope.datasourceChanged = function() {
-      datasourceSrv.get($scope.currentAnnotation.datasource).then(function(ds) {
+      return datasourceSrv.get($scope.currentAnnotation.datasource).then(function(ds) {
         $scope.currentDatasource = ds;
         $scope.currentAnnotation.datasource = ds.name;
       });

@@ -14,13 +14,18 @@ describe('GraphiteQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.services'));
 
   beforeEach(ctx.providePhase());
-  beforeEach(ctx.createControllerPhase('GraphiteQueryCtrl'));
+  beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
+    ctx.$q = $q;
+    ctx.scope = $rootScope.$new();
+    ctx.scope.ctrl = {panel: ctx.panel};
+    ctx.panelCtrl = ctx.scope.ctrl;
+    ctx.scope.datasource = ctx.datasource;
+    ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+    ctx.controller = $controller('GraphiteQueryCtrl', {$scope: ctx.scope});
+  }));
 
   beforeEach(function() {
     ctx.scope.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
-
-    ctx.scope.datasource = ctx.datasource;
-    ctx.scope.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
   });
 
   describe('init', function() {
@@ -49,7 +54,7 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope.init();
       ctx.scope.$digest();
 
-      ctx.scope.$parent = { get_data: sinon.spy() };
+      ctx.panelCtrl.refresh = sinon.spy();
       ctx.scope.addFunction(gfunc.getFuncDef('aliasByNode'));
     });
 
@@ -61,8 +66,8 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.scope.target.target).to.be('aliasByNode(test.prod.*.count, 2)');
     });
 
-    it('should call get_data', function() {
-      expect(ctx.scope.$parent.get_data.called).to.be(true);
+    it('should call refresh', function() {
+      expect(ctx.panelCtrl.refresh.called).to.be(true);
     });
   });
 
@@ -72,8 +77,6 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: true}]));
       ctx.scope.init();
       ctx.scope.$digest();
-
-      ctx.scope.$parent = { get_data: sinon.spy() };
       ctx.scope.addFunction(gfunc.getFuncDef('asPercent'));
     });
 
@@ -88,7 +91,6 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should not add select metric segment', function() {
@@ -107,7 +109,6 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope.datasource.metricFindQuery.returns(ctx.$q.when([]));
       ctx.scope.init();
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should add 2 segments', function() {
@@ -147,7 +148,6 @@ describe('GraphiteQueryCtrl', function() {
         ctx.altSegments = results;
       });
       ctx.scope.$digest();
-      ctx.scope.$parent = { get_data: sinon.spy() };
     });
 
     it('should have no segments', function() {
@@ -162,7 +162,7 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope.init();
       ctx.scope.$digest();
 
-      ctx.scope.$parent = { get_data: sinon.spy() };
+      ctx.panelCtrl.refresh = sinon.spy();
       ctx.scope.target.target = '';
       ctx.scope.targetChanged();
     });
@@ -171,8 +171,8 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.scope.target.target).to.be('aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
     });
 
-    it('should call get_data', function() {
-      expect(ctx.scope.$parent.get_data.called).to.be(true);
+    it('should call panelCtrl.refresh', function() {
+      expect(ctx.panelCtrl.refresh.called).to.be(true);
     });
   });
 });

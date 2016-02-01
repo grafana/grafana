@@ -30,8 +30,7 @@ module.exports = function(config) {
         'reflect-metadata/*.js',
         'reflect-metadata/*.ts',
         'reflect-metadata/*.d.ts',
-        'rxjs/bundles/*.js',
-        'rxjs/Rx.d.ts',
+        'rxjs/**/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

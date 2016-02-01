@@ -1,3 +1,9 @@
+.navbar {
+  position: relative;
+  z-index: 110;
+  margin-bottom: 0;
+}
+
 .navbar .navbar-inner {
   padding-left: 0px;
   border: none;
@@ -33,12 +39,11 @@
   a {
     color: darken(@linkColor, 5%);
     background-color: @navbarButtonBackground;
-    border-bottom: 1px solid @navbarButtonBackground;
     display: inline-block;
     &:hover {
       background: @navbarButtonBackgroundHighlight;
       color: @linkColor;
-      border-bottom: 1px solid @blue;
+      // border-bottom: 1px solid @blue;
     }
   }
 }
@@ -60,11 +65,18 @@
     width: 30px;
     height: 30px;
   }
+  .icon-gf-grafana_wordmark {
+    font-size: 21px;
+    position: relative;
+    top: 4px;
+    padding-left: 5px;
+    display: none;
+  }
 }
 
 .top-nav-dashboards-btn {
   a {
-    padding: 15px 17px 14px 13px;
+    padding: 16px 17px 14px 13px;
   }
 
   .fa-th-large {

@@ -3,12 +3,12 @@
 
 	<div class="editor-row small" style="padding-bottom: 0;">
 		<label>Axis:</label>
-		<button ng-click="toggleYAxis(series);dismiss();"
+		<button ng-click="ctrl.toggleYAxis(series);dismiss();"
 			class="btn btn-mini"
 			ng-class="{'btn-success': series.yaxis === 1 }">
 			Left
 		</button>
-		<button ng-click="toggleYAxis(series);dismiss();"
+		<button ng-click="ctrl.toggleYAxis(series);dismiss();"
 			class="btn btn-mini"
 			ng-class="{'btn-success': series.yaxis === 2 }">
 			Right
@@ -16,10 +16,10 @@
 	</div>
 
 	<div class="editor-row">
-		<i ng-repeat="color in colors" class="pointer"
+		<i ng-repeat="color in ctrl.colors" class="pointer"
 			ng-class="{'fa fa-circle-o': color === series.color,'fa fa-circle': color !== series.color}"
 			ng-style="{color:color}"
-			ng-click="changeSeriesColor(series, color);dismiss();">&nbsp;</i>
+			ng-click="ctrl.changeSeriesColor(series, color);dismiss();">&nbsp;</i>
 	</div>
 </div>
 

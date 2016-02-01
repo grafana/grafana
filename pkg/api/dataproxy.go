@@ -103,5 +103,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
 	}
 }

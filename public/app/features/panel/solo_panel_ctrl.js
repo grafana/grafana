@@ -39,13 +39,8 @@ function (angular, $) {
       }
 
       $scope.panel.span = 12;
-      $scope.dashboardViewState = {registerPanel: function() { }, state: {}};
     };
 
-    if (!$scope.skipAutoInit) {
-      $scope.init();
-    }
-
+    $scope.init();
   });
-
 });

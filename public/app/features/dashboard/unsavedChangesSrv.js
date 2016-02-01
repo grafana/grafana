@@ -139,7 +139,7 @@ function(angular, _) {
       };
 
       $rootScope.appEvent('show-modal', {
-        src: './app/partials/unsaved-changes.html',
+        src: 'public/app/partials/unsaved-changes.html',
         modalClass: 'modal-no-header confirm-modal',
         scope: modalScope,
       });

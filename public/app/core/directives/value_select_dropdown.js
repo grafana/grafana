@@ -227,7 +227,7 @@ function (angular, _, coreModule) {
   coreModule.default.directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
     return {
       scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
-      templateUrl: 'app/partials/valueSelectDropdown.html',
+      templateUrl: 'public/app/partials/valueSelectDropdown.html',
       controller: 'ValueSelectDropdownCtrl',
       controllerAs: 'vm',
       bindToController: true,

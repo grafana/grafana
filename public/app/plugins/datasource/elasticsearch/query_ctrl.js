@@ -6,8 +6,9 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ElasticQueryCtrl', function($scope, $timeout, uiSegmentSrv) {
+  module.controller('ElasticQueryCtrl', function($scope, $rootScope, $timeout, uiSegmentSrv) {
     $scope.esVersion = $scope.datasource.esVersion;
+    $scope.panelCtrl = $scope.ctrl;
 
     $scope.init = function() {
       var target = $scope.target;
@@ -27,10 +28,10 @@ function (angular) {
       var newJson = angular.toJson($scope.datasource.queryBuilder.build($scope.target), true);
       if (newJson !== $scope.oldQueryRaw) {
         $scope.rawQueryOld = newJson;
-        $scope.get_data();
+        $scope.panelCtrl.refresh();
       }
 
-      $scope.appEvent('elastic-query-updated');
+      $rootScope.appEvent('elastic-query-updated');
     };
 
     $scope.handleQueryError = function(err) {

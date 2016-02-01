@@ -101,7 +101,7 @@ export class TimePickerCtrl {
     this.refresh.options.unshift({text: 'off'});
 
     this.$rootScope.appEvent('show-dash-editor', {
-      src: 'app/features/dashboard/timepicker/dropdown.html',
+      src: 'public/app/features/dashboard/timepicker/dropdown.html',
       scope: this.$scope,
       cssClass: 'gf-timepicker-dropdown',
     });
@@ -146,7 +146,7 @@ export class TimePickerCtrl {
 export function settingsDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/dashboard/timepicker/settings.html',
+    templateUrl: 'public/app/features/dashboard/timepicker/settings.html',
     controller: TimePickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
@@ -159,7 +159,7 @@ export function settingsDirective() {
 export function timePickerDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'app/features/dashboard/timepicker/timepicker.html',
+    templateUrl: 'public/app/features/dashboard/timepicker/timepicker.html',
     controller: TimePickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
