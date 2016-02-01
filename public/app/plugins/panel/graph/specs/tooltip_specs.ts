@@ -8,6 +8,7 @@ import GraphTooltip from '../graph_tooltip';
 var scope =  {
   appEvent: sinon.spy(),
   onAppEvent: sinon.spy(),
+  ctrl: {}
 };
 
 var elem = $('<div></div>');
@@ -15,8 +16,8 @@ var dashboard = { };
 
 function describeSharedTooltip(desc, fn) {
   var ctx: any = {};
-  ctx.scope = scope;
-  ctx.scope.panel =  {
+  ctx.ctrl = scope.ctrl;
+  ctx.ctrl.panel =  {
     tooltip:  {
       shared: true
     },
@@ -51,9 +52,11 @@ describeSharedTooltip("steppedLine false, stack false", function(ctx) {
   it('should return 2 series', function() {
     expect(ctx.results.length).to.be(2);
   });
+
   it('should add time to results array', function() {
     expect(ctx.results.time).to.be(10);
   });
+
   it('should set value and hoverIndex', function() {
     expect(ctx.results[0].value).to.be(15);
     expect(ctx.results[1].value).to.be(2);
@@ -93,7 +96,7 @@ describeSharedTooltip("steppedLine false, stack true, individual false", functio
         stack: true
       }
     ];
-    ctx.scope.panel.stack = true;
+    ctx.ctrl.panel.stack = true;
     ctx.pos = { x: 11 };
   });
 
@@ -124,7 +127,7 @@ describeSharedTooltip("steppedLine false, stack true, individual false, series s
         stack: false
       }
     ];
-    ctx.scope.panel.stack = true;
+    ctx.ctrl.panel.stack = true;
     ctx.pos = { x: 11 };
   });
 
@@ -156,15 +159,14 @@ describeSharedTooltip("steppedLine false, stack true, individual true", function
         stack: false
       }
     ];
-    ctx.scope.panel.stack = true;
-    ctx.scope.panel.tooltip.value_type = 'individual';
+    ctx.ctrl.panel.stack = true;
+    ctx.ctrl.panel.tooltip.value_type = 'individual';
     ctx.pos = { x: 11 };
   });
 
   it('should not show stacked value', function() {
     expect(ctx.results[1].value).to.be(2);
   });
-
 });
 
 

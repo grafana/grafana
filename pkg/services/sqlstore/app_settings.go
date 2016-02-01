@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -40,18 +42,27 @@ func UpdateAppSettings(cmd *m.UpdateAppSettingsCmd) error {
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {
+			// encrypt secureJsonData
+			secureJsonData := make(map[string][]byte)
+			for key, data := range cmd.SecureJsonData {
+				secureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
+			}
 			app = m.AppSettings{
-				AppId:    cmd.AppId,
-				OrgId:    cmd.OrgId,
-				Enabled:  cmd.Enabled,
-				Pinned:   cmd.Pinned,
-				JsonData: cmd.JsonData,
-				Created:  time.Now(),
-				Updated:  time.Now(),
+				AppId:          cmd.AppId,
+				OrgId:          cmd.OrgId,
+				Enabled:        cmd.Enabled,
+				Pinned:         cmd.Pinned,
+				JsonData:       cmd.JsonData,
+				SecureJsonData: secureJsonData,
+				Created:        time.Now(),
+				Updated:        time.Now(),
 			}
 			_, err = sess.Insert(&app)
 			return err
 		} else {
+			for key, data := range cmd.SecureJsonData {
+				app.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
+			}
 			app.Updated = time.Now()
 			app.Enabled = cmd.Enabled
 			app.JsonData = cmd.JsonData

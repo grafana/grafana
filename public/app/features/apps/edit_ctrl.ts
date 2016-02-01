@@ -24,6 +24,7 @@ export class AppEditCtrl {
       enabled: this.appModel.enabled,
       pinned: this.appModel.pinned,
       jsonData: this.appModel.jsonData,
+      secureJsonData: this.appModel.secureJsonData,
     }, options);
 
     this.backendSrv.post(`/api/org/apps/${this.$routeParams.appId}/settings`, updateCmd).then(function() {

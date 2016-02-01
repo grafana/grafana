@@ -8,15 +8,15 @@ function (ElasticDatasource, editView) {
   'use strict';
 
   function metricsQueryEditor() {
-    return {controller: 'ElasticQueryCtrl', templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.editor.html'};
+    return {controller: 'ElasticQueryCtrl', templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/query.editor.html'};
   }
 
   function metricsQueryOptions() {
-    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/query.options.html'};
+    return {templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/query.options.html'};
   }
 
   function annotationsQueryEditor() {
-    return {templateUrl: 'app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
+    return {templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/annotations.editor.html'};
   }
 
   return {

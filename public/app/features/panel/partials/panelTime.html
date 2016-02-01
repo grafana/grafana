@@ -13,8 +13,8 @@
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last" placeholder="1h"
-					  empty-to-null ng-model="panel.timeFrom" valid-time-span
-					  ng-change="get_data()" ng-model-onblur>
+					  empty-to-null ng-model="ctrl.panel.timeFrom" valid-time-span
+					  ng-change="ctrl.refresh()" ng-model-onblur>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -32,8 +32,8 @@
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last" placeholder="1h"
-					empty-to-null ng-model="panel.timeShift" valid-time-span
-					ng-change="get_data()" ng-model-onblur>
+					empty-to-null ng-model="ctrl.panel.timeShift" valid-time-span
+					ng-change="ctrl.refresh()" ng-model-onblur>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -47,9 +47,9 @@
 					<strong>Hide time override info</strong>
 				</li>
 				<li class="tight-form-item last">
-					<input class="cr1" id="panel.hideTimeOverride" type="checkbox"
-					ng-model="panel.hideTimeOverride" ng-checked="panel.hideTimeOverride" ng-change="get_data()">
-					<label for="panel.hideTimeOverride" class="cr1"></label>
+					<input class="cr1" id="ctrl.panel.hideTimeOverride" type="checkbox"
+					ng-model="ctrl.panel.hideTimeOverride" ng-checked="ctrl.panel.hideTimeOverride" ng-change="ctrl.refresh()">
+					<label for="ctrl.panel.hideTimeOverride" class="cr1"></label>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

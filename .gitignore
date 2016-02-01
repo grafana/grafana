@@ -6,6 +6,7 @@ awsconfig
 /dist
 /emails/dist
 /public_gen
+/public/vendor/npm
 /tmp
 vendor/phantomjs/phantomjs
 

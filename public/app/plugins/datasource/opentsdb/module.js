@@ -7,12 +7,12 @@ function (OpenTsDatasource) {
   function metricsQueryEditor() {
     return {
       controller: 'OpenTSDBQueryCtrl',
-      templateUrl: 'app/plugins/datasource/opentsdb/partials/query.editor.html',
+      templateUrl: 'public/app/plugins/datasource/opentsdb/partials/query.editor.html',
     };
   }
 
   function configView() {
-    return {templateUrl: 'app/plugins/datasource/opentsdb/partials/config.html'};
+    return {templateUrl: 'public/app/plugins/datasource/opentsdb/partials/config.html'};
   }
 
   return {

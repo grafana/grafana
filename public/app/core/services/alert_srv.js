@@ -72,7 +72,7 @@ function (angular, _, coreModule) {
       scope.noText = payload.noText || "Cancel";
 
       var confirmModal = $modal({
-        template: './app/partials/confirm_modal.html',
+        template: 'public/app/partials/confirm_modal.html',
         persist: false,
         modalClass: 'modal-no-header confirm-modal',
         show: false,

@@ -1,11 +1,8 @@
 package api
 
 import (
-	"errors"
-	"strconv"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	_ "github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -101,39 +98,6 @@ func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	return *itemQuery.Result, nil
 }
 
-func LoadPlaylistDashboards(id int64) ([]m.PlaylistDashboardDto, error) {
-	playlistItems, _ := LoadPlaylistItems(id)
-
-	dashboardIds := make([]int64, 0)
-
-	for _, i := range playlistItems {
-		dashboardId, _ := strconv.ParseInt(i.Value, 10, 64)
-		dashboardIds = append(dashboardIds, dashboardId)
-	}
-
-	if len(dashboardIds) == 0 {
-		return make([]m.PlaylistDashboardDto, 0), nil
-	}
-
-	dashboardQuery := m.GetPlaylistDashboardsQuery{DashboardIds: dashboardIds}
-	if err := bus.Dispatch(&dashboardQuery); err != nil {
-		log.Warn("dashboardquery failed: %v", err)
-		return nil, errors.New("Playlist not found")
-	}
-
-	dtos := make([]m.PlaylistDashboardDto, 0)
-	for _, item := range *dashboardQuery.Result {
-		dtos = append(dtos, m.PlaylistDashboardDto{
-			Id:    item.Id,
-			Slug:  item.Slug,
-			Title: item.Title,
-			Uri:   "db/" + item.Slug,
-		})
-	}
-
-	return dtos, nil
-}
-
 func GetPlaylistItems(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
@@ -147,9 +111,9 @@ func GetPlaylistItems(c *middleware.Context) Response {
 }
 
 func GetPlaylistDashboards(c *middleware.Context) Response {
-	id := c.ParamsInt64(":id")
+	playlistId := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(id)
+	playlists, err := LoadPlaylistDashboards(c.OrgId, c.UserId, playlistId)
 	if err != nil {
 		return ApiError(500, "Could not load dashboards", err)
 	}

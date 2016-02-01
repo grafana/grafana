@@ -32,7 +32,7 @@ function (angular) {
         modalScope.key = result.key;
 
         $scope.appEvent('show-modal', {
-          src: './app/features/org/partials/apikeyModal.html',
+          src: 'public/app/features/org/partials/apikeyModal.html',
           scope: modalScope
         });
 

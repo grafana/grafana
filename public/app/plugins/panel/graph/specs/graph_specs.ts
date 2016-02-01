@@ -24,11 +24,13 @@ describe('grafanaGraph', function() {
         }));
 
         beforeEach(angularMocks.inject(function($rootScope, $compile) {
+          var ctrl: any = {};
           var scope = $rootScope.$new();
+          scope.ctrl = ctrl;
           var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
 
-          scope.height = '200px';
-          scope.panel = {
+          ctrl.height = '200px';
+          ctrl.panel = {
             legend: {},
             grid: { },
             y_formats: [],
@@ -38,14 +40,14 @@ describe('grafanaGraph', function() {
             }
           };
 
-          scope.panelRenderingComplete = sinon.spy();
-          scope.appEvent = sinon.spy();
-          scope.onAppEvent = sinon.spy();
-          scope.hiddenSeries = {};
-          scope.dashboard = { timezone: 'browser' };
-          scope.range = {
+          $rootScope.onAppEvent = sinon.spy();
+          ctrl.otherPanelInFullscreenMode = sinon.spy();
+          ctrl.renderingCompleted = sinon.spy();
+          ctrl.hiddenSeries = {};
+          ctrl.dashboard = { timezone: 'browser' };
+          ctrl.range = {
             from: moment([2015, 1, 1, 10]),
-            to: moment([2015, 1, 1, 22])
+            to: moment([2015, 1, 1, 22]),
           };
           ctx.data = [];
           ctx.data.push(new TimeSeries({
@@ -57,7 +59,7 @@ describe('grafanaGraph', function() {
             alias: 'series2'
           }));
 
-          setupFunc(scope, ctx.data);
+          setupFunc(ctrl, ctx.data);
 
           $compile(element)(scope);
           scope.$digest();
@@ -74,11 +76,11 @@ describe('grafanaGraph', function() {
   }
 
   graphScenario('simple lines options', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.lines = true;
-      scope.panel.fill = 5;
-      scope.panel.linewidth = 3;
-      scope.panel.steppedLine = true;
+    ctx.setup(function(ctrl) {
+      ctrl.panel.lines = true;
+      ctrl.panel.fill = 5;
+      ctrl.panel.linewidth = 3;
+      ctrl.panel.steppedLine = true;
     });
 
     it('should configure plot with correct options', function() {
@@ -90,8 +92,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('grid thresholds 100, 200', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.grid = {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.grid = {
         threshold1: 100,
         threshold1Color: "#111",
         threshold2: 200,
@@ -110,8 +112,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('inverted grid thresholds 200, 100', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.grid = {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.grid = {
         threshold1: 200,
         threshold1Color: "#111",
         threshold2: 100,
@@ -130,8 +132,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('grid thresholds from zero', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.grid = {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.grid = {
         threshold1: 0,
         threshold1Color: "#111",
       };
@@ -144,8 +146,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('when logBase is log 10', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.grid = {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.grid = {
         leftMax: null,
         rightMax: null,
         leftMin: null,
@@ -163,8 +165,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('should use timeStep for barWidth', function(ctx) {
-    ctx.setup(function(scope, data) {
-      scope.panel.bars = true;
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.bars = true;
       data[0] = new TimeSeries({
         datapoints: [[1,10],[2,20]],
         alias: 'series1',
@@ -177,10 +179,10 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('series option overrides, fill & points', function(ctx) {
-    ctx.setup(function(scope, data) {
-      scope.panel.lines = true;
-      scope.panel.fill = 5;
-      scope.panel.seriesOverrides = [
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.lines = true;
+      ctrl.panel.fill = 5;
+      ctrl.panel.seriesOverrides = [
         { alias: 'test', fill: 0, points: true }
       ];
 
@@ -195,8 +197,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('should order series order according to zindex', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.seriesOverrides = [{ alias: 'series1', zindex: 2 }];
+    ctx.setup(function(ctrl) {
+      ctrl.panel.seriesOverrides = [{ alias: 'series1', zindex: 2 }];
     });
 
     it('should move zindex 2 last', function() {
@@ -206,8 +208,8 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('when series is hidden', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.hiddenSeries = {'series2': true};
+    ctx.setup(function(ctrl) {
+      ctrl.hiddenSeries = {'series2': true};
     });
 
     it('should remove datapoints and disable stack', function() {
@@ -218,9 +220,9 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('when stack and percent', function(ctx) {
-    ctx.setup(function(scope) {
-      scope.panel.percentage = true;
-      scope.panel.stack = true;
+    ctx.setup(function(ctrl) {
+      ctrl.panel.percentage = true;
+      ctrl.panel.stack = true;
     });
 
     it('should show percentage', function() {
@@ -231,9 +233,9 @@ describe('grafanaGraph', function() {
 
   graphScenario('when panel too narrow to show x-axis dates in same granularity as wide panels', function(ctx) {
     describe('and the range is less than 24 hours', function() {
-      ctx.setup(function(scope) {
-        scope.range.from = moment([2015, 1, 1, 10]);
-        scope.range.to = moment([2015, 1, 1, 22]);
+      ctx.setup(function(ctrl) {
+        ctrl.range.from = moment([2015, 1, 1, 10]);
+        ctrl.range.to = moment([2015, 1, 1, 22]);
       });
 
       it('should format dates as hours minutes', function() {
