@@ -9,16 +9,25 @@ define([
     var popoverSrv = {};
 
     beforeEach(module('grafana.services'));
-    beforeEach(module('grafana.panels.graph'));
+    beforeEach(module('grafana.controllers'));
 
     beforeEach(ctx.providePhase({
       popoverSrv: popoverSrv
     }));
 
-    beforeEach(ctx.createControllerPhase('SeriesOverridesCtrl'));
-    beforeEach(function() {
+    beforeEach(inject(function($rootScope, $controller) {
+     // ctx.createControllerPhase('SeriesOverridesCtrl'));
+     // beforeEach(function() {
+      ctx.scope = $rootScope.$new();
+      ctx.scope.ctrl = {
+        render: sinon.spy(),
+        seriesList: []
+      };
       ctx.scope.render = function() {};
-    });
+      ctx.controller = $controller('SeriesOverridesCtrl', {
+        $scope: ctx.scope
+      });
+    }));
 
     describe('When setting an override', function() {
       beforeEach(function() {
