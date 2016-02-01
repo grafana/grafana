@@ -12,7 +12,7 @@ function (angular, $, _) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-links-btn"><i class="fa fa-link"></i></span>' +
+            '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
 
@@ -28,6 +28,7 @@ function (angular, $, _) {
         }
         return template;
       }
+
       function createMenuTemplate(ctrl) {
         var template = '<div class="panel-menu small">';
 
@@ -124,8 +125,8 @@ function (angular, $, _) {
             }
 
             var menuTemplate;
-            if ($(e.target).hasClass('fa-link')) {
-              menuTemplate = createExternalLinkMenu($scope);
+            if ($(e.target).hasClass('fa-external-link')) {
+              menuTemplate = createExternalLinkMenu(ctrl);
             } else {
               menuTemplate = createMenuTemplate(ctrl);
             }
