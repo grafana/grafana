@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import coreModule from '../core_module';
 
-function pluginDirectiveLoader($compile, datasourceSrv) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
 
   function getPluginComponentDirective(options) {
     return function() {
@@ -27,30 +27,53 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
 
   function getModule(scope, attrs) {
     switch (attrs.type) {
-      case "metrics-query-editor":
+      // QueryCtrl
+      case "query-ctrl": {
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
           scope.datasource = ds;
 
           return System.import(ds.meta.module).then(dsModule => {
             return {
-              name: 'metrics-query-editor-' + ds.meta.id,
+              name: 'query-ctrl-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
               attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
               Component: dsModule.QueryCtrl
             };
           });
         });
+      }
+      // QueryOptionsCtrl
+      case "query-options-ctrl": {
+        return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
+          return System.import(ds.meta.module).then((dsModule): any => {
+            if (!dsModule.QueryOptionsCtrl) {
+              return {notFound: true};
+            }
 
-      case 'datasource-config-view':
+            return {
+              name: 'query-options-ctrl-' + ds.meta.id,
+              bindings: {panelCtrl: "="},
+              attrs: {"panel-ctrl": "ctrl"},
+              Component: dsModule.QueryOptionsCtrl
+            };
+          });
+        });
+      }
+      // ConfigCtrl
+      case 'datasource-config-ctrl': {
         return System.import(scope.datasourceMeta.module).then(function(dsModule) {
           return {
             name: 'ds-config-' + scope.datasourceMeta.id,
             bindings: {meta: "=", current: "="},
             attrs: {meta: "datasourceMeta", current: "current"},
-            Component: dsModule.ConfigView,
+            Component: dsModule.ConfigCtrl,
           };
         });
+      }
+      default: {
+        $rootScope.appEvent('alert-error', ['Plugin component error', 'could not find component '+ attrs.type]);
+      }
     }
   }
 
@@ -67,6 +90,11 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
   }
 
   function registerPluginComponent(scope, elem, attrs, componentInfo) {
+    if (componentInfo.notFound) {
+      elem.empty();
+      return;
+    }
+
     if (!componentInfo.Component.registered) {
       var directiveName = attrs.$normalize(componentInfo.name);
       var directiveFn = getPluginComponentDirective(componentInfo);

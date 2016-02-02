@@ -23,9 +23,11 @@ function getBlockNodes(nodes) {
   return blockNodes || nodes;
 }
 
-function rebuildOnChange($compile) {
+function rebuildOnChange($animate) {
 
   return {
+    multiElement: true,
+    terminal: true,
     transclude: true,
     priority: 600,
     restrict: 'E',
@@ -33,23 +35,31 @@ function rebuildOnChange($compile) {
       var childScope, previousElements;
       var uncompiledHtml;
 
-      scope.$watch(attrs.property, function rebuildOnChangeAction(value) {
-
+      function cleanUp() {
         if (childScope) {
           childScope.$destroy();
           childScope = null;
           elem.empty();
         }
+      }
 
-        if (value || attrs.ignoreNull) {
-          if (!childScope) {
-            transclude(function(clone, newScope) {
-              childScope = newScope;
-              elem.append($compile(clone)(childScope));
-            });
+      scope.$watch(attrs.property, function rebuildOnChangeAction(value, oldValue) {
+        if (value || attrs.showNull) {
+          // if same value and we have childscope
+          // ignore this double event
+          if (value === oldValue && childScope) {
+            return;
           }
-        }
 
+          cleanUp();
+          transclude(function(clone, newScope) {
+            childScope = newScope;
+            $animate.enter(clone, elem.parent(), elem);
+          });
+
+        } else {
+          cleanUp();
+        }
       });
     }
   };
