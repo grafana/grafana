@@ -5,8 +5,7 @@ import _ from 'lodash';
 
 import coreModule from '../core_module';
 
-/** @ngInject */
-function pluginComponentLoader($compile, datasourceSrv) {
+function pluginDirectiveLoader($compile, datasourceSrv) {
 
   function getPluginComponentDirective(options) {
     return function() {
@@ -31,9 +30,7 @@ function pluginComponentLoader($compile, datasourceSrv) {
       case "metrics-query-editor":
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
-          if (!scope.target.refId) {
-            scope.target.refId = 'A';
-          }
+          scope.datasource = ds;
 
           return System.import(ds.meta.module).then(dsModule => {
             return {
@@ -44,6 +41,7 @@ function pluginComponentLoader($compile, datasourceSrv) {
             };
           });
         });
+
       case 'datasource-config-view':
         return System.import(scope.datasourceMeta.module).then(function(dsModule) {
           return {
@@ -89,4 +87,4 @@ function pluginComponentLoader($compile, datasourceSrv) {
   };
 }
 
-coreModule.directive('pluginComponent', pluginComponentLoader);
+coreModule.directive('pluginComponent', pluginDirectiveLoader);

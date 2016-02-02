@@ -193,23 +193,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  addDataQuery(datasource) {
-    this.dashboard.addDataQueryTo(this.panel, datasource);
-  }
-
-  removeDataQuery(query) {
-    this.dashboard.removeDataQuery(this.panel, query);
-    this.refresh();
-  };
-
-  duplicateDataQuery(query) {
-    this.dashboard.duplicateDataQuery(this.panel, query);
-  }
-
-  moveDataQuery(fromIndex, toIndex) {
-    this.dashboard.moveDataQuery(this.panel, fromIndex, toIndex);
-  }
-
   setDatasource(datasource) {
     // switching to mixed
     if (datasource.meta.mixed) {
@@ -228,6 +211,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.panel.datasource = datasource.value;
     this.datasource = null;
     this.refresh();
+  }
+
+  addDataQuery(datasource) {
+    var target = {
+      datasource: datasource ? datasource.name : undefined
+    };
+    this.panel.targets.push(target);
   }
 }
 
