@@ -9,7 +9,7 @@ import * as dateMath from 'app/core/utils/datemath';
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
-function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
   this.type = 'prometheus';
   this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
   this.name = instanceSettings.name;
@@ -271,8 +271,6 @@ function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
-    return Math.floor(date.valueOf() / 1000);
+    return Math.ceil(date.valueOf() / 1000);
   }
 }
-
-export {PrometheusDatasource};

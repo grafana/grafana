@@ -3,6 +3,6 @@ define([
   './panel_directive',
   './solo_panel_ctrl',
   './panel_loader',
-  './query_editor',
+  './query_ctrl',
   './panel_editor_tab',
 ], function () {});

@@ -194,6 +194,16 @@ function (angular, $, _, moment) {
         moment.utc(date).fromNow();
     };
 
+    p.getNextQueryLetter = function(panel) {
+      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      return _.find(letters, function(refId) {
+        return _.every(panel.targets, function(other) {
+          return other.refId !== refId;
+        });
+      });
+    };
+
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;

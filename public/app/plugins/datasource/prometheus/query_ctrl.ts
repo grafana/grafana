@@ -5,10 +5,9 @@ import _ from 'lodash';
 import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
-import {QueryEditorCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/features/panel/panel';
 
-/** @ngInject */
-class PrometheusQueryCtrl extends QueryEditorCtrl {
+class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/prometheus/partials/query.editor.html';
   metric: any;
   resolutions: any;
@@ -16,6 +15,7 @@ class PrometheusQueryCtrl extends QueryEditorCtrl {
   suggestMetrics: any;
   linkToPrometheus: any;
 
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv) {
     super($scope, $injector);
 
