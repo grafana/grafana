@@ -1,6 +1,6 @@
 <div class="tight-form">
   <ul class="tight-form-list pull-right">
-    <li class="tight-form-item small" ng-show="target.datasource">
+    <li class="tight-form-item small" ng-show="ctrl.target.datasource">
       <em>{{ctrl.target.datasource}}</em>
     </li>
     <li class="tight-form-item">
@@ -27,7 +27,7 @@
       {{ctrl.target.refId}}
     </li>
     <li>
-      <a class="tight-form-item" ng-click="ctrl.toggleHideQuery(ctrl.target);" role="menuitem">
+      <a class="tight-form-item" ng-click="ctrl.toggleHideQuery();" role="menuitem">
         <i class="fa fa-eye"></i>
       </a>
     </li>
@@ -40,12 +40,12 @@
     <li>
       <input type="text"
              class="input-xxlarge tight-form-input"
-             ng-model="target.expr"
+             ng-model="ctrl.target.expr"
              spellcheck='false'
              placeholder="query expression"
              data-min-length=0 data-items=100
              ng-model-onblur
-             ng-change="refreshMetricData()">
+             ng-change="ctrl.refreshMetricData()">
     </li>
     <li class="tight-form-item">
       Metric
@@ -53,9 +53,9 @@
     <li>
       <input type="text"
              class="input-medium tight-form-input"
-             ng-model="target.metric"
+             ng-model="ctrl.target.metric"
              spellcheck='false'
-             bs-typeahead="suggestMetrics"
+             bs-typeahead="ctrl.suggestMetrics"
              placeholder="metric name"
              data-min-length=0 data-items=100>
     </li>
@@ -70,9 +70,9 @@
       Legend format
     </li>
     <li>
-      <input type="text" class="tight-form-input input-xxlarge" ng-model="target.legendFormat"
+      <input type="text" class="tight-form-input input-xxlarge" ng-model="ctrl.target.legendFormat"
              spellcheck='false' placeholder="legend format" data-min-length=0 data-items=1000
-             ng-model-onblur ng-change="refreshMetricData()">
+             ng-model-onblur ng-change="ctrl.refreshMetricData()">
       </input>
     </li>
   </ul>
@@ -86,14 +86,14 @@
       Step
     </li>
     <li>
-      <input type="text" class="input-mini tight-form-input" ng-model="target.interval"
+      <input type="text" class="input-mini tight-form-input" ng-model="ctrl.target.interval"
              bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
              data-placement="right"
              spellcheck='false'
-             placeholder="{{interval}}"
+             placeholder="{{ctrl.panelCtrl.interval}}"
              data-min-length=0 data-items=100
              ng-model-onblur
-             ng-change="refreshMetricData()"
+             ng-change="ctrl.refreshMetricData()"
              />
       </input>
     </li>
@@ -102,13 +102,13 @@
       Resolution
     </li>
     <li>
-      <select ng-model="target.intervalFactor" class="tight-form-input input-mini"
-             ng-options="r.factor as r.label for r in resolutions"
-             ng-change="refreshMetricData()">
+      <select ng-model="ctrl.target.intervalFactor" class="tight-form-input input-mini"
+             ng-options="r.factor as r.label for r in ctrl.resolutions"
+             ng-change="ctrl.refreshMetricData()">
       </select>
     </li>
     <li class="tight-form-item">
-      <a href="{{linkToPrometheus()}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
+      <a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
         <i class="fa fa-share-square-o"></i>
       </a>
     </li>

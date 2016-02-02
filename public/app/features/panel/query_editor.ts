@@ -9,9 +9,8 @@ export class QueryEditorCtrl {
   panelCtrl: any;
   panel: any;
 
-  constructor(private $scope, private $injector) {
+  constructor(public $scope, private $injector) {
     this.panel = this.panelCtrl.panel;
-    this.datasource = $scope.datasource;
 
     if (!this.target.refId) {
       this.target.refId = this.getNextQueryLetter();
@@ -44,8 +43,8 @@ export class QueryEditorCtrl {
     _.move(this.panel.targets, index, index + direction);
   }
 
-  toggleHideQuery(target) {
-    target.hide = !target.hide;
+  toggleHideQuery() {
+    this.target.hide = !this.target.hide;
     this.panelCtrl.refresh();
   }
 }
