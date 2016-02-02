@@ -1,6 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import './add_graphite_func';
+import './func_editor';
 
 import angular from 'angular';
 import _ from 'lodash';

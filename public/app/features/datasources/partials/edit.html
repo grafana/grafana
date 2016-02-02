@@ -41,10 +41,10 @@
 				<div class="clearfix"></div>
 			</div>
 
-			<div rebuild-on-change="datasourceMeta.id">
+			<rebuild-on-change property="datasourceMeta.id">
 				<plugin-component type="datasource-config-view">
 				</plugin-component>
-			</div>
+			</rebuild-on-change>
 
 			<div ng-if="testing" style="margin-top: 25px">
 				<h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
