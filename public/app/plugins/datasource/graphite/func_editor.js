@@ -27,6 +27,7 @@ function (angular, _, $) {
         link: function postLink($scope, elem) {
           var $funcLink = $(funcSpanTemplate);
           var $funcControls = $(funcControlsTemplate);
+          var ctrl = $scope.ctrl;
           var func = $scope.func;
           var funcDef = func.def;
           var scheduledRelink = false;
@@ -79,11 +80,13 @@ function (angular, _, $) {
               func.updateParam($input.val(), paramIndex);
               scheduledRelinkIfNeeded();
 
-              $scope.$apply($scope.targetChanged);
-            }
+              $scope.$apply(function() {
+                ctrl.targetChanged();
+              });
 
-            $input.hide();
-            $link.show();
+              $input.hide();
+              $link.show();
+            }
           }
 
           function inputKeyPress(paramIndex, e) {
@@ -198,7 +201,7 @@ function (angular, _, $) {
               if ($target.hasClass('fa-remove')) {
                 toggleFuncControls();
                 $scope.$apply(function() {
-                  $scope.removeFunction($scope.func);
+                  ctrl.removeFunction($scope.func);
                 });
                 return;
               }
@@ -206,7 +209,7 @@ function (angular, _, $) {
               if ($target.hasClass('fa-arrow-left')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index - 1);
-                  $scope.targetChanged();
+                  ctrl.targetChanged();
                 });
                 return;
               }
@@ -214,7 +217,7 @@ function (angular, _, $) {
               if ($target.hasClass('fa-arrow-right')) {
                 $scope.$apply(function() {
                   _.move($scope.functions, $scope.$index, $scope.$index + 1);
-                  $scope.targetChanged();
+                  ctrl.targetChanged();
                 });
                 return;
               }

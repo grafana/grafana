@@ -28,12 +28,12 @@ function rebuildOnChange($compile) {
   return {
     transclude: true,
     priority: 600,
-    restrict: 'A',
+    restrict: 'E',
     link: function(scope, elem, attrs, ctrl, transclude) {
       var childScope, previousElements;
       var uncompiledHtml;
 
-      scope.$watch(attrs.rebuildOnChange, function rebuildOnChangeAction(value) {
+      scope.$watch(attrs.property, function rebuildOnChangeAction(value) {
 
         if (childScope) {
           childScope.$destroy();
@@ -41,7 +41,7 @@ function rebuildOnChange($compile) {
           elem.empty();
         }
 
-        if (value) {
+        if (value || attrs.ignoreNull) {
           if (!childScope) {
             transclude(function(clone, newScope) {
               childScope = newScope;

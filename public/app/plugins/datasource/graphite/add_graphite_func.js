@@ -22,6 +22,7 @@ function (angular, _, $, gfunc) {
         link: function($scope, elem) {
           var categories = gfunc.getCategories();
           var allFunctions = getAllFunctionNames(categories);
+          var ctrl = $scope.ctrl;
 
           $scope.functionMenu = createFunctionDropDownMenu(categories);
 
@@ -48,7 +49,7 @@ function (angular, _, $, gfunc) {
               }
 
               $scope.$apply(function() {
-                $scope.addFunction(funcDef);
+                ctrl.addFunction(funcDef);
               });
 
               $input.trigger('blur');
