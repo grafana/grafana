@@ -32,31 +32,38 @@ function rebuildOnChange($animate) {
     priority: 600,
     restrict: 'E',
     link: function(scope, elem, attrs, ctrl, transclude) {
-      var childScope, previousElements;
-      var uncompiledHtml;
+      var block, childScope, previousElements;
 
       function cleanUp() {
+        if (previousElements) {
+          previousElements.remove();
+          previousElements = null;
+        }
         if (childScope) {
           childScope.$destroy();
           childScope = null;
-          elem.empty();
+        }
+        if (block) {
+          previousElements = getBlockNodes(block.clone);
+          $animate.leave(previousElements).then(function() {
+            previousElements = null;
+          });
+          block = null;
         }
       }
 
       scope.$watch(attrs.property, function rebuildOnChangeAction(value, oldValue) {
-        if (value || attrs.showNull) {
-          // if same value and we have childscope
-          // ignore this double event
-          if (value === oldValue && childScope) {
-            return;
-          }
-
+        if (childScope && value !== oldValue) {
           cleanUp();
+        }
+
+        if (!childScope && (value || attrs.showNull)) {
           transclude(function(clone, newScope) {
             childScope = newScope;
+            clone[clone.length++] = document.createComment(' end rebuild on change ');
+            block = {clone: clone};
             $animate.enter(clone, elem.parent(), elem);
           });
-
         } else {
           cleanUp();
         }

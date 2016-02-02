@@ -5,4 +5,5 @@ define([
   './panel_loader',
   './query_ctrl',
   './panel_editor_tab',
+  './query_editor_row',
 ], function () {});
