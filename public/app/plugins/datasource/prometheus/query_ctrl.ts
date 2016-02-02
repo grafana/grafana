@@ -13,6 +13,8 @@ class PrometheusQueryCtrl extends QueryEditorCtrl {
   metric: any;
   resolutions: any;
   oldTarget: any;
+  suggestMetrics: any;
+  linkToPrometheus: any;
 
   constructor($scope, $injector, private templateSrv) {
     super($scope, $injector);
@@ -27,28 +29,33 @@ class PrometheusQueryCtrl extends QueryEditorCtrl {
     });
 
     $scope.$on('typeahead-updated', () => {
-      $scope.$apply(this.inputMetric);
-      this.refreshMetricData();
+      this.$scope.$apply(() => {
+
+        this.target.expr += this.target.metric;
+        this.metric = '';
+        this.refreshMetricData();
+      });
     });
+
+    // called from typeahead so need this
+    // here in order to ensure this ref
+    this.suggestMetrics = (query, callback) => {
+      console.log(this);
+      this.datasource.performSuggestQuery(query).then(callback);
+    };
+
+    this.updateLink();
   }
 
   refreshMetricData() {
     if (!_.isEqual(this.oldTarget, this.target)) {
       this.oldTarget = angular.copy(this.target);
       this.panelCtrl.refresh();
+      this.updateLink();
     }
   }
 
-  inputMetric() {
-    this.target.expr += this.target.metric;
-    this.metric = '';
-  }
-
-  suggestMetrics(query, callback) {
-    this.datasource.performSuggestQuery(query).then(callback);
-  }
-
-  linkToPrometheus() {
+  updateLink() {
     var range = this.panelCtrl.range;
     var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
     var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
@@ -61,8 +68,8 @@ class PrometheusQueryCtrl extends QueryEditorCtrl {
       tab: 0
     };
     var hash = encodeURIComponent(JSON.stringify([expr]));
-    return this.datasource.directUrl + '/graph#' + hash;
-  };
+    this.linkToPrometheus = this.datasource.directUrl + '/graph#' + hash;
+  }
 }
 
 export {PrometheusQueryCtrl};

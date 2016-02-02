@@ -35,8 +35,8 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
           return System.import(ds.meta.module).then(dsModule => {
             return {
               name: 'metrics-query-editor-' + ds.meta.id,
-              bindings: {target: "=", panelCtrl: "="},
-              attrs: {"target": "target", "panel-ctrl": "ctrl"},
+              bindings: {target: "=", panelCtrl: "=", datasource: "="},
+              attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
               Component: dsModule.MetricsQueryEditor
             };
           });
