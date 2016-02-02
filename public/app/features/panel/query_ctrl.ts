@@ -3,7 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-export class QueryEditorCtrl {
+export class QueryCtrl {
   target: any;
   datasource: any;
   panelCtrl: any;
@@ -27,20 +27,24 @@ export class QueryEditorCtrl {
     });
   }
 
-  removeDataQuery(query) {
-    this.panel.targets = _.without(this.panel.targets, query);
+  removeQuery() {
+    this.panel.targets = _.without(this.panel.targets, this.target);
     this.panelCtrl.refresh();
   };
 
-  duplicateDataQuery(query) {
-    var clone = angular.copy(query);
+  duplicateQuery() {
+    var clone = angular.copy(this.target);
     clone.refId = this.getNextQueryLetter();
     this.panel.targets.push(clone);
   }
 
-  moveDataQuery(direction) {
+  moveQuery(direction) {
     var index = _.indexOf(this.panel.targets, this.target);
     _.move(this.panel.targets, index, index + direction);
+  }
+
+  refresh() {
+    this.panelCtrl.refresh();
   }
 
   toggleHideQuery() {

@@ -1,15 +1,15 @@
 <div class="tight-form">
 	<ul class="tight-form-list pull-right">
-		<li ng-show="parserError" class="tight-form-item">
-			<a bs-tooltip="parserError" style="color: rgb(229, 189, 28)" role="menuitem">
+		<li ng-show="ctrl.parserError" class="tight-form-item">
+			<a bs-tooltip="ctrl.parserError" style="color: rgb(229, 189, 28)" role="menuitem">
 				<i class="fa fa-warning"></i>
 			</a>
 		</li>
-		<li class="tight-form-item small" ng-show="target.datasource">
-			<em>{{target.datasource}}</em>
+		<li class="tight-form-item small" ng-show="ctrl.target.datasource">
+			<em>{{ctrl.target.datasource}}</em>
 		</li>
 		<li class="tight-form-item">
-			<a class="pointer" tabindex="1" ng-click="toggleEditorMode()">
+			<a class="pointer" tabindex="1" ng-click="ctrl.toggleEditorMode()">
 				<i class="fa fa-pencil"></i>
 			</a>
 		</li>
@@ -20,24 +20,24 @@
 				</a>
 				<ul class="dropdown-menu pull-right" role="menu">
 					<li role="menuitem">
-						<a tabindex="1" ng-click="toggleEditorMode()">
+						<a tabindex="1" ng-click="ctrl.toggleEditorMode()">
 							Switch editor mode
 						</a>
 					</li>
 					<li role="menuitem">
-						<a tabindex="1" ng-click="ctrl.duplicateDataQuery(target)">Duplicate</a>
+						<a tabindex="1" ng-click="ctrl.duplicateQuery()">Duplicate</a>
 					</li>
 					<li role="menuitem">
-						<a tabindex="1" ng-click="ctrl.moveDataQuery($index, $index-1)">Move up</a>
+						<a tabindex="1" ng-click="ctrl.moveQuery(-1)">Move up</a>
 					</li>
 					<li role="menuitem">
-						<a tabindex="1" ng-click="ctrl.moveDataQuery($index, $index+1)">Move down</a>
+						<a tabindex="1" ng-click="ctrl.moveQuery(1)">Move down</a>
 					</li>
 				</ul>
 			</div>
 		</li>
 		<li class="tight-form-item last">
-			<a class="pointer" tabindex="1" ng-click="ctrl.removeDataQuery(target)">
+			<a class="pointer" tabindex="1" ng-click="ctrl.removeQuery(target)">
 				<i class="fa fa-remove"></i>
 			</a>
 		</li>
@@ -45,24 +45,24 @@
 
 	<ul class="tight-form-list">
 		<li class="tight-form-item" style="min-width: 15px; text-align: center">
-			{{target.refId}}
+			{{ctrl.target.refId}}
 		</li>
 		<li>
-			<a class="tight-form-item" ng-click="target.hide = !target.hide; panelCtrl.refresh();" role="menuitem">
+			<a class="tight-form-item" ng-click="ctrl.toggleHideQuery()" role="menuitem">
 				<i class="fa fa-eye"></i>
 			</a>
 		</li>
 	</ul>
 
 	<span style="display: block; overflow: hidden;">
-		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="target.target" give-focus="target.textEditor" spellcheck='false' ng-model-onblur ng-change="panelCtrl.getData()" ng-show="target.textEditor"></input>
+		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="ctrl.target.target" give-focus="ctrl.target.textEditor" spellcheck='false' ng-model-onblur ng-change="ctrl.refresh()" ng-show="ctrl.target.textEditor"></input>
 	</span>
 
-	<ul class="tight-form-list" role="menu" ng-hide="target.textEditor">
-		<li ng-repeat="segment in segments" role="menuitem">
-			<metric-segment segment="segment" get-options="getAltSegments($index)" on-change="segmentValueChanged(segment, $index)"></metric-segment>
+	<ul class="tight-form-list" role="menu" ng-hide="ctrl.target.textEditor">
+		<li ng-repeat="segment in ctrl.segments" role="menuitem">
+			<metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
 		</li>
-		<li ng-repeat="func in functions">
+		<li ng-repeat="func in ctrl.functions">
 			<span graphite-func-editor class="tight-form-item tight-form-func">
 			</span>
 		</li>

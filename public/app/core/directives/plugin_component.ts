@@ -37,7 +37,7 @@ function pluginDirectiveLoader($compile, datasourceSrv) {
               name: 'metrics-query-editor-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
               attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
-              Component: dsModule.MetricsQueryEditor
+              Component: dsModule.QueryCtrl
             };
           });
         });
