@@ -11,7 +11,7 @@ function queryEditorRowDirective() {
     restrict: 'E',
     templateUrl: 'public/app/features/panel/partials/query_editor_row.html',
     transclude: true,
-    scope: { ctrl: "=" },
+    scope: {ctrl: "="},
   };
 }
 
