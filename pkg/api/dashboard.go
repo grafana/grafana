@@ -58,26 +58,20 @@ func GetDashboard(c *middleware.Context) {
 		creator = getUserLogin(dash.CreatedBy)
 	}
 
-	// Finding total panels and queries on the dashboard
-	totalRows, totalPanels, totalQueries := getTotalRowsPanelsAndQueries(dash.Data)
-
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta: dtos.DashboardMeta{
-			IsStarred:    isStarred,
-			Slug:         slug,
-			Type:         m.DashTypeDB,
-			CanStar:      c.IsSignedIn,
-			CanSave:      c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
-			CanEdit:      canEditDashboard(c.OrgRole),
-			Created:      dash.Created,
-			Updated:      dash.Updated,
-			UpdatedBy:    updater,
-			CreatedBy:    creator,
-			TotalRows:    totalRows,
-			TotalPanels:  totalPanels,
-			TotalQueries: totalQueries,
-			Version:      dash.Version,
+			IsStarred: isStarred,
+			Slug:      slug,
+			Type:      m.DashTypeDB,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:   canEditDashboard(c.OrgRole),
+			Created:   dash.Created,
+			Updated:   dash.Updated,
+			UpdatedBy: updater,
+			CreatedBy: creator,
+			Version:   dash.Version,
 		},
 	}
 
@@ -93,26 +87,6 @@ func getUserLogin(userId int64) string {
 		user := query.Result
 		return user.Login
 	}
-}
-
-func getTotalRowsPanelsAndQueries(data map[string]interface{}) (int, int, int) {
-	totalRows, totalPanels, totalQueries := 0, 0, 0
-	if rows, rowsOk := data["rows"]; rowsOk {
-		totalRows = len(rows.([]interface{}))
-		if totalRows > 0 {
-			for _, rowElement := range rows.([]interface{}) {
-				if panels, panelsOk := rowElement.(map[string]interface{})["panels"]; panelsOk {
-					totalPanels += len(panels.([]interface{}))
-					for _, panelElement := range panels.([]interface{}) {
-						if targets, targetsOk := panelElement.(map[string]interface{})["targets"]; targetsOk {
-							totalQueries += len(targets.([]interface{}))
-						}
-					}
-				}
-			}
-		}
-	}
-	return totalRows, totalPanels, totalQueries
 }
 
 func DeleteDashboard(c *middleware.Context) {
