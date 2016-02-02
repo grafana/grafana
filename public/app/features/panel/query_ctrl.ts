@@ -8,6 +8,7 @@ export class QueryCtrl {
   datasource: any;
   panelCtrl: any;
   panel: any;
+  hasRawMode: boolean;
 
   constructor(public $scope, private $injector) {
     this.panel = this.panelCtrl.panel;

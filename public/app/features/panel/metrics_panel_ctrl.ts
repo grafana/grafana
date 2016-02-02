@@ -164,11 +164,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
   issueQueries(datasource) {
+    this.updateTimeRange();
+
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
     }
-
-    this.updateTimeRange();
 
     var metricsQuery = {
       range: this.range,
