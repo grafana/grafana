@@ -60,6 +60,17 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
           });
         });
       }
+      // QueryOptionsCtrl
+      case "annotations-query-ctrl": {
+        return System.import(scope.currentDatasource.meta.module).then(function(dsModule) {
+          return {
+            name: 'annotations-query-ctrl-' + scope.currentDatasource.meta.id,
+            bindings: {annotation: "=", datasource: "="},
+            attrs: {"annotation": "currentAnnotation", datasource: "currentDatasource"},
+            Component: dsModule.AnnotationsQueryCtrl,
+          };
+        });
+      }
       // ConfigCtrl
       case 'datasource-config-ctrl': {
         return System.import(scope.datasourceMeta.module).then(function(dsModule) {
