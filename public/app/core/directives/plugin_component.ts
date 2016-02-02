@@ -60,7 +60,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
           });
         });
       }
-      // QueryOptionsCtrl
+      // Annotations
       case "annotations-query-ctrl": {
         return System.import(scope.currentDatasource.meta.module).then(function(dsModule) {
           return {
