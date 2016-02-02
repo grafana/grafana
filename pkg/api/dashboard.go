@@ -49,35 +49,70 @@ func GetDashboard(c *middleware.Context) {
 
 	dash := query.Result
 
-	// Finding the last updater of the dashboard
-	updater := "Anonymous"
-	if dash.UpdatedBy != 0 {
-		userQuery := m.GetUserByIdQuery{Id: dash.UpdatedBy}
-		userErr := bus.Dispatch(&userQuery)
-		if userErr != nil {
-			updater = "Unknown"
-		} else {
-			user := userQuery.Result
-			updater = user.Login
-		}
+	// Finding creator and last updater of the dashboard
+	updater, creator := "Anonymous", "Anonymous"
+	if dash.UpdatedBy > 0 {
+		updater = getUserLogin(dash.UpdatedBy)
 	}
+	if dash.CreatedBy > 0 {
+		creator = getUserLogin(dash.CreatedBy)
+	}
+
+	// Finding total panels and queries on the dashboard
+	totalRows, totalPanels, totalQueries := getTotalRowsPanelsAndQueries(dash.Data)
 
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta: dtos.DashboardMeta{
-			IsStarred: isStarred,
-			Slug:      slug,
-			Type:      m.DashTypeDB,
-			CanStar:   c.IsSignedIn,
-			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
-			CanEdit:   canEditDashboard(c.OrgRole),
-			Created:   dash.Created,
-			Updated:   dash.Updated,
-			UpdatedBy: updater,
+			IsStarred:    isStarred,
+			Slug:         slug,
+			Type:         m.DashTypeDB,
+			CanStar:      c.IsSignedIn,
+			CanSave:      c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:      canEditDashboard(c.OrgRole),
+			Created:      dash.Created,
+			Updated:      dash.Updated,
+			UpdatedBy:    updater,
+			CreatedBy:    creator,
+			TotalRows:    totalRows,
+			TotalPanels:  totalPanels,
+			TotalQueries: totalQueries,
+			Version:      dash.Version,
 		},
 	}
 
 	c.JSON(200, dto)
+}
+
+func getUserLogin(userId int64) string {
+	query := m.GetUserByIdQuery{Id: userId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		return "Anonymous"
+	} else {
+		user := query.Result
+		return user.Login
+	}
+}
+
+func getTotalRowsPanelsAndQueries(data map[string]interface{}) (int, int, int) {
+	totalRows, totalPanels, totalQueries := 0, 0, 0
+	if rows, rowsOk := data["rows"]; rowsOk {
+		totalRows = len(rows.([]interface{}))
+		if totalRows > 0 {
+			for _, rowElement := range rows.([]interface{}) {
+				if panels, panelsOk := rowElement.(map[string]interface{})["panels"]; panelsOk {
+					totalPanels += len(panels.([]interface{}))
+					for _, panelElement := range panels.([]interface{}) {
+						if targets, targetsOk := panelElement.(map[string]interface{})["targets"]; targetsOk {
+							totalQueries += len(targets.([]interface{}))
+						}
+					}
+				}
+			}
+		}
+	}
+	return totalRows, totalPanels, totalQueries
 }
 
 func DeleteDashboard(c *middleware.Context) {
@@ -104,9 +139,9 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	cmd.OrgId = c.OrgId
 
 	if !c.IsSignedIn {
-		cmd.UpdatedBy = 0
+		cmd.UserId = -1
 	} else {
-		cmd.UpdatedBy = c.UserId
+		cmd.UserId = c.UserId
 	}
 
 	dash := cmd.GetDashboardModel()
