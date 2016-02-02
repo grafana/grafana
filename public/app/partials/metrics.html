@@ -1,10 +1,10 @@
 <div class="editor-row">
 
 	<div class="tight-form-container">
-		<rebuild-on-change property="ctrl.panel.datasource" ignore-null="true">
-			<plugin-component type="metrics-query-editor" ng-repeat="target in ctrl.panel.targets" ng-class="{'tight-form-disabled': target.hide}">
-			</plugin-component>
-		</rebuild-on-change>
+		<!-- <rebuild&#45;on&#45;change property="ctrl.panel.datasource" show&#45;null="true"> -->
+		<!-- 	<plugin&#45;component type="query&#45;ctrl" ng&#45;repeat="target in ctrl.panel.targets" ng&#45;class="{'tight&#45;form&#45;disabled': target.hide}"> -->
+		<!-- 	</plugin&#45;component> -->
+		<!-- </rebuild&#45;on&#45;change> -->
 	</div>
 
 	<div style="margin: 20px 0 0 0">
@@ -28,7 +28,11 @@
 
 	</div>
 
-	<metrics-query-options></metrics-query-options>
+	<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
+		<plugin-component type="query-options-ctrl">
+		</plugin-component>
+	</rebuild-on-change>
+
 </div>
 
 <div class="editor-row" style="margin-top: 30px">

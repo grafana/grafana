@@ -1,14 +1,20 @@
 import {GraphiteDatasource} from './datasource';
 import {GraphiteQueryCtrl} from './query_ctrl';
 
-class GraphiteConfigView {
+class GraphiteConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
 }
+
+class GraphiteQueryOptionsCtrl {
+  static templateUrl = 'public/app/plugins/datasource/graphite/partials/query.options.html';
+}
+
 
 export {
   GraphiteDatasource as Datasource,
   GraphiteQueryCtrl as QueryCtrl,
-  GraphiteConfigView as ConfigView
+  GraphiteConfigCtrl as ConfigCtrl,
+  GraphiteQueryOptionsCtrl as QueryOptionsCtrl,
 };
 
 // define([
