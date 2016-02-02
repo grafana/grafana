@@ -15,7 +15,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   functions: any[];
   segments: any[];
-  parserError: string;
 
   /** @ngInject **/
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
@@ -35,7 +34,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   parseTarget() {
     this.functions = [];
     this.segments = [];
-    delete this.parserError;
+    this.error = null;
 
     if (this.target.textEditor) {
       return;
@@ -49,7 +48,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     if (astNode.type === 'error') {
-      this.parserError = astNode.message + " at position: " + astNode.pos;
+      this.error = astNode.message + " at position: " + astNode.pos;
       this.target.textEditor = true;
       return;
     }
@@ -58,7 +57,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       this.parseTargeRecursive(astNode, null, 0);
     } catch (err) {
       console.log('error parsing target:', err.message);
-      this.parserError = err.message;
+      this.error = err.message;
       this.target.textEditor = true;
     }
 
@@ -142,7 +141,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       }
     }).catch(err => {
-      this.parserError = err.message || 'Failed to issue metric query';
+      this.error = err.message || 'Failed to issue metric query';
     });
   }
 
@@ -179,13 +178,13 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
-      this.parserError = err.message || 'Failed to issue metric query';
+      this.error = err.message || 'Failed to issue metric query';
       return [];
     });
   }
 
   segmentValueChanged(segment, segmentIndex) {
-    delete this.parserError;
+    this.error = null;
 
     if (this.functions.length > 0 && this.functions[0].def.fake) {
       this.functions = [];
@@ -210,7 +209,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   targetChanged() {
-    if (this.parserError) {
+    if (this.error) {
       return;
     }
 

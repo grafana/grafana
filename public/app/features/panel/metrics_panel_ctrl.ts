@@ -38,13 +38,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (!this.panel.targets) {
       this.panel.targets = [{}];
     }
-
-    // hookup initial data fetch
-    this.$timeout(() => {
-      if (!this.skipDataOnInit) {
-        this.refresh();
-      }
-    }, 30);;
   }
 
   initEditMode() {
@@ -182,15 +175,19 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    return datasource.query(metricsQuery).then(results => {
-      this.setTimeQueryEnd();
+    try {
+      return datasource.query(metricsQuery).then(results => {
+        this.setTimeQueryEnd();
 
-      if (this.dashboard.snapshot) {
-        this.panel.snapshotData = results;
-      }
+        if (this.dashboard.snapshot) {
+          this.panel.snapshotData = results;
+        }
 
-      return results;
-    });
+        return results;
+      });
+    } catch (err) {
+      return this.$q.reject(err);
+    }
   }
 
   setDatasource(datasource) {
