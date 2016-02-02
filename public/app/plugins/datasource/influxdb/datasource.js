@@ -4,7 +4,6 @@ define([
   'app/core/utils/datemath',
   './influx_series',
   './influx_query',
-  './query_ctrl',
 ],
 function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';

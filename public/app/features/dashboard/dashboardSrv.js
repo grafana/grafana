@@ -177,42 +177,6 @@ function (angular, $, _, moment) {
       return newPanel;
     };
 
-    p.getNextQueryLetter = function(panel) {
-      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-      return _.find(letters, function(refId) {
-        return _.every(panel.targets, function(other) {
-          return other.refId !== refId;
-        });
-      });
-    };
-
-    p.addDataQueryTo = function(panel, datasource) {
-      var target = {
-        refId: this.getNextQueryLetter(panel)
-      };
-
-      if (datasource) {
-        target.datasource = datasource.name;
-      }
-
-      panel.targets.push(target);
-    };
-
-    p.removeDataQuery = function (panel, query) {
-      panel.targets = _.without(panel.targets, query);
-    };
-
-    p.duplicateDataQuery = function(panel, query) {
-      var clone = angular.copy(query);
-      clone.refId = this.getNextQueryLetter(panel);
-      panel.targets.push(clone);
-    };
-
-    p.moveDataQuery = function(panel, fromIndex, toIndex) {
-      _.move(panel.targets, fromIndex, toIndex);
-    };
-
     p.formatDate = function(date, format) {
       date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
