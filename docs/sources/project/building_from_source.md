@@ -35,7 +35,7 @@ to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
 ## Build the Front-end Assets
 
-To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+To build less to css for the frontend you will need a recent version of node (v0.12.0),
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
