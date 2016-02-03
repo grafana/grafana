@@ -3,13 +3,12 @@ define([
   'lodash',
   'app/core/utils/datemath',
   'moment',
-  './queryCtrl',
 ],
 function (angular, _, dateMath) {
   'use strict';
 
   /** @ngInject */
-  function OpenTSDBDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+  function OpenTsDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -73,13 +72,13 @@ function (angular, _, dateMath) {
         url: this.url + '/api/query',
         data: reqBody
       };
+
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
+
       if (this.basicAuth) {
-        options.headers = {
-          "Authorization": this.basicAuth
-        };
+        options.headers = {"Authorization": this.basicAuth};
       }
 
       // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
@@ -325,5 +324,7 @@ function (angular, _, dateMath) {
 
   }
 
-  return OpenTSDBDatasource;
+  return {
+    OpenTsDatasource: OpenTsDatasource
+  };
 });
