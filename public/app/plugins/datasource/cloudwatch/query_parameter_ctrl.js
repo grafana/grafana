@@ -9,7 +9,7 @@ function (angular, _) {
 
   module.directive('cloudwatchQueryParameter', function() {
     return {
-      templateUrl: 'app/plugins/datasource/cloudwatch/partials/query.parameter.html',
+      templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
       controller: 'CloudWatchQueryParameterCtrl',
       restrict: 'E',
       scope: {

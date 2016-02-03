@@ -1,4 +1,5 @@
-<datasource-http-settings></datasource-http-settings>
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
 
 <h4>Elasticsearch details</h4>
 
@@ -8,13 +9,13 @@
 			Index name
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='current.database' placeholder="" required></input>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.database' placeholder="" required></input>
 		</li>
 		<li class="tight-form-item">
 			Pattern
 		</li>
 		<li>
-			<select class="input-medium tight-form-input" ng-model="current.jsonData.interval" ng-options="f.value as f.name for f in indexPatternTypes" ng-change="indexPatternTypeChanged()" ></select>
+			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
@@ -25,7 +26,7 @@
 			Time field name
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='current.jsonData.timeField' placeholder="" required ng-init="current.jsonData.timeField = current.jsonData.timeField || '@timestamp'"></input>
+			<input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.timeField' placeholder="" required ng-init=""></input>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
@@ -36,7 +37,7 @@
 			Version
 		</li>
 		<li>
-			<select class="input-medium tight-form-input" ng-model="current.jsonData.esVersion" ng-options="f.value as f.name for f in esVersions"></select>
+			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
@@ -52,7 +53,7 @@
 			Group by time interval
 		</li>
 		<li>
-			<input type="text" class="input-medium tight-form-input input-xlarge" ng-model="current.jsonData.timeInterval"
+			<input type="text" class="input-medium tight-form-input input-xlarge" ng-model="ctrl.current.jsonData.timeInterval"
 			spellcheck='false' placeholder="example: >10s">
 		</li>
 		<li class="tight-form-item">

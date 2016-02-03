@@ -1,9 +1,6 @@
 import {ElasticDatasource} from './datasource';
 import {ElasticQueryCtrl} from './query_ctrl';
-
-class ElasticConfigCtrl {
-  static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/config.html';
-}
+import {ElasticConfigCtrl} from './config_ctrl';
 
 class ElasticQueryOptionsCtrl {
   static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/query.options.html';
