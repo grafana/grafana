@@ -4,6 +4,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import 'jquery.flot';
+import 'jquery.flot.gauge';
 
 import kbn from 'app/core/utils/kbn';
 import TimeSeries from 'app/core/time_series2';
@@ -38,6 +39,12 @@ var panelDefaults = {
     full: false,
     lineColor: 'rgb(31, 120, 193)',
     fillColor: 'rgba(31, 118, 189, 0.18)',
+  },
+  gauge: {
+    show: false,
+    minValue: 0,
+    maxValue: 100,
+    thresholdLabels: true
   }
 };
 
@@ -270,6 +277,73 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return body;
     }
 
+    function addGauge() {
+      var plotCanvas = $('<div></div>');
+      var plotCss = {
+        top: '10px',
+        margin: 'auto',
+        position: 'relative',
+        height: elem.height() + 'px',
+        width: elem.width() + 'px'
+      };
+
+      plotCanvas.css(plotCss);
+
+      var thresholds = [];
+      for (var i = 0; i < data.thresholds.length; i++) {
+        thresholds.push({
+          value: data.thresholds[i],
+          color: data.colorMap[i]
+        });
+      }
+      thresholds.push({
+        value: panel.gauge.maxValue,
+        color: data.colorMap[data.colorMap.length  - 1]
+      });
+
+      var options = {
+        series: {
+          gauges: {
+            gauge: {
+              min: panel.gauge.minValue,
+              max: panel.gauge.maxValue,
+              background: { color: 'rgb(38,38,38)'},
+              border: { color: null },
+              shadow: { show: false },
+              width: 38
+            },
+            frame: { show: false },
+            label: { show: false },
+            layout: { margin: 0 },
+            cell: { border: { width: 0 } },
+            threshold: {
+              values: thresholds,
+              label: {
+                show: panel.gauge.thresholdLabels,
+                margin: 8,
+                font: { size: 18 }
+              },
+              width: 8
+            },
+            value: {
+              color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
+              formatter: function () { return data.valueFormated; },
+              font: { size: 30 }
+            },
+            show: true
+          }
+        }
+      };
+
+      elem.append(plotCanvas);
+
+      var plotSeries = {
+        data: [[0, data.valueRounded]]
+      };
+
+      $.plot(plotCanvas, [plotSeries], options);
+    }
+
     function addSparkline() {
       var width = elem.width() + 20;
       if (width < 30) {
@@ -335,7 +409,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
       setElementHeight();
 
-      var body = getBigValueHtml();
+      var body = panel.gauge.show ? '' : getBigValueHtml();
 
       if (panel.colorBackground && !isNaN(data.valueRounded)) {
         var color = getColorForValue(data, data.valueRounded);
@@ -356,6 +430,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       if (panel.sparkline.show) {
         addSparkline();
+      }
+
+      if (panel.gauge.show) {
+        addGauge();
       }
 
       elem.toggleClass('pointer', panel.links.length > 0);
