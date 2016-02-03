@@ -18,6 +18,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   suggestTagValues: any;
   addTagMode: boolean;
 
+  /** @ngInject **/
   constructor($scope, $injector) {
     super($scope, $injector);
 
