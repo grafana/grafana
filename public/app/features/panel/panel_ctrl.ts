@@ -63,12 +63,6 @@ export class PanelCtrl {
   }
 
   editPanel() {
-    if (!this.editModeInitiated) {
-      this.editorTabs = [];
-      this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
-      this.initEditMode();
-    }
-
     this.changeView(true, true);
   }
 
@@ -77,7 +71,9 @@ export class PanelCtrl {
   }
 
   initEditMode() {
-    return;
+    this.editorTabs = [];
+    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+    this.editModeInitiated = true;
   }
 
   addEditorTab(title, directiveFn, index?) {
@@ -166,12 +162,12 @@ export class PanelCtrl {
     });
   }
 
- sharePanel() {
-   var shareScope = this.$scope.$new();
-   shareScope.panel = this.panel;
-   shareScope.dashboard = this.dashboard;
+  sharePanel() {
+    var shareScope = this.$scope.$new();
+    shareScope.panel = this.panel;
+    shareScope.dashboard = this.dashboard;
 
-   this.publishAppEvent('show-modal', {
+    this.publishAppEvent('show-modal', {
      src: 'public/app/features/dashboard/partials/shareModal.html',
      scope: shareScope
    });
