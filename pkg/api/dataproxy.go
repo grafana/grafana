@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
+	"github.com/grafana/grafana/pkg/api/keystone"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -94,6 +95,15 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
 			return
 		}
+	}
+
+	keystoneAuth, _ := ds.JsonData["keystoneAuth"].(bool)
+	if keystoneAuth{
+		token, err := keystone.GetToken(c)
+		if err != nil {
+			c.JsonApiErr(500, "Failed to get keystone token", err)
+		}
+		c.Req.Request.Header["X-Auth-Token"] = []string{token}
 	}
 
 	if ds.Type == m.DS_CLOUDWATCH {
