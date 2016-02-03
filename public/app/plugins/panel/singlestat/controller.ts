@@ -50,7 +50,6 @@ export class SingleStatCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, panelDefaults);
   }
 
-
   initEditMode() {
     super.initEditMode();
     this.icon =  "fa fa-dashboard";
