@@ -41,6 +41,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   initEditMode() {
+    super.initEditMode();
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();

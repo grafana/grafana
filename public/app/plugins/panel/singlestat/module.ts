@@ -32,6 +32,8 @@ class SingleStatPanel extends PanelDirective {
           $panelContainer = elem.parents('.panel-container');
           firstRender = false;
           hookupDrilldownLinkTooltip();
+        } else {
+          return;
         }
       }
 

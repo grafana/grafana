@@ -57,7 +57,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
   initEditMode() {
     super.initEditMode();
-    this.addEditorTab('Options', tablePanelEditor, 1);
+    this.addEditorTab('Options', tablePanelEditor, 2);
   }
 
   getExtendedMenu() {
