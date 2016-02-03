@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import coreModule from '../core_module';
 
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q) {
 
   function getPluginComponentDirective(options) {
     return function() {
@@ -83,7 +83,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
         });
       }
       default: {
-        $rootScope.appEvent('alert-error', ['Plugin component error', 'could not find component '+ attrs.type]);
+        return $q.reject({message: "Could not find component type: " + attrs.type });
       }
     }
   }
@@ -106,6 +106,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
       return;
     }
 
+    if (!componentInfo.Component) {
+      throw {message: 'Failed to find exported plugin component for ' + componentInfo.name};
+    }
+
     if (!componentInfo.Component.registered) {
       var directiveName = attrs.$normalize(componentInfo.name);
       var directiveFn = getPluginComponentDirective(componentInfo);
@@ -121,6 +125,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope) {
     link: function(scope, elem, attrs) {
       getModule(scope, attrs).then(function (componentInfo) {
         registerPluginComponent(scope, elem, attrs, componentInfo);
+      }).catch(err => {
+        $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
       });
     }
   };
