@@ -15,8 +15,7 @@ type keystoneAuther struct {
     v3                bool
     userdomainname    string
     token             string
-// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
-    tenants           []v2_tenant_struct
+    tenants           []tenant_struct
 }
 
 type v2_auth_response_struct struct {
@@ -45,12 +44,10 @@ type v2_credentials_struct struct {
 }
 
 type v2_tenant_response_struct struct{
-// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
-    Tenants []v2_tenant_struct
+    Tenants []tenant_struct
 }
 
-// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
-type v2_tenant_struct struct {
+type tenant_struct struct {
     Name string
 }
 
@@ -82,8 +79,7 @@ type v3_userdomain_struct struct {
 }
 
 type v3_project_response_struct struct{
-// maybe we should remove the v2_ in the name here, as this will be used for both v2 and v3?
-    Projects []v2_tenant_struct
+    Projects []tenant_struct
 }
 
 func NewKeystoneAuthenticator(server string, v3 bool, userdomainaname string) *keystoneAuther {
