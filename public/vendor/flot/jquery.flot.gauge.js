@@ -277,7 +277,7 @@
          */
         Gauge.prototype.drawBackground = function(layout) {
             
-            if (!options.grid.show) {
+            if (!gaugeOptions.frame.show) {
                 return;
             }
             context.save();
@@ -301,7 +301,7 @@
         Gauge.prototype.drawCellBackground = function(gaugeOptionsi, cellLayout) {
             
             context.save();
-            if (gaugeOptionsi.cell.border && gaugeOptionsi.cell.border.color && gaugeOptionsi.cell.border.width) {
+            if (gaugeOptionsi.cell.border && gaugeOptionsi.cell.border.show && gaugeOptionsi.cell.border.color && gaugeOptionsi.cell.border.width) {
                 context.strokeStyle = gaugeOptionsi.cell.border.color;
                 context.lineWidth = gaugeOptionsi.cell.border.width;
                 context.strokeRect(cellLayout.x, cellLayout.y, cellLayout.cellWidth, cellLayout.cellHeight);
@@ -337,9 +337,9 @@
                 layout.width,
                 toRad(gaugeOptionsi.gauge.startAngle),
                 toRad(gaugeOptionsi.gauge.endAngle),
-                gaugeOptionsi.gauge.stroke.color,  // line color
-                gaugeOptionsi.gauge.stroke.width,  // line width
-                gaugeOptionsi.gauge.frameColor,    // fill color
+                gaugeOptionsi.gauge.border.color,      // line color
+                gaugeOptionsi.gauge.border.width,      // line width
+                gaugeOptionsi.gauge.background.color,  // fill color
                 blur);
 
             // draw gauge
@@ -583,7 +583,7 @@
          * @param  {Number} [a] the angle of the value drawn
          */
         function drawText(x, y, id, text, textOptions, a) {
-            var span = $("#" + id);
+            var span = $("." + id, placeholder);
             var exists = span.length;
             if (!exists) {
                 span = $("<span></span>")
@@ -621,7 +621,6 @@
 
         return Gauge;
     })();
-
     /**
      * get a instance of Logger
      *
@@ -849,11 +848,15 @@
                     vMargin: 5,
                     square: false
                 },
+                frame: {
+                    show: true
+                },
                 cell: {
                     background: {
                         color: null
                     },
                     border: {
+                        show: true,
                         color: "black",
                         width: 1
                     },
@@ -866,15 +869,17 @@
                     endAngle: 2.1, // 0 - 2 factor of the radians
                     min: 0,
                     max: 100,
-                    shadow: {
-                        show: true,
-                        blur: 5
+                    background: {
+                        color: "white"
                     },
-                    stroke: {
+                    border: {
                         color: "lightgray",
                         width: 2
                     },
-                    frameColor: "white"
+                    shadow: {
+                        show: true,
+                        blur: 5
+                    }
                 },
                 label: {
                     show: true,
