@@ -5,6 +5,7 @@ import _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
+import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
 
 /** @ngInject */
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -45,20 +46,23 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function loadPanelComponentInfo(scope, attrs) {
+    var componentInfo: any = {
+      name: 'panel-plugin-' + scope.panel.type,
+      bindings: {dashboard: "=", panel: "=", row: "="},
+      attrs: {dashboard: "dashboard", panel: "panel", row: "row"},
+    };
+
     var panelElemName = 'panel-' + scope.panel.type;
     let panelInfo = config.panels[scope.panel.type];
-    if (!panelInfo) {
-      // unknown
+    var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    if (panelInfo) {
+      panelCtrlPromise = System.import(panelInfo.module).then(function(panelModule) {
+        return panelModule.PanelCtrl;
+      });
     }
 
-    return System.import(panelInfo.module).then(function(panelModule): any {
-      var PanelCtrl = panelModule.PanelCtrl;
-      var componentInfo = {
-        name: 'panel-plugin-' + panelInfo.id,
-        bindings: {dashboard: "=", panel: "=", row: "="},
-        attrs: {dashboard: "dashboard", panel: "panel", row: "row"},
-        Component: PanelCtrl,
-      };
+    return panelCtrlPromise.then(function(PanelCtrl: any) {
+      componentInfo.Component = PanelCtrl;
 
       if (!PanelCtrl || PanelCtrl.registered) {
         return componentInfo;
