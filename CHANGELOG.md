@@ -20,6 +20,7 @@
 * **Playlist**: Fix for memory leak when running a playlist, closes [#3794](https://github.com/grafana/grafana/pull/3794)
 * **InfluxDB**: Fix for InfluxDB and table panel when using Format As Table and having group by time, fixes [#3928](https://github.com/grafana/grafana/issues/3928)
 * **Panel Time shift**: Fix for panel time range and using dashboard times liek `Today` and `This Week`, fixes [#3941](https://github.com/grafana/grafana/issues/3941)
+* **Row repeat**: Repeated rows will now appear next to each other and not by the bottom of the dashboard, fixes [#3942](https://github.com/grafana/grafana/issues/3942)
 
 # 2.6.1 (unrelased, 2.6.x branch)
 
