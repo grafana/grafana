@@ -357,5 +357,7 @@ function (angular, _, moment, dateMath) {
 
   }
 
-  return CloudWatchDatasource;
+  return {
+    CloudWatchDatasource: CloudWatchDatasource
+  };
 });

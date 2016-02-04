@@ -2,17 +2,15 @@
 
 import angular from 'angular';
 import {GrafanaDatasource} from './datasource';
+import {QueryCtrl} from 'app/features/panel/panel';
 
-var module = angular.module('grafana.directives');
-
-function grafanaMetricsQueryEditor() {
-  return {templateUrl: 'public/app/plugins/datasource/grafana/partials/query.editor.html'};
+class GrafanaQueryCtrl extends QueryCtrl {
+  static templateUrl = 'public/app/plugins/datasource/grafana/partials/query.editor.html';
 }
-
 
 export {
   GrafanaDatasource,
   GrafanaDatasource as Datasource,
-  grafanaMetricsQueryEditor as metricsQueryEditor
+  GrafanaQueryCtrl as QueryCtrl,
 };
 

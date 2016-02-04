@@ -61,6 +61,13 @@ function (angular, _, config) {
       });
     };
 
+    $scope.editRow = function() {
+      $scope.appEvent('show-dash-editor', {
+        src: 'public/app/partials/roweditor.html',
+        scope: $scope.$new()
+      });
+    };
+
     $scope.moveRow = function(direction) {
       var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);

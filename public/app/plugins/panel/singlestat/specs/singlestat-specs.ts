@@ -4,7 +4,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../..
 
 import angular from 'angular';
 import helpers from '../../../../../test/specs/helpers';
-import {SingleStatCtrl} from '../controller';
+import {SingleStatCtrl} from '../module';
 
 describe('SingleStatCtrl', function() {
   var ctx = new helpers.ControllerTestContext();

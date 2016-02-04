@@ -1,14 +1,15 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import {PanelDirective} from '../../../features/panel/panel';
+import {PanelCtrl} from '../../../features/panel/panel';
 
-class UnknownPanel extends PanelDirective {
-  templateUrl = 'public/app/plugins/panel/unknown/module.html';
+export class UnknownPanelCtrl extends PanelCtrl {
+  static templateUrl = 'public/app/plugins/panel/unknown/module.html';
+
+  /** @ngInject */
+  constructor($scope, $injector) {
+    super($scope, $injector);
+  }
 }
 
 
-export {
-  UnknownPanel,
-  UnknownPanel as Panel
-}
 

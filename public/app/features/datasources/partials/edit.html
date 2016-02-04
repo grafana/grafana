@@ -41,7 +41,10 @@
 				<div class="clearfix"></div>
 			</div>
 
-			<ds-config-view ng-if="datasourceMeta.id" ds-meta="datasourceMeta" current="current"></ds-config-view>
+			<rebuild-on-change property="datasourceMeta.id">
+				<plugin-component type="datasource-config-ctrl">
+				</plugin-component>
+			</rebuild-on-change>
 
 			<div ng-if="testing" style="margin-top: 25px">
 				<h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>

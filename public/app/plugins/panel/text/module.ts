@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {PanelDirective, PanelCtrl} from '../../../features/panel/panel';
+import {PanelCtrl} from '../../../features/panel/panel';
 
  // Set and populate defaults
 var panelDefaults = {
@@ -10,6 +10,8 @@ var panelDefaults = {
 };
 
 export class TextPanelCtrl extends PanelCtrl {
+  static templateUrl = `public/app/plugins/panel/text/module.html`;
+
   converter: any;
   content: string;
 
@@ -21,8 +23,10 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   initEditMode() {
+    super.initEditMode();
     this.icon = 'fa fa-text-width';
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
+    this.editorTabIndex = 1;
   }
 
   refresh() {
@@ -77,9 +81,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-class TextPanel extends PanelDirective {
-  templateUrl = `public/app/plugins/panel/text/module.html`;
-  controller = TextPanelCtrl;
-}
-
-export {TextPanel as Panel}
+export {TextPanelCtrl as PanelCtrl}

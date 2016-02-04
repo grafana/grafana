@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import config from 'app/core/config';
-import {PanelDirective, PanelCtrl} from '../../../features/panel/panel';
+import {PanelCtrl} from '../../../features/panel/panel';
 
  // Set and populate defaults
 var panelDefaults = {
@@ -13,6 +13,8 @@ var panelDefaults = {
 };
 
 class DashListCtrl extends PanelCtrl {
+  static templateUrl = 'public/app/plugins/panel/dashlist/module.html';
+
   dashList: any[];
   modes: any[];
 
@@ -28,6 +30,7 @@ class DashListCtrl extends PanelCtrl {
   }
 
   initEditMode() {
+    super.initEditMode();
     this.modes = ['starred', 'search'];
     this.icon = "fa fa-star";
     this.addEditorTab('Options', () => {
@@ -52,12 +55,4 @@ class DashListCtrl extends PanelCtrl {
   }
 }
 
-class DashListPanel extends PanelDirective {
-  controller = DashListCtrl;
-  templateUrl = 'public/app/plugins/panel/dashlist/module.html';
-}
-
-export {
-  DashListCtrl,
-  DashListPanel as Panel
-}
+export {DashListCtrl, DashListCtrl as PanelCtrl}

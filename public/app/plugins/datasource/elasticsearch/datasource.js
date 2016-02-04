@@ -304,5 +304,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
   }
 
-  return ElasticDatasource;
+  return {
+    ElasticDatasource: ElasticDatasource
+  };
 });

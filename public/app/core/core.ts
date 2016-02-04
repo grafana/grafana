@@ -3,7 +3,6 @@
 
 import "./directives/annotation_tooltip";
 import "./directives/body_class";
-import "./directives/config_modal";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
 import "./directives/dash_upload";
@@ -16,6 +15,8 @@ import "./directives/password_strenght";
 import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
+import "./directives/plugin_component";
+import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import './jquery_extended';
 import './partials';

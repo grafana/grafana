@@ -65,7 +65,7 @@
 									</ul>
 								</li>
 								<li>
-									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
+									<a ng-click="editRow()">Row editor</a>
 								</li>
 								<li>
 									<a ng-click="deleteRow()">Delete row</a>
@@ -81,8 +81,8 @@
 
 					<div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboard.meta.fullscreen" drag="panel.id"
 						ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-						<panel-loader class="panel-margin" dashboard="dashboard" row="row" panel="panel">
-						</panel-loader>
+						<plugin-component type="panel" class="panel-margin">
+						</plugin-component>
 					</div>
 
 					<div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">

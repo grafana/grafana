@@ -103,6 +103,11 @@ function (angular, _, $) {
         if (!panelScope) {
           return;
         }
+
+        if (!panelScope.ctrl.editModeInitiated) {
+          panelScope.ctrl.initEditMode();
+        }
+
         this.enterFullscreen(panelScope);
         return;
       }

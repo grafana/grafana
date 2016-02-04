@@ -3,7 +3,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 import moment from 'moment';
 import angular from 'angular';
 import helpers from 'test/specs/helpers';
-import Datasource from "../datasource";
+import {ElasticDatasource} from "../datasource";
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -21,7 +21,7 @@ describe('ElasticDatasource', function() {
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = ctx.$injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = ctx.$injector.instantiate(ElasticDatasource, {instanceSettings: instanceSettings});
   }
 
   describe('When testing datasource with index pattern', function() {
