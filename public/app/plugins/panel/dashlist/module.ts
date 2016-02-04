@@ -13,6 +13,8 @@ var panelDefaults = {
 };
 
 class DashListCtrl extends PanelCtrl {
+  static templateUrl = 'public/app/plugins/panel/dashlist/module.html';
+
   dashList: any[];
   modes: any[];
 
@@ -55,10 +57,9 @@ class DashListCtrl extends PanelCtrl {
 
 class DashListPanel extends PanelDirective {
   controller = DashListCtrl;
-  templateUrl = 'public/app/plugins/panel/dashlist/module.html';
 }
 
 export {
-  DashListCtrl,
-  DashListPanel as Panel
+  DashListCtrl as DashListCtrl,
+  DashListCtrl as PanelCtrl,
 }

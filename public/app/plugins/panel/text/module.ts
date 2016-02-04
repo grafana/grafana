@@ -10,6 +10,8 @@ var panelDefaults = {
 };
 
 export class TextPanelCtrl extends PanelCtrl {
+  static templateUrl = `public/app/plugins/panel/text/module.html`;
+
   converter: any;
   content: string;
 
@@ -79,9 +81,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-class TextPanel extends PanelDirective {
-  templateUrl = `public/app/plugins/panel/text/module.html`;
-  controller = TextPanelCtrl;
-}
-
-export {TextPanel as Panel}
+export {TextPanelCtrl as PanelCtrl}

@@ -3,14 +3,30 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-import coreModule from '../core_module';
+import config from 'app/core/config';
+import coreModule from 'app/core/core_module';
 
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q) {
+/** @ngInject */
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
+
+  function getTemplate(component) {
+    if (component.template) {
+      return $q.when(component.template);
+    }
+    var cached = $templateCache.get(component.templateUrl);
+    if (cached) {
+      return $q.when(cached);
+    }
+    return $http.get(component.templateUrl).then(res => {
+      return res.data;
+    });
+  }
 
   function getPluginComponentDirective(options) {
     return function() {
       return {
         templateUrl: options.Component.templateUrl,
+        template: options.Component.template,
         restrict: 'E',
         controller: options.Component,
         controllerAs: 'ctrl',
@@ -20,9 +36,48 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q) {
           if (ctrl.link) {
             ctrl.link(scope, elem, attrs, ctrl);
           }
+          if (ctrl.init) {
+            ctrl.init();
+          }
         }
       };
     };
+  }
+
+  function loadPanelComponentInfo(scope, attrs) {
+    var panelElemName = 'panel-' + scope.panel.type;
+    let panelInfo = config.panels[scope.panel.type];
+    if (!panelInfo) {
+      // unknown
+    }
+
+    return System.import(panelInfo.module).then(function(panelModule): any {
+      var PanelCtrl = panelModule.PanelCtrl;
+      var componentInfo = {
+        name: 'panel-plugin-' + panelInfo.id,
+        bindings: {dashboard: "=", panel: "=", row: "="},
+        attrs: {dashboard: "dashboard", panel: "panel", row: "row"},
+        Component: PanelCtrl,
+      };
+
+      if (!PanelCtrl || PanelCtrl.registered) {
+        return componentInfo;
+      };
+
+      if (PanelCtrl.templatePromise) {
+        return PanelCtrl.templatePromise.then(res => {
+          return componentInfo;
+        });
+      }
+
+      PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
+        PanelCtrl.templateUrl = null;
+        PanelCtrl.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
+        return componentInfo;
+      });
+
+      return PanelCtrl.templatePromise;
+    });
   }
 
   function getModule(scope, attrs) {
@@ -82,6 +137,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q) {
           };
         });
       }
+      // Panel
+      case 'panel': {
+        return loadPanelComponentInfo(scope, attrs);
+      }
       default: {
         return $q.reject({message: "Could not find component type: " + attrs.type });
       }
@@ -127,6 +186,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q) {
         registerPluginComponent(scope, elem, attrs, componentInfo);
       }).catch(err => {
         $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
+        console.log('Plugin componnet error', err);
       });
     }
   };
