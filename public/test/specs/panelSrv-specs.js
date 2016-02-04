@@ -10,6 +10,7 @@ define([
     var _panelScope;
     var _datasourceSrvStub;
 
+	beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(module(function($provide) {
       _datasourceSrvStub = {
