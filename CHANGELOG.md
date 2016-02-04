@@ -1,7 +1,7 @@
 # 3.0.0 (unrelased master branch)
 
 ### New Features
-* **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/pull/3655)
+* **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/issues/3655)
 * **Metadata**: Settings panel now shows dashboard metadata, closes [#3304](https://github.com/grafana/grafana/issues/3304)
 * **InfluxDB**: Support for policy selection in query editor, closes [#2018](https://github.com/grafana/grafana/issues/2018)
 
@@ -11,14 +11,15 @@
 * **KairosDB** The data source is no longer included in default builds, but can easily be installed via improved plugin system, closes [#3524](https://github.com/grafana/grafana/issues/3524)
 
 ### Enhancements
-* **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/pull/3458)
-* **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/pull/3584)
-* **snapshot**: Annotations are now included in snapshots, closes [#3635](https://github.com/grafana/grafana/pull/3635)
+* **Sessions**: Support for memcached as session storage, closes [#3458](https://github.com/grafana/grafana/issues/3458)
+* **mysql**: Grafana now supports ssl for mysql, closes [#3584](https://github.com/grafana/grafana/issues/3584)
+* **snapshot**: Annotations are now included in snapshots, closes [#3635](https://github.com/grafana/grafana/issues/3635)
 * **Admin**: Admin can now have global overview of Grafana setup, closes [#3812](https://github.com/grafana/grafana/issues/3812)
 
 ### Bug fixes
 * **Playlist**: Fix for memory leak when running a playlist, closes [#3794](https://github.com/grafana/grafana/pull/3794)
-* **InfluxDB**: Fix for InfluxDB and table panel when using Format As Table and having group by time, fixes [#3928](https://github.com/grafana/grafana/pull/3928)
+* **InfluxDB**: Fix for InfluxDB and table panel when using Format As Table and having group by time, fixes [#3928](https://github.com/grafana/grafana/issues/3928)
+* **Panel Time shift**: Fix for panel time range and using dashboard times liek `Today` and `This Week`, fixes [#3941](https://github.com/grafana/grafana/issues/3941)
 
 # 2.6.1 (unrelased, 2.6.x branch)
 
