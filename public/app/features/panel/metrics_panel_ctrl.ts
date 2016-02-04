@@ -134,6 +134,7 @@ class MetricsPanelCtrl extends PanelCtrl {
           this.rangeRaw.from = timeFromInfo.from;
           this.rangeRaw.to = timeFromInfo.to;
           this.range.from = timeFromDate;
+          this.range.to = dateMath.parse(timeFromInfo.to);
         }
       }
 
