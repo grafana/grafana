@@ -3,7 +3,7 @@ import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
-import Datasource from "../datasource";
+import {CloudWatchDatasource} from "../datasource";
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -20,7 +20,7 @@ describe('CloudWatchDatasource', function() {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = $injector.instantiate(CloudWatchDatasource, {instanceSettings: instanceSettings});
   }));
 
   describe('When performing CloudWatch query', function() {

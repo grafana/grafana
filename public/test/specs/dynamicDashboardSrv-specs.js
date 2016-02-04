@@ -106,6 +106,7 @@ define([
         repeat: 'servers',
         panels: [{id: 2}]
       });
+      dash.rows.push({panels: []});
       dash.templating.list.push({
         name: 'servers',
         current: {
@@ -120,14 +121,14 @@ define([
     });
 
     it('should repeat row one time', function() {
-      expect(ctx.rows.length).to.be(2);
+      expect(ctx.rows.length).to.be(3);
     });
 
     it('should keep panel ids on first row', function() {
       expect(ctx.rows[0].panels[0].id).to.be(2);
     });
 
-    it('should mark second row as repeated', function() {
+    it('should keep first row as repeat', function() {
       expect(ctx.rows[0].repeat).to.be('servers');
     });
 
@@ -159,7 +160,7 @@ define([
       });
 
       it('should still only have 2 rows', function() {
-        expect(ctx.rows.length).to.be(2);
+        expect(ctx.rows.length).to.be(3);
       });
 
       it.skip('should have updated props from source', function() {
@@ -178,7 +179,7 @@ define([
       });
 
       it('should remove repeated second row', function() {
-        expect(ctx.rows.length).to.be(1);
+        expect(ctx.rows.length).to.be(2);
       });
     });
   });

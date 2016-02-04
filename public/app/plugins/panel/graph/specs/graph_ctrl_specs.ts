@@ -3,7 +3,7 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
 import angular from 'angular';
-import {GraphCtrl} from '../graph_ctrl';
+import {GraphCtrl} from '../module';
 import helpers from '../../../../../test/specs/helpers';
 
 describe('GraphCtrl', function() {

@@ -1,4 +1,5 @@
-<datasource-http-settings></datasource-http-settings>
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
 
 <h4>InfluxDB Details</h4>
 
@@ -8,7 +9,7 @@
 			Database
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.database' placeholder="" required></input>
+			<input type="text" class="tight-form-input input-large" ng-model='ctrl.current.database' placeholder="" required></input>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
@@ -19,13 +20,13 @@
 			User
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.user' placeholder="" required></input>
+			<input type="text" class="tight-form-input input-large" ng-model='ctrl.current.user' placeholder="" required></input>
 		</li>
 		<li class="tight-form-item">
 			Password
 		</li>
 		<li>
-			<input type="password" class="tight-form-input input-large" ng-model='current.password' placeholder="" required></input>
+			<input type="password" class="tight-form-input input-large" ng-model='ctrl.current.password' placeholder="" required></input>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
