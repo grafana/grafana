@@ -1,5 +1,6 @@
 define([
   './helpers',
+  'app/core/services/timer',
   'app/features/panel/panel_srv',
 ], function() {
   'use strict';
