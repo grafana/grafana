@@ -153,7 +153,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  toggleQueryMode() {
+  toggleEditorMode() {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
