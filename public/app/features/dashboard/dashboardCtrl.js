@@ -57,7 +57,6 @@ function (angular, $, config, moment) {
 
         dashboardKeybindings.shortcuts($scope);
 
-        $scope.evaluateTotalStats();
         $scope.updateSubmenuVisibility();
         $scope.setWindowTitleAndTheme();
 
@@ -66,25 +65,6 @@ function (angular, $, config, moment) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
       });
-    };
-
-    $scope.evaluateTotalStats = function() {
-      $scope.dashboard.totalRows = 0;
-      $scope.dashboard.totalPanels = 0;
-      $scope.dashboard.totalQueries = 0;
-      if ($scope.dashboard.rows) {
-        $scope.dashboard.totalRows = $scope.dashboard.rows.length;
-        for (var i=0; i<$scope.dashboard.rows.length; i++) {
-          if ($scope.dashboard.rows[i].panels) {
-            $scope.dashboard.totalPanels += $scope.dashboard.rows[i].panels.length;
-            for (var j=0; j<$scope.dashboard.rows[i].panels.length; j++) {
-              if ($scope.dashboard.rows[i].panels[j].targets) {
-                $scope.dashboard.totalQueries += $scope.dashboard.rows[i].panels[j].targets.length;
-              }
-            }
-          }
-        }
-      }
     };
 
     $scope.updateSubmenuVisibility = function() {
