@@ -2,6 +2,7 @@
 
 import config from 'app/core/config';
 import _ from 'lodash';
+import angular from 'angular';
 
 export class PanelCtrl {
   panel: any;
@@ -177,7 +178,7 @@ export class PanelCtrl {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.inspector = this.inspector;
+    modalScope.inspector = angular.copy(this.inspector);
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/inspector.html',
