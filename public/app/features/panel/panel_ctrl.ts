@@ -171,5 +171,17 @@ export class PanelCtrl {
      src: 'public/app/features/dashboard/partials/shareModal.html',
      scope: shareScope
    });
- }
+  }
+
+  openInspector() {
+    var modalScope = this.$scope.$new();
+    modalScope.panel = this.panel;
+    modalScope.dashboard = this.dashboard;
+    modalScope.inspector = this.inspector;
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/inspector.html',
+      scope: modalScope
+    });
+  }
 }
