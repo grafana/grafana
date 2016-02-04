@@ -3,48 +3,6 @@
 import angular from 'angular';
 import $ from 'jquery';
 
-import {PanelCtrl} from './panel_ctrl';
-
-export class DefaultPanelCtrl extends PanelCtrl {
-  /** @ngInject */
-  constructor($scope, $injector) {
-    super($scope, $injector);
-  }
-}
-
-export class PanelDirective {
-  template: string;
-  templateUrl: string;
-  bindToController: boolean;
-  scope: any;
-  controller: any;
-  controllerAs: string;
-
-  getDirective() {
-    if (!this.controller) {
-      this.controller = DefaultPanelCtrl;
-    }
-
-    return {
-      template: this.template,
-      templateUrl: this.templateUrl,
-      controller: this.controller,
-      controllerAs: 'ctrl',
-      bindToController: true,
-      scope: {dashboard: "=", panel: "=", row: "="},
-      link: (scope, elem, attrs, ctrl) => {
-        ctrl.init();
-        this.link(scope, elem, attrs, ctrl);
-      }
-    };
-  }
-
-  link(scope, elem, attrs, ctrl) {
-    return null;
-  }
-}
-
-
 var module = angular.module('grafana.directives');
 
 module.directive('grafanaPanel', function() {
