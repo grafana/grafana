@@ -53,7 +53,6 @@ function (angular, $, _) {
 
           template += '<a class="panel-menu-link" ';
           if (item.click) { template += ' ng-click="' + item.click + '"'; }
-          if (item.editorLink) { template += ' dash-editor-link="' + item.editorLink + '"'; }
           template += '>';
           template += item.text + '</a>';
         });
