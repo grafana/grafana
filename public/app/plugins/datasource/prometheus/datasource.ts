@@ -295,6 +295,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   }
 
   function renderTemplate(format, data) {
+    var originalSettings = _.templateSettings;
     _.templateSettings = {
       interpolate: /\{\{(.+?)\}\}/g
     };
