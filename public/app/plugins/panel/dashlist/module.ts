@@ -28,6 +28,7 @@ class DashListCtrl extends PanelCtrl {
   }
 
   initEditMode() {
+    super.initEditMode();
     this.modes = ['starred', 'search'];
     this.icon = "fa fa-star";
     this.addEditorTab('Options', () => {

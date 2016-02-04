@@ -8,7 +8,7 @@ import {UnknownPanel} from '../../plugins/panel/unknown/module';
 var directiveModule = angular.module('grafana.directives');
 
 /** @ngInject */
-function panelLoader($compile, dynamicDirectiveSrv, $http, $q, $injector, $templateCache) {
+function panelLoader($compile, $http, $q, $injector, $templateCache) {
   return {
     restrict: 'E',
     scope: {
