@@ -138,7 +138,7 @@ define([
         controller : 'ResetPasswordCtrl',
       })
       .when('/dashboard/snapshots', {
-        templateUrl: 'app/features/snapshot/partials/snapshots.html',
+        templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
         controller : 'SnapshotsCtrl',
         controllerAs: 'ctrl',
       })
