@@ -67,11 +67,16 @@ describe('when rendering table', () => {
     });
 
     it('colored cell should have style', () => {
-        var html = renderer.renderCell(2, 85);
-        expect(html).to.be('<td style="color:red">85.0</td>');
+      var html = renderer.renderCell(2, 85);
+      expect(html).to.be('<td style="color:red">85.0</td>');
     });
 
-    it('unformated undefined should be rendered as -', () => {
+    it('unformated undefined should be rendered as string', () => {
+      var html = renderer.renderCell(3, 'value');
+      expect(html).to.be('<td>value</td>');
+    });
+
+    it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, undefined);
       expect(html).to.be('<td></td>');
     });
