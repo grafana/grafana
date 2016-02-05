@@ -75,7 +75,7 @@ Creates a new dashboard or updates an existing dashboard.
 
 JSON Body schema:
 
-- **dashboard** – The complete dashboard model, id = null to create a new dashboard
+- **dashboard** – The complete dashboard model, id = null to create a new dashboard.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version or with same dashboard title.
 
 **Example Response**:
