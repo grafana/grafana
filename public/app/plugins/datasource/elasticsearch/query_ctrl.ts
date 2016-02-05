@@ -5,7 +5,7 @@ import './metric_agg';
 
 import angular from 'angular';
 import _ from 'lodash';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/query.editor.html';

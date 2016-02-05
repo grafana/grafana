@@ -8,7 +8,7 @@ import _ from 'lodash';
 import InfluxQueryBuilder from './query_builder';
 import InfluxQuery from './influx_query';
 import queryPart from './query_part';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/influxdb/partials/query.editor.html';

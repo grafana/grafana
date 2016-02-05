@@ -5,7 +5,7 @@ import _ from 'lodash';
 import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/prometheus/partials/query.editor.html';

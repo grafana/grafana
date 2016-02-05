@@ -5,7 +5,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
 import * as FileExport from 'app/core/utils/file_export';
-import {MetricsPanelCtrl} from '../../../features/panel/panel';
+import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
