@@ -175,7 +175,7 @@ export default class InfluxQuery {
     }
 
     if (!target.measurement) {
-      throw "Metric measurement is missing";
+      throw {message: "Metric measurement is missing"};
     }
 
     var query = 'SELECT ';

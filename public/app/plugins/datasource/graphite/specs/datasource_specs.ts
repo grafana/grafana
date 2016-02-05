@@ -1,7 +1,7 @@
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import Datasource from "../datasource";
+import {GraphiteDatasource} from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -18,7 +18,7 @@ describe('graphiteDatasource', function() {
   }));
 
   beforeEach(function() {
-    ctx.ds = ctx.$injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = ctx.$injector.instantiate(GraphiteDatasource, {instanceSettings: instanceSettings});
   });
 
   describe('When querying influxdb with one target using query editor target spec', function() {

@@ -137,6 +137,11 @@ define([
         templateUrl: 'public/app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
+      .when('/dashboard/snapshots', {
+        templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
+        controller : 'SnapshotsCtrl',
+        controllerAs: 'ctrl',
+      })
       .when('/apps', {
         templateUrl: 'public/app/features/apps/partials/list.html',
         controller: 'AppListCtrl',

@@ -38,23 +38,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (!this.panel.targets) {
       this.panel.targets = [{}];
     }
-
-    // hookup initial data fetch
-    this.$timeout(() => {
-      if (!this.skipDataOnInit) {
-        this.refresh();
-      }
-    }, 30);;
   }
 
   initEditMode() {
+    super.initEditMode();
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();
-  }
-
-  refresh() {
-    this.getData();
   }
 
   refreshData(data) {
@@ -67,13 +57,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     return data;
   }
 
-  getData() {
+  refresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       if (this.loadSnapshot) {
+        this.updateTimeRange();
         this.loadSnapshot(this.panel.snapshotData);
       }
       return;
@@ -140,6 +131,7 @@ class MetricsPanelCtrl extends PanelCtrl {
           this.rangeRaw.from = timeFromInfo.from;
           this.rangeRaw.to = timeFromInfo.to;
           this.range.from = timeFromDate;
+          this.range.to = dateMath.parse(timeFromInfo.to);
         }
       }
 
@@ -164,11 +156,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
   issueQueries(datasource) {
+    this.updateTimeRange();
+
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
     }
-
-    this.updateTimeRange();
 
     var metricsQuery = {
       range: this.range,
@@ -182,32 +174,19 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    return datasource.query(metricsQuery).then(results => {
-      this.setTimeQueryEnd();
+    try {
+      return datasource.query(metricsQuery).then(results => {
+        this.setTimeQueryEnd();
 
-      if (this.dashboard.snapshot) {
-        this.panel.snapshotData = results;
-      }
+        if (this.dashboard.snapshot) {
+          this.panel.snapshotData = results;
+        }
 
-      return results;
-    });
-  }
-
-  addDataQuery(datasource) {
-    this.dashboard.addDataQueryTo(this.panel, datasource);
-  }
-
-  removeDataQuery(query) {
-    this.dashboard.removeDataQuery(this.panel, query);
-    this.refresh();
-  };
-
-  duplicateDataQuery(query) {
-    this.dashboard.duplicateDataQuery(this.panel, query);
-  }
-
-  moveDataQuery(fromIndex, toIndex) {
-    this.dashboard.moveDataQuery(this.panel, fromIndex, toIndex);
+        return results;
+      });
+    } catch (err) {
+      return this.$q.reject(err);
+    }
   }
 
   setDatasource(datasource) {
@@ -228,6 +207,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.panel.datasource = datasource.value;
     this.datasource = null;
     this.refresh();
+  }
+
+  addDataQuery(datasource) {
+    var target = {
+      datasource: datasource ? datasource.name : undefined
+    };
+    this.panel.targets.push(target);
   }
 }
 
