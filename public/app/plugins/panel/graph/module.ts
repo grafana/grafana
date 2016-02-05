@@ -7,9 +7,9 @@ import './seriesOverridesCtrl';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import TimeSeries from '../../../core/time_series2';
-import * as fileExport from '../../../core/utils/file_export';
-import {MetricsPanelCtrl} from '../../../features/panel/panel';
+import TimeSeries from 'app/core/time_series2';
+import * as fileExport from 'app/core/utils/file_export';
+import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 var panelDefaults = {
   // datasource name, null = default datasource

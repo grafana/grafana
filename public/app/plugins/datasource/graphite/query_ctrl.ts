@@ -8,7 +8,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import gfunc from './gfunc';
 import {Parser} from './parser';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/query.editor.html';

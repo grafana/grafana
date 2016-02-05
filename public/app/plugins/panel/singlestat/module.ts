@@ -6,8 +6,8 @@ import $ from 'jquery';
 import 'jquery.flot';
 
 import kbn from 'app/core/utils/kbn';
-import TimeSeries from '../../../core/time_series2';
-import {MetricsPanelCtrl} from '../../../features/panel/panel';
+import TimeSeries from 'app/core/time_series2';
+import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 // Set and populate defaults
 var panelDefaults = {
