@@ -1,21 +1,19 @@
 ----
-page_title: HTTP API
+page_title: Authentication API
 page_description: Grafana HTTP API Reference
 page_keywords: grafana, admin, http, api, documentation
 ---
 
-# HTTP API Reference
+# Authentication API
 
 The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
 dashboards, creating users and updating data sources.
 
-## Authorization
-
-### Tokens
+## Tokens
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).
 
-### Basic Auth
+## Basic Auth
 
 If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
 standard basic auth.
@@ -26,7 +24,7 @@ curl example:
 {"id":1,"name":"Main Org."}
 ```
 
-### Create API Token
+## Create API Token
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
 

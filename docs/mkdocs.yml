@@ -65,7 +65,6 @@ pages:
 - ['reference/plugins.md', 'Reference', 'Plugins']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Administration']
-- ['reference/http_api.md', 'Reference', 'HTTP API']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
 
 - ['datasources/overview.md', 'Data Sources', 'Overview']
@@ -76,6 +75,15 @@ pages:
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 - ['datasources/prometheus.md', 'Data Sources', 'Prometheus']
+
+- ['http_api/first_steps.md', 'HTTP API', 'Authentication API']
+- ['http_api/dashboards.md', 'HTTP API', 'Dashboards API']
+- ['http_api/data_sources.md', 'HTTP API', 'Data Sources API']
+- ['http_api/orgs.md', 'HTTP API', 'Organisations API']
+- ['http_api/users.md', 'HTTP API', 'Users API']
+- ['http_api/admin.md', 'HTTP API', 'Admin API']
+- ['http_api/snapshots.md', 'HTTP API', 'Snapshots API']
+- ['http_api/general.md', 'HTTP API', 'Other API']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
