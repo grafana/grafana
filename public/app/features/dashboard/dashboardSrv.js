@@ -208,7 +208,7 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 9;
+      this.schemaVersion = 10;
 
       if (oldVersion === this.schemaVersion) {
         return;
@@ -378,6 +378,22 @@ function (angular, $, _, moment) {
               panel.thresholds = k.join(",");
             }
           }
+        });
+      }
+
+      // schema version 10 changes
+      if (oldVersion < 10) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'table') { return; }
+
+          _.each(panel.styles, function(style) {
+            if (style.thresholds && style.thresholds.length >= 3) {
+              var k = style.thresholds;
+              k.shift();
+              style.thresholds = k;
+            }
+          });
         });
       }
 

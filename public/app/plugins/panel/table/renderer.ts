@@ -16,12 +16,12 @@ export class TableRenderer {
   getColorForValue(value, style) {
     if (!style.thresholds) { return null; }
 
-    for (var i = style.thresholds.length - 1; i >= 0 ; i--) {
-      if (value >= style.thresholds[i]) {
+    for (var i = style.thresholds.length; i > 0; i--) {
+      if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
       }
     }
-    return null;
+    return _.first(style.colors);
   }
 
   defaultCellFormater(v) {
