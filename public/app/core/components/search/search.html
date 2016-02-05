@@ -1,3 +1,4 @@
+<div class="search-container" ng-if="ctrl.isOpen">
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
 			<input  type="text" placeholder="Find dashboards by name" give-focus="ctrl.giveSearchFocus" tabindex="1"
@@ -29,7 +30,7 @@
 		<div class="row">
 			<div class="span6 offset1">
 				<div ng-repeat="tag in ctrl.results" class="pointer" style="width: 180px; float: left;"
-					ng-class="{'selected': $index === selectedIndex }"
+					ng-class="{'selected': $index === ctrl.selectedIndex }"
 					ng-click="ctrl.filterByTag(tag.term, $event)">
 					<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
 						<i class="fa fa-tag"></i>
@@ -44,7 +45,7 @@
 		<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
 		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in ctrl.results"
-			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
+			ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
 
 			<span class="search-result-tags">
 				<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
@@ -71,4 +72,4 @@
 		</a>
 		<div class="clearfix"></div>
 	</div>
-
+</div>

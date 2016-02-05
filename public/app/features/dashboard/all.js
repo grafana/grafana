@@ -12,7 +12,6 @@ define([
   './viewStateSrv',
   './timeSrv',
   './unsavedChangesSrv',
-  './directives/dashSearchView',
   './timepicker/timepicker',
   './graphiteImportCtrl',
   './dynamicDashboardSrv',
