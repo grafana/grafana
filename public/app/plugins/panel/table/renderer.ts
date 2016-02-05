@@ -4,6 +4,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 
+
+
 export class TableRenderer {
   formaters: any[];
   colorState: any;
@@ -24,22 +26,27 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(v) {
-    if (v === null || v === void 0) {
-      return '';
-    }
+  defaultCellFormater(escapeHtml = true) {
+    return function(v) {
+      if (v === null || v === void 0 || v === undefined) {
+        return '';
+      }
 
-    if (_.isArray(v)) {
-      v = v.join(',&nbsp;');
-    }
+      if (_.isArray(v)) {
+        v = v.join(',&nbsp;');
+      }
 
-    return v;
+      if (_.isString(v) && escapeHtml) {
+        v = encodeHtml(v);
+      }
+
+      return v;
+    };
   }
-
 
   createColumnFormater(style) {
     if (!style) {
-      return this.defaultCellFormater;
+      return this.defaultCellFormater();
     }
 
     if (style.type === 'date') {
@@ -62,7 +69,7 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return v;
+          return encodeHtml(v);
         }
 
         if (style.colorMode) {
@@ -73,7 +80,11 @@ export class TableRenderer {
       };
     }
 
-    return this.defaultCellFormater;
+    if (style.type === 'string') {
+      return this.defaultCellFormater(style.escapeHtml);
+    }
+
+    return this.defaultCellFormater();
   }
 
   formatColumnValue(colIndex, value) {
@@ -91,7 +102,7 @@ export class TableRenderer {
       }
     }
 
-    this.formaters[colIndex] = this.defaultCellFormater;
+    this.formaters[colIndex] = this.defaultCellFormater();
     return this.formaters[colIndex](value);
   }
 
@@ -141,4 +152,16 @@ export class TableRenderer {
 
     return html;
   }
+}
+
+function encodeHtml(unsafe) {
+  return unsafe.replace(/[&<>"']/g, function(m) {
+    return ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      '\'': '&#039;'
+    })[m];
+  });
 }
