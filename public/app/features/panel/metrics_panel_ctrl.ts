@@ -6,8 +6,8 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {PanelCtrl} from './panel_ctrl';
 
-import * as rangeUtil from '../../core/utils/rangeutil';
-import * as dateMath from '../../core/utils/datemath';
+import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from 'app/core/utils/datemath';
 
 class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;

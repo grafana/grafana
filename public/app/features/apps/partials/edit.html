@@ -97,7 +97,7 @@
 		<h3 class="simple-box-header">Configuration:</h3>
 		<div class="simple-box-body">
 			<div ng-if="ctrl.appModel.appId">
-				<app-config-view app-model="ctrl.appModel"></app-config-view>
+				<plugin-component type="app-config-ctrl"></plugin-component>
 				<div class="clearfix"></div>
 				<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
 			</div>
