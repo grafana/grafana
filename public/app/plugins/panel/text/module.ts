@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {PanelCtrl} from '../../../features/panel/panel';
+import {PanelCtrl} from 'app/features/panel/panel';
 
  // Set and populate defaults
 var panelDefaults = {
