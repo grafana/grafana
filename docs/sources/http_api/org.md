@@ -1,12 +1,12 @@
 ----
-page_title: Organisations API
-page_description: Grafana Organisations API Reference
-page_keywords: grafana, admin, http, api, documentation, orgs, organisations
+page_title: Organisation API
+page_description: Grafana Organisation API Reference
+page_keywords: grafana, admin, http, api, documentation, orgs, organisation
 ---
 
-## Organisation API
+# Organisation API
 
-### Get current Organisation
+## Get current Organisation
 
 `GET /api/org`
 
@@ -27,7 +27,7 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisations
       "name":"Main Org."
     }
 
-### Get Organisation by Id
+## Get Organisation by Id
 
 `GET /api/orgs/:orgId`
 
@@ -56,7 +56,7 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisations
       }
     }
 
-### Get Organisation by Name
+## Get Organisation by Name
 
 `GET /api/orgs/name/:orgName`
 
@@ -85,7 +85,7 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisations
       }
     }
 
-### Update current Organisation
+## Update current Organisation
 
 `PUT /api/org`
 
@@ -109,7 +109,7 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisations
     {"message":"Organization updated"}
 
 
-### Get all users within the actual organisation
+## Get all users within the actual organisation
 
 `GET /api/org/users`
 
@@ -135,7 +135,7 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisations
       }
     ]
 
-### Add a new user to the actual organisation
+## Add a new user to the actual organisation
 
 `POST /api/org/users`
 
@@ -161,7 +161,7 @@ Adds a global user to the actual organisation.
 
     {"message":"User added to organization"}
 
-### Updates the given user
+## Updates the given user
 
 `PATCH /api/org/users/:userId`
 
@@ -185,7 +185,7 @@ Adds a global user to the actual organisation.
     {"message":"Organization user updated"}
 
 
-### Delete user in actual organisation
+## Delete user in actual organisation
 
 `DELETE /api/org/users/:userId`
 
@@ -204,9 +204,9 @@ Adds a global user to the actual organisation.
     {"message":"User removed from organization"}
 
 
-## Organisations
+# Organisations
 
-### Search all Organisations
+## Search all Organisations
 
 `GET /api/orgs`
 
@@ -229,7 +229,7 @@ Adds a global user to the actual organisation.
       }
     ]
 
-### Update Organisation
+## Update Organisation
 
 `PUT /api/orgs/:orgId`
 
@@ -254,7 +254,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
 
     {"message":"Organization updated"}
 
-### Get Users in Organisation
+## Get Users in Organisation
 
 `GET /api/orgs/:orgId/users`
 
@@ -279,7 +279,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
       }
     ]
 
-### Add User in Organisation
+## Add User in Organisation
 
 `POST /api/orgs/:orgId/users`
 
@@ -302,7 +302,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
 
     {"message":"User added to organization"}
 
-### Update Users in Organisation
+## Update Users in Organisation
 
 `PATCH /api/orgs/:orgId/users/:userId`
 
@@ -324,7 +324,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
 
     {"message":"Organization user updated"}
 
-### Delete User in Organisation
+## Delete User in Organisation
 
 `DELETE /api/orgs/:orgId/users/:userId`
 

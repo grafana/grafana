@@ -1,12 +1,12 @@
 ----
-page_title: Users API
-page_description: Grafana Users API Reference
-page_keywords: grafana, admin, http, api, documentation, users
+page_title: User API
+page_description: Grafana User API Reference
+page_keywords: grafana, admin, http, api, documentation, user
 ---
 
-## Users API
+# User API
 
-### Search Users
+## Search Users
 
 `GET /api/users`
 
@@ -39,7 +39,7 @@ page_keywords: grafana, admin, http, api, documentation, users
       }
     ]
 
-### Get single user by Id
+## Get single user by Id
 
 `GET /api/users/:id`
 
@@ -64,7 +64,7 @@ page_keywords: grafana, admin, http, api, documentation, users
       "isGrafanaAdmin": true
     }
 
-### User Update
+## User Update
 
 `PUT /api/users/:id`
 
@@ -90,7 +90,7 @@ page_keywords: grafana, admin, http, api, documentation, users
     {"message":"User updated"}
 
 
-### Get Organisations for user
+## Get Organisations for user
 
 `GET /api/users/:id/orgs`
 
@@ -116,7 +116,7 @@ page_keywords: grafana, admin, http, api, documentation, users
 
 ## User
 
-### Actual User
+## Actual User
 
 `GET /api/user`
 
@@ -141,7 +141,7 @@ page_keywords: grafana, admin, http, api, documentation, users
       "isGrafanaAdmin":true
     }
 
-### Change Password
+## Change Password
 
 `PUT /api/user/password`
 
@@ -167,7 +167,7 @@ Changes the password for the user
 
     {"message":"User password changed"}
 
-### Switch user context
+## Switch user context
 
 `POST /api/user/using/:organisationId`
 
@@ -187,7 +187,7 @@ Switch user context to the given organisation.
 
     {"message":"Active organization changed"}
 
-### Organisations of the actual User
+## Organisations of the actual User
 
 `GET /api/user/orgs`
 
@@ -213,7 +213,7 @@ Return a list of all organisations of the current user.
       }
     ]
 
-### Star a dashboard
+## Star a dashboard
 
 `POST /api/user/stars/dashboard/:dashboardId`
 
@@ -233,7 +233,7 @@ Stars the given Dashboard for the actual user.
 
     {"message":"Dashboard starred!"}
 
-### Unstar a dashboard
+## Unstar a dashboard
 
 `DELETE /api/user/stars/dashboard/:dashboardId`
 

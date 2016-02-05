@@ -1,12 +1,12 @@
 ----
-page_title: Dashboards API
-page_description: Grafana Dashboards API Reference
-page_keywords: grafana, admin, http, api, documentation, dashboards
+page_title: Dashboard API
+page_description: Grafana Dashboard API Reference
+page_keywords: grafana, admin, http, api, documentation, dashboard
 ---
 
-## Dashboards API
+# Dashboard API
 
-### Create / Update dashboard
+## Create / Update dashboard
 
 `POST /api/dashboards/db`
 
@@ -73,7 +73,7 @@ same status code is also used if another dashboard exists with the same title. T
 
 In in case of title already exists the `status` property will be `name-exists`.
 
-### Get dashboard
+## Get dashboard
 
 `GET /api/dashboards/db/:slug`
 
@@ -110,7 +110,7 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
       }
     }
 
-### Delete dashboard
+## Delete dashboard
 
 `DELETE /api/dashboards/db/:slug`
 
@@ -130,7 +130,7 @@ The above will delete the dashboard with the specified slug. The slug is the url
 
     {"title": "Test"}
 
-### Gets the home dashboard
+## Gets the home dashboard
 
 `GET /api/dashboards/home`
 
@@ -186,7 +186,7 @@ Will return the home dashboard.
       }
     }
 
-### Tags for Dashboard
+## Tags for Dashboard
 
 
 `GET /api/dashboards/tags`
@@ -216,11 +216,11 @@ Get all tabs of dashboards
       }
     ]
 
-### Dashboard from JSON file
+## Dashboard from JSON file
 
 `GET /file/:file`
 
-### Search Dashboards
+## Search Dashboards
 
 `GET /api/search/`
 

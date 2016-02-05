@@ -1,12 +1,12 @@
 ----
-page_title: Snapshots API
-page_description: Grafana Snapshots API Reference
-page_keywords: grafana, admin, http, api, documentation, snapshots, dashboards
+page_title: Snapshot API
+page_description: Grafana Snapshot API Reference
+page_keywords: grafana, admin, http, api, documentation, snapshot, dashboard
 ---
 
-## Snapshots API
+# Snapshot API
 
-### Create new snapshot
+## Create new snapshot
 
 `POST /api/snapshots`
 
@@ -63,7 +63,7 @@ Keys:
 - **deleteKey** – Key generated to delete the snapshot
 - **key** – Key generated to share the dashboard
 
-### Get Snapshot by Id
+## Get Snapshot by Id
 
 `GET /api/snapshots/:key`
 
@@ -118,7 +118,7 @@ Keys:
         }
     }
 
-### Delete Snapshot by Id
+## Delete Snapshot by Id
 
 `GET /api/snapshots-delete/:key`
 

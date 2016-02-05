@@ -4,9 +4,9 @@ page_description: Grafana Admin API Reference
 page_keywords: grafana, admin, http, api, documentation
 ---
 
-## Admin API
+# Admin API
 
-### Settings
+## Settings
 
 `GET /api/admin/settings`
 
@@ -162,7 +162,7 @@ page_keywords: grafana, admin, http, api, documentation
       }
     }
 
-### Grafana Stats
+## Grafana Stats
 
 `GET /api/admin/stats`
 
@@ -190,7 +190,7 @@ page_keywords: grafana, admin, http, api, documentation
       "grafana_admin_count":2
     }
 
-### Global Users
+## Global Users
 
 `POST /api/admin/users`
 
@@ -217,7 +217,7 @@ Create new user
 
     {"id":5,"message":"User created"}
 
-### Password for User
+## Password for User
 
 `PUT /api/admin/users/:id/password`
 
@@ -237,7 +237,7 @@ Change password for specific user
 
     {"password":"userpassword"}
 
-### Permissions
+## Permissions
 
 `PUT /api/admin/users/:id/permissions`
 
@@ -255,7 +255,7 @@ Change password for specific user
 
     {message: "User permissions updated"}
 
-### Delete global User
+## Delete global User
 
 `DELETE /api/admin/users/:id`
 
