@@ -60,7 +60,7 @@
   "scripts": {
     "test": "grunt test",
     "coveralls": "grunt karma:coveralls && rm -rf ./coverage",
-    "postinstall": "grunt copy:node_modules"
+    "postinstall": "./node_modules/.bin/grunt copy:node_modules"
   },
   "license": "Apache-2.0",
   "dependencies": {
