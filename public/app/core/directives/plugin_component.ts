@@ -141,6 +141,17 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
           };
         });
       }
+      // AppConfigCtrl
+      case 'app-config-ctrl': {
+        return System.import(scope.ctrl.appModel.module).then(function(appModule) {
+          return {
+            name: 'app-config-' + scope.ctrl.appModel.appId,
+            bindings: {appModel: "=", appEditCtrl: "="},
+            attrs: {"app-model": "ctrl.appModel", "app-edit-ctrl": "ctrl"},
+            Component: appModule.ConfigCtrl,
+          };
+        });
+      }
       // Panel
       case 'panel': {
         return loadPanelComponentInfo(scope, attrs);
