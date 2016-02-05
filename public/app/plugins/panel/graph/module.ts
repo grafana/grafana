@@ -152,7 +152,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   loadSnapshot(snapshotData) {
-    this.updateTimeRange();
     this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
     this.dataHandler(snapshotData);
   }

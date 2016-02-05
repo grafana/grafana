@@ -9,6 +9,7 @@ import {QueryCtrl} from 'app/features/panel/panel';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'public/app/plugins/datasource/prometheus/partials/query.editor.html';
+
   metric: any;
   resolutions: any;
   oldTarget: any;

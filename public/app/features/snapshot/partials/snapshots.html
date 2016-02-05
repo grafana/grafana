@@ -1,4 +1,4 @@
-<navbar icon="fa fa-fw fa-camera-retro" title="Dashboard snapshots"></navbar>
+<navbar icon="icon-gf icon-gf-snapshot" title="Dashboard snapshots"></navbar>
 
 <div class="page-container">
   <div class="page-wide">
@@ -11,9 +11,9 @@
         <th><strong>Snapshot url</strong></th>
         <th style="width: 70px"></th>
         <th style="width: 25px"></th>
-     
+
      </thead>
-      
+
       <tr ng-repeat="snapshot in ctrl.snapshots">
         <td>
 					<a href="dashboard/snapshot/{{snapshot.key}}">{{snapshot.name}}</a>
