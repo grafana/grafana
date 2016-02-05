@@ -90,18 +90,20 @@ function (angular, _, moment, dateMath) {
       return this.awsRequest({action: '__GetNamespaces'});
     };
 
-    this.getMetrics = function(namespace) {
+    this.getMetrics = function(namespace, region) {
       return this.awsRequest({
         action: '__GetMetrics',
+        region: region,
         parameters: {
           namespace: templateSrv.replace(namespace)
         }
       });
     };
 
-    this.getDimensionKeys = function(namespace) {
+    this.getDimensionKeys = function(namespace, region) {
       return this.awsRequest({
         action: '__GetDimensions',
+        region: region,
         parameters: {
           namespace: templateSrv.replace(namespace)
         }
@@ -164,14 +166,14 @@ function (angular, _, moment, dateMath) {
         return this.getNamespaces();
       }
 
-      var metricNameQuery = query.match(/^metrics\(([^\)]+?)\)/);
+      var metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (metricNameQuery) {
-        return this.getMetrics(metricNameQuery[1]);
+        return this.getMetrics(metricNameQuery[1], metricNameQuery[3]);
       }
 
-      var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)\)/);
+      var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (dimensionKeysQuery) {
-        return this.getDimensionKeys(dimensionKeysQuery[1]);
+        return this.getDimensionKeys(dimensionKeysQuery[1], dimensionKeysQuery[3]);
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
