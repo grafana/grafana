@@ -8,8 +8,8 @@
 	</a>
 </div>
 
-<div class="top-nav-snapshot-title" ng-if="dashboardMeta.isSnapshot">
-	<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom">
+<div class="top-nav-btn top-nav-dashboards-btn" ng-if="dashboardMeta.isSnapshot">
+	<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
 		<i class="icon-gf icon-gf-snapshot"></i>
 		<span class="dashboard-title">
 			{{dashboard.title}}
