@@ -5,6 +5,7 @@ define([
   './templating/templateSrv',
   './dashboard/all',
   './playlist/all',
+  './snapshot/all',
   './panel/all',
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
