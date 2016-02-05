@@ -79,7 +79,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   loadSnapshot(snapshotData) {
-    this.updateTimeRange();
     this.dataHandler(snapshotData);
   }
 

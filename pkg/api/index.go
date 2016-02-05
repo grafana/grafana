@@ -62,7 +62,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Snapshots",
-		Icon: "fa fa-fw fa-camera-retro",
+		Icon: "fa-fw icon-gf icon-gf-snapshot",
 		Url:  "/dashboard/snapshots",
 	})
 

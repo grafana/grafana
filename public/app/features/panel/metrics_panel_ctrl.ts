@@ -47,10 +47,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
-  refresh() {
-    this.getData();
-  }
-
   refreshData(data) {
     // null op
     return this.$q.when(data);
@@ -61,13 +57,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     return data;
   }
 
-  getData() {
+  refresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       if (this.loadSnapshot) {
+        this.updateTimeRange();
         this.loadSnapshot(this.panel.snapshotData);
       }
       return;
