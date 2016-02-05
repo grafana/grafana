@@ -19,7 +19,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
   this.name = instanceSettings.name;
   this.database = instanceSettings.database;
   this.basicAuth = instanceSettings.basicAuth;
-
+  this.interval = (instanceSettings.jsonData || {}).timeInterval;
   this.supportAnnotations = true;
   this.supportMetrics = true;
 
