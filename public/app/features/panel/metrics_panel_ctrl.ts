@@ -111,49 +111,49 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     var panelInterval = this.panel.interval;
     var datasourceInterval = (this.datasource || {}).interval;
-      this.interval = kbn.calculateInterval(this.range, this.resolution, panelInterval || datasourceInterval);
-    };
+    this.interval = kbn.calculateInterval(this.range, this.resolution, panelInterval || datasourceInterval);
+  };
 
-    applyPanelTimeOverrides() {
+  applyPanelTimeOverrides() {
+    this.timeInfo = '';
+
+    // check panel time overrrides
+    if (this.panel.timeFrom) {
+      var timeFromInfo = rangeUtil.describeTextRange(this.panel.timeFrom);
+      if (timeFromInfo.invalid) {
+        this.timeInfo = 'invalid time override';
+        return;
+      }
+
+      if (_.isString(this.rangeRaw.from)) {
+        var timeFromDate = dateMath.parse(timeFromInfo.from);
+        this.timeInfo = timeFromInfo.display;
+        this.rangeRaw.from = timeFromInfo.from;
+        this.rangeRaw.to = timeFromInfo.to;
+        this.range.from = timeFromDate;
+        this.range.to = dateMath.parse(timeFromInfo.to);
+      }
+    }
+
+    if (this.panel.timeShift) {
+      var timeShiftInfo = rangeUtil.describeTextRange(this.panel.timeShift);
+      if (timeShiftInfo.invalid) {
+        this.timeInfo = 'invalid timeshift';
+        return;
+      }
+
+      var timeShift = '-' + this.panel.timeShift;
+      this.timeInfo += ' timeshift ' + timeShift;
+      this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
+      this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
+
+      this.rangeRaw = this.range;
+    }
+
+    if (this.panel.hideTimeOverride) {
       this.timeInfo = '';
-
-      // check panel time overrrides
-      if (this.panel.timeFrom) {
-        var timeFromInfo = rangeUtil.describeTextRange(this.panel.timeFrom);
-        if (timeFromInfo.invalid) {
-          this.timeInfo = 'invalid time override';
-          return;
-        }
-
-        if (_.isString(this.rangeRaw.from)) {
-          var timeFromDate = dateMath.parse(timeFromInfo.from);
-          this.timeInfo = timeFromInfo.display;
-          this.rangeRaw.from = timeFromInfo.from;
-          this.rangeRaw.to = timeFromInfo.to;
-          this.range.from = timeFromDate;
-          this.range.to = dateMath.parse(timeFromInfo.to);
-        }
-      }
-
-      if (this.panel.timeShift) {
-        var timeShiftInfo = rangeUtil.describeTextRange(this.panel.timeShift);
-        if (timeShiftInfo.invalid) {
-          this.timeInfo = 'invalid timeshift';
-          return;
-        }
-
-        var timeShift = '-' + this.panel.timeShift;
-        this.timeInfo += ' timeshift ' + timeShift;
-        this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
-        this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
-
-        this.rangeRaw = this.range;
-      }
-
-      if (this.panel.hideTimeOverride) {
-        this.timeInfo = '';
-      }
-    };
+    }
+  };
 
   issueQueries(datasource) {
     this.updateTimeRange();
