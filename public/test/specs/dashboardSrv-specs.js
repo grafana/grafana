@@ -109,6 +109,7 @@ define([
       var model;
       var graph;
       var singlestat;
+      var table;
 
       beforeEach(function() {
         model = _dashboardSrv.create({
@@ -127,6 +128,10 @@ define([
                 {
                   type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
                   targets: [{refId: 'A'}, {}],
+                },
+                {
+                  type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
+                  targets: [{refId: 'A'}, {}],
                 }
               ]
             }
@@ -135,6 +140,7 @@ define([
 
         graph = model.rows[0].panels[0];
         singlestat = model.rows[0].panels[1];
+        table = model.rows[0].panels[2];
       });
 
       it('should have title', function() {
@@ -180,8 +186,15 @@ define([
         expect(model.annotations.list[0].name).to.be('old');
       });
 
+      it('table panel should only have two thresholds values', function() {
+        expect(table.styles[0].thresholds[0]).to.be("20");
+        expect(table.styles[0].thresholds[1]).to.be("30");
+        expect(table.styles[1].thresholds[0]).to.be("200");
+        expect(table.styles[1].thresholds[1]).to.be("300");
+      });
+
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(9);
+        expect(model.schemaVersion).to.be(10);
       });
 
     });
