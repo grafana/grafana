@@ -79,7 +79,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   loadSnapshot(snapshotData) {
-    this.dataHandler(snapshotData);
+    // give element time to get attached and get dimensions
+    this.$timeout(() => this.dataHandler(snapshotData), 50);
   }
 
   dataHandler(results) {
@@ -239,22 +240,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var $timeout = this.$timeout;
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
-    var data, linkInfo, $panelContainer;
-    var firstRender = true;
+    var data, linkInfo;
+    var $panelContainer = elem.parents('.panel-container');
+    // change elem to singlestat panel
+    elem = elem.find('.singlestat-panel');
+    hookupDrilldownLinkTooltip();
 
     scope.$on('render', function() {
-      if (firstRender) {
-        var inner = elem.find('.singlestat-panel');
-        if (inner.length) {
-          elem = inner;
-          $panelContainer = elem.parents('.panel-container');
-          firstRender = false;
-          hookupDrilldownLinkTooltip();
-        } else {
-          return;
-        }
-      }
-
       render();
       ctrl.renderingCompleted();
     });

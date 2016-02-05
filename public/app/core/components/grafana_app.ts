@@ -187,13 +187,17 @@ export function grafanaAppDirective(playlistSrv) {
         // hide search
         if (elem.find('.search-container').length > 0) {
           if (target.parents('.search-container').length === 0) {
-            scope.appEvent('hide-dash-search');
+            scope.$apply(function() {
+              scope.appEvent('hide-dash-search');
+            });
           }
         }
         // hide sidemenu
         if (!ignoreSideMenuHide && !scope.contextSrv.pinned && elem.find('.sidemenu').length > 0) {
           if (target.parents('.sidemenu').length === 0) {
-            scope.$apply(() => scope.contextSrv.toggleSideMenu());
+            scope.$apply(function() {
+              scope.contextSrv.toggleSideMenu();
+            });
           }
         }
 
