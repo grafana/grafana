@@ -1,12 +1,12 @@
 ----
-page_title: Data sources API
-page_description: Grafana Data sources API Reference
-page_keywords: grafana, admin, http, api, documentation, datasources
+page_title: Data source API
+page_description: Grafana Data source API Reference
+page_keywords: grafana, admin, http, api, documentation, datasource
 ---
 
-## Data sources API
+# Data source API
 
-### Get all datasources
+## Get all datasources
 
 `GET /api/datasources`
 
@@ -41,7 +41,7 @@ page_keywords: grafana, admin, http, api, documentation, datasources
       }
     ]
 
-### Get a single data sources by Id
+## Get a single data sources by Id
 
 `GET /api/datasources/:datasourceId`
 
@@ -74,7 +74,7 @@ page_keywords: grafana, admin, http, api, documentation, datasources
       "jsonData":null
     }
 
-### Create data source
+## Create data source
 
 `POST /api/datasources`
 
@@ -101,7 +101,7 @@ page_keywords: grafana, admin, http, api, documentation, datasources
 
     {"id":1,"message":"Datasource added"}
 
-### Update an existing data source
+## Update an existing data source
 
 `PUT /api/datasources/:datasourceId`
 
@@ -136,7 +136,7 @@ page_keywords: grafana, admin, http, api, documentation, datasources
 
     {"message":"Datasource updated"}
 
-### Delete an existing data source
+## Delete an existing data source
 
 `DELETE /api/datasources/:datasourceId`
 
@@ -154,7 +154,7 @@ page_keywords: grafana, admin, http, api, documentation, datasources
 
     {"message":"Data source deleted"}
 
-### Available data source types
+## Available data source types
 
 `GET /api/datasources/plugins`
 

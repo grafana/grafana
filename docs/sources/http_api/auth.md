@@ -6,9 +6,6 @@ page_keywords: grafana, admin, http, api, documentation
 
 # Authentication API
 
-The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
-dashboards, creating users and updating data sources.
-
 ## Tokens
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).

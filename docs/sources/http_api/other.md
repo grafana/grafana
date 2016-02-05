@@ -1,12 +1,12 @@
 ----
-page_title: General APIs
-page_description: Grafana General API Reference
+page_title: Other APIs
+page_description: Grafana Other API Reference
 page_keywords: grafana, admin, http, api, documentation, dashboards
 ---
 
-## Frontend Settings API
+# Frontend Settings API
 
-### Get Settings
+## Get Settings
 
 `GET /api/frontend/settings`
 
@@ -50,9 +50,9 @@ page_keywords: grafana, admin, http, api, documentation, dashboards
       "defaultDatasource": "Grafana"
     }
 
-## Login API
+# Login API
 
-### Renew session based on remember cookie
+## Renew session based on remember cookie
 
 `GET /api/login/ping`
 
