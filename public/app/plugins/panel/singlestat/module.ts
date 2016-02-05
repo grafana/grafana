@@ -59,7 +59,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super.initEditMode();
     this.icon =  "fa fa-dashboard";
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
-    this.addEditorTab('Options', 'app/plugins/panel/singlestat/editor.html', 2);
+    this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -172,11 +172,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     data.flotpairs = [];
 
     if (this.series.length > 1) {
-      this.inspector.error = new Error();
-      this.inspector.error.message = 'Multiple Series Error';
-      this.inspector.error.data = 'Metric query returns ' + this.series.length +
+      var error: any = new Error();
+      error.message = 'Multiple Series Error';
+      error.data = 'Metric query returns ' + this.series.length +
         ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify(this.series);
-      throw this.inspector.error;
+      throw error;
     }
 
     if (this.series && this.series.length > 0) {
