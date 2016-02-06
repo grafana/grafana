@@ -11,17 +11,17 @@
 		<h2 ng-show="!isNew">Edit data source</h2>
 
 		<form name="editForm">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 80px">
+			<div class="norm-form">
+				<ul class="norm-form-list">
+					<li class="norm-form-item small" style="width: 80px">
 						Name
 					</li>
 					<li>
 						<li>
-							<input type="text" class="input-xlarge tight-form-input" ng-model="current.name" placeholder="my data source name" required>
+							<input type="text" class="input-xlarge norm-form-input" ng-model="current.name" placeholder="my data source name" required>
 						</li>
 					</li>
-					<li class="tight-form-item">
+					<li class="norm-form-item">
 						Default&nbsp;
 						<input class="cr1" id="current.isDefault" type="checkbox" ng-model="current.isDefault" ng-checked="current.isDefault">
 						<label for="current.isDefault" class="cr1"></label>
@@ -29,13 +29,13 @@
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 80px">
+			<div class="norm-form last">
+				<ul class="norm-form-list">
+					<li class="norm-form-item" style="width: 80px">
 						Type
 					</li>
 					<li>
-						<select class="input-xlarge tight-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+						<select class="input-xlarge norm-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
