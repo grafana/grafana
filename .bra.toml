@@ -3,7 +3,7 @@ init_cmds = [
   ["go", "build", "-o", "./bin/grafana-server"],
 	["./bin/grafana-server"]
 ]
-watch_all = true
+watch_all = false
 watch_dirs = [
 	"$WORKDIR/pkg",
 	"$WORKDIR/public/views",
