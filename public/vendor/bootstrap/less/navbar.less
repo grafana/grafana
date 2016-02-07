@@ -22,10 +22,8 @@
   min-height: @navbarHeight;
   padding-left:  20px;
   padding-right: 20px;
-  #gradient > .vertical(@navbarBackgroundHighlight, @navbarBackground);
+  background-color: @navbarBackground;
   border: 1px solid @navbarBorder;
-  .border-radius(@baseBorderRadius);
-  .box-shadow(0 1px 4px rgba(0,0,0,.065));
 
   // Prevent floats from breaking the navbar
   .clearfix();
@@ -37,199 +35,20 @@
   width: auto;
 }
 
-// Override the default collapsed state
-.nav-collapse.collapse {
-  height: auto;
-  overflow: visible;
-}
-
-
-// Brand: website or project name
-// -------------------------
-.navbar .brand {
-  float: left;
-  display: block;
-  // Vertically center the text given @navbarHeight
-  padding: ((@navbarHeight - @baseLineHeight) / 2) 20px ((@navbarHeight - @baseLineHeight) / 2);
-  margin-left: -20px; // negative indent to left-align the text down the page
-  font-size: 20px;
-  font-weight: 200;
-  color: @navbarBrandColor;
-  text-shadow: 0 1px 0 @navbarBackgroundHighlight;
-  &:hover,
-  &:focus {
-    text-decoration: none;
-  }
-}
-
-// Plain text in topbar
-// -------------------------
-.navbar-text {
-  margin-bottom: 0;
-  line-height: @navbarHeight;
-  color: @navbarText;
-}
-
-// Janky solution for now to account for links outside the .nav
-// -------------------------
-.navbar-link {
-  color: @navbarLinkColor;
-  &:hover,
-  &:focus {
-    color: @navbarLinkColorHover;
-  }
-}
-
-// Dividers in navbar
-// -------------------------
-.navbar .divider-vertical {
-  height: @navbarHeight;
-  margin: 0 9px;
-  border-left: 1px solid @navbarBackground;
-  border-right: 1px solid @navbarBackgroundHighlight;
-}
-
-// Buttons in navbar
-// -------------------------
-.navbar .btn,
-.navbar .btn-group {
-  .navbarVerticalAlign(30px); // Vertically center in navbar
-}
-.navbar .btn-group .btn,
-.navbar .input-prepend .btn,
-.navbar .input-append .btn,
-.navbar .input-prepend .btn-group,
-.navbar .input-append .btn-group {
-  margin-top: 0; // then undo the margin here so we don't accidentally double it
-}
-
-// Navbar forms
-// -------------------------
-.navbar-form {
-  margin-bottom: 0; // remove default bottom margin
-  .clearfix();
-  input,
-  select,
-  .radio,
-  .checkbox {
-    .navbarVerticalAlign(30px); // Vertically center in navbar
-  }
-  input,
-  select,
-  .btn {
-    display: inline-block;
-    margin-bottom: 0;
-  }
-  input[type="image"],
-  input[type="checkbox"],
-  input[type="radio"] {
-    margin-top: 3px;
-  }
-  .input-append,
-  .input-prepend {
-    margin-top: 5px;
-    white-space: nowrap; // preven two  items from separating within a .navbar-form that has .pull-left
-    input {
-      margin-top: 0; // remove the margin on top since it's on the parent
-    }
-  }
-}
-
-// Navbar search
-// -------------------------
-.navbar-search {
-  position: relative;
-  float: left;
-  .navbarVerticalAlign(30px); // Vertically center in navbar
-  margin-bottom: 0;
-  .search-query {
-    margin-bottom: 0;
-    padding: 4px 14px;
-    #font > .sans-serif(13px, normal, 1);
-    .border-radius(15px); // redeclare because of specificity of the type attribute
-  }
-}
-
-
-
-// Static navbar
-// -------------------------
-
-.navbar-static-top {
-  position: static;
-  margin-bottom: 0; // remove 18px margin for default navbar
-  .navbar-inner {
-    .border-radius(0);
-  }
-}
-
-
-
-// Fixed navbar
-// -------------------------
-
-// Shared (top/bottom) styles
-.navbar-fixed-top,
-.navbar-fixed-bottom {
-  position: fixed;
-  right: 0;
-  left: 0;
-  z-index: @zindexFixedNavbar;
-  margin-bottom: 0; // remove 18px margin for default navbar
-}
-.navbar-fixed-top .navbar-inner,
-.navbar-static-top .navbar-inner {
-  border-width: 0 0 1px;
-}
-.navbar-fixed-bottom .navbar-inner {
-  border-width: 1px 0 0;
-}
-.navbar-fixed-top .navbar-inner,
-.navbar-fixed-bottom .navbar-inner {
-  padding-left:  0;
-  padding-right: 0;
-  .border-radius(0);
-}
-
-// Reset container width
-// Required here as we reset the width earlier on and the grid mixins don't override early enough
-.navbar-static-top .container,
-.navbar-fixed-top .container,
-.navbar-fixed-bottom .container {
-  #grid > .core > .span(@gridColumns);
-}
-
-// Fixed to top
-.navbar-fixed-top {
-  top: 0;
-}
-.navbar-fixed-top,
-.navbar-static-top {
-  .navbar-inner {
-    .box-shadow(~"0 1px 10px rgba(0,0,0,.1)");
-  }
-}
-
-// Fixed to bottom
-.navbar-fixed-bottom {
-  bottom: 0;
-  .navbar-inner {
-    .box-shadow(~"0 -1px 10px rgba(0,0,0,.1)");
-  }
-}
-
-
-
 // NAVIGATION
 // ----------
 
 .navbar .nav {
   position: relative;
   left: 0;
-  display: block;
   float: left;
   margin: 0 10px 0 0;
 }
+
+.nav {
+  display: block;
+}
+
 .navbar .nav.pull-right {
   float: right; // redeclare due to specificity
   margin-right: 0; // remove margin on float right nav
