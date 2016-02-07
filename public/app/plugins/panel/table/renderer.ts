@@ -4,8 +4,6 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 
-
-
 export class TableRenderer {
   formaters: any[];
   colorState: any;
@@ -26,27 +24,21 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(escapeHtml = true) {
-    return function(v) {
-      if (v === null || v === void 0 || v === undefined) {
-        return '';
-      }
+  defaultCellFormater(value) {
+    if (value === null || value === void 0 || value === undefined) {
+      return '';
+    }
 
-      if (_.isArray(v)) {
-        v = v.join(',&nbsp;');
-      }
+    if (_.isArray(value)) {
+        value = value.join(',&nbsp;');
+    }
 
-      if (_.isString(v) && escapeHtml) {
-        v = encodeHtml(v);
-      }
-
-      return v;
-    };
+    return value;
   }
 
   createColumnFormater(style) {
     if (!style) {
-      return this.defaultCellFormater();
+      return this.defaultCellFormater;
     }
 
     if (style.type === 'date') {
@@ -69,7 +61,7 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return encodeHtml(v);
+          return v;
         }
 
         if (style.colorMode) {
@@ -80,11 +72,7 @@ export class TableRenderer {
       };
     }
 
-    if (style.type === 'string') {
-      return this.defaultCellFormater(style.escapeHtml);
-    }
-
-    return this.defaultCellFormater();
+    return this.defaultCellFormater;
   }
 
   formatColumnValue(colIndex, value) {
@@ -102,12 +90,13 @@ export class TableRenderer {
       }
     }
 
-    this.formaters[colIndex] = this.defaultCellFormater();
+    this.formaters[colIndex] = this.defaultCellFormater;
     return this.formaters[colIndex](value);
   }
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
+    value = encodeHtml(value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
