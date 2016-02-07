@@ -41,12 +41,10 @@ describe('when rendering table', () => {
         {
           pattern: 'String',
           type: 'string',
-          escapeHtml: true,
         },
         {
           pattern: 'UnescapedString',
-          type: 'string',
-          escapeHtml: false,
+          type: 'string'
         }
       ]
     };
@@ -96,11 +94,6 @@ describe('when rendering table', () => {
     it('undefined formater should return escaped html', () => {
       var html = renderer.renderCell(4, "&breaking <br /> the <br /> row");
       expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
-    });
-
-    it('string style with escape html false should return html', () => {
-      var html = renderer.renderCell(5, "&breaking <br /> the <br /> row");
-      expect(html).to.be('<td>&breaking <br /> the <br /> row</td>');
     });
 
     it('undefined value should render as -', () => {
