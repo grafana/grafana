@@ -11,8 +11,7 @@ describe('when rendering table', () => {
       {text: 'Value'},
       {text: 'Colored'},
       {text: 'Undefined'},
-      {text: 'String'},
-      {text: 'UnescapedString' }
+      {text: 'String'}
     ];
 
     var panel = {
@@ -41,10 +40,6 @@ describe('when rendering table', () => {
         {
           pattern: 'String',
           type: 'string',
-        },
-        {
-          pattern: 'UnescapedString',
-          type: 'string'
         }
       ]
     };
@@ -92,7 +87,7 @@ describe('when rendering table', () => {
     });
 
     it('undefined formater should return escaped html', () => {
-      var html = renderer.renderCell(4, "&breaking <br /> the <br /> row");
+      var html = renderer.renderCell(3, "&breaking <br /> the <br /> row");
       expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
     });
 

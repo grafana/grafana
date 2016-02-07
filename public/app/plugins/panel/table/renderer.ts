@@ -24,16 +24,16 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(value) {
-    if (value === null || value === void 0 || value === undefined) {
+  defaultCellFormater(v) {
+    if (v === null || v === void 0 || v === undefined) {
       return '';
     }
 
-    if (_.isArray(value)) {
-        value = value.join(',&nbsp;');
+    if (_.isArray(v)) {
+      v = v.join(',&nbsp;');
     }
 
-    return value;
+    return v;
   }
 
   createColumnFormater(style) {
@@ -96,7 +96,7 @@ export class TableRenderer {
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
-    value = encodeHtml(value);
+    value = this.encodeHtml(value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
@@ -141,16 +141,16 @@ export class TableRenderer {
 
     return html;
   }
-}
 
-function encodeHtml(unsafe) {
-  return unsafe.replace(/[&<>"']/g, function(m) {
-    return ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      '\'': '&#039;'
-    })[m];
-  });
+  encodeHtml(unsafe) {
+    return unsafe.replace(/[&<>"']/g, function(m) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        '\'': '&#039;'
+      })[m];
+    });
+  }
 }
