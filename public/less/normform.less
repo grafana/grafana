@@ -1,11 +1,11 @@
 .norm-form {
-  border-top: 3px solid @nonDashBodyBackground;
-  border-left: 3px solid @nonDashBodyBackground;
-  border-right: 3px solid @nonDashBodyBackground;
+  border-top: 3px solid @pageBackground;
+  border-left: 3px solid @pageBackground;
+  border-right: 3px solid @pageBackground;
   background: transparent;
 
   &.last {
-    border-bottom: 1px solid @nonDashBodyBackground;
+    border-bottom: 1px solid @pageBackground;
   }
 
   &.borderless {
@@ -21,7 +21,7 @@
 }
 
 .norm-form-container-no-item-borders {
-  border: 1px solid @nonDashBodyBackground;
+  border: 1px solid @pageBackground;
   border-bottom: none;
 
   .norm-form, .norm-form-item, [type=text].norm-form-input, [type=text].norm-form-clear-input  {
@@ -44,7 +44,7 @@
 }
 
 .norm-form-container {
-  border-bottom: 1px solid @nonDashBodyBackground;
+  border-bottom: 1px solid @pageBackground;
 }
 
 .norm-form-btn {
@@ -74,7 +74,7 @@
   padding: 8px 7px;
   display: inline-block;
   font-weight: normal;
-  border-right: 3px solid @nonDashBodyBackground;
+  border-right: 3px solid @pageBackground;
   color: @grayLighter;
   display: inline-block;
   .small;
@@ -139,7 +139,7 @@ input[type=text].norm-form-clear-input {
   background: transparent;
   color: @grafanaTargetColor;
   border-radius: 0;
-  border-right: 2px solid @nonDashBodyBackground;
+  border-right: 2px solid @pageBackground;
 }
 
 [type=text],
@@ -148,7 +148,7 @@ input[type=text].norm-form-clear-input {
 [type=password] {
   &.norm-form-input {
     border: none;
-    border-right: 2px solid @nonDashBodyBackground;
+    border-right: 3px solid @pageBackground;
     margin: 0px;
     border-radius: 0;
     padding: 8px 6px;
@@ -172,32 +172,13 @@ input[type=checkbox].norm-form-checkbox {
 
 select.norm-form-input {
   border: none;
-  border-right: 1px solid @grafanaTargetSegmentBorder;
+  border-right: 3px solid @pageBackground;
   margin: 0px;
   border-radius: 0;
   height: 36px;
   padding: 9px 3px;
   &.last {
     border-right: none;
-  }
-}
-
-.norm-form-func-controls {
-  display: none;
-  text-align: center;
-
-  .fa-arrow-left {
-    float: left;
-    position: relative;
-    top: 2px;
-  }
-  .fa-arrow-right {
-    float: right;
-    position: relative;
-    top: 2px;
-  }
-  .fa-remove {
-    margin-left: 10px;
   }
 }
 
@@ -209,21 +190,6 @@ select.norm-form-input {
     display: inline;
   }
 }
-
-.norm-form-section {
-  margin-bottom: 20px;
-  margin-right: 40px;
-  vertical-align: top;
-  display: inline-block;
-  .norm-form {
-    margin-left: 20px;
-  }
-}
-
-.norm-form-align {
-  padding-left: 66px;
-}
-
 .norm-form-item-large { width: 115px; }
 .norm-form-item-xlarge { width: 150px; }
 .norm-form-item-xxlarge { width: 200px; }
