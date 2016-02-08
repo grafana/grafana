@@ -63,12 +63,11 @@
 			</select>
 		</li>
 
-		<li class="tight-form-item query-keyword" style="width: 59px">
+		<li class="tight-form-item query-keyword" style="width: 59px" ng-if="ctrl.tsdbVersion == 2">
 			Fill
-			<tip>Available since OpenTSDB 2.2</tip>
 		</li>
 
-		<li>
+		<li ng-if="ctrl.tsdbVersion == 2">
 			<select ng-model="ctrl.target.downsampleFillPolicy" class="tight-form-input input-small"
 				ng-options="agg for agg in ctrl.fillPolicies"
 				ng-change="ctrl.targetBlur()">
