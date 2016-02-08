@@ -8,6 +8,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   aggregators: any;
   fillPolicies: any;
+  tsdbVersion: any;
   aggregator: any;
   downsampleInterval: any;
   downsampleAggregator: any;
@@ -25,6 +26,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.errors = this.validateTarget();
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
+
+    this.tsdbVersion = this.datasource.tsdbVersion;
 
     if (!this.target.aggregator) {
       this.target.aggregator = 'sum';
