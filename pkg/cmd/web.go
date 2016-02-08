@@ -36,9 +36,6 @@ func newMacaron() *macaron.Macaron {
 	}
 
 	mapStatic(m, setting.StaticRootPath, "", "public")
-	mapStatic(m, setting.StaticRootPath, "css", "css")
-	mapStatic(m, setting.StaticRootPath, "img", "img")
-	mapStatic(m, setting.StaticRootPath, "fonts", "fonts")
 	mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
