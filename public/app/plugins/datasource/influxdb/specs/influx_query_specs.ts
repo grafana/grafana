@@ -51,12 +51,12 @@ describe('InfluxQuery', function() {
       var query = new InfluxQuery({
         measurement: 'cpu',
         groupBy: [{type: 'time', params: ['auto']}],
-        tags: [{key: 'hostname', value: 'server1'}]
+        tags: [{key: 'hostname', value: 'server\\1'}]
       });
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND $timeFilter'
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
                           + ' GROUP BY time($interval)');
     });
 
