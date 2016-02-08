@@ -3,5 +3,6 @@
   "name": "Prometheus",
   "id": "prometheus",
 
-  "metrics": true
+  "metrics": true,
+  "annotations": true
 }
