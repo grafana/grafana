@@ -65,25 +65,37 @@
 
 			<div class="clearfix"></div>
 
+			<div class="text-center login-divider">
+				<div class="login-divider-line">
+				  <span class="login-divider-text">
+				    Or login with
+				  </span>
+				</div>
+			</div>
+
+			<div class="clearfix"></div>
+
 			<div class="login-oauth text-center">
-				<a class="btn btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
+				<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
 					<i class="fa fa-google"></i>
 					with Google
 				</a>
-				<a class="btn btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
+				<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
 					<i class="fa fa-github"></i>
 					with Github
 				</a>
 			</div>
-		</div>
 
-		<div class="row" style="margin-top: 40px">
-			<div class="text-center">
-				<a href="user/password/send-reset-email">
-					Forgot your password?
-				</a>
+			<div class="text-center password-recovery">
+				<div class="text-center">
+					<a href="user/password/send-reset-email">
+						Forgot your password?
+					</a>
+				</div>
 			</div>
 		</div>
+
+
 
 		<div class="row" style="margin-top: 50px">
 			<div class="version-footer text-center small">
