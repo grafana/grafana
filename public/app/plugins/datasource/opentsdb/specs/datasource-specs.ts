@@ -4,7 +4,7 @@ import {OpenTsDatasource} from "../datasource";
 
 describe('opentsdb', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {url: '' };
+  var instanceSettings = {url: '', jsonData: { tsdbVersion: 1 }};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
