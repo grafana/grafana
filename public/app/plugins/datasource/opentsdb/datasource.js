@@ -14,6 +14,11 @@ function (angular, _, dateMath) {
     this.name = instanceSettings.name;
     this.withCredentials = instanceSettings.withCredentials;
     this.basicAuth = instanceSettings.basicAuth;
+    this.tsdbVersions = [
+      {name: '<=2.1', value: 1},
+      {name: '>=2.2', value: 2},
+    ];
+    this.tsdbVersion = instanceSettings.jsonData.tsdbVersion;
     this.supportMetrics = true;
     this.tagKeys = {};
 

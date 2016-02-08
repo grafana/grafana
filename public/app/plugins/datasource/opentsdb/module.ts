@@ -1,9 +1,6 @@
 import {OpenTsDatasource} from './datasource';
 import {OpenTsQueryCtrl} from './query_ctrl';
-
-class OpenTsConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import {OpenTsConfigCtrl} from './config_ctrl';
 
 export {
   OpenTsDatasource as Datasource,
