@@ -98,7 +98,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	keystoneAuth, _ := ds.JsonData["keystoneAuth"].(bool)
-	if keystoneAuth{
+	if keystoneAuth {
 		token, err := keystone.GetToken(c)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to get keystone token", err)

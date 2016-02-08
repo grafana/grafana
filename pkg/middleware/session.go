@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	SESS_KEY_USERID = "uid"
-	SESS_KEY_APIKEY = "apikey_id" // used fror render requests with api keys
+	SESS_KEY_USERID   = "uid"
+	SESS_KEY_APIKEY   = "apikey_id" // used fror render requests with api keys
 	SESS_KEY_PASSWORD = "password"
 )
 

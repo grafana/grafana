@@ -13,12 +13,12 @@ import (
 )
 
 type v2_auth_post_struct struct {
-	Auth v2_auth_struct  `json:"auth"`
+	Auth v2_auth_struct `json:"auth"`
 }
 
 type v2_auth_struct struct {
-	PasswordCredentials v2_credentials_struct  `json:"passwordCredentials"`
-	TenantName   string `json:"tenantName"`
+	PasswordCredentials v2_credentials_struct `json:"passwordCredentials"`
+	TenantName          string                `json:"tenantName"`
 }
 
 type v2_credentials_struct struct {
@@ -41,44 +41,44 @@ type v2_token_struct struct {
 }
 
 type v3_auth_post_struct struct {
-    Auth v3_auth_struct  `json:"auth"`
+	Auth v3_auth_struct `json:"auth"`
 }
 
 type v3_auth_struct struct {
-    Identity v3_identity_struct  `json:"identity"`
-    Scope v3_scope_struct  `json:"scope"`
+	Identity v3_identity_struct `json:"identity"`
+	Scope    v3_scope_struct    `json:"scope"`
 }
 
 type v3_identity_struct struct {
-    Methods []string  `json:"methods"`
-    Password v3_passwordmethod_struct  `json:"password"`
+	Methods  []string                 `json:"methods"`
+	Password v3_passwordmethod_struct `json:"password"`
 }
 
 type v3_passwordmethod_struct struct {
-    User v3_user_struct `json:"user"`
+	User v3_user_struct `json:"user"`
 }
 
 type v3_user_struct struct {
-    Name string `json:"name"`
-    Password string `json:"password"`
-    Domain v3_userdomain_struct `json:"domain"`
+	Name     string               `json:"name"`
+	Password string               `json:"password"`
+	Domain   v3_userdomain_struct `json:"domain"`
 }
 
 type v3_userdomain_struct struct {
-    Name string `json:"name"`
+	Name string `json:"name"`
 }
 
 type v3_scope_struct struct {
-    Project v3_project_struct `json:"project"`
+	Project v3_project_struct `json:"project"`
 }
 
 type v3_project_struct struct {
-    Name string `json:"name"`
-    Domain v3_projectdomain_struct `json:"domain"`
+	Name   string                  `json:"name"`
+	Domain v3_projectdomain_struct `json:"domain"`
 }
 
 type v3_projectdomain_struct struct {
-    Name string `json:"name"`
+	Name string `json:"name"`
 }
 
 func getUserName(c *middleware.Context) (string, error) {
@@ -118,7 +118,7 @@ func authenticateV2(c *middleware.Context) (string, error) {
 	auth_post.Auth.PasswordCredentials.Password = c.Session.Get(middleware.SESS_KEY_PASSWORD).(string)
 	b, _ := json.Marshal(auth_post)
 
-	request, err := http.NewRequest("POST", server + "/v2.0/tokens", bytes.NewBuffer(b))
+	request, err := http.NewRequest("POST", server+"/v2.0/tokens", bytes.NewBuffer(b))
 	if err != nil {
 		return "", err
 	}
@@ -163,7 +163,7 @@ func authenticateV3(c *middleware.Context) (string, error) {
 	auth_post.Auth.Scope.Project.Domain.Name = setting.KeystoneUserDomainName
 	b, _ := json.Marshal(auth_post)
 
-	request, err := http.NewRequest("POST", server + "/v3/auth/tokens", bytes.NewBuffer(b))
+	request, err := http.NewRequest("POST", server+"/v3/auth/tokens", bytes.NewBuffer(b))
 	if err != nil {
 		return "", err
 	}

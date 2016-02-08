@@ -133,9 +133,9 @@ var (
 	LdapConfigFile string
 
 	// Keystone
-	KeystoneEnabled bool
-	KeystoneURL string
-	KeystoneV3 bool
+	KeystoneEnabled        bool
+	KeystoneURL            string
+	KeystoneV3             bool
 	KeystoneUserDomainName string
 
 	// SMTP email settings
