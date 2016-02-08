@@ -56,12 +56,12 @@ type v3_auth_post_struct struct {
 }
 
 type v3_auth_struct struct {
-    PasswordCredentials v3_identity_struct  `json:"identity"`
+    Identity v3_identity_struct  `json:"identity"`
 }
 
 type v3_identity_struct struct {
     Methods []string  `json:"methods"`
-    PasswordMethod v3_passwordmethod_struct  `json:"password"`
+    Password v3_passwordmethod_struct  `json:"password"`
 }
 
 type v3_passwordmethod_struct struct {
@@ -151,11 +151,11 @@ func (a *keystoneAuther) authenticateV2(username, password string) error {
 
 func (a *keystoneAuther) authenticateV3(username, password string) error {
     var auth_post v3_auth_post_struct
-    auth_post.Auth.PasswordCredentials.Methods = []string{"password"}
-    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Name = username
-    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Password = password
+    auth_post.Auth.Identity.Methods = []string{"password"}
+    auth_post.Auth.Identity.Password.User.Name = username
+    auth_post.Auth.Identity.Password.User.Password = password
     // the user domain name is currently hardcoded via a config setting - this should change to an extra domain field in the login dialog later
-    auth_post.Auth.PasswordCredentials.PasswordMethod.User.Domain.Name = a.userdomainname
+    auth_post.Auth.Identity.Password.User.Domain.Name = a.userdomainname
     b, _ := json.Marshal(auth_post)
 
     request, err := http.NewRequest("POST", a.server + "/v3/auth/tokens", bytes.NewBuffer(b))
