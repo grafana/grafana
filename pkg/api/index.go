@@ -36,7 +36,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	if setting.DisableGravatar {
-		data.User.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
+		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/user_profile.png"
 	}
 
 	if len(data.User.Name) == 0 {
