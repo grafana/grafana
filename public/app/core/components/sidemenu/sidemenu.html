@@ -1,7 +1,7 @@
 <ul class="sidemenu sidemenu-main">
 
-	<li class="sidemenu-org-section dropdown" ng-if="ctrl.isSignedIn">
-		<div class="sidemenu-org" data-toggle="dropdown" ng-click="ctrl.openUserDropdown()">
+	<li class="sidemenu-org-section" ng-if="ctrl.isSignedIn">
+		<div class="sidemenu-org">
 			<div class="sidemenu-org-avatar">
 				<img ng-src="{{ctrl.user.gravatarUrl}}">
 			</div>
@@ -43,7 +43,15 @@
 				<img ng-src="{{item.img}}" ng-show="item.img">
 			</span>
 			<span class="sidemenu-item-text">{{item.text}}</span>
+			<i class="fa fa-caret-right small" ng-show="item.children"></i>
 		</a>
+		<ul class="dropdown-menu" role="menu" ng-if="item.children">
+			<li ng-repeat="child in item.children">
+				<a href="{{child.url}}">
+					{{child.text}}
+				</a>
+			</li>
+		</ul>
 	</li>
 
 	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="ctrl.systemSection">
