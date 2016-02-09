@@ -57,18 +57,24 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
+	app.PluginDir = pluginDir
+
+	Apps[app.Id] = app
+	return nil
+}
+
+func (app *AppPlugin) initApp() {
+	app.initFrontendPlugin()
+
 	if app.Css != nil {
 		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
 		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
 	}
 
-	app.PluginDir = pluginDir
-	app.initFrontendPlugin()
-
 	// check if we have child panels
 	for _, panel := range Panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
-			panel.IncludedInAppId = app.Id
+			panel.setPathsBasedOnApp(app)
 			app.Includes = append(app.Includes, &AppIncludeInfo{
 				Name: panel.Name,
 				Id:   panel.Id,
@@ -80,7 +86,7 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	// check if we have child datasources
 	for _, ds := range DataSources {
 		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
-			ds.IncludedInAppId = app.Id
+			ds.setPathsBasedOnApp(app)
 			app.Includes = append(app.Includes, &AppIncludeInfo{
 				Name: ds.Name,
 				Id:   ds.Id,
@@ -95,7 +101,4 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 			page.Slug = slug.Make(page.Name)
 		}
 	}
-
-	Apps[app.Id] = app
-	return nil
 }

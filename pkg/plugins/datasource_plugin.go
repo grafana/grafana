@@ -18,7 +18,6 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	}
 
 	p.PluginDir = pluginDir
-	p.initFrontendPlugin()
 	DataSources[p.Id] = p
 
 	return nil
