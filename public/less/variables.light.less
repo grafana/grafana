@@ -177,6 +177,10 @@
 @sideMenuBorder:                1px solid @grafanaTargetBorder;
 @sideMenuBackground:            @grafanaPanelBackground;
 @sideMenuBackgroundHighlight:   darken(@sideMenuBackground, 4%);
+@sideMenuShadow: 0 5px 30px 0 lighten(@grayLight, 30%);
+
+// search
+@searchShadow: 0 5px 30px 0 lighten(@grayLight, 30%);
 
 // Dropdowns
 // -------------------------
@@ -254,7 +258,7 @@
 @navbarLinkColorActive:           #555;
 @navbarLinkBackgroundHover:       transparent;
 @navbarLinkBackgroundActive:      darken(@navbarBackground, 6.5%);
-@navbarDropdownShadow:            inset 0px 4px 10px -4px darken(@bodyBackground, 20%);
+@navbarDropdownShadow:            inset 0px 4px 7px -4px darken(@bodyBackground, 20%);
 
 @navbarBrandColor:                @navbarLinkColor;
 

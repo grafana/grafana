@@ -12,6 +12,7 @@ export default class InfluxQuery {
   constructor(target) {
     this.target = target;
 
+    target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
@@ -149,6 +150,23 @@ export default class InfluxQuery {
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
+  getMeasurementAndPolicy() {
+    var policy = this.target.policy;
+    var measurement = this.target.measurement;
+
+    if (!measurement.match('^/.*/')) {
+      measurement = '"' + measurement+ '"';
+    }
+
+    if (policy !== 'default') {
+      policy = '"' + this.target.policy + '".';
+    } else {
+      policy = "";
+    }
+
+    return policy + measurement;
+  }
+
   render() {
     var target = this.target;
 
@@ -157,7 +175,7 @@ export default class InfluxQuery {
     }
 
     if (!target.measurement) {
-      throw "Metric measurement is missing";
+      throw {message: "Metric measurement is missing"};
     }
 
     var query = 'SELECT ';
@@ -176,12 +194,7 @@ export default class InfluxQuery {
       query += selectText;
     }
 
-    var measurement = target.measurement;
-    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-measurement = '"' + measurement+ '"';
-    }
-
-    query += ' FROM ' + measurement + ' WHERE ';
+    query += ' FROM ' + this.getMeasurementAndPolicy() + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index);
     });

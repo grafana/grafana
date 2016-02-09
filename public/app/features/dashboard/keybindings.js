@@ -21,7 +21,7 @@ function(angular, $) {
 
         helpModalScope = $rootScope.$new();
         var helpModal = $modal({
-          template: './app/partials/help_modal.html',
+          template: 'public/app/partials/help_modal.html',
           persist: false,
           show: false,
           scope: helpModalScope,

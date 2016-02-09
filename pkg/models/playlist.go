@@ -13,14 +13,14 @@ var (
 // Playlist model
 type Playlist struct {
 	Id       int64  `json:"id"`
-	Title    string `json:"title"`
+	Name     string `json:"name"`
 	Interval string `json:"interval"`
 	OrgId    int64  `json:"-"`
 }
 
 type PlaylistDTO struct {
 	Id       int64             `json:"id"`
-	Title    string            `json:"title"`
+	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
 	OrgId    int64             `json:"-"`
 	Items    []PlaylistItemDTO `json:"items"`
@@ -71,33 +71,41 @@ type PlaylistDashboardDto struct {
 //
 // COMMANDS
 //
-type PlaylistQuery struct {
-	Title string
-	Limit int
-	OrgId int64
 
-	Result Playlists
-}
-
-type UpdatePlaylistQuery struct {
-	Id       int64
-	Title    string
-	Type     string
-	Interval string
-	Items    []PlaylistItemDTO
+type UpdatePlaylistCommand struct {
+	OrgId    int64             `json:"-"`
+	Id       int64             `json:"id" binding:"Required"`
+	Name     string            `json:"name" binding:"Required"`
+	Interval string            `json:"interval"`
+	Items    []PlaylistItemDTO `json:"items"`
 
 	Result *PlaylistDTO
 }
 
-type CreatePlaylistQuery struct {
-	Title    string
-	Type     string
-	Interval string
-	Data     []int64
-	OrgId    int64
-	Items    []PlaylistItemDTO
+type CreatePlaylistCommand struct {
+	Name     string            `json:"name" binding:"Required"`
+	Interval string            `json:"interval"`
+	Items    []PlaylistItemDTO `json:"items"`
 
+	OrgId  int64 `json:"-"`
 	Result *Playlist
+}
+
+type DeletePlaylistCommand struct {
+	Id    int64
+	OrgId int64
+}
+
+//
+// QUERIES
+//
+
+type GetPlaylistsQuery struct {
+	Name  string
+	Limit int
+	OrgId int64
+
+	Result Playlists
 }
 
 type GetPlaylistByIdQuery struct {
@@ -108,13 +116,4 @@ type GetPlaylistByIdQuery struct {
 type GetPlaylistItemsByIdQuery struct {
 	PlaylistId int64
 	Result     *[]PlaylistItem
-}
-
-type GetPlaylistDashboardsQuery struct {
-	DashboardIds []int64
-	Result       *PlaylistDashboards
-}
-
-type DeletePlaylistQuery struct {
-	Id int64
 }

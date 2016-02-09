@@ -178,42 +178,6 @@ function (angular, $, _, moment) {
       return newPanel;
     };
 
-    p.getNextQueryLetter = function(panel) {
-      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-      return _.find(letters, function(refId) {
-        return _.every(panel.targets, function(other) {
-          return other.refId !== refId;
-        });
-      });
-    };
-
-    p.addDataQueryTo = function(panel, datasource) {
-      var target = {
-        refId: this.getNextQueryLetter(panel)
-      };
-
-      if (datasource) {
-        target.datasource = datasource.name;
-      }
-
-      panel.targets.push(target);
-    };
-
-    p.removeDataQuery = function (panel, query) {
-      panel.targets = _.without(panel.targets, query);
-    };
-
-    p.duplicateDataQuery = function(panel, query) {
-      var clone = angular.copy(query);
-      clone.refId = this.getNextQueryLetter(panel);
-      panel.targets.push(clone);
-    };
-
-    p.moveDataQuery = function(panel, fromIndex, toIndex) {
-      _.move(panel.targets, fromIndex, toIndex);
-    };
-
     p.formatDate = function(date, format) {
       date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
@@ -231,13 +195,23 @@ function (angular, $, _, moment) {
         moment.utc(date).fromNow();
     };
 
+    p.getNextQueryLetter = function(panel) {
+      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      return _.find(letters, function(refId) {
+        return _.every(panel.targets, function(other) {
+          return other.refId !== refId;
+        });
+      });
+    };
+
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 8;
+      this.schemaVersion = 10;
 
-      if (oldVersion === 8) {
+      if (oldVersion === this.schemaVersion) {
         return;
       }
 
@@ -386,6 +360,39 @@ function (angular, $, _, moment) {
                   delete target.fill;
                 }
               }
+            }
+          });
+        });
+      }
+
+      // schema version 9 changes
+      if (oldVersion < 9) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'singlestat' && panel.thresholds !== "") { return; }
+
+          if (panel.thresholds) {
+            var k = panel.thresholds.split(",");
+
+            if (k.length >= 3) {
+              k.shift();
+              panel.thresholds = k.join(",");
+            }
+          }
+        });
+      }
+
+      // schema version 10 changes
+      if (oldVersion < 10) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'table') { return; }
+
+          _.each(panel.styles, function(style) {
+            if (style.thresholds && style.thresholds.length >= 3) {
+              var k = style.thresholds;
+              k.shift();
+              style.thresholds = k;
             }
           });
         });

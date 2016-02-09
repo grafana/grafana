@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import Datasource from "../datasource";
+import {OpenTsDatasource} from "../datasource";
 
 describe('opentsdb', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -14,7 +14,7 @@ describe('opentsdb', function() {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = $injector.instantiate(OpenTsDatasource, {instanceSettings: instanceSettings});
   }));
 
   describe('When performing metricFindQuery', function() {
@@ -36,14 +36,14 @@ describe('opentsdb', function() {
       expect(requestOptions.params.q).to.be('pew');
     });
 
-    it('tag_names(cpu) should generate looku  query', function() {
+    it('tag_names(cpu) should generate lookup query', function() {
       ctx.ds.metricFindQuery('tag_names(cpu)').then(function(data) { results = data; });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
       expect(requestOptions.params.m).to.be('cpu');
     });
 
-    it('tag_values(cpu, test) should generate looku  query', function() {
+    it('tag_values(cpu, test) should generate lookup query', function() {
       ctx.ds.metricFindQuery('tag_values(cpu, hostname)').then(function(data) { results = data; });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');

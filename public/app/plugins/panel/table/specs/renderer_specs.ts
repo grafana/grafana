@@ -33,7 +33,7 @@ describe('when rendering table', () => {
           unit: 'none',
           decimals: 1,
           colorMode: 'value',
-          thresholds: [0, 50, 80],
+          thresholds: [50, 80],
           colors: ['green', 'orange', 'red']
         }
       ]
@@ -57,8 +57,18 @@ describe('when rendering table', () => {
     });
 
     it('colored cell should have style', () => {
+        var html = renderer.renderCell(2, 40);
+        expect(html).to.be('<td style="color:green">40.0</td>');
+    });
+
+    it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 55);
       expect(html).to.be('<td style="color:orange">55.0</td>');
+    });
+
+    it('colored cell should have style', () => {
+        var html = renderer.renderCell(2, 85);
+        expect(html).to.be('<td style="color:red">85.0</td>');
     });
 
     it('unformated undefined should be rendered as -', () => {

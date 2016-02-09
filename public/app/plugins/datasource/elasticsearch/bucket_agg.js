@@ -10,7 +10,7 @@ function (angular, _, queryDef) {
 
   module.directive('elasticBucketAgg', function() {
     return {
-      templateUrl: 'app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
       controller: 'ElasticBucketAggCtrl',
       restrict: 'E',
       scope: {

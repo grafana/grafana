@@ -1,9 +1,9 @@
-<topnav title="Data sources" title-url="datasources" icon="fa fa-fw fa-database" subnav="true">
+<navbar title="Data sources" title-url="datasources" icon="fa fa-fw fa-database" subnav="true">
 	<ul class="nav">
 		<li ng-class="{active: isNew}" ng-show="isNew"><a href="datasources/new">Add new</a></li>
 		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">{{current.name}}</a></li>
 	</ul>
-</topnav>
+</navbar>
 
 <div class="page-container">
 	<div class="page">
@@ -41,7 +41,10 @@
 				<div class="clearfix"></div>
 			</div>
 
-			<ds-config-view ng-if="datasourceMeta.id" ds-meta="datasourceMeta" current="current"></ds-config-view>
+			<rebuild-on-change property="datasourceMeta.id">
+				<plugin-component type="datasource-config-ctrl">
+				</plugin-component>
+			</rebuild-on-change>
 
 			<div ng-if="testing" style="margin-top: 25px">
 				<h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>

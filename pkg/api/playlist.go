@@ -1,12 +1,10 @@
 package api
 
 import (
-	"errors"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	_ "github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"strconv"
 )
 
 func ValidateOrgPlaylist(c *middleware.Context) {
@@ -33,8 +31,8 @@ func SearchPlaylists(c *middleware.Context) Response {
 		limit = 1000
 	}
 
-	searchQuery := m.PlaylistQuery{
-		Title: query,
+	searchQuery := m.GetPlaylistsQuery{
+		Name:  query,
 		Limit: limit,
 		OrgId: c.OrgId,
 	}
@@ -59,7 +57,7 @@ func GetPlaylist(c *middleware.Context) Response {
 
 	dto := &m.PlaylistDTO{
 		Id:       cmd.Result.Id,
-		Title:    cmd.Result.Title,
+		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
 		OrgId:    cmd.Result.OrgId,
 		Items:    playlistDTOs,
@@ -100,39 +98,6 @@ func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	return *itemQuery.Result, nil
 }
 
-func LoadPlaylistDashboards(id int64) ([]m.PlaylistDashboardDto, error) {
-	playlistItems, _ := LoadPlaylistItems(id)
-
-	dashboardIds := make([]int64, 0)
-
-	for _, i := range playlistItems {
-		dashboardId, _ := strconv.ParseInt(i.Value, 10, 64)
-		dashboardIds = append(dashboardIds, dashboardId)
-	}
-
-	if len(dashboardIds) == 0 {
-		return make([]m.PlaylistDashboardDto, 0), nil
-	}
-
-	dashboardQuery := m.GetPlaylistDashboardsQuery{DashboardIds: dashboardIds}
-	if err := bus.Dispatch(&dashboardQuery); err != nil {
-		log.Warn("dashboardquery failed: %v", err)
-		return nil, errors.New("Playlist not found")
-	}
-
-	dtos := make([]m.PlaylistDashboardDto, 0)
-	for _, item := range *dashboardQuery.Result {
-		dtos = append(dtos, m.PlaylistDashboardDto{
-			Id:    item.Id,
-			Slug:  item.Slug,
-			Title: item.Title,
-			Uri:   "db/" + item.Slug,
-		})
-	}
-
-	return dtos, nil
-}
-
 func GetPlaylistItems(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
@@ -146,9 +111,9 @@ func GetPlaylistItems(c *middleware.Context) Response {
 }
 
 func GetPlaylistDashboards(c *middleware.Context) Response {
-	id := c.ParamsInt64(":id")
+	playlistId := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(id)
+	playlists, err := LoadPlaylistDashboards(c.OrgId, c.UserId, playlistId)
 	if err != nil {
 		return ApiError(500, "Could not load dashboards", err)
 	}
@@ -159,7 +124,7 @@ func GetPlaylistDashboards(c *middleware.Context) Response {
 func DeletePlaylist(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
-	cmd := m.DeletePlaylistQuery{Id: id}
+	cmd := m.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to delete playlist", err)
 	}
@@ -167,28 +132,28 @@ func DeletePlaylist(c *middleware.Context) Response {
 	return Json(200, "")
 }
 
-func CreatePlaylist(c *middleware.Context, query m.CreatePlaylistQuery) Response {
-	query.OrgId = c.OrgId
-	err := bus.Dispatch(&query)
-	if err != nil {
+func CreatePlaylist(c *middleware.Context, cmd m.CreatePlaylistCommand) Response {
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to create playlist", err)
 	}
 
-	return Json(200, query.Result)
+	return Json(200, cmd.Result)
 }
 
-func UpdatePlaylist(c *middleware.Context, query m.UpdatePlaylistQuery) Response {
-	err := bus.Dispatch(&query)
+func UpdatePlaylist(c *middleware.Context, cmd m.UpdatePlaylistCommand) Response {
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to save playlist", err)
+	}
+
+	playlistDTOs, err := LoadPlaylistItemDTOs(cmd.Id)
 	if err != nil {
 		return ApiError(500, "Failed to save playlist", err)
 	}
 
-	playlistDTOs, err := LoadPlaylistItemDTOs(query.Id)
-	if err != nil {
-		return ApiError(500, "Failed to save playlist", err)
-	}
-
-	query.Result.Items = playlistDTOs
-
-	return Json(200, query.Result)
+	cmd.Result.Items = playlistDTOs
+	return Json(200, cmd.Result)
 }

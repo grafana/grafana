@@ -3,17 +3,19 @@ define([
   'lodash',
   'app/core/utils/datemath',
   'moment',
-  './queryCtrl',
 ],
 function (angular, _, dateMath) {
   'use strict';
 
   /** @ngInject */
-  function OpenTSDBDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+  function OpenTsDatasource(instanceSettings, $q, backendSrv, templateSrv) {
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
+    this.withCredentials = instanceSettings.withCredentials;
+    this.basicAuth = instanceSettings.basicAuth;
     this.supportMetrics = true;
+    this.tagKeys = {};
 
     // Called once per panel (graph)
     this.query = function(options) {
@@ -49,10 +51,13 @@ function (angular, _, dateMath) {
           if (index === -1) {
             index = 0;
           }
+
+          this._saveTagKeys(metricData);
+
           return transformMetricData(metricData, groupByTags, options.targets[index], options);
-        });
+        }.bind(this));
         return { data: result };
-      });
+      }.bind(this));
     };
 
     this.performTimeSeriesQuery = function(queries, start, end) {
@@ -72,7 +77,31 @@ function (angular, _, dateMath) {
         data: reqBody
       };
 
+      if (this.basicAuth || this.withCredentials) {
+        options.withCredentials = true;
+      }
+
+      if (this.basicAuth) {
+        options.headers = {"Authorization": this.basicAuth};
+      }
+
+      // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
+      // go as POST rather than OPTIONS+POST
+      options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
       return backendSrv.datasourceRequest(options);
+    };
+
+    this.suggestTagKeys = function(metric) {
+      return $q.when(this.tagKeys[metric] || []);
+    };
+
+    this._saveTagKeys = function(metricData) {
+      var tagKeys = Object.keys(metricData.tags);
+      _.each(metricData.aggregateTags, function(tag) {
+        tagKeys.push(tag);
+      });
+
+      this.tagKeys[metricData.metric] = tagKeys;
     };
 
     this._performSuggestQuery = function(query, type) {
@@ -272,6 +301,10 @@ function (angular, _, dateMath) {
         }
 
         query.downsample = interval + "-" + target.downsampleAggregator;
+
+        if (target.downsampleFillPolicy && target.downsampleFillPolicy !== "none") {
+          query.downsample += "-" + target.downsampleFillPolicy;
+        }
       }
 
       query.tags = angular.copy(target.tags);
@@ -308,5 +341,7 @@ function (angular, _, dateMath) {
 
   }
 
-  return OpenTSDBDatasource;
+  return {
+    OpenTsDatasource: OpenTsDatasource
+  };
 });

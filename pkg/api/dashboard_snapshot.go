@@ -98,3 +98,43 @@ func DeleteDashboardSnapshot(c *middleware.Context) {
 
 	c.JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
 }
+
+func SearchDashboardSnapshots(c *middleware.Context) Response {
+	query := c.Query("query")
+	limit := c.QueryInt("limit")
+
+	if limit == 0 {
+		limit = 1000
+	}
+
+	searchQuery := m.GetDashboardSnapshotsQuery{
+		Name:  query,
+		Limit: limit,
+		OrgId: c.OrgId,
+	}
+
+	err := bus.Dispatch(&searchQuery)
+	if err != nil {
+		return ApiError(500, "Search failed", err)
+	}
+
+	dtos := make([]*m.DashboardSnapshotDTO, len(searchQuery.Result))
+	for i, snapshot := range searchQuery.Result {
+		dtos[i] = &m.DashboardSnapshotDTO{
+			Id:          snapshot.Id,
+			Name:        snapshot.Name,
+			Key:         snapshot.Key,
+			DeleteKey:   snapshot.DeleteKey,
+			OrgId:       snapshot.OrgId,
+			UserId:      snapshot.UserId,
+			External:    snapshot.External,
+			ExternalUrl: snapshot.ExternalUrl,
+			Expires:     snapshot.Expires,
+			Created:     snapshot.Created,
+			Updated:     snapshot.Updated,
+		}
+	}
+
+	return Json(200, dtos)
+	//return Json(200, searchQuery.Result)
+}

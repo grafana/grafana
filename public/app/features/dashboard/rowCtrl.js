@@ -61,6 +61,13 @@ function (angular, _, config) {
       });
     };
 
+    $scope.editRow = function() {
+      $scope.appEvent('show-dash-editor', {
+        src: 'public/app/partials/roweditor.html',
+        scope: $scope.$new()
+      });
+    };
+
     $scope.moveRow = function(direction) {
       var rowsList = $scope.dashboard.rows;
       var rowIndex = _.indexOf(rowsList, $scope.row);
@@ -116,36 +123,7 @@ function (angular, _, config) {
       $scope.$broadcast('render');
     };
 
-    $scope.removePanel = function(panel) {
-      $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to remove this panel?',
-        icon: 'fa-trash',
-        yesText: 'Delete',
-        onConfirm: function() {
-          $scope.row.panels = _.without($scope.row.panels, panel);
-        }
-      });
-    };
-
-    $scope.updatePanelSpan = function(panel, span) {
-      panel.span = Math.min(Math.max(Math.floor(panel.span + span), 1), 12);
-    };
-
-    $scope.replacePanel = function(newPanel, oldPanel) {
-      var row = $scope.row;
-      var index = _.indexOf(row.panels, oldPanel);
-      row.panels.splice(index, 1);
-
-      // adding it back needs to be done in next digest
-      $timeout(function() {
-        newPanel.id = oldPanel.id;
-        newPanel.span = oldPanel.span;
-        row.panels.splice(index, 0, newPanel);
-      });
-    };
-
     $scope.init();
-
   });
 
   module.directive('rowHeight', function() {

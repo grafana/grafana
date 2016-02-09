@@ -40,6 +40,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/users/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
+	r.Get("/admin/stats", reqGrafanaAdmin, Index)
 
 	r.Get("/apps", reqSignedIn, Index)
 	r.Get("/apps/edit/*", reqSignedIn, Index)
@@ -68,9 +69,11 @@ func Register(r *macaron.Macaron) {
 	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), wrap(ResetPassword))
 
 	// dashboard snapshots
-	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/dashboard/snapshot/*", Index)
+	r.Get("/dashboard/snapshots/", reqSignedIn, Index)
 
+	// api for dashboard snapshots
+	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:key", DeleteDashboardSnapshot)
@@ -182,6 +185,11 @@ func Register(r *macaron.Macaron) {
 			r.Get("/tags", GetDashboardTags)
 		})
 
+		// Dashboard snapshots
+		r.Group("/dashboard/snapshots", func() {
+			r.Get("/", wrap(SearchDashboardSnapshots))
+		})
+
 		// Playlist
 		r.Group("/playlists", func() {
 			r.Get("/", wrap(SearchPlaylists))
@@ -189,8 +197,8 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id/items", ValidateOrgPlaylist, wrap(GetPlaylistItems))
 			r.Get("/:id/dashboards", ValidateOrgPlaylist, wrap(GetPlaylistDashboards))
 			r.Delete("/:id", reqEditorRole, ValidateOrgPlaylist, wrap(DeletePlaylist))
-			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistQuery{}), ValidateOrgPlaylist, wrap(UpdatePlaylist))
-			r.Post("/", reqEditorRole, bind(m.CreatePlaylistQuery{}), wrap(CreatePlaylist))
+			r.Put("/:id", reqEditorRole, bind(m.UpdatePlaylistCommand{}), ValidateOrgPlaylist, wrap(UpdatePlaylist))
+			r.Post("/", reqEditorRole, bind(m.CreatePlaylistCommand{}), wrap(CreatePlaylist))
 		})
 
 		// Search
@@ -210,12 +218,13 @@ func Register(r *macaron.Macaron) {
 		r.Delete("/users/:id", AdminDeleteUser)
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
+		r.Get("/stats", AdminGetStats)
 	}, reqGrafanaAdmin)
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
-	InitApiPluginRoutes(r)
+	InitAppPluginRoutes(r)
 
 	r.NotFound(NotFoundHandler)
 }

@@ -20,11 +20,28 @@ type DashboardSnapshot struct {
 	Dashboard map[string]interface{}
 }
 
+// DashboardSnapshotDTO without dashboard map
+type DashboardSnapshotDTO struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Key         string `json:"key"`
+	DeleteKey   string `json:"deleteKey"`
+	OrgId       int64  `json:"orgId"`
+	UserId      int64  `json:"userId"`
+	External    bool   `json:"external"`
+	ExternalUrl string `json:"externalUrl"`
+
+	Expires time.Time `json:"expires"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+}
+
 // -----------------
 // COMMANDS
 
 type CreateDashboardSnapshotCommand struct {
 	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
+	Name      string                 `json:"name" binding:"Required"`
 	Expires   int64                  `json:"expires"`
 
 	// these are passed when storing an external snapshot ref
@@ -46,4 +63,14 @@ type GetDashboardSnapshotQuery struct {
 	Key string
 
 	Result *DashboardSnapshot
+}
+
+type DashboardSnapshots []*DashboardSnapshot
+
+type GetDashboardSnapshotsQuery struct {
+	Name  string
+	Limit int
+	OrgId int64
+
+	Result DashboardSnapshots
 }

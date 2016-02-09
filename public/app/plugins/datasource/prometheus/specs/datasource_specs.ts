@@ -1,7 +1,7 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
-import Datasource from '../datasource';
+import {PrometheusDatasource} from '../datasource';
 
 describe('PrometheusDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -13,7 +13,7 @@ describe('PrometheusDatasource', function() {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(Datasource, {instanceSettings: instanceSettings});
+    ctx.ds = $injector.instantiate(PrometheusDatasource, {instanceSettings: instanceSettings});
   }));
 
   describe('When querying prometheus with one target using query editor target spec', function() {

@@ -1,4 +1,4 @@
-define([
+  define([
   'angular',
   'app/core/config',
   'lodash'
@@ -11,31 +11,25 @@ function (angular) {
   module.config(function($routeProvider) {
     $routeProvider
       .when('/playlists', {
-        templateUrl: 'app/features/playlist/partials/playlists.html',
+        templateUrl: 'public/app/features/playlist/partials/playlists.html',
+        controllerAs: 'ctrl',
         controller : 'PlaylistsCtrl'
       })
       .when('/playlists/create', {
-        templateUrl: 'app/features/playlist/partials/playlist.html',
+        templateUrl: 'public/app/features/playlist/partials/playlist.html',
+        controllerAs: 'ctrl',
         controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/edit/:id', {
-        templateUrl: 'app/features/playlist/partials/playlist.html',
+        templateUrl: 'public/app/features/playlist/partials/playlist.html',
+        controllerAs: 'ctrl',
         controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/play/:id', {
-        templateUrl: 'app/partials/dashboard.html',
-        controller : 'LoadDashboardCtrl',
         resolve: {
-          init: function(backendSrv, playlistSrv, $route) {
+          init: function(playlistSrv, $route) {
             var playlistId = $route.current.params.id;
-
-            return backendSrv.get('/api/playlists/' + playlistId)
-              .then(function(playlist) {
-                return backendSrv.get('/api/playlists/' + playlistId + '/dashboards')
-                  .then(function(dashboards) {
-                    playlistSrv.start(dashboards, playlist.interval);
-                  });
-              });
+            playlistSrv.start(playlistId);
           }
         }
       });

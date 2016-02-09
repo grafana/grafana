@@ -1,6 +1,7 @@
 define([
   './playlists_ctrl',
-  './playlistSrv',
+  './playlist_search',
+  './playlist_srv',
   './playlist_edit_ctrl',
   './playlist_routes'
 ], function () {});

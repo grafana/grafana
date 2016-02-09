@@ -1,4 +1,5 @@
-<datasource-http-settings></datasource-http-settings>
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
 
 <h4>InfluxDB Details</h4>
 
@@ -8,7 +9,7 @@
 			Database
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.database' placeholder="" required></input>
+			<input type="text" class="tight-form-input input-large" ng-model='ctrl.current.database' placeholder="" required></input>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
@@ -19,16 +20,33 @@
 			User
 		</li>
 		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.user' placeholder="" required></input>
+			<input type="text" class="tight-form-input input-large" ng-model='ctrl.current.user' placeholder="" required></input>
 		</li>
 		<li class="tight-form-item">
 			Password
 		</li>
 		<li>
-			<input type="password" class="tight-form-input input-large" ng-model='current.password' placeholder="" required></input>
+			<input type="password" class="tight-form-input input-large" ng-model='ctrl.current.password' placeholder="" required></input>
 		</li>
 	</ul>
 	<div class="clearfix"></div>
 </div>
 
 
+<br>
+<h4>Default query settings</h4>
+<div class="tight-form last">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 200px">
+			Group by time interval
+		</li>
+		<li>
+			<input type="text" class="input-medium tight-form-input input-xlarge" ng-model="ctrl.current.jsonData.timeInterval"
+			spellcheck='false' placeholder="example: >10s">
+		</li>
+		<li class="tight-form-item">
+			<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>

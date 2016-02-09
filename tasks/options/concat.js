@@ -28,8 +28,10 @@ module.exports = function(config) {
 
     js: {
       src: [
+        '<%= genDir %>/vendor/npm/es5-shim/es5-shim.js',
         '<%= genDir %>/vendor/npm/es6-shim/es6-shim.js',
-        '<%= genDir %>/vendor/npm/es6-promise/es6-promise.js',
+        '<%= genDir %>/vendor/npm/es6-promise/dist/es6-promise.js',
+        '<%= genDir %>/vendor/npm/systemjs/dist/system-polyfills.js',
         '<%= genDir %>/vendor/npm/systemjs/dist/system.js',
         '<%= genDir %>/app/system.conf.js',
         '<%= genDir %>/app/boot.js',

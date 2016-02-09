@@ -1,3 +1,3 @@
-declare var Datasource: any;
-export default Datasource;
+declare var ElasticDatasource: any;
+export {ElasticDatasource};
 

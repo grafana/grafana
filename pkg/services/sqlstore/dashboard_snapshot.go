@@ -12,6 +12,7 @@ func init() {
 	bus.AddHandler("sql", CreateDashboardSnapshot)
 	bus.AddHandler("sql", GetDashboardSnapshot)
 	bus.AddHandler("sql", DeleteDashboardSnapshot)
+	bus.AddHandler("sql", SearchDashboardSnapshots)
 }
 
 func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
@@ -24,6 +25,7 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 		}
 
 		snapshot := &m.DashboardSnapshot{
+			Name:      cmd.Name,
 			Key:       cmd.Key,
 			DeleteKey: cmd.DeleteKey,
 			OrgId:     cmd.OrgId,
@@ -62,4 +64,19 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 
 	query.Result = &snapshot
 	return nil
+}
+
+func SearchDashboardSnapshots(query *m.GetDashboardSnapshotsQuery) error {
+	var snapshots = make(m.DashboardSnapshots, 0)
+
+	sess := x.Limit(query.Limit)
+
+	if query.Name != "" {
+		sess.Where("name LIKE ?", query.Name)
+	}
+
+	sess.Where("org_id = ?", query.OrgId)
+	err := sess.Find(&snapshots)
+	query.Result = snapshots
+	return err
 }

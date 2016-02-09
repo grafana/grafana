@@ -89,6 +89,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["index"] = ds.Database
 		}
 
+		if ds.Type == m.DS_INFLUXDB {
+			dsMap["database"] = ds.Database
+		}
+
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			dsMap["directUrl"] = ds.Url
@@ -119,6 +123,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		panels[panel.Id] = map[string]interface{}{
 			"module": panel.Module,
 			"name":   panel.Name,
+			"id":     panel.Id,
+			"info":   panel.Info,
 		}
 	}
 
