@@ -143,12 +143,25 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        return System.import(scope.ctrl.appModel.module).then(function(appModule) {
+        let appModel = scope.ctrl.appModel;
+        return System.import(appModel.module).then(function(appModule) {
           return {
-            name: 'app-config-' + scope.ctrl.appModel.appId,
+            name: 'app-config-' + appModel.appId,
             bindings: {appModel: "=", appEditCtrl: "="},
             attrs: {"app-model": "ctrl.appModel", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,
+          };
+        });
+      }
+      // App Page
+      case 'app-page': {
+        let appModel = scope.ctrl.appModel;
+        return System.import(appModel.module).then(function(appModule) {
+          return {
+            name: 'app-page-' + appModel.appId + '-' + scope.ctrl.page.slug,
+            bindings: {appModel: "="},
+            attrs: {"app-model": "ctrl.appModel"},
+            Component: appModule[scope.ctrl.page.component],
           };
         });
       }

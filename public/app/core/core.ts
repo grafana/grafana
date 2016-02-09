@@ -28,7 +28,7 @@ import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
-import 'app/core/routes/all';
+import 'app/core/routes/routes';
 import './filters/filters';
 import coreModule from './core_module';
 

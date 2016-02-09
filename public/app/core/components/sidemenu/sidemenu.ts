@@ -16,7 +16,7 @@ export class SideMenuCtrl {
   appSubUrl: string;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv) {
+  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
@@ -29,6 +29,7 @@ export class SideMenuCtrl {
         this.contextSrv.sidemenu = false;
       }
     });
+
   }
 
  getUrl(url) {
@@ -36,9 +37,7 @@ export class SideMenuCtrl {
  }
 
  setupMainNav() {
-   this.mainLinks = config.bootData.mainNavLinks.map(item => {
-     return {text: item.text, icon: item.icon, img: item.img, url: this.getUrl(item.url)};
-   });
+   this.mainLinks = config.bootData.mainNavLinks;
  }
 
  openUserDropdown() {

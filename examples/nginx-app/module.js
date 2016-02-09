@@ -1,28 +1,20 @@
 define([
-  'angular',
-  'app/app'
-], function(angular, app)  {
+], function()  {
+  'use strict';
 
-  var module = angular.module('nginx-app', []);
-  app.default.useModule(module);
+  function StreamPageCtrl() {}
+  StreamPageCtrl.templateUrl = 'public/plugins/nginx-app/partials/stream.html';
 
-  module.config(function($routeProvider) {
-    $routeProvider
-      .when('/nginx/stream', {
-        templateUrl: 'public/plugins/nginx-app/partials/stream.html',
-      });
-  });
+  function LogsPageCtrl() {}
+  LogsPageCtrl.templateUrl = 'public/plugins/nginx-app/partials/logs.html';
 
-  function NginxConfigCtrl() {
-    this.appEditCtrl.beforeUpdate = function() {
-      alert('before!');
-    };
-  }
+  function NginxConfigCtrl() {}
   NginxConfigCtrl.templateUrl = 'public/plugins/nginx-app/partials/config.html';
 
-
   return {
-    ConfigCtrl: NginxConfigCtrl
+    ConfigCtrl: NginxConfigCtrl,
+    StreamPageCtrl: StreamPageCtrl,
+    LogsPageCtrl: LogsPageCtrl,
   };
 
 });

@@ -72,12 +72,6 @@ export class GrafanaApp {
     this.useModule(coreModule);
 
     var preBootRequires = [System.import('app/features/all')];
-    var pluginModules = config.bootData.pluginModules || [];
-
-    // add plugin modules
-    for (var i = 0; i < pluginModules.length; i++) {
-      preBootRequires.push(System.import(pluginModules[i]));
-    }
 
     Promise.all(preBootRequires).then(() => {
       // disable tool tip animation

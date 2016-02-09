@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 type AppPluginPage struct {
-	Name    string          `json:"name"`
-	Url     string          `json:"url"`
-	ReqRole models.RoleType `json:"reqRole"`
+	Name      string          `json:"name"`
+	Slug      string          `json:"slug"`
+	Component string          `json:"component"`
+	Role      models.RoleType `json:"role"`
 }
 
 type AppPluginCss struct {
@@ -27,9 +29,9 @@ type AppIncludeInfo struct {
 type AppPlugin struct {
 	FrontendPluginBase
 	Css      *AppPluginCss     `json:"css"`
-	Pages    []AppPluginPage   `json:"pages"`
+	Pages    []*AppPluginPage  `json:"pages"`
 	Routes   []*AppPluginRoute `json:"routes"`
-	Includes []AppIncludeInfo  `json:"-"`
+	Includes []*AppIncludeInfo `json:"-"`
 
 	Pinned  bool `json:"-"`
 	Enabled bool `json:"-"`
@@ -67,11 +69,17 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	for _, panel := range Panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
 			panel.IncludedInAppId = app.Id
-			app.Includes = append(app.Includes, AppIncludeInfo{
+			app.Includes = append(app.Includes, &AppIncludeInfo{
 				Name: panel.Name,
 				Id:   panel.Id,
 				Type: panel.Type,
 			})
+		}
+	}
+
+	for _, page := range app.Pages {
+		if page.Slug == "" {
+			page.Slug = slug.Make(page.Name)
 		}
 	}
 
