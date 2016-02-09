@@ -73,7 +73,7 @@
 
   window.grafanaBootData = {settings: {}};
 
-  var modules = ['angular', 'angular-mocks', 'app/grafana'];
+  var modules = ['angular', 'angular-mocks', 'app/app'];
   var promises = modules.map(function(name) {
     return System.import(name);
   });
