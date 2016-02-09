@@ -42,7 +42,7 @@ var panelDefaults = {
 };
 
 class SingleStatCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/singlestat/module.html';
+  static templateUrl = 'module.html';
 
   series: any[];
   data: any[];

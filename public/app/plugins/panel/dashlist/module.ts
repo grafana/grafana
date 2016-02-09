@@ -13,7 +13,7 @@ var panelDefaults = {
 };
 
 class DashListCtrl extends PanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/dashlist/module.html';
+  static templateUrl = 'module.html';
 
   dashList: any[];
   modes: any[];

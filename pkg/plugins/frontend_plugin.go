@@ -9,6 +9,7 @@ import (
 type FrontendPluginBase struct {
 	PluginBase
 	Module        string `json:"module"`
+	BaseUrl       string `json:"baseUrl"`
 	StaticRoot    string `json:"staticRoot"`
 	StaticRootAbs string `json:"-"`
 }
@@ -34,10 +35,12 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 
 	if fp.StaticRoot != "" {
 		fp.Module = path.Join("plugins", fp.Id, "module")
+		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
 	}
 
 	fp.Module = path.Join("app/plugins", fp.Type, fp.Id, "module")
+	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
 }
 
 func evalRelativePluginUrlPath(pathStr string, pluginId string) string {
