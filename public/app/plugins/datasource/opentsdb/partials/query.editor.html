@@ -82,10 +82,53 @@
 	<div class="clearfix"></div>
 </div>
 
+<div class="tight-form" ng-if="ctrl.tsdbVersion == 2">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
+      Filters
+    </li>
+    <li ng-repeat="filter in ctrl.target.filters track by $index" class="tight-form-item">
+      {{filter.type}}:{{filter.key}}&nbsp;=&nbsp;{{filter.value}}:{{filter.groupByFlag}}
+      <a ng-click="ctrl.editFilter(filter.type, filter.key, filter.value, filter.groupByFlag)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a ng-click="ctrl.removeFilter(filter.type, filter.key)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+    <li class="tight-form-item query-keyword" ng-hide="ctrl.addFilterMode">
+      <a ng-click="ctrl.addFilter()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+
+    <li ng-show="ctrl.addFilterMode">
+      <input type="text" class="input-small tight-form-input" spellcheck='false'
+      bs-typeahead="ctrl.suggestFilterKeys" data-min-length=0 data-items=100
+      ng-model="ctrl.target.currentFilterKey" placeholder="key"></input>
+
+      <input type="text" class="input-small tight-form-input"
+      spellcheck='false' bs-typeahead="ctrl.suggestFilterValues"
+      data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="value">
+      </input>
+      <a ng-click="ctrl.addFilter()">
+        add filter
+      </a>
+      <a bs-tooltip="ctrl.errors.filters"
+        style="color: rgb(229, 189, 28)"
+        ng-show="target.errors.filters">
+        <i class="fa fa-warning"></i>
+      </a>
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
 			Tags
+      <tip ng-if="ctrl.tsdbVersion == 2">Please use filters, tags are deprecated in opentsdb 2.2</tip>
 		</li>
 		<li ng-repeat="(key, value) in ctrl.target.tags track by $index" class="tight-form-item">
 			{{key}}&nbsp;=&nbsp;{{value}}
