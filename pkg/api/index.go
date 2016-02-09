@@ -86,10 +86,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	for _, plugin := range enabledPlugins.Apps {
-		if plugin.Module != "" {
-			data.PluginModules = append(data.PluginModules, plugin.Module)
-		}
-
 		if plugin.Css != nil {
 			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
 		}
