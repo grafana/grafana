@@ -48,6 +48,7 @@ Name | Description
 `label_values(label)` | Returns a list of label values for the `label` in every metric.
 `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric.
 `metrics(metric)` | Returns a list of metrics matching the specified `metric` regex.
+`query_result(query)` | Returns a list of Prometheus query result for the `query`.
 
 For details of `metric names` & `label names`, and `label values`, please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
