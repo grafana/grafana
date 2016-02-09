@@ -25,6 +25,9 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 
 	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.Id)
 	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.Id)
+	for i := -0; i < len(fp.Info.Screenshots); i++ {
+		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.Id)
+	}
 	fp.handleModuleDefaults()
 }
 
