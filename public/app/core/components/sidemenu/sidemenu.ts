@@ -38,7 +38,6 @@ export class SideMenuCtrl {
 
  setupMainNav() {
    this.mainLinks = config.bootData.mainNavLinks;
-   this.openUserDropdown();
  }
 
  openUserDropdown() {
