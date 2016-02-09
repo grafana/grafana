@@ -12,7 +12,7 @@ define([
     // BoilerPlatePanel.template = '<h2>boilerplate</h2>';
 
     // all panel static assets can be accessed via 'public/plugins/<plugin-id>/<file>
-    BoilerPlatePanel.templateUrl = 'public/plugins/panel-boilerplate-es5/panel.html';
+    BoilerPlatePanel.templateUrl = 'panel.html';
 
     BoilerPlatePanel.prototype = Object.create(_super.prototype);
     BoilerPlatePanel.prototype.constructor = BoilerPlatePanel;

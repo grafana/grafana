@@ -5,7 +5,7 @@ import {GrafanaDatasource} from './datasource';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 class GrafanaQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/grafana/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 }
 
 export {

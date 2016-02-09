@@ -102,6 +102,10 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return err
 	}
 
+	if f.Name() == "node_modules" {
+		return util.WalkSkipDir
+	}
+
 	if f.IsDir() {
 		return nil
 	}
