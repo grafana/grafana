@@ -6,15 +6,15 @@ import (
 )
 
 type AppSettings struct {
-	Name     string                   `json:"name"`
-	AppId    string                   `json:"appId"`
-	Enabled  bool                     `json:"enabled"`
-	Pinned   bool                     `json:"pinned"`
-	Module   string                   `json:"module"`
-	Info     *plugins.PluginInfo      `json:"info"`
-	Pages    []plugins.AppPluginPage  `json:"pages"`
-	Includes []plugins.AppIncludeInfo `json:"includes"`
-	JsonData map[string]interface{}   `json:"jsonData"`
+	Name     string                    `json:"name"`
+	AppId    string                    `json:"appId"`
+	Enabled  bool                      `json:"enabled"`
+	Pinned   bool                      `json:"pinned"`
+	Module   string                    `json:"module"`
+	Info     *plugins.PluginInfo       `json:"info"`
+	Pages    []*plugins.AppPluginPage  `json:"pages"`
+	Includes []*plugins.AppIncludeInfo `json:"includes"`
+	JsonData map[string]interface{}    `json:"jsonData"`
 }
 
 func NewAppSettingsDto(def *plugins.AppPlugin, data *models.AppSettings) *AppSettings {

@@ -6,8 +6,8 @@
   "staticRoot": ".",
 
   "pages": [
-    {"name": "Live stream", "url": "nginx/stream", "reqRole": "Editor"},
-    {"name": "Log view", "url": "nginx/log", "reqRole": "Editor"}
+    { "name": "Live stream", "component": "StreamPageCtrl", "role": "Editor"},
+    { "name": "Log view", "component": "LogsPageCtrl", "role": "Viewer"}
   ],
 
   "css": {
