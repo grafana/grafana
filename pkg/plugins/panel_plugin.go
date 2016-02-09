@@ -12,7 +12,6 @@ func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	}
 
 	p.PluginDir = pluginDir
-	p.initFrontendPlugin()
 	Panels[p.Id] = p
 
 	return nil

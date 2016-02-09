@@ -41,7 +41,17 @@ func Init() error {
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 	scan(setting.PluginsPath)
 	checkPluginPaths()
-	// checkDependencies()
+
+	for _, panel := range Panels {
+		panel.initFrontendPlugin()
+	}
+	for _, panel := range DataSources {
+		panel.initFrontendPlugin()
+	}
+	for _, app := range Apps {
+		app.initApp()
+	}
+
 	return nil
 }
 
