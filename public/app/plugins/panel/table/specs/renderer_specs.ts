@@ -11,6 +11,7 @@ describe('when rendering table', () => {
       {text: 'Value'},
       {text: 'Colored'},
       {text: 'Undefined'},
+      {text: 'String'}
     ];
 
     var panel = {
@@ -35,6 +36,10 @@ describe('when rendering table', () => {
           colorMode: 'value',
           thresholds: [50, 80],
           colors: ['green', 'orange', 'red']
+        },
+        {
+          pattern: 'String',
+          type: 'string',
         }
       ]
     };
@@ -67,11 +72,26 @@ describe('when rendering table', () => {
     });
 
     it('colored cell should have style', () => {
-        var html = renderer.renderCell(2, 85);
-        expect(html).to.be('<td style="color:red">85.0</td>');
+      var html = renderer.renderCell(2, 85);
+      expect(html).to.be('<td style="color:red">85.0</td>');
     });
 
-    it('unformated undefined should be rendered as -', () => {
+    it('unformated undefined should be rendered as string', () => {
+      var html = renderer.renderCell(3, 'value');
+      expect(html).to.be('<td>value</td>');
+    });
+
+    it('string style with escape html should return escaped html', () => {
+      var html = renderer.renderCell(4, "&breaking <br /> the <br /> row");
+      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+    });
+
+    it('undefined formater should return escaped html', () => {
+      var html = renderer.renderCell(3, "&breaking <br /> the <br /> row");
+      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+    });
+
+    it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, undefined);
       expect(html).to.be('<td></td>');
     });
