@@ -1,5 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
+import './dashboard_loaders';
+
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
 import {BundleLoader} from './bundle_loader';
