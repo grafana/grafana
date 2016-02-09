@@ -52,11 +52,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Text: "Dashboards",
 		Icon: "fa fa-fw fa-th-large",
 		Url:  setting.AppSubUrl + "/",
-		Children: []*dtos.NavLink{
-			{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"},
-			{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"},
-		},
+		// Children: []*dtos.NavLink{
+		// 	{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"},
+		// 	{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"},
+		// },
 	})
+
+	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"})
+	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"})
 
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
