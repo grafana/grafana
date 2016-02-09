@@ -19,12 +19,13 @@ type PluginBase struct {
 }
 
 type PluginInfo struct {
-	Author      PluginInfoLink   `json:"author"`
-	Description string           `json:"description"`
-	Links       []PluginInfoLink `json:"links"`
-	Logos       PluginLogos      `json:"logos"`
-	Version     string           `json:"version"`
-	Updated     string           `json:"updated"`
+	Author      PluginInfoLink      `json:"author"`
+	Description string              `json:"description"`
+	Links       []PluginInfoLink    `json:"links"`
+	Logos       PluginLogos         `json:"logos"`
+	Screenshots []PluginScreenshots `json:"screenshots"`
+	Version     string              `json:"version"`
+	Updated     string              `json:"updated"`
 }
 
 type PluginInfoLink struct {
@@ -35,6 +36,11 @@ type PluginInfoLink struct {
 type PluginLogos struct {
 	Small string `json:"small"`
 	Large string `json:"large"`
+}
+
+type PluginScreenshots struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
 }
 
 type PluginStaticRoute struct {
