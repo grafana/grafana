@@ -77,6 +77,19 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		}
 	}
 
+	// check if we have child datasources
+	for _, ds := range DataSources {
+		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
+			ds.IncludedInAppId = app.Id
+			app.Includes = append(app.Includes, &AppIncludeInfo{
+				Name: ds.Name,
+				Id:   ds.Id,
+				Type: ds.Type,
+			})
+		}
+	}
+
+	// slugify pages
 	for _, page := range app.Pages {
 		if page.Slug == "" {
 			page.Slug = slug.Make(page.Name)
