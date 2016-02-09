@@ -19,6 +19,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   suggestTagKeys: any;
   suggestTagValues: any;
   addTagMode: boolean;
+  addFilterMode: boolean;
 
   /** @ngInject **/
   constructor($scope, $injector) {
@@ -106,6 +107,58 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.target.currentTagKey = key;
     this.target.currentTagValue = value;
     this.addTag();
+  }
+
+  addFilter() {
+    if (!this.addFilterMode) {
+      this.addFilterMode = true;
+      return;
+    }
+
+    if (!this.target.filters) {
+      this.target.filters = [];
+    }
+
+    if (!this.target.currentFilterType) {
+      this.target.currentFilterType = 'literal_or';
+    }
+
+    if (!this.target.currentFilterGroupBy) {
+      this.target.currentFilterGroupBy = false;
+    }
+
+    this.errors = this.validateTarget();
+
+    if (!this.errors.filters) {
+      var currentFilter = {
+        type:    this.target.currentFilterType,
+        tagk:     this.target.currentFilterKey,
+        filter:   this.target.currentFilterValue,
+        groupBy: this.target.currentFilterGroupBy
+      };
+      this.target.filters.push(currentFilter);
+      this.target.currentFilterType = 'literal_or';
+      this.target.currentFilterKey = '';
+      this.target.currentFilterValue = '';
+      this.target.currentFilterGroupBy = false;
+      this.targetBlur();
+    }
+
+    this.addFilterMode = false;
+  }
+
+  removeFilter(index) {
+    this.target.filters.splice(index, 1);
+    this.targetBlur();
+  }
+
+  editFilter(fil, index) {
+    this.removeFilter(index);
+    this.target.currentFilterKey = fil.tagk;
+    this.target.currentFilterValue = fil.filter;
+    this.target.currentFilterType = fil.type;
+    this.target.currentFilterGroupBy = fil.groupBy;
+    this.addFilter();
   }
 
   validateTarget() {
