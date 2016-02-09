@@ -14,6 +14,7 @@ const (
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
+	DS_GENERIC_SQL   = "generic_sql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -57,11 +58,12 @@ var knownDatasourcePlugins map[string]bool = map[string]bool{
 	DS_CLOUDWATCH:  true,
 	DS_PROMETHEUS:  true,
 	DS_OPENTSDB:    true,
+	DS_GENERIC_SQL: true,
 	"opennms":      true,
 	"druid":        true,
 	"dalmatinerdb": true,
 	"gnocci":       true,
-	"zabbix":       true,
+	"zabbix":       true,	
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {

@@ -1,0 +1,10 @@
+{
+  "type": "datasource",
+  "name": "Generic SQL",
+  "id": "generic_sql",
+
+  "module": "plugins/generic_sql/module",
+  "staticRoot": ".",
+
+  "metrics": true
+}
