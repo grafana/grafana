@@ -31,7 +31,6 @@ function (angular, _) {
       var i, j, row, panel;
       for (i = 0; i < this.dashboard.rows.length; i++) {
         row = this.dashboard.rows[i];
-
         // handle row repeats
         if (row.repeat) {
           this.repeatRow(row, i);
@@ -40,6 +39,7 @@ function (angular, _) {
         else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
           this.dashboard.rows.splice(i, 1);
           i = i - 1;
+          continue;
         }
 
         // repeat panels
@@ -52,6 +52,8 @@ function (angular, _) {
           else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
+          } else if (!_.isEmpty(panel.scopedVars) && panel.repeatIteration !== this.iteration) {
+            panel.scopedVars = {};
           }
         }
       }
@@ -116,8 +118,9 @@ function (angular, _) {
           panel = copy.panels[i];
           panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
+          panel.repeatIteration = this.iteration;
         }
-      });
+      }, this);
     };
 
     this.getPanelClone = function(sourcePanel, row, index) {
