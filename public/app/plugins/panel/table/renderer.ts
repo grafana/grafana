@@ -96,7 +96,7 @@ export class TableRenderer {
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
-    value = this.encodeHtml(value);
+    value = _.escape(value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
@@ -140,18 +140,5 @@ export class TableRenderer {
     }
 
     return html;
-  }
-
-  encodeHtml(unsafe) {
-    return unsafe.replace(/[&<>"']/g, function(m) {
-      return ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        '\'': '&#039;',
-        '/': '&#x2F;'
-      })[m];
-    });
   }
 }
