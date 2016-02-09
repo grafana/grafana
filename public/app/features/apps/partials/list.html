@@ -2,7 +2,7 @@
 </navbar>
 
 <div class="page-container">
-  <div class="page-wide" ng-init="ctrl.init()">
+  <div class="page-wide">
     <h1>Apps</h1>
 
 		<div ng-if="!ctrl.apps">
@@ -18,13 +18,13 @@
           <li>
             <div class="filter-list-card-controls">
               <div class="filter-list-card-config">
-								<a href="apps/edit/{{app.appId}}">
+								<a href="apps/{{app.appId}}/edit">
 									<i class="fa fa-cog"></i>
 								</a>
               </div>
             </div>
 						<span class="filter-list-card-title">
-							<a href="apps/edit/{{app.appId}}">
+							<a href="apps/{{app.appId}}/edit">
 								{{app.name}}
 							</a>
 							&nbsp; &nbsp;
