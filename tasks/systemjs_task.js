@@ -11,7 +11,7 @@ module.exports = function(grunt) {
     console.log('Starting systemjs-builder');
 
     var modules = [
-      'app/app',
+      'app/grafana',
       'app/features/all',
       'app/plugins/panel/**/module',
       'app/plugins/datasource/graphite/datasource',
