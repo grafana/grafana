@@ -87,12 +87,12 @@
     <li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
       Filters
     </li>
-    <li ng-repeat="filter in ctrl.target.filters track by $index" class="tight-form-item">
-      {{filter.type}}:{{filter.key}}&nbsp;=&nbsp;{{filter.value}}:{{filter.groupByFlag}}
-      <a ng-click="ctrl.editFilter(filter.type, filter.key, filter.value, filter.groupByFlag)">
+    <li ng-repeat="fil in ctrl.target.filters track by $index" class="tight-form-item">
+      {{fil.tagk}}&nbsp;=&nbsp;{{fil.type}}&#40;{{fil.filter}}&#41;&nbsp;&#44&nbsp;groupBy&nbsp;=&nbsp;{{fil.groupBy}}
+      <a ng-click="ctrl.editFilter(fil, $index)">
         <i class="fa fa-pencil"></i>
       </a>
-      <a ng-click="ctrl.removeFilter(filter.type, filter.key)">
+      <a ng-click="ctrl.removeFilter($index)">
         <i class="fa fa-remove"></i>
       </a>
     </li>
@@ -102,15 +102,23 @@
       </a>
     </li>
 
-    <li ng-show="ctrl.addFilterMode">
+    <li class="query-keyword" ng-show="ctrl.addFilterMode">
       <input type="text" class="input-small tight-form-input" spellcheck='false'
-      bs-typeahead="ctrl.suggestFilterKeys" data-min-length=0 data-items=100
+      bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
       ng-model="ctrl.target.currentFilterKey" placeholder="key"></input>
 
+      Type <select ng-model="ctrl.target.currentFilterType"
+      class="tight-form-input input-small"
+      ng-options="filType for filType in ctrl.filterTypes">
+      </select>
+ 
       <input type="text" class="input-small tight-form-input"
-      spellcheck='false' bs-typeahead="ctrl.suggestFilterValues"
-      data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="value">
+      spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+      data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="filter">
       </input>
+
+      groupBy <editor-checkbox text="" model="ctrl.target.currentFilterGroupBy"></editor-checkbox>
+ 
       <a ng-click="ctrl.addFilter()">
         add filter
       </a>
