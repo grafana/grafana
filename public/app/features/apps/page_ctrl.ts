@@ -5,11 +5,14 @@ import _ from 'lodash';
 
 export class AppPageCtrl {
   page: any;
+  appId: any;
   appModel: any;
 
   /** @ngInject */
   constructor(private backendSrv, private $routeParams: any, private $rootScope) {
-    this.backendSrv.get(`/api/org/apps/${this.$routeParams.appId}/settings`).then(app => {
+    this.appId = $routeParams.appId;
+
+    this.backendSrv.get(`/api/org/apps/${this.appId}/settings`).then(app => {
       this.appModel = app;
       this.page = _.findWhere(app.pages, {slug: this.$routeParams.slug});
       if (!this.page) {
