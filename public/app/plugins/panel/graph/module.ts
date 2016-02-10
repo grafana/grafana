@@ -70,6 +70,8 @@ var panelDefaults = {
     value_type: 'cumulative',
     shared: true,
   },
+  // tags for filtering annotation
+  annotationFilter: '',
   // time overrides
   timeFrom: null,
   timeShift: null,
@@ -169,8 +171,15 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.seriesList = _.map(results.data, (series, i) => this.seriesHandler(series, i));
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
 
+    var self = this;
     this.annotationsPromise.then(annotations => {
       this.loading = false;
+      if (!_.isEmpty(self.panel.annotationFilter)) {
+        var filterTags = self.panel.annotationFilter.split(',');
+        annotations = _.filter(annotations, function(annotation) {
+          return _.intersection(annotation.tags, filterTags).length === filterTags.length;
+        });
+      }
       this.seriesList.annotations = annotations;
       this.render(this.seriesList);
     }, () => {
