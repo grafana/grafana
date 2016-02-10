@@ -6,7 +6,7 @@ class PrometheusConfigCtrl {
 }
 
 class PrometheusAnnotationsQueryCtrl {
-  static templateUrl = 'annotations.editor.html';
+  static templateUrl = 'partials/annotations.editor.html';
 }
 
 export {
