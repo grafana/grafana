@@ -32,6 +32,7 @@
     "grunt-git-describe": "~2.3.2",
     "grunt-karma": "~0.12.1",
     "grunt-ng-annotate": "^1.0.1",
+    "grunt-notify": "^0.4.3",
     "grunt-string-replace": "~1.2.1",
     "grunt-systemjs-builder": "^0.2.5",
     "grunt-tslint": "^3.0.1",
