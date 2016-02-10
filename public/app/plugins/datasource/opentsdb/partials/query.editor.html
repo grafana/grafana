@@ -86,6 +86,7 @@
   <ul class="tight-form-list" role="menu">
     <li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
       Filters
+      <tip ng-if="ctrl.tsdbVersion == 2">Filters does not work with tags, either of the two will work but not both.</tip>
     </li>
     <li ng-repeat="fil in ctrl.target.filters track by $index" class="tight-form-item">
       {{fil.tagk}}&nbsp;=&nbsp;{{fil.type}}&#40;{{fil.filter}}&#41;&nbsp;&#44&nbsp;groupBy&nbsp;=&nbsp;{{fil.groupBy}}
@@ -118,15 +119,20 @@
       </input>
 
       groupBy <editor-checkbox text="" model="ctrl.target.currentFilterGroupBy"></editor-checkbox>
- 
-      <a ng-click="ctrl.addFilter()">
-        add filter
-      </a>
+
       <a bs-tooltip="ctrl.errors.filters"
         style="color: rgb(229, 189, 28)"
-        ng-show="target.errors.filters">
+        ng-show="ctrl.errors.filters">
         <i class="fa fa-warning"></i>
       </a>
+ 
+      <a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">
+        add filter
+      </a>
+      <a ng-click="ctrl.closeAddFilterMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+
     </li>
   </ul>
   <div class="clearfix"></div>
@@ -163,15 +169,21 @@
 			spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
 			data-min-length=0 data-items=100 ng-model="ctrl.target.currentTagValue" placeholder="value">
 			</input>
-			<a ng-click="ctrl.addTag()">
+
+      <a bs-tooltip="ctrl.errors.tags"
+        style="color: rgb(229, 189, 28)"
+        ng-show="ctrl.errors.tags">
+        <i class="fa fa-warning"></i>
+      </a>
+
+			<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">
 				add tag
 			</a>
-			<a bs-tooltip="ctrl.errors.tags"
-				style="color: rgb(229, 189, 28)"
-				ng-show="target.errors.tags">
-				<i class="fa fa-warning"></i>
-			</a>
-		</li>
+      <a ng-click="ctrl.closeAddTagMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+		
+    </li>
 	</ul>
 	<div class="clearfix"></div>
 </div>

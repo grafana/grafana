@@ -76,6 +76,11 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   addTag() {
+
+    if (this.target.filters && this.target.filters.length > 0) {
+      this.errors.tags = "Please remove filters to use tags, tags and filters are mutually exclusive.";
+    }
+
     if (!this.addTagMode) {
       this.addTagMode = true;
       return;
@@ -109,7 +114,17 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.addTag();
   }
 
+  closeAddTagMode() {
+    this.addTagMode = false;
+    return;
+  }
+
   addFilter() {
+
+    if (this.target.tags && _.size(this.target.tags) > 0) {
+      this.errors.filters = "Please remove tags to use filters, tags and filters are mutually exclusive.";
+    }
+
     if (!this.addFilterMode) {
       this.addFilterMode = true;
       return;
@@ -159,6 +174,11 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.target.currentFilterType = fil.type;
     this.target.currentFilterGroupBy = fil.groupBy;
     this.addFilter();
+  }
+
+  closeAddFilterMode() {
+    this.addFilterMode = false;
+    return;
   }
 
   validateTarget() {
