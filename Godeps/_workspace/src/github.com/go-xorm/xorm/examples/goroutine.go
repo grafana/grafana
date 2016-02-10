@@ -33,7 +33,7 @@ func test(engine *xorm.Engine) {
 		return
 	}
 
-	size := 500
+	size := 100
 	queue := make(chan int, size)
 
 	for i := 0; i < size; i++ {
@@ -83,7 +83,7 @@ func test(engine *xorm.Engine) {
 }
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	runtime.GOMAXPROCS(2)
 	fmt.Println("-----start sqlite go routines-----")
 	engine, err := sqliteEngine()
 	if err != nil {
