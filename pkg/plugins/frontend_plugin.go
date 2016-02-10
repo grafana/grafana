@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,13 +37,10 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 }
 
 func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
-	//	log.Info("Module Before: %v", fp.Module)
-	// find out plugins path relative to app static root
 	appSubPath := strings.Replace(fp.PluginDir, app.StaticRootAbs, "", 1)
 	fp.IncludedInAppId = app.Id
 	fp.BaseUrl = app.BaseUrl
 	fp.Module = util.JoinUrlFragments("plugins/"+app.Id, appSubPath) + "/module"
-	log.Info("setting paths based on app: subpath = %v, module: %v", appSubPath, fp.Module)
 }
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {

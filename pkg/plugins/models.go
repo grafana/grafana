@@ -2,6 +2,11 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginLoader interface {
@@ -16,6 +21,20 @@ type PluginBase struct {
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+}
+
+func (pb *PluginBase) registerPlugin(pluginDir string) error {
+	if _, exists := Plugins[pb.Id]; exists {
+		return errors.New("Plugin with same id already exists")
+	}
+
+	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {
+		log.Info("Plugins: Registering plugin %v", pb.Name)
+	}
+
+	pb.PluginDir = pluginDir
+	Plugins[pb.Id] = pb
+	return nil
 }
 
 type PluginInfo struct {

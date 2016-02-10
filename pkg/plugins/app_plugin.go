@@ -57,7 +57,9 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
-	app.PluginDir = pluginDir
+	if err := app.registerPlugin(pluginDir); err != nil {
+		return err
+	}
 
 	Apps[app.Id] = app
 	return nil
