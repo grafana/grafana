@@ -7,10 +7,7 @@ type IndexViewData struct {
 	AppSubUrl          string
 	GoogleAnalyticsId  string
 	GoogleTagManagerId string
-
-	PluginCss     []*PluginCss
-	PluginModules []string
-	MainNavLinks  []*NavLink
+	MainNavLinks       []*NavLink
 }
 
 type PluginCss struct {

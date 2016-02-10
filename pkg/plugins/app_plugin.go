@@ -28,7 +28,6 @@ type AppIncludeInfo struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Css      *AppPluginCss     `json:"css"`
 	Pages    []*AppPluginPage  `json:"pages"`
 	Routes   []*AppPluginRoute `json:"routes"`
 	Includes []*AppIncludeInfo `json:"-"`
@@ -67,11 +66,6 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 func (app *AppPlugin) initApp() {
 	app.initFrontendPlugin()
-
-	if app.Css != nil {
-		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
-		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
-	}
 
 	// check if we have child panels
 	for _, panel := range Panels {
