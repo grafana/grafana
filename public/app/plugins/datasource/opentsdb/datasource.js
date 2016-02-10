@@ -315,6 +315,8 @@ function (angular, _, dateMath) {
         }
       }
 
+      query.filters = angular.copy(target.filters);
+
       return query;
     }
 
