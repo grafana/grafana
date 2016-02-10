@@ -81,10 +81,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	for _, plugin := range enabledPlugins.Apps {
-		if plugin.Css != nil {
-			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
-		}
-
 		if plugin.Pinned {
 			pageLink := &dtos.NavLink{
 				Text: plugin.Name,
