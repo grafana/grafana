@@ -101,8 +101,8 @@
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
-			"Comment": "v1.2-26-g9543750",
-			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
+			"Comment": "v1.2-171-g267b128",
+			"Rev": "267b128680c46286b9ca13475c3cca5de8f79bd7"
 		},
 		{
 			"ImportPath": "github.com/go-xorm/core",
