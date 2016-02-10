@@ -39,7 +39,6 @@ type AppPlugin struct {
 type AppPluginRoute struct {
 	Path            string                 `json:"path"`
 	Method          string                 `json:"method"`
-	ReqSignedIn     bool                   `json:"reqSignedIn"`
 	ReqGrafanaAdmin bool                   `json:"reqGrafanaAdmin"`
 	ReqRole         models.RoleType        `json:"reqRole"`
 	Url             string                 `json:"url"`
