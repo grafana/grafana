@@ -19,6 +19,7 @@ var (
 	Panels       map[string]*PanelPlugin
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
+	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 )
 
@@ -32,14 +33,30 @@ func Init() error {
 	StaticRoutes = make([]*PluginStaticRoute, 0)
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
+	Plugins = make(map[string]*PluginBase)
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 	}
 
+	log.Info("Plugins: Scan starting")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
-	scan(setting.PluginsPath)
+
+	// check if plugins dir exists
+	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
+		log.Warn("Plugins: Plugin dir %v does not exist", setting.PluginsPath)
+		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
+			log.Warn("Plugins: Failed to create plugin dir: %v, error: %v", setting.PluginsPath, err)
+		} else {
+			log.Info("Plugins: Plugin dir %v created", setting.PluginsPath)
+			scan(setting.PluginsPath)
+		}
+	} else {
+		scan(setting.PluginsPath)
+	}
+
+	// check plugin paths defined in config
 	checkPluginPaths()
 
 	for _, panel := range Panels {
@@ -55,32 +72,11 @@ func Init() error {
 	return nil
 }
 
-// func checkDependencies() {
-// 	for appType, app := range Apps {
-// 		for _, reqPanel := range app.PanelPlugins {
-// 			if _, ok := Panels[reqPanel]; !ok {
-// 				log.Fatal(4, "App %s requires Panel type %s, but it is not present.", appType, reqPanel)
-// 			}
-// 		}
-// 		for _, reqDataSource := range app.DatasourcePlugins {
-// 			if _, ok := DataSources[reqDataSource]; !ok {
-// 				log.Fatal(4, "App %s requires DataSource type %s, but it is not present.", appType, reqDataSource)
-// 			}
-// 		}
-// 		for _, reqApiPlugin := range app.ApiPlugins {
-// 			if _, ok := ApiPlugins[reqApiPlugin]; !ok {
-// 				log.Fatal(4, "App %s requires ApiPlugin type %s, but it is not present.", appType, reqApiPlugin)
-// 			}
-// 		}
-// 	}
-// }
-
 func checkPluginPaths() error {
 	for _, section := range setting.Cfg.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
-				log.Info("Plugin: Scaning dir %s", path)
 				scan(path)
 			}
 		}
@@ -92,6 +88,8 @@ func scan(pluginDir string) error {
 	scanner := &PluginScanner{
 		pluginPath: pluginDir,
 	}
+
+	log.Info("Plugins: Scaning dir %s", pluginDir)
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if pluginDir != "data/plugins" {
@@ -123,7 +121,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	if f.Name() == "plugin.json" {
 		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			log.Error(3, "Failed to load plugin json file: %v,  err: %v", currentPath, err)
+			log.Error(3, "Plugins: Failed to load plugin json file: %v,  err: %v", currentPath, err)
 			scanner.errors = append(scanner.errors, err)
 		}
 	}

@@ -11,8 +11,10 @@ func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
-	p.PluginDir = pluginDir
-	Panels[p.Id] = p
+	if err := p.registerPlugin(pluginDir); err != nil {
+		return err
+	}
 
+	Panels[p.Id] = p
 	return nil
 }
