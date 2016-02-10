@@ -60,13 +60,16 @@
 @grafanaTargetFuncBackground: darken(@grafanaTargetBackground, 5%);
 @grafanaTargetFuncHightlight: darken(@grafanaTargetBackground, 10%);
 
+@grafanaSelectBackground: @grafanaTargetFuncBackground;
+
 @modalBackground: @bodyBackground;
 @codeTagBackground: #ddd;
 
 // Scaffolding
 // -------------------------
-@bodyBackground:      #EFEFEF;
+// @bodyBackground:      #EFEFEF;
 @pageBackground:      @grayDarker;
+@bodyBackground:  	  @pageBackground;
 @textColor:           @gray;
 
 // Links
@@ -77,18 +80,19 @@
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "PT Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
-@baseFontWeight:		    400;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
 
-@headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    bold;    // instead of browser default, bold
+@headingsFontFamily:    inherit; // inherit. empty to use BS default, @baseFontFamily
+@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsFontStyle:    	italic; 
 @headingsColor:         @textColor; // empty to use BS default, @textColor
 
 
@@ -153,6 +157,8 @@
 
 @btnInverseBackground:              @white;
 @btnInverseBackgroundHighlight:     darken(@grayLight, 15%);
+
+@btnText:              				@grayLighter;
 
 @iconContainerBackground:			      @white;
 @iconContainerBackgroundHighlight:	lighten(@white, 5%);

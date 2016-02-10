@@ -47,13 +47,16 @@
 @grafanaTargetFuncBackground: #333;
 @grafanaTargetFuncHightlight: #444;
 
+@grafanaSelectBackground:	@grafanaTargetFuncBackground;
+
 @modalBackground: @black;
 @codeTagBackground: #444;
 
 // Scaffolding
 // -------------------------
-@bodyBackground:  rgb(20,20,20);
+// @bodyBackground:  rgb(20,20,20);
 @pageBackground:  @grayDarker;
+@bodyBackground:  @pageBackground;
 @textColor:       @grayLighter;
 
 // Links
@@ -65,18 +68,19 @@
 
 // Typography
 // -------------------------
-@sansFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
+@sansFontFamily:        "PT Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 @serifFontFamily:       Georgia, "Times New Roman", Times, serif;
 @monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
 
 @baseFontSize:          14px;
-@baseFontWeight:		    400;
+@baseFontWeight:		400;
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
-@headingsFontWeight:    normal;    // instead of browser default, bold
+@headingsFontWeight:    200;    // instead of browser default, bold
+@headingsFontStyle:    	italic; 
 @headingsColor:         darken(@white,11%); // empty to use BS default, @textColor
 @inputText:             @black;
 
@@ -98,7 +102,7 @@
 @borderRadiusSmall:     2px;
 
 // Lists
-@grafanaListBackground:  #262626;
+@grafanaListBackground:  @grayDark;
 @grafanaListAccent:      lighten(@grayDarker, 2%);
 @grafanaListBorderTop:      @grayDark;
 @grafanaListBorderBottom:   @black;
@@ -121,6 +125,7 @@
 // -------------------------
 @btnBackground:                     @grayDark;
 @btnBackgroundHighlight:            darken(@grayLight, 15%);
+@btnBackgroundShadow:            	darken(@grayLight, 15%);
 @btnBorder:                         #bbb;
 
 @btnPrimaryBackground:              @blueDark;
@@ -140,6 +145,8 @@
 
 @btnInverseBackground:              @grayDark;
 @btnInverseBackgroundHighlight:     lighten(@grayDark, 5%);
+
+@btnText:              				@gray;
 
 @iconContainerBackground:			      @black;
 @iconContainerBackgroundHighlight:	lighten(@black, 5%);
