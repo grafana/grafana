@@ -11,6 +11,7 @@ type AppSettings struct {
 	Enabled  bool                      `json:"enabled"`
 	Pinned   bool                      `json:"pinned"`
 	Module   string                    `json:"module"`
+	BaseUrl  string                    `json:"baseUrl"`
 	Info     *plugins.PluginInfo       `json:"info"`
 	Pages    []*plugins.AppPluginPage  `json:"pages"`
 	Includes []*plugins.AppIncludeInfo `json:"includes"`
@@ -23,6 +24,7 @@ func NewAppSettingsDto(def *plugins.AppPlugin, data *models.AppSettings) *AppSet
 		Name:     def.Name,
 		Info:     &def.Info,
 		Module:   def.Module,
+		BaseUrl:  def.BaseUrl,
 		Pages:    def.Pages,
 		Includes: def.Includes,
 	}

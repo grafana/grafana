@@ -7,6 +7,7 @@ export class AppEditCtrl {
   appModel: any;
   appId: any;
   includedPanels: any;
+  includedDatasources: any;
 
   /** @ngInject */
   constructor(private backendSrv: any, private $routeParams: any) {
@@ -16,6 +17,7 @@ export class AppEditCtrl {
     this.backendSrv.get(`/api/org/apps/${this.appId}/settings`).then(result => {
       this.appModel = result;
       this.includedPanels = _.where(result.includes, {type: 'panel'});
+      this.includedDatasources = _.where(result.includes, {type: 'datasource'});
     });
   }
 

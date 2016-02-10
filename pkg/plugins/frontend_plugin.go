@@ -4,11 +4,16 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type FrontendPluginBase struct {
 	PluginBase
 	Module        string `json:"module"`
+	BaseUrl       string `json:"baseUrl"`
 	StaticRoot    string `json:"staticRoot"`
 	StaticRootAbs string `json:"-"`
 }
@@ -22,22 +27,36 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 		})
 	}
 
+	fp.handleModuleDefaults()
+
 	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.Id)
 	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.Id)
-	fp.handleModuleDefaults()
+
+	for i := 0; i < len(fp.Info.Screenshots); i++ {
+		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.Id)
+	}
+}
+
+func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
+	//	log.Info("Module Before: %v", fp.Module)
+	// find out plugins path relative to app static root
+	appSubPath := strings.Replace(fp.PluginDir, app.StaticRootAbs, "", 1)
+	fp.IncludedInAppId = app.Id
+	fp.BaseUrl = app.BaseUrl
+	fp.Module = util.JoinUrlFragments("plugins/"+app.Id, appSubPath) + "/module"
+	log.Info("setting paths based on app: subpath = %v, module: %v", appSubPath, fp.Module)
 }
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {
-	if fp.Module != "" {
-		return
-	}
 
 	if fp.StaticRoot != "" {
 		fp.Module = path.Join("plugins", fp.Id, "module")
+		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
 	}
 
 	fp.Module = path.Join("app/plugins", fp.Type, fp.Id, "module")
+	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
 }
 
 func evalRelativePluginUrlPath(pathStr string, pluginId string) string {

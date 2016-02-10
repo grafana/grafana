@@ -41,7 +41,17 @@ func Init() error {
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 	scan(setting.PluginsPath)
 	checkPluginPaths()
-	// checkDependencies()
+
+	for _, panel := range Panels {
+		panel.initFrontendPlugin()
+	}
+	for _, panel := range DataSources {
+		panel.initFrontendPlugin()
+	}
+	for _, app := range Apps {
+		app.initApp()
+	}
+
 	return nil
 }
 
@@ -100,6 +110,10 @@ func scan(pluginDir string) error {
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err
+	}
+
+	if f.Name() == "node_modules" {
+		return util.WalkSkipDir
 	}
 
 	if f.IsDir() {

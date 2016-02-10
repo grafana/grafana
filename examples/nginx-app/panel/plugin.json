@@ -1,6 +1,5 @@
 {
   "type": "panel",
   "name": "Nginx Panel",
-  "id": "nginx-panel",
-  "staticRoot": "."
+  "id": "nginx-panel"
 }
