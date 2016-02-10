@@ -71,13 +71,24 @@
 .page-container {
   background-color: @pageBackground;
   position: relative;
-  padding: 20px 20px 60px 81px;
+  padding: 25px 60px 60px 88px;
 }
+
 
 .page {
   max-width: 653px;
 }
 
+.page-header-align {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  display: -ms-flexbox;      /* TWEENER - IE 10 */
+  display: -webkit-flex;     /* NEW - Chrome */
+  flex-wrap: wrap-reverse;
+}
 .page-wide {
   max-width: 1000px;
 }

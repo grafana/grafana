@@ -58,6 +58,9 @@
     float: left;
     background: @labelBackground;
   }
+  & .trans {
+    background: transparent;
+  }
 }
 
 .norm-form-flex-wrapper {
@@ -145,7 +148,7 @@ input[type=text].norm-form-clear-input {
 [type=text],
 [type=email],
 [type=number],
-[type=password] {
+[type=password], {
   &.norm-form-input {
     border: none;
     border-right: 3px solid @pageBackground;
@@ -154,6 +157,7 @@ input[type=text].norm-form-clear-input {
     padding: 8px 6px;
     height: 100%;
     box-sizing: border-box;
+    font-size: 16px;
     &.last {
       border-right: none;
     }
@@ -176,7 +180,8 @@ select.norm-form-input {
   margin: 0px;
   border-radius: 0;
   height: 36px;
-  padding: 9px 3px;
+  padding: 9px 3px;    
+  font-size: 16px;
   &.last {
     border-right: none;
   }

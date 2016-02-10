@@ -1,15 +1,23 @@
-<navbar title="Data sources" icon="fa fa-fw fa-database">
+<navbar> 
+<div class="top-nav-btn dashnav-dashboards-btn" >
+	<a class="pointer" ng-click="openSearch()">
+		<i class="icon-gf icon-gf-datasources"></i>
+		<span class="dashboard-title">Data Sources</span>
+		<i class="fa fa-caret-down"></i>
+	</a>
+</div>
 </navbar>
 
 <div class="page-container">
 	<div class="page-wide">
-
-		<a class="btn btn-inverse pull-right" href="datasources/new">
+	<div class="page-header-align">
+		<h1>Data sources</h1>
+		<a class="btn btn-success" href="datasources/new">
 			<i class="fa fa-plus"></i>
 			Add data source
 		</a>
 
-		<h1>Data sources</h1>
+	</div>
 		<br>
 
 		<div ng-if="datasources.length === 0">
