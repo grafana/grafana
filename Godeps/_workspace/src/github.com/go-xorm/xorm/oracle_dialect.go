@@ -1,3 +1,7 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 import (
@@ -518,7 +522,7 @@ func (db *oracle) SqlType(c *core.Column) string {
 		res = "TIMESTAMP WITH TIME ZONE"
 	case core.Float, core.Double, core.Numeric, core.Decimal:
 		res = "NUMBER"
-	case core.Text, core.MediumText, core.LongText:
+	case core.Text, core.MediumText, core.LongText, core.Json:
 		res = "CLOB"
 	case core.Char, core.Varchar, core.TinyText:
 		res = "VARCHAR2"
@@ -661,8 +665,8 @@ func (db *oracle) MustDropTable(tableName string) error {
 		" AND column_name = ?", args
 }*/
 
-func (db *oracle) IsColumnExist(tableName string, col *core.Column) (bool, error) {
-	args := []interface{}{tableName, col.Name}
+func (db *oracle) IsColumnExist(tableName, colName string) (bool, error) {
+	args := []interface{}{tableName, colName}
 	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = :1" +
 		" AND column_name = :2"
 	rows, err := db.DB().Query(query, args...)
@@ -740,6 +744,8 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 		switch dt {
 		case "VARCHAR2":
 			col.SQLType = core.SQLType{core.Varchar, len1, len2}
+		case "NVARCHAR2":
+			col.SQLType = core.SQLType{core.NVarchar, len1, len2}
 		case "TIMESTAMP WITH TIME ZONE":
 			col.SQLType = core.SQLType{core.TimeStampz, 0, 0}
 		case "NUMBER":

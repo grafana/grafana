@@ -41,18 +41,20 @@ define([
       dash.templating.list.push({
         name: 'apps',
         current: {
-          text: 'se1, se2',
-          value: ['se1', 'se2']
+          text: 'se1, se2, se3',
+          value: ['se1', 'se2', 'se3']
         },
         options: [
           {text: 'se1', value: 'se1', selected: true},
           {text: 'se2', value: 'se2', selected: true},
+          {text: 'se3', value: 'se3', selected: true},
+          {text: 'se4', value: 'se4', selected: false}
         ]
       });
     });
 
     it('should repeat panel one time', function() {
-      expect(ctx.rows[0].panels.length).to.be(2);
+      expect(ctx.rows[0].panels.length).to.be(3);
     });
 
     it('should mark panel repeated', function() {
@@ -63,6 +65,7 @@ define([
     it('should set scopedVars on panels', function() {
       expect(ctx.rows[0].panels[0].scopedVars.apps.value).to.be('se1');
       expect(ctx.rows[0].panels[1].scopedVars.apps.value).to.be('se2');
+      expect(ctx.rows[0].panels[2].scopedVars.apps.value).to.be('se3');
     });
 
     describe('After a second iteration', function() {
@@ -83,18 +86,34 @@ define([
       });
 
       it('should have same panel count', function() {
-        expect(ctx.rows[0].panels.length).to.be(2);
+        expect(ctx.rows[0].panels.length).to.be(3);
       });
     });
 
     describe('After a second iteration and selected values reduced', function() {
       beforeEach(function() {
         ctx.dash.templating.list[0].options[1].selected = false;
+        
+        ctx.dynamicDashboardSrv.update(ctx.dash);
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(ctx.rows[0].panels.length).to.be(2);
+      });
+    });
+
+    describe('After a second iteration and panel repeat is turned off', function() {
+      beforeEach(function() {
+        ctx.rows[0].panels[0].repeat = null;
         ctx.dynamicDashboardSrv.update(ctx.dash);
       });
 
       it('should clean up repeated panel', function() {
         expect(ctx.rows[0].panels.length).to.be(1);
+      });
+
+      it('should remove scoped vars from reused panel', function() {
+        expect(ctx.rows[0].panels[0].scopedVars).to.be.empty();
       });
     });
 

@@ -32,7 +32,7 @@ var panelTemplate = `
       <div class="gf-box-header">
         <div class="gf-box-title">
           <i ng-class="ctrl.icon"></i>
-          {{ctrl.name}}
+          {{ctrl.pluginName}}
         </div>
 
         <div ng-model="ctrl.editorTabIndex" bs-tabs>

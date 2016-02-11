@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
 
-/** @ngInject */
+/** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
 
   function getTemplate(component) {
@@ -23,7 +23,16 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
+  function relativeTemplateUrlToAbs(templateUrl, baseUrl) {
+    if (!templateUrl) { return undefined; }
+    if (templateUrl.indexOf('public') === 0) { return templateUrl; }
+    return baseUrl + '/' + templateUrl;
+  }
+
   function getPluginComponentDirective(options) {
+    // handle relative template urls for plugin templates
+    options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
+
     return function() {
       return {
         templateUrl: options.Component.templateUrl,
@@ -74,6 +83,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         });
       }
 
+      if (panelInfo) {
+        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
+      }
+
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
         PanelCtrl.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
@@ -94,6 +107,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
           return System.import(ds.meta.module).then(dsModule => {
             return {
+              baseUrl: ds.meta.baseUrl,
               name: 'query-ctrl-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
               attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
@@ -111,6 +125,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             }
 
             return {
+              baseUrl: ds.meta.baseUrl,
               name: 'query-options-ctrl-' + ds.meta.id,
               bindings: {panelCtrl: "="},
               attrs: {"panel-ctrl": "ctrl"},
@@ -123,6 +138,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       case "annotations-query-ctrl": {
         return System.import(scope.currentDatasource.meta.module).then(function(dsModule) {
           return {
+            baseUrl: scope.currentDatasource.meta.baseUrl,
             name: 'annotations-query-ctrl-' + scope.currentDatasource.meta.id,
             bindings: {annotation: "=", datasource: "="},
             attrs: {"annotation": "currentAnnotation", datasource: "currentDatasource"},
@@ -134,6 +150,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       case 'datasource-config-ctrl': {
         return System.import(scope.datasourceMeta.module).then(function(dsModule) {
           return {
+            baseUrl: scope.datasourceMeta.baseUrl,
             name: 'ds-config-' + scope.datasourceMeta.id,
             bindings: {meta: "=", current: "="},
             attrs: {meta: "datasourceMeta", current: "current"},
@@ -143,12 +160,27 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        return System.import(scope.ctrl.appModel.module).then(function(appModule) {
+        let appModel = scope.ctrl.appModel;
+        return System.import(appModel.module).then(function(appModule) {
           return {
-            name: 'app-config-' + scope.ctrl.appModel.appId,
+            baseUrl: appModel.baseUrl,
+            name: 'app-config-' + appModel.appId,
             bindings: {appModel: "=", appEditCtrl: "="},
             attrs: {"app-model": "ctrl.appModel", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,
+          };
+        });
+      }
+      // App Page
+      case 'app-page': {
+        let appModel = scope.ctrl.appModel;
+        return System.import(appModel.module).then(function(appModule) {
+          return {
+            baseUrl: appModel.baseUrl,
+            name: 'app-page-' + appModel.appId + '-' + scope.ctrl.page.slug,
+            bindings: {appModel: "="},
+            attrs: {"app-model": "ctrl.appModel"},
+            Component: appModule[scope.ctrl.page.component],
           };
         });
       }

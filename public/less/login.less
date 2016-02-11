@@ -76,10 +76,10 @@
 
 .login-submit-button-row {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 30px;
   button {
-    padding: 9px 7px;
-    font-size: 14px;
+    padding: 14px 23px;
+    font-size: 16px;
     font-weight: bold;
     min-width: 150px;
     display: inline-block;
@@ -88,9 +88,12 @@
 }
 
 .login-oauth {
-  margin-top: 30px;
-  padding: 10px;
-  background: @grafanaTargetBackground;
+  margin-bottom: 15px;
+
+  .btn {
+    margin: 5px;
+  }
+
   .btn-google {
     background: #dd4b39;
     color: white;
@@ -98,6 +101,33 @@
   .btn-github {
     background: #555;
     color: white;
+  }
+}
+
+.password-recovery {
+  background: @grafanaTargetBackground;
+  margin-top: 10px;
+  padding: 10px;
+  a {
+    color: @grayLight;
+  }
+}
+
+.login-divider {
+  float: left;
+  width: 50%;
+  margin: 5px 25% 25px 25%;
+
+  .login-divider-line {
+    width: 100%;
+    height: 10px;
+    border-bottom: 1px solid @gray;
+
+    .login-divider-text {
+      background-color: @grayDarker;
+      color: @grayLight;
+      padding: 0 10px;
+    }
   }
 }
 
