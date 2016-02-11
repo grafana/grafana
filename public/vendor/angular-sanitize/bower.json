@@ -1,9 +1,10 @@
 {
   "name": "angular-sanitize",
-  "version": "1.5.0-rc.0",
+  "version": "1.5.1-build.4601+sha.c966876",
+  "license": "MIT",
   "main": "./angular-sanitize.js",
   "ignore": [],
   "dependencies": {
-    "angular": "1.5.0-rc.0"
+    "angular": "1.5.1-build.4601+sha.c966876"
   }
 }

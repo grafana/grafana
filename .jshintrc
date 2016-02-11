@@ -28,6 +28,7 @@
 
   "globals": {
     "System": true,
+    "Promise": true,
     "define": true,
     "require": true,
     "Chromath": false,

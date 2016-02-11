@@ -45,11 +45,11 @@
 }
 
 .playlist-active {
-  .grafana-menu-zoom-out,
   .add-row-panel-hint,
-  .grafana-menu-refresh,
-  .top-nav-dash-actions {
-    display:none;
+  .dashnav-refresh-action,
+  .dashnav-zoom-out,
+  .dashnav-action-icons {
+    display: none;
   }
 
   .grafana-menu-stop-playlist {
@@ -68,6 +68,11 @@
   margin-left: auto;
   margin-right: auto;
   top: 20%;
+}
+
+.grafana-app {
+  display: block;
+  min-height: 100%;
 }
 
 .histogram-chart {

@@ -36,7 +36,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	if setting.DisableGravatar {
-		data.User.GravatarUrl = setting.AppSubUrl + "/img/user_profile.png"
+		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/user_profile.png"
 	}
 
 	if len(data.User.Name) == 0 {
@@ -51,32 +51,27 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Dashboards",
 		Icon: "fa fa-fw fa-th-large",
-		Url:  "/",
+		Url:  setting.AppSubUrl + "/",
+		// Children: []*dtos.NavLink{
+		// 	{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"},
+		// 	{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"},
+		// },
 	})
 
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-		Text: "Playlists",
-		Icon: "fa fa-fw fa-list",
-		Url:  "/playlists",
-	})
-
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-		Text: "Snapshots",
-		Icon: "fa-fw icon-gf icon-gf-snapshot",
-		Url:  "/dashboard/snapshots",
-	})
+	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"})
+	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"})
 
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Data Sources",
 			Icon: "fa fa-fw fa-database",
-			Url:  "/datasources",
+			Url:  setting.AppSubUrl + "/datasources",
 		})
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Apps",
 			Icon: "fa fa-fw fa-cubes",
-			Url:  "/apps",
+			Url:  setting.AppSubUrl + "/apps",
 		})
 	}
 
@@ -86,20 +81,25 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	for _, plugin := range enabledPlugins.Apps {
-		if plugin.Module != "" {
-			data.PluginModules = append(data.PluginModules, plugin.Module)
-		}
-
 		if plugin.Css != nil {
 			data.PluginCss = append(data.PluginCss, &dtos.PluginCss{Light: plugin.Css.Light, Dark: plugin.Css.Dark})
 		}
 
 		if plugin.Pinned {
-			data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			pageLink := &dtos.NavLink{
 				Text: plugin.Name,
-				Url:  "/apps/edit/" + plugin.Id,
+				Url:  setting.AppSubUrl + "/apps/" + plugin.Id + "/edit",
 				Img:  plugin.Info.Logos.Small,
-			})
+			}
+
+			for _, page := range plugin.Pages {
+				pageLink.Children = append(pageLink.Children, &dtos.NavLink{
+					Url:  setting.AppSubUrl + "/apps/" + plugin.Id + "/page/" + page.Slug,
+					Text: page.Name,
+				})
+			}
+
+			data.MainNavLinks = append(data.MainNavLinks, pageLink)
 		}
 	}
 

@@ -1,14 +1,19 @@
-If you have any idea for an improvement or found a bug do not hesitate to open an issue.
-And if you have time clone this repo and submit a pull request and help me make Grafana the
-kickass metrics & devops dashboard we all dream about!
+Follow the setup guide in README.md
 
-Prerequisites:
- - Nodejs (for jshint & grunt & development server)
+### Rebuild frontend assts on source change
+```
+grunt && grunt watch
+```
 
-Clone repository:
+### Rerun tests on source change
+```
+grunt karma:dev
+```
 
-    npm install
-    grunt server (starts development web server in src folder)
-    grunt (runs jshint and less -> css compilation)
+### Run tests before commit
+```
+grunt test
+godep go test -v ./pkg/...
+```
 
-Please remember to run grunt before doing pull request to verify that your code passes all the jshint validations.
+

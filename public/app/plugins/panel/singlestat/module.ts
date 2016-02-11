@@ -6,8 +6,8 @@ import $ from 'jquery';
 import 'jquery.flot';
 
 import kbn from 'app/core/utils/kbn';
-import TimeSeries from '../../../core/time_series2';
-import {MetricsPanelCtrl} from '../../../features/panel/panel';
+import TimeSeries from 'app/core/time_series2';
+import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 // Set and populate defaults
 var panelDefaults = {
@@ -42,7 +42,7 @@ var panelDefaults = {
 };
 
 class SingleStatCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/singlestat/module.html';
+  static templateUrl = 'module.html';
 
   series: any[];
   data: any[];
@@ -59,7 +59,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super.initEditMode();
     this.icon =  "fa fa-dashboard";
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
-    this.addEditorTab('Options', 'app/plugins/panel/singlestat/editor.html', 2);
+    this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -79,7 +79,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   loadSnapshot(snapshotData) {
-    this.dataHandler(snapshotData);
+    // give element time to get attached and get dimensions
+    this.$timeout(() => this.dataHandler(snapshotData), 50);
   }
 
   dataHandler(results) {
@@ -172,11 +173,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     data.flotpairs = [];
 
     if (this.series.length > 1) {
-      this.inspector.error = new Error();
-      this.inspector.error.message = 'Multiple Series Error';
-      this.inspector.error.data = 'Metric query returns ' + this.series.length +
+      var error: any = new Error();
+      error.message = 'Multiple Series Error';
+      error.data = 'Metric query returns ' + this.series.length +
         ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify(this.series);
-      throw this.inspector.error;
+      throw error;
     }
 
     if (this.series && this.series.length > 0) {
@@ -239,37 +240,29 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var $timeout = this.$timeout;
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
-    var data, linkInfo, $panelContainer;
-    var firstRender = true;
+    var data, linkInfo;
+    var elemHeight;
+    var $panelContainer = elem.find('.panel-container');
+    // change elem to singlestat panel
+    elem = elem.find('.singlestat-panel');
+    hookupDrilldownLinkTooltip();
 
     scope.$on('render', function() {
-      if (firstRender) {
-        var inner = elem.find('.singlestat-panel');
-        if (inner.length) {
-          elem = inner;
-          $panelContainer = elem.parents('.panel-container');
-          firstRender = false;
-          hookupDrilldownLinkTooltip();
-        } else {
-          return;
-        }
-      }
-
       render();
       ctrl.renderingCompleted();
     });
 
     function setElementHeight() {
       try {
-        var height = scope.height || panel.height || ctrl.row.height;
-        if (_.isString(height)) {
-          height = parseInt(height.replace('px', ''), 10);
+        elemHeight = ctrl.height || panel.height || ctrl.row.height;
+        if (_.isString(elemHeight)) {
+          elemHeight = parseInt(elemHeight.replace('px', ''), 10);
         }
 
-        height -= 5; // padding
-        height -= panel.title ? 24 : 9; // subtract panel title bar
+        elemHeight -= 5; // padding
+        elemHeight -= panel.title ? 24 : 9; // subtract panel title bar
 
-        elem.css('height', height + 'px');
+        elem.css('height', elemHeight + 'px');
 
         return true;
       } catch (e) { // IE throws errors sometimes
@@ -313,7 +306,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       var width = elem.width() + 20;
-      var height = elem.height() || 100;
+      var height = elemHeight;
 
       var plotCanvas = $('<div></div>');
       var plotCss: any = {};
