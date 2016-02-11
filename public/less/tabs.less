@@ -2,7 +2,7 @@
 .nav-tabs-alt {
   border-bottom: @grafanaTriggerBorder;
   padding-left: 10px;
-  margin: 0;
+  margin: 0 0 10px 0;
 
 	& > li > a {
 	  color: darken(@linkColor, 20%);
@@ -16,7 +16,7 @@
 	li.active > a:focus,
 	li.active > a:hover {
     .border-radius(3px);
-		border: @grafanaTriggerBorder;
+	  border: @grafanaTriggerBorder;
 	  background-color: transparent;
 	  border-bottom: 1px solid @grafanaPanelBackground;
 	  color: @linkColor;

@@ -14,8 +14,8 @@
 
 <div class="page-container">
 	<div class="page">
-		<h2 ng-show="isNew">Add data source</h2>
-		<h2 ng-show="!isNew">Edit data source</h2>
+		<h1 ng-show="isNew">Add data source</h1>
+		<h1 ng-show="!isNew">Edit data source</h1>
 		<p class="small" ng-show="isNew">This text will only appear on Add Data Source</p>
 
 		<form name="editForm">
@@ -69,7 +69,7 @@
 				<button type="submit" class="btn btn-inverse" ng-show="!isNew" ng-click="saveChanges(true)">
 					Test Connection
 				</button>
-				<a class="btnText" href="datasources">Cancel</a>
+				<a class="btn-text" href="datasources">Cancel</a>
 			</div>
 			<br>
 		</form>
