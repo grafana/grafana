@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 type AppPluginPage struct {
-	Name    string          `json:"name"`
-	Url     string          `json:"url"`
-	ReqRole models.RoleType `json:"reqRole"`
+	Name      string          `json:"name"`
+	Slug      string          `json:"slug"`
+	Component string          `json:"component"`
+	Role      models.RoleType `json:"role"`
 }
 
 type AppPluginCss struct {
@@ -27,9 +29,9 @@ type AppIncludeInfo struct {
 type AppPlugin struct {
 	FrontendPluginBase
 	Css      *AppPluginCss     `json:"css"`
-	Pages    []AppPluginPage   `json:"pages"`
+	Pages    []*AppPluginPage  `json:"pages"`
 	Routes   []*AppPluginRoute `json:"routes"`
-	Includes []AppIncludeInfo  `json:"-"`
+	Includes []*AppIncludeInfo `json:"-"`
 
 	Pinned  bool `json:"-"`
 	Enabled bool `json:"-"`
@@ -55,19 +57,27 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
+	if err := app.registerPlugin(pluginDir); err != nil {
+		return err
+	}
+
+	Apps[app.Id] = app
+	return nil
+}
+
+func (app *AppPlugin) initApp() {
+	app.initFrontendPlugin()
+
 	if app.Css != nil {
 		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
 		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
 	}
 
-	app.PluginDir = pluginDir
-	app.initFrontendPlugin()
-
 	// check if we have child panels
 	for _, panel := range Panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
-			panel.IncludedInAppId = app.Id
-			app.Includes = append(app.Includes, AppIncludeInfo{
+			panel.setPathsBasedOnApp(app)
+			app.Includes = append(app.Includes, &AppIncludeInfo{
 				Name: panel.Name,
 				Id:   panel.Id,
 				Type: panel.Type,
@@ -75,6 +85,22 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		}
 	}
 
-	Apps[app.Id] = app
-	return nil
+	// check if we have child datasources
+	for _, ds := range DataSources {
+		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
+			ds.setPathsBasedOnApp(app)
+			app.Includes = append(app.Includes, &AppIncludeInfo{
+				Name: ds.Name,
+				Id:   ds.Id,
+				Type: ds.Type,
+			})
+		}
+	}
+
+	// slugify pages
+	for _, page := range app.Pages {
+		if page.Slug == "" {
+			page.Slug = slug.Make(page.Name)
+		}
+	}
 }

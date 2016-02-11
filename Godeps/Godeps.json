@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.5",
+	"GoVersion": "go1.5.1",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -101,17 +101,18 @@
 		},
 		{
 			"ImportPath": "github.com/go-sql-driver/mysql",
-			"Comment": "v1.2-26-g9543750",
-			"Rev": "9543750295406ef070f7de8ae9c43ccddd44e15e"
+			"Comment": "v1.2-171-g267b128",
+			"Rev": "267b128680c46286b9ca13475c3cca5de8f79bd7"
 		},
 		{
 			"ImportPath": "github.com/go-xorm/core",
-			"Rev": "be6e7ac47dc57bd0ada25322fa526944f66ccaa6"
+			"Comment": "v0.4.4-7-g9e608f7",
+			"Rev": "9e608f7330b9d16fe2818cfe731128b3f156cb9a"
 		},
 		{
 			"ImportPath": "github.com/go-xorm/xorm",
-			"Comment": "v0.4.2-58-ge2889e5",
-			"Rev": "e2889e5517600b82905f1d2ba8b70deb71823ffe"
+			"Comment": "v0.4.4-44-gf561133",
+			"Rev": "f56113384f2c63dfe4cd8e768e349f1c35122b58"
 		},
 		{
 			"ImportPath": "github.com/gosimple/slug",

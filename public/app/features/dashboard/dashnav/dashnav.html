@@ -1,6 +1,6 @@
 <navbar>
 
-<div class="top-nav-btn top-nav-dashboards-btn" ng-if="!dashboardMeta.isSnapshot">
+<div class="top-nav-btn dashnav-dashboards-btn" ng-if="!dashboardMeta.isSnapshot">
 	<a class="pointer" ng-click="openSearch()">
 		<i class="fa fa-th-large"></i>
 		<span class="dashboard-title">{{dashboard.title}}</span>
@@ -8,8 +8,8 @@
 	</a>
 </div>
 
-<div class="top-nav-snapshot-title" ng-if="dashboardMeta.isSnapshot">
-	<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom">
+<div class="top-nav-btn dashnav-dashboards-btn" ng-if="dashboardMeta.isSnapshot">
+	<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
 		<i class="icon-gf icon-gf-snapshot"></i>
 		<span class="dashboard-title">
 			{{dashboard.title}}
@@ -18,7 +18,7 @@
 	</a>
 </div>
 
-<ul class="nav pull-left top-nav-dash-actions">
+<ul class="nav pull-left dashnav-action-icons">
 	<li ng-show="dashboardMeta.canStar">
 		<a class="pointer" ng-click="starDashboard()">
 			<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred}" style="color: orange;"></i>
@@ -70,7 +70,7 @@
 </ul>
 
 <ul class="nav pull-right">
-	<li ng-show="dashboardViewState.fullscreen" class="back-to-dashboard-link">
+	<li ng-show="dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
 		<a ng-click="exitFullscreen()">
 			Back to dashboard
 		</a>

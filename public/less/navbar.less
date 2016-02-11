@@ -10,7 +10,7 @@
 }
 
 .navbar .nav>li>a {
-  padding: 17px 15px 13px;
+  padding: 17px 13px 13px;
   .fa { font-size: 115%; }
 }
 
@@ -50,7 +50,7 @@
 
 .top-nav-menu-btn {
   a {
-    padding: 6px 20px 6px 13px;
+     padding: 6px 20px 6px 13px;
   }
   img {
     width: 30px;
@@ -74,14 +74,25 @@
   }
 }
 
-.top-nav-dashboards-btn {
+.dashnav-dashboards-btn {
   a {
-    padding: 16px 17px 14px 13px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    padding: 16px 17px 15px 13px;
   }
 
   .fa-th-large {
     position: relative;
     top: 2px;
+  }
+
+  .icon-gf {
+    position: relative;
+    top: 5px;
+    font-size: 27px;
+    line-height: 8px;
   }
 }
 
@@ -114,20 +125,4 @@
   color: @linkColor;
 }
 
-.top-nav-snapshot-title {
-  .gf-icon {
-    position: relative;
-    top: 3px;
-    font-size: 27px;
-  }
-  a {
-    display: inline-block;
-    padding: 0px 15px 5px 10px;
-  }
-  display: block;
-  float: left;
-  font-size: 1.4em;
-  margin: 9px 18px 5px 14px;
-  color: @linkColor;
-}
 

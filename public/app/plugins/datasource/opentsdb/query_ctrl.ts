@@ -2,10 +2,10 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/opentsdb/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
   aggregators: any;
   fillPolicies: any;
   aggregator: any;

@@ -6,8 +6,8 @@ import queryPart from './query_part';
 export default class InfluxQuery {
   target: any;
   selectModels: any[];
-  groupByParts: any;
   queryBuilder: any;
+  groupByParts: any;
 
   constructor(target) {
     this.target = target;
@@ -144,7 +144,7 @@ export default class InfluxQuery {
 
     // quote value unless regex
     if (operator !== '=~' && operator !== '!~') {
-      value = "'" + value + "'";
+      value = "'" + value.replace('\\', '\\\\') + "'";
     }
 
     return str + '"' + tag.key + '" ' + operator + ' ' + value;

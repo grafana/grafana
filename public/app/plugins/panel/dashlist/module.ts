@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import config from 'app/core/config';
-import {PanelCtrl} from '../../../features/panel/panel';
+import {PanelCtrl} from 'app/plugins/sdk';
 
  // Set and populate defaults
 var panelDefaults = {
@@ -13,7 +13,7 @@ var panelDefaults = {
 };
 
 class DashListCtrl extends PanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/dashlist/module.html';
+  static templateUrl = 'module.html';
 
   dashList: any[];
   modes: any[];

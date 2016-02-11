@@ -31,14 +31,11 @@ func newMacaron() *macaron.Macaron {
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		log.Info("Plugin: Adding static route %s -> %s", pluginRoute, route.Directory)
+		log.Info("Plugins: Adding route %s -> %s", pluginRoute, route.Directory)
 		mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
 	mapStatic(m, setting.StaticRootPath, "", "public")
-	mapStatic(m, setting.StaticRootPath, "css", "css")
-	mapStatic(m, setting.StaticRootPath, "img", "img")
-	mapStatic(m, setting.StaticRootPath, "fonts", "fonts")
 	mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{

@@ -41,8 +41,8 @@
   .top-nav-menu-btn {
     a {
       background-color: @sideMenuBackground;
-      padding-right: 46px;
-      padding-left: 24px;
+      padding-right: 54px;
+      padding-left: 16px;
     }
     .icon-gf-grafana_wordmark  {
       display: inline-block;
@@ -88,6 +88,7 @@
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .icon-circle {
@@ -111,9 +112,8 @@
 .sidemenu-item {
   color: @linkColor;
   line-height: 47px;
-  padding: 0px 10px 0px 20px;
+  padding: 0px 10px 0px 10px;
   display: block;
-  white-space: nowrap;
 
   &:hover {
     background-color: @sideMenuBackgroundHighlight;
@@ -192,8 +192,8 @@
 
 .sidemenu-org {
   border-bottom: @sideMenuBorder;
-  //box-shadow: @sideMenuTopShadow;
-  padding: 17px 10px 15px 21px;
+  border-top: @sideMenuBorder;
+  padding: 17px 10px 15px 14px;
   box-sizing: border-box;
   cursor: pointer;
   &:hover {

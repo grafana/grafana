@@ -12,6 +12,14 @@ function (_, $, coreModule) {
 
         var lastHideControlsVal;
 
+        $scope.onAppEvent('panel-fullscreen-enter', function() {
+          elem.toggleClass('panel-in-fullscreen', true);
+        });
+
+        $scope.onAppEvent('panel-fullscreen-exit', function() {
+          elem.toggleClass('panel-in-fullscreen', false);
+        });
+
         $scope.$watch('dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;

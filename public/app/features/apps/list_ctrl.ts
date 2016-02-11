@@ -6,9 +6,8 @@ export class AppListCtrl {
   apps: any[];
 
   /** @ngInject */
-  constructor(private backendSrv: any) {}
+  constructor(private backendSrv: any) {
 
-  init() {
     this.backendSrv.get('api/org/apps').then(apps => {
       this.apps = apps;
     });
