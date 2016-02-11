@@ -1,0 +1,36 @@
+{
+  "browser": true,
+  "esnext": true,
+
+  "bitwise":false,
+  "curly": true,
+  "eqnull": true,
+  "devel": true,
+  "eqeqeq": true,
+  "forin": false,
+  "immed": true,
+  "supernew": true,
+  "expr": true,
+  "indent": 2,
+  "latedef": true,
+  "newcap": true,
+  "noarg": true,
+  "noempty": true,
+  "undef": true,
+  "boss": true,
+  "trailing": true,
+  "laxbreak": true,
+  "laxcomma": true,
+  "sub": true,
+  "unused": true,
+  "maxdepth": 6,
+  "maxlen": 140,
+
+  "globals": {
+    "System": true,
+    "define": true,
+    "require": true,
+    "Chromath": false,
+    "setImmediate": true
+  }
+}
