@@ -42,18 +42,13 @@ func UpdateAppSettings(cmd *m.UpdateAppSettingsCmd) error {
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {
-			// encrypt secureJsonData
-			secureJsonData := make(map[string][]byte)
-			for key, data := range cmd.SecureJsonData {
-				secureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
-			}
 			app = m.AppSettings{
 				AppId:          cmd.AppId,
 				OrgId:          cmd.OrgId,
 				Enabled:        cmd.Enabled,
 				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
-				SecureJsonData: secureJsonData,
+				SecureJsonData: cmd.GetEncryptedJsonData(),
 				Created:        time.Now(),
 				Updated:        time.Now(),
 			}
@@ -63,6 +58,7 @@ func UpdateAppSettings(cmd *m.UpdateAppSettingsCmd) error {
 			for key, data := range cmd.SecureJsonData {
 				app.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
 			}
+			app.SecureJsonData = cmd.GetEncryptedJsonData()
 			app.Updated = time.Now()
 			app.Enabled = cmd.Enabled
 			app.JsonData = cmd.JsonData

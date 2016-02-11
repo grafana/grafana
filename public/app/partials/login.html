@@ -63,9 +63,7 @@
 				</div>
 			</form>
 
-			<div class="clearfix"></div>
-
-			<div class="text-center login-divider">
+			<div class="text-center login-divider" ng-if="oauthEnabled">
 				<div class="login-divider-line">
 				  <span class="login-divider-text">
 				    Or login with
@@ -75,7 +73,7 @@
 
 			<div class="clearfix"></div>
 
-			<div class="login-oauth text-center">
+			<div class="login-oauth text-center" ng-if="oauthEnabled">
 				<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
 					<i class="fa fa-google"></i>
 					with Google
@@ -85,6 +83,8 @@
 					with Github
 				</a>
 			</div>
+
+			<div class="clearfix"></div>
 
 			<div class="text-center password-recovery">
 				<div class="text-center">
