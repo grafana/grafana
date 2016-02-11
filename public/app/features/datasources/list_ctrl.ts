@@ -16,7 +16,6 @@ export class DataSourcesCtrl {
   }
 
   removeDataSourceConfirmed(ds) {
-    ///_.remove(this.playlistsd, { id: playlist.id });
 
     this.backendSrv.delete('/api/datasources/' + ds.id)
       .then(() => {
