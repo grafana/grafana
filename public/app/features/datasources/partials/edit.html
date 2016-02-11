@@ -31,8 +31,7 @@
 					</li>
 					<li class="norm-form-item trans">
 						<input class="cr1" id="current.isDefault" type="checkbox" ng-model="current.isDefault" ng-checked="current.isDefault">
-						<label for="current.isDefault" class="cr1"></label>
-						Default
+						<label for="current.isDefault" class="cr1">Default</label>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -43,7 +42,7 @@
 						Type
 					</li>
 					<li>
-						<select class="input-xlarge norm-form-input norm-form-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+						<select class="input-xlarge norm-form-input norm-form-auto norm-form-input-boxbox" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
