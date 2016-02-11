@@ -50,32 +50,20 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 		Text: "Dashboards",
-		Icon: "fa fa-fw fa-th-large",
+		Icon: "icon-gf icon-gf-dashboard",
 		Url:  "/",
-	})
-
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-		Text: "Playlists",
-		Icon: "fa fa-fw fa-list",
-		Url:  "/playlists",
-	})
-
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-		Text: "Snapshots",
-		Icon: "fa-fw icon-gf icon-gf-snapshot",
-		Url:  "/dashboard/snapshots",
 	})
 
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Data Sources",
-			Icon: "fa fa-fw fa-database",
+			Icon: "icon-gf icon-gf-datasources",
 			Url:  "/datasources",
 		})
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Apps",
-			Icon: "fa fa-fw fa-cubes",
+			Text: "Plugins",
+			Icon: "icon-gf icon-gf-apps",
 			Url:  "/apps",
 		})
 	}
