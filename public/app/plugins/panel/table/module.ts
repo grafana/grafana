@@ -38,7 +38,7 @@ var panelDefaults = {
 };
 
 class TablePanelCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/table/module.html';
+  static templateUrl = 'module.html';
 
   pageIndex: number;
   dataRaw: any;

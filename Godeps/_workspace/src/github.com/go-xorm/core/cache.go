@@ -1,10 +1,11 @@
 package core
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+	"bytes"
+	"encoding/gob"
 )
 
 const (
@@ -47,16 +48,20 @@ type Cacher interface {
 }
 
 func encodeIds(ids []PK) (string, error) {
-	b, err := json.Marshal(ids)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(ids)
+
+	return buf.String(), err
 }
+
 
 func decodeIds(s string) ([]PK, error) {
 	pks := make([]PK, 0)
-	err := json.Unmarshal([]byte(s), &pks)
+
+	dec := gob.NewDecoder(bytes.NewBufferString(s))
+	err := dec.Decode(&pks)
+
 	return pks, err
 }
 

@@ -23,7 +23,7 @@
     "no-debugger": true,
     "no-duplicate-key": true,
     "no-duplicate-variable": true,
-    "no-empty": true,
+    "no-empty": false,
     "no-eval": true,
     "no-inferrable-types": true,
     "no-shadowed-variable": false,
