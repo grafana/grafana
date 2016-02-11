@@ -40,9 +40,15 @@ function (angular, _, dateMath) {
 
       var groupByTags = {};
       _.each(queries, function(query) {
-        _.each(query.tags, function(val, key) {
-          groupByTags[key] = true;
-        });
+        if (query.filters && query.filters.length > 0) {
+          _.each(query.filters, function(val) {
+            groupByTags[val.tagk] = true;
+          });
+        } else {
+          _.each(query.tags, function(val, key) {
+            groupByTags[key] = true;
+          });
+        }
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
@@ -327,11 +333,18 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return target.metric === metricData.metric &&
+          if (target.filters && target.filters.length > 0) {
+            return target.metric === metricData.metric &&
+            _.all(target.filters, function(filter) {
+              return filter.tagk === interpolatedTagValue === "*";
+            });
+          } else {
+            return target.metric === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
-            interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
-            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
-          });
+              interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
+              return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+            });
+          }
         });
       });
     }
