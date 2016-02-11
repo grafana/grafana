@@ -105,8 +105,6 @@ function (angular, _, config) {
           $scope.updateFrontendSettings().then(function() {
             if (test) {
               $scope.testDatasource();
-            } else {
-              $location.path('datasources');
             }
           });
         });
