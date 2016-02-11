@@ -89,6 +89,7 @@ function (angular, _, dateMath) {
       // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
       // go as POST rather than OPTIONS+POST
       options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+
       return backendSrv.datasourceRequest(options);
     };
 
@@ -308,14 +309,16 @@ function (angular, _, dateMath) {
         }
       }
 
-      query.tags = angular.copy(target.tags);
-      if(query.tags){
-        for(var key in query.tags){
-          query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
+      if (target.filters && target.filters.length > 0) {
+        query.filters = angular.copy(target.filters);
+      } else {
+        query.tags = angular.copy(target.tags);
+        if(query.tags){
+          for(var key in query.tags){
+            query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
+          }
         }
       }
-
-      query.filters = angular.copy(target.filters);
 
       return query;
     }
