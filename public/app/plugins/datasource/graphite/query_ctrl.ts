@@ -11,7 +11,7 @@ import {Parser} from './parser';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/graphite/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 
   functions: any[];
   segments: any[];

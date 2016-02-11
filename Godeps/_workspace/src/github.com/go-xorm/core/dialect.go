@@ -54,7 +54,7 @@ type Dialect interface {
 	IndexCheckSql(tableName, idxName string) (string, []interface{})
 	TableCheckSql(tableName string) (string, []interface{})
 
-	IsColumnExist(tableName string, col *Column) (bool, error)
+	IsColumnExist(tableName string, colName string) (bool, error)
 
 	CreateTableSql(table *Table, tableName, storeEngine, charset string) string
 	DropTableSql(tableName string) string
@@ -62,6 +62,8 @@ type Dialect interface {
 	DropIndexSql(tableName string, index *Index) string
 
 	ModifyColumnSql(tableName string, col *Column) string
+
+	ForUpdateSql(query string) string
 
 	//CreateTableIfNotExists(table *Table, tableName, storeEngine, charset string) error
 	//MustDropTable(tableName string) error
@@ -164,10 +166,10 @@ func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
 	return false, nil
 }
 
-func (db *Base) IsColumnExist(tableName string, col *Column) (bool, error) {
+func (db *Base) IsColumnExist(tableName, colName string) (bool, error) {
 	query := "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?"
 	query = strings.Replace(query, "`", db.dialect.QuoteStr(), -1)
-	return db.HasRecords(query, db.DbName, tableName, col.Name)
+	return db.HasRecords(query, db.DbName, tableName, colName)
 }
 
 /*
@@ -229,28 +231,33 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 		tableName = table.Name
 	}
 
-	sql += b.dialect.Quote(tableName) + " ("
+	sql += b.dialect.Quote(tableName)
+	sql += " ("
 
-	pkList := table.PrimaryKeys
+	if len(table.ColumnsSeq()) > 0 {
+		pkList := table.PrimaryKeys
 
-	for _, colName := range table.ColumnsSeq() {
-		col := table.GetColumn(colName)
-		if col.IsPrimaryKey && len(pkList) == 1 {
-			sql += col.String(b.dialect)
-		} else {
-			sql += col.StringNoPk(b.dialect)
+		for _, colName := range table.ColumnsSeq() {
+			col := table.GetColumn(colName)
+			if col.IsPrimaryKey && len(pkList) == 1 {
+				sql += col.String(b.dialect)
+			} else {
+				sql += col.StringNoPk(b.dialect)
+			}
+			sql = strings.TrimSpace(sql)
+			sql += ", "
 		}
-		sql = strings.TrimSpace(sql)
-		sql += ", "
-	}
 
-	if len(pkList) > 1 {
-		sql += "PRIMARY KEY ( "
-		sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
-		sql += " ), "
-	}
+		if len(pkList) > 1 {
+			sql += "PRIMARY KEY ( "
+			sql += b.dialect.Quote(strings.Join(pkList, b.dialect.Quote(",")))
+			sql += " ), "
+		}
 
-	sql = sql[:len(sql)-2] + ")"
+		sql = sql[:len(sql)-2]
+	}
+	sql += ")"
+
 	if b.dialect.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}
@@ -262,21 +269,25 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 			sql += " DEFAULT CHARSET " + charset
 		}
 	}
-	sql += ";"
+
 	return sql
 }
 
+func (b *Base) ForUpdateSql(query string) string {
+	return query + " FOR UPDATE"
+}
+
 var (
-	dialects = map[DbType]Dialect{}
+	dialects = map[DbType]func() Dialect{}
 )
 
-func RegisterDialect(dbName DbType, dialect Dialect) {
-	if dialect == nil {
+func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
+	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[dbName] = dialect // !nashtsai! allow override dialect
+	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
 }
 
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]
+	return dialects[dbName]()
 }

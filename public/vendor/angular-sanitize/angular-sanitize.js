@@ -1,6 +1,6 @@
 /**
- * @license AngularJS v1.5.0-rc.0
- * (c) 2010-2015 Google, Inc. http://angularjs.org
+ * @license AngularJS v1.5.1-build.4601+sha.c966876
+ * (c) 2010-2016 Google, Inc. http://angularjs.org
  * License: MIT
  */
 (function(window, angular, undefined) {'use strict';
@@ -259,7 +259,7 @@ var validElements = angular.extend({},
                                    optionalEndTagElements);
 
 //Attributes that have href and hence need to be sanitized
-var uriAttrs = toMap("background,cite,href,longdesc,src,usemap,xlink:href");
+var uriAttrs = toMap("background,cite,href,longdesc,src,xlink:href");
 
 var htmlAttrs = toMap('abbr,align,alt,axis,bgcolor,border,cellpadding,cellspacing,class,clear,' +
     'color,cols,colspan,compact,coords,dir,face,headers,height,hreflang,hspace,' +
@@ -652,8 +652,13 @@ angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
         /((ftp|https?):\/\/|(www\.)|(mailto:)?[A-Za-z0-9._%+-]+@)\S*[^\s.;,(){}<>"\u201d\u2019]/i,
       MAILTO_REGEXP = /^mailto:/i;
 
+  var linkyMinErr = angular.$$minErr('linky');
+  var isString = angular.isString;
+
   return function(text, target, attributes) {
-    if (!text) return text;
+    if (text == null || text === '') return text;
+    if (!isString(text)) throw linkyMinErr('notstring', 'Expected string but received: {0}', text);
+
     var match;
     var raw = text;
     var html = [];

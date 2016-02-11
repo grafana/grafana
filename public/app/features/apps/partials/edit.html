@@ -68,7 +68,10 @@
 					Datasources
 				</div>
 				<ul>
-					<li><em class="small">None</em></li>
+					<li ng-show="!ctrl.includedDatasources.length"><em class="small">None</em></li>
+					<li ng-repeat="ds in ctrl.includedDatasources">
+						{{ds.name}}
+					</li>
 				</ul>
 			</div>
 			<div class="simple-box-body simple-box-column">
@@ -78,7 +81,7 @@
 				</div>
 				<ul>
 					<li ng-repeat="page in ctrl.appModel.pages">
-						<a href="{{page.url}}" class="external-link">{{page.name}}</a>
+						<a href="apps/{{ctrl.appId}}/page/{{page.slug}}" class="external-link">{{page.name}}</a>
 					</li>
 				</ul>
 			</div>

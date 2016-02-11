@@ -99,7 +99,7 @@ function (angular, _, $, gfunc) {
         submenu: _.map(list, function(value) {
           return {
             text: value.name,
-            click: "addFunction('" + value.name + "')",
+            click: "ctrl.addFunction('" + value.name + "')",
           };
         })
       };

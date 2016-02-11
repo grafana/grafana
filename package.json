@@ -51,7 +51,7 @@
     "phantomjs": "^1.9.19",
     "reflect-metadata": "0.1.2",
     "rxjs": "5.0.0-beta.0",
-    "systemjs": "0.19.6",
+    "systemjs": "0.19.20",
     "zone.js": "0.5.10"
   },
   "engines": {
@@ -69,9 +69,9 @@
     "grunt-jscs": "~1.5.x",
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
-    "lodash": "^2.4.1",
+    "lodash": "^4.0.0",
     "sinon": "1.16.1",
-    "systemjs-builder": "^0.14.15",
+    "systemjs-builder": "^0.15.7",
     "tslint": "^3.2.1",
     "typescript": "^1.7.5"
   }

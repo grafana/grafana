@@ -2,7 +2,7 @@ import {OpenTsDatasource} from './datasource';
 import {OpenTsQueryCtrl} from './query_ctrl';
 
 class OpenTsConfigCtrl {
-  static templateUrl = 'public/app/plugins/datasource/opentsdb/partials/config.html';
+  static templateUrl = 'partials/config.html';
 }
 
 export {
