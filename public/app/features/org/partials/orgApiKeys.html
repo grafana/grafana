@@ -10,25 +10,25 @@
 			API Keys
 		</h1>
 
-		<form name="addTokenrForm" class="form-inline tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 100px">
+		<form name="addTokenrForm" class="form-inline norm-form last">
+			<ul class="norm-form-list">
+				<li class="norm-form-item" style="width: 100px">
 					Add a key
 				</li>
 				<li>
-					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
+					<input type="text" class="input-xlarge norm-form-input" ng-model='token.name' placeholder="Name"></input>
 				</li>
-				<li class="tight-form-item">
+				<li class="norm-form-item">
 					Role
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+					<select class="input-small norm-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
 				</li>
-				<li style="float: right">
-					<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
-				</li>
+				</ul>
+				<button class="btn btn-success" style="margin-left:15px; vertical-algin:middle;" ng-click="addToken()">Add</button>
+			
 				<div class="clearfix"></div>
-			</ul>
+			
 		</form>
 
 		<table class="filter-table">
