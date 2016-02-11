@@ -82,7 +82,7 @@ var panelDefaults = {
 };
 
 class GraphCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/graph/module.html';
+  static templateUrl = 'module.html';
 
   hiddenSeries: any = {};
   seriesList: any = [];

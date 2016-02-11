@@ -116,45 +116,45 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints[3][0]).to.be(null);
     });
   });
-  describe('When performing metricFindQuery', function() {
+  describe('When performing annotationQuery', function() {
     var results;
-    var response;
-    it('label_values(resource) should generate label search query', function() {
-      response = {
-        status: "success",
-        data: ["value1", "value2", "value3"]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/resource/values').respond(response);
-      ctx.ds.metricFindQuery('label_values(resource)').then(function(data) { results = data; });
+    var urlExpected = 'proxied/api/v1/query_range?query=' +
+                      encodeURIComponent('ALERTS{alertstate="firing"}') +
+                      '&start=1443438675&end=1443460275&step=60s';
+    var options = {
+      annotation: {
+        expr: 'ALERTS{alertstate="firing"}',
+        tagKeys: 'job',
+        titleFormat: '{{alertname}}',
+        textFormat: '{{instance}}'
+      },
+      range: {
+        from: moment(1443438674760),
+        to: moment(1443460274760)
+      }
+    };
+    var response = {
+      status: "success",
+      data: {
+        resultType: "matrix",
+        result: [{
+          metric: {"__name__": "ALERTS", alertname: "InstanceDown", alertstate: "firing", instance: "testinstance", job: "testjob"},
+          values: [[1443454528, "1"]]
+        }]
+      }
+    };
+    beforeEach(function() {
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.annotationQuery(options).then(function(data) { results = data; });
       ctx.$httpBackend.flush();
-      ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
     });
-    it('label_values(metric, resource) should generate series query', function() {
-      response = {
-        status: "success",
-        data: [
-          {__name__: "metric", resource: "value1"},
-          {__name__: "metric", resource: "value2"},
-          {__name__: "metric", resource: "value3"}
-        ]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/series?match[]=metric').respond(response);
-      ctx.ds.metricFindQuery('label_values(metric, resource)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
+    it('should return annotation list', function() {
       ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
-    });
-    it('metrics(metric.*) should generate metric name query', function() {
-      response = {
-        status: "success",
-        data: ["metric1","metric2","metric3","nomatch"]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/__name__/values').respond(response);
-      ctx.ds.metricFindQuery('metrics(metric.*)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
-      ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
+      expect(results.length).to.be(1);
+      expect(results[0].tags).to.contain('testjob');
+      expect(results[0].title).to.be('InstanceDown');
+      expect(results[0].text).to.be('testinstance');
+      expect(results[0].time).to.be(1443454528 * 1000);
     });
   });
 });

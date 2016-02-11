@@ -42,7 +42,7 @@ var panelDefaults = {
 };
 
 class SingleStatCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'public/app/plugins/panel/singlestat/module.html';
+  static templateUrl = 'module.html';
 
   series: any[];
   data: any[];
@@ -241,7 +241,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
     var data, linkInfo;
-    var $panelContainer = elem.parents('.panel-container');
+    var elemHeight;
+    var $panelContainer = elem.find('.panel-container');
     // change elem to singlestat panel
     elem = elem.find('.singlestat-panel');
     hookupDrilldownLinkTooltip();
@@ -253,15 +254,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function setElementHeight() {
       try {
-        var height = scope.height || panel.height || ctrl.row.height;
-        if (_.isString(height)) {
-          height = parseInt(height.replace('px', ''), 10);
+        elemHeight = ctrl.height || panel.height || ctrl.row.height;
+        if (_.isString(elemHeight)) {
+          elemHeight = parseInt(elemHeight.replace('px', ''), 10);
         }
 
-        height -= 5; // padding
-        height -= panel.title ? 24 : 9; // subtract panel title bar
+        elemHeight -= 5; // padding
+        elemHeight -= panel.title ? 24 : 9; // subtract panel title bar
 
-        elem.css('height', height + 'px');
+        elem.css('height', elemHeight + 'px');
 
         return true;
       } catch (e) { // IE throws errors sometimes
@@ -305,7 +306,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       var width = elem.width() + 20;
-      var height = elem.height() || 100;
+      var height = elemHeight;
 
       var plotCanvas = $('<div></div>');
       var plotCss: any = {};

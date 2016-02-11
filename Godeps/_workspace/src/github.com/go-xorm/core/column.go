@@ -1,10 +1,10 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 const (
@@ -35,6 +35,8 @@ type Column struct {
 	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
+	DisableTimeZone bool
+	TimeZone        *time.Location // column specified time zone
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
@@ -122,50 +124,34 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 	}
 
 	if dataStruct.Type().Kind() == reflect.Map {
-		var keyValue reflect.Value
-
-		if len(col.fieldPath) == 1 {
-			keyValue = reflect.ValueOf(col.FieldName)
-		} else if len(col.fieldPath) == 2 {
-			keyValue = reflect.ValueOf(col.fieldPath[1])
-		} else {
-			return nil, fmt.Errorf("Unsupported mutliderive %v", col.FieldName)
-		}
-
+		keyValue := reflect.ValueOf(col.fieldPath[len(col.fieldPath)-1])
 		fieldValue = dataStruct.MapIndex(keyValue)
 		return &fieldValue, nil
+	} else if dataStruct.Type().Kind() == reflect.Interface {
+		structValue := reflect.ValueOf(dataStruct.Interface())
+		dataStruct = &structValue
 	}
 
-	if len(col.fieldPath) == 1 {
-		fieldValue = dataStruct.FieldByName(col.FieldName)
-	} else if len(col.fieldPath) == 2 {
-		parentField := dataStruct.FieldByName(col.fieldPath[0])
-		if parentField.IsValid() {
-			if parentField.Kind() == reflect.Struct {
-				fieldValue = parentField.FieldByName(col.fieldPath[1])
-			} else if parentField.Kind() == reflect.Ptr {
-				if parentField.IsNil() {
-					parentField.Set(reflect.New(parentField.Type().Elem()))
-					fieldValue = parentField.Elem().FieldByName(col.fieldPath[1])
-				} else {
-					parentField = parentField.Elem()
-					if parentField.IsValid() {
-						fieldValue = parentField.FieldByName(col.fieldPath[1])
-					} else {
-						return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
-					}
-				}
-			}
-		} else {
-			// so we can use a different struct as conditions
-			fieldValue = dataStruct.FieldByName(col.fieldPath[1])
+	level := len(col.fieldPath)
+	fieldValue = dataStruct.FieldByName(col.fieldPath[0])
+	for i := 0; i < level-1; i++ {
+		if !fieldValue.IsValid() {
+			break
 		}
-	} else {
-		return nil, fmt.Errorf("Unsupported mutliderive %v", col.FieldName)
+		if fieldValue.Kind() == reflect.Struct {
+			fieldValue = fieldValue.FieldByName(col.fieldPath[i+1])
+		} else if fieldValue.Kind() == reflect.Ptr {
+			if fieldValue.IsNil() {
+				fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
+			}
+			fieldValue = fieldValue.Elem().FieldByName(col.fieldPath[i+1])
+		} else {
+			return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
+		}
 	}
 
 	if !fieldValue.IsValid() {
-		return nil, errors.New("no find field matched")
+		return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
 	}
 
 	return &fieldValue, nil

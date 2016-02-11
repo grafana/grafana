@@ -26,6 +26,10 @@
       "small": "img/logo_small.png",
       "large": "img/logo_large.png"
     },
+    "screenshots": [
+      {"name": "img1", "path": "img/screenshot1.png"},
+      {"name": "img2", "path": "img/screenshot2.png"}
+    ],
     "links": [
       {"name": "Project site", "url": "http://project.com"},
       {"name": "License & Terms", "url": "http://license.com"}

@@ -8,7 +8,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 class PrometheusQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/prometheus/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 
   metric: any;
   resolutions: any;

@@ -5,19 +5,23 @@ import _ from 'lodash';
 
 export class AppEditCtrl {
   appModel: any;
+  appId: any;
   includedPanels: any;
+  includedDatasources: any;
 
   /** @ngInject */
   constructor(private backendSrv: any, private $routeParams: any) {
     this.appModel = {};
+    this.appId = $routeParams.appId;
 
-    this.backendSrv.get(`/api/org/apps/${this.$routeParams.appId}/settings`).then(result => {
+    this.backendSrv.get(`/api/org/apps/${this.appId}/settings`).then(result => {
       this.appModel = result;
       this.includedPanels = _.where(result.includes, {type: 'panel'});
+      this.includedDatasources = _.where(result.includes, {type: 'datasource'});
     });
   }
 
-  update(options) {
+  update() {
     var updateCmd = _.extend({
       appId: this.appModel.appId,
       orgId: this.appModel.orgId,
@@ -25,19 +29,19 @@ export class AppEditCtrl {
       pinned: this.appModel.pinned,
       jsonData: this.appModel.jsonData,
       secureJsonData: this.appModel.secureJsonData,
-    }, options);
+    }, {});
 
-    this.backendSrv.post(`/api/org/apps/${this.$routeParams.appId}/settings`, updateCmd).then(function() {
+    this.backendSrv.post(`/api/org/apps/${this.appId}/settings`, updateCmd).then(function() {
       window.location.href = window.location.href;
     });
   }
 
   toggleEnabled() {
-    this.update({enabled: this.appModel.enabled});
+    this.update();
   }
 
   togglePinned() {
-    this.update({pinned: this.appModel.pinned});
+    this.update();
   }
 }
 
