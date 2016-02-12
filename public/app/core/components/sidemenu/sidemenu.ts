@@ -22,6 +22,7 @@ export class SideMenuCtrl {
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
     this.updateMenu();
+    this.openUserDropdown();
 
     this.$scope.$on('$routeChangeSuccess', () => {
       this.updateMenu();
@@ -133,7 +134,6 @@ export class SideMenuCtrl {
  updateMenu() {
    this.systemSection = false;
    this.mainLinks = [];
-   this.orgMenu = [];
 
    var currentPath = this.$location.path();
    if (currentPath.indexOf('/admin') === 0) {
