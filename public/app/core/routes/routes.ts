@@ -18,25 +18,30 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'LoadDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard/:type/:slug', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'LoadDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard-solo/:type/:slug', {
     templateUrl: 'public/app/features/panel/partials/soloPanel.html',
     controller : 'SoloPanelCtrl',
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard-import/:file', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'DashFromImportCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard/new', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'NewDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/import/dashboard', {
     templateUrl: 'public/app/features/dashboard/partials/import.html',

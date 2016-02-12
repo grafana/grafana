@@ -171,7 +171,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       });
 
       // tooltip removal fix
-      scope.$on("$routeChangeSuccess", function() {
+      // manage page classes
+      var pageClass;
+      scope.$on("$routeChangeSuccess", function(evt, data) {
+        if (pageClass) {
+          body.removeClass(pageClass);
+        }
+        pageClass = data.$$route.pageClass;
+        if (pageClass) {
+          body.addClass(pageClass);
+        }
         $("#tooltip, .tooltip").remove();
       });
 
