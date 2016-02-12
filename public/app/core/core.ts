@@ -2,7 +2,7 @@
 ///<reference path="./mod_defs.d.ts" />
 
 import "./directives/annotation_tooltip";
-import "./directives/body_class";
+import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
 import "./directives/dash_upload";

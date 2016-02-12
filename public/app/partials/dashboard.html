@@ -1,15 +1,15 @@
-<div body-class class="dashboard" ng-if="dashboard">
+<div dash-class ng-if="dashboard">
 	<dashnav></dashnav>
 
-	<div class="main-view-container">
+	<div class="dashboard-container">
 
-	<div dash-editor-view></div>
-	<dashboard-search></dashboard-search>
-	<div class="clearfix"></div>
+		<div dash-editor-view></div>
+		<dashboard-search></dashboard-search>
+		<div class="clearfix"></div>
 
-	<dashboard-submenu ng-if="submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+		<dashboard-submenu ng-if="submenuEnabled" dashboard="dashboard"></dashboard-submenu>
 
-	<div class="clearfix"></div>
+		<div class="clearfix"></div>
 
 		<div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
 			<div class="row-control">
@@ -60,8 +60,8 @@
 									<ul class="dropdown-menu">
 										<li><a ng-click="moveRow('up')">Up</a></li>
 										<li><a ng-click="moveRow('down')">Down</a></li>
-                    <li><a ng-click="moveRow('top')">To top</a></li>
-                    <li><a ng-click="moveRow('bottom')">To Bottom</a></li>
+										<li><a ng-click="moveRow('top')">To top</a></li>
+										<li><a ng-click="moveRow('bottom')">To Bottom</a></li>
 									</ul>
 								</li>
 								<li>
@@ -105,5 +105,5 @@
 				</span>
 			</div>
 		</div>
-
 	</div>
+</div>
