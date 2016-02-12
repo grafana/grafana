@@ -45,6 +45,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/datasources', {
     templateUrl: 'public/app/features/datasources/partials/list.html',
     controller : 'DataSourcesCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/datasources/edit/:id', {
