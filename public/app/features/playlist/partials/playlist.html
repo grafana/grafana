@@ -1,37 +1,46 @@
-<navbar title="Playlists" title-url="playlists" icon="fa fa-fw fa-list" subnav="true">
+<navbar> 
+<div class="top-nav-btn dashnav-dashboards-btn" >
+  <a class="pointer" ng-click="openSearch()">
+    <i class="fa fa-fw fa-list"></i>
+    <span class="dashboard-title">Playlist</span>
+    <i class="fa fa-caret-down"></i>
+  </a>
+</div>
+</navbar>
+<!-- <navbar title="Playlists" title-url="playlists" icon="fa fa-fw fa-list" subnav="true">
 	<ul class="nav">
 		<li ng-class="{active: ctrl.isNew()}" ng-show="ctrl.isNew()"><a href="datasources/create">New</a></li>
 		<li class="active" ng-show="!ctrl.isNew()"><a href="playlists/edit/{{ctrl.playlist.id}}">{{ctrl.playlist.name}}</a></li>
 	</ul>
-</navbar>
+</navbar> -->
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
-    <h2 ng-show="ctrl.isNew()">New playlist</h2>
-    <h2 ng-show="!ctrl.isNew()">Edit playlist</h2>
+    <h1 ng-show="ctrl.isNew()">New Playlist</h1>
+    <h1 ng-show="!ctrl.isNew()">Edit Playlist</h1>
 
-    <h4>Name and interval</h4>
+    <h3>Name and interval</h3>
 
     <div style="margin-bottom: 10px;">
       <div>
-        <div class="tight-form">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 100px">
+        <div class="norm-form">
+          <ul class="norm-form-list">
+            <li class="norm-form-item" style="width: 100px">
               Name
             </li>
             <li>
-              <input type="text" required ng-model="ctrl.playlist.name" class="input-xlarge tight-form-input">
+              <input type="text" required ng-model="ctrl.playlist.name" class="input-xlarge norm-form-input">
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
-        <div class="tight-form last">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 100px">
+        <div class="norm-form last">
+          <ul class="norm-form-list">
+            <li class="norm-form-item" style="width: 100px">
               Interval
             </li>
             <li>
-              <input type="text" required ng-model="ctrl.playlist.interval" placeholder="5m" class="input-xlarge tight-form-input">
+              <input type="text" required ng-model="ctrl.playlist.interval" placeholder="5m" class="input-xlarge norm-form-input">
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -116,14 +125,12 @@
   <div class="clearfix"></div>
 
   <div class="pull-left" style="margin-top: 25px;">
-    <!-- <div class="tight-form"> -->
-      <button type="button"
+    <!-- <div class="norm-form"> -->
+      <a
               class="btn btn-success"
               ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
-              ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</button>
-      <button type="button"
-              class="btn btn-inverse"
-              ng-click="ctrl.backToList()">Cancel</button>
+              ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
+      <a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
     <!-- </div> -->
   </div>
 

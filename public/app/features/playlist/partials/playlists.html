@@ -1,14 +1,22 @@
-<navbar icon="fa fa-fw fa-list" title="Playlists"></navbar>
+<navbar> 
+<div class="top-nav-btn dashnav-dashboards-btn" >
+  <a class="pointer" ng-click="openSearch()">
+    <i class="fa fa-fw fa-list"></i>
+    <span class="dashboard-title">New Playlist</span>
+    <i class="fa fa-caret-down"></i>
+  </a>
+</div>
+</navbar>
 
 <div class="page-container">
   <div class="page-wide">
 
-		<a class="btn btn-inverse pull-right" href="playlists/create">
+		<a class="btn btn-success pull-right" href="playlists/create">
 			<i class="fa fa-plus"></i>
-			New playlist
+			New Playlist
 		</a>
 
-    <h2>Saved playlists</h2>
+    <h1>Saved playlists</h1>
 
      <table class="filter-table" style="margin-top: 20px">
       <thead>
