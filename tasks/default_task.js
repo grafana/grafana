@@ -8,6 +8,7 @@ module.exports = function(grunt) {
     'jshint',
     'tslint',
     'clean:gen',
+    'copy:node_modules',
     'copy:public_to_gen',
     'phantomjs',
     'css',
