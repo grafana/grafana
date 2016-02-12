@@ -77,8 +77,8 @@ export class GrafanaCtrl {
         });
       };
 
-      f(root);
       $rootScope.performance.scopeCount = scopes;
+      f(root);
       return count;
     };
 
@@ -140,21 +140,23 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv) {
+export function grafanaAppDirective(playlistSrv, contextSrv) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
       var ignoreSideMenuHide;
+      var body = $('body');
+
       // handle sidemenu open state
       scope.$watch('contextSrv.sidemenu', newVal => {
         if (newVal !== undefined) {
-          elem.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
+          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
           if (!newVal) {
-            scope.contextSrv.setPinnedState(false);
+            contextSrv.setPinnedState(false);
           }
         }
-        if (scope.contextSrv.sidemenu) {
+        if (contextSrv.sidemenu) {
           ignoreSideMenuHide = true;
           setTimeout(() => {
             ignoreSideMenuHide = false;
@@ -164,7 +166,7 @@ export function grafanaAppDirective(playlistSrv) {
 
       scope.$watch('contextSrv.pinned', newVal => {
         if (newVal !== undefined) {
-          elem.toggleClass('sidemenu-pinned', newVal);
+          body.toggleClass('sidemenu-pinned', newVal);
         }
       });
 
@@ -174,18 +176,18 @@ export function grafanaAppDirective(playlistSrv) {
       });
 
       // handle document clicks that should hide things
-      elem.click(function(evt) {
+      body.click(function(evt) {
         var target = $(evt.target);
         if (target.parents().length === 0) {
           return;
         }
 
         if (target.parents('.dash-playlist-actions').length === 0) {
-            playlistSrv.stop();
+          playlistSrv.stop();
         }
 
         // hide search
-        if (elem.find('.search-container').length > 0) {
+        if (body.find('.search-container').length > 0) {
           if (target.parents('.search-container').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
@@ -193,7 +195,7 @@ export function grafanaAppDirective(playlistSrv) {
           }
         }
         // hide sidemenu
-        if (!ignoreSideMenuHide && !scope.contextSrv.pinned && elem.find('.sidemenu').length > 0) {
+        if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
           if (target.parents('.sidemenu').length === 0) {
             scope.$apply(function() {
               scope.contextSrv.toggleSideMenu();
