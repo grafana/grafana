@@ -53,6 +53,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Icon: "icon-gf icon-gf-dashboard",
 		Url:  setting.AppSubUrl + "/",
 		Children: []*dtos.NavLink{
+			{Text: "Home dashboard", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/"},
 			{Text: "Playlists", Icon: "fa fa-fw fa-list", Url: setting.AppSubUrl + "/playlists"},
 			{Text: "Snapshots", Icon: "fa-fw icon-gf icon-gf-snapshot", Url: setting.AppSubUrl + "/dashboard/snapshots"},
 		},

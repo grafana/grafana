@@ -1,3 +1,5 @@
+@sideMenuWidth:  220px;
+
 .sidemenu-canvas {
   position: relative;
 }
@@ -6,13 +8,11 @@
   position: absolute;
   top: 52px;
   left: 0;
-  width: 220px;
+  width: @sideMenuWidth;
   background-color: @bodyBackground;
-  border: @sideMenuBorder;
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
-  // box-shadow: @sideMenuShadow;
 
   a:focus {
     text-decoration: none;
@@ -32,7 +32,7 @@
     min-height: 100%;
   }
   .main-view-container {
-    padding-left: 210px;
+    padding-left: @sideMenuWidth;
   }
   .page-container {
     margin-left: 195px;
@@ -42,7 +42,7 @@
     a {
       background-color: @pageBackground;
       padding-right: 67px;
-      padding-left: 24px;
+      padding-left: 22px;
     }
     .icon-gf-grafana_wordmark  {
       display: inline-block;
@@ -54,6 +54,9 @@
   .sidemenu-org {
     box-shadow: none;
   }
+  .search-container {
+    left: auto;
+  }
 }
 
 .sidemenu {
@@ -62,18 +65,16 @@
   margin: 0;
   padding: 0;
 
-  .fa-caret-down {
+  li {
     position: relative;
-    top: 2px;
-    font-size: 90%;
-  }
 
-  .dropdown-menu {
-    top: 0px;
-    left: 200px;
-    margin: 0;
-    >li>a {
-      color: @linkColor;
+    &:hover {
+      .dropdown-menu {
+        display: block;
+        top: 0px;
+        left: @sideMenuWidth;
+        background-color: @bodyBackground;
+      }
     }
   }
 }
@@ -146,13 +147,6 @@
     padding: 4px;
     overflow: hidden;
   }
-
-  .fa {
-    float: left;
-    font-size: 120%;
-    line-height: 41px;
-    padding: 0 15px;
-  }
 }
 
 .sidemenu-section-tagline {
@@ -191,24 +185,22 @@
 }
 
 .sidemenu-org {
-  border-bottom: @sideMenuBorder;
-  border-top: @sideMenuBorder;
   padding: 17px 10px 15px 14px;
   box-sizing: border-box;
   cursor: pointer;
   &:hover {
-    background-color: @grafanaTargetFuncBackground;
+    background-color: @sideMenuBackgroundHighlight;
   }
   display: table;
   position: relative;
   width: 100%;
 }
 
-.sidemenu-org .fa-caret-right {
+.sidemenu .fa-caret-right {
   position: absolute;
-  top: 50%;
+  top: 38%;
   right: 25px;
-  font-size: 80%;
+  font-size: 14px;
   color: @linkColor;
 }
 
@@ -239,7 +231,6 @@
   font-size: 13px;
   color: @linkColorDisabled;
 }
-
 
 .sidemenu-org-user {
   display: block;
