@@ -1,214 +1,68 @@
-.norm-form {
-  border-top: 3px solid @pageBackground;
-  // border-left: 3px solid @pageBackground;
-  // border-right: 3px solid @pageBackground;
-  background: transparent;
-
-  &.last {
-    border-bottom: 1px solid @pageBackground;
-  }
-
-  &.borderless {
-    background: transparent;
-    border: none;
-  }
+.gf-form {
+  margin-top: 3px;
+  margin-right: 3px;
+  display: inline-block;
 
   .checkbox-label {
     display: inline;
-    padding-right: 4px;
-    margin-bottom: 0;
-    margin-left: 5px;
+    padding: 8px 7px 8px 4px;
+  }
+  .cr1 {
+    margin-left: 8px;
   }
 }
 
-.norm-form-container-no-item-borders {
-  border: 1px solid @pageBackground;
-  border-bottom: none;
-
-  .norm-form, .norm-form-item, [type=text].norm-form-input, [type=text].norm-form-clear-input  {
-    border: none;
-  }
+.gf-form-group {
+  margin-bottom: 20px;
 }
 
-
-.spaced-form {
-  .norm-form {
-    margin: 7px 0;
-  }
+.gf-form-button-row {
+  margin-top: 15px;
+  margin-bottom: 10px;
 }
 
-.borderless {
-  .norm-form-item,
-  .norm-form-input {
-    border: none;
-  }
-}
-
-.norm-form-container {
-  border-bottom: 1px solid @pageBackground;
-}
-
-.norm-form-btn {
-  padding: 7px 12px;
-}
-
-.norm-form-list {
-  list-style: none;
-  margin: 0;
-  >li {
-    float: left;
-    background: @labelBackground;
-  }
-  & .trans {
-    background: transparent;
-  }
-}
-
-.norm-form-flex-wrapper {
-  display: flex;
-  flex-direction: row;
-  float: none !important;
-}
-
-.grafana-metric-options {
-  margin-top: 25px;
-}
-
-.norm-form-item {
+.gf-form-label {
+  background-color: @labelBackground;
+  display: inline-block;
   padding: 8px 7px;
-  display: inline-block;
-  font-weight: normal;
-  border-right: 3px solid @pageBackground;
-  color: @grayLighter;
-  display: inline-block;
   .small;
-
-  .has-open-function & {
-    padding-top: 25px;
-  }
-
-  .norm-form-disabled & {
-    color: @grafanaTargetColorHide;
-  }
-
-  &:hover, &:focus {
-    text-decoration: none;
-  }
-
-  &a:hover {
-    background: @grafanaTargetFuncBackground;
-  }
-
-  &.last {
-    border-right: none;
-  }
-}
-
-
-.norm-form-item-icon {
-  i {
-    width: 15px;
-    text-align: center;
-    display: inline-block;
-  }
-}
-
-.norm-form-func {
-  background: @grafanaTargetFuncBackground;
-  > a {
-    color: @grafanaTargetColor;
-  }
-  > a:hover {
-    color: @linkColor;
-  }
-
-  &.show-function-controls {
-    padding-top: 5px;
-    min-width: 100px;
-    text-align: center;
-  }
-}
-
-input[type=text].norm-form-func-param {
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-input[type=text].norm-form-clear-input {
-  padding: 8px 7px;
-  border: none;
-  margin: 0px;
-  background: transparent;
-  color: @grafanaTargetColor;
-  border-radius: 0;
-  border-right: 2px solid @pageBackground;
 }
 
 [type=text],
 [type=email],
 [type=number],
 [type=password], {
-  &.norm-form-input {
+  &.gf-form-input {
     border: none;
-    border-right: 3px solid @pageBackground;
     margin: 0px;
     border-radius: 0;
     padding: 8px 6px;
     height: 100%;
     box-sizing: border-box;
     font-size: 15px;
-    &.last {
-      border-right: none;
-    }
   }
 }
 
-input[type=checkbox].norm-form-checkbox {
+input[type=checkbox].gf-form-checkbox {
   margin: 0;
 }
 
-.norm-form-textarea {
-  height: 200px;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-select.norm-form-input {
+select.gf-form-input {
   border: none;
-  border-right: 3px solid @pageBackground;
   margin: 0px;
   border-radius: 0;
   height: 36px;
-  padding: 9px 3px;    
+  padding: 9px 3px;
   font-size: 15px;
-  &.last {
-    border-right: none;
-  }
 }
 
-.norm-form-radio {
-  input[type=radio] {
-    margin: 0;
-  }
-  label {
-    display: inline;
-  }
-}
-.norm-form-item-large { width: 115px; }
-.norm-form-item-xlarge { width: 150px; }
-.norm-form-item-xxlarge { width: 200px; }
+.gf-size-xs { width: 60px;}
+.gf-size-s { width: 80px;}
+.gf-size-ms { width: 100px;}
+.gf-size-m { width: 120px; }
+.gf-size-l { width: 150px; }
+.gf-size-xl { width: 200px; }
+.gf-size-xxl { width: 300px; }
+.gf-size-xxxl { width: 400px; }
 
-.norm-form-input.norm-form-item-xxlarge {
-  width: 215px;
-}
-
-.norm-form-auto {
-  width: auto;
-}
-
-.norm-form-inner-box {
-  margin: 20px 0 20px 148px;
-  display: inline-block;
-}
+.gf-size-auto { width: auto; }

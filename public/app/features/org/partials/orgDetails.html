@@ -6,90 +6,57 @@
 
 		<h1>Preferences</h1>
 
-		<form name="orgForm">
-			<div class="norm-form last">
-				<ul class="norm-form-list">
-					<li class="norm-form-item" style="width: 100px">
-						Name
-					</li>
-					<li>
-						<input type="text" required ng-model="org.name" class="norm-form-input last" style="width: 475px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+		<form name="orgForm" class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">Name</span>
+				<input class="gf-form-input gf-size-xxl" type="text" required ng-model="org.name">
 			</div>
 
-			<br>
-			<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
-			<br>
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
+			</div>
 		</form>
 
-		<section class="simple-box">
-			<h3 class="">Address</h3>
-		</section>
+		<h3>Address</h3>
 
-		<form name="addressForm">
-			<div class="norm-form">
-				<ul class="norm-form-list">
-					<li class="norm-form-item" style="width: 100px">
-						Address 1
-					</li>
-					<li>
-						<input type="text" ng-model="address.address1" class="norm-form-input" style="width:193px">
-					</li>
-					<li class="norm-form-item" style="width: 75px">
-						Address 2
-					</li>
-					<li>
-						<input type="text" ng-model="address.address2" class="norm-form-input last" style="width:193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+		<form name="addressForm" class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">Address1</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address1">
 			</div>
-			<div class="norm-form">
-				<ul class="norm-form-list">
-					<li class="norm-form-item" style="width: 100px">
-						City
-					</li>
-					<li>
-						<input type="text" ng-model="address.city" class="norm-form-input" style="width: 193px">
-					</li>
-					<li class="norm-form-item" style="width: 75px">
-						Postal code
-					</li>
-					<li>
-						<input type="text" ng-model="address.zipCode" class="input-medium norm-form-input last" style="width: 193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">Address2</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address2">
 			</div>
-			<div class="norm-form last">
-				<ul class="norm-form-list">
-					<li class="norm-form-item" style="width: 100px">
-						State
-					</li>
-					<li>
-						<input type="text" ng-model="address.state" class="norm-form-input" style="width: 193px">
-					</li>
-					<li class="norm-form-item" style="width: 75px">
-						Country
-					</li>
-					<li>
-						<input type="text" ng-model="address.country" class="norm-form-input last" style="width: 193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+			<br>
+
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">City</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.city">
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">Postal code</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.zipCode">
+			</div>
+			<br>
+
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">State</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.state">
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label gf-size-s">Country</span>
+				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.country">
 			</div>
 
-			<br>
-			<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
-			<br>
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
+			</div>
 		</form>
 	</div>
 
 	<h3>Org. Users</h3>
 	<a href="org/users" class="btn btn-inverse">Manage</a>
-
 
 </div>
 

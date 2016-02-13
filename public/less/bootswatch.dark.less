@@ -103,64 +103,6 @@ hr {
 	}
 }
 
-@media (max-width: @navbarCollapseWidth) {
-
-	.navbar .nav-collapse {
-
-		.nav li > a {
-			border: none;
-			color: @grayLighter;
-			font-weight: normal;
-			text-shadow: none;
-
-			&:hover {
-				border: none;
-				background-color: @blue;
-			}
-		}
-
-		.nav .active > a {
-			border: none;
-			background-color: @blue;
-		}
-
-		.dropdown-menu a:hover {
-			background-color: @blue;
-		}
-
-		.navbar-form,
-		.navbar-search {
-			border-top: none;
-			border-bottom: none;
-		}
-
-		.nav-header {
-			color: rgba(128, 128, 128, 0.6);
-		}
-	}
-
-	.navbar-inverse .nav-collapse {
-
-		.nav li > a:hover {
-			background-color: #111;
-		}
-
-		.nav .active > a {
-			background-color: #111;
-		}
-
-		.nav li.dropdown.open > .dropdown-toggle,
-		.nav li.dropdown.active > .dropdown-toggle,
-		.nav li.dropdown.open.active > .dropdown-toggle {
-			background-color: #111;
-		}
-	}
-}
-
-.dropdown-menu {
-	.border-radius(0);
-}
-
 
 div.subnav {
 
