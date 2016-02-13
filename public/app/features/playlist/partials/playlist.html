@@ -1,18 +1,5 @@
-<navbar> 
-<div class="top-nav-btn dashnav-dashboards-btn" >
-  <a class="pointer" ng-click="openSearch()">
-    <i class="fa fa-fw fa-list"></i>
-    <span class="dashboard-title">Playlist</span>
-    <i class="fa fa-caret-down"></i>
-  </a>
-</div>
+<navbar icon="fa fa-fw fa-list" title="Playlist">
 </navbar>
-<!-- <navbar title="Playlists" title-url="playlists" icon="fa fa-fw fa-list" subnav="true">
-	<ul class="nav">
-		<li ng-class="{active: ctrl.isNew()}" ng-show="ctrl.isNew()"><a href="datasources/create">New</a></li>
-		<li class="active" ng-show="!ctrl.isNew()"><a href="playlists/edit/{{ctrl.playlist.id}}">{{ctrl.playlist.name}}</a></li>
-	</ul>
-</navbar> -->
 
 <div class="page-container" ng-form="playlistEditForm">
   <div class="page">
