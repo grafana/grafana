@@ -1,0 +1,42 @@
+
+.page-container {
+  background-color: @pageBackground;
+  position: relative;
+  padding: 25px 56px;
+  padding: 25px 56px;
+  max-width: 1060px;
+  margin-left: 0;
+}
+
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  display: -ms-flexbox;      /* TWEENER - IE 10 */
+  display: -webkit-flex;     /* NEW - Chrome */
+  flex-wrap: wrap-reverse;
+}
+
+.admin-page {
+  max-width: 800px;
+  margin-left: 10px;
+  .gf-box {
+    margin-top: 0;
+  }
+  .gf-box-body {
+    min-height: 0;
+  }
+  h2 {
+    margin-left: 15px;
+    margin-bottom: 0px;
+    font-size: @fontSizeLarge;
+    color: @textColor;
+    i {
+      padding-right: 6px;
+    }
+  }
+}
+
