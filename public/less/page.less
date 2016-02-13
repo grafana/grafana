@@ -1,3 +1,26 @@
+.grafana-app {
+  display: block;
+  height: 100%;
+}
+
+.dashboard-container {
+  padding: 5px 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main-view {
+  background-image: url(/img/grafana_pattern.png);
+  background-position: 100% -550px;
+  background-repeat: no-repeat;
+  height: 100%;
+}
+
+.page-dashboard {
+  .main-view {
+    background-image: none;
+  }
+}
 
 .page-container {
   background-color: @pageBackground;
@@ -6,6 +29,7 @@
   padding: 25px 56px;
   max-width: 1060px;
   margin-left: 0;
+  height: 100%;
 }
 
 
