@@ -67,9 +67,8 @@
 
 // Scaffolding
 // -------------------------
-// @bodyBackground:      #EFEFEF;
-@pageBackground:      @grayDarker;
-@bodyBackground:  	  @pageBackground;
+@bodyBackground:      #EFEFEF;
+@pageBackground:  	  @white;
 @textColor:           @gray;
 
 // Links
@@ -189,7 +188,7 @@
 // Dropdowns
 // -------------------------
 @dropdownBackground:            @white;
-@dropdownBorder:                rgba(0,0,0,.2);
+@dropdownBorder:                @grafanaTargetBorder;
 @dropdownDividerTop:            #e5e5e5;
 @dropdownDividerBottom:         @white;
 @dropdownDivider:               @dropdownDividerTop;
@@ -201,7 +200,6 @@
 
 @dropdownLinkBackgroundActive:  @blue;
 @dropdownLinkBackgroundHover:   @blue;
-
 
 
 // COMPONENT VARIABLES
@@ -254,7 +252,7 @@
 @navbarHeight:                    52px;
 @navbarBackgroundHighlight:       #f8f8f8;
 @navbarBackground:                #f8f8f8;
-@navbarBorder:                    none;
+@navbarBorder:                    1px solid @grafanaTargetBorder;
 
 @navbarText:                      #666;
 @navbarLinkColor:                 #666;
