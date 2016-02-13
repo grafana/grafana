@@ -2,95 +2,64 @@
 </navbar>
 
 <div class="page-container">
-	<div class="page-wide">
 
-		<h1>Profile</h1>
+	<h1>Profile</h1>
 
-		<section class="simple-box">
-			<h3 class="">Preferences</h3>
-		</section>
-			<form name="userForm">
-				<div class="norm-form">
-					<ul class="norm-form-list">
-						<li class="norm-form-item" style="width: 100px">
-							Name
-						</li>
-						<li>
-							<input type="text" required ng-model="user.name" class="input-xlarge norm-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="norm-form">
-					<ul class="norm-form-list">
-						<li class="norm-form-item" style="width: 100px">
-							Email
-						</li>
-						<li>
-							<input type="email" required ng-model="user.email" class="input-xlarge norm-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="norm-form">
-					<ul class="norm-form-list">
-						<li class="norm-form-item" style="width: 100px">
-							Username
-						</li>
-						<li>
-							<input type="text" required ng-model="user.login" class="input-xlarge norm-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
+	<form name="userForm" class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Name</span>
+			<input class="gf-form-input gf-size-xxl" type="text" required ng-model="user.name" >
+		</div>
+		<br>
 
-				<div class="norm-form last">
-					<ul class="norm-form-list">
-						<li class="norm-form-item" style="width: 100px">
-							UI Theme
-						</li>
-						<li>
-							<select class="input-small norm-form-input" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<br>
-				<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
-				<div class="clearfix"></div>
-			</form>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Email</span>
+			<input class="gf-form-input gf-size-xxl" type="email" required ng-model="user.email">
+		</div>
+		<br>
 
-			<section class="simple-box">
-				<h3 class="">Password</h3>
-				<a class="btn btn-inverse btn-small" href="profile/password" style="margin: 7px 10px 0 0">Change Password</a>
-			</section>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Username</span>
+			<input class="gf-form-input gf-size-xxl" type="text" required ng-model="user.login">
+		</div>
+		<br>
 
-			<section class="simple-box">
-				<h3 class="">Organizations</h3>
-				<table class="filter-table form-inline">
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Role</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr ng-repeat="org in orgs">
-							<td>{{org.name}}</td>
-							<td>{{org.role}}</td>
-							<td class="text-right">
-								<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
-									Current
-								</span>
-								<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
-									Select
-								</a>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</section>
-	</div>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">UI Theme</span>
+			<select class="gf-form-input gf-size-auto" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
+		</div>
+	</form>
+
+	<h3>Password</h3>
+	<a href="profile/password" class="btn btn-inverse">Change Password</a>
+
+	<h3>Organizations</h3>
+	<table class="filter-table form-inline">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="org in orgs">
+				<td>{{org.name}}</td>
+				<td>{{org.role}}</td>
+				<td class="text-right">
+					<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
+						Current
+					</span>
+					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+						Select
+					</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
 
