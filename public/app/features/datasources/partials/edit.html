@@ -5,8 +5,10 @@
 </navbar>
 
 <div class="page-container">
-	<h1 ng-show="isNew">Add data source</h1>
-	<h1 ng-show="!isNew">Edit data source</h1>
+	<div class="page-header">
+		<h1 ng-show="isNew">Add data source</h1>
+		<h1 ng-show="!isNew">Edit data source</h1>
+	</div>
 
 	<form name="editForm">
 		<div class="gf-form-group">

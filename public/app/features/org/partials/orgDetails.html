@@ -2,61 +2,67 @@
 </navbar>
 
 <div class="page-container">
-	<div class="page">
-
+	<div class="page-header">
 		<h1>Preferences</h1>
-
-		<form name="orgForm" class="gf-form-group">
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Name</span>
-				<input class="gf-form-input gf-size-xxl" type="text" required ng-model="org.name">
-			</div>
-
-			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
-			</div>
-		</form>
-
-		<h3>Address</h3>
-
-		<form name="addressForm" class="gf-form-group">
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Address1</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address1">
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Address2</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address2">
-			</div>
-			<br>
-
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">City</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.city">
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Postal code</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.zipCode">
-			</div>
-			<br>
-
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">State</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.state">
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Country</span>
-				<input class="gf-form-input gf-size-xl" type="text" ng-model="address.country">
-			</div>
-
-			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
-			</div>
-		</form>
 	</div>
 
-	<h3>Org. Users</h3>
-	<a href="org/users" class="btn btn-inverse">Manage</a>
+	<form name="orgForm" class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Name</span>
+			<input class="gf-form-input gf-size-xxl" type="text" required ng-model="org.name">
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
+		</div>
+	</form>
+
+	<h3>Address</h3>
+
+	<form name="addressForm" class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Address1</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address1">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Address2</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address2">
+		</div>
+		<br>
+
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">City</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.city">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Postal code</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.zipCode">
+		</div>
+		<br>
+
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">State</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.state">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label gf-size-s">Country</span>
+			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.country">
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
+		</div>
+	</form>
+
+	<div class="gf-form-group">
+		<h3>Users</h3>
+		<a href="org/users" class="btn btn-inverse">Manage</a>
+	</div>
+
+	<div class="gf-form-group">
+		<h3>API Keys</h3>
+		<a href="org/apikeys" class="btn btn-inverse">Manage</a>
+	</div>
 
 </div>
 
