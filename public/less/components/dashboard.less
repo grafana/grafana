@@ -24,7 +24,7 @@
 }
 
 .row-button {
-  width: 30px;
+  width: 24px;
   float: left;
   cursor: pointer;
   line-height: 31px;
@@ -63,6 +63,36 @@
 
   &:hover {
     left: -12px;
+  }
+}
+
+
+.row-control-inner {
+  padding:0px;
+  margin:0px;
+  position:relative;
+}
+
+.hide-controls {
+  padding: 0;
+  .row-tab {
+    display: none;
+  }
+  .add-row-panel-hint {
+    display: none;
+  }
+}
+
+.playlist-active {
+  .add-row-panel-hint,
+  .dashnav-refresh-action,
+  .dashnav-zoom-out,
+  .dashnav-action-icons {
+    display: none;
+  }
+
+  .grafana-menu-stop-playlist {
+    display: list-item;
   }
 }
 
@@ -110,7 +140,7 @@ div.flot-text {
 
 .panel-title {
   border: 0px;
-  font-weight: bold;
+  font-weight: @fontWeightSemi;
   position: relative;
   cursor: pointer;
   width: 100%;
