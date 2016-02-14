@@ -26,16 +26,6 @@
 		</ul>
 	</li>
 
-	<li class="sidemenu-system-section" ng-if="ctrl.systemSection">
-		<div class="sidemenu-system-section-inner">
-			<i class="icon-gf icon-gf-apps"></i>
-			<div class="sidemenu-section-text-wrapper">
-				<div class="sidemenu-section-heading">Grafana Admin</div>
-				<div class="sidemenu-section-tagline">v {{ctrl.grafanaVersion}}</div>
-			</div>
-		</div>
-	</li>
-
 	<li ng-repeat="item in ctrl.mainLinks" class="dropdown">
 		<a href="{{item.url}}" class="sidemenu-item sidemenu-main-link" target="{{item.target}}">
 			<span class="icon-circle sidemenu-icon">
@@ -53,15 +43,6 @@
 			</li>
 		</ul>
 	</li>
-
-	<ul class="sidemenu sidemenu-small" style="margin-top:50px" ng-if="ctrl.systemSection">
-		<li>
-			<a href="{{ctrl.appSubUrl}}/" class="sidemenu-item">
-				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-backward"></i></span>
-				<span class="sidemenu-item-text">Exit admin</span>
-			</a>
-		</li>
-	</ul>
 
 	<li ng-if="!ctrl.isSignedIn">
 		<a href="login" class="sidemenu-item" target="_self">

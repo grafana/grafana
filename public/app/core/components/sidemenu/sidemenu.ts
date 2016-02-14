@@ -11,8 +11,6 @@ export class SideMenuCtrl {
   user: any;
   mainLinks: any;
   orgMenu: any;
-  systemSection: any;
-  grafanaVersion: any;
   appSubUrl: string;
 
   /** @ngInject */
@@ -21,11 +19,11 @@ export class SideMenuCtrl {
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
-    this.updateMenu();
+
+    this.mainLinks = config.bootData.mainNavLinks;
     this.openUserDropdown();
 
     this.$scope.$on('$routeChangeSuccess', () => {
-      this.updateMenu();
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
@@ -35,10 +33,6 @@ export class SideMenuCtrl {
 
  getUrl(url) {
    return config.appSubUrl + url;
- }
-
- setupMainNav() {
-   this.mainLinks = config.bootData.mainNavLinks;
  }
 
  openUserDropdown() {
@@ -70,10 +64,6 @@ export class SideMenuCtrl {
 
    this.orgMenu.push({cssClass: "divider"});
 
-   if (this.contextSrv.isGrafanaAdmin) {
-     this.orgMenu.push({text: "Grafana adminstration", icon: "fa fa-fw fa-cogs", url: this.getUrl("/admin/settings")});
-   }
-
    this.backendSrv.get('/api/user/orgs').then(orgs => {
      orgs.forEach(org => {
        if (org.orgId === this.contextSrv.user.orgId) {
@@ -99,48 +89,6 @@ export class SideMenuCtrl {
    this.backendSrv.post('/api/user/using/' + orgId).then(() => {
      window.location.href = window.location.href;
    });
- };
-
- setupAdminNav() {
-   this.systemSection = true;
-   this.grafanaVersion = config.buildInfo.version;
-
-   this.mainLinks.push({
-     text: "System info",
-     icon: "fa fa-fw fa-info",
-     url: this.getUrl("/admin/settings"),
-   });
-
-   this.mainLinks.push({
-     text: "Stats",
-     icon: "fa fa-fw fa-bar-chart",
-     url: this.getUrl("/admin/stats"),
-   });
-
-   this.mainLinks.push({
-     text: "Users",
-     icon: "fa fa-fw fa-user",
-     url: this.getUrl("/admin/users"),
-   });
-
-   this.mainLinks.push({
-     text: "Organizations",
-     icon: "fa fa-fw fa-users",
-     url: this.getUrl("/admin/orgs"),
-   });
-
- }
-
- updateMenu() {
-   this.systemSection = false;
-   this.mainLinks = [];
-
-   var currentPath = this.$location.path();
-   if (currentPath.indexOf('/admin') === 0) {
-     this.setupAdminNav();
-   } else {
-     this.setupMainNav();
-   }
  };
 }
 

@@ -1,65 +1,63 @@
-<navbar icon="fa fa-fw fa-user" title="Users" title-url="admin/users" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="admin/users/create">Add user</a></li>
-	</ul>
+<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
+	<nav-button title="Users" title-url="admin/users" icon="icon-gf icon-gf-users"></nav-button>
 </navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
+	<div class="page-header">
+		<h1>
 			Add new user
-		</h2>
-
-		<form name="userForm">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							<strong>Name</strong>
-						</li>
-						<li>
-							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							<strong>Email</strong>
-						</li>
-						<li>
-							<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							<strong>Username</strong>
-						</li>
-						<li>
-							<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							<strong>Password</strong>
-						</li>
-						<li>
-							<input type="password" required ng-model="user.password" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
-
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="create()">Create</button>
-		</form>
+		</h1>
 	</div>
+
+	<form name="userForm">
+		<div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						<strong>Name</strong>
+					</li>
+					<li>
+						<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						<strong>Email</strong>
+					</li>
+					<li>
+						<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						<strong>Username</strong>
+					</li>
+					<li>
+						<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 100px">
+						<strong>Password</strong>
+					</li>
+					<li>
+						<input type="password" required ng-model="user.password" class="input-xxlarge tight-form-input last" >
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+
+		<br>
+		<button type="submit" class="pull-right btn btn-success" ng-click="create()">Create</button>
+	</form>
 </div>

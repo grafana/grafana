@@ -1,5 +1,6 @@
 <div class="navbar">
 	<div class="navbar-inner"><div class="container-fluid">
+
 			<div class="top-nav-btn top-nav-menu-btn">
 				<a class="pointer" ng-click="ctrl.contextSrv.toggleSideMenu()">
 					<span class="top-nav-logo-background">
@@ -10,12 +11,10 @@
 				</a>
 			</div>
 
-			<div class="top-nav-btn dashnav-dashboards-btn" ng-if="ctrl.title">
-				<a class="pointer" href="{{ctrl.titleUrl}}">
-					<i ng-class="ctrl.icon"></i>
-					<span class="dashboard-title">{{ctrl.title}}</span>
-					<!-- <i class="fa fa&#45;caret&#45;down"></i> -->
-				</a>
+
+			<div ng-if="ctrl.title">
+				<nav-button title="{{ctrl.title}}" title-url="{{ctrl.titleUrl}}" icon="{{ctrl.icon}}">
+				</nav-button>
 			</div>
 
 			<div ng-transclude></div>
