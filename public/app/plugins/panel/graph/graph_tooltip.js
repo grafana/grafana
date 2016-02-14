@@ -34,7 +34,8 @@ function ($) {
     };
 
     this.showTooltip = function(absoluteTime, relativeTime, innerHtml, pos) {
-      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '<br>(' + relativeTime + ')</div> ' ;
+      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime +
+        ' <span class="tone-down">(' + relativeTime + ')</span></div> ';
       body += innerHtml + '</div>';
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };

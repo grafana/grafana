@@ -3,6 +3,24 @@
   cursor: crosshair;
 }
 
+.histogram-chart {
+  position: relative;
+}
+
+.datapoints-warning {
+  pointer: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  margin-top: -50px;
+  margin-left: -100px;
+  width: 200px;
+  text-align: center;
+  cursor: auto;
+  padding: 10px;
+}
+
 .graph-legend {
   margin: 0 20px;
   text-align: center;
@@ -206,9 +224,13 @@
 
   .graph-tooltip-time {
     text-align: center;
-    font-weight: bold;
+    font-weight: @fontWeightSemi;
     position: relative;
     top: -3px;
+  }
+
+  .tone-down {
+    opacity: 0.7;
   }
 
   .label-tag {

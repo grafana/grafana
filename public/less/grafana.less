@@ -43,6 +43,8 @@
 @import "./components/tags.less";
 @import "./components/modals.less";
 @import "./components/dropdown.less";
+@import "./components/color_picker.less";
+@import "./components/tooltip.less";
 
 // PAGES
 @import "./pages/login.less";
@@ -50,144 +52,6 @@
 @import "./pages/admin.less";
 @import "./pages/alerting.less";
 @import "./pages/apps.less";
-
-
-.row-control-inner {
-  padding:0px;
-  margin:0px;
-  position:relative;
-}
-
-.hide-controls {
-  padding: 0;
-  .row-tab {
-    display: none;
-  }
-  .add-row-panel-hint {
-    display: none;
-  }
-}
-
-.playlist-active {
-  .add-row-panel-hint,
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons {
-    display: none;
-  }
-
-  .grafana-menu-stop-playlist {
-    display: list-item;
-  }
-}
-
-.row-button {
-  width: 24px;
-}
-
-.histogram-chart {
-  position:relative;
-}
-
-.scrollable {
-  max-height: 300px;
-  overflow: auto;
-}
-
-
-
-// SPECTRUM CSS overrides
-
-.sp-replacer {
-  background: inherit;
-  border: none;
-  color: inherit;
-  padding: 0;
-}
-
-.sp-replacer:hover, .sp-replacer.sp-active {
-  border-color: inherit;
-  color: inherit;
-}
-
-.sp-container {
-  border-radius: 0;
-  background-color: @heroUnitBackground;
-  border: none;
-  padding: 0;
-}
-
-.sp-palette-container, .sp-picker-container {
-  border: none;
-}
-
-.sp-dd {
-  display: none;
-}
-
-.sp-preview {
-  position: relative;
-  width: 15px;
-  height: 15px;
-  border: none;
-  margin-right: 5px;
-  float: left;
-  z-index: 0;
-}
-
-.datapoints-warning {
-  pointer: none;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 10;
-  margin-top: -50px;
-  margin-left: -100px;
-  width: 200px;
-  text-align: center;
-  cursor: auto;
-  padding: 10px;
-}
-
-.metrics-editor-help:hover {
-  .hide {
-    display: block;
-  }
-}
-
-.grafana-tooltip {
-  position : absolute;
-  top: -1000;
-  left: 0;
-  color: @tooltipColor;
-  padding: 10px;
-  font-size: 11pt;
-  font-weight : 200;
-  background-color: @tooltipBackground;
-  border-radius: 5px;
-  z-index: 9999;
-  max-width: 800px;
-  max-height: 600px;
-  overflow: hidden;
-  line-height: 14px;
-  a {
-    color: @tooltipLinkColor;
-  }
-}
-
-.grafana-tooltip hr {
- padding: 2px;
- color: #c8c8c8;
- margin: 0px;
- border-bottom:0px solid #c8c8c8;
-}
-
-.tooltip.in {
-  .opacity(100);
-}
-.tooltip-inner {
-  max-width: 400px;
-}
 
 .grafana-version-info {
   position: absolute;
