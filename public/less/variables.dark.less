@@ -76,6 +76,7 @@
 @baseFontFamily:        @sansFontFamily;
 @baseLineHeight:        20px;
 @altFontFamily:         @serifFontFamily;
+@fontWeightSemi:		    600;
 
 @headingsFontFamily:    inherit; // empty to use BS default, @baseFontFamily
 @headingsFontWeight:    400;    // instead of browser default, bold
@@ -273,20 +274,15 @@
 // -------------------------
 @warningText:             darken(#c09853, 10%);
 @warningBackground:       @orange;
-@warningBorder:           transparent;
 
 @errorText:               #b94a48;
-@errorBackground:         @grayLighter;
-@errorBorder:             darken(spin(@errorBackground, -10), 3%);
+@errorBackground:         @btnDangerBackground;
 
 @successText:             #468847;
-@successBackground:       @grayLighter;
-@successBorder:           darken(spin(@successBackground, -10), 5%);
+@successBackground:       @btnSuccessBackground;
 
 @infoText:                @blueDark;
-@infoBackground:          @grayLighter;
-@infoBorder:              darken(spin(@infoBackground, -10), 7%);
-
+@infoBackground:          @btnInfoBackground;
 
 // Tooltips and popovers
 // -------------------------
