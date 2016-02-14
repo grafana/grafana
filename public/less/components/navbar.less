@@ -1,18 +1,67 @@
+
+
 .navbar {
+  overflow: visible;
   position: relative;
   z-index: 110;
-  margin-bottom: 0;
 }
 
-.navbar .navbar-inner {
-  padding-left: 0px;
+.navbar-inner {
+  min-height: @navbarHeight;
+  padding-right: 20px;
+  background-color: @navbarBackground;
   border-bottom: @navbarBorder;
+
+  .clearfix();
 }
 
-.navbar .nav>li>a {
+.navbar .nav {
+  position: relative;
+  left: 0;
+  float: left;
+  margin: 0 10px 0 0;
+}
+
+.nav {
+  display: block;
+}
+
+.navbar .nav.pull-right {
+  float: right; // redeclare due to specificity
+  margin-right: 0; // remove margin on float right nav
+}
+
+.navbar .nav > li {
+  float: left;
+}
+
+// Links
+.navbar .nav > li > a {
+  float: none;
   padding: 17px 13px 13px;
+  color: @navbarLinkColor;
+  text-decoration: none;
+
   .fa { font-size: 115%; }
 }
+
+// Hover/focus
+.navbar .nav > li > a:focus,
+.navbar .nav > li > a:hover {
+  background-color: @navbarLinkBackgroundHover; // "transparent" is default to differentiate :hover/:focus from .active
+  color: @navbarLinkColorHover;
+  text-decoration: none;
+}
+
+// Active nav items
+.navbar .nav > .active > a,
+.navbar .nav > .active > a:hover,
+.navbar .nav > .active > a:focus {
+  color: @navbarLinkColorActive;
+  text-decoration: none;
+  background-color: @navbarLinkBackgroundActive;
+}
+
 
 .fa.top-nav-breadcrumb-icon {
   margin: 18px 0 6px 5px;
