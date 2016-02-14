@@ -45,7 +45,7 @@
   z-index: @zindexDropdown;
   display: none; // none by default, but block on "open" of the menu
   float: left;
-  min-width: 160px;
+  min-width: 140px;
   padding: 5px 0;
   margin: 2px 0 0; // override default ul
   list-style: none;
@@ -67,12 +67,17 @@
   // Links within the dropdown menu
   > li > a {
     display: block;
-    padding: 3px 20px;
+    padding: 3px 20px 3px 15px;
     clear: both;
     font-weight: normal;
     line-height: @baseLineHeight;
     color: @dropdownLinkColor;
     white-space: nowrap;
+
+    i {
+      padding-right: 5px;
+      color: @linkColorDisabled;
+    }
   }
 }
 
