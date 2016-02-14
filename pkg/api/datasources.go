@@ -12,26 +12,8 @@ import (
 )
 
 func GetDataSources(c *middleware.Context) {
-  log.Info("DataSource Url: %v", setting.DataSource.DataSourceUrlRoot)
+    log.Info("DataSource Url: %v", setting.DataSource.DataSourceUrlRoot)
 
-  result := make([]*dtos.DataSource, 1)
-  result[0] = &dtos.DataSource{
-      Id:        1,
-      OrgId:     1,
-      Name:      "opentsdb",
-      Url:       setting.DataSource.DataSourceUrlRoot,
-      Type:      "opentsdb",
-      Access:    "direct",
-      Password:  "",
-      Database:  "",
-      User:      "",
-      BasicAuth: false,
-      IsDefault: true,
-  }
-
-  c.JSON(200, result)
-
-  /*
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -57,7 +39,6 @@ func GetDataSources(c *middleware.Context) {
 	}
 
 	c.JSON(200, result)
-	*/
 }
 
 func GetDataSourceById(c *middleware.Context) {

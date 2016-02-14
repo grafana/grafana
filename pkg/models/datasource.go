@@ -115,6 +115,10 @@ type DeleteDataSourceCommand struct {
 	OrgId int64
 }
 
+type DeleteAllDataSourceInOrgCommand struct {
+  OrgId int64
+}
+
 // ---------------------
 // QUERIES
 

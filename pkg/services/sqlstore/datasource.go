@@ -13,6 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSources)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSource)
+  bus.AddHandler("sql", DeleteAllDataSourceInOrg)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
 	bus.AddHandler("sql", GetDataSourceByName)
@@ -51,6 +52,14 @@ func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
 		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		return err
 	})
+}
+
+func DeleteAllDataSourceInOrg(cmd *m.DeleteAllDataSourceInOrgCommand) error {
+  return inTransaction(func(sess *xorm.Session) error {
+    var rawSql = "DELETE FROM data_source WHERE org_id=?"
+    _, err := sess.Exec(rawSql, cmd.OrgId)
+    return err
+  })
 }
 
 func AddDataSource(cmd *m.AddDataSourceCommand) error {

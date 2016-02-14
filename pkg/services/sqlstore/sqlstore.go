@@ -59,6 +59,29 @@ func EnsureAdminUser() {
 	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
+func AddDatasourceFromConfig() {
+
+  log.Info("Add default datasource in the config to the database")
+  // Delete the default datasource if it exists
+  if err := bus.Dispatch(&m.DeleteAllDataSourceInOrgCommand{
+    OrgId:    1,
+  }); err != nil {
+    log.Warn("Could not delete data source with OrgId = 1: %v", err)
+  }
+  // Add default data source with OrgId = 1
+  if err := bus.Dispatch(&m.AddDataSourceCommand{
+    OrgId:    1,
+    Name:     "opentsdb",
+    Type:     m.DS_OPENTSDB,
+    Access:   m.DS_ACCESS_DIRECT,
+    Url:      setting.DataSource.DataSourceUrlRoot,
+    IsDefault:true,
+  }); err != nil {
+    log.Fatal(3, "Could not add default datasource from config: %v", err)
+    return
+  }
+}
+
 func NewEngine() {
 	x, err := getEngine()
 
