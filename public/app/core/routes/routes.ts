@@ -12,6 +12,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
 
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadAppsBundle = new BundleLoader('app/features/apps/all');
+  var loadAdminBundle = new BundleLoader('app/features/admin/admin');
 
   $routeProvider
   .when('/', {
@@ -95,35 +96,49 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/profile/partials/select_org.html',
     controller : 'SelectOrgCtrl',
   })
+  // ADMIN
+  .when('/admin', {
+    templateUrl: 'public/app/features/admin/partials/admin_home.html',
+    controller : 'AdminHomeCtrl',
+    resolve: loadAdminBundle,
+  })
   .when('/admin/settings', {
     templateUrl: 'public/app/features/admin/partials/settings.html',
     controller : 'AdminSettingsCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/users', {
     templateUrl: 'public/app/features/admin/partials/users.html',
     controller : 'AdminListUsersCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/users/create', {
     templateUrl: 'public/app/features/admin/partials/new_user.html',
     controller : 'AdminEditUserCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/users/edit/:id', {
     templateUrl: 'public/app/features/admin/partials/edit_user.html',
     controller : 'AdminEditUserCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/orgs', {
     templateUrl: 'public/app/features/admin/partials/orgs.html',
     controller : 'AdminListOrgsCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/orgs/edit/:id', {
     templateUrl: 'public/app/features/admin/partials/edit_org.html',
     controller : 'AdminEditOrgCtrl',
+    resolve: loadAdminBundle,
   })
   .when('/admin/stats', {
     templateUrl: 'public/app/features/admin/partials/stats.html',
     controller : 'AdminStatsCtrl',
     controllerAs: 'ctrl',
+    resolve: loadAdminBundle,
   })
+  // LOGIN / SIGNUP
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
