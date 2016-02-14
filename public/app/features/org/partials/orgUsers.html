@@ -7,7 +7,7 @@
 <div class="page-container">
 	<div class="page-wide">
 
-		<button class="btn btn-inverse pull-right" ng-click="openInviteModal()">
+		<button class="btn btn-inverse pull-right" ng-click="ctrl.openInviteModal()">
 			<i class="fa fa-plus"></i>
 			Add or Invite
 		</button>
@@ -16,7 +16,7 @@
 		<br>
 
 		<tabset>
-			<tab heading="Users ({{users.length}})">
+			<tab heading="Users ({{ctrl.users.length}})">
 				<table class="filter-table form-inline">
 					<thead>
 						<tr>
@@ -26,22 +26,22 @@
 							<th style="width: 34px;"></th>
 						</tr>
 					</thead>
-					<tr ng-repeat="user in users">
+					<tr ng-repeat="user in ctrl.users">
 						<td>{{user.login}}</td>
 						<td><span class="ellipsis">{{user.email}}</span></td>
 						<td>
-							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
+							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
 							</select>
 						</td>
 						<td>
-							<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
+							<a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">
 								<i class="fa fa-remove"></i>
 							</a>
 						</td>
 					</tr>
 				</table>
 			</tab>
-			<tab heading="Pending Invitations ({{pendingInvites.length}})">
+			<tab heading="Pending Invitations ({{ctrl.pendingInvites.length}})">
 				<table class="filter-table form-inline">
 					<thead>
 						<tr>
@@ -50,12 +50,12 @@
 							<th></th>
 						</tr>
 					</thead>
-					<tbody ng-repeat="invite in pendingInvites">
+					<tbody ng-repeat="invite in ctrl.pendingInvites">
 						<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
 							<td>{{invite.email}}</td>
 							<td>{{invite.name}}</td>
 							<td class="text-right">
-								<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)">
+								<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="ctrl.copyInviteToClipboard($event)">
 									<i class="fa fa-clipboard"></i> Copy Invite
 								</button>
 								&nbsp;
@@ -70,7 +70,7 @@
 							<td colspan="3">
 								<a href="{{invite.url}}">{{invite.url}}</a><br><br>
 								&nbsp;
-								<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
+								<button class="btn btn-inverse btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
 									<i class="fa fa-remove" style="color: red"></i> Revoke invite
 								</button>
 								<span style="padding-left: 15px">
