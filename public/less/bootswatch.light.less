@@ -140,12 +140,12 @@ a.text-success:hover { color: darken(@green, 10%); }
 // -----------------------------------------------------
 
 .btn {
-	padding: 5px 12px;
+	padding: 8px 12px;
 	background-image: none;
 	.box-shadow(none);
 	border: none;
 	.border-radius(3px);
-	text-shadow: none;
+  text-shadow: 0 1px 0 rgba(0,0,0,.5);
 
 	&.disabled {
 		box-shadow: inset 0 2px 4px rgba(0,0,0,.15),~" "0 1px 2px rgba(0,0,0,.05);
@@ -288,17 +288,6 @@ legend {
 // DROPDOWNS
 // -----------------------------------------------------
 
-
-// ALERTS, LABELS, BADGES
-// -----------------------------------------------------
-
-.alert {
-	text-shadow: none;
-
-	&-heading, h1, h2, h3, h4, h5, h6 {
-		color: @white;
-	}
-}
 
 .label {
 

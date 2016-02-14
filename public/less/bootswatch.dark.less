@@ -49,11 +49,11 @@ hr {
 
 .btn {
 	padding: 8px 12px;
-	margin-right:10px;
+	margin-right: 10px;
 	background-image: none;
 	border: none;
 	.border-radius(0px);
-	text-shadow: none;
+  text-shadow: 0 1px 0 rgba(0,0,0,.5);
 
 	&.disabled {
 		box-shadow: inset 0 2px 4px rgba(0,0,0,.15),~" "0 1px 2px rgba(0,0,0,.05);
@@ -153,24 +153,6 @@ legend, label {
 		background-color: @blue;
 		color: @white;
 	}
-}
-
-// ALERTS, LABELS, BADGES
-// -----------------------------------------------------
-
-.alert,
-.alert .alert-heading,
-.alert-success,
-.alert-success .alert-heading,
-.alert-danger,
-.alert-error,
-.alert-danger .alert-heading,
-.alert-error .alert-heading,
-.alert-info,
-.alert-info .alert-heading {
-  color: @white;
-  text-shadow: none;
-  border: none;
 }
 
 .label {
