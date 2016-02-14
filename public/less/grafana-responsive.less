@@ -22,7 +22,7 @@
 @fluidGridColumnWidth768:      percentage(@gridColumnWidth768/@gridRowWidth768);
 @fluidGridGutterWidth768:      percentage(@gridGutterWidth768/@gridRowWidth768);
 
-@screen-xs: 480px;
+@screen-xs: 320px;
 @screen-sm: 768px;
 @screen-md: 992px;
 @screen-lg: 1200px;
@@ -67,6 +67,18 @@
   .dashnav-action-icons {
     display: none;
   }
+  .page-container {
+    padding: 0 20px;
+  }
+}
+
+// form styles
+@media @breakpoint-sm-up {
+  .gf-size-m { width: 120px; }
+  .gf-size-l { width: 150px; }
+  .gf-size-xl { width: 200px; }
+  .gf-size-xxl { width: 300px; }
+  .gf-size-xxxl { width: 400px; }
 }
 
 @media @breakpoint-sm-up {
