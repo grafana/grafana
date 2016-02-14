@@ -9,16 +9,13 @@
   left: 0;
   z-index: @zindexPopover;
   display: none;
-  max-width: 276px;
+  max-width: 480px;
   padding: 1px;
   text-align: left; // Reset given new insertion method
   background-color: @popoverBackground;
-  -webkit-background-clip: padding-box;
-     -moz-background-clip: padding;
-          background-clip: padding-box;
+  background-clip: padding-box;
   border: 1px solid #ccc;
   border: 1px solid rgba(0,0,0,.2);
-  .border-radius(6px);
   .box-shadow(0 5px 10px rgba(0,0,0,.2));
 
   // Overrides for proper insertion
@@ -38,8 +35,6 @@
   font-weight: normal;
   line-height: 18px;
   background-color: @popoverTitleBackground;
-  border-bottom: 1px solid darken(@popoverTitleBackground, 5%);
-  .border-radius(5px 5px 0 0);
 
   &:empty {
     display: none;

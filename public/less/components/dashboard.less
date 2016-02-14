@@ -1,3 +1,71 @@
+
+.grafana-row {
+  margin-bottom: 5px;
+}
+
+.row-tab {
+  .dropdown-menu-right {
+    top: 0;
+    left: 33px;
+  }
+}
+
+.row-tab-button {
+  padding: 0px;
+  cursor: pointer;
+  vertical-align: middle;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+  background: @btnSuccessBackground;
+  color: rgba(255,255,255,.90);
+}
+
+.row-button {
+  width: 30px;
+  float: left;
+  cursor: pointer;
+  line-height: 31px;
+  background-color: @blueDark;
+}
+
+.row-text {
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.9em;
+  text-align: center;
+  line-height: 31px;
+  height: 31px;
+}
+
+.row-close {
+  padding: 0px;
+  margin: 0px;
+  background: @grafanaPanelBackground;
+  text-align: center;
+}
+
+.row-close-buttons {
+  position: absolute;
+  left: 0;
+}
+
+.row-open {
+  margin-top: 5px;
+  left: -28px;
+  position: absolute;
+  z-index: 100;
+  transition: .10s left;
+  transition-delay: .10s;
+
+  &:hover {
+    left: -12px;
+  }
+}
+
 .panel {
   display: inline-block;
   float: left;
@@ -141,26 +209,6 @@
   display: none;
   .panel-container {
     border: 1px solid @grayDark;
-  }
-}
-
-.panel-ghost{
-  width: 100%;
-  .panel-container {
-    border: none;
-    background: transparent;
-  }
-  .panel-ghost-list {
-    margin: 10px 0 10px 20px;
-  }
-
-  button {
-    text-align: left;
-    min-width: 135px;
-    .fa {
-      position: relative;
-      left: -5px;
-    }
   }
 }
 
