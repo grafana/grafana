@@ -39,6 +39,10 @@
 @import "./components/navbar.less";
 @import "./components/popovers.less";
 @import "./components/alerts.less";
+@import "./components/typeahead.less";
+@import "./components/tags.less";
+@import "./components/modals.less";
+@import "./components/dropdown.less";
 
 // PAGES
 @import "./pages/login.less";
@@ -79,15 +83,6 @@
 
 .row-button {
   width: 24px;
-}
-
-.modal {
-  max-width: 800px;
-  left: 0;
-  right: 0;
-  margin-left: auto;
-  margin-right: auto;
-  top: 20%;
 }
 
 .histogram-chart {
@@ -235,93 +230,6 @@
   td { padding: 3px; }
   th:last-child { text-align: left; }
   td:first-child { text-align: right; }
-}
-
-.modal-no-header {
-  border: 1px solid @grafanaTargetFuncBackground;
-  text-align: center;
-
-  h3 {
-    margin-top: 30px;
-  }
-
-  .modal-close {
-    float: right;
-    font-size: 140%;
-    padding: 10px;
-  }
-
-  .modal-tagline {
-    font-size: 16px;
-  }
-}
-
-.confirm-modal {
-  max-width: 500px;
-
-  .confirm-modal-icon {
-    padding-top: 41px;
-    font-size: 280%;
-    color: @green;
-    padding-bottom: 20px;
-  }
-
-  .confirm-modal-title {
-    font-size: 18px;
-    color: @linkColor;
-    margin-bottom: 15px;
-  }
-
-  .confirm-modal-buttons {
-    margin-top: 35px;
-    margin-bottom: 35px;
-    button {
-      margin-right: 5px
-    }
-  }
-}
-
-.share-modal-body {
-  text-align: center;
-  padding: 10px 0;
-
-  .tight-form {
-    text-align: left;
-  }
-
-  .share-modal-options {
-    margin: 11px 20px 33px 20px;
-  }
-
-  .share-modal-big-icon {
-    .fa, .icon-gf {
-      font-size: 70px;
-    }
-  }
-
-  .share-snapshot-info-text {
-    margin: 10px 105px;
-    strong {
-      color: @headingsColor;
-      font-weight: 500;
-    }
-  }
-
-  .share-snapshot-header {
-    margin: 20px 0 22px 0;
-  }
-
-  .tight-form {
-    text-align: left;
-  }
-
-  .share-snapshot-link {
-    max-width: 716px;
-    white-space: nowrap;
-    overflow: hidden;
-    display: block;
-    text-overflow: ellipsis;
-  }
 }
 
 .query-keyword {
