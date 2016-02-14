@@ -5,26 +5,6 @@
 // TYPOGRAPHY
 // -----------------------------------------------------
 
-label, input, button, select, textarea,
-.navbar .search-query:-moz-placeholder,
-.navbar .search-query::-webkit-input-placeholder {
-	font-family: 'Droid Sans', sans-serif;
-	color: @gray;
-}
-
-
-
-blockquote {
-	border-left: 5px solid @grayDark;
-
-	&.pull-right {
-		border-right: 5px solid @grayDark;
-	}
-}
-
-// SCAFFOLDING
-// -----------------------------------------------------
-
 html {
 	height: 100%;
 }
@@ -93,53 +73,8 @@ hr {
 		text-shadow: none;
 		.placeholder(@gray);
 	}
-
-	&-inverse {
-
-	}
 }
 
-
-div.subnav {
-
-	margin: 0 1px;
-	background-color: @grayDarker;
-	background-image: none;
-	border: none;
-	border-bottom: 1px solid @grayDark;
-
-	.nav > li > a,
-	.nav > li:first-child > a,
-	.nav > li:first-child > a:hover {
-		padding: 11px 12px;
-		border: none;
-		background-color: @grayDarker;
-		color: @grayLight;
-	}
-
-	.nav > li > a:hover,
-	.nav > li.active > a,
-	.nav > li.active > a:hover,
-	.nav > li:first-child > a:hover {
-		padding: 11px 12px;
-		background: transparent;
-		border: none;
-		border-bottom: 1px solid @blue;
-		color: @white;
-	}
-
-	.nav li.nav-header {
-		text-shadow: none;
-	}
-
-
-
-
-	&-fixed {
-		top: @navbarHeight;
-		margin: 0;
-	}
-}
 
 // NAV
 // -----------------------------------------------------
@@ -172,131 +107,13 @@ div.subnav {
 	}
 }
 
-.nav-pills {
-
-	li > a:hover {
-		background-color: @blue;
-		color: @white;
-	}
-
-	li.disabled > a {
-		color: @textColor;
-	}
-
-	.open .dropdown-toggle {
-		background-color: #060606;
-	}
-
-	.dropdown-menu li > a:hover {
-		border: none;
-	}
-}
-
-.nav-list {
-
-	li > a {
-		text-shadow: none;
-	}
-
-	li > a:hover {
-		background-color: @blue;
-		color: @white;
-	}
-
-	.nav-header {
-		text-shadow: none;
-	}
-
-	.divider {
-		background-color: transparent;
-		border-bottom: 1px solid @grayDark;
-	}
-}
-
-.nav-stacked {
-
-	li > a {
-		border: 1px solid @grayDark !important;
-	}
-
-	li > a:hover,
-	li.active > a {
-		background-color: @blue;
-		color: @white;
-	}
-}
-
-.tabbable  {
-	.nav-tabs,
-	.nav-tabs li.active > a {
-		border-color: @grayDark;
-	}
-}
-
-.breadcrumb {
-
-	background-color: transparent;
-	background-image: none;
-	border-width: 0;
-	.box-shadow(none);
-	font-size: 14px;
-
-	li {
-		text-shadow: none;
-	}
-
-	li > a {
-		color: @blue;
-		text-shadow: none;
-	}
-}
-
-.pagination {
-
-	ul {
-		.box-shadow(none);
-	}
-
-	ul > li > a:hover,
-	ul > .active > a,
-	ul > .active > span {
-		// color: @white;
-	}
-
-	ul > .disabled > a,
-	ul > .disabled > a:hover,
-	ul > .disabled > span,
-	ul > .disabled > span:hover {
-		background-color: rgba(0, 0, 0, 0.2);
-	}
-}
-
-.pager {
-
-	li > a,
-	li > span {
-		background-color: @bodyBackground;
-		border: none;
-
-		&:hover {
-			background-color: @blue;
-		}
-	}
-
-	.disabled a,
-	.disabled a:hover {
-		background-color: @bodyBackground;
-	}
-
-}
-
 // BUTTONS
 // -----------------------------------------------------
+
 .btn {
 	padding: 8px 12px;
 	margin-right:10px;
 	background-image: none;
-	// .box-shadow(0px 0px 8px @bodyBackground);
 	border: none;
 	.border-radius(0px);
 	text-shadow: none;
