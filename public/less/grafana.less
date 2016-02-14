@@ -1,35 +1,44 @@
-@import "type.less";
-@import "login.less";
-@import "submenu.less";
-@import "panel_graph.less";
-@import "panel_dashlist.less";
-@import "panel_singlestat.less";
-@import "panel_table.less";
-@import "bootstrap-tagsinput.less";
-@import "tables_lists.less";
-@import "search.less";
-@import "playlist.less";
-@import "panel.less";
-@import "forms.less";
-@import "tightform.less";
-@import "normform.less";
-@import "sidemenu.less";
-@import "navbar.less";
-@import "gfbox.less";
-@import "admin.less";
-@import "pagination.less";
-@import "validation.less";
-@import "gf-fonts.less";
-@import "tabs.less";
-@import "timepicker.less";
-@import "alerting.less";
-@import "apps.less";
-@import "filter-controls.less";
-@import "filter-list.less";
-@import "filter-table.less";
-@import "simple-box.less";
-@import "dropdown.less";
-@import "page.less";
+
+// BASE
+@import "./base/type.less";
+@import "./base/forms.less";
+@import "./base/fonts.less";
+
+// UTILS
+@import "./utils/validation.less";
+
+// LAYOUTS
+@import "./layout/page.less";
+
+// COMPONENTS
+@import "./components/panel_graph.less";
+@import "./components/submenu.less";
+@import "./components/panel_dashlist.less";
+@import "./components/panel_singlestat.less";
+@import "./components/panel_table.less";
+@import "./components/tagsinput.less";
+@import "./components/tables_lists.less";
+@import "./components/search.less";
+@import "./components/panel.less";
+@import "./components/tightform.less";
+@import "./components/gf-form.less";
+@import "./components/sidemenu.less";
+@import "./components/navbar.less";
+@import "./components/gfbox.less";
+@import "./components/pagination.less";
+@import "./components/tabs.less";
+@import "./components/timepicker.less";
+@import "./components/filter-controls.less";
+@import "./components/filter-list.less";
+@import "./components/filter-table.less";
+
+// PAGES
+@import "./pages/login.less";
+@import "./pages/playlist.less";
+@import "./pages/admin.less";
+@import "./pages/alerting.less";
+@import "./pages/apps.less";
+
 
 .row-control-inner {
   padding:0px;
