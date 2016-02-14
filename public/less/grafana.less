@@ -1,8 +1,10 @@
 
 // BASE
+@import "./base/base.less";
 @import "./base/type.less";
 @import "./base/forms.less";
 @import "./base/fonts.less";
+@import "./base/code.less";
 
 // UTILS
 @import "./utils/validation.less";
@@ -31,6 +33,9 @@
 @import "./components/filter-controls.less";
 @import "./components/filter-list.less";
 @import "./components/filter-table.less";
+@import "./components/scrollbar.less";
+@import "./components/old_stuff.less";
+@import "./components/navbar.less";
 
 // PAGES
 @import "./pages/login.less";
@@ -91,47 +96,6 @@
   overflow: auto;
 }
 
-
-//
-// Srollbars
-//
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar:hover {
-  height: 8px;
-}
-
-::-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment { display: none;  }
-::-webkit-scrollbar-button:horizontal:decrement {  display: none; }
-::-webkit-scrollbar-button:horizontal:increment {  display: none; }
-::-webkit-scrollbar-button:vertical:decrement { display: none; }
-::-webkit-scrollbar-button:vertical:increment { display: none; }
-::-webkit-scrollbar-button:horizontal:decrement:active { background-image: none; }
-::-webkit-scrollbar-button:horizontal:increment:active { background-image: none; }
-::-webkit-scrollbar-button:vertical:decrement:active { background-image: none; }
-::-webkit-scrollbar-button:vertical:increment:active {background-image: none; }
-::-webkit-scrollbar-track-piece { background-color: transparent; }
-
-::-webkit-scrollbar-thumb:vertical {
-  height: 50px;
-  background: -webkit-gradient(linear, left top, right top, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
-  border: 1px solid @scrollbarBorder;
-  border-top: 1px solid @scrollbarBorder;
-  border-left: 1px solid @scrollbarBorder;
-}
-
-::-webkit-scrollbar-thumb:horizontal {
-  width: 50px;
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, @scrollbarBackground), color-stop(100%, @scrollbarBackground2));
-  border: 1px solid @scrollbarBorder;
-  border-top: 1px solid @scrollbarBorder;
-  border-left: 1px solid @scrollbarBorder;
-}
 
 
 // SPECTRUM CSS overrides

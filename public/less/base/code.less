@@ -10,6 +10,7 @@ pre {
   #font > #family > .monospace;
   font-size: @baseFontSize - 2;
   color: @grayDark;
+  background-color: @codeTagBackground;
   .border-radius(3px);
 }
 
@@ -34,7 +35,6 @@ pre {
   white-space: pre;
   white-space: pre-wrap;
   background-color: #f5f5f5;
-  border: 1px solid #ccc; // fallback for IE7-8
   border: 1px solid rgba(0,0,0,.15);
   .border-radius(@baseBorderRadius);
 
@@ -54,8 +54,3 @@ pre {
   }
 }
 
-// Enable scrollable blocks of code
-.pre-scrollable {
-  max-height: 340px;
-  overflow-y: scroll;
-}
