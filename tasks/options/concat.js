@@ -4,7 +4,6 @@ module.exports = function(config) {
   return {
     cssDark: {
       src: [
-        '<%= genDir %>/vendor/css/normalize.min.css',
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
         '<%= genDir %>/css/bootstrap.dark.min.css',
@@ -16,7 +15,6 @@ module.exports = function(config) {
 
     cssLight: {
       src: [
-        '<%= genDir %>/vendor/css/normalize.min.css',
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
         '<%= genDir %>/css/bootstrap.light.min.css',
