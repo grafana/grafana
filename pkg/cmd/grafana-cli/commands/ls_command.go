@@ -7,22 +7,15 @@ import (
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
-var getPlugins func(path string) []m.InstalledPlugin
+var ls_getPlugins func(path string) []m.InstalledPlugin = s.GetLocalPlugins
 
-var GetStat m.IoUtil
-
-func init() {
-	getPlugins = s.GetLocalPlugins
-	GetStat = s.IoUtil
-}
-
-func validateCommand(pluginDir string) error {
+var validateLsCommmand = func(pluginDir string) error {
 	if pluginDir == "" {
 		return errors.New("missing path flag")
 	}
 
 	log.Info("plugindir: " + pluginDir + "\n")
-	pluginDirInfo, err := GetStat.Stat(pluginDir)
+	pluginDirInfo, err := s.IoHelper.Stat(pluginDir)
 
 	if err != nil {
 		return errors.New("missing path flag")
@@ -37,11 +30,11 @@ func validateCommand(pluginDir string) error {
 
 func lsCommand(c CommandLine) error {
 	pluginDir := c.GlobalString("path")
-	if err := validateCommand(pluginDir); err != nil {
+	if err := validateLsCommmand(pluginDir); err != nil {
 		return err
 	}
 
-	for _, plugin := range getPlugins(pluginDir) {
+	for _, plugin := range ls_getPlugins(pluginDir) {
 		log.Infof("plugin: %s @ %s \n", plugin.Name, plugin.Info.Version)
 	}
 
