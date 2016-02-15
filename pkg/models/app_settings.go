@@ -49,6 +49,14 @@ type UpdateAppSettingsCmd struct {
 	OrgId int64  `json:"-"`
 }
 
+func (cmd *UpdateAppSettingsCmd) GetEncryptedJsonData() SecureJsonData {
+	encrypted := make(SecureJsonData)
+	for key, data := range cmd.SecureJsonData {
+		encrypted[key] = util.Encrypt([]byte(data), setting.SecretKey)
+	}
+	return encrypted
+}
+
 // ---------------------
 // QUERIES
 type GetAppSettingsQuery struct {

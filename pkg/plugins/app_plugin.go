@@ -28,7 +28,6 @@ type AppIncludeInfo struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Css      *AppPluginCss     `json:"css"`
 	Pages    []*AppPluginPage  `json:"pages"`
 	Routes   []*AppPluginRoute `json:"routes"`
 	Includes []*AppIncludeInfo `json:"-"`
@@ -40,7 +39,6 @@ type AppPlugin struct {
 type AppPluginRoute struct {
 	Path            string                 `json:"path"`
 	Method          string                 `json:"method"`
-	ReqSignedIn     bool                   `json:"reqSignedIn"`
 	ReqGrafanaAdmin bool                   `json:"reqGrafanaAdmin"`
 	ReqRole         models.RoleType        `json:"reqRole"`
 	Url             string                 `json:"url"`
@@ -67,11 +65,6 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 func (app *AppPlugin) initApp() {
 	app.initFrontendPlugin()
-
-	if app.Css != nil {
-		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
-		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
-	}
 
 	// check if we have child panels
 	for _, panel := range Panels {
