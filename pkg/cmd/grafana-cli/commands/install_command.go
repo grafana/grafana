@@ -77,10 +77,9 @@ func InstallPlugin(pluginName, pluginFolder, version string) error {
 	res := services.ReadPlugin(pluginFolder, pluginName)
 
 	for _, v := range res.Dependency.Plugins {
-		log.Infof("Depends on %s install!\n", v.Id)
+		log.Infof("Installing Dependency: %s\n", v.Id)
 
-		//Todo: uncomment this code once the repo is more correct.
-		//InstallPlugin(v.Id, pluginFolder, "")
+		InstallPlugin(v.Id, pluginFolder, "")
 	}
 
 	return err

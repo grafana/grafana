@@ -22,7 +22,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var Commands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "installs stuff",
+		Usage:  "installs a plugin",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
@@ -42,7 +42,7 @@ var Commands = []cli.Command{
 		Action: runCommand(lsCommand),
 	}, {
 		Name:   "remove",
-		Usage:  "removes stuff",
+		Usage:  "removes installed plugin",
 		Action: runCommand(removeCommand),
 	},
 }
