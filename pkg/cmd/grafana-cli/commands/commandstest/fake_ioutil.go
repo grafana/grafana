@@ -11,7 +11,7 @@ type FakeIoUtil struct {
 }
 
 func (util *FakeIoUtil) Stat(path string) (os.FileInfo, error) {
-	return FakeFileInfo{IsDirectory: util.FakeIsDirectory}, nil
+	return &FakeFileInfo{IsDirectory: util.FakeIsDirectory}, nil
 }
 
 func (util *FakeIoUtil) RemoveAll(path string) error {
@@ -30,7 +30,7 @@ type FakeFileInfo struct {
 	IsDirectory bool
 }
 
-func (ffi FakeFileInfo) IsDir() bool {
+func (ffi *FakeFileInfo) IsDir() bool {
 	return ffi.IsDirectory
 }
 
