@@ -13,16 +13,13 @@
 	<form name="editForm">
 		<div class="gf-form-group">
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Name</span>
-				<input class="gf-form-input gf-size-xxl" type="text" ng-model="current.name" placeholder="My data source name" required>
-			</div>
-			<div class="gf-form">
+				<span class="gf-form-label gf-size-xs">Name</span>
+				<input class="gf-form-input gf-size-max-xxl" type="text" ng-model="current.name" placeholder="My data source name" required>
 				<editor-checkbox text="Default" model="current.isDefault"></editor-checkbox>
 			</div>
-			<br>
 
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-s">Type</span>
+				<span class="gf-form-label gf-size-xs">Type</span>
 				<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 			</div>
 		</div>

@@ -8,8 +8,8 @@
 
 	<form name="orgForm" class="gf-form-group">
 		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">Name</span>
-			<input class="gf-form-input gf-size-xxl" type="text" required ng-model="org.name">
+			<span class="gf-form-label gf-size-xs">Name</span>
+			<input class="gf-form-input gf-size-max-xxl" type="text" required ng-model="org.name">
 		</div>
 
 		<div class="gf-form-button-row">
@@ -20,33 +20,37 @@
 	<h3>Address</h3>
 
 	<form name="addressForm" class="gf-form-group">
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">Address1</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address1">
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">Address1</span>
+				<input class="gf-form-input" type="text" ng-model="address.address1">
+			</div>
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">Address2</span>
+				<input class="gf-form-input" type="text" ng-model="address.address2">
+			</div>
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">Address2</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.address2">
-		</div>
-		<br>
 
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">City</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.city">
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">City</span>
+				<input class="gf-form-input" type="text" ng-model="address.city">
+			</div>
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">Postal code</span>
+				<input class="gf-form-input" type="text" ng-model="address.zipCode">
+			</div>
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">Postal code</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.zipCode">
-		</div>
-		<br>
 
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">State</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.state">
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label gf-size-s">Country</span>
-			<input class="gf-form-input gf-size-xl" type="text" ng-model="address.country">
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">State</span>
+				<input class="gf-form-input" type="text" ng-model="address.state">
+			</div>
+			<div class="gf-form gf-size-max-xxxl">
+				<span class="gf-form-label gf-size-sm">Country</span>
+				<input class="gf-form-input" type="text" ng-model="address.country">
+			</div>
 		</div>
 
 		<div class="gf-form-button-row">

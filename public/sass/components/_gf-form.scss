@@ -1,12 +1,18 @@
+$gf-form-margin: 4px;
+
 .gf-form {
-  margin-top: 3px;
-  margin-right: 3px;
-  display: inline-block;
+  margin-top: $gf-form-margin;
+  margin-right: $gf-form-margin;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 
   .checkbox-label {
     display: inline;
+    cursor: pointer;
     padding: 8px 7px 8px 4px;
   }
+
   .cr1 {
     margin-left: 8px;
   }
@@ -16,9 +22,15 @@
   margin-bottom: 20px;
 }
 
-.gf-form-flow {
-  float: left;
-  margin-right: 20px;
+.gf-form-inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+
+  .gf-form {
+    flex-grow: 1;
+  }
 }
 
 .gf-form-button-row {
@@ -27,10 +39,16 @@
 }
 
 .gf-form-label {
+  flex-shrink: 0;
   background-color: $labelBackground;
-  display: inline-block;
+  display: block;
   padding: 8px 7px;
   font-size: $fontSizeSmall;
+  margin-right: $gf-form-margin;
+}
+
+.gf-form-checkbox {
+  flex-shrink: 0;
 }
 
 [type=text],
@@ -45,6 +63,9 @@
     height: 100%;
     box-sizing: border-box;
     font-size: 15px;
+    display: block;
+    width: 100%;
+    margin-right: $gf-form-margin;
   }
 }
 
@@ -56,16 +77,20 @@ select.gf-form-input {
   padding: 2px 3px;
   font-size: 15px;
   box-sizing: content-box;
+  display: block;
+  width: 100%;
+  margin-right: $gf-form-margin;
 }
 
-.gf-size-xs { width: 60px; }
-.gf-size-s { width: 80px; }
-.gf-size-ms { width: 100px;}
-.gf-size-m { width: 110px; }
-.gf-size-l { width: 120px; }
-.gf-size-xl { width: 150px; }
-.gf-size-xxl { width: 200px; }
-.gf-size-xxxl { width: 300px; }
+@each $size, $value in $form-sizes {
+  .gf-size-#{$size} { width: $value; }
+
+  .gf-size-max-#{$size} {
+    max-width: $value;
+  }
+}
+
 .gf-size-auto { width: auto; }
+.gf-size-max { width: 100%; }
 
 

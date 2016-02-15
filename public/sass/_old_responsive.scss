@@ -34,12 +34,6 @@
 
 // form styles
 @include media-breakpoint-up(md) {
-  .gf-size-m { width: 120px; }
-  .gf-size-l { width: 150px; }
-  .gf-size-xl { width: 200px; }
-  .gf-size-xxl { width: 300px; }
-  .gf-size-xxxl { width: 400px; }
-
   .dashnav-dashboards-btn a {
     max-width: 180px;
   }
