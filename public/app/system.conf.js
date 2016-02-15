@@ -43,6 +43,8 @@ System.config({
   },
 
   map: {
+    text: 'vendor/plugin-text/text.js',
+    css: 'app/core/utils/css_loader.js'
   },
 
   meta: {
