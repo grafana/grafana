@@ -1,0 +1,149 @@
+//
+// Modals
+// --------------------------------------------------
+
+// Background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: $zindexModalBackdrop;
+  background-color: $black;
+}
+
+.modal-backdrop,
+.modal-backdrop.fade.in {
+  @include opacity(70);
+}
+
+// Base modal
+.modal {
+  position: fixed;
+  z-index: $zindexModal;
+  width: 100%;
+	background-color: $grafanaPanelBackground;
+  @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  @include background-clip(padding-box);
+  outline: none;
+
+  max-width: 800px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  top: 20%;
+}
+
+.modal-header {
+  padding: 9px 15px;
+	border-bottom: 1px solid $grafanaPanelBackground;
+}
+
+// Body (where all modal content resides)
+.modal-body {
+  position: relative;
+  overflow-y: auto;
+}
+
+// Remove bottom margin if need be
+.modal-form {
+  margin-bottom: 0;
+}
+
+// Footer (for actions)
+.modal-footer {
+  padding: 14px 15px 15px;
+	border-top: 1px solid $grafanaPanelBackground;
+  background-color: $grafanaPanelBackground;
+  text-align: right; // right align buttons
+  @include clearfix(); // clear it in case folks use .pull-* classes on buttons
+}
+
+.modal-no-header {
+  border: 1px solid $grafanaTargetFuncBackground;
+  text-align: center;
+
+  h3 {
+    margin-top: 30px;
+  }
+
+  .modal-close {
+    float: right;
+    font-size: 140%;
+    padding: 10px;
+  }
+
+  .modal-tagline {
+    font-size: 16px;
+  }
+}
+
+.confirm-modal {
+  max-width: 500px;
+
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: $green;
+    padding-bottom: 20px;
+  }
+
+  .confirm-modal-title {
+    font-size: 18px;
+    color: $linkColor;
+    margin-bottom: 15px;
+  }
+
+  .confirm-modal-buttons {
+    margin-top: 35px;
+    margin-bottom: 35px;
+    button {
+      margin-right: 5px
+    }
+  }
+}
+
+.share-modal-body {
+  text-align: center;
+  padding: 10px 0;
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-modal-options {
+    margin: 11px 20px 33px 20px;
+  }
+
+  .share-modal-big-icon {
+    .fa, .icon-gf {
+      font-size: 70px;
+    }
+  }
+
+  .share-snapshot-info-text {
+    margin: 10px 105px;
+    strong {
+      color: $headingsColor;
+      font-weight: 500;
+    }
+  }
+
+  .share-snapshot-header {
+    margin: 20px 0 22px 0;
+  }
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-snapshot-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+  }
+}

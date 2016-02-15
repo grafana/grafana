@@ -1,0 +1,71 @@
+.grafana-app {
+  display: block;
+  height: 100%;
+}
+
+.dashboard-container {
+  padding: 5px 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main-view {
+  // background-image: url(/img/grafana_pattern.png);
+  // background-position: 100% -550px;
+  // background-repeat: no-repeat;
+  height: 100%;
+}
+
+.page-dashboard {
+  .main-view {
+    background-image: none;
+  }
+}
+
+.page-container {
+  background-color: $pageBackground;
+  position: relative;
+  padding: 25px 56px 10px 56px;
+  max-width: 1060px;
+  margin-left: 0;
+  height: 100%;
+}
+
+
+.page-header {
+  padding: 10px 0 39px 0px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  display: -ms-flexbox;      /* TWEENER - IE 10 */
+  display: -webkit-flex;     /* NEW - Chrome */
+  flex-wrap: wrap-reverse;
+  background: transparent url(../img/page_header_line.png) no-repeat left 60px;
+  h1 {
+    font-style: italic;
+  }
+}
+
+.admin-page {
+  max-width: 800px;
+  margin-left: 10px;
+  .gf-box {
+    margin-top: 0;
+  }
+  .gf-box-body {
+    min-height: 0;
+  }
+  h2 {
+    margin-left: 15px;
+    margin-bottom: 0px;
+    font-size: $fontSizeLarge;
+    color: $textColor;
+    i {
+      padding-right: 6px;
+    }
+  }
+}
+

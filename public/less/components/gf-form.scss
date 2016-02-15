@@ -1,0 +1,71 @@
+.gf-form {
+  margin-top: 3px;
+  margin-right: 3px;
+  display: inline-block;
+
+  .checkbox-label {
+    display: inline;
+    padding: 8px 7px 8px 4px;
+  }
+  .cr1 {
+    margin-left: 8px;
+  }
+}
+
+.gf-form-group {
+  margin-bottom: 20px;
+}
+
+.gf-form-flow {
+  float: left;
+  margin-right: 20px;
+}
+
+.gf-form-button-row {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.gf-form-label {
+  background-color: $labelBackground;
+  display: inline-block;
+  padding: 8px 7px;
+  @include small;
+}
+
+[type=text],
+[type=email],
+[type=number],
+[type=password], {
+  &.gf-form-input {
+    border: none;
+    margin: 0px;
+    border-radius: 0;
+    padding: 8px 6px;
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 15px;
+  }
+}
+
+input[type=checkbox].gf-form-checkbox {
+  margin: 0;
+}
+
+select.gf-form-input {
+  padding: 2px 3px;
+  font-size: 15px;
+  box-sizing: content-box;
+}
+
+.gf-size-xs { width: 60px; }
+.gf-size-s { width: 80px; }
+.gf-size-ms { width: 100px;}
+.gf-size-m { width: 110px; }
+.gf-size-l { width: 120px; }
+.gf-size-xl { width: 150px; }
+.gf-size-xxl { width: 200px; }
+.gf-size-xxxl { width: 300px; }
+.gf-size-auto { width: auto; }
+
+
