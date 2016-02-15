@@ -1,3 +1,7 @@
+.clearfix {
+  @include clearfix();
+}
+
 .highlight-word {
   color: $orange;
 }
