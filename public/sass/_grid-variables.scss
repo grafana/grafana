@@ -34,3 +34,13 @@ $grid-gutter-width: 30px !default;
 
 $enable-flex: false;
 
+$form-sizes: (
+  xs: 60px,
+  sm: 80px,
+  md: 120px,
+  lg: 150px,
+  xl: 200px,
+  xxl: 300px,
+  xxxl: 400px
+) !default;
+

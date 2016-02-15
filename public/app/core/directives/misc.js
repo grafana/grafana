@@ -69,7 +69,8 @@ function (angular, coreModule, kbn) {
           ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
         template = template + label;
-        elem.replaceWith($compile(angular.element(template))(scope));
+        elem.addClass('gf-form-checkbox');
+        elem.html($compile(angular.element(template))(scope));
       }
     };
   });
