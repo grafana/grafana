@@ -63,7 +63,7 @@ func main() {
 			setup()
 
 		case "build":
-			pkg := "."
+			pkg := "./pkg/cmd/grafana-server"
 			clean()
 			build(pkg, []string{})
 
