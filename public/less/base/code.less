@@ -6,14 +6,12 @@
 // Inline and block code styles
 code,
 pre {
-  #font > #family > .monospace;
+  .font-family-monospace();
   font-size: @baseFontSize - 2;
   background-color: @codeTagBackground;
   color: @textColor;
   border: 1px solid darken(@codeTagBackground, 15%);
   padding: 2px;
-
-  .border-radius(3px);
 }
 
 // Inline code

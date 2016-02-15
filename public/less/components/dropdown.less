@@ -59,11 +59,6 @@
     left: auto;
   }
 
-  // Dividers (basically an hr) within the dropdown
-  .divider {
-    .nav-divider(@dropdownDividerTop, @dropdownDividerBottom);
-  }
-
   // Links within the dropdown menu
   > li > a {
     display: block;
@@ -117,17 +112,12 @@
   text-decoration: none;
   background-color: transparent;
   background-image: none; // Remove CSS gradient
-  .reset-filter();
   cursor: default;
 }
 
 // Open state for the dropdown
 // ---------------------------
 .open {
-  // IE7's z-index only goes to the nearest positioned ancestor, which would
-  // make the menu appear below buttons that appeared later on the page
-  *z-index: @zindexDropdown;
-
   & > .dropdown-menu {
     display: block;
   }
