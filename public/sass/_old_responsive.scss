@@ -1,0 +1,84 @@
+
+.dashnav-back-to-dashboard  {
+  display: none;
+}
+
+// Media queries
+// ---------------------
+@include media-breakpoint-down(sm) {
+  div.panel {
+    width: 100% !important;
+    padding: 0px !important;
+  }
+  .panel-margin {
+    margin-right: 0;
+    margin-left: 0;
+  }
+  body {
+    padding: 0;
+  }
+  .dashnav-dashboards-btn a {
+    max-width: 200px;
+  }
+  .gf-timepicker-nav-btn {
+    max-width: 120px;
+  }
+  .dashnav-zoom-out,
+  .dashnav-action-icons {
+    display: none;
+  }
+  .page-container {
+    padding: 10px 20px;
+  }
+}
+
+// form styles
+@include media-breakpoint-up(md) {
+  .gf-size-m { width: 120px; }
+  .gf-size-l { width: 150px; }
+  .gf-size-xl { width: 200px; }
+  .gf-size-xxl { width: 300px; }
+  .gf-size-xxxl { width: 400px; }
+
+  .dashnav-dashboards-btn a {
+    max-width: 180px;
+  }
+  .gf-timepicker-nav-btn {
+    max-width: 120px;
+  }
+  .panel-in-fullscreen {
+    .dashnav-action-icons {
+      display: none;
+    }
+    .dashnav-back-to-dashboard  {
+      display: block;
+    }
+  }
+}
+
+@include media-breakpoint-up(lg) {
+  .dashnav-dashboards-btn a {
+    max-width: 290px;
+  }
+  .gf-timepicker-nav-btn {
+    max-width: 240px;
+  }
+  .dashnav-zoom-out {
+    display: block;
+  }
+}
+
+@include media-breakpoint-up(xl) {
+  .panel-in-fullscreen {
+    .dashnav-action-icons {
+      display: block;
+    }
+  }
+
+  .dashnav-dashboards-btn a {
+    max-width: none;
+  }
+  .gf-timepicker-nav-btn {
+    max-width: none;
+  }
+}
