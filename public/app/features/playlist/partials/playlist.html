@@ -18,35 +18,34 @@
 		</div>
 	</div>
 
-	<div class="row" style="max-width: 400px">
-		<h5>Add dashboards</h5>
-		<div style="">
-			<playlist-search class="playlist-search-container" search-started="ctrl.searchStarted(promise)"></playlist-search>
+	<div class="row">
+		<div class="col-xl-6">
+			<h5>Add dashboards</h5>
+			<div style="">
+				<playlist-search class="playlist-search-container" search-started="ctrl.searchStarted(promise)"></playlist-search>
+			</div>
 		</div>
 	</div>
 
 	<div class="row">
-		<div class="span5 pull-left" ng-if="ctrl.filteredDashboards.length > 0">
+		<div class="col-lg-5">
 			<h5>Search results ({{ctrl.filteredDashboards.length}})</h5>
-			<table class="grafana-options-table">
-				<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
-					<td style="white-space: nowrap;">
-						{{playlistItem.title}}
-					</td>
-					<td style="text-align: center">
-						<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
-							<i class="fa fa-plus"></i>
-							Add to playlist
-						</button>
-					</td>
-				</tr>
-			</table>
-		</div>
-		<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0">
-			<div class="row">
-				<div class="span6 offset1">
+			<div ng-if="ctrl.filteredDashboards.length > 0">
+				<table class="grafana-options-table">
+					<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
+						<td style="white-space: nowrap;">
+							{{playlistItem.title}}
+						</td>
+						<td style="text-align: center">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
+								<i class="fa fa-plus"></i>
+								Add to playlist
+							</button>
+						</td>
+					</tr>
+				</table>
+				<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0">
 					<div ng-repeat="tag in ctrl.filteredTags" class="pointer" style="width: 180px; float: left;"
-						ng-class="{'selected': $index === selectedIndex }"
 						ng-click="ctrl.addTagPlaylistItem(tag, $event)">
 						<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
 							<i class="fa fa-tag"></i>
@@ -56,7 +55,8 @@
 				</div>
 			</div>
 		</div>
-		<div class="span5 pull-left">
+
+		<div class="col-lg-5">
 			<h5>Added dashboards</h5>
 			<table class="grafana-options-table">
 				<tr ng-repeat="playlistItem in ctrl.playlistItems">
@@ -89,13 +89,10 @@
 	<div class="clearfix"></div>
 
 	<div class="pull-left" style="margin-top: 25px;">
-		<!-- <div class="norm-form"> -->
-			<a
-				class="btn btn-success"
-				ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
-				ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
-			<a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
-			<!-- </div> -->
+		<a class="btn btn-success"
+			ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
+			ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
+		<a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
 	</div>
 
 	<div class="clearfix"></div>
