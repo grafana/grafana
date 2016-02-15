@@ -11,14 +11,14 @@ import (
 )
 
 func getGrafanaPluginPath() string {
-	os := runtime.GOOS
-	if os == "linux" {
-		return "/var/lib/grafana/plugins"
-	} else if os == "windows" {
-		return "C:\\opt\\grafana\\plugins" // :&
-	}
+	//TODO: try to get path from os:env GF_PLUGIN_FOLDER
 
-	return "tmp_do/" //based on your OS!
+	os := runtime.GOOS
+	if os == "windows" {
+		return "C:\\opt\\grafana\\plugins"
+	} else {
+		return "/var/lib/grafana/plugins"
+	}
 }
 
 func main() {
