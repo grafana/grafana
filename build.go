@@ -63,9 +63,9 @@ func main() {
 			setup()
 
 		case "build":
-			pkg := "./pkg/cmd/grafana-server"
 			clean()
-			build(pkg, []string{})
+			build(serverBinaryName, "./pkg/cmd/grafana-server", []string{})
+			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
 
 		case "test":
 			test("./pkg/...")
@@ -312,8 +312,8 @@ func test(pkg string) {
 	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
 }
 
-func build(pkg string, tags []string) {
-	binary := "./bin/" + serverBinaryName
+func build(binaryName, pkg string, tags []string) {
+	binary := "./bin/" + binaryName
 	if goos == "windows" {
 		binary += ".exe"
 	}
