@@ -6,7 +6,7 @@ module.exports = function(config) {
       src: [
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/css/bootstrap.dark.min.css',
+        '<%= genDir %>/css/grafana.dark.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css'
       ],
       dest: '<%= genDir %>/css/grafana.dark.min.css'
@@ -16,7 +16,7 @@ module.exports = function(config) {
       src: [
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/css/bootstrap.light.min.css',
+        '<%= genDir %>/css/grafana.light.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css'
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
