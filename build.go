@@ -31,7 +31,7 @@ var (
 	linuxPackageIteration string = ""
 	race                  bool
 	workingDir            string
-	serverBinaryName      string = "grafana-server"
+	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
 const minGoVersion = 1.3
@@ -64,8 +64,9 @@ func main() {
 
 		case "build":
 			clean()
-			build(serverBinaryName, "./pkg/cmd/grafana-server", []string{})
-			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+			for _, binary := range binaries {
+				build(binary, "./pkg/cmd/"+binary, []string{})
+			}
 
 		case "test":
 			test("./pkg/...")
@@ -138,6 +139,7 @@ func readVersionFromPackageJson() {
 type linuxPackageOptions struct {
 	packageType            string
 	homeDir                string
+	binPath                string
 	serverBinPath          string
 	cliBinPath             string
 	configDir              string
@@ -160,8 +162,7 @@ func createDebPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
-		serverBinPath:          "/usr/sbin/grafana-server",
-		cliBinPath:             "/usr/sbin/grafana-cli",
+		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
 		ldapFilePath:           "/etc/grafana/ldap.toml",
@@ -183,8 +184,7 @@ func createRpmPackages() {
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",
 		homeDir:                "/usr/share/grafana",
-		serverBinPath:          "/usr/sbin/grafana-server",
-		cliBinPath:             "/usr/sbin/grafana-cli",
+		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
 		configFilePath:         "/etc/grafana/grafana.ini",
 		ldapFilePath:           "/etc/grafana/ldap.toml",
@@ -219,9 +219,9 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
 	// copy binary
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/grafana-server"), filepath.Join(packageRoot, options.serverBinPath))
-	// copy binary
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/grafana-cli"), filepath.Join(packageRoot, options.cliBinPath))
+	for _, binary := range binaries {
+		runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+binary), filepath.Join(packageRoot, "/usr/sbin/"+binary))
+	}
 	// copy init.d script
 	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
 	// copy environment var file
