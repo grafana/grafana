@@ -7,6 +7,7 @@
 @import "./base/code.less";
 
 // UTILS
+@import "./utils/utils.less";
 @import "./utils/validation.less";
 @import "./utils/angular.less";
 
@@ -49,6 +50,10 @@
 @import "./components/color_picker.less";
 @import "./components/tooltip.less";
 @import "./components/buttons.less";
+@import "./components/footer.less";
+@import "./components/infobox.less";
+@import "./components/shortcuts.less";
+@import "./components/query_editor.less";
 
 // PAGES
 @import "./pages/login.less";
@@ -56,105 +61,5 @@
 @import "./pages/admin.less";
 @import "./pages/alerting.less";
 @import "./pages/apps.less";
+@import "./pages/signup.less";
 
-.grafana-version-info {
-  position: absolute;
-  bottom: 2px;
-  left: 3px;
-  font-size: 80%;
-  color: darken(@gray, 25%);
-  a { color: darken(@gray, 25%); }
-}
-
-.template-variable {
-  color: @variable;
-}
-
-.grafana-info-box:before {
-  content: "\f05a";
-  font-family:'FontAwesome';
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  font-size: 20px;
-  color: @blue;
-}
-
-.grafana-info-box {
-  position: relative;
-  padding: 5px 15px;
-  background-color: @grafanaTargetBackground;
-  border: 1px solid @grafanaTargetBorder;
-  h5 {
-    margin-top: 5px;
-  }
-}
-
-.grafana-tip {
-  padding-left: 5px;
-}
-
-.shortcut-table {
-  td { padding: 3px; }
-  th:last-child { text-align: left; }
-  td:first-child { text-align: right; }
-}
-
-.query-keyword {
-  font-weight: bold;
-  color: @blue;
-}
-
-.query-segment-key {
-  border-right: none;
-  padding-right: 1px;
-}
-
-.query-segment-operator {
-  padding-right: 1px;
-  border-right: none;
-  color: @orange;
-}
-
-.highlight-word {
-  color: @orange;
-}
-
-.body-copy-emphasis {
-  color: @headingsColor;
-}
-
-.signup-page-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100%;
-  width: 100%;
-  background-image: url(/img/background_tease.jpg);
-
-  .signup-logo-container {
-    width: 150px;
-    margin: 0 auto;
-    padding: 80px 0;
-  }
-}
-
-.typeahead strong {
-  color: @yellow;
-}
-
-.dashboard-header {
-  font-family: "grafana-icons";
-  font-size: 22px;
-  text-align: center;
-  span {
-    display: inline-block;
-    border: none;
-    border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
-    border-image-slice: 1;
-    border-bottom: 2px solid transparent;
-    padding: 1.2rem .2rem .4rem .2rem;
-  }
-}
