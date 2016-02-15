@@ -5,10 +5,11 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/version"
 	"os"
 	"runtime"
 )
+
+var version = "master"
 
 func getGrafanaPluginPath() string {
 	//TODO: try to get path from os:env GF_PLUGIN_FOLDER
@@ -28,7 +29,7 @@ func main() {
 	app.Name = "Grafana cli"
 	app.Author = "raintank"
 	app.Email = "https://github.com/grafana/grafana"
-	app.Version = version.Version
+	app.Version = version
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "path",

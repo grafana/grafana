@@ -19,14 +19,14 @@ func removeCommand(c CommandLine) error {
 	plugin := c.Args().First()
 	log.Info("plugin: " + plugin + "\n")
 	if plugin == "" {
-		return errors.New("Missing which plugin parameter")
+		return errors.New("Missing plugin parameter")
 	}
 
 	log.Infof("plugins : \n%v\n", localPlugins)
 
 	for _, p := range localPlugins {
-		log.Infof("is %s == %s ? %v", p.Id, c.Args().First(), p.Id == c.Args().First())
 		if p.Id == c.Args().First() {
+			log.Infof("removing plugin %s", p.Id)
 			removePlugin(pluginPath, p.Id)
 		}
 	}

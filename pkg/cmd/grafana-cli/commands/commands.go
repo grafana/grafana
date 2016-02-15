@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"os"
 )
 
 func runCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
@@ -13,6 +14,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 			log.Errorf("%v\n\n", err)
 
 			cmd.ShowHelp()
+			os.Exit(1)
 		} else {
 			log.Info("Restart grafana after installing plugins . <service grafana-server restart>\n")
 		}

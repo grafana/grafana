@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	services "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -49,7 +49,7 @@ func installCommand(c CommandLine) error {
 }
 
 func InstallPlugin(pluginName, pluginFolder, version string) error {
-	plugin, err := services.GetPlugin(pluginName)
+	plugin, err := s.GetPlugin(pluginName)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func InstallPlugin(pluginName, pluginFolder, version string) error {
 		log.Info("Installed %s successfully ✔\n", plugin.Id)
 	}
 
-	res := services.ReadPlugin(pluginFolder, pluginName)
+	res := s.ReadPlugin(pluginFolder, pluginName)
 
 	for _, v := range res.Dependency.Plugins {
 		log.Infof("Installing Dependency: %s\n", v.Id)
