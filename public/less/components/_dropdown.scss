@@ -59,6 +59,14 @@
     left: auto;
   }
 
+  .divider {
+    height: 1px;
+    margin: (($baseLineHeight / 2) - 1) 1px; // 8px 1px
+    overflow: hidden;
+    background-color: $dropdownDividerTop;
+    border-bottom: 1px solid $dropdownDividerBottom;
+  }
+
   // Links within the dropdown menu
   > li > a {
     display: block;
