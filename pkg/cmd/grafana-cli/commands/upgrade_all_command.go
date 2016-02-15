@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	services "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/hashicorp/go-version"
 )
 
@@ -30,9 +30,9 @@ func ShouldUpgrade(installed string, remote m.Plugin) bool {
 func upgradeAllCommand(c CommandLine) error {
 	pluginDir := c.GlobalString("path")
 
-	localPlugins := services.GetLocalPlugins(pluginDir)
+	localPlugins := s.GetLocalPlugins(pluginDir)
 
-	remotePlugins, err := services.ListAllPlugins()
+	remotePlugins, err := s.ListAllPlugins()
 
 	if err != nil {
 		return err
@@ -51,9 +51,9 @@ func upgradeAllCommand(c CommandLine) error {
 	}
 
 	for _, p := range pluginsToUpgrade {
-		log.Infof("lets upgrade %v \n", p)
+		log.Infof("Upgrading %v \n", p.Id)
 
-		services.RemoveInstalledPlugin(pluginDir, p.Id)
+		s.RemoveInstalledPlugin(pluginDir, p.Id)
 		InstallPlugin(p.Id, pluginDir, "")
 	}
 
