@@ -19,10 +19,18 @@ body {
 a {
   color: $linkColor;
   text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: $linkColorHover;
+    text-decoration: none;
+  }
+
+  &:focus {
+    @include tab-focus();
+  }
 }
 
-a:hover,
-a:focus {
-  color: $linkColorHover;
+img {
+  vertical-align: middle;
 }
-

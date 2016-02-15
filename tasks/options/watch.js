@@ -23,7 +23,7 @@ module.exports = function(config, grunt) {
 
     if (/(\.scss)$/.test(filepath)) {
       grunt.task.run('clean:css');
-      grunt.task.run('sass');
+      grunt.task.run('css');
     }
 
     if (/(\.ts)$/.test(filepath)) {
