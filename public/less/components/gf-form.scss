@@ -30,7 +30,7 @@
   background-color: $labelBackground;
   display: inline-block;
   padding: 8px 7px;
-  @include small;
+  font-size: $fontSizeSmall;
 }
 
 [type=text],

@@ -155,6 +155,11 @@ $iconContainerBackgroundHighlight:	lighten($black, 5%);
 $iconContainerBorder:				        1px solid transparent;
 $iconContainerShadow:				        0 0 14px 2px rgba(255,255,255, 0.05);
 
+// Hero unit
+// -------------------------
+$heroUnitBackground:              $grayDark;
+$heroUnitHeadingColor:            inherit;
+$heroUnitLeadColor:               inherit;
 
 // Forms
 // -------------------------
@@ -166,13 +171,6 @@ $formActionsBackground:         transparent;
 $inputHeight:                   $baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
 $labelBackground:				$grayDark;
 
-
-// Sidemenu
-// -------------------------
-$sideMenuTopShadow:          $navbarDropdownShadow;
-$sideMenuBackground:         $grayDark;
-$sideMenuBackgroundHighlight: lighten($grayDark, 4%);
-$sideMenuShadow: 0 0 35px 0 $bodyBackground;
 
 // Search
 $searchShadow: 0 0 35px 0 $bodyBackground;
@@ -194,7 +192,6 @@ $dropdownLinkBackgroundActive:  $blueDark;
 $dropdownLinkBackgroundHover:   $blueDark;
 
 
-
 // COMPONENT VARIABLES
 // --------------------------------------------------
 
@@ -210,13 +207,6 @@ $zindexFixedNavbar:       1030;
 $zindexModalBackdrop:     1040;
 $zindexModal:             1050;
 
-// Sprite icons path
-// -------------------------
-$iconSpritePath:          "../img/glyphicons-halflings.png";
-$iconWhiteSpritePath:     "../img/glyphicons-halflings-white.png";
-
-
-// Input placeholder text color
 // -------------------------
 $placeholderText:         darken($textColor, 25%);
 
@@ -235,12 +225,6 @@ $horizontalComponentOffset:       180px;
 // -------------------------
 $wellBackground:                  #131517;
 
-
-// Navbar
-// -------------------------
-$navbarCollapseWidth:             979px;
-$navbarCollapseDesktopWidth:      $navbarCollapseWidth + 1;
-
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       $grayDark;
 $navbarBackground:                $grayDark;
@@ -258,19 +242,18 @@ $navbarDropdownShadow:            inset 0px 4px 10px -4px $bodyBackground;
 $navbarButtonBackground:          lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
+// Sidemenu
+// -------------------------
+$sideMenuTopShadow:          $navbarDropdownShadow;
+$sideMenuBackground:         $grayDark;
+$sideMenuBackgroundHighlight: lighten($grayDark, 4%);
+$sideMenuShadow: 0 0 35px 0 $bodyBackground;
+
 // Pagination
 // -------------------------
 $paginationBackground:                $bodyBackground;
 $paginationBorder:                    transparent;
 $paginationActiveBackground:          $blue;
-
-
-// Hero unit
-// -------------------------
-$heroUnitBackground:              $grayDark;
-$heroUnitHeadingColor:            inherit;
-$heroUnitLeadColor:               inherit;
-
 
 // Form states and alerts
 // -------------------------

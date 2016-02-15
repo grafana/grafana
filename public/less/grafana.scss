@@ -1,4 +1,8 @@
 
+// MIXINS
+@import "./mixins/mixins.scss";
+@import "./mixins/buttons.scss";
+
 // BASE
 @import "./base/normalize.scss";
 @import "./base/base.scss";
@@ -11,10 +15,6 @@
 @import "./utils/utils.scss";
 @import "./utils/validation.scss";
 @import "./utils/angular.scss";
-
-// MIXINS
-@import "./mixins/mixins.scss";
-@import "./mixins/buttons.scss";
 
 // LAYOUTS
 // @import "./bootstrap/grid.scss";
