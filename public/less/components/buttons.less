@@ -2,39 +2,28 @@
 // Buttons
 // --------------------------------------------------
 
-
 // Base styles
 // --------------------------------------------------
 
 // Core
 .btn {
   display: inline-block;
-  .ie7-inline-block();
-  padding: 4px 12px;
-  margin-bottom: 0; // For input.btn
+	padding: 8px 12px;
+	margin-right: 10px;
   font-size: @baseFontSize;
   line-height: @baseLineHeight;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
-  .buttonBackground(@btnBackground, @btnBackgroundHighlight,  @grayDark, 0 1px 1px rgba(255,255,255,.75));
   border: none;
-  *border: 0; // Remove the border to prevent IE7's black border on input:focus
-  border-bottom-color: darken(@btnBorder, 10%);
-  .border-radius(@baseBorderRadius);
-  .ie7-restore-left-whitespace(); // Give IE7 some love
+
+  .buttonBackground(@btnBackground, @btnBackgroundHighlight,  @grayDark, 0 1px 1px rgba(255,255,255,.75));
   .box-shadow(~"inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05)");
 
   // Hover/focus state
   &:hover,
   &:focus {
-    color: @grayDark;
     text-decoration: none;
-    background-position: 0 -15px;
-
-    // transition is only when going to hover/focus, otherwise the background
-    // behind the gradient (there for IE<=9 fallback) gets mismatched
-    .transition(background-position .1s linear);
   }
 
   // Focus state for keyboard and accessibility
@@ -47,7 +36,6 @@
   &:active {
     background-image: none;
     outline: 0;
-    .box-shadow(~"inset 0 2px 4px rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.05)");
   }
 
   // Disabled state
@@ -56,88 +44,28 @@
     cursor: default;
     background-image: none;
     .opacity(65);
-    .box-shadow(none);
   }
-
 }
-
-
 
 // Button Sizes
 // --------------------------------------------------
 
 // Large
 .btn-large {
-  padding: @paddingLarge;
+  padding: 6px 20px;
   font-size: @fontSizeLarge;
-  .border-radius(@borderRadiusLarge);
-}
-.btn-large [class^="icon-"],
-.btn-large [class*=" icon-"] {
-  margin-top: 4px;
 }
 
-// Small
 .btn-small {
-  padding: @paddingSmall;
+	padding: 2px 10px;
   font-size: @fontSizeSmall;
-  .border-radius(@borderRadiusSmall);
-}
-.btn-small [class^="icon-"],
-.btn-small [class*=" icon-"] {
-  margin-top: 0;
-}
-.btn-mini [class^="icon-"],
-.btn-mini [class*=" icon-"] {
-  margin-top: -1px;
 }
 
-// Mini
 .btn-mini {
-  padding: @paddingMini;
+	padding: 2px 6px;
+	margin-right: 0;
+	margin-right: 0;
   font-size: @fontSizeMini;
-  .border-radius(@borderRadiusSmall);
-}
-
-
-// Block button
-// -------------------------
-
-.btn-block {
-  display: block;
-  width: 100%;
-  padding-left: 0;
-  padding-right: 0;
-  .box-sizing(border-box);
-}
-
-// Vertically space out multiple block buttons
-.btn-block + .btn-block {
-  margin-top: 5px;
-}
-
-// Specificity overrides
-input[type="submit"],
-input[type="reset"],
-input[type="button"] {
-  &.btn-block {
-    width: 100%;
-  }
-}
-
-
-
-// Alternate buttons
-// --------------------------------------------------
-
-// Provide *some* extra contrast for those who can get it
-.btn-primary.active,
-.btn-warning.active,
-.btn-danger.active,
-.btn-success.active,
-.btn-info.active,
-.btn-inverse.active {
-  color: rgba(255,255,255,.75);
 }
 
 // Set the backgrounds
@@ -163,7 +91,9 @@ input[type="button"] {
 }
 // Inverse appears as dark gray
 .btn-inverse {
-  .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight);
+  .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight, @btnInverseText);
+  box-shadow: none;
+  border: 1px solid @grafanaTargetFuncHightlight;
 }
 
 
