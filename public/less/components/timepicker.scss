@@ -83,25 +83,6 @@
   }
 }
 
-.faMixin {
-  display: inline-block;
-  font: normal normal normal 14px/1 FontAwesome;
-  font-size: inherit;
-  text-rendering: auto;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.glyphicon-chevron-right:before {
-  @include faMixin;
-  content: "\f054";
-}
-
-.glyphicon-chevron-left:before {
-  @include faMixin;
-  content: "\f053";
-}
-
 .input-datetime-format {
   color: $linkColorDisabled
 }

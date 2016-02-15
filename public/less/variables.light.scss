@@ -43,12 +43,15 @@ $grafanaPanelBackground: 	$grayLighter;
 $grafanaPanelBorder: 	  	solid 1px #ddd;
 $grafanaTriggerBorder:		solid 1px $grayLight;
 
+// Scaffolding
+// -------------------------
+$bodyBackground:      #EFEFEF;
+$pageBackground:  	  $white;
+$textColor:           $gray;
+
 // Submenu
 $submenuBackground:     rgb(218, 217, 217);
 $submenuBorder:         $white;
-
-// Tabs
-$fullEditBorder:          $grayLighter;
 
 // Graphite Target Editor
 $grafanaTargetBorder:         #ddd;
@@ -64,12 +67,6 @@ $grafanaSelectBackground: $grafanaTargetFuncBackground;
 
 $modalBackground: $bodyBackground;
 $codeTagBackground: #ddd;
-
-// Scaffolding
-// -------------------------
-$bodyBackground:      #EFEFEF;
-$pageBackground:  	  $white;
-$textColor:           $gray;
 
 // Links
 // -------------------------
@@ -221,12 +218,6 @@ $zindexModalBackdrop:     1040;
 $zindexModal:             1050;
 
 
-// Sprite icons path
-// -------------------------
-$iconSpritePath:          "../img/glyphicons-halflings.png";
-$iconWhiteSpritePath:     "../img/glyphicons-halflings-white.png";
-
-
 // Input placeholder text color
 // -------------------------
 $placeholderText:         $grayLight;
@@ -249,8 +240,6 @@ $wellBackground:                  $grayLighter;
 
 // Navbar
 // -------------------------
-$navbarCollapseWidth:             979px;
-$navbarCollapseDesktopWidth:      $navbarCollapseWidth + 1;
 
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       #f8f8f8;

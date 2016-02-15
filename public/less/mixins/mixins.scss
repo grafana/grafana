@@ -7,6 +7,11 @@
   }
 }
 
+// Box sizing
+@mixin box-sizing($boxmodel) {
+  box-sizing: $boxmodel;
+}
+
 @mixin tab-focus() {
   // Default
   outline: thin dotted;
@@ -219,11 +224,6 @@
 // Background sizing
 @mixin background-size($size) {
   background-size: $size;
-}
-
-// Box sizing
-@mixin box-sizing($boxmodel) {
-  box-sizing: $boxmodel;
 }
 
 // User select

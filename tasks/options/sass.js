@@ -4,8 +4,8 @@ module.exports = function(config) {
     src:{
       options: {},
       files: {
-        "<%= genDir %>/css/grafana.dark.css": "<%= srcDir %>/less/grafana.dark.scss",
-        "<%= genDir %>/css/grafana.light.css": "<%= srcDir %>/less/grafana.light.scss",
+        "<%= genDir %>/css/grafana.dark.min.css": "<%= srcDir %>/less/grafana.dark.scss",
+        "<%= genDir %>/css/grafana.light.min.css": "<%= srcDir %>/less/grafana.light.scss",
       }
     }
   };
