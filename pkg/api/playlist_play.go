@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
