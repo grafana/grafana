@@ -10,12 +10,12 @@ grunt && grunt watch
 grunt karma:dev
 ```
 
-### Rerun tests for backend assets before commit
+### Run tests for backend assets before commit
 ```
 test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
 ```
 
-### Run tests before commit
+### Run tests for frontend assets before commit
 ```
 grunt test
 godep go test -v ./pkg/...
