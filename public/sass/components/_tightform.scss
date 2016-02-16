@@ -112,7 +112,7 @@
 
 .tight-form-func {
   background: $tight-form-func-bg;
-  
+
   &.show-function-controls {
     padding-top: 5px;
     min-width: 100px;
@@ -131,7 +131,7 @@ input[type=text].tight-form-clear-input {
   padding: 8px 7px;
   border: none;
   margin: 0px;
-  background: transparent;  
+  background: transparent;
   border-radius: 0;
   border-right: 1px solid $tight-form-border;
 }
@@ -141,6 +141,7 @@ input[type=text].tight-form-clear-input {
 [type=number],
 [type=password] {
   &.tight-form-input {
+    background-color: $input-bg;
     border: none;
     border-right: 1px solid $tight-form-border;
     margin: 0px;
@@ -167,6 +168,7 @@ input[type=checkbox].tight-form-checkbox {
 select.tight-form-input {
   border: none;
   border-right: 1px solid $tight-form-border;
+  background-color: $input-bg;
   margin: 0px;
   border-radius: 0;
   height: 36px;

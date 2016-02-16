@@ -1,8 +1,5 @@
 
 .nav-tabs-alt {
-  border-bottom: 1px solid $divider-border-color;
-  padding-left: 10px;
-  margin: 0 0 10px 0;
 
 	& > li > a {
 	  color: darken($link-color, 20%);
@@ -16,7 +13,7 @@
 	li.active > a:focus,
 	li.active > a:hover {
     @include border-radius(3px);
-	  border: 1px solid $divider-border-color;	  
+	  border: 1px solid $divider-border-color;
 	  background-color: transparent;
 	  border-bottom: 1px solid $panel-bg;
 	  color: $link-color;

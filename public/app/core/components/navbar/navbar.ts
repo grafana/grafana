@@ -25,6 +25,7 @@ export function navbarDirective() {
     },
     link: function(scope, elem, attrs, ctrl) {
       ctrl.icon = attrs.icon;
+      elem.addClass('navbar');
     }
   };
 }

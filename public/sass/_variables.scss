@@ -78,8 +78,8 @@ $grid-gutter-width: 30px !default;
 $enable-flex: false;
 
 $form-sizes: (
-  xs: 60px,
-  sm: 80px,
+  xs: 80px,
+  sm: 100px,
   md: 120px,
   lg: 150px,
   xl: 200px,
@@ -172,7 +172,7 @@ $table-sm-cell-padding:         .3rem !default;
 // Forms
 $input-padding-x:                .75rem !default;
 $input-padding-y:                .5rem !default;
-$input-line-height:              1.25 !default;
+$input-line-height:              1.25rem !default;
 
 $input-border-radius:            $border-radius !default;
 $input-border-radius-lg:         $border-radius-lg !default;

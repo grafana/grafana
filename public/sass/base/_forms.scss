@@ -6,17 +6,6 @@
 // GENERAL STYLES
 // --------------
 
-// Make all forms have space below them
-form {
-  margin: 0 0 $line-height-base;
-}
-
-fieldset {
-  padding: 0;
-  margin: 0;
-  border: 0;
-}
-
 // Groups of fields with labels on top (legends)
 legend {
   display: block;
@@ -56,84 +45,69 @@ label {
   display: block;
 }
 
-// Form controls
-// -------------------------
+// // Form controls
+// // -------------------------
+//
+// // Shared size and type resets
+// select,
+// textarea,
+// input[type="text"],
+// input[type="password"],
+// input[type="datetime"],
+// input[type="datetime-local"],
+// input[type="date"],
+// input[type="month"],
+// input[type="time"],
+// input[type="week"],
+// input[type="number"],
+// input[type="email"],
+// input[type="url"],
+// input[type="search"],
+// input[type="tel"],
+// input[type="color"],
+// .uneditable-input {
+//   display: inline-block;
+//   height: $input-height;
+//   line-height: $input-line-height;
+//   padding: 4px 6px;
+//   font-size: $font-size-base;
+//   color: $input-color;
+//   vertical-align: top;
+// }
 
-// Shared size and type resets
-select,
-textarea,
-input[type="text"],
-input[type="password"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="date"],
-input[type="month"],
-input[type="time"],
-input[type="week"],
-input[type="number"],
-input[type="email"],
-input[type="url"],
-input[type="search"],
-input[type="tel"],
-input[type="color"],
-.uneditable-input {
-  display: inline-block;
-  height: $input-height;
-  line-height: $input-line-height;
-  padding: 4px 6px;
-  font-size: $font-size-base;
-  color: $input-color;
-  vertical-align: top;
-}
-
-// Reset appearance properties for textual inputs and textarea
-// Declare width for legacy (can't be on input[type=*] selectors or it's too specific)
-input,
-textarea,
-.uneditable-input {
-  width: 206px; // plus 12px padding and 2px border
-}
 // Reset height since textareas have rows
 textarea {
   height: auto;
 }
 
-// Everything else
-textarea,
-input[type="text"],
-input[type="password"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="date"],
-input[type="month"],
-input[type="time"],
-input[type="week"],
-input[type="number"],
-input[type="email"],
-input[type="url"],
-input[type="search"],
-input[type="tel"],
-input[type="color"],
-.uneditable-input {
-  background-color: $input-bg;
-  border: 1px solid $input-border-color;
-  @include box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
-  @include transition("border linear .2s, box-shadow linear .2s");
-
-  // Focus state
-  &:focus {
-    border-color: rgba(82,168,236, .8);
-    outline: 0;
-    @include box-shadow("inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(82,168,236,.6)");
-  }
-}
-
-// Position radios and checkboxes better
-input[type="radio"],
-input[type="checkbox"] {
-  margin: 4px 0 0;
-  line-height: normal;
-}
+// // Everything else
+// textarea,
+// input[type="text"],
+// input[type="password"],
+// input[type="datetime"],
+// input[type="datetime-local"],
+// input[type="date"],
+// input[type="month"],
+// input[type="time"],
+// input[type="week"],
+// input[type="number"],
+// input[type="email"],
+// input[type="url"],
+// input[type="search"],
+// input[type="tel"],
+// input[type="color"] {
+//   background-color: $input-bg;
+//   border: 1px solid $input-border-color;
+//   @include box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
+//   @include transition("border linear .2s, box-shadow linear .2s");
+//
+//   // Focus state
+//   &:focus {
+//     border-color: rgba(82,168,236, .8);
+//     outline: 0;
+//     @include box-shadow("inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(82,168,236,.6)");
+//   }
+// }
 
 // Reset width of input images, buttons, radios, checkboxes
 input[type="file"],
@@ -207,7 +181,7 @@ textarea[disabled],
 input[readonly],
 select[readonly],
 textarea[readonly] {
-  cursor: not-allowed;
+  cursor: $cursor-disabled;
   background-color: $input-bg-disabled;
 }
 
@@ -216,6 +190,7 @@ input[type="radio"][disabled],
 input[type="checkbox"][disabled],
 input[type="radio"][readonly],
 input[type="checkbox"][readonly] {
+  cursor: $cursor-disabled;
   background-color: transparent;
 }
 
