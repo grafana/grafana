@@ -16,14 +16,14 @@
   margin: -5px -10px 10px 5px;
   padding: 10px 20px;
   float: right;
-  background-color: $grafanaPanelBackground;
+  background-color: $panel-bg;
   @include box-shadow($navbarDropdownShadow);
 }
 
 .gf-timepicker-absolute-section {
   width: 300px;
   float: left;
-  border-right: $grafanaTriggerBorder;
+  border-right: 1px solid $divider-border-color;
   padding: 0 0 0 20px;
   select {
     width: 183px;

@@ -47,7 +47,7 @@
 .row-close {
   padding: 0px;
   margin: 0px;
-  background: $grafanaPanelBackground;
+  background: $panel-bg;
   text-align: center;
 }
 
@@ -116,9 +116,9 @@ div.flot-text {
 }
 
 .panel-container {
-  background-color: $grafanaPanelBackground;
+  background-color: $panel-bg;
   position: relative;
-  border: $grafanaPanelBorder;
+  border: $panel-border;
   &:hover {
     .panel-actions {
       display: block;
@@ -185,7 +185,7 @@ div.flot-text {
   position: absolute;
   border-left: 31px solid transparent;
   border-right: 30px solid transparent;
-  border-bottom: 27px solid $grafanaPanelBackground;
+  border-bottom: 27px solid $panel-bg;
   left: 0;
   bottom: 0;
 }

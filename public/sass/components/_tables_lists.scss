@@ -4,14 +4,14 @@
   th {
     text-align: left;
     padding: 5px 10px;
-    border-bottom: 4px solid $grafanaPanelBackground;
+    border-bottom: 4px solid $panel-bg;
   }
 
   tr td {
     background-color: $grafanaListBackground;
     padding: 5px 10px;
     white-space: nowrap;
-    border-bottom: 4px solid $grafanaPanelBackground;
+    border-bottom: 4px solid $panel-bg;
     &.nobg {
       background-color: transparent;
     }
