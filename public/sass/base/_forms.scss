@@ -25,6 +25,7 @@ legend {
   }
 }
 
+// Reset height since textareas have rows
 // Set font for forms
 label,
 input,
@@ -45,69 +46,17 @@ label {
   display: block;
 }
 
-// // Form controls
-// // -------------------------
-//
-// // Shared size and type resets
-// select,
-// textarea,
-// input[type="text"],
-// input[type="password"],
-// input[type="datetime"],
-// input[type="datetime-local"],
-// input[type="date"],
-// input[type="month"],
-// input[type="time"],
-// input[type="week"],
-// input[type="number"],
-// input[type="email"],
-// input[type="url"],
-// input[type="search"],
-// input[type="tel"],
-// input[type="color"],
-// .uneditable-input {
-//   display: inline-block;
-//   height: $input-height;
-//   line-height: $input-line-height;
-//   padding: 4px 6px;
-//   font-size: $font-size-base;
-//   color: $input-color;
-//   vertical-align: top;
-// }
+input,
+select {
+  background-color: $input-bg;
+  color: $input-color;
+  border: none;
+  box-shadow: none;
+}
 
-// Reset height since textareas have rows
 textarea {
   height: auto;
 }
-
-// // Everything else
-// textarea,
-// input[type="text"],
-// input[type="password"],
-// input[type="datetime"],
-// input[type="datetime-local"],
-// input[type="date"],
-// input[type="month"],
-// input[type="time"],
-// input[type="week"],
-// input[type="number"],
-// input[type="email"],
-// input[type="url"],
-// input[type="search"],
-// input[type="tel"],
-// input[type="color"] {
-//   background-color: $input-bg;
-//   border: 1px solid $input-border-color;
-//   @include box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
-//   @include transition("border linear .2s, box-shadow linear .2s");
-//
-//   // Focus state
-//   &:focus {
-//     border-color: rgba(82,168,236, .8);
-//     outline: 0;
-//     @include box-shadow("inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(82,168,236,.6)");
-//   }
-// }
 
 // Reset width of input images, buttons, radios, checkboxes
 input[type="file"],
