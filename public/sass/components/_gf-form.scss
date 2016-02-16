@@ -42,12 +42,15 @@ $gf-form-margin: 4px;
 }
 
 .gf-form-label {
+  padding: $input-padding-y $input-padding-x;
+  line-height: $input-line-height;
   flex-shrink: 0;
+
   background-color: $input-label-bg;
   display: block;
-  padding: 8px 7px;
   font-size: $font-size-sm;
   margin-right: $gf-form-margin;
+  border: $input-btn-border-width solid transparent;
 }
 
 .gf-form-checkbox {
@@ -65,53 +68,46 @@ $gf-form-margin: 4px;
 .gf-size-max { width: 100%; }
 .gf-size-auto { width: auto; }
 
+.gf-form-input {
+  display: block;
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  font-size: $font-size-base;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  background-image: none;
+  background-clip: padding-box;
+  border: $input-btn-border-width solid $input-border-color;
+  @include border-radius($input-border-radius);
+  @include box-shadow($input-box-shadow);
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 
-select,
-[type=text],
-[type=email],
-[type=number],
-[type=password] {
-  &.gf-form-input {
-    display: block;
-    width: 100%;
-    padding: $input-padding-y $input-padding-x;
-    font-size: $font-size-base;
-    line-height: $input-line-height;
-    color: $input-color;
-    background-color: $input-bg;
-    background-image: none;
-    background-clip: padding-box;
-    border: $input-btn-border-width solid $input-border-color;
-    @include border-radius($input-border-radius);
-    @include box-shadow($input-box-shadow);
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  // Unstyle the caret on `<select>`s in IE10+.
+  &::-ms-expand {
+    background-color: transparent;
+    border: 0;
+  }
 
-    // Unstyle the caret on `<select>`s in IE10+.
-    &::-ms-expand {
-      background-color: transparent;
-      border: 0;
-    }
+  // Customize the `:focus` state to imitate native WebKit styles.
+  @include form-control-focus();
 
-    // Customize the `:focus` state to imitate native WebKit styles.
-    @include form-control-focus();
+  // Placeholder
+  &::placeholder {
+    color: $input-color-placeholder;
+    // Override Firefox's unusual default opacity; see https://github.com/twbs/bootstrap/pull/11526.
+    opacity: 1;
+  }
 
-    // Placeholder
-    &::placeholder {
-      color: $input-color-placeholder;
-      // Override Firefox's unusual default opacity; see https://github.com/twbs/bootstrap/pull/11526.
-      opacity: 1;
-    }
+  &:disabled,
+  &[readonly] {
+    background-color: $input-bg-disabled;
+    // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655.
+    opacity: 1;
+  }
 
-    &:disabled,
-    &[readonly] {
-      background-color: $input-bg-disabled;
-      // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655.
-      opacity: 1;
-    }
-
-    &:disabled {
-      cursor: $cursor-disabled;
-    }
+  &:disabled {
+    cursor: $cursor-disabled;
   }
 
   &.gf-size-auto { width: auto; }
