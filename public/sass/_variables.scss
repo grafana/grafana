@@ -91,7 +91,7 @@ $form-sizes: (
 // Typography
 // -------------------------
 
-$font-family-sans-serif:    "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-sans-serif:    "Helvetica Neue", Helvetica, Arial, sans-serif;
 $font-family-serif:         Georgia, "Times New Roman", Times, serif;
 $font-family-monospace:     Menlo, Monaco, Consolas, "Courier New", monospace;
 $font-family-base:        $font-family-sans-serif !default;
@@ -127,7 +127,7 @@ $lead-font-size:   1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
-$headings-font-family:   inherit !default;
+$headings-font-family:   "Open Sans" !default;
 $headings-font-weight:   400 !default;
 $headings-line-height:   1.1 !default;
 

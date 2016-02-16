@@ -56,6 +56,7 @@
 
 // Actual tabs (as links)
 .nav-tabs > li > a {
+  color: $text-color;
   padding-top: 8px;
   padding-bottom: 8px;
   line-height: $line-height-base;
@@ -64,8 +65,10 @@
   &:hover,
   &:focus {
     border-color: $divider-border-color;
+    color: $link-color;
   }
 }
+
 // Active state, and it's :hover/:focus to override normal :hover/:focus
 .nav-tabs > .active > a,
 .nav-tabs > .active > a:hover,
@@ -84,4 +87,28 @@
 
 .tab-content > .active {
   display: block;
+}
+
+// temp hack
+.modal-body, .gf-box {
+  .nav-tabs {
+    border-bottom: none;
+  }
+
+  .nav-tabs > li > a {
+    border: none;
+    border-radius: 0;
+    &:hover,
+    &:focus {
+      border-bottom: 1px solid $blue;
+    }
+  }
+
+  .nav-tabs > .active > a,
+  .nav-tabs > .active > a:hover,
+  .nav-tabs > .active > a:focus {
+    border: none;
+    border-bottom: 1px solid $blue;
+    color: $link-color;
+  }
 }
