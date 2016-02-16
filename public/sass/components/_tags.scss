@@ -10,7 +10,7 @@
   vertical-align: baseline;
   white-space: nowrap;
   text-shadow: 0 -1px 0 rgba(0,0,0,.25);
-  background-color: $grayLight;
+  background-color: $gray-light;
 }
 
 
@@ -55,6 +55,6 @@
   &-info              { background-color: $infoText; }
   &-info[href]        { background-color: darken($infoText, 10%); }
   // Inverse (black)
-  &-inverse           { background-color: $grayDark; }
-  &-inverse[href]     { background-color: darken($grayDark, 10%); }
+  &-inverse           { background-color: $gray-dark; }
+  &-inverse[href]     { background-color: darken($gray-dark, 10%); }
 }

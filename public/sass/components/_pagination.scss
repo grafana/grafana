@@ -29,14 +29,14 @@
 }
 .pagination ul > .active > a,
 .pagination ul > .active > span {
-  color: $grayLight;
+  color: $gray-light;
   cursor: default;
 }
 .pagination ul > .disabled > span,
 .pagination ul > .disabled > a,
 .pagination ul > .disabled > a:hover,
 .pagination ul > .disabled > a:focus {
-  color: $grayLight;
+  color: $gray-light;
   background-color: transparent;
   cursor: default;
 }

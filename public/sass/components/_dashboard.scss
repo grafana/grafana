@@ -31,7 +31,7 @@
   float: left;
   cursor: pointer;
   line-height: 31px;
-  background-color: $blueDark;
+  background-color: $blue-dark;
 }
 
 .row-text {
@@ -245,7 +245,7 @@ div.flot-text {
 .panel-drop-zone {
   display: none;
   .panel-container {
-    border: 1px solid $grayDark;
+    border: 1px solid $gray-dark;
   }
 }
 
