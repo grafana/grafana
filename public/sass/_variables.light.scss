@@ -15,6 +15,7 @@ $gray-dark:             lighten(#000, 20%);   // #333
 $gray:                  lighten(#000, 33.5%); // #555
 $gray-light:            lighten(#000, 60%);   // #999
 $gray-lighter:          lighten(#000, 97.5%); // #eee
+$gray-lightest:         lighten(#000, 98.5%); // #eee
 $white:                 #fff;
 
 
@@ -44,10 +45,10 @@ $critical:              #EC2128;
 // Scaffolding
 // -------------------------
 
-$body-bg:  		rgb(20,20,20);
-$page-bg:  		$gray-darker;
-$body-color:    $gray-lighter;
-$text-color:    $gray-lighter;
+$body-bg:  		  #EFEFEF;
+$page-bg:  		  $gray-lightest;
+$body-color:    $gray;
+$text-color:    $gray;
 
 // Links
 // -------------------------
@@ -73,7 +74,7 @@ $component-active-bg:    $brand-primary !default;
 // Panel
 // -------------------------
 
-$panel-bg: 		  $gray-lighter;
+$panel-bg: 		    $gray-lighter;
 $panel-border: 	  solid 1px #ddd;
 
 $divider-border-color: 		$gray-light;
