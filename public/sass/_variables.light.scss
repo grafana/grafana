@@ -193,18 +193,6 @@ $dropdownLinkBackgroundHover:   $blue;
 // --------------------------------------------------
 
 
-// Z-index master list
-// -------------------------
-// Used for a bird's eye view of components dependent on the z-axis
-// Try to avoid customizing these :)
-$zindexDropdown:          1000;
-$zindexPopover:           1010;
-$zindexTooltip:           1030;
-$zindexFixedNavbar:       1030;
-$zindexModalBackdrop:     1040;
-$zindexModal:             1050;
-
-
 // Input placeholder text color
 // -------------------------
 $placeholderText:         $gray-light;

@@ -6,7 +6,7 @@
 // Base class
 .tooltip {
   position: absolute;
-  z-index: $zindexTooltip;
+  z-index: $zindex-tooltip;
   display: block;
   visibility: visible;
   font-size: 11px;
@@ -26,7 +26,7 @@
   color: $tooltipColor;
   text-align: center;
   text-decoration: none;
-  background-color: $tooltipBackground;  
+  background-color: $tooltipBackground;
 }
 
 // Arrows
