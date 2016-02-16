@@ -1,12 +1,9 @@
 package services
 
 import (
-	//m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"io/ioutil"
 	"os"
 )
-
-//var IoUtils m.IoUtil = IoUtilImp{}
 
 type IoUtilImp struct {
 }

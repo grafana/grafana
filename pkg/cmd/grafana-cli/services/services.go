@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/franela/goreq"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"path"
 )
@@ -22,7 +23,7 @@ func ListAllPlugins() (m.PluginRepo, error) {
 	return resp, nil
 }
 
-func ReadPlugin(pluginDir, pluginName string) m.InstalledPlugin {
+func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 	pluginDataPath := path.Join(pluginDir, pluginName, "plugin.json")
 	pluginData, _ := IoHelper.ReadFile(pluginDataPath)
 
@@ -34,24 +35,27 @@ func ReadPlugin(pluginDir, pluginName string) m.InstalledPlugin {
 	}
 
 	if res.Id == "" {
-		res.Id = res.Name
+		return m.InstalledPlugin{}, errors.New("could not read find plugin " + pluginName)
 	}
 
-	return res
+	return res, nil
 }
 
 func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
 	result := make([]m.InstalledPlugin, 0)
 	files, _ := IoHelper.ReadDir(pluginDir)
 	for _, f := range files {
-		res := ReadPlugin(pluginDir, f.Name())
-		result = append(result, res)
+		res, err := ReadPlugin(pluginDir, f.Name())
+		if err == nil {
+			result = append(result, res)
+		}
 	}
 
 	return result
 }
 
 func RemoveInstalledPlugin(pluginPath, id string) error {
+	log.Infof("Removing plugin: %v\n", id)
 	return IoHelper.RemoveAll(path.Join(pluginPath, id))
 }
 

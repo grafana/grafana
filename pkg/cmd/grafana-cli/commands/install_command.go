@@ -71,15 +71,14 @@ func InstallPlugin(pluginName, pluginFolder, version string) error {
 
 	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
 	if err == nil {
-		log.Info("Installed %s successfully ✔\n", plugin.Id)
+		log.Infof("Installed %v successfully ✔\n", plugin.Id)
 	}
 
-	res := s.ReadPlugin(pluginFolder, pluginName)
+	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 
 	for _, v := range res.Dependency.Plugins {
-		log.Infof("Installing Dependency: %s\n", v.Id)
-
 		InstallPlugin(v.Id, pluginFolder, "")
+		log.Infof("Installed Dependency: %v ✔\n", v.Id)
 	}
 
 	return err
