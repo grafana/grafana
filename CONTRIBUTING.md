@@ -1,6 +1,6 @@
 Follow the setup guide in README.md
 
-### Rebuild frontend assts on source change
+### Rebuild frontend assets on source change
 ```
 grunt && grunt watch
 ```
@@ -15,5 +15,3 @@ grunt karma:dev
 grunt test
 godep go test -v ./pkg/...
 ```
-
-
