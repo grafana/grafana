@@ -244,12 +244,12 @@ a.external-link {
 
 
 .link {
-  color: $linkColor;
+  color: $link-color;
   cursor: pointer;
 }
 
 .link:hover {
-  color: $linkColorHover;
+  color: $link-color-hover;
 }
 
 .pointer {

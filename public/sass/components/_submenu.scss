@@ -4,7 +4,7 @@
 }
 
 .annotation-disabled, .annotation-disabled a {
-  color: $linkColorDisabled;
+  color: $link-color-disabled;
 }
 
 .annotation-segment {
@@ -56,7 +56,7 @@
   z-index: 1000;
   font-size: $baseFontSize;
   border-radius: 3px 3px 0 0;
-  border: 1px solid $grafanaTargetFuncBackground;
+  border: 1px solid $tight-form-func-bg;
 
   &.multi {
    .selected {
@@ -71,7 +71,7 @@
      display: none;
    }
    .selected {
-     background-color: $grafanaTargetFuncHightlight;
+     background-color: $tight-form-func-highlight-bg;
    }
  }
 }
@@ -86,7 +86,7 @@
   display: table-cell;
   line-height: 26px;
   &:nth-child(2) {
-    border-left: 1px solid $grafanaTargetFuncBackground;
+    border-left: 1px solid $tight-form-func-bg;
   }
 }
 
@@ -129,5 +129,5 @@
 .dash-nav-link {
   padding: 8px 7px;
   display: inline-block;
-  color: $textColor;
+  color: $text-color;
 }

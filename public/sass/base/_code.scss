@@ -8,9 +8,9 @@ code,
 pre {
   @include font-family-monospace();
   font-size: $baseFontSize - 2;
-  background-color: $codeTagBackground;
-  color: $textColor;
-  border: 1px solid darken($codeTagBackground, 15%);
+  background-color: $code-tag-bg;
+  color: $text-color;
+  border: 1px solid darken($code-tag-bg, 15%);
   padding: 2px;
 }
 

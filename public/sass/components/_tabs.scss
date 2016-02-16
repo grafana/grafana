@@ -5,7 +5,7 @@
   margin: 0 0 10px 0;
 
 	& > li > a {
-	  color: darken($linkColor, 20%);
+	  color: darken($link-color, 20%);
 	}
 
 	li > a:hover {
@@ -19,11 +19,11 @@
 	  border: 1px solid $divider-border-color;	  
 	  background-color: transparent;
 	  border-bottom: 1px solid $panel-bg;
-	  color: $linkColor;
+	  color: $link-color;
 	}
 
 	li.disabled > a {
-		color: $textColor;
+		color: $text-color;
 	}
 
 	.open .dropdown-toggle {

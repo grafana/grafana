@@ -62,7 +62,7 @@
 }
 
 .modal-no-header {
-  border: 1px solid $grafanaTargetFuncBackground;
+  border: 1px solid $tight-form-func-bg;
   text-align: center;
 
   h3 {
@@ -92,7 +92,7 @@
 
   .confirm-modal-title {
     font-size: 18px;
-    color: $linkColor;
+    color: $link-color;
     margin-bottom: 15px;
   }
 

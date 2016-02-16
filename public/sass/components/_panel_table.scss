@@ -37,7 +37,7 @@
     border-left-width: 0;
 
     &:hover {
-      background-color: $grafanaTargetFuncBackground;
+      background-color: $tight-form-func-bg;
     }
 
     &.active {
@@ -63,8 +63,8 @@
 
   td {
     padding: 0.45em 0 0.45em 1.1em;
-    border-bottom: 2px solid $bodyBackground;
-    border-right: 2px solid $bodyBackground;
+    border-bottom: 2px solid $body-bg;
+    border-right: 2px solid $body-bg;
 
     &:first-child {
       padding-left: 15px;
@@ -77,8 +77,8 @@
 
 .table-panel-header-bg {
   background: $grafanaListAccent;
-  border-top: 2px solid $bodyBackground;
-  border-bottom: 2px solid $bodyBackground;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
   height: 2.0em;
   position: absolute;
   top: 0;

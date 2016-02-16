@@ -100,7 +100,7 @@
 }
 
 div.flot-text {
-  color: $textColor !important;
+  color: $text-color !important;
 }
 
 .panel {
@@ -204,7 +204,7 @@ div.flot-text {
 .panel-menu {
   z-index: 500;
   position: absolute;
-  background: $grafanaTargetFuncBackground;
+  background: $tight-form-func-bg;
   border: 1px solid black;
 
   .panel-menu-row {

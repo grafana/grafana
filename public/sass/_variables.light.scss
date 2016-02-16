@@ -36,68 +36,64 @@ $online:                #01A64F;
 $warn:                  #F79520;
 $critical:              #EC2128;
 
-// grafana Variables
-// -------------------------
-$panel-bg: 	$gray-lighter;
-$panel-border: 	  	solid 1px #ddd;
-
-$divider-border-color: 		$gray-light;
-
 // Scaffolding
 // -------------------------
-$bodyBackground:      #EFEFEF;
-$pageBackground:  	  $white;
-$textColor:           $gray;
+
+$body-bg:  rgb(20,20,20);
+$page-bg:  $gray-darker;
+$text-color:       $gray-lighter;
+
+// Links
+// -------------------------
+$link-color:             $gray;
+$link-color-disabled:     lighten($link-color,30%);
+$link-color-hover:        darken($link-color, 20%);
+
+// Typography
+// -------------------------
+$font-family-sans-serif:        "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-serif:       Georgia, "Times New Roman", Times, serif;
+$font-family-monospace:        Menlo, Monaco, Consolas, "Courier New", monospace;
+
+$baseFontSize:          14px;
+$baseFontWeight:		    400;
+$fontWeightSemi:		    600;
+$baseFontFamily:        $font-family-sans-serif;
+$baseLineHeight:        20px;
+$altFontFamily:         $font-family-serif;
+
+$headingsFontFamily:    inherit; // inherit. empty to use BS default, $baseFontFamily
+$headingsFontWeight:    normal;    // instead of browser default, bold
+$headingsFontStyle:    	normal;
+$headingsColor:         $text-color; // empty to use BS default, $text-color
+
+// Panel
+// -------------------------
+  
+$panel-bg: 		  $gray-lighter;
+$panel-border: 	  solid 1px #ddd;
+
+$divider-border-color: 		$gray-light;
 
 // Submenu
 $submenuBackground:     rgb(218, 217, 217);
 $submenuBorder:         $white;
 
 // Graphite Target Editor
-$grafanaTargetBorder:         #ddd;
-$grafanaTargetBackground:     #efefef;
-$grafanaTargetColor:          $textColor;
-$grafanaTargetColorHide:      lighten($textColor, 25%);
-$grafanaTargetSegmentBorder:  #ddd;
+$tight-form-border:         #ddd;
+$tight-form-bg:     		#efefef;
 
-$grafanaTargetFuncBackground: darken($grafanaTargetBackground, 5%);
-$grafanaTargetFuncHightlight: darken($grafanaTargetBackground, 10%);
+$tight-form-func-bg: 			darken($tight-form-bg, 5%);
+$tight-form-func-highlight-bg: 	darken($tight-form-bg, 10%);
 
-$grafanaSelectBackground: $grafanaTargetFuncBackground;
-
-$modalBackground: $bodyBackground;
-$codeTagBackground: #ddd;
-
-// Links
-// -------------------------
-$linkColor:             $gray;
-$linkColorDisabled:     lighten($linkColor,30%);
-$linkColorHover:        darken($linkColor, 20%);
-
-// Typography
-// -------------------------
-$sansFontFamily:        "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-$serifFontFamily:       Georgia, "Times New Roman", Times, serif;
-$monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
-
-$baseFontSize:          14px;
-$baseFontWeight:		    400;
-$fontWeightSemi:		    600;
-$baseFontFamily:        $sansFontFamily;
-$baseLineHeight:        20px;
-$altFontFamily:         $serifFontFamily;
-
-$headingsFontFamily:    inherit; // inherit. empty to use BS default, $baseFontFamily
-$headingsFontWeight:    normal;    // instead of browser default, bold
-$headingsFontStyle:    	normal;
-$headingsColor:         $textColor; // empty to use BS default, $textColor
-
+$modal-background: 		$body-bg;
+$code-tag-bg: 	#ddd;
 
 // Component sizing
 // -------------------------
 // Based on 14px font-size and 20px line-height
 
-$fontSizeLarge:         $baseFontSize * 1.25; // ~18px
+$font-size-lg:         $baseFontSize * 1.25; // ~18px
 $fontSizeSmall:         $baseFontSize * 0.85; // ~12px
 $fontSizeMini:          $baseFontSize * 0.75; // ~11px
 
@@ -116,7 +112,7 @@ $grafanaListBorderTop:         #eee;
 $grafanaListBorderBottom:      #eee;
 $grafanaListHighlight:         darken($gray-lighter,10%);
 $grafanaListHighlightContrast: #ddd;
-$grafanaListMainLinkColor:     $textColor;
+$grafanaListMainLinkColor:     $text-color;
 
 
 // Tables
@@ -188,7 +184,7 @@ $searchShadow: 0 5px 30px 0 lighten($gray-light, 30%);
 // Dropdowns
 // -------------------------
 $dropdownBackground:            $white;
-$dropdownBorder:                $grafanaTargetBorder;
+$dropdownBorder:                $tight-form-border;
 $dropdownDividerTop:            #e5e5e5;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
@@ -244,7 +240,7 @@ $wellBackground:                  $gray-lighter;
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       #f8f8f8;
 $navbarBackground:                #f8f8f8;
-$navbarBorder:                    1px solid $grafanaTargetBorder;
+$navbarBorder:                    1px solid $tight-form-border;
 
 $navbarText:                      #666;
 $navbarLinkColor:                 #666;
@@ -252,7 +248,7 @@ $navbarLinkColorHover:            #333;
 $navbarLinkColorActive:           #555;
 $navbarLinkBackgroundHover:       transparent;
 $navbarLinkBackgroundActive:      darken($navbarBackground, 6.5%);
-$navbarDropdownShadow:            inset 0px 4px 7px -4px darken($bodyBackground, 20%);
+$navbarDropdownShadow:            inset 0px 4px 7px -4px darken($body-bg, 20%);
 
 $navbarBrandColor:                $navbarLinkColor;
 

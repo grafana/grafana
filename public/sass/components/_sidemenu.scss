@@ -9,7 +9,7 @@ $sideMenuWidth:  220px;
   top: 52px;
   left: 0;
   width: $sideMenuWidth;
-  background-color: $bodyBackground;
+  background-color: $body-bg;
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
@@ -40,7 +40,7 @@ $sideMenuWidth:  220px;
   }
   .top-nav-menu-btn {
     a {
-      background-color: $pageBackground;
+      background-color: $page-bg;
       padding-right: 67px;
       padding-left: 22px;
     }
@@ -73,7 +73,7 @@ $sideMenuWidth:  220px;
         display: block;
         top: 0px;
         left: $sideMenuWidth;
-        background-color: $bodyBackground;
+        background-color: $body-bg;
       }
     }
   }
@@ -97,7 +97,7 @@ $sideMenuWidth:  220px;
   height: 40px;
   display: inline-block;
   i {
-    color: $linkColor;
+    color: $link-color;
     opacity: .7;
     position: relative;
     left: 7px;
@@ -111,7 +111,7 @@ $sideMenuWidth:  220px;
 }
 
 .sidemenu-item {
-  color: $linkColor;
+  color: $link-color;
   line-height: 47px;
   padding: 0px 10px 0px 10px;
   display: block;
@@ -183,7 +183,7 @@ $sideMenuWidth:  220px;
   top: 38%;
   right: 25px;
   font-size: 14px;
-  color: $linkColor;
+  color: $link-color;
 }
 
 .sidemenu-org-avatar,
@@ -205,13 +205,13 @@ $sideMenuWidth:  220px;
 
 .sidemenu-org-details {
   padding-left: 10px;
-  color: $linkColor;
+  color: $link-color;
 }
 
 .sidemenu-org-name {
   display: block;
   font-size: 13px;
-  color: $linkColorDisabled;
+  color: $link-color-disabled;
 }
 
 .sidemenu-org-user {
