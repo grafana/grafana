@@ -61,7 +61,7 @@
 
   .divider {
     height: 1px;
-    margin: (($baseLineHeight / 2) - 1) 1px; // 8px 1px
+    margin: (($line-height-base / 2) - 1) 1px; // 8px 1px
     overflow: hidden;
     background-color: $dropdownDividerTop;
     border-bottom: 1px solid $dropdownDividerBottom;
@@ -73,7 +73,7 @@
     padding: 3px 20px 3px 15px;
     clear: both;
     font-weight: normal;
-    line-height: $baseLineHeight;
+    line-height: $line-height-base;
     color: $dropdownLinkColor;
     white-space: nowrap;
 

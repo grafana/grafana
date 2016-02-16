@@ -8,7 +8,7 @@
 
 // Make all forms have space below them
 form {
-  margin: 0 0 $baseLineHeight;
+  margin: 0 0 $line-height-base;
 }
 
 fieldset {
@@ -22,16 +22,16 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: $baseLineHeight;
-  font-size: $baseFontSize * 1.5;
-  line-height: $baseLineHeight * 2;
+  margin-bottom: $line-height-base;
+  font-size: $font-size-base * 1.5;
+  line-height: $line-height-base * 2;
   color: $gray-dark;
   border: 0;
   border-bottom: 1px solid #e5e5e5;
 
   // Small
   small {
-    font-size: $baseLineHeight * .75;
+    font-size: $line-height-base * .75;
     color: $gray-light;
   }
 }
@@ -42,13 +42,13 @@ input,
 button,
 select,
 textarea {
-  @include font-shorthand($baseFontSize,normal,$baseLineHeight); // Set size, weight, line-height here
+  @include font-shorthand($font-size-base,normal,$line-height-base); // Set size, weight, line-height here
 }
 input,
 button,
 select,
 textarea {
-  font-family: $baseFontFamily; // And only set font-family here for those that need it (note the missing label element)
+  font-family: $font-family-base; // And only set font-family here for those that need it (note the missing label element)
 }
 
 // Identify controls by their labels
@@ -78,10 +78,10 @@ input[type="tel"],
 input[type="color"],
 .uneditable-input {
   display: inline-block;
-  height: $baseLineHeight;
+  height: $line-height-base;
   padding: 4px 6px;
-  font-size: $baseFontSize;
-  line-height: $baseLineHeight;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
   color: $inputText;
   vertical-align: top;
 }

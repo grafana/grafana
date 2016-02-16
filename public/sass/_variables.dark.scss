@@ -35,77 +35,26 @@ $critical:              #ed2e18;
 // -------------------------
 $body-bg:  				rgb(20,20,20);
 $page-bg:  				$gray-darker;
+$body-color:      		$gray-lighter;
 $text-color:      		$gray-lighter;
 
 // Links
 // -------------------------
-$link-color:             darken($white,11%);
+$link-color:              darken($white,11%);
 $link-color-disabled:     darken($link-color,30%);
-$link-color-hover:        $white;
+$link-hover-color:        $white;
 
 // Typography
 // -------------------------
+$headings-color:         darken($white,11%); 
+$abbr-border-color: 	 $gray-light !default;
 
-$font-family-sans-serif:    "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-$font-family-serif:       	Georgia, "Times New Roman", Times, serif;
-$font-family-monospace:     Menlo, Monaco, Consolas, "Courier New", monospace;
-$font-family-base:       	$font-family-sans-serif !default;
+$text-muted: 			 darken($link-color,30%);
 
-$font-size-root: 14px !default;
+$blockquote-small-color:  $gray-light !default;
+$blockquote-border-color: $gray-lighter !default;
 
-$font-size-base: 1rem !default;
-$font-size-lg:   1.25rem !default;
-$font-size-sm:   .875rem !default;
-$font-size-xs:   .75rem !default;
-
-$line-height-base: 1.5 !default;
-
-$font-size-h1: 2.5rem !default;
-$font-size-h2: 2rem !default;
-$font-size-h3: 1.75rem !default;
-$font-size-h4: 1.5rem !default;
-$font-size-h5: 1.25rem !default;
-$font-size-h6: 1rem !default;
-
-$display1-size: 6rem !default;
-$display2-size: 5.5rem !default;
-$display3-size: 4.5rem !default;
-$display4-size: 3.5rem !default;
-
-$display1-weight: 300 !default;
-$display2-weight: 300 !default;
-$display3-weight: 300 !default;
-$display4-weight: 300 !default;
-
-$baseFontSize:          14px;
-$baseFontWeight:		    400;
-$baseFontFamily:        $font-family-sans-serif;
-$baseLineHeight:        20px;
-$altFontFamily:         $font-family-serif;
-$fontWeightSemi:		    600;
-
-$headingsFontFamily:    inherit; // empty to use BS default, $baseFontFamily
-$headingsFontWeight:    400;    // instead of browser default, bold
-$headingsFontStyle:    	normal;
-$headingsColor:         darken($white,11%); // empty to use BS default, $text-color
-$inputText:             $gray-light;
-
-// Component sizing
-// -------------------------
-// Based on 14px font-size and 20px line-height
-
-$font-size-lg:         $baseFontSize * 1.25; // ~18px
-$fontSizeSmall:         $baseFontSize * 0.85; // ~12px
-$fontSizeMini:          $baseFontSize * 0.75; // ~11px
-
-$paddingLarge:          11px 19px; // 44px
-$paddingSmall:          2px 10px;  // 26px
-$paddingMini:           0px 6px;   // 22px
-
-$baseBorderRadius:      3px;
-$borderRadiusLarge:     4px;
-$borderRadiusSmall:     2px;
-
+$hr-border-color: rgba(0,0,0,.1) !default;
 
 // Panel
 // -------------------------
@@ -140,10 +89,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$tableBackground:                   transparent; // overall background-color
-$tableBackgroundAccent:             rgba(100, 100, 100, 0.3); // for striping
-$tableBackgroundHover:              $gray-dark; // for hover
-$tableBorder:                       $gray-dark; // table and cell border
+$table-bg:                    transparent; // overall background-color
+$table-bg-accent:             rgba(100, 100, 100, 0.3); // for striping
+$table-bg-hover:              $gray-dark; // for hover
+$table-border:                $gray-dark; // table and cell border
 
 // Buttons
 // -------------------------
@@ -190,9 +139,10 @@ $heroUnitLeadColor:               inherit;
 $inputBackground:               lighten($gray-dark,5%);
 $inputBorder:                   lighten($gray-dark,5%);
 $inputBorderRadius:             $baseBorderRadius;
+$inputText:              		$gray-light;
 $inputDisabledBackground:       #555;
 $formActionsBackground:         transparent;
-$inputHeight:                   $baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
+$inputHeight:                   $line-height-base + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
 $labelBackground:				$gray-dark;
 
 
@@ -281,8 +231,8 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$warningText:             darken(#c09853, 10%);
-$warningBackground:       $orange;
+$state-warning-text:             darken(#c09853, 10%);
+$state-warning-bg:       $orange;
 
 $errorText:               #b94a48;
 $errorBackground:         $btnDangerBackground;

@@ -7,7 +7,7 @@
 code,
 pre {
   @include font-family-monospace();
-  font-size: $baseFontSize - 2;
+  font-size: $font-size-base - 2;
   background-color: $code-tag-bg;
   color: $text-color;
   border: 1px solid darken($code-tag-bg, 15%);
@@ -25,9 +25,9 @@ code {
 // Blocks of code
 pre {
   display: block;
-  margin: 0 0 $baseLineHeight / 2;
-  font-size: $baseFontSize - 1; // 14px to 13px
-  line-height: $baseLineHeight;
+  margin: 0 0 $line-height-base / 2;
+  font-size: $font-size-base - 1; // 14px to 13px
+  line-height: $line-height-base;
   word-break: break-all;
   word-wrap: break-word;
   white-space: pre;
@@ -36,7 +36,7 @@ pre {
 
   // Make prettyprint styles more spaced out for readability
   &.prettyprint {
-    margin-bottom: $baseLineHeight;
+    margin-bottom: $line-height-base;
   }
 
   // Account for some code outputs that place code tags in pre tags

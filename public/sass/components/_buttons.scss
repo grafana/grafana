@@ -10,8 +10,8 @@
   display: inline-block;
 	padding: 8px 12px;
 	margin-right: 10px;
-  font-size: $baseFontSize;
-  line-height: $baseLineHeight;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
@@ -57,14 +57,14 @@
 
 .btn-small {
 	padding: 2px 10px;
-  font-size: $fontSizeSmall;
+  font-size: $font-size-sm;
 }
 
 .btn-mini {
 	padding: 2px 6px;
 	margin-right: 0;
 	margin-right: 0;
-  font-size: $fontSizeMini;
+  font-size: $font-size-xs;
 }
 
 // Set the backgrounds
