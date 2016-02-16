@@ -1,11 +1,11 @@
 .tight-form {
-  border-top: 1px solid $grafanaTargetBorder;
-  border-left: 1px solid $grafanaTargetBorder;
-  border-right: 1px solid $grafanaTargetBorder;
-  background: $grafanaTargetBackground;
+  border-top: 1px solid $tight-form-border;
+  border-left: 1px solid $tight-form-border;
+  border-right: 1px solid $tight-form-border;
+  background: $tight-form-bg;
 
   &.last {
-    border-bottom: 1px solid $grafanaTargetBorder;
+    border-bottom: 1px solid $tight-form-border;
   }
 
   &.borderless {
@@ -21,7 +21,7 @@
 }
 
 .tight-form-container-no-item-borders {
-  border: 1px solid $grafanaTargetBorder;
+  border: 1px solid $tight-form-border;
   border-bottom: none;
 
   .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
@@ -44,7 +44,7 @@
 }
 
 .tight-form-container {
-  border-bottom: 1px solid $grafanaTargetBorder;
+  border-bottom: 1px solid $tight-form-border;
 }
 
 .tight-form-btn {
@@ -73,16 +73,19 @@
   padding: 8px 7px;
   display: inline-block;
   font-weight: normal;
-  border-right: 1px solid $grafanaTargetSegmentBorder;
-  color: $grafanaTargetColor;
+  border-right: 1px solid $tight-form-border;
   display: inline-block;
+  color: $text-color;
 
   .has-open-function & {
     padding-top: 25px;
   }
 
   .tight-form-disabled & {
-    color: $grafanaTargetColorHide;
+    color: $link-color-disabled;
+    a {
+      color: $link-color-disabled;
+    }
   }
 
   &:hover, &:focus {
@@ -90,7 +93,7 @@
   }
 
   &a:hover {
-    background: $grafanaTargetFuncBackground;
+    background: $tight-form-func-bg;
   }
 
   &.last {
@@ -108,14 +111,8 @@
 }
 
 .tight-form-func {
-  background: $grafanaTargetFuncBackground;
-  > a {
-    color: $grafanaTargetColor;
-  }
-  > a:hover {
-    color: $linkColor;
-  }
-
+  background: $tight-form-func-bg;
+  
   &.show-function-controls {
     padding-top: 5px;
     min-width: 100px;
@@ -134,10 +131,9 @@ input[type=text].tight-form-clear-input {
   padding: 8px 7px;
   border: none;
   margin: 0px;
-  background: transparent;
-  color: $grafanaTargetColor;
+  background: transparent;  
   border-radius: 0;
-  border-right: 1px solid $grafanaTargetSegmentBorder;
+  border-right: 1px solid $tight-form-border;
 }
 
 [type=text],
@@ -146,7 +142,7 @@ input[type=text].tight-form-clear-input {
 [type=password] {
   &.tight-form-input {
     border: none;
-    border-right: 1px solid $grafanaTargetSegmentBorder;
+    border-right: 1px solid $tight-form-border;
     margin: 0px;
     border-radius: 0;
     padding: 8px 6px;
@@ -170,7 +166,7 @@ input[type=checkbox].tight-form-checkbox {
 
 select.tight-form-input {
   border: none;
-  border-right: 1px solid $grafanaTargetSegmentBorder;
+  border-right: 1px solid $tight-form-border;
   margin: 0px;
   border-radius: 0;
   height: 36px;

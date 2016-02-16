@@ -36,7 +36,7 @@
 }
 
 .gf-timepicker-utc {
-  background-color: $grafanaTargetFuncBackground;
+  background-color: $tight-form-func-bg;
   color: $orange;
   font-size: 75%;
   padding: 3px;
@@ -71,7 +71,7 @@
     background-image: none;
     border: none;
     padding: 6px 9px;
-    color: $textColor;
+    color: $text-color;
     &.active span {
       color: $blue;
       font-weight: bold;
@@ -84,5 +84,5 @@
 }
 
 .input-datetime-format {
-  color: $linkColorDisabled
+  color: $link-color-disabled
 }

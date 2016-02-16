@@ -52,7 +52,7 @@
 // Large
 .btn-large {
   padding: 6px 20px;
-  font-size: $fontSizeLarge;
+  font-size: $font-size-lg;
 }
 
 .btn-small {
@@ -92,7 +92,7 @@
 .btn-inverse {
   @include buttonBackground($btnInverseBackground, $btnInverseBackgroundHighlight, $btnInverseText);
   box-shadow: none;
-  border: 1px solid $grafanaTargetFuncHightlight;
+  border: 1px solid $tight-form-func-highlight-bg;
 }
 
 .btn-text {

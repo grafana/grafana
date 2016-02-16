@@ -2,7 +2,7 @@
   margin: 10px 5px;
   background-color: $panel-bg;
   position: relative;
-  border: 1px solid $grafanaTargetFuncBackground;
+  border: 1px solid $tight-form-func-bg;
 }
 
 .gf-box-no-margin {
@@ -19,7 +19,7 @@
   i {
     font-size: 120%;
   }
-  color: $textColor;
+  color: $text-color;
   &:hover {
     color: $white;
   }
@@ -42,9 +42,9 @@
 }
 
 .gf-box-header {
-  border-bottom: 1px solid $grafanaTargetFuncBackground;
+  border-bottom: 1px solid $tight-form-func-bg;
   overflow: hidden;
-  background-color: $grafanaTargetBackground;
+  background-color: $tight-form-bg;
   .tabs {
     float: left;
   }
@@ -57,13 +57,13 @@
   padding-right: 20px;
   padding-left: 10px;
   float: left;
-  color: $linkColor;
+  color: $link-color;
   font-size: 18px;
   font-weight: normal;
   line-height: 38px;
   margin: 0;
   .fa {
     padding: 0 8px 0 5px;
-    color: $textColor;
+    color: $text-color;
   }
 }

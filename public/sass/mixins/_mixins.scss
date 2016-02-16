@@ -78,15 +78,15 @@
 // --------------------------------------------------
 
 @mixin font-family-serif() {
-  font-family: $serifFontFamily;
+  font-family: $font-family-serif;
 }
 
 @mixin font-family-sans-serif() {
-  font-family: $sansFontFamily;
+  font-family: $font-family-sans-serif;
 }
 
 @mixin font-family-monospace() {
-  font-family: $monoFontFamily;
+  font-family: $font-family-monospace;
 }
 
 @mixin font-shorthand($size: $baseFontSize, $weight: normal, $lineHeight: $baseLineHeight) {
@@ -278,8 +278,8 @@
 }
 
 // Gradient Bar Colors for buttons and alerts
-@mixin gradientBar($primaryColor, $secondaryColor, $textColor: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,.25)) {
-  color: $textColor;
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,.25)) {
+  color: $text-color;
   text-shadow: $textShadow;
   @include gradient-vertical($primaryColor, $secondaryColor);
   border-color: $secondaryColor $secondaryColor darken($secondaryColor, 15%);

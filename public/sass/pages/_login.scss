@@ -18,7 +18,7 @@
     width: 125px;
   }
   .icon-gf-grafana_wordmark {
-    color: $linkColor;
+    color: $link-color;
     position: relative;
     top: -90px;
     font-size: 3rem;
@@ -31,7 +31,7 @@
 }
 
 .login-tab-header {
-  background: $grafanaTargetBackground;
+  background: $tight-form-bg;
   text-align: center;
 }
 
@@ -42,14 +42,14 @@
   padding: 10px 10px;
 
   &.active {
-    background: darken($grafanaTargetBackground, 5%);
+    background: darken($tight-form-bg, 5%);
     color: $white;
   }
 
   font-weight: bold;
   display: inline-block;
   width: 170px;
-  color: $textColor;
+  color: $text-color;
 }
 
 .password-strength {
@@ -58,7 +58,7 @@
   overflow: visible;
   white-space: nowrap;
   padding-top: 3px;
-  color: darken($textColor, 20%);
+  color: darken($text-color, 20%);
   border-top: 3px solid $red;
   &.password-strength-ok {
     width: 40%;
@@ -102,7 +102,7 @@
 }
 
 .password-recovery {
-  background: $grafanaTargetBackground;
+  background: $tight-form-bg;
   margin-top: 10px;
   padding: 10px;
   a {
@@ -143,7 +143,7 @@
 
 .invite-box {
   text-align: center;
-  border: 1px solid $grafanaTargetFuncBackground;
+  border: 1px solid $tight-form-func-bg;
 	background-color: $panel-bg;
   width: 800px;
   margin-left: auto;

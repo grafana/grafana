@@ -175,7 +175,7 @@
 
 .graph-legend-series-hidden {
   a {
-    color: $linkColorDisabled;
+    color: $link-color-disabled;
   }
 }
 
@@ -192,7 +192,7 @@
   }
   .close {
     margin-right: 5px;
-    color: $linkColor;
+    color: $link-color;
     opacity: 0.7;
     text-shadow: none;
   }
@@ -286,7 +286,7 @@
 }
 
 .axisLabel {
-  color: $textColor;
+  color: $text-color;
   font-size: $fontSizeSmall;
   position: absolute;
   text-align: center;

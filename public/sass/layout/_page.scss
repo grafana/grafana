@@ -23,7 +23,7 @@
 }
 
 .page-container {
-  background-color: $pageBackground;
+  background-color: $page-bg;
   position: relative;
   padding: 25px 56px 10px 56px;
   max-width: 1060px;
@@ -61,8 +61,8 @@
   h2 {
     margin-left: 15px;
     margin-bottom: 0px;
-    font-size: $fontSizeLarge;
-    color: $textColor;
+    font-size: $font-size-lg;
+    color: $text-color;
     i {
       padding-right: 6px;
     }

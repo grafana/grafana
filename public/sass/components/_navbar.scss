@@ -66,7 +66,7 @@
   margin: 18px 0 6px 5px;
   float: left;
   font-size: 120%;
-  color: $textColor;
+  color: $text-color;
 }
 
 .top-nav-btn {
@@ -75,7 +75,7 @@
   float: left;
   margin: 0;
   font-size: 1.4em;
-  border-right: 1px solid $grafanaTargetBorder;
+  border-right: 1px solid $tight-form-border;
 
   .fa-caret-down {
     font-size: 55%;
@@ -86,12 +86,12 @@
   }
 
   a {
-    color: darken($linkColor, 5%);
+    color: darken($link-color, 5%);
     background-color: $navbarButtonBackground;
     display: inline-block;
     &:hover {
       background: $navbarButtonBackgroundHighlight;
-      color: $linkColor;
+      color: $link-color;
       // border-bottom: 1px solid $blue;
     }
   }
@@ -107,7 +107,7 @@
   }
   .top-nav-logo-background {
     display: inline-block;
-    border: 1px solid $bodyBackground;
+    border: 1px solid $body-bg;
     padding: 4px;
     border-radius: 50%;
     background: $iconContainerBackground;
@@ -171,7 +171,7 @@
   float: left;
   font-size: 17px;
   padding: 18px 10px 10px 13px;
-  color: $linkColor;
+  color: $link-color;
 }
 
 

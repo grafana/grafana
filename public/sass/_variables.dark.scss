@@ -31,66 +31,70 @@ $online:                #10a345;
 $warn:                  #ffc03c;
 $critical:              #ed2e18;
 
-// grafana Variables
-// -------------------------
-$panel-bg: 					$gray-darker;
-$panel-border: 				solid 1px $gray-dark;
-
-$divider-border-color: 		#555; 
-
-// Graphite Target Editor
-$grafanaTargetBorder:         $black;
-$grafanaTargetBackground:     $gray-dark;
-$grafanaTargetColor:          #c8c8c8;
-$grafanaTargetColorHide:      darken(#c8c8c8, 25%);
-$grafanaTargetSegmentBorder:  #050505;
-
-$grafanaTargetFuncBackground: #333;
-$grafanaTargetFuncHightlight: #444;
-
-$grafanaSelectBackground:	$grafanaTargetFuncBackground;
-
-$modalBackground: $black;
-$codeTagBackground: #444;
-
 // Scaffolding
 // -------------------------
-$bodyBackground:  rgb(20,20,20);
-$pageBackground:  $gray-darker;
-$textColor:       $gray-lighter;
+$body-bg:  				rgb(20,20,20);
+$page-bg:  				$gray-darker;
+$text-color:      		$gray-lighter;
 
 // Links
 // -------------------------
-$linkColor:             darken($white,11%);
-$linkColorDisabled:     darken($linkColor,30%);
-$linkColorHover:        $white;
-
+$link-color:             darken($white,11%);
+$link-color-disabled:     darken($link-color,30%);
+$link-color-hover:        $white;
 
 // Typography
 // -------------------------
-$sansFontFamily:        "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-$serifFontFamily:       Georgia, "Times New Roman", Times, serif;
-$monoFontFamily:        Menlo, Monaco, Consolas, "Courier New", monospace;
+
+$font-family-sans-serif:    "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-serif:       	Georgia, "Times New Roman", Times, serif;
+$font-family-monospace:     Menlo, Monaco, Consolas, "Courier New", monospace;
+$font-family-base:       	$font-family-sans-serif !default;
+
+$font-size-root: 14px !default;
+
+$font-size-base: 1rem !default;
+$font-size-lg:   1.25rem !default;
+$font-size-sm:   .875rem !default;
+$font-size-xs:   .75rem !default;
+
+$line-height-base: 1.5 !default;
+
+$font-size-h1: 2.5rem !default;
+$font-size-h2: 2rem !default;
+$font-size-h3: 1.75rem !default;
+$font-size-h4: 1.5rem !default;
+$font-size-h5: 1.25rem !default;
+$font-size-h6: 1rem !default;
+
+$display1-size: 6rem !default;
+$display2-size: 5.5rem !default;
+$display3-size: 4.5rem !default;
+$display4-size: 3.5rem !default;
+
+$display1-weight: 300 !default;
+$display2-weight: 300 !default;
+$display3-weight: 300 !default;
+$display4-weight: 300 !default;
 
 $baseFontSize:          14px;
 $baseFontWeight:		    400;
-$baseFontFamily:        $sansFontFamily;
+$baseFontFamily:        $font-family-sans-serif;
 $baseLineHeight:        20px;
-$altFontFamily:         $serifFontFamily;
+$altFontFamily:         $font-family-serif;
 $fontWeightSemi:		    600;
 
 $headingsFontFamily:    inherit; // empty to use BS default, $baseFontFamily
 $headingsFontWeight:    400;    // instead of browser default, bold
 $headingsFontStyle:    	normal;
-$headingsColor:         darken($white,11%); // empty to use BS default, $textColor
+$headingsColor:         darken($white,11%); // empty to use BS default, $text-color
 $inputText:             $gray-light;
-
 
 // Component sizing
 // -------------------------
 // Based on 14px font-size and 20px line-height
 
-$fontSizeLarge:         $baseFontSize * 1.25; // ~18px
+$font-size-lg:         $baseFontSize * 1.25; // ~18px
 $fontSizeSmall:         $baseFontSize * 0.85; // ~12px
 $fontSizeMini:          $baseFontSize * 0.75; // ~11px
 
@@ -102,13 +106,32 @@ $baseBorderRadius:      3px;
 $borderRadiusLarge:     4px;
 $borderRadiusSmall:     2px;
 
+
+// Panel
+// -------------------------
+$panel-bg: 					$gray-darker;
+$panel-border: 				solid 1px $gray-dark;
+
+$divider-border-color: 		#555; 
+
+// Graphite Target Editor
+$tight-form-border:         #050505;
+$tight-form-bg:     		$gray-dark;
+  
+$tight-form-func-bg: 		#333;
+$tight-form-func-highlight-bg: #444;
+
+$modal-background: $black;
+$code-tag-bg: #444;
+
+
 // Lists
 $grafanaListBackground:  $gray-dark;
 $grafanaListAccent:      lighten($gray-darker, 2%);
 $grafanaListBorderTop:      $gray-dark;
 $grafanaListBorderBottom:   $black;
 $grafanaListHighlight:      #333;
-$grafanaListMainLinkColor: $textColor;
+$grafanaListMainLinkColor: $text-color;
 
 // Scrollbars
 $scrollbarBackground: #3a3a3a;
@@ -146,7 +169,7 @@ $btnDangerBackgroundHighlight:      darken($red, 3%);
 
 $btnInverseBackground:              $gray-dark;
 $btnInverseBackgroundHighlight:     lighten($gray-dark, 1%);
-$btnInverseText:                    $textColor;
+$btnInverseText:                    $link-color;
 $btnInverseBorder:                  #333;
 
 $btnText:              				$gray;
@@ -174,7 +197,7 @@ $labelBackground:				$gray-dark;
 
 
 // Search
-$searchShadow: 0 0 35px 0 $bodyBackground;
+$searchShadow: 0 0 35px 0 $body-bg;
 
 // Dropdowns
 // -------------------------
@@ -183,9 +206,9 @@ $dropdownBorder:                rgba(0,0,0,.2);
 $dropdownDividerTop:            transparent;
 $dropdownDividerBottom:         #444;
 $dropdownDivider:               $dropdownDividerBottom;
-$dropdownTitle:                 $linkColorDisabled;
+$dropdownTitle:                 $link-color-disabled;
 
-$dropdownLinkColor:             $textColor;
+$dropdownLinkColor:             $text-color;
 $dropdownLinkColorHover:        $white;
 $dropdownLinkColorActive:       $white;
 
@@ -209,7 +232,7 @@ $zindexModalBackdrop:     1040;
 $zindexModal:             1050;
 
 // -------------------------
-$placeholderText:         darken($textColor, 25%);
+$placeholderText:         darken($text-color, 25%);
 
 
 // Hr border color
@@ -229,7 +252,7 @@ $wellBackground:                  #131517;
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       $gray-dark;
 $navbarBackground:                $gray-dark;
-$navbarBorder:                    1px solid $bodyBackground;
+$navbarBorder:                    1px solid $body-bg;
 
 $navbarText:                      $gray-light;
 $navbarLinkColor:                 $gray-light;
@@ -237,8 +260,8 @@ $navbarLinkColorHover:            $white;
 $navbarLinkColorActive:           $navbarLinkColorHover;
 $navbarLinkBackgroundHover:       transparent;
 $navbarLinkBackgroundActive:      $navbarBackground;
-$navbarBrandColor:                $linkColor;
-$navbarDropdownShadow:            inset 0px 4px 10px -4px $bodyBackground;
+$navbarBrandColor:                $link-color;
+$navbarDropdownShadow:            inset 0px 4px 10px -4px $body-bg;
 
 $navbarButtonBackground:          lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
@@ -248,11 +271,11 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 $sideMenuTopShadow:          $navbarDropdownShadow;
 $sideMenuBackground:         $gray-dark;
 $sideMenuBackgroundHighlight: lighten($gray-dark, 4%);
-$sideMenuShadow: 0 0 35px 0 $bodyBackground;
+$sideMenuShadow: 0 0 35px 0 $body-bg;
 
 // Pagination
 // -------------------------
-$paginationBackground:                $bodyBackground;
+$paginationBackground:                $body-bg;
 $paginationBorder:                    transparent;
 $paginationActiveBackground:          $blue;
 
@@ -276,7 +299,7 @@ $tooltipColor:            $white;
 $tooltipBackground:       rgb(58, 57, 57);
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $linkColor;
+$tooltipLinkColor:        $link-color;
 
 $popoverBackground:       $heroUnitBackground;
 $popoverArrowWidth:       10px;
