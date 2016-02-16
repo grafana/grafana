@@ -16,7 +16,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 			cmd.ShowHelp()
 			os.Exit(1)
 		} else {
-			log.Info("Restart grafana after installing plugins . <service grafana-server restart>\n")
+			log.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 		}
 	}
 }
@@ -24,7 +24,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var Commands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "installs a plugin",
+		Usage:  "install <plugin name>",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
@@ -32,7 +32,7 @@ var Commands = []cli.Command{
 		Action: runCommand(listremoteCommand),
 	}, {
 		Name:   "upgrade",
-		Usage:  "upgrades one plugin",
+		Usage:  "upgrade <plugin name>",
 		Action: runCommand(upgradeCommand),
 	}, {
 		Name:   "upgrade-all",
@@ -44,7 +44,7 @@ var Commands = []cli.Command{
 		Action: runCommand(lsCommand),
 	}, {
 		Name:   "remove",
-		Usage:  "removes installed plugin",
+		Usage:  "remove <plugin name>",
 		Action: runCommand(removeCommand),
 	},
 }
