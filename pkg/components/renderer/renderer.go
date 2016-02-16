@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -21,7 +22,13 @@ type RenderOpts struct {
 
 func RenderToPng(params *RenderOpts) (string, error) {
 	log.Info("PhantomRenderer::renderToPng url %v", params.Url)
-	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "phantomjs"))
+
+	var executable = "phantomjs"
+	if runtime.GOOS == "windows" {
+		executable = executable + ".exe"
+	}
+
+	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
