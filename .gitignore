@@ -34,3 +34,5 @@ fig.yml
 profile.cov
 /grafana
 .notouch
+/pkg/cmd/grafana-cli/grafana-cli
+/pkg/cmd/grafana-server/grafana-server
