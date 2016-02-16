@@ -6,17 +6,17 @@
 // -------------------------
 $black:                 #000;
 $gray:                  #bbb;
-$gray-dark:              #262626;
-$gray-darker:            #1f1f1f;
+$gray-dark:             #262626;
+$gray-darker:           #1f1f1f;
 
-$gray-light:             #ADAFAE;
-$gray-lighter:           #BBBFC2;
+$gray-light:            #ADAFAE;
+$gray-lighter:          #BBBFC2;
 $white:                 #fff;
 
 // Accent colors
 // -------------------------
 $blue:                  #33B5E5;
-$blue-dark:              #005f81;
+$blue-dark:             #005f81;
 $green:                 #669900;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
@@ -33,9 +33,10 @@ $critical:              #ed2e18;
 
 // grafana Variables
 // -------------------------
-$grafanaPanelBackground: 	$gray-darker;
-$grafanaPanelBorder: 		  solid 1px $gray-dark;
-$grafanaTriggerBorder:		solid 1px #555;
+$panel-bg: 					$gray-darker;
+$panel-border: 				solid 1px $gray-dark;
+
+$divider-border-color: 		#555; 
 
 // Graphite Target Editor
 $grafanaTargetBorder:         $black;

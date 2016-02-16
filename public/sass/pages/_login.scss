@@ -27,7 +27,7 @@
 }
 
 .login-inner-box {
-  background: $grafanaPanelBackground;
+  background: $panel-bg;
 }
 
 .login-tab-header {
@@ -144,7 +144,7 @@
 .invite-box {
   text-align: center;
   border: 1px solid $grafanaTargetFuncBackground;
-	background-color: $grafanaPanelBackground;
+	background-color: $panel-bg;
   width: 800px;
   margin-left: auto;
   margin-right: auto;

@@ -1,7 +1,7 @@
 
 .app-edit-logo-box {
   padding: 1.2rem;
-  background: $grafanaPanelBackground;
+  background: $panel-bg;
   text-align: center;
   img {
     max-width: 7rem;
@@ -14,7 +14,7 @@
   margin: 0 0 0 2rem;
 
   li {
-    background: $grafanaPanelBackground;
+    background: $panel-bg;
     margin-top: 4px;
     padding: 0.2rem 1rem;
   }

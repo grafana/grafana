@@ -7,8 +7,8 @@
   width: 700px;
   box-shadow: $searchShadow;
   padding: 10px;
-  background-color: $grafanaPanelBackground;
-  border: $grafanaPanelBorder;
+  background-color: $panel-bg;
+  border: $panel-border;
 
   .label-tag {
     margin-left: 6px;

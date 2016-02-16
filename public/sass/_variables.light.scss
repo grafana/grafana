@@ -10,11 +10,11 @@
 // Grays
 // -------------------------
 $black:                 #000;
-$gray-darker:            lighten(#000, 11.5%); // #222
-$gray-dark:              lighten(#000, 20%);   // #333
+$gray-darker:           lighten(#000, 11.5%); // #222
+$gray-dark:             lighten(#000, 20%);   // #333
 $gray:                  lighten(#000, 33.5%); // #555
-$gray-light:             lighten(#000, 60%);   // #999
-$gray-lighter:           lighten(#000, 97.5%); // #eee
+$gray-light:            lighten(#000, 60%);   // #999
+$gray-lighter:          lighten(#000, 97.5%); // #eee
 $white:                 #fff;
 
 
@@ -38,9 +38,10 @@ $critical:              #EC2128;
 
 // grafana Variables
 // -------------------------
-$grafanaPanelBackground: 	$gray-lighter;
-$grafanaPanelBorder: 	  	solid 1px #ddd;
-$grafanaTriggerBorder:		solid 1px $gray-light;
+$panel-bg: 	$gray-lighter;
+$panel-border: 	  	solid 1px #ddd;
+
+$divider-border-color: 		$gray-light;
 
 // Scaffolding
 // -------------------------
@@ -178,7 +179,7 @@ $labelBackground:				#f8f8f8;
 
 // Sidemenu
 // -------------------------
-$sideMenuBackground:            $grafanaPanelBackground;
+$sideMenuBackground:            $panel-bg;
 $sideMenuBackgroundHighlight:   darken($sideMenuBackground, 4%);
 
 // search

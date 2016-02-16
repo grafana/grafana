@@ -23,7 +23,7 @@
   position: fixed;
   z-index: $zindexModal;
   width: 100%;
-	background-color: $grafanaPanelBackground;
+	background-color: $panel-bg;
   @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
   @include background-clip(padding-box);
   outline: none;
@@ -38,7 +38,7 @@
 
 .modal-header {
   padding: 9px 15px;
-	border-bottom: 1px solid $grafanaPanelBackground;
+	border-bottom: 1px solid $panel-bg;
 }
 
 // Body (where all modal content resides)
@@ -55,8 +55,8 @@
 // Footer (for actions)
 .modal-footer {
   padding: 14px 15px 15px;
-	border-top: 1px solid $grafanaPanelBackground;
-  background-color: $grafanaPanelBackground;
+	border-top: 1px solid $panel-bg;
+  background-color: $panel-bg;
   text-align: right; // right align buttons
   @include clearfix(); // clear it in case folks use .pull-* classes on buttons
 }
