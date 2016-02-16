@@ -25,14 +25,14 @@ legend {
   margin-bottom: $baseLineHeight;
   font-size: $baseFontSize * 1.5;
   line-height: $baseLineHeight * 2;
-  color: $grayDark;
+  color: $gray-dark;
   border: 0;
   border-bottom: 1px solid #e5e5e5;
 
   // Small
   small {
     font-size: $baseLineHeight * .75;
-    color: $grayLight;
+    color: $gray-light;
   }
 }
 

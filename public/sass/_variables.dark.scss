@@ -6,17 +6,17 @@
 // -------------------------
 $black:                 #000;
 $gray:                  #bbb;
-$grayDark:              #262626;
-$grayDarker:            #1f1f1f;
+$gray-dark:              #262626;
+$gray-darker:            #1f1f1f;
 
-$grayLight:             #ADAFAE;
-$grayLighter:           #BBBFC2;
+$gray-light:             #ADAFAE;
+$gray-lighter:           #BBBFC2;
 $white:                 #fff;
 
 // Accent colors
 // -------------------------
 $blue:                  #33B5E5;
-$blueDark:              #005f81;
+$blue-dark:              #005f81;
 $green:                 #669900;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
@@ -33,13 +33,13 @@ $critical:              #ed2e18;
 
 // grafana Variables
 // -------------------------
-$grafanaPanelBackground: 	$grayDarker;
-$grafanaPanelBorder: 		  solid 1px $grayDark;
+$grafanaPanelBackground: 	$gray-darker;
+$grafanaPanelBorder: 		  solid 1px $gray-dark;
 $grafanaTriggerBorder:		solid 1px #555;
 
 // Graphite Target Editor
 $grafanaTargetBorder:         $black;
-$grafanaTargetBackground:     $grayDark;
+$grafanaTargetBackground:     $gray-dark;
 $grafanaTargetColor:          #c8c8c8;
 $grafanaTargetColorHide:      darken(#c8c8c8, 25%);
 $grafanaTargetSegmentBorder:  #050505;
@@ -55,8 +55,8 @@ $codeTagBackground: #444;
 // Scaffolding
 // -------------------------
 $bodyBackground:  rgb(20,20,20);
-$pageBackground:  $grayDarker;
-$textColor:       $grayLighter;
+$pageBackground:  $gray-darker;
+$textColor:       $gray-lighter;
 
 // Links
 // -------------------------
@@ -82,7 +82,7 @@ $headingsFontFamily:    inherit; // empty to use BS default, $baseFontFamily
 $headingsFontWeight:    400;    // instead of browser default, bold
 $headingsFontStyle:    	normal;
 $headingsColor:         darken($white,11%); // empty to use BS default, $textColor
-$inputText:             $grayLight;
+$inputText:             $gray-light;
 
 
 // Component sizing
@@ -102,9 +102,9 @@ $borderRadiusLarge:     4px;
 $borderRadiusSmall:     2px;
 
 // Lists
-$grafanaListBackground:  $grayDark;
-$grafanaListAccent:      lighten($grayDarker, 2%);
-$grafanaListBorderTop:      $grayDark;
+$grafanaListBackground:  $gray-dark;
+$grafanaListAccent:      lighten($gray-darker, 2%);
+$grafanaListBorderTop:      $gray-dark;
 $grafanaListBorderBottom:   $black;
 $grafanaListHighlight:      #333;
 $grafanaListMainLinkColor: $textColor;
@@ -118,18 +118,18 @@ $scrollbarBorder: black;
 // -------------------------
 $tableBackground:                   transparent; // overall background-color
 $tableBackgroundAccent:             rgba(100, 100, 100, 0.3); // for striping
-$tableBackgroundHover:              $grayDark; // for hover
-$tableBorder:                       $grayDark; // table and cell border
+$tableBackgroundHover:              $gray-dark; // for hover
+$tableBorder:                       $gray-dark; // table and cell border
 
 // Buttons
 // -------------------------
-$btnBackground:                     $grayDark;
-$btnBackgroundHighlight:            darken($grayLight, 15%);
-$btnBackgroundShadow:            	darken($grayLight, 15%);
+$btnBackground:                     $gray-dark;
+$btnBackgroundHighlight:            darken($gray-light, 15%);
+$btnBackgroundShadow:            	darken($gray-light, 15%);
 $btnBorder:                         #bbb;
 
-$btnPrimaryBackground:              $blueDark;
-$btnPrimaryBackgroundHighlight:     lighten($blueDark, 5%);
+$btnPrimaryBackground:              $blue-dark;
+$btnPrimaryBackgroundHighlight:     lighten($blue-dark, 5%);
 
 $btnInfoBackground:                 lighten($purple, 3%);
 $btnInfoBackgroundHighlight:        darken($purple, 3%);
@@ -143,8 +143,8 @@ $btnWarningBackgroundHighlight:     darken($orange, 3%);
 $btnDangerBackground:               lighten($red, 3%);
 $btnDangerBackgroundHighlight:      darken($red, 3%);
 
-$btnInverseBackground:              $grayDark;
-$btnInverseBackgroundHighlight:     lighten($grayDark, 1%);
+$btnInverseBackground:              $gray-dark;
+$btnInverseBackgroundHighlight:     lighten($gray-dark, 1%);
 $btnInverseText:                    $textColor;
 $btnInverseBorder:                  #333;
 
@@ -157,19 +157,19 @@ $iconContainerShadow:				        0 0 14px 2px rgba(255,255,255, 0.05);
 
 // Hero unit
 // -------------------------
-$heroUnitBackground:              $grayDark;
+$heroUnitBackground:              $gray-dark;
 $heroUnitHeadingColor:            inherit;
 $heroUnitLeadColor:               inherit;
 
 // Forms
 // -------------------------
-$inputBackground:               lighten($grayDark,5%);
-$inputBorder:                   lighten($grayDark,5%);
+$inputBackground:               lighten($gray-dark,5%);
+$inputBorder:                   lighten($gray-dark,5%);
 $inputBorderRadius:             $baseBorderRadius;
 $inputDisabledBackground:       #555;
 $formActionsBackground:         transparent;
 $inputHeight:                   $baseLineHeight + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-$labelBackground:				$grayDark;
+$labelBackground:				$gray-dark;
 
 
 // Search
@@ -188,8 +188,8 @@ $dropdownLinkColor:             $textColor;
 $dropdownLinkColorHover:        $white;
 $dropdownLinkColorActive:       $white;
 
-$dropdownLinkBackgroundActive:  $blueDark;
-$dropdownLinkBackgroundHover:   $blueDark;
+$dropdownLinkBackgroundActive:  $blue-dark;
+$dropdownLinkBackgroundHover:   $blue-dark;
 
 
 // COMPONENT VARIABLES
@@ -213,7 +213,7 @@ $placeholderText:         darken($textColor, 25%);
 
 // Hr border color
 // -------------------------
-$hrBorder:                $grayDark;
+$hrBorder:                $gray-dark;
 
 
 // Horizontal forms & lists
@@ -226,12 +226,12 @@ $horizontalComponentOffset:       180px;
 $wellBackground:                  #131517;
 
 $navbarHeight:                    52px;
-$navbarBackgroundHighlight:       $grayDark;
-$navbarBackground:                $grayDark;
+$navbarBackgroundHighlight:       $gray-dark;
+$navbarBackground:                $gray-dark;
 $navbarBorder:                    1px solid $bodyBackground;
 
-$navbarText:                      $grayLight;
-$navbarLinkColor:                 $grayLight;
+$navbarText:                      $gray-light;
+$navbarLinkColor:                 $gray-light;
 $navbarLinkColorHover:            $white;
 $navbarLinkColorActive:           $navbarLinkColorHover;
 $navbarLinkBackgroundHover:       transparent;
@@ -245,8 +245,8 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 // Sidemenu
 // -------------------------
 $sideMenuTopShadow:          $navbarDropdownShadow;
-$sideMenuBackground:         $grayDark;
-$sideMenuBackgroundHighlight: lighten($grayDark, 4%);
+$sideMenuBackground:         $gray-dark;
+$sideMenuBackgroundHighlight: lighten($gray-dark, 4%);
 $sideMenuShadow: 0 0 35px 0 $bodyBackground;
 
 // Pagination
@@ -266,7 +266,7 @@ $errorBackground:         $btnDangerBackground;
 $successText:             #468847;
 $successBackground:       $btnSuccessBackground;
 
-$infoText:                $blueDark;
+$infoText:                $blue-dark;
 $infoBackground:          $btnInfoBackground;
 
 // Tooltips and popovers

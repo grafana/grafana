@@ -106,7 +106,7 @@
   margin-top: 10px;
   padding: 10px;
   a {
-    color: $grayLight;
+    color: $gray-light;
   }
 }
 
@@ -121,8 +121,8 @@
     border-bottom: 1px solid $gray;
 
     .login-divider-text {
-      background-color: $grayDarker;
-      color: $grayLight;
+      background-color: $gray-darker;
+      color: $gray-light;
       padding: 0 10px;
     }
   }

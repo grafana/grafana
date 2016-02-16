@@ -19,7 +19,7 @@
 .nav > li > a:hover,
 .nav > li > a:focus {
   text-decoration: none;
-  background-color: $grayLighter;
+  background-color: $gray-lighter;
 }
 
 // Redeclare pull classes because of specifity
@@ -34,7 +34,7 @@
   font-size: 11px;
   font-weight: bold;
   line-height: $baseLineHeight;
-  color: $grayLight;
+  color: $gray-light;
   text-shadow: 0 1px 0 rgba(255,255,255,.5);
   text-transform: uppercase;
 }
@@ -114,7 +114,7 @@
   @include border-radius(4px 4px 0 0);
   &:hover,
   &:focus {
-    border-color: $grayLighter $grayLighter #ddd;
+    border-color: $gray-lighter $gray-lighter #ddd;
   }
 }
 // Active state, and it's :hover/:focus to override normal :hover/:focus
@@ -172,8 +172,8 @@
 .nav > li.dropdown.open.active > a:hover,
 .nav > li.dropdown.open.active > a:focus {
   color: $white;
-  background-color: $grayLight;
-  border-color: $grayLight;
+  background-color: $gray-light;
+  border-color: $gray-light;
 }
 .nav li.dropdown.open .caret,
 .nav li.dropdown.open.active .caret,
@@ -187,7 +187,7 @@
 // Dropdowns in stacked tabs
 .tabs-stacked .open > a:hover,
 .tabs-stacked .open > a:focus {
-  border-color: $grayLight;
+  border-color: $gray-light;
 }
 
 // Show/hide tabbable areas
