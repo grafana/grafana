@@ -78,11 +78,11 @@ input[type="tel"],
 input[type="color"],
 .uneditable-input {
   display: inline-block;
-  height: $line-height-base;
+  height: $input-height;
+  line-height: $input-line-height;
   padding: 4px 6px;
   font-size: $font-size-base;
-  line-height: $line-height-base;
-  color: $inputText;
+  color: $input-color;
   vertical-align: top;
 }
 
@@ -115,8 +115,8 @@ input[type="search"],
 input[type="tel"],
 input[type="color"],
 .uneditable-input {
-  background-color: $inputBackground;
-  border: 1px solid $inputBorder;
+  background-color: $input-bg;
+  border: 1px solid $input-border-color;
   @include box-shadow(inset 0 1px 1px rgba(0,0,0,.075));
   @include transition("border linear .2s, box-shadow linear .2s");
 
@@ -149,15 +149,15 @@ input[type="checkbox"] {
 // Set the height of select and file controls to match text inputs
 select,
 input[type="file"] {
-  height: $inputHeight; /* In IE7, the height of the select element cannot be changed by height, only font-size */
-  line-height: $inputHeight;
+  height: $input-height; /* In IE7, the height of the select element cannot be changed by height, only font-size */
+  line-height: $input-height;
 }
 
 // Make select elements obey height by applying a border
 select {
   width: 220px; // default input width + 10px of padding that doesn't get applied
-  border: 1px solid $inputBorder;
-  background-color: $inputBackground; // Chrome on Linux and Mobile Safari need background-color
+  border: 1px solid $input-border-color;
+  background-color: $input-bg; // Chrome on Linux and Mobile Safari need background-color
 }
 
 // Make multiple select elements height not fixed
@@ -182,7 +182,6 @@ input,
 textarea {
   @include placeholder();
 }
-
 
 // INPUT SIZES
 // -----------
@@ -209,7 +208,7 @@ input[readonly],
 select[readonly],
 textarea[readonly] {
   cursor: not-allowed;
-  background-color: $inputDisabledBackground;
+  background-color: $input-bg-disabled;
 }
 
 // Explicitly reset the colors here
@@ -286,5 +285,43 @@ input[type="checkbox"]:checked+label {
     padding: 5px 6px;
     height: 100%;
     box-sizing: border-box;
+  }
+}
+
+// Form control feedback states
+//
+// Apply contextual and semantic states to individual form controls.
+
+.form-control-success,
+.form-control-warning,
+.form-control-danger {
+  padding-right: ($input-padding-x * 3);
+  background-repeat: no-repeat;
+  background-position: center right ($input-height / 4);
+  background-size: ($input-height / 2) ($input-height / 2);
+}
+
+// Form validation states
+.has-success {
+  @include form-control-validation($brand-success);
+
+  .form-control-success {
+    background-image: $form-icon-success;
+  }
+}
+
+.has-warning {
+  @include form-control-validation($brand-warning);
+
+  .form-control-warning {
+    background-image: $form-icon-warning;
+  }
+}
+
+.has-danger {
+  @include form-control-validation($brand-danger);
+
+  .form-control-danger {
+    background-image: $form-icon-danger;
   }
 }

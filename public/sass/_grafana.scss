@@ -5,6 +5,7 @@
 @import "mixins/grid";
 @import "mixins/grid-framework";
 @import "mixins/hover";
+@import "mixins/forms";
 
 
 // BASE
@@ -38,7 +39,6 @@
 @import "components/sidemenu";
 @import "components/navbar";
 @import "components/gfbox";
-@import "components/pagination";
 @import "components/tabs";
 @import "components/timepicker";
 @import "components/filter-controls";

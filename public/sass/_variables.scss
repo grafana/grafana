@@ -106,11 +106,11 @@ $font-size-xs:   .75rem !default;
 $line-height-base: 1.5 !default;
 $font-weight-semi-bold:       600;
 
-$font-size-h1: 2.5rem !default;
-$font-size-h2: 2rem !default;
-$font-size-h3: 1.75rem !default;
-$font-size-h4: 1.5rem !default;
-$font-size-h5: 1.25rem !default;
+$font-size-h1: 2.0rem !default;
+$font-size-h2: 1.75rem !default;
+$font-size-h3: 1.50rem !default;
+$font-size-h4: 1.30rem !default;
+$font-size-h5: 1.20rem !default;
 $font-size-h6: 1rem !default;
 
 $display1-size: 6rem !default;
@@ -143,14 +143,19 @@ $nested-kbd-font-weight: bold !default;
 
 $list-inline-padding: 5px !default;
 
+// Components
+//
+// Define common padding and border radius sizes and more.
 
-$paddingLarge:          11px 19px; // 44px
-$paddingSmall:          2px 10px;  // 26px
-$paddingMini:           0px 6px;   // 22px
+$line-height-lg:         (4 / 3) !default;
+$line-height-sm:         1.5 !default;
 
-$baseBorderRadius:      3px;
-$borderRadiusLarge:     4px;
-$borderRadiusSmall:     2px;
+$border-radius:          0.0rem !default;
+$border-radius-lg:       0.3rem !default;
+$border-radius-sm:       0.2rem !default;
+
+$caret-width:            .3em !default;
+$caret-width-lg:         $caret-width !default;
 
 // Links
 // -------------------------
@@ -163,3 +168,31 @@ $link-hover-decoration:   none !default;
 
 $table-cell-padding:            .75rem !default;
 $table-sm-cell-padding:         .3rem !default;
+
+// Forms
+$input-padding-x:                .75rem !default;
+$input-padding-y:                .5rem !default;
+$input-line-height:              1.25 !default;
+
+$input-border-radius:            $border-radius !default;
+$input-border-radius-lg:         $border-radius-lg !default;
+$input-border-radius-sm:         $border-radius-sm !default;
+
+$input-padding-x-sm:             .5rem !default;
+$input-padding-y-sm:             .25rem !default;
+
+$input-padding-x-lg:             1.5rem !default;
+$input-padding-y-lg:             .75rem !default;
+
+$input-height:                   (($font-size-base * $line-height-base) + ($input-padding-y * 2)) !default;
+$input-height-lg:                (($font-size-lg * $line-height-lg) + ($input-padding-y-lg * 2)) !default;
+$input-height-sm:                (($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)) !default;
+
+$form-group-margin-bottom:       $spacer-y !default;
+
+$cursor-disabled:                not-allowed !default;
+
+// Form validation icons
+$form-icon-success: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%235cb85c' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3E%3C/svg%3E") !default;
+$form-icon-warning: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%23f0ad4e' d='M4.4 5.324h-.8v-2.46h.8zm0 1.42h-.8V5.89h.8zM3.76.63L.04 7.075c-.115.2.016.425.26.426h7.397c.242 0 .372-.226.258-.426C6.726 4.924 5.47 2.79 4.253.63c-.113-.174-.39-.174-.494 0z'/%3E%3C/svg%3E") !default;
+$form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23d9534f' viewBox='-2 -2 7 7'%3E%3Cpath stroke='%23d9534f' d='M0 0l3 3m0-3L0 3'/%3E%3Ccircle r='.5'/%3E%3Ccircle cx='3' r='.5'/%3E%3Ccircle cy='3' r='.5'/%3E%3Ccircle cx='3' cy='3' r='.5'/%3E%3C/svg%3E") !default;

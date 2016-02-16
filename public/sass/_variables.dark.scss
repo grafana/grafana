@@ -25,6 +25,11 @@ $pink:                  #FF4444;
 $purple:                #9933CC;
 $variable:              #32D1DF;
 
+$brand-primary:         $blue-dark;
+$brand-success:         $green;
+$brand-warning:         $orange;
+$brand-danger:          $red;
+
 // Status colors
 // -------------------------
 $online:                #10a345;
@@ -46,9 +51,8 @@ $link-hover-color:        $white;
 
 // Typography
 // -------------------------
-$headings-color:         darken($white,11%); 
+$headings-color:         darken($white,11%);
 $abbr-border-color: 	 $gray-light !default;
-
 $text-muted: 			 darken($link-color,30%);
 
 $blockquote-small-color:  $gray-light !default;
@@ -56,31 +60,34 @@ $blockquote-border-color: $gray-lighter !default;
 
 $hr-border-color: rgba(0,0,0,.1) !default;
 
+// Components
+$component-active-color: #fff !default;
+$component-active-bg:    $brand-primary !default;
+
 // Panel
 // -------------------------
 $panel-bg: 					$gray-darker;
 $panel-border: 				solid 1px $gray-dark;
 
-$divider-border-color: 		#555; 
+$divider-border-color: 		#555;
 
 // Graphite Target Editor
 $tight-form-border:         #050505;
 $tight-form-bg:     		$gray-dark;
-  
+
 $tight-form-func-bg: 		#333;
 $tight-form-func-highlight-bg: #444;
 
 $modal-background: $black;
 $code-tag-bg: #444;
 
-
 // Lists
-$grafanaListBackground:  $gray-dark;
-$grafanaListAccent:      lighten($gray-darker, 2%);
+$grafanaListBackground:  	$gray-dark;
+$grafanaListAccent:      	lighten($gray-darker, 2%);
 $grafanaListBorderTop:      $gray-dark;
 $grafanaListBorderBottom:   $black;
 $grafanaListHighlight:      #333;
-$grafanaListMainLinkColor: $text-color;
+$grafanaListMainLinkColor:  $text-color;
 
 // Scrollbars
 $scrollbarBackground: #3a3a3a;
@@ -128,22 +135,19 @@ $iconContainerBackgroundHighlight:	lighten($black, 5%);
 $iconContainerBorder:				        1px solid transparent;
 $iconContainerShadow:				        0 0 14px 2px rgba(255,255,255, 0.05);
 
-// Hero unit
-// -------------------------
-$heroUnitBackground:              $gray-dark;
-$heroUnitHeadingColor:            inherit;
-$heroUnitLeadColor:               inherit;
-
 // Forms
 // -------------------------
-$inputBackground:               lighten($gray-dark,5%);
-$inputBorder:                   lighten($gray-dark,5%);
-$inputBorderRadius:             $baseBorderRadius;
-$inputText:              		$gray-light;
-$inputDisabledBackground:       #555;
-$formActionsBackground:         transparent;
-$inputHeight:                   $line-height-base + 10px; // base line-height + 8px vertical padding + 2px top/bottom border
-$labelBackground:				$gray-dark;
+$input-bg:                       lighten($gray-dark,5%);
+$input-bg-disabled:              #555;
+
+$input-color:                    $gray-light;
+$input-border-color:             lighten($gray-dark,5%);
+$input-btn-border-width:         1px;
+$input-box-shadow:               inset 0 1px 1px rgba(0,0,0,.075) !default;
+$input-border-focus:             $input-border-color !default;
+$input-box-shadow-focus:         rgba(102,175,233,.6) !default;
+$input-color-placeholder:        #999 !default;
+$input-label-bg:				 $gray-dark;
 
 
 // Search
@@ -151,7 +155,7 @@ $searchShadow: 0 0 35px 0 $body-bg;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground:            $heroUnitBackground;
+$dropdownBackground:            $gray-dark;
 $dropdownBorder:                rgba(0,0,0,.2);
 $dropdownDividerTop:            transparent;
 $dropdownDividerBottom:         #444;
@@ -183,11 +187,6 @@ $zindexModal:             1050;
 
 // -------------------------
 $placeholderText:         darken($text-color, 25%);
-
-
-// Hr border color
-// -------------------------
-$hrBorder:                $gray-dark;
 
 
 // Horizontal forms & lists
@@ -251,7 +250,7 @@ $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
 
-$popoverBackground:       $heroUnitBackground;
+$popoverBackground:       $dropdownBackground;
 $popoverArrowWidth:       10px;
 $popoverArrowColor:       $popoverBackground;
 $popoverTitleBackground:  $popoverBackground;
@@ -262,38 +261,3 @@ $popoverArrowOuterColor:  rgba(0,0,0,.25);
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
-
-// GRID
-// --------------------------------------------------
-
-
-// Default 940px grid
-// -------------------------
-$gridColumns:             12;
-$gridColumnWidth:         60px;
-$gridGutterWidth:         20px;
-$gridRowWidth:            ($gridColumns * $gridColumnWidth) + ($gridGutterWidth * ($gridColumns - 1));
-
-// 1200px min
-$gridColumnWidth1200:     70px;
-$gridGutterWidth1200:     30px;
-$gridRowWidth1200:        ($gridColumns * $gridColumnWidth1200) + ($gridGutterWidth1200 * ($gridColumns - 1));
-
-// 768px-979px
-$gridColumnWidth768:      42px;
-$gridGutterWidth768:      20px;
-$gridRowWidth768:         ($gridColumns * $gridColumnWidth768) + ($gridGutterWidth768 * ($gridColumns - 1));
-
-
-// Fluid grid
-// -------------------------
-$fluidGridColumnWidth:    percentage($gridColumnWidth/$gridRowWidth);
-$fluidGridGutterWidth:    percentage($gridGutterWidth/$gridRowWidth);
-
-// 1200px min
-$fluidGridColumnWidth1200:     percentage($gridColumnWidth1200/$gridRowWidth1200);
-$fluidGridGutterWidth1200:     percentage($gridGutterWidth1200/$gridRowWidth1200);
-
-// 768px-979px
-$fluidGridColumnWidth768:      percentage($gridColumnWidth768/$gridRowWidth768);
-$fluidGridGutterWidth768:      percentage($gridGutterWidth768/$gridRowWidth768);

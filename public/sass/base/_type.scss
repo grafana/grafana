@@ -194,14 +194,6 @@ dd {
 // MISC
 // ----
 
-// Horizontal rules
-hr {
-  margin: $line-height-base 0;
-  border: 0;
-  border-top: 1px solid $hrBorder;
-  border-bottom: 1px solid $white;
-}
-
 // Abbreviations and acronyms
 abbr[title],
 // Added data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
