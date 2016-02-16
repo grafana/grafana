@@ -149,7 +149,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	var loader PluginLoader
 	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
-		return errors.New("Unkown plugin type " + pluginCommon.Type)
+		return errors.New("Unknown plugin type " + pluginCommon.Type)
 	} else {
 		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}
