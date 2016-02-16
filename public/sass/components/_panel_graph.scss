@@ -224,7 +224,7 @@
 
   .graph-tooltip-time {
     text-align: center;
-    font-weight: $fontWeightSemi;
+    font-weight: $font-weight-semi-bold;
     position: relative;
     top: -3px;
   }
@@ -287,7 +287,7 @@
 
 .axisLabel {
   color: $text-color;
-  font-size: $fontSizeSmall;
+  font-size: $font-size-sm;
   position: absolute;
   text-align: center;
   font-size: 12px;

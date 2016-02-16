@@ -1,5 +1,48 @@
 
 
+// Options
+//
+// Quickly modify global styling by enabling or disabling optional features.
+
+$enable-flex:               false !default;
+$enable-rounded:            true !default;
+$enable-shadows:            false !default;
+$enable-gradients:          false !default;
+$enable-transitions:        false !default;
+$enable-hover-media-query:  false !default;
+$enable-grid-classes:       true !default;
+$enable-print-styles:       true !default;
+
+
+// Spacing
+//
+// Control the default styling of most Bootstrap elements by modifying these
+// variables. Mostly focused on spacing.
+
+$spacer:   1rem !default;
+$spacer-x: $spacer !default;
+$spacer-y: $spacer !default;
+$spacers: (
+  0: (
+    x: 0,
+    y: 0
+  ),
+  1: (
+    x: $spacer-x,
+    y: $spacer-y
+  ),
+  2: (
+    x: ($spacer-x * 1.5),
+    y: ($spacer-y * 1.5)
+  ),
+  3: (
+    x: ($spacer-x * 3),
+    y: ($spacer-y * 3)
+  )
+) !default;
+$border-width: 1px !default;
+
+
 // Grid breakpoints
 //
 // Define the minimum and maximum dimensions at which your layout will change,
@@ -44,3 +87,79 @@ $form-sizes: (
   xxxl: 400px
 ) !default;
 
+
+// Typography
+// -------------------------
+
+$font-family-sans-serif:    "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-serif:         Georgia, "Times New Roman", Times, serif;
+$font-family-monospace:     Menlo, Monaco, Consolas, "Courier New", monospace;
+$font-family-base:        $font-family-sans-serif !default;
+
+$font-size-root: 14px !default;
+
+$font-size-base: 1rem !default;
+$font-size-lg:   1.25rem !default;
+$font-size-sm:   .875rem !default;
+$font-size-xs:   .75rem !default;
+
+$line-height-base: 1.5 !default;
+$font-weight-semi-bold:       600;
+
+$font-size-h1: 2.5rem !default;
+$font-size-h2: 2rem !default;
+$font-size-h3: 1.75rem !default;
+$font-size-h4: 1.5rem !default;
+$font-size-h5: 1.25rem !default;
+$font-size-h6: 1rem !default;
+
+$display1-size: 6rem !default;
+$display2-size: 5.5rem !default;
+$display3-size: 4.5rem !default;
+$display4-size: 3.5rem !default;
+
+$display1-weight: 400 !default;
+$display2-weight: 400 !default;
+$display3-weight: 400 !default;
+$display4-weight: 400 !default;
+
+$lead-font-size:   1.25rem !default;
+$lead-font-weight: 300 !default;
+
+$headings-margin-bottom: ($spacer / 2) !default;
+$headings-font-family:   inherit !default;
+$headings-font-weight:   400 !default;
+$headings-line-height:   1.1 !default;
+
+$blockquote-font-size:    ($font-size-base * 1.25) !default;
+$blockquote-border-width: .25rem !default;
+
+$hr-border-width: $border-width !default;
+
+$dt-font-weight: bold !default;
+
+$kbd-box-shadow:         inset 0 -.1rem 0 rgba(0,0,0,.25) !default;
+$nested-kbd-font-weight: bold !default;
+
+$list-inline-padding: 5px !default;
+
+
+$paddingLarge:          11px 19px; // 44px
+$paddingSmall:          2px 10px;  // 26px
+$paddingMini:           0px 6px;   // 22px
+
+$baseBorderRadius:      3px;
+$borderRadiusLarge:     4px;
+$borderRadiusSmall:     2px;
+
+// Links
+// -------------------------
+$link-decoration:         none !default;
+$link-hover-decoration:   none !default;
+
+// Tables
+//
+// Customizes the `.table` component with basic values, each used across all table variations.
+
+$table-cell-padding:            .75rem !default;
+$table-sm-cell-padding:         .3rem !default;

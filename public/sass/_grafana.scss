@@ -4,10 +4,12 @@
 @import "mixins/breakpoints";
 @import "mixins/grid";
 @import "mixins/grid-framework";
+@import "mixins/hover";
+
 
 // BASE
 @import "base/normalize";
-@import "base/base";
+@import "base/reboot";
 @import "base/type";
 @import "base/forms";
 @import "base/fonts";
@@ -44,7 +46,6 @@
 @import "components/filter-table";
 @import "components/scrollbar";
 @import "components/old_stuff";
-@import "components/navbar";
 @import "components/popovers";
 @import "components/alerts";
 @import "components/typeahead";

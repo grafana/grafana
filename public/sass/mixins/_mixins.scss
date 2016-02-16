@@ -89,23 +89,23 @@
   font-family: $font-family-monospace;
 }
 
-@mixin font-shorthand($size: $baseFontSize, $weight: normal, $lineHeight: $baseLineHeight) {
+@mixin font-shorthand($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
   font-size: $size;
   font-weight: $weight;
   line-height: $lineHeight;
 }
 
-@mixin font-serif($size: $baseFontSize, $weight: normal, $lineHeight: $baseLineHeight) {
+@mixin font-serif($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
   @include font-family-serif();
   @include font-shorthand($size, $weight, $lineHeight);
 }
 
-@mixin font-sans-serif($size: $baseFontSize, $weight: normal, $lineHeight: $baseLineHeight) {
+@mixin font-sans-serif($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
   @include font-family-sans-serif();
   @include font-shorthand($size, $weight, $lineHeight);
 }
 
-@mixin monospace($size: $baseFontSize, $weight: normal, $lineHeight: $baseLineHeight) {
+@mixin monospace($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
   @include font-family-monospace;
   @include font-shorthand($size, $weight, $lineHeight);
 }

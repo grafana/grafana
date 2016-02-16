@@ -8,7 +8,7 @@
 
 .nav {
   margin-left: 0;
-  margin-bottom: $baseLineHeight;
+  margin-bottom: $line-height-base;
   list-style: none;
 }
 
@@ -33,7 +33,7 @@
   padding: 3px 15px;
   font-size: 11px;
   font-weight: bold;
-  line-height: $baseLineHeight;
+  line-height: $line-height-base;
   color: $gray-light;
   text-shadow: 0 1px 0 rgba(255,255,255,.5);
   text-transform: uppercase;
@@ -109,7 +109,7 @@
 .nav-tabs > li > a {
   padding-top: 8px;
   padding-bottom: 8px;
-  line-height: $baseLineHeight;
+  line-height: $line-height-base;
   border: 1px solid transparent;
   @include border-radius(4px 4px 0 0);
   &:hover,
@@ -139,8 +139,8 @@
 }
 .nav .dropdown-toggle:hover .caret,
 .nav .dropdown-toggle:focus .caret {
-  border-top-color: $link-color-hover;
-  border-bottom-color: $link-color-hover;
+  border-top-color: $link-hover-color;
+  border-bottom-color: $link-hover-color;
 }
 /* move down carets for tabs */
 .nav-tabs .dropdown-toggle .caret {

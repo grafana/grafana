@@ -96,7 +96,7 @@
   // Block level the page header small tag for readability
   .page-header h1 small {
     display: block;
-    line-height: $baseLineHeight;
+    line-height: $line-height-base;
   }
 
   // Update checkboxes for iOS

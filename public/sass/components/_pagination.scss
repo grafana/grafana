@@ -15,7 +15,7 @@
 .pagination ul > li > span {
   float: left; // Collapse white-space
   padding: 4px 12px;
-  line-height: $baseLineHeight;
+  line-height: $line-height-base;
   text-decoration: none;
   background-color: $paginationBackground;
   border: 1px solid $paginationBorder;
@@ -100,7 +100,7 @@
   ul > li > a,
   ul > li > span {
     padding: $paddingSmall;
-    font-size: $fontSizeSmall;
+    font-size: $font-size-sm;
   }
 }
 // Mini
@@ -108,6 +108,6 @@
   ul > li > a,
   ul > li > span {
     padding: $paddingMini;
-    font-size: $fontSizeMini;
+    font-size: $font-size-xs;
   }
 }
