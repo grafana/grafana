@@ -1,7 +1,8 @@
 
-<h3>Http settings</h3>
 
 <div class="gf-form-group">
+	<h3>Http settings</h3>
+
 	<div class="gf-form">
 		<span class="gf-form-label gf-size-xs">Url</span>
 		<input class="gf-form-input gf-size-max-xxl" type="text" ng-model='current.url' placeholder="http://my.server.com:8080" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
@@ -13,7 +14,6 @@
 		</span>
 		<select class="gf-form-input gf-size-auto" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
 	</div>
-	<br>
 
 	<div class="gf-form">
 		<span class="gf-form-label gf-size-xs">

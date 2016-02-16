@@ -1,64 +1,38 @@
 <datasource-http-settings current="ctrl.current">
 </datasource-http-settings>
 
-<h4>Elasticsearch details</h4>
+<div class="gf-form-group">
+	<h3>Elasticsearch details</h3>
 
-<div class="tight-form">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 144px">
-			Index name
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.database' placeholder="" required></input>
-		</li>
-		<li class="tight-form-item">
-			Pattern
-		</li>
-		<li>
-			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
-</div>
-<div class="tight-form">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 144px">
-			Time field name
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-xlarge" ng-model='ctrl.current.jsonData.timeField' placeholder="" required ng-init=""></input>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
-</div>
-<div class="tight-form last">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 144px">
-			Version
-		</li>
-		<li>
-			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
+	<div class="gf-form-inline">
+		<div class="gf-form gf-size-max-xxxl">
+			<span class="gf-form-label gf-size-md">Index name</span>
+			<input class="gf-form-input" type="text" ng-model='ctrl.current.database' placeholder="" required></input>
+		</div>
+
+		<div class="gf-form gf-size-xl">
+			<span class="gf-form-label gf-size-md">Pattern</span>
+			<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
+		</div>
+	</div>
+
+	<div class="gf-form gf-size-max-xxxl">
+		<span class="gf-form-label gf-size-md">Time field name</span>
+		<input class="gf-form-input" type="text"  ng-model='ctrl.current.jsonData.timeField' placeholder="" required ng-init=""></input>
+	</div>
+
+	<div class="gf-form">
+		<span class="gf-form-label gf-size-md">Version</span>
+		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
+	</div>
+
 </div>
 
-<br>
+<div class="gf-form-group">
+	<h4>Default query settings</h4>
 
-<h4>Default query settings</h4>
-
-<div class="tight-form last">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 200px">
-			Group by time interval
-		</li>
-		<li>
-			<input type="text" class="input-medium tight-form-input input-xlarge" ng-model="ctrl.current.jsonData.timeInterval"
-			spellcheck='false' placeholder="example: >10s">
-		</li>
-		<li class="tight-form-item">
-			<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
+	<div class="gf-form">
+		<span class="gf-form-label">Group by time interval</span>
+		<input class="gf-form-input gf-size-max-md" type="text" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="example: >10s">
+	</div>
 </div>
