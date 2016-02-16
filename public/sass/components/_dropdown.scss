@@ -42,7 +42,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: $zindexDropdown;
+  z-index: $zindex-dropdown;
   display: none; // none by default, but block on "open" of the menu
   float: left;
   min-width: 140px;
@@ -139,7 +139,7 @@
   right: 0;
   bottom: 0;
   top: 0;
-  z-index: $zindexDropdown - 10;
+  z-index: $zindex-dropdown - 10;
 }
 
 // Right aligned dropdowns
@@ -239,5 +239,5 @@
 // ---------
 .typeahead {
   z-index: 1051;
-  margin-top: 2px; // give it some space to breathe  
+  margin-top: 2px; // give it some space to breathe
 }
