@@ -58,7 +58,7 @@ function (angular, _, moment, dateMath) {
         var result = [];
 
         _.each(allResponse, function(response, index) {
-          var metrics = transformMetricData(response, options.targets[index]);
+          var metrics = transformMetricData(response, options.targets[index], options.scopedVars);
           result = result.concat(metrics);
         });
 
@@ -302,18 +302,18 @@ function (angular, _, moment, dateMath) {
       return this.defaultRegion;
     };
 
-    function transformMetricData(md, options) {
+    function transformMetricData(md, options, scopedVars) {
       var aliasRegex = /\{\{(.+?)\}\}/g;
       var aliasPattern = options.alias || '{{metric}}_{{stat}}';
       var aliasData = {
-        region: templateSrv.replace(options.region),
-        namespace: templateSrv.replace(options.namespace),
-        metric: templateSrv.replace(options.metricName),
+        region: templateSrv.replace(options.region, scopedVars),
+        namespace: templateSrv.replace(options.namespace, scopedVars),
+        metric: templateSrv.replace(options.metricName, scopedVars),
       };
       var aliasDimensions = {};
       _.each(_.keys(options.dimensions), function(origKey) {
-        var key = templateSrv.replace(origKey);
-        var value = templateSrv.replace(options.dimensions[origKey]);
+        var key = templateSrv.replace(origKey, scopedVars);
+        var value = templateSrv.replace(options.dimensions[origKey], scopedVars);
         aliasDimensions[key] = value;
       });
       _.extend(aliasData, aliasDimensions);
