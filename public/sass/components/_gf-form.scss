@@ -1,4 +1,4 @@
-$gf-form-margin: 4px;
+$gf-form-margin: 0.4rem;
 
 .gf-form {
   margin-top: $gf-form-margin;
@@ -31,14 +31,14 @@ $gf-form-margin: 4px;
   flex-wrap: wrap;
   align-content: flex-start;
 
-  .gf-form {
+  .gf-form-flex {
     flex-grow: 1;
   }
 }
 
 .gf-form-button-row {
-  margin-top: 20px;
-  margin-bottom: 10px;
+  margin-top: $spacer * 2;
+  margin-bottom: $spacer;
 }
 
 .gf-form-label {
@@ -61,6 +61,7 @@ $gf-form-margin: 4px;
   .gf-size-#{$size} { width: $value; }
 
   .gf-size-max-#{$size} {
+    flex-grow: 1;
     max-width: $value;
   }
 }
