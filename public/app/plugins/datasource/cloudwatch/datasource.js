@@ -310,7 +310,13 @@ function (angular, _, moment, dateMath) {
         namespace: templateSrv.replace(options.namespace),
         metric: templateSrv.replace(options.metricName),
       };
-      _.extend(aliasData, options.dimensions);
+      var aliasDimensions = {};
+      _.each(_.keys(options.dimensions), function(origKey) {
+        var key = templateSrv.replace(origKey);
+        var value = templateSrv.replace(options.dimensions[origKey]);
+        aliasDimensions[key] = value;
+      });
+      _.extend(aliasData, aliasDimensions);
 
       var periodMs = options.period * 1000;
       return _.map(options.statistics, function(stat) {
