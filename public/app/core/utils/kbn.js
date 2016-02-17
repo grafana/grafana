@@ -358,14 +358,17 @@ function($, _) {
   kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
 
   // Energy
-  kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
-  kbn.valueFormats.kwatt  = kbn.formatBuilders.decimalSIPrefix('W', 1);
-  kbn.valueFormats.watth  = kbn.formatBuilders.decimalSIPrefix('Wh');
-  kbn.valueFormats.kwatth = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
-  kbn.valueFormats.joule  = kbn.formatBuilders.decimalSIPrefix('J');
-  kbn.valueFormats.ev     = kbn.formatBuilders.decimalSIPrefix('eV');
-  kbn.valueFormats.amp    = kbn.formatBuilders.decimalSIPrefix('A');
-  kbn.valueFormats.volt   = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
+  kbn.valueFormats.kwatt        = kbn.formatBuilders.decimalSIPrefix('W', 1);
+  kbn.valueFormats.voltamp      = kbn.formatBuilders.decimalSIPrefix('VA');
+  kbn.valueFormats.kvoltamp     = kbn.formatBuilders.decimalSIPrefix('VA', 1);
+  kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
+  kbn.valueFormats.watth        = kbn.formatBuilders.decimalSIPrefix('Wh');
+  kbn.valueFormats.kwatth       = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
+  kbn.valueFormats.joule        = kbn.formatBuilders.decimalSIPrefix('J');
+  kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
+  kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -636,14 +639,17 @@ function($, _) {
       {
         text: 'energy',
         submenu: [
-          {text: 'watt (W)',            value: 'watt'  },
-          {text: 'kilowatt (kW)',       value: 'kwatt' },
-          {text: 'watt-hour (Wh)',      value: 'watth' },
-          {text: 'kilowatt-hour (kWh)', value: 'kwatth'},
-          {text: 'joule (J)',           value: 'joule' },
-          {text: 'electron volt (eV)',  value: 'ev'    },
-          {text: 'Ampere (A)',          value: 'amp'   },
-          {text: 'Volt (V)',            value: 'volt'  },
+          {text: 'watt (W)',                   value: 'watt'        },
+          {text: 'kilowatt (kW)',              value: 'kwatt'       },
+          {text: 'volt-ampere (VA)',           value: 'voltamp'     },
+          {text: 'kilovolt-ampere (kVA)',      value: 'kvoltamp'    },
+          {text: 'volt-ampere reactive (var)', value: 'voltampreact'},
+          {text: 'watt-hour (Wh)',             value: 'watth'       },
+          {text: 'kilowatt-hour (kWh)',        value: 'kwatth'      },
+          {text: 'joule (J)',                  value: 'joule'       },
+          {text: 'electron volt (eV)',         value: 'ev'          },
+          {text: 'Ampere (A)',                 value: 'amp'         },
+          {text: 'Volt (V)',                   value: 'volt'        },
         ]
       },
       {
