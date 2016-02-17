@@ -126,6 +126,11 @@ var (
 	LdapEnabled    bool
 	LdapConfigFile string
 
+	// Keystone
+	KeystoneEnabled bool
+	KeystoneURL string
+	KeystoneV3 bool
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -466,6 +471,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+
+	keystone := Cfg.Section("auth.keystone")
+	KeystoneEnabled = keystone.Key("enabled").MustBool(false)
+	KeystoneURL = keystone.Key("auth_url").String()
+	KeystoneV3 = keystone.Key("v3").MustBool(false)
 
 	readSessionConfig()
 	readSmtpSettings()

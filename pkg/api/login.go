@@ -106,6 +106,10 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 
 	loginUserWithUser(user, c)
 
+	if setting.KeystoneEnabled {
+		c.Session.Set(middleware.SESS_KEY_PASSWORD, cmd.Password)
+	}
+
 	result := map[string]interface{}{
 		"message": "Logged in",
 	}
