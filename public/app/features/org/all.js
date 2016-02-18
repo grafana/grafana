@@ -1,5 +1,5 @@
 define([
-  './orgUsersCtrl',
+  './org_users_ctrl',
   './newOrgCtrl',
   './userInviteCtrl',
   './orgApiKeysCtrl',
