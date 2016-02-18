@@ -14,7 +14,7 @@
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
-  border: none;
+  border: $input-btn-border-width solid transparent;
 
   @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
 
@@ -90,6 +90,25 @@
   @include buttonBackground($btnInverseBackground, $btnInverseBackgroundHighlight, $btnInverseText);
   box-shadow: none;
   border: 1px solid $tight-form-func-highlight-bg;
+}
+
+.btn-outline-primary {
+  @include button-outline-variant($btnPrimaryBackground);
+}
+.btn-outline-secondary {
+  @include button-outline-variant($btnInverseBackground);
+}
+.btn-outline-info {
+  @include button-outline-variant($btnInfoBackground);
+}
+.btn-outline-success {
+  @include button-outline-variant($btnSuccessBackground);
+}
+.btn-outline-warning {
+  @include button-outline-variant($btnWarningBackground);
+}
+.btn-outline-danger {
+  @include button-outline-variant($btnDangerBackground);
 }
 
 .btn-text {
