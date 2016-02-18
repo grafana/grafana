@@ -5,8 +5,6 @@
   // gradientBar will set the background to a pleasing blend of these, to support IE<=9
   @include gradientBar($startColor, $endColor, $text-color, $textShadow);
 
-  box-shadow: inset 0 -4px rgba(0,0,0,0.3);
-
   // in these cases the gradient won't cover the background, so we override
   &:hover, &:focus, &:active, &.active, &.disabled, &[disabled] {
     color: $text-color;
@@ -20,6 +18,8 @@
 @mixin button-size($padding-y, $padding-x, $font-size, $border-radius) {
   padding: $padding-y $padding-x;
   font-size: $font-size;
+  box-shadow: inset 0 (-$padding-y/2) rgba(0,0,0,0.2);
+
   @include border-radius($border-radius);
 }
 
