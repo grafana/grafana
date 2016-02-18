@@ -9,7 +9,7 @@
   &:hover, &:focus, &:active, &.active, &.disabled, &[disabled] {
     color: $text-color;
     background-image: none;
-    background-color: darken($endColor, 2%);
+    background-color: $startColor;
   }
 }
 
@@ -18,7 +18,7 @@
 @mixin button-size($padding-y, $padding-x, $font-size, $border-radius) {
   padding: $padding-y $padding-x;
   font-size: $font-size;
-  box-shadow: inset 0 (-$padding-y/2) rgba(0,0,0,0.2);
+  //box-shadow: inset 0 (-$padding-y/3) rgba(0,0,0,0.15);
 
   @include border-radius($border-radius);
 }

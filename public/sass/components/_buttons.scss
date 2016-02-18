@@ -67,7 +67,7 @@
 // Set the backgrounds
 // -------------------------
 .btn-primary {
-  @include buttonBackground($btnPrimaryBackground, $btnPrimaryBackgroundHighlight);
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
 }
 // Warning appears are orange
 .btn-warning {
@@ -93,7 +93,7 @@
 }
 
 .btn-outline-primary {
-  @include button-outline-variant($btnPrimaryBackground);
+  @include button-outline-variant($btn-primary-bg);
 }
 .btn-outline-secondary {
   @include button-outline-variant($btnInverseBackground);

@@ -20,14 +20,14 @@ $blue-dark:             #005f81;
 $green:                 #669900;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
-$orange:                #FF8800;
 $pink:                  #FF4444;
 $purple:                #9933CC;
 $variable:              #32D1DF;
+$orange:                #FF8800;
 
-$brand-primary:         $blue-dark;
+$brand-primary:         $orange;
 $brand-success:         $green;
-$brand-warning:         $orange;
+$brand-warning:         $brand-primary;
 $brand-danger:          $red;
 
 // Status colors
@@ -103,21 +103,18 @@ $table-border:                $gray-dark; // table and cell border
 
 // Buttons
 // -------------------------
-$btnBackground:                     $gray-dark;
-$btnBackgroundHighlight:            darken($gray-light, 15%);
-$btnBorder:                         #bbb;
 
-$btnPrimaryBackground:              $blue-dark;
-$btnPrimaryBackgroundHighlight:     lighten($blue-dark, 5%);
+$btn-primary-bg:              $brand-primary;
+$btn-primary-bg-hl:           lighten($brand-primary, 8%);
 
 $btnInfoBackground:                 lighten($purple, 3%);
 $btnInfoBackgroundHighlight:        darken($purple, 3%);
 
-$btnSuccessBackground:              lighten($green, 3%);
 $btnSuccessBackgroundHighlight:     darken($green, 3%);
+$btnSuccessBackground:              lighten($green, 3%);
 
-$btnWarningBackground:              lighten($orange, 3%);
-$btnWarningBackgroundHighlight:     darken($orange, 3%);
+$btnWarningBackground:              $brand-warning;
+$btnWarningBackgroundHighlight:     lighten($brand-warning, 8%);
 
 $btnDangerBackground:               lighten($red, 3%);
 $btnDangerBackgroundHighlight:      darken($red, 3%);
@@ -216,8 +213,8 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:             darken(#c09853, 10%);
-$state-warning-bg:       $orange;
+$state-warning-text:      darken(#c09853, 10%);
+$state-warning-bg:        $brand-warning;
 
 $errorText:               #b94a48;
 $errorBackground:         $btnDangerBackground;
