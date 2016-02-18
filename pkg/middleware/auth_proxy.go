@@ -20,7 +20,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	query := getSignedInUserQueryForProxyAuth(proxyHeaderValue)
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
-			ctx.Handle(500, "Failed find user specifed in auth proxy header", err)
+			ctx.Handle(500, "Failed to find user specified in auth proxy header", err)
 			return true
 		}
 
