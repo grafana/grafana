@@ -186,6 +186,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/global-alerts', {
     templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
   })
+  .when('/styleguide', {
+    controller: 'StyleGuideCtrl',
+    controllerAs: 'ctrl',
+    templateUrl: 'public/app/features/styleguide/styleguide.html',
+  })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',
     controller: 'ErrorCtrl'
