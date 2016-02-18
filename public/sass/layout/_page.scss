@@ -33,17 +33,18 @@
 }
 
 .page-header {
-  padding: $spacer 0 $spacer * 2.5;
+  padding: $spacer 0;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
-  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
-  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
-  display: -ms-flexbox;      /* TWEENER - IE 10 */
-  display: -webkit-flex;     /* NEW - Chrome */
   flex-wrap: wrap-reverse;
-  background: transparent url(../img/page_header_line.png) no-repeat left 60px;
+  border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
+  border-image-slice: 1;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-bottom: 4px solid transparent;
 
   h1 {
     font-style: italic;
