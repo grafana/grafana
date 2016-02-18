@@ -4,15 +4,11 @@
 }
 
 .dashboard-container {
-  padding: 5px 5px;
+  padding: $spacer / 2;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .main-view {
-  // background-image: url(/img/grafana_pattern.png);
-  // background-position: 100% -550px;
-  // background-repeat: no-repeat;
   height: 100%;
 }
 
@@ -33,7 +29,7 @@
 }
 
 .page-header {
-  padding: $spacer 0;
+  padding: $spacer 0 $spacer/2 0;
 
   display: flex;
   justify-content: flex-end;
@@ -59,7 +55,7 @@
 .page-heading {
   font-size: 1.25rem;
   margin-top: 0;
-  margin-bottom: $spacer * 0.6;
+  margin-bottom: $spacer * 0.7;
 }
 
 .admin-page {
