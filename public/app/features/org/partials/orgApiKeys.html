@@ -2,54 +2,49 @@
 </navbar>
 
 <div class="page-container">
-	<div class="page-wide">
-		<h1>
-			API Keys
-		</h1>
-
-		<form name="addTokenrForm" class="form-inline norm-form last">
-			<ul class="norm-form-list">
-				<li class="norm-form-item" style="width: 100px">
-					Add a key
-				</li>
-				<li>
-					<input type="text" class="input-xlarge norm-form-input" ng-model='token.name' placeholder="Name"></input>
-				</li>
-				<li class="norm-form-item">
-					Role
-				</li>
-				<li>
-					<select class="input-small norm-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
-				</li>
-				</ul>
-				<button class="btn btn-success" style="margin-left:15px; vertical-algin:middle;" ng-click="addToken()">Add</button>
-
-				<div class="clearfix"></div>
-
-		</form>
-
-		<table class="filter-table">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Role</th>
-					<th style="width: 34px;"></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="t in tokens">
-					<td>{{t.name}}</td>
-					<td>{{t.role}}</td>
-					<td>
-						<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+	<div class="page-header">
+		<h1>API Keys</h1>
 	</div>
 
+	<h3 class="page-heading">Add new</h3>
+	<form name="addTokenForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxl">
+				<span class="gf-form-label">Add a key</span>
+				<input type="text" class="gf-form-input" ng-model='token.name' placeholder="Name"></input>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">Role</span>
+				<select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-success" ng-click="addToken()">Add</button>
+			</div>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Existing Keys</h3>
+	<table class="filter-table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th style="width: 34px;"></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="t in tokens">
+				<td>{{t.name}}</td>
+				<td>{{t.role}}</td>
+				<td>
+					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
 </div>
+
 
 

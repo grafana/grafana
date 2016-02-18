@@ -1,7 +1,7 @@
 $gf-form-margin: 0.4rem;
 
 .gf-form {
-  margin-top: $gf-form-margin;
+  margin-bottom: $gf-form-margin;
   margin-right: $gf-form-margin;
   display: flex;
   flex-direction: row;
@@ -19,10 +19,7 @@ $gf-form-margin: 0.4rem;
 }
 
 .gf-form-group {
-  h3, h2, h4 {
-    margin-top: $spacer * 2;
-    margin-bottom: $spacer * 1;
-  }
+  margin-bottom: $spacer * 1.5;
 }
 
 .gf-form-inline {
@@ -37,8 +34,10 @@ $gf-form-margin: 0.4rem;
 }
 
 .gf-form-button-row {
-  margin-top: $spacer * 2;
-  margin-bottom: $spacer;
+  margin-top: $spacer * 1.5;
+  a, button {
+    margin-right: $spacer;
+  }
 }
 
 .gf-form-label {
@@ -114,3 +113,9 @@ $gf-form-margin: 0.4rem;
   &.gf-size-auto { width: auto; }
 }
 
+.gf-form-btn {
+  padding: $input-padding-y $input-padding-x;
+  line-height: $input-line-height;
+  flex-shrink: 0;
+  flex-grow: 0;
+}

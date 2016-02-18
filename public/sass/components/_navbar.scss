@@ -8,7 +8,7 @@
 
 .navbar-inner {
   min-height: $navbarHeight;
-  padding-right: 20px;
+  padding-right: $spacer;
   background-color: $navbarBackground;
   border-bottom: $navbarBorder;
   @include clearfix();
@@ -18,11 +18,6 @@
   position: relative;
   left: 0;
   float: left;
-  margin: 0 10px 0 0;
-}
-
-.nav {
-  display: block;
 }
 
 .navbar .nav.pull-right {
@@ -174,5 +169,4 @@
   padding: 18px 10px 10px 13px;
   color: $link-color;
 }
-
 

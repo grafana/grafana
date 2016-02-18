@@ -8,41 +8,43 @@
 // Core
 .btn {
   display: inline-block;
-	padding: 8px 12px;
-	margin-right: 10px;
+  font-weight: $btn-font-weight;
+  line-height: $btn-line-height;
   font-size: $font-size-base;
-  line-height: $line-height-base;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
   border: none;
 
-  @include buttonBackground($btnBackground, $btnBackgroundHighlight,  $gray-dark, 0 1px 1px rgba(255,255,255,.75));
-  @include box-shadow("inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05)");
+  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
 
-  // Hover/focus state
-  &:hover,
-  &:focus {
+  &,
+  &:active,
+  &.active {
+    &:focus,
+    &.focus {
+      @include tab-focus();
+    }
+  }
+
+  @include hover-focus {
+    text-decoration: none;
+  }
+  &.focus {
     text-decoration: none;
   }
 
-  // Focus state for keyboard and accessibility
-  &:focus {
-    @include tab-focus();
-  }
-
-  // Active state
-  &.active,
-  &:active {
+  &:active,
+  &.active {
     background-image: none;
+    outline: 0;
   }
 
-  // Disabled state
   &.disabled,
-  &[disabled] {
-    cursor: default;
-    background-image: none;
-    @include opacity(65);
+  &:disabled {
+    cursor: $cursor-disabled;
+    opacity: .65;
+    @include box-shadow(none);
   }
 }
 
@@ -51,20 +53,15 @@
 
 // Large
 .btn-large {
-  padding: 6px 20px;
-  font-size: $font-size-lg;
+  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
 }
 
 .btn-small {
-	padding: 2px 10px;
-  font-size: $font-size-sm;
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
 }
 
 .btn-mini {
-	padding: 2px 6px;
-	margin-right: 0;
-	margin-right: 0;
-  font-size: $font-size-xs;
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
 }
 
 // Set the backgrounds
