@@ -38,23 +38,3 @@
 }
 
 
-// Colors
-// Only give background-color difference to links (and to simplify, we don't qualifty with `a` but [href] attribute)
-.label,
-.badge {
-  // Important (red)
-  &-important         { background-color: $errorText; }
-  &-important[href]   { background-color: darken($errorText, 10%); }
-  // Warnings (orange)
-  &-warning           { background-color: $orange; }
-  &-warning[href]     { background-color: darken($orange, 10%); }
-  // Success (green)
-  &-success           { background-color: $successText; }
-  &-success[href]     { background-color: darken($successText, 10%); }
-  // Info (turquoise)
-  &-info              { background-color: $infoText; }
-  &-info[href]        { background-color: darken($infoText, 10%); }
-  // Inverse (black)
-  &-inverse           { background-color: $gray-dark; }
-  &-inverse[href]     { background-color: darken($gray-dark, 10%); }
-}

@@ -15,13 +15,35 @@
 		</a>
 	</div>
 
+	<tabset>
+		<tab heading="Colors">
+			<ul>
+				<li class="style-guide-color-card" ng-repeat="color in ctrl.colors" style="background-color: {{color.value}}">
+					<strong>${{color.name}}</strong>
+					<em>{{color.value}}</em>
+				</li>
+			</ul>
+		</tab>
+		<tab heading="Buttons">
 
-	<h3 class="page-heading">Colors</h3>
-	<ul>
-		<li class="style-guide-color-card" ng-repeat="color in ctrl.colors" style="background-color: {{color.value}}">
-			<strong>${{color.name}}</strong>
-			<em>{{color.value}}</strong>
-		</li>
-	</ul>
+			<div class="style-guide-button-list p-a-2">
+				<button class="btn btn-primary">btn-primary</button>
+				<button class="btn btn-info">btn-info</button>
+				<button class="btn btn-inverse">btn-inverse</button>
+				<button class="btn btn-success">btn-success</button>
+				<button class="btn btn-warning">btn-warning</button>
+				<button class="btn btn-danger">btn-danger</button>
+			</div>
+
+
+			<div class="style-guide-button-list p-a-2">
+				<button class="btn btn-primary btn-small">btn-small</button>
+				<button class="btn btn-success btn-large">btn-large</button>
+			</div>
+		</tab>
+		<tab heading="Forms">
+		</tab>
+	</tabset>
 
 </div>
+

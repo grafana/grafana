@@ -23,7 +23,7 @@ $white:                 #fff;
 // Accent colors
 // -------------------------
 $blue:             	   	#2AB2E4;
-$blue-dark:              #75CAEB;
+$blue-dark:             #75CAEB;
 $green:                 #28B62C;
 $red:                   #FF4136;
 $yellow:                #FF851B;
@@ -32,7 +32,7 @@ $pink:                  #E671B8;
 $purple:                #9954BB;
 $variable:              #2AB2E4;
 
-$brand-primary:         $blue-dark;
+$brand-primary:         $orange;
 $brand-success:         $green;
 $brand-warning:         $orange;
 $brand-danger:          $red;
@@ -124,8 +124,8 @@ $btnBackground:                     $gray-lighter;
 $btnBackgroundHighlight:            darken($gray-lighter, 15%);
 $btnBorder:                         #bbb;
 
-$btnPrimaryBackground:              lighten($blue, 3%);
-$btnPrimaryBackgroundHighlight:     darken($blue, 3%);
+$btn-primary-bg:                    $brand-primary;
+$btn-primary-bg-hl:                 lighten($brand-primary, 10%);
 
 $btnInfoBackground:                 lighten($purple, 3%);
 $btnInfoBackgroundHighlight:        darken($purple, 3%);
