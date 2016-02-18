@@ -10,4 +10,5 @@ define([
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
   './profile/selectOrgCtrl',
+  './styleguide/styleguide',
 ], function () {});
