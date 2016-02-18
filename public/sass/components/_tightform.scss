@@ -71,6 +71,7 @@
 
 .tight-form-item {
   padding: 8px 7px;
+  box-sizing: content-box;
   display: inline-block;
   font-weight: normal;
   border-right: 1px solid $tight-form-border;
