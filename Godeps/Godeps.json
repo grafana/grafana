@@ -70,8 +70,17 @@
 			"Rev": "72a68649ba712ee7c4b5b4a943a626bcd7d90eb8"
 		},
 		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-187-gc31a797",
+			"Rev": "c31a7975863e7810c92e2e288a9ab074f9a88f29"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "2df174808ee097f90d259e432cc04442cf60be21"
+		},
+		{
+			"ImportPath": "github.com/franela/goreq",
+			"Rev": "3ddeded65be21dacb5a2e2d0b95af9ff6862a2b5"
 		},
 		{
 			"ImportPath": "github.com/go-ini/ini",
@@ -115,8 +124,16 @@
 			"Rev": "f56113384f2c63dfe4cd8e768e349f1c35122b58"
 		},
 		{
+			"ImportPath": "github.com/gopherjs/gopherjs/js",
+			"Rev": "14d893dca2e4adb93a5ccc9494040acc0821cd8d"
+		},
+		{
 			"ImportPath": "github.com/gosimple/slug",
 			"Rev": "8d258463b4459f161f51d6a357edacd3eef9d663"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-version",
+			"Rev": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38"
 		},
 		{
 			"ImportPath": "github.com/jmespath/go-jmespath",
