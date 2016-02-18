@@ -36,8 +36,8 @@
   padding: $spacer 0;
 
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
+  align-items: flex-end;
   flex-wrap: wrap-reverse;
   border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
   border-image-slice: 1;
@@ -48,6 +48,10 @@
 
   h1 {
     font-style: italic;
+    flex-grow: 1;
+  }
+  button, a {
+    margin-left: $spacer;
   }
   margin-bottom: 2rem;
 }
