@@ -8,11 +8,9 @@
 			<span class="gf-form-label gf-size-xs">Span</span>
 			<select class="gf-form-input gf-size-auto" ng-model="ctrl.panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
 		</div>
-		<div class="gf-form gf-size-max-lg">
-			<span class="gf-form-label">Height</span>
-			<input type="text" class="gf-form-input" ng-model='ctrl.panel.height' placeholder="100px"></input>
-		</div>
-		<div class="gf-form">
+		<div class="gf-form gf-size-max-xxl">
+			<span class="gf-form-label gf-size-sm">Height</span>
+			<input type="text" class="gf-form-input gf-size-max-xs" ng-model='ctrl.panel.height' placeholder="100px"></input>
 			<editor-checkbox text="Transparent" model="ctrl.panel.transparent"></editor-checkbox>
 		</div>
 	</div>
