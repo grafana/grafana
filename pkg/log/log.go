@@ -35,6 +35,15 @@ func NewLogger(bufLen int64, mode, config string) {
 	}
 }
 
+// this helps you work around the performance annoyance mentioned in
+// https://github.com/grafana/grafana/issues/4055
+// until we refactor this library completely
+func Level(level LogLevel) {
+	for i := range loggers {
+		loggers[i].level = level
+	}
+}
+
 func Trace(format string, v ...interface{}) {
 	for _, logger := range loggers {
 		logger.Trace(format, v...)

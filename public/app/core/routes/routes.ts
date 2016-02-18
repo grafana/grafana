@@ -77,6 +77,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/org/users', {
     templateUrl: 'public/app/features/org/partials/orgUsers.html',
     controller : 'OrgUsersCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/org/apikeys', {

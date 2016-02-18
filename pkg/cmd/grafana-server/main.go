@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -74,7 +73,7 @@ func main() {
 		go metrics.StartUsageReportLoop()
 	}
 
-	cmd.StartServer()
+	StartServer()
 	exitChan <- 0
 }
 
