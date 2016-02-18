@@ -90,14 +90,6 @@ function (angular, _, $) {
         }
 
         function render() {
-          if (panel.legend.rightSide) {
-            var panelheight = scope.ctrl.height || scope.ctrl.panel.height || scope.ctrl.row.height;
-            $container.css("height", panelheight);
-            $container.toggleClass('graph-legend-fixed-height', true);
-          } else {
-            $container.css("height", "");
-          }
-
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
@@ -183,6 +175,19 @@ function (angular, _, $) {
 
             html += '</div>';
             $container.append($(html));
+          }
+
+          var legendContainerHeight = $container.parent().height();
+          var legendHeight = $container.height();
+
+          if (panel.legend.rightSide && legendHeight >= legendContainerHeight) {
+            $container.toggleClass('graph-legend-fixed-height', true);
+          }
+
+          if (panel.legend.rightSide) {
+            $container.css("height", scope.ctrl.height || scope.ctrl.panel.height || scope.ctrl.row.height);
+          } else {
+            $container.css("height", "");
           }
         }
       }
