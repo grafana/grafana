@@ -33,7 +33,7 @@
 }
 
 .page-header {
-  padding: 10px 0 39px 0px;
+  padding: $spacer 0 $spacer * 2.5;
 
   display: flex;
   justify-content: space-between;
@@ -44,11 +44,17 @@
   display: -webkit-flex;     /* NEW - Chrome */
   flex-wrap: wrap-reverse;
   background: transparent url(../img/page_header_line.png) no-repeat left 60px;
+
   h1 {
     font-style: italic;
   }
-
   margin-bottom: 2rem;
+}
+
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.6;
 }
 
 .admin-page {

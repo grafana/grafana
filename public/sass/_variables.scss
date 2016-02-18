@@ -78,13 +78,13 @@ $grid-gutter-width: 30px !default;
 $enable-flex: false;
 
 $form-sizes: (
-  xs: 80px,
-  sm: 100px,
-  md: 120px,
-  lg: 150px,
-  xl: 200px,
-  xxl: 300px,
-  xxxl: 400px
+  xs: 5.7rem,
+  sm: 7rem,
+  md: 8.5rem,
+  lg: 10rem,
+  xl: 14rem,
+  xxl: 21rem,
+  xxxl: 28rem
 ) !default;
 
 
@@ -135,12 +135,7 @@ $blockquote-font-size:    ($font-size-base * 1.25) !default;
 $blockquote-border-width: .25rem !default;
 
 $hr-border-width: $border-width !default;
-
 $dt-font-weight: bold !default;
-
-$kbd-box-shadow:         inset 0 -.1rem 0 rgba(0,0,0,.25) !default;
-$nested-kbd-font-weight: bold !default;
-
 $list-inline-padding: 5px !default;
 
 // Components
@@ -208,4 +203,19 @@ $zindex-navbar-fixed:      1030;
 $zindex-modal-backdrop:    1040;
 $zindex-modal:             1050;
 
+// Buttons
+//
+
+$btn-padding-x:                  1rem !default;
+$btn-padding-y:                  .6rem !default;
+$btn-line-height:                1.25 !default;
+$btn-font-weight:                normal !default;
+
+$btn-padding-x-sm:               .5rem !default;
+$btn-padding-y-sm:               .25rem !default;
+
+$btn-padding-x-lg:               1.5rem !default;
+$btn-padding-y-lg:               .75rem !default;
+
+$btn-border-radius:              1px;
 
