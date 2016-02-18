@@ -1,37 +1,52 @@
 <div class="row pull-right">
 	<form name="timeForm" class="gf-timepicker-absolute-section">
 		<h3>Time range</h3>
+
 		<label class="small">From:</label>
-		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="ctrl.timeRaw.from" input-datetime>
-			<button class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
-				<i class="fa fa-calendar"></i>
-			</button>
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.from" input-datetime>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
+					<i class="fa fa-calendar"></i>
+				</button>
+			</div>
 		</div>
 
 		<div ng-if="openFromPicker">
 			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
+
 		<label class="small">To:</label>
-		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="ctrl.timeRaw.to" input-datetime>
-			<button class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
-				<i class="fa fa-calendar"></i>
-			</button>
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.to" input-datetime>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
+					<i class="fa fa-calendar"></i>
+				</button>
+			</div>
 		</div>
 
 		<div ng-if="openToPicker">
 			<datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
 		</div>
 
-		<label class="small">Refreshing every:</label>
-		<select ng-model="ctrl.refresh.value" class='input-medium' ng-options="f.value as f.text for f in ctrl.refresh.options">
-		</select>
 
-		<button type="submit" class="btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">
-			Apply
-		</button>
+
+		<label class="small">Refreshing every:</label>
+		<div class="gf-form-inline">
+			<div class="gf-form gf-size-max-xxxl">
+				<select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
+			</div>
+		</div>
+
 	</form>
 
 	<div class="gf-timepicker-relative-section">
