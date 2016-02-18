@@ -1,5 +1,3 @@
-$sideMenuWidth:  220px;
-
 .sidemenu-canvas {
   position: relative;
 }
@@ -8,7 +6,7 @@ $sideMenuWidth:  220px;
   position: absolute;
   top: 52px;
   left: 0;
-  width: $sideMenuWidth;
+  width: $side-menu-width;
   background-color: $body-bg;
   z-index: 101;
   transform: translate3d(0, -100%, 0);
@@ -32,17 +30,15 @@ $sideMenuWidth:  220px;
     min-height: calc(100% - 54px);
   }
   .dashboard-container {
-    padding-left: $sideMenuWidth;
+    padding-left: $side-menu-width;
   }
   .page-container {
-    margin-left: 195px;
-    padding-left: 77px;
+    margin-left: $side-menu-width;
   }
   .top-nav-menu-btn {
     a {
       background-color: $page-bg;
-      padding-right: 67px;
-      padding-left: 22px;
+      width: $side-menu-width;
     }
     .icon-gf-grafana_wordmark  {
       display: inline-block;
@@ -71,7 +67,7 @@ $sideMenuWidth:  220px;
       .dropdown-menu {
         display: block;
         top: 0px;
-        left: $sideMenuWidth;
+        left: $side-menu-width;
         background-color: $body-bg;
       }
     }
