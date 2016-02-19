@@ -64,6 +64,10 @@
   @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
 }
 
+.btn-link {
+  color: $btn-link-color;   
+}
+
 // Set the backgrounds
 // -------------------------
 .btn-primary {
@@ -71,23 +75,23 @@
 }
 // Warning appears are orange
 .btn-warning {
-  @include buttonBackground($btnWarningBackground, $btnWarningBackgroundHighlight);
+  @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
 }
 // Danger and error appear as red
 .btn-danger {
-  @include buttonBackground($btnDangerBackground, $btnDangerBackgroundHighlight);
+  @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
 }
 // Success appears as green
 .btn-success {
-  @include buttonBackground($btnSuccessBackground, $btnSuccessBackgroundHighlight);
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 }
 // Info appears as a neutral blue
 .btn-info {
-  @include buttonBackground($btnInfoBackground, $btnInfoBackgroundHighlight);
+  @include buttonBackground($btn-info-bg, $btn-info-bg-hl);
 }
 // Inverse appears as dark gray
 .btn-inverse {
-  @include buttonBackground($btnInverseBackground, $btnInverseBackgroundHighlight, $btnInverseText);
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
   box-shadow: none;
   border: 1px solid $tight-form-func-highlight-bg;
 }
@@ -96,23 +100,19 @@
   @include button-outline-variant($btn-primary-bg);
 }
 .btn-outline-secondary {
-  @include button-outline-variant($btnInverseBackground);
+  @include button-outline-variant($btn-inverse-bg);
 }
 .btn-outline-info {
-  @include button-outline-variant($btnInfoBackground);
+  @include button-outline-variant($btn-info-bg);
 }
 .btn-outline-success {
-  @include button-outline-variant($btnSuccessBackground);
+  @include button-outline-variant($btn-success-bg);
 }
 .btn-outline-warning {
-  @include button-outline-variant($btnWarningBackground);
+  @include button-outline-variant($btn-warning-bg);
 }
 .btn-outline-danger {
-  @include button-outline-variant($btnDangerBackground);
+  @include button-outline-variant($btn-danger-bg);
 }
 
-.btn-text {
-  color: $btnText;
-  margin: 0;
-  vertical-align: middle;
-}
+

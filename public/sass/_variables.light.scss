@@ -62,22 +62,22 @@ $text-color:    $gray-1;
 // Links
 // -------------------------
 $link-color:             $gray-1;
-$link-color-disabled:    lighten($link-color,30%);
+$link-color-disabled:    lighten($link-color, 30%);
 $link-hover-color:       darken($link-color, 20%);
 
 // Typography
 // -------------------------
-$headings-color:         $text-color;
+$headings-color:       $text-color;
 $abbr-border-color: 	 $gray-2 !default;
-$text-muted: 			 darken($link-color,30%);
+$text-muted: 			     darken($link-color,30%);
 
 $blockquote-small-color:  $gray-2 !default;
 $blockquote-border-color: $gray-3 !default;
 
-$hr-border-color: rgba(0,0,0,.1) !default;
+$hr-border-color: $dark-3 !default;
 
 // Components
-$component-active-color: #fff !default;
+$component-active-color: $white !default;
 $component-active-bg:    $brand-primary !default;
 
 // Panel
@@ -96,58 +96,52 @@ $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
 $modal-background: $body-bg;
-$code-tag-bg:      #ddd;
+$code-tag-bg:      $dark-5;
 
 // Lists
-$grafanaListBackground:    	   darken($gray-3,5%);
-$grafanaListAccent:            darken($gray-3,8%);
-$grafanaListBorderTop:         #eee;
-$grafanaListBorderBottom:      #eee;
-$grafanaListHighlight:         darken($gray-3,10%);
-$grafanaListHighlightContrast: #ddd;
+$grafanaListBackground:    	   $gray-6;
+$grafanaListAccent:            $gray-5;
+$grafanaListBorderTop:         $gray-3;
+$grafanaListBorderBottom:      $gray-3;
+$grafanaListHighlight:         $gray-5;
 $grafanaListMainLinkColor:     $text-color;
 
 
 // Tables
 // -------------------------
 $table-bg:                   transparent; // overall background-color
-$table-bg-accent:            #f9f9f9; // for striping
-$table-bg-hover:             #E8F8FD; // for hover
+$table-bg-accent:            $gray-5; // for striping
+$table-bg-hover:             $gray-5; // for hover
 $table-bg-active:            $table-bg-hover !default;
-$table-border:               #ddd; // table and cell border
-
+$table-border:               $gray-3; // table and cell border
 
 // Scrollbars
-$scrollbarBackground: $gray-3;
-$scrollbarBackground2: $gray-3;
-$scrollbarBorder: $gray-2;
+$scrollbarBackground:   $gray-5;
+$scrollbarBackground2:  $gray-5;
+$scrollbarBorder:       $gray-4;
 
 // Buttons
 // -------------------------
-$btnBackground:                     $gray-3;
-$btnBackgroundHighlight:            darken($gray-3, 15%);
-$btnBorder:                         #bbb;
+$btn-primary-bg:        $brand-primary;
+$btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
-$btn-primary-bg:                    $brand-primary;
-$btn-primary-bg-hl:                 lighten($brand-primary, 10%);
+$btn-info-bg:           lighten($purple, 3%);
+$btn-info-bg-hl:        darken($purple, 3%);
 
-$btnInfoBackground:                 lighten($purple, 3%);
-$btnInfoBackgroundHighlight:        darken($purple, 3%);
+$btn-success-bg:        lighten($green, 3%);
+$btn-success-bg-hl:     darken($green, 3%);
 
-$btnSuccessBackground:              lighten($green, 3%);
-$btnSuccessBackgroundHighlight:     darken($green, 3%);
+$btn-warning-bg:        lighten($orange, 3%);
+$btn-warning-bg-hl:     darken($orange, 3%);
 
-$btnWarningBackground:              lighten($orange, 3%);
-$btnWarningBackgroundHighlight:     darken($orange, 3%);
+$btn-danger-bg:         lighten($red, 3%);
+$btn-danger-bg-hl:      darken($red, 3%);
 
-$btnDangerBackground:               lighten($red, 3%);
-$btnDangerBackgroundHighlight:      darken($red, 3%);
+$btn-inverse-bg:          $gray-5;
+$btn-inverse-bg-hl:       darken($gray-5, 5%);
+$btn-inverse-text-color:  $dark-4;
 
-$btnInverseBackground:              $gray-5;
-$btnInverseBackgroundHighlight:     darken($gray-5, 5%);
-$btnInverseText:                    $dark-4;
-
-$btnText: $gray-3;
+$btn-link-color: $gray-1;
 
 $iconContainerBackground: $white;
 

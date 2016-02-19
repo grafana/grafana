@@ -70,7 +70,7 @@
     padding: 1px;
   }
   button.btn-sm {
-    @include buttonBackground($btnInverseBackground, $btnInverseBackgroundHighlight);
+    @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
     background-image: none;
     border: none;
     padding: 6px 10px;
