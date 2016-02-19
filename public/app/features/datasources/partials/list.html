@@ -33,7 +33,7 @@
 				<tr ng-repeat="ds in ctrl.datasources">
 					<td>
 						<a href="datasources/edit/{{ds.id}}">
-							<i class="fa fa-database"></i> &nbsp; {{ds.name}}
+							<i class="icon-gf inline-icon-gf icon-gf-datasources"></i> &nbsp; {{ds.name}}
 						</a>
 					</td>
 					<td>
@@ -41,7 +41,7 @@
 					</td>
 					<td class="text-center">
 						<span ng-if="ds.isDefault">
-							<span class="label label-info">default</span>
+							<span class="btn btn-secondary btn-mini">default</span>
 						</span>
 					</td>
 					<td class="text-right">
