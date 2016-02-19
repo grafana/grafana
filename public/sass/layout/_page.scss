@@ -20,6 +20,10 @@
 
 .page-container {
   background-color: $page-bg;
+  background-image: $page-img-bg; /* this is an experiment */
+  background-position: left;
+  background-size: 60%;
+  background-repeat: no-repeat;
   position: relative;
   padding: ($spacer * 2) ($spacer * 4);
   max-width: 1060px;
@@ -30,7 +34,6 @@
 
 .page-header {
   padding: $spacer 0 $spacer/2 0;
-
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -40,7 +43,7 @@
   border-top: 0;
   border-right: 0;
   border-left: 0;
-  border-bottom: 4px solid transparent;
+  border-bottom: 1px solid transparent;
 
   h1 {
     font-style: italic;

@@ -50,6 +50,7 @@ $critical:              #ed2e18;
 // -------------------------
 $body-bg:  			   rgb(20,20,20);
 $page-bg:  			   $dark-2;
+$page-img-bg: 		   url('../img/angle_gradient_rev.png');
 $body-color:   		   $gray-4;
 $text-color:   	       $gray-4;
 
@@ -73,6 +74,7 @@ $hr-border-color: rgba(0,0,0,.1) !default;
 // Components
 $component-active-color: #fff !default;
 $component-active-bg:    $brand-primary !default;
+
 
 // Panel
 // -------------------------
