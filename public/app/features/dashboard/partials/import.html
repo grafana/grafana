@@ -2,62 +2,51 @@
 </navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
+	<div class="page-header">
+		<h1>
 			Import file
 			<em style="font-size: 14px;padding-left: 10px;"> <i class="fa fa-info-circle"></i> Load dashboard from local .json file</em>
-		</h2>
+		</h1>
+	</div>
 
-		<div class="editor-row">
-			<div class="section">
-				<div class="editor-option">
-					<form>
-						<input type="file" id="dashupload" dash-upload/><br>
-					</form>
-				</div>
+	<div class="gf-form-group">
+			<form class="gf-form">
+				<input type="file" id="dashupload" dash-upload/><br>
+			</form>
+	</div>
+
+	<h5 class="page-heading">
+		Migrate dashboards
+		<em style="font-size: 14px;padding-left: 10px;"><i class="fa fa-info-circle"></i> Import dashboards from Elasticsearch or InfluxDB</em>
+	</h5>
+
+	<div class="gf-form-group last">
+		<div class="gf-form">
+			<div class="gf-form-label">Dashboard source</div>
+			<div>
+				<select type="text" ng-model="sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources"></select>
+			</div>
+			<div class="gf-form-btn">
+				<button class="btn btn-success" ng-click="startImport()">Import</button>
 			</div>
 		</div>
-
-		<h2>
-			Migrate dashboards
-			<em style="font-size: 14px;padding-left: 10px;"><i class="fa fa-info-circle"></i> Import dashboards from Elasticsearch or InfluxDB</em>
-		</h2>
-
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 150px">
-					<strong>Dashboard source</strong>
-				</li>
-				<li>
-					<select type="text" ng-model="sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-					</select>
-				</li>
-				<li style="float: right">
-					<button class="btn btn-success tight-form-btn" ng-click="startImport()">Import</button>
-				</li>
-				<div class="clearfix"></div>
-			</ul>
-		</div>
-
-		<div class="editor-row" ng-if="importing">
-			<section class="section">
-				<h5>{{infoText}}</h5>
-
-				<div class="editor-row row">
-					<table class="grafana-options-table span5">
-						<tr ng-repeat="dash in imported">
-							<td>{{dash.name}}</td>
-							<td>
-								{{dash.info}}
-							</td>
-						</tr>
-					</table>
-				</div>
-			</section>
-		</div>
-
-		<div ng-include="'public/app/features/dashboard/partials/graphiteImport.html'"></div>
-
 	</div>
+
+	<h5 class="page-heading" ng-if="importing">{{infoText}}</h5>
+	<div class="editor-row" ng-if="importing">
+		<div class="editor-row row">
+			<table class="grafana-options-table span5">
+				<tr ng-repeat="dash in imported">
+					<td>{{dash.name}}</td>
+					<td>
+						{{dash.info}}
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+	<div ng-include="'public/app/features/dashboard/partials/graphiteImport.html'"></div>
+
 </div>
 
