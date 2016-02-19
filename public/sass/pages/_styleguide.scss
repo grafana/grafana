@@ -1,10 +1,9 @@
 .style-guide-color-card {
   list-style: none;
-  margin: 0 $spacer $spacer 0;
-  float: left;
-  padding: $spacer*2;
-  width: 20rem;
-  border-radius: 0.5rem;
+  margin: 0;  
+  padding: $spacer;
+  width: 100%;  
+  text-align: center;
   text-shadow: 0 0 8px #fff;
   color: $black;
   font-size: $font-size-sm;
@@ -12,7 +11,7 @@
 
 .color-card-body-bg { background-color: $body-bg; }
 .color-card-page-bg { background-color: $page-bg; }
-.color-card-gray { background-color: $gray; }
+.color-card-gray { background-color: $gray-1; }
 
 .style-guide-button-list {
   padding: $spacer;

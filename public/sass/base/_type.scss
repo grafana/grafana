@@ -27,9 +27,9 @@ em      { font-style: italic; color: $headings-color; }
 cite    { font-style: normal; }
 
 // Utility classes
-.muted               { color: $gray-light; }
+.muted               { color: $gray-2; }
 a.muted:hover,
-a.muted:focus        { color: darken($gray-light, 10%); }
+a.muted:focus        { color: darken($gray-2, 10%); }
 
 .text-warning        { color: $state-warning-text; }
 a.text-warning:hover,
@@ -199,7 +199,7 @@ abbr[title],
 // Added data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
 abbr[data-original-title] {
   cursor: help;
-  border-bottom: 1px dotted $gray-light;
+  border-bottom: 1px dotted $gray-2;
 }
 abbr.initialism {
   font-size: 90%;
@@ -210,7 +210,7 @@ abbr.initialism {
 blockquote {
   padding: 0 0 0 15px;
   margin: 0 0 $line-height-base;
-  border-left: 5px solid $gray-lighter;
+  border-left: 5px solid $gray-3;
   p {
     margin-bottom: 0;
     font-size: $font-size-base * 1.25;
@@ -220,7 +220,7 @@ blockquote {
   small {
     display: block;
     line-height: $line-height-base;
-    color: $gray-light;
+    color: $gray-2;
     &:before {
       content: '\2014 \00A0';
     }
@@ -231,7 +231,7 @@ blockquote {
     float: right;
     padding-right: 15px;
     padding-left: 0;
-    border-right: 5px solid $gray-lighter;
+    border-right: 5px solid $gray-3;
     border-left: 0;
     p,
     small {

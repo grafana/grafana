@@ -127,7 +127,7 @@ $lead-font-size:   1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
-$headings-font-family:  "Helvetica Neue", Helvetica, Arial, sans-serif;
+$headings-font-family:  "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $headings-font-weight:   400 !default;
 $headings-line-height:   1.1 !default;
 
@@ -145,9 +145,9 @@ $list-inline-padding: 5px !default;
 $line-height-lg:         (4 / 3) !default;
 $line-height-sm:         1.5 !default;
 
-$border-radius:          0.0rem !default;
+$border-radius:          0.2rem !default;
 $border-radius-lg:       0.3rem !default;
-$border-radius-sm:       0.2rem !default;
+$border-radius-sm:       0.1rem !default;
 
 $caret-width:            .3em !default;
 $caret-width-lg:         $caret-width !default;
