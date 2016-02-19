@@ -1,0 +1,33 @@
+files:
+  include: '**/*.s+(a|c)ss'
+  ignore:
+
+rules:
+  empty-line-between-blocks: 0
+  no-empty-rulesets: 1
+  # Consistency Rules
+  # extends-before-mixins: 1
+  # extends-before-declarations: 1
+  # mixins-before-declarations: 1
+  # Require an empty line between blocks
+  # final-newline: 1
+  # no-ids: 1
+  # indentation: 0
+  # leading-zero: 1
+  # name-format: 0
+  # nesting-depth: 1
+  # placeholder-in-extend: 1
+  # property-sort-order: 1
+  # property-spelling: 0
+  # shorthand: 1
+  # one-declaration-per-line: 1
+  # single-line-per-selector: 1
+  # space-after-comma: 1
+  # # Space surrounding colons
+  # space-before-colon: 1
+  # space-after-colon: 1
+  #
+  # space-before-brace: 1
+  #
+  # space-between-parens: 1
+  # trailing-semicolon: 1
