@@ -96,7 +96,6 @@ function ($) {
       if (seriesList && seriesList.length > 0) {
         for (var i = 0; i < seriesList.length; i++) {
           var series = seriesList[i];
-
           if (series && series.data) {
             for (var j = 0; j<series.data.length; j++) {
               var timestamp = series.data[j][0].toString();
@@ -104,7 +103,6 @@ function ($) {
                 return true;
               }
             }
-            return false;
           } else {
             return false;
           }
