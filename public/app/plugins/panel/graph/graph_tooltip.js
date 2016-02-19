@@ -91,6 +91,28 @@ function ($) {
       return results;
     };
 
+    this.findMillisecondResolutionNeed = function(seriesList) {
+      if (seriesList && seriesList.length > 0) {
+
+        for (var i = 0; i < seriesList.length; i++) {
+          var series = seriesList[i];
+
+          if (series && series.data) {
+            for (var j = 0; j<series.data.length; j++) {
+              var timestamp = series.data[j][0].toString();
+              if (timestamp.length === 13 && parseInt(timestamp.substring(10,13)) !== 0) {
+                return true;
+              }
+            }
+          } else {
+            return false;
+          }
+        }
+      } else {
+        return false;
+      }
+    };
+
     elem.mouseleave(function () {
       if (panel.tooltip.shared) {
         var plot = elem.data().plot;
@@ -112,7 +134,9 @@ function ($) {
 
       var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
-      if(panel.tooltip.msResolution) {
+      var msResolution = self.findMillisecondResolutionNeed(plotData);
+
+      if(msResolution) {
         tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
       }
 

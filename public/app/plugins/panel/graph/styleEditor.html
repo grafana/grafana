@@ -52,10 +52,6 @@
 			text="All series" model="ctrl.panel.tooltip.shared" change="ctrl.render()"
 			tip="Show all series on same tooltip and a x croshair to help follow all series">
 		</editor-opt-bool>
-    <editor-opt-bool
-      text="ms Resolution" model="ctrl.panel.tooltip.msResolution" change="ctrl.render()"
-      tip="Shows tooltip's absolute time to the nearset millisecond">
-    </editor-opt-bool>
 		<div class="editor-option" ng-show="ctrl.panel.stack">
       <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
       <select class="input-small" ng-model="ctrl.panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="ctrl.render()"></select>
