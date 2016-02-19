@@ -127,6 +127,9 @@ $scrollbarBorder:       $gray-4;
 $btn-primary-bg:        $brand-primary;
 $btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
+$btn-secondary-bg:      $blue-dark;
+$btn-secondary-bg-hl:   lighten($blue-dark, 8%);
+
 $btn-info-bg:           lighten($purple, 3%);
 $btn-info-bg-hl:        darken($purple, 3%);
 
