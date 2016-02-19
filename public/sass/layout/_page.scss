@@ -20,7 +20,7 @@
 
 .page-container {
   background-color: $page-bg;
-  background-image: $page-img-bg; /* this is an experiment */
+  background-image: url($pageImageUrl); /* this is an experiment */
   background-position: left;
   background-size: 60%;
   background-repeat: no-repeat;
