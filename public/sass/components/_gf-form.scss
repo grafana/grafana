@@ -1,4 +1,5 @@
-$gf-form-margin: 0.4rem;
+$gf-form-margin: 0.2rem;
+$gf-form-label-margin: 0.2rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -49,8 +50,9 @@ $gf-form-margin: 0.4rem;
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-margin;
+  margin-right: $gf-form-label-margin;
   border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
 }
 
 .gf-form-checkbox {
@@ -79,8 +81,8 @@ $gf-form-margin: 0.4rem;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: $input-btn-border-width solid $input-border-color;
-  @include border-radius($input-border-radius);
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 
