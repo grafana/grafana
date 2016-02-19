@@ -33,7 +33,7 @@ $yellow:                #ECBB13;
 $pink:                  #FF4444;
 $purple:                #9933CC;
 $variable:              #32D1DF;
-$orange:                #FF8800;
+$orange:                #dF7518;
 
 $brand-primary:         $orange;
 $brand-success:         $green;
@@ -205,7 +205,7 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $dark-3;
+$side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $dark-4;
 
 // Pagination
