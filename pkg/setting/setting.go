@@ -6,7 +6,6 @@ package setting
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -386,7 +385,7 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	return errors.New("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?")
+	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
 }
 
 func NewConfigContext(args *CommandLineArgs) error {
