@@ -92,8 +92,8 @@ function ($) {
     };
 
     this.findMillisecondResolutionNeed = function(seriesList) {
-      if (seriesList && seriesList.length > 0) {
 
+      if (seriesList && seriesList.length > 0) {
         for (var i = 0; i < seriesList.length; i++) {
           var series = seriesList[i];
 
@@ -104,10 +104,12 @@ function ($) {
                 return true;
               }
             }
+            return false;
           } else {
             return false;
           }
         }
+        return false;
       } else {
         return false;
       }
@@ -136,8 +138,10 @@ function ($) {
 
       var msResolution = self.findMillisecondResolutionNeed(plotData);
 
-      if(msResolution) {
+      if (msResolution) {
         tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      } else {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
       }
 
       if (dashboard.sharedCrosshair) {
