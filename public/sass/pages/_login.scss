@@ -105,7 +105,7 @@
   margin-top: 10px;
   padding: 10px;
   a {
-    color: $gray-light;
+    color: $gray-2;
   }
 }
 
@@ -117,11 +117,11 @@
   .login-divider-line {
     width: 100%;
     height: 10px;
-    border-bottom: 1px solid $gray;
+    border-bottom: 1px solid $gray-1;
 
     .login-divider-text {
-      background-color: $gray-darker;
-      color: $gray-light;
+      background-color: $dark-3;
+      color: $gray-2;
       padding: 0 10px;
     }
   }
@@ -168,7 +168,7 @@
 }
 
 @include media-breakpoint-up(md) {
-  .login-box-logo {
+  .login-box-logo {      
     img {
       width: 125px;
     }

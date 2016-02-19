@@ -7,7 +7,7 @@
   top: 52px;
   left: 0;
   width: $side-menu-width;
-  background-color: $body-bg;
+  background-color: $side-menu-bg;
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
@@ -68,7 +68,7 @@
         display: block;
         top: 0px;
         left: $side-menu-width;
-        background-color: $body-bg;
+        background-color: $side-menu-bg;
       }
     }
   }
@@ -112,7 +112,7 @@
   display: block;
 
   &:hover {
-    background-color: $sideMenuBackgroundHighlight;
+    background-color: $side-menu-item-hover-bg;
   }
 
   .sidemenu-item-text {
@@ -166,7 +166,7 @@
   box-sizing: border-box;
   cursor: pointer;
   &:hover {
-    background-color: $sideMenuBackgroundHighlight;
+    background-color: $side-menu-item-hover-bg;
   }
   display: table;
   position: relative;
