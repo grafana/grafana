@@ -54,8 +54,9 @@ $critical:              #EC2128;
 // Scaffolding
 // -------------------------
 
-$body-bg:  		  $white;
-$page-bg:  		  $white;
+$body-bg:  		$white;
+$page-bg:  		$white;
+$page-img-bg: 	url('../img/angle_gradient_light_rev.png');
 $body-color:    $gray-1;
 $text-color:    $gray-1;
 
@@ -79,6 +80,7 @@ $hr-border-color: $dark-3 !default;
 // Components
 $component-active-color: $white !default;
 $component-active-bg:    $brand-primary !default;
+
 
 // Panel
 // -------------------------
