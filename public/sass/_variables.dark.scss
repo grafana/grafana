@@ -117,26 +117,25 @@ $table-border:                $dark-3; // table and cell border
 $btn-primary-bg:              $brand-primary;
 $btn-primary-bg-hl:           lighten($brand-primary, 8%);
 
-$btnInfoBackground:                 lighten($purple, 3%);
-$btnInfoBackgroundHighlight:        darken($purple, 3%);
+$btn-info-bg:                 lighten($purple, 3%);
+$btn-info-bg-hl:     		  darken($purple, 3%);
 
-$btnSuccessBackgroundHighlight:     darken($green, 3%);
-$btnSuccessBackground:              lighten($green, 3%);
+$btn-success-bg-hl:     	  darken($green, 3%);
+$btn-success-bg:              lighten($green, 3%);
 
-$btnWarningBackground:              $brand-warning;
-$btnWarningBackgroundHighlight:     lighten($brand-warning, 8%);
+$btn-warning-bg:              $brand-warning;
+$btn-warning-bg-hl:     	  lighten($brand-warning, 8%);
 
-$btnDangerBackground:               lighten($red, 3%);
-$btnDangerBackgroundHighlight:      darken($red, 3%);
+$btn-danger-bg:               lighten($red, 3%);
+$btn-danger-bg-hl:            darken($red, 3%);
 
-$btnInverseBackground:              $dark-3;
-$btnInverseBackgroundHighlight:     lighten($dark-3, 1%);
-$btnInverseText:                    $link-color;
-$btnInverseBorder:                  #333;
+$btn-inverse-bg:              $dark-3;
+$btn-inverse-bg-hl:     	  lighten($dark-3, 1%);
+$btn-inverse-text-color:      $link-color;
 
-$btnText:              				$gray-3;
+$btn-link-color:              $gray-3;
 
-$iconContainerBackground:		    $black;
+$iconContainerBackground:	  $black;
 
 // Forms
 // -------------------------
@@ -150,7 +149,6 @@ $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        #999 !default;
 $input-label-bg:				 $dark-3;
-
 
 // Search
 $searchShadow: 0 0 35px 0 $body-bg;
@@ -222,13 +220,13 @@ $state-warning-text:      darken(#c09853, 10%);
 $state-warning-bg:        $brand-warning;
 
 $errorText:               #b94a48;
-$errorBackground:         $btnDangerBackground;
+$errorBackground:         $btn-danger-bg;
 
 $successText:             #468847;
-$successBackground:       $btnSuccessBackground;
+$successBackground:       $btn-success-bg;
 
 $infoText:                $blue-dark;
-$infoBackground:          $btnInfoBackground;
+$infoBackground:          $btn-info-bg;
 
 // Tooltips and popovers
 // -------------------------
