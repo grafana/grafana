@@ -1,4 +1,4 @@
-$gf-form-margin: 0.2rem;
+$gf-form-margin: 0.3rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -84,7 +84,6 @@ $gf-form-margin: 0.2rem;
   // Placeholder
   &::placeholder {
     color: $input-color-placeholder;
-    // Override Firefox's unusual default opacity; see https://github.com/twbs/bootstrap/pull/11526.
     opacity: 1;
   }
 
