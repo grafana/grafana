@@ -20,7 +20,9 @@
 
 			<div class="gf-form">
 				<span class="gf-form-label width-7">Type</span>
-				<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				<div class="gf-form-select-wrapper">
+					<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				</div>
 			</div>
 		</div>
 

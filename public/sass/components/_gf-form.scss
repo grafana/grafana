@@ -104,34 +104,31 @@ $gf-form-label-margin: 0.2rem;
   &.gf-size-auto { width: auto; }
 }
 
-// select.gf-form-input {
-//   -webkit-appearance: none;
-//   -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
-//   appearance: none;
-//
-//
-//   &:-moz-focusring {
-//     color: transparent;
-//   }
-// }
-//
-// .gf-form-select-wrapper {
-//   position: relative;
-//   &:after {
-//     position: absolute;
-//     top: 50%;
-//     right: 10px;
-//     height: 12px;
-//     margin-top: -6px;
-//     padding: 0;
-//     background-color: transparent;
-//     color: $input-color;
-//     font: normal normal normal 14px/1 FontAwesome;
-//     text-align: center;
-//     content: '\f0d7';
-//     pointer-events: none;
-//   }
-// }
+.gf-form-select-wrapper {
+  position: relative;
+
+  select.gf-form-input {
+    padding-right: $input-padding-x*2;
+    -webkit-appearance: none;
+    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    appearance: none;
+
+    &:-moz-focusring {
+      color: transparent;
+    }
+  }
+
+  &:after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+}
 
 .gf-form-btn {
   padding: $input-padding-y $input-padding-x;
