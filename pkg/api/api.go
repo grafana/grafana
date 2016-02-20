@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/go-macaron/binding"
+	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -223,6 +224,10 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	// Gravatar service.
+	avt := avatar.CacheServer()
+	r.Get("/avatar/:hash", avt.ServeHTTP)
 
 	InitAppPluginRoutes(r)
 
