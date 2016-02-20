@@ -189,6 +189,15 @@
 
 .sidemenu-org-avatar {
   width: 44px;
+  background-color: $gray-2;
+  border-radius: 50%;
+  .no-avatar {
+    color: $text-color;
+    text-shadow: 0 1px 0 $dark-1;
+    padding-left: 17px;
+    position: relative;
+    top:  5px;
+  }
 }
 
 .sidemenu-org-avatar > img {

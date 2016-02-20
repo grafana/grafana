@@ -1,3 +1,13 @@
+.login-container {
+  background-image: url($pageImageUrl); /* this is an experiment */
+  background-position: left;
+  background-size: 60%;
+  background-repeat: no-repeat;
+  min-width: 100%;
+  margin-left: 0;
+  margin-top: -26px; /* BAD HACK - experiement to see how it looks */
+  padding-top: $spacer * 5; /* BAD HACK - experiement to see how it looks */
+}
 
 .login-form {
   display: inline-block;
@@ -6,11 +16,12 @@
 
 .login-box {
   max-width: 700px;
-  margin: $spacer * 2 auto 0 auto;
+  margin: 0 auto; /* was $spacer * 2 auto 0 auto; */
 }
 
 .login-box-logo {
   text-align: center;
+  margin-bottom: $spacer * 2;
   img {
     width: 6rem;
   }
@@ -173,7 +184,7 @@
       width: 125px;
     }
     .icon-gf-grafana_wordmark {
-      top: -90px;
+      top: -5px;
       font-size: 3rem;
     }
   }
