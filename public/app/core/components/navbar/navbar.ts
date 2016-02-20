@@ -30,28 +30,5 @@ export function navbarDirective() {
   };
 }
 
-var navButtonTemplate = `
-<div class="top-nav-btn dashnav-dashboards-btn">
-  <a href="{{::titleUrl}}">
-    <i class="{{::icon}}"></i>
-    <span class="dashboard-title">{{::title}}</span>
-  </a>
-</div>
-`;
-
-function navButton() {
-  return {
-    restrict: 'E',
-    template: navButtonTemplate,
-    scope: {
-      title: "@",
-      titleUrl: "@",
-    },
-    link: function(scope, elem, attrs, ctrl) {
-      scope.icon = attrs.icon;
-    }
-  };
-}
-
 coreModule.directive('navbar', navbarDirective);
 coreModule.directive('navButton', navButton);
