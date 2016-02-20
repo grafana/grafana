@@ -13,9 +13,9 @@ $black:                 #000;
 
 // -------------------------
 $black:            #000;
-$dark-1:           #141414; // (body)
-$dark-2:           #1f1d1d; // ($gray-darker)
-$dark-3:           #262626; // ($gray-dark)
+$dark-1:           #141414; 
+$dark-2:           #1f1d1d;
+$dark-3:           #262626;
 $dark-4:           #333333;
 $dark-5:           #444444;
 $gray-1:           #555555;
@@ -31,7 +31,7 @@ $white:            #fff;
 // Accent colors
 // -------------------------
 $blue:             	   	#2AB2E4;
-$blue-dark:             #75CAEB;
+$blue-dark:             #3CAAD6;
 $green:                 #28B62C;
 $red:                   #FF4136;
 $yellow:                #FF851B;
@@ -54,9 +54,8 @@ $critical:              #EC2128;
 // Scaffolding
 // -------------------------
 
-$body-bg:  		$white;
-$page-bg:  		$white;
-$pageImageUrl: 	'../img/angle_gradient_light_rev.png';
+$body-bg:  		  $white;
+$page-bg:  		  $white;
 $body-color:    $gray-1;
 $text-color:    $gray-1;
 
@@ -80,7 +79,6 @@ $hr-border-color: $dark-3 !default;
 // Components
 $component-active-color: $white !default;
 $component-active-bg:    $brand-primary !default;
-
 
 // Panel
 // -------------------------
@@ -128,10 +126,7 @@ $btn-primary-bg:        $brand-primary;
 $btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
 $btn-secondary-bg:      $blue-dark;
-$btn-secondary-bg-hl:   lighten($blue-dark, 8%);
-
-$btn-info-bg:           lighten($purple, 3%);
-$btn-info-bg-hl:        darken($purple, 3%);
+$btn-secondary-bg-hl:   lighten($blue-dark, 4%);
 
 $btn-success-bg:        lighten($green, 3%);
 $btn-success-bg-hl:     darken($green, 3%);
@@ -255,8 +250,8 @@ $successText:             lighten($green, 10%);
 $successBackground:       $green;
 $successBorder:           transparent;
 
-$infoText:                lighten($purple,10%);
-$infoBackground:          $purple;
+$infoText:                $blue;
+$infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
 
@@ -279,5 +274,3 @@ $popoverArrowOuterColor:  rgba(0,0,0,.25);
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
-
-

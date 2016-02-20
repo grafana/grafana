@@ -31,28 +31,28 @@
 			<form name="signUpForm" class="login-form gf-form-group">
 
 				<div class="gf-form" ng-if="verifyEmailEnabled">
-					<span class="gf-form-label gf-size-md">
+					<span class="gf-form-label width-9">
 						Email code<tip>Email verification code (sent to your email)</tip>
 					</span>
-					<input type="text" class="gf-form-input gf-size-max-xl" ng-model="formModel.code" required></input>
+					<input type="text" class="gf-form-input max-width-14" ng-model="formModel.code" required></input>
 				</div>
 
 				<div class="gf-form" ng-if="!autoAssignOrg">
-					<span class="gf-form-label gf-size-md">Org. name</span>
-					<input type="text" name="orgName" class="gf-form-input gf-size-max-xl" ng-model='formModel.orgName' placeholder="Name your organization">
+					<span class="gf-form-label width-9">Org. name</span>
+					<input type="text" name="orgName" class="gf-form-input max-width-14" ng-model='formModel.orgName' placeholder="Name your organization">
 				</div>
 
 				<div class="gf-form">
-					<span class="gf-form-label gf-size-md">Your name</span>
-					<input type="text" name="name" class="gf-form-input gf-size-max-xl" ng-model='formModel.name' placeholder="(optional)">
+					<span class="gf-form-label width-9">Your name</span>
+					<input type="text" name="name" class="gf-form-input max-width-14" ng-model='formModel.name' placeholder="(optional)">
 				</div>
 				<div class="gf-form">
-					<span class="gf-form-label gf-size-md">Username</span>
-					<input type="text" class="gf-form-input gf-size-max-xl" required ng-model='formModel.username' placeholder="Username" autocomplete="off">
+					<span class="gf-form-label width-9">Username</span>
+					<input type="text" class="gf-form-input max-width-14" required ng-model='formModel.username' placeholder="Username" autocomplete="off">
 				</div>
 				<div class="gf-form">
-					<span class="gf-form-label gf-size-md">Password</span>
-					<input type="password" class="gf-form-input gf-size-max-xl" required ng-model="formModel.password" id="inputPassword" placeholder="password" autocomplete="off">
+					<span class="gf-form-label width-9">Password</span>
+					<input type="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password" autocomplete="off">
 				</div>
 
 				<div style="margin-left: 7.5rem; width: 254px;">

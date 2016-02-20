@@ -30,25 +30,21 @@
     min-height: calc(100% - 54px);
   }
   .dashboard-container {
-    padding-left: $side-menu-width;
+    padding-left: $side-menu-width + 0.2rem;
   }
   .page-container {
     margin-left: $side-menu-width;
   }
-  .top-nav-menu-btn {
-    a {
-      background-color: $page-bg;
-      width: $side-menu-width;
-    }
+  .navbar-brand-btn {
+    background-color: $page-bg;
+    width: $side-menu-width;
+
     .icon-gf-grafana_wordmark  {
       display: inline-block;
     }
     .fa {
       display: none;
     }
-  }
-  .sidemenu-org {
-    box-shadow: none;
   }
   .search-container {
     left: auto;
@@ -195,7 +191,7 @@
 .sidemenu .fa-caret-right {
   position: absolute;
   top: 38%;
-  right: 25px;
+  right: 6px;
   font-size: 14px;
   color: $link-color;
 }

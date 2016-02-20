@@ -16,6 +16,7 @@
 .style-guide-button-list {
   padding: $spacer;
   button {
+    display: block;
     margin: 0 $spacer $spacer 0;
   }
 }

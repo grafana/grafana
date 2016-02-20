@@ -17,7 +17,7 @@
   body {
     padding: 0;
   }
-  .dashnav-dashboards-btn a {
+  .page-dashboard .navbar-page-btn {
     max-width: 200px;
   }
   .gf-timepicker-nav-btn {
@@ -34,7 +34,7 @@
 
 // form styles
 @include media-breakpoint-up(md) {
-  .dashnav-dashboards-btn a {
+  .page-dashboard .navbar-page-btn {
     max-width: 180px;
   }
   .gf-timepicker-nav-btn {
@@ -51,7 +51,7 @@
 }
 
 @include media-breakpoint-up(lg) {
-  .dashnav-dashboards-btn a {
+  .page-dashboard .navbar-page-btn {
     max-width: 290px;
   }
   .gf-timepicker-nav-btn {

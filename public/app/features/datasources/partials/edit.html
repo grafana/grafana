@@ -13,14 +13,14 @@
 	<form name="editForm">
 		<div class="gf-form-group">
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-sm">Name</span>
-				<input class="gf-form-input gf-size-max-xxl" type="text" ng-model="current.name" placeholder="My data source name" required>
+				<span class="gf-form-label width-7">Name</span>
+				<input class="gf-form-input max-width-21" type="text" ng-model="current.name" placeholder="My data source name" required>
 				<editor-checkbox text="Default" model="current.isDefault"></editor-checkbox>
 			</div>
 
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-sm">Type</span>
-				<select class="gf-form-input gf-size-auto gf-form-select-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				<span class="gf-form-label width-7">Type</span>
+				<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 			</div>
 		</div>
 
@@ -41,7 +41,7 @@
 		<div class="gf-form-button-row">
 			<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
 			<button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
-			<button type="submit" class="btn btn-primary" ng-show="!isNew" ng-click="saveChanges(true)">
+			<button type="submit" class="btn btn-secondary" ng-show="!isNew" ng-click="saveChanges(true)">
 				Test Connection
 			</button>
 			<a class="btn btn-link" href="datasources">Cancel</a>

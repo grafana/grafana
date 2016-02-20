@@ -18,9 +18,9 @@
   }
 }
 
+$color-page-hero-bg: #2e2e2e;
 .page-container {
   background-color: $page-bg;
-  background-image: url($pageImageUrl); /* this is an experiment */
   background-position: left;
   background-size: 60%;
   background-repeat: no-repeat;
@@ -30,6 +30,7 @@
   margin-left: 0;
   min-height: calc(100% - 54px);
   padding-bottom: $spacer * 5;
+  background-image: linear-gradient(60deg, rgba(0, 0, 0, 0) 0%, lighten($page-bg, 5%) 98%);
 }
 
 .page-header {

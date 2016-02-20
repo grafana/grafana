@@ -1,19 +1,16 @@
 <div class="navbar-inner">
-	<div class="top-nav-btn top-nav-menu-btn">
-		<a class="pointer" ng-click="ctrl.contextSrv.toggleSideMenu()">
-			<span class="top-nav-logo-background">
-				<img class="logo-icon" src="public/img/grafana_icon.svg"></img>
-			</span>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
-			<i class="fa fa-caret-down"></i>
-		</a>
-	</div>
+	<a class="navbar-brand-btn pointer" ng-click="ctrl.contextSrv.toggleSideMenu()">
+		<span class="navbar-brand-btn-background">
+			<img src="public/img/grafana_icon.svg"></img>
+		</span>
+		<i class="icon-gf icon-gf-grafana_wordmark"></i>
+		<i class="fa fa-caret-down"></i>
+	</a>
 
-
-	<div ng-if="ctrl.title">
-		<nav-button title="{{ctrl.title}}" title-url="{{ctrl.titleUrl}}" icon="{{ctrl.icon}}">
-		</nav-button>
-	</div>
+	<a href="{{::ctrl.titleUrl}}" class="navbar-page-btn" ng-show="ctrl.title">
+		<i class="{{::ctrl.icon}}"></i>
+		{{::ctrl.title}}
+	</a>
 
 	<div ng-transclude></div>
 </div>

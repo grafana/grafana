@@ -59,18 +59,6 @@ $gf-form-label-margin: 0.2rem;
   flex-shrink: 0;
 }
 
-@each $size, $value in $form-sizes {
-  .gf-size-#{$size} { width: $value; }
-
-  .gf-size-max-#{$size} {
-    flex-grow: 1;
-    max-width: $value;
-  }
-}
-
-.gf-size-max { width: 100%; }
-.gf-size-auto { width: auto; }
-
 .gf-form-input {
   display: block;
   width: 100%;
