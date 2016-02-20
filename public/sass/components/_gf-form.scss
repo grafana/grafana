@@ -104,31 +104,34 @@ $gf-form-label-margin: 0.2rem;
   &.gf-size-auto { width: auto; }
 }
 
-select.gf-form-input {
-  text-overflow: '';
-  -webkit-appearance: none;
-  -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
-  appearance: none;
-
-  &:after {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    height: 12px;
-    margin-top: -6px;
-    padding: 0;
-    background-color: transparent;
-    color: $input-color;
-    font: normal normal normal 14px/1 FontAwesome;
-    text-align: center;
-    content: '\f0d7';
-    pointer-events: none;
-  }
-
-  &:-moz-focusring {
-    color: transparent;
-  }
-}
+// select.gf-form-input {
+//   -webkit-appearance: none;
+//   -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+//   appearance: none;
+//
+//
+//   &:-moz-focusring {
+//     color: transparent;
+//   }
+// }
+//
+// .gf-form-select-wrapper {
+//   position: relative;
+//   &:after {
+//     position: absolute;
+//     top: 50%;
+//     right: 10px;
+//     height: 12px;
+//     margin-top: -6px;
+//     padding: 0;
+//     background-color: transparent;
+//     color: $input-color;
+//     font: normal normal normal 14px/1 FontAwesome;
+//     text-align: center;
+//     content: '\f0d7';
+//     pointer-events: none;
+//   }
+// }
 
 .gf-form-btn {
   padding: $input-padding-y $input-padding-x;
