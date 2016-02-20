@@ -18,7 +18,6 @@
   }
 }
 
-$color-page-hero-bg: #2e2e2e;
 .page-container {
   background-color: $page-bg;
   position: relative;
@@ -27,7 +26,7 @@ $color-page-hero-bg: #2e2e2e;
   margin-left: 0;
   min-height: calc(100% - 54px);
   padding-bottom: $spacer * 5;
-  background-image: linear-gradient(60deg, rgba(0, 0, 0, 0) 0%, lighten($page-bg, 5%) 98%);
+  background-image: linear-gradient(60deg, rgba(0, 0, 0, 0) 0%, lighten($page-bg, 4%) 98%);
 }
 
 .page-header {
