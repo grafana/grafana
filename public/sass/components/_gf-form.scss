@@ -1,5 +1,5 @@
-$gf-form-margin: 0.2rem;
-$gf-form-label-margin: 0.2rem;
+$gf-form-margin: 0.25rem;
+$gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -70,7 +70,7 @@ $gf-form-label-margin: 0.2rem;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: $input-btn-border-width solid $input-bg;
+  border: $input-btn-border-width solid $input-border-color;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
