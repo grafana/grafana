@@ -186,7 +186,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/global-alerts', {
     templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
   })
-  .when('/styleguide', {
+  .when('/styleguide/:page?', {
     controller: 'StyleGuideCtrl',
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
