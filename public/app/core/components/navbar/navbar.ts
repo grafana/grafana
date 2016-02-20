@@ -31,4 +31,3 @@ export function navbarDirective() {
 }
 
 coreModule.directive('navbar', navbarDirective);
-coreModule.directive('navButton', navButton);
