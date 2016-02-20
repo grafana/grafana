@@ -6,6 +6,9 @@ import _ from 'lodash';
 class StyleGuideCtrl {
   colors: any = [];
   theme: string;
+  buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
+  buttonSizes = ['btn-small', '', 'btn-large'];
+  buttonVariants = ['-', '-outline-'];
 
   /** @ngInject **/
   constructor($http) {
