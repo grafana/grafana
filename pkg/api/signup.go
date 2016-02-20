@@ -74,10 +74,16 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	// check if user exists
-	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
+	existing_user := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	if err := bus.Dispatch(&existing_user); err == nil {
 		return ApiError(401, "User with same email address already exists", nil)
 	}
+
+  // check if org exists
+  existing_org := m.GetOrgByNameQuery{Name: form.OrgName}
+  if err := bus.Dispatch(&existing_org); err == nil {
+    return ApiError(500, "Organization with same name already exists", nil)
+  }
 
 	// dispatch create command
 	if err := bus.Dispatch(&createUserCmd); err != nil {

@@ -10,13 +10,6 @@
 		</div>
 
     <div class="invite-box">
-			<h3>
-				You're almost there.
-			</h3>
-
-			<div class="modal-tagline">
-				We just need a couple of more bits of<br> information to finish creating your account.
-			</div>
 
 			<div style="display: inline-block; margin-top: 25px; width: 300px">
 					<div class="editor-option">
@@ -43,7 +36,7 @@
 								Organization name
 							</li>
 							<li>
-								<input type="text" name="orgName" class="tight-form-input last" ng-model='formModel.orgName' placeholder="Name your organization" style="width: 253px">
+								<input type="text" name="orgName" class="tight-form-input last" required ng-model='formModel.orgName' placeholder="Name your organization" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -99,12 +92,11 @@
 			<div class="clearfix"></div>
 		</div>
 
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
-			</div>
-		</div>
+    <div class="row" style="margin-top: 50px">
+      <div class="version-footer text-center small">
+        Copyright CloudInsight
+      </div>
+    </div>
 
 	</div>
 
