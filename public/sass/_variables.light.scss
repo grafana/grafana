@@ -31,7 +31,7 @@ $white:            #fff;
 // Accent colors
 // -------------------------
 $blue:             	   	#2AB2E4;
-$blue-dark:             #75CAEB;
+$blue-dark:             #3CAAD6;
 $green:                 #28B62C;
 $red:                   #FF4136;
 $yellow:                #FF851B;
@@ -125,8 +125,8 @@ $scrollbarBorder:       $gray-4;
 $btn-primary-bg:        $brand-primary;
 $btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
-$btn-info-bg:           lighten($purple, 3%);
-$btn-info-bg-hl:        darken($purple, 3%);
+$btn-secondary-bg:      $blue-dark;
+$btn-secondary-bg-hl:   lighten($blue-dark, 4%);
 
 $btn-success-bg:        lighten($green, 3%);
 $btn-success-bg-hl:     darken($green, 3%);
@@ -250,8 +250,8 @@ $successText:             lighten($green, 10%);
 $successBackground:       $green;
 $successBorder:           transparent;
 
-$infoText:                lighten($purple,10%);
-$infoBackground:          $purple;
+$infoText:                $blue;
+$infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
 

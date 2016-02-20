@@ -18,6 +18,7 @@
   }
 }
 
+$color-page-hero-bg: #2e2e2e;
 .page-container {
   background-color: $page-bg;
   position: relative;
@@ -26,6 +27,7 @@
   margin-left: 0;
   min-height: calc(100% - 54px);
   padding-bottom: $spacer * 5;
+  background-image: linear-gradient(60deg, rgba(0, 0, 0, 0) 0%, lighten($page-bg, 5%) 98%);
 }
 
 .page-header {
@@ -40,7 +42,7 @@
   border-top: 0;
   border-right: 0;
   border-left: 0;
-  border-bottom: 4px solid transparent;
+  border-bottom: 2px solid transparent;
 
   h1 {
     font-style: italic;
