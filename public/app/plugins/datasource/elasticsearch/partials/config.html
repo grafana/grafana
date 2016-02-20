@@ -5,24 +5,24 @@
 
 <div class="gf-form-group">
 	<div class="gf-form-inline">
-		<div class="gf-form gf-size-max-xxxl">
-			<span class="gf-form-label gf-size-md">Index name</span>
+		<div class="gf-form max-width-28">
+			<span class="gf-form-label width-9">Index name</span>
 			<input class="gf-form-input" type="text" ng-model='ctrl.current.database' placeholder="" required></input>
 		</div>
 
-		<div class="gf-form gf-size-xl">
-			<span class="gf-form-label gf-size-md">Pattern</span>
+		<div class="gf-form width-14">
+			<span class="gf-form-label width-9">Pattern</span>
 			<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
 		</div>
 	</div>
 
-	<div class="gf-form gf-size-max-xxxl">
-		<span class="gf-form-label gf-size-md">Time field name</span>
+	<div class="gf-form max-width-28">
+		<span class="gf-form-label width-9">Time field name</span>
 		<input class="gf-form-input" type="text"  ng-model='ctrl.current.jsonData.timeField' placeholder="" required ng-init=""></input>
 	</div>
 
 	<div class="gf-form">
-		<span class="gf-form-label gf-size-md">Version</span>
+		<span class="gf-form-label width-9">Version</span>
 		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
 	</div>
 
@@ -32,6 +32,6 @@
 <div class="gf-form-group">
 	<div class="gf-form">
 		<span class="gf-form-label">Group by time interval</span>
-		<input class="gf-form-input gf-size-max-md" type="text" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="example: >10s">
+		<input class="gf-form-input max-width-9" type="text" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="example: >10s">
 	</div>
 </div>
