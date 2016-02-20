@@ -66,11 +66,30 @@
     &:hover {
       .dropdown-menu {
         display: block;
+        opacity: 0;
         top: 0px;
         left: $side-menu-width;
         background-color: $side-menu-bg;
+        animation: dropdown-anim 100ms ease-in-out 150ms forwards;
+        z-index: -9999;
       }
     }
+  }
+}
+
+@keyframes dropdown-anim {
+  0% {
+    display: none;
+    opacity: 0;
+  }
+  1% {
+    display: block;
+    opacity: 0;
+    transform: translate3d(-5%,0,0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0,0,0)
   }
 }
 
