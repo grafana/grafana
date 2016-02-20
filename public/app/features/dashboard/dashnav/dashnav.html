@@ -1,12 +1,10 @@
 <navbar>
 
-<div class="top-nav-btn dashnav-dashboards-btn" ng-if="!dashboardMeta.isSnapshot">
-	<a class="pointer" ng-click="openSearch()">
-		<i class="icon-gf icon-gf-dashboard"></i>
-		<span class="dashboard-title">{{dashboard.title}}</span>
-		<i class="fa fa-caret-down"></i>
-	</a>
-</div>
+<a class="pointer navbar-page-btn" ng-show="!dashboardMeta.isSnapshot" ng-click="openSearch()">
+	<i class="icon-gf icon-gf-dashboard"></i>
+	<span>{{dashboard.title}}</span>
+	<i class="fa fa-caret-down"></i>
+</a>
 
 <div class="top-nav-btn dashnav-dashboards-btn" ng-if="dashboardMeta.isSnapshot">
 	<a class="pointer" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">

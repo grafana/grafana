@@ -8,17 +8,17 @@ $black:                 #000;
 
 // -------------------------
 $black:            #000;
-$dark-1:           #141414; // (body)
-$dark-2:           #1f1d1d; // ($gray-darker)
-$dark-3:           #262626; // ($gray-dark)
+$dark-1:           #141414; 
+$dark-2:           #1f1d1d;
+$dark-3:           #262626;
 $dark-4:           #333333;
 $dark-5:           #444444;
 $gray-1:           #555555;
-$gray-2:           #6e7580;
+$gray-2:           #7B7B7B;
 $gray-3:           #b3b3b3;
-$gray-4:           #cfd4d9;
-$gray-5:           #e8edf0;
-$gray-6:           #f7f9fa;
+$gray-4:           #D8D9DA;
+$gray-5:           #ECECEC;
+$gray-6:           #f4f5f8;
 $gray-7:           #fbfbfb;
 
 $white:            #fff;
@@ -50,7 +50,6 @@ $critical:              #ed2e18;
 // -------------------------
 $body-bg:  			   rgb(20,20,20);
 $page-bg:  			   $dark-2;
-$pageImageUrl: 		   '../img/angle_gradient_rev.png';
 $body-color:   		   $gray-4;
 $text-color:   	       $gray-4;
 
@@ -75,7 +74,6 @@ $hr-border-color: rgba(0,0,0,.1) !default;
 $component-active-color: #fff !default;
 $component-active-bg:    $brand-primary !default;
 
-
 // Panel
 // -------------------------
 $panel-bg: 				 $dark-2;
@@ -94,8 +92,8 @@ $modal-background: $black;
 $code-tag-bg: #444;
 
 // Lists
-$grafanaListBackground:  	$dark-3;
-$grafanaListAccent:      	lighten($dark-2, 2%);
+$grafanaListBackground:  	  $dark-3;
+$grafanaListAccent:      	  lighten($dark-2, 2%);
 $grafanaListBorderTop:      $dark-3;
 $grafanaListBorderBottom:   $black;
 $grafanaListHighlight:      #333;
@@ -120,22 +118,19 @@ $btn-primary-bg:              $brand-primary;
 $btn-primary-bg-hl:           lighten($brand-primary, 8%);
 
 $btn-secondary-bg:            $blue-dark;
-$btn-secondary-bg-hl:         lighten($blue-dark, 8%);
+$btn-secondary-bg-hl:     		lighten($blue-dark, 3%);
 
-$btn-info-bg:                 lighten($purple, 3%);
-$btn-info-bg-hl:     		  darken($purple, 3%);
-
-$btn-success-bg-hl:     	  darken($green, 3%);
+$btn-success-bg-hl:     	    darken($green, 3%);
 $btn-success-bg:              lighten($green, 3%);
 
 $btn-warning-bg:              $brand-warning;
-$btn-warning-bg-hl:     	  lighten($brand-warning, 8%);
+$btn-warning-bg-hl:     	    lighten($brand-warning, 8%);
 
 $btn-danger-bg:               lighten($red, 3%);
 $btn-danger-bg-hl:            darken($red, 3%);
 
 $btn-inverse-bg:              $dark-3;
-$btn-inverse-bg-hl:     	  lighten($dark-3, 1%);
+$btn-inverse-bg-hl:     	    lighten($dark-3, 1%);
 $btn-inverse-text-color:      $link-color;
 
 $btn-link-color:              $gray-3;
@@ -231,7 +226,7 @@ $successText:             #468847;
 $successBackground:       $btn-success-bg;
 
 $infoText:                $blue-dark;
-$infoBackground:          $btn-info-bg;
+$infoBackground:          $blue-dark;
 
 // Tooltips and popovers
 // -------------------------

@@ -65,7 +65,7 @@
 }
 
 .btn-link {
-  color: $btn-link-color;   
+  color: $btn-link-color;
 }
 
 // Set the backgrounds
@@ -89,8 +89,8 @@
   @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 }
 // Info appears as a neutral blue
-.btn-info {
-  @include buttonBackground($btn-info-bg, $btn-info-bg-hl);
+.btn-secondary {
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
 }
 // Inverse appears as dark gray
 .btn-inverse {
@@ -103,10 +103,10 @@
   @include button-outline-variant($btn-primary-bg);
 }
 .btn-outline-secondary {
-  @include button-outline-variant($btn-inverse-bg);
+  @include button-outline-variant($btn-secondary-bg);
 }
-.btn-outline-info {
-  @include button-outline-variant($btn-info-bg);
+.btn-outline-inverse {
+  @include button-outline-variant($btn-inverse-bg);
 }
 .btn-outline-success {
   @include button-outline-variant($btn-success-bg);
