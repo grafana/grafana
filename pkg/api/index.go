@@ -110,7 +110,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				{Text: "Global Orgs", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/orgs"},
 				{Text: "Server Settings", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/settings"},
 				{Text: "Server Stats", Icon: "fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/stats"},
-			},			
+			},
 		})
 	}
 
