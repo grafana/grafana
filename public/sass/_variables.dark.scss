@@ -8,10 +8,10 @@ $black:                 #000;
 
 // -------------------------
 $black:            #000;
-$dark-1:           #141414; 
+$dark-1:           #141414;
 $dark-2:           #1f1d1d;
-$dark-3:           #262626;
-$dark-4:           #333333;
+$dark-3:           #292929;
+$dark-4:           #373737;
 $dark-5:           #444444;
 $gray-1:           #555555;
 $gray-2:           #7B7B7B;
@@ -139,16 +139,16 @@ $iconContainerBackground:	  $black;
 
 // Forms
 // -------------------------
-$input-bg:                       lighten($dark-3,5%);
-$input-bg-disabled:              #555;
+$input-bg:                       $dark-4;
+$input-bg-disabled:              $dark-3;
 
 $input-color:                    $gray-4;
-$input-border-color:             lighten($dark-2,5%);
+$input-border-color:             $dark-4;
 $input-box-shadow:               inset 0 1px 1px rgba(0,0,0,.075) !default;
 $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
-$input-color-placeholder:        #999 !default;
-$input-label-bg:				 $dark-3;
+$input-color-placeholder:        $gray-1 !default;
+$input-label-bg:				         $dark-3;
 
 // Search
 $searchShadow: 0 0 35px 0 $body-bg;
