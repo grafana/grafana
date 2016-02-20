@@ -185,6 +185,7 @@ $input-height-lg:                (($font-size-lg * $line-height-lg) + ($input-pa
 $input-height-sm:                (($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)) !default;
 
 $form-group-margin-bottom:       $spacer-y !default;
+$gf-form-margin: 0.2rem;
 
 $cursor-disabled:                not-allowed !default;
 

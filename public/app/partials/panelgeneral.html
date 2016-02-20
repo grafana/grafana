@@ -1,7 +1,7 @@
 <div class="gf-form-group">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-size-max-xxl">
-			<span class="gf-form-label gf-size-sm">Title</span>
+			<span class="gf-form-label width-7">Title</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.panel.title'></input>
 		</div>
 		<div class="gf-form">
@@ -9,7 +9,7 @@
 			<select class="gf-form-input gf-size-auto" ng-model="ctrl.panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
 		</div>
 		<div class="gf-form gf-size-max-xxl">
-			<span class="gf-form-label gf-size-sm">Height</span>
+			<span class="gf-form-label width-7">Height</span>
 			<input type="text" class="gf-form-input gf-size-max-xs" ng-model='ctrl.panel.height' placeholder="100px"></input>
 			<editor-checkbox text="Transparent" model="ctrl.panel.transparent"></editor-checkbox>
 		</div>
@@ -17,7 +17,7 @@
 
 	<div class="gf-form-inline">
 		<div class="gf-form gf-size-max-xxl">
-			<span class="gf-form-label gf-size-sm">Repeat Panel</span>
+			<span class="gf-form-label width-7">Repeat Panel</span>
 			<select class="gf-form-input" ng-model="ctrl.panel.repeat" ng-options="f.name as f.name for f in ctrl.dashboard.templating.list">
 				<option value=""></option>
 			</select>
