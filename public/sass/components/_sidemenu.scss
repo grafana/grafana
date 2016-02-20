@@ -7,7 +7,7 @@
   top: 52px;
   left: 0;
   width: $side-menu-width;
-  background-color: $side-menu-bg;
+  background-color: rgba($side-menu-bg,$side-menu-opacity);
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
@@ -65,15 +65,15 @@
         opacity: 0;
         top: 0px;
         left: $side-menu-width;
-        background-color: $side-menu-bg;
-        animation: dropdown-anim 100ms ease-in-out 150ms forwards;
+        background-color: rgba($side-menu-bg,$side-menu-opacity);
+        @include animation('dropdown-anim 100ms ease-in-out 100ms forwards');
         z-index: -9999;
       }
     }
   }
 }
 
-@keyframes dropdown-anim {
+@include keyframes(dropdown-anim) {
   0% {
     display: none;
     opacity: 0;
@@ -85,7 +85,7 @@
   }
   100% {
     opacity: 1;
-    transform: translate3d(0,0,0)
+    transform: translate3d(0,0,0);
   }
 }
 
