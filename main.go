@@ -85,7 +85,7 @@ func initRuntime() {
 
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
-    sqlstore.AddDatasourceFromConfig()
+	sqlstore.AddDatasourceFromConfig()
 }
 
 func writePIDFile() {

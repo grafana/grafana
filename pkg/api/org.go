@@ -6,6 +6,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/metrics"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/services/sqlstore"
 	"github.com/wangy1931/grafana/pkg/setting"
 	"github.com/wangy1931/grafana/pkg/util"
 )
@@ -63,6 +64,11 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 	}
 
 	metrics.M_Api_Org_Create.Inc(1)
+
+	// We need to add the data source defined in config for this org to data_source table
+	if err := sqlstore.AddDatasourceForOrg(cmd.Result.Id); err != nil {
+		return ApiError(500, "Failed to add data source for organization", err)
+	}
 
 	return Json(200, &util.DynMap{
 		"orgId":   cmd.Result.Id,
@@ -127,6 +133,11 @@ func DeleteOrgById(c *middleware.Context) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
 		return ApiError(500, "Failed to update organization", err)
 	}
+	// We need to delete the data source for this org from data_source table
+	if err := sqlstore.DeleteDatasourceForOrg(c.ParamsInt64(":orgId")); err != nil {
+		return ApiError(500, "Failed to add data source for organization", err)
+	}
+
 	return ApiSuccess("Organization deleted")
 }
 

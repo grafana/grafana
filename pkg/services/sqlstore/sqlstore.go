@@ -33,6 +33,10 @@ var (
 	UseSQLite3 bool
 )
 
+const (
+	MAINORG_ID = 1
+)
+
 func EnsureAdminUser() {
 	statsQuery := m.GetSystemStatsQuery{}
 
@@ -61,25 +65,80 @@ func EnsureAdminUser() {
 
 func AddDatasourceFromConfig() {
 
-  log.Info("Add default datasource in the config to the database")
-  // Delete the default datasource if it exists
-  if err := bus.Dispatch(&m.DeleteAllDataSourceInOrgCommand{
-    OrgId:    1,
-  }); err != nil {
-    log.Warn("Could not delete data source with OrgId = 1: %v", err)
-  }
-  // Add default data source with OrgId = 1
-  if err := bus.Dispatch(&m.AddDataSourceCommand{
-    OrgId:    1,
-    Name:     "opentsdb",
-    Type:     m.DS_OPENTSDB,
-    Access:   m.DS_ACCESS_DIRECT,
-    Url:      setting.DataSource.DataSourceUrlRoot,
-    IsDefault:true,
-  }); err != nil {
-    log.Fatal(3, "Could not add default datasource from config: %v", err)
-    return
-  }
+	// Read datasource from OrgId 1 and compare with the current setting:
+	// If same, do nothing
+	// If different, need to update the entries in the data_source table for all the OrgIds.
+
+	// Read data source from OrgId 1 (default Main.org)
+	query := m.GetDataSourceByNameQuery{
+		OrgId: MAINORG_ID,
+		Name:  "opentsdb",
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		log.Fatal(3, "Could not read data source with OrgId = 1: %v", err)
+		return
+	}
+
+	log.Info("Data source read from OrgId 1 (MAINORG_ID) is %s", query.Result.Url)
+
+	if setting.DataSource.DataSourceUrlRoot == query.Result.Url {
+		return
+	}
+
+	// If initially OrgId 1 does not have data source defined in data_source table, add it.
+	// This should only happen when the system runs at the first time.
+	if query.Result.Url == "" {
+		// Add default data source with OrgId = 1
+		if err := bus.Dispatch(&m.AddDataSourceCommand{
+			OrgId:     MAINORG_ID,
+			Name:      "opentsdb",
+			Type:      m.DS_OPENTSDB,
+			Access:    m.DS_ACCESS_DIRECT,
+			Url:       setting.DataSource.DataSourceUrlRoot,
+			IsDefault: true,
+		}); err != nil {
+			log.Fatal(3, "Could not add default datasource for OrgId 1 from config: %v", err)
+			return
+		}
+	} else {
+		log.Info("Update default datasource for all the Orgs")
+		if err := bus.Dispatch(&m.UpdateDataSourceForAllOrgCommand{
+			Url: setting.DataSource.DataSourceUrlRoot,
+		}); err != nil {
+			log.Fatal(3, "Could not update default datasource for all Orgs: %v", err)
+			return
+		}
+	}
+}
+
+func AddDatasourceForOrg(orgId int64) (err error) {
+	log.Info("AddDatasourceForOrg: orgId=%v", orgId)
+	if err = bus.Dispatch(&m.AddDataSourceCommand{
+		OrgId:     orgId,
+		Name:      "opentsdb",
+		Type:      m.DS_OPENTSDB,
+		Access:    m.DS_ACCESS_DIRECT,
+		Url:       setting.DataSource.DataSourceUrlRoot,
+		IsDefault: true,
+	}); err != nil {
+		log.Error(3, "Could not add default datasource from config: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func DeleteDatasourceForOrg(orgId int64) (err error) {
+	log.Info("DeleteDatasourceForOrg: orgId=%v", orgId)
+	if err = bus.Dispatch(&m.DeleteAllDataSourceInOrgCommand{
+		OrgId: orgId,
+	}); err != nil {
+		log.Error(3, "Could not delete data source with OrgId = %v: %v", orgId, err)
+		return err
+	}
+
+	return nil
 }
 
 func NewEngine() {

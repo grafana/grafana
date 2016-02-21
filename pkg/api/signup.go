@@ -1,12 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"github.com/wangy1931/grafana/pkg/api/dtos"
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/events"
 	"github.com/wangy1931/grafana/pkg/metrics"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/services/sqlstore"
 	"github.com/wangy1931/grafana/pkg/setting"
 	"github.com/wangy1931/grafana/pkg/util"
 )
@@ -85,6 +87,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		return ApiError(500, "Organization with same name already exists", nil)
 	}
 
+	// Note that: the new org is also created together with this signup user (auto_assign_org = false)
 	// dispatch create command
 	if err := bus.Dispatch(&createUserCmd); err != nil {
 		return ApiError(500, "Failed to create user", err)
@@ -118,6 +121,11 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 
 	loginUserWithUser(user, c)
 	metrics.M_Api_User_SignUpCompleted.Inc(1)
+
+	// We need to add the data source defined in config for this org to data_source table
+	if err := sqlstore.AddDatasourceForOrg(user.OrgId); err != nil {
+		return ApiError(500, fmt.Sprintf("Failed to add data source for organization %v", user.OrgId), err)
+	}
 
 	return Json(200, apiResponse)
 }

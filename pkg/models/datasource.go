@@ -116,7 +116,11 @@ type DeleteDataSourceCommand struct {
 }
 
 type DeleteAllDataSourceInOrgCommand struct {
-  OrgId int64
+	OrgId int64
+}
+
+type UpdateDataSourceForAllOrgCommand struct {
+	Url string
 }
 
 // ---------------------
