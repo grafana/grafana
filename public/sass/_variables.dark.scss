@@ -166,8 +166,8 @@ $dropdownLinkColor:             $text-color;
 $dropdownLinkColorHover:        $white;
 $dropdownLinkColorActive:       $white;
 
-$dropdownLinkBackgroundActive:  $blue-dark;
-$dropdownLinkBackgroundHover:   $blue-dark;
+$dropdownLinkBackgroundActive:  $dark-4;
+$dropdownLinkBackgroundHover:   $dark-4;
 
 
 // COMPONENT VARIABLES
@@ -206,7 +206,7 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $body-bg;
-$side-menu-item-hover-bg: $dark-4;
+$side-menu-item-hover-bg: $dark-3;
 $side-menu-opacity:		  0.97;
 
 // Pagination

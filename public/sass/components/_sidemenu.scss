@@ -58,8 +58,12 @@
 
   li {
     position: relative;
+    @include left-brand-border();
 
     &:hover {
+      background-color: $side-menu-item-hover-bg;
+      @include left-brand-border-gradient();
+
       .dropdown-menu {
         display: block;
         opacity: 0;
@@ -125,10 +129,8 @@
   line-height: 47px;
   padding: 0px 10px 0px 10px;
   display: block;
+  border-left: 1px solid transparent;
 
-  &:hover {
-    background-color: $side-menu-item-hover-bg;
-  }
 
   .sidemenu-item-text {
     padding-left: 11px;
@@ -180,9 +182,6 @@
   padding: 17px 10px 15px 14px;
   box-sizing: border-box;
   cursor: pointer;
-  &:hover {
-    background-color: $side-menu-item-hover-bg;
-  }
   display: table;
   position: relative;
   width: 100%;
