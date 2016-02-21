@@ -123,7 +123,7 @@ function($, _) {
     var lowLimitMs = 1; // 1 millisecond default low limit
     var intervalMs, lowLimitInterval;
 
-    if(lowLimit) {
+    if (lowLimit) {
         lowLimitMs = kbn.interval_to_ms(lowLimit);
     }
 
