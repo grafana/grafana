@@ -74,6 +74,8 @@
     "lodash": "^2.4.1",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.15.7",
+    "tether": "^1.2.0",
+    "tether-drop": "^1.4.2",
     "tslint": "^3.4.0",
     "typescript": "^1.7.5"
   }
