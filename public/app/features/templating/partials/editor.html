@@ -134,6 +134,12 @@
 								<li>
 									<select class="input-mini tight-form-input last" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
 								</li>
+								<li class="tight-form-item" ng-show="current.auto">
+									Auto interval min value <tip>The calculated value will not go below this threshold</tip>
+								</li>
+								<li>
+									<input type="text" style="width: 35px" class="input-xxlarge tight-form-input last" ng-model="current.auto_min" ng-change="runQuery()"></input>
+								</li>
 							</ul>
 							<div class="clearfix"></div>
 						</div>
