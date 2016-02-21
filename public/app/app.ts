@@ -47,6 +47,17 @@ export class GrafanaApp {
       this.registerFunctions.factory    = $provide.factory;
       this.registerFunctions.service    = $provide.service;
       this.registerFunctions.filter     = $filterProvider.register;
+
+      $provide.decorator("$http", ["$delegate", function($delegate) {
+        var get = $delegate.get;
+        $delegate.get = function(url, config) {
+          if (url.match(/\.html$/)) {
+            url += "?v=" + new Date().getTime();
+          }
+          return get(url, config);
+        };
+        return $delegate;
+      }]);
     });
 
     this.ngModuleDependencies = [
