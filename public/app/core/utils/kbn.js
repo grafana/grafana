@@ -124,7 +124,7 @@ function($, _) {
     var intervalMs, lowLimitInterval;
 
     if (lowLimit) {
-        lowLimitMs = kbn.interval_to_ms(lowLimit);
+      lowLimitMs = kbn.interval_to_ms(lowLimit);
     }
 
     if (userInterval) {
