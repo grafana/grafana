@@ -56,7 +56,7 @@
   margin: 0;
   padding: 0;
 
-  li {
+  > li {
     position: relative;
     @include left-brand-border();
 
