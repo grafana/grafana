@@ -270,11 +270,9 @@ th {
 //
 // Forms
 //
-
 label {
   // Allow labels to use `margin` for spacing.
   display: inline-block;
-  margin-bottom: .5rem;
 }
 
 // Work around a Firefox/IE bug where the transparent `button` background
