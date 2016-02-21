@@ -32,6 +32,7 @@ input,
 button,
 select,
 textarea {
+  background-color: $input-bg;
   @include font-shorthand($font-size-base,normal,$line-height-base); // Set size, weight, line-height here
 }
 input,
