@@ -1,0 +1,245 @@
+
+@mixin tether($themePrefix: "tether") {
+  .#{ $themePrefix }-element, .#{ $themePrefix }-element * {
+    &, &:after, &:before {
+      box-sizing: border-box;
+    }
+  }
+
+  .#{ $themePrefix }-element {
+    position: absolute;
+    display: none;
+  }
+
+  &.#{ $themePrefix }-open {
+    display: block;
+  }
+}
+
+@mixin tether-theme-arrows($themePrefix: "tether", $themeName: "arrows", $arrowSize: 16px, $arrowPointerEvents: null, $backgroundColor: #fff, $color: inherit, $useDropShadow: false) {
+  .#{ $themePrefix }-element.#{ $themePrefix }-theme-#{ $themeName } {
+    max-width: 100%;
+    max-height: 100%;
+
+    .#{ $themePrefix }-content {
+      border-radius: 5px;
+      position: relative;
+      font-family: inherit;
+      background: $backgroundColor;
+      color: $color;
+      padding: 1em;
+      font-size: 1.1em;
+      line-height: 1.5em;
+
+      @if $useDropShadow {
+        transform: translateZ(0);
+        filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .2));
+      }
+
+      &:before {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-width: $arrowSize;
+        border-style: solid;
+        pointer-events: $arrowPointerEvents;
+      }
+    }
+
+    // Centers and middles
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-center .#{ $themePrefix }-content {
+      margin-bottom: $arrowSize;
+
+      &:before {
+        top: 100%;
+        left: 50%;
+        margin-left: - $arrowSize;
+        border-top-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-center .#{ $themePrefix }-content {
+      margin-top: $arrowSize;
+
+      &:before {
+        bottom: 100%;
+        left: 50%;
+        margin-left: - $arrowSize;
+        border-bottom-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-element-attached-middle .#{ $themePrefix }-content {
+      margin-right: $arrowSize;
+
+      &:before {
+        left: 100%;
+        top: 50%;
+        margin-top: - $arrowSize;
+        border-left-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-element-attached-middle .#{ $themePrefix }-content {
+      margin-left: $arrowSize;
+
+      &:before {
+        right: 100%;
+        top: 50%;
+        margin-top: - $arrowSize;
+        border-right-color: $backgroundColor;
+      }
+    }
+
+    // Target middle/center, element corner
+
+    &.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-center .#{ $themePrefix }-content {
+      left: - $arrowSize * 2;
+    }
+
+    &.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-center .#{ $themePrefix }-content {
+      left: $arrowSize * 2;
+    }
+
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-middle .#{ $themePrefix }-content {
+      margin-top: $arrowSize;
+
+      &:before {
+        bottom: 100%;
+        left: $arrowSize;
+        border-bottom-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-middle .#{ $themePrefix }-content {
+      margin-top: $arrowSize;
+
+      &:before {
+        bottom: 100%;
+        right: $arrowSize;
+        border-bottom-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-middle .#{ $themePrefix }-content {
+      margin-bottom: $arrowSize;
+
+      &:before {
+        top: 100%;
+        left: $arrowSize;
+        border-top-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-middle .#{ $themePrefix }-content {
+      margin-bottom: $arrowSize;
+
+      &:before {
+        top: 100%;
+        right: $arrowSize;
+        border-top-color: $backgroundColor;
+      }
+    }
+
+    // Top and bottom corners
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-bottom .#{ $themePrefix }-content {
+      margin-top: $arrowSize;
+
+      &:before {
+        bottom: 100%;
+        left: $arrowSize;
+        border-bottom-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-bottom .#{ $themePrefix }-content {
+      margin-top: $arrowSize;
+
+      &:before {
+        bottom: 100%;
+        right: $arrowSize;
+        border-bottom-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-top .#{ $themePrefix }-content {
+      margin-bottom: $arrowSize;
+
+      &:before {
+        top: 100%;
+        left: $arrowSize;
+        border-top-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-top .#{ $themePrefix }-content {
+      margin-bottom: $arrowSize;
+
+      &:before {
+        top: 100%;
+        right: $arrowSize;
+        border-top-color: $backgroundColor;
+      }
+    }
+
+    // Side corners
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-left .#{ $themePrefix }-content {
+      margin-right: $arrowSize;
+
+      &:before {
+        top: $arrowSize;
+        left: 100%;
+        border-left-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-top.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-right .#{ $themePrefix }-content {
+      margin-left: $arrowSize;
+
+      &:before {
+        top: $arrowSize;
+        right: 100%;
+        border-right-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-right.#{ $themePrefix }-target-attached-left .#{ $themePrefix }-content {
+      margin-right: $arrowSize;
+
+      &:before {
+        bottom: $arrowSize;
+        left: 100%;
+        border-left-color: $backgroundColor;
+      }
+    }
+
+    &.#{ $themePrefix }-element-attached-bottom.#{ $themePrefix }-element-attached-left.#{ $themePrefix }-target-attached-right .#{ $themePrefix }-content {
+      margin-left: $arrowSize;
+
+      &:before {
+        bottom: $arrowSize;
+        right: 100%;
+        border-right-color: $backgroundColor;
+      }
+    }
+  }
+}
+
+$themePrefix: "drop";
+$themeName: "arrows-bounce-dark";
+$arrowSize: 12px;
+$backgroundColor: #000;
+$color: #fff;
+$useDropShadow: false;
+$attachmentOffset: $arrowSize;
+$easing: cubic-bezier(0, 0, 0.265, 1.55);
+
+@include tether($themePrefix: $themePrefix);
+@include tether-theme-arrows($themePrefix: $themePrefix, $themeName: $themeName, $arrowSize: $arrowSize, $backgroundColor: $backgroundColor, $color: $color, $useDropShadow: $useDropShadow);
+
+
+// +drop-animation-scale($themePrefix: $themePrefix, $themeName: $themeName, $attachmentOffset: $attachmentOffset, $easing: $easing)
