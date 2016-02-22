@@ -264,15 +264,6 @@ $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        darken($white,11%);
 
-$popoverBackground:       $white;
-$popoverArrowWidth:       15px;
-$popoverArrowColor:       $white;
-$popoverTitleBackground:  $white;
-
-// Special enhancement for popovers
-$popoverArrowOuterWidth:  $popoverArrowWidth + 1;
-$popoverArrowOuterColor:  rgba(0,0,0,.25);
-
 // popover
 $popover-bg:         $dark-4;
 $popover-color:      $text-color;
