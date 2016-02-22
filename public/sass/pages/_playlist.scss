@@ -27,6 +27,7 @@
   margin-bottom: 15px;
 }
 
+
 .playlist-search-field-wrapper {
   input {
     width: 100%;
@@ -109,6 +110,10 @@
   .add-dashboard {
     text-align: center;
   }
+
+  .fa-star {
+    color: $orange;
+  }
 }
 
 .playlist-column-header {
@@ -119,9 +124,4 @@
 
 .selected-playlistitem-settings {
   text-align: right;
-}
-
-.tag-result-container {
-  width: 160px;
-  float: left;
 }
