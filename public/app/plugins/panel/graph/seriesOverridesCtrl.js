@@ -53,22 +53,21 @@ define([
     };
 
     $scope.openColorSelector = function() {
-      var popoverScope = $scope.$new();
-      popoverScope.colorSelected = $scope.colorSelected;
-      popoverScope.colors = $scope.ctrl.colors;
-
       popoverSrv.show({
-        element: $element.find(".dropdown"),
-        placement: 'top',
-        templateUrl:  'public/app/partials/colorpicker.html',
-        scope: popoverScope
+        element: $element.find(".dropdown")[0],
+        position: 'top center',
+        openOn: 'click',
+        template: '<gf-color-picker></gf-color-picker>',
+        model: {
+          colorSelected: $scope.colorSelected,
+        }
       });
     };
 
     $scope.removeOverride = function(option) {
       delete $scope.override[option.propertyName];
       $scope.updateCurrentOverrides();
-      $scope.ctrl.render();
+      $scope.ctrl.refresh();
     };
 
     $scope.getSeriesNames = function() {

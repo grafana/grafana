@@ -1,5 +1,4 @@
 <div ng-controller="JsonEditorCtrl">
-
 	<div class="gf-box-header">
 		<div class="gf-box-title">
 			<i class="fa fa-edit"></i>
@@ -11,12 +10,13 @@
 		</button>
 	</div>
 
-	<div class="gf-box-body" style="height: 500px">
-		<textarea ng-model="json" rows="20" spellcheck="false" style="width: 100%;"></textarea>
-		<br>
-		<br>
+	<div class="gf-box-body json-box-body">
+		<div class="gf-form">
+			<textarea class="gf-form-input" ng-model="json" rows="20" spellcheck="false"></textarea>
+		</div>
 
-		<button type="button" class="btn btn-success" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
+		<div class="gf-form-button-row">
+			<button type="button" class="btn btn-success" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
+		</div>
 	</div>
-
 </div>

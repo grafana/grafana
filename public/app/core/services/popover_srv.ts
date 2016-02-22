@@ -4,45 +4,51 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import Drop from 'tether-drop';
 
 /** @ngInject **/
-function popoverSrv($templateCache, $timeout, $q, $http, $compile) {
-
-  this.getTemplate = function(url) {
-    return $q.when($templateCache.get(url) || $http.get(url, {cache: true}));
-  };
+function popoverSrv($compile, $rootScope) {
 
   this.show = function(options) {
+    var popoverScope = _.extend($rootScope.$new(true), options.model);
+    var drop;
 
-    options.scope.dismiss = function() {
-      var popover = options.element.data('popover');
-      if (popover) {
-        popover.destroy();
-      }
-      options.scope.$destroy();
+    function destroyDrop() {
+      setTimeout(function() {
+        if (drop.tether) {
+          drop.destroy();
+        }
+      });
+    }
+
+    popoverScope.dismiss = function() {
+      popoverScope.$destroy();
+      destroyDrop();
     };
 
-    this.getTemplate(options.templateUrl).then(function(result) {
-      $timeout(function() {
-        var template = _.isString(result) ? result : result.data;
+    var contentElement = document.createElement('div');
+    contentElement.innerHTML = options.template;
 
+    $compile(contentElement)(popoverScope);
 
-        options.element.popover({
-          content: template,
-          placement: options.placement || 'bottom',
-          html: true
-        });
-
-        var popover = options.element.data('popover');
-        popover.hasContent = function () {
-          return template;
-        };
-
-        popover.toggle();
-        popover.scope = options.scope;
-        $compile(popover.$tip)(popover.scope);
-      }, 1);
+    drop = new Drop({
+      target: options.element,
+      content: contentElement,
+      position: options.position,
+      classes: 'drop-popover',
+      openOn: options.openOn || 'hover',
+      hoverCloseDelay: 200,
+      tetherOptions: {
+        constraints: [{to: 'window', pin: true, attachment: "both"}]
+      }
     });
+
+    drop.on('close', () => {
+      popoverScope.dismiss({fromDropClose: true});
+      destroyDrop();
+    });
+
+    drop.open();
   };
 }
 
