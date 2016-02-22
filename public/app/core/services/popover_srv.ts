@@ -4,6 +4,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import Drop from 'tether-drop';
 
 /** @ngInject **/
 function popoverSrv($templateCache, $timeout, $q, $http, $compile) {
@@ -26,21 +27,18 @@ function popoverSrv($templateCache, $timeout, $q, $http, $compile) {
       $timeout(function() {
         var template = _.isString(result) ? result : result.data;
 
-
-        options.element.popover({
+        var drop = new Drop({
+          target: options.element[0],
           content: template,
-          placement: options.placement || 'bottom',
-          html: true
+          position: 'bottom top',
+          classes: 'drop-help',
+          openOn: 'click',
+          tetherOptions: {
+          }
         });
 
-        var popover = options.element.data('popover');
-        popover.hasContent = function () {
-          return template;
-        };
-
-        popover.toggle();
-        popover.scope = options.scope;
-        $compile(popover.$tip)(popover.scope);
+        drop.open();
+        //$compile(popover.$tip)(popover.scope);
       }, 1);
     });
   };
