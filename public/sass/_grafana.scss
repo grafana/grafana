@@ -7,7 +7,7 @@
 @import "mixins/grid-framework";
 @import "mixins/hover";
 @import "mixins/forms";
-
+@import "mixins/drop_element";
 
 // BASE
 @import "base/normalize";
@@ -64,7 +64,7 @@
 @import "components/footer";
 @import "components/infobox";
 @import "components/shortcuts";
-@import "components/tether_drop";
+@import "components/drop";
 @import "components/query_editor";
 
 // PAGES
@@ -76,5 +76,5 @@
 @import "pages/signup";
 @import "pages/styleguide";
 
-@import "old_responsive";
 
+@import "old_responsive";

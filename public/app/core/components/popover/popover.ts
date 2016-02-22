@@ -16,6 +16,7 @@ export function popoverDirective() {
         return;
       }
 
+      var offset = attrs.offset || '0 -10px';
 
       transclude(function(clone, newScope) {
         var content = document.createElement("div");
@@ -27,10 +28,10 @@ export function popoverDirective() {
           target: inputElem[0],
           content: content,
           position: 'right middle',
-          classes: 'drop-popover',
+          classes: 'drop-help',
           openOn: 'click',
           tetherOptions: {
-            offset: "0 -10px"
+            offset: offset
           }
         });
 

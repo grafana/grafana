@@ -1,7 +1,7 @@
 <ul class="sidemenu">
 
 	<li class="sidemenu-org-section" ng-if="ctrl.isSignedIn" class="dropdown">
-		<div class="sidemenu-org">
+		<a class="sidemenu-org" href="profile">
 			<div class="sidemenu-org-avatar">
 				<img ng-if="ctrl.user.gravatarUrl" ng-src="{{ctrl.user.gravatarUrl}}">
 				<span class="sidemenu-org-avatar--missing">
@@ -12,7 +12,7 @@
 				<span class="sidemenu-org-user sidemenu-item-text">{{ctrl.user.name}}</span>
 				<span class="sidemenu-org-name sidemenu-item-text">{{ctrl.user.orgName}}</span>
 			</div>
-		</div>
+		</a>
 		<i class="fa fa-caret-right"></i>
 		<ul class="dropdown-menu" role="menu">
 			<li ng-repeat="menuItem in ctrl.orgMenu" ng-class="menuItem.cssClass">
