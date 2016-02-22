@@ -35,7 +35,16 @@ function (angular) {
     };
 
     $scope.removeUser = function(user) {
-      backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
+      $scope.appEvent('confirm-modal', {
+        title: 'Do you want to remove the user?',
+        text: 'The user will be removed from this organization!',
+        icon: 'fa-trash',
+        yesText: 'Delete',
+        onConfirm: function() {
+          backendSrv.delete('/api/org/users/' + user.userId).then($scope.get);
+        }
+      });
+
     };
 
     $scope.revokeInvite = function(invite, evt) {

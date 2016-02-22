@@ -82,6 +82,10 @@ type DeleteUserCommand struct {
 	UserId int64
 }
 
+type DeleteAllUserInOrgCommand struct {
+	OrgId int64
+}
+
 type SetUsingOrgCommand struct {
 	UserId int64
 	OrgId  int64
