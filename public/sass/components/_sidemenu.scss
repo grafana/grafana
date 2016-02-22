@@ -60,6 +60,7 @@
     position: relative;
     @include left-brand-border();
 
+    &.active,
     &:hover {
       background-color: $side-menu-item-hover-bg;
       @include left-brand-border-gradient();
