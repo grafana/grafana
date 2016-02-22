@@ -7,7 +7,7 @@
   top: 52px;
   left: 0;
   width: $side-menu-width;
-  background-color: $side-menu-bg;
+  background-color: rgba($side-menu-bg,$side-menu-opacity);
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
@@ -30,25 +30,21 @@
     min-height: calc(100% - 54px);
   }
   .dashboard-container {
-    padding-left: $side-menu-width;
+    padding-left: $side-menu-width + 0.2rem;
   }
   .page-container {
     margin-left: $side-menu-width;
   }
-  .top-nav-menu-btn {
-    a {
-      background-color: $page-bg;
-      width: $side-menu-width;
-    }
+  .navbar-brand-btn {
+    background-color: $page-bg;
+    width: $side-menu-width;
+
     .icon-gf-grafana_wordmark  {
       display: inline-block;
     }
     .fa {
       display: none;
     }
-  }
-  .sidemenu-org {
-    box-shadow: none;
   }
   .search-container {
     left: auto;
@@ -60,17 +56,40 @@
   margin: 0;
   padding: 0;
 
-  li {
+  > li {
     position: relative;
+    @include left-brand-border();
 
     &:hover {
+      background-color: $side-menu-item-hover-bg;
+      @include left-brand-border-gradient();
+
       .dropdown-menu {
         display: block;
+        opacity: 0;
         top: 0px;
         left: $side-menu-width;
-        background-color: $side-menu-bg;
+        background-color: rgba($side-menu-bg,$side-menu-opacity);
+        @include animation('dropdown-anim 100ms ease-in-out 100ms forwards');
+        z-index: -9999;
       }
     }
+  }
+}
+
+@include keyframes(dropdown-anim) {
+  0% {
+    display: none;
+    opacity: 0;
+  }
+  1% {
+    display: block;
+    opacity: 0;
+    transform: translate3d(-5%,0,0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0,0,0);
   }
 }
 
@@ -110,10 +129,8 @@
   line-height: 47px;
   padding: 0px 10px 0px 10px;
   display: block;
+  border-left: 1px solid transparent;
 
-  &:hover {
-    background-color: $side-menu-item-hover-bg;
-  }
 
   .sidemenu-item-text {
     padding-left: 11px;
@@ -165,9 +182,6 @@
   padding: 17px 10px 15px 14px;
   box-sizing: border-box;
   cursor: pointer;
-  &:hover {
-    background-color: $side-menu-item-hover-bg;
-  }
   display: table;
   position: relative;
   width: 100%;
@@ -176,7 +190,7 @@
 .sidemenu .fa-caret-right {
   position: absolute;
   top: 38%;
-  right: 25px;
+  right: 6px;
   font-size: 14px;
   color: $link-color;
 }
@@ -188,14 +202,26 @@
 }
 
 .sidemenu-org-avatar {
-  width: 44px;
-}
-
-.sidemenu-org-avatar > img {
   width: 40px;
   height: 40px;
+  background-color: $gray-2;
   border-radius: 50%;
-  position: absolute;
+  text-align: center;
+
+  >img {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    left: 14px;
+  }
+}
+
+.sidemenu-org-avatar--missing {
+  color: $gray-4;
+  text-shadow: 0 1px 0 $dark-1;
+  line-height: 40px;
+  font-size: $font-size-lg;
 }
 
 .sidemenu-org-details {

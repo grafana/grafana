@@ -13,10 +13,10 @@ $black:                 #000;
 
 // -------------------------
 $black:            #000;
-$dark-1:           #141414; // (body)
-$dark-2:           #1f1d1d; // ($gray-darker)
-$dark-3:           #262626; // ($gray-dark)
-$dark-4:           #333333;
+$dark-1:           #141414;
+$dark-2:           #1f1d1d;
+$dark-3:           #292929;
+$dark-4:           #373737;
 $dark-5:           #444444;
 $gray-1:           #555555;
 $gray-2:           #7B7B7B;
@@ -31,7 +31,7 @@ $white:            #fff;
 // Accent colors
 // -------------------------
 $blue:             	   	#2AB2E4;
-$blue-dark:             #75CAEB;
+$blue-dark:             #3CAAD6;
 $green:                 #28B62C;
 $red:                   #FF4136;
 $yellow:                #FF851B;
@@ -125,8 +125,8 @@ $scrollbarBorder:       $gray-4;
 $btn-primary-bg:        $brand-primary;
 $btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
-$btn-info-bg:           lighten($purple, 3%);
-$btn-info-bg-hl:        darken($purple, 3%);
+$btn-secondary-bg:      $blue-dark;
+$btn-secondary-bg-hl:   lighten($blue-dark, 4%);
 
 $btn-success-bg:        lighten($green, 3%);
 $btn-success-bg-hl:     darken($green, 3%);
@@ -156,15 +156,16 @@ $input-box-shadow:               none;
 $input-border-focus:             $blue !default;
 $input-box-shadow-focus:         $blue !default;
 $input-color-placeholder:        $gray-4 !default;
-$input-label-bg:	        	     $gray-5;
+$input-label-bg:	        	     $gray-6;
 
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $gray-6;
+$side-menu-opacity:		  0.97;
 
 // search
-$searchShadow: 0 5px 30px 0 lighten($gray-2, 30%);
+$search-shadow: 0 5px 30px 0 lighten($gray-2, 30%);
 
 // Dropdowns
 // -------------------------
@@ -176,11 +177,11 @@ $dropdownDivider:               $dropdownDividerTop;
 $dropdownTitle:                 $dark-5;
 
 $dropdownLinkColor:             $dark-3;
-$dropdownLinkColorHover:        $white;
-$dropdownLinkColorActive:       $white;
+$dropdownLinkColorHover:        $link-color;
+$dropdownLinkColorActive:       $link-color;
 
-$dropdownLinkBackgroundActive:  $blue;
-$dropdownLinkBackgroundHover:   $blue;
+$dropdownLinkBackgroundActive:  $gray-6;
+$dropdownLinkBackgroundHover:   $gray-6;
 
 
 // COMPONENT VARIABLES
@@ -250,8 +251,8 @@ $successText:             lighten($green, 10%);
 $successBackground:       $green;
 $successBorder:           transparent;
 
-$infoText:                lighten($purple,10%);
-$infoBackground:          $purple;
+$infoText:                $blue;
+$infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
 
@@ -274,5 +275,3 @@ $popoverArrowOuterColor:  rgba(0,0,0,.25);
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
-
-

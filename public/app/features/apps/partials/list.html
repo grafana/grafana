@@ -2,14 +2,14 @@
 </navbar>
 
 <div class="page-container">
-  <div class="page-wide">
+  <div class="page-header">
     <h1>Plugins</h1>
+    </div>
+	<div ng-if="!ctrl.apps">
+		<em>No apps defined</em>
+	</div>
 
-		<div ng-if="!ctrl.apps">
-			<em>No apps defined</em>
-		</div>
-
-		<ul class="filter-list">
+	<ul class="filter-list">
       <li ng-repeat="app in ctrl.apps">
         <ul class="filter-list-card">
 					<li class="filter-list-card-image">
@@ -43,6 +43,5 @@
           </li>
         </ul>
       </li>
-		</ul>
-	</div>
+	</ul>
 </div>

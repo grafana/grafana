@@ -15,35 +15,34 @@
 		</a>
 	</div>
 
-	<tabset>
-		<tab heading="Colors">
-			<ul>
-				<li class="style-guide-color-card" ng-repeat="color in ctrl.colors" style="background-color: {{color.value}}">
-					<strong>${{color.name}}</strong>
-					<em>{{color.value}}</em>
-				</li>
-			</ul>
-		</tab>
-		<tab heading="Buttons">
+	<ul class="nav nav-tabs">
+		<li ng-repeat="page in ctrl.pages" ng-class="{active: ctrl.page[page]}" class="tab">
+			<a href="styleguide/{{page}}">{{page}}</a>
+		</li>
+	</ul>
 
-			<div class="style-guide-button-list p-a-2">
-				<button class="btn btn-primary">btn-primary</button>
-				<button class="btn btn-info">btn-info</button>
-				<button class="btn btn-inverse">btn-inverse</button>
-				<button class="btn btn-success">btn-success</button>
-				<button class="btn btn-warning">btn-warning</button>
-				<button class="btn btn-danger">btn-danger</button>
+	<div class="tab-pane" ng-if="ctrl.page.colors">
+		<ul>
+			<li class="style-guide-color-card" ng-repeat="color in ctrl.colors" style="background-color: {{color.value}}">
+				<strong>${{color.name}}</strong>
+				<em>{{color.value}}</em>
+			</li>
+		</ul>
+	</div>
+
+	<div class="tab-pane" ng-if="ctrl.page.buttons">
+		<div ng-repeat="variant in ctrl.buttonVariants" class="row">
+			<div ng-repeat="btnSize in ctrl.buttonSizes" class="style-guide-button-list p-a-2 col-md-4">
+				<button ng-repeat="buttonName in ctrl.buttonNames" class="btn btn{{variant}}{{buttonName}} {{btnSize}}">
+					btn{{variant}}{{buttonName}}
+				</button>
 			</div>
+		</div>
+	</div>
 
-
-			<div class="style-guide-button-list p-a-2">
-				<button class="btn btn-primary btn-small">btn-small</button>
-				<button class="btn btn-success btn-large">btn-large</button>
-			</div>
-		</tab>
-		<tab heading="Forms">
-		</tab>
-	</tabset>
+	<div class="tab-pane" ng-if="ctrl.page.forms">
+		forms
+	</div>
 
 </div>
 

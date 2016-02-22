@@ -36,7 +36,7 @@
     "grunt-sass": "^1.1.0",
     "grunt-string-replace": "~1.2.1",
     "grunt-systemjs-builder": "^0.2.5",
-    "grunt-tslint": "^3.0.1",
+    "grunt-tslint": "^3.0.2",
     "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~0.1.5",
@@ -74,7 +74,9 @@
     "lodash": "^2.4.1",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.15.7",
-    "tslint": "^3.2.1",
+    "tether": "^1.2.0",
+    "tether-drop": "^1.4.2",
+    "tslint": "^3.4.0",
     "typescript": "^1.7.5"
   }
 }
