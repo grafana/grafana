@@ -15,6 +15,13 @@
 			<div class="gf-form">
 				<span class="gf-form-label width-7">Name</span>
 				<input class="gf-form-input max-width-21" type="text" ng-model="current.name" placeholder="My data source name" required>
+
+				<gf-popover offset="0px -85px">
+					The name is used when you select the data source in panels.
+					The <code>Default</code> data source is preselected in new
+					new panels.
+				</gf-popover>
+
 				<editor-checkbox text="Default" model="current.isDefault"></editor-checkbox>
 			</div>
 
@@ -24,6 +31,7 @@
 					<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
 				</div>
 			</div>
+
 		</div>
 
 		<rebuild-on-change property="datasourceMeta.id">

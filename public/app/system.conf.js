@@ -3,6 +3,7 @@ System.config({
   baseURL: 'public',
   paths: {
     'tether': 'vendor/npm/tether/dist/js/tether.js',
+    'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
     'moment': 'vendor/moment.js',
     "jquery": "vendor/jquery/dist/jquery.js",
     'lodash-src': 'vendor/lodash.js',
