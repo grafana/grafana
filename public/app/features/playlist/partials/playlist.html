@@ -26,7 +26,6 @@
 
 	<div class="row">
 		<div class="col-md-6">
-
 			<div class="playlist-search-containerwrapper">
 				<div class="max-width-32">
 					<h5 class="page-headering playlist-column-header">Available</h5>
@@ -40,7 +39,9 @@
 				<table class="grafana-options-table playlist-available-list">
 					<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
 						<td>
-							<i class="icon-gf icon-gf-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
+							<i class="icon-gf icon-gf-dashboard"></i>
+							&nbsp;&nbsp;{{playlistItem.title}}
+							<i class="fa fa-star" ng-show="playlistItem.isStarred"></i>
 						</td>
 						<td class="add-dashboard">
 							<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
@@ -52,14 +53,23 @@
 				</table>
 			</div>
 			<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0;">
-					<div ng-repeat="tag in ctrl.filteredTags" class="pointer tag-result-container"
-						ng-click="ctrl.addTagPlaylistItem(tag, $event)">
-						<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
-							<i class="fa fa-tag"></i>
-							<span>{{tag.term}} &nbsp;({{tag.count}})</span>
-						</a>
-					</div>
-				</div>
+				<table class="grafana-options-table playlist-available-list">
+					<tr ng-repeat="tag in ctrl.filteredTags">
+						<td>
+							<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
+								<i class="fa fa-tag"></i>
+								<span>{{tag.term}} &nbsp;({{tag.count}})</span>
+							</a>
+						</td>
+						<td class="add-dashboard">
+							<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
+								<i class="fa fa-plus"></i>
+								Add to playlist
+							</button>
+						</td>
+					</tr>
+				</table>
+			</div>
 		</div>
 
 		<div class="col-md-6">
