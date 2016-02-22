@@ -24,7 +24,9 @@
 		<span class="gf-form-label width-7">
 			Access <tip>Direct = url is used directly from browser, Proxy = Grafana backend will proxy the request</tip>
 		</span>
-		<select class="gf-form-input gf-size-auto" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+		<div class="gf-form-select-wrapper">
+			<select class="gf-form-input gf-size-auto" ng-model="current.access" ng-options="f for f in ['direct', 'proxy']"></select>
+		</div>
 	</div>
 
 	<div class="gf-form">
