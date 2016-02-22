@@ -25,6 +25,7 @@ import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
 import {searchDirective} from './components/search/search';
 import {popoverDirective} from './components/popover/popover';
+import {colorPicker} from './components/colorpicker/colorpicker';
 import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
 import 'app/core/controllers/all';
@@ -40,5 +41,6 @@ export {
   sideMenuDirective,
   navbarDirective,
   searchDirective,
+  colorPicker,
   popoverDirective
 };
