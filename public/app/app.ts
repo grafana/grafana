@@ -47,6 +47,20 @@ export class GrafanaApp {
       this.registerFunctions.factory    = $provide.factory;
       this.registerFunctions.service    = $provide.service;
       this.registerFunctions.filter     = $filterProvider.register;
+
+      $provide.decorator("$http", ["$delegate", "$templateCache", function($delegate, $templateCache) {
+        var get = $delegate.get;
+        $delegate.get = function(url, config) {
+          if (url.match(/\.html$/)) {
+            // some template's already exist in the cache
+            if (!$templateCache.get(url)) {
+              url += "?v=" + new Date().getTime();
+            }
+          }
+          return get(url, config);
+        };
+        return $delegate;
+      }]);
     });
 
     this.ngModuleDependencies = [

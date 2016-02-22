@@ -58,7 +58,7 @@
 
 .row-open {
   margin-top: 5px;
-  left: -28px;
+  left: -30px;
   position: absolute;
   z-index: 100;
   transition: .10s left;
@@ -233,12 +233,12 @@ div.flot-text {
 }
 
 .panel-highlight  {
-  @include box-shadow("inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
 }
 
 .on-drag-hover {
   .panel-container {
-    @include box-shadow("inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
   }
 }
 
@@ -281,7 +281,7 @@ div.flot-text {
     border-top: 0;
     border-right: 0;
     border-left: 0;
-    border-bottom: 2px solid transparent;
+    border-bottom: 1px solid transparent;
     padding: 1.2rem .5rem .4rem .5rem;
   }
 }

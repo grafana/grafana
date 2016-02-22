@@ -5,7 +5,7 @@
   z-index: 1000;
   position: absolute;
   width: 700px;
-  box-shadow: $searchShadow;
+  box-shadow: $search-shadow;
   padding: 10px;
   background-color: $panel-bg;
   border: $panel-border;
@@ -73,6 +73,7 @@
     white-space: nowrap;
     background-color: $grafanaListBackground;
     margin-bottom: 4px;
+
     .search-result-icon:before {
       content: "\f009";
     }

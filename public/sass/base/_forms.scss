@@ -178,7 +178,7 @@ input[type="checkbox"].cr1 {
 
 label.cr1 {
   display: inline-block;
-  height: 19px;
+  height: 18px;
   position: relative;
   clear: none;
   text-indent: 2px;
@@ -190,7 +190,7 @@ label.cr1 {
 }
 
 input[type="checkbox"]:checked+label {
-  background: url($checkboxImageUrl) 0px -21px no-repeat;
+  background: url($checkboxImageUrl) 0px -18px no-repeat;
 }
 
 .gf-fluid-input {

@@ -3,7 +3,10 @@
 	<li class="sidemenu-org-section" ng-if="ctrl.isSignedIn" class="dropdown">
 		<div class="sidemenu-org">
 			<div class="sidemenu-org-avatar">
-				<img ng-src="{{ctrl.user.gravatarUrl}}">
+				<img ng-if="ctrl.user.gravatarUrl" ng-src="{{ctrl.user.gravatarUrl}}">
+				<span class="sidemenu-org-avatar--missing">
+					<i class="fa fa-fw fa-user"></i>
+				</span>
 			</div>
 			<div class="sidemenu-org-details">
 				<span class="sidemenu-org-user sidemenu-item-text">{{ctrl.user.name}}</span>

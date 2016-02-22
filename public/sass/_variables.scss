@@ -77,17 +77,6 @@ $grid-gutter-width: 30px !default;
 
 $enable-flex: false;
 
-$form-sizes: (
-  xs: 5.7rem,
-  sm: 7rem,
-  md: 8.5rem,
-  lg: 10rem,
-  xl: 14rem,
-  xxl: 21rem,
-  xxxl: 28rem
-) !default;
-
-
 // Typography
 // -------------------------
 
@@ -170,9 +159,13 @@ $input-padding-y:                .6rem !default;
 $input-line-height:              1.35rem !default;
 
 $input-btn-border-width:         1px;
-$input-border-radius:            $border-radius !default;
-$input-border-radius-lg:         $border-radius-lg !default;
-$input-border-radius-sm:         $border-radius-sm !default;
+$input-border-radius:            0 $border-radius $border-radius 0 !default;
+$input-border-radius-lg:         0 $border-radius-lg $border-radius-lg 0 !default;
+$input-border-radius-sm:         0 $border-radius-sm $border-radius-sm 0 !default;
+
+$label-border-radius:            $border-radius 0 0 $border-radius !default;
+$label-border-radius-lg:         $border-radius-lg 0 0 $border-radius-lg !default;
+$label-border-radius-sm:         $border-radius-sm 0 0 $border-radius-sm !default;
 
 $input-padding-x-sm:             .5rem !default;
 $input-padding-y-sm:             .25rem !default;
@@ -185,6 +178,7 @@ $input-height-lg:                (($font-size-lg * $line-height-lg) + ($input-pa
 $input-height-sm:                (($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)) !default;
 
 $form-group-margin-bottom:       $spacer-y !default;
+$gf-form-margin: 0.2rem;
 
 $cursor-disabled:                not-allowed !default;
 
@@ -221,4 +215,4 @@ $btn-padding-y-lg:               .75rem !default;
 $btn-border-radius:              3px;
 
 // sidemenu
-$side-menu-width:  15rem;
+$side-menu-width:  14rem;
