@@ -286,3 +286,10 @@ div.flot-text {
   }
 }
 
+.json-box-body {
+  min-height: 500px;
+  textarea {
+    width: 100%;
+    background-color: $gray-1;
+  }
+}
