@@ -73,13 +73,17 @@
 					</div>
 					<div class="gf-form">
 						<span class="gf-form-label max-width-10">Datasource</span>
-						<select class="gf-form-input gf-size-auto" ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input gf-size-auto" ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
+						</div>
 					</div>
 				</div>
 				<div class="gf-form-inline">
 					<div class="gf-form gf-size-max-xl">
 						<span class="gf-form-label width-10">Icon size</span>
-						<select class="gf-form-input gf-size-md" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input gf-size-md" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
+						</div>
 					</div>
 					<div class="gf-form">
 						<label class="gf-form-label">
