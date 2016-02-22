@@ -119,13 +119,9 @@ function($, _) {
     s: 1
   };
 
-  kbn.calculateInterval = function(range, resolution, userInterval, lowLimit) {
+  kbn.calculateInterval = function(range, resolution, userInterval) {
     var lowLimitMs = 1; // 1 millisecond default low limit
     var intervalMs, lowLimitInterval;
-
-    if (lowLimit) {
-      lowLimitMs = kbn.interval_to_ms(lowLimit);
-    }
 
     if (userInterval) {
       if (userInterval[0] === '>') {
