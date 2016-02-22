@@ -9,14 +9,14 @@
 
 		<gf-popover>
 			<p>Specify a complete HTTP url (http://your_server:8080)</p>
-			<p ng-show="current.access === 'direct'">
-				When access method is <code>Direct</code> then this url needs to be
-				accessable from your browser.
-			</p>
-			<p ng-show="current.access === 'proxy'">
-				Your access method is currently <code>Proxy</code> then the url needs to
-				be accessable from the grafana backend.
-			</p>
+			<span ng-show="current.access === 'direct'">
+				Your access method is <code>Direct</code>, this means the url
+				needs to be accessable from the browser.
+			</span>
+			<span ng-show="current.access === 'proxy'">
+				Your access method is currently <code>Proxy</code>, this means the url
+				needs to be accessable from the grafana backend.
+			</span>
 		</gf-popover>
 	</div>
 

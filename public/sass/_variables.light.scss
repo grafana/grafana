@@ -174,7 +174,7 @@ $dropdownBorder:                $tight-form-border;
 $dropdownDividerTop:            $gray-6;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
-$dropdownTitle:                 $dark-5;
+$dropdownTitle:                 $gray-3;
 
 $dropdownLinkColor:             $dark-3;
 $dropdownLinkColorHover:        $link-color;
@@ -272,6 +272,10 @@ $popoverTitleBackground:  $white;
 // Special enhancement for popovers
 $popoverArrowOuterWidth:  $popoverArrowWidth + 1;
 $popoverArrowOuterColor:  rgba(0,0,0,.25);
+
+// popover
+$popover-help-bg:         $blue-dark;
+$popover-help-color:      $gray-6;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
