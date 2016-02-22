@@ -4,126 +4,72 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>
-			Edit User
-		</h1>
+		<h1>Edit User</h1>
 	</div>
 
-	<form name="userForm">
-		<div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Name
-					</li>
-					<li>
-						<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+	<form name="userForm" class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Name</span>
+				<input type="text" required ng-model="user.name" class="gf-form-input max-width-25" >
 			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Email
-					</li>
-					<li>
-						<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Email</span>
+				<input type="email" ng-model="user.email" class="gf-form-input max-width-25" >
 			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Username
-					</li>
-					<li>
-						<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Username</span>
+				<input type="text" ng-model="user.login" class="gf-form-input max-width-25" >
 			</div>
-		</div>
 
-		<br>
-		<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+			</div>
 	</form>
 
-	<h3>
-		Change password
-	</h3>
+	<h3 class="page-heading">Change password</h3>
 
-	<form name="passwordForm">
-		<div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						New password
-					</li>
-					<li>
-						<input type="password" required ng-minlength="4" ng-model="password" class="input-xxlarge tight-form-input last">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form">
+				<span class="gf-form-label width-10">New password</span>
+				<input type="password" required ng-minlength="4" ng-model="password" class="gf-form-input max-width-25">
 		</div>
 
-		<br>
-		<button type="submit" class="pull-right btn btn-success" ng-click="setPassword()">Update</button>
-	</form>
-
-	<h3>
-		Permissions
-	</h3>
-
-	<div>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item last">
-					Grafana Admin&nbsp;
-					<input class="cr1" id="permissions.isGrafanaAdmin" type="checkbox"
-					ng-model="permissions.isGrafanaAdmin" ng-checked="permissions.isGrafanaAdmin">
-					<label for="permissions.isGrafanaAdmin" class="cr1"></label>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<br>
-		<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
-		<br>
-	</div>
-
-	<h3>
-		Organizations
-	</h3>
-
-	<form name="addOrgForm">
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 160px">
-					Add organization
-				</li>
-				<li>
-					<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"
-					required class="input-xlarge tight-form-input" placeholder="organization name">
-				</li>
-				<li class="tight-form-item">
-					Role
-				</li>
-				<li>
-					<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
-					</select>
-				</li>
-				<li>
-					<button class="btn btn-success tight-form-btn" ng-click="addOrgUser()">Add</button>
-				</li>
-				<div class="clearfix"></div>
-			</ul>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="setPassword()">Update</button>
 		</div>
 	</form>
 
-	<table class="grafana-options-table form-inline">
+	<h3 class="page-heading">Permissions</h3>
+
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form" >
+			<editor-checkbox text="Grafana Admin" model="permissions.isGrafanaAdmin" style="line-height: 1.5rem;"></editor-checkbox>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updatePermissions()">Update</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Organizations</h3>
+
+	<form name="addOrgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label width-12">Add organization</span>
+				<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"	required class="gf-form-input max-width-20" placeholder="organization name">
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">Role</span>
+				<select type="text" ng-model="newOrg.role" class="gf-form-input width-10" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn btn-success gf-form-btn" ng-click="addOrgUser()">Add</button>
+			</div>
+		</div>
+	</form>
+
+	<table class="grafana-options-table">
 		<tr>
 			<th>Name</th>
 			<th>Role</th>
@@ -134,7 +80,7 @@
 				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
 			</td>
 			<td>
-				<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
+				<select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
 				</select>
 			</td>
 			<td style="width: 1%">

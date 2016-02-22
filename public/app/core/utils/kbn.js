@@ -593,12 +593,12 @@ function($, _) {
           {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec',    value: 'bps'},
           {text: 'bytes/sec',   value: 'Bps'},
-          {text: 'kilobites/sec', value: 'Kbits'},
+          {text: 'kilobits/sec', value: 'Kbits'},
           {text: 'kilobytes/sec',    value: 'KBs'},
-          {text: 'megabites/sec', value: 'Mbits'},
+          {text: 'megabits/sec', value: 'Mbits'},
           {text: 'megabytes/sec',    value: 'MBs'},
           {text: 'gigabytes/sec',   value: 'GBs'},
-          {text: 'gigabites/sec',   value: 'Gbits'},
+          {text: 'gigabits/sec',   value: 'Gbits'},
         ]
       },
       {
