@@ -1,6 +1,4 @@
 <div class="graph-legend-popover">
-	<a class="close" ng-click="dismiss();" href="">×</a>
-
 	<div class="editor-row" style="padding-bottom: 0;">
 		<label>Axis:</label>
 		<button ng-click="ctrl.toggleYAxis(series);dismiss();"
@@ -19,7 +17,7 @@
 		<i ng-repeat="color in ctrl.colors" class="pointer"
 			ng-class="{'fa fa-circle-o': color === series.color,'fa fa-circle': color !== series.color}"
 			ng-style="{color:color}"
-			ng-click="ctrl.changeSeriesColor(series, color);dismiss();">&nbsp;</i>
+			ng-click="ctrl.changeSeriesColor(series, color);">&nbsp;</i>
 	</div>
 </div>
 

@@ -22,7 +22,7 @@
 }
 
 .graph-legend {
-  margin: 0 20px;
+  margin: 0 $spacer;
   text-align: center;
 
   .popover-content {
@@ -181,7 +181,6 @@
 
 .graph-legend-popover {
   width: 200px;
-  min-height: 100px;
   label {
     display: inline-block;
   }
