@@ -15,8 +15,8 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
     display: block;
   }
 
-  &.drop-open.drop-popover.drop-out-of-bounds,
-  &.drop-open-transitionend.drop-popover.drop-out-of-bounds {
+  &.drop-open.drop-help.drop-out-of-bounds,
+  &.drop-open-transitionend.drop-help.drop-out-of-bounds {
     display: none;
   }
 }
