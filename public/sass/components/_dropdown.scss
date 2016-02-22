@@ -59,8 +59,8 @@
   }
 
   .divider {
-    height: 1px;
-    margin: (($line-height-base / 2) - 1) 1px; // 8px 1px
+    height: 0.1rem;
+    margin: 0.5rem 0; // 8px 1px
     overflow: hidden;
     background-color: $dropdownDividerTop;
     border-bottom: 1px solid $dropdownDividerBottom;
