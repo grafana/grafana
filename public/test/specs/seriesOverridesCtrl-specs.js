@@ -20,6 +20,7 @@ define([
      // beforeEach(function() {
       ctx.scope = $rootScope.$new();
       ctx.scope.ctrl = {
+        refresh: sinon.spy(),
         render: sinon.spy(),
         seriesList: []
       };
