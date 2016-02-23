@@ -258,14 +258,14 @@ $infoBorder:              transparent;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       $gray-4;
+$tooltipColor:            $text-color;
+$tooltipBackground:       $gray-5;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        darken($white,11%);
+$tooltipLinkColor:        $text-color;
 
 // popover
-$popover-bg:         $dark-4;
+$popover-bg:         $gray-5;
 $popover-color:      $text-color;
 
 $popover-help-bg:         $blue-dark;
