@@ -45,6 +45,7 @@ function ($, coreModule) {
           if (editview) {
             scope.contextSrv.editview = editViewMap[editview];
             payload.src = scope.contextSrv.editview.src;
+            payload.cssClass = "tabbed-view";
           }
 
           if (lastEditor === payload.src) {
