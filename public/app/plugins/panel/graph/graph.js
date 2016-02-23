@@ -335,16 +335,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               types[event.annotation.name] = {
                 color: event.annotation.iconColor,
                 position: 'BOTTOM',
+                markerSize: 5,
               };
             }
-
-            // if (event.annotation.showLine) {
-            //   options.grid.markings.push({
-            //     color: event.annotation.lineColor,
-            //     lineWidth: 1,
-            //     xaxis: { from: event.min, to: event.max }
-            //   });
-            // }
           });
 
           options.events = {

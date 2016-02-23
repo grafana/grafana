@@ -68,7 +68,7 @@
 			<div class="gf-form-group">
 				<div class="gf-form-inline">
 					<div class="gf-form gf-size-max-xxl">
-						<span class="gf-form-label width-10">Name</span>
+						<span class="gf-form-label">Name</span>
 						<input type="text" class="gf-form-input" ng-model='currentAnnotation.name' placeholder="name"></input>
 					</div>
 					<div class="gf-form">
@@ -77,26 +77,17 @@
 							<select class="gf-form-input gf-size-auto" ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
 						</div>
 					</div>
-				</div>
-				<div class="gf-form-inline">
-					<div class="gf-form gf-size-max-xl">
-						<span class="gf-form-label width-10">Icon size</span>
-						<div class="gf-form-select-wrapper">
-							<select class="gf-form-input gf-size-md" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
-						</div>
-					</div>
+					<!-- <div class="gf&#45;form gf&#45;size&#45;max&#45;xl"> -->
+					<!-- 	<span class="gf&#45;form&#45;label width&#45;10">Icon size</span> -->
+					<!-- 	<div class="gf&#45;form&#45;select&#45;wrapper"> -->
+					<!-- 		<select class="gf&#45;form&#45;input gf&#45;size&#45;md" ng&#45;model="currentAnnotation.iconSize" ng&#45;options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select> -->
+					<!-- 	</div> -->
+					<!-- </div> -->
 					<div class="gf-form">
 						<label class="gf-form-label">
-							<span>Icon color</span>
+							<span>Color</span>
 							<spectrum-picker ng-model="currentAnnotation.iconColor"></spectrum-picker>
 						</label>
-					</div>
-					<div class="gf-form">
-						<label class="gf-form-label">
-							<span>Line color</span>
-							<spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
-						</label>
-						<editor-checkbox text="Grid line" model="currentAnnotation.showLine"></editor-checkbox>
 					</div>
 				</div>
 			</div>
