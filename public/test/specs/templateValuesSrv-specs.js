@@ -360,6 +360,24 @@ define([
       });
     });
 
+    describeUpdateVariable('with include all and custom value', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: 'apps.*',
+          name: 'test',
+          includeAll: true,
+          allFormat: 'custom',
+          options: [{text: "All", value: "frontend-.*"}]
+        };
+        scenario.queryResult = [{text: 'frontend-01'}, {text: 'frontend-02'}, { text: 'backend-01'}];
+      });
+
+      it('should add the all value untouched', function() {
+        expect(scenario.variable.options[0].value).to.be('frontend-.*');
+      });
+    });
+
   });
 
 });
