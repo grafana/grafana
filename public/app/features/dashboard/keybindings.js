@@ -64,7 +64,7 @@ function(angular, $) {
         scope.appEvent('export-dashboard', evt);
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+q', function(evt) {
+      keyboardManager.bind('ctrl+i', function(evt) {
         scope.appEvent('quick-snapshot', evt);
       }, { inputDisabled: true });
 
