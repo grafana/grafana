@@ -1,7 +1,8 @@
 .tabbed-view {
   background-color: $page-bg;
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
-  margin: -($spacer/2) 0 $spacer*2 0;
+  margin: -$dashboard-padding;
+  margin-bottom: $spacer*2;
   padding: $spacer*2;
 }
 
