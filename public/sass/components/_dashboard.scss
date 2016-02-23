@@ -271,8 +271,8 @@ div.flot-text {
 }
 
 .dashboard-header {
-  font-family: "grafana-icons";
-  font-size: 22px;
+  font-family: $headings-font-family;
+  font-size: $font-size-h2;
   text-align: center;
   span {
     display: inline-block;
