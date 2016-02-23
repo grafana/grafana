@@ -6,13 +6,13 @@ define([
   'app/core/utils/kbn',
   './graph_tooltip',
   'jquery.flot',
-  'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
   'jquery.flot.fillbelow',
-  'jquery.flot.crosshair'
+  'jquery.flot.crosshair',
+  './jquery.flot.events',
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
@@ -333,28 +333,24 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           _.each(annotations, function(event) {
             if (!types[event.annotation.name]) {
               types[event.annotation.name] = {
-                level: _.keys(types).length + 1,
-                icon: {
-                  icon: "fa fa-chevron-down",
-                  size: event.annotation.iconSize,
-                  color: event.annotation.iconColor,
-                }
+                color: event.annotation.iconColor,
+                position: 'BOTTOM',
               };
             }
 
-            if (event.annotation.showLine) {
-              options.grid.markings.push({
-                color: event.annotation.lineColor,
-                lineWidth: 1,
-                xaxis: { from: event.min, to: event.max }
-              });
-            }
+            // if (event.annotation.showLine) {
+            //   options.grid.markings.push({
+            //     color: event.annotation.lineColor,
+            //     lineWidth: 1,
+            //     xaxis: { from: event.min, to: event.max }
+            //   });
+            // }
           });
 
           options.events = {
             levels: _.keys(types).length + 1,
             data: annotations,
-            types: types
+            types: types,
           };
         }
 

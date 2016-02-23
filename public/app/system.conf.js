@@ -20,7 +20,6 @@ System.config({
     "bootstrap-tagsinput": "vendor/tagsinput/bootstrap-tagsinput.js",
     "jquery.flot": "vendor/flot/jquery.flot",
     "jquery.flot.pie": "vendor/flot/jquery.flot.pie",
-    "jquery.flot.events": "vendor/flot/jquery.flot.events",
     "jquery.flot.selection": "vendor/flot/jquery.flot.selection",
     "jquery.flot.stack": "vendor/flot/jquery.flot.stack",
     "jquery.flot.stackpercent": "vendor/flot/jquery.flot.stackpercent",
