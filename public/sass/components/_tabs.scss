@@ -44,15 +44,18 @@
 }
 
 .gf-tabs-link {
-  padding: ($spacer * 0.75) $spacer;
+  padding: 0.80rem 1rem 0.60rem 1rem;
   margin-right: $spacer/2;
   line-height: $line-height-base;
   border: 1px solid transparent;
-  @include border-radius(4px 4px 0 0);
+  position: relative;
+  top: 3px;
+
+  @include border-radius(2px 2px 0 0);
 
   &:hover,
   &:focus {
-    border-color: $divider-border-color;
+    border-color: #F9952B;
     color: $link-color;
   }
 
@@ -60,11 +63,9 @@
   &.active:hover,
   &.active:focus {
     @include border-radius(3px);
-    border: 1px solid $divider-border-color;
+    border: 1px solid #F9952B;
     background-color: transparent;
     border-bottom: 1px solid $panel-bg;
     color: $link-color;
-    position: relative;
-    top: 1px;
   }
 }

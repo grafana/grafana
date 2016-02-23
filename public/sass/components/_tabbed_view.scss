@@ -3,7 +3,7 @@
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
   margin: -$dashboard-padding;
   margin-bottom: $spacer*2;
-  padding: $spacer*2;
+  padding: $spacer*3;
 }
 
 .tabbed-view-header {
@@ -39,7 +39,11 @@
 }
 
 .tabbed-view-body {
-  padding: 20px;
-  min-height: 150px;
+  padding: $spacer*2;
+  min-height: 250px;
 }
 
+.section-heading {
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+}
