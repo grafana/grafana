@@ -37,7 +37,14 @@
 	   	</a>
 		</li>
 
-		<li class="dropdown">
+    <li ng-if="!contextSrv.isOrgAdmin">
+      <a class="sidemenu-item">
+        <span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
+        <span class="sidemenu-item-text">{{contextSrv.user.orgName}}</span>
+      </a>
+    </li>
+
+		<li class="dropdown" ng-if="contextSrv.isOrgAdmin">
 			<a class="sidemenu-item pointer" data-toggle="dropdown" ng-click="loadOrgs()" tabindex="0">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-users"></i></span>
 				<span class="sidemenu-item-text">{{contextSrv.user.orgName}}</span><i class="fa fa-caret-down small"></i>
