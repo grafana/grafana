@@ -1,7 +1,7 @@
 .tabbed-view {
   background-color: $page-bg;
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
-  margin: -($spacer/2);
+  margin: -($spacer/2) 0 $spacer*2 0;
   padding: $spacer*2;
 }
 
@@ -13,6 +13,12 @@
   border-right: 0;
   border-left: 0;
   border-bottom: 1px solid transparent;
+}
+
+.tabbed-view-title {
+  margin-left: $spacer*2;
+  float: left;
+  font-style: italic;
 }
 
 .tabbed-view-close-btn {
