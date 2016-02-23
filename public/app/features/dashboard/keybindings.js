@@ -64,6 +64,10 @@ function(angular, $) {
         scope.appEvent('export-dashboard', evt);
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+q', function(evt) {
+        scope.appEvent('quick-snapshot', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
         var popups = $('.popover.in');
         if (popups.length > 0) {
