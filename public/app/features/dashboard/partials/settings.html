@@ -1,20 +1,22 @@
-<div class="gf-box-header">
-	<div class="gf-box-title">
-		<i class="fa fa-cogs"></i>
+<div class="tabbed-view-header">
+	<h2 class="tabbed-view-title">
 		Settings
-	</div>
+	</h2>
 
-	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker', 'Metadata']" data-title="{{tab}}">
-		</div>
-	</div>
+	<ul class="gf-tabs">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata']">
+			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+				{{::tab}}
+			</a>
+		</li>
+	</ul>
 
-	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+	<button class="tabbed-view-close-btn" ng-click="dismiss();">
 		<i class="fa fa-remove"></i>
 	</button>
 </div>
 
-<div class="gf-box-body" style="padding-bottom: 50px;">
+<div class="tabbed-view-body" style="padding-bottom: 50px;">
 	<div ng-if="editor.index == 0">
 		<div class="editor-row">
 			<div class="tight-form-section">
@@ -139,7 +141,7 @@
             </li>
           </ul>
           <div class="clearfix"></div>
-        </div> 
+        </div>
         <div class="tight-form">
           <ul class="tight-form-list">
             <li class="tight-form-item" style="width: 120px">
