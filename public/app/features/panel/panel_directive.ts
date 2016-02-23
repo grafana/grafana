@@ -28,24 +28,27 @@ var panelTemplate = `
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
-    <div class="gf-box">
-      <div class="gf-box-header">
-        <div class="gf-box-title">
+    <div class="tabbed-view">
+      <div class="tabbed-view-header">
+        <h2 class="tabbed-view-title">
           <i ng-class="ctrl.icon"></i>
           {{ctrl.pluginName}}
-        </div>
+        </h2>
 
-        <div ng-model="ctrl.editorTabIndex" bs-tabs>
-          <div ng-repeat="tab in ctrl.editorTabs" data-title="{{tab.title}}">
-          </div>
-        </div>
+        <ul class="gf-tabs">
+          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
+            <a class="gf-tabs-link" ng-click="ctrl.editorTabIndex = $index" ng-class="{active: ctrl.editorTabIndex === $index}">
+              {{::tab.title}}
+            </a>
+          </li>
+        </ul>
 
-        <button class="gf-box-header-close-btn" ng-click="ctrl.exitFullscreen();">
+        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
           Back to dashboard
         </button>
       </div>
 
-      <div class="gf-box-body">
+      <div class="tabbed-view-body">
         <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
           <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
         </div>
