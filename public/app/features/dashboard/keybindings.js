@@ -60,6 +60,10 @@ function(angular, $) {
         scope.appEvent('zoom-out', evt);
       }, { inputDisabled: true });
 
+      keyboardManager.bind('ctrl+e', function(evt) {
+        scope.appEvent('export-dashboard', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
         var popups = $('.popover.in');
         if (popups.length > 0) {
