@@ -10,24 +10,32 @@
 // Grays
 // -------------------------
 $black:                 #000;
-$gray-darker:           lighten(#000, 11.5%); // #222
-$gray-dark:             lighten(#000, 20%);   // #333
-$gray:                  lighten(#000, 33.5%); // #555
-$gray-light:            lighten(#000, 60%);   // #999
-$gray-light2:           lighten(#000, 70%);   // #999
-$gray-lighter:          lighten(#000, 96.5%); // #eee
-$gray-lightest:         lighten(#000, 98%); // #eee
-$white:                 #fff;
 
+// -------------------------
+$black:            #000;
+$dark-1:           #141414;
+$dark-2:           #1f1d1d;
+$dark-3:           #292929;
+$dark-4:           #373737;
+$dark-5:           #444444;
+$gray-1:           #555555;
+$gray-2:           #7B7B7B;
+$gray-3:           #b3b3b3;
+$gray-4:           #D8D9DA;
+$gray-5:           #ECECEC;
+$gray-6:           #f4f5f8;
+$gray-7:           #fbfbfb;
+
+$white:            #fff;
 
 // Accent colors
 // -------------------------
 $blue:             	   	#2AB2E4;
-$blue-dark:             #75CAEB;
+$blue-dark:             #3CAAD6;
 $green:                 #28B62C;
 $red:                   #FF4136;
 $yellow:                #FF851B;
-$orange:                #FF7518;
+$orange:                #Ff7941;
 $pink:                  #E671B8;
 $purple:                #9954BB;
 $variable:              #2AB2E4;
@@ -48,146 +56,132 @@ $critical:              #EC2128;
 
 $body-bg:  		  $white;
 $page-bg:  		  $white;
-$body-color:    $gray;
-$text-color:    $gray;
+$body-color:    $gray-1;
+$text-color:    $gray-1;
 
 // Links
 // -------------------------
-$link-color:             $gray;
-$link-color-disabled:    lighten($link-color,30%);
+$link-color:             $gray-1;
+$link-color-disabled:    lighten($link-color, 30%);
 $link-hover-color:       darken($link-color, 20%);
 
 // Typography
 // -------------------------
-$headings-color:         $text-color;
-$abbr-border-color: 	 $gray-light !default;
-$text-muted: 			 darken($link-color,30%);
+$headings-color:       $text-color;
+$abbr-border-color: 	 $gray-2 !default;
+$text-muted: 			     darken($link-color,30%);
 
-$blockquote-small-color:  $gray-light !default;
-$blockquote-border-color: $gray-lighter !default;
+$blockquote-small-color:  $gray-2 !default;
+$blockquote-border-color: $gray-3 !default;
 
-$hr-border-color: rgba(0,0,0,.1) !default;
+$hr-border-color: $dark-3 !default;
 
 // Components
-$component-active-color: #fff !default;
+$component-active-color: $white !default;
 $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
 
-$panel-bg: 		    $gray-lightest;
-$panel-border: 	  solid 1px $gray-lighter;
+$panel-bg: 		  $gray-7;
+$panel-border:  solid 1px $gray-6;
 
-$divider-border-color: 		$gray-light;
-
-// Submenu
-$submenuBackground:     rgb(218, 217, 217);
-$submenuBorder:         $white;
+$divider-border-color:	$gray-2;
 
 // Graphite Target Editor
-$tight-form-border:     #ddd;
-$tight-form-bg:     		#efefef;
+$tight-form-border:   $gray-4;
+$tight-form-bg:    		$gray-6;
 
-$tight-form-func-bg: 			darken($tight-form-bg, 5%);
-$tight-form-func-highlight-bg: 	darken($tight-form-bg, 10%);
+$tight-form-func-bg:            $gray-5;
+$tight-form-func-highlight-bg:  $gray-6;
 
-$modal-background: 		$body-bg;
-$code-tag-bg: 	#ddd;
+$modal-background: $body-bg;
+$code-tag-bg:      $dark-5;
 
 // Lists
-$grafanaListBackground:  	     darken($gray-lighter,5%);
-$grafanaListAccent:            darken($gray-lighter,8%);
-$grafanaListBorderTop:         #eee;
-$grafanaListBorderBottom:      #eee;
-$grafanaListHighlight:         darken($gray-lighter,10%);
-$grafanaListHighlightContrast: #ddd;
+$grafanaListBackground:    	   $gray-6;
+$grafanaListAccent:            $gray-5;
+$grafanaListBorderTop:         $gray-3;
+$grafanaListBorderBottom:      $gray-3;
+$grafanaListHighlight:         $gray-5;
 $grafanaListMainLinkColor:     $text-color;
 
 
 // Tables
 // -------------------------
 $table-bg:                   transparent; // overall background-color
-$table-bg-accent:            #f9f9f9; // for striping
-$table-bg-hover:             #E8F8FD; // for hover
+$table-bg-accent:            $gray-5; // for striping
+$table-bg-hover:             $gray-5; // for hover
 $table-bg-active:            $table-bg-hover !default;
-$table-border:               #ddd; // table and cell border
-
+$table-border:               $gray-3; // table and cell border
 
 // Scrollbars
-$scrollbarBackground: $gray-lighter;
-$scrollbarBackground2: $gray-lighter;
-$scrollbarBorder: $gray-light;
+$scrollbarBackground:   $gray-5;
+$scrollbarBackground2:  $gray-5;
+$scrollbarBorder:       $gray-4;
 
 // Buttons
 // -------------------------
-$btnBackground:                     $gray-lighter;
-$btnBackgroundHighlight:            darken($gray-lighter, 15%);
-$btnBorder:                         #bbb;
+$btn-primary-bg:        $brand-primary;
+$btn-primary-bg-hl:     lighten($brand-primary, 8%);
 
-$btn-primary-bg:                    $brand-primary;
-$btn-primary-bg-hl:                 lighten($brand-primary, 10%);
+$btn-secondary-bg:      $blue-dark;
+$btn-secondary-bg-hl:   lighten($blue-dark, 4%);
 
-$btnInfoBackground:                 lighten($purple, 3%);
-$btnInfoBackgroundHighlight:        darken($purple, 3%);
+$btn-success-bg:        lighten($green, 3%);
+$btn-success-bg-hl:     darken($green, 3%);
 
-$btnSuccessBackground:              lighten($green, 3%);
-$btnSuccessBackgroundHighlight:     darken($green, 3%);
+$btn-warning-bg:        lighten($orange, 3%);
+$btn-warning-bg-hl:     darken($orange, 3%);
 
-$btnWarningBackground:              lighten($orange, 3%);
-$btnWarningBackgroundHighlight:     darken($orange, 3%);
+$btn-danger-bg:         lighten($red, 3%);
+$btn-danger-bg-hl:      darken($red, 3%);
 
-$btnDangerBackground:               lighten($red, 3%);
-$btnDangerBackgroundHighlight:      darken($red, 3%);
+$btn-inverse-bg:          $gray-5;
+$btn-inverse-bg-hl:       darken($gray-5, 5%);
+$btn-inverse-text-color:  $dark-4;
 
-$btnInverseBackground:              $gray-lighter;
-$btnInverseBackgroundHighlight:     darken($gray-lighter, 5%);
-$btnInverseText:                    $black;
-$btnInverseBorder:                  $gray-light;
+$btn-link-color: $gray-1;
 
-$btnText:              				$gray-lighter;
-
-$iconContainerBackground:			      $white;
-$iconContainerBackgroundHighlight:	lighten($white, 5%);
-$iconContainerBorder:				        1px solid rgba(0,0,0, 0.05);
-$iconContainerShadow:				        0 0 14px 2px rgba(0,0,0, 0.05);
-
+$iconContainerBackground: $white;
 
 // Forms
 // -------------------------
-$input-bg:                       $white;
-$input-bg-disabled:              $gray-lighter;
+$input-bg:                       $gray-7;
+$input-bg-disabled:              $gray-5;
 
-$input-color:                    #020202;
-$input-border-color:             $gray-lighter;
-$input-box-shadow:               inset 0 1px 1px rgba(0,0,0,.075) !default;
-$input-border-focus:             #66afe9 !default;
-$input-box-shadow-focus:         rgba(102,175,233,.6) !default;
-$input-color-placeholder:        #999 !default;
-$input-label-bg:	        		   #f8f8f8;
+$input-color:                    $dark-3;
+$input-border-color:             $gray-5;
+$input-box-shadow:               none;
+$input-border-focus:             $blue !default;
+$input-box-shadow-focus:         $blue !default;
+$input-color-placeholder:        $gray-4 !default;
+$input-label-bg:	        	     $gray-6;
 
 // Sidemenu
 // -------------------------
-$sideMenuBackground:            $panel-bg;
-$sideMenuBackgroundHighlight:   darken($sideMenuBackground, 4%);
+$side-menu-bg:            $body-bg;
+$side-menu-item-hover-bg: $gray-6;
+$side-menu-opacity:		  0.97;
 
 // search
-$searchShadow: 0 5px 30px 0 lighten($gray-light, 30%);
+$search-shadow: 0 5px 30px 0 lighten($gray-2, 30%);
 
 // Dropdowns
 // -------------------------
 $dropdownBackground:            $white;
 $dropdownBorder:                $tight-form-border;
-$dropdownDividerTop:            #e5e5e5;
+$dropdownDividerTop:            $gray-6;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
-$dropdownTitle:                 #333;
+$dropdownTitle:                 $gray-3;
 
-$dropdownLinkColor:             $gray-dark;
-$dropdownLinkColorHover:        $white;
-$dropdownLinkColorActive:       $white;
+$dropdownLinkColor:             $dark-3;
+$dropdownLinkColorHover:        $link-color;
+$dropdownLinkColorActive:       $link-color;
 
-$dropdownLinkBackgroundActive:  $blue;
-$dropdownLinkBackgroundHover:   $blue;
+$dropdownLinkBackgroundActive:  $gray-6;
+$dropdownLinkBackgroundHover:   $gray-6;
 
 
 // COMPONENT VARIABLES
@@ -196,12 +190,12 @@ $dropdownLinkBackgroundHover:   $blue;
 
 // Input placeholder text color
 // -------------------------
-$placeholderText:         $gray-light;
+$placeholderText:         $gray-2;
 
 
 // Hr border color
 // -------------------------
-$hrBorder:                $gray-lighter;
+$hrBorder:                $gray-3;
 
 
 // Horizontal forms & lists
@@ -211,7 +205,7 @@ $horizontalComponentOffset:       180px;
 
 // Wells
 // -------------------------
-$wellBackground:                  $gray-lighter;
+$wellBackground:                  $gray-3;
 
 
 // Navbar
@@ -238,7 +232,7 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 // Pagination
 // -------------------------
-$paginationBackground:                $gray-light;
+$paginationBackground:                $gray-2;
 $paginationBorder:                    transparent;
 $paginationActiveBackground:          $blue;
 
@@ -257,29 +251,25 @@ $successText:             lighten($green, 10%);
 $successBackground:       $green;
 $successBorder:           transparent;
 
-$infoText:                lighten($purple,10%);
-$infoBackground:          $purple;
+$infoText:                $blue;
+$infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
 
 // Tooltips and popovers
 // -------------------------
 $tooltipColor:            $white;
-$tooltipBackground:       $gray-dark;
+$tooltipBackground:       $gray-4;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        darken($white,11%);
 
-$popoverBackground:       $white;
-$popoverArrowWidth:       15px;
-$popoverArrowColor:       $white;
-$popoverTitleBackground:  $white;
+// popover
+$popover-bg:         $dark-4;
+$popover-color:      $text-color;
 
-// Special enhancement for popovers
-$popoverArrowOuterWidth:  $popoverArrowWidth + 1;
-$popoverArrowOuterColor:  rgba(0,0,0,.25);
+$popover-help-bg:         $blue-dark;
+$popover-help-color:      $gray-6;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
-
-

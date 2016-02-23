@@ -1,12 +1,13 @@
 // MIXINS
 @import "mixins/mixins";
+@import "mixins/animations";
 @import "mixins/buttons";
 @import "mixins/breakpoints";
 @import "mixins/grid";
 @import "mixins/grid-framework";
 @import "mixins/hover";
 @import "mixins/forms";
-
+@import "mixins/drop_element";
 
 // BASE
 @import "base/normalize";
@@ -15,12 +16,14 @@
 @import "base/forms";
 @import "base/fonts";
 @import "base/grid";
+@import "base/font_awesome";
 
 // UTILS
 @import "utils/utils";
 @import "utils/validation";
 @import "utils/angular";
 @import "utils/spacings";
+@import "utils/widths";
 
 // LAYOUTS
 @import "layout/page";
@@ -37,6 +40,7 @@
 @import "components/panel_dashlist";
 @import "components/panel_singlestat";
 @import "components/panel_table";
+@import "components/panel_text";
 @import "components/tagsinput";
 @import "components/tables_lists";
 @import "components/search";
@@ -52,7 +56,6 @@
 @import "components/filter-table";
 @import "components/scrollbar";
 @import "components/old_stuff";
-@import "components/popovers";
 @import "components/typeahead";
 @import "components/modals";
 @import "components/dropdown";
@@ -60,6 +63,7 @@
 @import "components/footer";
 @import "components/infobox";
 @import "components/shortcuts";
+@import "components/drop";
 @import "components/query_editor";
 
 // PAGES
@@ -70,5 +74,6 @@
 @import "pages/apps";
 @import "pages/signup";
 @import "pages/styleguide";
+
 
 @import "old_responsive";

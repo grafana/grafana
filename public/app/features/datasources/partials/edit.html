@@ -13,15 +13,24 @@
 	<form name="editForm">
 		<div class="gf-form-group">
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-xs">Name</span>
-				<input class="gf-form-input gf-size-max-xxl" type="text" ng-model="current.name" placeholder="My data source name" required>
+				<span class="gf-form-label width-7">Name</span>
+				<input class="gf-form-input max-width-21" type="text" ng-model="current.name" placeholder="My data source name" required>
+				<gf-popover offset="0px -85px">
+					The name is used when you select the data source in panels.
+					The <code>Default</code> data source is preselected in new
+					panels.
+				</gf-popover>
+
 				<editor-checkbox text="Default" model="current.isDefault"></editor-checkbox>
 			</div>
 
 			<div class="gf-form">
-				<span class="gf-form-label gf-size-xs">Type</span>
-				<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				<span class="gf-form-label width-7">Type</span>
+				<div class="gf-form-select-wrapper">
+					<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				</div>
 			</div>
+
 		</div>
 
 		<rebuild-on-change property="datasourceMeta.id">
@@ -41,10 +50,10 @@
 		<div class="gf-form-button-row">
 			<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
 			<button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
-			<button type="submit" class="btn btn-primary" ng-show="!isNew" ng-click="saveChanges(true)">
+			<button type="submit" class="btn btn-secondary" ng-show="!isNew" ng-click="saveChanges(true)">
 				Test Connection
 			</button>
-			<a class="btn-text" href="datasources">Cancel</a>
+			<a class="btn btn-link" href="datasources">Cancel</a>
 		</div>
 	</form>
 </div>

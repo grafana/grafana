@@ -77,8 +77,8 @@ export class GrafanaCtrl {
         });
       };
 
-      $rootScope.performance.scopeCount = scopes;
       f(root);
+      $rootScope.performance.scopeCount = scopes;
       return count;
     };
 

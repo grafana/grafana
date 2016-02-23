@@ -77,24 +77,13 @@ $grid-gutter-width: 30px !default;
 
 $enable-flex: false;
 
-$form-sizes: (
-  xs: 5.7rem,
-  sm: 7rem,
-  md: 8.5rem,
-  lg: 10rem,
-  xl: 14rem,
-  xxl: 21rem,
-  xxxl: 28rem
-) !default;
-
-
 // Typography
 // -------------------------
 
-$font-family-sans-serif:    "Helvetica Neue", Helvetica, Arial, sans-serif;
-$font-family-serif:         Georgia, "Times New Roman", Times, serif;
-$font-family-monospace:     Menlo, Monaco, Consolas, "Courier New", monospace;
-$font-family-base:        $font-family-sans-serif !default;
+$font-family-sans-serif:   "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-serif:        Georgia, "Times New Roman", Times, serif;
+$font-family-monospace:    Menlo, Monaco, Consolas, "Courier New", monospace;
+$font-family-base:         $font-family-sans-serif !default;
 
 $font-size-root: 14px !default;
 
@@ -127,7 +116,7 @@ $lead-font-size:   1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
-$headings-font-family:  "Helvetica Neue", Helvetica, Arial, sans-serif;
+$headings-font-family:  "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $headings-font-weight:   400 !default;
 $headings-line-height:   1.1 !default;
 
@@ -145,9 +134,9 @@ $list-inline-padding: 5px !default;
 $line-height-lg:         (4 / 3) !default;
 $line-height-sm:         1.5 !default;
 
-$border-radius:          0.0rem !default;
+$border-radius:          0.2rem !default;
 $border-radius-lg:       0.3rem !default;
-$border-radius-sm:       0.2rem !default;
+$border-radius-sm:       0.1rem !default;
 
 $caret-width:            .3em !default;
 $caret-width-lg:         $caret-width !default;
@@ -170,9 +159,13 @@ $input-padding-y:                .6rem !default;
 $input-line-height:              1.35rem !default;
 
 $input-btn-border-width:         1px;
-$input-border-radius:            $border-radius !default;
-$input-border-radius-lg:         $border-radius-lg !default;
-$input-border-radius-sm:         $border-radius-sm !default;
+$input-border-radius:            0 $border-radius $border-radius 0 !default;
+$input-border-radius-lg:         0 $border-radius-lg $border-radius-lg 0 !default;
+$input-border-radius-sm:         0 $border-radius-sm $border-radius-sm 0 !default;
+
+$label-border-radius:            $border-radius 0 0 $border-radius !default;
+$label-border-radius-lg:         $border-radius-lg 0 0 $border-radius-lg !default;
+$label-border-radius-sm:         $border-radius-sm 0 0 $border-radius-sm !default;
 
 $input-padding-x-sm:             .5rem !default;
 $input-padding-y-sm:             .25rem !default;
@@ -185,6 +178,7 @@ $input-height-lg:                (($font-size-lg * $line-height-lg) + ($input-pa
 $input-height-sm:                (($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)) !default;
 
 $form-group-margin-bottom:       $spacer-y !default;
+$gf-form-margin: 0.2rem;
 
 $cursor-disabled:                not-allowed !default;
 
@@ -198,7 +192,6 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
 $zindex-dropdown:          1000;
-$zindex-popover:           1010;
 $zindex-tooltip:           1020;
 $zindex-navbar-fixed:      1030;
 $zindex-modal-backdrop:    1040;
@@ -221,4 +214,4 @@ $btn-padding-y-lg:               .75rem !default;
 $btn-border-radius:              3px;
 
 // sidemenu
-$side-menu-width:  15rem;
+$side-menu-width:  14rem;

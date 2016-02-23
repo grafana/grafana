@@ -1,4 +1,5 @@
-$gf-form-margin: 0.4rem;
+$gf-form-margin: 0.25rem;
+$gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -49,25 +50,15 @@ $gf-form-margin: 0.4rem;
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-margin;
+  margin-right: $gf-form-label-margin;
+
   border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
 }
 
 .gf-form-checkbox {
   flex-shrink: 0;
 }
-
-@each $size, $value in $form-sizes {
-  .gf-size-#{$size} { width: $value; }
-
-  .gf-size-max-#{$size} {
-    flex-grow: 1;
-    max-width: $value;
-  }
-}
-
-.gf-size-max { width: 100%; }
-.gf-size-auto { width: auto; }
 
 .gf-form-input {
   display: block;
@@ -80,7 +71,7 @@ $gf-form-margin: 0.4rem;
   background-image: none;
   background-clip: padding-box;
   border: $input-btn-border-width solid $input-border-color;
-  @include border-radius($input-border-radius);
+  @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 
@@ -96,7 +87,6 @@ $gf-form-margin: 0.4rem;
   // Placeholder
   &::placeholder {
     color: $input-color-placeholder;
-    // Override Firefox's unusual default opacity; see https://github.com/twbs/bootstrap/pull/11526.
     opacity: 1;
   }
 
@@ -112,6 +102,32 @@ $gf-form-margin: 0.4rem;
   }
 
   &.gf-size-auto { width: auto; }
+}
+
+.gf-form-select-wrapper {
+  position: relative;
+
+  select.gf-form-input {
+    padding-right: $input-padding-x*2;
+    -webkit-appearance: none;
+    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    appearance: none;
+
+    &:-moz-focusring {
+      color: transparent;
+    }
+  }
+
+  &:after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
 }
 
 .gf-form-btn {

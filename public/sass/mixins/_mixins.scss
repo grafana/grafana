@@ -331,4 +331,15 @@
   background-image: linear-gradient($angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
 }
 
+@mixin left-brand-border() {
+  border-left: 2px solid transparent;
+}
 
+@mixin left-brand-border-gradient() {
+  border-image: linear-gradient(rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
+  border-image-slice: 1;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 2px solid transparent;
+}

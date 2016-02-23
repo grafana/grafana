@@ -24,6 +24,8 @@ import './partials';
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
 import {searchDirective} from './components/search/search';
+import {popoverDirective} from './components/popover/popover';
+import {colorPicker} from './components/colorpicker/colorpicker';
 import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
 import 'app/core/controllers/all';
@@ -32,4 +34,13 @@ import 'app/core/routes/routes';
 import './filters/filters';
 import coreModule from './core_module';
 
-export {arrayJoin, coreModule, grafanaAppDirective, sideMenuDirective, navbarDirective, searchDirective};
+export {
+  arrayJoin,
+  coreModule,
+  grafanaAppDirective,
+  sideMenuDirective,
+  navbarDirective,
+  searchDirective,
+  colorPicker,
+  popoverDirective
+};

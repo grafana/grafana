@@ -85,6 +85,10 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
   };
 
   this.annotationQuery = function(options) {
+    if (!options.annotation.query) {
+      return $q.reject({message: 'Query missing in annotation definition'});
+    }
+
     var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = templateSrv.replace(query);

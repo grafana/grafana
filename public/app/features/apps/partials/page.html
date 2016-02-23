@@ -1,14 +1,13 @@
-<navbar icon="fa fa-fw fa-cubes" title="{{ctrl.appModel.name}}" title-url="apps/{{ctrl.appId}}/edit">
+<navbar icon="icon-gf icon-gf-apps" title="{{ctrl.appModel.name}}" title-url="apps/{{ctrl.appId}}/edit">
 </navbar>
 
 <div class="page-container">
-	<div class="page-wide">
+	<div class="page-header">
 		<h1>{{ctrl.page.name}}</h1>
+	</div>
 
-		<div ng-if="ctrl.page">
-			<plugin-component type="app-page">
-			</plugin-component>
-		</div>
-
+	<div ng-if="ctrl.page">
+		<plugin-component type="app-page">
+		</plugin-component>
 	</div>
 </div>

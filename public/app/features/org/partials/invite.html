@@ -19,15 +19,15 @@
 
 		<form name="inviteForm">
 			<div class="gf-form-inline" ng-repeat="invite in invites">
-				<div class="gf-form gf-size-max-xxl">
+				<div class="gf-form max-width-21">
 					<span class="gf-form-label">Email or Username</span>
 					<input type="text" ng-model="invite.loginOrEmail" required class="gf-form-input" placeholder="email@test.com">
 				</div>
-				<div class="gf-form gf-size-max-xl">
+				<div class="gf-form max-width-14">
 					<span class="gf-form-label">Name</span>
 					<input type="text" ng-model="invite.name" class="gf-form-input" placeholder="name (optional)">
 				</div>
-				<div class="gf-form gf-size-max-lg">
+				<div class="gf-form max-width-10">
 					<span class="gf-form-label">Role</span>
 					<select ng-model="invite.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
 					</select>

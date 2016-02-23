@@ -9,8 +9,10 @@
 					<strong>Data source</strong>
 				</li>
 				<li>
-					<select type="text" ng-model="options.sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-					</select>
+					<div class="gf-form-select-wrapper">
+						<select type="text" ng-model="options.sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
+						</select>
+					</div>
 				</li>
 				<li style="float: right">
 					<button class="btn btn-inverse tight-form-btn" ng-click="listAll()">List dashboards</button>
