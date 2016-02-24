@@ -15,12 +15,6 @@
 					{{currentAnnotation.name}}
 				</a>
 			</li>
-			<li class="gf-tabs-item" >
-				<a class="gf-tabs-link" ng-click="mode = 'new';" ng-class="{active: mode === 'new'}">
-					<i class="fa fa-plus"></i>
-					New
-				</a>
-			</li>
 		</ul>
 
 		<button class="tabbed-view-close-btn" ng-click="dismiss();">
@@ -57,6 +51,12 @@
 			</table>
 		</div>
 
+		<div class="gf-form" ng-show="mode === 'list'">
+			<div class="gf-form-button-row">
+				<a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
+			</div>
+		</div>
+
 		<div class="annotations-basic-settings" ng-if="mode === 'edit' || mode === 'new'">
 			<div class="gf-form-group">
 				<div class="gf-form-inline">
@@ -87,9 +87,11 @@
 			<div class="gf-form">
 				<div class="gf-form-button-row">
 					<button ng-show="mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="add()">Add</button>
-					<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
+					<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update()">Update</button>
 				</div>
 			</div>
 		</div>
+
+
 	</div>
 </div>
