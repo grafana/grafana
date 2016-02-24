@@ -1,39 +1,34 @@
 <div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
-
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-bolt"></i>
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
 			Annotations
-		</div>
+		</h2>
 
-		<div class="tabs">
-			<ul class="nav nav-tabs">
-				<li ng-class="{active: mode === 'list'}">
-					<a ng-click="mode = 'list';">
-						List
-					</a>
-				</li>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" >
+				<a class="gf-tabs-link" ng-click="mode = 'list';" ng-class="{active: mode === 'list'}">
+					List
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="mode === 'edit'">
+				<a class="gf-tabs-link" ng-class="{active: mode === 'edit'}">
+					{{currentAnnotation.name}}
+				</a>
+			</li>
+			<li class="gf-tabs-item" >
+				<a class="gf-tabs-link" ng-click="mode = 'new';" ng-class="{active: mode === 'new'}">
+					<i class="fa fa-plus"></i>
+					New
+				</a>
+			</li>
+		</ul>
 
-				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
-					<a>
-						{{currentAnnotation.name}}
-					</a>
-				</li>
-
-				<li ng-class="{active: mode === 'new'}">
-					<a ng-click="mode = 'new';">
-						<i class="fa fa-plus"></i>
-						New
-					</a>
-				</li>
-			</ul>
-		</div>
-
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<button class="tabbed-view-close-btn" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
 		</button>
 	</div>
-	<div class="gf-box-body">
+
+	<div class="tabbed-view-body">
 		<div class="editor-row row" ng-if="mode === 'list'">
 			<div class="span6">
 				<div ng-if="annotations.length === 0">
@@ -48,13 +43,13 @@
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 
-						<td style="width: 1%" class="nobg">
+						<td style="width: 1%">
 							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
 								<i class="fa fa-edit"></i>
 								Edit
 							</a>
 						</td>
-						<td style="width: 1%" class="nobg">
+						<td style="width: 1%">
 							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
 								<i class="fa fa-remove"></i>
 							</a>
