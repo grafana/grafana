@@ -19,6 +19,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this.name = instanceSettings.name;
     this.index = instanceSettings.index;
     this.timeField = instanceSettings.jsonData.timeField;
+    this.fixedSchema = instanceSettings.jsonData.fixedSchema || false;
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;

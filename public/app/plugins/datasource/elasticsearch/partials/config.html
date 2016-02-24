@@ -24,6 +24,7 @@
 	<div class="gf-form">
 		<span class="gf-form-label width-9">Version</span>
 		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
+		<editor-checkbox text="Fixed Schema" tip="Autocomplete will consider each metric to be stored within an elasticsearch type" model="ctrl.current.jsonData.fixedSchema"></editor-checkbox>
 	</div>
 
 </div>
