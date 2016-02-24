@@ -18,7 +18,8 @@ function (angular, _, queryDef) {
         index: "=",
         onChange: "&",
         getFields: "&",
-        esVersion: '='
+        esVersion: '=',
+        fixedSchema: '='
       }
     };
   });

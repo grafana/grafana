@@ -11,6 +11,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   esVersion: any;
+  fixedSchema: boolean;
   rawQueryOld: string;
 
   /** @ngInject **/
@@ -18,14 +19,38 @@ export class ElasticQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;
+    this.fixedSchema = this.datasource.fixedSchema;
     this.queryUpdated();
   }
 
+  getMetrics(type) {
+      /* When using the fixed schema options, the metrics names are the
+         elasticsearch types within the index */
+      var data;
+      if (this.fixedSchema) {
+          var data = this.datasource.getIndexTypes();
+      } else {
+          var jsonStr = angular.toJson({ find: 'fields', type: type });
+          data = this.datasource.metricFindQuery(jsonStr);
+      }
+      return data
+          .then(this.uiSegmentSrv.transformToSegments(false))
+          .catch(this.handleQueryError.bind(this));
+  }
+
   getFields(type) {
-    var jsonStr = angular.toJson({find: 'fields', type: type});
-    return this.datasource.metricFindQuery(jsonStr)
-    .then(this.uiSegmentSrv.transformToSegments(false))
-    .catch(this.handleQueryError.bind(this));
+      /* When using the fixed schema options, the metrics names are the
+         elasticsearch types within the index */
+      var data;
+      if (this.fixedSchema) {
+          var data = this.datasource.getTags(this.target.metrics[0]['field']);
+      } else {
+          var jsonStr = angular.toJson({ find: 'fields', type: type });
+          data = this.datasource.metricFindQuery(jsonStr);
+      }
+      return data
+          .then(this.uiSegmentSrv.transformToSegments(false))
+          .catch(this.handleQueryError.bind(this));
   }
 
   queryUpdated() {
