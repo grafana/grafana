@@ -28,7 +28,7 @@ var panelTemplate = `
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
-    <div class="tabbed-view">
+    <div class="tabbed-view tabbed-view--panel-edit">
       <div class="tabbed-view-header">
         <h2 class="tabbed-view-title">
           <i ng-class="ctrl.icon"></i>
@@ -44,7 +44,7 @@ var panelTemplate = `
         </ul>
 
         <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-          Back to dashboard
+          <i class="fa fa-remove"></i>
         </button>
       </div>
 

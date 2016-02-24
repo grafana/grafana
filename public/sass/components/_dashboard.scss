@@ -271,17 +271,12 @@ div.flot-text {
 }
 
 .dashboard-header {
-  font-family: "grafana-icons";
-  font-size: 22px;
+  font-family: $headings-font-family;
+  font-size: $font-size-h2;
   text-align: center;
   span {
     display: inline-block;
-    border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
-    border-image-slice: 1;
-    border-top: 0;
-    border-right: 0;
-    border-left: 0;
-    border-bottom: 1px solid transparent;
+    @include brand-bottom-border();
     padding: 1.2rem .5rem .4rem .5rem;
   }
 }

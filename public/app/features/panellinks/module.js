@@ -52,6 +52,5 @@ function (angular, _) {
       $scope.deleteLink = function(link) {
         $scope.panel.links = _.without($scope.panel.links, link);
       };
-
     });
 });

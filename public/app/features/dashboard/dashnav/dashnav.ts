@@ -12,6 +12,8 @@ export class DashNavCtrl {
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
+      $scope.onAppEvent('export-dashboard', $scope.snapshot);
+      $scope.onAppEvent('quick-snapshot', $scope.quickSnapshot);
 
       $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
 
@@ -50,6 +52,10 @@ export class DashNavCtrl {
         src: 'public/app/features/dashboard/partials/shareModal.html',
         scope: modalScope
       });
+    };
+
+    $scope.quickSnapshot = function() {
+      $scope.shareDashboard(1);
     };
 
     $scope.openSearch = function() {

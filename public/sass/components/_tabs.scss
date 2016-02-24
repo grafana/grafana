@@ -55,7 +55,7 @@
 
   &:hover,
   &:focus {
-    border-color: #F9952B;
+    border-color: rgba(216, 131, 40, 0.77);
     color: $link-color;
   }
 
@@ -63,8 +63,7 @@
   &.active:hover,
   &.active:focus {
     @include border-radius(3px);
-    border: 1px solid #F9952B;
-    background-color: transparent;
+    border-color: rgba(216, 131, 40, 0.77);
     border-bottom: 1px solid $panel-bg;
     color: $link-color;
   }

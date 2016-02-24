@@ -1,5 +1,5 @@
 .submenu-controls {
-  margin: 10px 5px;
+  margin: 0 5px;
   font-size: 16px;
 }
 
@@ -23,6 +23,7 @@
   border: $panel-border;
   margin-right: 10px;
   display: inline-block;
+  float: left;
 
   .fa-caret-down {
     font-size: 75%;
@@ -37,11 +38,35 @@
   .label-tag {
     margin: 0 5px;
   }
+
+  padding: 8px 7px;
+  box-sizing: content-box;
+  display: inline-block;
+  font-weight: normal;
+  display: inline-block;
+  color: $text-color;
+}
+
+.submenu-item-label {
+  padding: 8px 0px 8px 7px;
+  box-sizing: content-box;
+  display: inline-block;
+  font-weight: normal;
+  display: inline-block;
 }
 
 .variable-link-wrapper  {
   display: inline-block;
   position: relative;
+
+  .hidden-input {
+    padding: 8px 7px;
+    border: none;
+    margin: 0px;
+    background: transparent;
+    border-radius: 0;
+    border-right: 1px solid $tight-form-border;
+  }
 }
 
 .variable-value-dropdown {
