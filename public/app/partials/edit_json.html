@@ -1,16 +1,15 @@
 <div ng-controller="JsonEditorCtrl">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-edit"></i>
-		  JSON
-		</div>
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
+			JSON
+		</h2>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<button class="tabbed-view-close-btn" ng-click="dismiss()">
 			<i class="fa fa-remove"></i>
 		</button>
 	</div>
 
-	<div class="gf-box-body json-box-body">
+	<div class="tabbed-view-body">
 		<div class="gf-form">
 			<textarea class="gf-form-input" ng-model="json" rows="20" spellcheck="false"></textarea>
 		</div>
