@@ -30,33 +30,31 @@
 
 	<div class="tabbed-view-body">
 		<div class="editor-row row" ng-if="mode === 'list'">
-			<div class="span6">
-				<div ng-if="annotations.length === 0">
-					<em>No annotations defined</em>
-				</div>
-				<table class="grafana-options-table">
-					<tr ng-repeat="annotation in annotations">
-						<td style="width:90%">
-							<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
-							{{annotation.name}}
-						</td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-
-						<td style="width: 1%">
-							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
-								<i class="fa fa-edit"></i>
-								Edit
-							</a>
-						</td>
-						<td style="width: 1%">
-							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
+			<div ng-if="annotations.length === 0">
+				<em>No annotations defined</em>
 			</div>
+			<table class="grafana-options-table">
+				<tr ng-repeat="annotation in annotations">
+					<td style="width:90%">
+						<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
+						{{annotation.name}}
+					</td>
+					<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+
+					<td style="width: 1%">
+						<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							Edit
+						</a>
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
 		</div>
 
 		<div class="annotations-basic-settings" ng-if="mode === 'edit' || mode === 'new'">
