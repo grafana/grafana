@@ -15,11 +15,8 @@
 					{{current.name}}
 				</a>
 			</li>
-			<li class="gf-tabs-item" >
-				<a class="gf-tabs-link" ng-click="mode = 'new';" ng-class="{active: mode === 'new'}">
-					<i class="fa fa-plus"></i>
-					New
-				</a>
+			<li class="gf-tabs-item" ng-show="mode === 'new'">
+				<span class="active gf-tabs-link">New</span>
 			</li>
 		</ul>
 
@@ -31,42 +28,45 @@
 	<div class="tabbed-view-body">
 
 		<div ng-if="mode === 'list'">
+			<div ng-if="variables.length === 0">
+				<em>No template variables defined</em>
+			</div>
+			<table class="grafana-options-table">
+				<tr ng-repeat="variable in variables">
+					<td style="width: 1%">
+						<span class="template-variable">
+							${{variable.name}}
+						</span>
+					</td>
+					<td class="max-width" style="max-width: 200px;">
+						{{variable.query}}
+					</td>
 
-			<div class="editor-row row">
-					<div ng-if="variables.length === 0">
-						<em>No template variables defined</em>
-					</div>
-					<table class="grafana-options-table">
-						<tr ng-repeat="variable in variables">
-							<td style="width: 1%">
-								<span class="template-variable">
-									${{variable.name}}
-								</span>
-							</td>
-							<td class="max-width" style="max-width: 200px;">
-								{{variable.query}}
-							</td>
+					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+					<td style="width: 1%">
+            <a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
+              Duplicate
+            </a>
+          </td>
+					<td style="width: 1%">
+						<a ng-click="edit(variable)" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							Edit
+						</a>
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
+		</div>
 
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-							<td style="width: 1%">
-                <a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
-                  Duplicate
-                </a>
-              </td>
-							<td style="width: 1%">
-								<a ng-click="edit(variable)" class="btn btn-inverse btn-mini">
-									<i class="fa fa-edit"></i>
-									Edit
-								</a>
-							</td>
-							<td style="width: 1%">
-								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
-									<i class="fa fa-remove"></i>
-								</a>
-							</td>
-						</tr>
-					</table>
+		<div class="gf-form" ng-show="mode === 'list'">
+			<div class="gf-form-button-row">
+				<a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
 			</div>
 		</div>
 
