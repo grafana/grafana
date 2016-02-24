@@ -39,8 +39,9 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getFields(type) {
-      /* When using the fixed schema options, the metrics names are the
-         elasticsearch types within the index */
+      /* When using the fixed schema options, the metrics tags are the fields
+         defined within the elasticsearch index associated to (arbitrarilly)
+         the first metric. */
       var data;
       if (this.fixedSchema) {
           var data = this.datasource.getTags(this.target.metrics[0]['field']);
