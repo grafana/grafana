@@ -1,7 +1,7 @@
 .tabbed-view {
   background-color: $page-bg;
   background-image: $page-gradient;
-  margin: -$dashboard-padding;
+  margin: -($panel-margin*2);
   margin-bottom: $spacer*2;
   padding: $spacer*3;
 
