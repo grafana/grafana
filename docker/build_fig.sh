@@ -7,7 +7,7 @@ template_dir=templates
 grafana_config_file=conf.tmp
 grafana_config=config
 
-fig_file=fig.yml
+fig_file=docker-compose.yml
 fig_config=fig
 
 if [ "$#" == 0 ]; then
