@@ -9,7 +9,7 @@ function ($) {
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip">');
+    var $tooltip = $('<div>');
 
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
@@ -43,7 +43,7 @@ function ($) {
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex;
       var results = [];
-
+      results.outOfScope = true;
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
 
@@ -62,6 +62,9 @@ function ($) {
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
+        if(pos.x >= series.data[0][0] && pos.x <= series.data[series.data.length-1][0]) {
+          results.outOfScope = false;
+        }
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -103,9 +106,15 @@ function ($) {
       if (dashboard.sharedCrosshair) {
         ctrl.publishAppEvent('clearCrosshair');
       }
+      if (dashboard.sharedTooltip) {
+        scope.appEvent('clearTooltip', { scope: scope });
+      }
     });
 
-    elem.bind("plothover", function (event, pos, item) {
+    elem.bind('clearTooltip', function() {
+      $tooltip.detach();
+    });
+    elem.bind("plothover", function (event, pos, item, isSharedTooltip) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
@@ -123,7 +132,10 @@ function ($) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
-
+        if(seriesHoverInfo.outOfScope) {
+          $tooltip.detach();
+          return;
+        }
         seriesHtml = '';
 
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
@@ -147,6 +159,9 @@ function ($) {
         }
 
         self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
+        if(dashboard.sharedTooltip && !isSharedTooltip) {
+          scope.appEvent('shareTooltip', { pos: pos, scope: scope });
+        }
       }
       // single series tooltip
       else if (item) {
@@ -173,6 +188,36 @@ function ($) {
       // no hit
       else {
         $tooltip.detach();
+      }
+    });
+
+    scope.onAppEvent('shareTooltip', function(event, info) {
+      // do not need to to this if event is from this panel or edit mode
+      if (info.scope === scope ||
+        scope.dashboardViewState.state.edit ||
+        scope.dashboardViewState.state.fullscreen) {
+        return;
+      }
+      // info.pos -> canvas pos
+      var plot = elem.data().plot;
+      if(plot !== null){
+        var parentPos = elem.parents('.panel.ng-scope').position();
+        var newPos = {
+          pageX: parentPos.left + plot.p2c(info.pos).left,
+          pageY: parentPos.top,
+          y: info.pos.y,
+          y1: info.pos.y1,
+          x: info.pos.x,
+          x1: info.pos.x1
+        };
+        elem.trigger('plothover', [newPos, null, true]);
+      }
+    });
+
+    scope.onAppEvent('clearTooltip', function(event, info) {
+      // do not need to to this if event is from this panel
+      if (info.scope !== scope) {
+        elem.trigger('clearTooltip');
       }
     });
   }

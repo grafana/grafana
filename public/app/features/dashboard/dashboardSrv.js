@@ -29,6 +29,7 @@ function (angular, $, _, moment) {
       this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
+      this.sharedTooltip = data.sharedTooltip || false;
       this.rows = data.rows || [];
       this.time = data.time || { from: 'now-6h', to: 'now' };
       this.timepicker = data.timepicker || {};
