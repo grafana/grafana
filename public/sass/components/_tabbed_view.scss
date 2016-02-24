@@ -1,19 +1,27 @@
 .tabbed-view {
   background-color: $page-bg;
-  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
+  background-image: $page-gradient;
   margin: -$dashboard-padding;
   margin-bottom: $spacer*2;
   padding: $spacer*3;
+
+  &.tabbed-view--panel-edit {
+    padding: 0;
+
+    .tabbed-view-header {
+      padding: 0;
+      background-color: $body-bg;
+      padding: 1.5em 1rem 0 1rem;
+    }
+    .gf-tabs-link.active {
+      background-color: $panel-bg;
+    }
+  }
 }
 
 .tabbed-view-header {
   @include clearfix();
-  border-image: linear-gradient(to right, rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
-  border-image-slice: 1;
-  border-top: 0;
-  border-right: 0;
-  border-left: 0;
-  border-bottom: 1px solid transparent;
+  @include brand-bottom-border();
 }
 
 .tabbed-view-title {
