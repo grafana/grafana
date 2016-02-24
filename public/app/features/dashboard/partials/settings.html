@@ -56,34 +56,28 @@
 	</div>
 
 	<div ng-if="editor.index == 1">
-		<div class="editor-row">
-			<div class="tight-form-section">
-				<h5>Rows settings</h5>
-				<div class="tight-form-container">
-					<div class="tight-form" ng-repeat="row in dashboard.rows">
-						<ul class="tight-form-list">
-							<li class="tight-form-item">
-								Title
-							</li>
-							<li>
-								<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
-							</li>
-							<li class="tight-form-item">
-								<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+		<h5 class="section-heading">Rows settings</h5>
+
+		<div class="gf-form-group">
+			<div class="gf-form-inline" ng-repeat="row in dashboard.rows">
+				<div class="gf-form">
+					<span class="gf-form-label">Title</span>
+					<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
+					<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
 				</div>
+
+				<div class="gf-form">
+					<button class="btn btn-inverse btn-mini" ng-hide="$first" style="margin-right: 5px;">
+						<i ng-click="_.move(dashboard.rows,$index,$index-1)"  ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
+					</button>
+					<button class="btn btn-inverse btn-mini" ng-hide="$last" style="margin-right: 5px;">
+						<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					</button>
+					<button class="btn btn-danger btn-mini" style="margin-right: 5px;">
+						<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="fa fa-remove"></i>
+					</button>
+				</div>
+
 			</div>
 		</div>
 	</div>
