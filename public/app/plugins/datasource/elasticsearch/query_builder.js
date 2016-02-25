@@ -79,7 +79,8 @@ function (queryDef) {
         query: {
           query_string: {
             query: query,
-            analyze_wildcard: true
+            analyze_wildcard: true,
+            lowercase_expanded_terms: false
           }
         }
       };
@@ -113,6 +114,7 @@ function (queryDef) {
           "query": {
             "query_string": {
               "analyze_wildcard": true,
+              "lowercase_expanded_terms": false,
               "query": '$lucene_query',
             }
           },
@@ -203,6 +205,7 @@ function (queryDef) {
             "query_string": {
               "analyze_wildcard": true,
               "query": '$lucene_query',
+              "lowercase_expanded_terms": false,
             }
           },
           "filter": {
