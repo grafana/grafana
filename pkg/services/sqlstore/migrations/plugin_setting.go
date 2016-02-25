@@ -4,12 +4,12 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addAppSettingsMigration(mg *Migrator) {
 
-	appSettingsV2 := Table{
-		Name: "app_settings",
+	pluginSettingTable := Table{
+		Name: "plugin_setting",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
-			{Name: "app_id", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "plugin_id", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "pinned", Type: DB_Bool, Nullable: false},
 			{Name: "json_data", Type: DB_Text, Nullable: true},
@@ -18,14 +18,12 @@ func addAppSettingsMigration(mg *Migrator) {
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"org_id", "app_id"}, Type: UniqueIndex},
+			{Cols: []string{"org_id", "plugin_id"}, Type: UniqueIndex},
 		},
 	}
 
-	mg.AddMigration("Drop old table app_settings v1", NewDropTableMigration("app_settings"))
-
-	mg.AddMigration("create app_settings table v2", NewAddTableMigration(appSettingsV2))
+	mg.AddMigration("create plugin_setting table", NewAddTableMigration(pluginSettingTable))
 
 	//-------  indexes ------------------
-	addTableIndicesMigrations(mg, "v3", appSettingsV2)
+	addTableIndicesMigrations(mg, "v1", pluginSettingTable)
 }

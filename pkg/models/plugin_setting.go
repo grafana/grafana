@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	ErrAppSettingNotFound = errors.New("AppSetting not found")
+	ErrPluginSettingNotFound = errors.New("Plugin setting not found")
 )
 
-type AppSettings struct {
+type PluginSetting struct {
 	Id             int64
-	AppId          string
+	PluginId       string
 	OrgId          int64
 	Enabled        bool
 	Pinned         bool
@@ -39,17 +39,17 @@ func (s SecureJsonData) Decrypt() map[string]string {
 // COMMANDS
 
 // Also acts as api DTO
-type UpdateAppSettingsCmd struct {
+type UpdatePluginSettingCmd struct {
 	Enabled        bool                   `json:"enabled"`
 	Pinned         bool                   `json:"pinned"`
 	JsonData       map[string]interface{} `json:"jsonData"`
 	SecureJsonData map[string]string      `json:"secureJsonData"`
 
-	AppId string `json:"-"`
-	OrgId int64  `json:"-"`
+	PluginId string `json:"-"`
+	OrgId    int64  `json:"-"`
 }
 
-func (cmd *UpdateAppSettingsCmd) GetEncryptedJsonData() SecureJsonData {
+func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() SecureJsonData {
 	encrypted := make(SecureJsonData)
 	for key, data := range cmd.SecureJsonData {
 		encrypted[key] = util.Encrypt([]byte(data), setting.SecretKey)
@@ -59,13 +59,13 @@ func (cmd *UpdateAppSettingsCmd) GetEncryptedJsonData() SecureJsonData {
 
 // ---------------------
 // QUERIES
-type GetAppSettingsQuery struct {
+type GetPluginSettingsQuery struct {
 	OrgId  int64
-	Result []*AppSettings
+	Result []*PluginSetting
 }
 
-type GetAppSettingByAppIdQuery struct {
-	AppId  string
-	OrgId  int64
-	Result *AppSettings
+type GetPluginSettingByIdQuery struct {
+	PluginId string
+	OrgId    int64
+	Result   *PluginSetting
 }

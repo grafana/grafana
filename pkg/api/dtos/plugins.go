@@ -5,7 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type AppSettings struct {
+type PluginSetting struct {
 	Name     string                    `json:"name"`
 	AppId    string                    `json:"appId"`
 	Enabled  bool                      `json:"enabled"`
@@ -18,8 +18,17 @@ type AppSettings struct {
 	JsonData map[string]interface{}    `json:"jsonData"`
 }
 
-func NewAppSettingsDto(def *plugins.AppPlugin, data *models.AppSettings) *AppSettings {
-	dto := &AppSettings{
+type PluginListItem struct {
+	Name     string              `json:"name"`
+	Type     string              `json:"type"`
+	PluginId string              `json:"pluginId"`
+	Enabled  bool                `json:"enabled"`
+	Pinned   bool                `json:"pinned"`
+	Info     *plugins.PluginInfo `json:"info"`
+}
+
+func NewPluginSettingDto(def *plugins.AppPlugin, data *models.PluginSetting) *PluginSetting {
+	dto := &PluginSetting{
 		AppId:    def.Id,
 		Name:     def.Name,
 		Info:     &def.Info,
