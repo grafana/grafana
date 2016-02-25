@@ -4,5 +4,6 @@
   "id": "prometheus",
 
   "metrics": true,
-  "annotations": true
+  "annotations": true,
+  "defaultMatchFormat": "pipe"
 }
