@@ -1,13 +1,10 @@
 package dtos
 
-import (
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-)
+import "github.com/grafana/grafana/pkg/plugins"
 
 type PluginSetting struct {
 	Name     string                    `json:"name"`
-	AppId    string                    `json:"appId"`
+	PluginId string                    `json:"pluginId"`
 	Enabled  bool                      `json:"enabled"`
 	Pinned   bool                      `json:"pinned"`
 	Module   string                    `json:"module"`
@@ -25,25 +22,4 @@ type PluginListItem struct {
 	Enabled  bool                `json:"enabled"`
 	Pinned   bool                `json:"pinned"`
 	Info     *plugins.PluginInfo `json:"info"`
-}
-
-func NewPluginSettingDto(def *plugins.AppPlugin, data *models.PluginSetting) *PluginSetting {
-	dto := &PluginSetting{
-		AppId:    def.Id,
-		Name:     def.Name,
-		Info:     &def.Info,
-		Module:   def.Module,
-		BaseUrl:  def.BaseUrl,
-		Pages:    def.Pages,
-		Includes: def.Includes,
-	}
-
-	if data != nil {
-		dto.Enabled = data.Enabled
-		dto.Pinned = data.Pinned
-		dto.Info = &def.Info
-		dto.JsonData = data.JsonData
-	}
-
-	return dto
 }

@@ -38,15 +38,34 @@ func GetPluginList(c *middleware.Context) Response {
 func GetPluginSettingById(c *middleware.Context) Response {
 	pluginId := c.Params(":pluginId")
 
-	if pluginDef, exists := plugins.Apps[pluginId]; !exists {
-		return ApiError(404, "PluginId not found, no installed plugin with that id", nil)
+	if def, exists := plugins.Plugins[pluginId]; !exists {
+		return ApiError(404, "Plugin not found, no installed plugin with that id", nil)
 	} else {
-		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
-			return ApiError(500, "Failed to get login settings", nil)
+		dto := &dtos.PluginSetting{
+			PluginId: def.Id,
+			Name:     def.Name,
+			Info:     &def.Info,
 		}
 
-		return Json(200, dtos.NewPluginSettingDto(pluginDef, query.Result))
+		if app, exists := plugins.Apps[pluginId]; exists {
+			dto.Pages = app.Pages
+			dto.Includes = app.Includes
+			dto.BaseUrl = app.BaseUrl
+			dto.Module = app.Module
+		}
+
+		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
+		if err := bus.Dispatch(&query); err != nil {
+			if err != m.ErrPluginSettingNotFound {
+				return ApiError(500, "Failed to get login settings", nil)
+			}
+		} else {
+			dto.Enabled = query.Result.Enabled
+			dto.Pinned = query.Result.Pinned
+			dto.JsonData = query.Result.JsonData
+		}
+
+		return Json(200, dto)
 	}
 }
 
