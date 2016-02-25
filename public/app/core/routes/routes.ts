@@ -11,7 +11,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
   var loadOrgBundle = new BundleLoader('app/features/org/all');
-  var loadAppsBundle = new BundleLoader('app/features/apps/all');
+  var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
 
   $routeProvider
@@ -165,23 +165,23 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'SnapshotsCtrl',
     controllerAs: 'ctrl',
   })
-  .when('/apps', {
-    templateUrl: 'public/app/features/apps/partials/list.html',
-    controller: 'AppListCtrl',
+  .when('/plugins', {
+    templateUrl: 'public/app/features/plugins/partials/list.html',
+    controller: 'PluginListCtrl',
     controllerAs: 'ctrl',
-    resolve: loadAppsBundle,
+    resolve: loadPluginsBundle,
   })
-  .when('/apps/:appId/edit', {
-    templateUrl: 'public/app/features/apps/partials/edit.html',
-    controller: 'AppEditCtrl',
+  .when('/plugins/:pluginId/edit', {
+    templateUrl: 'public/app/features/plugins/partials/edit.html',
+    controller: 'PluginEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadAppsBundle,
+    resolve: loadPluginsBundle,
   })
-  .when('/apps/:appId/page/:slug', {
-    templateUrl: 'public/app/features/apps/partials/page.html',
+  .when('/plugins/:pluginId/page/:slug', {
+    templateUrl: 'public/app/features/plugins/partials/page.html',
     controller: 'AppPageCtrl',
     controllerAs: 'ctrl',
-    resolve: loadAppsBundle,
+    resolve: loadPluginsBundle,
   })
   .when('/global-alerts', {
     templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
