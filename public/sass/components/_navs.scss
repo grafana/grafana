@@ -55,16 +55,22 @@
 
 // Actual tabs (as links)
 .nav-tabs > li > a {
-  color: $text-color;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  // color: $text-color;
+  // padding-top: 8px;
+  // padding-bottom: 8px;
+  // line-height: $line-height-base;
+  // border: 1px solid transparent;
+  // @include border-radius(4px 4px 0 0);
+
+  padding: 0.40rem 1rem 0.35rem 1rem;
+  margin-right: $spacer/2;
   line-height: $line-height-base;
   border: 1px solid transparent;
-  @include border-radius(4px 4px 0 0);
+  position: relative;
+
   &:hover,
   &:focus {
-    border-color: $divider-border-color;
-    color: $link-color;
+    color: $link-hover-color;
   }
 }
 
@@ -72,9 +78,14 @@
 .nav-tabs > .active > a,
 .nav-tabs > .active > a:hover,
 .nav-tabs > .active > a:focus {
+  // @include border-radius(3px);
+  // border: 1px solid $divider-border-color;
+  // background-color: transparent;
+  // border-bottom: 1px solid $panel-bg;
+  // color: $link-hover-color;
+
   @include border-radius(3px);
-  border: 1px solid $divider-border-color;
-  background-color: transparent;
+  border-color: $divider-border-color;
   border-bottom: 1px solid $panel-bg;
   color: $link-color;
 }
