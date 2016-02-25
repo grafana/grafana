@@ -67,17 +67,16 @@
 				</div>
 
 				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" ng-hide="$first" style="margin-right: 5px;">
-						<i ng-click="_.move(dashboard.rows,$index,$index-1)"  ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
+					<button class="btn btn-inverse btn-mini" style="margin-right: 5px;" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
+						<i class="fa fa-trash"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$last" style="margin-right: 5px;">
-						<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					<button class="btn btn-inverse btn-mini" ng-hide="$first" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index-1)">
+						<i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
 					</button>
-					<button class="btn btn-danger btn-mini" style="margin-right: 5px;">
-						<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="fa fa-remove"></i>
+					<button class="btn btn-inverse btn-mini" ng-hide="$last" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index+1)">
+						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
 					</button>
 				</div>
-
 			</div>
 		</div>
 	</div>
