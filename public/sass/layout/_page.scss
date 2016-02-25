@@ -27,6 +27,10 @@
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
 }
 
+.page-header-logo {
+  max-width: 7rem;
+}
+
 .page-header {
   padding: $spacer 0 $spacer/2 0;
   display: flex;
