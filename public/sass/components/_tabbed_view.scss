@@ -25,9 +25,10 @@
 }
 
 .tabbed-view-title {
-  margin-left: $spacer*2;
+  margin-left: $spacer*1.5;
   float: left;
   font-style: italic;
+  padding-top: 0.2rem;
 }
 
 .tabbed-view-close-btn {
@@ -47,7 +48,7 @@
 }
 
 .tabbed-view-body {
-  padding: $spacer*2;
+  padding: $spacer*1.5;
   min-height: 250px;
 }
 

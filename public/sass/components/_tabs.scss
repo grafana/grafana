@@ -44,19 +44,18 @@
 }
 
 .gf-tabs-link {
-  padding: 0.80rem 1rem 0.60rem 1rem;
+  padding: 0.60rem 1rem 0.50rem 1rem;
   margin-right: $spacer/2;
   line-height: $line-height-base;
   border: 1px solid transparent;
   position: relative;
-  top: 3px;
+  top: 5px;
 
   @include border-radius(2px 2px 0 0);
 
   &:hover,
   &:focus {
-    border-color: rgba(216, 131, 40, 0.77);
-    color: $link-color;
+    color: $link-hover-color;
   }
 
   &.active,
