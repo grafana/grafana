@@ -72,7 +72,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Plugins",
 			Icon: "icon-gf icon-gf-apps",
-			Url:  setting.AppSubUrl + "/apps",
+			Url:  setting.AppSubUrl + "/plugins",
 		})
 	}
 

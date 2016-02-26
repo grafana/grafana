@@ -26,7 +26,7 @@ type templateData struct {
 func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.Header, error) {
 	result := http.Header{}
 
-	query := m.GetAppSettingByAppIdQuery{OrgId: orgId, AppId: appId}
+	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
