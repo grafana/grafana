@@ -26,6 +26,7 @@
 @import "utils/widths";
 
 // LAYOUTS
+@import "layout/lists";
 @import "layout/page";
 
 // COMPONENTS
@@ -44,7 +45,6 @@
 @import "components/tagsinput";
 @import "components/tables_lists";
 @import "components/search";
-@import "components/dashboard";
 @import "components/tightform";
 @import "components/gf-form";
 @import "components/sidemenu";
@@ -69,10 +69,11 @@
 
 // PAGES
 @import "pages/login";
+@import "pages/dashboard";
 @import "pages/playlist";
 @import "pages/admin";
 @import "pages/alerting";
-@import "pages/apps";
+@import "pages/plugins";
 @import "pages/signup";
 @import "pages/styleguide";
 

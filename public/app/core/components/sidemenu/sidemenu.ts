@@ -38,7 +38,6 @@ export class SideMenuCtrl {
  openUserDropdown() {
    this.orgMenu = [
      {section: 'You', cssClass: 'dropdown-menu-title'},
-     {text: 'Preferences', url: this.getUrl('/profile')},
      {text: 'Profile', url: this.getUrl('/profile')},
    ];
 
@@ -100,6 +99,22 @@ export function sideMenuDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {},
+    link: function(scope, elem) {
+      // hack to hide dropdown menu
+      elem.on('click.dropdown', '.dropdown-menu a', function(evt) {
+        var menu = $(evt.target).parents('.dropdown-menu');
+        var parent = menu.parent();
+        menu.detach();
+
+        setTimeout(function() {
+          parent.append(menu);
+        }, 100);
+      });
+
+      scope.$on("$destory", function() {
+        elem.off('click.dropdown');
+      });
+    }
   };
 }
 
