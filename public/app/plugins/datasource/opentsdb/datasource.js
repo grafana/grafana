@@ -14,7 +14,7 @@ function (angular, _, dateMath) {
     this.name = instanceSettings.name;
     this.withCredentials = instanceSettings.withCredentials;
     this.basicAuth = instanceSettings.basicAuth;
-    this.tsdbVersion = instanceSettings.jsonData.tsdbVersion;
+    this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.supportMetrics = true;
     this.tagKeys = {};
 
