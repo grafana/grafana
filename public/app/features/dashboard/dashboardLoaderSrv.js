@@ -5,8 +5,9 @@ define([
   'jquery',
   'app/core/utils/kbn',
   'app/core/utils/datemath',
+  './impressions',
 ],
-function (angular, moment, _, $, kbn, dateMath) {
+function (angular, moment, _, $, kbn, dateMath, impressions) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -24,19 +25,27 @@ function (angular, moment, _, $, kbn, dateMath) {
     };
 
     this.loadDashboard = function(type, slug) {
-      if (type === 'script') {
-        return this._loadScriptedDashboard(slug);
-      }
+      var promise;
 
-      if (type === 'snapshot') {
-        return backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
+      if (type === 'script') {
+        promise = this._loadScriptedDashboard(slug);
+      } else if (type === 'snapshot') {
+        promise = backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
           return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
         });
+      } else {
+        promise = backendSrv.getDashboard($routeParams.type, $routeParams.slug)
+          .catch(function() {
+            return self._dashboardLoadFailed("Not found");
+          });
       }
 
-      return backendSrv.getDashboard($routeParams.type, $routeParams.slug).catch(function() {
-        return self._dashboardLoadFailed("Not found");
+      promise.then(function(result) {
+        impressions.addImpression(slug);
+        return result;
       });
+
+      return promise;
     };
 
     this._loadScriptedDashboard = function(file) {
