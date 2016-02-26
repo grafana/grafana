@@ -4,6 +4,7 @@ import "github.com/grafana/grafana/pkg/plugins"
 
 type PluginSetting struct {
 	Name     string                    `json:"name"`
+	Type     string                    `json:"type"`
 	PluginId string                    `json:"pluginId"`
 	Enabled  bool                      `json:"enabled"`
 	Pinned   bool                      `json:"pinned"`

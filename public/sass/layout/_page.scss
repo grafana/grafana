@@ -3,19 +3,8 @@
   height: 100%;
 }
 
-.dashboard-container {
-  padding: $dashboard-padding;
-  width: 100%;
-}
-
 .main-view {
   height: 100%;
-}
-
-.page-dashboard {
-  .main-view {
-    background-image: none;
-  }
 }
 
 .page-container {
@@ -27,12 +16,29 @@
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
 }
 
-.page-header-logo {
-  max-width: 7rem;
+.page-body {
+  @include media-breakpoint-up(md) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.page-content-with-sidebar {
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.page-sidebar {
+  @include media-breakpoint-up(md) {
+    width: $page-sidebar-width;
+    margin-left: $page-sidebar-margin;
+  }
 }
 
 .page-header {
   padding: $spacer 0 $spacer/2 0;
+  margin-bottom: 2rem;
+
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -40,13 +46,12 @@
   @include brand-bottom-border();
 
   h1 {
-    font-style: italic;
     flex-grow: 1;
   }
+
   button, a {
     margin-left: $spacer;
   }
-  margin-bottom: 2rem;
 }
 
 .page-heading {
@@ -75,3 +80,20 @@
   }
 }
 
+.page-sidebar {
+  color: $text-color-weak;
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semi-bold;
+    color: $text-color-strong;
+  }
+  h5 {
+    font-size: $font-size-base;
+    color: $text-color-weak;
+    font-weight: $font-weight-semi-bold;
+  }
+}
+
+.page-sidebar-section {
+  margin-bottom: $spacer*2;
+}
