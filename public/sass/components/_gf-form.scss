@@ -58,7 +58,7 @@ $gf-form-label-margin: 0.25rem;
   .checkbox-label {
     display: inline;
     cursor: pointer;
-    padding: $input-padding-y $input-padding-x;
+    padding: $input-padding-y 0.4rem;
     line-height: $input-line-height;
   }
 }
