@@ -22,8 +22,8 @@ func TestPluginProxy(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		bus.AddHandler("test", func(query *m.GetAppSettingByAppIdQuery) error {
-			query.Result = &m.AppSettings{
+		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
+			query.Result = &m.PluginSetting{
 				SecureJsonData: map[string][]byte{
 					"key": util.Encrypt([]byte("123"), "password"),
 				},
