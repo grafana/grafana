@@ -38,8 +38,9 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       this.target.downsampleFillPolicy = 'none';
     }
 
+    var self = this;
     this.datasource.getAggregators().then(function(aggs) {
-      this.aggregators = aggs;
+      self.aggregators = aggs;
     });
 
     // needs to be defined here as it is called from typeahead
