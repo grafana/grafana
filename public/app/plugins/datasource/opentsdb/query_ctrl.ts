@@ -17,9 +17,10 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   suggestTagKeys: any;
   suggestTagValues: any;
   addTagMode: boolean;
+  timer: any;
 
   /** @ngInject **/
-  constructor($scope, $injector) {
+  constructor($scope, $injector, private $timeout) {
     super($scope, $injector);
 
     this.errors = this.validateTarget();
@@ -44,9 +45,15 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     // needs to be defined here as it is called from typeahead
     this.suggestMetrics = (query, callback) => {
-      this.datasource.metricFindQuery('metrics(' + query + ')')
-      .then(this.getTextValues)
-      .then(callback);
+      var self = this;
+      $timeout.cancel(this.timer);
+      if (!_.isEmpty(query)) {
+        this.timer = $timeout(function() {
+          self.datasource.metricFindQuery('metrics(' + query + ')')
+              .then(self.getTextValues)
+              .then(callback);
+        }, 250);
+      }
     };
 
     this.suggestTagKeys = (query, callback) => {
@@ -54,15 +61,23 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     };
 
     this.suggestTagValues = (query, callback) => {
-      this.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-      .then(this.getTextValues)
-      .then(callback);
+      var self = this;
+      $timeout.cancel(this.timer);
+      this.timer = $timeout(function () {
+        self.datasource.metricFindQuery('suggest_tagv(' + query + ')')
+            .then(self.getTextValues)
+            .then(callback);
+      }, 250);
     };
   }
 
   targetBlur() {
-    this.errors = this.validateTarget();
-    this.refresh();
+    var self = this;
+    this.$timeout.cancel(this.timer);
+    this.timer = this.$timeout(function () {
+      self.errors = self.validateTarget();
+      self.refresh();
+    }, 250);
   }
 
   getTextValues(metricFindResult) {
