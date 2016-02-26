@@ -47,6 +47,13 @@
 					<editor-checkbox text="Pinned" model="ctrl.model.pinned" change="ctrl.togglePinned()"></editor-checkbox>
 				</div>
 			</div>
+
+			<div ng-if="ctrl.model.pluginId">
+				<plugin-component type="app-config-ctrl"></plugin-component>
+				<div class="clearfix"></div>
+				<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
+			</div>
+
 		</div>
 
 		<aside class="page-sidebar">
@@ -56,7 +63,18 @@
 			</section>
 			<section class="page-sidebar-section" ng-show="ctrl.model.type === 'app'">
 				<h5>Includes</h4>
-				<span>TODO</span>
+				<ul class="ui-list">
+					<li ng-show="!ctrl.includedPanels.length"><em>None</em></li>
+					<li ng-repeat="panel in ctrl.includedPanels">
+						{{panel.name}}
+					</li>
+					<li ng-repeat="ds in ctrl.includedDatasources">
+						{{ds.name}}
+					</li>
+					<li ng-repeat="page in ctrl.model.pages">
+						<a href="apps/{{ctrl.appId}}/page/{{page.slug}}" class="external-link">{{page.name}}</a>
+					</li>
+				</ul>
 			</section>
 			<section class="page-sidebar-section">
 				<h5>Dependencies</h4>
