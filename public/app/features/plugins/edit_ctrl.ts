@@ -8,11 +8,13 @@ export class PluginEditCtrl {
   pluginId: any;
   includedPanels: any;
   includedDatasources: any;
+  tabIndex: number;
 
   /** @ngInject */
   constructor(private backendSrv: any, private $routeParams: any) {
     this.model = {};
     this.pluginId = $routeParams.pluginId;
+    this.tabIndex = 0;
 
     this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;

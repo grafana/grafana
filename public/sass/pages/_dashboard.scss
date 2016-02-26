@@ -1,3 +1,14 @@
+.dashboard-container {
+  padding: $dashboard-padding;
+  width: 100%;
+}
+
+.page-dashboard {
+  .main-view {
+    background-image: none;
+  }
+}
+
 .template-variable {
   color: $variable;
 }
