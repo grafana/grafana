@@ -82,6 +82,7 @@ $gf-form-label-margin: 0.25rem;
   &::-ms-expand {
     background-color: transparent;
     border: 0;
+    display: none;
   }
 
   // Customize the `:focus` state to imitate native WebKit styles.
@@ -109,15 +110,20 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-select-wrapper {
   position: relative;
+  background-color: $input-bg;
 
   select.gf-form-input {
+    text-indent: .01px;
+    text-overflow: '';
     padding-right: $input-padding-x*2;
     -webkit-appearance: none;
     -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
     appearance: none;
 
     &:-moz-focusring {
+      outline: none;
       color: transparent;
+      text-shadow: 0 0 0 $text-color;
     }
   }
 
