@@ -23,7 +23,7 @@
 	<li ng-show="dashboardMeta.canShare" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Share dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
 		<ul class="dropdown-menu">
-			<li ng-if="dashboardMeta.canEdit">
+			<li ng-if="dashboardMeta.canEdit || dashboardMeta.isSnapshot">
 				<a class="pointer" ng-click="shareDashboard(0)">
 					<i class="fa fa-link"></i> Link to Dashboard
 				</a>
