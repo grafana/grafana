@@ -45,6 +45,22 @@ define([
       });
     });
 
+    describe.only('replace can pass multi / all format', function() {
+      beforeEach(function() {
+        _templateSrv.init([{name: 'test', current: {value: ['value1', 'value2'] }}]);
+      });
+
+      it('should replace $test with globbed value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.{value1,value2}.filters');
+      });
+
+      it('should replace $test with piped value', function() {
+        var target = _templateSrv.replace('this=$test', {}, 'pipe');
+        expect(target).to.be('this=value1|value2');
+      });
+    });
+
     describe('render variable to string values', function() {
       it('single value should return value', function() {
         var result = _templateSrv.renderVariableValue({current: {value: 'test'}});

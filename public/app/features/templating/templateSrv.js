@@ -24,22 +24,18 @@ function (angular, _) {
 
     this.updateTemplateData = function() {
       this._values = {};
-      this._texts = {};
 
       _.each(this.variables, function(variable) {
-        if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
-
-        this._values[variable.name] = this.renderVariableValue(variable);
-        this._texts[variable.name] = variable.current.text;
-      }, this);
+         if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
+         this._values[variable.name] = variable.current.value;
+       }, this);
     };
 
-    this.renderVariableValue = function(variable) {
-      var value = variable.current.value;
+    this.formatValue = function(value, format) {
       if (_.isString(value)) {
         return value;
       } else {
-        switch(variable.multiFormat) {
+        switch(format) {
           case "regex values": {
             return '(' + value.join('|') + ')';
           }
@@ -89,22 +85,31 @@ function (angular, _) {
       });
     };
 
-    this.replace = function(target, scopedVars) {
+    this.replace = function(target, scopedVars, format) {
       if (!target) { return target; }
 
-      var value;
+      var value, systemValue;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
         if (scopedVars) {
           value = scopedVars[g1 || g2];
-          if (value) { return value.value; }
+          if (value) {
+            return self.formatValue(value.value);
+          }
         }
 
         value = self._values[g1 || g2];
-        if (!value) { return match; }
+        if (!value) {
+          return match;
+        }
 
-        return self._grafanaVariables[value] || value;
+        systemValue = self._grafanaVariables[value];
+        if (systemValue) {
+          return self.formatValue(systemValue);
+        }
+
+        return self.formatValue(value, format);
       });
     };
 
