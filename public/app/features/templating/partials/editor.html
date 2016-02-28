@@ -109,9 +109,15 @@
 					<span class="gf-form-label" ng-show="current.auto">
 						Auto interval steps <tip>How many times should the current time range be divided to calculate the value</tip>
 					</span>
-					<div class="gf-form-select-wrapper max-width-10">
+					<div class="gf-form-select-wrapper max-width-10" ng-show="current.auto">
 						<select class="gf-form-input" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
 					</div>
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label" ng-show="current.auto">
+						Auto interval min value <tip>The calculated value will not go below this threshold</tip>
+					</span>
+					<input type="text" class="gf-form-input max-width-10" ng-show="current.auto" ng-model="current.auto_min" ng-change="runQuery()"></input>
 				</div>
 			</div>
 
