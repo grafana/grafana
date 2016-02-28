@@ -45,12 +45,11 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     // needs to be defined here as it is called from typeahead
     this.suggestMetrics = (query, callback) => {
-      var self = this;
       $timeout.cancel(this.timer);
       if (!_.isEmpty(query)) {
-        this.timer = $timeout(function() {
-          self.datasource.metricFindQuery('metrics(' + query + ')')
-              .then(self.getTextValues)
+        this.timer = $timeout(() => {
+          this.datasource.metricFindQuery('metrics(' + query + ')')
+              .then(this.getTextValues)
               .then(callback);
         }, 250);
       }
@@ -61,22 +60,20 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     };
 
     this.suggestTagValues = (query, callback) => {
-      var self = this;
       $timeout.cancel(this.timer);
-      this.timer = $timeout(function () {
-        self.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-            .then(self.getTextValues)
+      this.timer = $timeout(() => {
+        this.datasource.metricFindQuery('suggest_tagv(' + query + ')')
+            .then(this.getTextValues)
             .then(callback);
       }, 250);
     };
   }
 
   targetBlur() {
-    var self = this;
     this.$timeout.cancel(this.timer);
-    this.timer = this.$timeout(function () {
-      self.errors = self.validateTarget();
-      self.refresh();
+    this.timer = this.$timeout(() => {
+      this.errors = this.validateTarget();
+      this.refresh();
     }, 250);
   }
 
