@@ -93,7 +93,7 @@ $font-size-sm:   .875rem !default;
 $font-size-xs:   .75rem !default;
 
 $line-height-base: 1.5 !default;
-$font-weight-semi-bold:       600;
+$font-weight-semi-bold: 600;
 
 $font-size-h1: 2.0rem !default;
 $font-size-h2: 1.75rem !default;
@@ -140,6 +140,11 @@ $border-radius-sm:       0.1rem !default;
 
 $caret-width:            .3em !default;
 $caret-width-lg:         $caret-width !default;
+
+// Page
+
+$page-sidebar-width: 10rem;
+$page-sidebar-margin: 5rem;
 
 // Links
 // -------------------------
@@ -192,7 +197,6 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
 $zindex-dropdown:          1000;
-$zindex-popover:           1010;
 $zindex-tooltip:           1020;
 $zindex-navbar-fixed:      1030;
 $zindex-modal-backdrop:    1040;
@@ -216,3 +220,8 @@ $btn-border-radius:              3px;
 
 // sidemenu
 $side-menu-width:  14rem;
+
+// dashboard
+$panel-margin: 0.4rem;
+$dashboard-padding: ($panel-margin * 2) $panel-margin $panel-margin $panel-margin;
+

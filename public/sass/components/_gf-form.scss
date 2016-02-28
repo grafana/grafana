@@ -9,12 +9,6 @@ $gf-form-label-margin: 0.25rem;
   align-items: center;
   text-align: left;
 
-  .checkbox-label {
-    display: inline;
-    cursor: pointer;
-    padding: 8px 7px 8px 4px;
-  }
-
   .cr1 {
     margin-left: 8px;
   }
@@ -36,7 +30,7 @@ $gf-form-label-margin: 0.25rem;
 }
 
 .gf-form-button-row {
-  margin-top: $spacer * 1.5;
+  padding-top: $spacer * 1.5;
   a, button {
     margin-right: $spacer;
   }
@@ -58,6 +52,15 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-checkbox {
   flex-shrink: 0;
+  padding: $input-padding-y $input-padding-x;
+  line-height: $input-line-height;
+
+  .checkbox-label {
+    display: inline;
+    cursor: pointer;
+    padding: $input-padding-y 0.4rem;
+    line-height: $input-line-height;
+  }
 }
 
 .gf-form-input {
@@ -79,6 +82,7 @@ $gf-form-label-margin: 0.25rem;
   &::-ms-expand {
     background-color: transparent;
     border: 0;
+    display: none;
   }
 
   // Customize the `:focus` state to imitate native WebKit styles.
@@ -106,15 +110,20 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-select-wrapper {
   position: relative;
+  background-color: $input-bg;
 
   select.gf-form-input {
+    text-indent: .01px;
+    text-overflow: '';
     padding-right: $input-padding-x*2;
     -webkit-appearance: none;
     -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
     appearance: none;
 
     &:-moz-focusring {
+      outline: none;
       color: transparent;
+      text-shadow: 0 0 0 $text-color;
     }
   }
 

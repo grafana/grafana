@@ -73,12 +73,7 @@ function ($, coreModule) {
           };
 
           var src = "'" + payload.src + "'";
-          var cssClass = payload.cssClass || 'gf-box';
-          var view = $('<div class="' + cssClass + '" ng-include="' + src + '"></div>');
-
-          if (payload.cssClass) {
-            view.addClass(payload.cssClass);
-          }
+          var view = $('<div class="tabbed-view" ng-include="' + src + '"></div>');
 
           elem.append(view);
           $compile(elem.contents())(editorScope);

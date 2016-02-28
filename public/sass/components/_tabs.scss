@@ -1,6 +1,4 @@
-
 .nav-tabs-alt {
-
 	& > li > a {
 	  color: darken($link-color, 20%);
 	}
@@ -15,7 +13,7 @@
     @include border-radius(3px);
 	  border: 1px solid $divider-border-color;
 	  background-color: transparent;
-	  border-bottom: 1px solid $panel-bg;
+	  border-bottom: 1px solid $page-bg;
 	  color: $link-color;
 	}
 
@@ -34,4 +32,38 @@
   }
 }
 
+.gf-tabs {
+  @include clearfix();
+  float: left;
+  margin: 0.5rem 0 0 2rem;
+}
 
+.gf-tabs-item {
+  float: left;
+  list-style: none;
+}
+
+.gf-tabs-link {
+  padding: 0.60rem 1rem 0.50rem 1rem;
+  margin-right: $spacer/2;
+  line-height: $line-height-base;
+  border: 1px solid transparent;
+  position: relative;
+  top: 5px;
+
+  @include border-radius(2px 2px 0 0);
+
+  &:hover,
+  &:focus {
+    color: $link-hover-color;
+  }
+
+  &.active,
+  &.active:hover,
+  &.active:focus {
+    @include border-radius(3px);
+    border-color: rgba(216, 131, 40, 0.77);
+    border-bottom: 1px solid $panel-bg;
+    color: $link-color;
+  }
+}

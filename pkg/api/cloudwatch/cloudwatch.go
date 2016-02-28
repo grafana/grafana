@@ -33,6 +33,7 @@ func init() {
 	actionHandlers = map[string]actionHandler{
 		"GetMetricStatistics":     handleGetMetricStatistics,
 		"ListMetrics":             handleListMetrics,
+		"DescribeAlarms":          handleDescribeAlarms,
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
 		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
 		"DescribeInstances":       handleDescribeInstances,
@@ -134,6 +135,49 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 			}
 			return !lastPage
 		})
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.DataSource.Database),
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
+	reqParam := &struct {
+		Parameters struct {
+			ActionPrefix    string    `json:"actionPrefix"`
+			AlarmNamePrefix string    `json:"alarmNamePrefix"`
+			AlarmNames      []*string `json:"alarmNames"`
+			StateValue      string    `json:"stateValue"`
+		} `json:"parameters"`
+	}{}
+	json.Unmarshal(req.Body, reqParam)
+
+	params := &cloudwatch.DescribeAlarmsInput{
+		MaxRecords: aws.Int64(100),
+	}
+	if reqParam.Parameters.ActionPrefix != "" {
+		params.ActionPrefix = aws.String(reqParam.Parameters.ActionPrefix)
+	}
+	if reqParam.Parameters.AlarmNamePrefix != "" {
+		params.AlarmNamePrefix = aws.String(reqParam.Parameters.AlarmNamePrefix)
+	}
+	if len(reqParam.Parameters.AlarmNames) != 0 {
+		params.AlarmNames = reqParam.Parameters.AlarmNames
+	}
+	if reqParam.Parameters.StateValue != "" {
+		params.StateValue = aws.String(reqParam.Parameters.StateValue)
+	}
+
+	resp, err := svc.DescribeAlarms(params)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return

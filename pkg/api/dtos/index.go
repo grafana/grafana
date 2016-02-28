@@ -16,9 +16,10 @@ type PluginCss struct {
 }
 
 type NavLink struct {
-	Text     string     `json:"text"`
-	Icon     string     `json:"icon"`
-	Img      string     `json:"img"`
-	Url      string     `json:"url"`
-	Children []*NavLink `json:"children"`
+	Text     string     `json:"text,omitempty"`
+	Icon     string     `json:"icon,omitempty"`
+	Img      string     `json:"img,omitempty"`
+	Url      string     `json:"url,omitempty"`
+	Divider  bool       `json:"divider,omitempty"`
+	Children []*NavLink `json:"children,omitempty"`
 }

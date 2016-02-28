@@ -50,8 +50,14 @@ $critical:              #ed2e18;
 // -------------------------
 $body-bg:  			   rgb(20,20,20);
 $page-bg:  			   $dark-2;
-$body-color:   		   $gray-4;
-$text-color:   	       $gray-4;
+$body-color:   		 $gray-4;
+$text-color:   	   $gray-4;
+$text-color-strong: $white;
+$text-color-weak: $gray-2;
+
+// gradients
+$brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
+$page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -237,14 +243,12 @@ $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
 
-$popoverBackground:       $dropdownBackground;
-$popoverArrowWidth:       10px;
-$popoverArrowColor:       $popoverBackground;
-$popoverTitleBackground:  $popoverBackground;
+// popover
+$popover-bg:         $dark-4;
+$popover-color:      $text-color;
 
-// Special enhancement for popovers
-$popoverArrowOuterWidth:  $popoverArrowWidth + 1;
-$popoverArrowOuterColor:  rgba(0,0,0,.25);
+$popover-help-bg:         $btn-secondary-bg;
+$popover-help-color:      $text-color;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';

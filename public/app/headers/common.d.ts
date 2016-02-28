@@ -39,4 +39,12 @@ declare module 'app/core/store' {
   export default store;
 }
 
+declare module 'tether' {
+  var config: any;
+  export default config;
+}
 
+declare module 'tether-drop' {
+  var config: any;
+  export default config;
+}
