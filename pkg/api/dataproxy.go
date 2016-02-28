@@ -64,20 +64,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 	return &httputil.ReverseProxy{Director: director}
 }
 
-var dsMap map[int64]*m.DataSource = make(map[int64]*m.DataSource)
-
 func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
-	// ds, exists := dsMap[id]
-	// if exists && ds.OrgId == orgId {
-	// 	return ds, nil
-	// }
-
 	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	dsMap[id] = &query.Result
 	return &query.Result, nil
 }
 

@@ -60,6 +60,7 @@
     position: relative;
     @include left-brand-border();
 
+    &.active,
     &:hover {
       background-color: $side-menu-item-hover-bg;
       @include left-brand-border-gradient();
@@ -68,9 +69,11 @@
         display: block;
         opacity: 0;
         top: 0px;
-        left: $side-menu-width;
+        // important to overlap it otherwise it can be hidden
+        // again by the mouse getting outside the hover space
+        left: $side-menu-width - 0.2rem;
         background-color: rgba($side-menu-bg,$side-menu-opacity);
-        @include animation('dropdown-anim 100ms ease-in-out 100ms forwards');
+        @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: -9999;
       }
     }
@@ -79,11 +82,6 @@
 
 @include keyframes(dropdown-anim) {
   0% {
-    display: none;
-    opacity: 0;
-  }
-  1% {
-    display: block;
     opacity: 0;
     transform: translate3d(-5%,0,0);
   }

@@ -22,7 +22,7 @@
 }
 
 .graph-legend {
-  margin: 0 20px;
+  margin: 0 $spacer;
   text-align: center;
 
   .popover-content {
@@ -181,7 +181,6 @@
 
 .graph-legend-popover {
   width: 200px;
-  min-height: 100px;
   label {
     display: inline-block;
   }
@@ -233,11 +232,6 @@
     opacity: 0.7;
   }
 
-  .label-tag {
-    margin-right: 4px;
-    margin-top: 8px;
-  }
-
   .graph-tooltip-list-item {
     display: table-row;
   }
@@ -251,6 +245,31 @@
     font-weight: bold;
     padding-left: 10px;
     text-align: right;
+  }
+}
+
+.graph-annotation {
+
+  .label-tag {
+    margin-right: 4px;
+    margin-top: 8px;
+  }
+
+  .graph-annotation-title {
+    font-weight: $font-weight-semi-bold;
+    position: relative;
+    top: -0.4rem;
+  }
+
+  a {
+    color: $blue;
+    text-decoration: underline;
+  }
+
+  .graph-annotation-time {
+    position: relative;
+    text-align: center;
+    top: 0.6rem;
   }
 }
 

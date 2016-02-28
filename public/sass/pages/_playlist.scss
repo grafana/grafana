@@ -1,3 +1,8 @@
+.playlist-description {
+  width: 555px;
+  margin-bottom: 20px;
+}
+
 .playlist-search-container {
   z-index: 1000;
   position: relative;
@@ -17,6 +22,11 @@
   top: 8px;
   right: 11px;
 }
+
+.playlist-search-containerwrapper {
+  margin-bottom: 15px;
+}
+
 
 .playlist-search-field-wrapper {
   input {
@@ -89,4 +99,29 @@
     float: right;
     padding-left: 20px;
   }
+}
+
+.playlist-available-list {
+  td {
+    line-height: 2rem;
+    white-space: nowrap;
+  }
+
+  .add-dashboard {
+    text-align: center;
+  }
+
+  .fa-star {
+    color: $orange;
+  }
+}
+
+.playlist-column-header {
+  border-bottom: thin solid $gray-1;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.selected-playlistitem-settings {
+  text-align: right;
 }

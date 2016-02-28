@@ -58,6 +58,12 @@ $body-bg:  		  $white;
 $page-bg:  		  $white;
 $body-color:    $gray-1;
 $text-color:    $gray-1;
+$text-color-strong: $white;
+$text-color-weak: $gray-1;
+
+// gradients
+$brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
+$page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -174,7 +180,7 @@ $dropdownBorder:                $tight-form-border;
 $dropdownDividerTop:            $gray-6;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
-$dropdownTitle:                 $dark-5;
+$dropdownTitle:                 $gray-3;
 
 $dropdownLinkColor:             $dark-3;
 $dropdownLinkColorHover:        $link-color;
@@ -258,20 +264,18 @@ $infoBorder:              transparent;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       $gray-4;
+$tooltipColor:            $text-color;
+$tooltipBackground:       $gray-5;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        darken($white,11%);
+$tooltipLinkColor:        $text-color;
 
-$popoverBackground:       $white;
-$popoverArrowWidth:       15px;
-$popoverArrowColor:       $white;
-$popoverTitleBackground:  $white;
+// popover
+$popover-bg:         $gray-5;
+$popover-color:      $text-color;
 
-// Special enhancement for popovers
-$popoverArrowOuterWidth:  $popoverArrowWidth + 1;
-$popoverArrowOuterColor:  rgba(0,0,0,.25);
+$popover-help-bg:         $blue-dark;
+$popover-help-color:      $gray-6;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';

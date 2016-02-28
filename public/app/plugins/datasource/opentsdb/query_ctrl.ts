@@ -38,7 +38,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       this.target.downsampleFillPolicy = 'none';
     }
 
-    this.datasource.getAggregators().then(function(aggs) {
+    this.datasource.getAggregators().then((aggs) => {
       this.aggregators = aggs;
     });
 
