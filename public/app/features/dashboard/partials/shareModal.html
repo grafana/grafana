@@ -119,22 +119,21 @@
 				<span class="gf-form-label width-12">Snapshot name</span>
 				<input type="text" ng-model="snapshot.name" class="gf-form-input max-width-15" >
 			</div>
-			<div class="gf-form">
+			<div class="gf-form" ng-if="step === 1">
 				<span class="gf-form-label width-12">Expire</span>
 				<div class="gf-form-select-wrapper max-width-15">
 					<select class="gf-form-input" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
 				</div>
 			</div>
 
-				<div class="gf-form" ng-if="step === 2" style="margin-top: 40px">
-					<div class="gf-form-row">
-						<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
-							<i class="fa fa-external-link-square"></i>
-							{{snapshotUrl}}
-						</a>
-						<br>
-						<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
-					</div>
+			<div class="gf-form" ng-if="step === 2" style="margin-top: 40px">
+				<div class="gf-form-row">
+					<a href="{{snapshotUrl}}" class="large share-snapshot-link" target="_blank">
+						<i class="fa fa-external-link-square"></i>
+						{{snapshotUrl}}
+					</a>
+					<br>
+					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
 				</div>
 			</div>
 
