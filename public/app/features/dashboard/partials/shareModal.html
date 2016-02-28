@@ -35,53 +35,30 @@
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
 
-	<div class="gf-form">
-		<div class="gf-form-row">
-			<span class="gf-fluid-input">
-				<textarea rows="5" data-share-panel-url class="input" ng-model='iframeHtml'></textarea>
-			</span>
+	<div class="gf-form-group position-center">
+		<div class="gf-form width-30" >
+			<textarea rows="5" data-share-panel-url class="gf-form-input width-30" ng-model='iframeHtml'></textarea>
 		</div>
-		<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+	</div>
+	<div class="gf-form-group">
+		<div class="gf-form position-center">
+			<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+		</div>
 	</div>
 </script>
 
 <script type="text/ng-template" id="shareLinkOptions.html">
-	<div class="editor-row" style="margin: 11px 20px 33px 20px">
-		<div class="section">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px;">
-						<label class="checkbox-label" for="options.forCurrent">Current time range</label>
-					</li>
-					<li class="tight-form-item last">
-						<input class="cr1" id="options.forCurrent" type="checkbox" ng-model="options.forCurrent" ng-checked="options.forCurrent" ng-change="buildUrl()">
-						<label for="options.forCurrent" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px">
-						<label class="checkbox-label" for="options.includeTemplateVars">Include template variables</label>
-					</li>
-					<li class="tight-form-item last">
-						<input class="cr1" id="options.includeTemplateVars" type="checkbox" ng-model="options.includeTemplateVars" ng-checked="options.includeTemplateVars" ng-change="buildUrl()">
-						<label for="options.includeTemplateVars" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px">
-						Theme
-					</li>
-					<li>
-						<select class="input-small tight-form-input last" style="width: 211px" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+	<div class="gf-form-group position-center">
+		<div class="gf-form">
+			<editor-checkbox text="Current time range" model="options.forCurrent" change="updated()"></editor-checkbox>
+		</div>
+		<div class="gf-form">
+			<editor-checkbox text="Include template variables" model="options.includeTemplateVars" change="updated()"></editor-checkbox>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label">Theme</span>
+			<div class="gf-form-select-wrapper max-width-10">
+				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>
 		</div>
 	</div>
@@ -93,14 +70,19 @@
 	</div>
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
-	<div class="gf-form">
-		<div class="gf-form-row">
-			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
-			<span class="gf-fluid-input">
-				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
-			</span>
+	<div class="gf-form-group position-center">
+		<div class="gf-form-inline">
+
+			<div class="gf-form width-30">
+				<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
+			</div>
+			<div class="gf-form pull-right">
+				<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+			</div>
 		</div>
-		<div class="editor-row" style="margin-top: 5px;" ng-show="modeSharePanel">
+	</div>
+	<div class="gf-form-group">
+		<div class="gf-form position-center" ng-show="modeSharePanel">
 			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
 		</div>
 	</div>
@@ -132,29 +114,15 @@
 			</p>
 		</div>
 
-		<div class="editor-row share-modal-options" style="">
-			<div class="section" ng-if="step === 1">
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 110px;">
-							Snapshot name
-						</li>
-						<li>
-							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 110px">
-							Expire
-						</li>
-						<li>
-							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
+		<div class="gf-form-group share-modal-options position-center">
+			<div class="gf-form" ng-if="step === 1">
+				<span class="gf-form-label width-12">Snapshot name</span>
+				<input type="text" ng-model="snapshot.name" class="gf-form-input max-width-15" >
+			</div>
+			<div class="gf-form" ng-if="step === 1">
+				<span class="gf-form-label width-12">Expire</span>
+				<div class="gf-form-select-wrapper max-width-15">
+					<select class="gf-form-input" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
 				</div>
 			</div>
 
@@ -168,21 +136,21 @@
 					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
 				</div>
 			</div>
-		</div>
 
-		<div ng-if="step === 1">
-			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
-				<i class="fa fa-save"></i>
-				Local Snapshot
-			</button>
-			<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
-				<i class="fa fa-cloud-upload"></i>
-				{{sharingButtonText}}
-			</button>
-		</div>
+			<div ng-if="step === 1" class="gf-form-buttons-row">
+				<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
+					<i class="fa fa-save"></i>
+					Local Snapshot
+				</button>
+				<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
+					<i class="fa fa-cloud-upload"></i>
+					{{sharingButtonText}}
+				</button>
+			</div>
 
-		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
-			Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
+			<div class="pull-right" ng-if="step === 2" style="padding: 5px">
+				Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
+			</div>
 		</div>
 
 	</div>

@@ -118,6 +118,8 @@
   }
 
   .share-modal-big-icon {
+    margin-bottom: 2rem;
+
     .fa, .icon-gf {
       font-size: 70px;
     }
@@ -145,5 +147,11 @@
     overflow: hidden;
     display: block;
     text-overflow: ellipsis;
+  }
+}
+
+.modal-body {
+  .position-center {
+    display: inline-block;
   }
 }

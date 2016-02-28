@@ -261,13 +261,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  toggleYAxis(info) {
-    var override = _.findWhere(this.panel.seriesOverrides, { alias: info.alias });
+  toggleAxis(info) {
+    var override = _.findWhere(this.panel.seriesOverrides, {alias: info.alias});
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
     }
-    override.yaxis = info.yaxis === 2 ? 1 : 2;
+    info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
     this.render();
   };
 

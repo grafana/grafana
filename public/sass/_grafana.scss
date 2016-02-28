@@ -7,7 +7,7 @@
 @import "mixins/grid-framework";
 @import "mixins/hover";
 @import "mixins/forms";
-
+@import "mixins/drop_element";
 
 // BASE
 @import "base/normalize";
@@ -26,6 +26,7 @@
 @import "utils/widths";
 
 // LAYOUTS
+@import "layout/lists";
 @import "layout/page";
 
 // COMPONENTS
@@ -44,7 +45,6 @@
 @import "components/tagsinput";
 @import "components/tables_lists";
 @import "components/search";
-@import "components/dashboard";
 @import "components/tightform";
 @import "components/gf-form";
 @import "components/sidemenu";
@@ -56,7 +56,6 @@
 @import "components/filter-table";
 @import "components/scrollbar";
 @import "components/old_stuff";
-@import "components/popovers";
 @import "components/typeahead";
 @import "components/modals";
 @import "components/dropdown";
@@ -64,15 +63,19 @@
 @import "components/footer";
 @import "components/infobox";
 @import "components/shortcuts";
+@import "components/drop";
 @import "components/query_editor";
+@import "components/tabbed_view";
 
 // PAGES
 @import "pages/login";
+@import "pages/dashboard";
 @import "pages/playlist";
 @import "pages/admin";
 @import "pages/alerting";
-@import "pages/apps";
+@import "pages/plugins";
 @import "pages/signup";
 @import "pages/styleguide";
+
 
 @import "old_responsive";

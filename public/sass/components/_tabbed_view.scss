@@ -1,0 +1,58 @@
+.tabbed-view {
+  background-color: $page-bg;
+  background-image: $page-gradient;
+  margin: -($panel-margin*2);
+  margin-bottom: $spacer*2;
+  padding: $spacer*3;
+
+  &.tabbed-view--panel-edit {
+    padding: 0;
+
+    .tabbed-view-header {
+      padding: 0;
+      background-color: $body-bg;
+      padding: 1.5em 1rem 0 1rem;
+    }
+    .gf-tabs-link.active {
+      background-color: $panel-bg;
+    }
+  }
+}
+
+.tabbed-view-header {
+  @include clearfix();
+  @include brand-bottom-border();
+}
+
+.tabbed-view-title {
+  margin-left: $spacer*1.5;
+  float: left;
+  font-style: italic;
+  padding-top: 0.2rem;
+}
+
+.tabbed-view-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  i {
+    font-size: 120%;
+  }
+  color: $text-color;
+  &:hover {
+    color: $white;
+  }
+}
+
+.tabbed-view-body {
+  padding: $spacer*1.5;
+  min-height: 250px;
+}
+
+.section-heading {
+  font-size: 1.1rem;
+  margin-bottom: 0.6rem;
+}

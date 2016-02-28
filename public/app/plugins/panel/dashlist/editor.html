@@ -1,57 +1,35 @@
-
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
-					<strong>Mode</strong>
-				</li>
-				<li>
-					<select class="input-small tight-form-input last" ng-model="ctrl.panel.mode" ng-options="f for f in ctrl.modes" ng-change="ctrl.refresh()"></select>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">Mode</span>
+			<div class="gf-form-select-wrapper max-width-10">
+				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ctrl.modes" ng-change="ctrl.refresh()"></select>
+			</div>
 		</div>
 	</div>
-	<div class="section" style="margin-bottom: 20px" ng-if="ctrl.panel.mode === 'search'">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
-					<strong>Search options</strong>
-				</li>
-				<li class="tight-form-item">
-					Query
-				</li>
-				<li>
-					<input type="text" class="input-medium tight-form-input" placeholder="title query"
-					ng-model="ctrl.panel.query" ng-change="ctrl.refresh()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Tags
-				</li>
-				<li>
-					<bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
-					</bootstrap-tagsinput>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+
+	<div class="gf-form-inline" ng-if="ctrl.panel.mode === 'search'">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">Search options</span>
+			<span class="gf-form-label">Query</span>
+
+			<input type="text" class="gf-form-input" placeholder="title query"
+				ng-model="ctrl.panel.query" ng-change="ctrl.refresh()" ng-model-onblur>
+
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label">Tags</span>
+
+			<bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
+			</bootstrap-tagsinput>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">Limit number to</span>
+			<input class="gf-form-input" type="number" ng-model="ctrl.panel.limit" ng-model-onblur ng-change="ctrl.refresh()">
 		</div>
 	</div>
 </div>
-
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 110px">
-					<strong>Limit number to</strong>
-				</li>
-				<li>
-					<input class="input-small tight-form-input last" type="number" ng-model="ctrl.panel.limit" ng-model-onblur ng-change="ctrl.refresh()">
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-</div>
-

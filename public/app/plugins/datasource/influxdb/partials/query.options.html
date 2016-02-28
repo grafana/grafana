@@ -1,45 +1,39 @@
 <section class="grafana-metric-options">
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-wrench"></i>
-			</li>
-			<li class="tight-form-item">
-				 Group by time interval
-			</li>
-			<li>
-				<input type="text" class="input-medium tight-form-input" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label"><i class="fa fa-wrench"></i></span>
+				<span class="gf-form-label width-11">Group by time interval</span>
+				<input type="text" class="gf-form-input" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
 				spellcheck='false' placeholder="example: >10s">
-			</li>
-			<li class="tight-form-item">
-				<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form last">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-info-circle"></i>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					alias patterns
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking &amp; and fill
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					group by time
-				</a>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
+				<span class="gf-form-label"><i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i></span>
+			</div>
+		</div>
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<!--span class="gf-form-label">
+					<i class="fa fa-info-circle"></i>
+				</span-->
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						<i class="fa fa-info-circle"></i>
+						&nbsp;alias patterns
+					</a>
+				</span>
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					<i class="fa fa-info-circle"></i>
+						&nbsp;stacking &amp; and fill
+					</a>
+				</span>
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					<i class="fa fa-info-circle"></i>
+						&nbsp;group by time
+					</a>
+				</span>
+			</div>
+		</div>
 	</div>
 </section>
 

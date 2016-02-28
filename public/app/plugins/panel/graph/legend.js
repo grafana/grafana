@@ -10,7 +10,7 @@ function (angular, _, $) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('graphLegend', function(popoverSrv) {
+  module.directive('graphLegend', function(popoverSrv, $timeout) {
 
     return {
       link: function(scope, elem) {
@@ -41,13 +41,24 @@ function (angular, _, $) {
 
           var el = $(e.currentTarget).find('.fa-minus');
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = seriesList[index];
-          var popoverScope = scope.$new();
-          popoverScope.series = seriesInfo;
-          popoverSrv.show({
-            element: el,
-            templateUrl:  'public/app/plugins/panel/graph/legend.popover.html',
-            scope: popoverScope
+          var series = seriesList[index];
+
+          $timeout(function() {
+            popoverSrv.show({
+              element: el[0],
+              position: 'bottom center',
+              template: '<gf-color-picker></gf-color-picker>',
+              model: {
+                autoClose: true,
+                series: series,
+                toggleAxis: function() {
+                  ctrl.toggleAxis(series);
+                },
+                colorSelected: function(color) {
+                  ctrl.changeSeriesColor(series, color);
+                }
+              },
+            });
           });
         }
 
