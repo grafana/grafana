@@ -17,6 +17,7 @@ describe('OpenTsQueryCtrl', function() {
     ctx.panelCtrl = {panel: {}};
     ctx.panelCtrl.refresh = sinon.spy();
     ctx.datasource.getAggregators = sinon.stub().returns(ctx.$q.when([]));
+    ctx.datasource.getFilterTypes = sinon.stub().returns(ctx.$q.when([]));
 
     ctx.ctrl = $controller(OpenTsQueryCtrl, {$scope: ctx.scope}, {
       panelCtrl: ctx.panelCtrl,

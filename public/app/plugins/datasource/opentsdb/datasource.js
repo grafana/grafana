@@ -224,13 +224,26 @@ function (angular, _, dateMath) {
     this.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
 
-      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+      aggregatorsPromise = this._get('/api/aggregators').then(function(result) {
         if (result.data && _.isArray(result.data)) {
           return result.data.sort();
         }
         return [];
       });
       return aggregatorsPromise;
+    };
+
+    var filterTypesPromise = null;
+    this.getFilterTypes = function() {
+      if (filterTypesPromise) { return filterTypesPromise; }
+
+      filterTypesPromise = this._get('/api/config/filters').then(function(result) {
+        if (result.data) {
+          return Object.keys(result.data).sort();
+        }
+        return [];
+      });
+      return filterTypesPromise;
     };
 
     function transformMetricData(md, groupByTags, target, options) {
