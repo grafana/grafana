@@ -126,9 +126,9 @@ func Register(r *macaron.Macaron) {
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 
 			// apps
-			r.Get("/apps", wrap(GetOrgAppsList))
-			r.Get("/apps/:appId/settings", wrap(GetAppSettingsById))
-			r.Post("/apps/:appId/settings", bind(m.UpdateAppSettingsCmd{}), wrap(UpdateAppSettings))
+			r.Get("/plugins", wrap(GetPluginList))
+			r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
+			r.Post("/plugins/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
 
 		// create new org

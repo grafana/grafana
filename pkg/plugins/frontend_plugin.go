@@ -56,6 +56,10 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 }
 
 func evalRelativePluginUrlPath(pathStr string, pluginId string) string {
+	if pathStr == "" {
+		return ""
+	}
+
 	u, _ := url.Parse(pathStr)
 	if u.IsAbs() {
 		return pathStr
