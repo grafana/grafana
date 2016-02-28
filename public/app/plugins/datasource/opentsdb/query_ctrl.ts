@@ -45,7 +45,15 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     }
 
     this.datasource.getAggregators().then((aggs) => {
-      this.aggregators = aggs;
+      if (aggs.length !== 0) {
+        this.aggregators = aggs;
+      }
+    });
+
+    this.datasource.getFilterTypes().then((filterTypes) => {
+      if (filterTypes.length !== 0) {
+        this.filterTypes = filterTypes;
+      }
     });
 
     // needs to be defined here as it is called from typeahead
@@ -135,7 +143,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     }
 
     if (!this.target.currentFilterType) {
-      this.target.currentFilterType = 'literal_or';
+      this.target.currentFilterType = 'iliteral_or';
     }
 
     if (!this.target.currentFilterGroupBy) {
