@@ -31,13 +31,18 @@ function (angular, _) {
        }, this);
     };
 
+    this.regexEscape = function(value) {
+      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+    };
+
     this.formatValue = function(value, format) {
       if (_.isString(value)) {
         return value;
       } else {
         switch(format) {
-          case "regex values": {
-            return '(' + value.join('|') + ')';
+          case "regex": {
+            var escapedValues = _.map(value, this.regexEscape);
+            return '(' + escapedValues.join('|') + ')';
           }
           case "lucene": {
             var quotedValues = _.map(value, function(val) {

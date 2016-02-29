@@ -45,7 +45,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
 
     // replace templated variables
-    allQueries = templateSrv.replace(allQueries, options.scopedVars);
+    allQueries = templateSrv.replace(allQueries, options.scopedVars, 'regex');
 
     return this._seriesQuery(allQueries).then(function(data): any {
       if (!data || !data.results) {
