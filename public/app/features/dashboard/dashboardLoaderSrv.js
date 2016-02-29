@@ -5,9 +5,9 @@ define([
   'jquery',
   'app/core/utils/kbn',
   'app/core/utils/datemath',
-  './impressions',
+  './impressionStore',
 ],
-function (angular, moment, _, $, kbn, dateMath, impressions) {
+function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -41,7 +41,7 @@ function (angular, moment, _, $, kbn, dateMath, impressions) {
       }
 
       promise.then(function(result) {
-        impressions.addImpression(slug);
+        impressionStore.impressions.addDashboardImpression(slug);
         return result;
       });
 

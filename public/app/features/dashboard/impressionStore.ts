@@ -3,10 +3,10 @@
 import store from 'app/core/store';
 import _ from 'lodash';
 
-export class Impressions {
+export class ImpressionsStore {
   constructor() {}
 
-  addImpression(slug) {
+  addDashboardImpression(slug) {
     var impressions = [];
     if (store.exists("dashboard_impressions")) {
       impressions = JSON.parse(store.get("dashboard_impressions"));
@@ -28,13 +28,13 @@ export class Impressions {
     store.set("dashboard_impressions", JSON.stringify(impressions));
   }
 
-  getImpressions() {
+  getDashboardOpened() {
     var k = store.get("dashboard_impressions");
     return JSON.parse(k);
   }
 }
 
-var impressions = new Impressions();
+var impressions = new ImpressionsStore();
 
 export {
   impressions
