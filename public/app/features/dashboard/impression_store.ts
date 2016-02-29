@@ -7,7 +7,6 @@ export class ImpressionsStore {
   constructor() {}
 
   addDashboardImpression(impression) {
-    console.log(impression);
     var impressions = [];
     if (store.exists("dashboard_impressions")) {
       impressions = JSON.parse(store.get("dashboard_impressions"));
