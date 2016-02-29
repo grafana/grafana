@@ -16,5 +16,5 @@ define([
   './graphiteImportCtrl',
   './dynamicDashboardSrv',
   './importCtrl',
-  './impressions',
+  './impressionStore',
 ], function () {});
