@@ -18,8 +18,8 @@
 	<div class="gf-box-body">
 
 		<div ng-if="editor.index == 0">
-			<h5>Request details</h5>
-			<table class="table table-striped small inspector-request-table">
+			<h5 class="section-heading">Request details</h5>
+			<table class="filter-table gf-form-group">
 				<tr>
 					<td>Url</td>
 					<td>{{inspector.error.config.url}}</td>
@@ -38,8 +38,8 @@
 				</tr>
 			</table>
 
-			<h5>Request parameters</h5>
-			<table class="table table-striped small inspector-request-table">
+			<h5 class="section-heading">Request parameters</h5>
+			<table class="filter-table">
 				<tr ng-repeat="param in request_parameters">
 					<td>
 						{{param.key}}

@@ -14,6 +14,8 @@ function (angular, _, dateMath) {
     this.name = instanceSettings.name;
     this.withCredentials = instanceSettings.withCredentials;
     this.basicAuth = instanceSettings.basicAuth;
+    instanceSettings.jsonData = instanceSettings.jsonData || {};
+    this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.supportMetrics = true;
     this.tagKeys = {};
 
@@ -39,9 +41,15 @@ function (angular, _, dateMath) {
 
       var groupByTags = {};
       _.each(queries, function(query) {
-        _.each(query.tags, function(val, key) {
-          groupByTags[key] = true;
-        });
+        if (query.filters && query.filters.length > 0) {
+          _.each(query.filters, function(val) {
+            groupByTags[val.tagk] = true;
+          });
+        } else {
+          _.each(query.tags, function(val, key) {
+            groupByTags[key] = true;
+          });
+        }
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
@@ -88,6 +96,7 @@ function (angular, _, dateMath) {
       // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
       // go as POST rather than OPTIONS+POST
       options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+
       return backendSrv.datasourceRequest(options);
     };
 
@@ -215,13 +224,26 @@ function (angular, _, dateMath) {
     this.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
 
-      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+      aggregatorsPromise = this._get('/api/aggregators').then(function(result) {
         if (result.data && _.isArray(result.data)) {
           return result.data.sort();
         }
         return [];
       });
       return aggregatorsPromise;
+    };
+
+    var filterTypesPromise = null;
+    this.getFilterTypes = function() {
+      if (filterTypesPromise) { return filterTypesPromise; }
+
+      filterTypesPromise = this._get('/api/config/filters').then(function(result) {
+        if (result.data) {
+          return Object.keys(result.data).sort();
+        }
+        return [];
+      });
+      return filterTypesPromise;
     };
 
     function transformMetricData(md, groupByTags, target, options) {
@@ -307,10 +329,14 @@ function (angular, _, dateMath) {
         }
       }
 
-      query.tags = angular.copy(target.tags);
-      if(query.tags){
-        for(var key in query.tags){
-          query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
+      if (target.filters && target.filters.length > 0) {
+        query.filters = angular.copy(target.filters);
+      } else {
+        query.tags = angular.copy(target.tags);
+        if(query.tags){
+          for(var key in query.tags){
+            query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
+          }
         }
       }
 
@@ -321,11 +347,18 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return target.metric === metricData.metric &&
+          if (target.filters && target.filters.length > 0) {
+            return target.metric === metricData.metric &&
+            _.all(target.filters, function(filter) {
+              return filter.tagk === interpolatedTagValue === "*";
+            });
+          } else {
+            return target.metric === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
-            interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
-            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
-          });
+              interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
+              return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+            });
+          }
         });
       });
     }

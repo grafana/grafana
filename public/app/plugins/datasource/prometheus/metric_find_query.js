@@ -11,16 +11,16 @@ function (_, moment) {
   }
 
   PrometheusMetricFindQuery.prototype.process = function() {
-    var label_values_regex = /^label_values\(([^,]+)(?:,\s*(.+))?\)$/;
+    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)$/;
     var metric_names_regex = /^metrics\((.+)\)$/;
     var query_result_regex = /^query_result\((.+)\)$/;
 
     var label_values_query = this.query.match(label_values_regex);
     if (label_values_query) {
-      if (label_values_query[2]) {
+      if (label_values_query[1]) {
         return this.labelValuesQuery(label_values_query[2], label_values_query[1]);
       } else {
-        return this.labelValuesQuery(label_values_query[1], null);
+        return this.labelValuesQuery(label_values_query[2], null);
       }
     }
 
