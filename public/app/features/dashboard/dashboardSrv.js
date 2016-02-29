@@ -140,7 +140,11 @@ function (angular, $, _, moment) {
     };
 
     p.isSubmenuFeaturesEnabled = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+      var visableTemplates = _.filter(this.templating.list, function(template) {
+        return template.hideVariable === undefined || template.hideVariable === false;
+      });
+
+      return visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
