@@ -125,7 +125,8 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   getExtendedMenu() {
     var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
+    menu.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
+    menu.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     menu.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
     return menu;
   }
@@ -294,6 +295,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     fileExport.exportSeriesListToCsv(this.seriesList);
+  }
+
+  exportCsvColumns() {
+    fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 }
 
