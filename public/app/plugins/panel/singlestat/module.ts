@@ -50,7 +50,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   unitFormats: any[];
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv, private templateSrv) {
+  constructor($scope, $injector, private $location, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, panelDefaults);
   }
@@ -213,7 +213,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // value/number to text mapping
       var value = parseFloat(map.value);
-      if (value === data.value) {
+      if (value === data.valueRounded) {
         data.valueFormated = map.text;
         return;
       }

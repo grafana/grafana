@@ -91,11 +91,17 @@
 						</div>
 					</div>
 				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Label</span>
-					<input type="text" class="gf-form-input max-width-14" ng-model='current.label' placeholder="optional display name"></input>
-					<editor-checkbox class="width-13" text="Hide label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
+				<div class="gf-form-inline">
+					<div class="gf-form">
+						<span class="gf-form-label width-7">Label</span>
+						<input type="text" class="gf-form-input max-width-14" ng-model='current.label' placeholder="optional display name"></input>
+					</div>
+					<div class="gf-form">
+						<editor-checkbox class="width-10" text="Hide label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
+						<editor-checkbox class="width-11" text="Hide variable" model="current.hideVariable" change="runQuery()"></editor-checkbox>
+					</div>
 				</div>
+
 			</div>
 
 			<h5 class="section-heading">Value Options</h5>
