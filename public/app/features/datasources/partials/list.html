@@ -23,6 +23,7 @@
 			<thead>
 				<tr>
 					<th><strong>name</strong></th>
+					<th><strong>type</strong></th>
 					<th><strong>url</strong></th>
 					<th style="width: 60px;"></th>
 					<th style="width: 85px;"></th>
@@ -37,7 +38,10 @@
 						</a>
 					</td>
 					<td>
-						<span class="ellipsis">{{ds.url}}</span>
+						<span>{{ds.type}}</span>
+					</td>
+					<td>
+						<span>{{ds.url}}</span>
 					</td>
 					<td class="text-center">
 						<span ng-if="ds.isDefault">
