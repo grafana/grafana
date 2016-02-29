@@ -12,10 +12,7 @@ function (angular, _, $) {
     var annotationDefaults = {
       name: '',
       datasource: null,
-      showLine: true,
-      iconColor: '#C0C6BE',
-      lineColor: 'rgba(255, 96, 96, 0.592157)',
-      iconSize: 13,
+      iconColor: 'rgba(255, 96, 96, 1)',
       enable: true
     };
 
