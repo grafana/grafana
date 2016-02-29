@@ -8,7 +8,7 @@
     font-weight: normal;
     font-style: normal;
 }
- 
+
 .icon-gf {
     /* use !important to prevent issues with browser extensions that change fonts */
     font-family: 'grafana-icons' !important;
@@ -27,10 +27,6 @@
 .inline-icon-gf {
     vertical-align: middle;
 }
-
-
-
-
 
 .icon-gf-raintank_wordmark:before {
     content: "\e600";
