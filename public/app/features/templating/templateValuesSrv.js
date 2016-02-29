@@ -45,7 +45,6 @@ function (angular, _, kbn) {
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
-      debugger;
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 

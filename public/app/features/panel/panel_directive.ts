@@ -31,7 +31,6 @@ var panelTemplate = `
     <div class="tabbed-view tabbed-view--panel-edit">
       <div class="tabbed-view-header">
         <h2 class="tabbed-view-title">
-          <i ng-class="ctrl.icon"></i>
           {{ctrl.pluginName}}
         </h2>
 
