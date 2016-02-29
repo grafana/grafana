@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func isDasboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) {
+func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
 	}
@@ -41,7 +41,7 @@ func GetDashboard(c *middleware.Context) {
 		return
 	}
 
-	isStarred, err := isDasboardStarredByUser(c, query.Result.Id)
+	isStarred, err := isDashboardStarredByUser(c, query.Result.Id)
 	if err != nil {
 		c.JsonApiErr(500, "Error while checking if dashboard was starred by user", err)
 		return
