@@ -86,6 +86,8 @@ pages:
 - ['http_api/snapshot.md', 'API', 'Snapshot API']
 - ['http_api/other.md', 'API', 'Other API']
 
+- ['plugins/plugins.md', 'Plugins', 'Plugins']
+
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
 
