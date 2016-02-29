@@ -179,6 +179,10 @@ function (angular, _, coreModule) {
       vm.variable.current.text = _.pluck(vm.selectedValues, 'text').join(' + ');
       vm.variable.current.tags = vm.selectedTags;
 
+      if (!vm.variable.multi) {
+        vm.variable.current.value = vm.selectedValues[0].value;
+      }
+
       if (commitChange) {
         vm.commitChanges();
       }

@@ -226,22 +226,19 @@ function (angular, _, kbn) {
       return _.map(_.keys(options).sort(), function(key) {
         var option = { text: key, value: key };
 
-        // check if values need to be regex escaped
-        if (self.shouldRegexEscape(variable)) {
-          option.value = self.regexEscape(option.value);
-        }
+        // // check if values need to be regex escaped
+        // if (self.shouldRegexEscape(variable)) {
+        //   option.value = self.regexEscape(option.value);
+        // }
 
         return option;
       });
     };
 
-    this.shouldRegexEscape = function(variable) {
-      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
-    };
-
-    this.regexEscape = function(value) {
-      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
-    };
+    // this.shouldRegexEscape = function(variable) {
+    //   return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
+    // };
+    //
 
     this.addAllOption = function(variable) {
       // var allValue = '';
