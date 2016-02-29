@@ -14,6 +14,41 @@ export function exportSeriesListToCsv(seriesList) {
     saveSaveBlob(text, 'grafana_data_export.csv');
 };
 
+export function exportSeriesListToCsvColumns(seriesList) {
+    var text = 'Time;';
+    // add header
+    _.each(seriesList, function(series) {
+        text += series.alias + ';';
+    });
+    text = text.substring(0,text.length-1);
+    text += '\n';
+
+    // process data
+    var dataArr = [[]];
+    var sIndex = 1;
+    _.each(seriesList, function(series) {
+        var cIndex = 0;
+        dataArr.push([]);
+        _.each(series.datapoints, function(dp) {
+            dataArr[0][cIndex] = new Date(dp[1]).toISOString();
+            dataArr[sIndex][cIndex] = dp[0];
+            cIndex++;
+        });
+        sIndex++;
+    });
+
+    // make text
+    for (var i = 0; i < dataArr[0].length; i++) {
+        text += dataArr[0][i] + ';';
+        for (var j = 1; j < dataArr.length; j++) {
+            text += dataArr[j][i] + ';';
+        }
+        text = text.substring(0,text.length-1);
+        text += '\n';
+    }
+    saveSaveBlob(text, 'grafana_data_export.csv');
+};
+
 export function exportTableDataToCsv(table) {
     var text = '';
     // add header
