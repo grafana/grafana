@@ -8,6 +8,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   aggregators: any;
   fillPolicies: any;
+  filterTypes: any;
+  tsdbVersion: any;
   aggregator: any;
   downsampleInterval: any;
   downsampleAggregator: any;
@@ -17,6 +19,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   suggestTagKeys: any;
   suggestTagValues: any;
   addTagMode: boolean;
+  addFilterMode: boolean;
 
   /** @ngInject **/
   constructor($scope, $injector) {
@@ -25,6 +28,9 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.errors = this.validateTarget();
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
+    this.filterTypes = ['wildcard','iliteral_or','not_iliteral_or','not_literal_or','iwildcard','literal_or','regexp'];
+
+    this.tsdbVersion = this.datasource.tsdbVersion;
 
     if (!this.target.aggregator) {
       this.target.aggregator = 'sum';
@@ -38,8 +44,16 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       this.target.downsampleFillPolicy = 'none';
     }
 
-    this.datasource.getAggregators().then(function(aggs) {
-      this.aggregators = aggs;
+    this.datasource.getAggregators().then((aggs) => {
+      if (aggs.length !== 0) {
+        this.aggregators = aggs;
+      }
+    });
+
+    this.datasource.getFilterTypes().then((filterTypes) => {
+      if (filterTypes.length !== 0) {
+        this.filterTypes = filterTypes;
+      }
     });
 
     // needs to be defined here as it is called from typeahead
@@ -70,6 +84,11 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   addTag() {
+
+    if (this.target.filters && this.target.filters.length > 0) {
+      this.errors.tags = "Please remove filters to use tags, tags and filters are mutually exclusive.";
+    }
+
     if (!this.addTagMode) {
       this.addTagMode = true;
       return;
@@ -101,6 +120,73 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.target.currentTagKey = key;
     this.target.currentTagValue = value;
     this.addTag();
+  }
+
+  closeAddTagMode() {
+    this.addTagMode = false;
+    return;
+  }
+
+  addFilter() {
+
+    if (this.target.tags && _.size(this.target.tags) > 0) {
+      this.errors.filters = "Please remove tags to use filters, tags and filters are mutually exclusive.";
+    }
+
+    if (!this.addFilterMode) {
+      this.addFilterMode = true;
+      return;
+    }
+
+    if (!this.target.filters) {
+      this.target.filters = [];
+    }
+
+    if (!this.target.currentFilterType) {
+      this.target.currentFilterType = 'iliteral_or';
+    }
+
+    if (!this.target.currentFilterGroupBy) {
+      this.target.currentFilterGroupBy = false;
+    }
+
+    this.errors = this.validateTarget();
+
+    if (!this.errors.filters) {
+      var currentFilter = {
+        type:    this.target.currentFilterType,
+        tagk:     this.target.currentFilterKey,
+        filter:   this.target.currentFilterValue,
+        groupBy: this.target.currentFilterGroupBy
+      };
+      this.target.filters.push(currentFilter);
+      this.target.currentFilterType = 'literal_or';
+      this.target.currentFilterKey = '';
+      this.target.currentFilterValue = '';
+      this.target.currentFilterGroupBy = false;
+      this.targetBlur();
+    }
+
+    this.addFilterMode = false;
+  }
+
+  removeFilter(index) {
+    this.target.filters.splice(index, 1);
+    this.targetBlur();
+  }
+
+  editFilter(fil, index) {
+    this.removeFilter(index);
+    this.target.currentFilterKey = fil.tagk;
+    this.target.currentFilterValue = fil.filter;
+    this.target.currentFilterType = fil.type;
+    this.target.currentFilterGroupBy = fil.groupBy;
+    this.addFilter();
+  }
+
+  closeAddFilterMode() {
+    this.addFilterMode = false;
+    return;
   }
 
   validateTarget() {

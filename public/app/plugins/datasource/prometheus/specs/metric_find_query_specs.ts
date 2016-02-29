@@ -48,6 +48,22 @@ describe('PrometheusMetricFindQuery', function() {
       ctx.$rootScope.$apply();
       expect(results.length).to.be(3);
     });
+    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate series query', function() {
+      response = {
+        status: "success",
+        data: [
+          {__name__: "metric", resource: "value1"},
+          {__name__: "metric", resource: "value2"},
+          {__name__: "metric", resource: "value3"}
+        ]
+      };
+      ctx.$httpBackend.expect('GET', 'proxied/api/v1/series?match[]=metric').respond(response);
+      var pm = new PrometheusMetricFindQuery(ctx.ds, 'label_values(metric, resource)');
+      pm.process().then(function(data) { results = data; });
+      ctx.$httpBackend.flush();
+      ctx.$rootScope.$apply();
+      expect(results.length).to.be(3);
+    });
     it('metrics(metric.*) should generate metric name query', function() {
       response = {
         status: "success",

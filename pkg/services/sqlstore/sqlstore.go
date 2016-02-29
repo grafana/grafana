@@ -77,7 +77,7 @@ func NewEngine() {
 		log.Fatal(3, "Sqlstore: Fail to connect to database: %v", err)
 	}
 
-	err = SetEngine(x, true)
+	err = SetEngine(x, setting.Env == setting.DEV)
 
 	if err != nil {
 		log.Fatal(3, "fail to initialize orm engine: %v", err)
@@ -105,14 +105,6 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 			return fmt.Errorf("sqlstore.init(fail to create xorm.log): %v", err)
 		}
 		x.Logger = xorm.NewSimpleLogger(f)
-
-		if setting.Env == setting.DEV {
-			x.ShowSQL = false
-			x.ShowInfo = false
-			x.ShowDebug = false
-			x.ShowErr = true
-			x.ShowWarn = true
-		}
 	}
 
 	return nil

@@ -69,14 +69,20 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('When value to text mapping is specified', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[10,1]];
+      ctx.datapoints = [[9.9,1]];
       ctx.ctrl.panel.valueMaps = [{value: '10', text: 'OK'}];
     });
 
-    it('Should replace value with text', function() {
-      expect(ctx.data.value).to.be(10);
-      expect(ctx.data.valueFormated).to.be('OK');
+    it('value should remain', function() {
+      expect(ctx.data.value).to.be(9.9);
     });
 
+    it('round should be rounded up', function() {
+      expect(ctx.data.valueRounded).to.be(10);
+    });
+
+    it('Should replace value with text', function() {
+      expect(ctx.data.valueFormated).to.be('OK');
+    });
   });
 });

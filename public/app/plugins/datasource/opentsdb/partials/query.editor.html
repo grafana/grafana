@@ -63,12 +63,11 @@
 			</select>
 		</li>
 
-		<li class="tight-form-item query-keyword" style="width: 59px">
+		<li class="tight-form-item query-keyword" style="width: 59px" ng-if="ctrl.tsdbVersion == 2">
 			Fill
-			<tip>Available since OpenTSDB 2.2</tip>
 		</li>
 
-		<li>
+		<li ng-if="ctrl.tsdbVersion == 2">
 			<select ng-model="ctrl.target.downsampleFillPolicy" class="tight-form-input input-small"
 				ng-options="agg for agg in ctrl.fillPolicies"
 				ng-change="ctrl.targetBlur()">
@@ -83,10 +82,67 @@
 	<div class="clearfix"></div>
 </div>
 
+<div class="tight-form" ng-if="ctrl.tsdbVersion == 2">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
+      Filters
+      <tip ng-if="ctrl.tsdbVersion == 2">Filters does not work with tags, either of the two will work but not both.</tip>
+    </li>
+    <li ng-repeat="fil in ctrl.target.filters track by $index" class="tight-form-item">
+      {{fil.tagk}}&nbsp;=&nbsp;{{fil.type}}&#40;{{fil.filter}}&#41;&nbsp;&#44&nbsp;groupBy&nbsp;=&nbsp;{{fil.groupBy}}
+      <a ng-click="ctrl.editFilter(fil, $index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a ng-click="ctrl.removeFilter($index)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+    <li class="tight-form-item query-keyword" ng-hide="ctrl.addFilterMode">
+      <a ng-click="ctrl.addFilter()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+
+    <li class="query-keyword" ng-show="ctrl.addFilterMode">
+      <input type="text" class="input-small tight-form-input" spellcheck='false'
+      bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+      ng-model="ctrl.target.currentFilterKey" placeholder="key"></input>
+
+      Type <select ng-model="ctrl.target.currentFilterType"
+      class="tight-form-input input-small"
+      ng-options="filType for filType in ctrl.filterTypes">
+      </select>
+ 
+      <input type="text" class="input-small tight-form-input"
+      spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+      data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="filter">
+      </input>
+
+      groupBy <editor-checkbox text="" model="ctrl.target.currentFilterGroupBy"></editor-checkbox>
+
+      <a bs-tooltip="ctrl.errors.filters"
+        style="color: rgb(229, 189, 28)"
+        ng-show="ctrl.errors.filters">
+        <i class="fa fa-warning"></i>
+      </a>
+ 
+      <a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">
+        add filter
+      </a>
+      <a ng-click="ctrl.closeAddFilterMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+
+    </li>
+  </ul>
+  <div class="clearfix"></div>
+</div>
+
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
 			Tags
+      <tip ng-if="ctrl.tsdbVersion == 2">Please use filters, tags are deprecated in opentsdb 2.2</tip>
 		</li>
 		<li ng-repeat="(key, value) in ctrl.target.tags track by $index" class="tight-form-item">
 			{{key}}&nbsp;=&nbsp;{{value}}
@@ -113,15 +169,21 @@
 			spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
 			data-min-length=0 data-items=100 ng-model="ctrl.target.currentTagValue" placeholder="value">
 			</input>
-			<a ng-click="ctrl.addTag()">
+
+      <a bs-tooltip="ctrl.errors.tags"
+        style="color: rgb(229, 189, 28)"
+        ng-show="ctrl.errors.tags">
+        <i class="fa fa-warning"></i>
+      </a>
+
+			<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">
 				add tag
 			</a>
-			<a bs-tooltip="ctrl.errors.tags"
-				style="color: rgb(229, 189, 28)"
-				ng-show="target.errors.tags">
-				<i class="fa fa-warning"></i>
-			</a>
-		</li>
+      <a ng-click="ctrl.closeAddTagMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+		
+    </li>
 	</ul>
 	<div class="clearfix"></div>
 </div>
