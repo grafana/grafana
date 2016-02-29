@@ -213,7 +213,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // value/number to text mapping
       var value = parseFloat(map.value);
-      if (value === data.value) {
+      if (value === data.valueRounded) {
         data.valueFormated = map.text;
         return;
       }
