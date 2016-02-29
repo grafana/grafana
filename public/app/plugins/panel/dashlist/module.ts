@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import {PanelCtrl} from 'app/plugins/sdk';
-import {impressions} from 'app/features/dashboard/impressionStore';
+import {impressions} from 'app/features/dashboard/impression_store';
 
  // Set and populate defaults
 var panelDefaults = {
@@ -45,8 +45,8 @@ class DashListCtrl extends PanelCtrl {
     if (this.panel.mode === 'last viewed') {
       var dashListNames = _.first(impressions.getDashboardOpened(), this.panel.limit).map((dashboard) => {
         return {
-          title: dashboard,
-          uri: 'db/' + dashboard
+          title: dashboard.title,
+          uri: 'db/' + dashboard.slug
         };
       });
 

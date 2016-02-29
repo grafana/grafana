@@ -5,7 +5,7 @@ define([
   'jquery',
   'app/core/utils/kbn',
   'app/core/utils/datemath',
-  './impressionStore',
+  './impression_store',
 ],
 function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
@@ -41,7 +41,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       }
 
       promise.then(function(result) {
-        impressionStore.impressions.addDashboardImpression(slug);
+        impressionStore.impressions.addDashboardImpression(result);
         return result;
       });
 
