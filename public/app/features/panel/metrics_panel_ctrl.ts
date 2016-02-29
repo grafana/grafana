@@ -17,6 +17,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   $timeout: any;
   datasourceSrv: any;
   timeSrv: any;
+  templateSrv: any;
   timing: any;
   range: any;
   rangeRaw: any;
@@ -34,6 +35,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.$q = $injector.get('$q');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
+    this.templateSrv = $injector.get('templateSrv');
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];
@@ -119,7 +121,8 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // check panel time overrrides
     if (this.panel.timeFrom) {
-      var timeFromInfo = rangeUtil.describeTextRange(this.panel.timeFrom);
+      var timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
+      var timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
         this.timeInfo = 'invalid time override';
         return;
@@ -136,13 +139,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.panel.timeShift) {
-      var timeShiftInfo = rangeUtil.describeTextRange(this.panel.timeShift);
+      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
+      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
         return;
       }
 
-      var timeShift = '-' + this.panel.timeShift;
+      var timeShift = '-' + timeShiftInterpolated;
       this.timeInfo += ' timeshift ' + timeShift;
       this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
