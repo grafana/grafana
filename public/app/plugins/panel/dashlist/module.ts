@@ -32,7 +32,7 @@ class DashListCtrl extends PanelCtrl {
 
   initEditMode() {
     super.initEditMode();
-    this.modes = ['starred', 'search', 'last viewed'];
+    this.modes = ['starred', 'search', 'recently viewed'];
     this.icon = "fa fa-star";
     this.addEditorTab('Options', () => {
       return {templateUrl: 'public/app/plugins/panel/dashlist/editor.html'};
@@ -42,7 +42,7 @@ class DashListCtrl extends PanelCtrl {
   refresh() {
     var params: any = {limit: this.panel.limit};
 
-    if (this.panel.mode === 'last viewed') {
+    if (this.panel.mode === 'recently viewed') {
 
       var dashListNames = impressions.getDashboardOpened().filter((imp) => {
         return imp.orgId === config.bootData.user.orgId;
