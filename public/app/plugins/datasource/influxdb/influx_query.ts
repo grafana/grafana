@@ -11,7 +11,7 @@ export default class InfluxQuery {
   templateSrv: any;
   scopedVars: any;
 
-  constructor(target, templateSrv, scopedVars) {
+  constructor(target, templateSrv?, scopedVars?) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
@@ -130,7 +130,7 @@ export default class InfluxQuery {
     this.updatePersistedParts();
   }
 
-  private renderTagCondition(tag, index) {
+  private renderTagCondition(tag, index, interpolate) {
     var str = "";
     var operator = tag.operator;
     var value = tag.value;
@@ -148,9 +148,11 @@ export default class InfluxQuery {
 
     // quote value unless regex
     if (operator !== '=~' && operator !== '!~') {
-      value = this.templateSrv.replace(value, this.scopedVars);
+      if (interpolate) {
+        value = this.templateSrv.replace(value, this.scopedVars);
+      }
       value = "'" + value.replace('\\', '\\\\') + "'";
-    } else {
+    } else if (interpolate){
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
@@ -174,11 +176,15 @@ export default class InfluxQuery {
     return policy + measurement;
   }
 
-  render() {
+  render(interpolate?) {
     var target = this.target;
 
     if (target.rawQuery) {
-      return target.query;
+      if (interpolate) {
+        return this.templateSrv.replace(target.query, this.scopedVars, 'regex');
+      } else {
+        return target.query;
+      }
     }
 
     if (!target.measurement) {
@@ -203,7 +209,7 @@ export default class InfluxQuery {
 
     query += ' FROM ' + this.getMeasurementAndPolicy() + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
-      return this.renderTagCondition(tag, index);
+      return this.renderTagCondition(tag, index, interpolate);
     });
 
     query += conditions.join(' ');
@@ -226,8 +232,6 @@ export default class InfluxQuery {
     if (target.fill) {
       query += ' fill(' + target.fill + ')';
     }
-
-    target.query = query;
 
     return query;
   }
