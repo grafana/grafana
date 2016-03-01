@@ -35,7 +35,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
 
       // build query
       var queryModel = new InfluxQuery(target, templateSrv, options.scopedVars);
-      var query =  queryModel.render();
+      var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
 
