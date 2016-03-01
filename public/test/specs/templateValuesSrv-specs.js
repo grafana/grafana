@@ -267,8 +267,7 @@ define([
 
       it('should add All option', function() {
         expect(scenario.variable.options[0].text).to.be('All');
-        expect(scenario.variable.options[0].value).to.eql(['backend1', 'backend2', 'backend3']);
-        expect(scenario.variable.options[0].isAll).to.be(true);
+        expect(scenario.variable.options[0].value).to.be('$__all');
       });
     });
 

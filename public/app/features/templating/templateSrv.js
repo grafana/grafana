@@ -13,7 +13,7 @@ function (angular, _) {
     var self = this;
 
     this._regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
-    this._values = {};
+    this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
 
@@ -23,14 +23,14 @@ function (angular, _) {
     };
 
     this.updateTemplateData = function() {
-      this._values = {};
+      this._index = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
         if (!variable.current || !variable.current.isNone && !variable.current.value) {
           continue;
         }
-        this._values[variable.name] = variable.current;
+        this._index[variable.name] = variable;
       }
     };
 
@@ -80,7 +80,7 @@ function (angular, _) {
     this.variableExists = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._values[match[1] || match[2]] !== void 0);
+      return match && (self._index[match[1] || match[2]] !== void 0);
     };
 
     this.containsVariable = function(str, variableName) {
@@ -96,17 +96,24 @@ function (angular, _) {
       str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
-        if (self._values[g1 || g2]) {
+        if (self._index[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
         return match;
       });
     };
 
+    this.getAllValue = function(variable) {
+      if (variable.allValue) {
+        return variable.allValue;
+      }
+      return _.pluck(variable.options, 'value');
+    };
+
     this.replace = function(target, scopedVars, format) {
       if (!target) { return target; }
 
-      var value, systemValue;
+      var variable, systemValue, value;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
@@ -117,25 +124,34 @@ function (angular, _) {
           }
         }
 
-        value = self._values[g1 || g2];
-        if (!value) {
+        variable = self._index[g1 || g2];
+        if (!variable) {
           return match;
         }
 
-        systemValue = self._grafanaVariables[value.value];
+        systemValue = self._grafanaVariables[variable.current.value];
         if (systemValue) {
           return self.formatValue(systemValue);
         }
 
-        var res = self.formatValue(value.value, format);
+        value = variable.current.value;
+        if (self.isAllValue(value)) {
+          value = self.getAllValue(variable);
+        }
+
+        var res = self.formatValue(value, format);
         return res;
       });
+    };
+
+    this.isAllValue = function(value) {
+      return value === '$__all' || Array.isArray(value) && value[0] === '$__all';
     };
 
     this.replaceWithText = function(target, scopedVars) {
       if (!target) { return target; }
 
-      var value;
+      var variable;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
@@ -144,10 +160,10 @@ function (angular, _) {
           if (option) { return option.text; }
         }
 
-        value = self._values[g1 || g2];
-        if (!value) { return match; }
+        variable = self._index[g1 || g2];
+        if (!variable) { return match; }
 
-        return self._grafanaVariables[value.value] || value.text;
+        return self._grafanaVariables[variable.current.value] || variable.current.text;
       });
     };
 
