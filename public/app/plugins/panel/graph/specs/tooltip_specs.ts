@@ -169,5 +169,79 @@ describeSharedTooltip("steppedLine false, stack true, individual true", function
   });
 });
 
+function describeMillisecondResolutionTooltip(desc, fn) {
+  var ctx: any = {};
+  ctx.ctrl = scope.ctrl;
+  ctx.ctrl.panel =  {
+    tooltip:  {
+      shared: true
+    },
+    legend: { },
+    stack: false
+  };
 
+  ctx.setup = function(setupFn) {
+    ctx.setupFn = setupFn;
+  };
 
+  describe(desc, function() {
+    beforeEach(function() {
+      ctx.setupFn();
+      var tooltip = new GraphTooltip(elem, dashboard, scope);
+      ctx.results = tooltip.findMillisecondResolutionNeed(ctx.data);
+    });
+
+    fn(ctx);
+  });
+}
+
+describeMillisecondResolutionTooltip('one second resolution timestamps', function(ctx) {
+  ctx.setup(function() {
+    ctx.data = [
+      {
+        data: [[1234567890, 45], [1234567899, 60]]
+      },
+      {
+        data: [[1236547890, 55], [1234456709, 90]]
+      }
+    ];
+  });
+
+  it('should not show millisecond resolution tooltip', function() {
+    expect(ctx.results).to.be(false);
+  });
+});
+
+describeMillisecondResolutionTooltip('millisecond timestamps with trailing zeros', function(ctx) {
+  ctx.setup(function() {
+    ctx.data = [
+      {
+        data: [[1234567890000, 45], [1234567899000, 60]]
+      },
+      {
+        data: [[1236547890000, 55], [1234456709000, 90]]
+      }
+    ];
+  });
+
+  it('should not show millisecond resolution tooltip', function() {
+    expect(ctx.results).to.be(false);
+  });
+});
+
+describeMillisecondResolutionTooltip('millisecond timestamps', function(ctx) {
+  ctx.setup(function() {
+    ctx.data = [
+      {
+        data: [[1234567890000, 45], [1234567899000, 60]]
+      },
+      {
+        data: [[1236547890001, 55], [1234456709045, 90]]
+      }
+    ];
+  });
+
+  it('should show millisecond resolution tooltip', function() {
+    expect(ctx.results).to.be(true);
+  });
+});
