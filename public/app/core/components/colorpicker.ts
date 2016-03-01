@@ -1,4 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
 import _ from 'lodash';
