@@ -47,11 +47,11 @@
         {
           "id": 3,
           "limit": 10,
-          "mode": "last viewed",
+          "mode": "recently viewed",
           "query": "",
           "span": 6,
           "tags": [],
-          "title": "Last 10 viewed dashboards",
+          "title": "Recently viewed dashboards",
           "type": "dashlist"
         }
       ],
