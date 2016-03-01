@@ -136,22 +136,23 @@
 					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
 				</div>
 			</div>
-
-			<div ng-if="step === 1" class="gf-form-buttons-row">
-				<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
-					<i class="fa fa-save"></i>
-					Local Snapshot
-				</button>
-				<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
-					<i class="fa fa-cloud-upload"></i>
-					{{sharingButtonText}}
-				</button>
-			</div>
-
-			<div class="pull-right" ng-if="step === 2" style="padding: 5px">
-				Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
-			</div>
 		</div>
 
+		<div ng-if="step === 1" class="gf-form-buttons-row">
+			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
+				<i class="fa fa-save"></i>
+				Local Snapshot
+			</button>
+			<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
+				<i class="fa fa-cloud-upload"></i>
+				{{sharingButtonText}}
+			</button>
+		</div>
+
+		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
+			Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
+		</div>
 	</div>
+
+</div>
 </script>
