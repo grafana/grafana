@@ -9,10 +9,11 @@ import (
 )
 
 type AppPluginPage struct {
-	Name      string          `json:"name"`
-	Slug      string          `json:"slug"`
-	Component string          `json:"component"`
-	Role      models.RoleType `json:"role"`
+	Name        string          `json:"name"`
+	Slug        string          `json:"slug"`
+	Component   string          `json:"component"`
+	Role        models.RoleType `json:"role"`
+	SuppressNav bool            `json:"suppressNav"`
 }
 
 type AppPluginCss struct {
