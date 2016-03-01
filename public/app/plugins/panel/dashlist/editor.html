@@ -6,6 +6,11 @@
 				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ctrl.modes" ng-change="ctrl.refresh()"></select>
 			</div>
 		</div>
+		<div class="gf-form" ng-show="ctrl.panel.mode === 'recently viewed'">
+			<span class="gf-form-label">
+				<i class="grafana-tip fa fa-question-circle ng-scope" bs-tooltip="'WARNING: This list will be cleared when clearing browser cache'" data-original-title="" title=""></i>
+			</span>
+		</div>
 	</div>
 
 	<div class="gf-form-inline" ng-if="ctrl.panel.mode === 'search'">
