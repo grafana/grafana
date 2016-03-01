@@ -108,7 +108,6 @@ function (angular, _, kbn) {
       if (variable.type === 'custom' && variable.includeAll) {
         self.addAllOption(variable);
       }
-
     };
 
     this.updateOptions = function(variable) {
@@ -226,60 +225,17 @@ function (angular, _, kbn) {
 
       return _.map(_.keys(options).sort(), function(key) {
         var option = { text: key, value: key };
-
-        // check if values need to be regex escaped
-        if (self.shouldRegexEscape(variable)) {
-          option.value = self.regexEscape(option.value);
-        }
-
         return option;
       });
     };
 
-    this.shouldRegexEscape = function(variable) {
-      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
-    };
-
-    this.regexEscape = function(value) {
-      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
-    };
-
     this.addAllOption = function(variable) {
-      var allValue = '';
-      switch(variable.allFormat) {
-        case 'wildcard': {
-          allValue = '*';
-          break;
-        }
-        case 'regex wildcard': {
-          allValue = '.*';
-          break;
-        }
-        case 'lucene': {
-          var quotedValues = _.map(variable.options, function(val) {
-            return '\\\"' + val.text + '\\\"';
-          });
-          allValue = '(' + quotedValues.join(' OR ') + ')';
-          break;
-        }
-        case 'regex values': {
-          allValue = '(' + _.map(variable.options, function(option) {
-            return self.regexEscape(option.text);
-          }).join('|') + ')';
-          break;
-        }
-        case 'pipe': {
-          allValue = _.pluck(variable.options, 'text').join('|');
-          break;
-        }
-        default: {
-          allValue = '{';
-          allValue += _.pluck(variable.options, 'text').join(',');
-          allValue += '}';
-        }
+      if (variable.allValue) {
+        variable.options.unshift({text: 'All', value: variable.allValue});
+        return;
       }
 
-      variable.options.unshift({text: 'All', value: allValue});
+      variable.options.unshift({text: 'All', value: "$__all"});
     };
 
   });
