@@ -6,8 +6,9 @@ define([
   'app/core/utils/kbn',
   'app/core/utils/datemath',
   './impression_store',
+  'app/core/config',
 ],
-function (angular, moment, _, $, kbn, dateMath, impressionStore) {
+function (angular, moment, _, $, kbn, dateMath, impressionStore, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -20,8 +21,12 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
                                                    $rootScope) {
     var self = this;
 
-    this._dashboardLoadFailed = function(title) {
-      return {meta: {canStar: false, canDelete: false, canSave: false}, dashboard: {title: title}};
+    this._dashboardLoadFailed = function(title, snapshot) {
+      snapshot = snapshot || false;
+      return {
+        meta: { canStar: false, isSnapshot: snapshot, canDelete: false, canSave: false, canEdit: false, dashboardNotFound: true },
+        dashboard: {title: title }
+      };
     };
 
     this.loadDashboard = function(type, slug) {
@@ -30,9 +35,10 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       if (type === 'script') {
         promise = this._loadScriptedDashboard(slug);
       } else if (type === 'snapshot') {
-        promise = backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
-          return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
-        });
+        promise = backendSrv.get('/api/snapshots/' + $routeParams.slug)
+          .catch(function() {
+            return self._dashboardLoadFailed("Snapshot not found", true);
+          });
       } else {
         promise = backendSrv.getDashboard($routeParams.type, $routeParams.slug)
           .catch(function() {
@@ -41,7 +47,15 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       }
 
       promise.then(function(result) {
-        impressionStore.impressions.addDashboardImpression(result);
+        if (result.meta.dashboardNotFound !== true) {
+          impressionStore.impressions.addDashboardImpression({
+            type: type,
+            slug: slug,
+            title: result.dashboard.title,
+            orgId: config.bootData.user.orgId
+          });
+        }
+
         return result;
       });
 
