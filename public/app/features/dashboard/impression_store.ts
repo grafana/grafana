@@ -31,8 +31,8 @@ export class ImpressionsStore {
   }
 
   getDashboardOpened() {
-    var k = store.get("dashboard_impressions");
-    return JSON.parse(k);
+    var impressions = store.get("dashboard_impressions");
+    return JSON.parse(impressions || "[]");
   }
 }
 
