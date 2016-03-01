@@ -168,4 +168,14 @@ export default class TimeSeries {
   formatValue(value) {
     return this.valueFormater(value, this.decimals, this.scaledDecimals);
   }
+
+  isMsResolutionNeeded() {
+    for (var i = 0; i<this.datapoints.length; i++) {
+      var timestamp = this.datapoints[i][0].toString();
+      if (timestamp.length === 13 && (timestamp % 1000) !== 0) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
