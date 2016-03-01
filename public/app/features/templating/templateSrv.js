@@ -31,31 +31,37 @@ function (angular, _) {
        }, this);
     };
 
-    this.regexEscape = function(value) {
+    function regexEscape(value) {
       return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
-    };
+    }
+
+    function luceneEscape(value) {
+      return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
+    }
 
     this.formatValue = function(value, format) {
-      if (_.isString(value)) {
-        return value;
-      } else {
-        switch(format) {
-          case "regex": {
-            var escapedValues = _.map(value, this.regexEscape);
-            return '(' + escapedValues.join('|') + ')';
+      switch(format) {
+        case "regex": {
+          var escapedValues = _.map(value, regexEscape);
+          return '(' + escapedValues.join('|') + ')';
+        }
+        case "lucene": {
+          if (typeof value === 'string') {
+            return luceneEscape(value);
           }
-          case "lucene": {
-            var quotedValues = _.map(value, function(val) {
-              return '\\\"' + val + '\\\"';
-            });
-            return '(' + quotedValues.join(' OR ') + ')';
+          var quotedValues = _.map(value, function(val) {
+            return '\"' + luceneEscape(val) + '\"';
+          });
+          return '(' + quotedValues.join(' OR ') + ')';
+        }
+        case "pipe": {
+          return value.join('|');
+        }
+        default:  {
+          if (typeof value === 'string') {
+            return value;
           }
-          case "pipe": {
-            return value.join('|');
-          }
-          default:  {
-            return '{' + value.join(',') + '}';
-          }
+          return '{' + value.join(',') + '}';
         }
       }
     };
@@ -114,7 +120,9 @@ function (angular, _) {
           return self.formatValue(systemValue);
         }
 
-        return self.formatValue(value, format);
+        var res = self.formatValue(value, format);
+        console.log('replace: ' + value, res);
+        return res;
       });
     };
 
