@@ -8,9 +8,13 @@ export default class InfluxQuery {
   selectModels: any[];
   queryBuilder: any;
   groupByParts: any;
+  templateSrv: any;
+  scopedVars: any;
 
-  constructor(target) {
+  constructor(target, templateSrv, scopedVars) {
     this.target = target;
+    this.templateSrv = templateSrv;
+    this.scopedVars = scopedVars;
 
     target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
@@ -135,7 +139,7 @@ export default class InfluxQuery {
     }
 
     if (!operator) {
-      if (/^\/.*\/$/.test(tag.value)) {
+      if (/^\/.*\/$/.test(value)) {
         operator = '=~';
       } else {
         operator = '=';
@@ -144,7 +148,10 @@ export default class InfluxQuery {
 
     // quote value unless regex
     if (operator !== '=~' && operator !== '!~') {
+      value = this.templateSrv.replace(value, this.scopedVars);
       value = "'" + value.replace('\\', '\\\\') + "'";
+    } else {
+      value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
