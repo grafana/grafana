@@ -34,7 +34,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       queryTargets.push(target);
 
       // build query
-      var queryModel = new InfluxQuery(target);
+      var queryModel = new InfluxQuery(target, templateSrv, options.scopedVars);
       var query =  queryModel.render();
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
@@ -45,7 +45,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
 
     // replace templated variables
-    allQueries = templateSrv.replace(allQueries, options.scopedVars, 'regex');
+    allQueries = templateSrv.replace(allQueries, options.scopedVars);
 
     return this._seriesQuery(allQueries).then(function(data): any {
       if (!data || !data.results) {
