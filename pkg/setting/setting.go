@@ -169,6 +169,11 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
+func shouldRedactKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
+}
+
 func applyEnvVariableOverrides() {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
@@ -180,7 +185,7 @@ func applyEnvVariableOverrides() {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				if strings.Contains(envKey, "PASSWORD") {
+				if shouldRedactKey(envKey) {
 					envValue = "*********"
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
@@ -197,7 +202,7 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				if strings.Contains(keyString, "password") {
+				if shouldRedactKey(keyString) {
 					value = "*********"
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
