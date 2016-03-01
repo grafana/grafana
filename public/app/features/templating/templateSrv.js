@@ -25,10 +25,13 @@ function (angular, _) {
     this.updateTemplateData = function() {
       this._values = {};
 
-      _.each(this.variables, function(variable) {
-         if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
-         this._values[variable.name] = variable.current.value;
-       }, this);
+      for (var i = 0; i < this.variables.length; i++) {
+        var variable = this.variables[i];
+        if (!variable.current || !variable.current.isNone && !variable.current.value) {
+          continue;
+        }
+        this._values[variable.name] = variable.current;
+      }
     };
 
     function regexEscape(value) {
@@ -42,6 +45,10 @@ function (angular, _) {
     this.formatValue = function(value, format) {
       switch(format) {
         case "regex": {
+          if (typeof value === 'string') {
+            return regexEscape(value);
+          }
+
           var escapedValues = _.map(value, regexEscape);
           return '(' + escapedValues.join('|') + ')';
         }
@@ -115,13 +122,12 @@ function (angular, _) {
           return match;
         }
 
-        systemValue = self._grafanaVariables[value];
+        systemValue = self._grafanaVariables[value.value];
         if (systemValue) {
           return self.formatValue(systemValue);
         }
 
-        var res = self.formatValue(value, format);
-        console.log('replace: ' + value, res);
+        var res = self.formatValue(value.value, format);
         return res;
       });
     };
@@ -130,7 +136,6 @@ function (angular, _) {
       if (!target) { return target; }
 
       var value;
-      var text;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
@@ -140,10 +145,9 @@ function (angular, _) {
         }
 
         value = self._values[g1 || g2];
-        text = self._texts[g1 || g2];
         if (!value) { return match; }
 
-        return self._grafanaVariables[value] || text;
+        return self._grafanaVariables[value.value] || value.text;
       });
     };
 
