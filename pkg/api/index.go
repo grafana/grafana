@@ -90,10 +90,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			}
 
 			for _, page := range plugin.Pages {
-				pageLink.Children = append(pageLink.Children, &dtos.NavLink{
-					Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + page.Slug,
-					Text: page.Name,
-				})
+				if !page.SuppressNav {
+					pageLink.Children = append(pageLink.Children, &dtos.NavLink{
+						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + page.Slug,
+						Text: page.Name,
+					})
+				}
 			}
 
 			data.MainNavLinks = append(data.MainNavLinks, pageLink)
