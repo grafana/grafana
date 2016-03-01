@@ -13,7 +13,7 @@ type AppPluginPage struct {
 	Slug        string          `json:"slug"`
 	Component   string          `json:"component"`
 	Role        models.RoleType `json:"role"`
-	SuppressNav bool            `json:"suppress_nav"`
+	SuppressNav bool            `json:"suppressNav"`
 }
 
 type AppPluginCss struct {
