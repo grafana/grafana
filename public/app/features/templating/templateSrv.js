@@ -107,7 +107,11 @@ function (angular, _) {
       if (variable.allValue) {
         return variable.allValue;
       }
-      return _.pluck(variable.options, 'value');
+      var values = [];
+      for (var i = 1; i < variable.options.length; i++) {
+        values.push(variable.options[i].value);
+      }
+      return values;
     };
 
     this.replace = function(target, scopedVars, format) {

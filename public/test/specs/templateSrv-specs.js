@@ -72,7 +72,7 @@ define([
           name: 'test',
           current: {value: '$__all' },
           options: [
-            {value: 'value1'}, {value: 'value2'}
+            {value: '$__all'}, {value: 'value1'}, {value: 'value2'}
           ]
         }]);
       });
