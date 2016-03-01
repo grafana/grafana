@@ -50,7 +50,7 @@ function (angular, _) {
           }
 
           var escapedValues = _.map(value, regexEscape);
-          return '(' + escapedValues.join('|') + ')';
+          return escapedValues.join('|');
         }
         case "lucene": {
           if (typeof value === 'string') {

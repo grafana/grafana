@@ -127,7 +127,7 @@ define([
 
       it('multi value and regex format should render regex string', function() {
         var result = _templateSrv.formatValue(['test.','test2'], 'regex');
-        expect(result).to.be('(test\\.|test2)');
+        expect(result).to.be('test\\.|test2');
       });
 
       it('multi value and pipe should render pipe string', function() {

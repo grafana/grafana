@@ -52,7 +52,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars);
+      query.expr = templateSrv.replace(target.expr, options.scopedVars, 'regex');
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;
