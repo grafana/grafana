@@ -16,12 +16,14 @@ export class ImpressionsStore {
     }
 
     impressions = impressions.filter((imp) => {
-      return impression.meta.slug !== imp.slug;
+      return impression.slug !== imp.slug;
     });
 
     impressions.unshift({
-      title: impression.dashboard.title,
-      slug: impression.meta.slug
+      title: impression.title,
+      slug: impression.slug,
+      orgId: impression.orgId,
+      type: impression.type
     });
 
     if (impressions.length > 20) {

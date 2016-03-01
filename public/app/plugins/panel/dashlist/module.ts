@@ -43,12 +43,18 @@ class DashListCtrl extends PanelCtrl {
     var params: any = {limit: this.panel.limit};
 
     if (this.panel.mode === 'last viewed') {
-      var dashListNames = _.first(impressions.getDashboardOpened(), this.panel.limit).map((dashboard) => {
+
+      var dashListNames = impressions.getDashboardOpened().filter((imp) => {
+        return imp.orgId === config.bootData.user.orgId;
+      });
+
+      dashListNames = _.first(dashListNames, params.limit).map((dashboard) => {
         return {
           title: dashboard.title,
-          uri: 'db/' + dashboard.slug
+          uri: dashboard.type + '/' + dashboard.slug
         };
       });
+
 
       this.dashList = dashListNames;
       this.renderingCompleted();
