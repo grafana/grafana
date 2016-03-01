@@ -66,6 +66,41 @@ define([
       });
     });
 
+    describe('variable with all option', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          options: [
+            {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should replace $test with formatted all value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.{value1,value2}.filters');
+      });
+    });
+
+    describe('variable with all option and custom value', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          allValue: '*',
+          options: [
+            {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should replace $test with formatted all value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.*.filters');
+      });
+    });
+
     describe('lucene format', function() {
       it('should properly escape $test with lucene escape sequences', function() {
         _templateSrv.init([{name: 'test', current: {value: 'value/4' }}]);

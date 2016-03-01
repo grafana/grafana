@@ -231,12 +231,11 @@ function (angular, _, kbn) {
 
     this.addAllOption = function(variable) {
       if (variable.allValue) {
-        variable.options.unshift({text: 'All', value: variable.allValue, isAll: true});
+        variable.options.unshift({text: 'All', value: variable.allValue});
         return;
       }
 
-      var value =_.pluck(variable.options, 'text');
-      variable.options.unshift({text: 'All', value: value, isAll: true});
+      variable.options.unshift({text: 'All', value: "$__all"});
     };
 
   });
