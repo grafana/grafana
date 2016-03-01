@@ -69,6 +69,7 @@ var panelDefaults = {
   tooltip       : {
     value_type: 'cumulative',
     shared: true,
+    msResolution: false,
   },
   // time overrides
   timeFrom: null,
@@ -200,6 +201,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
 
       this.datapointsCount += datapoints.length;
+
+      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
     return series;

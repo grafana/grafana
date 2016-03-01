@@ -109,7 +109,13 @@ function ($) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
-      var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml;
+      var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
+
+      if (panel.tooltip.msResolution) {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      } else {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
+      }
 
       if (dashboard.sharedCrosshair) {
         ctrl.publishAppEvent('setCrosshair', { pos: pos, scope: scope });
@@ -127,7 +133,7 @@ function ($) {
         seriesHtml = '';
 
         relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
-        absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -164,7 +170,7 @@ function ($) {
         value = series.formatValue(value);
 
         relativeTime = dashboard.getRelativeTime(item.datapoint[0]);
-        absoluteTime = dashboard.formatDate(item.datapoint[0]);
+        absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
