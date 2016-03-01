@@ -13,7 +13,12 @@ func listremoteCommand(c CommandLine) error {
 	}
 
 	for _, i := range plugin.Plugins {
-		log.Infof("id: %v version:\n", i.Id)
+		pluginVersion := ""
+		if len(i.Versions) > 0 {
+			pluginVersion = i.Versions[0].Version
+		}
+
+		log.Infof("id: %v version: %s\n", i.Id, pluginVersion)
 	}
 
 	return nil
