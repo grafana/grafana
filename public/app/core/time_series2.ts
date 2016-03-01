@@ -172,7 +172,7 @@ export default class TimeSeries {
   isMsResolutionNeeded() {
     for (var i = 0; i<this.datapoints.length; i++) {
       var timestamp = this.datapoints[i][0].toString();
-      if (timestamp.length === 13 && parseInt(timestamp.substring(10,13)) !== 0) {
+      if (timestamp.length === 13 && (timestamp % 1000) !== 0) {
         return true;
       }
     }
