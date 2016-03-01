@@ -45,7 +45,7 @@ define([
       });
     });
 
-    describe.only('replace can pass multi / all format', function() {
+    describe('replace can pass multi / all format', function() {
       beforeEach(function() {
         _templateSrv.init([{name: 'test', current: {value: ['value1', 'value2'] }}]);
       });
@@ -58,6 +58,19 @@ define([
       it('should replace $test with piped value', function() {
         var target = _templateSrv.replace('this=$test', {}, 'pipe');
         expect(target).to.be('this=value1|value2');
+      });
+
+      it('should replace $test with piped value', function() {
+        var target = _templateSrv.replace('this=$test', {}, 'pipe');
+        expect(target).to.be('this=value1|value2');
+      });
+    });
+
+    describe.only('lucene format', function() {
+      it('should properly escape $test with lucene escape sequences', function() {
+        _templateSrv.init([{name: 'test', current: {value: 'value/4' }}]);
+        var target = _templateSrv.replace('this:$test', {}, 'lucene');
+        expect(target).to.be("this:value\\\/4");
       });
     });
 

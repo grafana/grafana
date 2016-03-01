@@ -47,15 +47,15 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this._get = function(url) {
-      return this._request('GET', this.indexPattern.getIndexForToday() + url)
-      .then(function(results) {
+      return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+        results.data.$$config = results.config;
         return results.data;
       });
     };
 
     this._post = function(url, data) {
-      return this._request('POST', url, data)
-      .then(function(results) {
+      return this._request('POST', url, data).then(function(results) {
+        results.data.$$config = results.config;
         return results.data;
       });
     };
@@ -170,7 +170,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         var queryObj = this.queryBuilder.build(target);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = angular.toJson(target.query || '*');
+        var luceneQuery = target.query || '*';
+        luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
+        luceneQuery = angular.toJson(luceneQuery);
+
         // remove inner quotes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
@@ -190,7 +193,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
-      payload = templateSrv.replace(payload, options.scopedVars, 'lucene');
+      payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
