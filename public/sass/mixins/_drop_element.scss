@@ -27,6 +27,12 @@
       }
     }
 
+    &.drop-wide {
+      .drop-content {
+        max-width: 40rem;
+      }
+    }
+
     // Centers and middles
 
     &.drop-element-attached-bottom.drop-element-attached-center .drop-content {

@@ -1,11 +1,11 @@
-///<reference path="../../../headers/common.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
 import $ from 'jquery';
-import coreModule from '../../core_module';
+import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 
-export function popoverDirective() {
+export function infoPopover() {
   return {
     restrict: 'E',
     transclude: true,
@@ -17,6 +17,11 @@ export function popoverDirective() {
       }
 
       var offset = attrs.offset || '0 -10px';
+      var position = attrs.position || 'right middle';
+      var classes = 'drop-help';
+      if (attrs.wide) {
+        classes += ' drop-wide';
+      }
 
       transclude(function(clone, newScope) {
         var content = document.createElement("div");
@@ -27,8 +32,8 @@ export function popoverDirective() {
         var drop = new Drop({
           target: inputElem[0],
           content: content,
-          position: 'right middle',
-          classes: 'drop-help',
+          position: position,
+          classes: classes,
           openOn: 'click',
           tetherOptions: {
             offset: offset
@@ -52,4 +57,4 @@ export function popoverDirective() {
   };
 }
 
-coreModule.directive('gfPopover', popoverDirective);
+coreModule.directive('infoPopover', infoPopover);
