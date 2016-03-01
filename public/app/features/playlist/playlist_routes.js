@@ -26,6 +26,9 @@ function (angular) {
         controller : 'PlaylistEditCtrl'
       })
       .when('/playlists/play/:id', {
+        templateUrl: 'public/app/features/playlist/partials/playlists.html',
+        controllerAs: 'ctrl',
+        controller : 'PlaylistsCtrl',
         resolve: {
           init: function(playlistSrv, $route) {
             var playlistId = $route.current.params.id;
