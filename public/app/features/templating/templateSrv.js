@@ -42,7 +42,11 @@ function (angular, _) {
       return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
     }
 
-    this.formatValue = function(value, format) {
+    this.formatValue = function(value, format, variable) {
+      if (typeof format === 'function') {
+        return format(value, variable, this.formatValue);
+      }
+
       switch(format) {
         case "regex": {
           if (typeof value === 'string') {
@@ -121,21 +125,21 @@ function (angular, _) {
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
-        if (scopedVars) {
-          value = scopedVars[g1 || g2];
-          if (value) {
-            return self.formatValue(value.value);
-          }
-        }
-
         variable = self._index[g1 || g2];
         if (!variable) {
           return match;
         }
 
+        if (scopedVars) {
+          value = scopedVars[g1 || g2];
+          if (value) {
+            return self.formatValue(value.value, format, variable);
+          }
+        }
+
         systemValue = self._grafanaVariables[variable.current.value];
         if (systemValue) {
-          return self.formatValue(systemValue);
+          return self.formatValue(systemValue, format, variable);
         }
 
         value = variable.current.value;
@@ -143,7 +147,7 @@ function (angular, _) {
           value = self.getAllValue(variable);
         }
 
-        var res = self.formatValue(value, format);
+        var res = self.formatValue(value, format, variable);
         return res;
       });
     };
