@@ -13,13 +13,16 @@
 			<i class="fa fa-refresh"></i>
 			Reload
 		</a>
-	</div>
 
-	<ul class="nav nav-tabs">
-		<li ng-repeat="page in ctrl.pages" ng-class="{active: ctrl.page[page]}" class="tab">
-			<a href="styleguide/{{page}}">{{page}}</a>
-		</li>
-	</ul>
+		<div class="page-header-tabs">
+			<ul class="gf-tabs">
+				<li class="gf-tabs-item" ng-repeat="page in ctrl.pages">
+					<a class="gf-tabs-link" href="styleguide/{{page}}" ng-class="{active: ctrl.page[page]}">{{page}}</a>
+				</li>
+			</ul>
+		</div>
+
+	</div>
 
 	<div class="tab-pane" ng-if="ctrl.page.colors">
 		<ul>

@@ -35,7 +35,7 @@
 .gf-tabs {
   @include clearfix();
   float: left;
-  margin: 0.5rem 0 0 2rem;
+  margin: 0.4rem 0 0 0;
 }
 
 .gf-tabs-item {
@@ -46,10 +46,9 @@
 .gf-tabs-link {
   padding: 0.60rem 1rem 0.50rem 1rem;
   margin-right: $spacer/2;
-  line-height: $line-height-base;
   border: 1px solid transparent;
   position: relative;
-  top: 5px;
+  display: block;
 
   @include border-radius(2px 2px 0 0);
 
@@ -63,7 +62,9 @@
   &.active:focus {
     @include border-radius(3px);
     border-color: rgba(216, 131, 40, 0.77);
-    border-bottom: 1px solid $panel-bg;
+    border-bottom: 2px solid $panel-bg;
     color: $link-color;
+    position: relative;
+    top: 2px;
   }
 }
