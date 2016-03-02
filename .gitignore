@@ -37,3 +37,4 @@ profile.cov
 .notouch
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
+/examples/*/dist
