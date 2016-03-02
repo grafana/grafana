@@ -96,7 +96,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 	return nil
 }
 
-func ContainsDistFolder(path string) bool  {
+func ContainsDistFolder(path string) bool {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return false
