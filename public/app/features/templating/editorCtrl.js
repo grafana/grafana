@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv, $rootScope) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv) {
 
     var replacementDefaults = {
       type: 'query',
