@@ -109,7 +109,7 @@ export class TimePickerCtrl {
 
   applyCustom() {
     if (this.refresh.value !== this.dashboard.refresh) {
-      this.timeSrv.setAutoRefresh(this.refresh.value);
+      this.timeSrv.setAutoRefresh(this.refresh.value, this.refresh.align);
     }
 
     this.timeSrv.setTime(this.timeRaw, true);
