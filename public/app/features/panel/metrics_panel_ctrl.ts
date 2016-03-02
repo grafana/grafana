@@ -166,6 +166,23 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
+    var targets = JSON.stringify(this.panel.targets);
+    var intervalVar = null;
+    _.each(this.templateSrv.variables, function(variable) {
+      if (variable.type !== 'interval') {
+        return;
+      }
+      if (targets.indexOf(variable.name) >= 0) {
+        intervalVar = variable;
+      }
+    });
+    if (intervalVar) {
+      var interval = kbn.interval_to_ms(intervalVar.current.value);
+      this.range.from = dateMath.parseDateMath('-' + (this.range.from.valueOf() % interval) + 'ms', this.range.from, false);
+      this.range.to = dateMath.parseDateMath('+' + (interval - (this.range.to.valueOf() % interval)) + 'ms', this.range.to, true);
+      this.rangeRaw = this.range;
+    }
+
     var metricsQuery = {
       range: this.range,
       rangeRaw: this.rangeRaw,
