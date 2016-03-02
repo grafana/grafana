@@ -28,7 +28,7 @@
   float: left;
   font-style: italic;
   padding-top: 0.5rem;
-  margin: 0 $spacer*1.5 0 $spacer*1.5;
+  margin: 0 $spacer*3 0 $spacer*1.5;
 }
 
 .tabbed-view-close-btn {
@@ -37,7 +37,7 @@
   margin: 0;
   background-color: transparent;
   border: none;
-  padding: $spacer * 0.8;
+  padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
   i {
     font-size: 120%;
   }

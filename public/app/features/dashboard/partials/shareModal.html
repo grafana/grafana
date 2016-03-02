@@ -1,18 +1,21 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl" ng-init="init()">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-share"></i>
+<div class="modal-body" ng-controller="ShareModalCtrl" ng-init="init()">
+
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			{{modalTitle}}
-		</div>
+		</h2>
 
-		<div ng-model="editor.index" bs-tabs>
-			<div ng-repeat="tab in tabs" data-title="{{tab.title}}">
-			</div>
-		</div>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" ng-repeat="tab in tabs">
+				<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+					{{::tab.title}}
+				</a>
+			</li>
+		</ul>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
 	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">
@@ -50,13 +53,15 @@
 <script type="text/ng-template" id="shareLinkOptions.html">
 	<div class="gf-form-group position-center">
 		<div class="gf-form">
+			<span class="gf-form-label width-5">Include</span>
 			<editor-checkbox text="Current time range" model="options.forCurrent" change="updated()"></editor-checkbox>
 		</div>
 		<div class="gf-form">
-			<editor-checkbox text="Include template variables" model="options.includeTemplateVars" change="updated()"></editor-checkbox>
+			<span class="gf-form-label width-5">Include</span>
+			<editor-checkbox text="Template variables" model="options.includeTemplateVars" change="updated()"></editor-checkbox>
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label">Theme</span>
+			<span class="gf-form-label width-5">Theme</span>
 			<div class="gf-form-select-wrapper max-width-10">
 				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>

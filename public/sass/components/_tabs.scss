@@ -35,7 +35,7 @@
 .gf-tabs {
   @include clearfix();
   float: left;
-  margin: 0.4rem 0 0 0;
+  margin: $tabs-top-margin 0 0 0;
 }
 
 .gf-tabs-item {
@@ -44,7 +44,7 @@
 }
 
 .gf-tabs-link {
-  padding: 0.60rem 1rem 0.50rem 1rem;
+  padding: $tabs-padding-top $spacer $tabs-padding-bottom $spacer;
   margin-right: $spacer/2;
   border: 1px solid transparent;
   position: relative;
