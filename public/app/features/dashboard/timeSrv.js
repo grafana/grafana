@@ -72,6 +72,7 @@ define([
         var wait_ms = _i - (Date.now() % _i);
         $timeout(function () {
           self.start_scheduled_refresh(_i);
+          self.refreshDashboard();
         }, wait_ms);
       } else {
         this.cancel_scheduled_refresh();
