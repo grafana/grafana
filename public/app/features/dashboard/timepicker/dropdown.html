@@ -40,6 +40,7 @@
 			<div class="gf-form max-width-28">
 				<select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
 			</div>
+			<editor-checkbox text="Align" model="ctrl.refresh.align"></editor-checkbox>
 			<div class="gf-form">
 				<button type="submit" class="btn gf-form-btn btn-secondary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
 			</div>

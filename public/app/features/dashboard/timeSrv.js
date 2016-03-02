@@ -65,11 +65,17 @@ define([
       }
     };
 
-    this.setAutoRefresh = function (interval) {
+    this.setAutoRefresh = function (interval, align) {
       this.dashboard.refresh = interval;
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
-        this.start_scheduled_refresh(_i);
+        var wait_ms = 0;
+        if (align) {
+          wait_ms = _i - (Date.now() % _i);
+        }
+        $timeout(function () {
+          self.start_scheduled_refresh(_i);
+        }, wait_ms);
       } else {
         this.cancel_scheduled_refresh();
       }
