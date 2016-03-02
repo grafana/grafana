@@ -75,7 +75,7 @@ export class OrgUsersCtrl {
 
     this.$scope.appEvent('show-modal', {
       src: 'public/app/features/org/partials/invite.html',
-      modalClass: 'modal-no-header invite-modal',
+      modalClass: 'invite-modal',
       scope: modalScope
     });
   }
