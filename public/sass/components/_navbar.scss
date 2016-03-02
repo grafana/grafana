@@ -68,6 +68,9 @@
   .fa-caret-down {
     font-size: 70%;
   }
+  .fa-chevron-left{
+    display: none;
+  }
 
   &:hover {
     background: $navbarButtonBackgroundHighlight;
@@ -122,16 +125,33 @@
     padding-left: 0.2rem;
   }
 
-  .fa-th-large {
-    position: relative;
-    top: 2px;
-  }
-
   .icon-gf {
     position: relative;
     top: 2px;
     font-size: 20px;
     line-height: 8px;
+  }
+}
+
+.sidemenu-pinned {
+  .navbar-brand-btn {
+    background-color: $page-bg;
+    width: $side-menu-width;
+
+    .icon-gf-grafana_wordmark  {
+      display: inline-block;
+    }
+
+    .fa-caret-down {
+      display: none;
+    }
+
+    &:hover .fa-chevron-left {
+      display: inline-block;
+      color: $text-color-weak;
+      position: relative;
+      left: 1.3rem;
+    }
   }
 }
 
