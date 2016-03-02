@@ -160,6 +160,7 @@ export class DashNavCtrl {
       $scope.appEvent('show-modal', {
         src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
         scope: newScope,
+        modalClass: 'modal--narrow'
       });
     };
 

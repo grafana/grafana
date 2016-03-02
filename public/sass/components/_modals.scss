@@ -28,7 +28,7 @@
   @include background-clip(padding-box);
   outline: none;
 
-  max-width: 800px;
+  max-width: 750px;
   left: 0;
   right: 0;
   margin-left: auto;
@@ -56,13 +56,17 @@
 
 .modal-header-close {
   float: right;
-  padding: ($tabs-padding-top + $tabs-top-margin/2) $spacer $tabs-padding-bottom;
+  padding: 0.75rem $spacer;
 }
 
 // Body (where all modal content resides)
 .modal-body {
   position: relative;
   overflow-y: auto;
+}
+
+.modal-content {
+  padding: $spacer*2;
 }
 
 // Remove bottom margin if need be
@@ -96,6 +100,10 @@
   .modal-tagline {
     font-size: 16px;
   }
+}
+
+.modal--narrow {
+  max-width: 500px;
 }
 
 .confirm-modal {

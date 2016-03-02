@@ -18,7 +18,7 @@
 		</a>
 	</div>
 
-	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">
+	<div class="modal-content" ng-repeat="tab in tabs" ng-if="editor.index == $index">
 		<div ng-include src="tab.src" class="share-modal-body"></div>
 	</div>
 
@@ -86,10 +86,8 @@
 			</div>
 		</div>
 	</div>
-	<div class="gf-form-group">
-		<div class="gf-form position-center" ng-show="modeSharePanel">
-			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
-		</div>
+	<div class="gf-form position-center" ng-show="modeSharePanel">
+		<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
 	</div>
 </script>
 
