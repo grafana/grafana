@@ -35,17 +35,6 @@
   .page-container {
     margin-left: $side-menu-width;
   }
-  .navbar-brand-btn {
-    background-color: $page-bg;
-    width: $side-menu-width;
-
-    .icon-gf-grafana_wordmark  {
-      display: inline-block;
-    }
-    .fa {
-      display: none;
-    }
-  }
   .search-container {
     left: auto;
   }
