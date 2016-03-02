@@ -90,6 +90,10 @@ func scan(pluginDir string) error {
 	}
 
 	log.Info("Plugins: Scaning dir %s", pluginDir)
+	if util.ContainsDistFolder(pluginDir) {
+		log.Info("Plugins: Found dist folder in %s", pluginDir)
+		pluginDir = filepath.Join(pluginDir, "dist")
+	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if pluginDir != "data/plugins" {

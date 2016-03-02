@@ -44,8 +44,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, walk
 //
 //If resolvedPath is "", then we are not following symbolic links.
 //If symlinkPathsFollowed is not nil, then we need to detect infinite loop.
-func walk(path string, info os.FileInfo, resolvedPath string,
-	symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
+func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
 	if info == nil {
 		return errors.New("Walk: Nil FileInfo passed")
 	}
@@ -95,4 +94,24 @@ func walk(path string, info os.FileInfo, resolvedPath string,
 		return nil
 	}
 	return nil
+}
+
+func ContainsDistFolder(path string) bool  {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+
+	if !info.IsDir() {
+		return false
+	}
+
+	list, err := ioutil.ReadDir(path)
+	for _, fileInfo := range list {
+		if fileInfo.IsDir() && fileInfo.Name() == "dist" {
+			return true
+		}
+	}
+
+	return false
 }
