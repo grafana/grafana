@@ -35,7 +35,7 @@ function (angular, _) {
     };
 
     function regexEscape(value) {
-      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+      return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
     }
 
     function luceneEscape(value) {
