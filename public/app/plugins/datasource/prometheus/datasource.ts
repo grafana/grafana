@@ -39,13 +39,22 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
+  function regexEscape(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+  }
+
   function interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;
     }
 
-    return defaultFormatFn(value, 'regex', variable);
+    if (typeof value === 'string') {
+      return regexEscape(value);
+    }
+
+    var escapedValues = _.map(value, regexEscape);
+    return escapedValues.join('|');
   };
 
   // Called once per panel (graph)
