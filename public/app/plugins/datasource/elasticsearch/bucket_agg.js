@@ -27,6 +27,7 @@ function (angular, _, queryDef) {
 
     $scope.orderByOptions = [];
     $scope.bucketAggTypes = queryDef.bucketAggTypes;
+    $scope.bucketAggTypesHash = _.indexBy(queryDef.bucketAggTypes, 'value');
     $scope.orderOptions = queryDef.orderOptions;
     $scope.sizeOptions = queryDef.sizeOptions;
 

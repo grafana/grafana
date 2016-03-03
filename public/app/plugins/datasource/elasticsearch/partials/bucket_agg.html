@@ -57,7 +57,7 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 170px">
 					Trim edges points
@@ -71,11 +71,23 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 170px;">
+					Missing
+					<tip>The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value</tip>
+				</li>
+				<li>
+					<input type="text" class="tight-form-input last" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
 	</div>
 	<div class="tight-form-inner-box" ng-if="agg.type === 'terms'">
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 60px">
+				<li class="tight-form-item" style="width: 100px">
 					Order
 				</li>
 				<li>
@@ -86,7 +98,7 @@
 		</div>
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 60px">
+				<li class="tight-form-item" style="width: 100px">
 					Size
 				</li>
 				<li>
@@ -95,13 +107,25 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 60px">
+				<li class="tight-form-item" style="width: 100px">
 					Order By
 				</li>
 				<li>
 					<metric-segment-model property="agg.settings.orderBy" options="orderByOptions" on-change="onChangeInternal()" css-class="last"></metric-segment-model>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 100px;">
+					Missing
+					<tip>The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value</tip>
+				</li>
+				<li>
+					<input type="text" class="tight-form-input last" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -129,5 +153,3 @@
 	</div>
 
 </div>
-
-

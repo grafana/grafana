@@ -48,6 +48,10 @@ function (queryDef) {
       }
     }
 
+    if (aggDef.settings.missing) {
+      queryNode.terms.missing = aggDef.settings.missing;
+    }
+
     return queryNode;
   };
 
@@ -65,6 +69,10 @@ function (queryDef) {
 
     if (this.esVersion >= 2) {
       esAgg.format = "epoch_millis";
+    }
+
+    if (settings.missing) {
+      esAgg.missing = settings.missing;
     }
 
     return esAgg;

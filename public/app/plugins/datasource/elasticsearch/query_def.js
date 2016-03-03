@@ -20,9 +20,9 @@ function (_) {
     ],
 
     bucketAggTypes: [
-      {text: "Terms",           value: 'terms' },
+      {text: "Terms",           value: 'terms', supportsMissing: true },
       {text: "Filters",         value: 'filters' },
-      {text: "Date Histogram",  value: 'date_histogram' },
+      {text: "Date Histogram",  value: 'date_histogram', supportsMissing: true },
     ],
 
     orderByOptions: [
