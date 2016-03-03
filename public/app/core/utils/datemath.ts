@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+var units = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms'];
 
 export function parse(text, roundUp?) {
   if (!text) { return undefined; }
@@ -92,6 +92,9 @@ export function parseDateMath(mathString, time, roundUp?) {
       }
     }
     unit = mathString.charAt(i++);
+    if (mathString.charAt(i) === 's') {
+      unit += mathString.charAt(i++);
+    }
 
     if (!_.contains(units, unit)) {
       return undefined;
