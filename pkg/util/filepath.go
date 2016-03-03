@@ -80,35 +80,50 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		if err != nil {
 			return walkFn(resolvedPath, info, err)
 		}
+		var subFiles = make([]subFile, 0)
 		for _, fileInfo := range list {
 			path2 := filepath.Join(path, fileInfo.Name())
 			var resolvedPath2 string
 			if resolvedPath != "" {
 				resolvedPath2 = filepath.Join(resolvedPath, fileInfo.Name())
 			}
-			err = walk(path2, fileInfo, resolvedPath2, symlinkPathsFollowed, walkFn)
+			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
+		}
+
+		if containsDistFolder(subFiles) {
+			err := walk(
+				filepath.Join(path, "dist"),
+				info,
+				filepath.Join(resolvedPath, "dist"),
+				symlinkPathsFollowed,
+				walkFn)
+
 			if err != nil {
 				return err
 			}
+		} else {
+			for _, p := range subFiles {
+				err = walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, walkFn)
+
+				if err != nil {
+					return err
+				}
+			}
 		}
+
 		return nil
 	}
 	return nil
 }
 
-func ContainsDistFolder(path string) bool {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return false
-	}
+type subFile struct {
+	path, resolvedPath string
+	fileInfo           os.FileInfo
+}
 
-	if !info.IsDir() {
-		return false
-	}
-
-	list, err := ioutil.ReadDir(path)
-	for _, fileInfo := range list {
-		if fileInfo.IsDir() && fileInfo.Name() == "dist" {
+func containsDistFolder(subFiles []subFile) bool {
+	for _, p := range subFiles {
+		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
 			return true
 		}
 	}
