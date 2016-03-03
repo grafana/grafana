@@ -154,6 +154,19 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.rangeRaw = this.range;
     }
 
+    if (this.panel.timePeriod) {
+      var timePeriodInterpolated = this.templateSrv.replace(this.panel.timePeriod, this.panel.scopedVars);
+      var timePeriodInfo = rangeUtil.describeTextRange(timePeriodInterpolated);
+      if (timePeriodInfo.invalid) {
+        this.timeInfo = 'invalid period';
+        return;
+      }
+
+      var timePeriod = '+' + timePeriodInterpolated;
+      this.timeInfo += ' timePeriod ' + timePeriod;
+      this.range.to = dateMath.parseDateMath(timePeriod, this.range.from.clone(), true);
+    }
+
     if (this.panel.hideTimeOverride) {
       this.timeInfo = '';
     }

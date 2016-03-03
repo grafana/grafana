@@ -27,6 +27,17 @@
 		<span class="gf-form-label">
 			<i class="fa fa-clock-o"></i>
 		</span>
+		<span class="gf-form-label width-12">Override time period</span>
+		<span class="gf-form-label width-6">Period</span>
+		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
+			empty-to-null ng-model="ctrl.panel.timePeriod" valid-time-span
+			ng-change="ctrl.refresh()" ng-model-onblur>
+	</div>
+
+	<div class="gf-form">
+		<span class="gf-form-label">
+			<i class="fa fa-clock-o"></i>
+		</span>
 		<editor-checkbox text="Hide time override info" model="ctrl.panel.hideTimeOverride" change="ctrl.refresh()"></editor-checkbox>
 	</div>
 </div>
