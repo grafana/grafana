@@ -62,7 +62,6 @@ pages:
 - ['reference/templating.md', 'Reference', 'Templating']
 - ['reference/scripting.md', 'Reference', 'Scripting']
 - ['reference/playlist.md', 'Reference', 'Playlist']
-- ['reference/plugins.md', 'Reference', 'Plugins']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Administration']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
