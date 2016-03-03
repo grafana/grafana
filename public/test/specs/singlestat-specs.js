@@ -2,6 +2,7 @@ define([
   'angular',
   './helpers',
   'app/plugins/panel/singlestat/controller',
+  'app/core/services/timer',
   'app/features/panel/panel_srv',
   'app/features/panel/panel_helper',
 ], function(angular, helpers, SingleStatCtrl) {
