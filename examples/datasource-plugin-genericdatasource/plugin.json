@@ -8,7 +8,7 @@
   "staticRoot": ".",
 
   "metrics": true,
-  "annotations": false,
+  "annotations": true,
 
   "info": {
     "description": "generic datsource plugin",

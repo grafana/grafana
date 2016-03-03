@@ -37,6 +37,15 @@ export class GenericDatasource {
     });
   }
 
+  annotationQuery(options) {
+    return this.backendSrv.datasourceRequest({
+      url: this.url + '/annotations',
+      method: 'GET'
+    }).then(result => {
+      return result.data;
+    });
+  }
+
   // Optional
   // Required for templating
   metricFindQuery(options) {
