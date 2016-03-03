@@ -181,7 +181,14 @@ function (angular, _) {
         var value = current.value;
 
         if (current.text === 'All') {
-          value = 'All';
+          params['var-' + variable.name] = [];
+          _.each(variable.options, function(o) {
+            if (o.text === 'All') {
+              return;
+            }
+            params['var-' + variable.name].push(o.value);
+          });
+          return;
         }
 
         if (scopedVars && scopedVars[variable.name] !== void 0) {
