@@ -1,12 +1,12 @@
 <navbar>
 
-<a class="pointer navbar-page-btn" ng-show="!dashboardMeta.isSnapshot" ng-click="openSearch()">
+<a class="pointer navbar-page-btn" ng-if="::!dashboardMeta.isSnapshot" ng-click="openSearch()">
 	<i class="icon-gf icon-gf-dashboard"></i>
 	<span>{{dashboard.title}}</span>
 	<i class="fa fa-caret-down"></i>
 </a>
 
-<a class="pointer navbar-page-btn" ng-if="dashboardMeta.isSnapshot" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
+<a class="pointer navbar-page-btn" ng-if="::dashboardMeta.isSnapshot" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
 	<i class="icon-gf icon-gf-snapshot"></i>
 	<span>
 		{{dashboard.title}}
@@ -15,12 +15,12 @@
 </a>
 
 <ul class="nav pull-left dashnav-action-icons">
-	<li ng-show="dashboardMeta.canStar">
+	<li ng-show="::dashboardMeta.canStar">
 		<a class="pointer" ng-click="starDashboard()">
 			<i class="fa" ng-class="{'fa-star-o': !dashboardMeta.isStarred, 'fa-star': dashboardMeta.isStarred}" style="color: orange;"></i>
 		</a>
 	</li>
-	<li ng-show="dashboardMeta.canShare" class="dropdown">
+	<li ng-show="::dashboardMeta.canShare" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Share dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
 		<ul class="dropdown-menu">
 			<li>
@@ -35,10 +35,10 @@
 			</li>
 		</ul>
 	</li>
-	<li ng-show="dashboardMeta.canSave">
+	<li ng-show="::dashboardMeta.canSave">
 		<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
 	</li>
-	<li ng-if="showSettingsMenu" class="dropdown">
+	<li ng-if="::showSettingsMenu" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 		<ul class="dropdown-menu">
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
