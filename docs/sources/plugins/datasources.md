@@ -44,9 +44,10 @@ Request object passed to datasource.query function
 {
   "range": { "from": "2015-12-22T03:06:13.851Z", "to": "2015-12-22T06:48:24.137Z" },
   "interval": '5s',
-  "targets":
-   [ { refId: "B", target: "upper_75" },
-     { refId: "A", target: "upper_90" } ],
+  "targets": [
+    { refId: "B", target: "upper_75" },
+    { refId: "A", target: "upper_90" }
+  ],
   "format": "json",
   "maxDataPoints": 2495 //decided by the panel
 }
