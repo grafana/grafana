@@ -32,6 +32,14 @@ function (angular, _) {
         }
         this._index[variable.name] = variable;
       }
+
+      // add system interval variable if
+      // user has not added it
+      if (!this._index['interval']) {
+        this._index['interval'] = {
+          current: {value: ''}
+        };
+      }
     };
 
     function regexEscape(value) {

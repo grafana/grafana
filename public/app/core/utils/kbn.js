@@ -133,7 +133,7 @@ function($, _) {
     return str;
   };
 
-  kbn.interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
+  kbn.interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 
   // histogram & trends
   kbn.intervals_in_seconds = {
@@ -143,7 +143,8 @@ function($, _) {
     d: 86400,
     h: 3600,
     m: 60,
-    s: 1
+    s: 1,
+    ms: 0.001,
   };
 
   kbn.calculateInterval = function(range, resolution, userInterval) {

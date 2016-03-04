@@ -29,7 +29,7 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align" style="width: 94px">
-			Legend format
+			Alias pattern
 		</li>
 		<li>
 			<input type="text" class="tight-form-input input-xxlarge" ng-model="ctrl.target.legendFormat"
@@ -45,10 +45,10 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align" style="width: 94px">
-			Step
+			Interval
 		</li>
 		<li>
-			<input type="text" class="input-mini tight-form-input" ng-model="ctrl.target.interval"
+			<input type="text" class="input-small tight-form-input" ng-model="ctrl.target.interval"
 			bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
 			data-placement="right"
 			spellcheck='false'
@@ -60,15 +60,6 @@
 			</input>
 		</li>
 
-		<li class="tight-form-item">
-			Resolution
-		</li>
-		<li>
-			<select ng-model="ctrl.target.intervalFactor" class="tight-form-input input-mini"
-				ng-options="r.factor as r.label for r in ctrl.resolutions"
-				ng-change="ctrl.refreshMetricData()">
-			</select>
-		</li>
 		<li class="tight-form-item">
 			<a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
 				<i class="fa fa-share-square-o"></i>
