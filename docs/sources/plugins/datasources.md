@@ -45,8 +45,8 @@ Request object passed to datasource.query function
   "range": { "from": "2015-12-22T03:06:13.851Z", "to": "2015-12-22T06:48:24.137Z" },
   "interval": '5s',
   "targets": [
-    { refId: "B", target: "upper_75" },
-    { refId: "A", target: "upper_90" }
+    { "refId": "B", "target": "upper_75" },
+    { "refId": "A", "target": "upper_90" }
   ],
   "format": "json",
   "maxDataPoints": 2495 //decided by the panel
@@ -79,12 +79,12 @@ An array of
 Request object passed to datasource.annotationsQuery function
 ```json
 {
-  range: { from: '2016-03-04T04:07:55.144Z', to: '2016-03-04T07:07:55.144Z' },
-  rangeRaw: { from: 'now-3h', to: 'now' },
-  annotation: {
-    datasource: 'generic datasource',
-    enable: true,
-    name: 'annotation name'
+  "range": { "from": "2016-03-04T04:07:55.144Z", "to": "2016-03-04T07:07:55.144Z" },
+  "rangeRaw": { "from": "now-3h", to: "now" },
+  "annotation": {
+    "datasource": "generic datasource",
+    "enable": true,
+    "name": "annotation name"
   }
 }
 ```
