@@ -21,6 +21,7 @@ func AddMigrations(mg *Migrator) {
 	addAppSettingsMigration(mg)
 	addSessionMigration(mg)
 	addPlaylistMigrations(mg)
+	addPreferencesMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
