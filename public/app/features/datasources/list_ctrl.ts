@@ -37,10 +37,10 @@ export class DataSourcesCtrl {
   removeDataSource(ds) {
 
     this.$scope.appEvent('confirm-modal', {
-      title: 'Confirm delete datasource',
+      title: 'Delete',
       text: 'Are you sure you want to delete datasource ' + ds.name + '?',
       yesText: "Delete",
-      icon: "fa-warning",
+      icon: "fa-trash",
       onConfirm: () => {
         this.removeDataSourceConfirmed(ds);
       }

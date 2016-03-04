@@ -136,9 +136,10 @@ export class PanelCtrl {
 
   removePanel() {
     this.publishAppEvent('confirm-modal', {
-      title: 'Are you sure you want to remove this panel?',
+      title: 'Remove Panel',
+      text: 'Are you sure you want to remove this panel?',
       icon: 'fa-trash',
-      yesText: 'Delete',
+      yesText: 'Remove',
       onConfirm: () => {
         this.row.panels = _.without(this.row.panels, this.panel);
       }
