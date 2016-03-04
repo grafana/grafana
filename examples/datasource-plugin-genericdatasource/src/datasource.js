@@ -40,7 +40,8 @@ export class GenericDatasource {
   annotationQuery(options) {
     return this.backendSrv.datasourceRequest({
       url: this.url + '/annotations',
-      method: 'GET'
+      method: 'POST',
+      data: options
     }).then(result => {
       return result.data;
     });
