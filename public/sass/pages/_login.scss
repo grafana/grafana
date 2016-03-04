@@ -55,6 +55,10 @@
     color: $white;
   }
 
+  &:focus {
+    outline: 0;
+  }
+
   font-weight: bold;
   display: inline-block;
   width: 170px;
@@ -178,7 +182,7 @@
 }
 
 @include media-breakpoint-up(md) {
-  .login-box-logo {      
+  .login-box-logo {
     img {
       width: 125px;
     }
