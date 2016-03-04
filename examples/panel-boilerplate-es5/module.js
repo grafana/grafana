@@ -1,6 +1,7 @@
 define([
   'app/plugins/sdk',
-  'lodash'
+  'lodash',
+  './css/styles.css!'
 ], function(sdk, _) {
 
   var BoilerPlatePanelCtrl = (function(_super) {

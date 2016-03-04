@@ -20,7 +20,7 @@ To interact with the rest of grafana the plugins module file can export 5 differ
 
 ## Plugin json
 There are two datasource specific settings for the plugin.json
-```
+```javascript
 "metrics": true,
 "annotations": false,
 ```
