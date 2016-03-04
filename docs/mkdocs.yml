@@ -89,6 +89,8 @@ pages:
 - ['plugins/installation.md', 'Plugins', 'Installation']
 - ['plugins/datasources.md', 'Plugins', 'Datasource plugins']
 - ['plugins/panels.md', 'Plugins', 'Panel plugins']
+- ['plugins/development.md', 'Plugins', 'Plugin development']
+- ['plugins/plugin.json.md', 'Plugins', 'Plugin json']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']
