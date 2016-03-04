@@ -5,6 +5,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from 'app/core/utils/datemath';
 
 export class TimePickerCtrl {
 
