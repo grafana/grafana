@@ -205,6 +205,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
+    series.applySeriesOverrides(this.panel.seriesOverrides);
     return series;
   }
 

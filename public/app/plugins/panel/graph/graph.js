@@ -69,8 +69,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (!panel.legend.show || panel.legend.rightSide) {
             return 0;
           }
+
           if (panel.legend.alignAsTable) {
-            var total = 30 + (25 * data.length);
+            var legendSeries = _.filter(data, function(series) {
+              return series.hideFromLegend(panel.legend) === false;
+            });
+            console.log(legendSeries.length);
+            var total = 23 + (22 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;
@@ -85,13 +90,14 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
 
             graphHeight -= 5; // padding
-            graphHeight -= panel.title ? 24 : 9; // subtract panel title bar
+            graphHeight -= panel.title ? 25 : 5; // subtract panel title bar
             graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
 
             elem.css('height', graphHeight + 'px');
 
             return true;
           } catch(e) { // IE throws errors sometimes
+            console.log(e);
             return false;
           }
         }
@@ -107,7 +113,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           if (!setElementHeight()) { return true; }
 
-          if (_.isString(data)) {
+          if(_.isString(data)) {
             render_panel_as_graphite_png(data);
             return true;
           }
@@ -226,7 +232,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
-            series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack

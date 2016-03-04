@@ -39,6 +39,7 @@
 .graph-legend-icon,
 .graph-legend-alias,
 .graph-legend-value {
+  cursor: pointer;
   float: left;
   white-space: nowrap;
   font-size: 85%;
@@ -79,7 +80,7 @@
 
 .graph-legend-table {
   width: 100%;
-  margin: 0;
+  margin-top: 4px;
 
   .graph-legend-series {
     display: table-row;
@@ -174,7 +175,8 @@
 }
 
 .graph-legend-series-hidden {
-  a {
+  .graph-legend-value,
+  .graph-legend-alias {
     color: $link-color-disabled;
   }
 }

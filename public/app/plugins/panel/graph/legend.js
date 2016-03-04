@@ -145,16 +145,7 @@ function (angular, _, $) {
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
-            // ignore empty series
-            if (panel.legend.hideEmpty && series.allIsNull) {
-              continue;
-            }
-            // ignore series excluded via override
-            if (!series.legend) {
-              continue;
-            }
-            // ignore zero series
-            if (panel.legend.hideZero && series.allIsZero) {
+            if (series.hideFromLegend(panel.legend)) {
               continue;
             }
 
@@ -166,9 +157,7 @@ function (angular, _, $) {
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<div class="graph-legend-alias">';
-            html += '<a>' + _.escape(series.label) + '</a>';
-            html += '</div>';
+            html += '<a class="graph-legend-alias pointer">' + _.escape(series.label) + '</a>';
 
             if (panel.legend.values) {
               var avg = series.formatValue(series.stats.avg);
