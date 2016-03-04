@@ -26,7 +26,7 @@ export class TimePickerCtrl {
   isUtc: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private timeSrv) {
+  constructor(private $scope, private $rootScope, private timeSrv, private alertSrv) {
     $scope.ctrl = this;
 
     $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
@@ -111,8 +111,14 @@ export class TimePickerCtrl {
     if (this.refresh.value !== this.dashboard.refresh) {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
-
-    this.timeSrv.setTime(this.timeRaw, true);
+    if (dateMath.parse(this.timeRaw.from, false) !== undefined
+      && dateMath.parse(this.timeRaw.to, true) !== undefined) {
+        this.timeSrv.setTime(this.timeRaw, true);
+    } else {
+      var data = { message: "Selected time range is invalid." };
+      this.alertSrv.set("Error", data.message, "warning", 2000);
+      throw data;
+    }
     this.$rootScope.appEvent('hide-dash-editor');
   }
 
