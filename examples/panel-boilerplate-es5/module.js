@@ -1,28 +1,52 @@
 define([
-  'app/plugins/sdk'
-], function(sdk) {
+  'app/plugins/sdk',
+  'lodash'
+], function(sdk, _) {
 
-  var BoilerPlatePanel = (function(_super) {
+  var BoilerPlatePanelCtrl = (function(_super) {
+    var self;
 
-    function BoilerPlatePanel($scope, $injector) {
+    function BoilerPlatePanelCtrl($scope, $injector) {
       _super.call(this, $scope, $injector);
+
+      this.results = []
+
+      self = this;
     }
 
     // you do not need a templateUrl,  you can use a inline template here
-    // BoilerPlatePanel.template = '<h2>boilerplate</h2>';
+    // BoilerPlatePanelCtrl.template = '<h2>boilerplate</h2>';
 
     // all panel static assets can be accessed via 'public/plugins/<plugin-id>/<file>
-    BoilerPlatePanel.templateUrl = 'panel.html';
+    BoilerPlatePanelCtrl.templateUrl = 'panel.html';
 
-    BoilerPlatePanel.prototype = Object.create(_super.prototype);
-    BoilerPlatePanel.prototype.constructor = BoilerPlatePanel;
+    BoilerPlatePanelCtrl.prototype = Object.create(_super.prototype);
+    BoilerPlatePanelCtrl.prototype.constructor = BoilerPlatePanelCtrl;
 
-    return BoilerPlatePanel;
+    BoilerPlatePanelCtrl.prototype.refreshData = function(datasource) {
+      this.issueQueries(datasource)
+        .then(function(result) {
+          self.results = [];
+          _.each(result.data, function(target) {
+            var last = _.last(target.datapoints)
+            self.results.push(last[0]);
+          });
 
-  })(sdk.PanelCtrl);
+          self.render();
+        });
+    }
+
+    BoilerPlatePanelCtrl.prototype.render = function() {
+      this.values = this.results.join(',');
+    }
+
+    return BoilerPlatePanelCtrl;
+
+  })(sdk.MetricsPanelCtrl);
 
 
   return {
-    PanelCtrl: BoilerPlatePanel
+    PanelCtrl: BoilerPlatePanelCtrl
   };
 });
+
