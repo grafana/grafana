@@ -3,8 +3,6 @@
   "id": "datasource-plugin-genericdatasource",
   "type": "datasource",
 
-  "module": "plugins/genericdatasource/datasource",
-
   "staticRoot": ".",
 
   "metrics": true,
