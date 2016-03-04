@@ -25,4 +25,5 @@ MetricsPanelCtrl inherits from PanelCtrl and adds some common features for datas
 
 ## Implementing a MetricsPanelCtrl
 
-If you choose to inherit from MetricsPanelCtrl you should implement a function called refreshData that will be called by grafana when its time for all panels to get new data.
+If you choose to inherit from MetricsPanelCtrl you should implement a function called refreshData that will take an datasource as inparameter when its time to get new data. Its recommended that the refreshData function calls the issueQueries in the base class but its not mandatory. An examples of such implementation can be found in our [example panel](https://github.com/grafana/grafana/blob/master/examples/panel-boilerplate-es5/module.js#L27-L38)
+
