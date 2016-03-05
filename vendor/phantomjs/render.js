@@ -33,8 +33,6 @@
   var tries = 0;
 
   page.open(params.url, function (status) {
-    console.log('Loading a web page: ' + params.url + ' status: ' + status);
-
     function checkIsReady() {
       var canvas = page.evaluate(function() {
         if (!window.angular) { return false; }
