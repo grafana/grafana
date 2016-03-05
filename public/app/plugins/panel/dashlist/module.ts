@@ -50,9 +50,9 @@ class DashListCtrl extends PanelCtrl {
         limit: this.panel.limit
       }).then(result => {
 
-        this.dashList = dashboardIds.map(e => {
-          return _.find(result, r => {
-            return r.id === e;
+        this.dashList = dashboardIds.map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
           });
         });
 
