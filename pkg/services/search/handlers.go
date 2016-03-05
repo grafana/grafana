@@ -39,10 +39,11 @@ func searchHandler(query *Query) error {
 	hits := make(HitList, 0)
 
 	dashQuery := FindPersistedDashboardsQuery{
-		Title:     query.Title,
-		UserId:    query.UserId,
-		IsStarred: query.IsStarred,
-		OrgId:     query.OrgId,
+		Title:        query.Title,
+		UserId:       query.UserId,
+		IsStarred:    query.IsStarred,
+		OrgId:        query.OrgId,
+		DashboardIds: query.DashboardIds,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {
