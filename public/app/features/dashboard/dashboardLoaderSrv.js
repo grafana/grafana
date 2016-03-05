@@ -8,7 +8,7 @@ define([
   './impression_store',
   'app/core/config',
 ],
-function (angular, moment, _, $, kbn, dateMath, impressionStore, config) {
+function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -48,12 +48,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore, config) {
 
       promise.then(function(result) {
         if (result.meta.dashboardNotFound !== true) {
-          impressionStore.impressions.addDashboardImpression({
-            type: type,
-            slug: slug,
-            title: result.dashboard.title,
-            orgId: config.bootData.user.orgId
-          });
+          impressionStore.impressions.addDashboardImpression(result.dashboard.id);
         }
 
         return result;
