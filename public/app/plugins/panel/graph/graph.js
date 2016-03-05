@@ -471,6 +471,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
           url += panel['x-axis'] ? '' : '&hideAxes=true';
           url += panel['y-axis'] ? '' : '&hideYAxis=true';
+          url += panel['y-axis-2'] ? '' : '&hideYAxis2=true';
 
           switch(panel.y_formats[0]) {
             case 'bytes':
