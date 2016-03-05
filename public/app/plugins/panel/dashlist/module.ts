@@ -43,22 +43,21 @@ class DashListCtrl extends PanelCtrl {
     var params: any = {limit: this.panel.limit};
 
     if (this.panel.mode === 'recently viewed') {
+      var dashboardIds = impressions.getDashboardOpened();
 
-      var dashListNames = impressions.getDashboardOpened().filter((imp) => {
-        return imp.orgId === config.bootData.user.orgId;
+      return this.backendSrv.search({
+        dashboardIds: impressions.getDashboardOpened(),
+        limit: this.panel.limit
+      }).then(result => {
+
+        this.dashList = dashboardIds.map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
+          });
+        });
+
+        this.renderingCompleted();
       });
-
-      dashListNames = _.first(dashListNames, params.limit).map((dashboard) => {
-        return {
-          title: dashboard.title,
-          uri: dashboard.type + '/' + dashboard.slug
-        };
-      });
-
-
-      this.dashList = dashListNames;
-      this.renderingCompleted();
-      return;
     }
 
     if (this.panel.mode === 'starred') {
