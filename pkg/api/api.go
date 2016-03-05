@@ -96,6 +96,7 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+      r.Put("/prefs", bind(m.SavePreferenceCommand{}), wrap(SaveUserPreferences))
 		})
 
 		// users (admin permission required)
