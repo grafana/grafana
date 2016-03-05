@@ -369,6 +369,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             secondY.index = 2,
             secondY.logBase = panel.grid.rightLogBase || 1,
             secondY.position = 'right';
+            secondY.show = panel['y-axis-2'],
             secondY.min = panel.grid.rightMin;
             secondY.max = panel.percentage && panel.stack ? 100 : panel.grid.rightMax;
             options.yaxes.push(secondY);
