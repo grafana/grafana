@@ -17,10 +17,29 @@ type Preferences struct {
 }
 
 // ---------------------
+// QUERIES
+
+type GetPreferencesQuery struct {
+	PrefId   int64
+	PrefType string
+
+	Result PreferencesDTO
+}
+
+// ---------------------
 // COMMANDS
 
 type SavePreferencesCommand struct {
 	PrefData map[string]interface{} `json:"prefData" binding:"Required"`
 	PrefId   int64                  `json:"-"`
 	PrefType string                 `json:"-"`
+}
+
+// ----------------------
+// DTO & Projections
+
+type PreferencesDTO struct {
+	PrefId   int64                  `json:"prefId"`
+	PrefType string                 `json:"prefType"`
+	PrefData map[string]interface{} `json:"prefData"`
 }

@@ -6,7 +6,29 @@ import (
 )
 
 func init() {
+	bus.AddHandler("sql", GetPreferences)
 	bus.AddHandler("sql", SavePreferences)
+}
+
+func GetPreferences(query *m.GetPreferencesQuery) error {
+
+	sql := `SELECT * FROM preferences WHERE pref_id = ? ` +
+		`AND pref_type = ?`
+
+	var prefResults = make([]m.Preferences, 0)
+
+	resultsErr := x.Sql(sql, query.PrefId, query.PrefType).Find(&prefResults)
+
+	if resultsErr != nil {
+		return resultsErr
+	}
+	query.Result = m.PreferencesDTO{
+		PrefId:   prefResults[0].PrefId,
+		PrefType: prefResults[0].PrefType,
+		PrefData: prefResults[0].PrefData,
+	}
+
+	return nil
 }
 
 func SavePreferences(cmd *m.SavePreferencesCommand) error {
