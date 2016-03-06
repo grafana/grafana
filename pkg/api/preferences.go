@@ -19,3 +19,14 @@ func SaveUserPreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Re
 	return ApiSuccess("User preferences saved")
 
 }
+
+func GetUserPreferences(c *middleware.Context) Response {
+
+	query := m.GetPreferencesQuery{PrefId: c.UserId, PrefType: `user`}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to get user", err)
+	}
+
+	return Json(200, query.Result)
+}
