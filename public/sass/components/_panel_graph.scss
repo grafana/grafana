@@ -22,8 +22,11 @@
 }
 
 .graph-legend {
+  @include clearfix();
   margin: 0 $spacer;
   text-align: center;
+  width: calc(100% - $spacer);
+  padding-top: 6px;
 
   .popover-content {
     padding: 0;
@@ -71,7 +74,6 @@
   float: left;
   white-space: nowrap;
   padding-left: 10px;
-  padding-top: 6px;
 }
 
 .graph-legend-value {
@@ -79,11 +81,9 @@
 }
 
 .graph-legend-table {
-  width: 100%;
-  margin-top: 4px;
+  overflow-y: scroll;
 
-  .graph-legend-series {
-    display: table-row;
+  .graph-legend-series { display: table-row;
     float: none;
     padding-left: 0;
     &.pull-right {
@@ -314,6 +314,3 @@
   font-size: 12px;
 }
 
-.graph-legend-fixed-height {
-  overflow-y: scroll;
-}

@@ -142,6 +142,7 @@ function (angular, _, $) {
             }
           }
 
+          var seriesShown = 0;
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
@@ -175,17 +176,19 @@ function (angular, _, $) {
 
             html += '</div>';
             $container.append($(html));
+
+            seriesShown++;
           }
 
-          var legendContainerHeight = $container.parent().height();
-          var legendHeight = $container.height();
+          if (panel.legend.alignAsTable) {
+            var maxHeight = ctrl.height;
 
-          if (panel.legend.rightSide && legendHeight >= legendContainerHeight) {
-            $container.toggleClass('graph-legend-fixed-height', true);
-          }
+            if (!panel.legend.rightSide) {
+              maxHeight = maxHeight/2;
+            }
 
-          if (panel.legend.rightSide) {
-            $container.css("height", scope.ctrl.height || scope.ctrl.panel.height || scope.ctrl.row.height);
+            var topPadding = 6;
+            $container.css("height", maxHeight - topPadding);
           } else {
             $container.css("height", "");
           }

@@ -29,7 +29,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var panel = ctrl.panel;
         var data, annotations;
         var sortedSeries;
-        var graphHeight;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
 
@@ -67,14 +66,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function getLegendHeight(panelHeight) {
           if (!panel.legend.show || panel.legend.rightSide) {
-            return 0;
+            return 2;
           }
 
           if (panel.legend.alignAsTable) {
             var legendSeries = _.filter(data, function(series) {
               return series.hideFromLegend(panel.legend) === false;
             });
-            console.log(legendSeries.length);
             var total = 23 + (22 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
@@ -84,16 +82,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function setElementHeight() {
           try {
-            graphHeight = ctrl.height || panel.height || ctrl.row.height;
-            if (_.isString(graphHeight)) {
-              graphHeight = parseInt(graphHeight.replace('px', ''), 10);
-            }
-
-            graphHeight -= 5; // padding
-            graphHeight -= panel.title ? 25 : 5; // subtract panel title bar
-            graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
-
-            elem.css('height', graphHeight + 'px');
+            var height = ctrl.height - getLegendHeight(ctrl.height);
+            elem.css('height', height + 'px');
 
             return true;
           } catch(e) { // IE throws errors sometimes
