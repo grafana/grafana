@@ -9,14 +9,14 @@ function (angular) {
 
   module.controller('PreferencesCtrl', function($scope, backendSrv, $location) {
 
-    $scope.command = {};
+    $scope.prefData = {};
 
     $scope.setUserPreferences = function() {
       if (!$scope.userForm.$valid) { return; }
 
       console.log($scope.command);
 
-      backendSrv.put('/api/user/prefs', $scope.command).then(function() {
+      backendSrv.put('/api/user/prefs', { prefData : $scope.prefData }).then(function() {
         $location.path("profile");
       });
     };
