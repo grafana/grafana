@@ -111,9 +111,6 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
-
-  log.Info("%v", cmd)
-	
   userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
