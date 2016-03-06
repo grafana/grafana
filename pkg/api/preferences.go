@@ -20,13 +20,20 @@ func SaveUserPreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Re
 
 }
 
-func GetUserPreferences(c *middleware.Context) Response {
+// GET /api/user/prefs
+func GetUserPreferences(c *middleware.Context) {
 
 	query := m.GetPreferencesQuery{PrefId: c.UserId, PrefType: `user`}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to get user", err)
+		c.JsonApiErr(500, "Failed to get preferences for user", err)
 	}
 
-	return Json(200, query.Result)
+	dto := m.PreferencesDTO{
+		PrefId:   query.Result.PrefId,
+		PrefType: query.Result.PrefType,
+		PrefData: query.Result.PrefData,
+	}
+
+	c.JSON(200, dto)
 }

@@ -89,10 +89,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/profile/partials/profile.html',
     controller : 'ProfileCtrl',
   })
-  .when('/preferences', {
-    templateUrl: 'public/app/features/profile/partials/preferences.html',
-    controller : 'PreferencesCtrl',
-  })
   .when('/profile/password', {
     templateUrl: 'public/app/features/profile/partials/password.html',
     controller : 'ChangePasswordCtrl',
