@@ -6,7 +6,7 @@ import (
 
 // Typed errors
 var (
-	ErrPreferenceNotFound = errors.New("Preference not found")
+	ErrPreferencesNotFound = errors.New("Preferences not found")
 )
 
 type Preferences struct {
@@ -23,7 +23,7 @@ type GetPreferencesQuery struct {
 	PrefId   int64
 	PrefType string
 
-	Result PreferencesDTO
+	Result *Preferences
 }
 
 // ---------------------

@@ -22,10 +22,11 @@ func GetPreferences(query *m.GetPreferencesQuery) error {
 	if resultsErr != nil {
 		return resultsErr
 	}
-	query.Result = m.PreferencesDTO{
-		PrefId:   prefResults[0].PrefId,
-		PrefType: prefResults[0].PrefType,
-		PrefData: prefResults[0].PrefData,
+
+	if len(prefResults) > 0 {
+		query.Result = &prefResults[0]
+	} else {
+		query.Result = new(m.Preferences)
 	}
 
 	return nil
@@ -45,15 +46,25 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			return resultsErr
 		}
 
-		var matchedPref m.Preferences
-		matchedPref = prefResults[0]
-		matchedPref.PrefData = cmd.PrefData
-		affectedRows, updateErr := sess.Id(matchedPref.Id).Update(&matchedPref)
+		var savePref m.Preferences
+		var affectedRows int64
+		var saveErr error
 
-		if affectedRows == 0 {
-			return m.ErrPreferenceNotFound
+		if len(prefResults) == 0 {
+			savePref.PrefId = cmd.PrefId
+			savePref.PrefType = cmd.PrefType
+			savePref.PrefData = cmd.PrefData
+			affectedRows, saveErr = sess.Insert(&savePref)
+		} else {
+			savePref = prefResults[0]
+			savePref.PrefData = cmd.PrefData
+			affectedRows, saveErr = sess.Id(savePref.Id).Update(&savePref)
 		}
 
-		return updateErr
+		if affectedRows == 0 {
+			return m.ErrPreferencesNotFound
+		}
+
+		return saveErr
 	})
 }
