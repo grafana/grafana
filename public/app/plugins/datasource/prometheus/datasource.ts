@@ -60,19 +60,19 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.query = function(options) {
     var start = getPrometheusTime(options.range.from, false);
     var end = getPrometheusTime(options.range.to, true);
+    var range = Math.ceil(end - start);
 
-    var queries = _.map(options.targets, target => {
+    var queries = [];
+    for (let target of options.targets) {
       if (!target.expr || target.hide) {
         return;
       }
 
       var query: any = {};
-      var interval = templateSrv.replace(target.interval || options.interval);
+      var interval = templateSrv.replace(target.interval || options.interval, options.scopedVars);
       query.step = this.calculateStep(interval);
 
-      var range = Math.ceil(end - start);
-      // Prometheus drop query if range/step > 11000
-      // calibrate step if it is too big
+      // Prometheus drop query if range/step > 11000 calibrate step if it is too big
       if (range / query.step > 11000) {
         query.step = Math.ceil(range / 11000);
       }
@@ -80,8 +80,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var scopedVars = _.extend({"interval": {value: interval}, "intervalMs": {value: query.step}}, options.scopedVars);
       query.expr = templateSrv.replace(target.expr, scopedVars, interpolateQueryExpr);
 
-      return query;
-    });
+      queries.push(target);
+    }
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
