@@ -11,7 +11,6 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-  "github.com/grafana/grafana/pkg/log"
 )
 
 func init() {
@@ -28,7 +27,6 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
-  bus.AddHandler("sql", SaveUserPreferences)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
@@ -347,27 +345,4 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 		_, err := sess.Id(user.Id).Update(&user)
 		return err
 	})
-}
-
-func SaveUserPreferences(cmd *m.SavePreferenceCommand) error {
-  return inTransaction2(func(sess *session) error {
-
-    log.Info("%v", cmd)
-
-    pref := m.Preference{
-      PrefId: cmd.PrefId,
-      PrefType: cmd.PrefType,
-      PrefData: cmd.PrefData,
-    }
-
-    sess.Table("preferences").Where("pref_id", pref.PrefId).And("pref_type", pref.PrefType)
-
-    if _, err := sess.Update(&pref); err != nil {
-      return err
-    }
-
-    log.Info("%v", pref)
-
-    return nil
-  })  
 }

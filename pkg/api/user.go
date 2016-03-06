@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
-  "github.com/grafana/grafana/pkg/log"
 )
 
 // GET /api/user  (current authenticated user)
@@ -111,7 +110,7 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
-  userQuery := m.GetUserByIdQuery{Id: c.UserId}
+	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		return ApiError(500, "Could not read user from database", err)
@@ -144,19 +143,4 @@ func SearchUsers(c *middleware.Context) Response {
 	}
 
 	return Json(200, query.Result)
-}
-
-func SaveUserPreferences(c *middleware.Context, cmd m.SavePreferenceCommand) Response {
-
-  log.Info("%v", cmd.PrefData)
-
-  cmd.PrefId = c.UserId
-  cmd.PrefType = `user`
-
-  if err := bus.Dispatch(&cmd); err != nil {
-    return ApiError(500, "Failed to saved user preferences", err)
-  }
-
-  return ApiSuccess("User preferences saved")
-
 }
