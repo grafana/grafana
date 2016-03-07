@@ -36,6 +36,11 @@ func main() {
 			Usage: "path to the grafana installation",
 			Value: getGrafanaPluginPath(),
 		},
+		cli.StringFlag{
+			Name:  "repo",
+			Usage: "url to the plugin repository",
+			Value: "https://raw.githubusercontent.com/grafana/grafana-plugin-repository/master/repo.json",
+		},
 		cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: "enable debug logging",
