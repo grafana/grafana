@@ -1,7 +1,6 @@
 <navbar title="Plugins" title-url="plugins" icon="icon-gf icon-gf-apps">
 	<a href="plugins/apps" class="navbar-page-btn">
-		<i class="fa fa-chevron-right"></i>
-		Apps
+		Plugin details
 	</a>
 </navbar>
 
@@ -15,7 +14,7 @@
 			<div class="plugin-header-author">By {{ctrl.model.info.author.name}}</div>
 			<div class="plugin-header-stamps">
 				<span class="plugin-header-stamps-type">
-					<i class="icon-gf icon-gf-apps"></i> {{ctrl.model.type}}
+					<i class="{{ctrl.pluginIcon}}"></i> {{ctrl.model.type}}
 				</span>
 			</div>
 		</div>
@@ -59,7 +58,7 @@
 		<aside class="page-sidebar">
 			<section class="page-sidebar-section">
 				<h4>Version</h4>
-				<span>1.0.1</span>
+				<span>{{ctrl.model.info.version}}</span>
 			</section>
 			<section class="page-sidebar-section" ng-show="ctrl.model.type === 'app'">
 				<h5>Includes</h4>
@@ -78,7 +77,30 @@
 			</section>
 			<section class="page-sidebar-section">
 				<h5>Dependencies</h4>
-				<span>TODO</span>
+				<ul class="ui-list">
+					<li>
+						<span class="plugin-dependency-icon">
+							<img src="public/img/grafana_icon.svg"></img>
+						</span>
+						<span class="plugin-dependency-name">
+							Grafana
+						</span>
+						<span class="plugin-dependency-version">
+							{{ctrl.model.dependencies.grafanaVersion}}
+						</span>
+					</li>
+					<li ng-repeat="plugDep in ctrl.model.dependencies.plugins">
+						<span class="plugin-dependency-icon">
+							<i class="{{plugDep.icon}}"></i>
+						</span>
+						<span class="plugin-dependency-name">
+							{{plugDep.name}}
+						</span>
+						<span class="plugin-dependency-version">
+							{{plugDep.version}}
+						</span>
+					</li>
+				</ul>
 			</section>
 			<section class="page-sidebar-section">
 				<h5>Links</h4>

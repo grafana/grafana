@@ -5,6 +5,7 @@ import _ from 'lodash';
 
 export class PluginEditCtrl {
   model: any;
+  pluginIcon: string;
   pluginId: any;
   includedPanels: any;
   includedDatasources: any;
@@ -22,7 +23,20 @@ export class PluginEditCtrl {
       this.model = result;
       this.includedPanels = _.where(result.includes, {type: 'panel'});
       this.includedDatasources = _.where(result.includes, {type: 'datasource'});
+      this.pluginIcon = this.getPluginIcon(this.model.type);
+
+      this.model.dependencies.plugins.forEach(plug => {
+        plug.icon = this.getPluginIcon(plug.type);
+      });
     });
+  }
+
+  getPluginIcon(type) {
+    switch (type) {
+      case 'datasource':  return 'icon-gf icon-gf-datasources';
+      case 'panel':  return 'icon-gf icon-gf-panel';
+      case 'app':  return 'icon-gf icon-gf-apps';
+    }
   }
 
   update() {
@@ -53,7 +67,7 @@ export class PluginEditCtrl {
 
     // if set, performt he postUpdate hook. If a promise is returned it will block
     // the final step of the update procedure (reloading the page) until the promise
-    // resolves.  If the promise is rejected the page will not be reloaded. 
+    // resolves.  If the promise is rejected the page will not be reloaded.
     if (this.postUpdateHook != null) {
       chain = chain.then(function() {
         return Promise.resolve(this.postUpdateHook());
