@@ -32,7 +32,7 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.BaseUrl)
 
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
-		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.Id)
+		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
 }
 

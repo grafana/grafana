@@ -3,7 +3,7 @@
   "name": "App Example",
   "id": "app-example",
 
-  "staticRoot":" ./public",
+  "staticRoot": ".",
   "module": "app",
 
   "pages": [
