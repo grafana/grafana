@@ -28,8 +28,15 @@ export class ImpressionsStore {
   }
 
   getDashboardOpened() {
-    var impressions = store.get("dashboard_impressions");
-    return JSON.parse(impressions || "[]");
+    var impressions = store.get("dashboard_impressions") || "[]";
+
+    impressions = JSON.parse(impressions);
+
+    impressions = _.filter(impressions, el => {
+      return _.isNumber(el);
+    });
+
+    return impressions;
   }
 }
 

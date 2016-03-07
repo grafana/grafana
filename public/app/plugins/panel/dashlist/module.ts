@@ -49,11 +49,12 @@ class DashListCtrl extends PanelCtrl {
         dashboardIds: impressions.getDashboardOpened(),
         limit: this.panel.limit
       }).then(result => {
-
         this.dashList = dashboardIds.map(orderId => {
           return _.find(result, dashboard => {
             return dashboard.id === orderId;
           });
+        }).filter(el => {
+          return el !== undefined;
         });
 
         this.renderingCompleted();
