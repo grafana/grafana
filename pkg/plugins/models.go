@@ -33,6 +33,14 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 		log.Info("Plugins: Registering plugin %v", pb.Name)
 	}
 
+	if len(pb.Dependencies.Plugins) == 0 {
+		pb.Dependencies.Plugins = []PluginDependencyItem{}
+	}
+
+	if pb.Dependencies.GrafanaVersion == "" {
+		pb.Dependencies.GrafanaVersion = "*"
+	}
+
 	pb.PluginDir = pluginDir
 	Plugins[pb.Id] = pb
 	return nil

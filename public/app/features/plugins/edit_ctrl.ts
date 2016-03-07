@@ -8,18 +8,21 @@ export class PluginEditCtrl {
   pluginIcon: string;
   pluginId: any;
   includedPanels: any;
+  readmeHtml: any;
   includedDatasources: any;
   tabIndex: number;
   preUpdateHook: () => any;
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(private backendSrv: any, private $routeParams: any) {
+  constructor(private backendSrv, private $routeParams, private $sce, private $http) {
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
+   }
 
-    this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(result => {
+  init() {
+    return this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;
       this.includedPanels = _.where(result.includes, {type: 'panel'});
       this.includedDatasources = _.where(result.includes, {type: 'datasource'});
@@ -27,6 +30,17 @@ export class PluginEditCtrl {
 
       this.model.dependencies.plugins.forEach(plug => {
         plug.icon = this.getPluginIcon(plug.type);
+      });
+
+      return this.initReadme();
+    });
+  }
+
+  initReadme() {
+    return this.$http.get(this.model.baseUrl + '/readme.md').then(res => {
+      return System.import('remarkable').then(Remarkable => {
+        var md = new Remarkable();
+        this.readmeHtml = this.$sce.trustAsHtml(md.render(res.data));
       });
     });
   }
