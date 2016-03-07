@@ -7,7 +7,7 @@ module.exports = function(config) {
       // or
       map: {
         inline: false, // save all sourcemaps as separate files...
-        annotation: 'dist/css/maps/' // ...to the specified directory
+        annotation: '<%= genDir %>/css' // ...to the specified directory
       },
 
       processors: [
