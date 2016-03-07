@@ -132,3 +132,35 @@ func GetDataSourcePlugins(c *middleware.Context) {
 		c.JSON(200, dsList)
 	}
 }
+
+// Get /api/datasources/name/:name
+func GetDataSourceByName(c *middleware.Context) Response {
+	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return ApiError(404, "Data source not found", nil)
+		}
+		return ApiError(500, "Failed to query datasources", err)
+	}
+
+	ds := query.Result
+
+	return Json(200, &dtos.DataSource{
+		Id:                ds.Id,
+		OrgId:             ds.OrgId,
+		Name:              ds.Name,
+		Url:               ds.Url,
+		Type:              ds.Type,
+		Access:            ds.Access,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          ds.JsonData,
+	})
+}
