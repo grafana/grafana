@@ -43,7 +43,11 @@ func installCommand(c CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	log.Infof("version: %v\n", version)
+	if version == "" {
+		log.Infof("version: latest\n")
+	} else {
+		log.Infof("version: %v\n", version)
+	}
 
 	return InstallPlugin(pluginToInstall, pluginFolder, version, c.GlobalString("repo"))
 }
@@ -61,6 +65,10 @@ func InstallPlugin(pluginName, pluginFolder, version, repoUrl string) error {
 
 	url := v.Url
 	commit := v.Commit
+
+	if version == "" {
+		version = v.Version
+	}
 
 	downloadURL := url + "/archive/" + commit + ".zip"
 
@@ -113,6 +121,12 @@ func downloadFile(pluginName, filepath, url string) (err error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	log.Infof("Got statuscode %s from %s\n", resp.Status, url)
+
+	if resp.StatusCode == 302 || resp.StatusCode == 301 {
+		str, _ := ioutil.ReadAll(resp.Body)
+		log.Info("body %s\n\n", string(str))
 	}
 
 	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
