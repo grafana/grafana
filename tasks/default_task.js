@@ -2,7 +2,16 @@
 module.exports = function(grunt) {
   'use strict';
 
-  grunt.registerTask('css', ['sass', 'concat:cssDark', 'concat:cssLight', 'styleguide', 'sasslint']);
+  grunt.registerTask('css', [
+    'sass',
+    'concat:cssDark',
+    'concat:cssLight',
+    'styleguide',
+    'sasslint',
+    'postcss'
+    ]
+  );
+
   grunt.registerTask('default', [
     'jscs',
     'jshint',
