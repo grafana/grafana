@@ -6,7 +6,7 @@ import (
 )
 
 func listremoteCommand(c CommandLine) error {
-	plugin, err := s.ListAllPlugins()
+	plugin, err := s.ListAllPlugins(c.GlobalString("repo"))
 
 	if err != nil {
 		return err
