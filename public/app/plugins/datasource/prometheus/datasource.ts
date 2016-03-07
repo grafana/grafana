@@ -80,7 +80,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var scopedVars = _.extend({"interval": {value: interval}, "intervalMs": {value: query.step}}, options.scopedVars);
       query.expr = templateSrv.replace(target.expr, scopedVars, interpolateQueryExpr);
 
-      queries.push(target);
+      queries.push(query);
     }
 
     // No valid targets, return the empty result to save a round trip.
