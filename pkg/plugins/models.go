@@ -14,10 +14,11 @@ type PluginLoader interface {
 }
 
 type PluginBase struct {
-	Type string     `json:"type"`
-	Name string     `json:"name"`
-	Id   string     `json:"id"`
-	Info PluginInfo `json:"info"`
+	Type         string             `json:"type"`
+	Name         string             `json:"name"`
+	Id           string             `json:"id"`
+	Info         PluginInfo         `json:"info"`
+	Dependencies PluginDependencies `json:"dependencies"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
@@ -35,6 +36,18 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 	pb.PluginDir = pluginDir
 	Plugins[pb.Id] = pb
 	return nil
+}
+
+type PluginDependencies struct {
+	GrafanaVersion string                 `json:"grafanaVersion"`
+	Plugins        []PluginDependencyItem `json:"plugins"`
+}
+
+type PluginDependencyItem struct {
+	Type    string `json:"type"`
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 type PluginInfo struct {

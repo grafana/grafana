@@ -3,7 +3,23 @@
   "name": "Elasticsearch",
   "id": "elasticsearch",
 
-  "defaultMatchFormat": "lucene",
+  "info": {
+    "description": "Elasticsearch Data Source for Grafana",
+    "author": {
+      "name": "Grafana Core",
+      "url": "http://grafana.org"
+    },
+    "keywords": ["elasticsearch"],
+    "logos": {
+      "small": "img/logo_large.png",
+      "large": "img/logo_large.png"
+    },
+    "links": [
+      {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
+    ],
+    "version": "3.0.0"
+  },
+
   "annotations": true,
   "metrics": true
 }

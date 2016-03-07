@@ -22,8 +22,14 @@
 }
 
 .plugin-header-stamps-type {
-  color: $link-color-disabled;
+  color: $headings-color-disabled;
   text-transform: uppercase;
+}
+
+.plugin-dependency-icon {
+  img {
+    width: 16px;
+  }
 }
 
 // .app-edit-logo-box {

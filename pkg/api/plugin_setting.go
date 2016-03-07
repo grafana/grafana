@@ -42,10 +42,11 @@ func GetPluginSettingById(c *middleware.Context) Response {
 		return ApiError(404, "Plugin not found, no installed plugin with that id", nil)
 	} else {
 		dto := &dtos.PluginSetting{
-			Type:     def.Type,
-			PluginId: def.Id,
-			Name:     def.Name,
-			Info:     &def.Info,
+			Type:         def.Type,
+			PluginId:     def.Id,
+			Name:         def.Name,
+			Info:         &def.Info,
+			Dependencies: &def.Dependencies,
 		}
 
 		if app, exists := plugins.Apps[pluginId]; exists {
