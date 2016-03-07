@@ -33,6 +33,8 @@ module.exports = function(config) {
         'rxjs/**/*',
         'tether/**/*',
         'tether-drop/**/*',
+        'tether-drop/**/*',
+        'remarkable/dist/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

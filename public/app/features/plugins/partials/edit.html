@@ -1,10 +1,10 @@
 <navbar title="Plugins" title-url="plugins" icon="icon-gf icon-gf-apps">
-	<a href="plugins/apps" class="navbar-page-btn">
-		Plugin details
+	<a href="plugins" class="navbar-page-btn">
+    {{ctrl.model.name}}
 	</a>
 </navbar>
 
-<div class="page-container">
+<div class="page-container" ng-init="ctrl.init()">
   <div class="plugin-header">
 		<span ng-show="ctrl.model.info.logos.large" class="plugin-header-logo">
 			<img src="{{ctrl.model.info.logos.large}}">
@@ -30,7 +30,8 @@
 
 	<div class="page-body">
 		<div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 0">
-			README.md
+      <div ng-bind-html="ctrl.readmeHtml">
+      </div>
 		</div>
 
 		<div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 1">
