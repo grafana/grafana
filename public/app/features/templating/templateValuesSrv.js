@@ -24,7 +24,7 @@ function (angular, _, kbn) {
       var promises = [];
       for (var i = 0; i < self.variables.length; i++) {
         var variable = self.variables[i];
-        if (variable.refresh === 'On Time Change') {
+        if (variable.refresh === 'On Time Change and Dashboard Load') {
           promises.push(self.updateOptions(variable));
         }
       }
@@ -71,7 +71,7 @@ function (angular, _, kbn) {
         if (urlValue !== void 0) {
           return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
         }
-        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change') {
+        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change and Dashboard Load') {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
               console.log("setting current for %s", variable.name);
