@@ -24,7 +24,7 @@ func upgradeCommand(c CommandLine) error {
 		if localPlugin.Id == v.Id {
 			if ShouldUpgrade(localPlugin.Info.Version, v) {
 				s.RemoveInstalledPlugin(pluginDir, pluginName)
-				return InstallPlugin(localPlugin.Id, pluginDir, "", c.GlobalString("repo"))
+				return InstallPlugin(localPlugin.Id, "", c)
 			}
 		}
 	}

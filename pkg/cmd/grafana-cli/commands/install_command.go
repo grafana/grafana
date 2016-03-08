@@ -49,11 +49,12 @@ func installCommand(c CommandLine) error {
 		log.Infof("version: %v\n", version)
 	}
 
-	return InstallPlugin(pluginToInstall, pluginFolder, version, c.GlobalString("repo"))
+	return InstallPlugin(pluginToInstall, version, c)
 }
 
-func InstallPlugin(pluginName, pluginFolder, version, repoUrl string) error {
-	plugin, err := s.GetPlugin(pluginName, repoUrl)
+func InstallPlugin(pluginName, version string, c CommandLine) error {
+	plugin, err := s.GetPlugin(pluginName, c.GlobalString("repo"))
+	pluginFolder := c.GlobalString("path")
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func InstallPlugin(pluginName, pluginFolder, version, repoUrl string) error {
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 
 	for _, v := range res.Dependency.Plugins {
-		InstallPlugin(v.Id, pluginFolder, "", repoUrl)
+		InstallPlugin(v.Id, version, c)
 		log.Infof("Installed Dependency: %v ✔\n", v.Id)
 	}
 
