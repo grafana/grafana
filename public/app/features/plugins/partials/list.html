@@ -18,7 +18,7 @@
 		<tbody>
 			<tr ng-repeat="plugin in ctrl.plugins">
 				<td>
-					<a href="plugins/{{plugin.pluginId}}/edit">
+					<a href="plugins/{{plugin.id}}/edit">
 						{{plugin.name}}
 					</a>
 				</td>
@@ -30,7 +30,7 @@
 					<span class="label label-info" ng-if="plugin.pinned">Pinned</span>
 				</td>
 				<td class="text-right">
-					<a href="plugins/{{plugin.pluginId}}/edit" class="btn btn-inverse btn-small">
+					<a href="plugins/{{plugin.id}}/edit" class="btn btn-inverse btn-small">
 							<i class="fa fa-edit"></i>
 							Edit
 						</a>

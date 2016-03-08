@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div ng-if="ctrl.model.pluginId">
+      <div ng-if="ctrl.model.id">
         <plugin-component type="app-config-ctrl"></plugin-component>
         <div class="clearfix"></div>
         <button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
@@ -70,7 +70,7 @@
           </li>
           <li ng-repeat="page in ctrl.model.pages" class="plugin-info-list-item">
             <i class="icon-gf icon-gf-share"></i>
-            <a href="plugins/{{ctrl.pluginId}}/page/{{page.slug}}">{{page.name}}</a>
+            <a href="plugins/{{ctrl.model.id}}/page/{{page.slug}}">{{page.name}}</a>
           </li>
         </ul>
       </section>

@@ -6,7 +6,6 @@ import (
 	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -98,24 +97,6 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 	}
 
 	c.JsonOK("Datasource updated")
-}
-
-func GetDataSourcePlugins(c *middleware.Context) {
-	dsList := make(map[string]*plugins.DataSourcePlugin)
-
-	if enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId); err != nil {
-		c.JsonApiErr(500, "Failed to get org apps", err)
-		return
-	} else {
-
-		for key, value := range enabledPlugins.DataSources {
-			if !value.BuiltIn {
-				dsList[key] = value
-			}
-		}
-
-		c.JSON(200, dsList)
-	}
 }
 
 // Get /api/datasources/name/:name

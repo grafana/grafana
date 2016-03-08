@@ -9,6 +9,10 @@ import (
 )
 
 func GetPluginList(c *middleware.Context) Response {
+	typeFilter := c.Query("type")
+	enabledFilter := c.Query("enabled")
+	embeddedFilter := c.Query("embedded")
+
 	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
 
 	if err != nil {
@@ -17,21 +21,31 @@ func GetPluginList(c *middleware.Context) Response {
 
 	result := make([]*dtos.PluginListItem, 0)
 	for _, pluginDef := range plugins.Plugins {
-		// filter out plugin components
-		if pluginDef.IncludedInAppId != "" {
+		// filter out app sub plugins
+		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
+			continue
+		}
+
+		// filter on type
+		if typeFilter != "" && typeFilter != pluginDef.Type {
 			continue
 		}
 
 		listItem := &dtos.PluginListItem{
-			PluginId: pluginDef.Id,
-			Name:     pluginDef.Name,
-			Type:     pluginDef.Type,
-			Info:     &pluginDef.Info,
+			Id:   pluginDef.Id,
+			Name: pluginDef.Name,
+			Type: pluginDef.Type,
+			Info: &pluginDef.Info,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
+		}
+
+		// filter out disabled
+		if enabledFilter == "1" && !listItem.Enabled {
+			continue
 		}
 
 		result = append(result, listItem)
@@ -46,19 +60,20 @@ func GetPluginSettingById(c *middleware.Context) Response {
 	if def, exists := plugins.Plugins[pluginId]; !exists {
 		return ApiError(404, "Plugin not found, no installed plugin with that id", nil)
 	} else {
+
 		dto := &dtos.PluginSetting{
 			Type:         def.Type,
-			PluginId:     def.Id,
+			Id:           def.Id,
 			Name:         def.Name,
 			Info:         &def.Info,
 			Dependencies: &def.Dependencies,
+			Includes:     def.Includes,
+			BaseUrl:      def.BaseUrl,
+			Module:       def.Module,
 		}
 
 		if app, exists := plugins.Apps[pluginId]; exists {
 			dto.Pages = app.Pages
-			dto.Includes = app.Includes
-			dto.BaseUrl = app.BaseUrl
-			dto.Module = app.Module
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}

@@ -72,8 +72,6 @@ export class PluginEditCtrl {
     // Perform the core update procedure
     chain = chain.then(function() {
       var updateCmd = _.extend({
-        pluginId: self.model.pluginId,
-        orgId: self.model.orgId,
         enabled: self.model.enabled,
         pinned: self.model.pinned,
         jsonData: self.model.jsonData,

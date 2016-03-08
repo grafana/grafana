@@ -5,16 +5,38 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetPluginSettings(orgId int64) (map[string]*m.PluginSetting, error) {
+func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) {
 	query := m.GetPluginSettingsQuery{OrgId: orgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	pluginMap := make(map[string]*m.PluginSetting)
+	pluginMap := make(map[string]*m.PluginSettingInfoDTO)
 	for _, plug := range query.Result {
 		pluginMap[plug.PluginId] = plug
+	}
+
+	for _, pluginDef := range Plugins {
+		// ignore entries that exists
+		if _, ok := pluginMap[pluginDef.Id]; ok {
+			continue
+		}
+
+		// default to enabled true
+		opt := &m.PluginSettingInfoDTO{Enabled: true}
+
+		// if it's included in app check app settings
+		if pluginDef.IncludedInAppId != "" {
+			// app componets are by default disabled
+			opt.Enabled = false
+
+			if appSettings, ok := pluginMap[pluginDef.IncludedInAppId]; ok {
+				opt.Enabled = appSettings.Enabled
+			}
+		}
+
+		pluginMap[pluginDef.Id] = opt
 	}
 
 	return pluginMap, nil
@@ -22,44 +44,32 @@ func GetPluginSettings(orgId int64) (map[string]*m.PluginSetting, error) {
 
 func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 	enabledPlugins := NewEnabledPlugins()
-	orgPlugins, err := GetPluginSettings(orgId)
+	pluginSettingMap, err := GetPluginSettings(orgId)
 	if err != nil {
 		return nil, err
 	}
 
-	enabledApps := make(map[string]bool)
+	isPluginEnabled := func(pluginId string) bool {
+		_, ok := pluginSettingMap[pluginId]
+		return ok
+	}
 
 	for pluginId, app := range Apps {
-
-		if b, ok := orgPlugins[pluginId]; ok {
-			app.Enabled = b.Enabled
+		if b, ok := pluginSettingMap[pluginId]; ok {
 			app.Pinned = b.Pinned
-		}
-
-		if app.Enabled {
-			enabledApps[pluginId] = true
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
 		}
 	}
 
-	isPluginEnabled := func(appId string) bool {
-		if appId == "" {
-			return true
-		}
-
-		_, ok := enabledApps[appId]
-		return ok
-	}
-
 	// add all plugins that are not part of an App.
 	for dsId, ds := range DataSources {
-		if isPluginEnabled(ds.IncludedInAppId) {
+		if isPluginEnabled(ds.Id) {
 			enabledPlugins.DataSources[dsId] = ds
 		}
 	}
 
 	for _, panel := range Panels {
-		if isPluginEnabled(panel.IncludedInAppId) {
+		if isPluginEnabled(panel.Id) {
 			enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
 		}
 	}

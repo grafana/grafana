@@ -61,7 +61,14 @@ func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() SecureJsonData {
 // QUERIES
 type GetPluginSettingsQuery struct {
 	OrgId  int64
-	Result []*PluginSetting
+	Result []*PluginSettingInfoDTO
+}
+
+type PluginSettingInfoDTO struct {
+	OrgId    int64
+	PluginId string
+	Enabled  bool
+	Pinned   bool
 }
 
 type GetPluginSettingByIdQuery struct {

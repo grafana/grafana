@@ -3,7 +3,10 @@
   "type": "datasource",
   "id": "graphite",
 
-  "defaultMatchFormat": "glob",
+  "includes": [
+    {"type": "dashboard", "name": "Carbon Stats", "path": "dashboards/carbon_stats.json"}
+  ],
+
   "metrics": true,
   "annotations": true
 }
