@@ -129,8 +129,6 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    this.panel.now = true;
-
     var range = {from: timespan.from, to: timespan.to};
 
     if (this.panel.nowDelay && range.to === 'now') {

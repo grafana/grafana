@@ -44,8 +44,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, walk
 //
 //If resolvedPath is "", then we are not following symbolic links.
 //If symlinkPathsFollowed is not nil, then we need to detect infinite loop.
-func walk(path string, info os.FileInfo, resolvedPath string,
-	symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
+func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
 	if info == nil {
 		return errors.New("Walk: Nil FileInfo passed")
 	}
@@ -81,18 +80,53 @@ func walk(path string, info os.FileInfo, resolvedPath string,
 		if err != nil {
 			return walkFn(resolvedPath, info, err)
 		}
+		var subFiles = make([]subFile, 0)
 		for _, fileInfo := range list {
 			path2 := filepath.Join(path, fileInfo.Name())
 			var resolvedPath2 string
 			if resolvedPath != "" {
 				resolvedPath2 = filepath.Join(resolvedPath, fileInfo.Name())
 			}
-			err = walk(path2, fileInfo, resolvedPath2, symlinkPathsFollowed, walkFn)
+			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
+		}
+
+		if containsDistFolder(subFiles) {
+			err := walk(
+				filepath.Join(path, "dist"),
+				info,
+				filepath.Join(resolvedPath, "dist"),
+				symlinkPathsFollowed,
+				walkFn)
+
 			if err != nil {
 				return err
 			}
+		} else {
+			for _, p := range subFiles {
+				err = walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, walkFn)
+
+				if err != nil {
+					return err
+				}
+			}
 		}
+
 		return nil
 	}
 	return nil
+}
+
+type subFile struct {
+	path, resolvedPath string
+	fileInfo           os.FileInfo
+}
+
+func containsDistFolder(subFiles []subFile) bool {
+	for _, p := range subFiles {
+		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
+			return true
+		}
+	}
+
+	return false
 }

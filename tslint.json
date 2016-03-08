@@ -29,7 +29,6 @@
     "no-shadowed-variable": false,
     "no-string-literal": false,
     "no-switch-case-fall-through": false,
-    "no-trailing-comma": true,
     "no-trailing-whitespace": true,
     "no-unused-expression": false,
     "no-unused-variable": false,

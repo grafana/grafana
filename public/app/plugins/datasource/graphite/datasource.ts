@@ -64,7 +64,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
-      var target = templateSrv.replace(options.annotation.target);
+      var target = templateSrv.replace(options.annotation.target, {}, 'glob');
       var graphiteQuery = {
         rangeRaw: options.rangeRaw,
         targets: [{ target: target }],
@@ -72,8 +72,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
         maxDataPoints: 100
       };
 
-      return this.query(graphiteQuery)
-      .then(function(result) {
+      return this.query(graphiteQuery).then(function(result) {
         var list = [];
 
         for (var i = 0; i < result.data.length; i++) {

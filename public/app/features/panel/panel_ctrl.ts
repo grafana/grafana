@@ -3,6 +3,11 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import angular from 'angular';
+import $ from 'jquery';
+
+const TITLE_HEIGHT = 25;
+const EMPTY_TITLE_HEIGHT = 9;
+const PANEL_PADDING = 5;
 
 export class PanelCtrl {
   panel: any;
@@ -20,6 +25,9 @@ export class PanelCtrl {
   inspector: any;
   editModeInitiated: boolean;
   editorHelpIndex: number;
+  editMode: any;
+  height: any;
+  containerHeight: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -34,10 +42,12 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
+    $scope.$on("render", () => this.calculatePanelHeight());
   }
 
   init() {
     this.publishAppEvent('panel-instantiated', {scope: this.$scope});
+    this.calculatePanelHeight();
     this.refresh();
   }
 
@@ -96,7 +106,9 @@ export class PanelCtrl {
     let menu = [];
     menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
     menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    menu.push({text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    }
     menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
     return menu;
   }
@@ -107,6 +119,23 @@ export class PanelCtrl {
 
   otherPanelInFullscreenMode() {
     return this.dashboard.meta.fullscreen && !this.fullscreen;
+  }
+
+  calculatePanelHeight() {
+
+    if (this.fullscreen) {
+      var docHeight = $(window).height();
+      var editHeight = Math.floor(docHeight * 0.3);
+      var fullscreenHeight = Math.floor(docHeight * 0.7);
+      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+    } else {
+      this.containerHeight = this.panel.height || this.row.height;
+      if (_.isString(this.containerHeight)) {
+        this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
+      }
+    }
+
+    this.height = this.containerHeight - (PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
   broadcastRender(arg1?, arg2?) {
@@ -134,9 +163,10 @@ export class PanelCtrl {
 
   removePanel() {
     this.publishAppEvent('confirm-modal', {
-      title: 'Are you sure you want to remove this panel?',
+      title: 'Remove Panel',
+      text: 'Are you sure you want to remove this panel?',
       icon: 'fa-trash',
-      yesText: 'Delete',
+      yesText: 'Remove',
       onConfirm: () => {
         this.row.panels = _.without(this.row.panels, this.panel);
       }
@@ -169,9 +199,9 @@ export class PanelCtrl {
     shareScope.dashboard = this.dashboard;
 
     this.publishAppEvent('show-modal', {
-     src: 'public/app/features/dashboard/partials/shareModal.html',
-     scope: shareScope
-   });
+      src: 'public/app/features/dashboard/partials/shareModal.html',
+      scope: shareScope
+    });
   }
 
   openInspector() {

@@ -28,7 +28,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.target = this.target;
-    this.queryModel = new InfluxQuery(this.target);
+    this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
     this.resultFormats = [
@@ -154,6 +154,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
+    this.target.query = this.queryModel.render(false);
     this.target.rawQuery = !this.target.rawQuery;
   }
 

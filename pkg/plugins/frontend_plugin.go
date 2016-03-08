@@ -28,11 +28,11 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 
 	fp.handleModuleDefaults()
 
-	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.Id)
-	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.Id)
+	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.BaseUrl)
+	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.BaseUrl)
 
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
-		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.Id)
+		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
 }
 
@@ -55,10 +55,14 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
 }
 
-func evalRelativePluginUrlPath(pathStr string, pluginId string) string {
+func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
+	if pathStr == "" {
+		return ""
+	}
+
 	u, _ := url.Parse(pathStr)
 	if u.IsAbs() {
 		return pathStr
 	}
-	return path.Join("public/plugins", pluginId, pathStr)
+	return path.Join(baseUrl, pathStr)
 }

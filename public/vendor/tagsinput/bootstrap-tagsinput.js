@@ -35,7 +35,8 @@
     this.inputSize = Math.max(1, this.placeholderText.length);
 
     this.$container = $('<div class="bootstrap-tagsinput"></div>');
-    this.$input = $('<input size="' + this.inputSize + '" type="text" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
+    this.$input = $('<input class="tight-form-input" size="' +
+                    this.inputSize + '" type="text" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
 
     this.$element.after(this.$container);
 

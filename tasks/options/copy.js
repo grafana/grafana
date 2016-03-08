@@ -31,6 +31,10 @@ module.exports = function(config) {
         'reflect-metadata/*.ts',
         'reflect-metadata/*.d.ts',
         'rxjs/**/*',
+        'tether/**/*',
+        'tether-drop/**/*',
+        'tether-drop/**/*',
+        'remarkable/dist/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

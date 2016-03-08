@@ -34,8 +34,8 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       queryTargets.push(target);
 
       // build query
-      var queryModel = new InfluxQuery(target);
-      var query =  queryModel.render();
+      var queryModel = new InfluxQuery(target, templateSrv, options.scopedVars);
+      var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
 
@@ -85,6 +85,10 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
   };
 
   this.annotationQuery = function(options) {
+    if (!options.annotation.query) {
+      return $q.reject({message: 'Query missing in annotation definition'});
+    }
+
     var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = templateSrv.replace(query);

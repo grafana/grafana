@@ -16,9 +16,7 @@ function (angular, _) {
       name: '',
       options: [],
       includeAll: false,
-      allFormat: 'glob',
       multi: false,
-      multiFormat: 'glob',
     };
 
     $scope.init = function() {

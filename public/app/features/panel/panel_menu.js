@@ -2,8 +2,9 @@ define([
   'angular',
   'jquery',
   'lodash',
+  'tether',
 ],
-function (angular, $, _) {
+function (angular, $, _, Tether) {
   'use strict';
 
   angular
@@ -35,8 +36,10 @@ function (angular, $, _) {
         if (ctrl.dashboard.meta.canEdit) {
           template += '<div class="panel-menu-inner">';
           template += '<div class="panel-menu-row">';
-          template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
-          template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
+          if (!ctrl.dashboard.meta.fullscreen) {
+            template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
+            template += '<a class="panel-menu-icon pull-left" ng-click="ctrl.updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
+          }
           template += '<a class="panel-menu-icon pull-right" ng-click="ctrl.removePanel()"><i class="fa fa-trash"></i></a>';
           template += '<div class="clearfix"></div>';
           template += '</div>';
@@ -77,6 +80,7 @@ function (angular, $, _) {
           var ctrl = $scope.ctrl;
           var timeout = null;
           var $menu = null;
+          var teather;
 
           elem.append($link);
 
@@ -103,6 +107,7 @@ function (angular, $, _) {
             }
 
             if (menuScope) {
+              teather.destroy();
               $menu.unbind();
               $menu.remove();
               menuScope.$destroy();
@@ -151,23 +156,19 @@ function (angular, $, _) {
             $scope.$apply(function() {
               $compile($menu.contents())(menuScope);
 
-              var menuWidth =  $menu[0].offsetWidth;
-              var menuHeight =  $menu[0].offsetHeight;
-
-              var windowWidth = $(window).width();
-              var panelLeftPos = $(elem).offset().left;
-              var panelWidth = $(elem).width();
-
-              var menuLeftPos = (panelWidth / 2) - (menuWidth/2);
-              var stickingOut = panelLeftPos + menuLeftPos + menuWidth - windowWidth;
-              if (stickingOut > 0) {
-                menuLeftPos -= stickingOut + 10;
-              }
-              if (panelLeftPos + menuLeftPos < 0) {
-                menuLeftPos = 0;
-              }
-
-              $menu.css({'left': menuLeftPos, top: -menuHeight});
+              teather = new Tether({
+                element: $menu,
+                target: $panelContainer,
+                attachment: 'bottom center',
+                targetAttachment: 'top center',
+                constraints: [
+                  {
+                    to: 'window',
+                    attachment: 'together',
+                    pin: true
+                  }
+                ]
+              });
             });
 
             dismiss(2200);

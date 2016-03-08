@@ -35,7 +35,7 @@ func (a *ldapAuther) Dial() error {
 				return err
 			} else {
 				if !certPool.AppendCertsFromPEM(pem) {
-					return errors.New("Failed to append CA certficate " + caCertFile)
+					return errors.New("Failed to append CA certificate " + caCertFile)
 				}
 			}
 		}

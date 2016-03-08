@@ -50,7 +50,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   unitFormats: any[];
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv, private templateSrv) {
+  constructor($scope, $injector, private $location, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, panelDefaults);
   }
@@ -213,7 +213,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // value/number to text mapping
       var value = parseFloat(map.value);
-      if (value === data.value) {
+      if (value === data.valueRounded) {
         data.valueFormated = map.text;
         return;
       }
@@ -241,7 +241,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
     var data, linkInfo;
-    var elemHeight;
     var $panelContainer = elem.find('.panel-container');
     // change elem to singlestat panel
     elem = elem.find('.singlestat-panel');
@@ -253,21 +252,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     });
 
     function setElementHeight() {
-      try {
-        elemHeight = ctrl.height || panel.height || ctrl.row.height;
-        if (_.isString(elemHeight)) {
-          elemHeight = parseInt(elemHeight.replace('px', ''), 10);
-        }
-
-        elemHeight -= 5; // padding
-        elemHeight -= panel.title ? 24 : 9; // subtract panel title bar
-
-        elem.css('height', elemHeight + 'px');
-
-        return true;
-      } catch (e) { // IE throws errors sometimes
-        return false;
-      }
+      elem.css('height', ctrl.height + 'px');
     }
 
     function applyColoringThresholds(value, valueString) {
@@ -306,7 +291,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       var width = elem.width() + 20;
-      var height = elemHeight;
+      var height = ctrl.height;
 
       var plotCanvas = $('<div></div>');
       var plotCss: any = {};

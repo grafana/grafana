@@ -1,99 +1,76 @@
-<navbar icon="fa fa-fw fa-users" title="Organization">
-	<ul class="nav">
-		<li class="active"><a href="org">Preferences</a></li>
-	</ul>
+<navbar icon="icon-gf icon-gf-users" title="Organization" title-url="org">
 </navbar>
 
 <div class="page-container">
-	<div class="page">
-
-		<h1>Organization</h1>
-
-		<section class="simple-box">
-			<h3 class="simple-box-header">Preferences</h3>
-		</section>
-
-		<form name="orgForm">
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Name
-					</li>
-					<li>
-						<input type="text" required ng-model="org.name" class="tight-form-input last" style="width: 475px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
-			<br>
-		</form>
-
-		<section class="simple-box">
-			<h3 class="simple-box-header">Address</h3>
-		</section>
-
-		<form name="addressForm">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						Address 1
-					</li>
-					<li>
-						<input type="text" ng-model="address.address1" class="tight-form-input" style="width:193px">
-					</li>
-					<li class="tight-form-item" style="width: 75px">
-						Address 2
-					</li>
-					<li>
-						<input type="text" ng-model="address.address2" class="tight-form-input last" style="width:193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						City
-					</li>
-					<li>
-						<input type="text" ng-model="address.city" class="tight-form-input" style="width: 193px">
-					</li>
-					<li class="tight-form-item" style="width: 75px">
-						Postal code
-					</li>
-					<li>
-						<input type="text" ng-model="address.zipCode" class="input-medium tight-form-input last" style="width: 193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px">
-						State
-					</li>
-					<li>
-						<input type="text" ng-model="address.state" class="tight-form-input" style="width: 193px">
-					</li>
-					<li class="tight-form-item" style="width: 75px">
-						Country
-					</li>
-					<li>
-						<input type="text" ng-model="address.country" class="tight-form-input last" style="width: 193px">
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="updateAddress()">Update</button>
-			<br>
-		</form>
+	<div class="page-header">
+		<h1>Preferences</h1>
 	</div>
 
+	<h3 class="page-heading">General</h3>
+	<form name="orgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-6">Name</span>
+				<input class="gf-form-input" type="text" required ng-model="org.name">
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-success" ng-click="update()">Update</button>
+			</div>
+		</div>
+	</form>
+
+
+	<h3 class="page-heading">Address</h3>
+
+	<form name="addressForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">Address1</span>
+				<input class="gf-form-input" type="text" ng-model="address.address1">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">Address2</span>
+				<input class="gf-form-input" type="text" ng-model="address.address2">
+			</div>
+		</div>
+
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">City</span>
+				<input class="gf-form-input" type="text" ng-model="address.city">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">Postal code</span>
+				<input class="gf-form-input" type="text" ng-model="address.zipCode">
+			</div>
+		</div>
+
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">State</span>
+				<input class="gf-form-input" type="text" ng-model="address.state">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">Country</span>
+				<input class="gf-form-input" type="text" ng-model="address.country">
+			</div>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Admin Pages</h3>
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<a href="org/users" class="btn gf-form-btn btn-inverse">Users &amp; Roles</a>
+			</div>
+			<div class="gf-form">
+			<a href="org/apikeys" class="btn gf-form-btn btn-inverse">API Keys</a>
+		</div>
+	</div>
 </div>
 
 

@@ -28,24 +28,26 @@ var panelTemplate = `
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
-    <div class="gf-box">
-      <div class="gf-box-header">
-        <div class="gf-box-title">
-          <i ng-class="ctrl.icon"></i>
+    <div class="tabbed-view tabbed-view--panel-edit">
+      <div class="tabbed-view-header">
+        <h2 class="tabbed-view-title">
           {{ctrl.pluginName}}
-        </div>
+        </h2>
 
-        <div ng-model="ctrl.editorTabIndex" bs-tabs>
-          <div ng-repeat="tab in ctrl.editorTabs" data-title="{{tab.title}}">
-          </div>
-        </div>
+        <ul class="gf-tabs">
+          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
+            <a class="gf-tabs-link" ng-click="ctrl.editorTabIndex = $index" ng-class="{active: ctrl.editorTabIndex === $index}">
+              {{::tab.title}}
+            </a>
+          </li>
+        </ul>
 
-        <button class="gf-box-header-close-btn" ng-click="ctrl.exitFullscreen();">
-          Back to dashboard
+        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
+          <i class="fa fa-remove"></i>
         </button>
       </div>
 
-      <div class="gf-box-body">
+      <div class="tabbed-view-body">
         <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
           <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
         </div>
@@ -63,8 +65,8 @@ module.directive('grafanaPanel', function() {
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var ctrl = scope.ctrl;
-      scope.$watchGroup(['ctrl.fullscreen', 'ctrl.height', 'ctrl.panel.height', 'ctrl.row.height'], function() {
-        panelContainer.css({ minHeight: ctrl.height || ctrl.panel.height || ctrl.row.height, display: 'block' });
+      scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
+        panelContainer.css({minHeight: ctrl.containerHeight});
         elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
       });
     }

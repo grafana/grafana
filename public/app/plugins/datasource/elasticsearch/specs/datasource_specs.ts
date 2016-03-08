@@ -33,7 +33,7 @@ describe('ElasticDatasource', function() {
       var requestOptions;
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
-        return ctx.$q.when({});
+        return ctx.$q.when({data: {}});
       };
 
       ctx.ds.testDatasource();
