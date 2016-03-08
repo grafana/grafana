@@ -18,7 +18,13 @@ function (angular, _, config) {
 
   module.controller('DataSourceEditCtrl', function($scope, $q, backendSrv, $routeParams, $location, datasourceSrv) {
 
-    var defaults = {name: '', type: 'graphite', url: '', access: 'proxy', jsonData: {}};
+    var defaults = {
+      name: '',
+      type: 'graphite',
+      url: '',
+      access: 'proxy',
+      jsonData: {}
+    };
 
     $scope.init = function() {
       $scope.isNew = true;

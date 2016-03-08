@@ -8,8 +8,13 @@ class DashboardScriptLoader {
 }
 
 export class DashImportListCtrl {
+  dashboards: any[];
+  plugin: any;
+
   constructor(private $http) {
-    console.log('importList', this);
+
+    this.dashboards = this.plugin.includes.filter(val => val.type === 'dashboard');
+
   }
 
   load(json) {
@@ -18,17 +23,22 @@ export class DashImportListCtrl {
   }
 
   import() {
-    var url = 'public/app/plugins/datasource/graphite/dashboards/carbon_stats.json';
-    this.$http.get(url).then(res => {
-      this.load(res.data);
-    });
+    // this.$http.get(url).then(res => {
+    //   this.load(res.data);
+    // });
   }
 }
 
 var template = `
-<h3 class="page-heading">Dashboards</h3>
-<div class="gf-form-group">
-  <button class="btn btn-mini btn-inverse" ng-click="ctrl.import(dash)">Import</button>
+<div class="gf-form-group" ng-if="ctrl.dashboards.length">
+  <h3 class="page-heading">Dashboards</h3>
+  <div class="gf-form" ng-repeat="dash in ctrl.dashboards">
+    <label class="gf-form-label">
+        <i class="icon-gf icon-gf-dashboard"></i>
+    </label>
+    <label class="gf-form-label width-20">{{dash.name}}</label>
+    <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.import(dash)">Import</button>
+  </div>
 </div>
 `;
 

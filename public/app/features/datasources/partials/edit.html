@@ -36,6 +36,8 @@ icon="icon-gf icon-gf-datasources">
 		<rebuild-on-change property="datasourceMeta.id">
 			<plugin-component type="datasource-config-ctrl">
 			</plugin-component>
+
+			<dashboard-import-list plugin="datasourceMeta"></dashboard-import-list>
 		</rebuild-on-change>
 
 		<div ng-if="testing" style="margin-top: 25px">
@@ -46,8 +48,6 @@ icon="icon-gf icon-gf-datasources">
 				<div ng-bind='testing.message'></div>
 			</div>
 		</div>
-
-		<!-- <dashboard&#45;import&#45;list plugin="current"></dashboard&#45;import&#45;list> -->
 
 		<div class="gf-form-button-row">
 			<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
