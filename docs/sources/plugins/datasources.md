@@ -8,7 +8,7 @@ page_keywords: grafana, plugins, documentation
 
 # Datasources
 
-Datasource plugins enables people to develop plugins for any database that commuicates over http. Its up to the plugin to transform the data into time series data so that any grafana panel can then show it.
+Datasource plugins enables people to develop plugins for any database that communicates over http. Its up to the plugin to transform the data into time series data so that any grafana panel can then show it.
 
 To interact with the rest of grafana the plugins module file can export 5 different components.
 
@@ -54,7 +54,7 @@ Request object passed to datasource.query function
 ```
 
 There are two different kind of results for datasources.
-Time series and table. Time series is the most common format and is suppoert by all datasources and panels. Table format is only support by the Influxdb datasource and table panel. But we might se more of this in the future.
+Time series and table. Time series is the most common format and is supported by all datasources and panels. Table format is only support by the Influxdb datasource and table panel. But we might see more of this in the future.
 
 Time series response from datasource.query
 An array of

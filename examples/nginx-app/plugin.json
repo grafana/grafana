@@ -34,6 +34,14 @@
     "updated": "2015-02-10"
   },
 
+  "includes": {
+    "dashboards": [],
+    "plugins": [
+      {"type": "panel", "name": "Nginx Panel"},
+      {"type": "datasource", "name": "Nginx Datasource"}
+    ]
+  },
+
   "dependencies": {
     "grafanaVersion": "3.x.x",
     "plugins": [
