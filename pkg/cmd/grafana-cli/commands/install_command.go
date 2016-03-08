@@ -26,8 +26,8 @@ func validateInput(c CommandLine, pluginFolder string) error {
 		return errors.New("missing path flag")
 	}
 
-	fileinfo, err := os.Stat(pluginDir)
-	if err != nil && !fileinfo.IsDir() {
+	fileInfo, err := os.Stat(pluginDir)
+	if err != nil && !fileInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
 
@@ -49,11 +49,12 @@ func installCommand(c CommandLine) error {
 		log.Infof("version: %v\n", version)
 	}
 
-	return InstallPlugin(pluginToInstall, pluginFolder, version, c.GlobalString("repo"))
+	return InstallPlugin(pluginToInstall, version, c)
 }
 
-func InstallPlugin(pluginName, pluginFolder, version, repoUrl string) error {
-	plugin, err := s.GetPlugin(pluginName, repoUrl)
+func InstallPlugin(pluginName, version string, c CommandLine) error {
+	plugin, err := s.GetPlugin(pluginName, c.GlobalString("repo"))
+	pluginFolder := c.GlobalString("path")
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func InstallPlugin(pluginName, pluginFolder, version, repoUrl string) error {
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 
 	for _, v := range res.Dependency.Plugins {
-		InstallPlugin(v.Id, pluginFolder, "", repoUrl)
+		InstallPlugin(v.Id, version, c)
 		log.Infof("Installed Dependency: %v ✔\n", v.Id)
 	}
 
@@ -106,12 +107,26 @@ func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {
 	return m.Version{}, errors.New("Could not find the version your looking for")
 }
 
-func RemoveGitBuildFromname(pluginname, filename string) string {
+func RemoveGitBuildFromName(pluginName, filename string) string {
 	r := regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-	return r.ReplaceAllString(filename, pluginname+"/")
+	return r.ReplaceAllString(filename, pluginName+"/")
 }
 
-func downloadFile(pluginName, filepath, url string) (err error) {
+var retryCount = 0
+
+func downloadFile(pluginName, filePath, url string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retryCount++
+			if retryCount == 1 {
+				log.Debug("\nFailed downloading. Will retry once.\n")
+				downloadFile(pluginName, filePath, url)
+			} else {
+				panic(r)
+			}
+		}
+	}()
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -122,24 +137,18 @@ func downloadFile(pluginName, filepath, url string) (err error) {
 	if err != nil {
 		return err
 	}
-	log.Infof("Got statuscode %s from %s\n", resp.Status, url)
-
-	if resp.StatusCode == 302 || resp.StatusCode == 301 {
-		str, _ := ioutil.ReadAll(resp.Body)
-		log.Info("body %s\n\n", string(str))
-	}
 
 	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
 	if err != nil {
 		return err
 	}
 	for _, zf := range r.File {
-		newfile := path.Join(filepath, RemoveGitBuildFromname(pluginName, zf.Name))
+		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			os.Mkdir(newfile, 0777)
+			os.Mkdir(newFile, 0777)
 		} else {
-			dst, err := os.Create(newfile)
+			dst, err := os.Create(newFile)
 			if err != nil {
 				log.Errorf("%v", err)
 			}
