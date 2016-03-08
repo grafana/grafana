@@ -17,13 +17,13 @@ This class have to inherit from sdk.PanelCtrl or sdk.MetricsPanelCtrl and be exp
   };
 ```
 
-This class will be instancieted once for every panel of its kind in a dashboard and treated as an AngularJs controller.
+This class will be instantiated once for every panel of its kind in a dashboard and treated as an AngularJs controller.
 
 ## MetricsPanelCtrl or PanelCtrl
 
-MetricsPanelCtrl inherits from PanelCtrl and adds some common features for datasource usage. So if your Panel will be working with a datasource you should inherit from MetricsPanelCtrl. If dont need to access any datasource then you should inherit from PanelCtrl instead.
+MetricsPanelCtrl inherits from PanelCtrl and adds some common features for datasource usage. So if your Panel will be working with a datasource you should inherit from MetricsPanelCtrl. If don't need to access any datasource then you should inherit from PanelCtrl instead.
 
 ## Implementing a MetricsPanelCtrl
 
-If you choose to inherit from MetricsPanelCtrl you should implement a function called refreshData that will take an datasource as inparameter when its time to get new data. Its recommended that the refreshData function calls the issueQueries in the base class but its not mandatory. An examples of such implementation can be found in our [example panel](https://github.com/grafana/grafana/blob/master/examples/panel-boilerplate-es5/module.js#L27-L38)
+If you choose to inherit from MetricsPanelCtrl you should implement a function called refreshData that will take a datasource as in parameter when its time to get new data. Its recommended that the refreshData function calls the issueQueries in the base class but its not mandatory. An examples of such implementation can be found in our [example panel](https://github.com/grafana/grafana/blob/master/examples/panel-boilerplate-es5/module.js#L27-L38)
 
