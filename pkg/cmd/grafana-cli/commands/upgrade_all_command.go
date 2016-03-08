@@ -54,7 +54,7 @@ func upgradeAllCommand(c CommandLine) error {
 		log.Infof("Upgrading %v \n", p.Id)
 
 		s.RemoveInstalledPlugin(pluginDir, p.Id)
-		InstallPlugin(p.Id, pluginDir, "", c.GlobalString("repo"))
+		InstallPlugin(p.Id, "", c)
 	}
 
 	return nil
