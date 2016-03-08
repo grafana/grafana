@@ -111,7 +111,21 @@ func RemoveGitBuildFromname(pluginname, filename string) string {
 	return r.ReplaceAllString(filename, pluginname+"/")
 }
 
+var retryCount = 0
+
 func downloadFile(pluginName, filepath, url string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retryCount++
+			if retryCount == 1 {
+        log.Debug("\nFailed downloading. Will retry once.\n")
+				downloadFile(pluginName, filepath, url)
+			} else {
+        panic(r)
+      }
+		}
+	}()
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -121,12 +135,6 @@ func downloadFile(pluginName, filepath, url string) (err error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
-	}
-	log.Infof("Got statuscode %s from %s\n", resp.Status, url)
-
-	if resp.StatusCode == 302 || resp.StatusCode == 301 {
-		str, _ := ioutil.ReadAll(resp.Body)
-		log.Info("body %s\n\n", string(str))
 	}
 
 	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
