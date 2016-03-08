@@ -35,7 +35,7 @@
   },
 
   "dependencies": {
-    "grafanaVersion": "2.6.x",
+    "grafanaVersion": "3.x.x",
     "plugins": [
       {"type": "datasource", "id": "graphite", "name": "Graphite", "version": "1.0.0"},
       {"type": "panel", "id": "graph", "name": "Graph", "version": "1.0.0"}

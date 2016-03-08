@@ -2,7 +2,7 @@
 
 import './graph';
 import './legend';
-import './seriesOverridesCtrl';
+import './series_overrides_ctrl';
 
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
@@ -69,6 +69,7 @@ var panelDefaults = {
   tooltip       : {
     value_type: 'cumulative',
     shared: true,
+    msResolution: false,
   },
   // time overrides
   timeFrom: null,
@@ -125,7 +126,8 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   getExtendedMenu() {
     var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
+    menu.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
+    menu.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     menu.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
     return menu;
   }
@@ -199,8 +201,11 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
 
       this.datapointsCount += datapoints.length;
+
+      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
+    series.applySeriesOverrides(this.panel.seriesOverrides);
     return series;
   }
 
@@ -261,13 +266,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  toggleYAxis(info) {
-    var override = _.findWhere(this.panel.seriesOverrides, { alias: info.alias });
+  toggleAxis(info) {
+    var override = _.findWhere(this.panel.seriesOverrides, {alias: info.alias});
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
     }
-    override.yaxis = info.yaxis === 2 ? 1 : 2;
+    info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
     this.render();
   };
 
@@ -294,6 +299,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsv() {
     fileExport.exportSeriesListToCsv(this.seriesList);
+  }
+
+  exportCsvColumns() {
+    fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 }
 

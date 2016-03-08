@@ -3,6 +3,7 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import {PanelCtrl} from 'app/plugins/sdk';
+import {impressions} from 'app/features/dashboard/impression_store';
 
  // Set and populate defaults
 var panelDefaults = {
@@ -31,7 +32,7 @@ class DashListCtrl extends PanelCtrl {
 
   initEditMode() {
     super.initEditMode();
-    this.modes = ['starred', 'search'];
+    this.modes = ['starred', 'search', 'recently viewed'];
     this.icon = "fa fa-star";
     this.addEditorTab('Options', () => {
       return {templateUrl: 'public/app/plugins/panel/dashlist/editor.html'};
@@ -40,6 +41,25 @@ class DashListCtrl extends PanelCtrl {
 
   refresh() {
     var params: any = {limit: this.panel.limit};
+
+    if (this.panel.mode === 'recently viewed') {
+      var dashboardIds = impressions.getDashboardOpened();
+
+      return this.backendSrv.search({
+        dashboardIds: impressions.getDashboardOpened(),
+        limit: this.panel.limit
+      }).then(result => {
+        this.dashList = dashboardIds.map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
+          });
+        }).filter(el => {
+          return el !== undefined;
+        });
+
+        this.renderingCompleted();
+      });
+    }
 
     if (this.panel.mode === 'starred') {
       params.starred = "true";

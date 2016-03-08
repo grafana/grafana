@@ -34,7 +34,7 @@ Default Region | Used in query editor to set region (can be changed on per query
 Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
-Checkout AWS docs on [IAM Roles]](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
 ### AWS credentials file
 

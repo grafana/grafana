@@ -5,44 +5,40 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetOrgAppSettings(orgId int64) (map[string]*m.AppSettings, error) {
-	query := m.GetAppSettingsQuery{OrgId: orgId}
+func GetPluginSettings(orgId int64) (map[string]*m.PluginSetting, error) {
+	query := m.GetPluginSettingsQuery{OrgId: orgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	orgAppsMap := make(map[string]*m.AppSettings)
-	for _, orgApp := range query.Result {
-		orgAppsMap[orgApp.AppId] = orgApp
+	pluginMap := make(map[string]*m.PluginSetting)
+	for _, plug := range query.Result {
+		pluginMap[plug.PluginId] = plug
 	}
 
-	return orgAppsMap, nil
+	return pluginMap, nil
 }
 
 func GetEnabledPlugins(orgId int64) (*EnabledPlugins, error) {
 	enabledPlugins := NewEnabledPlugins()
-	orgApps, err := GetOrgAppSettings(orgId)
+	orgPlugins, err := GetPluginSettings(orgId)
 	if err != nil {
 		return nil, err
 	}
 
 	enabledApps := make(map[string]bool)
 
-	for appId, installedApp := range Apps {
-		var app AppPlugin
-		app = *installedApp
+	for pluginId, app := range Apps {
 
-		// check if the app is stored in the DB for this org and if so, use the
-		// state stored there.
-		if b, ok := orgApps[appId]; ok {
+		if b, ok := orgPlugins[pluginId]; ok {
 			app.Enabled = b.Enabled
 			app.Pinned = b.Pinned
 		}
 
 		if app.Enabled {
-			enabledApps[app.Id] = true
-			enabledPlugins.Apps = append(enabledPlugins.Apps, &app)
+			enabledApps[pluginId] = true
+			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
 		}
 	}
 

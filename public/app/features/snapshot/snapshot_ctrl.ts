@@ -27,10 +27,10 @@ export class SnapshotsCtrl {
 
   removeSnapshot(snapshot) {
     this.$rootScope.appEvent('confirm-modal', {
-      title: 'Confirm delete snapshot',
+      title: 'Delete',
       text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
       yesText: "Delete",
-      icon: "fa-warning",
+      icon: "fa-trash",
       onConfirm: () => {
         this.removeSnapshotConfirmed(snapshot);
       }

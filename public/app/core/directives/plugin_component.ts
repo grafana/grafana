@@ -160,13 +160,13 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        let appModel = scope.ctrl.appModel;
-        return System.import(appModel.module).then(function(appModule) {
+        let model = scope.ctrl.model;
+        return System.import(model.module).then(function(appModule) {
           return {
-            baseUrl: appModel.baseUrl,
-            name: 'app-config-' + appModel.appId,
+            baseUrl: model.baseUrl,
+            name: 'app-config-' + model.pluginId,
             bindings: {appModel: "=", appEditCtrl: "="},
-            attrs: {"app-model": "ctrl.appModel", "app-edit-ctrl": "ctrl"},
+            attrs: {"app-model": "ctrl.model", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,
           };
         });

@@ -21,7 +21,7 @@ module.exports = function(config, grunt) {
       grunt.task.run('jscs');
     }
 
-    if (/(\.less)$/.test(filepath)) {
+    if (/(\.scss)$/.test(filepath)) {
       grunt.task.run('clean:css');
       grunt.task.run('css');
     }

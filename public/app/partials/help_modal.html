@@ -1,16 +1,16 @@
-<div class="modal-body gf-box-no-margin">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
+<div class="modal-body">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			<i class="fa fa-keyboard-o"></i>
-			Keyboard shortcuts
-		</div>
+			<span class="p-l-1">Keyboard shortcuts</span>
+		</h2>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
-	<div class="gf-box-body">
+	<div class="modal-content">
 		<table class="shortcut-table">
 			<tr>
 				<th></th>
@@ -32,6 +32,10 @@
 				<td><span class="label label-info">CTRL+S</span></td>
 				<td>Save dashboard</td>
 			</tr>
+      <tr>
+        <td><span class="label label-info">CTRL+E</span></td>
+        <td>Export dashboard</td>
+      </tr>
 			<tr>
 				<td><span class="label label-info">CTRL+H</span></td>
 				<td>Hide row controls</td>
@@ -40,6 +44,10 @@
 				<td><span class="label label-info">CTRL+Z</span></td>
 				<td>Zoom out</td>
 			</tr>
+      <tr>
+        <td><span class="label label-info">CTRL+I</span></td>
+        <td>Quick snapshot</td>
+      </tr>
 			<tr>
 				<td><span class="label label-info">CTRL+O</span></td>
 				<td>Enable/Disable shared graph crosshair</td>

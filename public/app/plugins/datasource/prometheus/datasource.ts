@@ -39,6 +39,24 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
+  function regexEscape(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+  }
+
+  function interpolateQueryExpr(value, variable, defaultFormatFn) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return regexEscape(value);
+    }
+
+    var escapedValues = _.map(value, regexEscape);
+    return escapedValues.join('|');
+  };
+
   // Called once per panel (graph)
   this.query = function(options) {
     var start = getPrometheusTime(options.range.from, false);
@@ -52,7 +70,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars);
+      query.expr = templateSrv.replace(target.expr, options.scopedVars, interpolateQueryExpr);
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;

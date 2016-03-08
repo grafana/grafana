@@ -1,45 +1,37 @@
-<navbar title="Data sources" title-url="datasources" icon="fa fa-fw fa-database" subnav="true">
-	<ul class="nav">
-		<li ng-class="{active: isNew}" ng-show="isNew"><a href="datasources/new">Add new</a></li>
-		<li class="active" ng-show="!isNew"><a href="datasources/edit/{{current.name}}">{{current.name}}</a></li>
-	</ul>
+<navbar
+title="Data Sources"
+title-url="datasources"
+icon="icon-gf icon-gf-datasources">
 </navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2 ng-show="isNew">Add data source</h2>
-		<h2 ng-show="!isNew">Edit data source</h2>
+	<div class="page-header">
+		<h1 ng-show="isNew">Add data source</h1>
+		<h1 ng-show="!isNew">Edit data source</h1>
+	</div>
 
-		<form name="editForm">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 80px">
-						Name
-					</li>
-					<li>
-						<li>
-							<input type="text" class="input-xlarge tight-form-input" ng-model="current.name" placeholder="my data source name" required>
-						</li>
-					</li>
-					<li class="tight-form-item">
-						Default&nbsp;
-						<input class="cr1" id="current.isDefault" type="checkbox" ng-model="current.isDefault" ng-checked="current.isDefault">
-						<label for="current.isDefault" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+	<form name="editForm">
+		<div class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-7">Name</span>
+				<input class="gf-form-input max-width-21" type="text" ng-model="current.name" placeholder="My data source name" required>
+				<info-popover offset="0px -95px">
+					The name is used when you select the data source in panels.
+					The <code>Default</code> data source is preselected in new
+					panels.
+				</info-popover>
+
+				<editor-checkbox text="Default" model="current.isDefault"></editor-checkbox>
 			</div>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 80px">
-						Type
-					</li>
-					<li>
-						<select class="input-xlarge tight-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+
+			<div class="gf-form">
+				<span class="gf-form-label width-7">Type</span>
+				<div class="gf-form-select-wrapper">
+					<select class="gf-form-input gf-size-auto" ng-model="current.type" ng-options="k as v.name for (k, v) in types" ng-change="typeChanged()"></select>
+				</div>
 			</div>
+
+			<dashboard-import-list plugin="current"></dashboard-import-list>
 
 			<rebuild-on-change property="datasourceMeta.id">
 				<plugin-component type="datasource-config-ctrl">
@@ -55,17 +47,15 @@
 				</div>
 			</div>
 
-			<dashboard-import-list plugin="current"></dashboard-import-list>
-
-			<div class="pull-right" style="margin-top: 35px">
+			<div class="gf-form-button-row">
 				<button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
 				<button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
-				<button type="submit" class="btn btn-inverse" ng-show="!isNew" ng-click="saveChanges(true)">
+				<button type="submit" class="btn btn-secondary" ng-show="!isNew" ng-click="saveChanges(true)">
 					Test Connection
 				</button>
-				<a class="btn btn-inverse" href="datasources">Cancel</a>
+				<a class="btn btn-link" href="datasources">Cancel</a>
 			</div>
-			<br>
-		</form>
-	</div>
+
+	</form>
 </div>
+

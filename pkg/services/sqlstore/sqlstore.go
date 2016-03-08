@@ -77,7 +77,7 @@ func NewEngine() {
 		log.Fatal(3, "Sqlstore: Fail to connect to database: %v", err)
 	}
 
-	err = SetEngine(x, true)
+	err = SetEngine(x, setting.Env == setting.DEV)
 
 	if err != nil {
 		log.Fatal(3, "fail to initialize orm engine: %v", err)
@@ -105,14 +105,6 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 			return fmt.Errorf("sqlstore.init(fail to create xorm.log): %v", err)
 		}
 		x.Logger = xorm.NewSimpleLogger(f)
-
-		if setting.Env == setting.DEV {
-			x.ShowSQL = false
-			x.ShowInfo = false
-			x.ShowDebug = false
-			x.ShowErr = true
-			x.ShowWarn = true
-		}
 	}
 
 	return nil
@@ -149,8 +141,13 @@ func getEngine() (*xorm.Engine, error) {
 		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
 			port = fields[1]
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s",
-			DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode)
+		if DbCfg.Pwd == "" {
+			DbCfg.Pwd = "''"
+		}
+		if DbCfg.User == "" {
+			DbCfg.User = "''"
+		}
+		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode)
 	case "sqlite3":
 		if !filepath.IsAbs(DbCfg.Path) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)

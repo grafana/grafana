@@ -89,8 +89,6 @@ func scan(pluginDir string) error {
 		pluginPath: pluginDir,
 	}
 
-	log.Info("Plugins: Scaning dir %s", pluginDir)
-
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if pluginDir != "data/plugins" {
 			log.Warn("Could not scan dir \"%v\" error: %s", pluginDir, err)
@@ -149,7 +147,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	var loader PluginLoader
 	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
-		return errors.New("Unkown plugin type " + pluginCommon.Type)
+		return errors.New("Unknown plugin type " + pluginCommon.Type)
 	} else {
 		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}

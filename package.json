@@ -7,10 +7,11 @@
   "version": "3.0.0-pre1",
   "repository": {
     "type": "git",
-    "url": "http://github.com/torkelo/grafana.git"
+    "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
     "angular2": "2.0.0-beta.0",
+    "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.33.3",
     "expect.js": "~0.2.0",
@@ -24,7 +25,7 @@
     "grunt-contrib-copy": "~0.8.2",
     "grunt-contrib-cssmin": "~0.14.0",
     "grunt-contrib-htmlmin": "~0.6.0",
-    "grunt-contrib-jshint": "~0.11.3",
+    "grunt-contrib-jshint": "~1.0.0",
     "grunt-contrib-less": "~0.7.0",
     "grunt-contrib-uglify": "~0.11.0",
     "grunt-contrib-watch": "^0.6.1",
@@ -32,12 +33,15 @@
     "grunt-git-describe": "~2.3.2",
     "grunt-karma": "~0.12.1",
     "grunt-ng-annotate": "^1.0.1",
+    "grunt-notify": "^0.4.3",
+    "grunt-postcss": "^0.8.0",
+    "grunt-sass": "^1.1.0",
     "grunt-string-replace": "~1.2.1",
     "grunt-systemjs-builder": "^0.2.5",
-    "grunt-tslint": "^3.0.1",
+    "grunt-tslint": "^3.0.2",
     "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
-    "jshint-stylish": "~0.1.5",
+    "jshint-stylish": "~2.1.0",
     "karma": "~0.13.15",
     "karma-chrome-launcher": "~0.2.2",
     "karma-coverage": "0.5.3",
@@ -50,6 +54,7 @@
     "phantomjs": "^1.9.19",
     "reflect-metadata": "0.1.2",
     "rxjs": "5.0.0-beta.0",
+    "sass-lint": "^1.5.0",
     "systemjs": "0.19.20",
     "zone.js": "0.5.10"
   },
@@ -59,19 +64,22 @@
   },
   "scripts": {
     "test": "grunt test",
-    "coveralls": "grunt karma:coveralls && rm -rf ./coverage",
-    "postinstall": "./node_modules/.bin/grunt copy:node_modules"
+    "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
   "license": "Apache-2.0",
   "dependencies": {
     "es5-shim": "^4.4.1",
     "grunt-jscs": "~1.5.x",
+    "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
-    "lodash": "^4.0.0",
+    "lodash": "^2.4.1",
+    "remarkable": "^1.6.2",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.15.7",
-    "tslint": "^3.2.1",
+    "tether": "^1.2.0",
+    "tether-drop": "^1.4.2",
+    "tslint": "^3.4.0",
     "typescript": "^1.7.5"
   }
 }

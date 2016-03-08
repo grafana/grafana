@@ -1,0 +1,9 @@
+.grafana-version-info {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  font-size: 80%;
+  color: darken($gray-1, 25%);
+  a { color: darken($gray-1, 25%); }
+}
+

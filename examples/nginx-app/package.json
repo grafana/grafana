@@ -31,7 +31,7 @@
   "dependencies": {
     "babel-plugin-transform-es2015-modules-systemjs": "^6.5.0",
     "babel-preset-es2015": "^6.5.0",
-    "lodash": "~4.0.0"
+    "lodash": "~4.0.0",
   },
   "homepage": "https://github.com/raintank/kentik-app-poc#readme"
 }

@@ -6,13 +6,13 @@ define([
   'app/core/utils/kbn',
   './graph_tooltip',
   'jquery.flot',
-  'jquery.flot.events',
   'jquery.flot.selection',
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
   'jquery.flot.fillbelow',
-  'jquery.flot.crosshair'
+  'jquery.flot.crosshair',
+  './jquery.flot.events',
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
@@ -29,7 +29,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var panel = ctrl.panel;
         var data, annotations;
         var sortedSeries;
-        var graphHeight;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
 
@@ -67,10 +66,14 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function getLegendHeight(panelHeight) {
           if (!panel.legend.show || panel.legend.rightSide) {
-            return 0;
+            return 2;
           }
+
           if (panel.legend.alignAsTable) {
-            var total = 30 + (25 * data.length);
+            var legendSeries = _.filter(data, function(series) {
+              return series.hideFromLegend(panel.legend) === false;
+            });
+            var total = 23 + (22 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;
@@ -79,19 +82,12 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function setElementHeight() {
           try {
-            graphHeight = ctrl.height || panel.height || ctrl.row.height;
-            if (_.isString(graphHeight)) {
-              graphHeight = parseInt(graphHeight.replace('px', ''), 10);
-            }
-
-            graphHeight -= 5; // padding
-            graphHeight -= panel.title ? 24 : 9; // subtract panel title bar
-            graphHeight = graphHeight - getLegendHeight(graphHeight); // subtract one line legend
-
-            elem.css('height', graphHeight + 'px');
+            var height = ctrl.height - getLegendHeight(ctrl.height);
+            elem.css('height', height + 'px');
 
             return true;
           } catch(e) { // IE throws errors sometimes
+            console.log(e);
             return false;
           }
         }
@@ -107,7 +103,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           if (!setElementHeight()) { return true; }
 
-          if (_.isString(data)) {
+          if(_.isString(data)) {
             render_panel_as_graphite_png(data);
             return true;
           }
@@ -200,9 +196,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
                 fill: 1,
                 fillColor: false,
                 radius: panel.points ? panel.pointradius : 2
-                // little points when highlight points
               },
-              shadowSize: 1
+              shadowSize: 0
             },
             yaxes: [],
             xaxis: {},
@@ -226,7 +221,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
-            series.applySeriesOverrides(panel.seriesOverrides);
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode, panel.y_formats);
 
             // if hidden remove points and disable stack
@@ -333,28 +327,17 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           _.each(annotations, function(event) {
             if (!types[event.annotation.name]) {
               types[event.annotation.name] = {
-                level: _.keys(types).length + 1,
-                icon: {
-                  icon: "fa fa-chevron-down",
-                  size: event.annotation.iconSize,
-                  color: event.annotation.iconColor,
-                }
+                color: event.annotation.iconColor,
+                position: 'BOTTOM',
+                markerSize: 5,
               };
-            }
-
-            if (event.annotation.showLine) {
-              options.grid.markings.push({
-                color: event.annotation.lineColor,
-                lineWidth: 1,
-                xaxis: { from: event.min, to: event.max }
-              });
             }
           });
 
           options.events = {
             levels: _.keys(types).length + 1,
             data: annotations,
-            types: types
+            types: types,
           };
         }
 

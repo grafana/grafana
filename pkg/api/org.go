@@ -84,7 +84,7 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
-			return ApiError(400, "Organization name taken", err)
+			return ApiError(409, "Organization name taken", err)
 		}
 		return ApiError(500, "Failed to create organization", err)
 	}

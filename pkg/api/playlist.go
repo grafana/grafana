@@ -17,6 +17,11 @@ func ValidateOrgPlaylist(c *middleware.Context) {
 		return
 	}
 
+	if query.Result.OrgId == 0 {
+		c.JsonApiErr(404, "Playlist not found", err)
+		return
+	}
+
 	if query.Result.OrgId != c.OrgId {
 		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
 		return
