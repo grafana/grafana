@@ -196,9 +196,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
                 fill: 1,
                 fillColor: false,
                 radius: panel.points ? panel.pointradius : 2
-                // little points when highlight points
               },
-              shadowSize: 1
+              shadowSize: 0
             },
             yaxes: [],
             xaxis: {},

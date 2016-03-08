@@ -17,6 +17,11 @@ func GetPluginList(c *middleware.Context) Response {
 
 	result := make([]*dtos.PluginListItem, 0)
 	for _, pluginDef := range plugins.Plugins {
+		// filter out plugin components
+		if pluginDef.IncludedInAppId != "" {
+			continue
+		}
+
 		listItem := &dtos.PluginListItem{
 			PluginId: pluginDef.Id,
 			Name:     pluginDef.Name,
