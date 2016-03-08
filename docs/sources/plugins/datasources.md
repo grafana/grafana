@@ -53,7 +53,10 @@ Request object passed to datasource.query function
 }
 ```
 
-Expected response from datasource.query
+There are two different kind of results for datasources.
+Time series and table. Time series is the most common format and is suppoert by all datasources and panels. Table format is only support by the Influxdb datasource and table panel. But we might se more of this in the future.
+
+Time series response from datasource.query
 An array of
 ```json
 [
@@ -70,6 +73,42 @@ An array of
       [861,1450754160000],
       [767,1450754220000]
     ]
+  }
+]
+```
+
+Table response from datasource.query
+An array of
+```json
+[
+  {
+    "columns": [
+      {
+        "text": "Time",
+        "type": "time",
+        "sort": true,
+        "desc": true,
+      },
+      {
+        "text": "mean",
+      },
+      {
+        "text": "sum",
+      }
+    ],
+    "rows": [
+      [
+        1457425380000,
+        null,
+        null
+      ],
+      [
+        1457425370000,
+        1002.76215352,
+        1002.76215352
+      ],
+    ],
+    "type": "table"
   }
 ]
 ```

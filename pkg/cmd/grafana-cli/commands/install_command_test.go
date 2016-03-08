@@ -19,7 +19,7 @@ func TestFoldernameReplacement(t *testing.T) {
 
 		Convey("should be replaced with plugin name", func() {
 			for k, v := range paths {
-				So(RemoveGitBuildFromname(pluginName, k), ShouldEqual, v)
+				So(RemoveGitBuildFromName(pluginName, k), ShouldEqual, v)
 			}
 		})
 	})
@@ -32,7 +32,7 @@ func TestFoldernameReplacement(t *testing.T) {
 
 		Convey("should be replaced with plugin name", func() {
 			for k, v := range paths {
-				So(RemoveGitBuildFromname(pluginName, k), ShouldEqual, v)
+				So(RemoveGitBuildFromName(pluginName, k), ShouldEqual, v)
 			}
 		})
 	})
