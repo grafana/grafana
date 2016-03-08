@@ -25,31 +25,41 @@ function (angular, _, kbn) {
       templateSrv.init(this.variables);
 
       var queryParams = $location.search();
-      var promises = [];
+      var promiseChain = $q.when(true);
 
-      for (var i = 0; i < this.variables.length; i++) {
-        var variable = this.variables[i];
+      this.variables.forEach(function(variable) {
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          promises.push(this.setVariableFromUrl(variable, urlValue));
+          promiseChain = promiseChain.then(function() {
+            return self.setVariableFromUrl(variable, urlValue);
+          });
         }
         else if (variable.refresh) {
-          promises.push(this.updateOptions(variable));
+          promiseChain = promiseChain.then(function() {
+            return self.updateOptions(variable);
+          });
         }
         else if (variable.type === 'interval') {
           this.updateAutoInterval(variable);
         }
-      }
+      });
 
-      return $q.all(promises);
+      return promiseChain;
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
-      var option = _.findWhere(variable.options, { text: urlValue });
-      option = option || { text: urlValue, value: urlValue };
+      var promise = $q.when([]);
+      if (variable.refresh) {
+        promise = this.updateOptions(variable);
+      }
 
-      this.updateAutoInterval(variable);
-      return this.setVariableValue(variable, option);
+      return promise.then(function() {
+        var option = _.findWhere(variable.options, { text: urlValue });
+        option = option || { text: urlValue, value: urlValue };
+
+        self.updateAutoInterval(variable);
+        return self.setVariableValue(variable, option);
+      });
     };
 
     this.updateAutoInterval = function(variable) {
