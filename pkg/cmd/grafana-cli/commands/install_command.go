@@ -118,11 +118,11 @@ func downloadFile(pluginName, filepath, url string) (err error) {
 		if r := recover(); r != nil {
 			retryCount++
 			if retryCount == 1 {
-        log.Debug("\nFailed downloading. Will retry once.\n")
+				log.Debug("\nFailed downloading. Will retry once.\n")
 				downloadFile(pluginName, filepath, url)
 			} else {
-        panic(r)
-      }
+				panic(r)
+			}
 		}
 	}()
 
