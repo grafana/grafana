@@ -40,7 +40,7 @@ function (angular, _, config) {
         return $q.when(null);
       }
 
-      return backendSrv.get('/api/datasources/plugins').then(function(plugins) {
+      return backendSrv.get('/api/org/plugins', {enabled: 1, type: 'datasource'}).then(function(plugins) {
         datasourceTypes = plugins;
         $scope.types = plugins;
       });
@@ -55,7 +55,9 @@ function (angular, _, config) {
     };
 
     $scope.typeChanged = function() {
-      $scope.datasourceMeta = $scope.types[$scope.current.type];
+      return backendSrv.get('/api/org/plugins/' + $scope.current.type + '/settings').then(function(pluginInfo) {
+        $scope.datasourceMeta = pluginInfo;
+      });
     };
 
     $scope.updateFrontendSettings = function() {

@@ -11,10 +11,6 @@ import (
 
 type FrontendPluginBase struct {
 	PluginBase
-	Module        string `json:"module"`
-	BaseUrl       string `json:"baseUrl"`
-	StaticRoot    string `json:"staticRoot"`
-	StaticRootAbs string `json:"-"`
 }
 
 func (fp *FrontendPluginBase) initFrontendPlugin() {

@@ -26,7 +26,10 @@ export class DashImportListCtrl {
 }
 
 var template = `
-<button class="btn btn-mini btn-inverse" ng-click="ctrl.import(dash)">Import</span>
+<h3 class="page-heading">Dashboards</h3>
+<div class="gf-form-group">
+  <button class="btn btn-mini btn-inverse" ng-click="ctrl.import(dash)">Import</button>
+</div>
 `;
 
 export function dashboardImportList() {
