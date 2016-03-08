@@ -52,24 +52,9 @@ func GetDataSourceById(c *middleware.Context) Response {
 	}
 
 	ds := query.Result
+	dtos := convertModelToDtos(ds)
 
-	return Json(200, &dtos.DataSource{
-		Id:                ds.Id,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Url:               ds.Url,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-	})
+	return Json(200, &dtos)
 }
 
 func DeleteDataSource(c *middleware.Context) {
@@ -145,8 +130,13 @@ func GetDataSourceByName(c *middleware.Context) Response {
 	}
 
 	ds := query.Result
+	dtos := convertModelToDtos(ds)
 
-	return Json(200, &dtos.DataSource{
+	return Json(200, &dtos)
+}
+
+func convertModelToDtos(ds m.DataSource) dtos.DataSource {
+	return dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
@@ -162,5 +152,5 @@ func GetDataSourceByName(c *middleware.Context) Response {
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,
-	})
+	}
 }
