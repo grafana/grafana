@@ -7,7 +7,7 @@ export class PluginEditCtrl {
   model: any;
   pluginIcon: string;
   pluginId: any;
-  includedPanels: any;
+  includes: any;
   readmeHtml: any;
   includedDatasources: any;
   tabIndex: number;
@@ -24,12 +24,15 @@ export class PluginEditCtrl {
   init() {
     return this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;
-      this.includedPanels = _.where(result.includes, {type: 'panel'});
-      this.includedDatasources = _.where(result.includes, {type: 'datasource'});
       this.pluginIcon = this.getPluginIcon(this.model.type);
 
       this.model.dependencies.plugins.forEach(plug => {
         plug.icon = this.getPluginIcon(plug.type);
+      });
+
+      this.includes = _.map(result.includes, plug => {
+        plug.icon = this.getPluginIcon(plug.type);
+        return plug;
       });
 
       return this.initReadme();
@@ -50,6 +53,7 @@ export class PluginEditCtrl {
       case 'datasource':  return 'icon-gf icon-gf-datasources';
       case 'panel':  return 'icon-gf icon-gf-panel';
       case 'app':  return 'icon-gf icon-gf-apps';
+      case 'page':  return 'icon-gf icon-gf-share';
     }
   }
 

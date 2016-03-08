@@ -15,7 +15,7 @@
 }
 
 .plugin-header-info-block {
-  padding-top: $spacer;
+  float: left;
 }
 
 .plugin-header-author {
@@ -26,9 +26,22 @@
   text-transform: uppercase;
 }
 
-.plugin-dependency-icon {
+.plugin-info-list-item {
   img {
     width: 16px;
+  }
+  white-space: nowrap;
+  max-width: $page-sidebar-width;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.plugin-markdown-readme {
+  img {
+    max-width: 100%;
+  }
+  ul {
+    padding-left: $spacer*1.5;
   }
 }
 
