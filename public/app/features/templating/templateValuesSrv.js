@@ -27,10 +27,9 @@ function (angular, _, kbn) {
       var queryParams = $location.search();
       var promises = [];
 
-      //use promises to delay processing variables that
-      //depend on other variables.
+      // use promises to delay processing variables that
+      // depend on other variables.
       this.variableLock = {};
-      var self = this;
       _.forEach(this.variables, function(variable) {
         self.variableLock[variable.name] = $q.defer();
       });
@@ -45,7 +44,8 @@ function (angular, _, kbn) {
 
     this.processVariable = function(variable, queryParams) {
       var dependencies = [];
-      var self = this;
+      var lock = self.variableLock[variable.name];
+
       // determine our dependencies.
       if (variable.type === "query") {
         _.forEach(this.variables, function(v) {
@@ -54,49 +54,44 @@ function (angular, _, kbn) {
           }
         });
       }
+
       return $q.all(dependencies).then(function() {
-        var variableName = variable.name;
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          return self.setVariableFromUrl(variable, urlValue).then(function() {
-            self.variableLock[variableName].resolve();
-          });
+          return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
         }
         else if (variable.refresh) {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
               console.log("setting current for %s", variable.name);
-              self.setVariableValue(variable, variable.options[0], true);
+              self.setVariableValue(variable, variable.options[0]);
             }
-            self.variableLock[variableName].resolve();
+            lock.resolve();
           });
         }
         else if (variable.type === 'interval') {
           self.updateAutoInterval(variable);
-          self.variableLock[variableName].resolve();
+          lock.resolve();
         } else {
-          self.variableLock[variableName].resolve();
+          lock.resolve();
         }
       });
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
+      var promise = $q.when(true);
+
       if (variable.refresh) {
-        var self = this;
-        //refresh the list of options before setting the value
-        return this.updateOptions(variable).then(function() {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          self.updateAutoInterval(variable);
-          return self.setVariableValue(variable, option, true);
-        });
+        promise = this.updateOptions(variable);
       }
-      var option = _.findWhere(variable.options, { text: urlValue });
-      option = option || { text: urlValue, value: urlValue };
 
-      this.updateAutoInterval(variable);
-      return this.setVariableValue(variable, option, true);
+      return promise.then(function() {
+        var option = _.findWhere(variable.options, { text: urlValue });
+        option = option || { text: urlValue, value: urlValue };
+
+        self.updateAutoInterval(variable);
+        return self.setVariableValue(variable, option, true);
+      });
     };
 
     this.updateAutoInterval = function(variable) {
@@ -111,7 +106,7 @@ function (angular, _, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, firstLoad) {
+    this.setVariableValue = function(variable, option, initPhase) {
       variable.current = angular.copy(option);
 
       if (_.isArray(variable.current.value)) {
@@ -119,13 +114,14 @@ function (angular, _, kbn) {
       }
 
       self.selectOptionsForCurrentValue(variable);
-
       templateSrv.updateTemplateData();
+
       // on first load, variable loading is ordered to ensure
       // that parents are updated before children.
-      if (firstLoad) {
+      if (initPhase) {
         return $q.when();
       }
+
       return self.updateOptionsInChildVariables(variable);
     };
 
@@ -171,7 +167,8 @@ function (angular, _, kbn) {
 
       return datasourceSrv.get(variable.datasource)
         .then(_.partial(this.updateOptionsFromMetricFindQuery, variable))
-        .then(_.partial(this.updateTags, variable));
+        .then(_.partial(this.updateTags, variable))
+        .then(_.partial(this.validateVariableSelectionState, variable));
     };
 
     this.selectOptionsForCurrentValue = function(variable) {
@@ -196,7 +193,7 @@ function (angular, _, kbn) {
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0]);
+        return self.setVariableValue(variable, variable.options[0], true);
       }
 
       if (_.isArray(variable.current.value)) {
@@ -204,7 +201,7 @@ function (angular, _, kbn) {
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
-          return self.setVariableValue(variable, currentOption);
+          return self.setVariableValue(variable, currentOption, true);
         } else {
           if (!variable.options.length) { return; }
           return self.setVariableValue(variable, variable.options[0]);
