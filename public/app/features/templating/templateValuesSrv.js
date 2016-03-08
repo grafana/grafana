@@ -64,6 +64,10 @@ function (angular, _, kbn) {
         }
         else if (variable.refresh) {
           return self.updateOptions(variable).then(function() {
+            if (_.isEmpty(variable.current) && variable.options.length) {
+              console.log("setting current for %s", variable.name);
+              self.setVariableValue(variable, variable.options[0], true);
+            }
             self.variableLock[variableName].resolve();
           });
         }
