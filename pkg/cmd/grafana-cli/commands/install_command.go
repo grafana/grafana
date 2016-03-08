@@ -26,8 +26,8 @@ func validateInput(c CommandLine, pluginFolder string) error {
 		return errors.New("missing path flag")
 	}
 
-	fileinfo, err := os.Stat(pluginDir)
-	if err != nil && !fileinfo.IsDir() {
+	fileInfo, err := os.Stat(pluginDir)
+	if err != nil && !fileInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
 
@@ -106,20 +106,20 @@ func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {
 	return m.Version{}, errors.New("Could not find the version your looking for")
 }
 
-func RemoveGitBuildFromname(pluginname, filename string) string {
+func RemoveGitBuildFromName(pluginName, filename string) string {
 	r := regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-	return r.ReplaceAllString(filename, pluginname+"/")
+	return r.ReplaceAllString(filename, pluginName+"/")
 }
 
 var retryCount = 0
 
-func downloadFile(pluginName, filepath, url string) (err error) {
+func downloadFile(pluginName, filePath, url string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			retryCount++
 			if retryCount == 1 {
 				log.Debug("\nFailed downloading. Will retry once.\n")
-				downloadFile(pluginName, filepath, url)
+				downloadFile(pluginName, filePath, url)
 			} else {
 				panic(r)
 			}
@@ -142,12 +142,12 @@ func downloadFile(pluginName, filepath, url string) (err error) {
 		return err
 	}
 	for _, zf := range r.File {
-		newfile := path.Join(filepath, RemoveGitBuildFromname(pluginName, zf.Name))
+		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			os.Mkdir(newfile, 0777)
+			os.Mkdir(newFile, 0777)
 		} else {
-			dst, err := os.Create(newfile)
+			dst, err := os.Create(newFile)
 			if err != nil {
 				log.Errorf("%v", err)
 			}
