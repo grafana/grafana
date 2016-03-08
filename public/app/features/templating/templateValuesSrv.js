@@ -21,13 +21,13 @@ function (angular, _, kbn) {
     }, $rootScope);
 
     $rootScope.onAppEvent('refresh', function() {
-      var promises = [];
-      for (var i = 0; i < self.variables.length; i++) {
-        var variable = self.variables[i];
-        if (variable.refresh === 'On Time Change and Dashboard Load') {
-          promises.push(self.updateOptions(variable));
-        }
-      }
+      var promises = _.chain(self.variables)
+      .filter(function(variable) {
+        return variable.refresh === 'On Time Change and Dashboard Load';
+      })
+      .map(function(variable) {
+        return self.updateOptions(variable);
+      }).value();
       return $q.all(promises);
     }, $rootScope);
 

@@ -403,11 +403,10 @@ function (angular, $, _, moment) {
 
       if (oldVersion < 11) {
         // update template variables
-        for (i = 0 ; i < this.templating.list.length; i++) {
-          var templateVariable = this.templating.list[i];
+        _.each(this.templating.list, function(templateVariable) {
           if (templateVariable.refresh) { templateVariable.refresh = 'On Dashboard Load'; }
           if (!templateVariable.refresh) { templateVariable.refresh = 'Never'; }
-        }
+        });
       }
 
       if (panelUpgrades.length === 0) {
