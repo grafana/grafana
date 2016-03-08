@@ -35,8 +35,9 @@
   },
 
   "includes": [
-      {"type": "panel", "name": "Nginx Panel"},
-      {"type": "datasource", "name": "Nginx Datasource"}
+    {"type": "dashboard", "name": "Nginx Connection stats", "path": "dashboards/nginx_connection_stats.json"},
+    {"type": "panel", "name": "Nginx Panel"},
+    {"type": "datasource", "name": "Nginx Datasource"}
   ],
 
   "dependencies": {
