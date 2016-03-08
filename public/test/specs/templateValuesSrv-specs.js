@@ -34,12 +34,13 @@ define([
         options: [{text: "test", value: "test"}]
       };
 
-      beforeEach(function() {
+      beforeEach(function(done) {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
         urlParams["var-apps"] = "new";
         ctx.$location.search = sinon.stub().returns(urlParams);
-        ctx.service.init(dashboard);
+        ctx.service.init(dashboard).then(function() { done(); });
+        ctx.$rootScope.$digest();
       });
 
       it('should update current value', function() {
@@ -56,12 +57,13 @@ define([
         options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}, {text: 'val3', value: 'val3', selected: true}]
       };
 
-      beforeEach(function() {
+      beforeEach(function(done) {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
         urlParams["var-apps"] = ["val2", "val1"];
         ctx.$location.search = sinon.stub().returns(urlParams);
-        ctx.service.init(dashboard);
+        ctx.service.init(dashboard).then(function() { done(); });
+        ctx.$rootScope.$digest();
       });
 
       it('should update current value', function() {
