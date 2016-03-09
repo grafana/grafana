@@ -12,7 +12,7 @@ import (
 var IoHelper m.IoUtil = IoUtilImp{}
 
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
-	res, _ := goreq.Request{Uri: repoUrl}.Do()
+	res, _ := goreq.Request{Uri: repoUrl, MaxRedirects: 3}.Do()
 
 	var resp m.PluginRepo
 	err := res.Body.FromJsonTo(&resp)
