@@ -4,7 +4,7 @@ To help us respond to your issues faster, please make sure to add as much inform
 
 If this issue is about a plugin, please open the issue in that repository.
 
-Tag your issues title with [Feature Request] / [Bug] / [Question] or no tag if your unsure.
+Start your issues title with [Feature Request] / [Bug] / [Question] or no tag if your unsure.
 
 Ex
 * What grafana version are you using?
