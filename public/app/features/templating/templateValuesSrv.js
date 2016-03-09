@@ -158,8 +158,23 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
+      var query = variable.query;
+      if (variable.type === 'custom' && variable.expand) {
+        var range = timeSrv.timeRange();
+        try {
+          query = _.template(templateSrv.replace(query), {
+            range: {
+              from: range.from,
+              to: range.to
+            }
+          }, { variable: 'g' });
+        } catch (e) {
+          query = '';
+        }
+      }
+
       // extract options in comma seperated string
-      variable.options = _.map(variable.query.split(/[,]+/), function(text) {
+      variable.options = _.map(query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
       });
 
