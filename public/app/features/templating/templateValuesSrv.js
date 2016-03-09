@@ -13,11 +13,25 @@ function (angular, _, kbn) {
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
-    $rootScope.onAppEvent('time-range-changed', function()  {
-      var variable = _.findWhere(self.variables, { type: 'interval' });
-      if (variable) {
-        self.updateAutoInterval(variable);
+    // update time variant variables
+    $rootScope.onAppEvent('refresh', function() {
+
+      // look for interval variables
+      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      if (intervalVariable) {
+        self.updateAutoInterval(intervalVariable);
       }
+
+      // update variables with refresh === 2
+      var promises = self.variables
+        .filter(function(variable) {
+          return variable.refresh === 2;
+        }).map(function(variable) {
+          return self.updateOptions(variable);
+        });
+
+      return $q.all(promises);
+
     }, $rootScope);
 
     this.init = function(dashboard) {
@@ -60,7 +74,7 @@ function (angular, _, kbn) {
         if (urlValue !== void 0) {
           return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
         }
-        else if (variable.refresh) {
+        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change and Dashboard Load') {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
               console.log("setting current for %s", variable.name);
