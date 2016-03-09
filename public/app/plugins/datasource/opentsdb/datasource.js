@@ -69,6 +69,40 @@ function (angular, _, dateMath) {
       }.bind(this));
     };
 
+    this.annotationQuery = function(options) {
+      var start = convertToTSDBTime(options.rangeRaw.from, false);
+      var end = convertToTSDBTime(options.rangeRaw.to, true);
+      var qs = [];
+      var eventList = [];
+
+      qs.push({ aggregator:"sum", metric:options.annotation.target });
+
+      var queries = _.compact(qs);
+
+      return this.performTimeSeriesQuery(queries, start, end).then(function(results) {
+        if(results.data[0]) {
+          var annotationObject = results.data[0].annotations;
+          if(options.annotation.isGlobal){
+            annotationObject = results.data[0].globalAnnotations;
+          }
+          if(annotationObject) {
+            _.each(annotationObject, function(annotation) {
+              var event = {
+                title: annotation.description,
+                time: Math.floor(annotation.startTime) * 1000,
+                text: annotation.notes,
+                annotation: options.annotation
+              };
+
+              eventList.push(event);
+            });
+          }
+        }
+        return eventList;
+
+      }.bind(this));
+    };
+
     this.performTimeSeriesQuery = function(queries, start, end) {
       var msResolution = false;
       if (this.tsdbResolution === 2) {
@@ -77,7 +111,8 @@ function (angular, _, dateMath) {
       var reqBody = {
         start: start,
         queries: queries,
-        msResolution: msResolution
+        msResolution: msResolution,
+        globalAnnotations: true
       };
 
       // Relative queries (e.g. last hour) don't include an end time
