@@ -171,8 +171,8 @@
 				</div>
 				<div class="gf-form">
 					<span class="gf-form-label width-7">Refresh</span>
-					<select class="gf-form-input max-width-22" ng-model="current.refresh" ng-options="f for f in ['Never', 'On Dashboard Load', 'On Time Change and Dashboard Load']"></select>
-					<tip>When to update the values of this template, will slow down dashboard load / time change</tip>
+					<select class="gf-form-input max-width-14" ng-model="current.refresh" ng-options="f.value as f.text for f in refreshOptions"></select>
+					<tip>When to update the values of this variable, will slow down dashboard load / time change</tip>
 				</div>
 			</div>
 
