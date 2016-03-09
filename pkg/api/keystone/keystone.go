@@ -5,11 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	SESS_TOKEN            = "keystone_token"
+	SESS_TOKEN_EXPIRATION = "keystone_expiration"
+	SESS_TOKEN_PROJECT    = "keystone_project"
+	TOKEN_BUFFER_TIME     = 5 // Tokens refresh if the token will expire in less than this many minutes
 )
 
 type v2_auth_post_struct struct {
@@ -81,6 +89,14 @@ type v3_projectdomain_struct struct {
 	Name string `json:"name"`
 }
 
+type v3_auth_response_struct struct {
+	Token v3_token_struct
+}
+
+type v3_token_struct struct {
+	Expires_at string
+}
+
 func getUserName(c *middleware.Context) (string, error) {
 	userQuery := m.GetUserByIdQuery{Id: c.Session.Get(middleware.SESS_KEY_USERID).(int64)}
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -110,10 +126,12 @@ func authenticateV2(c *middleware.Context) (string, error) {
 	} else {
 		auth_post.Auth.PasswordCredentials.Username = username
 	}
-	if tenant, err := getOrgName(c); err != nil {
+	var project string
+	if org, err := getOrgName(c); err != nil {
 		return "", err
 	} else {
-		auth_post.Auth.TenantName = tenant
+		project = org
+		auth_post.Auth.TenantName = org
 	}
 	auth_post.Auth.PasswordCredentials.Password = c.Session.Get(middleware.SESS_KEY_PASSWORD).(string)
 	b, _ := json.Marshal(auth_post)
@@ -138,6 +156,9 @@ func authenticateV2(c *middleware.Context) (string, error) {
 		return "", err
 	}
 
+	c.Session.Set(SESS_TOKEN, auth_response.Access.Token.Id)
+	c.Session.Set(SESS_TOKEN_EXPIRATION, auth_response.Access.Token.Expires)
+	c.Session.Set(SESS_TOKEN_PROJECT, project)
 	return auth_response.Access.Token.Id, nil
 }
 
@@ -151,10 +172,12 @@ func authenticateV3(c *middleware.Context) (string, error) {
 	} else {
 		auth_post.Auth.Identity.Password.User.Name = username
 	}
-	if tenant, err := getOrgName(c); err != nil {
+	var project string
+	if org, err := getOrgName(c); err != nil {
 		return "", err
 	} else {
-		auth_post.Auth.Scope.Project.Name = tenant
+		project = org
+		auth_post.Auth.Scope.Project.Name = org
 	}
 	auth_post.Auth.Identity.Password.User.Password = c.Session.Get(middleware.SESS_KEY_PASSWORD).(string)
 	// the user domain name is currently hardcoded via a config setting - this should change to an extra domain field in the login dialog later
@@ -176,13 +199,60 @@ func authenticateV3(c *middleware.Context) (string, error) {
 		return "", errors.New("Keystone authentication failed: " + resp.Status)
 	}
 
+	decoder := json.NewDecoder(resp.Body)
+	var auth_response v3_auth_response_struct
+	err = decoder.Decode(&auth_response)
+	if err != nil {
+		return "", err
+	}
+	token := resp.Header.Get("X-Subject-Token")
+
+	c.Session.Set(SESS_TOKEN, token)
+	c.Session.Set(SESS_TOKEN_EXPIRATION, auth_response.Token.Expires_at)
+	c.Session.Set(SESS_TOKEN_PROJECT, project)
 	// in keystone v3 the token is in the response header
-	return resp.Header.Get("X-Subject-Token"), nil
+	return token, nil
+}
+
+func validateCurrentToken(c *middleware.Context) (bool, error) {
+	token := c.Session.Get(SESS_TOKEN)
+	if token == nil {
+		return false, nil
+	}
+
+	expiration_string := c.Session.Get(SESS_TOKEN_EXPIRATION).(string)
+	if expiration_string == "" {
+		return false, nil
+	}
+	expiration, err := time.Parse(time.RFC3339, c.Session.Get(SESS_TOKEN_EXPIRATION).(string))
+	if err != nil {
+		return false, err
+	}
+
+	now := time.Now()
+	if now.After(expiration.Add(-TOKEN_BUFFER_TIME * time.Minute)) {
+		return false, nil
+	}
+
+	project := c.Session.Get(SESS_TOKEN_PROJECT)
+	org, err := getOrgName(c)
+	if err != nil {
+		return false, err
+	}
+	if org != project {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func GetToken(c *middleware.Context) (string, error) {
 	var token string
 	var err error
+	valid, err := validateCurrentToken(c)
+	if valid {
+		return c.Session.Get(SESS_TOKEN).(string), nil
+	}
 	if setting.KeystoneV3 {
 		if token, err = authenticateV3(c); err != nil {
 			return "", err
