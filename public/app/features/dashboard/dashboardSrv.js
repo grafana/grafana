@@ -404,8 +404,8 @@ function (angular, $, _, moment) {
       if (oldVersion < 11) {
         // update template variables
         _.each(this.templating.list, function(templateVariable) {
-          if (templateVariable.refresh) { templateVariable.refresh = 'On Dashboard Load'; }
-          if (!templateVariable.refresh) { templateVariable.refresh = 'Never'; }
+          if (templateVariable.refresh) { templateVariable.refresh = 1; }
+          if (!templateVariable.refresh) { templateVariable.refresh = 0; }
         });
       }
 

@@ -13,22 +13,25 @@ function (angular, _, kbn) {
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
-    $rootScope.onAppEvent('time-range-changed', function()  {
-      var variable = _.findWhere(self.variables, { type: 'interval' });
-      if (variable) {
-        self.updateAutoInterval(variable);
-      }
-    }, $rootScope);
-
+    // update time variant variables
     $rootScope.onAppEvent('refresh', function() {
-      var promises = _.chain(self.variables)
-      .filter(function(variable) {
-        return variable.refresh === 'On Time Change and Dashboard Load';
-      })
-      .map(function(variable) {
-        return self.updateOptions(variable);
-      }).value();
+
+      // look for interval variables
+      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      if (intervalVariable) {
+        self.updateAutoInterval(intervalVariable);
+      }
+
+      // update variables with refresh === 2
+      var promises = self.variables
+        .filter(function(variable) {
+          return variable.refresh === 2;
+        }).map(function(variable) {
+          return self.updateOptions(variable);
+        });
+
       return $q.all(promises);
+
     }, $rootScope);
 
     this.init = function(dashboard) {
