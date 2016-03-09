@@ -1,0 +1,5 @@
+{
+  "type": "datasource",
+  "name": "Nginx Datasource",
+  "id": "nginx-datasource"
+}
