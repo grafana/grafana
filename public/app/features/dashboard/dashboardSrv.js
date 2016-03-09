@@ -212,7 +212,7 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 10;
+      this.schemaVersion = 11;
 
       if (oldVersion === this.schemaVersion) {
         return;
@@ -398,6 +398,14 @@ function (angular, $, _, moment) {
               style.thresholds = k;
             }
           });
+        });
+      }
+
+      if (oldVersion < 11) {
+        // update template variables
+        _.each(this.templating.list, function(templateVariable) {
+          if (templateVariable.refresh) { templateVariable.refresh = 'On Dashboard Load'; }
+          if (!templateVariable.refresh) { templateVariable.refresh = 'Never'; }
         });
       }
 
