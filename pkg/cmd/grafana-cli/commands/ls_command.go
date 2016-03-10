@@ -10,7 +10,7 @@ import (
 
 var ls_getPlugins func(path string) []m.InstalledPlugin = s.GetLocalPlugins
 
-var validateLsCommmand = func(pluginDir string) error {
+var validateLsCommand = func(pluginDir string) error {
 	if pluginDir == "" {
 		return errors.New("missing path flag")
 	}
@@ -31,7 +31,7 @@ var validateLsCommmand = func(pluginDir string) error {
 
 func lsCommand(c CommandLine) error {
 	pluginDir := c.GlobalString("path")
-	if err := validateLsCommmand(pluginDir); err != nil {
+	if err := validateLsCommand(pluginDir); err != nil {
 		return err
 	}
 
