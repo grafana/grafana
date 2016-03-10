@@ -7,15 +7,14 @@
 		<h1 ng-show="isNew">Add data source</h1>
 		<h1 ng-show="!isNew">Edit data source</h1>
 
-		<div class="page-header-tabs">
-
+		<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
 			<ul class="gf-tabs">
 				<li class="gf-tabs-item">
 					<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 0" ng-class="{active: ctrl.tabIndex === 0}">
 					  Config
 					</a>
 				</li>
-				<li class="gf-tabs-item" ng-show="ctrl.hasDashboards" ng-cloak>
+				<li class="gf-tabs-item">
 					<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 1" ng-class="{active: ctrl.tabIndex === 1}">
 					  Dashboards
 					</a>
@@ -47,7 +46,6 @@
           </div>
         </div>
       </div>
-
 
       <rebuild-on-change property="ctrl.datasourceMeta.id">
         <plugin-component type="datasource-config-ctrl">

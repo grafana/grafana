@@ -1,10 +1,10 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 class DashboardScriptLoader {
-
 }
 
 export class DashImportListCtrl {
@@ -12,9 +12,19 @@ export class DashImportListCtrl {
   plugin: any;
 
   constructor(private $http) {
+    this.dashboards = [];
 
-    this.dashboards = this.plugin.includes.filter(val => val.type === 'dashboard');
+    this.plugin.includes
+    .filter(val => val.type === 'dashboard')
+    .forEach(this.getDashbordImportStatus.bind(this));
+  }
 
+  getDashbordImportStatus(dash) {
+    var dashUrl = this.plugin.baseUrl + '/' + dash.path;
+    this.$http.get(dashUrl).then(res => {
+      this.load(res.data);
+
+    });
   }
 
   load(json) {
@@ -22,10 +32,7 @@ export class DashImportListCtrl {
     console.log(model);
   }
 
-  import() {
-    // this.$http.get(url).then(res => {
-    //   this.load(res.data);
-    // });
+  import(dash) {
   }
 }
 
@@ -41,7 +48,7 @@ var template = `
           {{dash.name}}</span>
         </td>
         <td class="width-2">
-          <button class="btn btn-primary btn-small">Install</button>
+          <button class="btn btn-secondary" ng-click="ctrl.import(dash)">Install</button>
         </td
       </tr>
     </tbody>

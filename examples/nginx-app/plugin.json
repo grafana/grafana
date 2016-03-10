@@ -26,6 +26,10 @@
       "small": "img/logo_small.png",
       "large": "img/logo_large.png"
     },
+    "screenshots": [
+      {"name": "img1", "path": "img/screenshot1.png"},
+      {"name": "img2", "path": "img/screenshot2.png"}
+    ],
     "links": [
       {"name": "Project site", "url": "http://project.com"},
       {"name": "License & Terms", "url": "http://license.com"}
@@ -35,7 +39,8 @@
   },
 
   "includes": [
-    {"type": "dashboard", "name": "Nginx Connection stats", "path": "dashboards/nginx_connection_stats.json"},
+    {"type": "dashboard", "name": "Nginx Connections", "path": "dashboards/connections.json"},
+    {"type": "dashboard", "name": "Nginx Memory", "path": "dashboards/memory.json"},
     {"type": "panel", "name": "Nginx Panel"},
     {"type": "datasource", "name": "Nginx Datasource"}
   ],
