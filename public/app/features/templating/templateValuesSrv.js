@@ -74,7 +74,7 @@ function (angular, _, kbn) {
         if (urlValue !== void 0) {
           return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
         }
-        else if (variable.refresh === 'On Dashboard Load' || variable.refresh === 'On Time Change and Dashboard Load') {
+        else if (variable.refresh === 1 || variable.refresh === 2) {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
               console.log("setting current for %s", variable.name);
