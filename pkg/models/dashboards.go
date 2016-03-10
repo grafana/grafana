@@ -102,8 +102,11 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 }
 
 // GetString a
-func (dash *Dashboard) GetString(prop string) string {
-	return dash.Data[prop].(string)
+func (dash *Dashboard) GetString(prop string, defaultValue string) string {
+	if val, exists := dash.Data[prop]; exists {
+		return val.(string)
+	}
+	return defaultValue
 }
 
 // UpdateSlug updates the slug
