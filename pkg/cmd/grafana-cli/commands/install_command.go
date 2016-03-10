@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -44,12 +45,6 @@ func installCommand(c CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	if version == "" {
-		log.Infof("version: latest\n")
-	} else {
-		log.Infof("version: %v\n", version)
-	}
-
 	return InstallPlugin(pluginToInstall, version, c)
 }
 
@@ -77,13 +72,14 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 	log.Infof("installing %v @ %v\n", plugin.Id, version)
 	log.Infof("from url: %v\n", downloadURL)
 	log.Infof("into: %v\n", pluginFolder)
+	log.Info("\n")
 
 	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("Installed %v successfully ✔\n", plugin.Id)
+	log.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
 
 	/* Enable once we need support for downloading depedencies
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
