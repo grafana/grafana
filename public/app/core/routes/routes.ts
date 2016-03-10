@@ -63,6 +63,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/datasources/new', {
     templateUrl: 'public/app/features/datasources/partials/edit.html',
     controller : 'DataSourceEditCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/org', {

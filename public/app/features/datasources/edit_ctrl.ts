@@ -22,6 +22,8 @@ export class DataSourceEditCtrl {
   types: any;
   testing: any;
   datasourceMeta: any;
+  tabIndex: number;
+  hasDashboards: boolean;
 
   /** @ngInject */
   constructor(
@@ -34,6 +36,7 @@ export class DataSourceEditCtrl {
 
       this.isNew = true;
       this.datasources = [];
+      this.tabIndex = 0;
 
       this.loadDatasourceTypes().then(() => {
         if (this.$routeParams.id) {
@@ -66,8 +69,10 @@ export class DataSourceEditCtrl {
     }
 
     typeChanged() {
+      this.hasDashboards = false;
       return this.backendSrv.get('/api/org/plugins/' + this.current.type + '/settings').then(pluginInfo => {
         this.datasourceMeta = pluginInfo;
+        this.hasDashboards = _.findWhere(pluginInfo.includes, {type: 'dashboard'});
       });
     }
 

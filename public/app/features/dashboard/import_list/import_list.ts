@@ -31,14 +31,21 @@ export class DashImportListCtrl {
 
 var template = `
 <div class="gf-form-group" ng-if="ctrl.dashboards.length">
-  <h3 class="page-heading">Dashboards</h3>
-  <div class="gf-form" ng-repeat="dash in ctrl.dashboards">
-    <label class="gf-form-label">
-        <i class="icon-gf icon-gf-dashboard"></i>
-    </label>
-    <label class="gf-form-label width-20">{{dash.name}}</label>
-    <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.import(dash)">Import</button>
-  </div>
+  <table class="filter-table">
+    <tbody>
+      <tr ng-repeat="dash in ctrl.dashboards">
+        <td class="width-1">
+          <i class="icon-gf icon-gf-dashboard"></i>
+        </td>
+        <td>
+          {{dash.name}}</span>
+        </td>
+        <td class="width-2">
+          <button class="btn btn-primary btn-small">Install</button>
+        </td
+      </tr>
+    </tbody>
+  </table>
 </div>
 `;
 
