@@ -41,7 +41,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "repo",
 			Usage: "url to the plugin repository",
-			Value: "https://raw.githubusercontent.com/grafana/grafana-plugin-repository/master/repo.json",
+			Value: "",
 		},
 		cli.BoolFlag{
 			Name:  "debug, d",
