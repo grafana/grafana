@@ -10,6 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type AnyId struct {
+	Id int64 `json:"id"`
+}
+
 type LoginCommand struct {
 	User     string `json:"user" binding:"Required"`
 	Password string `json:"password" binding:"Required"`
