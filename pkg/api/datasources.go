@@ -116,6 +116,25 @@ func GetDataSourceByName(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
+// Get /api/datasources/id/:name
+func GetDataSourceIdByName(c *middleware.Context) Response {
+	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return ApiError(404, "Data source not found", nil)
+		}
+		return ApiError(500, "Failed to query datasources", err)
+	}
+
+	ds := query.Result
+	dtos := dtos.AnyId{
+		Id: ds.Id,
+	}
+
+	return Json(200, &dtos)
+}
+
 func convertModelToDtos(ds m.DataSource) dtos.DataSource {
 	return dtos.DataSource{
 		Id:                ds.Id,

@@ -171,11 +171,10 @@ func Register(r *macaron.Macaron) {
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", wrap(GetDataSourceById))
+			r.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
 
-		r.Group("/datasources/name/:name", func() {
-			r.Get("/", wrap(GetDataSourceByName))
-		}, reqOrgAdmin)
+		r.Get("/datasources/id/:name", wrap(GetDataSourceIdByName), reqSignedIn)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
