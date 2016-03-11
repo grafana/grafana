@@ -48,8 +48,9 @@ func InstallPluginDashboard(cmd *InstallPluginDashboardCommand) error {
 		Title:             dashboard.Title,
 		Path:              cmd.Path,
 		Revision:          dashboard.GetString("revision", "1.0"),
-		InstalledURI:      "db/" + saveCmd.Result.Slug,
+		InstalledUri:      "db/" + saveCmd.Result.Slug,
 		InstalledRevision: dashboard.GetString("revision", "1.0"),
+		Installed:         true,
 	}
 
 	return nil

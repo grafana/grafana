@@ -140,6 +140,6 @@ coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 coreModule.directive('datasourceHttpSettings', function() {
   return {
     scope: {current: "="},
-    templateUrl: 'public/app/features/datasources/partials/http_settings.html'
+    templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html'
   };
 });

@@ -27,7 +27,8 @@ type PluginListItem struct {
 }
 
 type InstallPluginDashboardCmd struct {
-	PluginId string                 `json:"pluginId"`
-	Path     string                 `json:"path"`
-	Inputs   map[string]interface{} `json:"inputs"`
+	PluginId  string                 `json:"pluginId"`
+	Path      string                 `json:"path"`
+	Reinstall bool                   `json:"reinstall"`
+	Inputs    map[string]interface{} `json:"inputs"`
 }

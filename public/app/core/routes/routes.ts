@@ -52,19 +52,19 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/datasources/partials/list.html',
     controller : 'DataSourcesCtrl',
     controllerAs: 'ctrl',
-    resolve: loadOrgBundle,
+    resolve: loadPluginsBundle,
   })
   .when('/datasources/edit/:id', {
     templateUrl: 'public/app/features/datasources/partials/edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadOrgBundle,
+    resolve: loadPluginsBundle,
   })
   .when('/datasources/new', {
     templateUrl: 'public/app/features/datasources/partials/edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadOrgBundle,
+    resolve: loadPluginsBundle,
   })
   .when('/org', {
     templateUrl: 'public/app/features/org/partials/orgDetails.html',
