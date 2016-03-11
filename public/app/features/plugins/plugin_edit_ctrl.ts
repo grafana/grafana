@@ -78,7 +78,7 @@ export class PluginEditCtrl {
         secureJsonData: self.model.secureJsonData,
       }, {});
 
-      return self.backendSrv.post(`/api/org/plugins/${self.pluginId}/settings`, updateCmd);
+      return self.backendSrv.post(`/api/plugins/${self.pluginId}/settings`, updateCmd);
     });
 
     // if set, performt he postUpdate hook. If a promise is returned it will block
