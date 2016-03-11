@@ -49,19 +49,19 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'DashboardImportCtrl',
   })
   .when('/datasources', {
-    templateUrl: 'public/app/features/datasources/partials/list.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
   .when('/datasources/edit/:id', {
-    templateUrl: 'public/app/features/datasources/partials/edit.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
   .when('/datasources/new', {
-    templateUrl: 'public/app/features/datasources/partials/edit.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
@@ -168,19 +168,19 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
   })
   .when('/plugins', {
-    templateUrl: 'public/app/features/plugins/partials/list.html',
+    templateUrl: 'public/app/features/plugins/partials/plugin_list.html',
     controller: 'PluginListCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
   .when('/plugins/:pluginId/edit', {
-    templateUrl: 'public/app/features/plugins/partials/edit.html',
+    templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
     controller: 'PluginEditCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
   .when('/plugins/:pluginId/page/:slug', {
-    templateUrl: 'public/app/features/plugins/partials/page.html',
+    templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
     controller: 'AppPageCtrl',
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
