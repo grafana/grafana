@@ -14,8 +14,8 @@ func TestPluginDashboards(t *testing.T) {
 
 	Convey("When asking plugin dashboard info", t, func() {
 		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.nginx-app")
-		sec.NewKey("path", "../../examples/nginx-app")
+		sec, _ := setting.Cfg.NewSection("plugin.test-app")
+		sec.NewKey("path", "../../tests/test-app")
 		err := Init()
 
 		So(err, ShouldBeNil)
@@ -31,7 +31,7 @@ func TestPluginDashboards(t *testing.T) {
 			return m.ErrDashboardNotFound
 		})
 
-		dashboards, err := GetPluginDashboards(1, "nginx-app")
+		dashboards, err := GetPluginDashboards(1, "test-app")
 
 		So(err, ShouldBeNil)
 
@@ -43,7 +43,7 @@ func TestPluginDashboards(t *testing.T) {
 			So(dashboards[0].Title, ShouldEqual, "Nginx Connections")
 			So(dashboards[0].Revision, ShouldEqual, "1.5")
 			So(dashboards[0].InstalledRevision, ShouldEqual, "1.1")
-			So(dashboards[0].InstalledURI, ShouldEqual, "db/nginx-connections")
+			So(dashboards[0].InstalledUri, ShouldEqual, "db/nginx-connections")
 
 			So(dashboards[1].Revision, ShouldEqual, "2.0")
 			So(dashboards[1].InstalledRevision, ShouldEqual, "")

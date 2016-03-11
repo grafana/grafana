@@ -1,7 +1,7 @@
 {
   "type": "app",
-  "name": "Nginx",
-  "id": "nginx-app",
+  "name": "Test App",
+  "id": "test-app",
 
   "staticRoot": ".",
 
@@ -16,12 +16,12 @@
   },
 
   "info": {
-    "description": "Official Grafana Nginx App & Dashboard bundle",
+    "description": "Official Grafana Test App & Dashboard bundle",
     "author": {
-      "name": "Nginx Inc.",
-      "url": "http://nginx.com"
+      "name": "Test Inc.",
+      "url": "http://test.com"
     },
-    "keywords": ["nginx"],
+    "keywords": ["test"],
     "logos": {
       "small": "img/logo_small.png",
       "large": "img/logo_large.png"
