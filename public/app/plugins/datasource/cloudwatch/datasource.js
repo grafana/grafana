@@ -205,14 +205,14 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         });
       }
 
-      var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?([^)]+)\)/);
+      var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
       if (ec2InstanceAttributeQuery) {
         region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
         var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
-        var filter = _.map(filterJson, function(f) {
+        var filter = _.map(filterJson, function(values, name) {
           return {
-            Name: f.slice(0, f.indexOf('=')),
-            Values: f.slice(f.indexOf('=') + 1).split(',')
+            Name: name,
+            Values: values
           };
         });
         var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
