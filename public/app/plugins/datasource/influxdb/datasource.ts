@@ -104,7 +104,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
   this.metricFindQuery = function (query) {
     var interpolated;
     try {
-      interpolated = templateSrv.replace(query);
+      interpolated = templateSrv.replace(query, null, 'regex');
     } catch (err) {
       return $q.reject(err);
     }
