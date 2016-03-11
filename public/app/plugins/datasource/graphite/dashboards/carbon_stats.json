@@ -2,6 +2,7 @@
   "__inputs": {
     "graphite": {
       "type": "datasource",
+      "pluginId": "graphite",
       "description": "Graphite datasource"
     }
   },

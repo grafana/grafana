@@ -1,5 +1,24 @@
 {
+  "__inputs": {
+    "graphite": {
+      "type": "datasource",
+      "pluginId": "graphite",
+      "description": "Graphite datasource"
+    }
+  },
+
   "title": "Nginx Connections",
   "revision": "1.5",
-  "schemaVersion": 11
+  "schemaVersion": 11,
+
+  "rows": [
+    {
+      "panels": [
+        {
+          "type": "graph",
+          "datasource": "$__graphite"
+        }
+      ]
+    }
+  ]
 }
