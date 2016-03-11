@@ -7,32 +7,33 @@ import (
 )
 
 // PUT /api/user/prefs
-func SaveUserPreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
+func SavePreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
 
-	cmd.PrefId = c.UserId
-	cmd.PrefType = `user`
+	cmd.UserId = c.UserId
+  cmd.OrgId  = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to saved user preferences", err)
+		return ApiError(500, "Failed to saved preferences", err)
 	}
 
-	return ApiSuccess("User preferences saved")
+	return ApiSuccess("Preferences saved")
 
 }
 
 // GET /api/user/prefs
-func GetUserPreferences(c *middleware.Context) {
+func GetPreferences(c *middleware.Context) {
 
-	query := m.GetPreferencesQuery{PrefId: c.UserId, PrefType: `user`}
+	query := m.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to get preferences for user", err)
+		c.JsonApiErr(500, "Failed to get preferences", err)
 	}
 
 	dto := m.PreferencesDTO{
-		PrefId:   query.Result.PrefId,
-		PrefType: query.Result.PrefType,
-		PrefData: query.Result.PrefData,
+		Id:         query.Result.Id,
+		UserId:     query.Result.UserId,
+    OrgId:      query.Result.OrgId,
+		Preference: query.Result.Preference,
 	}
 
 	c.JSON(200, dto)

@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+  "time"
 )
 
 // Typed errors
@@ -10,18 +11,22 @@ var (
 )
 
 type Preferences struct {
-	Id       int64
-	PrefId   int64
-	PrefType string
-	PrefData map[string]interface{}
+	Id         int64
+	OrgId      int64
+	UserId     int64
+  Version    int
+	Preference map[string]interface{}
+  Created    time.Time
+  Updated    time.Time
 }
 
 // ---------------------
 // QUERIES
 
 type GetPreferencesQuery struct {
-	PrefId   int64
-	PrefType string
+	Id     int64
+	OrgId  int64
+  UserId int64
 
 	Result *Preferences
 }
@@ -30,16 +35,17 @@ type GetPreferencesQuery struct {
 // COMMANDS
 
 type SavePreferencesCommand struct {
-	PrefData map[string]interface{} `json:"prefData" binding:"Required"`
-	PrefId   int64                  `json:"-"`
-	PrefType string                 `json:"-"`
+	Preference map[string]interface{} `json:"Preference" binding:"Required"`
+	UserId     int64                  `json:"-"`
+	OrgId      int64                  `json:"-"`
 }
 
 // ----------------------
 // DTO & Projections
 
 type PreferencesDTO struct {
-	PrefId   int64                  `json:"prefId"`
-	PrefType string                 `json:"prefType"`
-	PrefData map[string]interface{} `json:"prefData"`
+	Id         int64                  `json:"Id"`
+	UserId     int64                  `json:"UserId"`
+  OrgId      int64                  `json:"OrgId"`
+	Preference map[string]interface{} `json:"Preference"`
 }
