@@ -41,7 +41,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "repo",
 			Usage: "url to the plugin repository",
-			Value: "",
+			Value: "https://grafana-net.raintank.io/api/plugins",
 		},
 		cli.BoolFlag{
 			Name:  "debug, d",
