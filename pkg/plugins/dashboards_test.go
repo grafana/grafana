@@ -23,7 +23,7 @@ func TestPluginDashboards(t *testing.T) {
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			if query.Slug == "nginx-connections" {
 				dash := m.NewDashboard("Nginx Connections")
-				dash.Data["revision"] = "1.1"
+				dash.Data.Set("revision", "1.1")
 				query.Result = dash
 				return nil
 			}

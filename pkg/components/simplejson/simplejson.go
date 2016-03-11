@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 )
 
@@ -51,6 +50,11 @@ func New() *Json {
 	}
 }
 
+// New returns a pointer to a new, empty `Json` object
+func NewFromAny(data interface{}) *Json {
+	return &Json{data: data}
+}
+
 // Interface returns the underlying data
 func (j *Json) Interface() interface{} {
 	return j.data
@@ -68,7 +72,6 @@ func (j *Json) EncodePretty() ([]byte, error) {
 
 // Implements the json.Marshaler interface.
 func (j *Json) MarshalJSON() ([]byte, error) {
-	fmt.Printf("MarshalJSON")
 	return json.Marshal(&j.data)
 }
 
