@@ -7,7 +7,13 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"time"
+	"io/ioutil"
+	"bytes"
+	"encoding/json"
+	"strings"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -90,6 +96,89 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	if ds.Type == m.DS_CLOUDWATCH {
 		cloudwatch.HandleRequest(c, ds)
+	}else if ds.Type == m.DS_INFLUXDB {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+		proxy.Transport = dataProxyTransport
+
+		if (c.SignedInUser.Login != setting.AdminUser) && (c.SignedInUser.OrgId != 1) {
+			c.Req.Request.ParseForm()
+			form_values := c.Req.Request.Form
+			if contents, ok := form_values["q"]; ok {
+				queries,err := url.QueryUnescape(strings.Join(contents,""))
+				if err != nil {
+					c.JsonApiErr(500, "Unable to verify authorization", err)
+					return
+				}
+				for _, query := range strings.Split(strings.Replace(queries,";","\n",-1),"\n"){
+					if strings.HasPrefix(query, "SELECT"){
+						if !strings.Contains(query,fmt.Sprintf("FROM \"P%d.",c.SignedInUser.OrgId)){
+							c.JsonApiErr(403, "Unauthorized Query", nil)
+							return
+						}
+					}else{
+						log.Info("Metadata Query: %#v",query)
+					}
+				}
+			}else{
+				c.JsonApiErr(500, "Unable to verify authorization", err)
+				return
+			}
+		}
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
+	}else if ds.Type == m.DS_OPENTSDB {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+		proxy.Transport = dataProxyTransport
+
+		if (c.SignedInUser.Login != setting.AdminUser) && (c.SignedInUser.OrgId != 1) {
+
+			contents, err := ioutil.ReadAll(c.Req.Request.Body)
+
+			if err != nil || len(contents) == 0 {
+				c.Req.Request.ParseForm()
+				form_values := c.Req.Request.Form
+				if contents, ok := form_values["q"]; ok && !(strings.Contains(strings.Join(contents,""),"m=") || strings.Contains(strings.Join(contents,""),"tsuid=")){
+					log.Info("Metadata Query: %#v",contents)
+				}else{
+					c.JsonApiErr(500, "Unable to verify authorization", nil)
+					return
+				}
+			}else{
+				c.Req.Request.Body = ioutil.NopCloser(bytes.NewReader(contents))
+
+				var v util.DynMap
+				err = json.Unmarshal(contents, &v)
+				if err != nil {
+					log.Info("Body: %s",contents)
+					c.JsonApiErr(500, "Unable to verify authorization", err)
+					return
+				}
+
+				for _,element := range v["queries"].([]interface{}) {
+					m := element.(map[string]interface {})
+					org_matches := strings.HasPrefix(m["metric"].(string),fmt.Sprintf("P%d.",c.SignedInUser.OrgId))
+					if !org_matches || (m["tsuids"] != nil) {
+						c.JsonApiErr(403, "Unauthorized Query", nil)
+						return
+					}
+				}
+			}
+		}
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
+	}else if ds.Type == m.DS_ES {
+		if (c.SignedInUser.Login == setting.AdminUser) || (c.SignedInUser.OrgId == 1) || (ds.OrgId == c.SignedInUser.OrgId) {
+			proxyPath := c.Params("*")
+			proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+			proxy.Transport = dataProxyTransport
+			proxy.ServeHTTP(c.Resp, c.Req.Request)
+			c.Resp.Header().Del("Set-Cookie")
+		}else{
+			c.JsonApiErr(403, "Unauthorized Query", nil)
+			return
+		}
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
