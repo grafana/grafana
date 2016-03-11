@@ -107,3 +107,34 @@ func UpdatePluginSetting(c *middleware.Context, cmd m.UpdatePluginSettingCmd) Re
 
 	return ApiSuccess("Plugin settings updated")
 }
+
+func GetPluginDashboards(c *middleware.Context) Response {
+	pluginId := c.Params(":pluginId")
+
+	if list, err := plugins.GetPluginDashboards(c.OrgId, pluginId); err != nil {
+		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
+			return ApiError(404, notfound.Error(), nil)
+		}
+
+		return ApiError(500, "Failed to get plugin dashboards", err)
+	} else {
+		return Json(200, list)
+	}
+}
+
+func InstallPluginDashboard(c *middleware.Context, apiCmd dtos.InstallPluginDashboardCmd) Response {
+
+	cmd := plugins.InstallPluginDashboardCommand{
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		PluginId: apiCmd.PluginId,
+		Path:     apiCmd.Path,
+		Inputs:   apiCmd.Inputs,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to install dashboard", err)
+	}
+
+	return Json(200, cmd.Result)
+}

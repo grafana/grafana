@@ -3,11 +3,27 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var (
+	PluginTypeApp        = "app"
+	PluginTypeDatasource = "datasource"
+	PluginTypePanel      = "panel"
+	PluginTypeDashboard  = "dashboard"
+)
+
+type PluginNotFoundError struct {
+	PluginId string
+}
+
+func (e PluginNotFoundError) Error() string {
+	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
+}
 
 type PluginLoader interface {
 	Load(decoder *json.Decoder, pluginDir string) error

@@ -29,7 +29,15 @@ func validateInput(c CommandLine, pluginFolder string) error {
 	}
 
 	fileInfo, err := os.Stat(pluginDir)
-	if err != nil && !fileInfo.IsDir() {
+	if err != nil {
+		if err = os.MkdirAll(pluginDir, os.ModePerm); err != nil {
+			return errors.New("path is not a directory")
+		}
+
+		return nil
+	}
+
+	if !fileInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
 
