@@ -26,6 +26,10 @@ func (j *Json) FromDB(data []byte) error {
 }
 
 func (j *Json) ToDB() ([]byte, error) {
+	if j == nil || j.data == nil {
+		return nil, nil
+	}
+
 	return j.Encode()
 }
 
