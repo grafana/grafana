@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -64,32 +65,33 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 		return err
 	}
 
-	url := v.Url
-	commit := v.Commit
-
 	if version == "" {
 		version = v.Version
 	}
 
-	downloadURL := url + "/archive/" + commit + ".zip"
+	downloadURL := fmt.Sprintf("%s/%s/versions/%s/download",
+		c.GlobalString("repo"),
+		pluginName,
+		version)
 
 	log.Infof("installing %v @ %v\n", plugin.Id, version)
 	log.Infof("from url: %v\n", downloadURL)
-	log.Infof("on commit: %v\n", commit)
 	log.Infof("into: %v\n", pluginFolder)
 
 	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
-	if err == nil {
-		log.Infof("Installed %v successfully ✔\n", plugin.Id)
+	if err != nil {
+		return err
 	}
 
-	res, _ := s.ReadPlugin(pluginFolder, pluginName)
+	log.Infof("Installed %v successfully ✔\n", plugin.Id)
 
+	/* Enable once we need support for downloading depedencies
+	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependency.Plugins {
 		InstallPlugin(v.Id, version, c)
-		log.Infof("Installed Dependency: %v ✔\n", v.Id)
+		log.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
-
+	*/
 	return err
 }
 

@@ -74,7 +74,7 @@ page_keywords: grafana, admin, http, api, documentation, datasource
       "jsonData":null
     }
 
-## Get a single data sources by Name
+## Get a single data source by Name
 
 `GET /api/datasources/name/:name`
 
@@ -105,6 +105,26 @@ page_keywords: grafana, admin, http, api, documentation, datasource
       "basicAuthPassword":"",
       "isDefault":false,
       "jsonData":null
+    }
+
+## Get data source Id by Name
+
+`GET /api/datasources/id/:name`
+
+**Example Request**:
+
+    GET /api/datasources/id/test_datasource HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "id":1
     }
 
 ## Create data source
