@@ -1,6 +1,10 @@
 package plugins
 
 import (
+	"fmt"
+	"reflect"
+	"regexp"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dynmap"
 	"github.com/grafana/grafana/pkg/log"
@@ -24,6 +28,14 @@ type ImportDashboardInput struct {
 	Value    string `json:"value"`
 }
 
+type DashboardInputMissingError struct {
+	VariableName string
+}
+
+func (e DashboardInputMissingError) Error() string {
+	return fmt.Sprintf("Dashbord input variable: %v missing from import command", e.VariableName)
+}
+
 func init() {
 	bus.AddHandler("plugins", ImportDashboard)
 }
@@ -42,8 +54,19 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		return err
 	}
 
+	template := dynmap.NewFromMap(dashboard.Data)
+	evaluator := &DashTemplateEvaluator{
+		template: template,
+		inputs:   cmd.Inputs,
+	}
+
+	generatedDash, err := evaluator.Eval()
+	if err != nil {
+		return err
+	}
+
 	saveCmd := m.SaveDashboardCommand{
-		Dashboard: dashboard.Data,
+		Dashboard: generatedDash.StringMap(),
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.UserId,
 	}
@@ -70,14 +93,8 @@ type DashTemplateEvaluator struct {
 	inputs    []ImportDashboardInput
 	variables map[string]string
 	result    *dynmap.Object
+	varRegex  *regexp.Regexp
 }
-
-// func (this *DashTemplateEvaluator) getObject(path string) map[string]interface{} {
-// 	if obj, exists := this.template[path]; exists {
-// 		return obj.(map[string]interface{})
-// 	}
-// 	return nil
-// }
 
 func (this *DashTemplateEvaluator) findInput(varName string, varDef *dynmap.Object) *ImportDashboardInput {
 	inputType, _ := varDef.GetString("type")
@@ -94,14 +111,22 @@ func (this *DashTemplateEvaluator) findInput(varName string, varDef *dynmap.Obje
 func (this *DashTemplateEvaluator) Eval() (*dynmap.Object, error) {
 	this.result = dynmap.NewObject()
 	this.variables = make(map[string]string)
+	this.varRegex, _ = regexp.Compile("\\$__(\\w+)")
 
 	// check that we have all inputs we need
 	if requiredInputs, err := this.template.GetObject("__inputs"); err == nil {
 		for varName, value := range requiredInputs.Map() {
 			varDef, _ := value.Object()
 			input := this.findInput(varName, varDef)
-			this.variables[varName] = input.Value
+
+			if input == nil {
+				return nil, &DashboardInputMissingError{VariableName: varName}
+			}
+
+			this.variables["$__"+varName] = input.Value
 		}
+	} else {
+		log.Info("Import: dashboard has no __import section")
 	}
 
 	this.EvalObject(this.template, this.result)
@@ -111,19 +136,24 @@ func (this *DashTemplateEvaluator) Eval() (*dynmap.Object, error) {
 func (this *DashTemplateEvaluator) EvalObject(source *dynmap.Object, writer *dynmap.Object) {
 
 	for key, value := range source.Map() {
-		if key == "__input" {
+		if key == "__inputs" {
 			continue
 		}
 
 		goValue := value.Interface()
-		switch goValue.(type) {
+
+		switch v := goValue.(type) {
 		case string:
-			writer.SetValue(key, goValue)
+			interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
+				return this.variables[match]
+			})
+			writer.SetValue(key, interpolated)
 		case map[string]interface{}:
 			childSource, _ := value.Object()
 			childWriter, _ := writer.SetValue(key, map[string]interface{}{}).Object()
 			this.EvalObject(childSource, childWriter)
 		default:
+			log.Info("type: %v", reflect.TypeOf(goValue))
 			log.Error(3, "Unknown json type key: %v , type: %v", key, goValue)
 		}
 	}

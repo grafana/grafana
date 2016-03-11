@@ -120,6 +120,10 @@ func (v *Value) Interface() interface{} {
 	return v.data
 }
 
+func (v *Value) StringMap() map[string]interface{} {
+	return v.data.(map[string]interface{})
+}
+
 // Private Get
 func (v *Value) get(key string) (*Value, error) {
 
