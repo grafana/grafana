@@ -209,7 +209,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       if (ec2InstanceAttributeQuery) {
         region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
         var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
-        var filter = _.map(filterJson, function(values, name) {
+        var filters = _.map(filterJson, function(values, name) {
           return {
             Name: name,
             Values: values
@@ -217,7 +217,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         });
         var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
 
-        return this.performEC2DescribeInstances(region, filter, null).then(function(result) {
+        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
           var attributes = _.chain(result.Reservations)
           .map(function(reservations) {
             return _.pluck(reservations.Instances, targetAttributeName);
