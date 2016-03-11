@@ -1,3 +1,4 @@
 ## Example plugin implementations
 
-[simple-json-datasource](https://github.com/grafana/simple-json-datasource)
+datasource:[simple-json-datasource](https://github.com/grafana/simple-json-datasource)
+app:  [example-app](https://github.com/grafana/example-app)
