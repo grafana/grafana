@@ -8,7 +8,7 @@ export class PluginListCtrl {
   /** @ngInject */
   constructor(private backendSrv: any) {
 
-    this.backendSrv.get('api/org/plugins').then(plugins => {
+    this.backendSrv.get('api/plugins', {embedded: 0}).then(plugins => {
       this.plugins = plugins;
     });
   }

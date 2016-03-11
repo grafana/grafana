@@ -13,7 +13,6 @@ define([
   './timeSrv',
   './unsavedChangesSrv',
   './timepicker/timepicker',
-  './import_list/import_list',
   './graphiteImportCtrl',
   './dynamicDashboardSrv',
   './importCtrl',

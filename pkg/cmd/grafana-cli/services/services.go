@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/franela/goreq"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
@@ -12,8 +13,12 @@ import (
 var IoHelper m.IoUtil = IoUtilImp{}
 
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
+	fullUrl := repoUrl + "/repo"
+	res, _ := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
 
-	res, _ := goreq.Request{Uri: repoUrl + "/repo", MaxRedirects: 3}.Do()
+	if res.StatusCode != 200 {
+		return m.PluginRepo{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
+	}
 
 	var resp m.PluginRepo
 	err := res.Body.FromJsonTo(&resp)

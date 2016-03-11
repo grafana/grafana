@@ -22,7 +22,7 @@ export class PluginEditCtrl {
    }
 
   init() {
-    return this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(result => {
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;
       this.pluginIcon = this.getPluginIcon(this.model.type);
 
