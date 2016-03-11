@@ -25,7 +25,7 @@
 
   <div ng-if="ctrl.tabIndex === 0" class="tab-content">
 
-    <form name="editForm">
+    <form name="ctrl.editForm">
       <div class="gf-form-group">
         <div class="gf-form">
           <span class="gf-form-label width-7">Name</span>
@@ -52,12 +52,12 @@
         </plugin-component>
       </rebuild-on-change>
 
-      <div ng-if="testing" style="margin-top: 25px">
-        <h5 ng-show="!testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
-        <h5 ng-show="testing.done">Test results</h5>
-        <div class="alert-{{testing.status}} alert">
-          <div class="alert-title">{{testing.title}}</div>
-          <div ng-bind='testing.message'></div>
+      <div ng-if="ctrl.testing" style="margin-top: 25px">
+        <h5 ng-show="!ctrl.testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
+        <h5 ng-show="ctrl.testing.done">Test results</h5>
+        <div class="alert-{{ctrl.testing.status}} alert">
+          <div class="alert-title">{{ctrl.testing.title}}</div>
+          <div ng-bind='ctrl.testing.message'></div>
         </div>
       </div>
 
