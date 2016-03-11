@@ -35,9 +35,9 @@ function (angular, _) {
     };
 
     function regexEscape(value) {
-			if (value === '.*') {
-				return value;
-			}
+      if (value === '.*') {
+        return value;
+      }
 
       return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
     }
@@ -116,9 +116,9 @@ function (angular, _) {
         return variable.allValue;
       }
 
-			if (format === 'regex') {
-				return '.*';
-			}
+      if (format === 'regex') {
+        return '.*';
+      }
 
       var values = [];
       for (var i = 1; i < variable.options.length; i++) {
