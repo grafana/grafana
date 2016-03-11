@@ -14,7 +14,7 @@
       "panels": [
         {
           "type": "graph",
-          "datasource": "__$graphite"
+          "datasource": "$__graphite"
         }
       ]
     }

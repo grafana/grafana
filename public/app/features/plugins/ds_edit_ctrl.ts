@@ -24,6 +24,7 @@ export class DataSourceEditCtrl {
   datasourceMeta: any;
   tabIndex: number;
   hasDashboards: boolean;
+  editForm: any;
 
   /** @ngInject */
   constructor(
@@ -114,7 +115,7 @@ export class DataSourceEditCtrl {
     }
 
     saveChanges(test) {
-      if (!this.$scope.editForm.$valid) {
+      if (!this.editForm.$valid) {
         return;
       }
 

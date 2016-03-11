@@ -33,7 +33,9 @@ func TestDashboardImport(t *testing.T) {
 			Path:     "dashboards/connections.json",
 			OrgId:    1,
 			UserId:   1,
-			Inputs:   []ImportDashboardInput{},
+			Inputs: []ImportDashboardInput{
+				{Name: "*", Type: "datasource"},
+			},
 		}
 
 		err = ImportDashboard(&cmd)
@@ -41,6 +43,10 @@ func TestDashboardImport(t *testing.T) {
 
 		Convey("should install dashboard", func() {
 			So(importedDash, ShouldNotBeNil)
+
+			dashData := dynmap.NewFromMap(importedDash.Data)
+			So(dashData.String(), ShouldEqual, "")
+
 			rows := importedDash.Data["rows"].([]interface{})
 			row1 := rows[0].(map[string]interface{})
 			panels := row1["panels"].([]interface{})
@@ -53,7 +59,7 @@ func TestDashboardImport(t *testing.T) {
 
 	Convey("When evaling dashboard template", t, func() {
 		template, _ := dynmap.NewObjectFromBytes([]byte(`{
-      "__input": {
+      "__inputs": {
         "graphite": {
           "type": "datasource"
         }
@@ -76,6 +82,12 @@ func TestDashboardImport(t *testing.T) {
 		Convey("should render template", func() {
 			So(res.MustGetString("test.prop", ""), ShouldEqual, "my-server")
 		})
+
+		Convey("should not include inputs in output", func() {
+			_, err := res.GetObject("__inputs")
+			So(err, ShouldNotBeNil)
+		})
+
 	})
 
 }
