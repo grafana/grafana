@@ -25,3 +25,9 @@ type PluginListItem struct {
 	Pinned  bool                `json:"pinned"`
 	Info    *plugins.PluginInfo `json:"info"`
 }
+
+type InstallPluginDashboardCmd struct {
+	PluginId string                 `json:"pluginId"`
+	Path     string                 `json:"path"`
+	Inputs   map[string]interface{} `json:"inputs"`
+}

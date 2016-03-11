@@ -11,29 +11,26 @@ export class DashImportListCtrl {
   dashboards: any[];
   plugin: any;
 
-  constructor(private $http) {
+  constructor(private $http, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
-    this.plugin.includes
-    .filter(val => val.type === 'dashboard')
-    .forEach(this.getDashbordImportStatus.bind(this));
-  }
-
-  getDashbordImportStatus(dash) {
-    var dashUrl = this.plugin.baseUrl + '/' + dash.path;
-    this.$http.get(dashUrl).then(res => {
-      this.load(res.data);
-
+    backendSrv.get(`/api/plugins/dashboards/${this.plugin.id}`).then(dashboards => {
+      this.dashboards = dashboards;
     });
   }
 
-  load(json) {
-    var model = angular.fromJson(json);
-    console.log(model);
+  import(dash) {
+    var installCmd = {
+      pluginId: this.plugin.id,
+      path: dash.path,
+      inputs: {}
+    };
+
+    this.backendSrv.post(`/api/plugins/dashboards/install`, installCmd).then(res => {
+      console.log(res);
+    });
   }
 
-  import(dash) {
-  }
 }
 
 var template = `
@@ -45,11 +42,17 @@ var template = `
           <i class="icon-gf icon-gf-dashboard"></i>
         </td>
         <td>
-          {{dash.name}}</span>
+          {{dash.title}}
+        </td>
+        <td>
+          {{dash.revision}}
+        </td>
+        <td>
+          {{dash.installedRevision}}
         </td>
         <td class="width-2">
           <button class="btn btn-secondary" ng-click="ctrl.import(dash)">Install</button>
-        </td
+        </td>
       </tr>
     </tbody>
   </table>
