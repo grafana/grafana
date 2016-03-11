@@ -1,89 +1,29 @@
 package login
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/keystone"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 type keystoneAuther struct {
-	server         string
-	v3             bool
-	userdomainname string
-	token          string
-	tenants        []tenant_struct
+	server     string
+	domainname string
+	roles      map[m.RoleType][]string
+
+	token        string
+	project_list map[string][]string
 }
 
-type v2_auth_response_struct struct {
-	Access v2_access_struct
-}
-
-type v2_access_struct struct {
-	Token v2_token_struct
-}
-
-type v2_token_struct struct {
-	Id string
-}
-
-type v2_auth_post_struct struct {
-	Auth v2_auth_struct `json:"auth"`
-}
-
-type v2_auth_struct struct {
-	PasswordCredentials v2_credentials_struct `json:"passwordCredentials"`
-}
-
-type v2_credentials_struct struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type v2_tenant_response_struct struct {
-	Tenants []tenant_struct
-}
-
-type tenant_struct struct {
-	Name string
-}
-
-type v3_auth_post_struct struct {
-	Auth v3_auth_struct `json:"auth"`
-}
-
-type v3_auth_struct struct {
-	Identity v3_identity_struct `json:"identity"`
-}
-
-type v3_identity_struct struct {
-	Methods  []string                 `json:"methods"`
-	Password v3_passwordmethod_struct `json:"password"`
-}
-
-type v3_passwordmethod_struct struct {
-	User v3_user_struct `json:"user"`
-}
-
-type v3_user_struct struct {
-	Name     string               `json:"name"`
-	Password string               `json:"password"`
-	Domain   v3_userdomain_struct `json:"domain"`
-}
-
-type v3_userdomain_struct struct {
-	Name string `json:"name"`
-}
-
-type v3_project_response_struct struct {
-	Projects []tenant_struct
-}
-
-func NewKeystoneAuthenticator(server string, v3 bool) *keystoneAuther {
-	return &keystoneAuther{server: server, v3: v3}
+func NewKeystoneAuthenticator(server, domainname string, admin_roles, editor_roles, viewer_roles []string) *keystoneAuther {
+	roles := map[m.RoleType][]string{
+		m.ROLE_ADMIN:  admin_roles,
+		m.ROLE_EDITOR: editor_roles,
+		m.ROLE_VIEWER: viewer_roles,
+	}
+	return &keystoneAuther{server: server, domainname: domainname, roles: roles}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
@@ -97,7 +37,7 @@ func (a *keystoneAuther) login(query *LoginUserQuery) error {
 		return err
 	} else {
 		// sync org roles
-		if err := a.syncOrgRoles(grafanaUser); err != nil {
+		if err := a.syncOrgRoles(query.Username, query.Password, grafanaUser); err != nil {
 			return err
 		}
 		query.User = grafanaUser
@@ -107,73 +47,16 @@ func (a *keystoneAuther) login(query *LoginUserQuery) error {
 }
 
 func (a *keystoneAuther) authenticate(username, password string) error {
-	if a.v3 {
-		if err := a.authenticateV3(username, password); err != nil {
-			return err
-		}
-	} else {
-		if err := a.authenticateV2(username, password); err != nil {
-			return err
-		}
+	auth := keystone.Auth_data{
+		Server:   a.server,
+		Username: username,
+		Password: password,
+		Domain:   a.domainname,
 	}
-	return nil
-}
-
-func (a *keystoneAuther) authenticateV2(username, password string) error {
-	var auth_post v2_auth_post_struct
-	auth_post.Auth.PasswordCredentials.Username = username
-	auth_post.Auth.PasswordCredentials.Password = password
-	b, _ := json.Marshal(auth_post)
-
-	request, err := http.NewRequest("POST", a.server+"/v2.0/tokens", bytes.NewBuffer(b))
-	if err != nil {
+	if err := keystone.AuthenticateUnscoped(&auth); err != nil {
 		return err
 	}
-
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return err
-	} else if resp.StatusCode != 200 {
-		return errors.New("Keystone authentication failed: " + resp.Status)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	var auth_response v2_auth_response_struct
-	err = decoder.Decode(&auth_response)
-	if err != nil {
-		return err
-	}
-
-	a.token = auth_response.Access.Token.Id
-	return nil
-}
-
-func (a *keystoneAuther) authenticateV3(username, password string) error {
-	var auth_post v3_auth_post_struct
-	auth_post.Auth.Identity.Methods = []string{"password"}
-	auth_post.Auth.Identity.Password.User.Name = username
-	auth_post.Auth.Identity.Password.User.Password = password
-	// the user domain name is currently hardcoded via a config setting - this should change to an extra domain field in the login dialog later
-	auth_post.Auth.Identity.Password.User.Domain.Name = a.userdomainname
-	b, _ := json.Marshal(auth_post)
-
-	request, err := http.NewRequest("POST", a.server+"/v3/auth/tokens", bytes.NewBuffer(b))
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return err
-	} else if resp.StatusCode != 201 {
-		return errors.New("Keystone authentication failed: " + resp.Status)
-	}
-
-	// in keystone v3 the token is in the response header
-	a.token = resp.Header.Get("X-Subject-Token")
-
+	a.token = auth.Token
 	return nil
 }
 
@@ -229,8 +112,39 @@ func (a *keystoneAuther) createGrafanaOrg(orgname string) (*m.Org, error) {
 	return &cmd.Result, nil
 }
 
-func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
-	err := a.getTenantList()
+func (a *keystoneAuther) removeGrafanaOrgUser(userid, orgid int64) error {
+	cmd := m.RemoveOrgUserCommand{
+		UserId: userid,
+		OrgId:  orgid,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		// Ignore change if user is the last admin
+		if err != m.ErrLastOrgAdmin {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *keystoneAuther) updateGrafanaOrgUser(userid, orgid int64, role m.RoleType) error {
+	cmd := m.UpdateOrgUserCommand{
+		UserId: userid,
+		Role:   role,
+		OrgId:  orgid,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		// Ignore change if user is the last admin
+		if err != m.ErrLastOrgAdmin {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *keystoneAuther) syncOrgRoles(username, password string, user *m.User) error {
+	err := a.getProjectList(username, password)
 	if err != nil {
 		return err
 	}
@@ -244,32 +158,32 @@ func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
 
 	// update or remove org roles
 	for _, org := range orgsQuery.Result {
-		match := false
 		handledOrgIds[org.OrgId] = true
 
-		// search for matching tenant
-		for _, tenant := range a.tenants {
-			if org.Name == tenant.Name {
-				match = true
-				break
-			}
-		}
-
-		// remove role if no mappings match
-		if !match {
-			cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
-			if err := bus.Dispatch(&cmd); err != nil {
-				// Ignore remove org user if user is the last admin
-				if err != m.ErrLastOrgAdmin {
+		if user_roles, ok := a.project_list[org.Name]; ok {
+			// Update roles if user belongs to org
+			role_name := a.getRole(user_roles)
+			if role_name != "" {
+				if err := a.updateGrafanaOrgUser(user.Id, org.OrgId, role_name); err != nil {
 					return err
 				}
+			} else {
+				// remove user if no permissions
+				if err := a.removeGrafanaOrgUser(user.Id, org.OrgId); err != nil {
+					return err
+				}
+			}
+		} else {
+			// remove role if no mappings match
+			if err := a.removeGrafanaOrgUser(user.Id, org.OrgId); err != nil {
+				return err
 			}
 		}
 	}
 
 	// add missing org roles
-	for _, tenant := range a.tenants {
-		if grafanaOrg, err := a.getGrafanaOrgFor(tenant.Name); err != nil {
+	for project, _ := range a.project_list {
+		if grafanaOrg, err := a.getGrafanaOrgFor(project); err != nil {
 			return err
 		} else {
 			if _, exists := handledOrgIds[grafanaOrg.Id]; exists {
@@ -277,14 +191,9 @@ func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
 			}
 
 			// add role
-			cmd := m.AddOrgUserCommand{UserId: user.Id, Role: "Editor", OrgId: grafanaOrg.Id}
-			if err := bus.Dispatch(&cmd); err != nil {
-				return err
-			}
-
-			// set org if none is set (for new users)
-			if user.OrgId == 1 {
-				cmd := m.SetUsingOrgCommand{UserId: user.Id, OrgId: grafanaOrg.Id}
+			role_name := a.getRole(a.project_list[project])
+			if role_name != "" {
+				cmd := m.AddOrgUserCommand{UserId: user.Id, Role: role_name, OrgId: grafanaOrg.Id}
 				if err := bus.Dispatch(&cmd); err != nil {
 					return err
 				}
@@ -295,68 +204,77 @@ func (a *keystoneAuther) syncOrgRoles(user *m.User) error {
 		}
 	}
 
-	return nil
-}
+	orgsQuery = m.GetUserOrgListQuery{UserId: user.Id}
+	if err := bus.Dispatch(&orgsQuery); err != nil {
+		return err
+	}
 
-func (a *keystoneAuther) getTenantList() error {
-	if a.v3 {
-		if err := a.getProjectListV3(); err != nil {
+	if len(orgsQuery.Result) == 0 {
+		return errors.New("Keystone authentication failed: No grafana permissions")
+	}
+
+	match := false
+	var orgid int64
+	for _, org := range orgsQuery.Result {
+		orgid = org.OrgId
+		if user.OrgId == orgid {
+			match = true
+			break
+		}
+	}
+
+	// set org if none is set (for new users), or if user no longer has permissions for the current org
+	if (user.OrgId == 1) || (match == false) {
+		cmd := m.SetUsingOrgCommand{UserId: user.Id, OrgId: orgid}
+		if err := bus.Dispatch(&cmd); err != nil {
 			return err
 		}
-	} else {
-		if err := a.getTenantListV2(); err != nil {
+	}
+
+	return nil
+}
+
+func (a *keystoneAuther) getProjectList(username, password string) error {
+	projects_data := keystone.Projects_data{
+		Token:  a.token,
+		Server: a.server,
+	}
+	if err := keystone.GetProjects(&projects_data); err != nil {
+		return err
+	}
+	projects := projects_data.Projects
+	a.project_list = make(map[string][]string)
+	for _, project := range projects {
+		var auth keystone.Auth_data
+		auth.Server = a.server
+		auth.Username = username
+		auth.Password = password
+		auth.Domain = a.domainname
+		auth.Project = project
+		if err := keystone.AuthenticateScoped(&auth); err != nil {
 			return err
 		}
+		var roles []string
+		for _, role := range auth.Roles {
+			roles = append(roles, role.Name)
+		}
+		a.project_list[project] = roles
 	}
 	return nil
 }
 
-func (a *keystoneAuther) getTenantListV2() error {
-	request, err := http.NewRequest("GET", a.server+"/v2.0/tenants", nil)
-	if err != nil {
-		return err
+func (a *keystoneAuther) getRole(user_roles []string) m.RoleType {
+	role_map := make(map[string]bool)
+	for _, role := range user_roles {
+		role_map[role] = true
 	}
-	request.Header.Add("X-Auth-Token", a.token)
-
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return err
-	} else if resp.StatusCode != 200 {
-		return errors.New("Keystone tenant-list failed: " + resp.Status)
+	role_order := []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR, m.ROLE_VIEWER}
+	for _, role_type := range role_order {
+		for _, role := range a.roles[role_type] {
+			if _, ok := role_map[role]; ok {
+				return role_type
+			}
+		}
 	}
-
-	decoder := json.NewDecoder(resp.Body)
-	var tenant_response v2_tenant_response_struct
-	err = decoder.Decode(&tenant_response)
-	if err != nil {
-		return err
-	}
-	a.tenants = tenant_response.Tenants
-	return nil
-}
-
-func (a *keystoneAuther) getProjectListV3() error {
-	request, err := http.NewRequest("GET", a.server+"/v3/auth/projects", nil)
-	if err != nil {
-		return err
-	}
-	request.Header.Add("X-Auth-Token", a.token)
-
-	client := &http.Client{}
-	resp, err := client.Do(request)
-	if err != nil {
-		return err
-	} else if resp.StatusCode != 200 {
-		return errors.New("Keystone project-list failed: " + resp.Status)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	var project_response v3_project_response_struct
-	err = decoder.Decode(&project_response)
-	if err != nil {
-		return err
-	}
-	a.tenants = project_response.Projects
-	return nil
+	return ""
 }
