@@ -35,6 +35,10 @@ function (angular, _) {
     };
 
     function regexEscape(value) {
+      if (value === '.*') {
+        return value;
+      }
+
       return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
     }
 
@@ -107,10 +111,15 @@ function (angular, _) {
       });
     };
 
-    this.getAllValue = function(variable) {
+    this.getAllValue = function(variable, format) {
       if (variable.allValue) {
         return variable.allValue;
       }
+
+      if (format === 'regex') {
+        return '.*';
+      }
+
       var values = [];
       for (var i = 1; i < variable.options.length; i++) {
         values.push(variable.options[i].value);
@@ -144,7 +153,7 @@ function (angular, _) {
 
         value = variable.current.value;
         if (self.isAllValue(value)) {
-          value = self.getAllValue(variable);
+          value = self.getAllValue(variable, format);
         }
 
         var res = self.formatValue(value, format, variable);
