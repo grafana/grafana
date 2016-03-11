@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/dynmap"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -54,9 +54,8 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		return err
 	}
 
-	template := dynmap.NewFromMap(dashboard.Data)
 	evaluator := &DashTemplateEvaluator{
-		template: template,
+		template: dashboard.Data,
 		inputs:   cmd.Inputs,
 	}
 
@@ -66,7 +65,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 	}
 
 	saveCmd := m.SaveDashboardCommand{
-		Dashboard: generatedDash.StringMap(),
+		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.UserId,
 	}
@@ -89,15 +88,15 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 }
 
 type DashTemplateEvaluator struct {
-	template  *dynmap.Object
+	template  *simplejson.Json
 	inputs    []ImportDashboardInput
 	variables map[string]string
-	result    *dynmap.Object
+	result    *simplejson.Json
 	varRegex  *regexp.Regexp
 }
 
-func (this *DashTemplateEvaluator) findInput(varName string, varDef *dynmap.Object) *ImportDashboardInput {
-	inputType, _ := varDef.GetString("type")
+func (this *DashTemplateEvaluator) findInput(varName string, varDef *simplejson.Json) *ImportDashboardInput {
+	inputType := varDef.Get("type").MustString()
 
 	for _, input := range this.inputs {
 		if inputType == input.Type && (input.Name == varName || input.Name == "*") {
@@ -108,16 +107,15 @@ func (this *DashTemplateEvaluator) findInput(varName string, varDef *dynmap.Obje
 	return nil
 }
 
-func (this *DashTemplateEvaluator) Eval() (*dynmap.Object, error) {
-	this.result = dynmap.NewObject()
+func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
+	this.result = simplejson.New()
 	this.variables = make(map[string]string)
 	this.varRegex, _ = regexp.Compile("\\$__(\\w+)")
 
 	// check that we have all inputs we need
-	if requiredInputs, err := this.template.GetObject("__inputs"); err == nil {
-		for varName, value := range requiredInputs.Map() {
-			varDef, _ := value.Object()
-			input := this.findInput(varName, varDef)
+	if inputDefs := this.template.Get("__inputs"); inputDefs != nil {
+		for varName, value := range inputDefs.MustMap() {
+			input := this.findInput(varName, simplejson.NewFromAny(value))
 
 			if input == nil {
 				return nil, &DashboardInputMissingError{VariableName: varName}
@@ -133,28 +131,28 @@ func (this *DashTemplateEvaluator) Eval() (*dynmap.Object, error) {
 	return this.result, nil
 }
 
-func (this *DashTemplateEvaluator) EvalObject(source *dynmap.Object, writer *dynmap.Object) {
+func (this *DashTemplateEvaluator) EvalObject(source *simplejson.Json, writer *simplejson.Json) {
 
-	for key, value := range source.Map() {
+	for key, value := range source.MustMap() {
 		if key == "__inputs" {
 			continue
 		}
 
-		goValue := value.Interface()
-
-		switch v := goValue.(type) {
+		switch v := value.(type) {
 		case string:
 			interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
 				return this.variables[match]
 			})
-			writer.SetValue(key, interpolated)
+			writer.Set(key, interpolated)
 		case map[string]interface{}:
-			childSource, _ := value.Object()
-			childWriter, _ := writer.SetValue(key, map[string]interface{}{}).Object()
+			childSource := simplejson.NewFromAny(value)
+			childWriter := simplejson.New()
+			writer.Set(key, childWriter.Interface())
 			this.EvalObject(childSource, childWriter)
+		case []interface{}:
 		default:
-			log.Info("type: %v", reflect.TypeOf(goValue))
-			log.Error(3, "Unknown json type key: %v , type: %v", key, goValue)
+			log.Info("type: %v", reflect.TypeOf(value))
+			log.Error(3, "Unknown json type key: %v , type: %v", key, value)
 		}
 	}
 }
