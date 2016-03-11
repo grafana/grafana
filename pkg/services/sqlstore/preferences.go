@@ -12,12 +12,12 @@ func init() {
 
 func GetPreferences(query *m.GetPreferencesQuery) error {
 
-	sql := `SELECT * FROM preferences WHERE pref_id = ? ` +
-		`AND pref_type = ?`
+	sql := `SELECT * FROM preferences WHERE user_id = ? ` +
+		`AND org_id = ?`
 
 	var prefResults = make([]m.Preferences, 0)
 
-	resultsErr := x.Sql(sql, query.PrefId, query.PrefType).Find(&prefResults)
+	resultsErr := x.Sql(sql, query.UserId, query.OrgId).Find(&prefResults)
 
 	if resultsErr != nil {
 		return resultsErr
@@ -35,12 +35,12 @@ func GetPreferences(query *m.GetPreferencesQuery) error {
 func SavePreferences(cmd *m.SavePreferencesCommand) error {
 	return inTransaction2(func(sess *session) error {
 
-		sql := `SELECT * FROM preferences WHERE pref_id = ? ` +
-			`AND pref_type = ?`
+		sql := `SELECT * FROM preferences WHERE user_id = ? ` +
+			`AND org_id = ?`
 
 		var prefResults = make([]m.Preferences, 0)
 
-		resultsErr := sess.Sql(sql, cmd.PrefId, cmd.PrefType).Find(&prefResults)
+		resultsErr := sess.Sql(sql, cmd.UserId, cmd.OrgId).Find(&prefResults)
 
 		if resultsErr != nil {
 			return resultsErr
@@ -51,13 +51,13 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 		var saveErr error
 
 		if len(prefResults) == 0 {
-			savePref.PrefId = cmd.PrefId
-			savePref.PrefType = cmd.PrefType
-			savePref.PrefData = cmd.PrefData
+			savePref.UserId = cmd.UserId
+			savePref.OrgId = cmd.OrgId
+			savePref.Preference = cmd.Preference
 			affectedRows, saveErr = sess.Insert(&savePref)
 		} else {
 			savePref = prefResults[0]
-			savePref.PrefData = cmd.PrefData
+			savePref.Preference = cmd.Preference
 			affectedRows, saveErr = sess.Id(savePref.Id).Update(&savePref)
 		}
 

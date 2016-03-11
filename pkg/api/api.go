@@ -96,7 +96,6 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
-			r.Combo("/prefs").Get(GetUserPreferences).Put(bind(m.SavePreferencesCommand{}), wrap(SaveUserPreferences))
 		})
 
 		// users (admin permission required)
@@ -164,6 +163,8 @@ func Register(r *macaron.Macaron) {
 			r.Post("/", quota("api_key"), bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
 			r.Delete("/:id", wrap(DeleteApiKey))
 		}, reqOrgAdmin)
+
+    r.Combo("/preferences").Get(GetPreferences).Put(bind(m.SavePreferencesCommand{}), wrap(SavePreferences))
 
 		// Data sources
 		r.Group("/datasources", func() {
