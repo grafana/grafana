@@ -11,6 +11,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 
 		cmd := &contextCommandLine{context}
 		if err := command(cmd); err != nil {
+			log.Error("\nError: ")
 			log.Errorf("%s\n\n", err)
 
 			cmd.ShowHelp()
