@@ -54,7 +54,7 @@ export class DataSourceEditCtrl {
         return this.$q.when(null);
       }
 
-      return this.backendSrv.get('/api/org/plugins', {enabled: 1, type: 'datasource'}).then(plugins => {
+      return this.backendSrv.get('/api/plugins', {enabled: 1, type: 'datasource'}).then(plugins => {
         datasourceTypes = plugins;
         this.types = plugins;
       });
@@ -70,7 +70,7 @@ export class DataSourceEditCtrl {
 
     typeChanged() {
       this.hasDashboards = false;
-      return this.backendSrv.get('/api/org/plugins/' + this.current.type + '/settings').then(pluginInfo => {
+      return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
         this.datasourceMeta = pluginInfo;
         this.hasDashboards = _.findWhere(pluginInfo.includes, {type: 'dashboard'});
       });

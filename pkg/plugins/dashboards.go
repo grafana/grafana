@@ -10,25 +10,27 @@ import (
 )
 
 type PluginDashboardInfoDTO struct {
-	Title             string
-	InstalledURI      string
-	InstalledRevision string
-	Revision          string
-	Description       string
+	PluginId          string `json:"pluginId"`
+	Title             string `json:"title"`
+	InstalledURI      string `json:"installedURI"`
+	InstalledRevision string `json:"installedRevision"`
+	Revision          string `json:"revision"`
+	Description       string `json:"description"`
+	Path              string `json:"path"`
 }
 
 func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDTO, error) {
 	plugin, exists := Plugins[pluginId]
 
 	if !exists {
-		return nil, &PluginNotFoundError{pluginId}
+		return nil, PluginNotFoundError{pluginId}
 	}
 
 	result := make([]*PluginDashboardInfoDTO, 0)
 
 	for _, include := range plugin.Includes {
 		if include.Type == PluginTypeDashboard {
-			if dashInfo, err := getDashboardImportStatus(orgId, plugin, include); err != nil {
+			if dashInfo, err := getDashboardImportStatus(orgId, plugin, include.Path); err != nil {
 				return nil, err
 			} else {
 				result = append(result, dashInfo)
@@ -39,10 +41,9 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	return result, nil
 }
 
-func getDashboardImportStatus(orgId int64, plugin *PluginBase, dashInclude *PluginInclude) (*PluginDashboardInfoDTO, error) {
-	res := &PluginDashboardInfoDTO{}
+func loadPluginDashboard(plugin *PluginBase, path string) (*m.Dashboard, error) {
 
-	dashboardFilePath := filepath.Join(plugin.PluginDir, dashInclude.Path)
+	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
 	reader, err := os.Open(dashboardFilePath)
 	if err != nil {
 		return nil, err
@@ -57,8 +58,21 @@ func getDashboardImportStatus(orgId int64, plugin *PluginBase, dashInclude *Plug
 		return nil, err
 	}
 
-	dashboard := m.NewDashboardFromJson(data)
+	return m.NewDashboardFromJson(data), nil
+}
 
+func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*PluginDashboardInfoDTO, error) {
+	res := &PluginDashboardInfoDTO{}
+
+	var dashboard *m.Dashboard
+	var err error
+
+	if dashboard, err = loadPluginDashboard(plugin, path); err != nil {
+		return nil, err
+	}
+
+	res.Path = path
+	res.PluginId = plugin.Id
 	res.Title = dashboard.Title
 	res.Revision = dashboard.GetString("revision", "1.0")
 

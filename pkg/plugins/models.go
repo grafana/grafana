@@ -21,7 +21,7 @@ type PluginNotFoundError struct {
 	PluginId string
 }
 
-func (e *PluginNotFoundError) Error() string {
+func (e PluginNotFoundError) Error() string {
 	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
 }
 
