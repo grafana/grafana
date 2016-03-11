@@ -4,9 +4,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
-class DashboardScriptLoader {
-}
-
 export class DashImportListCtrl {
   dashboards: any[];
   plugin: any;
@@ -19,50 +16,32 @@ export class DashImportListCtrl {
     });
   }
 
-  import(dash) {
+  import(dash, reinstall) {
     var installCmd = {
       pluginId: this.plugin.id,
       path: dash.path,
+      reinstall: reinstall,
       inputs: {}
     };
 
     this.backendSrv.post(`/api/plugins/dashboards/install`, installCmd).then(res => {
-      console.log(res);
+      this.$rootScope.appEvent('alert-success', ['Dashboard Installed', dash.title]);
+      _.extend(dash, res);
     });
   }
 
+  remove(dash) {
+    this.backendSrv.delete('/api/dashboards/' + dash.installedUri).then(() => {
+      this.$rootScope.appEvent('alert-success', ['Dashboard Deleted', dash.title]);
+      dash.installed = false;
+    });
+  }
 }
-
-var template = `
-<div class="gf-form-group" ng-if="ctrl.dashboards.length">
-  <table class="filter-table">
-    <tbody>
-      <tr ng-repeat="dash in ctrl.dashboards">
-        <td class="width-1">
-          <i class="icon-gf icon-gf-dashboard"></i>
-        </td>
-        <td>
-          {{dash.title}}
-        </td>
-        <td>
-          {{dash.revision}}
-        </td>
-        <td>
-          {{dash.installedRevision}}
-        </td>
-        <td class="width-2">
-          <button class="btn btn-secondary" ng-click="ctrl.import(dash)">Install</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-`;
 
 export function dashboardImportList() {
   return {
     restrict: 'E',
-    template: template,
+    templateUrl: 'public/app/features/plugins/import_list/import_list.html',
     controller: DashImportListCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
@@ -71,7 +50,6 @@ export function dashboardImportList() {
     }
   };
 }
-
 
 coreModule.directive('dashboardImportList', dashboardImportList);
 

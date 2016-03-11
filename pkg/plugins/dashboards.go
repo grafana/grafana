@@ -12,7 +12,8 @@ import (
 type PluginDashboardInfoDTO struct {
 	PluginId          string `json:"pluginId"`
 	Title             string `json:"title"`
-	InstalledURI      string `json:"installedURI"`
+	Installed         bool   `json:"installed"`
+	InstalledUri      string `json:"installedUri"`
 	InstalledRevision string `json:"installedRevision"`
 	Revision          string `json:"revision"`
 	Description       string `json:"description"`
@@ -83,7 +84,8 @@ func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*Pl
 			return nil, err
 		}
 	} else {
-		res.InstalledURI = "db/" + query.Result.Slug
+		res.Installed = true
+		res.InstalledUri = "db/" + query.Result.Slug
 		res.InstalledRevision = query.Result.GetString("revision", "1.0")
 	}
 

@@ -4,8 +4,7 @@
   "id": "graphite",
 
   "includes": [
-    {"type": "dashboard", "name": "Carbon Overview", "path": "dashboards/carbon_stats.json"},
-    {"type": "dashboard", "name": "Carbon Agent Details", "path": "dashboards/carbon_stats.json"}
+    {"type": "dashboard", "name": "Carbon Cache Stats", "path": "dashboards/carbon_stats.json"}
   ],
 
   "metrics": true,
