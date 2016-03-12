@@ -25,7 +25,7 @@ function (angular, _, kbn) {
       // update variables with refresh === 2
       var promises = self.variables
         .filter(function(variable) {
-          return variable.refresh === 2;
+          return variable.refresh === 2 || variable.expand;
         }).map(function(variable) {
           return self.updateOptions(variable);
         });
@@ -158,8 +158,23 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
+      var query = variable.query;
+      if (variable.type === 'custom' && variable.expand) {
+        var range = timeSrv.timeRange();
+        try {
+          query = _.template(templateSrv.replace(query), {
+            range: {
+              from: range.from,
+              to: range.to
+            }
+          }, { variable: 'g' });
+        } catch (e) {
+          query = '';
+        }
+      }
+
       // extract options in comma seperated string
-      variable.options = _.map(variable.query.split(/[,]+/), function(text) {
+      variable.options = _.map(query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
       });
 

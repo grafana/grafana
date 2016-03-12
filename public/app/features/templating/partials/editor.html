@@ -138,6 +138,10 @@
 					<span class="gf-form-label width-13">Values seperated by comma</span>
 					<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
 				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-13">Expand option</span>
+					<editor-checkbox text="Enable" model="current.expand" change="runQuery()"></editor-checkbox>
+				</div>
 			</div>
 
 			<div ng-show="current.type === 'query'" class="gf-form-group">
