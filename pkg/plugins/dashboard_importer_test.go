@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -34,7 +35,7 @@ func TestDashboardImport(t *testing.T) {
 			OrgId:    1,
 			UserId:   1,
 			Inputs: []ImportDashboardInput{
-				{Name: "*", Type: "datasource"},
+				{Name: "*", Type: "datasource", Value: "graphite"},
 			},
 		}
 
@@ -44,11 +45,15 @@ func TestDashboardImport(t *testing.T) {
 		Convey("should install dashboard", func() {
 			So(importedDash, ShouldNotBeNil)
 
-			dashStr, _ := importedDash.Data.EncodePretty()
-			So(string(dashStr), ShouldEqual, "")
+			resultStr, _ := importedDash.Data.EncodePretty()
+			expectedBytes, _ := ioutil.ReadFile("../../tests/test-app/dashboards/connections_result.json")
+			expectedJson, _ := simplejson.NewJson(expectedBytes)
+			expectedStr, _ := expectedJson.EncodePretty()
 
-			// So(panel["datasource"], ShouldEqual, "graphite")
-			// So(importedDash.Data["__inputs"], ShouldBeNil)
+			So(string(resultStr), ShouldEqual, string(expectedStr))
+
+			panel := importedDash.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
+			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
 		})
 	})
 

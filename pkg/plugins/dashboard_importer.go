@@ -1,8 +1,8 @@
 package plugins
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -127,32 +127,45 @@ func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 		log.Info("Import: dashboard has no __import section")
 	}
 
-	this.EvalObject(this.template, this.result)
-	return this.result, nil
+	return simplejson.NewFromAny(this.evalObject(this.template)), nil
 }
 
-func (this *DashTemplateEvaluator) EvalObject(source *simplejson.Json, writer *simplejson.Json) {
+func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
+
+	sourceValue := source.Interface()
+
+	switch v := sourceValue.(type) {
+	case string:
+		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
+			return this.variables[match]
+		})
+		return interpolated
+	case bool:
+		return v
+	case json.Number:
+		return v
+	case map[string]interface{}:
+		return this.evalObject(source)
+	case []interface{}:
+		array := make([]interface{}, 0)
+		for _, item := range v {
+			array = append(array, this.evalValue(simplejson.NewFromAny(item)))
+		}
+		return array
+	}
+
+	return nil
+}
+
+func (this *DashTemplateEvaluator) evalObject(source *simplejson.Json) interface{} {
+	result := make(map[string]interface{})
 
 	for key, value := range source.MustMap() {
 		if key == "__inputs" {
 			continue
 		}
-
-		switch v := value.(type) {
-		case string:
-			interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
-				return this.variables[match]
-			})
-			writer.Set(key, interpolated)
-		case map[string]interface{}:
-			childSource := simplejson.NewFromAny(value)
-			childWriter := simplejson.New()
-			writer.Set(key, childWriter.Interface())
-			this.EvalObject(childSource, childWriter)
-		case []interface{}:
-		default:
-			log.Info("type: %v", reflect.TypeOf(value))
-			log.Error(3, "Unknown json type key: %v , type: %v", key, value)
-		}
+		result[key] = this.evalValue(simplejson.NewFromAny(value))
 	}
+
+	return result
 }

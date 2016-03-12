@@ -53,8 +53,8 @@ type DashboardMeta struct {
 }
 
 type DashboardFullWithMeta struct {
-	Meta      DashboardMeta          `json:"meta"`
-	Dashboard map[string]interface{} `json:"dashboard"`
+	Meta      DashboardMeta    `json:"meta"`
+	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
 type DataSource struct {
