@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -95,11 +94,10 @@ type DashTemplateEvaluator struct {
 	varRegex  *regexp.Regexp
 }
 
-func (this *DashTemplateEvaluator) findInput(varName string, varDef *simplejson.Json) *ImportDashboardInput {
-	inputType := varDef.Get("type").MustString()
+func (this *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
 
 	for _, input := range this.inputs {
-		if inputType == input.Type && (input.Name == varName || input.Name == "*") {
+		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
 		}
 	}
@@ -110,21 +108,20 @@ func (this *DashTemplateEvaluator) findInput(varName string, varDef *simplejson.
 func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	this.result = simplejson.New()
 	this.variables = make(map[string]string)
-	this.varRegex, _ = regexp.Compile("\\$__(\\w+)")
+	this.varRegex, _ = regexp.Compile(`(\$\{\w+\})`)
 
 	// check that we have all inputs we need
-	if inputDefs := this.template.Get("__inputs"); inputDefs != nil {
-		for varName, value := range inputDefs.MustMap() {
-			input := this.findInput(varName, simplejson.NewFromAny(value))
+	for _, inputDef := range this.template.Get("__inputs").MustArray() {
+		inputDefJson := simplejson.NewFromAny(inputDef)
+		inputName := inputDefJson.Get("name").MustString()
+		inputType := inputDefJson.Get("type").MustString()
+		input := this.findInput(inputName, inputType)
 
-			if input == nil {
-				return nil, &DashboardInputMissingError{VariableName: varName}
-			}
-
-			this.variables["$__"+varName] = input.Value
+		if input == nil {
+			return nil, &DashboardInputMissingError{VariableName: inputName}
 		}
-	} else {
-		log.Info("Import: dashboard has no __import section")
+
+		this.variables["${"+inputName+"}"] = input.Value
 	}
 
 	return simplejson.NewFromAny(this.evalObject(this.template)), nil
@@ -137,7 +134,11 @@ func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{
 	switch v := sourceValue.(type) {
 	case string:
 		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
-			return this.variables[match]
+			if replacement, exists := this.variables[match]; exists {
+				return replacement
+			} else {
+				return match
+			}
 		})
 		return interpolated
 	case bool:
