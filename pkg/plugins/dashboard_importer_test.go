@@ -59,13 +59,14 @@ func TestDashboardImport(t *testing.T) {
 
 	Convey("When evaling dashboard template", t, func() {
 		template, _ := simplejson.NewJson([]byte(`{
-      "__inputs": {
-        "graphite": {
+      "__inputs": [
+        {
+					"name": "DS_NAME",
           "type": "datasource"
         }
-      },
+      ],
       "test": {
-        "prop": "$__graphite"
+        "prop": "${DS_NAME}"
       }
     }`))
 

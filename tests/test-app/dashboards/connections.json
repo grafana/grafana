@@ -1,11 +1,11 @@
 {
-  "__inputs": {
-    "graphite": {
+  "__inputs": [
+    {
+      "name": "DS_NAME",
       "type": "datasource",
-      "pluginId": "graphite",
-      "description": "Graphite datasource"
+      "pluginId": "graphite"
     }
-  },
+  ],
 
   "title": "Nginx Connections",
   "revision": "1.5",
@@ -20,7 +20,7 @@
       "panels": [
         {
           "type": "graph",
-          "datasource": "$__graphite"
+          "datasource": "${DS_NAME}"
         }
       ]
     }
