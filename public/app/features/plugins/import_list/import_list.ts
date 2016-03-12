@@ -34,7 +34,7 @@ export class DashImportListCtrl {
       });
     }
 
-    this.backendSrv.post(`/api/plugins/dashboards/install`, installCmd).then(res => {
+    this.backendSrv.post(`/api/plugins/dashboards/import`, installCmd).then(res => {
       this.$rootScope.appEvent('alert-success', ['Dashboard Installed', dash.title]);
       _.extend(dash, res);
     });
