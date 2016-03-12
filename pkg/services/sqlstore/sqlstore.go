@@ -76,20 +76,19 @@ func AddDatasourceFromConfig() {
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		log.Fatal(3, "Could not read data source with OrgId = 1: %v", err)
-		return
-	}
+		log.Info("Could not find data source with OrgId = 1: %v", err)
+	} else {
+		log.Info("Data source read from OrgId 1 (MAINORG_ID) is %s", query.Result.Url)
 
-	log.Info("Data source read from OrgId 1 (MAINORG_ID) is %s", query.Result.Url)
-
-	if setting.DataSource.DataSourceUrlRoot == query.Result.Url {
-		return
+		if setting.DataSource.DataSourceUrlRoot == query.Result.Url {
+			return
+		}
 	}
 
 	// If initially OrgId 1 does not have data source defined in data_source table, add it.
 	// This should only happen when the system runs at the first time.
 	if query.Result.Url == "" {
-		// Add default data source with OrgId = 1
+		log.Info("Add default data source for OrgId = 1 from config: %v", setting.DataSource.DataSourceUrlRoot)
 		if err := bus.Dispatch(&m.AddDataSourceCommand{
 			OrgId:     MAINORG_ID,
 			Name:      "opentsdb",

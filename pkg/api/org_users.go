@@ -116,5 +116,9 @@ func removeOrgUserHelper(orgId int64, userId int64) Response {
 		return ApiError(500, "Failed to remove user from organization", err)
 	}
 
+	if err := bus.Dispatch(&m.DeleteUserCommand{UserId: userId}); err != nil {
+		return ApiError(500, "Failed to remove user", err)
+	}
+
 	return ApiSuccess("User removed from organization")
 }

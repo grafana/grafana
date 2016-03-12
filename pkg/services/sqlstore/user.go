@@ -25,6 +25,7 @@ func init() {
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DeleteUser)
+	bus.AddHandler("sql", DeleteAllUserInOrg)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
 }
@@ -333,6 +334,22 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 
 		return nil
 	})
+}
+
+func DeleteAllUserInOrg(cmd *m.DeleteAllUserInOrgCommand) error {
+	// query all the user_id from this Org first
+	query := m.GetOrgUsersQuery{OrgId: cmd.OrgId}
+	if err := GetOrgUsers(&query); err != nil {
+		return err
+	}
+
+	// Delete all the users
+	for _, result := range query.Result {
+		if err := DeleteUser(&m.DeleteUserCommand{UserId: result.UserId}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {

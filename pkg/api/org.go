@@ -130,12 +130,18 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 
 // GET /api/orgs/:orgId
 func DeleteOrgById(c *middleware.Context) Response {
-	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
-		return ApiError(500, "Failed to update organization", err)
+	// We need to remove all the users in the org before deleting the org
+	if err := bus.Dispatch(&m.DeleteAllUserInOrgCommand{OrgId: c.ParamsInt64(":orgId")}); err != nil {
+		return ApiError(500, "Failed to delete all users in the organization", err)
 	}
-	// We need to delete the data source for this org from data_source table
+
+	// We also need to delete the data source for this org from data_source table
 	if err := sqlstore.DeleteDatasourceForOrg(c.ParamsInt64(":orgId")); err != nil {
 		return ApiError(500, "Failed to add data source for organization", err)
+	}
+
+	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+		return ApiError(500, "Failed to update organization", err)
 	}
 
 	return ApiSuccess("Organization deleted")
