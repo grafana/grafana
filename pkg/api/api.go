@@ -176,7 +176,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(GetPluginList))
 
 			r.Get("/dashboards/:pluginId", wrap(GetPluginDashboards))
-			r.Post("/dashboards/install", bind(dtos.InstallPluginDashboardCmd{}), wrap(InstallPluginDashboard))
+			r.Post("/dashboards/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
 			r.Get("/:pluginId/settings", wrap(GetPluginSettingById))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))

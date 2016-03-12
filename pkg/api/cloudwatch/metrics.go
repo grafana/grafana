@@ -130,11 +130,14 @@ func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
-	if customMetricsNamespaces, ok := req.DataSource.JsonData["customMetricsNamespaces"].(string); ok {
-		for _, key := range strings.Split(customMetricsNamespaces, ",") {
+
+	customNamespaces := req.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
+	if customNamespaces != "" {
+		for _, key := range strings.Split(customNamespaces, ",") {
 			keys = append(keys, key)
 		}
 	}
+
 	sort.Sort(sort.StringSlice(keys))
 
 	result := []interface{}{}
