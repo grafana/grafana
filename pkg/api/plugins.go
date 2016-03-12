@@ -122,9 +122,9 @@ func GetPluginDashboards(c *middleware.Context) Response {
 	}
 }
 
-func InstallPluginDashboard(c *middleware.Context, apiCmd dtos.InstallPluginDashboardCmd) Response {
+func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
 
-	cmd := plugins.InstallPluginDashboardCommand{
+	cmd := plugins.ImportDashboardCommand{
 		OrgId:    c.OrgId,
 		UserId:   c.UserId,
 		PluginId: apiCmd.PluginId,

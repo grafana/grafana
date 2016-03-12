@@ -7,6 +7,7 @@ import coreModule from 'app/core/core_module';
 export class DashImportListCtrl {
   dashboards: any[];
   plugin: any;
+  datasource: any;
 
   constructor(private $http, private backendSrv, private $rootScope) {
     this.dashboards = [];
@@ -21,10 +22,19 @@ export class DashImportListCtrl {
       pluginId: this.plugin.id,
       path: dash.path,
       reinstall: reinstall,
-      inputs: {}
+      inputs: []
     };
 
-    this.backendSrv.post(`/api/plugins/dashboards/install`, installCmd).then(res => {
+    if (this.datasource) {
+      installCmd.inputs.push({
+        name: '*',
+        type: 'datasource',
+        pluginId: this.datasource.type,
+        value: this.datasource.name
+      });
+    }
+
+    this.backendSrv.post(`/api/plugins/dashboards/import`, installCmd).then(res => {
       this.$rootScope.appEvent('alert-success', ['Dashboard Installed', dash.title]);
       _.extend(dash, res);
     });
@@ -46,7 +56,8 @@ export function dashboardImportList() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      plugin: "="
+      plugin: "=",
+      datasource: "="
     }
   };
 }

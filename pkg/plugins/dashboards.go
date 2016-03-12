@@ -1,11 +1,11 @@
 package plugins
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -52,10 +52,8 @@ func loadPluginDashboard(plugin *PluginBase, path string) (*m.Dashboard, error) 
 
 	defer reader.Close()
 
-	jsonParser := json.NewDecoder(reader)
-	var data map[string]interface{}
-
-	if err := jsonParser.Decode(&data); err != nil {
+	data, err := simplejson.NewFromReader(reader)
+	if err != nil {
 		return nil, err
 	}
 
