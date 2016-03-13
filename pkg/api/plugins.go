@@ -122,6 +122,20 @@ func GetPluginDashboards(c *middleware.Context) Response {
 	}
 }
 
+func GetPluginReadme(c *middleware.Context) Response {
+	pluginId := c.Params(":pluginId")
+
+	if content, err := plugins.GetPluginReadme(pluginId); err != nil {
+		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
+			return ApiError(404, notfound.Error(), nil)
+		}
+
+		return ApiError(500, "Could not get readme", err)
+	} else {
+		return Respond(200, content)
+	}
+}
+
 func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
 
 	cmd := plugins.ImportDashboardCommand{

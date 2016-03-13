@@ -113,8 +113,8 @@ $scrollbarBorder: black;
 // Tables
 // -------------------------
 $table-bg:                    transparent; // overall background-color
-$table-bg-accent:             rgba(100, 100, 100, 0.3); // for striping
-$table-bg-hover:              $dark-3; // for hover
+$table-bg-accent:             $dark-3; // for striping
+$table-bg-hover:              $dark-4; // for hover
 $table-border:                $dark-3; // table and cell border
 
 // Buttons

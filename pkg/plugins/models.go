@@ -43,6 +43,9 @@ type PluginBase struct {
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+
+	// cache for readme file contents
+	Readme []byte `json:"-"`
 }
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
