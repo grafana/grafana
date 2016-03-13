@@ -175,9 +175,8 @@ func Register(r *macaron.Macaron) {
 		r.Group("/plugins", func() {
 			r.Get("/", wrap(GetPluginList))
 
-			r.Get("/dashboards/:pluginId", wrap(GetPluginDashboards))
-			r.Post("/dashboards/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
-
+			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
+			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
 			r.Get("/:pluginId/settings", wrap(GetPluginSettingById))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
@@ -193,6 +192,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
+			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 		})
 
 		// Dashboard snapshots

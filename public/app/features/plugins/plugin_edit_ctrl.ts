@@ -40,10 +40,10 @@ export class PluginEditCtrl {
   }
 
   initReadme() {
-    return this.$http.get(this.model.baseUrl + '/readme.md').then(res => {
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/readme`).then(res => {
       return System.import('remarkable').then(Remarkable => {
         var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res.data));
+        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
       });
     });
   }

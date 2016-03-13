@@ -12,7 +12,7 @@ export class DashImportListCtrl {
   constructor(private $http, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
-    backendSrv.get(`/api/plugins/dashboards/${this.plugin.id}`).then(dashboards => {
+    backendSrv.get(`/api/plugins/${this.plugin.id}/dashboards`).then(dashboards => {
       this.dashboards = dashboards;
     });
   }
@@ -34,7 +34,7 @@ export class DashImportListCtrl {
       });
     }
 
-    this.backendSrv.post(`/api/plugins/dashboards/import`, installCmd).then(res => {
+    this.backendSrv.post(`/api/dashboards/import`, installCmd).then(res => {
       this.$rootScope.appEvent('alert-success', ['Dashboard Installed', dash.title]);
       _.extend(dash, res);
     });
