@@ -11,6 +11,8 @@ export class PluginEditCtrl {
   readmeHtml: any;
   includedDatasources: any;
   tabIndex: number;
+  tabs: any;
+  hasDashboards: any;
   preUpdateHook: () => any;
   postUpdateHook: () => any;
 
@@ -19,6 +21,7 @@ export class PluginEditCtrl {
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
+    this.tabs = ['Overview'];
    }
 
   init() {
@@ -34,6 +37,15 @@ export class PluginEditCtrl {
         plug.icon = this.getPluginIcon(plug.type);
         return plug;
       });
+
+      if (this.model.type === 'app') {
+        this.tabs.push('Config');
+
+        this.hasDashboards = _.findWhere(result.includes, {type: 'dashboard'});
+        if (this.hasDashboards) {
+          this.tabs.push('Dashboards');
+        }
+      }
 
       return this.initReadme();
     });
@@ -54,6 +66,7 @@ export class PluginEditCtrl {
       case 'panel':  return 'icon-gf icon-gf-panel';
       case 'app':  return 'icon-gf icon-gf-apps';
       case 'page':  return 'icon-gf icon-gf-share';
+      case 'dashboard':  return 'icon-gf icon-gf-dashboard';
     }
   }
 
@@ -64,9 +77,7 @@ export class PluginEditCtrl {
     // the next step of execution will block until the promise resolves.
     // if the promise is rejected, this update will be aborted.
     if (this.preUpdateHook != null) {
-      chain = chain.then(function() {
-        return Promise.resolve(self.preUpdateHook());
-      });
+      chain = self.preUpdateHook();
     }
 
     // Perform the core update procedure
@@ -86,7 +97,7 @@ export class PluginEditCtrl {
     // resolves.  If the promise is rejected the page will not be reloaded.
     if (this.postUpdateHook != null) {
       chain = chain.then(function() {
-        return Promise.resolve(this.postUpdateHook());
+        return this.postUpdateHook();
       });
     }
 
@@ -101,17 +112,16 @@ export class PluginEditCtrl {
     this.preUpdateHook = callback;
   }
 
-  setPOstUpdateHook(callback: () => any) {
+  setPostUpdateHook(callback: () => any) {
     this.postUpdateHook = callback;
   }
 
-  toggleEnabled() {
+  enable() {
+    this.model.enabled = true;
+    this.model.pinned = true;
     this.update();
   }
 
-  togglePinned() {
-    this.update();
-  }
 }
 
 angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);
