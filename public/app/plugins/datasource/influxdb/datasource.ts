@@ -214,4 +214,3 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     return (date.valueOf() / 1000).toFixed(0) + 's';
   }
 }
-

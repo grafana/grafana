@@ -12,7 +12,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
     });
   });
 
@@ -43,7 +43,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "default"."cpu" WHERE $timeFilter GROUP BY'
+                          + ' time($interval) fill(null)');
     });
   });
 
@@ -57,7 +58,7 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
                           + ' GROUP BY time($interval)');
     });
 
@@ -69,7 +70,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
     });
   });
 
@@ -82,7 +83,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
                           '$timeFilter GROUP BY time($interval)');
     });
   });
@@ -96,7 +97,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
                           '$timeFilter GROUP BY time($interval)');
     });
   });
@@ -110,7 +111,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "default"."cpu" WHERE $timeFilter ' +
                           'GROUP BY time($interval), "host"');
     });
   });
@@ -123,7 +124,7 @@ describe('InfluxQuery', function() {
         groupBy: [],
       }, templateSrv, {});
       var queryText = query.render();
-      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter');
+      expect(queryText).to.be('SELECT "value" FROM "default"."cpu" WHERE $timeFilter');
     });
   });
 
@@ -135,7 +136,7 @@ describe('InfluxQuery', function() {
         groupBy: [{type: 'time'}, {type: 'fill', params: ['0']}],
       }, templateSrv, {});
       var queryText = query.render();
-      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(0)');
+      expect(queryText).to.be('SELECT "value" FROM "default"."cpu" WHERE $timeFilter GROUP BY time($interval) fill(0)');
     });
   });
 

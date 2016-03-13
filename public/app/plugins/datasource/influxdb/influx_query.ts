@@ -167,13 +167,7 @@ export default class InfluxQuery {
       measurement = '"' + measurement+ '"';
     }
 
-    if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
-    } else {
-      policy = "";
-    }
-
-    return policy + measurement;
+    return '"' + this.target.policy + '".' + measurement;
   }
 
   render(interpolate?) {
