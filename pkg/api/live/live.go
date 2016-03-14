@@ -31,5 +31,6 @@ func (lc *LiveConn) Serve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (lc *LiveConn) PushToStream(c *middleware.Context, message dtos.StreamMessage) {
-
+	h.streamChannel <- &message
+	c.JsonOK("Message recevived")
 }
