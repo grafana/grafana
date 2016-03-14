@@ -64,7 +64,7 @@
       <div class="gf-form-button-row">
         <button type="submit" class="btn btn-success" ng-show="ctrl.isNew" ng-click="ctrl.saveChanges()">Add</button>
         <button type="submit" class="btn btn-success" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save</button>
-        <button type="submit" class="btn btn-secondary" ng-show="!ctrl.isNew" ng-click="ctrl.testDatasource()">
+        <button type="submit" class="btn btn-secondary" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges(true)">
           Test Connection
         </button>
         <a class="btn btn-link" href="datasources">Cancel</a>
