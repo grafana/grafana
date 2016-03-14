@@ -10,10 +10,10 @@ import (
 func SavePreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
 
 	cmd.UserId = c.UserId
-  cmd.OrgId  = c.OrgId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to saved preferences", err)
+		return ApiError(500, "Failed to save preferences", err)
 	}
 
 	return ApiSuccess("Preferences saved")
@@ -32,7 +32,7 @@ func GetPreferences(c *middleware.Context) {
 	dto := m.PreferencesDTO{
 		Id:         query.Result.Id,
 		UserId:     query.Result.UserId,
-    OrgId:      query.Result.OrgId,
+		OrgId:      query.Result.OrgId,
 		Preference: query.Result.Preference,
 	}
 

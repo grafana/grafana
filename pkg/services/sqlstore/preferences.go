@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"time"
 )
 
 func init() {
@@ -54,10 +55,12 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			savePref.UserId = cmd.UserId
 			savePref.OrgId = cmd.OrgId
 			savePref.Preference = cmd.Preference
+			savePref = SetPreferencesModel(savePref, false)
 			affectedRows, saveErr = sess.Insert(&savePref)
 		} else {
 			savePref = prefResults[0]
 			savePref.Preference = cmd.Preference
+			savePref = SetPreferencesModel(savePref, true)
 			affectedRows, saveErr = sess.Id(savePref.Id).Update(&savePref)
 		}
 
@@ -67,4 +70,17 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 
 		return saveErr
 	})
+}
+
+func SetPreferencesModel(pref m.Preferences, updating bool) m.Preferences {
+
+	if updating {
+		pref.Version = pref.Version + 1
+	} else {
+		pref.Version = 0
+		pref.Created = time.Now()
+	}
+	pref.Updated = time.Now()
+
+	return pref
 }

@@ -2,7 +2,7 @@ package models
 
 import (
 	"errors"
-  "time"
+	"time"
 )
 
 // Typed errors
@@ -14,10 +14,10 @@ type Preferences struct {
 	Id         int64
 	OrgId      int64
 	UserId     int64
-  Version    int
+	Version    int
 	Preference map[string]interface{}
-  Created    time.Time
-  Updated    time.Time
+	Created    time.Time
+	Updated    time.Time
 }
 
 // ---------------------
@@ -26,7 +26,7 @@ type Preferences struct {
 type GetPreferencesQuery struct {
 	Id     int64
 	OrgId  int64
-  UserId int64
+	UserId int64
 
 	Result *Preferences
 }
@@ -46,6 +46,6 @@ type SavePreferencesCommand struct {
 type PreferencesDTO struct {
 	Id         int64                  `json:"Id"`
 	UserId     int64                  `json:"UserId"`
-  OrgId      int64                  `json:"OrgId"`
+	OrgId      int64                  `json:"OrgId"`
 	Preference map[string]interface{} `json:"Preference"`
 }
