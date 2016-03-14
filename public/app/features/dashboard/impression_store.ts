@@ -6,7 +6,7 @@ import _ from 'lodash';
 export class ImpressionsStore {
   constructor() {}
 
-  addDashboardImpression(impression) {
+  addDashboardImpression(dashboardId) {
     var impressions = [];
     if (store.exists("dashboard_impressions")) {
       impressions = JSON.parse(store.get("dashboard_impressions"));
@@ -16,25 +16,27 @@ export class ImpressionsStore {
     }
 
     impressions = impressions.filter((imp) => {
-      return impression.slug !== imp.slug;
+      return dashboardId !== imp;
     });
 
-    impressions.unshift({
-      title: impression.title,
-      slug: impression.slug,
-      orgId: impression.orgId,
-      type: impression.type
-    });
+    impressions.unshift(dashboardId);
 
-    if (impressions.length > 20) {
-      impressions.shift();
+    if (impressions.length > 50) {
+      impressions.pop();
     }
     store.set("dashboard_impressions", JSON.stringify(impressions));
   }
 
   getDashboardOpened() {
-    var impressions = store.get("dashboard_impressions");
-    return JSON.parse(impressions || "[]");
+    var impressions = store.get("dashboard_impressions") || "[]";
+
+    impressions = JSON.parse(impressions);
+
+    impressions = _.filter(impressions, el => {
+      return _.isNumber(el);
+    });
+
+    return impressions;
   }
 }
 

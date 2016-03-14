@@ -129,7 +129,6 @@ function (angular, _, $) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
-      delete ctrl.height;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -147,13 +146,9 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.3);
-      var fullscreenHeight = Math.floor(docHeight * 0.7);
       var ctrl = panelScope.ctrl;
 
       ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
-      ctrl.height = ctrl.editMode ? editHeight : fullscreenHeight;
       ctrl.fullscreen = true;
 
       this.oldTimeRange = ctrl.range;

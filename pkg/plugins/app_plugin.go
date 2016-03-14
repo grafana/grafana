@@ -21,20 +21,13 @@ type AppPluginCss struct {
 	Dark  string `json:"dark"`
 }
 
-type AppIncludeInfo struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Id   string `json:"id"`
-}
-
 type AppPlugin struct {
 	FrontendPluginBase
-	Pages    []*AppPluginPage  `json:"pages"`
-	Routes   []*AppPluginRoute `json:"routes"`
-	Includes []*AppIncludeInfo `json:"-"`
+	Pages  []*AppPluginPage  `json:"pages"`
+	Routes []*AppPluginRoute `json:"routes"`
 
-	Pinned  bool `json:"-"`
-	Enabled bool `json:"-"`
+	FoundChildPlugins []*PluginInclude `json:"-"`
+	Pinned            bool             `json:"-"`
 }
 
 type AppPluginRoute struct {
@@ -71,7 +64,7 @@ func (app *AppPlugin) initApp() {
 	for _, panel := range Panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
 			panel.setPathsBasedOnApp(app)
-			app.Includes = append(app.Includes, &AppIncludeInfo{
+			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: panel.Name,
 				Id:   panel.Id,
 				Type: panel.Type,
@@ -83,7 +76,7 @@ func (app *AppPlugin) initApp() {
 	for _, ds := range DataSources {
 		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
 			ds.setPathsBasedOnApp(app)
-			app.Includes = append(app.Includes, &AppIncludeInfo{
+			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: ds.Name,
 				Id:   ds.Id,
 				Type: ds.Type,

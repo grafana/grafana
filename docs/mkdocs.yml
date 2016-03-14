@@ -25,9 +25,10 @@ google_analytics: ['UA-47280256-1', 'grafana.org']
 pages:
 
 # Introduction:
-- ['index.md', 'Project', 'About Grafana']
-- ['project/cla.md', 'Project', 'Contributor License Agreement']
+# - ['index.md', 'Project', 'About Grafana']
+# - ['project/cla.md', 'Project', 'Contributor License Agreement']
 
+- ['index.md', '**HIDDEN**']
 - ['installation/index.md', 'Installation', 'Installation']
 - ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
 - ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']
@@ -62,7 +63,6 @@ pages:
 - ['reference/templating.md', 'Reference', 'Templating']
 - ['reference/scripting.md', 'Reference', 'Scripting']
 - ['reference/playlist.md', 'Reference', 'Playlist']
-- ['reference/plugins.md', 'Reference', 'Plugins']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Administration']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
@@ -90,6 +90,8 @@ pages:
 - ['plugins/installation.md', 'Plugins', 'Installation']
 - ['plugins/datasources.md', 'Plugins', 'Datasource plugins']
 - ['plugins/panels.md', 'Plugins', 'Panel plugins']
+- ['plugins/development.md', 'Plugins', 'Plugin development']
+- ['plugins/plugin.json.md', 'Plugins', 'Plugin json']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']

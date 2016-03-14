@@ -142,19 +142,11 @@ function (angular, _, $) {
             }
           }
 
+          var seriesShown = 0;
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
-            // ignore empty series
-            if (panel.legend.hideEmpty && series.allIsNull) {
-              continue;
-            }
-            // ignore series excluded via override
-            if (!series.legend) {
-              continue;
-            }
-            // ignore zero series
-            if (panel.legend.hideZero && series.allIsZero) {
+            if (series.hideFromLegend(panel.legend)) {
               continue;
             }
 
@@ -166,9 +158,7 @@ function (angular, _, $) {
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<div class="graph-legend-alias">';
-            html += '<a>' + _.escape(series.label) + '</a>';
-            html += '</div>';
+            html += '<a class="graph-legend-alias pointer">' + _.escape(series.label) + '</a>';
 
             if (panel.legend.values) {
               var avg = series.formatValue(series.stats.avg);
@@ -186,17 +176,19 @@ function (angular, _, $) {
 
             html += '</div>';
             $container.append($(html));
+
+            seriesShown++;
           }
 
-          var legendContainerHeight = $container.parent().height();
-          var legendHeight = $container.height();
+          if (panel.legend.alignAsTable) {
+            var maxHeight = ctrl.height;
 
-          if (panel.legend.rightSide && legendHeight >= legendContainerHeight) {
-            $container.toggleClass('graph-legend-fixed-height', true);
-          }
+            if (!panel.legend.rightSide) {
+              maxHeight = maxHeight/2;
+            }
 
-          if (panel.legend.rightSide) {
-            $container.css("height", scope.ctrl.height || scope.ctrl.panel.height || scope.ctrl.row.height);
+            var topPadding = 6;
+            $container.css("height", maxHeight - topPadding);
           } else {
             $container.css("height", "");
           }

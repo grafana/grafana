@@ -143,7 +143,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       return this.awsRequest({
         region: region,
         action: 'DescribeInstances',
-        parameters: { filter: filters, instanceIds: instanceIds }
+        parameters: { filters: filters, instanceIds: instanceIds }
       });
     };
 
@@ -202,6 +202,28 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
           });
 
           return transformSuggestData(volumeIds);
+        });
+      }
+
+      var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+      if (ec2InstanceAttributeQuery) {
+        region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
+        var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
+        var filters = _.map(filterJson, function(values, name) {
+          return {
+            Name: name,
+            Values: values
+          };
+        });
+        var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
+
+        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
+          var attributes = _.chain(result.Reservations)
+          .map(function(reservations) {
+            return _.pluck(reservations.Instances, targetAttributeName);
+          })
+          .flatten().value();
+          return transformSuggestData(attributes);
         });
       }
 

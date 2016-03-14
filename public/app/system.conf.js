@@ -2,6 +2,7 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
+    'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
     'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
     'moment': 'vendor/moment.js',

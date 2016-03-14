@@ -53,7 +53,6 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 }
 
 func GetDashboardSnapshot(c *middleware.Context) {
-
 	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
@@ -136,5 +135,4 @@ func SearchDashboardSnapshots(c *middleware.Context) Response {
 	}
 
 	return Json(200, dtos)
-	//return Json(200, searchQuery.Result)
 }

@@ -126,8 +126,10 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	}
 
 	days := 86400 * setting.LogInRememberDays
-	c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-	c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	if days > 0 {
+		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	}
 
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }

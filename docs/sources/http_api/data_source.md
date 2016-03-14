@@ -74,6 +74,59 @@ page_keywords: grafana, admin, http, api, documentation, datasource
       "jsonData":null
     }
 
+## Get a single data source by Name
+
+`GET /api/datasources/name/:name`
+
+**Example Request**:
+
+    GET /api/datasources/name/test_datasource HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "id":1,
+      "orgId":1,
+      "name":"test_datasource",
+      "type":"graphite",
+      "access":"proxy",
+      "url":"http://mydatasource.com",
+      "password":"",
+      "user":"",
+      "database":"",
+      "basicAuth":false,
+      "basicAuthUser":"",
+      "basicAuthPassword":"",
+      "isDefault":false,
+      "jsonData":null
+    }
+
+## Get data source Id by Name
+
+`GET /api/datasources/id/:name`
+
+**Example Request**:
+
+    GET /api/datasources/id/test_datasource HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "id":1
+    }
+
 ## Create data source
 
 `POST /api/datasources`

@@ -5,8 +5,8 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../..
 import '../module';
 import angular from 'angular';
 import $ from 'jquery';
-import helpers from '../../../../../test/specs/helpers';
-import TimeSeries from '../../../../core/time_series2';
+import helpers from 'test/specs/helpers';
+import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 
 describe('grafanaGraph', function() {
@@ -182,11 +182,10 @@ describe('grafanaGraph', function() {
     ctx.setup(function(ctrl, data) {
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
-      ctrl.panel.seriesOverrides = [
-        { alias: 'test', fill: 0, points: true }
-      ];
-
+      data[0].zindex = 10;
       data[1].alias = 'test';
+      data[1].lines = {fill: 0.001};
+      data[1].points = {show: true};
     });
 
     it('should match second series and fill zero, and enable points', function() {
@@ -197,8 +196,9 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('should order series order according to zindex', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.seriesOverrides = [{ alias: 'series1', zindex: 2 }];
+    ctx.setup(function(ctrl, data) {
+      data[1].zindex = 1;
+      data[0].zindex = 10;
     });
 
     it('should move zindex 2 last', function() {
