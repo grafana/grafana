@@ -1,0 +1,8 @@
+{
+  "type": "datasource",
+  "name": "Grafana Stream DS",
+  "id": "grafana-stream-ds",
+
+  "builtIn": true,
+  "metrics": true
+}
