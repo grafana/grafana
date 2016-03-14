@@ -48,6 +48,13 @@ func GetPluginList(c *middleware.Context) Response {
 			continue
 		}
 
+		// filter out built in data sources
+		if ds, exists := plugins.DataSources[pluginDef.Id]; exists {
+			if ds.BuiltIn {
+				continue
+			}
+		}
+
 		result = append(result, listItem)
 	}
 
