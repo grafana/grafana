@@ -42,7 +42,7 @@ export class LiveSrv {
       };
 
       this.conn.onmessage = (evt) => {
-        console.log("Live: message received:", evt.data);
+        this.handleMessage(evt.data);
       };
 
       this.conn.onerror = (evt) => {
@@ -59,6 +59,23 @@ export class LiveSrv {
     });
 
     return this.initPromise;
+  }
+
+  handleMessage(message) {
+    message = JSON.parse(message);
+
+    if (!message.stream) {
+      console.log("Error: stream message without stream!", message);
+      return;
+    }
+
+    var observer = this.observers[message.stream];
+    if (!observer) {
+      this.removeObserver(message.stream, null);
+      return;
+    }
+
+    observer.next(message);
   }
 
   reconnect() {
@@ -89,6 +106,7 @@ export class LiveSrv {
   }
 
   removeObserver(stream, observer) {
+    console.log('unsubscribe', stream);
     delete this.observers[stream];
 
     this.getConnection().then(conn => {
