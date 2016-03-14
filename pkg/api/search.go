@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/search"
+	"strconv"
 )
 
 func Search(c *middleware.Context) {
@@ -17,13 +18,22 @@ func Search(c *middleware.Context) {
 		limit = 1000
 	}
 
+	dbids := make([]int, 0)
+	for _, id := range c.QueryStrings("dashboardIds") {
+		dashboardId, err := strconv.Atoi(id)
+		if err == nil {
+			dbids = append(dbids, dashboardId)
+		}
+	}
+
 	searchQuery := search.Query{
-		Title:     query,
-		Tags:      tags,
-		UserId:    c.UserId,
-		Limit:     limit,
-		IsStarred: starred == "true",
-		OrgId:     c.OrgId,
+		Title:        query,
+		Tags:         tags,
+		UserId:       c.UserId,
+		Limit:        limit,
+		IsStarred:    starred == "true",
+		OrgId:        c.OrgId,
+		DashboardIds: dbids,
 	}
 
 	err := bus.Dispatch(&searchQuery)

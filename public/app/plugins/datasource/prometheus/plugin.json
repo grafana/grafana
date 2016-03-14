@@ -3,6 +3,10 @@
   "name": "Prometheus",
   "id": "prometheus",
 
+  "includes": [
+    {"type": "dashboard", "name": "Prometheus Stats", "path": "dashboards/prometheus_stats.json"}
+  ],
+
   "metrics": true,
   "annotations": true
 }

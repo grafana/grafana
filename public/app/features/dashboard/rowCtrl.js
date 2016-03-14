@@ -52,7 +52,8 @@ function (angular, _, config) {
       }
 
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to delete this row?',
+        title: 'Delete',
+        text: 'Are you sure you want to delete this row?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

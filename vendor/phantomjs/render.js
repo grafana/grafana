@@ -33,7 +33,7 @@
   var tries = 0;
 
   page.open(params.url, function (status) {
-    console.log('Loading a web page: ' + params.url + ' status: ' + status);
+    // console.log('Loading a web page: ' + params.url + ' status: ' + status);
 
     function checkIsReady() {
       var canvas = page.evaluate(function() {
@@ -49,10 +49,11 @@
       });
 
       if (canvas || tries === 1000) {
-        var bb = page.evaluate(function () { 
-          return document.getElementsByClassName("main-view")[0].getBoundingClientRect(); 
+        var bb = page.evaluate(function () {
+          return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
         });
-          page.clipRect = {
+
+        page.clipRect = {
           top:    bb.top,
           left:   bb.left,
           width:  bb.width,

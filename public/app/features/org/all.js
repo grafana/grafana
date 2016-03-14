@@ -4,5 +4,4 @@ define([
   './userInviteCtrl',
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
-  '../datasources/all',
 ], function () {});

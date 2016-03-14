@@ -2,7 +2,7 @@
 
 import './graph';
 import './legend';
-import './seriesOverridesCtrl';
+import './series_overrides_ctrl';
 
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
@@ -205,6 +205,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
+    series.applySeriesOverrides(this.panel.seriesOverrides);
     return series;
   }
 

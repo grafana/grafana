@@ -69,7 +69,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
-			dash.Data["version"] = dash.Version
+			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Id(dash.Id).Update(dash)
 		}
 
@@ -108,7 +108,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 		return m.ErrDashboardNotFound
 	}
 
-	dashboard.Data["id"] = dashboard.Id
+	dashboard.Data.Set("id", dashboard.Id)
 	query.Result = &dashboard
 
 	return nil
@@ -146,6 +146,19 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		params = append(params, query.UserId)
 	}
 
+	if len(query.DashboardIds) > 0 {
+		sql.WriteString(" AND (")
+		for i, dashboardId := range query.DashboardIds {
+			if i != 0 {
+				sql.WriteString(" OR")
+			}
+
+			sql.WriteString(" dashboard.id = ?")
+			params = append(params, dashboardId)
+		}
+		sql.WriteString(")")
+	}
+
 	if len(query.Title) > 0 {
 		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
@@ -154,6 +167,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
+
 	err := x.Sql(sql.String(), params...).Find(&res)
 	if err != nil {
 		return err

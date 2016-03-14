@@ -83,25 +83,6 @@
   @include clearfix(); // clear it in case folks use .pull-* classes on buttons
 }
 
-.modal-no-header {
-  border: 1px solid $tight-form-func-bg;
-  text-align: center;
-
-  h3 {
-    margin-top: 30px;
-  }
-
-  .modal-close {
-    float: right;
-    font-size: 140%;
-    padding: 10px;
-  }
-
-  .modal-tagline {
-    font-size: 16px;
-  }
-}
-
 .modal--narrow {
   max-width: 500px;
 }
@@ -116,17 +97,22 @@
     padding-bottom: 20px;
   }
 
-  .confirm-modal-title {
-    font-size: 18px;
+  .confirm-modal-text {
+    font-size: $font-size-h4;
     color: $link-color;
-    margin-bottom: 15px;
+    margin-bottom: $spacer*2;
+    padding-top: $spacer;
+  }
+
+  .confirm-modal-text2 {
+    font-size: $font-size-h5;
+    padding-top: $spacer;
   }
 
   .confirm-modal-buttons {
-    margin-top: 35px;
-    margin-bottom: 35px;
+    margin-bottom: $spacer;
     button {
-      margin-right: 5px
+      margin-right: $spacer/2;
     }
   }
 }

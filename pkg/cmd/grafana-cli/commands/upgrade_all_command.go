@@ -32,7 +32,7 @@ func upgradeAllCommand(c CommandLine) error {
 
 	localPlugins := s.GetLocalPlugins(pluginDir)
 
-	remotePlugins, err := s.ListAllPlugins()
+	remotePlugins, err := s.ListAllPlugins(c.GlobalString("repo"))
 
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func upgradeAllCommand(c CommandLine) error {
 		log.Infof("Upgrading %v \n", p.Id)
 
 		s.RemoveInstalledPlugin(pluginDir, p.Id)
-		InstallPlugin(p.Id, pluginDir, "")
+		InstallPlugin(p.Id, "", c)
 	}
 
 	return nil

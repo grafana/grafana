@@ -180,4 +180,21 @@ export default class TimeSeries {
     }
     return false;
   }
+
+  hideFromLegend(options) {
+    if (options.hideEmpty && this.allIsNull) {
+      return true;
+    }
+    // ignore series excluded via override
+    if (!this.legend) {
+      return true;
+    }
+
+    // ignore zero series
+    if (options.hideZero && this.allIsZero) {
+      return true;
+    }
+
+    return false;
+  }
 }
