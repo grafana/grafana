@@ -149,7 +149,11 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // ConfigCtrl
       case 'datasource-config-ctrl': {
         var dsMeta = scope.ctrl.datasourceMeta;
-        return System.import(dsMeta.module).then(function(dsModule) {
+        return System.import(dsMeta.module).then(function(dsModule): any {
+          if (!dsMeta.ConfigCtrl) {
+            return {notFound: true};
+          }
+
           return {
             baseUrl: dsMeta.baseUrl,
             name: 'ds-config-' + dsMeta.id,

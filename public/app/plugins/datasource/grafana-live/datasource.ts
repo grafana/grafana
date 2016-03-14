@@ -15,7 +15,9 @@ export class GrafanaStreamDS {
     }
 
     var target = options.targets[0];
-    liveSrv.subscribe(target);
+    liveSrv.subscribe(target.stream);
+
+    return Promise.resolve({data: []});
   }
 }
 

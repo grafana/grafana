@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 )
 
@@ -25,11 +26,27 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+type subscription struct {
+	name string
 }
 
 type connection struct {
-	ws   *websocket.Conn
-	send chan []byte
+	ws      *websocket.Conn
+	streams []*subscription
+	send    chan []byte
+}
+
+func newConnection(ws *websocket.Conn) *connection {
+	return &connection{
+		send:    make(chan []byte, 256),
+		streams: make([]*subscription, 0),
+		ws:      ws,
+	}
 }
 
 func (c *connection) readPump() {
@@ -48,7 +65,24 @@ func (c *connection) readPump() {
 			}
 			break
 		}
-		h.broadcast <- message
+
+		c.handleMessage(message)
+	}
+}
+
+func (c *connection) handleMessage(message []byte) {
+	json, err := simplejson.NewJson(message)
+	if err != nil {
+		log.Error(3, "Unreadable message on websocket channel:", err)
+	}
+
+	msgType := json.Get("action").MustString()
+	streamName := json.Get("stream").MustString()
+
+	switch msgType {
+	case "subscribe":
+		c.streams = append(c.streams, &subscription{name: streamName})
+		log.Info("Live: subscribing to stream %v", streamName)
 	}
 }
 
@@ -98,7 +132,7 @@ func (lc *LiveConn) Serve(w http.ResponseWriter, r *http.Request) {
 		log.Error(3, "Live: Failed to upgrade connection to WebSocket", err)
 		return
 	}
-	c := &connection{send: make(chan []byte, 256), ws: ws}
+	c := newConnection(ws)
 	h.register <- c
 	go c.writePump()
 	c.readPump()
