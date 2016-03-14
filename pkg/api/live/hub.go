@@ -1,6 +1,9 @@
 package live
 
-import "github.com/grafana/grafana/pkg/log"
+import (
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/log"
+)
 
 type hub struct {
 	// Registered connections.
@@ -14,6 +17,8 @@ type hub struct {
 
 	// Unregister requests from connections.
 	unregister chan *connection
+
+	streamPipe chan *dtos.StreamMessage
 }
 
 var h = hub{
