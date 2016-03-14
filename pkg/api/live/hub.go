@@ -2,30 +2,36 @@ package live
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 )
 
 type hub struct {
-	// Registered connections.
 	connections map[*connection]bool
+	streams     map[string]map[*connection]bool
 
-	// Inbound messages from the connections.
-	broadcast chan []byte
+	register      chan *connection
+	unregister    chan *connection
+	streamChannel chan *dtos.StreamMessage
+	subChannel    chan *streamSubscription
+}
 
-	// Register requests from the connections.
-	register chan *connection
-
-	// Unregister requests from connections.
-	unregister chan *connection
-
-	streamPipe chan *dtos.StreamMessage
+type streamSubscription struct {
+	conn *connection
+	name string
 }
 
 var h = hub{
-	broadcast:   make(chan []byte),
-	register:    make(chan *connection),
-	unregister:  make(chan *connection),
-	connections: make(map[*connection]bool),
+	connections:   make(map[*connection]bool),
+	streams:       make(map[string]map[*connection]bool),
+	register:      make(chan *connection),
+	unregister:    make(chan *connection),
+	streamChannel: make(chan *dtos.StreamMessage),
+	subChannel:    make(chan *streamSubscription),
+}
+
+func (h *hub) removeConnection() {
+
 }
 
 func (h *hub) run() {
@@ -39,20 +45,34 @@ func (h *hub) run() {
 				delete(h.connections, c)
 				close(c.send)
 			}
-		case m := <-h.broadcast:
-			log.Info("Live: broadcasting")
-			for c := range h.connections {
+		// hand stream subscriptions
+		case sub := <-h.subChannel:
+			log.Info("Live: Connection subscribing to: %v", sub.name)
+			subscribers, exists := h.streams[sub.name]
+			if !exists {
+				subscribers = make(map[*connection]bool)
+				h.streams[sub.name] = subscribers
+			}
+			subscribers[sub.conn] = true
+
+			// handle stream messages
+		case message := <-h.streamChannel:
+			subscribers, exists := h.streams[message.Stream]
+			if !exists {
+				log.Info("Live: Message to stream without subscribers: %v", message.Stream)
+				continue
+			}
+
+			messageBytes, _ := simplejson.NewFromAny(message).Encode()
+			for sub := range subscribers {
 				select {
-				case c.send <- m:
+				case sub.send <- messageBytes:
 				default:
-					close(c.send)
-					delete(h.connections, c)
+					close(sub.send)
+					delete(h.connections, sub)
+					delete(subscribers, sub)
 				}
 			}
 		}
 	}
-}
-
-func SendMessage(message string) {
-	h.broadcast <- []byte(message)
 }

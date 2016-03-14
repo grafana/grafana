@@ -245,7 +245,7 @@ func Register(r *macaron.Macaron) {
 	r.Any("/ws", liveConn.Serve)
 
 	// streams
-	r.Post("/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+	r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
 
 	InitAppPluginRoutes(r)
 

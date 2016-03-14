@@ -31,21 +31,15 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type subscription struct {
-	name string
-}
-
 type connection struct {
-	ws      *websocket.Conn
-	streams []*subscription
-	send    chan []byte
+	ws   *websocket.Conn
+	send chan []byte
 }
 
 func newConnection(ws *websocket.Conn) *connection {
 	return &connection{
-		send:    make(chan []byte, 256),
-		streams: make([]*subscription, 0),
-		ws:      ws,
+		send: make(chan []byte, 256),
+		ws:   ws,
 	}
 }
 
@@ -79,10 +73,14 @@ func (c *connection) handleMessage(message []byte) {
 	msgType := json.Get("action").MustString()
 	streamName := json.Get("stream").MustString()
 
+	if len(streamName) == 0 {
+		log.Error(3, "Not allowed to subscribe to empty stream name")
+		return
+	}
+
 	switch msgType {
 	case "subscribe":
-		c.streams = append(c.streams, &subscription{name: streamName})
-		log.Info("Live: subscribing to stream %v", streamName)
+		h.subChannel <- &streamSubscription{name: streamName, conn: c}
 	}
 }
 
