@@ -38,7 +38,6 @@ type PluginBase struct {
 	Includes      []*PluginInclude   `json:"includes"`
 	Module        string             `json:"module"`
 	BaseUrl       string             `json:"baseUrl"`
-	StaticRoot    string             `json:"staticRoot"`
 	StaticRootAbs string             `json:"-"`
 
 	IncludedInAppId string `json:"-"`

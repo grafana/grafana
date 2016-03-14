@@ -3,10 +3,10 @@ package plugins
 import (
 	"net/url"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FrontendPluginBase struct {
@@ -14,8 +14,8 @@ type FrontendPluginBase struct {
 }
 
 func (fp *FrontendPluginBase) initFrontendPlugin() {
-	if fp.StaticRoot != "" {
-		fp.StaticRootAbs = filepath.Join(fp.PluginDir, fp.StaticRoot)
+	if !isExternalPlugin(fp.PluginDir) {
+		fp.StaticRootAbs = fp.PluginDir
 		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
 			Directory: fp.StaticRootAbs,
 			PluginId:  fp.Id,
@@ -41,7 +41,7 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {
 
-	if fp.StaticRoot != "" {
+	if isExternalPlugin(fp.PluginDir) {
 		fp.Module = path.Join("plugins", fp.Id, "module")
 		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
@@ -49,6 +49,10 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 
 	fp.Module = path.Join("app/plugins", fp.Type, fp.Id, "module")
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
+}
+
+func isExternalPlugin(pluginDir string) bool {
+	return strings.Contains(pluginDir, setting.StaticRootPath)
 }
 
 func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
