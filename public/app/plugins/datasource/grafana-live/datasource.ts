@@ -3,6 +3,7 @@
 import {liveSrv} from 'app/core/core';
 
 export class GrafanaStreamDS {
+  subscription: any;
 
   /** @ngInject */
   constructor(private $q) {
@@ -15,7 +16,10 @@ export class GrafanaStreamDS {
     }
 
     var target = options.targets[0];
-    liveSrv.subscribe(target.stream);
+    var observable = liveSrv.subscribe(target.stream);
+    this.subscription = observable.subscribe(data => {
+      console.log("grafana stream ds data!", data);
+    });
 
     return Promise.resolve({data: []});
   }

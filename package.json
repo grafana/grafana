@@ -53,7 +53,7 @@
     "mocha": "2.3.4",
     "phantomjs": "^1.9.19",
     "reflect-metadata": "0.1.2",
-    "rxjs": "5.0.0-beta.0",
+    "rxjs": "5.0.0-beta.2",
     "sass-lint": "^1.5.0",
     "systemjs": "0.19.20",
     "zone.js": "0.5.10"
