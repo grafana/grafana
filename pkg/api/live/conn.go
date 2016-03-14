@@ -81,7 +81,10 @@ func (c *connection) handleMessage(message []byte) {
 	switch msgType {
 	case "subscribe":
 		h.subChannel <- &streamSubscription{name: streamName, conn: c}
+	case "unsubscribe":
+		h.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
 	}
+
 }
 
 func (c *connection) write(mt int, payload []byte) error {
