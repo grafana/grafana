@@ -7,7 +7,7 @@ import angular from 'angular';
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, contextSrv, $timeout) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
@@ -101,6 +101,26 @@ export class DashNavCtrl {
 
         $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
       }, $scope.handleSaveDashError);
+    };
+
+    $scope.saveDashboardAsHome = function() {
+      var orgId = 'org-' + contextSrv.user.orgId;
+      backendSrv.get('/api/preferences').then(function(prefs) {
+
+        // Checking if the preferences already exists or not
+        if (prefs.userId === 0 && prefs.orgId === 0 && prefs.preference === null) {
+          prefs.preference = {};
+        }
+        if (prefs.preference == null) {
+          prefs.preference = {
+            home_dashboard_id: $scope.dashboard.id
+          };
+        } else {
+          var orgPrefs = prefs.preference;
+          orgPrefs.home_dashboard = $scope.dashboard.id;
+        }
+        backendSrv.put('api/preferences', prefs);
+      });
     };
 
     $scope.handleSaveDashError = function(err) {
