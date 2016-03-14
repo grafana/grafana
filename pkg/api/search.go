@@ -1,11 +1,11 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/search"
-	"strconv"
 )
 
 func Search(c *middleware.Context) {
@@ -43,6 +43,4 @@ func Search(c *middleware.Context) {
 	}
 
 	c.JSON(200, searchQuery.Result)
-
-	live.SendMessage(query)
 }

@@ -20,14 +20,6 @@ class AdminSettingsCtrl {
 class AdminHomeCtrl {
   /** @ngInject **/
   constructor() {
-
-    var conn = new WebSocket("ws://localhost:3000/ws");
-    conn.onclose = function(evt) {
-      console.log("Connection closed");
-    };
-    conn.onmessage = function(evt) {
-      console.log("message", evt.data);
-    };
   }
 }
 
