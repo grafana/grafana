@@ -24,12 +24,20 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 
 	fp.handleModuleDefaults()
 
-	fp.Info.Logos.Small = evalRelativePluginUrlPath(fp.Info.Logos.Small, fp.BaseUrl)
-	fp.Info.Logos.Large = evalRelativePluginUrlPath(fp.Info.Logos.Large, fp.BaseUrl)
+	fp.Info.Logos.Small = getPluginLogoUrl(fp.Info.Logos.Small, fp.BaseUrl)
+	fp.Info.Logos.Large = getPluginLogoUrl(fp.Info.Logos.Large, fp.BaseUrl)
 
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
 		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
+}
+
+func getPluginLogoUrl(path, baseUrl string) string {
+	if path == "" {
+		return "public/img/plugin-default-logo_dark.svg"
+	}
+
+	return evalRelativePluginUrlPath(path, baseUrl)
 }
 
 func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
