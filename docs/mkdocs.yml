@@ -25,9 +25,10 @@ google_analytics: ['UA-47280256-1', 'grafana.org']
 pages:
 
 # Introduction:
-- ['index.md', 'Project', 'About Grafana']
-- ['project/cla.md', 'Project', 'Contributor License Agreement']
+# - ['index.md', 'Project', 'About Grafana']
+# - ['project/cla.md', 'Project', 'Contributor License Agreement']
 
+- ['index.md', '**HIDDEN**']
 - ['installation/index.md', 'Installation', 'Installation']
 - ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
 - ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']

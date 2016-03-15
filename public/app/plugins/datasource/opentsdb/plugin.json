@@ -4,5 +4,17 @@
   "id": "opentsdb",
 
   "metrics": true,
-  "defaultMatchFormat": "pipe"
+  "defaultMatchFormat": "pipe",
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/opentsdb_logo.png",
+      "large": "img/opentsdb_logo.png"
+    }
+  }
 }

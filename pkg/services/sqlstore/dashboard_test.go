@@ -5,6 +5,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -12,11 +13,11 @@ import (
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
 		OrgId: orgId,
-		Dashboard: map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
-		},
+		}),
 	}
 
 	err := SaveDashboard(&cmd)
@@ -58,11 +59,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    float64(123412321),
 						"title": "Expect error",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)
@@ -76,11 +77,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId:     2,
 					Overwrite: true,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    float64(query.Result.Id),
 						"title": "Expect error",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)
@@ -135,11 +136,11 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should not be able to save dashboard with same name", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    nil,
 						"title": "test dash 23",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)

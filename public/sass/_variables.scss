@@ -4,7 +4,7 @@
 //
 // Quickly modify global styling by enabling or disabling optional features.
 
-$enable-flex:               false !default;
+$enable-flex:               true !default;
 $enable-rounded:            true !default;
 $enable-shadows:            false !default;
 $enable-gradients:          false !default;
@@ -143,8 +143,8 @@ $caret-width-lg:         $caret-width !default;
 
 // Page
 
-$page-sidebar-width: 10rem;
-$page-sidebar-margin: 5rem;
+$page-sidebar-width: 11rem;
+$page-sidebar-margin: 4rem;
 
 // Links
 // -------------------------

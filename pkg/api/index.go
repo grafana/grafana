@@ -48,18 +48,23 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.User.LightTheme = true
 	}
 
+	dashboardChildNavs := []*dtos.NavLink{
+		{Text: "Home", Url: setting.AppSubUrl + "/"},
+		{Text: "Playlists", Url: setting.AppSubUrl + "/playlists"},
+		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots"},
+	}
+
+	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Url: setting.AppSubUrl + "/dashboard/new"})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Url: setting.AppSubUrl + "/import/dashboard"})
+	}
+
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-		Text: "Dashboards",
-		Icon: "icon-gf icon-gf-dashboard",
-		Url:  setting.AppSubUrl + "/",
-		Children: []*dtos.NavLink{
-			{Text: "Home", Url: setting.AppSubUrl + "/"},
-			{Text: "Playlists", Url: setting.AppSubUrl + "/playlists"},
-			{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots"},
-			{Divider: true},
-			{Text: "New", Url: setting.AppSubUrl + "/dashboard/new"},
-			{Text: "Import", Url: setting.AppSubUrl + "/import/dashboard"},
-		},
+		Text:     "Dashboards",
+		Icon:     "icon-gf icon-gf-dashboard",
+		Url:      setting.AppSubUrl + "/",
+		Children: dashboardChildNavs,
 	})
 
 	if c.OrgRole == m.ROLE_ADMIN {

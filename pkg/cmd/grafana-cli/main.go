@@ -12,7 +12,9 @@ import (
 var version = "master"
 
 func getGrafanaPluginPath() string {
-	//TODO: try to get path from os:env GF_PLUGIN_FOLDER
+	if os.Getenv("GF_PLUGIN_DIR") != "" {
+		return os.Getenv("GF_PLUGIN_DIR")
+	}
 
 	os := runtime.GOOS
 	if os == "windows" {
@@ -35,6 +37,11 @@ func main() {
 			Name:  "path",
 			Usage: "path to the grafana installation",
 			Value: getGrafanaPluginPath(),
+		},
+		cli.StringFlag{
+			Name:  "repo",
+			Usage: "url to the plugin repository",
+			Value: "https://grafana-net.raintank.io/api/plugins",
 		},
 		cli.BoolFlag{
 			Name:  "debug, d",

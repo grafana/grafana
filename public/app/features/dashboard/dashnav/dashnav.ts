@@ -137,8 +137,8 @@ export class DashNavCtrl {
 
     $scope.deleteDashboard = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Delete dashboard',
-        text: 'Do you want to delete dashboard?',
+        title: 'Delete',
+        text: 'Do you want to delete this dashboard?',
         text2: $scope.dashboard.title,
         icon: 'fa-trash',
         yesText: 'Delete',

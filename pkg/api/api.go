@@ -127,10 +127,6 @@ func Register(r *macaron.Macaron) {
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 
-			// apps
-			r.Get("/plugins", wrap(GetPluginList))
-			r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
-			r.Post("/plugins/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
 
 		// create new org
@@ -172,7 +168,18 @@ func Register(r *macaron.Macaron) {
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", wrap(GetDataSourceById))
-			r.Get("/plugins", GetDataSourcePlugins)
+			r.Get("/name/:name", wrap(GetDataSourceByName))
+		}, reqOrgAdmin)
+
+		r.Get("/datasources/id/:name", wrap(GetDataSourceIdByName), reqSignedIn)
+
+		r.Group("/plugins", func() {
+			r.Get("/", wrap(GetPluginList))
+
+			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
+			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
+			r.Get("/:pluginId/settings", wrap(GetPluginSettingById))
+			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
@@ -186,6 +193,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
+			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 		})
 
 		// Dashboard snapshots

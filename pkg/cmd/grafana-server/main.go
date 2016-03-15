@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/social"
 )
 
-var version = "master"
+var version = "3.0.0-pre1"
 var commit = "NA"
 var buildstamp string
 var build_date string

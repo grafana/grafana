@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "angular2": "2.0.0-beta.0",
+    "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.33.3",
     "expect.js": "~0.2.0",
@@ -33,6 +34,7 @@
     "grunt-karma": "~0.12.1",
     "grunt-ng-annotate": "^1.0.1",
     "grunt-notify": "^0.4.3",
+    "grunt-postcss": "^0.8.0",
     "grunt-sass": "^1.1.0",
     "grunt-string-replace": "~1.2.1",
     "grunt-systemjs-builder": "^0.2.5",
@@ -72,6 +74,7 @@
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
+    "remarkable": "^1.6.2",
     "sinon": "1.16.1",
     "systemjs-builder": "^0.15.7",
     "tether": "^1.2.0",

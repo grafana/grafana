@@ -148,12 +148,13 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // ConfigCtrl
       case 'datasource-config-ctrl': {
-        return System.import(scope.datasourceMeta.module).then(function(dsModule) {
+        var dsMeta = scope.ctrl.datasourceMeta;
+        return System.import(dsMeta.module).then(function(dsModule) {
           return {
-            baseUrl: scope.datasourceMeta.baseUrl,
-            name: 'ds-config-' + scope.datasourceMeta.id,
+            baseUrl: dsMeta.baseUrl,
+            name: 'ds-config-' + dsMeta.id,
             bindings: {meta: "=", current: "="},
-            attrs: {meta: "datasourceMeta", current: "current"},
+            attrs: {meta: "ctrl.datasourceMeta", current: "ctrl.current"},
             Component: dsModule.ConfigCtrl,
           };
         });

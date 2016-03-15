@@ -14,7 +14,7 @@ func upgradeCommand(c CommandLine) error {
 		return err
 	}
 
-	remotePlugins, err2 := s.ListAllPlugins()
+	remotePlugins, err2 := s.ListAllPlugins(c.GlobalString("repo"))
 
 	if err2 != nil {
 		return err2
@@ -24,7 +24,7 @@ func upgradeCommand(c CommandLine) error {
 		if localPlugin.Id == v.Id {
 			if ShouldUpgrade(localPlugin.Info.Version, v) {
 				s.RemoveInstalledPlugin(pluginDir, pluginName)
-				return InstallPlugin(localPlugin.Id, pluginDir, "")
+				return InstallPlugin(localPlugin.Id, "", c)
 			}
 		}
 	}
