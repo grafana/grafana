@@ -26,8 +26,10 @@
 		</div>
 	</div>
 
-	<section class="card-section">
-		<ol class="card-list">
+	<section class="card-section" layout-mode>
+    <layout-selector></layout-selector>
+
+		<ol class="card-list" >
 			<li class="card-item-wrapper" ng-repeat="plugin in ctrl.plugins">
 				<a class="card-item" href="plugins/{{plugin.id}}/edit">
 					<div class="card-item-header">
@@ -36,7 +38,7 @@
 					</div>
 					<div class="card-item-body">
 						<figure class="card-item-figure">
-							<img src="{{plugin.info.logos.small}}">
+							<img ng-src="{{plugin.info.logos.small}}">
 						</figure>
 						<div class="card-item-details">
 							<div class="card-item-name" href="plugins/{{plugin.id}}/edit">{{plugin.name}}</div>
