@@ -2,7 +2,7 @@
 
 import './graph';
 import './legend';
-import './seriesOverridesCtrl';
+import './series_overrides_ctrl';
 
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';

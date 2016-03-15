@@ -62,10 +62,10 @@ export class TextPanelCtrl extends PanelCtrl {
     if (this.converter) {
       this.updateContent(this.converter.makeHtml(text));
     } else {
-      System.import('vendor/showdown').then(Showdown => {
-        this.converter = new Showdown.converter();
+      return System.import('remarkable').then(Remarkable => {
+        var md = new Remarkable();
         this.$scope.$apply(() => {
-          this.updateContent(this.converter.makeHtml(text));
+          this.updateContent(md.render(text));
         });
       });
     }
