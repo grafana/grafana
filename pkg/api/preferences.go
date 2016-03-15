@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -29,11 +30,10 @@ func GetPreferences(c *middleware.Context) {
 		c.JsonApiErr(500, "Failed to get preferences", err)
 	}
 
-	dto := m.PreferencesDTO{
-		Id:         query.Result.Id,
-		UserId:     query.Result.UserId,
-		OrgId:      query.Result.OrgId,
-		Preference: query.Result.Preference,
+	dto := dtos.Preferences{
+		HomeDashboardId: query.Result.HomeDashboardId,
+		Timezone:        query.Result.Timezone,
+		Theme:           query.Result.Theme,
 	}
 
 	c.JSON(200, dto)

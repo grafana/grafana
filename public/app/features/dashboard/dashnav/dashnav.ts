@@ -104,22 +104,9 @@ export class DashNavCtrl {
     };
 
     $scope.saveDashboardAsHome = function() {
-      var orgId = 'org-' + contextSrv.user.orgId;
-      backendSrv.get('/api/preferences').then(function(prefs) {
-
-        // Checking if the preferences already exists or not
-        if (prefs.userId === 0 && prefs.orgId === 0 && prefs.preference === null) {
-          prefs.preference = {};
-        }
-        if (prefs.preference == null) {
-          prefs.preference = {
-            home_dashboard_id: $scope.dashboard.id
-          };
-        } else {
-          var orgPrefs = prefs.preference;
-          orgPrefs.home_dashboard = $scope.dashboard.id;
-        }
-        backendSrv.put('api/preferences', prefs);
+      // TODO: this backend method needs to be implemented
+      backendSrv.post('/api/preferences/set-home-dash', {
+        dashboardId: $scope.dashboard.id
       });
     };
 

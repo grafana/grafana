@@ -11,13 +11,15 @@ var (
 )
 
 type Preferences struct {
-	Id         int64
-	OrgId      int64
-	UserId     int64
-	Version    int
-	Preference map[string]interface{}
-	Created    time.Time
-	Updated    time.Time
+	Id              int64
+	OrgId           int64
+	UserId          int64
+	Version         int
+	HomeDashboardId int64
+	Timezone        string
+	Theme           string
+	Created         time.Time
+	Updated         time.Time
 }
 
 // ---------------------
@@ -33,19 +35,11 @@ type GetPreferencesQuery struct {
 
 // ---------------------
 // COMMANDS
-
 type SavePreferencesCommand struct {
-	Preference map[string]interface{} `json:"Preference" binding:"Required"`
-	UserId     int64                  `json:"-"`
-	OrgId      int64                  `json:"-"`
-}
+	UserId int64
+	OrgId  int64
 
-// ----------------------
-// DTO & Projections
-
-type PreferencesDTO struct {
-	Id         int64                  `json:"Id"`
-	UserId     int64                  `json:"UserId"`
-	OrgId      int64                  `json:"OrgId"`
-	Preference map[string]interface{} `json:"Preference"`
+	HomeDashboardId int64
+	Timezone        string
+	Theme           string
 }
