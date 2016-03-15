@@ -28,6 +28,7 @@ import {infoPopover} from './components/info_popover';
 import {colorPicker} from './components/colorpicker';
 import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
+import {layoutSelector} from './components/layout_selector/layout_selector';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -42,5 +43,6 @@ export {
   navbarDirective,
   searchDirective,
   colorPicker,
+  layoutSelector,
   infoPopover
 };
