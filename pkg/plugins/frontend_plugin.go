@@ -3,9 +3,9 @@ package plugins
 import (
 	"net/url"
 	"path"
-	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -14,10 +14,9 @@ type FrontendPluginBase struct {
 }
 
 func (fp *FrontendPluginBase) initFrontendPlugin() {
-	if fp.StaticRoot != "" {
-		fp.StaticRootAbs = filepath.Join(fp.PluginDir, fp.StaticRoot)
+	if isInternalPlugin(fp.PluginDir) {
 		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
-			Directory: fp.StaticRootAbs,
+			Directory: fp.PluginDir,
 			PluginId:  fp.Id,
 		})
 	}
@@ -41,7 +40,7 @@ func getPluginLogoUrl(path, baseUrl string) string {
 }
 
 func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
-	appSubPath := strings.Replace(fp.PluginDir, app.StaticRootAbs, "", 1)
+	appSubPath := strings.Replace(fp.PluginDir, app.PluginDir, "", 1)
 	fp.IncludedInAppId = app.Id
 	fp.BaseUrl = app.BaseUrl
 	fp.Module = util.JoinUrlFragments("plugins/"+app.Id, appSubPath) + "/module"
@@ -49,7 +48,7 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {
 
-	if fp.StaticRoot != "" {
+	if isInternalPlugin(fp.PluginDir) {
 		fp.Module = path.Join("plugins", fp.Id, "module")
 		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
@@ -57,6 +56,10 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 
 	fp.Module = path.Join("app/plugins", fp.Type, fp.Id, "module")
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
+}
+
+func isInternalPlugin(pluginDir string) bool {
+	return !strings.Contains(pluginDir, setting.StaticRootPath)
 }
 
 func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
