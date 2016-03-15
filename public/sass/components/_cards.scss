@@ -56,7 +56,10 @@
 
 .card-item-header {
   color: $text-color-weak;
+  text-transform: uppercase;
   margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
 }
 
 .card-item-name {
