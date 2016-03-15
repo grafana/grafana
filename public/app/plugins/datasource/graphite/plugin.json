@@ -8,5 +8,12 @@
   ],
 
   "metrics": true,
-  "annotations": true
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    }
+  }
 }
