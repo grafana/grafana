@@ -1,8 +1,11 @@
 package api
 
 import (
+	"sort"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/plugins"
 	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -17,9 +20,10 @@ func GetDataSources(c *middleware.Context) {
 		return
 	}
 
-	result := make([]*dtos.DataSource, len(query.Result))
-	for i, ds := range query.Result {
-		result[i] = &dtos.DataSource{
+	result := make(dtos.DataSourceList, 0)
+	for _, ds := range query.Result {
+
+		dsItem := dtos.DataSource{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
 			Name:      ds.Name,
@@ -32,8 +36,17 @@ func GetDataSources(c *middleware.Context) {
 			BasicAuth: ds.BasicAuth,
 			IsDefault: ds.IsDefault,
 		}
+
+		if plugin, exists := plugins.DataSources[ds.Type]; exists {
+			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+		} else {
+			dsItem.TypeLogoUrl = "public/img/plugin-default-logo_dark.svg"
+		}
+
+		result = append(result, dsItem)
 	}
 
+	sort.Sort(result)
 	c.JSON(200, result)
 }
 
