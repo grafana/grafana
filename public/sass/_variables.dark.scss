@@ -67,9 +67,9 @@ $link-hover-color:        $white;
 
 // Typography
 // -------------------------
-$headings-color:          darken($white,11%);
-$abbr-border-color: 	  $gray-3 !default;
-$text-muted: 			  darken($link-color,30%);
+$headings-color:       darken($white,11%);
+$abbr-border-color: 	 $gray-3 !default;
+$text-muted: 			     darken($link-color,30%);
 
 $blockquote-small-color:  $gray-3 !default;
 $blockquote-border-color: $gray-4 !default;
@@ -252,3 +252,10 @@ $popover-help-color:      $text-color;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
+
+// cards
+$card-background: linear-gradient(135deg, #2f2f2f, #262626);
+$card-background-hover: linear-gradient(135deg, #343434, #262626);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
+
+
