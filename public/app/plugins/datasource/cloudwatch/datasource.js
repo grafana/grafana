@@ -222,7 +222,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
           .map(function(reservations) {
             return _.pluck(reservations.Instances, targetAttributeName);
           })
-          .flatten().value();
+          .flatten().uniq().sortBy().value();
           return transformSuggestData(attributes);
         });
       }
