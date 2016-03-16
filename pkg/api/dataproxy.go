@@ -111,13 +111,19 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 					return
 				}
 				for _, query := range strings.Split(strings.Replace(queries,";","\n",-1),"\n"){
-					if strings.HasPrefix(query, "SELECT"){
-						if !strings.Contains(query,fmt.Sprintf("FROM \"P%d.",c.SignedInUser.OrgId)){
+					if strings.Contains(strings.ToUpper(query), "INTO") || strings.Contains(query, ","){
+						c.JsonApiErr(403, "Unauthorized Query", nil)
+						return
+					}else if strings.HasPrefix(strings.ToUpper(query), "SELECT"){
+						if !strings.Contains(strings.ToUpper(query),fmt.Sprintf("FROM \"P%d.",c.SignedInUser.OrgId)){
 							c.JsonApiErr(403, "Unauthorized Query", nil)
 							return
 						}
-					}else{
+					}else if strings.HasPrefix(strings.ToUpper(query), "SHOW"){
 						log.Info("Metadata Query: %#v",query)
+					}else{
+						c.JsonApiErr(403, "Unauthorized Query", nil)
+						return
 					}
 				}
 			}else{
