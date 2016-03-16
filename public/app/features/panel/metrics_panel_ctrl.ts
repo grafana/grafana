@@ -27,6 +27,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   datasources: any[];
   dataSubscription: any;
+  dataHandler: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -203,7 +204,10 @@ class MetricsPanelCtrl extends PanelCtrl {
   handleObservable(observable) {
     this.dataSubscription = observable.subscribe({
       next: (data) => {
-        console.log('panel: observer got data');
+        if (data.range) {
+          this.range = data.range;
+        }
+        this.dataHandler(data);
       },
       error: (error) => {
         console.log('panel: observer got error');
