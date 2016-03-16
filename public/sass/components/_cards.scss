@@ -1,4 +1,27 @@
+.layout-selector {
+  text-align: right;
+  margin: 0 $spacer*1.5 $spacer;
+  position: relative;
+  top: -0.5rem;
 
+  button {
+    background: $input-label-bg;
+    color: $text-color-weak;
+    border: none;
+    padding: 0.5rem;
+    line-height: 1;
+    font-size: 130%;
+
+    &:focus {
+      outline: none;
+    }
+
+    &.active {
+      background-color: lighten($input-label-bg, 5%);
+      color: $link-color;
+    }
+  }
+}
 
 .card-section {
   margin-bottom: $spacer*2;
@@ -11,15 +34,9 @@
   list-style-type: none;
 }
 
-.card-item-wrapper {
-  width: 100%;
-  padding: 0 1.5rem 1.5rem 0rem;
-}
-
 .card-item {
   display: block;
   height: 100%;
-  min-height: 12rem;
   background: $card-background;
   box-shadow: $card-shadow;
   padding: 1rem;
@@ -27,13 +44,6 @@
 
   &:hover {
     background: $card-background-hover;
-  }
-}
-
-.card-item-figure {
-  margin: 0 $spacer $spacer 0;
-  img {
-    width: 6rem;
   }
 }
 
@@ -46,28 +56,87 @@
 
 .card-item-header {
   color: $text-color-weak;
+  text-transform: uppercase;
   margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
 }
 
 .card-item-name {
   color: $headings-color;
-  font-size: $font-size-h3;
 }
 
 .card-item-sub-name {
   color: $text-color-weak;
 }
 
-@include media-breakpoint-up(md) {
+.card-list-layout-grid {
+
   .card-item-wrapper {
-    width: 50%;
+    width: 100%;
+    padding: 0 1.5rem 1.5rem 0rem;
+  }
+
+  .card-item-figure {
+    margin: 0 $spacer $spacer 0;
+    height: 6rem;
+
+    img {
+      width: 6rem;
+    }
+  }
+
+  .card-item-name {
+    font-size: $font-size-h3;
+  }
+
+  @include media-breakpoint-up(md) {
+    .card-item-wrapper {
+      width: 50%;
+    }
+  }
+
+  @include media-breakpoint-up(lg) {
+    .card-item-wrapper {
+      width: 33.333333%;
+    }
   }
 }
 
-@include media-breakpoint-up(lg) {
+.card-list-layout-list {
+
   .card-item-wrapper {
-    width: 33%;
+    padding: 0;
+    width: 100%;
+  }
+
+  .card-item {
+    border-bottom: .2rem solid $page-bg;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .card-item-header {
+    float: right;
+  }
+
+  .card-item-figure {
+    margin: 0 $spacer 0 0;
+    img {
+      width: 3.5rem;
+    }
+  }
+
+  .card-item-name {
+    font-size: $font-size-h4;
+  }
+
+  .card-item-sub-name {
+    font-size: $font-size-sm;
+  }
+
+  .layout-selector {
+    margin-right: 0;
   }
 }
-
 

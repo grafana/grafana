@@ -67,6 +67,9 @@
         <button type="submit" class="btn btn-secondary" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges(true)">
           Test Connection
         </button>
+				<button type="submit" class="btn btn-danger" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
+					Delete
+        </button>
         <a class="btn btn-link" href="datasources">Cancel</a>
       </div>
 

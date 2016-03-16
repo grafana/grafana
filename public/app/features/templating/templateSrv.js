@@ -69,6 +69,9 @@ function (angular, _) {
           return '(' + quotedValues.join(' OR ') + ')';
         }
         case "pipe": {
+          if (typeof value === 'string') {
+            return value;
+          }
           return value.join('|');
         }
         default:  {
