@@ -26,6 +26,20 @@ type PluginListItem struct {
 	Info    *plugins.PluginInfo `json:"info"`
 }
 
+type PluginList []PluginListItem
+
+func (slice PluginList) Len() int {
+	return len(slice)
+}
+
+func (slice PluginList) Less(i, j int) bool {
+	return slice[i].Name < slice[j].Name
+}
+
+func (slice PluginList) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
 type ImportDashboardCommand struct {
 	PluginId  string                         `json:"pluginId"`
 	Path      string                         `json:"path"`
