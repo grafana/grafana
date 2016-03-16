@@ -125,6 +125,11 @@
 			"Rev": "abb928e07c4108683d6b4d0b6ca08fe6bc0eee5f"
 		},
 		{
+			"ImportPath": "github.com/bmizerany/assert",
+			"Comment": "release.r60-6-ge17e998",
+			"Rev": "e17e99893cb6509f428e1728281c2ad60a6b31e3"
+		},
+		{
 			"ImportPath": "github.com/bradfitz/gomemcache/memcache",
 			"Comment": "release.r60-40-g72a6864",
 			"Rev": "72a68649ba712ee7c4b5b4a943a626bcd7d90eb8"
@@ -236,6 +241,15 @@
 		{
 			"ImportPath": "github.com/klauspost/crc32",
 			"Rev": "6834731faf32e62a2dd809d99fb24d1e4ae5a92d"
+		},
+		{
+			"ImportPath": "github.com/kr/pretty",
+			"Comment": "go.weekly.2011-12-22-27-ge6ac2fc",
+			"Rev": "e6ac2fc51e89a3249e82157fa0bb7a18ef9dd5bb"
+		},
+		{
+			"ImportPath": "github.com/kr/text",
+			"Rev": "bb797dc4fb8320488f47bf11de07a733d7233e1f"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",

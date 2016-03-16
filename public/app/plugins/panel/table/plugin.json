@@ -1,5 +1,12 @@
 {
   "type": "panel",
   "name": "Table",
-  "id": "table"
+  "id": "table",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    }
+  }
 }

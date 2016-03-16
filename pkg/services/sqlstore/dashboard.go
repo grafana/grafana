@@ -69,7 +69,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
-			dash.Data["version"] = dash.Version
+			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Id(dash.Id).Update(dash)
 		}
 
@@ -108,7 +108,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 		return m.ErrDashboardNotFound
 	}
 
-	dashboard.Data["id"] = dashboard.Id
+	dashboard.Data.Set("id", dashboard.Id)
 	query.Result = &dashboard
 
 	return nil

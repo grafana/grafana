@@ -43,13 +43,10 @@ class DashListCtrl extends PanelCtrl {
     var params: any = {limit: this.panel.limit};
 
     if (this.panel.mode === 'recently viewed') {
-      var dashboardIds = impressions.getDashboardOpened();
+      var dashIds = _.first(impressions.getDashboardOpened(), this.panel.limit);
 
-      return this.backendSrv.search({
-        dashboardIds: impressions.getDashboardOpened(),
-        limit: this.panel.limit
-      }).then(result => {
-        this.dashList = dashboardIds.map(orderId => {
+      return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
+        this.dashList = dashIds.map(orderId => {
           return _.find(result, dashboard => {
             return dashboard.id === orderId;
           });

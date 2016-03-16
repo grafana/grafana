@@ -1,7 +1,4 @@
 <navbar title="Plugins" title-url="plugins" icon="icon-gf icon-gf-apps">
-<a href="plugins/{{ctrl.model.pluginId}}/edit" class="navbar-page-btn">
-  {{ctrl.model.name}}
-</a>
 </navbar>
 
 <div class="page-container" ng-init="ctrl.init()">
@@ -23,7 +20,7 @@
     </div>
 
     <ul class="gf-tabs">
-      <li class="gf-tabs-item" ng-repeat="tab in ::['Overview', 'Config']">
+      <li class="gf-tabs-item" ng-repeat="tab in ctrl.tabs">
         <a class="gf-tabs-link" ng-click="ctrl.tabIndex = $index" ng-class="{active: ctrl.tabIndex === $index}">
           {{::tab}}
         </a>
@@ -39,21 +36,18 @@
     </div>
 
     <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 1">
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <editor-checkbox text="Enabled" model="ctrl.model.enabled" change="ctrl.toggleEnabled()"></editor-checkbox>
-        </div>
-        <div class="gf-form">
-          <editor-checkbox text="Pinned" model="ctrl.model.pinned" change="ctrl.togglePinned()"></editor-checkbox>
-        </div>
-      </div>
-
       <div ng-if="ctrl.model.id">
         <plugin-component type="app-config-ctrl"></plugin-component>
-        <div class="clearfix"></div>
-        <button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
-      </div>
 
+	      <div class="gf-form-button-row">
+					<button type="submit" class="btn btn-success" ng-click="ctrl.enable()" ng-show="!ctrl.model.enabled">Enable</button>
+					<button type="submit" class="btn btn-success" ng-click="ctrl.update()" ng-show="ctrl.model.enabled">Update</button>
+				</div>
+      </div>
+    </div>
+
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 2">
+			<dashboard-import-list plugin="ctrl.model"></dashboard-import-list>
     </div>
 
     <aside class="page-sidebar">
