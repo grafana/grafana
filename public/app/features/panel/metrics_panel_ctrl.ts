@@ -26,6 +26,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   timeInfo: any;
   skipDataOnInit: boolean;
   datasources: any[];
+  dataSubscription: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -182,6 +183,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       return datasource.query(metricsQuery).then(results => {
         this.setTimeQueryEnd();
 
+        // check for if data source returns observable
+        if (results && results.subscribe) {
+          this.handleObservable(results);
+          return {data: []};
+        }
+
         if (this.dashboard.snapshot) {
           this.panel.snapshotData = results;
         }
@@ -191,6 +198,20 @@ class MetricsPanelCtrl extends PanelCtrl {
     } catch (err) {
       return this.$q.reject(err);
     }
+  }
+
+  handleObservable(observable) {
+    this.dataSubscription = observable.subscribe({
+      next: (data) => {
+        console.log('panel: observer got data');
+      },
+      error: (error) => {
+        console.log('panel: observer got error');
+      },
+      complete: () => {
+        console.log('panel: observer got complete');
+      }
+    });
   }
 
   setDatasource(datasource) {
