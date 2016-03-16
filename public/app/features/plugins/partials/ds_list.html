@@ -18,23 +18,28 @@
 
 		<ol class="card-list" >
 			<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
-				<div class="card-item" >
+				<a class="card-item" href="datasources/edit/{{ds.id}}/">
 					<div class="card-item-header">
 						<i class="icon-gf icon-gf-{{ds.type}}"></i>
 						{{ds.type}}
 					</div>
 					<div class="card-item-body">
-						<a href="datasources/edit/{{ds.id}}">
-							<figure class="card-item-figure">
-								<img ng-src="{{ds.typeLogoUrl}}">
-							</figure>
-						</a>
+						<figure class="card-item-figure">
+							<img ng-src="{{ds.typeLogoUrl}}">
+						</figure>
 						<div class="card-item-details">
-							<a class="card-item-name" href="datasources/edit/{{ds.id}}/">{{ds.name}}</a>
-							<div class="card-item-sub-name">{{ds.url}}</div>
+							<div class="card-item-name">
+								{{ds.name}}
+								<span ng-if="ds.isDefault">
+									<span class="btn btn-secondary btn-mini">default</span>
+								</span>
+							</div>
+							<div class="card-item-sub-name">
+								{{ds.url}}
+							</div>
 						</div>
 					</div>
-				</div>
+				</a>
 			</li>
 		</ol>
 	</section>
@@ -43,49 +48,4 @@
 		<em>No data sources defined</em>
 	</div>
 
-	<table class="filter-table" ng-if="ctrl.datasources.length > 0">
-		<thead>
-			<tr>
-				<th><strong>name</strong></th>
-				<th><strong>type</strong></th>
-				<th><strong>url</strong></th>
-				<th style="width: 60px;"></th>
-				<th style="width: 85px;"></th>
-				<th style="width: 44px;"></th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr ng-repeat="ds in ctrl.datasources">
-				<td>
-					<a href="datasources/edit/{{ds.id}}">
-						<i class="icon-gf inline-icon-gf icon-gf-datasources"></i> &nbsp; {{ds.name}}
-					</a>
-				</td>
-				<td>
-					<span>{{ds.type}}</span>
-				</td>
-				<td>
-					<span>{{ds.url}}</span>
-				</td>
-				<td class="text-center">
-					<span ng-if="ds.isDefault">
-						<span class="btn btn-secondary btn-mini">default</span>
-					</span>
-				</td>
-				<td class="text-right">
-					<a href="datasources/edit/{{ds.id}}" class="btn btn-inverse btn-small">
-						<i class="fa fa-edit"></i>
-						Edit
-					</a>
-				</td>
-				<td class="text-right">
-					<a ng-click="ctrl.removeDataSource(ds)" class="btn btn-danger btn-small">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-
-</div>
 </div>

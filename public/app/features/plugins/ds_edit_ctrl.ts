@@ -134,6 +134,24 @@ export class DataSourceEditCtrl {
         });
       }
     };
+
+    confirmDelete() {
+      this.backendSrv.delete('/api/datasources/' + this.current.id).then(() => {
+        this.$location.path('datasources');
+      });
+    }
+
+    delete(s) {
+      this.$scope.appEvent('confirm-modal', {
+        title: 'Delete',
+        text: 'Are you sure you want to delete this datasource?',
+        yesText: "Delete",
+        icon: "fa-trash",
+        onConfirm: () => {
+          this.confirmDelete();
+        }
+      });
+    }
 }
 
 coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
