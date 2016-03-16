@@ -56,7 +56,10 @@
 
 .card-item-header {
   color: $text-color-weak;
+  text-transform: uppercase;
   margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
 }
 
 .card-item-name {
@@ -103,8 +106,14 @@
 .card-list-layout-list {
 
   .card-item-wrapper {
+    padding: 0;
     width: 100%;
-    padding: 0 0 1.5rem 0rem;
+  }
+
+  .card-item {
+    border-bottom: .2rem solid $page-bg;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .card-item-header {
