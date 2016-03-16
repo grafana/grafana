@@ -22,6 +22,11 @@ module.exports = function(config) {
       dest: '<%= genDir %>/css/grafana.light.min.css'
     },
 
+    cssFonts: {
+      src: [ '<%= genDir %>/css/fonts.css' ],
+      dest: '<%= genDir %>/css/fonts.min.css'
+    },
+
     js: {
       src: [
         '<%= genDir %>/vendor/npm/es5-shim/es5-shim.js',
