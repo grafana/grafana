@@ -11,7 +11,7 @@ export class AppPageCtrl {
   /** @ngInject */
   constructor(private backendSrv, private $routeParams: any, private $rootScope) {
     this.pluginId = $routeParams.pluginId;
-    this.backendSrv.get(`/api/org/plugins/${this.pluginId}/settings`).then(app => {
+    this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(app => {
       this.appModel = app;
       this.page = _.findWhere(app.pages, {slug: this.$routeParams.slug});
       if (!this.page) {

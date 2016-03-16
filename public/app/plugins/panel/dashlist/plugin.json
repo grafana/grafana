@@ -1,5 +1,12 @@
 {
   "type": "panel",
   "name": "Dashboard list",
-  "id": "dashlist"
+  "id": "dashlist",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    }
+  }
 }

@@ -279,3 +279,9 @@ $popover-help-color:      $gray-6;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
+
+// cards
+$card-background: linear-gradient(135deg, $gray-5, $gray-6);
+$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
+

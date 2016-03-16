@@ -30,19 +30,20 @@ type PluginLoader interface {
 }
 
 type PluginBase struct {
-	Type          string             `json:"type"`
-	Name          string             `json:"name"`
-	Id            string             `json:"id"`
-	Info          PluginInfo         `json:"info"`
-	Dependencies  PluginDependencies `json:"dependencies"`
-	Includes      []*PluginInclude   `json:"includes"`
-	Module        string             `json:"module"`
-	BaseUrl       string             `json:"baseUrl"`
-	StaticRoot    string             `json:"staticRoot"`
-	StaticRootAbs string             `json:"-"`
+	Type         string             `json:"type"`
+	Name         string             `json:"name"`
+	Id           string             `json:"id"`
+	Info         PluginInfo         `json:"info"`
+	Dependencies PluginDependencies `json:"dependencies"`
+	Includes     []*PluginInclude   `json:"includes"`
+	Module       string             `json:"module"`
+	BaseUrl      string             `json:"baseUrl"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+
+	// cache for readme file contents
+	Readme []byte `json:"-"`
 }
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {

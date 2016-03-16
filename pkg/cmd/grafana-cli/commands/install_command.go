@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 )
 
 func validateInput(c CommandLine, pluginFolder string) error {
@@ -156,7 +157,11 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		} else {
 			dst, err := os.Create(newFile)
 			if err != nil {
-				log.Errorf("%v", err)
+				if strings.Contains(err.Error(), "permission denied") {
+					return fmt.Errorf(
+						"Could not create file %s. permission deined. Make sure you have write access to plugindir",
+						newFile)
+				}
 			}
 			defer dst.Close()
 			src, err := zf.Open()

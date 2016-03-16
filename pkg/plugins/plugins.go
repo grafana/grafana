@@ -3,6 +3,7 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -154,4 +155,32 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
+}
+
+func GetPluginReadme(pluginId string) ([]byte, error) {
+	plug, exists := Plugins[pluginId]
+	if !exists {
+		return nil, PluginNotFoundError{pluginId}
+	}
+
+	if plug.Readme != nil {
+		return plug.Readme, nil
+	}
+
+	readmePath := filepath.Join(plug.PluginDir, "README.md")
+	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
+		readmePath = filepath.Join(plug.PluginDir, "readme.md")
+	}
+
+	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
+		plug.Readme = make([]byte, 0)
+		return plug.Readme, nil
+	}
+
+	if readmeBytes, err := ioutil.ReadFile(readmePath); err != nil {
+		return nil, err
+	} else {
+		plug.Readme = readmeBytes
+		return plug.Readme, nil
+	}
 }

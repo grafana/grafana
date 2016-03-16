@@ -1,6 +1,8 @@
 package api
 
 import (
+	"sort"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -19,7 +21,7 @@ func GetPluginList(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get list of plugins", err)
 	}
 
-	result := make([]*dtos.PluginListItem, 0)
+	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
@@ -31,7 +33,7 @@ func GetPluginList(c *middleware.Context) Response {
 			continue
 		}
 
-		listItem := &dtos.PluginListItem{
+		listItem := dtos.PluginListItem{
 			Id:   pluginDef.Id,
 			Name: pluginDef.Name,
 			Type: pluginDef.Type,
@@ -48,9 +50,17 @@ func GetPluginList(c *middleware.Context) Response {
 			continue
 		}
 
+		// filter out built in data sources
+		if ds, exists := plugins.DataSources[pluginDef.Id]; exists {
+			if ds.BuiltIn {
+				continue
+			}
+		}
+
 		result = append(result, listItem)
 	}
 
+	sort.Sort(result)
 	return Json(200, result)
 }
 
@@ -122,9 +132,23 @@ func GetPluginDashboards(c *middleware.Context) Response {
 	}
 }
 
-func InstallPluginDashboard(c *middleware.Context, apiCmd dtos.InstallPluginDashboardCmd) Response {
+func GetPluginReadme(c *middleware.Context) Response {
+	pluginId := c.Params(":pluginId")
 
-	cmd := plugins.InstallPluginDashboardCommand{
+	if content, err := plugins.GetPluginReadme(pluginId); err != nil {
+		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
+			return ApiError(404, notfound.Error(), nil)
+		}
+
+		return ApiError(500, "Could not get readme", err)
+	} else {
+		return Respond(200, content)
+	}
+}
+
+func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
+
+	cmd := plugins.ImportDashboardCommand{
 		OrgId:    c.OrgId,
 		UserId:   c.UserId,
 		PluginId: apiCmd.PluginId,

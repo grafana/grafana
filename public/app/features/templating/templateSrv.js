@@ -43,6 +43,9 @@ function (angular, _) {
     }
 
     this.formatValue = function(value, format, variable) {
+      // for some scopedVars there is no variable
+      variable = variable || {};
+
       if (typeof format === 'function') {
         return format(value, variable, this.formatValue);
       }
@@ -66,6 +69,9 @@ function (angular, _) {
           return '(' + quotedValues.join(' OR ') + ')';
         }
         case "pipe": {
+          if (typeof value === 'string') {
+            return value;
+          }
           return value.join('|');
         }
         default:  {
@@ -126,15 +132,16 @@ function (angular, _) {
 
       return target.replace(this._regex, function(match, g1, g2) {
         variable = self._index[g1 || g2];
-        if (!variable) {
-          return match;
-        }
 
         if (scopedVars) {
           value = scopedVars[g1 || g2];
           if (value) {
             return self.formatValue(value.value, format, variable);
           }
+        }
+
+        if (!variable) {
+          return match;
         }
 
         systemValue = self._grafanaVariables[variable.current.value];
