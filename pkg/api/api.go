@@ -160,7 +160,12 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", wrap(DeleteApiKey))
 		}, reqOrgAdmin)
 
-		r.Combo("/preferences").Get(GetPreferences).Put(bind(m.SavePreferencesCommand{}), wrap(SavePreferences))
+    // Preferences
+    r.Group("/preferences", func() {
+		  r.Get("/", wrap(GetPreferences))
+      r.Put("/", bind(m.SavePreferencesCommand{}), wrap(SavePreferences))
+      r.Post("/set-home-dash", bind(m.SavePreferencesCommand{}), wrap(SetHomeDashboard))
+    })
 
 		// Data sources
 		r.Group("/datasources", func() {
