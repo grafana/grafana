@@ -39,7 +39,7 @@ type SavePreferencesCommand struct {
 	UserId int64
 	OrgId  int64
 
-	HomeDashboardId int64   `json:"dashboardId"`
-	Timezone        string  `json:"timezone"`
-	Theme           string  `json:"theme"`
+	HomeDashboardId int64  `json:"homeDashboardId"`
+	Timezone        string `json:"timezone"`
+	Theme           string `json:"theme"`
 }

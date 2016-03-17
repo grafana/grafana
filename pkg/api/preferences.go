@@ -42,13 +42,13 @@ func GetPreferences(c *middleware.Context) {
 // POST /api/preferences/set-home-dash
 func SetHomeDashboard(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
 
-  cmd.UserId = c.UserId
-  cmd.OrgId = c.OrgId
+	cmd.UserId = c.UserId
+	cmd.OrgId = c.OrgId
 
-  if err := bus.Dispatch(&cmd); err != nil {
-    return ApiError(500, "Failed to set home dashboard", err)
-  }
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to set home dashboard", err)
+	}
 
-  return ApiSuccess("Home dashboard set")
+	return ApiSuccess("Home dashboard set")
 
 }
