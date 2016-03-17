@@ -256,7 +256,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (shouldDelayDraw(panel)) {
             // temp fix for legends on the side, need to render twice to get dimensions right
             callPlot(false);
-            setTimeout(function() { callPlot(true); }, 50);
+            setTimeout(function() { addTimeAxis(options); callPlot(true); }, 50);
             legendSideLastValue = panel.legend.rightSide;
           }
           else {
