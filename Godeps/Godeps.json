@@ -5,6 +5,11 @@
 		"./pkg/..."
 	],
 	"Deps": [
+                {
+			"ImportPath": "github.com/influxdata/influxdb",
+			"Comment": "v0.10.3",
+			"Rev": "f55169eaca706f78e2d66edb0b8e62861712a747"
+		},
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
 			"Comment": "v0.1.0-21-g056c9bc",

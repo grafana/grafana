@@ -13,6 +13,8 @@ import (
 	"strings"
 	"fmt"
 
+	"github.com/influxdata/influxdb/influxql"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
@@ -102,32 +104,45 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		proxy.Transport = dataProxyTransport
 
 		if (c.SignedInUser.Login != setting.AdminUser) && (c.SignedInUser.OrgId != 1) {
-			c.Req.Request.ParseForm()
-			form_values := c.Req.Request.Form
-			if contents, ok := form_values["q"]; ok {
-				queries,err := url.QueryUnescape(strings.Join(contents,""))
-				if err != nil {
-					c.JsonApiErr(500, "Unable to verify authorization", err)
-					return
-				}
-				for _, query := range strings.Split(strings.Replace(queries,";","\n",-1),"\n"){
-					if strings.HasPrefix(strings.ToUpper(query), "SELECT"){
-						if strings.Contains(strings.ToUpper(query), "INTO") ||
-							strings.ContainsAny(query, ",~/") ||
-							!strings.Contains(strings.ToUpper(query),fmt.Sprintf("FROM \"P%d.",c.SignedInUser.OrgId)){
+			queries := strings.TrimSpace(c.Req.Request.URL.Query().Get("q"))
+			parsed,err := influxql.ParseQuery(queries)
+			if err != nil {
+				c.JsonApiErr(500, "Unable to verify authorization", err)
+				log.Warn("Queries: %#v",queries)
+				return
+			}else{
+				for _, s := range parsed.Statements {
+					switch stmt := s.(type) {
+					case *influxql.SelectStatement:
+						if stmt.Target != nil {
 							c.JsonApiErr(403, "Unauthorized Query", nil)
+							log.Warn("Unauthed SELECT INTO Query: %#v",s.String())
 							return
 						}
-					}else if strings.HasPrefix(strings.ToUpper(query), "SHOW"){
-						log.Info("Metadata Query: %#v",query)
-					}else{
+						for _,source := range stmt.SourceNames() {
+							log.Info("%#v",source)
+							if !strings.HasPrefix(source,fmt.Sprintf("P%d.",c.SignedInUser.OrgId)){
+								c.JsonApiErr(403, "Unauthorized Query", nil)
+								log.Warn("Unauthed SELECT Query: %#v, source: %#v",s.String(),source)
+								return
+							}
+						}
+					case *influxql.ShowFieldKeysStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowMeasurementsStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowSeriesStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowTagKeysStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowTagValuesStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					default:
 						c.JsonApiErr(403, "Unauthorized Query", nil)
+						log.Warn("Unauthed Query Type: %#v",s.String())
 						return
 					}
 				}
-			}else{
-				c.JsonApiErr(500, "Unable to verify authorization", err)
-				return
 			}
 		}
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
@@ -156,7 +171,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 				var v util.DynMap
 				err = json.Unmarshal(contents, &v)
 				if err != nil {
-					log.Info("Body: %s",contents)
+					log.Warn("Body: %s",contents)
 					c.JsonApiErr(500, "Unable to verify authorization", err)
 					return
 				}
