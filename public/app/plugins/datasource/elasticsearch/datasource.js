@@ -76,7 +76,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       var queryInterpolated = templateSrv.replace(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
-      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
+      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated, "lowercase_expanded_terms": false } }] } };
       var data = {
         "fields": [timeField, "_source"],
         "query" : { "filtered": { "query" : query, "filter": filter } },
