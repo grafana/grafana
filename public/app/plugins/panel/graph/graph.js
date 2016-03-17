@@ -363,11 +363,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
-            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1], panel.grid.rightValue == 'absolute');
+            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1]);
           }
 
           applyLogScale(options.yaxes[0], data);
-          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0], panel.grid.leftValue == 'absolute');
+          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0]);
         }
 
         function applyLogScale(axis, data) {
@@ -413,9 +413,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
-        function configureAxisMode(axis, format, absolute) {
+        function configureAxisMode(axis, format) {
           axis.tickFormatter = function(val, axis) {
-            return kbn.valueFormats[format](absolute?Math.abs(val):val, axis.tickDecimals, axis.scaledDecimals);
+            return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
           };
         }
 
