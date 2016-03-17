@@ -7,25 +7,19 @@ function (coreModule) {
   coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv) {
 
     if (!$routeParams.slug) {
-
-      backendSrv.get('/api/preferences').then(function(preferences) {
-        if (preferences !== null && preferences.homeDashboardId !== 0) {
-          backendSrv.get('/api/dashboards/id/' + preferences.homeDashboardId).then(function(dashSlug) {
-            $routeParams.type = 'db';
-            $routeParams.slug = dashSlug.slug;
-            dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
-              $scope.initDashboard(result, $scope);
-            });
-          });
+      backendSrv.get('/api/dashboards/home').then(function(result) {
+        if (result.slug == null) {
+          var meta = result.meta;
+          meta.canSave = meta.canShare = meta.canStar = false;
+          $scope.initDashboard(result, $scope);
         } else {
-          backendSrv.get('/api/dashboards/home').then(function(result) {
-            var meta = result.meta;
-            meta.canSave = meta.canShare = meta.canStar = false;
+          $routeParams.type = 'db';
+          $routeParams.slug = result.slug;
+          dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
             $scope.initDashboard(result, $scope);
           });
         }
       });
-
       return;
     }
 
