@@ -1,9 +1,9 @@
 package sqlstore
 
 import (
-  "time"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"time"
 )
 
 func init() {
@@ -42,8 +42,8 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 				HomeDashboardId: cmd.HomeDashboardId,
 				Timezone:        cmd.Timezone,
 				Theme:           cmd.Theme,
-        Created:         time.Now(),
-        Updated:         time.Now(),
+				Created:         time.Now(),
+				Updated:         time.Now(),
 			}
 			_, err = sess.Insert(&prefs)
 			return err
@@ -51,8 +51,8 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			prefs.HomeDashboardId = cmd.HomeDashboardId
 			prefs.Timezone = cmd.Timezone
 			prefs.Theme = cmd.Theme
-      prefs.Updated = time.Now()
-      prefs.Version += 1
+			prefs.Updated = time.Now()
+			prefs.Version += 1
 			_, err = sess.Id(prefs.Id).Update(&prefs)
 			return err
 		}
