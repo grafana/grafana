@@ -204,3 +204,17 @@ func GetDashboardTags(c *middleware.Context) {
 
 	c.JSON(200, query.Result)
 }
+
+func GetDashboardSlugById(c *middleware.Context) {
+	dashId := c.ParamsInt64(":id")
+	query := m.GetDashboardSlugByIdQuery{Id: dashId}
+	err := bus.Dispatch(&query)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get slug from database", err)
+		return
+	}
+
+	slug := dtos.DashboardSlug{Slug: query.Result}
+
+	c.JSON(200, &slug)
+}

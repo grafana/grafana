@@ -200,6 +200,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
+			r.Get("/id/:id", GetDashboardSlugById)
 		})
 
 		// Dashboard snapshots
