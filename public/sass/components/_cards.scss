@@ -1,4 +1,6 @@
 .layout-selector {
+  @include clearfix();
+
   text-align: right;
   margin: 0 $spacer*1.5 $spacer;
   position: relative;
@@ -7,10 +9,12 @@
   button {
     background: $input-label-bg;
     color: $text-color-weak;
+    box-shadow: $card-shadow;
     border: none;
     padding: 0.5rem;
     line-height: 1;
     font-size: 130%;
+    float: right;
 
     &:focus {
       outline: none;
@@ -19,6 +23,15 @@
     &.active {
       background-color: lighten($input-label-bg, 5%);
       color: $link-color;
+    }
+
+    &:nth-child(2) {
+      border-radius: 3px 0 0 3px;
+      border-right: 1px solid $panel-border;
+    }
+
+    &:nth-child(1) {
+      border-radius: 0 3px 3px 0;
     }
   }
 }
