@@ -86,6 +86,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   hiddenSeries: any = {};
+  highlightSeries: any = {};
   seriesList: any = [];
   logScales: any;
   unitFormats: any;
@@ -230,6 +231,20 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.toggleSeriesExclusiveMode(serie);
     }
 
+    this.render();
+  }
+
+  toggleHighlightSeries(serie, event) {
+    if (this.highlightSeries[serie.alias] && this.highlightSeries[serie.alias].highlight) {
+      return;
+    }
+
+    this.highlightSeries[serie.alias] = { highlight: true, originalSetting: _.clone(serie.lines) };
+    setTimeout((function() {
+      this.highlightSeries[serie.alias].highlight = false;
+      serie.lines = this.highlightSeries[serie.alias].originalSetting;
+      this.render();
+    }).bind(this), 500);
     this.render();
   }
 
