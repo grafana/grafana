@@ -27,6 +27,7 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
+  tooltip: string;
   allIsNull: boolean;
   allIsZero: boolean;
   decimals: number;
@@ -52,6 +53,7 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
+    this.tooltip = 'default';
   }
 
   applySeriesOverrides(overrides) {

@@ -40,7 +40,7 @@ function ($) {
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };
 
-    this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
+    this.getMultiSeriesPlotHoverInfo = function(seriesList, pos, hideInvisible) {
       var value, i, series, hoverIndex;
       var results = [];
 
@@ -82,7 +82,8 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex });
+          results.push({ value: value, hoverIndex: newhoverIndex,
+                hidden: series.tooltip === "hide" || (series.tooltip === "default" && hideInvisible && !series.legend) });
         } else {
           results.push({ value: value, hoverIndex: hoverIndex });
         }
@@ -128,7 +129,7 @@ function ($) {
       if (panel.tooltip.shared) {
         plot.unhighlight();
 
-        var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
+        var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos, panel.tooltip.legend);
 
         seriesHtml = '';
 
