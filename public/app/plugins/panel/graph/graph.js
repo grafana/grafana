@@ -363,11 +363,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
-            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1], panel.grid.rightValue == 'absolute');
+            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1], panel.grid.rightValue === 'absolute');
           }
 
           applyLogScale(options.yaxes[0], data);
-          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0], panel.grid.leftValue == 'absolute');
+          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0], panel.grid.leftValue === 'absolute');
         }
 
         function applyLogScale(axis, data) {
