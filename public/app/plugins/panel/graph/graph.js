@@ -256,7 +256,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (shouldDelayDraw(panel)) {
             // temp fix for legends on the side, need to render twice to get dimensions right
             callPlot(false);
-            setTimeout(function() { callPlot(true); }, 50);
+            setTimeout(function() { addTimeAxis(options); callPlot(true); }, 50);
             legendSideLastValue = panel.legend.rightSide;
           }
           else {
@@ -363,11 +363,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
-            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1]);
+            configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.y_formats[1], panel.grid.rightValue === 'absolute');
           }
 
           applyLogScale(options.yaxes[0], data);
-          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0]);
+          configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.y_formats[0], panel.grid.leftValue === 'absolute');
         }
 
         function applyLogScale(axis, data) {
@@ -413,9 +413,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
-        function configureAxisMode(axis, format) {
+        function configureAxisMode(axis, format, absolute) {
           axis.tickFormatter = function(val, axis) {
-            return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+            return kbn.valueFormats[format](absolute?Math.abs(val):val, axis.tickDecimals, axis.scaledDecimals);
           };
         }
 
