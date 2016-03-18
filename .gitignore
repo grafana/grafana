@@ -24,6 +24,7 @@ build-windows.cmd
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.mes
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.skincfg
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard_project.tvsconfig
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.stat
 /packaging/windows/GrafCrunchGuard/__history
 /packaging/windows/GrafCrunchGuard/ModelSupport_GrafCrunchGuard
 /packaging/windows/GrafCrunchGuard/Win32
@@ -34,6 +35,7 @@ build-windows.cmd
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.~dsk
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.identcache
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.skincfg
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.stat
 /packaging/windows/RunGrafCrunch/__history
 /packaging/windows/RunGrafCrunch/Win32
 /packaging/windows/RunGrafCrunch/Win64
