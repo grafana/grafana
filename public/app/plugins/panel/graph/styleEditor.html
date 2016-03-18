@@ -52,6 +52,12 @@
 			text="All series" model="ctrl.panel.tooltip.shared" change="ctrl.render()"
 			tip="Show all series on same tooltip and a x croshair to help follow all series">
 		</editor-opt-bool>
+		<div class="editor-option" ng-show="ctrl.panel.tooltip.shared">
+			<editor-opt-bool
+				text="Hide invisible" model="ctrl.panel.tooltip.legend" change="ctrl.render()"
+				tip="Hide tooltip of series according it visibility on legend">
+			</editor-opt-bool>
+		</div>
 		<div class="editor-option" ng-show="ctrl.panel.stack">
       <label class="small">Stacked Values <tip>How should the values in stacked charts to be calculated?</tip></label>
       <select class="input-small" ng-model="ctrl.panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="ctrl.render()"></select>
