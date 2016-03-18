@@ -36,6 +36,7 @@ build-windows.cmd
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.~dsk
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.identcache
 /packaging/windows/RunGrafCrunch/RunGrafCrunch.skincfg
+/packaging/windows/RunGrafCrunch/RunGrafCrunch.stat
 /packaging/windows/RunGrafCrunch/__history
 /packaging/windows/RunGrafCrunch/Win32
 /packaging/windows/RunGrafCrunch/Win64
