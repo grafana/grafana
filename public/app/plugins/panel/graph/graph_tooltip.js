@@ -82,7 +82,8 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex, hidden: !series.tooltip || (hideInvisible && !series.legend) });
+          results.push({ value: value, hoverIndex: newhoverIndex,
+                hidden: series.tooltip === "hide" || (series.tooltip === "default" && hideInvisible && !series.legend) });
         } else {
           results.push({ value: value, hoverIndex: hoverIndex });
         }
