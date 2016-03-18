@@ -226,6 +226,14 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               series.data = [];
               series.stack = false;
             }
+
+            if (ctrl.highlightSeries[series.alias] && ctrl.highlightSeries[series.alias].highlight) {
+              if (series.lines.lineWidth) {
+                series.lines.lineWidth = series.lines.lineWidth + 1;
+              } else {
+                series.lines.lineWidth = options.series.lines.lineWidth + 1;
+              }
+            }
           }
 
           if (data.length && data[0].stats.timeStep) {
