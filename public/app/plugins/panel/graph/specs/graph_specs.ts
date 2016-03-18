@@ -44,6 +44,7 @@ describe('grafanaGraph', function() {
           ctrl.otherPanelInFullscreenMode = sinon.spy();
           ctrl.renderingCompleted = sinon.spy();
           ctrl.hiddenSeries = {};
+          ctrl.highlightSeries = {};
           ctrl.dashboard = { timezone: 'browser' };
           ctrl.range = {
             from: moment([2015, 1, 1, 10]),
