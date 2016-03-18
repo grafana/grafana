@@ -38,6 +38,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+AppCopyright=2015 (c) AdRem Software Inc., all rights reserved
 LicenseFile={#LICENSE}
 DefaultDirName={pf64}\AdRem\GrafCrunch
 DefaultGroupName={#MyAppGroupName}
