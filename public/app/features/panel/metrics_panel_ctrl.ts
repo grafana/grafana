@@ -26,8 +26,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   timeInfo: any;
   skipDataOnInit: boolean;
   datasources: any[];
-  dataSubscription: any;
-  dataHandler: any;
+  dataSubject: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -168,7 +167,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
+    if (this.dataSubject) {
+      return this.$q.when([]);
+    }
+
     var metricsQuery = {
+      panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.rangeRaw,
       interval: this.interval,
@@ -184,9 +188,9 @@ class MetricsPanelCtrl extends PanelCtrl {
       return datasource.query(metricsQuery).then(results => {
         this.setTimeQueryEnd();
 
-        // check for if data source returns observable
+        // check for if data source returns subject
         if (results && results.subscribe) {
-          this.handleObservable(results);
+          this.handleDataSubject(results);
           return {data: []};
         }
 
@@ -194,16 +198,27 @@ class MetricsPanelCtrl extends PanelCtrl {
           this.panel.snapshotData = results;
         }
 
-        return results;
+        return this.dataHandler(results);
       });
     } catch (err) {
       return this.$q.reject(err);
     }
   }
 
-  handleObservable(observable) {
-    this.dataSubscription = observable.subscribe({
+  dataHandler(data) {
+    return data;
+  }
+
+  handleDataSubject(subject) {
+    // if we already have a connection
+    if (this.dataSubject) {
+      return;
+    }
+
+    this.dataSubject = subject;
+    this.dataSubject.subscribe({
       next: (data) => {
+        console.log('dataSubject next!');
         if (data.range) {
           this.range = data.range;
         }
