@@ -27,6 +27,7 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
+  tooltip: string;
   allIsNull: boolean;
   allIsZero: boolean;
   decimals: number;
