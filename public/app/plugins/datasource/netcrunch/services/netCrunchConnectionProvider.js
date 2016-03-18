@@ -507,7 +507,8 @@ define([
                                                     periodInterval,
                                                     dateFrom, dateTo, resultType,
                                                     null, // day mask just no mask
-                                                    null) // value for equal checking
+                                                    null, // value for equal checking
+                                                    null)
             .then(function (data) {
               return {
                 domain : calculateTimeDomain(dateFrom, periodType, periodInterval, data.trend.length),

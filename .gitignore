@@ -25,6 +25,7 @@ build-windows.cmd
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.mes
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard.skincfg
 /packaging/windows/GrafCrunchGuard/GrafCrunchGuard_project.tvsconfig
+/packaging/windows/GrafCrunchGuard/GrafCrunchGuard.stat
 /packaging/windows/GrafCrunchGuard/__history
 /packaging/windows/GrafCrunchGuard/ModelSupport_GrafCrunchGuard
 /packaging/windows/GrafCrunchGuard/Win32
