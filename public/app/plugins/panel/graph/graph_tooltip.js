@@ -69,10 +69,10 @@ function ($) {
           } else if (!series.stack) {
             value = series.data[hoverIndex][1];
           } else {
-            var stack_index = series.stack == 'A'?1:
-                series.stack == 'B'?2:
-                series.stack == 'C'?3:
-                series.stack == 'D'?4:0;
+            var stack_index = series.stack === 'A'?1:
+                series.stack === 'B'?2:
+                series.stack === 'C'?3:
+                series.stack === 'D'?4:0;
             last_value[stack_index] += series.data[hoverIndex][1];
             value = last_value[stack_index];
           }

@@ -102,10 +102,10 @@ function (angular, _, $) {
 
         function getStackValue(series, panel, value, stack) {
             var stack_index =
-                    (series.stack == 'A'?1:
-                    series.stack == 'B'?2:
-                    series.stack == 'C'?3:
-                    series.stack == 'D'?4:
+                    (series.stack === 'A'?1:
+                    series.stack === 'B'?2:
+                    series.stack === 'C'?3:
+                    series.stack === 'D'?4:
                     0),
                 result = 0;
 
