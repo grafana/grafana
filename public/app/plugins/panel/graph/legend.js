@@ -100,6 +100,26 @@ function (angular, _, $) {
           return html + '</th>';
         }
 
+        function getStackValue(series, panel, value, stack) {
+            var stack_index =
+                    (series.stack == 'A'?1:
+                    series.stack == 'B'?2:
+                    series.stack == 'C'?3:
+                    series.stack == 'D'?4:
+                    0),
+                result = 0;
+
+            series.stack?
+                "individual" === panel.tooltip.value_type?
+                    result = value:
+                    series.stack?
+                        (stack[stack_index] += value, result = stack[stack_index]):
+                        result = value:
+                result = value;
+
+            return result;
+        }
+
         function render() {
           if (firstRender) {
             elem.append($container);
@@ -133,6 +153,12 @@ function (angular, _, $) {
             $container.append($(header));
           }
 
+          var stack_avg = [0, 0, 0, 0, 0],
+            stack_current = [0, 0, 0, 0, 0],
+            stack_min = [0, 0, 0, 0, 0],
+            stack_max = [0, 0, 0, 0, 0],
+            stack_total = [0, 0, 0, 0, 0];
+
           if (panel.legend.sort) {
             seriesList = _.sortBy(seriesList, function(series) {
               return series.stats[panel.legend.sort];
@@ -145,6 +171,11 @@ function (angular, _, $) {
           var seriesShown = 0;
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
+            var avg = series.formatValue(getStackValue(series, panel, series.stats.avg, stack_avg));
+            var current = series.formatValue(getStackValue(series, panel, series.stats.current, stack_current));
+            var min = series.formatValue(getStackValue(series, panel, series.stats.min, stack_min));
+            var max = series.formatValue(getStackValue(series, panel, series.stats.max, stack_max));
+            var total = series.formatValue(getStackValue(series, panel, series.stats.total, stack_total));
 
             if (series.hideFromLegend(panel.legend)) {
               continue;
@@ -161,12 +192,6 @@ function (angular, _, $) {
             html += '<a class="graph-legend-alias pointer">' + _.escape(series.label) + '</a>';
 
             if (panel.legend.values) {
-              var avg = series.formatValue(series.stats.avg);
-              var current = series.formatValue(series.stats.current);
-              var min = series.formatValue(series.stats.min);
-              var max = series.formatValue(series.stats.max);
-              var total = series.formatValue(series.stats.total);
-
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
               if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }

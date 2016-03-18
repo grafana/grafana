@@ -45,7 +45,7 @@ function ($) {
       var results = [];
 
       //now we know the current X (j) position for X and Y values
-      var last_value = 0; //needed for stacked values
+      var last_value = [0, 0, 0, 0, 0]; //needed for stacked values
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
@@ -69,8 +69,12 @@ function ($) {
           } else if (!series.stack) {
             value = series.data[hoverIndex][1];
           } else {
-            last_value += series.data[hoverIndex][1];
-            value = last_value;
+            var stack_index = series.stack == 'A'?1:
+                series.stack == 'B'?2:
+                series.stack == 'C'?3:
+                series.stack == 'D'?4:0;
+            last_value[stack_index] += series.data[hoverIndex][1];
+            value = last_value[stack_index];
           }
         } else {
           value = series.data[hoverIndex][1];
