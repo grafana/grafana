@@ -58,6 +58,12 @@
   &:hover {
     background: $card-background-hover;
   }
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }  
 }
 
 .card-item-body {
