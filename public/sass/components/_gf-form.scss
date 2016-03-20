@@ -3,7 +3,6 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
-  margin-right: $gf-form-margin;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -67,6 +66,7 @@ $gf-form-label-margin: 0.25rem;
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   font-size: $font-size-base;
   line-height: $input-line-height;
   color: $input-color;
@@ -139,8 +139,8 @@ $gf-form-label-margin: 0.25rem;
   }
 }
 
-.gf-form-select-wrapper + .gf-form-select-wrapper { 
-  margin-left: $gf-form-label-margin; 
+.gf-form-select-wrapper + .gf-form-select-wrapper {
+  margin-left: $gf-form-label-margin;
 }
 
 .gf-form-btn {
@@ -148,4 +148,9 @@ $gf-form-label-margin: 0.25rem;
   line-height: $input-line-height;
   flex-shrink: 0;
   flex-grow: 0;
+}
+
+.query-editor-secondary-row {
+  margin-left: 5.2rem;
+
 }

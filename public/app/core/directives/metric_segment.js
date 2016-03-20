@@ -8,10 +8,10 @@ function (_, $, coreModule) {
 
   coreModule.default.directive('metricSegment', function($compile, $sce) {
     var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-      ' class="tight-form-clear-input input-medium"' +
+      ' class="gf-form-input input-medium"' +
       ' spellcheck="false" style="display:none"></input>';
 
-    var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+    var buttonTemplate = '<a class="gf-form-label" ng-class="segment.cssClass" ' +
       'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
     return {
