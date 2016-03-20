@@ -22,9 +22,7 @@ The easiset way to try your plugin with grafana is to [setup grafana for develop
 ## Examples / boilerplate
 We currently have three different examples that you can fork to get started developing your grafana plugin.
 
- - [generic-datasource](https://github.com/grafana/grafana/tree/master/examples/datasource-plugin-genericdatasource) (small datasource plugin for quering json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for quering json data from backends)
  - [panel-boilderplate-es5](https://github.com/grafana/grafana/tree/master/examples/panel-boilerplate-es5)
- - [nginx-app](https://github.com/grafana/grafana/tree/master/examples/nginx-app)
+ - [example-app](https://github.com/grafana/example-app)
 
-## Publish your plugin
-We are currently working on this.

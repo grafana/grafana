@@ -139,6 +139,10 @@ $gf-form-label-margin: 0.25rem;
   }
 }
 
+.gf-form-select-wrapper + .gf-form-select-wrapper { 
+  margin-left: $gf-form-label-margin; 
+}
+
 .gf-form-btn {
   padding: $input-padding-y $input-padding-x;
   line-height: $input-line-height;

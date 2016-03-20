@@ -23,17 +23,17 @@ func (fp *FrontendPluginBase) initFrontendPlugin() {
 
 	fp.handleModuleDefaults()
 
-	fp.Info.Logos.Small = getPluginLogoUrl(fp.Info.Logos.Small, fp.BaseUrl)
-	fp.Info.Logos.Large = getPluginLogoUrl(fp.Info.Logos.Large, fp.BaseUrl)
+	fp.Info.Logos.Small = getPluginLogoUrl(fp.Type, fp.Info.Logos.Small, fp.BaseUrl)
+	fp.Info.Logos.Large = getPluginLogoUrl(fp.Type, fp.Info.Logos.Large, fp.BaseUrl)
 
 	for i := 0; i < len(fp.Info.Screenshots); i++ {
 		fp.Info.Screenshots[i].Path = evalRelativePluginUrlPath(fp.Info.Screenshots[i].Path, fp.BaseUrl)
 	}
 }
 
-func getPluginLogoUrl(path, baseUrl string) string {
+func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 	if path == "" {
-		return "public/img/plugin-default-logo_dark.svg"
+		return "public/img/icn-" + pluginType + ".svg"
 	}
 
 	return evalRelativePluginUrlPath(path, baseUrl)
