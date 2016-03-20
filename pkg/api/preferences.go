@@ -7,7 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-// PUT /api/user/prefs
+// PUT /api/preferences
 func SavePreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
 
 	cmd.UserId = c.UserId
@@ -21,7 +21,7 @@ func SavePreferences(c *middleware.Context, cmd m.SavePreferencesCommand) Respon
 
 }
 
-// GET /api/user/prefs
+// GET /api/preferences
 func GetPreferences(c *middleware.Context) {
 
 	query := m.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
@@ -37,4 +37,18 @@ func GetPreferences(c *middleware.Context) {
 	}
 
 	c.JSON(200, dto)
+}
+
+// POST /api/preferences/set-home-dash
+func SetHomeDashboard(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
+
+	cmd.UserId = c.UserId
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to set home dashboard", err)
+	}
+
+	return ApiSuccess("Home dashboard set")
+
 }

@@ -106,7 +106,7 @@ export class DashNavCtrl {
     $scope.saveDashboardAsHome = function() {
       // TODO: this backend method needs to be implemented
       backendSrv.post('/api/preferences/set-home-dash', {
-        dashboardId: $scope.dashboard.id
+        homeDashboardId: $scope.dashboard.id
       });
     };
 

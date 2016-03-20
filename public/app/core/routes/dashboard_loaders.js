@@ -8,9 +8,17 @@ function (coreModule) {
 
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(result) {
-        var meta = result.meta;
-        meta.canSave = meta.canShare = meta.canStar = false;
-        $scope.initDashboard(result, $scope);
+        if (result.slug == null) {
+          var meta = result.meta;
+          meta.canSave = meta.canShare = meta.canStar = false;
+          $scope.initDashboard(result, $scope);
+        } else {
+          $routeParams.type = 'db';
+          $routeParams.slug = result.slug;
+          dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+            $scope.initDashboard(result, $scope);
+          });
+        }
       });
       return;
     }
