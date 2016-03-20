@@ -175,9 +175,8 @@ func GetHomeDashboard(c *middleware.Context) {
 			return
 		}
 
-		slug := dtos.DashboardSlug{Slug: query.Result}
-
-		c.JSON(200, &slug)
+		dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + query.Result}
+		c.JSON(200, &dashRedirect)
 		return
 	}
 

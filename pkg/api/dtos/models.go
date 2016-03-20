@@ -57,8 +57,8 @@ type DashboardFullWithMeta struct {
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
-type DashboardSlug struct {
-	Slug string `json:"slug"`
+type DashboardRedirect struct {
+	RedirectUri string `json:"redirectUri"`
 }
 
 type DataSource struct {
