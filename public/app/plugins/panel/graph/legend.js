@@ -101,7 +101,12 @@ function (angular, _, $) {
         }
 
         function render() {
-          console.log('render legend');
+          if (!ctrl.panel.legend.show) {
+            elem.empty();
+            firstRender = true;
+            return;
+          }
+
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
