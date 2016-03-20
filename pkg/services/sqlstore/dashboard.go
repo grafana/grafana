@@ -257,16 +257,22 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 	return nil
 }
 
+type DashboardSlugDTO struct {
+	Slug string
+}
+
 func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
-	dashboard := m.Dashboard{Id: query.Id}
-	has, err := x.Get(&dashboard)
-	query.Result = dashboard.Slug
+	var rawSql = `SELECT slug from dashboard WHERE Id=?`
+	var slug = DashboardSlugDTO{}
+
+	exists, err := x.Sql(rawSql, query.Id).Get(&slug)
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if exists == false {
 		return m.ErrDashboardNotFound
 	}
 
+	query.Result = slug.Slug
 	return nil
 }
