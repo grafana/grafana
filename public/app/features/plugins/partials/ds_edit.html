@@ -4,8 +4,8 @@
 <div class="page-container">
 
   <div class="page-header">
-		<h1 ng-show="isNew">Add data source</h1>
-		<h1 ng-show="!isNew">Edit data source</h1>
+		<h1 ng-show="ctrl.isNew">Add data source</h1>
+		<h1 ng-hide="ctrl.isNew">Edit data source</h1>
 
 		<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
 			<ul class="gf-tabs">
@@ -66,6 +66,9 @@
         <button type="submit" class="btn btn-success" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save</button>
         <button type="submit" class="btn btn-secondary" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges(true)">
           Test Connection
+        </button>
+				<button type="submit" class="btn btn-danger" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
+					Delete
         </button>
         <a class="btn btn-link" href="datasources">Cancel</a>
       </div>

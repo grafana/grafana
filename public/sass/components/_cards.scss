@@ -1,4 +1,6 @@
 .layout-selector {
+  @include clearfix();
+
   text-align: right;
   margin: 0 $spacer*1.5 $spacer;
   position: relative;
@@ -7,10 +9,12 @@
   button {
     background: $input-label-bg;
     color: $text-color-weak;
+    box-shadow: $card-shadow;
     border: none;
     padding: 0.5rem;
     line-height: 1;
     font-size: 130%;
+    float: right;
 
     &:focus {
       outline: none;
@@ -19,6 +23,15 @@
     &.active {
       background-color: lighten($input-label-bg, 5%);
       color: $link-color;
+    }
+
+    &:nth-child(2) {
+      border-radius: 3px 0 0 3px;
+      border-right: 1px solid $panel-border;
+    }
+
+    &:nth-child(1) {
+      border-radius: 0 3px 3px 0;
     }
   }
 }
@@ -45,26 +58,43 @@
   &:hover {
     background: $card-background-hover;
   }
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 }
 
 .card-item-body {
   display: flex;
+  overflow: hidden;
 }
 
 .card-item-details {
+  overflow: hidden;
 }
 
 .card-item-header {
   color: $text-color-weak;
+  text-transform: uppercase;
   margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
 }
 
 .card-item-name {
   color: $headings-color;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .card-item-sub-name {
   color: $text-color-weak;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .card-list-layout-grid {
@@ -103,8 +133,14 @@
 .card-list-layout-list {
 
   .card-item-wrapper {
+    padding: 0;
     width: 100%;
-    padding: 0 0 1.5rem 0rem;
+  }
+
+  .card-item {
+    border-bottom: .2rem solid $page-bg;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .card-item-header {
