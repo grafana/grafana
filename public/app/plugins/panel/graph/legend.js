@@ -101,6 +101,7 @@ function (angular, _, $) {
         }
 
         function render() {
+          console.log('render legend');
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
