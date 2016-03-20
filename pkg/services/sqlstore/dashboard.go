@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
+	bus.AddHandler("sql", GetDashboardSlugById)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -251,6 +252,20 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
+	dashboard := m.Dashboard{Id: query.Id}
+	has, err := x.Get(&dashboard)
+	query.Result = dashboard.Slug
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrDashboardNotFound
 	}
 
 	return nil

@@ -57,6 +57,10 @@ type DashboardFullWithMeta struct {
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
+type DashboardSlug struct {
+	Slug string `json:"slug"`
+}
+
 type DataSource struct {
 	Id                int64            `json:"id"`
 	OrgId             int64            `json:"orgId"`
