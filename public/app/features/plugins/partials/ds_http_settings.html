@@ -29,12 +29,18 @@
 		</div>
 	</div>
 
-	<div class="gf-form">
-		<span class="gf-form-label width-7">
-			Http Auth
-		</span>
-		<editor-checkbox text="Basic Auth" model="current.basicAuth"></editor-checkbox>
-		<editor-checkbox text="With Credentials" model="current.withCredentials"></editor-checkbox><tip>Tip for with credentials</tip>
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label width-7">Http Auth</label>
+		</div>
+		<gf-form-switch class="gf-form"
+			label="Basic Auth"
+			checked="current.basicAuth" switch-class="max-width-6">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="With Credentials"
+			checked="current.withCredentials" switch-class="max-width-6">
+		</gf-form-switch>
 	</div>
 
 	<div class="gf-form" ng-if="current.basicAuth">

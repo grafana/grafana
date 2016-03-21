@@ -48,10 +48,6 @@ $gf-form-margin: 0.25rem;
   @include border-radius($label-border-radius-sm);
 }
 
-.gf-form-switch-wrapper {
-  margin-right: $gf-form-margin;
-}
-
 .gf-form-checkbox {
   flex-shrink: 0;
   padding: $input-padding-y $input-padding-x;
@@ -150,4 +146,7 @@ $gf-form-margin: 0.25rem;
   flex-grow: 0;
 }
 
+.gf-form-switch {
+  margin-right: $gf-form-margin;
+}
 
