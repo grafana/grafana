@@ -106,7 +106,7 @@ function (angular, _, coreModule, config) {
         }
 
         //populate error obj on Internal Error
-        if (_.isString(err.data) && err.status === 500 && !err.data) {
+        if (_.isString(err.data) && err.status === 500) {
           err.data = {
             error: err.statusText
           };
