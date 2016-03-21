@@ -101,23 +101,20 @@ function (angular, _, $) {
         }
 
         function getStackValue(series, panel, value, stack) {
-            var stack_index =
-                    (series.stack === 'A'?1:
-                    series.stack === 'B'?2:
-                    series.stack === 'C'?3:
-                    series.stack === 'D'?4:
-                    0),
-                result = 0;
+          var stack_index = (series.stack === 'A')?1:
+            (series.stack === 'B')?2:
+            (series.stack === 'C')?3:
+            (series.stack === 'D')?4:0;
+          var result = 0;
 
-            series.stack?
-                "individual" === panel.tooltip.value_type?
-                    result = value:
-                    series.stack?
-                        (stack[stack_index] += value, result = stack[stack_index]):
-                        result = value:
-                result = value;
-
-            return result;
+          series.stack?
+            "individual" === panel.tooltip.value_type?
+              result = value:
+              series.stack?
+                (stack[stack_index] += value, result = stack[stack_index]):
+                result = value:
+            result = value;
+          return result;
         }
 
         function render() {
