@@ -3,15 +3,30 @@
     <h5 class="section-heading">Draw Modes</h5>
     <div class="gf-form">
       <label class="gf-form-label width-5">Bars</label>
-      <editor-checkbox text="Enable" model="ctrl.panel.bars" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch-wrapper">
+				<div class="switch">
+					<input id="cmn-toggle-3" class="cmn-toggle cmn-toggle-round" type="checkbox" ng-model="ctrl.panel.bars">
+					<label for="cmn-toggle-3"></label>
+				</div>
+			</div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-5">Lines</label>
-      <editor-checkbox text="Enable" model="ctrl.panel.lines" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch-wrapper">
+				<div class="switch">
+					<input id="cmn-toggle-2" class="cmn-toggle cmn-toggle-round" type="checkbox" ng-model="ctrl.panel.lines">
+					<label for="cmn-toggle-2"></label>
+				</div>
+			</div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-5">Points</label>
-      <editor-checkbox text="Enable" model="ctrl.panel.points" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch-wrapper">
+				<div class="switch">
+					<input id="cmn-toggle-1" class="cmn-toggle cmn-toggle-round" type="checkbox" ng-model="ctrl.panel.points">
+					<label for="cmn-toggle-1"></label>
+				</div>
+			</div>
     </div>
   </div>
   <div class="section">
