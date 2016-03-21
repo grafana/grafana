@@ -81,6 +81,58 @@ func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
 	return &query.Result, nil
 }
 
+type MeasurementBody map[string][]map[string][]map[string]interface{}
+
+func getMeasurements(ds *m.DataSource, proxyPath string) ([]string,error) {
+	var measurements []string
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", util.JoinUrlFragments(ds.Url,proxyPath), nil)
+	q := req.URL.Query()
+	q.Set("q","SHOW MEASUREMENTS")
+	q.Add("db", ds.Database)
+	req.URL.RawQuery = q.Encode()
+	if err != nil {
+		return nil,err
+	}
+	req.SetBasicAuth(ds.User, ds.Password)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil,err
+	}
+	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil{
+		return nil,err
+	}
+	var v MeasurementBody
+	err = json.Unmarshal(contents, &v)
+	if err != nil{
+		return nil,err
+	}
+	for _,val := range v["results"][0]["series"][0]["values"].([]interface{}){
+		measurements = append(measurements, val.([]interface{})[0].(string))
+	}
+	return measurements,nil
+}
+
+func Filter(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func All(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if !f(v) {
+			return false
+		}
+	}
+	return true
+}
+
 func ProxyDataSourceRequest(c *middleware.Context) {
 	ds, err := getDatasource(c.ParamsInt64(":id"), c.OrgId)
 	if err != nil {
@@ -111,6 +163,8 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 				log.Warn("Queries: %#v",queries)
 				return
 			}else{
+				var measurements []string
+				validator := func(x string) bool {return strings.HasPrefix(x,fmt.Sprintf("P%d.",c.SignedInUser.OrgId))}
 				for _, s := range parsed.Statements {
 					switch stmt := s.(type) {
 					case *influxql.SelectStatement:
@@ -119,9 +173,22 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 							log.Warn("Unauthed SELECT INTO Query: %#v",s.String())
 							return
 						}
-						for _,source := range stmt.SourceNames() {
-							log.Info("%#v",source)
-							if !strings.HasPrefix(source,fmt.Sprintf("P%d.",c.SignedInUser.OrgId)){
+						for indx,source := range stmt.SourceNames() {
+							regex := stmt.Sources[indx].(*influxql.Measurement).Regex.Val
+							if regex != nil {
+								if len(measurements) == 0 {
+									measurements,err = getMeasurements(ds,proxyPath)
+									if err != nil{
+										c.JsonApiErr(500, "Unable to verify authorization", err)
+										return
+									}
+								}
+								if !All(Filter(measurements,regex.MatchString),validator){
+									c.JsonApiErr(403, "Unauthorized Query", nil)
+									log.Warn("Unauthed SELECT Query: %#v, source: /%s/",s.String(),regex.String())
+									return
+								}
+							}else if !validator(source) {
 								c.JsonApiErr(403, "Unauthorized Query", nil)
 								log.Warn("Unauthed SELECT Query: %#v, source: %#v",s.String(),source)
 								return
@@ -177,7 +244,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 				}
 
 				for _,element := range v["queries"].([]interface{}) {
-					m := element.(map[string]interface {})
+					m := element.(util.DynMap)
 					org_matches := strings.HasPrefix(m["metric"].(string),fmt.Sprintf("P%d.",c.SignedInUser.OrgId))
 					if !org_matches || (m["tsuids"] != nil) {
 						c.JsonApiErr(403, "Unauthorized Query", nil)
