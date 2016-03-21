@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -74,10 +75,16 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Id   string `json:"id"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Type       string          `json:"type"`
+	Component  string          `json:"component"`
+	Role       models.RoleType `json:"role"`
+	AddToNav   bool            `json:"AddToNav"`
+	DefaultNav bool            `json:"defaultNav"`
+	Slug       string          `json:"slug"`
+
+	Id string `json:"-"`
 }
 
 type PluginDependencyItem struct {

@@ -82,10 +82,6 @@ func GetPluginSettingById(c *middleware.Context) Response {
 			Module:       def.Module,
 		}
 
-		if app, exists := plugins.Apps[pluginId]; exists {
-			dto.Pages = app.Pages
-		}
-
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
 			if err != m.ErrPluginSettingNotFound {

@@ -11,7 +11,6 @@ type PluginSetting struct {
 	Module       string                      `json:"module"`
 	BaseUrl      string                      `json:"baseUrl"`
 	Info         *plugins.PluginInfo         `json:"info"`
-	Pages        []*plugins.AppPluginPage    `json:"pages"`
 	Includes     []*plugins.PluginInclude    `json:"includes"`
 	Dependencies *plugins.PluginDependencies `json:"dependencies"`
 	JsonData     map[string]interface{}      `json:"jsonData"`
