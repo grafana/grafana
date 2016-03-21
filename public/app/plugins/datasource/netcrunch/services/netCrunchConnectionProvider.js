@@ -627,13 +627,30 @@ define([
             }
           }
 
+          function versionGreaterEqualThan(version, major, minor) {
+            var result = false;
+
+            if (parseInt(version.major) >= parseInt(major)) {
+              if (parseInt(version.major) > parseInt(major)) {
+                result = true;
+              } else {
+                if (parseInt(version.minor) >= parseInt(minor)) {
+                  result = true;
+                }
+              }
+            }
+
+            return result;
+          }
+
           return getServerApi().then(function(serverApi) {
             var version;
 
             if ((serverApi.api != null) && (serverApi.api[0] != null) && (serverApi.api[0].ver != null)) {
               version = parseVersion(serverApi.api[0].ver);
               if (version != null) {
-                if (parseInt(version.major) >= 9) {
+                if (versionGreaterEqualThan(version, netCrunchConnectionProviderConsts.NC_SERVER_VER_MAJOR,
+                                                     netCrunchConnectionProviderConsts.NC_SERVER_VER_MINOR) === true) {
                   return $q.when(version);
                 } else {
                   return $q.reject(netCrunchConnectionProviderConsts.ERROR_SERVER_VER, version);

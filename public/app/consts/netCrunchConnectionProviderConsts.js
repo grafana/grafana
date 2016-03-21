@@ -18,6 +18,9 @@ define([
     angular.module('grafana.const').constant('netCrunchConnectionProviderConsts', {
       API_NAME: '/ncapi/',
 
+      NC_SERVER_VER_MAJOR : 9,
+      NC_SERVER_VER_MINOR : 2,
+
       ERROR_SERVER_API : 1,
       ERROR_SERVER_VER : 2,
       ERROR_CONNECTION_INIT : 3,
@@ -25,7 +28,7 @@ define([
       ERROR_MESSAGES : [
         '',
         'Server connection failed',
-        'NetCrunch server version should be 9.0 or greater',
+        'NetCrunch server version should be 9.2 or greater',
         'Server connection initialization failed',
         'Authentication failed'
       ]
