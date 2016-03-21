@@ -8,6 +8,9 @@ $switch-height: 1.5rem;
 
 .gf-form-switch {
   position: relative;
+  max-width: 4.5rem;
+  flex-grow: 1;
+  min-width: 4.0rem;
 
   input {
     position: absolute;
@@ -22,7 +25,7 @@ $switch-height: 1.5rem;
     cursor: pointer;
     outline: none;
     user-select: none;
-    width: 5rem;
+    width: 100%;
     height: 2.65rem;
     background-color: $page-bg;
   }
@@ -35,7 +38,6 @@ $switch-height: 1.5rem;
     bottom: 0;
     right: 0;
     color: #fff;
-    font-family: "Open Sans";
     font-size: $font-size-sm;
     text-align: center;
     line-height: 2.6rem;

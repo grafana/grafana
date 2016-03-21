@@ -2,14 +2,14 @@
   <div class="section">
     <h5 class="section-heading">Draw Modes</h5>
     <div class="gf-form">
-      <label class="gf-form-label width-5">Bars</label>
+      <label for="cmn-toggle-3" class="gf-form-label width-5">Bars</label>
 			<div class="gf-form-switch">
 				<input id="cmn-toggle-3" type="checkbox" ng-model="ctrl.panel.bars">
 				<label for="cmn-toggle-3" data-on="Yes" data-off="No"></label>
 			</div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-5">Lines</label>
+      <label for="cmn-toggle-2" class="gf-form-label width-5">Lines</label>
 			<div class="gf-form-switch">
 				<input id="cmn-toggle-2" type="checkbox" ng-model="ctrl.panel.lines">
 				<label for="cmn-toggle-2" data-on="Yes" data-off="No"></label>
@@ -27,25 +27,28 @@
 		<h5 class="section-heading">Mode Options</h5>
 		<div class="gf-form" ng-show="ctrl.panel.lines">
 			<label class="gf-form-label width-8">Fill</label>
-			<div class="gf-form-select-wrapper">
+			<div class="gf-form-select-wrapper max-width-5">
 				<select class="gf-form-input" ng-model="ctrl.panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 			</div>
 		</div>
 		<div class="gf-form" ng-show="ctrl.panel.lines">
 			<label class="gf-form-label width-8">Line Width</label>
-			<div class="gf-form-select-wrapper">
+			<div class="gf-form-select-wrapper max-width-5">
 				<select class="gf-form-input" ng-model="ctrl.panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 			</div>
 		</div>
 		<div class="gf-form" ng-show="ctrl.panel.points">
 			<label class="gf-form-label width-8">Point Radius</label>
-			<div class="gf-form-select-wrapper">
+			<div class="gf-form-select-wrapper max-width-5">
 				<select class="gf-form-input" ng-model="ctrl.panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 			</div>
 		</div>
 		<div class="gf-form" ng-show="ctrl.panel.lines">
 			<label class="gf-form-label width-8">Staircase</label>
-			<editor-checkbox text="" model="ctrl.panel.steppedLine" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch max-width-5">
+				<input id="cmn-toggle-122" type="checkbox" ng-model="ctrl.panel.steppedLine">
+				<label for="cmn-toggle-122" data-on="Yes" data-off="No"></label>
+			</div>
 		</div>
 	</div>
 	<div class="section">
