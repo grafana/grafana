@@ -66,76 +66,16 @@ input.cmn-toggle-round:checked + label:after {
 }
 
 /* ============================================================
-  SWITCH 2 - ROUND FLAT
-============================================================ */
-input.cmn-toggle-round-flat + label {
-  padding: 2px;
-  width: 120px;
-  height: 60px;
-  background-color: #dddddd;
-  -webkit-border-radius: 60px;
-  -moz-border-radius: 60px;
-  -ms-border-radius: 60px;
-  -o-border-radius: 60px;
-  border-radius: 60px;
-  -webkit-transition: background 0.4s;
-  -moz-transition: background 0.4s;
-  -o-transition: background 0.4s;
-  transition: background 0.4s;
-}
-input.cmn-toggle-round-flat + label:before, input.cmn-toggle-round-flat + label:after {
-  display: block;
-  position: absolute;
-  content: "";
-}
-input.cmn-toggle-round-flat + label:before {
-  top: 2px;
-  left: 2px;
-  bottom: 2px;
-  right: 2px;
-  background-color: #fff;
-  -webkit-border-radius: 60px;
-  -moz-border-radius: 60px;
-  -ms-border-radius: 60px;
-  -o-border-radius: 60px;
-  border-radius: 60px;
-  -webkit-transition: background 0.4s;
-  -moz-transition: background 0.4s;
-  -o-transition: background 0.4s;
-  transition: background 0.4s;
-}
-input.cmn-toggle-round-flat + label:after {
-  top: 4px;
-  left: 4px;
-  bottom: 4px;
-  width: 52px;
-  background-color: #dddddd;
-  -webkit-border-radius: 52px;
-  -moz-border-radius: 52px;
-  -ms-border-radius: 52px;
-  -o-border-radius: 52px;
-  border-radius: 52px;
-  -webkit-transition: margin 0.4s, background 0.4s;
-  -moz-transition: margin 0.4s, background 0.4s;
-  -o-transition: margin 0.4s, background 0.4s;
-  transition: margin 0.4s, background 0.4s;
-}
-input.cmn-toggle-round-flat:checked + label {
-  background-color: #8ce196;
-}
-input.cmn-toggle-round-flat:checked + label:after {
-  margin-left: 60px;
-  background-color: #8ce196;
-}
-
-/* ============================================================
   SWITCH 3 - YES NO
 ============================================================ */
 input.cmn-toggle-yes-no + label {
   padding: 2px;
-  width: 120px;
-  height: 60px;
+  width: 5rem;
+  height: 2.6rem;
+  padding: $input-padding-y $input-padding-x;
+  background-color: $input-bg;
 }
+
 input.cmn-toggle-yes-no + label:before, input.cmn-toggle-yes-no + label:after {
   display: block;
   position: absolute;
@@ -144,53 +84,32 @@ input.cmn-toggle-yes-no + label:before, input.cmn-toggle-yes-no + label:after {
   bottom: 0;
   right: 0;
   color: #fff;
-  font-family: "Roboto Slab", serif;
-  font-size: 20px;
+  font-family: "Open Sans";
+  font-size: $font-size-sm;
   text-align: center;
-  line-height: 60px;
+  line-height: 2.6rem;
 }
+
 input.cmn-toggle-yes-no + label:before {
-  background-color: #dddddd;
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
   content: attr(data-off);
-  -webkit-transition: -webkit-transform 0.5s;
-  -moz-transition: -moz-transform 0.5s;
-  -o-transition: -o-transform 0.5s;
   transition: transform 0.5s;
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  -ms-backface-visibility: hidden;
-  -o-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+
 input.cmn-toggle-yes-no + label:after {
-  background-color: #8ce196;
+  //@include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   content: attr(data-on);
-  -webkit-transition: -webkit-transform 0.5s;
-  -moz-transition: -moz-transform 0.5s;
-  -o-transition: -o-transform 0.5s;
   transition: transform 0.5s;
-  -webkit-transform: rotateY(180deg);
-  -moz-transform: rotateY(180deg);
-  -ms-transform: rotateY(180deg);
-  -o-transform: rotateY(180deg);
   transform: rotateY(180deg);
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  -ms-backface-visibility: hidden;
-  -o-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+
 input.cmn-toggle-yes-no:checked + label:before {
-  -webkit-transform: rotateY(180deg);
-  -moz-transform: rotateY(180deg);
-  -ms-transform: rotateY(180deg);
-  -o-transform: rotateY(180deg);
   transform: rotateY(180deg);
 }
+
 input.cmn-toggle-yes-no:checked + label:after {
-  -webkit-transform: rotateY(0);
-  -moz-transform: rotateY(0);
-  -ms-transform: rotateY(0);
-  -o-transform: rotateY(0);
   transform: rotateY(0);
 }

@@ -80,11 +80,21 @@
     <h5 class="section-heading">Multiple Series</h5>
     <div class="gf-form">
       <label class="gf-form-label width-7">Stack</label>
-      <editor-checkbox text="Enable" model="ctrl.panel.stack" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch-wrapper">
+				<div class="switch">
+					<input id="cmn-toggle-7" class="cmn-toggle cmn-toggle-yes-no" type="checkbox" ng-model="ctrl.panel.stack">
+					<label for="cmn-toggle-7" data-on="Yes" data-off="No"></label>
+				</div>
+			</div>
     </div>
     <div class="gf-form" ng-show="ctrl.panel.stack">
       <label class="gf-form-label width-7">Percent</label>
-      <editor-checkbox text="Enable" model="ctrl.panel.percent" change="ctrl.render()"></editor-checkbox>
+			<div class="gf-form-switch-wrapper">
+				<div class="switch">
+					<input id="cmn-toggle-8" class="cmn-toggle cmn-toggle-yes-no" type="checkbox" ng-model="ctrl.panel.percent">
+					<label for="cmn-toggle-8" data-on="Yes" data-off="No"></label>
+				</div>
+			</div>
     </div>
     <div class="gf-form" ng-show="ctrl.panel.stack">
       <label class="gf-form-label width-7">Tooltip value</label>
