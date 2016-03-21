@@ -38,6 +38,7 @@ func AddApiKey(cmd *m.AddApiKeyCommand) error {
 			Name:    cmd.Name,
 			Role:    cmd.Role,
 			Key:     cmd.Key,
+			Token:   cmd.Token,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}

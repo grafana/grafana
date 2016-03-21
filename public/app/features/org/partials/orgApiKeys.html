@@ -36,11 +36,13 @@
 			<tr>
 				<th style="text-align: left">Name</th>
 				<th style="text-align: left">Role</th>
+				<th style="text-align: left">Token</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="t in tokens">
 				<td>{{t.name}}</td>
 				<td>{{t.role}}</td>
+				<td>{{t.token}}</td>
 				<td style="width: 1%">
 					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
 						<i class="fa fa-remove"></i>
@@ -51,5 +53,3 @@
 	</div>
 
 </div>
-
-

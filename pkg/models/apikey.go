@@ -12,6 +12,7 @@ type ApiKey struct {
 	OrgId   int64
 	Name    string
 	Key     string
+	Token     string
 	Role    RoleType
 	Created time.Time
 	Updated time.Time
@@ -24,6 +25,7 @@ type AddApiKeyCommand struct {
 	Role  RoleType `json:"role" binding:"Required"`
 	OrgId int64    `json:"-"`
 	Key   string   `json:"-"`
+	Token string   `json:"-"`
 
 	Result *ApiKey `json:"-"`
 }
@@ -66,5 +68,6 @@ type GetApiKeyByIdQuery struct {
 type ApiKeyDTO struct {
 	Id   int64    `json:"id"`
 	Name string   `json:"name"`
+	Token string   `json:"token"`
 	Role RoleType `json:"role"`
 }
