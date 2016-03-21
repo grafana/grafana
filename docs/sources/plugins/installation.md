@@ -17,30 +17,30 @@ On Linux systems the grafana-cli will assume that the grafana plugin directory i
 
 List available plugins
 ```
-grafana-cli list-remote
+grafana-cli plugins list-remote
 ```
 
 Install a plugin type
 ```
-grafana-cli install <plugin-id>
+grafana-cli plugins install <plugin-id>
 ```
 
 List installed plugins
 ```
-grafana-cli ls
+grafana-cli plugins ls
 ```
 
 Upgrade all installed plugins
 ```
-grafana-cli upgrade-all
+grafana-cli plugins upgrade-all
 ```
 
 Upgrade one plugin
 ```
-grafana-cli upgrade <plugin-id>
+grafana-cli plugins upgrade <plugin-id>
 ```
 
 Remove one plugin
 ```
-grafana-cli remove <plugin-id>
+grafana-cli plugins remove <plugin-id>
 ```
