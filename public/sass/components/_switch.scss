@@ -3,113 +3,66 @@ $switch-width: 3.5rem;
 $switch-height: 1.5rem;
 
 /* ============================================================
-  COMMON
-============================================================ */
-.cmn-toggle {
-  position: absolute;
-  margin-left: -9999px;
-  visibility: hidden;
-}
-.cmn-toggle + label {
-  display: block;
-  position: relative;
-  cursor: pointer;
-  outline: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* ============================================================
-  SWITCH 1 - ROUND
-============================================================ */
-input.cmn-toggle-round + label {
-  padding: 2px;
-  width: $switch-width;
-  height: $switch-height;
-  background-color: $dark-1;
-  border-radius: $switch-border-radius;
-}
-
-input.cmn-toggle-round + label:before, input.cmn-toggle-round + label:after {
-  display: block;
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  bottom: 1px;
-  content: "";
-}
-
-input.cmn-toggle-round + label:before {
-  right: 1px;
-  background-color: $card-background;
-  border-radius: $switch-border-radius;
-  box-shadow: $card-shadow;
-  transition: background 0.4s;
-}
-
-input.cmn-toggle-round + label:after {
-  width: $switch-height;
-  background-color: $dark-5;
-  border-radius: 100%;
-  box-shadow: $card-shadow;
-  transition: margin 0.4s;
-}
-
-input.cmn-toggle-round:checked + label:before {
-  background-color: $blue;
-}
-
-input.cmn-toggle-round:checked + label:after {
-  margin-left: $switch-width - $switch-height;
-}
-
-/* ============================================================
   SWITCH 3 - YES NO
 ============================================================ */
-input.cmn-toggle-yes-no + label {
-  padding: 2px;
-  width: 5rem;
-  height: 2.6rem;
-  padding: $input-padding-y $input-padding-x;
-  background-color: $input-bg;
-}
 
-input.cmn-toggle-yes-no + label:before, input.cmn-toggle-yes-no + label:after {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  color: #fff;
-  font-family: "Open Sans";
-  font-size: $font-size-sm;
-  text-align: center;
-  line-height: 2.6rem;
-}
+.gf-form-switch {
+  position: relative;
+  max-width: 4.5rem;
+  flex-grow: 1;
+  min-width: 4.0rem;
 
-input.cmn-toggle-yes-no + label:before {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
-  content: attr(data-off);
-  transition: transform 0.5s;
-  backface-visibility: hidden;
-}
+  input {
+    position: absolute;
+    margin-left: -9999px;
+    visibility: hidden;
+    display: none;
+  }
 
-input.cmn-toggle-yes-no + label:after {
-  //@include buttonBackground($btn-success-bg, $btn-success-bg-hl);
-  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
-  content: attr(data-on);
-  transition: transform 0.5s;
-  transform: rotateY(180deg);
-  backface-visibility: hidden;
-}
+  input + label {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    width: 100%;
+    height: 2.65rem;
+    background-color: $page-bg;
+  }
 
-input.cmn-toggle-yes-no:checked + label:before {
-  transform: rotateY(180deg);
-}
+  input + label:before, input + label:after {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    color: #fff;
+    font-size: $font-size-sm;
+    text-align: center;
+    line-height: 2.6rem;
+  }
 
-input.cmn-toggle-yes-no:checked + label:after {
-  transform: rotateY(0);
+  input + label:before {
+    @include buttonBackground($input-bg, lighten($input-bg, 5%));
+    content: attr(data-off);
+    transition: transform 0.5s;
+    backface-visibility: hidden;
+  }
+
+  input + label:after {
+    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+    content: attr(data-on);
+    transition: transform 0.5s;
+    transform: rotateY(180deg);
+    backface-visibility: hidden;
+  }
+
+  input:checked + label:before {
+    transform: rotateY(180deg);
+  }
+
+  input:checked + label:after {
+    transform: rotateY(0);
+  }
 }
