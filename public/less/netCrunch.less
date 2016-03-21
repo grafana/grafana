@@ -70,7 +70,7 @@
 }
 
 .net-crunch-container {
-  .flex-column;
+  .flex-line;
   .flex-wrap(wrap);
   .align-content(flex-start);
   .align-items(flex-start);
@@ -157,7 +157,9 @@ input[type="text"].counter-input {
 }
 
 .tile-list-element {
-  .tile
+  .tile;
+  margin-left: 7px;
+  width: @tile-width - 15;
 }
 
 .tile-selected {
