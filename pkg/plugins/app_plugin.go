@@ -8,14 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type AppPluginPage struct {
-	Name        string          `json:"name"`
-	Slug        string          `json:"slug"`
-	Component   string          `json:"component"`
-	Role        models.RoleType `json:"role"`
-	SuppressNav bool            `json:"suppressNav"`
-}
-
 type AppPluginCss struct {
 	Light string `json:"light"`
 	Dark  string `json:"dark"`
@@ -23,7 +15,6 @@ type AppPluginCss struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Pages  []*AppPluginPage  `json:"pages"`
 	Routes []*AppPluginRoute `json:"routes"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
@@ -85,7 +76,7 @@ func (app *AppPlugin) initApp() {
 	}
 
 	// slugify pages
-	for _, page := range app.Pages {
+	for _, page := range app.Includes {
 		if page.Slug == "" {
 			page.Slug = slug.Make(page.Name)
 		}
