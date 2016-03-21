@@ -9,7 +9,7 @@
 
 		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
 			empty-to-null ng-model="ctrl.panel.timeFrom" valid-time-span
-			ng-change="ctrl.refresh()" ng-model-onblur>
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
 	</div>
 
 	<div class="gf-form">
@@ -20,14 +20,18 @@
 		<span class="gf-form-label width-6">Amount</span>
 		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
 			empty-to-null ng-model="ctrl.panel.timeShift" valid-time-span
-			ng-change="ctrl.refresh()" ng-model-onblur>
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
 	</div>
 
 	<div class="gf-form">
 		<span class="gf-form-label">
 			<i class="fa fa-clock-o"></i>
 		</span>
-		<editor-checkbox text="Hide time override info" model="ctrl.panel.hideTimeOverride" change="ctrl.refresh()"></editor-checkbox>
+		<label class="gf-form-label width-12">Hide time override info</label>
+		<div class="gf-form-switch max-width-6">
+			<input id="cmn-toggle-122" type="checkbox" ng-model="ctrl.panel.hideTimeOverride" change="ctrl.refresh()">
+			<label for="cmn-toggle-122" data-on="Yes" data-off="No"></label>
+		</div>
 	</div>
 </div>
 
