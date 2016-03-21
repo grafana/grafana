@@ -1,27 +1,18 @@
 <div class="editor-row gf-form-group">
   <div class="section">
     <h5 class="section-heading">Draw Modes</h5>
-    <div class="gf-form">
-      <label for="cmn-toggle-3" class="gf-form-label width-5">Bars</label>
-			<div class="gf-form-switch">
-				<input id="cmn-toggle-3" type="checkbox" ng-model="ctrl.panel.bars">
-				<label for="cmn-toggle-3" data-on="Yes" data-off="No"></label>
-			</div>
-    </div>
-    <div class="gf-form">
-      <label for="cmn-toggle-2" class="gf-form-label width-5">Lines</label>
-			<div class="gf-form-switch">
-				<input id="cmn-toggle-2" type="checkbox" ng-model="ctrl.panel.lines">
-				<label for="cmn-toggle-2" data-on="Yes" data-off="No"></label>
-			</div>
-		</div>
-		<div class="gf-form">
-			<label class="gf-form-label width-5">Points</label>
-			<div class="gf-form-switch">
-				<input id="cmn-toggle-1" type="checkbox" ng-model="ctrl.panel.points">
-				<label for="cmn-toggle-1" data-on="Yes" data-off="No"></label>
-			</div>
-		</div>
+		<gf-form-switch class="gf-form"
+			label="Bars" label-class="width-5"
+			checked="ctrl.panel.bars" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="Lines" label-class="width-5"
+			checked="ctrl.panel.lines" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="Points" label-class="width-5"
+			checked="ctrl.panel.points" on-change="ctrl.render()">
+		</gf-form-switch>
 	</div>
 	<div class="section">
 		<h5 class="section-heading">Mode Options</h5>
@@ -43,13 +34,10 @@
 				<select class="gf-form-input" ng-model="ctrl.panel.pointradius" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 			</div>
 		</div>
-		<div class="gf-form" ng-show="ctrl.panel.lines">
-			<label class="gf-form-label width-8">Staircase</label>
-			<div class="gf-form-switch max-width-5">
-				<input id="cmn-toggle-122" type="checkbox" ng-model="ctrl.panel.steppedLine">
-				<label for="cmn-toggle-122" data-on="Yes" data-off="No"></label>
-			</div>
-		</div>
+		<gf-form-switch class="gf-form"
+			label="Staircase" label-class="width-8"
+			checked="ctrl.panel.steppedLine" on-change="ctrl.render()">
+		</gf-form-switch>
 	</div>
 	<div class="section">
 		<h5 class="section-heading">Misc options</h5>
@@ -75,20 +63,14 @@
 
 	<div class="section">
 		<h5 class="section-heading">Multiple Series</h5>
-		<div class="gf-form">
-			<label class="gf-form-label width-7">Stack</label>
-			<div class="gf-form-switch">
-				<input id="cmn-toggle-7" type="checkbox" ng-model="ctrl.panel.stack">
-				<label for="cmn-toggle-7" data-on="Yes" data-off="No"></label>
-			</div>
-		</div>
-		<div class="gf-form" ng-show="ctrl.panel.stack">
-			<label class="gf-form-label width-7">Percent</label>
-			<div class="gf-form-switch">
-				<input id="cmn-toggle-8" type="checkbox" ng-model="ctrl.panel.percent">
-				<label for="cmn-toggle-8" data-on="Yes" data-off="No"></label>
-			</div>
-		</div>
+		<gf-form-switch class="gf-form"
+			label="Stack" label-class="width-7"
+			checked="ctrl.panel.stack" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form" ng-show="ctrl.panel.stack"
+			label="Percent" label-class="width-7"
+			checked="ctrl.panel.percent" on-change="ctrl.render()">
+		</gf-form-switch>
 		<div class="gf-form" ng-show="ctrl.panel.stack">
 			<label class="gf-form-label width-7">Tooltip value</label>
 			<div class="gf-form-select-wrapper max-width-8">

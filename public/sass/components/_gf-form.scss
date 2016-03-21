@@ -1,9 +1,7 @@
 $gf-form-margin: 0.25rem;
-$gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
-  margin-right: $gf-form-margin;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -38,20 +36,20 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   flex-shrink: 0;
 
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-label-margin;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
 }
 
 .gf-form-switch-wrapper {
-  margin-right: $gf-form-label-margin;
+  margin-right: $gf-form-margin;
 }
 
 .gf-form-checkbox {
@@ -71,6 +69,7 @@ $gf-form-label-margin: 0.25rem;
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   font-size: $font-size-base;
   line-height: $input-line-height;
   color: $input-color;
@@ -113,6 +112,7 @@ $gf-form-label-margin: 0.25rem;
 }
 
 .gf-form-select-wrapper {
+  margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
 
@@ -141,10 +141,6 @@ $gf-form-label-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
-}
-
-.gf-form-select-wrapper + .gf-form-select-wrapper {
-  margin-left: $gf-form-label-margin;
 }
 
 .gf-form-btn {

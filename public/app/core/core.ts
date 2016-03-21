@@ -29,6 +29,7 @@ import {colorPicker} from './components/colorpicker';
 import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
 import {layoutSelector} from './components/layout_selector/layout_selector';
+import {switchDirective} from './components/switch';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -44,5 +45,6 @@ export {
   searchDirective,
   colorPicker,
   layoutSelector,
+  switchDirective,
   infoPopover
 };
