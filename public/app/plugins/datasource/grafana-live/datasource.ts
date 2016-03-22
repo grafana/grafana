@@ -24,7 +24,6 @@ export class GrafanaStreamDS {
 
   /** @ngInject */
   constructor() {
-
   }
 
   query(options): any {

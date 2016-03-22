@@ -29,11 +29,9 @@ export class TextPanelCtrl extends PanelCtrl {
     this.editorTabIndex = 1;
   }
 
-  refresh() {
-    this.render();
-  }
-
   render() {
+    super.render();
+
     if (this.panel.mode === 'markdown') {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {
