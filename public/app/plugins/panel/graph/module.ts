@@ -160,17 +160,17 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
-  onDataReceived(results) {
+  onDataReceived(dataList) {
     // png renderer returns just a url
-    if (_.isString(results)) {
-      this.render(results);
+    if (_.isString(dataList)) {
+      this.render(dataList);
       return;
     }
 
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;
-    this.seriesList = _.map(results.data, (series, i) => this.seriesHandler(series, i));
+    this.seriesList = dataList.map(this.seriesHandler.bind(this));
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
 
     this.annotationsPromise.then(annotations => {

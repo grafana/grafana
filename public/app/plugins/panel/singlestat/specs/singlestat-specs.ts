@@ -23,12 +23,11 @@ describe('SingleStatCtrl', function() {
 
         beforeEach(function() {
           setupFunc();
-          ctx.datasource.query = sinon.stub().returns(ctx.$q.when({
-            data: [{target: 'test.cpu1', datapoints: ctx.datapoints}]
-          }));
+          var data = [
+            {target: 'test.cpu1', datapoints: ctx.datapoints}
+          ];
 
-          ctx.ctrl.refreshData(ctx.datasource);
-          ctx.scope.$digest();
+          ctx.ctrl.onDataReceived(data);
           ctx.data = ctx.ctrl.data;
         });
       };

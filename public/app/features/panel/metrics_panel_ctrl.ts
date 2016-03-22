@@ -53,21 +53,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
-  loadSnapshot(data) {
-    // null op
-    return data;
-  }
-
   refresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
-      if (this.loadSnapshot) {
-        this.updateTimeRange();
-        this.loadSnapshot(this.panel.snapshotData);
-      }
+      this.updateTimeRange();
+      this.events.emit('load-snapshot', this.panel.snapshotData);
       return;
     }
 
@@ -83,15 +76,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     // load datasource service
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
-    .then(() => {
-      this.loading = false;
-    }).catch(err => {
-      console.log('Panel data error:', err);
+    .then(this.handleQueryResult.bind(this))
+    .catch(err => {
       this.loading = false;
       this.error = err.message || "Timeseries data request error";
       this.inspector = {error: err};
-
       this.events.emit('data-error', err);
+      console.log('Panel data error:', err);
     });
   }
 
@@ -184,29 +175,24 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    try {
-      return datasource.query(metricsQuery).then(results => {
-        this.setTimeQueryEnd();
-
-        // check for if data source returns subject
-        if (results && results.subscribe) {
-          this.handleDataStream(results);
-          return;
-        }
-
-        if (this.dashboard.snapshot) {
-          this.panel.snapshotData = results;
-        }
-
-        return this.events.emit('data-received', results);
-      });
-    } catch (err) {
-      return this.$q.reject(err);
-    }
+    return datasource.query(metricsQuery);
   }
 
-  dataHandler(data) {
-    return data;
+  handleQueryResult(result) {
+    this.setTimeQueryEnd();
+    this.loading = false;
+
+    // check for if data source returns subject
+    if (result && result.subscribe) {
+      this.handleDataStream(result);
+      return;
+    }
+
+    if (this.dashboard.snapshot) {
+      this.panel.snapshotData = result;
+    }
+
+    return this.events.emit('data-received', result.data);
   }
 
   handleDataStream(stream) {

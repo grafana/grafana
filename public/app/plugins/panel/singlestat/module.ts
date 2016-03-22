@@ -45,7 +45,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   series: any[];
-  data: any[];
+  data: any;
   fontSizes: any[];
   unitFormats: any[];
 
@@ -53,6 +53,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private $location, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, panelDefaults);
+
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
   }
 
   initEditMode() {
@@ -68,23 +71,27 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  refreshData(datasource) {
-    return this.issueQueries(datasource)
-      .then(this.dataHandler.bind(this))
-      .catch(err => {
-        this.series = [];
-        this.render();
-        throw err;
-      });
-  }
-
   loadSnapshot(snapshotData) {
     // give element time to get attached and get dimensions
     this.$timeout(() => this.dataHandler(snapshotData), 50);
   }
 
-  dataHandler(results) {
-    this.series = _.map(results.data, this.seriesHandler.bind(this));
+  onDataError(err) {
+    this.onDataReceived({data: []});
+  }
+
+  onDataReceived(dataList) {
+    this.series = dataList.map(this.seriesHandler.bind(this));
+
+    var data: any = {};
+    this.setValues(data);
+
+    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
+      return Number(strVale.trim());
+    });
+
+    data.colorMap = this.panel.colors;
+    this.data = data;
     this.render();
   }
 
@@ -153,20 +160,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
     return result;
-  }
-
-  render() {
-    var data: any = {};
-    this.setValues(data);
-
-    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
-      return Number(strVale.trim());
-    });
-
-    data.colorMap = this.panel.colors;
-
-    this.data = data;
-    this.broadcastRender();
   }
 
   setValues(data) {
