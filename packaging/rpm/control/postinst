@@ -37,9 +37,9 @@ if [ $1 -eq 1 ] ; then
     -c "grafana user" grafana
 	fi
 
- 	# Set user permissions on /var/log/grafana, /var/lib/grafana
-	mkdir -p /var/log/grafana /var/lib/grafana
-	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
+ 	# Set user permissions on /var/log/grafana, /var/lib/grafana, /var/run/grafana
+	mkdir -p /var/log/grafana /var/lib/grafana /var/run/grafana
+	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana /var/run/grafana
 	chmod 755 /var/log/grafana /var/lib/grafana
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
