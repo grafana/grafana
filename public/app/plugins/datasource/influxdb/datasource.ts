@@ -109,7 +109,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       return $q.reject(err);
     }
 
-    return this._seriesQuery(interpolated).then(function (results) {
+    return this._seriesQuery(interpolated).then((results) => {
       if (!results || results.results.length === 0) { return []; }
 
       var influxResults = results.results[0];
@@ -118,14 +118,20 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       }
 
       var series = influxResults.series[0];
-      return _.map(series.values, function(value) {
+      return _.map(series.values, (value) => {
         if (_.isArray(value)) {
-          return { text: value[0] };
+          return { text: this.getValueBasedOnInfluxVersion(value) };
         } else {
           return { text: value };
         }
       });
     });
+  };
+
+  this.getValueBasedOnInfluxVersion = function(value) {
+    //influxdb 0.10.0 sends the value in first position
+    //influxdb 0.11.0 sends the value in second position
+    return value[1] || value[0];
   };
 
   this._seriesQuery = function(query) {
