@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -31,16 +32,17 @@ type cwRequest struct {
 
 func init() {
 	actionHandlers = map[string]actionHandler{
-		"GetMetricStatistics":     handleGetMetricStatistics,
-		"ListMetrics":             handleListMetrics,
-		"DescribeAlarms":          handleDescribeAlarms,
-		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
-		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
-		"DescribeInstances":       handleDescribeInstances,
-		"__GetRegions":            handleGetRegions,
-		"__GetNamespaces":         handleGetNamespaces,
-		"__GetMetrics":            handleGetMetrics,
-		"__GetDimensions":         handleGetDimensions,
+		"GetMetricStatistics":       handleGetMetricStatistics,
+		"ListMetrics":               handleListMetrics,
+		"DescribeAlarms":            handleDescribeAlarms,
+		"DescribeAlarmsForMetric":   handleDescribeAlarmsForMetric,
+		"DescribeAlarmHistory":      handleDescribeAlarmHistory,
+		"DescribeInstances":         handleDescribeInstances,
+		"ElbDescribeInstanceHealth": handleElbDescribeInstanceHealth,
+		"__GetRegions":              handleGetRegions,
+		"__GetNamespaces":           handleGetNamespaces,
+		"__GetMetrics":              handleGetMetrics,
+		"__GetDimensions":           handleGetDimensions,
 	}
 }
 
@@ -295,6 +297,33 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 			}
 			return !lastPage
 		})
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func handleElbDescribeInstanceHealth(req *cwRequest, c *middleware.Context) {
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.DataSource.Database),
+	}
+
+	svc := elb.New(session.New(cfg), cfg)
+
+	reqParam := &struct {
+		Parameters struct {
+			LoadBalancerName *string `json:"loadBalancerName"`
+		} `json:"parameters"`
+	}{}
+	json.Unmarshal(req.Body, reqParam)
+
+	params := &elb.DescribeInstanceHealthInput{}
+	params.LoadBalancerName = reqParam.Parameters.LoadBalancerName
+
+	resp, err := svc.DescribeInstanceHealth(params)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
