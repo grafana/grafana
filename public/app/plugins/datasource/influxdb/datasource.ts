@@ -6,6 +6,7 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
+import ResponseParser from './response_parser';
 
 /** @ngInject */
 export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -22,6 +23,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
   this.interval = (instanceSettings.jsonData || {}).timeInterval;
   this.supportAnnotations = true;
   this.supportMetrics = true;
+  this.responseParser = new ResponseParser();
 
   this.query = function(options) {
     var timeFilter = getTimeFilter(options);
@@ -101,7 +103,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     });
   };
 
-  this.metricFindQuery = function (query) {
+  this.metricFindQuery = function (query, queryType) {
     var interpolated;
     try {
       interpolated = templateSrv.replace(query, null, 'regex');
@@ -109,23 +111,8 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       return $q.reject(err);
     }
 
-    return this._seriesQuery(interpolated).then(function (results) {
-      if (!results || results.results.length === 0) { return []; }
-
-      var influxResults = results.results[0];
-      if (!influxResults.series) {
-        return [];
-      }
-
-      var series = influxResults.series[0];
-      return _.map(series.values, function(value) {
-        if (_.isArray(value)) {
-          return { text: value[0] };
-        } else {
-          return { text: value };
-        }
-      });
-    });
+    return this._seriesQuery(interpolated)
+      .then(_.curry(this.responseParser.parse)(queryType));
   };
 
   this._seriesQuery = function(query) {
