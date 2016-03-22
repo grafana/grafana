@@ -13,7 +13,7 @@
     "angular2": "2.0.0-beta.0",
     "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
-    "es6-shim": "^0.33.3",
+    "es6-shim": "^0.35.0",
     "expect.js": "~0.2.0",
     "glob": "~3.2.7",
     "grunt": "~0.4.0",
