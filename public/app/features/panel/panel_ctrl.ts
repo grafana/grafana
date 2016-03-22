@@ -9,6 +9,8 @@ const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
 const PANEL_PADDING = 5;
 
+import {Emitter} from 'app/core/core';
+
 export class PanelCtrl {
   panel: any;
   row: any;
@@ -28,12 +30,14 @@ export class PanelCtrl {
   editMode: any;
   height: any;
   containerHeight: any;
+  events: Emitter;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
+    this.events = new Emitter();
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -56,7 +60,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    return;
+    this.render();
   }
 
   publishAppEvent(evtName, evt) {
@@ -138,7 +142,7 @@ export class PanelCtrl {
     this.height = this.containerHeight - (PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
-  broadcastRender(arg1?, arg2?) {
+  render(arg1?, arg2?) {
     this.$scope.$broadcast('render', arg1, arg2);
   }
 
@@ -157,7 +161,7 @@ export class PanelCtrl {
   updateColumnSpan(span) {
     this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
     this.$timeout(() => {
-      this.broadcastRender();
+      this.render();
     });
   }
 

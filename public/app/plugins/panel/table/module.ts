@@ -80,9 +80,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       });
     }
 
-    return this.issueQueries(datasource)
-    .then(this.dataHandler.bind(this))
-    .catch(err => {
+    return this.issueQueries(datasource).catch(err => {
       this.render();
       throw err;
     });

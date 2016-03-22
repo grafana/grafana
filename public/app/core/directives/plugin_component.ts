@@ -146,11 +146,11 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
           };
         });
       }
-      // ConfigCtrl
+      // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         var dsMeta = scope.ctrl.datasourceMeta;
         return System.import(dsMeta.module).then(function(dsModule): any {
-          if (!dsMeta.ConfigCtrl) {
+          if (!dsModule.ConfigCtrl) {
             return {notFound: true};
           }
 

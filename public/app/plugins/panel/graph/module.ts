@@ -106,6 +106,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.legend, panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
+
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
   }
 
   initEditMode() {
@@ -138,14 +141,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  refreshData(datasource) {
+  issueQueries(datasource) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
-
-    return this.issueQueries(datasource).catch(err => {
-      this.seriesList = [];
-      this.render([]);
-      throw err;
-    });
+    return super.issueQueries(datasource);
   }
 
   zoomOut(evt) {
@@ -157,7 +155,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.dataHandler(snapshotData);
   }
 
-  dataHandler(results) {
+  onDataError(err) {
+    this.seriesList = [];
+    this.render([]);
+  }
+
+  onDataReceived(results) {
     // png renderer returns just a url
     if (_.isString(results)) {
       this.render(results);
@@ -178,7 +181,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.loading = false;
       this.render(this.seriesList);
     });
-  };
+  }
 
   seriesHandler(seriesData, index) {
     var datapoints = seriesData.datapoints;
@@ -206,10 +209,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     series.applySeriesOverrides(this.panel.seriesOverrides);
     return series;
-  }
-
-  render(data?: any) {
-    this.broadcastRender(data);
   }
 
   changeSeriesColor(series, color) {

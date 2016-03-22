@@ -9,6 +9,8 @@ import {PanelCtrl} from './panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
+import {Subject} from 'vendor/npm/rxjs/Subject';
+
 class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
@@ -26,7 +28,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   timeInfo: any;
   skipDataOnInit: boolean;
   datasources: any[];
-  dataSubject: any;
+  dataStream: any;
+  dataSubscription: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -50,11 +53,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
-  refreshData(data) {
-    // null op
-    return this.$q.when(data);
-  }
-
   loadSnapshot(data) {
     // null op
     return data;
@@ -73,21 +71,27 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
+    // // ignore if we have data stream
+    if (this.dataStream) {
+      return;
+    }
+
     // clear loading/error state
     delete this.error;
     this.loading = true;
 
     // load datasource service
-    this.datasourceSrv.get(this.panel.datasource).then(datasource => {
-      this.datasource = datasource;
-      return this.refreshData(this.datasource);
-    }).then(() => {
+    this.datasourceSrv.get(this.panel.datasource)
+    .then(this.issueQueries.bind(this))
+    .then(() => {
       this.loading = false;
     }).catch(err => {
       console.log('Panel data error:', err);
       this.loading = false;
       this.error = err.message || "Timeseries data request error";
       this.inspector = {error: err};
+
+      this.events.emit('data-error', err);
     });
   }
 
@@ -167,10 +171,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
-    if (this.dataSubject) {
-      return this.$q.when([]);
-    }
-
     var metricsQuery = {
       panelId: this.panel.id,
       range: this.range,
@@ -190,15 +190,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
         // check for if data source returns subject
         if (results && results.subscribe) {
-          this.handleDataSubject(results);
-          return {data: []};
+          this.handleDataStream(results);
+          return;
         }
 
         if (this.dashboard.snapshot) {
           this.panel.snapshotData = results;
         }
 
-        return this.dataHandler(results);
+        return this.events.emit('data-received', results);
       });
     } catch (err) {
       return this.$q.reject(err);
@@ -209,22 +209,24 @@ class MetricsPanelCtrl extends PanelCtrl {
     return data;
   }
 
-  handleDataSubject(subject) {
+  handleDataStream(stream) {
     // if we already have a connection
-    if (this.dataSubject) {
+    if (this.dataStream) {
+      console.log('two stream observables!');
       return;
     }
 
-    this.dataSubject = subject;
-    this.dataSubject.subscribe({
+    this.dataStream = stream;
+    this.dataSubscription = stream.subscribe({
       next: (data) => {
         console.log('dataSubject next!');
         if (data.range) {
           this.range = data.range;
         }
-        this.dataHandler(data);
+        this.events.emit('data-received', data);
       },
       error: (error) => {
+        this.events.emit('data-error', error);
         console.log('panel: observer got error');
       },
       complete: () => {
