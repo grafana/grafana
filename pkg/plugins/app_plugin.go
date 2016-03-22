@@ -6,6 +6,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AppPluginCss struct {
@@ -75,10 +76,18 @@ func (app *AppPlugin) initApp() {
 		}
 	}
 
+	app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/edit"
+
 	// slugify pages
-	for _, page := range app.Includes {
-		if page.Slug == "" {
-			page.Slug = slug.Make(page.Name)
+	for _, include := range app.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
+		}
+		if include.Type == "page" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/page/" + include.Slug
+		}
+		if include.Type == "dashboard" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
 		}
 	}
 }

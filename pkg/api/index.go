@@ -90,7 +90,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
 				Text: plugin.Name,
-				Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit",
+				Url:  plugin.DefaultNavUrl,
 				Img:  plugin.Info.Logos.Small,
 			}
 
@@ -100,9 +100,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
 						Text: include.Name,
 					}
-					if include.DefaultNav {
-						appLink.Url = link.Url
-					}
 					appLink.Children = append(appLink.Children, link)
 				}
 				if include.Type == "dashboard" && include.AddToNav {
@@ -110,16 +107,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 						Url:  setting.AppSubUrl + "/dashboard/db/" + include.Slug,
 						Text: include.Name,
 					}
-					if include.DefaultNav {
-						appLink.Url = link.Url
-					}
 					appLink.Children = append(appLink.Children, link)
 				}
 			}
 
 			if c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}
 
 			data.MainNavLinks = append(data.MainNavLinks, appLink)
@@ -132,10 +126,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Icon: "fa fa-fw fa-cogs",
 			Url:  setting.AppSubUrl + "/admin",
 			Children: []*dtos.NavLink{
-				{Text: "Global Users", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/users"},
-				{Text: "Global Orgs", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/orgs"},
-				{Text: "Server Settings", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/settings"},
-				{Text: "Server Stats", Icon: "fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/stats"},
+				{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
+				{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+				{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
+				{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
 			},
 		})
 	}

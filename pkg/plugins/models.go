@@ -42,6 +42,7 @@ type PluginBase struct {
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+	DefaultNavUrl   string `json:"-"`
 
 	// cache for readme file contents
 	Readme []byte `json:"-"`
@@ -80,7 +81,7 @@ type PluginInclude struct {
 	Type       string          `json:"type"`
 	Component  string          `json:"component"`
 	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"AddToNav"`
+	AddToNav   bool            `json:"addToNav"`
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
 

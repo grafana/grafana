@@ -15,6 +15,7 @@ export class AppPageCtrl {
     this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(app => {
       this.appModel = app;
       this.page = _.findWhere(app.includes, {slug: this.$routeParams.slug});
+
       if (!this.page) {
         this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
       }
