@@ -121,7 +121,7 @@ module.directive('panelResizer', function($rootScope) {
         }
 
         scope.$apply(function() {
-          scope.$broadcast('render');
+          ctrl.broadcastRender();
         });
       }
 
