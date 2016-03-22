@@ -14,7 +14,7 @@ CONF_DIR=/etc/grafana
 
 CONF_FILE=/etc/grafana/grafana.ini
 
-PID_FILE=/var/run/grafana.pid
+PID_FILE=/var/run/grafana/grafana.pid
 
 RESTART_ON_UPGRADE=false
 
