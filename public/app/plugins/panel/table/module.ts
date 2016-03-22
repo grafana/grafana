@@ -57,6 +57,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     _.defaults(this.panel, panelDefaults);
+
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
   }
 
   initEditMode() {
@@ -70,7 +73,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     return menu;
   }
 
-  refreshData(datasource) {
+  issueQueries(datasource) {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
@@ -80,36 +83,19 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       });
     }
 
-    return this.issueQueries(datasource).catch(err => {
-      this.render();
-      throw err;
-    });
+    return super.issueQueries(datasource);
   }
 
-  toggleColumnSort(col, colIndex) {
-    if (this.panel.sort.col === colIndex) {
-      if (this.panel.sort.desc) {
-        this.panel.sort.desc = false;
-      } else {
-        this.panel.sort.col = null;
-      }
-    } else {
-      this.panel.sort.col = colIndex;
-      this.panel.sort.desc = true;
-    }
-
+  onDataError(err) {
+    this.dataRaw = [];
     this.render();
   }
 
-  dataHandler(results) {
-    this.dataRaw = results.data;
+  onDataReceived(dataList) {
+    this.dataRaw = dataList;
     this.pageIndex = 0;
-    this.render();
-  }
 
-  render() {
-    // automatically correct transform mode
-    // based on data
+    // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
       if (this.dataRaw[0].type === 'table') {
         this.panel.transform = 'table';
@@ -126,7 +112,22 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.broadcastRender(this.table);
+    this.render(this.table);
+  }
+
+  toggleColumnSort(col, colIndex) {
+    if (this.panel.sort.col === colIndex) {
+      if (this.panel.sort.desc) {
+        this.panel.sort.desc = false;
+      } else {
+        this.panel.sort.col = null;
+      }
+    } else {
+      this.panel.sort.col = colIndex;
+      this.panel.sort.desc = true;
+    }
+
+    this.render();
   }
 
   exportCsv() {
