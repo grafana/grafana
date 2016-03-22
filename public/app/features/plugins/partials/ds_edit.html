@@ -4,8 +4,8 @@
 <div class="page-container">
 
   <div class="page-header">
-		<h1 ng-show="isNew">Add data source</h1>
-		<h1 ng-show="!isNew">Edit data source</h1>
+		<h1 ng-show="ctrl.isNew">Add data source</h1>
+		<h1 ng-hide="ctrl.isNew">Edit data source</h1>
 
 		<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
 			<ul class="gf-tabs">

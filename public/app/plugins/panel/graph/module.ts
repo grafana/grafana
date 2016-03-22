@@ -4,6 +4,7 @@ import './graph';
 import './legend';
 import './series_overrides_ctrl';
 
+import template from './template';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
@@ -83,7 +84,7 @@ var panelDefaults = {
 };
 
 class GraphCtrl extends MetricsPanelCtrl {
-  static templateUrl = 'module.html';
+  static template = template;
 
   hiddenSeries: any = {};
   seriesList: any = [];

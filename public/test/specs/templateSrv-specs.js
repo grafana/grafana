@@ -135,6 +135,11 @@ define([
         expect(result).to.be('test|test2');
       });
 
+      it('slash should be properly escaped in regex format', function() {
+         var result = _templateSrv.formatValue('Gi3/14', 'regex');
+         expect(result).to.be('Gi3\\/14');
+      });
+
     });
 
     describe('can check if variable exists', function() {
