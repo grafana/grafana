@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"gopkg.in/ldap.v2"
+	"github.com/go-ldap/ldap"
 )
 
-// ExampleConn_Bind demonstrates how to bind a connection to an ldap user
+// ExampleConn_Bind demonstrats how to bind a connection to an ldap user
 // allowing access to restricted attrabutes that user has access to
 func ExampleConn_Bind() {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", "ldap.example.com", 389))
