@@ -31,6 +31,7 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 			Email:           cmd.Email,
 			Name:            cmd.Name,
 			OrgId:           cmd.OrgId,
+			OrgName:         cmd.OrgName,
 			Code:            cmd.Code,
 			Role:            cmd.Role,
 			Status:          cmd.Status,
@@ -53,6 +54,7 @@ func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
 	rawSql := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
+									tu.org_name       as org_name,
 	                tu.email          as email,
 									tu.name           as name,
 									tu.role           as role,
@@ -91,6 +93,7 @@ func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 	var rawSql = `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
+									tu.org_name       as org_name,
 	                tu.email          as email,
 									tu.name           as name,
 									tu.role           as role,

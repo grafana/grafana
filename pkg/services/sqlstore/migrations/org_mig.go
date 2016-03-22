@@ -20,7 +20,7 @@ func addOrgMigrations(mg *Migrator) {
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"name"}, Type: UniqueIndex},
+			{Cols: []string{"name"}, Type: IndexType},
 		},
 	}
 

@@ -19,15 +19,15 @@ type User struct {
 	Password      string
 	Salt          string
 	Rands         string
-	Company       string
+	OrgName       string
 	EmailVerified bool
 	Theme         string
 
-	IsAdmin bool
-	OrgId   int64
+	IsAdmin       bool
+	OrgId         int64
 
-	Created time.Time
-	Updated time.Time
+	Created       time.Time
+	Updated       time.Time
 }
 
 func (u *User) NameOrFallback() string {
@@ -47,7 +47,6 @@ type CreateUserCommand struct {
 	Email         string
 	Login         string
 	Name          string
-	Company       string
 	OrgName       string
 	Password      string
 	EmailVerified bool
@@ -150,8 +149,9 @@ type UserProfileDTO struct {
 	Name           string `json:"name"`
 	Login          string `json:"login"`
 	Theme          string `json:"theme"`
-	OrgId          int64  `json:"orgId"`
-	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+	OrgId          int64  `json:"org_id"`
+	OrgName        string `json:"org_name"`
+	IsGrafanaAdmin bool   `json:"is_grafana_admin"`
 }
 
 type UserSearchHitDTO struct {
@@ -159,5 +159,5 @@ type UserSearchHitDTO struct {
 	Name    string `json:"name"`
 	Login   string `json:"login"`
 	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
+	IsAdmin bool   `json:"is_admin"`
 }

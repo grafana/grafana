@@ -8,6 +8,7 @@ func addTempUserMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "org_name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
 			{Name: "email", Type: DB_NVarchar, Length: 255},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
