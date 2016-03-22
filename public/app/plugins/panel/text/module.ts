@@ -12,7 +12,7 @@ var panelDefaults = {
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
 
-  converter: any;
+  remarkable: any;
   content: string;
 
   /** @ngInject */
@@ -54,21 +54,16 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   renderMarkdown(content) {
-    var text = content
-    .replace(/&/g, '&amp;')
-    .replace(/>/g, '&gt;')
-    .replace(/</g, '&lt;');
-
-    if (this.converter) {
-      this.updateContent(this.converter.makeHtml(text));
-    } else {
+    if (!this.remarkable) {
       return System.import('remarkable').then(Remarkable => {
-        var md = new Remarkable();
+        this.remarkable = new Remarkable();
         this.$scope.$apply(() => {
-          this.updateContent(md.render(text));
+          this.updateContent(this.remarkable.render(content));
         });
       });
     }
+
+    this.updateContent(this.remarkable.render(content));
   }
 
   updateContent(html) {

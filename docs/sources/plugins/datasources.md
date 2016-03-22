@@ -4,7 +4,7 @@ page_description: Datasource plugins for Grafana
 page_keywords: grafana, plugins, documentation
 ---
 
- > Our goal is not to have a very extensive documentation but rather have actual code that people can look at. An example implementation of a datasource can be found in the grafana repo under /examples/datasource-plugin-genericdatasource
+ > Our goal is not to have a very extensive documentation but rather have actual code that people can look at. An example implementation of a datasource can be found in this [example datasource repo](https://github.com/grafana/simple-json-datasource)
 
 # Datasources
 
