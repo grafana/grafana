@@ -20,10 +20,10 @@
 					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
 				</li>
 				<li class="tight-form-item">
-					Role
+					Type
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+					<select class="input-small tight-form-input" ng-model="token.client" ng-options="c for c in clientTypes"></select>
 				</li>
 				<li style="float: right">
 					<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
@@ -35,13 +35,13 @@
 		<table class="grafana-options-table" style="width: 250px">
 			<tr>
 				<th style="text-align: left">Name</th>
-				<th style="text-align: left">Role</th>
+				<th style="text-align: left">Type</th>
 				<th style="text-align: left">Token</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="t in tokens">
 				<td>{{t.name}}</td>
-				<td>{{t.role}}</td>
+				<td>{{t.client}}</td>
 				<td>{{t.token}}</td>
 				<td style="width: 1%">
 					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">

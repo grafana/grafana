@@ -27,6 +27,17 @@ func (r RoleType) IsValid() bool {
 	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR || r == ROLE_AGENT
 }
 
+type ClientType string
+
+const (
+	CLIENT_APPLICATION ClientType = "Application"
+	CLIENT_AGENT       ClientType = "Agent"
+)
+
+func (c ClientType) IsValid() bool {
+	return c == CLIENT_APPLICATION || c == CLIENT_AGENT
+}
+
 type OrgUser struct {
 	Id      int64
 	OrgId   int64
