@@ -1,4 +1,4 @@
-import {InfluxDatasource} from './datasource';
+import InfluxDatasource from './datasource';
 import {InfluxQueryCtrl} from './query_ctrl';
 
 class InfluxConfigCtrl {
