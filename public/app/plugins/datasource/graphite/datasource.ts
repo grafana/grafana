@@ -27,7 +27,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
     if (params.length === 0) {
-      return $q.when([]);
+      return $q.when({data: []});
     }
 
     if (options.format === 'png') {
