@@ -1,3 +1,4 @@
+///<reference path="../../headers/common.d.ts" />
 
 import {Subject} from 'vendor/npm/rxjs/Subject';
 

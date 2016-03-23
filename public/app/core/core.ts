@@ -36,6 +36,8 @@ import 'app/core/services/all';
 import 'app/core/routes/routes';
 import './filters/filters';
 import coreModule from './core_module';
+import appEvents from './app_events';
+
 
 export {
   arrayJoin,
@@ -48,5 +50,6 @@ export {
   liveSrv,
   layoutSelector,
   infoPopover,
-  Emitter
+  Emitter,
+  appEvents,
 };
