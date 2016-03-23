@@ -112,7 +112,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     }
 
     return this._seriesQuery(interpolated)
-      .then(_.curry(this.responseParser.parse)(queryType));
+      .then(_.curry(this.responseParser.parse)(query));
   };
 
   this._seriesQuery = function(query) {

@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 export default class ResponseParser {
 
-  parse(queryType, results) {
+  parse(query, results) {
     if (!results || results.results.length === 0) { return []; }
 
     var influxResults = results.results[0];
@@ -13,9 +13,9 @@ export default class ResponseParser {
     }
 
     var series = influxResults.series[0];
-    return _.map(series.values, function(value) {
+    return _.map(series.values, (value) => {
       if (_.isArray(value)) {
-        if (queryType === 'SHOW_TAGS') {
+        if (query.indexOf('SHOW TAG VALUES') >= 0) {
           return { text: (value[1] || value[0]) };
         } else {
           return { text: value[0] };
