@@ -4,7 +4,56 @@ import ResponseParser from '../response_parser';
 
 describe("influxdb response parser", () => {
   this.parser = new ResponseParser();
-  describe("SHOW_TAGS response", () => {
+  describe("SHOW TAG response", () => {
+    var query = 'SHOW TAG KEYS FROM "cpu"';
+    describe("response from 0.10.0", () => {
+      var response = {
+        "results": [
+          {
+            "series": [
+              {
+                "name": "cpu",
+                "columns": ["tagKey"],
+                "values": [ ["datacenter"], ["hostname"], ["source"] ]
+              }
+            ]
+          }
+        ]
+      };
+
+      var result = this.parser.parse(query, response);
+
+      it("expects three results", () => {
+        expect(_.size(result)).to.be(3);
+      });
+    });
+
+    describe("response from 0.11.0", () => {
+      var response = {
+        "results": [
+          {
+            "series": [
+              {
+                "name": "cpu",
+                "columns": ["tagKey"],
+                "values": [ ["datacenter"], ["hostname"], ["source"] ]
+              }
+            ]
+          }
+        ]
+      };
+
+      var result = this.parser.parse(query, response);
+
+      it("expects three results", () => {
+        expect(_.size(result)).to.be(3);
+      });
+    });
+  });
+
+  describe("SHOW TAG VALUES response", () => {
+    var query = 'SHOW TAG VALUES FROM "cpu" WITH KEY = "hostname"';
+
     describe("response from 0.10.0", () => {
       var response = {
         "results": [
@@ -20,7 +69,7 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse('SHOW_TAGS', response);
+      var result = this.parser.parse(query, response);
 
       it("should get two responses", () => {
         expect(_.size(result)).to.be(2);
@@ -44,7 +93,7 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse('SHOW_TAGS', response);
+      var result = this.parser.parse(query, response);
 
       it("should get two responses", () => {
         expect(_.size(result)).to.be(2);
@@ -52,9 +101,14 @@ describe("influxdb response parser", () => {
         expect(result[1].text).to.be('api');
       });
     });
+
+
+
+
   });
 
-  describe("SHOW_FIELDS response", () => {
+  describe("SHOW FIELD response", () => {
+    var query = 'SHOW FIELD KEYS FROM "cpu"';
     describe("response from 0.10.0", () => {
       var response = {
         "results": [
@@ -72,7 +126,7 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse('SHOW_FIELDS', response);
+      var result = this.parser.parse(query, response);
       it("should get two responses", () => {
         expect(_.size(result)).to.be(6);
       });
@@ -93,7 +147,7 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse('SHOW_FIELDS', response);
+      var result = this.parser.parse(query, response);
 
       it("should get two responses", () => {
         expect(_.size(result)).to.be(1);
