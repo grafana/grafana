@@ -16,23 +16,27 @@ export class AppPageCtrl {
     this.pluginId = $routeParams.pluginId;
 
     if (pluginInfoCache[this.pluginId]) {
-      this.appModel = pluginInfoCache[this.pluginId];
+      this.initPage(pluginInfoCache[this.pluginId]);
     } else {
       this.loadPluginInfo();
     }
   }
 
+  initPage(app) {
+    this.appModel = app;
+    this.page = _.findWhere(app.includes, {slug: this.$routeParams.slug});
+    this.appLogoUrl = app.info.logos.small;
+
+    pluginInfoCache[this.pluginId] = app;
+
+    if (!this.page) {
+      this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
+    }
+  }
+
   loadPluginInfo() {
     this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(app => {
-      this.appModel = app;
-      this.page = _.findWhere(app.includes, {slug: this.$routeParams.slug});
-      this.appLogoUrl = app.info.logos.small;
-
-      pluginInfoCache[this.pluginId] = app;
-
-      if (!this.page) {
-        this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
-      }
+      this.initPage(app);
     });
   }
 }
