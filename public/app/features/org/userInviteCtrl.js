@@ -14,7 +14,9 @@ function (angular, _) {
     ];
 
     $scope.options = {skipEmails: false};
-    $scope.init = function() { };
+
+    $scope.init = function() {
+    };
 
     $scope.addInvite = function() {
       $scope.invites.push({name: '', email: '', role: 'Editor'});
