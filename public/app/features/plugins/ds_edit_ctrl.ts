@@ -2,8 +2,9 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import coreModule from 'app/core/core_module';
+
 import config from 'app/core/config';
+import {coreModule, appEvents} from 'app/core/core';
 
 var datasourceTypes = [];
 
@@ -142,7 +143,7 @@ export class DataSourceEditCtrl {
     }
 
     delete(s) {
-      this.$scope.appEvent('confirm-modal', {
+      appEvents.emit('confirm-modal', {
         title: 'Delete',
         text: 'Are you sure you want to delete this datasource?',
         yesText: "Delete",
