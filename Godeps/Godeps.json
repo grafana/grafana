@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5.1",
+	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -208,6 +209,10 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.4-44-gf561133",
 			"Rev": "f56113384f2c63dfe4cd8e768e349f1c35122b58"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "c45a635370221f34fea2d5163fd156fcb4e38e8a"
 		},
 		{
 			"ImportPath": "github.com/gosimple/slug",
