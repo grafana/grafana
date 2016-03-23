@@ -8,35 +8,49 @@ import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
 
-/** @ngInject */
-export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) {
-  this.type = 'influxdb';
-  this.urls = _.map(instanceSettings.url.split(','), function(url) {
-    return url.trim();
-  });
+export default class InfluxDatasource {
+  type: string;
+  urls: any;
+  username: string;
+  password: string;
+  name: string;
+  database: any;
+  basicAuth: any;
+  interval: any;
+  supportAnnotations: boolean;
+  supportMetrics: boolean;
+  responseParser: any;
 
-  this.username = instanceSettings.username;
-  this.password = instanceSettings.password;
-  this.name = instanceSettings.name;
-  this.database = instanceSettings.database;
-  this.basicAuth = instanceSettings.basicAuth;
-  this.interval = (instanceSettings.jsonData || {}).timeInterval;
-  this.supportAnnotations = true;
-  this.supportMetrics = true;
-  this.responseParser = new ResponseParser();
+  /** @ngInject */
+  constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
+    this.type = 'influxdb';
+    this.urls = _.map(instanceSettings.url.split(','), function(url) {
+      return url.trim();
+    });
 
-  this.query = function(options) {
-    var timeFilter = getTimeFilter(options);
+    this.username = instanceSettings.username;
+    this.password = instanceSettings.password;
+    this.name = instanceSettings.name;
+    this.database = instanceSettings.database;
+    this.basicAuth = instanceSettings.basicAuth;
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.supportAnnotations = true;
+    this.supportMetrics = true;
+    this.responseParser = new ResponseParser();
+  }
+
+  query(options) {
+    var timeFilter = this.getTimeFilter(options);
     var queryTargets = [];
     var i, y;
 
-    var allQueries = _.map(options.targets, function(target) {
+    var allQueries = _.map(options.targets, (target) => {
       if (target.hide) { return []; }
 
       queryTargets.push(target);
 
       // build query
-      var queryModel = new InfluxQuery(target, templateSrv, options.scopedVars);
+      var queryModel = new InfluxQuery(target, this.templateSrv, options.scopedVars);
       var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
@@ -47,9 +61,9 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
 
     // replace templated variables
-    allQueries = templateSrv.replace(allQueries, options.scopedVars);
+    allQueries = this.templateSrv.replace(allQueries, options.scopedVars);
 
-    return this._seriesQuery(allQueries).then(function(data): any {
+    return this._seriesQuery(allQueries).then((data): any => {
       if (!data || !data.results) {
         return [];
       }
@@ -62,7 +76,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
         var target = queryTargets[i];
         var alias = target.alias;
         if (alias) {
-          alias = templateSrv.replace(target.alias, options.scopedVars);
+          alias = this.templateSrv.replace(target.alias, options.scopedVars);
         }
 
         var influxSeries = new InfluxSeries({ series: data.results[i].series, alias: alias });
@@ -86,16 +100,16 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     });
   };
 
-  this.annotationQuery = function(options) {
+  annotationQuery(options) {
     if (!options.annotation.query) {
-      return $q.reject({message: 'Query missing in annotation definition'});
+      return this.$q.reject({message: 'Query missing in annotation definition'});
     }
 
-    var timeFilter = getTimeFilter({rangeRaw: options.rangeRaw});
+    var timeFilter = this.getTimeFilter({rangeRaw: options.rangeRaw});
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
-    query = templateSrv.replace(query);
+    query = this.templateSrv.replace(query);
 
-    return this._seriesQuery(query).then(function(data) {
+    return this._seriesQuery(query).then(data => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }
@@ -103,29 +117,29 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     });
   };
 
-  this.metricFindQuery = (query) => {
+  metricFindQuery(query) {
     var interpolated;
     try {
-      interpolated = templateSrv.replace(query, null, 'regex');
+      interpolated = this.templateSrv.replace(query, null, 'regex');
     } catch (err) {
-      return $q.reject(err);
+      return this.$q.reject(err);
     }
 
     return this._seriesQuery(interpolated)
       .then(_.curry(this.responseParser.parse)(query));
   };
 
-  this._seriesQuery = function(query) {
+  _seriesQuery(query) {
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
-  };
+  }
 
-  this.testDatasource = function() {
-    return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(function () {
+  testDatasource() {
+    return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(() => {
       return { status: "success", message: "Data source is working", title: "Success" };
     });
-  };
+  }
 
-  this._influxRequest = function(method, url, data) {
+  _influxRequest(method, url, data) {
     var self = this;
 
     var currentUrl = self.urls.shift();
@@ -159,7 +173,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
       options.headers.Authorization = self.basicAuth;
     }
 
-    return backendSrv.datasourceRequest(options).then(function(result) {
+    return this.backendSrv.datasourceRequest(options).then(result => {
       return result.data;
     }, function(err) {
       if (err.status !== 0 || err.status >= 300) {
@@ -172,9 +186,9 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     });
   };
 
-  function getTimeFilter(options) {
-    var from = getInfluxTime(options.rangeRaw.from, false);
-    var until = getInfluxTime(options.rangeRaw.to, true);
+  getTimeFilter(options) {
+    var from = this.getInfluxTime(options.rangeRaw.from, false);
+    var until = this.getInfluxTime(options.rangeRaw.to, true);
     var fromIsAbsolute = from[from.length-1] === 's';
 
     if (until === 'now()' && !fromIsAbsolute) {
@@ -184,7 +198,7 @@ export function InfluxDatasource(instanceSettings, $q, backendSrv, templateSrv) 
     return 'time > ' + from + ' and time < ' + until;
   }
 
-  function getInfluxTime(date, roundUp) {
+  getInfluxTime(date, roundUp) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
