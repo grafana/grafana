@@ -62,7 +62,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       this.updateTimeRange();
-      this.events.emit('data-snapshot-load', this.panel.snapshotData);
+      var data = this.panel.snapshotData;
+      // backward compatability
+      if (!_.isArray(data)) {
+        data = data;
+      }
+
+      this.events.emit('data-snapshot-load', data);
       return;
     }
 
@@ -191,7 +197,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.dashboard.snapshot) {
-      this.panel.snapshotData = result;
+      this.panel.snapshotData = result.data;
     }
 
     return this.events.emit('data-received', result.data);

@@ -1,10 +1,9 @@
 <section class="grafana-metric-options gf-form-group">
 	<div class="gf-form-inline">
-		<div class="gf-form">
-			<span class="gf-form-label">
-				<i class="fa fa-wrench"></i>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-8">
+				Cache timeout
 			</span>
-			<span class="gf-form-label width-8">Cache timeout</span>
 			<input type="text"
 				class="gf-form-input"
 				ng-model="ctrl.panelCtrl.panel.cacheTimeout"
@@ -14,8 +13,8 @@
 				placeholder="60">
 			</input>
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Max data points</span>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label">Max data points</span>
 			<input type="text"
 				class="gf-form-input"
 				ng-model="ctrl.panelCtrl.panel.maxDataPoints"
@@ -32,25 +31,25 @@
 			<span class="gf-form-label width-12">
 				<i class="fa fa-info-circle"></i>
 				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					shorter legend names
+					Shorter legend names
 				</a>
 			</span>
 			<span class="gf-form-label width-12">
 				<i class="fa fa-info-circle"></i>
 				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					series as parameters
+					Series as parameters
 				</a>
 			</span>
 			<span class="gf-form-label width-7">
 				<i class="fa fa-info-circle"></i>
 				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking
+					Stacking
 				</a>
 			</span>
 			<span class="gf-form-label width-8">
 				<i class="fa fa-info-circle"></i>
 				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					templating
+					Templating
 				</a>
 			</span>
 			<span class="gf-form-label width-10">
