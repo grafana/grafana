@@ -61,17 +61,16 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
   }
 
-  getExtendedMenu() {
-    var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
-    return menu;
+  onInitPanelActions(actions) {
+    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
   }
 
   issueQueries(datasource) {
@@ -211,7 +210,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       elem.off('click', '.table-panel-page-link');
     });
 
-    scope.$on('render', function(event, renderData) {
+    ctrl.events.on('render', function(renderData) {
       data = renderData || data;
       if (data) {
         renderPanel();

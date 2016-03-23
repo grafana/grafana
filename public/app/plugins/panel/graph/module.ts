@@ -110,12 +110,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
-
-    this.icon = "fa fa-bar-chart";
+  onInitEditMode() {
     this.addEditorTab('Axes & Grid', 'public/app/plugins/panel/graph/axisEditor.html', 2);
     this.addEditorTab('Display Styles', 'public/app/plugins/panel/graph/styleEditor.html', 3);
 
@@ -129,12 +128,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
   }
 
-  getExtendedMenu() {
-    var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
-    menu.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
-    menu.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
-    return menu;
+  onInitPanelActions(actions) {
+    actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
+    actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
+    actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
   }
 
   setUnitFormat(axis, subItem) {

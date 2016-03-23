@@ -18,7 +18,6 @@ export class PanelCtrl {
   editorTabIndex: number;
   pluginName: string;
   pluginId: string;
-  icon: string;
   editorTabs: any;
   $scope: any;
   $injector: any;
@@ -60,7 +59,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.render();
+    this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -89,6 +88,7 @@ export class PanelCtrl {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
     this.editModeInitiated = true;
+    this.events.emit('init-edit-mode', null);
   }
 
   addEditorTab(title, directiveFn, index?) {
@@ -118,7 +118,9 @@ export class PanelCtrl {
   }
 
   getExtendedMenu() {
-    return [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+    this.events.emit('init-panel-actions', actions);
+    return actions;
   }
 
   otherPanelInFullscreenMode() {
@@ -126,7 +128,6 @@ export class PanelCtrl {
   }
 
   calculatePanelHeight() {
-
     if (this.fullscreen) {
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.3);
@@ -142,8 +143,13 @@ export class PanelCtrl {
     this.height = this.containerHeight - (PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
-  render(arg1?, arg2?) {
-    this.$scope.$broadcast('render', arg1, arg2);
+  render(payload?) {
+    // ignore if other panel is in fullscreen mode
+    if (this.otherPanelInFullscreenMode()) {
+      return;
+    }
+
+    this.events.emit('render', payload);
   }
 
   toggleEditorHelp(index) {

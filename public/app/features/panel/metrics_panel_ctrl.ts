@@ -44,16 +44,18 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (!this.panel.targets) {
       this.panel.targets = [{}];
     }
+
+    this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
+    this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
-  refresh() {
+  private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
