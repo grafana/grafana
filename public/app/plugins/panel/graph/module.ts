@@ -87,6 +87,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   hiddenSeries: any = {};
+  highlightSeries: any = {};
   seriesList: any = [];
   logScales: any;
   unitFormats: any;
@@ -95,6 +96,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   datapointsOutside: boolean;
   datapointsWarning: boolean;
   colors: any = [];
+  timeoutLock: any;
 
   /** @ngInject */
   constructor($scope, $injector, private annotationsSrv) {
@@ -232,6 +234,31 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     this.render();
+  }
+
+  removeHighlight(serie, event) {
+    clearTimeout(this.timeoutLock);
+    if (this.highlightSeries[serie.alias] && this.highlightSeries[serie.alias].highlight) {
+      this.highlightSeries[serie.alias].highlight = false;
+      serie.lines = this.highlightSeries[serie.alias].originalSetting;
+      this.queueRender();
+    }
+  }
+
+  queueRender() {
+    this.timeoutLock = setTimeout(() => {
+      this.render();
+    }, 100);
+  }
+
+  toggleHighlightSeries(serie, event) {
+    clearTimeout(this.timeoutLock);
+    if (this.highlightSeries[serie.alias] && this.highlightSeries[serie.alias].highlight) {
+      return;
+    }
+
+    this.highlightSeries[serie.alias] = { highlight: true, originalSetting: _.clone(serie.lines) };
+    this.queueRender();
   }
 
   toggleSeriesExclusiveMode (serie) {
