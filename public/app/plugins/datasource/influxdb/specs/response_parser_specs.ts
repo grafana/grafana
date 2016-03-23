@@ -6,48 +6,24 @@ describe("influxdb response parser", () => {
   this.parser = new ResponseParser();
   describe("SHOW TAG response", () => {
     var query = 'SHOW TAG KEYS FROM "cpu"';
-    describe("response from 0.10.0", () => {
-      var response = {
-        "results": [
-          {
-            "series": [
-              {
-                "name": "cpu",
-                "columns": ["tagKey"],
-                "values": [ ["datacenter"], ["hostname"], ["source"] ]
-              }
-            ]
-          }
-        ]
-      };
+    var response = {
+      "results": [
+        {
+          "series": [
+            {
+              "name": "cpu",
+              "columns": ["tagKey"],
+              "values": [ ["datacenter"], ["hostname"], ["source"] ]
+            }
+          ]
+        }
+      ]
+    };
 
-      var result = this.parser.parse(query, response);
+    var result = this.parser.parse(query, response);
 
-      it("expects three results", () => {
-        expect(_.size(result)).to.be(3);
-      });
-    });
-
-    describe("response from 0.11.0", () => {
-      var response = {
-        "results": [
-          {
-            "series": [
-              {
-                "name": "cpu",
-                "columns": ["tagKey"],
-                "values": [ ["datacenter"], ["hostname"], ["source"] ]
-              }
-            ]
-          }
-        ]
-      };
-
-      var result = this.parser.parse(query, response);
-
-      it("expects three results", () => {
-        expect(_.size(result)).to.be(3);
-      });
+    it("expects three results", () => {
+      expect(_.size(result)).to.be(3);
     });
   });
 
