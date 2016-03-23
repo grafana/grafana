@@ -109,6 +109,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
   }
 
   initEditMode() {
@@ -150,9 +151,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.publishAppEvent('zoom-out', evt);
   }
 
-  loadSnapshot(snapshotData) {
+  onDataSnapshotLoad(snapshotData) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
-    this.dataHandler(snapshotData);
+    this.onDataReceived(snapshotData.data);
   }
 
   onDataError(err) {

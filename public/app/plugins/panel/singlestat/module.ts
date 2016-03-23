@@ -56,6 +56,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
   }
 
   initEditMode() {
@@ -71,9 +72,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  loadSnapshot(snapshotData) {
-    // give element time to get attached and get dimensions
-    this.$timeout(() => this.dataHandler(snapshotData), 50);
+  onDataSnapshotLoad(snapshotData) {
+    this.onDataReceived(snapshotData.data);
   }
 
   onDataError(err) {
@@ -284,8 +284,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       var width = elem.width() + 20;
-      var height = ctrl.height;
+      if (width < 30) {
+        // element has not gotten it's width yet
+        // delay sparkline render
+        setTimeout(addSparkline, 30);
+        return;
+      }
 
+      var height = ctrl.height;
       var plotCanvas = $('<div></div>');
       var plotCss: any = {};
       plotCss.position = 'absolute';

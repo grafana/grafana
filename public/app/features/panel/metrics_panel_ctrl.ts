@@ -60,7 +60,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       this.updateTimeRange();
-      this.events.emit('load-snapshot', this.panel.snapshotData);
+      this.events.emit('data-snapshot-load', this.panel.snapshotData);
       return;
     }
 

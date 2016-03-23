@@ -60,6 +60,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
   }
 
   initEditMode() {
@@ -84,6 +85,10 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     return super.issueQueries(datasource);
+  }
+
+  onDataSnapshotLoad(data) {
+    this.onDataReceived(data.data);
   }
 
   onDataError(err) {
@@ -141,15 +146,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     var formaters = [];
 
     function getTableHeight() {
-      var panelHeight = ctrl.height || ctrl.panel.height || ctrl.row.height;
-      if (_.isString(panelHeight)) {
-        panelHeight = parseInt(panelHeight.replace('px', ''), 10);
-      }
+      var panelHeight = ctrl.height;
+
       if (pageCount > 1) {
-        panelHeight -= 28;
+        panelHeight -= 26;
       }
 
-      return (panelHeight - 60) + 'px';
+      return (panelHeight - 31) + 'px';
     }
 
     function appendTableRows(tbodyElem) {
