@@ -235,14 +235,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var templateSrv = this.templateSrv;
     var data, linkInfo;
     var $panelContainer = elem.find('.panel-container');
-    // change elem to singlestat panel
     elem = elem.find('.singlestat-panel');
-    hookupDrilldownLinkTooltip();
-
-    scope.$on('render', function() {
-      render();
-      ctrl.renderingCompleted();
-    });
 
     function setElementHeight() {
       elem.css('height', ctrl.height + 'px');
@@ -417,6 +410,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
       });
     }
+
+    hookupDrilldownLinkTooltip();
+
+    this.events.on('render', function() {
+      render();
+      ctrl.renderingCompleted();
+    });
   }
 }
 

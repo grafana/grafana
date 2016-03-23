@@ -14,7 +14,7 @@ export class Emitter {
     this.subjects = {};
   }
 
-  emit(name, data) {
+  emit(name, data?) {
     var fnName = createName(name);
     this.subjects[fnName] || (this.subjects[fnName] = new Subject());
     this.subjects[fnName].next(data);
