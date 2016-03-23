@@ -50,9 +50,9 @@ $switch-height: 1.5rem;
     font-family: 'FontAwesome';
     //content: "\f00c";
 
-    //content: "\f096"; // square-o
-    content: "\f046"; // check-square-o
-    color: darken($text-color-weak, 17%);
+    content: "\f096"; // square-o
+    //content: "\f046"; // check-square-o
+    color: darken($text-color-weak, 10%);
     transition: transform 0.4s;
     backface-visibility: hidden;
     text-shadow: 0px 0px 5px rgb(45, 45, 45);
