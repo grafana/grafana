@@ -24,6 +24,11 @@ You can use any build system you like that support systemjs. All the built conte
 
 All our example plugins have build scripted configured.
 
+## module.(js|ts)
+
+This is the entry point for every plugin. This is the place where you should export your plugin implementation. Depending on what kind of plugin you are developing you will be expected to export different things. You can find whats expected for [datasource](http://docs.grafana.org/v3.0/plugins/datasources/), [panels](http://docs.grafana.org/v3.0/plugins/panels/) and [apps](http://docs.grafana.org/v3.0/plugins/app/)
+plugins in the documentation.
+
 ## Start developing your plugin
 There are two ways that you can start developing a Grafana plugin.
 1. Setup a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/DEVELOPMENT.md)  and place your plugin in the ```data/plugins``` folder.
