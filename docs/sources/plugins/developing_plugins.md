@@ -8,21 +8,35 @@ page_keywords: grafana, plugins, documentation, development
 
 From grafana 3.0 it's very easy to develop your own plugins and share them with other grafana users.
 
+## Short version
+
+1. [Setup grafana](https://github.com/grafana/grafana/blob/master/DEVELOPMENT.md)
+2. Clone an example plugin into ```data/plugins```
+3. Code away!
+
 ## What languages?
 
-Since everything turns into javascript its up to you to choose which language you want. That said its proberbly a good idea to choose es6 or typescript since we use es6 classes in Grafana.
+Since everything turns into javascript it's up to you to choose which language you want. That said it's probably a good idea to choose es6 or typescript since we use es6 classes in Grafana. So it's easier to get inspiration from the Grafana repo is you choose one of those languages.
 
-##Buildscript
+## Buildscript
 
-You can use any buildsystem you like that support systemjs. All the built content should endup in a folder named dist and commited to the repository.
+You can use any build system you like that support systemjs. All the built content should end up in a folder named ```dist``` and committed to the repository.By committing the dist folder the person who installs your plugin does not have to run any buildscript.
 
-##Loading plugins
-The easiset way to try your plugin with grafana is to [setup grafana for development](https://github.com/grafana/grafana/blob/master/DEVELOPMENT.md) and place your plugin in the /data/plugins folder in grafana. When grafana starts it will scan that folder for folders that contains a plugin.json file and mount them as plugins. If your plugin folder contains a folder named dist it will mount that folder instead of the plugin base folder.
+All our example plugins have build scripted configured.
 
-## Examples / boilerplate
-We currently have three different examples that you can fork to get started developing your grafana plugin.
+## Start developing your plugin
+There are two ways that you can start developing a Grafana plugin.
+1. Setup a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/DEVELOPMENT.md)  and place your plugin in the ```data/plugins``` folder.
+2. Install Grafana and place your plugin the plugins directory which is set in your [config file](http://docs.grafana.org/installation/configuration/)
+
+We encourage people to setup the full Grafana environment so that you can get inspiration from the rest of grafana code base.
+
+When Grafana starts it will scan the plugin folders and mount every folder that contains a plugin.json file unless the folder contains a subfolder named dist. In that case grafana will mount the dist folder instead.
+This makes it possible to have both built and src content in the same plugin folder.
+
+## Boilerplate
+We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
  - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for quering json data from backends)
- - [panel-boilderplate-es5](https://github.com/grafana/grafana/tree/master/examples/panel-boilerplate-es5)
+ - [piechart-panel](https://github.com/grafana/piechart-panel)
  - [example-app](https://github.com/grafana/example-app)
-
