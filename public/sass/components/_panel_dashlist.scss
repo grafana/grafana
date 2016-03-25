@@ -1,3 +1,17 @@
+panel-plugin-dashlist .panel-container {
+  border-radius: 4px; 
+  border:none; 
+  box-shadow: $card-shadow;
+  .panel-header {
+    text-align: left !important;
+    font-size: 1.25rem;
+    padding: 0 20px 10px 20px;
+    .panel-title {
+      font-weight: 400;
+    }
+  }
+}
+
 .dashlist-item {
 
 }
@@ -7,7 +21,6 @@
   margin: 5px;
   padding: 7px;
   background-color: $tight-form-bg;
-  border: 1px solid $tight-form-border;
   .fa {
     float: right;
     padding-top: 3px;
