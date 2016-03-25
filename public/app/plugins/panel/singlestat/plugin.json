@@ -7,6 +7,11 @@
     "author": {
       "name": "Grafana Project",
       "url": "http://grafana.org"
+},
+    "logos": {
+      "small": "img/icn-singlestat-panel.svg",
+      "large": "img/icn-singlestat-panel.svg"
     }
   }
 }
+
