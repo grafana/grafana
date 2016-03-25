@@ -7,6 +7,10 @@
     "author": {
       "name": "Grafana Project",
       "url": "http://grafana.org"
+},
+    "logos": {
+      "small": "img/icn-dashlist-panel.svg",
+      "large": "img/icn-dashlist-panel.svg"
     }
   }
 }
