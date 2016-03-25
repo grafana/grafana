@@ -217,7 +217,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         if (data.range) {
           this.range = data.range;
         }
-        this.events.emit('data-received', data);
+        this.events.emit('data-received', data.data);
       },
       error: (error) => {
         this.events.emit('data-error', error);
