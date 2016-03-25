@@ -122,6 +122,11 @@ export class PluginEditCtrl {
     this.update();
   }
 
+  disable() {
+    this.model.enabled = false;
+    this.model.pinned = false;
+    this.update();
+  }
 }
 
 angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);
