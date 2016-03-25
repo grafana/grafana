@@ -5,7 +5,9 @@ import store from 'app/core/store';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
+
 import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class GrafanaCtrl {
 
@@ -47,6 +49,7 @@ export class GrafanaCtrl {
 
     $rootScope.appEvent = function(name, payload) {
       $rootScope.$emit(name, payload);
+      appEvents.emit(name, payload);
     };
 
     $rootScope.colors = [
