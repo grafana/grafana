@@ -21,13 +21,13 @@ export class Emitter {
     this.subjects[fnName].next(data);
   }
 
-  on(name, handler, $scope) {
+  on(name, handler, scope?) {
     var fnName = createName(name);
     this.subjects[fnName] || (this.subjects[fnName] = new Subject());
     var subscription = this.subjects[fnName].subscribe(handler);
 
-    if ($scope) {
-      $scope.$on('$destroy', function() {
+    if (scope) {
+      scope.$on('$destroy', function() {
         subscription.unsubscribe();
       });
     }
