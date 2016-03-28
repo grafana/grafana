@@ -56,18 +56,18 @@
 				<div class="gf-form">
 					<span class="gf-form-label">Title</span>
 					<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
-					<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
 				</div>
+				<gf-form-switch class="gf-form" label="Show title" checked="row.showTitle" switch-class="max-width-6"></gf-form-switch>
 
 				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" style="margin-right: 5px;" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
-						<i class="fa fa-trash"></i>
-					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$first" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index-1)">
+					<button class="btn btn-inverse gf-form-btn" ng-click="_.move(dashboard.rows,$index,$index-1)">
 						<i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$last" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index+1)">
+					<button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
 						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					</button>
+					<button class="btn btn-inverse gf-form-btn" click="dashboard.rows = _.without(dashboard.rows,row)">
+						<i class="fa fa-trash"></i>
 					</button>
 				</div>
 			</div>
