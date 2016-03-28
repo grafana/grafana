@@ -142,7 +142,8 @@ function (angular, _, dateMath) {
         return $q.reject(err);
       }
 
-      var responseTransform = function(result, type) {
+      var type = null;
+      var responseTransform = function(result) {
         if (type && (type === 'metrics')) {
           return _.map(result, function(value) {
             return {text: value.replace(this.prefix, '')};
@@ -161,7 +162,8 @@ function (angular, _, dateMath) {
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
-        return this._performSuggestQuery(this.prefix + metrics_query[1], 'metrics').then(responseTransform('metrics'));
+        type = 'metrics';
+        return this._performSuggestQuery(this.prefix + metrics_query[1], type).then(responseTransform);
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
@@ -176,12 +178,14 @@ function (angular, _, dateMath) {
 
       var tag_names_suggest_query = interpolated.match(tag_names_suggest_regex);
       if (tag_names_suggest_query) {
-        return this._performSuggestQuery(tag_names_suggest_query[1], 'tagk').then(responseTransform);
+        type = 'tagk';
+        return this._performSuggestQuery(tag_names_suggest_query[1], type).then(responseTransform);
       }
 
       var tag_values_suggest_query = interpolated.match(tag_values_suggest_regex);
       if (tag_values_suggest_query) {
-        return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
+        type = 'tagv';
+        return this._performSuggestQuery(tag_values_suggest_query[1], type).then(responseTransform);
       }
 
       return $q.when([]);
