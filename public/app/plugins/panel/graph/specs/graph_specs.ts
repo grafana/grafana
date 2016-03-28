@@ -8,6 +8,7 @@ import $ from 'jquery';
 import helpers from 'test/specs/helpers';
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
+import {Emitter} from 'app/core/core';
 
 describe('grafanaGraph', function() {
 
@@ -24,31 +25,33 @@ describe('grafanaGraph', function() {
         }));
 
         beforeEach(angularMocks.inject(function($rootScope, $compile) {
-          var ctrl: any = {};
+          var ctrl: any = {
+            events: new Emitter(),
+            height: 200,
+            panel: {
+              legend: {},
+              grid: { },
+              y_formats: [],
+              seriesOverrides: [],
+              tooltip: {
+                shared: true
+              }
+            },
+            renderingCompleted: sinon.spy(),
+            hiddenSeries: {},
+            dashboard: {timezone: 'browser'},
+            range: {
+              from: moment([2015, 1, 1, 10]),
+              to: moment([2015, 1, 1, 22]),
+            },
+          };
+
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
-          var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
 
-          ctrl.height = '200px';
-          ctrl.panel = {
-            legend: {},
-            grid: { },
-            y_formats: [],
-            seriesOverrides: [],
-            tooltip: {
-              shared: true
-            }
-          };
 
           $rootScope.onAppEvent = sinon.spy();
-          ctrl.otherPanelInFullscreenMode = sinon.spy();
-          ctrl.renderingCompleted = sinon.spy();
-          ctrl.hiddenSeries = {};
-          ctrl.dashboard = { timezone: 'browser' };
-          ctrl.range = {
-            from: moment([2015, 1, 1, 10]),
-            to: moment([2015, 1, 1, 22]),
-          };
+
           ctx.data = [];
           ctx.data.push(new TimeSeries({
             datapoints: [[1,1],[2,2]],
@@ -61,11 +64,12 @@ describe('grafanaGraph', function() {
 
           setupFunc(ctrl, ctx.data);
 
+          var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
           $compile(element)(scope);
           scope.$digest();
-          $.plot = ctx.plotSpy = sinon.spy();
 
-          scope.$emit('render', ctx.data);
+          $.plot = ctx.plotSpy = sinon.spy();
+          ctrl.events.emit('render', ctx.data);
           ctx.plotData = ctx.plotSpy.getCall(0).args[1];
           ctx.plotOptions = ctx.plotSpy.getCall(0).args[2];
         }));

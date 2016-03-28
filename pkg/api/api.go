@@ -4,6 +4,7 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
@@ -35,6 +36,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
+	r.Get("/admin", reqGrafanaAdmin, Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
@@ -238,7 +240,13 @@ func Register(r *macaron.Macaron) {
 	avt := avatar.CacheServer()
 	r.Get("/avatar/:hash", avt.ServeHTTP)
 
+	// Websocket
+	liveConn := live.New()
+	r.Any("/ws", liveConn.Serve)
+
+	// streams
+	r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+
 	InitAppPluginRoutes(r)
 
-	r.NotFound(NotFoundHandler)
 }

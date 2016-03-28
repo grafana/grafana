@@ -54,12 +54,13 @@ $critical:              #EC2128;
 // Scaffolding
 // -------------------------
 
-$body-bg:  		  $white;
-$page-bg:  		  $white;
-$body-color:    $gray-1;
-$text-color:    $gray-1;
-$text-color-strong: $white;
-$text-color-weak: $gray-1;
+$body-bg:  		  		    $white;
+$page-bg:  		  		    $white;
+$body-color:    		    $gray-1;
+$text-color:    		    $gray-1;
+$text-color-strong:	    $white;
+$text-color-weak: 	    $gray-1;
+$text-color-emphasis: 	$dark-5;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);

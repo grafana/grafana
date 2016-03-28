@@ -22,6 +22,7 @@ export function navbarDirective() {
     scope: {
       title: "@",
       titleUrl: "@",
+      iconUrl: "@",
     },
     link: function(scope, elem, attrs, ctrl) {
       ctrl.icon = attrs.icon;

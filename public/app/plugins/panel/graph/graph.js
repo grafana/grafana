@@ -54,7 +54,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }, scope);
 
         // Receive render events
-        scope.$on('render',function(event, renderData) {
+        ctrl.events.on('render', function(renderData) {
           data = renderData || data;
           if (!data) {
             ctrl.refresh();
@@ -94,10 +94,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function shouldAbortRender() {
           if (!data) {
-            return true;
-          }
-
-          if (ctrl.otherPanelInFullscreenMode()) {
             return true;
           }
 

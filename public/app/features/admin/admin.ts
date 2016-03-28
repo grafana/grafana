@@ -19,7 +19,8 @@ class AdminSettingsCtrl {
 
 class AdminHomeCtrl {
   /** @ngInject **/
-  constructor() {}
+  constructor() {
+  }
 }
 
 export class AdminStatsCtrl {

@@ -45,7 +45,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   series: any[];
-  data: any[];
+  data: any;
   fontSizes: any[];
   unitFormats: any[];
 
@@ -53,11 +53,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private $location, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, panelDefaults);
+
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
-    this.icon =  "fa fa-dashboard";
+  onInitEditMode() {
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.unitFormats = kbn.getUnitFormats();
@@ -68,23 +71,26 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  refreshData(datasource) {
-    return this.issueQueries(datasource)
-      .then(this.dataHandler.bind(this))
-      .catch(err => {
-        this.series = [];
-        this.render();
-        throw err;
-      });
+  onDataSnapshotLoad(snapshotData) {
+    this.onDataReceived(snapshotData.data);
   }
 
-  loadSnapshot(snapshotData) {
-    // give element time to get attached and get dimensions
-    this.$timeout(() => this.dataHandler(snapshotData), 50);
+  onDataError(err) {
+    this.onDataReceived({data: []});
   }
 
-  dataHandler(results) {
-    this.series = _.map(results.data, this.seriesHandler.bind(this));
+  onDataReceived(dataList) {
+    this.series = dataList.map(this.seriesHandler.bind(this));
+
+    var data: any = {};
+    this.setValues(data);
+
+    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
+      return Number(strVale.trim());
+    });
+
+    data.colorMap = this.panel.colors;
+    this.data = data;
     this.render();
   }
 
@@ -153,20 +159,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
     return result;
-  }
-
-  render() {
-    var data: any = {};
-    this.setValues(data);
-
-    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
-      return Number(strVale.trim());
-    });
-
-    data.colorMap = this.panel.colors;
-
-    this.data = data;
-    this.broadcastRender();
   }
 
   setValues(data) {
@@ -242,14 +234,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var templateSrv = this.templateSrv;
     var data, linkInfo;
     var $panelContainer = elem.find('.panel-container');
-    // change elem to singlestat panel
     elem = elem.find('.singlestat-panel');
-    hookupDrilldownLinkTooltip();
-
-    scope.$on('render', function() {
-      render();
-      ctrl.renderingCompleted();
-    });
 
     function setElementHeight() {
       elem.css('height', ctrl.height + 'px');
@@ -291,8 +276,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function addSparkline() {
       var width = elem.width() + 20;
-      var height = ctrl.height;
+      if (width < 30) {
+        // element has not gotten it's width yet
+        // delay sparkline render
+        setTimeout(addSparkline, 30);
+        return;
+      }
 
+      var height = ctrl.height;
       var plotCanvas = $('<div></div>');
       var plotCss: any = {};
       plotCss.position = 'absolute';
@@ -418,6 +409,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
       });
     }
+
+    hookupDrilldownLinkTooltip();
+
+    this.events.on('render', function() {
+      render();
+      ctrl.renderingCompleted();
+    });
   }
 }
 

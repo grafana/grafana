@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5.1",
+	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -159,8 +160,8 @@
 		},
 		{
 			"ImportPath": "github.com/go-ldap/ldap",
-			"Comment": "v1-19-g83e6542",
-			"Rev": "83e65426fd1c06626e88aa8a085e5bfed0208e29"
+			"Comment": "v2.2.1",
+			"Rev": "07a7330929b9ee80495c88a4439657d89c7dbd87"
 		},
 		{
 			"ImportPath": "github.com/go-macaron/binding",
@@ -208,6 +209,10 @@
 			"ImportPath": "github.com/go-xorm/xorm",
 			"Comment": "v0.4.4-44-gf561133",
 			"Rev": "f56113384f2c63dfe4cd8e768e349f1c35122b58"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "c45a635370221f34fea2d5163fd156fcb4e38e8a"
 		},
 		{
 			"ImportPath": "github.com/gosimple/slug",
