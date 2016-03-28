@@ -12,6 +12,7 @@ define([
   'jquery.flot.stackpercent',
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair',
+  'jquery.flot.highlightSeries',
   './jquery.flot.events',
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
@@ -214,6 +215,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             },
             crosshair: {
               mode: panel.tooltip.shared || dashboard.sharedCrosshair ? "x" : null
+            },
+            highlightSeries: {
+              autoHighlight: true,
+              color: "black"
             }
           };
 
