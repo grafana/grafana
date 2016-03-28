@@ -12,11 +12,13 @@ describe('ElasticDatasource', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
+
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.$injector = $injector;
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   function createDatasource(instanceSettings) {
