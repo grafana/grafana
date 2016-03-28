@@ -39,6 +39,7 @@ type LdapAttributeMap struct {
 	Surname  string `toml:"surname"`
 	Email    string `toml:"email"`
 	MemberOf string `toml:"member_of"`
+	UID      string `toml:"uid"`
 }
 
 type LdapGroupToOrgRole struct {

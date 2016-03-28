@@ -7,6 +7,7 @@ type ldapUserInfo struct {
 	Username  string
 	Email     string
 	MemberOf  []string
+	UID       string
 }
 
 func (u *ldapUserInfo) isMemberOf(group string) bool {
