@@ -18,9 +18,8 @@ export class SwitchCtrl {
   checked: any;
   show: any;
 
-  constructor($element) {
-    // hack to workaround animation
-    // happening on first show
+  /** @ngInject */
+  constructor() {
     this.show = true;
   }
 

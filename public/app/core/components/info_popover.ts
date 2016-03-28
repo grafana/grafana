@@ -40,14 +40,6 @@ export function infoPopover() {
           }
         });
 
-      // inputElem.on('focus.popover', function() {
-      //   drop.open();
-      // });
-      //
-      // inputElem.on('blur.popover', function() {
-      //   close();
-      // });
-
         scope.$on('$destroy', function() {
           drop.destroy();
         });
