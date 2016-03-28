@@ -72,18 +72,15 @@ func GetPluginSettingById(c *middleware.Context) Response {
 	} else {
 
 		dto := &dtos.PluginSetting{
-			Type:         def.Type,
-			Id:           def.Id,
-			Name:         def.Name,
-			Info:         &def.Info,
-			Dependencies: &def.Dependencies,
-			Includes:     def.Includes,
-			BaseUrl:      def.BaseUrl,
-			Module:       def.Module,
-		}
-
-		if app, exists := plugins.Apps[pluginId]; exists {
-			dto.Pages = app.Pages
+			Type:          def.Type,
+			Id:            def.Id,
+			Name:          def.Name,
+			Info:          &def.Info,
+			Dependencies:  &def.Dependencies,
+			Includes:      def.Includes,
+			BaseUrl:       def.BaseUrl,
+			Module:        def.Module,
+			DefaultNavUrl: def.DefaultNavUrl,
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}

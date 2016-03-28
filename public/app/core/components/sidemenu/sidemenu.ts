@@ -86,7 +86,7 @@ export class SideMenuCtrl {
 
  switchOrg(orgId) {
    this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-     window.location.href = window.location.href;
+     window.location.href = `${config.appSubUrl}/`;
    });
  };
 }

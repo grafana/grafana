@@ -40,7 +40,10 @@
 		</a>
 		<ul class="dropdown-menu" role="menu" ng-if="::item.children">
 			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}">
-				<a href="{{::child.url}}">{{::child.text}}</a>
+				<a href="{{::child.url}}">
+					<i class="{{::child.icon}}" ng-show="::child.icon"></i>
+					{{::child.text}}
+				</a>
 			</li>
 		</ul>
 	</li>
