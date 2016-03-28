@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
+
 	"github.com/franela/goreq"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"path"
 )
 
 var IoHelper m.IoUtil = IoUtilImp{}
@@ -66,9 +67,7 @@ func RemoveInstalledPlugin(pluginPath, id string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	resp, err := ListAllPlugins(repoUrl)
-	if err != nil {
-	}
+	resp, _ := ListAllPlugins(repoUrl)
 
 	for _, i := range resp.Plugins {
 		if i.Id == pluginId {
