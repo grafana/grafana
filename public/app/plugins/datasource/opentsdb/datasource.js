@@ -11,13 +11,14 @@ function (angular, _, dateMath) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
+  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv, contextSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
+      this.prefix = contextSrv.user.orgName + ".";
     }
 
     // Called once per panel (graph)
@@ -28,7 +29,7 @@ function (angular, _, dateMath) {
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
+        qs.push(convertTargetToQuery(target, options, this.prefix));
       });
 
       var queries = _.compact(qs);
@@ -54,7 +55,7 @@ function (angular, _, dateMath) {
           if (index === -1) {
             index = 0;
           }
-          return transformMetricData(metricData, groupByTags, options.targets[index], options);
+          return transformMetricData(metricData, groupByTags, options.targets[index], options, this.prefix);
         });
         return { data: result };
       });
@@ -91,7 +92,7 @@ function (angular, _, dateMath) {
         return $q.when([]);
       }
 
-      var m = metric + "{" + key + "=*}";
+      var m = this.prefix + metric + "{" + key + "=*}";
 
       return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
@@ -108,7 +109,7 @@ function (angular, _, dateMath) {
     OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
+      return this._get('/api/search/lookup', {m: this.prefix + metric, limit: 1000}).then(function(result) {
         result = result.data.results;
         var tagks = [];
         _.each(result, function(r) {
@@ -141,7 +142,12 @@ function (angular, _, dateMath) {
         return $q.reject(err);
       }
 
-      var responseTransform = function(result) {
+      var responseTransform = function(result, type) {
+        if (type && (type === 'metrics')) {
+          return _.map(result, function(value) {
+            return {text: value.replace(this.prefix, '')};
+          });
+        }
         return _.map(result, function(value) {
           return {text: value};
         });
@@ -155,7 +161,7 @@ function (angular, _, dateMath) {
 
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
-        return this._performSuggestQuery(metrics_query[1], 'metrics').then(responseTransform);
+        return this._performSuggestQuery(this.prefix + metrics_query[1], 'metrics').then(responseTransform('metrics'));
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
@@ -200,8 +206,8 @@ function (angular, _, dateMath) {
       return aggregatorsPromise;
     };
 
-    function transformMetricData(md, groupByTags, target, options) {
-      var metricLabel = createMetricLabel(md, target, groupByTags, options);
+    function transformMetricData(md, groupByTags, target, options, prefix) {
+      var metricLabel = createMetricLabel(md, target, groupByTags, options, prefix);
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
@@ -213,7 +219,7 @@ function (angular, _, dateMath) {
       return { target: metricLabel, datapoints: dps };
     }
 
-    function createMetricLabel(md, target, groupByTags, options) {
+    function createMetricLabel(md, target, groupByTags, options, prefix) {
       if (target.alias) {
         var scopedVars = _.clone(options.scopedVars || {});
         _.each(md.tags, function(value, key) {
@@ -222,7 +228,7 @@ function (angular, _, dateMath) {
         return templateSrv.replace(target.alias, scopedVars);
       }
 
-      var label = md.metric;
+      var label = md.metric.replace(prefix, '');
       var tagData = [];
 
       if (!_.isEmpty(md.tags)) {
@@ -240,13 +246,13 @@ function (angular, _, dateMath) {
       return label;
     }
 
-    function convertTargetToQuery(target, options) {
+    function convertTargetToQuery(target, options, prefix) {
       if (!target.metric || target.hide) {
         return null;
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: prefix + templateSrv.replace(target.metric, options.scopedVars),
         aggregator: "avg"
       };
 
@@ -293,7 +299,7 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return target.metric === metricData.metric &&
+          return (this.prefix + target.metric) === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
             interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
             return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
