@@ -42,6 +42,6 @@ This makes it possible to have both built and src content in the same plugin fol
 ## Boilerplate
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
- - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for quering json data from backends)
+ - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
  - [piechart-panel](https://github.com/grafana/piechart-panel)
  - [example-app](https://github.com/grafana/example-app)
