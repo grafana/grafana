@@ -69,8 +69,22 @@ Name | Description
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
-The `ec2_instance_attribute` query take `filters` in JSON format.  
-You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).  
+## Example templated Queries
+
+Example dimension queries which will return list of resources for individual AWS Services:
+
+Service | Query
+------- | -----
+EBS | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
+ElastiCache | `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`
+RedShift | `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`
+RDS | `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`
+S3 | `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`
+
+## ec2_instance_attribute JSON filters
+
+The `ec2_instance_attribute` query take `filters` in JSON format.
+You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
 Specify like `{ filter_name1: [ filter_value1 ], filter_name2: [ filter_value2 ] }`
 
 Example `ec2_instance_attribute()` query
