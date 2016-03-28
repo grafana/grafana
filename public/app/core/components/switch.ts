@@ -7,7 +7,7 @@ import coreModule from 'app/core/core_module';
 
 var template = `
 <label for="check-{{$id}}" class="gf-form-label {{ctrl.labelClass}} pointer">{{ctrl.label}}</label>
-<div class="gf-form-switch {{ctrl.switchClass}}" >
+<div class="gf-form-switch {{ctrl.switchClass}}">
   <input id="check-{{$id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
   <label for="check-{{$id}}" data-on="Yes" data-off="No"></label>
 </div>
@@ -15,6 +15,11 @@ var template = `
 
 export class SwitchCtrl {
   onChange: any;
+  checked: any;
+
+  constructor() {
+    console.log('property: ' + this.checked, this);
+  }
 
   internalOnChange() {
     return new Promise(resolve => {

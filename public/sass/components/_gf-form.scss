@@ -141,18 +141,10 @@ $gf-form-margin: 0.25rem;
   }
 }
 
-<<<<<<< HEAD
-||||||| merged common ancestors
-.gf-form-select-wrapper + .gf-form-select-wrapper {
-  margin-left: $gf-form-label-margin;
-}
-
-=======
 .gf-form--v-stretch {
   align-items: stretch;
 }
 
->>>>>>> master
 .gf-form-btn {
   margin-right: $gf-form-margin;
   padding: $input-padding-y $input-padding-x;
@@ -160,14 +152,10 @@ $gf-form-margin: 0.25rem;
   flex-shrink: 0;
   flex-grow: 0;
 }
-<<<<<<< HEAD
 
 .gf-form-switch {
   margin-right: $gf-form-margin;
 }
-
-||||||| merged common ancestors
-=======
 
 .natural-language-input {
   &input[type="number"] {
@@ -178,4 +166,3 @@ $gf-form-margin: 0.25rem;
   }
 }
 
->>>>>>> master
