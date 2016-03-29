@@ -15,14 +15,16 @@ var IoHelper m.IoUtil = IoUtilImp{}
 
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	fullUrl := repoUrl + "/repo"
-	res, _ := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
-
+	res, err := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
+	if err != nil {
+		return m.PluginRepo{}, err
+	}
 	if res.StatusCode != 200 {
 		return m.PluginRepo{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
 	}
 
 	var resp m.PluginRepo
-	err := res.Body.FromJsonTo(&resp)
+	err = res.Body.FromJsonTo(&resp)
 	if err != nil {
 		return m.PluginRepo{}, errors.New("Could not load plugin data")
 	}
