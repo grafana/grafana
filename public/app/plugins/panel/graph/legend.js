@@ -72,14 +72,14 @@ function (angular, _, $) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
-          ctrl.removeHighlight(seriesInfo, e);
+          ctrl.publishAppEvent('unhighlight', { series: seriesInfo });
         }
 
         function toggleHighlightSeries(e) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
-          ctrl.toggleHighlightSeries(seriesInfo, e);
+          ctrl.publishAppEvent('highlight', { series: seriesInfo });
         }
 
         function sortLegend(e) {

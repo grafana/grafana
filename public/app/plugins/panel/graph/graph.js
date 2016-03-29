@@ -54,6 +54,16 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }, scope);
 
+        rootScope.onAppEvent('highlight', function(event, info) {
+          var plot = elem.data().plot;
+          plot.highlightSeries(info.series);
+        }, scope);
+
+        rootScope.onAppEvent('unhighlight', function(event, info) {
+          var plot = elem.data().plot;
+          plot.unHighlightSeries(info.series);
+        }, scope);
+
         // Receive render events
         ctrl.events.on('render', function(renderData) {
           data = renderData || data;
@@ -233,14 +243,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             if (ctrl.hiddenSeries[series.alias]) {
               series.data = [];
               series.stack = false;
-            }
-
-            if (ctrl.highlightSeries[series.alias] && ctrl.highlightSeries[series.alias].highlight) {
-              if (series.lines.lineWidth) {
-                series.lines.lineWidth = series.lines.lineWidth + 1;
-              } else {
-                series.lines.lineWidth = options.series.lines.lineWidth + 1;
-              }
             }
           }
 
