@@ -112,7 +112,6 @@ $gf-form-margin: 0.25rem;
   margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
-  margin-right: $gf-form-margin;
 
   select.gf-form-input {
     text-indent: .01px;
@@ -166,3 +165,20 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-dropdown-typeahead {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+  padding-right: $input-padding-x;
+
+  &:after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+}
