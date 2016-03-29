@@ -212,7 +212,7 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 11;
+      this.schemaVersion = 12;
 
       if (oldVersion === this.schemaVersion) {
         return;
@@ -406,6 +406,49 @@ function (angular, $, _, moment) {
         _.each(this.templating.list, function(templateVariable) {
           if (templateVariable.refresh) { templateVariable.refresh = 1; }
           if (!templateVariable.refresh) { templateVariable.refresh = 0; }
+        });
+      }
+
+      if (oldVersion < 12) {
+        // update graph yaxes changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'graph') { return; }
+          if (!panel.yaxes) {
+            panel.yaxes = [
+              {
+                show: panel['y-axis'],
+                min: panel.grid.leftMin,
+                max: panel.grid.leftMax,
+                logBase: panel.grid.leftLogBase,
+                format: panel.y_formats[0],
+                label: panel.leftYAxisLabel,
+              },
+              {
+                show: panel['y-axis'],
+                min: panel.grid.rightMin,
+                max: panel.grid.rightMax,
+                logBase: panel.grid.rightLogBase,
+                format: panel.y_formats[1],
+                label: panel.rightYAxisLabel,
+              }
+            ];
+
+            panel.xaxis = {
+              show: panel['x-axis'],
+            };
+
+            delete panel.grid.leftMin;
+            delete panel.grid.leftMax;
+            delete panel.grid.leftLogBase;
+            delete panel.grid.rightMin;
+            delete panel.grid.rightMax;
+            delete panel.grid.rightLogBase;
+            delete panel.y_formats;
+            delete panel.leftYAxisLabel;
+            delete panel.rightYAxisLabel;
+            delete panel['y-axis'];
+            delete panel['x-axis'];
+          }
         });
       }
 
