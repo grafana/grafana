@@ -16,9 +16,9 @@ var IoHelper m.IoUtil = IoUtilImp{}
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	fullUrl := repoUrl + "/repo"
 	res, err := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
-  if err != nil {
-    return m.PluginRepo{}, err
-  }
+	if err != nil {
+		return m.PluginRepo{}, err
+	}
 	if res.StatusCode != 200 {
 		return m.PluginRepo{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
 	}
