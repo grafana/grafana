@@ -401,11 +401,18 @@ function (angular, $, _, moment) {
         });
       }
 
-      if (oldVersion < 11) {
+      if (oldVersion < 12) {
         // update template variables
         _.each(this.templating.list, function(templateVariable) {
           if (templateVariable.refresh) { templateVariable.refresh = 1; }
           if (!templateVariable.refresh) { templateVariable.refresh = 0; }
+          if (templateVariable.hideVariable) {
+            templateVariable.hide = 2;
+          } else if (templateVariable.hideLabel) {
+            templateVariable.hide = 1;
+          } else {
+            templateVariable.hide = 0;
+          }
         });
       }
 
