@@ -354,6 +354,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             secondY.index = 2,
             secondY.logBase = panel.grid.rightLogBase || 1,
             secondY.position = 'right';
+            secondY.show = panel['y-axis-2'],
             secondY.min = panel.grid.rightMin;
             secondY.max = panel.percentage && panel.stack ? 100 : panel.grid.rightMax;
             options.yaxes.push(secondY);
@@ -455,6 +456,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
           url += panel['x-axis'] ? '' : '&hideAxes=true';
           url += panel['y-axis'] ? '' : '&hideYAxis=true';
+          url += panel['y-axis-2'] ? '' : '&hideYAxis2=true';
 
           switch(panel.y_formats[0]) {
             case 'bytes':
