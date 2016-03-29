@@ -17,20 +17,28 @@ var panelDefaults = {
   datasource: null,
   // sets client side (flot) or native graphite png renderer (png)
   renderer: 'flot',
-  // Show/hide the x-axis
-  'x-axis'      : true,
-  // Show/hide y-axis
-  'y-axis'      : true,
-  // y axis formats, [left axis,right axis]
-  y_formats    : ['short', 'short'],
-  // grid options
+  yaxes: [
+    {
+      label: null,
+      show: true,
+      logBase: 1,
+      min: null,
+      max: null,
+      format: 'short'
+    },
+    {
+      label: null,
+      show: true,
+      logBase: 1,
+      min: null,
+      max: null,
+      format: 'short'
+    }
+  ],
+  xaxis: {
+    show: true
+  },
   grid          : {
-    leftLogBase: 1,
-    leftMax: null,
-    rightMax: null,
-    leftMin: null,
-    rightMin: null,
-    rightLogBase: 1,
     threshold1: null,
     threshold2: null,
     threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -115,8 +123,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes & Grid', 'public/app/plugins/panel/graph/axisEditor.html', 2);
-    this.addEditorTab('Display Styles', 'public/app/plugins/panel/graph/styleEditor.html', 3);
+    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/axisEditor.html', 2);
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/styleEditor.html', 3);
 
     this.logScales = {
       'linear': 1,
@@ -135,7 +143,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   setUnitFormat(axis, subItem) {
-    this.panel.y_formats[axis] = subItem.value;
+    axis.format = subItem.value;
     this.render();
   }
 
