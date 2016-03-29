@@ -23,6 +23,7 @@ function (_) {
     var dimensionValuesQuery = this.query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
     var ebsVolumeIdsQuery = this.query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
     var ec2InstanceAttributeQuery = this.query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+    var elbInstanceIdsQuery = this.query.match(/^elb_instance_ids\(([^,]+?),\s?([^,]+?)\)/);
 
     if (regionQuery) {
       return this.regionQuery();
@@ -60,6 +61,12 @@ function (_) {
       var targetAttributeName = this.templateSrv.replace(ec2InstanceAttributeQuery[2]);
       var filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
       return this.ec2InstanceAttributeQuery(region, targetAttributeName, filterJson);
+    }
+
+    if (elbInstanceIdsQuery) {
+      region = this.templateSrv.replace(elbInstanceIdsQuery[1]);
+      var loadBalancerName = this.templateSrv.replace(elbInstanceIdsQuery[2]);
+      return this.elbInstanceIdsQuery(region, loadBalancerName);
     }
 
     return this.$q.when([]);
@@ -122,6 +129,17 @@ function (_) {
       })
       .flatten().uniq().sortBy().value();
       return self.transformSuggestData(attributes);
+    });
+  };
+
+  CloudWatchMetricFindQuery.prototype.elbInstanceIdsQuery = function(region, loadBalancerName) {
+    var self = this;
+    return this.datasource.performElbDescribeInstanceHealth(region, loadBalancerName).then(function(result) {
+      var instanceIds = _.chain(result.InstanceStates)
+      .map(function(state) {
+        return state.InstanceId;
+      }).sortBy().value();
+      return self.transformSuggestData(instanceIds);
     });
   };
 

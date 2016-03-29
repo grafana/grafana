@@ -111,4 +111,24 @@ describe('CloudWatchMetricFindQuery', function() {
       expect(scenario.request.data.action).to.be('ListMetrics');
     });
   });
+
+  describeMetricFindQuery('elb_instance_ids(us-east-1,loadBalancerName)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        InstanceStates: [
+          {
+            InstanceId: 'i-12345678',
+            ReasonCode: 'N/A',
+            State: 'InService',
+            Description: 'N/A'
+          }
+        ]
+      };
+    });
+
+    it('should call ElbDescribeInstanceHealth and return result', () => {
+      expect(scenario.result[0].text).to.be('i-12345678');
+      expect(scenario.request.data.action).to.be('ElbDescribeInstanceHealth');
+    });
+  });
 });

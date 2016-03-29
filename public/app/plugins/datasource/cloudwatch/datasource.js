@@ -148,6 +148,14 @@ function (angular, _, moment, dateMath, CloudWatchMetricFindQuery, CloudWatchAnn
       });
     };
 
+    this.performElbDescribeInstanceHealth = function(region, loadBalancerName) {
+      return this.awsRequest({
+        region: region,
+        action: 'ElbDescribeInstanceHealth',
+        parameters: { loadBalancerName: loadBalancerName }
+      });
+    };
+
     this.metricFindQuery = function(query) {
       var metricFindQuery = new CloudWatchMetricFindQuery(this, query, $q, templateSrv);
       return metricFindQuery.process();
