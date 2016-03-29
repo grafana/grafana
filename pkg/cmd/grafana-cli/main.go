@@ -2,20 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"runtime"
+
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	"os"
-	"runtime"
 )
 
 var version = "master"
 
-func getGrafanaPluginPath() string {
-	if os.Getenv("GF_PLUGIN_DIR") != "" {
-		return os.Getenv("GF_PLUGIN_DIR")
-	}
-
+func getGrafanaPluginDir() string {
 	os := runtime.GOOS
 	if os == "windows" {
 		return "C:\\opt\\grafana\\plugins"
@@ -29,19 +26,22 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
-	app.Author = "raintank"
+	app.Usage = ""
+	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "path",
-			Usage: "path to the grafana installation",
-			Value: getGrafanaPluginPath(),
+			Name:   "pluginsDir",
+			Usage:  "path to the grafana plugin directory",
+			Value:  getGrafanaPluginDir(),
+			EnvVar: "GF_PLUGIN_DIR",
 		},
 		cli.StringFlag{
-			Name:  "repo",
-			Usage: "url to the plugin repository",
-			Value: "https://grafana-net.raintank.io/api/plugins",
+			Name:   "repo",
+			Usage:  "url to the plugin repository",
+			Value:  "https://grafana.net/api/plugins",
+			EnvVar: "GF_PLUGIN_REPO",
 		},
 		cli.BoolFlag{
 			Name:  "debug, d",

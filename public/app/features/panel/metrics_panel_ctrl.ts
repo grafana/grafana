@@ -9,6 +9,8 @@ import {PanelCtrl} from './panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
+import {Subject} from 'vendor/npm/rxjs/Subject';
+
 class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
@@ -26,6 +28,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   timeInfo: any;
   skipDataOnInit: boolean;
   datasources: any[];
+  dataStream: any;
+  dataSubscription: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -40,35 +44,36 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (!this.panel.targets) {
       this.panel.targets = [{}];
     }
+
+    this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
+    this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 
-  refreshData(data) {
-    // null op
-    return this.$q.when(data);
-  }
-
-  loadSnapshot(data) {
-    // null op
-    return data;
-  }
-
-  refresh() {
+  private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
-      if (this.loadSnapshot) {
-        this.updateTimeRange();
-        this.loadSnapshot(this.panel.snapshotData);
+      this.updateTimeRange();
+      var data = this.panel.snapshotData;
+      // backward compatability
+      if (!_.isArray(data)) {
+        data = data;
       }
+
+      this.events.emit('data-snapshot-load', data);
+      return;
+    }
+
+    // // ignore if we have data stream
+    if (this.dataStream) {
       return;
     }
 
@@ -77,16 +82,15 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    this.datasourceSrv.get(this.panel.datasource).then(datasource => {
-      this.datasource = datasource;
-      return this.refreshData(this.datasource);
-    }).then(() => {
-      this.loading = false;
-    }).catch(err => {
-      console.log('Panel data error:', err);
+    this.datasourceSrv.get(this.panel.datasource)
+    .then(this.issueQueries.bind(this))
+    .then(this.handleQueryResult.bind(this))
+    .catch(err => {
       this.loading = false;
       this.error = err.message || "Timeseries data request error";
       this.inspector = {error: err};
+      this.events.emit('data-error', err);
+      console.log('Panel data error:', err);
     });
   }
 
@@ -167,6 +171,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     var metricsQuery = {
+      panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.rangeRaw,
       interval: this.interval,
@@ -178,19 +183,50 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    try {
-      return datasource.query(metricsQuery).then(results => {
-        this.setTimeQueryEnd();
+    return datasource.query(metricsQuery);
+  }
 
-        if (this.dashboard.snapshot) {
-          this.panel.snapshotData = results;
-        }
+  handleQueryResult(result) {
+    this.setTimeQueryEnd();
+    this.loading = false;
 
-        return results;
-      });
-    } catch (err) {
-      return this.$q.reject(err);
+    // check for if data source returns subject
+    if (result && result.subscribe) {
+      this.handleDataStream(result);
+      return;
     }
+
+    if (this.dashboard.snapshot) {
+      this.panel.snapshotData = result.data;
+    }
+
+    return this.events.emit('data-received', result.data);
+  }
+
+  handleDataStream(stream) {
+    // if we already have a connection
+    if (this.dataStream) {
+      console.log('two stream observables!');
+      return;
+    }
+
+    this.dataStream = stream;
+    this.dataSubscription = stream.subscribe({
+      next: (data) => {
+        console.log('dataSubject next!');
+        if (data.range) {
+          this.range = data.range;
+        }
+        this.events.emit('data-received', data.data);
+      },
+      error: (error) => {
+        this.events.emit('data-error', error);
+        console.log('panel: observer got error');
+      },
+      complete: () => {
+        console.log('panel: observer got complete');
+      }
+    });
   }
 
   setDatasource(datasource) {

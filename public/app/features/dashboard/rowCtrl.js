@@ -30,11 +30,6 @@ function (angular, _, config) {
 
     $scope.toggleRow = function(row) {
       row.collapse = row.collapse ? false : true;
-      if (!row.collapse) {
-        $timeout(function() {
-          $scope.$broadcast('render');
-        });
-      }
     };
 
     $scope.addPanel = function(panel) {

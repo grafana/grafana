@@ -139,7 +139,7 @@ function (angular, _, $) {
           self.$scope.broadcastRefresh();
         }
         else {
-          self.fullscreenPanel.$broadcast('render');
+          ctrl.render();
         }
         delete self.fullscreenPanel;
       });
@@ -159,7 +159,7 @@ function (angular, _, $) {
       this.$scope.appEvent('panel-fullscreen-enter', {panelId: ctrl.panel.id});
 
       $timeout(function() {
-        panelScope.$broadcast('render');
+        ctrl.render();
       });
     };
 

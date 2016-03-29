@@ -22,7 +22,7 @@ function (angular, _, $) {
         var seriesList;
         var i;
 
-        scope.$on('render', function() {
+        ctrl.events.on('render', function() {
           data = ctrl.seriesList;
           if (data) {
             render();

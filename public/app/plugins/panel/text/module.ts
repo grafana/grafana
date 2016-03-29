@@ -20,20 +20,18 @@ export class TextPanelCtrl extends PanelCtrl {
     super($scope, $injector);
 
     _.defaults(this.panel, panelDefaults);
+
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('refresh', this.onRender.bind(this));
+    this.events.on('render', this.onRender.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
-    this.icon = 'fa fa-text-width';
+  onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
   }
 
-  refresh() {
-    this.render();
-  }
-
-  render() {
+  onRender() {
     if (this.panel.mode === 'markdown') {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {

@@ -1,7 +1,7 @@
-<navbar icon="icon-gf icon-gf-apps" title="{{ctrl.appModel.name}}" title-url="plugins/{{ctrl.pluginId}}/edit">
+<navbar icon-url="{{ctrl.appLogoUrl}}" title="{{ctrl.appModel.name}}" title-url="{{ctrl.appModel.defaultNavUrl}}">
 </navbar>
 
-<div class="page-container">
+<div class="page-container" >
 	<div ng-if="ctrl.page">
 		<plugin-component type="app-page">
 		</plugin-component>
