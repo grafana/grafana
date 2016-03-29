@@ -88,6 +88,7 @@ pages:
 
 - ['plugins/overview.md', 'Plugins', 'Overview']
 - ['plugins/installation.md', 'Plugins', 'Installation']
+- ['plugins/app.md', 'Plugins', 'App plugins']
 - ['plugins/datasources.md', 'Plugins', 'Datasource plugins']
 - ['plugins/panels.md', 'Plugins', 'Panel plugins']
 - ['plugins/development.md', 'Plugins', 'Plugin development']

@@ -22,7 +22,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 	}
 }
 
-var Commands = []cli.Command{
+var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin name>",
@@ -47,5 +47,13 @@ var Commands = []cli.Command{
 		Name:   "remove",
 		Usage:  "remove <plugin name>",
 		Action: runCommand(removeCommand),
+	},
+}
+
+var Commands = []cli.Command{
+	{
+		Name:        "plugins",
+		Usage:       "Manage plugins for grafana",
+		Subcommands: pluginCommands,
 	},
 }

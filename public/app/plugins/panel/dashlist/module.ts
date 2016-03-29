@@ -28,18 +28,18 @@ class DashListCtrl extends PanelCtrl {
       this.panel.tags = [$scope.panel.tag];
       delete this.panel.tag;
     }
+
+    this.events.on('refresh', this.onRefresh.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  onInitEditMode() {
+    this.editorTabIndex = 1;
     this.modes = ['starred', 'search', 'recently viewed'];
-    this.icon = "fa fa-star";
-    this.addEditorTab('Options', () => {
-      return {templateUrl: 'public/app/plugins/panel/dashlist/editor.html'};
-    });
+    this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
   }
 
-  refresh() {
+  onRefresh() {
     var params: any = {limit: this.panel.limit};
 
     if (this.panel.mode === 'recently viewed') {
