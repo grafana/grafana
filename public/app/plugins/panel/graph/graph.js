@@ -218,7 +218,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             },
             highlightSeries: {
               autoHighlight: true,
-              color: "black"
+              color: null,
+              lines: {
+                lineWidth: '+1'
+              }
             }
           };
 
