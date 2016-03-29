@@ -49,6 +49,16 @@ $gf-form-margin: 0.25rem;
   @include border-radius($label-border-radius-sm);
 }
 
+.gf-form-filler {
+  margin-right: $gf-form-margin;
+  margin-bottom: $gf-form-margin;
+  flex-grow: 1;
+  background-color: $input-label-bg;
+
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
+}
+
 .gf-form-checkbox {
   flex-shrink: 0;
   padding: $input-padding-y $input-padding-x;
@@ -152,10 +162,6 @@ $gf-form-margin: 0.25rem;
   flex-grow: 0;
 }
 
-.query-editor-secondary-row {
-  margin-left: 5.2rem;
-}
-
 .gf-form-switch {
   margin-right: $gf-form-margin;
 }
@@ -185,4 +191,28 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+}
+
+.gf-form-query {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
+  .gf-form,
+  .gf-form-filler {
+    margin-bottom: 2px;
+  }
+
+  .gf-form-input,
+  .gf-form-select-wrapper,
+  .gf-form-filler,
+  .gf-form-label {
+    margin-right: 2px;
+  }
+}
+
+.gf-form-query-content {
+  flex-grow: 1;
 }
