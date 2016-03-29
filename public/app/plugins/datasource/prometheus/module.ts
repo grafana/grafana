@@ -9,9 +9,14 @@ class PrometheusAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
 
+class PrometheusQueryOptionsCtrl {
+  static templateUrl = 'partials/query.options.html';
+}
+
 export {
   PrometheusDatasource as Datasource,
   PrometheusQueryCtrl as QueryCtrl,
   PrometheusConfigCtrl as ConfigCtrl,
+  PrometheusQueryOptionsCtrl as QueryOptionsCtrl,
   PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

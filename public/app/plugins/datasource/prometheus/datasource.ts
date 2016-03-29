@@ -5,9 +5,8 @@ import _ from 'lodash';
 import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
+import kbn from 'app/core/utils/kbn';
 import PrometheusMetricFindQuery from './metric_find_query';
-
-var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
 export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -61,29 +60,28 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.query = function(options) {
     var start = getPrometheusTime(options.range.from, false);
     var end = getPrometheusTime(options.range.to, true);
+    var range = Math.ceil(end - start);
 
     var queries = [];
-    options = _.clone(options);
-    _.each(options.targets, _.bind(function(target) {
+    for (let target of options.targets) {
       if (!target.expr || target.hide) {
         return;
       }
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars, interpolateQueryExpr);
+      var interval = templateSrv.replace(target.interval || options.interval, options.scopedVars);
+      query.step = this.calculateStep(interval);
 
-      var interval = target.interval || options.interval;
-      var intervalFactor = target.intervalFactor || 1;
-      target.step = query.step = this.calculateInterval(interval, intervalFactor);
-      var range = Math.ceil(end - start);
-      // Prometheus drop query if range/step > 11000
-      // calibrate step if it is too big
-      if (query.step !== 0 && range / query.step > 11000) {
-        target.step = query.step = Math.ceil(range / 11000);
+      // Prometheus drop query if range/step > 11000 calibrate step if it is too big
+      if (range / query.step > 11000) {
+        query.step = Math.ceil(range / 11000);
       }
 
+      var scopedVars = _.extend({"interval": {value: interval}, "intervalMs": {value: query.step}}, options.scopedVars);
+      query.expr = templateSrv.replace(target.expr, scopedVars, interpolateQueryExpr);
+
       queries.push(query);
-    }, this));
+    }
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -204,15 +202,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     });
   };
 
-  this.calculateInterval = function(interval, intervalFactor) {
-    var m = interval.match(durationSplitRegexp);
-    var dur = moment.duration(parseInt(m[1]), m[2]);
-    var sec = dur.asSeconds();
+  this.calculateStep = function(interval) {
+    var sec = kbn.interval_to_seconds(interval);
     if (sec < 1) {
       sec = 1;
     }
-
-    return Math.ceil(sec * intervalFactor);
+    return sec;
   };
 
   this.transformMetricData = function(md, options, start, end) {

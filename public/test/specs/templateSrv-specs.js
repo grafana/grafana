@@ -43,6 +43,11 @@ define([
         var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
         expect(target).to.be('this.asd.filters');
       });
+
+      it('should replace $test2 with scoped value', function() {
+        var target = _templateSrv.replace('this.[$test].filters', {'test2': {value: 'mupp', text: 'asd'}});
+        expect(target).to.be('this.[mupp].filters');
+      });
     });
 
     describe('replace can pass multi / all format', function() {
