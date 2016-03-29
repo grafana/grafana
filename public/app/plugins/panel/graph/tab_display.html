@@ -1,5 +1,5 @@
-<div class="editor-row gf-form-group">
-  <div class="section">
+<div class="editor-row">
+  <div class="section gf-form-group">
     <h5 class="section-heading">Draw Modes</h5>
 		<gf-form-switch class="gf-form"
 			label="Bars" label-class="width-5"
@@ -14,7 +14,7 @@
 			checked="ctrl.panel.points" on-change="ctrl.render()">
 		</gf-form-switch>
 	</div>
-	<div class="section">
+	<div class="section gf-form-group">
 		<h5 class="section-heading">Mode Options</h5>
 		<div class="gf-form" ng-show="ctrl.panel.lines">
 			<label class="gf-form-label width-8">Fill</label>
@@ -39,7 +39,7 @@
 			checked="ctrl.panel.steppedLine" on-change="ctrl.render()">
 		</gf-form-switch>
 	</div>
-	<div class="section">
+	<div class="section gf-form-group">
 		<h5 class="section-heading">Misc options</h5>
 		<div class="gf-form">
 			<label class="gf-form-label width-7">Null value</label>
@@ -61,7 +61,7 @@
 		</div>
 	</div>
 
-	<div class="section">
+	<div class="section gf-form-group">
 		<h5 class="section-heading">Multiple Series</h5>
 		<gf-form-switch class="gf-form"
 			label="Stack" label-class="width-7"
@@ -82,7 +82,7 @@
 </div>
 
 <div class="editor-row">
-	<div class="section">
+	<div class="section gf-form-group">
 		<h5>Series specific overrides <tip>Regex match example: /server[0-3]/i </tip></h5>
 		<div class="tight-form-container">
 			<div class="tight-form" ng-repeat="override in ctrl.panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">

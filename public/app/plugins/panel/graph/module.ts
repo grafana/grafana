@@ -123,8 +123,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/axisEditor.html', 2);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/styleEditor.html', 3);
+    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
+    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     this.logScales = {
       'linear': 1,
