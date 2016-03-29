@@ -45,6 +45,7 @@ unhighlight a series manually by specifying a series by label, index or object.
 	function init(plot) {
 		var highlightedSeries = {};
 		var originalColors = {};
+		var originalLines = {};
 
 		function highlightSeries(series, color) {
 			var
@@ -55,9 +56,28 @@ unhighlight a series manually by specifying a series by label, index or object.
 			series = seriesAndIndex[1];
 
 			highlightedSeries[seriesAndIndex[0]] = series;
-			originalColors[seriesAndIndex[0]] = series.color;
-
-			series.color = color || options.color;
+			if (options.color) {
+				originalColors[seriesAndIndex[0]] = series.color;
+				series.color = color || options.color;
+			}
+			if (options.lines) {
+				var lineWidth = series.lines.lineWidth || plot.getOptions().series.lines.lineWidth;
+				switch (options.lines.lineWidth[0]) {
+					case '+':
+						lineWidth += parseInt(options.lines.lineWidth.slice(1), 10);
+						break;
+					case '-':
+						lineWidth -= parseInt(options.lines.lineWidth.slice(1), 10);
+						break;
+					default:
+						lineWidth = parseInt(options.lines.lineWidth, 10);
+						break;
+				}
+				originalLines[seriesAndIndex[0]] = series.lines;
+				var lineOptions = jQuery.extend(true, {}, series.lines, options.lines);
+				lineOptions.lineWidth = lineWidth;
+				series.lines = lineOptions;
+			}
 
 			if (options._debug) { start = new Date(); }
 			if (options._optimized) {
@@ -83,7 +103,12 @@ unhighlight a series manually by specifying a series by label, index or object.
 				options = plot.getOptions().highlightSeries,
                 start;
 
-			seriesAndIndex[1].color = originalColors[seriesAndIndex[0]];
+			if (originalColors[seriesAndIndex[0]]) {
+				seriesAndIndex[1].color = originalColors[seriesAndIndex[0]];
+			}
+			if (originalLines[seriesAndIndex[0]]) {
+				seriesAndIndex[1].lines = originalLines[seriesAndIndex[0]];
+			}
 
 			if (options._debug) { start = new Date(); }
 			if (options._optimized) {
