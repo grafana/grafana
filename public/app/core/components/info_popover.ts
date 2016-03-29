@@ -18,7 +18,7 @@ export function infoPopover() {
 
       var offset = attrs.offset || '0 -10px';
       var position = attrs.position || 'right middle';
-      var classes = 'drop-help';
+      var classes = 'drop-help drop-hide-out-of-bounds';
       if (attrs.wide) {
         classes += ' drop-wide';
       }
