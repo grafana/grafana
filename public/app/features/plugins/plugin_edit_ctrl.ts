@@ -2,6 +2,7 @@
 
 import angular from 'angular';
 import _ from 'lodash';
+import appEvents from 'app/core/app_events';
 
 export class PluginEditCtrl {
   model: any;
@@ -17,11 +18,18 @@ export class PluginEditCtrl {
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $routeParams, private $sce, private $http) {
+  constructor(private $scope,
+              private backendSrv,
+              private $routeParams,
+              private $sce,
+              private $http) {
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
     this.tabs = ['Overview'];
+
+    this.preUpdateHook = () => Promise.resolve();
+    this.postUpdateHook = () => Promise.resolve();
    }
 
   init() {
@@ -71,40 +79,44 @@ export class PluginEditCtrl {
   }
 
   update() {
-    var chain = Promise.resolve();
-    var self = this;
-    // if set, handle the preUpdateHook. If this returns a promise,
-    // the next step of execution will block until the promise resolves.
-    // if the promise is rejected, this update will be aborted.
-    if (this.preUpdateHook != null) {
-      chain = self.preUpdateHook();
-    }
-
-    // Perform the core update procedure
-    chain = chain.then(function() {
+    this.preUpdateHook().then(() => {
       var updateCmd = _.extend({
-        enabled: self.model.enabled,
-        pinned: self.model.pinned,
-        jsonData: self.model.jsonData,
-        secureJsonData: self.model.secureJsonData,
+        enabled: this.model.enabled,
+        pinned: this.model.pinned,
+        jsonData: this.model.jsonData,
+        secureJsonData: this.model.secureJsonData,
       }, {});
 
-      return self.backendSrv.post(`/api/plugins/${self.pluginId}/settings`, updateCmd);
-    });
-
-    // if set, performt he postUpdate hook. If a promise is returned it will block
-    // the final step of the update procedure (reloading the page) until the promise
-    // resolves.  If the promise is rejected the page will not be reloaded.
-    if (this.postUpdateHook != null) {
-      chain = chain.then(function() {
-        return this.postUpdateHook();
-      });
-    }
-
-    // all stesp in the update procedure are complete, so reload the page to make changes
-    // take effect.
-    chain.then(function() {
+      return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
+    })
+    .then(this.postUpdateHook)
+    .then((res) => {
       window.location.href = window.location.href;
+    });
+  }
+
+  importDashboards() {
+    // move to dashboards tab
+    this.tabIndex = 2;
+
+    return new Promise((resolve) => {
+      if (!this.$scope.$$phase) {
+        this.$scope.$digest();
+      }
+
+      // let angular load dashboards tab
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+
+    }).then(() => {
+      return new Promise((resolve, reject) => {
+        // send event to import list component
+        appEvents.emit('dashboard-list-import-all', {
+          resolve: resolve,
+          reject: reject
+        });
+      });
     });
   }
 
@@ -122,6 +134,11 @@ export class PluginEditCtrl {
     this.update();
   }
 
+  disable() {
+    this.model.enabled = false;
+    this.model.pinned = false;
+    this.update();
+  }
 }
 
 angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);

@@ -56,8 +56,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Url: setting.AppSubUrl + "/dashboard/new"})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Url: setting.AppSubUrl + "/import/dashboard"})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Icon: "fa fa-plus", Url: setting.AppSubUrl + "/dashboard/new"})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/import/dashboard"})
 	}
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -88,22 +88,35 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	for _, plugin := range enabledPlugins.Apps {
 		if plugin.Pinned {
-			pageLink := &dtos.NavLink{
+			appLink := &dtos.NavLink{
 				Text: plugin.Name,
-				Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit",
+				Url:  plugin.DefaultNavUrl,
 				Img:  plugin.Info.Logos.Small,
 			}
 
-			for _, page := range plugin.Pages {
-				if !page.SuppressNav {
-					pageLink.Children = append(pageLink.Children, &dtos.NavLink{
-						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + page.Slug,
-						Text: page.Name,
-					})
+			for _, include := range plugin.Includes {
+				if include.Type == "page" && include.AddToNav {
+					link := &dtos.NavLink{
+						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+						Text: include.Name,
+					}
+					appLink.Children = append(appLink.Children, link)
+				}
+				if include.Type == "dashboard" && include.AddToNav {
+					link := &dtos.NavLink{
+						Url:  setting.AppSubUrl + "/dashboard/db/" + include.Slug,
+						Text: include.Name,
+					}
+					appLink.Children = append(appLink.Children, link)
 				}
 			}
 
-			data.MainNavLinks = append(data.MainNavLinks, pageLink)
+			if c.OrgRole == m.ROLE_ADMIN {
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+			}
+
+			data.MainNavLinks = append(data.MainNavLinks, appLink)
 		}
 	}
 
@@ -113,10 +126,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Icon: "fa fa-fw fa-cogs",
 			Url:  setting.AppSubUrl + "/admin",
 			Children: []*dtos.NavLink{
-				{Text: "Global Users", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/users"},
-				{Text: "Global Orgs", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/orgs"},
-				{Text: "Server Settings", Icon: "fa fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/settings"},
-				{Text: "Server Stats", Icon: "fa-fw fa-cogs", Url: setting.AppSubUrl + "/admin/stats"},
+				{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
+				{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+				{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
+				{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
 			},
 		})
 	}

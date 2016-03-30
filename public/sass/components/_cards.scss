@@ -99,6 +99,10 @@
 
 .card-list-layout-grid {
 
+  .card-item-header-action {
+    float: right;
+  }
+
   .card-item-wrapper {
     width: 100%;
     padding: 0 1.5rem 1.5rem 0rem;
@@ -127,6 +131,14 @@
     .card-item-wrapper {
       width: 33.333333%;
     }
+  }
+
+  &.card-list-layout-grid--max-2-col {
+    @include media-breakpoint-up(lg) {
+      .card-item-wrapper {
+        width: 50%;
+      }
+    }    
   }
 }
 

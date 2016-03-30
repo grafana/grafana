@@ -18,7 +18,7 @@ export function infoPopover() {
 
       var offset = attrs.offset || '0 -10px';
       var position = attrs.position || 'right middle';
-      var classes = 'drop-help';
+      var classes = 'drop-help drop-hide-out-of-bounds';
       if (attrs.wide) {
         classes += ' drop-wide';
       }
@@ -39,14 +39,6 @@ export function infoPopover() {
             offset: offset
           }
         });
-
-      // inputElem.on('focus.popover', function() {
-      //   drop.open();
-      // });
-      //
-      // inputElem.on('blur.popover', function() {
-      //   close();
-      // });
 
         scope.$on('$destroy', function() {
           drop.destroy();

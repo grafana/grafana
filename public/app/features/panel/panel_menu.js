@@ -56,6 +56,7 @@ function (angular, $, _, Tether) {
 
           template += '<a class="panel-menu-link" ';
           if (item.click) { template += ' ng-click="' + item.click + '"'; }
+          if (item.href) { template += ' href="' + item.href + '"'; }
           template += '>';
           template += item.text + '</a>';
         });

@@ -18,6 +18,7 @@ module.exports = function (grunt) {
   }
 
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
+  console.log('Version', config.pkg.version);
 
   // load plugins
   require('load-grunt-tasks')(grunt);
