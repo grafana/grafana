@@ -4,11 +4,18 @@ page_description: Datasource plugins for Grafana
 page_keywords: grafana, plugins, documentation
 ---
 
- > Our goal is not to have a very extensive documentation but rather have actual code that people can look at. An example implementation of a datasource can be found in this [example datasource repo](https://github.com/grafana/simple-json-datasource)
 
 # Datasources
 
-Datasource plugins enables people to develop plugins for any database that communicates over http. Its up to the plugin to transform the data into time series data so that any grafana panel can then show it.
+Datasource plugins enables people to develop plugins for any database that
+communicates over http. Its up to the plugin to transform the data into
+time series data so that any grafana panel can then show it.
+
+## Datasource development
+
+> Our goal is not to have a very extensive documentation but rather have actual
+> code that people can look at. An example implementation of a datasource can be
+> found in this [example datasource repo](https://github.com/grafana/simple-json-datasource)
 
 To interact with the rest of grafana the plugins module file can export 5 different components.
 
@@ -19,11 +26,14 @@ To interact with the rest of grafana the plugins module file can export 5 differ
 - AnnotationsQueryCtrl
 
 ## Plugin json
+
 There are two datasource specific settings for the plugin.json
+
 ```javascript
 "metrics": true,
 "annotations": false,
 ```
+
 These settings indicates what kind of data the plugin can deliver. At least one of them have to be true
 
 ## Datasource
