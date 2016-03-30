@@ -103,7 +103,7 @@ func makeLatestDistCopies() {
 		rpmIteration = "-" + linuxPackageIteration
 	}
 
-	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
+	runError("cp", "dist/grafana_"+linuxPackageVersion+linuxPackageIteration+"_amd64.deb", "dist/grafana_latest_amd64.deb")
 	runError("cp", "dist/grafana-"+linuxPackageVersion+rpmIteration+".x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
 	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
 }
@@ -133,6 +133,11 @@ func readVersionFromPackageJson() {
 	if len(parts) > 1 {
 		linuxPackageVersion = parts[0]
 		linuxPackageIteration = parts[1]
+		if linuxPackageIteration != "" {
+			// add timestamp to iteration
+			linuxPackageIteration = fmt.Sprintf("%s%v", linuxPackageIteration, time.Now().Unix())
+		}
+		log.Println(fmt.Sprintf("teration %v", linuxPackageIteration))
 	}
 }
 
