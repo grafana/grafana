@@ -172,8 +172,8 @@ func createDebPackages() {
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
 		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
-		version:             linuxPackageVersion,
-		iteration:           linuxPackageIteration,
+		version:                linuxPackageVersion,
+		iteration:              linuxPackageIteration,
 
 		postinstSrc:    "packaging/deb/control/postinst",
 		initdScriptSrc: "packaging/deb/init.d/grafana-server",
