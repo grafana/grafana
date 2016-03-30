@@ -5,10 +5,10 @@ import (
 )
 
 func upgradeCommand(c CommandLine) error {
-	pluginDir := c.GlobalString("path")
+	pluginsDir := c.GlobalString("pluginsDir")
 	pluginName := c.Args().First()
 
-	localPlugin, err := s.ReadPlugin(pluginDir, pluginName)
+	localPlugin, err := s.ReadPlugin(pluginsDir, pluginName)
 
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func upgradeCommand(c CommandLine) error {
 	for _, v := range remotePlugins.Plugins {
 		if localPlugin.Id == v.Id {
 			if ShouldUpgrade(localPlugin.Info.Version, v) {
-				s.RemoveInstalledPlugin(pluginDir, pluginName)
+				s.RemoveInstalledPlugin(pluginsDir, pluginName)
 				return InstallPlugin(localPlugin.Id, "", c)
 			}
 		}

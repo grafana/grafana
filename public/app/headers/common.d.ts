@@ -1,5 +1,5 @@
-///<reference path="../../vendor/npm/angular2/typings/tsd.d.ts" />
-///<reference path="../../vendor/npm/angular2/manual_typings/globals.d.ts" />
+///<reference path="../../vendor/npm/angular2/typings/es6-promise/es6-promise.d.ts" />
+///<reference path="../../vendor/npm/angular2/typings/es6-collections/es6-collections.d.ts" />
 
 declare var System: any;
 

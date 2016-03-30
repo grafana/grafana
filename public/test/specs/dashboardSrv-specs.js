@@ -122,7 +122,10 @@ define([
             {
               panels: [
                 {
-                  type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  type: 'graph', legend: true, aliasYAxis: { test: 2 },
+                  y_formats: ['kbyte', 'ms'],
+                  grid: {min: 1, max: 10, rightMin: 5, rightMax: 15, leftLogBase: 1, rightLogBase: 2},
+                  leftYAxisLabel: 'left label',
                   targets: [{refId: 'A'}, {}],
                 },
                 {
@@ -172,11 +175,6 @@ define([
         expect(graph.legend.show).to.be(true);
       });
 
-      it('update grid options', function() {
-        expect(graph.grid.leftMin).to.be(1);
-        expect(graph.grid.leftMax).to.be(10);
-      });
-
       it('move aliasYAxis to series override', function() {
         expect(graph.seriesOverrides[0].alias).to.be("test");
         expect(graph.seriesOverrides[0].yaxis).to.be(2);
@@ -193,8 +191,24 @@ define([
         expect(table.styles[1].thresholds[1]).to.be("300");
       });
 
+      it('graph grid to yaxes options', function() {
+        expect(graph.yaxes[0].min).to.be(1);
+        expect(graph.yaxes[0].max).to.be(10);
+        expect(graph.yaxes[0].format).to.be('kbyte');
+        expect(graph.yaxes[0].label).to.be('left label');
+        expect(graph.yaxes[0].logBase).to.be(1);
+        expect(graph.yaxes[1].min).to.be(5);
+        expect(graph.yaxes[1].max).to.be(15);
+        expect(graph.yaxes[1].format).to.be('ms');
+        expect(graph.yaxes[1].logBase).to.be(2);
+
+        expect(graph.grid.rightMax).to.be(undefined);
+        expect(graph.grid.rightLogBase).to.be(undefined);
+        expect(graph.y_formats).to.be(undefined);
+      });
+
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(11);
+        expect(model.schemaVersion).to.be(12);
       });
 
     });
@@ -248,6 +262,8 @@ define([
           rows: [{
             panels: [{
               type: 'graph',
+              grid: {},
+              yaxes: [{}, {}],
               targets: [{
                 "alias": "$tag_datacenter $tag_source $col",
                 "column": "value",

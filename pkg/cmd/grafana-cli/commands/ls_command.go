@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
@@ -31,7 +32,7 @@ var validateLsCommand = func(pluginDir string) error {
 }
 
 func lsCommand(c CommandLine) error {
-	pluginDir := c.GlobalString("path")
+	pluginDir := c.GlobalString("pluginsDir")
 	if err := validateLsCommand(pluginDir); err != nil {
 		return err
 	}
