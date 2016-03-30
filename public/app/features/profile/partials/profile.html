@@ -10,20 +10,24 @@
 		<h3 class="page-heading">Preferences</h3>
 
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Name</span>
+			<span class="gf-form-label width-9">Name</span>
 			<input class="gf-form-input max-width-21" type="text" required ng-model="user.name" >
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Email</span>
+			<span class="gf-form-label width-9">Email</span>
 			<input class="gf-form-input max-width-21" type="email" required ng-model="user.email">
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Username</span>
+			<span class="gf-form-label width-9">Username</span>
 			<input class="gf-form-input max-width-21" type="text" required ng-model="user.login">
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">UI Theme</span>
+			<span class="gf-form-label width-9">UI Theme</span>
 			<select class="gf-form-input gf-size-auto" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Home Dashboard</span>
+			<dashboard-selector model="user.homeDashboardId"></dashboard-selector>
 		</div>
 
 		<div class="gf-form-button-row">
