@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "angular2": "2.0.0-beta.12",
+    "zone.js": "^0.6.6",
     "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.0",
@@ -67,7 +68,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "es5-shim": "^4.4.1",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",

@@ -25,7 +25,6 @@ module.exports = function(config) {
         'angular2/manual_typings/**/*',
         'systemjs/dist/*.js',
         'es6-promise/**/*',
-        'es5-shim/*.js',
         'es6-shim/*.js',
         'reflect-metadata/*.js',
         'reflect-metadata/*.ts',
