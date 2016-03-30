@@ -36,6 +36,7 @@ $gf-form-margin: 0.25rem;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   flex-shrink: 0;
 
@@ -108,9 +109,9 @@ $gf-form-margin: 0.25rem;
 }
 
 .gf-form-select-wrapper {
+  margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
-  margin-right: $gf-form-margin;
 
   select.gf-form-input {
     text-indent: .01px;
@@ -151,6 +152,10 @@ $gf-form-margin: 0.25rem;
   flex-grow: 0;
 }
 
+.gf-form-switch {
+  margin-right: $gf-form-margin;
+}
+
 .natural-language-input {
   &input[type="number"] {
     font-size: $font-size-base;
@@ -160,3 +165,20 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-dropdown-typeahead {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+  padding-right: $input-padding-x;
+
+  &:after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+}

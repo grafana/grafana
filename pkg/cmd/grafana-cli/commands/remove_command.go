@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	services "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -11,7 +12,7 @@ var getPluginss func(path string) []m.InstalledPlugin = services.GetLocalPlugins
 var removePlugin func(pluginPath, id string) error = services.RemoveInstalledPlugin
 
 func removeCommand(c CommandLine) error {
-	pluginPath := c.GlobalString("path")
+	pluginPath := c.GlobalString("pluginsDir")
 	localPlugins := getPluginss(pluginPath)
 
 	log.Info("remove!\n")
