@@ -60,7 +60,11 @@ $body-color:    		    $gray-1;
 $text-color:    		    $gray-1;
 $text-color-strong:	    $white;
 $text-color-weak: 	    $gray-1;
+$text-color-faint:      $gray-3;
 $text-color-emphasis: 	$dark-5;
+
+$text-shadow-strong: none;
+$text-shadow-faint: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);

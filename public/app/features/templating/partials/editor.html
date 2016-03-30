@@ -74,32 +74,33 @@
 			<h5 class="section-heading">Variable</h5>
 			<div class="gf-form-group">
 				<div class="gf-form-inline">
-					<div class="gf-form">
+					<div class="gf-form max-width-19">
 						<span class="gf-form-label width-7">Name</span>
-						<input type="text" class="gf-form-input max-width-14" placeholder="name" ng-model='current.name'></input>
+						<input type="text" class="gf-form-input max-width-12" placeholder="name" ng-model='current.name'></input>
 					</div>
 					<div class="gf-form">
 						<span class="gf-form-label width-4">Type</span>
-						<div class="gf-form-select-wrapper max-width-10">
-							<select class="gf-form-input  max-width-10" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input width-7" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
 						</div>
 					</div>
-					<div class="gf-form">
+					<div class="gf-form max-width-19">
 						<span class="gf-form-label width-7" ng-show="current.type === 'query'">Data source</span>
-						<div class="gf-form-select-wrapper" ng-show="current.type === 'query'">
-							<select class="gf-form-input max-width-14" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
+						<div class="gf-form-select-wrapper max-width-12" ng-show="current.type === 'query'">
+							<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
 						</div>
 					</div>
 				</div>
 				<div class="gf-form-inline">
-					<div class="gf-form">
+					<div class="gf-form max-width-19">
 						<span class="gf-form-label width-7">Label</span>
-						<input type="text" class="gf-form-input max-width-14" ng-model='current.label' placeholder="optional display name"></input>
+						<input type="text" class="gf-form-input max-width-12" ng-model='current.label' placeholder="optional display name"></input>
 					</div>
 					<div class="gf-form">
 						<span class="gf-form-label width-4">Hide</span>
-						<editor-checkbox text="Label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
-						<editor-checkbox text="Variable" model="current.hideVariable" change="runQuery()"></editor-checkbox>
+            <div class="gf-form-select-wrapper">
+							<select class="gf-form-input width-7" ng-model="current.hide" ng-options="f.value as f.text for f in hideOptions"></select>
+						</div>
 					</div>
 				</div>
 
@@ -176,17 +177,22 @@
 				</div>
 			</div>
 
-			<div class="gf-form-group" >
+			<div class="section gf-form-group" >
 				<h5 class="section-heading">Selection Options</h5>
-				<div class="gf-form">
-					<span class="gf-form-label width-10">Multi-value</span>
-					<editor-checkbox text="Enable" model="current.multi" change="runQuery()"></editor-checkbox>
-					<tip>Enables multiple values to be selected at the same time</tip>
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-10">Include All option</span>
-					<editor-checkbox class="width-13" text="Enable" model="current.includeAll" change="runQuery()"></editor-checkbox>
-				</div>
+        <gf-form-switch class="gf-form"
+                        label="Multi-value"
+                        label-class="width-10"
+                        tooltip="Enables multiple values to be selected at the same time"
+                        checked="current.multi"
+                        on-change="runQuery()">
+        </gf-form-switch>
+        <gf-form-switch class="gf-form"
+                        label="Include All option"
+                        label-class="width-10"
+                        checked="current.includeAll"
+                        on-change="runQuery()">
+        </gf-form-switch>
+
 				<div class="gf-form" ng-if="current.includeAll">
 					<span class="gf-form-label width-10">Custom all value</span>
 					<input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>

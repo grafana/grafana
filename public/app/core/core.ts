@@ -31,6 +31,7 @@ import {arrayJoin} from './directives/array_join';
 import {liveSrv} from './live/live_srv';
 import {Emitter} from './utils/emitter';
 import {layoutSelector} from './components/layout_selector/layout_selector';
+import {switchDirective} from './components/switch';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -49,6 +50,7 @@ export {
   colorPicker,
   liveSrv,
   layoutSelector,
+  switchDirective,
   infoPopover,
   Emitter,
   appEvents,

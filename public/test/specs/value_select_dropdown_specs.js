@@ -11,7 +11,7 @@ function () {
     var rootScope;
 
     beforeEach(module('grafana.core'));
-    beforeEach(inject(function($controller, $rootScope, $q) {
+    beforeEach(inject(function($controller, $rootScope, $q, $httpBackend) {
       rootScope = $rootScope;
       scope = $rootScope.$new();
       ctrl = $controller('ValueSelectDropdownCtrl', {$scope: scope});
@@ -19,6 +19,7 @@ function () {
         return $q.when(tagValuesMap[obj.tagKey]);
       };
       ctrl.onUpdated = sinon.spy();
+      $httpBackend.when('GET', /\.html$/).respond('');
     }));
 
     describe("Given simple variable", function() {
