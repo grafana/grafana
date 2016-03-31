@@ -174,8 +174,9 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 							return
 						}
 						for indx,source := range stmt.SourceNames() {
-							regex := stmt.Sources[indx].(*influxql.Measurement).Regex.Val
+							regex := stmt.Sources[indx].(*influxql.Measurement).Regex
 							if regex != nil {
+								regex := regex.Val
 								if len(measurements) == 0 {
 									measurements,err = getMeasurements(ds,proxyPath)
 									if err != nil{
