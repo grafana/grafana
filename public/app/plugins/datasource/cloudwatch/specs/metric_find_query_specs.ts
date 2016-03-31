@@ -21,6 +21,7 @@ describe('CloudWatchMetricFindQuery', function() {
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(CloudWatchDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   function describeMetricFindQuery(query, func) {
