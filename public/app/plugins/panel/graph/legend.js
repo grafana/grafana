@@ -22,7 +22,7 @@ function (angular, _, $) {
         var seriesList;
         var i;
 
-        scope.$on('render', function() {
+        ctrl.events.on('render', function() {
           data = ctrl.seriesList;
           if (data) {
             render();
@@ -101,6 +101,12 @@ function (angular, _, $) {
         }
 
         function render() {
+          if (!ctrl.panel.legend.show) {
+            elem.empty();
+            firstRender = true;
+            return;
+          }
+
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);

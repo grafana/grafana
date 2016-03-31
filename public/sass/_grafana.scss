@@ -14,9 +14,9 @@
 @import "base/reboot";
 @import "base/type";
 @import "base/forms";
-@import "base/fonts";
 @import "base/grid";
 @import "base/font_awesome";
+@import "base/grafana_icons";
 
 // UTILS
 @import "utils/utils";
@@ -35,6 +35,7 @@
 @import "components/navs";
 @import "components/tabs";
 @import "components/alerts";
+@import "components/switch";
 @import "components/tooltip";
 @import "components/tags";
 @import "components/panel_graph";

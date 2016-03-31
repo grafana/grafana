@@ -86,12 +86,12 @@ pages:
 - ['http_api/snapshot.md', 'API', 'Snapshot API']
 - ['http_api/other.md', 'API', 'Other API']
 
-- ['plugins/overview.md', 'Plugins', 'Overview']
+- ['plugins/index.md', 'Plugins', 'Overview']
 - ['plugins/installation.md', 'Plugins', 'Installation']
-- ['plugins/datasources.md', 'Plugins', 'Datasource plugins']
-- ['plugins/panels.md', 'Plugins', 'Panel plugins']
-- ['plugins/development.md', 'Plugins', 'Plugin development']
-- ['plugins/plugin.json.md', 'Plugins', 'Plugin json']
+- ['plugins/development.md', 'Plugins', 'Development']
+- ['plugins/apps.md', 'Plugins', 'Apps']
+- ['plugins/datasources.md', 'Plugins', 'Datasources']
+- ['plugins/panels.md', 'Plugins', 'Panels']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']

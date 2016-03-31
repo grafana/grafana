@@ -25,31 +25,28 @@ class DashListCtrl extends PanelCtrl {
     _.defaults(this.panel, panelDefaults);
 
     if (this.panel.tag) {
-      this.panel.tags = [$scope.panel.tag];
+      this.panel.tags = [this.panel.tag];
       delete this.panel.tag;
     }
+
+    this.events.on('refresh', this.onRefresh.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  onInitEditMode() {
+    this.editorTabIndex = 1;
     this.modes = ['starred', 'search', 'recently viewed'];
-    this.icon = "fa fa-star";
-    this.addEditorTab('Options', () => {
-      return {templateUrl: 'public/app/plugins/panel/dashlist/editor.html'};
-    });
+    this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
   }
 
-  refresh() {
+  onRefresh() {
     var params: any = {limit: this.panel.limit};
 
     if (this.panel.mode === 'recently viewed') {
-      var dashboardIds = impressions.getDashboardOpened();
+      var dashIds = _.first(impressions.getDashboardOpened(), this.panel.limit);
 
-      return this.backendSrv.search({
-        dashboardIds: impressions.getDashboardOpened(),
-        limit: this.panel.limit
-      }).then(result => {
-        this.dashList = dashboardIds.map(orderId => {
+      return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
+        this.dashList = dashIds.map(orderId => {
           return _.find(result, dashboard => {
             return dashboard.id === orderId;
           });

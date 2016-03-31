@@ -1,7 +1,7 @@
 {
   "rules": {
     "class-name": true,
-    "comment-format": [true, "check-space"],
+    "comment-format": [false, "check-space"],
     "curly": true,
     "eofline": true,
     "forin": false,

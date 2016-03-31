@@ -42,6 +42,7 @@
 	      <div class="gf-form-button-row">
 					<button type="submit" class="btn btn-success" ng-click="ctrl.enable()" ng-show="!ctrl.model.enabled">Enable</button>
 					<button type="submit" class="btn btn-success" ng-click="ctrl.update()" ng-show="ctrl.model.enabled">Update</button>
+					<button type="submit" class="btn btn-danger" ng-click="ctrl.disable()" ng-show="ctrl.model.enabled">Disable</button>
 				</div>
       </div>
     </div>
@@ -61,10 +62,6 @@
           <li ng-repeat="plug in ctrl.includes" class="plugin-info-list-item">
             <i class="{{plug.icon}}"></i>
             {{plug.name}}
-          </li>
-          <li ng-repeat="page in ctrl.model.pages" class="plugin-info-list-item">
-            <i class="icon-gf icon-gf-share"></i>
-            <a href="plugins/{{ctrl.model.id}}/page/{{page.slug}}">{{page.name}}</a>
           </li>
         </ul>
       </section>

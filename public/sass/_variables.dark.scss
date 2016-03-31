@@ -48,12 +48,17 @@ $critical:              #ed2e18;
 
 // Scaffolding
 // -------------------------
-$body-bg:  			   rgb(20,20,20);
-$page-bg:  			   $dark-2;
-$body-color:   		 $gray-4;
-$text-color:   	   $gray-4;
-$text-color-strong: $white;
-$text-color-weak: $gray-2;
+$body-bg:  			   	    rgb(20,20,20);
+$page-bg:  			   	    $dark-2;
+$body-color:   		 	    $gray-4;
+$text-color:   	   		  $gray-4;
+$text-color-strong: 	  $white;
+$text-color-weak: 		  $gray-2;
+$text-color-faint:      $gray-1;
+$text-color-emphasis: 	$gray-5;
+
+$text-shadow-strong: 1px 1px 4px $black;
+$text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
@@ -124,24 +129,24 @@ $btn-primary-bg:              $brand-primary;
 $btn-primary-bg-hl:           lighten($brand-primary, 8%);
 
 $btn-secondary-bg:            $blue-dark;
-$btn-secondary-bg-hl:     		lighten($blue-dark, 3%);
+$btn-secondary-bg-hl:     		lighten($blue-dark, 5%);
 
-$btn-success-bg-hl:     	    darken($green, 3%);
 $btn-success-bg:              lighten($green, 3%);
+$btn-success-bg-hl:     	    darken($green, 3%);
 
 $btn-warning-bg:              $brand-warning;
 $btn-warning-bg-hl:     	    lighten($brand-warning, 8%);
 
-$btn-danger-bg:               lighten($red, 3%);
-$btn-danger-bg-hl:            darken($red, 3%);
+$btn-danger-bg:               $red;
+$btn-danger-bg-hl:            lighten($red, 5%);
 
 $btn-inverse-bg:              $dark-3;
-$btn-inverse-bg-hl:     	    lighten($dark-3, 1%);
+$btn-inverse-bg-hl:     	    lighten($dark-3, 4%);
 $btn-inverse-text-color:      $link-color;
 
 $btn-link-color:              $gray-3;
 
-$iconContainerBackground:	  $black;
+$iconContainerBackground:	    $black;
 
 // Forms
 // -------------------------
@@ -150,7 +155,7 @@ $input-bg-disabled:              $dark-3;
 
 $input-color:                    $gray-4;
 $input-border-color:             $dark-4;
-$input-box-shadow:               inset 1px 0px 0.5rem 0px rgba(200, 200, 200, 0.10);
+$input-box-shadow:               inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.10);
 $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;

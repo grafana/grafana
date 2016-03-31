@@ -35,7 +35,7 @@ function (angular, _) {
     };
 
     function regexEscape(value) {
-      return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+      return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
     }
 
     function luceneEscape(value) {
@@ -69,6 +69,9 @@ function (angular, _) {
           return '(' + quotedValues.join(' OR ') + ')';
         }
         case "pipe": {
+          if (typeof value === 'string') {
+            return value;
+          }
           return value.join('|');
         }
         default:  {

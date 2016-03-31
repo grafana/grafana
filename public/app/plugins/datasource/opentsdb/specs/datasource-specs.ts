@@ -12,9 +12,10 @@ describe('opentsdb', function() {
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
-    ctx.$httpBackend =  $httpBackend;
+    ctx.$httpBackend = $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(OpenTsDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   describe('When performing metricFindQuery', function() {
