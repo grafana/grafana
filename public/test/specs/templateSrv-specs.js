@@ -127,7 +127,7 @@ define([
 
       it('multi value and regex format should render regex string', function() {
         var result = _templateSrv.formatValue(['test.','test2'], 'regex');
-        expect(result).to.be('test\\.|test2');
+        expect(result).to.be('test\\.$|test2');
       });
 
       it('multi value and pipe should render pipe string', function() {
@@ -138,6 +138,11 @@ define([
       it('slash should be properly escaped in regex format', function() {
          var result = _templateSrv.formatValue('Gi3/14', 'regex');
          expect(result).to.be('Gi3\\/14');
+      });
+
+      it('multi value and regex format should match entire strings', function() {
+         var result = _templateSrv.formatValue(['val1', 'val10'], 'regex');
+         expect(result).to.be('val1$|val10');
       });
 
     });
