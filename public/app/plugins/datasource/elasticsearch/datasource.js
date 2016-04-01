@@ -47,10 +47,19 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this._get = function(url) {
-      return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      var range = timeSrv.timeRange();
+      var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+      if (index_list) {
+        return this._request('GET', index_list[0] + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      } else {
+        return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      }
     };
 
     this._post = function(url, data) {
@@ -206,7 +215,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
-        var fields = {};
+        var fields = {},
+            new_pre;
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -214,7 +224,52 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'nested': 'nested'
         };
+
+        function autocompleteSearchFields(doc, pre) {
+          for (var field in doc) {
+            var prop = doc[field];
+            if (!prop.hasOwnProperty('type') && prop.hasOwnProperty('properties')) {
+              for (var subfield in prop.properties) {
+                var subfield_prop = prop.properties[subfield];
+                if (pre) {
+                  new_pre = pre + '.' + field + '.' + subfield;
+                } else {
+                  new_pre = field + '.' + subfield;
+                }
+                if (query.type && typeMap[subfield_prop.type] !== query.type) {
+                  autocompleteSearchFields(subfield_prop.properties, new_pre);
+                }
+                if (subfield_prop.type && subfield[0] !== '_') {
+                  if (query.type && typeMap[subfield_prop.type] === query.type) {
+                    fields[new_pre] = {text: new_pre, type: subfield_prop.type};
+                  }
+                }
+              }
+            } else if (prop.hasOwnProperty('type') && prop.hasOwnProperty('properties')) {
+              if (pre) {
+                new_pre = pre + '.' + field;
+              } else {
+                new_pre = field;
+              }
+              autocompleteSearchFields(prop.properties, new_pre);
+              //continue;
+            } else if (prop.hasOwnProperty('type') && !prop.hasOwnProperty('properties')) {
+              if (query.type && typeMap[prop.type] !== query.type) {
+                continue;
+              }
+              if (prop.type && field[0] !== '_') {
+                if (pre) {
+                  new_pre = pre + '.' + field;
+                } else {
+                  new_pre = field;
+                }
+                fields[new_pre] = {text: new_pre, type: prop.type};
+              }
+            }
+          }
+        }
 
         for (var indexName in res) {
           var index = res[indexName];
@@ -222,15 +277,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           if (!mappings) { continue; }
           for (var typeName in mappings) {
             var properties = mappings[typeName].properties;
-            for (var field in properties) {
-              var prop = properties[field];
-              if (query.type && typeMap[prop.type] !== query.type) {
-                continue;
-              }
-              if (prop.type && field[0] !== '_') {
-                fields[field] = {text: field, type: prop.type};
-              }
-            }
+            autocompleteSearchFields(properties, '');
           }
         }
 
