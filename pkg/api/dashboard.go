@@ -159,7 +159,6 @@ func canEditDashboard(role m.RoleType) bool {
 }
 
 func GetHomeDashboard(c *middleware.Context) {
-
 	// Checking if there is any preference set for home dashboard
 	query := m.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
 

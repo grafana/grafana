@@ -7,7 +7,7 @@ define([
   './playlist/all',
   './snapshot/all',
   './panel/all',
-  './profile/profileCtrl',
+  './profile/profile_ctrl',
   './profile/changePasswordCtrl',
   './profile/selectOrgCtrl',
   './styleguide/styleguide',
