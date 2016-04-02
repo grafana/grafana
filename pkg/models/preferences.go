@@ -33,6 +33,14 @@ type GetPreferencesQuery struct {
 	Result *Preferences
 }
 
+type GetPreferencesWithDefaultsQuery struct {
+	Id     int64
+	OrgId  int64
+	UserId int64
+
+	Result *Preferences
+}
+
 // ---------------------
 // COMMANDS
 type SavePreferencesCommand struct {

@@ -7,8 +7,5 @@ define([
   './playlist/all',
   './snapshot/all',
   './panel/all',
-  './profile/profile_ctrl',
-  './profile/changePasswordCtrl',
-  './profile/selectOrgCtrl',
   './styleguide/styleguide',
 ], function () {});

@@ -22,34 +22,52 @@ func SetHomeDashboard(c *middleware.Context, cmd m.SavePreferencesCommand) Respo
 
 // GET /api/user/preferences
 func GetUserPreferences(c *middleware.Context) Response {
-	userPrefs := m.GetPreferencesQuery{UserId: c.UserId, OrgId: c.OrgId}
+	return getPreferencesFor(c.OrgId, c.UserId)
+}
 
-	if err := bus.Dispatch(&userPrefs); err != nil {
-		c.JsonApiErr(500, "Failed to get preferences", err)
+func getPreferencesFor(orgId int64, userId int64) Response {
+	prefsQuery := m.GetPreferencesQuery{UserId: userId, OrgId: orgId}
+
+	if err := bus.Dispatch(&prefsQuery); err != nil {
+		return ApiError(500, "Failed to get preferences", err)
 	}
 
-	dto := dtos.UserPrefs{
-		Theme:           userPrefs.Result.Theme,
-		HomeDashboardId: userPrefs.Result.HomeDashboardId,
-		Timezone:        userPrefs.Result.Timezone,
+	dto := dtos.Prefs{
+		Theme:           prefsQuery.Result.Theme,
+		HomeDashboardId: prefsQuery.Result.HomeDashboardId,
+		Timezone:        prefsQuery.Result.Timezone,
 	}
 
 	return Json(200, &dto)
 }
 
 // PUT /api/user/preferences
-func UpdateUserPreferences(c *middleware.Context, dtoCmd dtos.UpdateUserPrefsCmd) Response {
+func UpdateUserPreferences(c *middleware.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+	return updatePreferencesFor(c.OrgId, c.UserId, &dtoCmd)
+}
+
+func updatePreferencesFor(orgId int64, userId int64, dtoCmd *dtos.UpdatePrefsCmd) Response {
 	saveCmd := m.SavePreferencesCommand{
-		UserId:          c.UserId,
-		OrgId:           c.OrgId,
+		UserId:          userId,
+		OrgId:           orgId,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		HomeDashboardId: dtoCmd.HomeDashboardId,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {
-		c.JsonApiErr(500, "Failed to save preferences", err)
+		return ApiError(500, "Failed to save preferences", err)
 	}
 
-	return ApiSuccess("User preferences updated")
+	return ApiSuccess("Preferences updated")
+}
+
+// GET /api/org/preferences
+func GetOrgPreferences(c *middleware.Context) Response {
+	return getPreferencesFor(c.OrgId, 0)
+}
+
+// PUT /api/org/preferences
+func UpdateOrgPreferences(c *middleware.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+	return updatePreferencesFor(c.OrgId, 0, &dtoCmd)
 }

@@ -96,12 +96,15 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
 			r.Post("/using/:id", wrap(UserSetUsingOrg))
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
+
 			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+
 			r.Get("/preferences", wrap(GetUserPreferences))
-			r.Put("/preferences", bind(dtos.UpdateUserPrefsCmd{}), wrap(UpdateUserPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateUserPreferences))
 		})
 
 		// users (admin permission required)
@@ -132,6 +135,9 @@ func Register(r *macaron.Macaron) {
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 
+			// prefs
+			r.Get("/preferences", wrap(GetOrgPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateOrgPreferences))
 		}, reqOrgAdmin)
 
 		// create new org
