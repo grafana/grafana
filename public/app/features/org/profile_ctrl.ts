@@ -8,39 +8,18 @@ export class ProfileCtrl {
   user: any;
   old_theme: any;
   orgs: any;
-  prefs: any;
   userForm: any;
-  prefsForm: any;
-
-  timezones: any = [
-    {value: '', text: 'Default'},
-    {value: 'browser', text: 'Local browser time'},
-    {value: 'utc', text: 'UTC'},
-  ];
-  themes: any = [
-    {value: '', text: 'Default'},
-    {value: 'dark', text: 'Dark'},
-    {value: 'light', text: 'Light'},
-  ];
 
   /** @ngInject **/
-  constructor(private $scope, private backendSrv, private contextSrv, private $location) {
+  constructor(private backendSrv, private contextSrv, private $location) {
     this.getUser();
     this.getUserOrgs();
-    this.getUserPrefs();
   }
 
   getUser() {
     this.backendSrv.get('/api/user').then(user => {
       this.user = user;
       this.user.theme = user.theme || 'dark';
-    });
-  }
-
-  getUserPrefs() {
-    this.backendSrv.get('/api/user/preferences').then(prefs => {
-      this.prefs = prefs;
-      this.old_theme = prefs.theme;
     });
   }
 
@@ -67,21 +46,6 @@ export class ProfileCtrl {
     });
   }
 
-  updatePrefs() {
-    if (!this.prefsForm.$valid) { return; }
-
-    var cmd = {
-      theme: this.prefs.theme,
-      timezone: this.prefs.timezone,
-      homeDashboardId: this.prefs.homeDashboardId
-    };
-
-    this.backendSrv.put('/api/user/preferences', cmd).then(() => {
-      if (this.old_theme !== cmd.theme) {
-        window.location.href = config.appSubUrl + this.$location.path();
-      }
-    });
-  }
 }
 
 coreModule.controller('ProfileCtrl', ProfileCtrl);

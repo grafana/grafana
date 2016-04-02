@@ -9,7 +9,42 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetPreferences)
+	bus.AddHandler("sql", GetPreferencesWithDefaults)
 	bus.AddHandler("sql", SavePreferences)
+}
+
+func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error {
+
+	prefs := make([]*m.Preferences, 0)
+	filter := "(org_id=? AND user_id=?) OR (org_id=? AND user_id=0)"
+	err := x.Where(filter, query.OrgId, query.UserId, query.OrgId).
+		OrderBy("user_id ASC").
+		Find(&prefs)
+
+	if err != nil {
+		return err
+	}
+
+	res := &m.Preferences{
+		Theme:           "dark",
+		Timezone:        "browser",
+		HomeDashboardId: 0,
+	}
+
+	for _, p := range prefs {
+		if p.Theme != "" {
+			res.Theme = p.Theme
+		}
+		if p.Timezone != "" {
+			res.Timezone = p.Timezone
+		}
+		if p.HomeDashboardId != 0 {
+			res.HomeDashboardId = p.HomeDashboardId
+		}
+	}
+
+	query.Result = res
+	return nil
 }
 
 func GetPreferences(query *m.GetPreferencesQuery) error {
@@ -54,7 +89,7 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			prefs.Theme = cmd.Theme
 			prefs.Updated = time.Now()
 			prefs.Version += 1
-			_, err = sess.Id(prefs.Id).Update(&prefs)
+			_, err := sess.Id(prefs.Id).AllCols().Update(&prefs)
 			return err
 		}
 	})
