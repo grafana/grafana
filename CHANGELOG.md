@@ -1,4 +1,10 @@
-# 3.0.0 (unrelased master branch)
+# 3.0.0-beta2 (unreleased)
+
+### Bug fixes
+* **Dashboard**: Fixed dashboard panel layout for mobile devices, fixes [#4529](https://github.com/grafana/grafana/issues/4529)
+* **Page Load Crash**: A Datasource with null jsonData would make Grafana fail to load page, fixes [#4536](https://github.com/grafana/grafana/issues/4536)
+
+# 3.0.0-beta1 (2016-03-31)
 
 ### New Features
 * **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/issues/3655)
