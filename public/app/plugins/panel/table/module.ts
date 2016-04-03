@@ -155,7 +155,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.timezone);
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }

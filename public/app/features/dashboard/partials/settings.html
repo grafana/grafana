@@ -34,7 +34,7 @@
 			<div class="gf-form">
 				<label class="gf-form-label width-7">Timezone</label>
 				<div class="gf-form-select-wrapper">
-					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f for f in ['browser','utc']"></select>
+					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 				</div>
 			</div>
 		</div>

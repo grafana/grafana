@@ -2,7 +2,7 @@
 
 import config from 'app/core/config';
 import _ from 'lodash';
-import coreModule from '../../core/core_module';
+import coreModule from 'app/core/core_module';
 
 export class PrefsControlCtrl {
   prefs: any;
@@ -42,9 +42,7 @@ export class PrefsControlCtrl {
     };
 
     this.backendSrv.put(`/api/${this.mode}/preferences`, cmd).then(() => {
-      if (this.oldTheme !== cmd.theme) {
-        window.location.href = config.appSubUrl + this.$location.path();
-      }
+      window.location.href = config.appSubUrl + this.$location.path();
     });
   }
 
