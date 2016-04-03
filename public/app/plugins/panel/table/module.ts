@@ -131,7 +131,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.desc = true;
     }
 
-    this.render();
+    this.table = transformDataToTable(this.dataRaw, this.panel);
+    this.table.sort(this.panel.sort);
+    this.render(this.table);
   }
 
   exportCsv() {
