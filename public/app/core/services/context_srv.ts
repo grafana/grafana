@@ -2,7 +2,6 @@
 
 import config from 'app/core/config';
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import store from 'app/core/store';
 
@@ -32,6 +31,13 @@ export class ContextSrv {
     this.pinned = store.getBool('grafana.sidemenu.pinned', false);
     if (this.pinned) {
       this.sidemenu = true;
+    }
+
+    if (!config.buildInfo) {
+      config.buildInfo = {};
+    }
+    if (!config.bootData) {
+      config.bootData = {user: {}, settings: {}};
     }
 
     this.version = config.buildInfo.version;
