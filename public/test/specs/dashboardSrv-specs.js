@@ -7,6 +7,10 @@ define([
     var _dashboardSrv;
 
     beforeEach(module('grafana.services'));
+    beforeEach(module(function($provide) {
+      $provide.value('contextSrv', {
+      });
+    }));
 
     beforeEach(inject(function(dashboardSrv) {
       _dashboardSrv = dashboardSrv;
