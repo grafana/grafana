@@ -7,7 +7,7 @@ import angular from 'angular';
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, contextSrv, $timeout) {
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
@@ -101,13 +101,6 @@ export class DashNavCtrl {
 
         $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
       }, $scope.handleSaveDashError);
-    };
-
-    $scope.saveDashboardAsHome = function() {
-      // TODO: this backend method needs to be implemented
-      backendSrv.post('/api/preferences/set-home-dash', {
-        homeDashboardId: $scope.dashboard.id
-      });
     };
 
     $scope.handleSaveDashError = function(err) {
