@@ -12,6 +12,11 @@ define([
       ctx.setup = function (setupFunc) {
 
         beforeEach(module('grafana.services'));
+        beforeEach(module(function($provide) {
+          $provide.value('contextSrv', {
+            user: { timezone: 'utc'}
+          });
+        }));
 
         beforeEach(inject(function(dynamicDashboardSrv, dashboardSrv) {
           ctx.dynamicDashboardSrv = dynamicDashboardSrv;
@@ -45,10 +50,10 @@ define([
           value: ['se1', 'se2', 'se3']
         },
         options: [
-          {text: 'se1', value: 'se1', selected: true},
-          {text: 'se2', value: 'se2', selected: true},
-          {text: 'se3', value: 'se3', selected: true},
-          {text: 'se4', value: 'se4', selected: false}
+        {text: 'se1', value: 'se1', selected: true},
+        {text: 'se2', value: 'se2', selected: true},
+        {text: 'se3', value: 'se3', selected: true},
+        {text: 'se4', value: 'se4', selected: false}
         ]
       });
     });
@@ -93,7 +98,7 @@ define([
     describe('After a second iteration and selected values reduced', function() {
       beforeEach(function() {
         ctx.dash.templating.list[0].options[1].selected = false;
-        
+
         ctx.dynamicDashboardSrv.update(ctx.dash);
       });
 
