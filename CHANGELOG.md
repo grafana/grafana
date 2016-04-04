@@ -11,6 +11,7 @@
 * **Page Load Crash**: A Datasource with null jsonData would make Grafana fail to load page, fixes [#4536](https://github.com/grafana/grafana/issues/4536)
 * **Metrics tab**: Fix for missing datasource name in datasource selector, fixes [#4540](https://github.com/grafana/grafana/issues/4540)
 * **Graph**: Fix legend in table mode with series on right-y axis, fixes [#4551](https://github.com/grafana/grafana/issues/4551), [#1145](https://github.com/grafana/grafana/issues/1145)
+* **Password**: Password reset link/page did not work, fixes [#4542](https://github.com/grafana/grafana/issues/4542)
 
 # 3.0.0-beta1 (2016-03-31)
 

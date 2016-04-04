@@ -94,7 +94,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/profile/password', {
-    templateUrl: 'public/app/features/org/partials/password.html',
+    templateUrl: 'public/app/features/org/partials/change_password.html',
     controller : 'ChangePasswordCtrl',
     resolve: loadOrgBundle,
   })
