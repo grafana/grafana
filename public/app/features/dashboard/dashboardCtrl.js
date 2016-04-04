@@ -134,6 +134,10 @@ function (angular, $, config, moment) {
       });
     };
 
+    $scope.timezoneChanged = function() {
+      $rootScope.$broadcast("refresh");
+    };
+
     $scope.formatDate = function(date) {
       return moment(date).format('MMM Do YYYY, h:mm:ss a');
     };

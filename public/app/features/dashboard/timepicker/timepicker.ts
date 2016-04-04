@@ -44,7 +44,7 @@ export class TimePickerCtrl {
     var time = angular.copy(this.timeSrv.timeRange());
     var timeRaw = angular.copy(this.timeSrv.timeRange(false));
 
-    if (this.dashboard.timezone === 'browser') {
+    if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
       time.to.local();
       if (moment.isMoment(timeRaw.from)) {
@@ -125,7 +125,7 @@ export class TimePickerCtrl {
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
-    return this.dashboard.timezone === 'browser' ? moment(jsDate) : moment(jsDate).utc();
+    return this.dashboard.isTimezoneUtc() ? moment(jsDate).utc() : moment(jsDate);
   }
 
   setRelativeFilter(timespan) {

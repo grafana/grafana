@@ -4,13 +4,17 @@ define([
 function (coreModule) {
   "use strict";
 
-  coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv) {
+  coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
 
     if (!$routeParams.slug) {
-      backendSrv.get('/api/dashboards/home').then(function(result) {
-        var meta = result.meta;
-        meta.canSave = meta.canShare = meta.canStar = false;
-        $scope.initDashboard(result, $scope);
+      backendSrv.get('/api/dashboards/home').then(function(homeDash) {
+        if (homeDash.redirectUri) {
+          $location.path('dashboard/' + homeDash.redirectUri);
+        } else {
+          var meta = homeDash.meta;
+          meta.canSave = meta.canShare = meta.canStar = false;
+          $scope.initDashboard(homeDash, $scope);
+        }
       });
       return;
     }

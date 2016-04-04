@@ -53,7 +53,9 @@ describe('grafanaGraph', function() {
             },
             renderingCompleted: sinon.spy(),
             hiddenSeries: {},
-            dashboard: {timezone: 'browser'},
+            dashboard: {
+              getTimezone: sinon.stub().returns('browser')
+            },
             range: {
               from: moment([2015, 1, 1, 10]),
               to: moment([2015, 1, 1, 22]),
