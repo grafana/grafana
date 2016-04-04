@@ -4,13 +4,14 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "3.0.0-pre1",
+  "version": "3.0.0-beta2",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
     "angular2": "2.0.0-beta.12",
+    "zone.js": "^0.6.6",
     "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.0",
@@ -31,7 +32,7 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-filerev": "^0.2.1",
     "grunt-git-describe": "~2.3.2",
-    "grunt-karma": "~0.12.1",
+    "grunt-karma": "~0.12.2",
     "grunt-ng-annotate": "^1.0.1",
     "grunt-notify": "^0.4.3",
     "grunt-postcss": "^0.8.0",
@@ -42,7 +43,7 @@
     "grunt-typescript": "^0.8.0",
     "grunt-usemin": "3.0.0",
     "jshint-stylish": "~2.1.0",
-    "karma": "~0.13.15",
+    "karma": "0.13.22",
     "karma-chrome-launcher": "~0.2.2",
     "karma-coverage": "0.5.3",
     "karma-coveralls": "1.1.2",
@@ -67,7 +68,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "es5-shim": "^4.4.1",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",

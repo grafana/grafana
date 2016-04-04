@@ -279,7 +279,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
           options.xaxis = {
-            timezone: dashboard.timezone,
+            timezone: dashboard.getTimezone(),
             show: panel['x-axis'],
             mode: "time",
             min: min,

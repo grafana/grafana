@@ -25,7 +25,7 @@ class DashListCtrl extends PanelCtrl {
     _.defaults(this.panel, panelDefaults);
 
     if (this.panel.tag) {
-      this.panel.tags = [$scope.panel.tag];
+      this.panel.tags = [this.panel.tag];
       delete this.panel.tag;
     }
 
