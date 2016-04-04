@@ -114,9 +114,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+  
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.render(this.table);
+    super.render(this.table);
   }
 
   toggleColumnSort(col, colIndex) {
