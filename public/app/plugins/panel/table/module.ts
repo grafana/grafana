@@ -114,9 +114,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.render(this.table);
+    return super.render(this.table);
   }
 
   toggleColumnSort(col, colIndex) {
@@ -130,10 +134,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.col = colIndex;
       this.panel.sort.desc = true;
     }
-
-    this.table = transformDataToTable(this.dataRaw, this.panel);
-    this.table.sort(this.panel.sort);
-    this.render(this.table);
+    this.render();
   }
 
   exportCsv() {
