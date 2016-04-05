@@ -1,4 +1,9 @@
-# 3.0.0-beta2 (unreleased)
+# 3.0.0-beta3 (unreleased)
+
+### Bug fixes
+* **Postgres**: Fixed page render crash when using postgres, fixes [#4558](https://github.com/grafana/grafana/issues/4558)
+
+# 3.0.0-beta2 (2016-04-04)
 
 ### New Features (introduces since 3.0-beta1)
 * **Preferences**: Set home dashboard on user and org level, closes [#1678](https://github.com/grafana/grafana/issues/1678)
