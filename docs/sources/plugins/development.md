@@ -10,7 +10,7 @@ From grafana 3.0 it's very easy to develop your own plugins and share them with 
 
 ## Short version
 
-1. [Setup grafana](https://github.com/grafana/grafana/blob/master/DEVELOPMENT.md)
+1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
 2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if your running development version from source dir)
 3. Code away!
 
