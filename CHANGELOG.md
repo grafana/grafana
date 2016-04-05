@@ -2,6 +2,7 @@
 
 ### Bug fixes
 * **Postgres**: Fixed page render crash when using postgres, fixes [#4558](https://github.com/grafana/grafana/issues/4558)
+* **Table panel**: Fixed table panel bug when trying to show annotations in table panel, fixes [#4563](https://github.com/grafana/grafana/issues/4563)
 
 # 3.0.0-beta2 (2016-04-04)
 
