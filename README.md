@@ -77,6 +77,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 - Go 1.5
 - NodeJS
+- [Godep](https://github.com/tools/godep)
 
 ### Get Code
 
