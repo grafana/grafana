@@ -3,7 +3,7 @@
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
 [IRC](https://webchat.freenode.net/?channels=grafana) |
-![](https://brandfolder.com/api/favicon/icon?size=18&amp;domain=www.slack.com)
+![](https://brandfolder.com/api/favicon/icon?size=18&domain=www.slack.com)
 [Slack](http://slack.raintank.io) |
 [Email](mailto:contact@grafana.org)
 
