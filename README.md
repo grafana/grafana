@@ -3,7 +3,7 @@
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
 [IRC](https://webchat.freenode.net/?channels=grafana) |
-[Slack](https://slack.raintank.io) |
+[Slack](http://slack.raintank.io) |
 [Email](mailto:contact@grafana.org)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
