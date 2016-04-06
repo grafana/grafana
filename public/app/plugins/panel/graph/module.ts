@@ -5,6 +5,7 @@ import './legend';
 import './series_overrides_ctrl';
 
 import template from './template';
+import angular from 'angular';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
@@ -108,7 +109,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private annotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, angular.copy(panelDefaults));
     _.defaults(this.panel.tooltip, panelDefaults.tooltip);
     _.defaults(this.panel.grid, panelDefaults.grid);
     _.defaults(this.panel.legend, panelDefaults.legend);
