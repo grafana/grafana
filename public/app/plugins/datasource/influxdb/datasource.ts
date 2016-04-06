@@ -55,7 +55,7 @@ export default class InfluxDatasource {
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
 
-    }).join("\n");
+    }).join(";\n");
 
     // replace grafana variables
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
