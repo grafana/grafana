@@ -67,6 +67,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",

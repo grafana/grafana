@@ -47,3 +47,8 @@ declare module 'tether-drop' {
   var config: any;
   export default config;
 }
+
+declare module 'eventemitter3' {
+  var config: any;
+  export default config;
+}
