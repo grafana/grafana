@@ -97,6 +97,14 @@
   width: 100%;
 }
 
+.card-item-sub-name--header {
+  color: $text-color-weak;
+  text-transform: uppercase;
+  margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
+}
+
 .card-list-layout-grid {
 
   .card-item-header-action {
@@ -138,7 +146,7 @@
       .card-item-wrapper {
         width: 50%;
       }
-    }    
+    }
   }
 }
 
