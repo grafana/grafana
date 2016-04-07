@@ -82,12 +82,13 @@ var (
 	ExternalEnabled      bool
 
 	// User settings
-	AllowUserSignUp    bool
-	AllowUserOrgCreate bool
-	AutoAssignOrg      bool
-	AutoAssignOrgRole  string
-	VerifyEmailEnabled bool
-	LoginHint          string
+	AllowUserSignUp      bool
+	AllowUserOrgCreate   bool
+	AutoAssignOrg        bool
+	AutoAssignOrgRole    string
+	VerifyEmailEnabled   bool
+	LoginHint            string
+	DisableUserPassLogin bool
 
 	// Http auth
 	AdminUser     string
@@ -454,6 +455,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
+	DisableUserPassLogin = users.Key("disable_user_pass_login").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
