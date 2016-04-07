@@ -1,13 +1,4 @@
-# 3.0.0-beta3 (unreleased)
-
-### Bug fixes
-* **Postgres**: Fixed page render crash when using postgres, fixes [#4558](https://github.com/grafana/grafana/issues/4558)
-* **Table panel**: Fixed table panel bug when trying to show annotations in table panel, fixes [#4563](https://github.com/grafana/grafana/issues/4563)
-* **App Config**: Fixed app config issue showing content of other app config, fixes [#4575](https://github.com/grafana/grafana/issues/4575)
-* **Graph Panel**: Fixed legend option max not updating, fixes [#4601](https://github.com/grafana/grafana/issues/4601)
-* **Graph Panel**: Fixed issue where newly added graph panels shared same axes config, fixes [#4582](https://github.com/grafana/grafana/issues/4582)
-
-# 3.0.0-beta2 (2016-04-04)
+# 3.0.0-beta2 (unreleased)
 
 ### New Features (introduces since 3.0-beta1)
 * **Preferences**: Set home dashboard on user and org level, closes [#1678](https://github.com/grafana/grafana/issues/1678)
@@ -18,9 +9,8 @@
 * **Dashboard**: Fixed dashboard panel layout for mobile devices, fixes [#4529](https://github.com/grafana/grafana/issues/4529)
 * **Table Panel**: Fixed issue with table panel sort, fixes [#4532](https://github.com/grafana/grafana/issues/4532)
 * **Page Load Crash**: A Datasource with null jsonData would make Grafana fail to load page, fixes [#4536](https://github.com/grafana/grafana/issues/4536)
-* **Metrics tab**: Fix for missing datasource name in datasource selector, fixes [#4540](https://github.com/grafana/grafana/issues/4540)
+* **Metrics tab**: Fix for missing datasource name in datasource selector, fixes [#4541](https://github.com/grafana/grafana/issues/4540)
 * **Graph**: Fix legend in table mode with series on right-y axis, fixes [#4551](https://github.com/grafana/grafana/issues/4551), [#1145](https://github.com/grafana/grafana/issues/1145)
-* **Password**: Password reset link/page did not work, fixes [#4542](https://github.com/grafana/grafana/issues/4542)
 
 # 3.0.0-beta1 (2016-03-31)
 
