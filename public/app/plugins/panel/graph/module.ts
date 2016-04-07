@@ -216,6 +216,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     series.applySeriesOverrides(this.panel.seriesOverrides);
+
+    if (seriesData.unit) {
+      this.panel.yaxes[series.yaxis-1].format = seriesData.unit;
+    }
+
     return series;
   }
 
