@@ -82,6 +82,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
+    this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
