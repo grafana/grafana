@@ -1,0 +1,17 @@
+<div class="dashlist">
+	<div class="dashlist-item" ng-repeat="plugin in ctrl.pluginList">
+		<a class="dashlist-link dashlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+			<span class="dashlist-title">
+				{{plugin.name}}
+			</span>
+      <span class="dashlist-update" ng-show="plugin.hasUpdate">
+        <i class="fa fa-exclamation"></i>
+        Update available
+			</span>
+      <span class="dashlist-update" ng-show="!plugin.enabled">
+        <i class="fa fa-exclamation"></i>
+        Enable now
+			</span>
+		</a>
+	</div>
+</div>

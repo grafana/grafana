@@ -43,6 +43,7 @@ type PluginBase struct {
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
 	DefaultNavUrl   string `json:"-"`
+	IsCorePlugin    bool   `json:"-"`
 
 	// cache for readme file contents
 	Readme []byte `json:"-"`
