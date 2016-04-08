@@ -1,6 +1,7 @@
 <div class="dashlist">
 	<div class="dashlist-item" ng-repeat="plugin in ctrl.pluginList">
 		<a class="dashlist-link dashlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+      <img ng-src="{{plugin.info.logos.small}}" style="width: 24px">
 			<span class="dashlist-title">
 				{{plugin.name}}
 			</span>
