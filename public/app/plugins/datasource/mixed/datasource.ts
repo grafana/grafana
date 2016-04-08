@@ -6,8 +6,7 @@ import _ from 'lodash';
 class MixedDatasource {
 
   /** @ngInject */
-  constructor(private $q, private datasourceSrv) {
-  }
+  constructor(private $q, private datasourceSrv) {}
 
   query(options) {
     var sets = _.groupBy(options.targets, 'datasource');

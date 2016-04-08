@@ -252,8 +252,13 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   addDataQuery(datasource) {
-    var target = {
-    };
+    var target: any = {};
+
+    if (datasource) {
+      target.datasource = datasource.name;
+      target.datasourceMeta = datasource.meta;
+    }
+
     this.panel.targets.push(target);
   }
 }
