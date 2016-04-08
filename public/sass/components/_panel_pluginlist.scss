@@ -50,5 +50,11 @@
   color: $text-color-weak;
 }
 
-.pluginlist-message--update {
+.pluginlist-emphasis {
+  font-weight: 600;
+}
+
+.pluginlist-none-installed {
+  color: $text-color-weak;
+  font-size: $font-size-sm;
 }
