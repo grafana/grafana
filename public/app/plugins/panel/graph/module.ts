@@ -219,6 +219,18 @@ class GraphCtrl extends MetricsPanelCtrl {
     return series;
   }
 
+  seriesOverrideChanged() {
+    if (!this.seriesList) {
+      return;
+    }
+
+    for (let series of this.seriesList) {
+      series.applySeriesOverrides(this.panel.seriesOverrides);
+    }
+
+    this.render();
+  }
+
   changeSeriesColor(series, color) {
     series.color = color;
     this.panel.aliasColors[series.alias] = series.color;
