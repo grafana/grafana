@@ -39,7 +39,7 @@
           "limit": 10,
           "mode": "starred",
           "query": "",
-          "span": 6,
+          "span": 3.75,
           "tags": [],
           "title": "Starred dashboards",
           "type": "dashlist"
@@ -49,10 +49,20 @@
           "limit": 10,
           "mode": "recently viewed",
           "query": "",
-          "span": 6,
+          "span": 3.75,
           "tags": [],
           "title": "Recently viewed dashboards",
           "type": "dashlist"
+        },
+        {
+          "title": "",
+          "error": false,
+          "span": 4.5,
+          "editable": true,
+          "type": "pluginlist",
+          "isNew": true,
+          "id": 4,
+          "links": []
         }
       ],
       "title": "Row"

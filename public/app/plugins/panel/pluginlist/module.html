@@ -1,18 +1,41 @@
-<div class="dashlist">
-	<div class="dashlist-item" ng-repeat="plugin in ctrl.pluginList">
-		<a class="dashlist-link dashlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
-      <img ng-src="{{plugin.info.logos.small}}" style="width: 24px">
-			<span class="dashlist-title">
+<div class="pluginlist">
+	<h5 class="pluginlist-section-header pluginlist-section-header--first"><i class="icon-gf icon-gf-apps pluginlist-icon"></i>Installed Apps</h5>
+	<div class="pluginlist-item" ng-repeat="plugin in ctrl.pluginList">
+		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+			<span class="pluginlist-title">{{plugin.name}}</span>
+			<span class="pluginlist-version">v{{plugin.info.version}}</span>
+      <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate">
+        Update available!
+			</span>
+      <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled">
+        Enable now
+			</span>
+			<span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
+        Up to date
+			</span>
+		</a>
+		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+			<span class="pluginlist-title">
 				{{plugin.name}}
 			</span>
-      <span class="dashlist-update" ng-show="plugin.hasUpdate">
-        <i class="fa fa-exclamation"></i>
+      <span class="pluginlist-message pluginlist-message--update">
         Update available
 			</span>
-      <span class="dashlist-update" ng-show="!plugin.enabled">
-        <i class="fa fa-exclamation"></i>
+		</a>
+		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+			<span class="pluginlist-title">
+				{{plugin.name}}
+			</span>
+      <span class="pluginlist-message pluginlist-message--enable">
         Enable now
 			</span>
 		</a>
 	</div>
+	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-panel pluginlist-icon"></i>Installed Panels</h5>
+
+	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-datasources pluginlist-icon"></i>Installed Data Sources</h5>
+
 </div>
