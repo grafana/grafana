@@ -61,6 +61,13 @@ export class GrafanaApp {
         };
         return $delegate;
       }]);
+
+      $provide.decorator('$httpBackend', function($delegate) {
+        return function(method, url, post, callback, headers, timeout, withCredentials, responseType) {
+          url = url.replace(';', '%3B');
+          $delegate(method, url, post, callback, headers, timeout, withCredentials, responseType);
+        };
+      });
     });
 
     this.ngModuleDependencies = [
