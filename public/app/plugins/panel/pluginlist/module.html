@@ -15,27 +15,17 @@
         Up to date
 			</span>
 		</a>
-		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
-      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
-			<span class="pluginlist-title">
-				{{plugin.name}}
-			</span>
-      <span class="pluginlist-message pluginlist-message--update">
-        Update available
-			</span>
-		</a>
-		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
-      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
-			<span class="pluginlist-title">
-				{{plugin.name}}
-			</span>
-      <span class="pluginlist-message pluginlist-message--enable">
-        Enable now
-			</span>
-		</a>
 	</div>
 	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-panel pluginlist-icon"></i>Installed Panels</h5>
-
+	<div class="pluginlist-item">
+		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
+			<span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
+		</a>
+	</div>
 	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-datasources pluginlist-icon"></i>Installed Data Sources</h5>
-
+	<div class="pluginlist-item">
+		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
+			<span class="pluginlist-none-installed">No additional data sources installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
+		</a>
+	</div>
 </div>
