@@ -14,6 +14,7 @@ func GetPluginList(c *middleware.Context) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	coreFilter := c.Query("core")
 
 	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
 
@@ -25,6 +26,11 @@ func GetPluginList(c *middleware.Context) Response {
 	for _, pluginDef := range plugins.Plugins {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
+			continue
+		}
+
+		// filter out core plugins
+		if coreFilter == "0" && pluginDef.IsCorePlugin {
 			continue
 		}
 
