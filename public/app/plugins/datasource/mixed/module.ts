@@ -2,6 +2,10 @@
 
 import angular from 'angular';
 import {MixedDatasource} from './datasource';
+import MixedQueryCtrl from './query_ctrl';
 
-export {MixedDatasource, MixedDatasource as Datasource};
+export {
+  MixedDatasource as Datasource,
+  MixedQueryCtrl as QueryCtrl
+};
 
