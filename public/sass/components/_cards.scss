@@ -116,6 +116,10 @@
     padding: 0 1.5rem 1.5rem 0rem;
   }
 
+  .card-item-wrapper--clickable {
+    cursor: pointer;
+  }
+
   .card-item-figure {
     margin: 0 $spacer $spacer 0;
     height: 6rem;
@@ -157,6 +161,10 @@
     width: 100%;
   }
 
+  .card-item-wrapper--clickable {
+    cursor: pointer;
+  }
+
   .card-item {
     border-bottom: .2rem solid $page-bg;
     border-radius: 0;
@@ -186,4 +194,3 @@
     margin-right: 0;
   }
 }
-
