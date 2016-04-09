@@ -1,10 +1,10 @@
 .pluginlist-section-header {
-  margin: ($spacer * 2) 0 $spacer 0;
+  margin-bottom: $spacer;
   color: $text-color-weak;
 }
 
-.pluginlist-section-header--first {
-  margin-top: $spacer /2;
+.pluginlist-section {
+  margin-bottom: $spacer;
 }
 
 .pluginlist-link {
