@@ -55,7 +55,7 @@ export default class InfluxDatasource {
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
 
-    }).join("\n");
+    }).join(";");
 
     // replace grafana variables
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
@@ -133,6 +133,17 @@ export default class InfluxDatasource {
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
   }
 
+
+  serializeParams(params) {
+    if (!params) { return '';}
+
+    return _.reduce(params, (memo, value, key) => {
+      if (value === null || value === undefined) { return memo; }
+      memo.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+      return memo;
+    }, []).join("&");
+  }
+
   testDatasource() {
     return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(() => {
       return { status: "success", message: "Data source is working", title: "Success" };
@@ -166,6 +177,7 @@ export default class InfluxDatasource {
       data:   data,
       precision: "ms",
       inspect: { type: 'influxdb' },
+      paramSerializer: this.serializeParams,
     };
 
     options.headers = options.headers || {};
