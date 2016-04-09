@@ -1,31 +1,29 @@
 <div class="pluginlist">
-	<h5 class="pluginlist-section-header pluginlist-section-header--first"><i class="icon-gf icon-gf-apps pluginlist-icon"></i>Installed Apps</h5>
-	<div class="pluginlist-item" ng-repeat="plugin in ctrl.pluginList">
-		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
-      <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
-			<span class="pluginlist-title">{{plugin.name}}</span>
-			<span class="pluginlist-version">v{{plugin.info.version}}</span>
-      <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate">
-        Update available!
-			</span>
-      <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled">
-        Enable now
-			</span>
-			<span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
-        Up to date
-			</span>
-		</a>
-	</div>
-	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-panel pluginlist-icon"></i>Installed Panels</h5>
-	<div class="pluginlist-item">
-		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
-			<span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
-		</a>
-	</div>
-	<h5 class="pluginlist-section-header"><i class="icon-gf icon-gf-datasources pluginlist-icon"></i>Installed Data Sources</h5>
-	<div class="pluginlist-item">
-		<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
-			<span class="pluginlist-none-installed">No additional data sources installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
-		</a>
+	<div class="pluginlist-section" ng-repeat="category in ctrl.viewModel">
+		<h5 class="pluginlist-section-header">
+			<i class="icon-gf icon-gf-{{category.type}} pluginlist-icon"></i>
+			{{category.header}}
+		</h5>
+		<div class="pluginlist-item" ng-repeat="plugin in category.list">
+			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
+				<img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+				<span class="pluginlist-title">{{plugin.name}}</span>
+				<span class="pluginlist-version">v{{plugin.info.version}}</span>
+				<span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate">
+					Update available!
+				</span>
+				<span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled">
+					Enable now
+				</span>
+				<span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
+					Up to date
+				</span>
+			</a>
+		</div>
+		<div class="pluginlist-item" ng-show="category.list.length === 0">
+			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
+				<span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
+			</a>
+		</div>
 	</div>
 </div>
