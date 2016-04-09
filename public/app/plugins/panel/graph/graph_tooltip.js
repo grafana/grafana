@@ -142,11 +142,16 @@ function ($) {
             continue;
           }
 
+          var highlightStyle = '';
+          if (item && i === item.seriesIndex) {
+            highlightStyle = ' style="font-weight: bold;"';
+          }
+
           series = seriesList[i];
 
           value = series.formatValue(hoverInfo.value);
 
-          seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
+          seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name"' + highlightStyle + '>';
           seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
