@@ -184,7 +184,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       cacheTimeout: this.panel.cacheTimeout
     };
 
-    this.setTimeQueryStart();
     return datasource.query(metricsQuery);
   }
 
