@@ -1,0 +1,60 @@
+.pluginlist-section-header {
+  margin: ($spacer * 2) 0 $spacer 0;
+  color: $text-color-weak;
+}
+
+.pluginlist-section-header--first {
+  margin-top: $spacer /2;
+}
+
+.pluginlist-link {
+  display: block;
+  margin: 5px;
+  padding: 7px;
+  background-color: $tight-form-bg;
+
+  &:hover {
+    background-color: $tight-form-func-bg;
+  }
+}
+
+.pluginlist-icon {
+  vertical-align: sub;
+  font-size: $font-size-h1;
+  margin-right: $spacer / 2;
+}
+
+.pluginlist-image {
+  width: 20px;
+}
+
+.pluginlist-title {
+    margin-right: $spacer / 3;
+}
+
+.pluginlist-version {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.pluginlist-message {
+  float: right;
+  font-size: $font-size-sm;
+}
+
+.pluginlist-message--enable{
+  color: $brand-success;
+}
+
+.pluginlist-message--no-update {
+  color: $text-color-weak;
+}
+
+.pluginlist-emphasis {
+  font-weight: 600;
+}
+
+.pluginlist-none-installed {
+  color: $text-color-weak;
+  font-size: $font-size-sm;
+}
