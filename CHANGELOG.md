@@ -12,6 +12,7 @@
 * **Graph Panel**: Fixed issue with axis labels overlapping Y-axis, fixes [#4626](https://github.com/grafana/grafana/issues/4626)
 * **InfluxDB**: Fixed issue with templating query containing template variable, fixes [#4602](https://github.com/grafana/grafana/issues/4602)
 * **Graph Panel**: Fixed issue with hiding series and stacking, fixes [#4557](https://github.com/grafana/grafana/issues/4557)
+* **Mixed Datasources**: Fixed issue with mixing many datasources in same graph, fixes [#4604](https://github.com/grafana/grafana/issues/4604)
 
 # 3.0.0-beta2 (2016-04-04)
 
