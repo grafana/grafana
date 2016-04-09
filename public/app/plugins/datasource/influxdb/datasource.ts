@@ -107,7 +107,7 @@ export default class InfluxDatasource {
 
     var timeFilter = this.getTimeFilter({rangeRaw: options.rangeRaw});
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
-    query = this.templateSrv.replace(query);
+    query = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(query).then(data => {
       if (!data || !data.results || !data.results[0]) {
