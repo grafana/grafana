@@ -22,7 +22,6 @@ define([
       ctx.scope.ctrl = {
         refresh: sinon.spy(),
         render: sinon.spy(),
-        seriesOverrideChanged: sinon.spy(),
         seriesList: []
       };
       ctx.scope.render = function() {};

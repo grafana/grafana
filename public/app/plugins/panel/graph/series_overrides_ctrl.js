@@ -43,7 +43,7 @@ define([
       }
 
       $scope.updateCurrentOverrides();
-      $scope.ctrl.seriesOverrideChanged();
+      $scope.ctrl.render();
     };
 
     $scope.colorSelected = function(color) {
@@ -62,7 +62,7 @@ define([
           colorSelected: $scope.colorSelected,
         },
         onClose: function() {
-          $scope.ctrl.seriesOverrideChanged();
+          $scope.ctrl.render();
         }
       });
     };
