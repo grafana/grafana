@@ -16,7 +16,7 @@ export class OpenTsConfigCtrl {
 
   tsdbVersions = [
     {name: '<=2.1', value: 1},
-    {name: '2.2', value: 2},
+    {name: '>=2.2', value: 2},
   ];
 
   tsdbResolutions = [
