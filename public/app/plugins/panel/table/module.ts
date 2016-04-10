@@ -218,6 +218,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }
