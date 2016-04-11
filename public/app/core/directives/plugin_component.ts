@@ -169,7 +169,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return System.import(model.module).then(function(appModule) {
           return {
             baseUrl: model.baseUrl,
-            name: 'app-config-' + model.pluginId,
+            name: 'app-config-' + model.id,
             bindings: {appModel: "=", appEditCtrl: "="},
             attrs: {"app-model": "ctrl.model", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,

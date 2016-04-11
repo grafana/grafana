@@ -5,6 +5,7 @@ import './legend';
 import './series_overrides_ctrl';
 
 import template from './template';
+import angular from 'angular';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
@@ -17,20 +18,28 @@ var panelDefaults = {
   datasource: null,
   // sets client side (flot) or native graphite png renderer (png)
   renderer: 'flot',
-  // Show/hide the x-axis
-  'x-axis'      : true,
-  // Show/hide y-axis
-  'y-axis'      : true,
-  // y axis formats, [left axis,right axis]
-  y_formats    : ['short', 'short'],
-  // grid options
+  yaxes: [
+    {
+      label: null,
+      show: true,
+      logBase: 1,
+      min: null,
+      max: null,
+      format: 'short'
+    },
+    {
+      label: null,
+      show: true,
+      logBase: 1,
+      min: null,
+      max: null,
+      format: 'short'
+    }
+  ],
+  xaxis: {
+    show: true
+  },
   grid          : {
-    leftLogBase: 1,
-    leftMax: null,
-    rightMax: null,
-    leftMin: null,
-    rightMin: null,
-    rightLogBase: 1,
     threshold1: null,
     threshold2: null,
     threshold1Color: 'rgba(216, 200, 27, 0.27)',
@@ -100,13 +109,14 @@ class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private annotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, angular.copy(panelDefaults));
     _.defaults(this.panel.tooltip, panelDefaults.tooltip);
     _.defaults(this.panel.grid, panelDefaults.grid);
     _.defaults(this.panel.legend, panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
 
+    this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
@@ -115,8 +125,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes & Grid', 'public/app/plugins/panel/graph/axisEditor.html', 2);
-    this.addEditorTab('Display Styles', 'public/app/plugins/panel/graph/styleEditor.html', 3);
+    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
+    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
+    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     this.logScales = {
       'linear': 1,
@@ -135,7 +146,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   setUnitFormat(axis, subItem) {
-    this.panel.y_formats[axis] = subItem.value;
+    axis.format = subItem.value;
     this.render();
   }
 
@@ -205,8 +216,19 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
-    series.applySeriesOverrides(this.panel.seriesOverrides);
+    if (seriesData.unit) {
+      this.panel.yaxes[series.yaxis-1].format = seriesData.unit;
+    }
+
     return series;
+  }
+
+  onRender() {
+    if (!this.seriesList) { return; }
+
+    for (let series of this.seriesList) {
+      series.applySeriesOverrides(this.panel.seriesOverrides);
+    }
   }
 
   changeSeriesColor(series, color) {
@@ -225,7 +247,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     } else {
       this.toggleSeriesExclusiveMode(serie);
     }
-
     this.render();
   }
 

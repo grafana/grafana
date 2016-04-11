@@ -77,9 +77,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
+      this.setTimeQueryStart();
       return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
-        this.dataRaw = annotations;
-        this.render();
+        return {data: annotations};
       });
     }
 
@@ -114,9 +114,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.render(this.table);
+    return super.render(this.table);
   }
 
   toggleColumnSort(col, colIndex) {
@@ -130,7 +134,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.col = colIndex;
       this.panel.sort.desc = true;
     }
-
     this.render();
   }
 
@@ -155,7 +158,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.timezone);
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }
@@ -215,6 +218,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }

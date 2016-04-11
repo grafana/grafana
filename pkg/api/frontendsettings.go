@@ -59,7 +59,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if len(ds.JsonData.MustMap()) > 0 {
+		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
 		}
 

@@ -14,6 +14,7 @@ describe('PrometheusDatasource', function() {
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(PrometheusDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   describe('When querying prometheus with one target using query editor target spec', function() {

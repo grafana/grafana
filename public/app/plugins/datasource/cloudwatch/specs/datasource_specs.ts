@@ -21,6 +21,7 @@ describe('CloudWatchDatasource', function() {
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(CloudWatchDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   describe('When performing CloudWatch query', function() {

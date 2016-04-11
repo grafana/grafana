@@ -157,7 +157,7 @@ function (angular, _, $) {
             }
 
             var html = '<div class="graph-legend-series';
-            if (series.yaxis === 2) { html += ' pull-right'; }
+            if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
             if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
@@ -194,9 +194,9 @@ function (angular, _, $) {
             }
 
             var topPadding = 6;
-            $container.css("height", maxHeight - topPadding);
+            $container.css("max-height", maxHeight - topPadding);
           } else {
-            $container.css("height", "");
+            $container.css("max-height", "");
           }
         }
       }

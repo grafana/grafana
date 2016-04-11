@@ -6,30 +6,27 @@
 		<h1>Profile</h1>
 	</div>
 
-	<form name="userForm" class="gf-form-group">
-		<h3 class="page-heading">Preferences</h3>
+	<form name="ctrl.userForm" class="gf-form-group">
+		<h3 class="page-heading">Information</h3>
 
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Name</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="user.name" >
+			<span class="gf-form-label width-9">Name</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.name" >
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Email</span>
-			<input class="gf-form-input max-width-21" type="email" required ng-model="user.email">
+			<span class="gf-form-label width-9">Email</span>
+			<input class="gf-form-input max-width-21" type="email" required ng-model="ctrl.user.email">
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Username</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="user.login">
+			<span class="gf-form-label width-9">Username</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.login">
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-7">UI Theme</span>
-			<select class="gf-form-input gf-size-auto" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
-		</div>
-
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="update()">Update</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
 		</div>
 	</form>
+
+	<prefs-control mode="user"></prefs-control>
 
 	<h3 class="page-heading">Password</h3>
 	<div class="gf-form-group">
@@ -47,7 +44,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="org in orgs">
+				<tr ng-repeat="org in ctrl.orgs">
 					<td>{{org.name}}</td>
 					<td>{{org.role}}</td>
 					<td class="text-right">
