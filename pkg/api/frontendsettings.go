@@ -137,9 +137,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":  setting.AuthProxyEnabled,
 		"buildInfo": map[string]interface{}{
-			"version":    setting.BuildVersion,
-			"commit":     setting.BuildCommit,
-			"buildstamp": setting.BuildStamp,
+			"version":       setting.BuildVersion,
+			"commit":        setting.BuildCommit,
+			"buildstamp":    setting.BuildStamp,
+			"latestVersion": plugins.GrafanaLatestVersion,
+			"hasUpdate":     plugins.GrafanaHasUpdate,
 		},
 	}
 
