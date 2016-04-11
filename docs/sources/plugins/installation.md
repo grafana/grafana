@@ -28,14 +28,14 @@ List installed plugins
 grafana-cli plugins ls
 ```
 
-Upgrade all installed plugins
+Update all installed plugins
 ```
-grafana-cli plugins upgrade-all
+grafana-cli plugins update-all
 ```
 
-Upgrade one plugin
+Update one plugin
 ```
-grafana-cli plugins upgrade <plugin-id>
+grafana-cli plugins update <plugin-id>
 ```
 
 Remove one plugin
