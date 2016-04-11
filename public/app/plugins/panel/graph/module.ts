@@ -116,6 +116,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.colors = $scope.$root.colors;
 
+    this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
@@ -215,13 +216,19 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
-    series.applySeriesOverrides(this.panel.seriesOverrides);
-
     if (seriesData.unit) {
       this.panel.yaxes[series.yaxis-1].format = seriesData.unit;
     }
 
     return series;
+  }
+
+  onRender() {
+    if (!this.seriesList) { return; }
+
+    for (let series of this.seriesList) {
+      series.applySeriesOverrides(this.panel.seriesOverrides);
+    }
   }
 
   changeSeriesColor(series, color) {
@@ -240,7 +247,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     } else {
       this.toggleSeriesExclusiveMode(serie);
     }
-
     this.render();
   }
 

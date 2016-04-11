@@ -39,6 +39,7 @@ $brand-primary:         $orange;
 $brand-success:         $green;
 $brand-warning:         $brand-primary;
 $brand-danger:          $red;
+$brand-text-highlight:  #f7941d;
 
 // Status colors
 // -------------------------
@@ -242,8 +243,8 @@ $infoBackground:          $blue-dark;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       rgb(58, 57, 57);
+$tooltipColor:            $text-color;
+$tooltipBackground:       $dark-4;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
