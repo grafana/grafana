@@ -73,7 +73,7 @@ func Init() error {
 		app.initApp()
 	}
 
-	StartPluginUpdateChecker()
+	go StartPluginUpdateChecker()
 	return nil
 }
 
