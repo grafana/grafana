@@ -11,16 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type GrafanaNetPlugins struct {
-	Plugins []GrafanaNetPlugin `json:"plugins"`
-}
-
 type GrafanaNetPlugin struct {
-	Id       string                    `json:"id"`
-	Versions []GrafanaNetPluginVersion `json:"versions"`
-}
-
-type GrafanaNetPluginVersion struct {
+	Slug    string `json:"slug"`
 	Version string `json:"version"`
 }
 
@@ -43,11 +35,27 @@ func StartPluginUpdateChecker() {
 	}
 }
 
+func getAllExternalPluginSlugs() string {
+	str := ""
+
+	for _, plug := range Plugins {
+		if plug.IsCorePlugin {
+			continue
+		}
+
+		str += plug.Id + ","
+	}
+
+	return str
+}
+
 func checkForUpdates() {
 	log.Trace("Checking for updates")
 
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-	resp, err := client.Get("https://grafana.net/api/plugins/repo")
+
+	pluginSlugs := getAllExternalPluginSlugs()
+	resp, err := client.Get("https://grafana.net/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 
 	if err != nil {
 		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
@@ -62,20 +70,18 @@ func checkForUpdates() {
 		return
 	}
 
-	var data GrafanaNetPlugins
-	err = json.Unmarshal(body, &data)
+	gNetPlugins := []GrafanaNetPlugin{}
+	err = json.Unmarshal(body, &gNetPlugins)
 	if err != nil {
 		log.Trace("Failed to unmarshal plugin repo, reading response from grafana.net, %v", err.Error())
 		return
 	}
 
 	for _, plug := range Plugins {
-		for _, gplug := range data.Plugins {
-			if gplug.Id == plug.Id {
-				if len(gplug.Versions) > 0 {
-					plug.GrafanaNetVersion = gplug.Versions[0].Version
-					plug.GrafanaNetHasUpdate = plug.Info.Version != plug.GrafanaNetVersion
-				}
+		for _, gplug := range gNetPlugins {
+			if gplug.Slug == plug.Id {
+				plug.GrafanaNetVersion = gplug.Version
+				plug.GrafanaNetHasUpdate = plug.Info.Version != plug.GrafanaNetVersion
 			}
 		}
 	}
