@@ -44,6 +44,9 @@ type PluginBase struct {
 	PluginDir       string `json:"-"`
 	DefaultNavUrl   string `json:"-"`
 
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
+
 	// cache for readme file contents
 	Readme []byte `json:"-"`
 }
