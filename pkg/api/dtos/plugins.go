@@ -18,12 +18,14 @@ type PluginSetting struct {
 }
 
 type PluginListItem struct {
-	Name    string              `json:"name"`
-	Type    string              `json:"type"`
-	Id      string              `json:"id"`
-	Enabled bool                `json:"enabled"`
-	Pinned  bool                `json:"pinned"`
-	Info    *plugins.PluginInfo `json:"info"`
+	Name          string              `json:"name"`
+	Type          string              `json:"type"`
+	Id            string              `json:"id"`
+	Enabled       bool                `json:"enabled"`
+	Pinned        bool                `json:"pinned"`
+	Info          *plugins.PluginInfo `json:"info"`
+	LastesVersion string              `json:"latestVersion"`
+	HasUpdate     bool                `json:"hasUpdate"`
 }
 
 type PluginList []PluginListItem
