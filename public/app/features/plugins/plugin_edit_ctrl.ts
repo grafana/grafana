@@ -73,7 +73,7 @@ export class PluginEditCtrl {
       case 'datasource':  return 'icon-gf icon-gf-datasources';
       case 'panel':  return 'icon-gf icon-gf-panel';
       case 'app':  return 'icon-gf icon-gf-apps';
-      case 'page':  return 'icon-gf icon-gf-share';
+      case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
       case 'dashboard':  return 'icon-gf icon-gf-dashboard';
     }
   }
@@ -142,4 +142,3 @@ export class PluginEditCtrl {
 }
 
 angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);
-
