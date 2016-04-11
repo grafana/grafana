@@ -26,6 +26,7 @@ class DashListCtrl extends PanelCtrl {
       {header: "Installed Panels", list: [], type: 'panel'},
       {header: "Installed Datasources", list: [], type: 'datasource'},
     ];
+
     this.update();
   }
 
@@ -42,30 +43,10 @@ class DashListCtrl extends PanelCtrl {
       this.viewModel[2].list = _.filter(plugins, {type: 'datasource'});
 
       for (let plugin of this.pluginList) {
-        if (!plugin.enabled) {
-          plugin.state = 'not-enabled';
-        }
-      }
-
-    }).then(this.checkForUpdates.bind(this));
-  }
-
-  checkForUpdates() {
-    return this.backendSrv.get('api/gnet/plugins/repo').then(data => {
-      var gNetPlugins = _.reduce(data.plugins, (memo, val) => {
-        memo[val.id] = val;
-        return memo;
-      }, {});
-
-      for (let plugin of this.pluginList) {
-        var source = gNetPlugins[plugin.id];
-        if (!source) {
-          continue;
-        }
-
-        if (plugin.info.version !== source.versions[0].version) {
-          plugin.hasUpdate = true;
+        if (plugin.hasUpdate) {
           plugin.state = 'has-update';
+        } else if (!plugin.enabled) {
+          plugin.state = 'not-enabled';
         }
       }
     });

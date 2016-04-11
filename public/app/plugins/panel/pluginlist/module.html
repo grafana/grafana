@@ -1,9 +1,8 @@
 <div class="pluginlist">
 	<div class="pluginlist-section" ng-repeat="category in ctrl.viewModel">
-		<h5 class="pluginlist-section-header">
-			<i class="icon-gf icon-gf-{{category.type}} pluginlist-icon"></i>
+		<h6 class="pluginlist-section-header">
 			{{category.header}}
-		</h5>
+		</h6>
 		<div class="pluginlist-item" ng-repeat="plugin in category.list">
 			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="plugins/{{plugin.id}}/edit">
 				<img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
@@ -12,7 +11,7 @@
 				<span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate">
 					Update available!
 				</span>
-				<span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled">
+				<span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
 					Enable now
 				</span>
 				<span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
