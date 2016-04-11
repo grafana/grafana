@@ -184,7 +184,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       cacheTimeout: this.panel.cacheTimeout
     };
 
-    this.setTimeQueryStart();
     return datasource.query(metricsQuery);
   }
 
@@ -252,8 +251,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   addDataQuery(datasource) {
-    var target = {
-    };
+    var target: any = {};
+
+    if (datasource) {
+      target.datasource = datasource.name;
+    }
+
     this.panel.targets.push(target);
   }
 }
