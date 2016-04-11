@@ -8,14 +8,14 @@ import {PanelCtrl} from '../../../features/panel/panel_ctrl';
 var panelDefaults = {
 };
 
-class DashListCtrl extends PanelCtrl {
+class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
 
   pluginList: any[];
   viewModel: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope, $injector, private backendSrv, private $location) {
     super($scope, $injector);
     _.defaults(this.panel, panelDefaults);
 
@@ -33,6 +33,22 @@ class DashListCtrl extends PanelCtrl {
   onInitEditMode() {
     this.editorTabIndex = 1;
     this.addEditorTab('Options', 'public/app/plugins/panel/pluginlist/editor.html');
+  }
+
+  gotoPlugin(plugin) {
+    this.$location.path(`plugins/${plugin.id}/edit`);
+  }
+
+  updateAvailable(plugin, $event) {
+    $event.stopPropagation();
+
+    var modalScope = this.$scope.$new(true);
+    modalScope.plugin = plugin;
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/features/plugins/partials/update_instructions.html',
+      scope: modalScope
+    });
   }
 
   update() {
@@ -53,4 +69,4 @@ class DashListCtrl extends PanelCtrl {
   }
 }
 
-export {DashListCtrl, DashListCtrl as PanelCtrl}
+export {PluginListCtrl, PluginListCtrl as PanelCtrl}

@@ -42,8 +42,17 @@
   font-size: $font-size-sm;
 }
 
+.pluginlist-message--update {
+   &:hover {
+    border-bottom: 1px solid $text-color;
+  }
+}
+
 .pluginlist-message--enable{
-  color: $brand-success;
+  color: $external-link-color;
+   &:hover {
+    border-bottom: 1px solid $external-link-color;
+  }
 }
 
 .pluginlist-message--no-update {
@@ -57,4 +66,10 @@
 .pluginlist-none-installed {
   color: $text-color-weak;
   font-size: $font-size-sm;
+}
+
+.pluginlist-inline-logo {
+  vertical-align: sub;
+  margin-right: $spacer / 3;
+  width: 16px;
 }
