@@ -47,7 +47,7 @@ func checkForUpdates() {
 	log.Trace("Checking for updates")
 
 	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-	resp, err := client.Get("https://grafana.net/api/plugins/repo?grafanaVersion=" + setting.BuildVersion)
+	resp, err := client.Get("https://grafana.net/api/plugins/repo")
 
 	if err != nil {
 		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
@@ -69,6 +69,7 @@ func checkForUpdates() {
 		return
 	}
 
+	log.Info("GNET PLUG: %v", len(data.Plugins))
 	for _, plug := range Plugins {
 		for _, gplug := range data.Plugins {
 			if gplug.Id == plug.Id {
