@@ -10,6 +10,7 @@ export class DashImportListCtrl {
   plugin: any;
   datasource: any;
 
+  /** @ngInject */
   constructor($scope, private $http, private backendSrv, private $rootScope) {
     this.dashboards = [];
 

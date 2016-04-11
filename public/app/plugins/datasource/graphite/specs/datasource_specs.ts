@@ -15,6 +15,7 @@ describe('graphiteDatasource', function() {
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.$injector = $injector;
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   beforeEach(function() {

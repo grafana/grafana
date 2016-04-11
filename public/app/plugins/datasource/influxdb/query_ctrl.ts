@@ -193,7 +193,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
       if (addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
-          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
         }
       }
 

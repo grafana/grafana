@@ -45,7 +45,8 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
-    $scope.$on("render", () => this.calculatePanelHeight());
+    $scope.$on("render", () => this.render());
+    $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
   }
 
   init() {
@@ -149,6 +150,7 @@ export class PanelCtrl {
       return;
     }
 
+    this.calculatePanelHeight();
     this.events.emit('render', payload);
   }
 

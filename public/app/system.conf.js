@@ -4,6 +4,7 @@ System.config({
   paths: {
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
+    'eventemitter3': 'vendor/npm/eventemitter3/index.js',
     'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
     'moment': 'vendor/moment.js',
     "jquery": "vendor/jquery/dist/jquery.js",
@@ -54,6 +55,10 @@ System.config({
       format: 'global',
       deps: ['jquery'],
       exports: 'angular',
+    },
+    'vendor/npm/eventemitter3/index.js': {
+      format: 'cjs',
+      exports: 'EventEmitter'
     },
   }
 });

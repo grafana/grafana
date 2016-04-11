@@ -2,22 +2,42 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"runtime"
+
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	"os"
-	"runtime"
 )
 
 var version = "master"
 
-func getGrafanaPluginPath() string {
-	os := runtime.GOOS
-	if os == "windows" {
-		return "C:\\opt\\grafana\\plugins"
-	} else {
-		return "/var/lib/grafana/plugins"
+func getGrafanaPluginDir() string {
+	currentOS := runtime.GOOS
+	defaultNix := "/var/lib/grafana/plugins"
+
+	if currentOS == "windows" {
+		return "..\\data\\plugins"
 	}
+
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		log.Error("Could not get current path. using default")
+		return defaultNix
+	}
+
+	if isDevenvironment(pwd) {
+		return "../data/plugins"
+	}
+
+	return defaultNix
+}
+
+func isDevenvironment(pwd string) bool {
+	// if ../conf/default.ini exists, grafana is not installed as package
+	_, err := os.Stat("../conf/default.ini")
+	return err != nil
 }
 
 func main() {
@@ -25,20 +45,21 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
-	app.Author = "raintank"
+	app.Usage = ""
+	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "path",
-			Usage:  "path to the grafana installation",
-			Value:  getGrafanaPluginPath(),
+			Name:   "pluginsDir",
+			Usage:  "path to the grafana plugin directory",
+			Value:  getGrafanaPluginDir(),
 			EnvVar: "GF_PLUGIN_DIR",
 		},
 		cli.StringFlag{
 			Name:   "repo",
 			Usage:  "url to the plugin repository",
-			Value:  "https://grafana-net.raintank.io/api/plugins",
+			Value:  "https://grafana.net/api/plugins",
 			EnvVar: "GF_PLUGIN_REPO",
 		},
 		cli.BoolFlag{

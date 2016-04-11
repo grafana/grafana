@@ -15,7 +15,7 @@ export default class ResponseParser {
     var series = influxResults.series[0];
     return _.map(series.values, (value) => {
       if (_.isArray(value)) {
-        if (query.indexOf('SHOW TAG VALUES') >= 0) {
+        if (query.toLowerCase().indexOf('show tag values') >= 0) {
           return { text: (value[1] || value[0]) };
         } else {
           return { text: value[0] };

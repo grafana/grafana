@@ -31,7 +31,21 @@ describe('grafanaGraph', function() {
             panel: {
               legend: {},
               grid: { },
-              y_formats: [],
+              yaxes: [
+                {
+                  min: null,
+                  max: null,
+                  format: 'short',
+                  logBase: 1
+                },
+                {
+                  min: null,
+                  max: null,
+                  format: 'short',
+                  logBase: 1
+                }
+              ],
+              xaxis: {},
               seriesOverrides: [],
               tooltip: {
                 shared: true
@@ -39,7 +53,9 @@ describe('grafanaGraph', function() {
             },
             renderingCompleted: sinon.spy(),
             hiddenSeries: {},
-            dashboard: {timezone: 'browser'},
+            dashboard: {
+              getTimezone: sinon.stub().returns('browser')
+            },
             range: {
               from: moment([2015, 1, 1, 10]),
               to: moment([2015, 1, 1, 22]),
@@ -151,13 +167,7 @@ describe('grafanaGraph', function() {
 
   graphScenario('when logBase is log 10', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        leftMax: null,
-        rightMax: null,
-        leftMin: null,
-        rightMin: null,
-        leftLogBase: 10,
-      };
+      ctrl.panel.yaxes[0].logBase = 10;
     });
 
     it('should apply axis transform and ticks', function() {
