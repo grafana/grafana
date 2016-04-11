@@ -47,6 +47,7 @@ export class PluginEditCtrl {
       });
 
       if (this.model.type === 'app') {
+        this.tabIndex = 1;
         this.tabs.push('Config');
 
         this.hasDashboards = _.findWhere(result.includes, {type: 'dashboard'});
