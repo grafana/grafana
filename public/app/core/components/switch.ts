@@ -27,11 +27,8 @@ export class SwitchCtrl {
   }
 
   internalOnChange() {
-    return new Promise(resolve => {
-      this.$timeout(() => {
-        this.onChange();
-        resolve();
-      });
+    return this.$timeout(() => {
+      return this.onChange();
     });
   }
 
