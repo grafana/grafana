@@ -25,7 +25,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "install <plugin name>",
+		Usage:  "install <plugin id>",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
@@ -33,7 +33,7 @@ var pluginCommands = []cli.Command{
 		Action: runCommand(listremoteCommand),
 	}, {
 		Name:   "upgrade",
-		Usage:  "upgrade <plugin name>",
+		Usage:  "upgrade <plugin id>",
 		Action: runCommand(upgradeCommand),
 	}, {
 		Name:   "upgrade-all",
@@ -45,11 +45,11 @@ var pluginCommands = []cli.Command{
 		Action: runCommand(lsCommand),
 	}, {
 		Name:   "uninstall",
-		Usage:  "uninstall <plugin name>",
+		Usage:  "uninstall <plugin id>",
 		Action: runCommand(removeCommand),
 	}, {
 		Name:   "remove",
-		Usage:  "remove <plugin name>",
+		Usage:  "remove <plugin id>",
 		Action: runCommand(removeCommand),
 	},
 }
