@@ -76,11 +76,18 @@
 }
 
 .card-item-header {
+  margin-bottom: $spacer;
+}
+
+.card-item-type {
   color: $text-color-weak;
   text-transform: uppercase;
-  margin-bottom: $spacer;
   font-size: $font-size-sm;
   font-weight: bold;
+}
+
+.card-item-notice {
+  font-size: $font-size-sm;
 }
 
 .card-item-name {
@@ -106,6 +113,16 @@
 }
 
 .card-list-layout-grid {
+
+  .card-item-type {
+    display: inline-block;
+  }
+
+  .card-item-notice {
+    font-size: $font-size-sm;
+    display: inline-block;
+    margin-left: $spacer;
+  }
 
   .card-item-header-action {
     float: right;
@@ -173,6 +190,7 @@
 
   .card-item-header {
     float: right;
+    text-align: right;
   }
 
   .card-item-figure {

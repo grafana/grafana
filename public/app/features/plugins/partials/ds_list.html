@@ -20,8 +20,9 @@
 			<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
 				<a class="card-item" href="datasources/edit/{{ds.id}}/">
 					<div class="card-item-header">
-						<i class="icon-gf icon-gf-{{ds.type}}"></i>
-						{{ds.type}}
+						<div class="card-item-type">
+							{{ds.type}}
+						</div>
 					</div>
 					<div class="card-item-body">
 						<figure class="card-item-figure">
