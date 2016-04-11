@@ -69,7 +69,6 @@ func checkForUpdates() {
 		return
 	}
 
-	log.Info("GNET PLUG: %v", len(data.Plugins))
 	for _, plug := range Plugins {
 		for _, gplug := range data.Plugins {
 			if gplug.Id == plug.Id {
@@ -103,6 +102,7 @@ func checkForUpdates() {
 
 	if strings.Contains(setting.BuildVersion, "-") {
 		GrafanaLatestVersion = githubLatest.Testing
+		GrafanaHasUpdate = githubLatest.Testing != setting.BuildVersion
 	} else {
 		GrafanaLatestVersion = githubLatest.Stable
 		GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
