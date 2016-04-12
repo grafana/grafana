@@ -234,6 +234,8 @@
 
 .graph-tooltip {
   white-space: nowrap;
+  font-size: $font-size-sm;
+  background-color: $graph-tooltip-bg;
 
   .graph-tooltip-time {
     text-align: center;
@@ -246,7 +248,8 @@
     display: table-row;
 
     &--highlight {
-      color: $brand-text-highlight;
+      color: $link-color;
+      font-weight: bold;
     }
   }
 

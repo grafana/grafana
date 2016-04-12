@@ -253,6 +253,9 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
+	// grafana.net proxy
+	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
+
 	// Gravatar service.
 	avt := avatar.CacheServer()
 	r.Get("/avatar/:hash", avt.ServeHTTP)

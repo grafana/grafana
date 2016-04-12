@@ -9,7 +9,7 @@ function ($) {
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip">');
+    var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
 
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
@@ -34,7 +34,7 @@ function ($) {
     };
 
     this.showTooltip = function(absoluteTime, innerHtml, pos) {
-      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '</div> ';
+      var body = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>';
       body += innerHtml + '</div>';
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };
