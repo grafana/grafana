@@ -111,7 +111,7 @@ func checkForUpdates() {
 
 	if strings.Contains(setting.BuildVersion, "-") {
 		GrafanaLatestVersion = githubLatest.Testing
-		GrafanaHasUpdate = strings.HasPrefix(setting.BuildVersion, githubLatest.Testing)
+		GrafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, githubLatest.Testing)
 	} else {
 		GrafanaLatestVersion = githubLatest.Stable
 		GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
