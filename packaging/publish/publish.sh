@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
-deb_ver=3.0.0-beta21459801392
-rpm_ver=3.0.0-beta21459801392
+deb_ver=3.0.0-beta31460381868
+rpm_ver=3.0.0-beta31460381868
 
 #rpm_ver=3.0.0-1
 
@@ -15,7 +15,7 @@ rpm_ver=3.0.0-beta21459801392
 
 #wget https://grafanarel.s3.amazonaws.com/builds/grafana-${rpm_ver}.x86_64.rpm
 
-package_cloud push grafana/testing/el/6 grafana-${rpm_ver}.x86_64.rpm
+#package_cloud push grafana/testing/el/6 grafana-${rpm_ver}.x86_64.rpm
 #package_cloud push grafana/testing/el/7 grafana-${rpm_ver}.x86_64.rpm
 
 # package_cloud push grafana/stable/el/7 grafana-${version}-1.x86_64.rpm
