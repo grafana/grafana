@@ -268,6 +268,12 @@ $infoText:                $blue;
 $infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
+// popover
+$popover-bg:              $gray-5;
+$popover-color:           $text-color;
+
+$popover-help-bg:         $blue-dark;
+$popover-help-color:      $gray-6;
 
 // Tooltips and popovers
 // -------------------------
@@ -275,14 +281,8 @@ $tooltipColor:            $text-color;
 $tooltipBackground:       $gray-5;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $text-color;
-
-// popover
-$popover-bg:         $gray-5;
-$popover-color:      $text-color;
-
-$popover-help-bg:         $blue-dark;
-$popover-help-color:      $gray-6;
+$tooltipLinkColor:        $link-color;
+$graph-tooltip-bg:        $gray-5;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';

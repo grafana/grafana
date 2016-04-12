@@ -19,6 +19,7 @@ export class PluginEditCtrl {
 
   /** @ngInject */
   constructor(private $scope,
+              private $rootScope,
               private backendSrv,
               private $routeParams,
               private $sce,
@@ -126,6 +127,16 @@ export class PluginEditCtrl {
 
   setPostUpdateHook(callback: () => any) {
     this.postUpdateHook = callback;
+  }
+
+  updateAvailable() {
+    var modalScope = this.$scope.$new(true);
+    modalScope.plugin = this.model;
+
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/features/plugins/partials/update_instructions.html',
+      scope: modalScope
+    });
   }
 
   enable() {
