@@ -26,7 +26,10 @@ func StartPluginUpdateChecker() {
 		return
 	}
 
-	ticker := time.NewTicker(time.Second * 24)
+	// do one check directly
+	go checkForUpdates()
+
+	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:

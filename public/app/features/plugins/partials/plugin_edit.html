@@ -56,9 +56,7 @@
         <h4>Version</h4>
         <span>{{ctrl.model.info.version}}</span>
 				<div ng-show="ctrl.model.hasUpdate">
-					<a href="https://grafana.net/plugins/{{ctrl.model.id}}" target="_blank">
-						Update Available!
-					</a>
+          <a ng-click="ctrl.updateAvailable()" bs-tooltip="ctrl.model.latestVersion">Update Available!</a>
 				</div>
       </section>
       <section class="page-sidebar-section" ng-show="ctrl.model.type === 'app'">

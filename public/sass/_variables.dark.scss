@@ -242,20 +242,22 @@ $successBackground:       $btn-success-bg;
 $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
 
-// Tooltips and popovers
-// -------------------------
-$tooltipColor:            $text-color;
-$tooltipBackground:       $dark-4;
-$tooltipArrowWidth:       5px;
-$tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $link-color;
-
 // popover
 $popover-bg:         $dark-4;
 $popover-color:      $text-color;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
+
+
+// Tooltips and popovers
+// -------------------------
+$tooltipColor:            $text-color;
+$tooltipBackground:       $dark-5;
+$tooltipArrowWidth:       5px;
+$tooltipArrowColor:       $tooltipBackground;
+$tooltipLinkColor:        $link-color;
+$graph-tooltip-bg:        $dark-5;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
