@@ -202,6 +202,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       datapoints: datapoints,
       alias: alias,
       color: color,
+      unit: seriesData.unit,
     });
 
     if (datapoints && datapoints.length > 0) {
@@ -212,13 +213,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
 
       this.datapointsCount += datapoints.length;
-
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
-    if (seriesData.unit) {
-      this.panel.yaxes[series.yaxis-1].format = seriesData.unit;
-    }
 
     return series;
   }
@@ -228,6 +225,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     for (let series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
+
+      if (series.unit) {
+        this.panel.yaxes[series.yaxis-1].format = series.unit;
+      }
     }
   }
 
