@@ -24,6 +24,7 @@
     max-width: 120px;
   }
   .dashnav-zoom-out,
+  .dashnav-move-timeframe,
   .dashnav-action-icons {
     display: none;
   }
@@ -40,6 +41,11 @@
   .gf-timepicker-nav-btn {
     max-width: 120px;
   }
+
+  .dashnav-move-timeframe {
+    display: none;
+  }
+
   .panel-in-fullscreen {
     .dashnav-action-icons {
       display: none;
@@ -58,6 +64,9 @@
     max-width: 240px;
   }
   .dashnav-zoom-out {
+    display: block;
+  }
+  .dashnav-move-timeframe {
     display: block;
   }
 }
