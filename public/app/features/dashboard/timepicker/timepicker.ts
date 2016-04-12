@@ -30,6 +30,8 @@ export class TimePickerCtrl {
     $scope.ctrl = this;
 
     $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
+    $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
+    $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
 
@@ -85,6 +87,30 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
+  }
+
+  move(direction) {
+    var range = this.timeSrv.timeRange();
+
+    var timespan = (range.to.valueOf() - range.from.valueOf());
+    var to, from;
+    if (direction === -1) {
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
+    } else if (direction === 1) {
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
+      }
+    } else {
+      to = range.to.valueOf();
+      from = range.from.valueOf();
+    }
+
+    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
+
   }
 
   openDropdown() {
