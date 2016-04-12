@@ -248,7 +248,8 @@
     display: table-row;
 
     &--highlight {
-      color: $brand-text-highlight;
+      color: $link-color;
+      font-weight: bold;
     }
   }
 
