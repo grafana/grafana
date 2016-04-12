@@ -59,6 +59,7 @@ define([
         openOn: 'click',
         template: '<gf-color-picker></gf-color-picker>',
         model: {
+          autoClose: true,
           colorSelected: $scope.colorSelected,
         },
         onClose: function() {
