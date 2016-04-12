@@ -14,7 +14,7 @@ type FrontendPluginBase struct {
 }
 
 func (fp *FrontendPluginBase) initFrontendPlugin() {
-	if isInternalPlugin(fp.PluginDir) {
+	if isExternalPlugin(fp.PluginDir) {
 		StaticRoutes = append(StaticRoutes, &PluginStaticRoute{
 			Directory: fp.PluginDir,
 			PluginId:  fp.Id,
@@ -48,17 +48,18 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 
 func (fp *FrontendPluginBase) handleModuleDefaults() {
 
-	if isInternalPlugin(fp.PluginDir) {
+	if isExternalPlugin(fp.PluginDir) {
 		fp.Module = path.Join("plugins", fp.Id, "module")
 		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
 	}
 
+	fp.IsCorePlugin = true
 	fp.Module = path.Join("app/plugins", fp.Type, fp.Id, "module")
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, fp.Id)
 }
 
-func isInternalPlugin(pluginDir string) bool {
+func isExternalPlugin(pluginDir string) bool {
 	return !strings.Contains(pluginDir, setting.StaticRootPath)
 }
 
