@@ -7,10 +7,6 @@ import coreModule from 'app/core/core_module';
 
 var template = `
 <div class="graph-legend-popover">
-  <a class="drop-popopver-close" ng-click="ctrl.close();" href="" ng-hide="ctrl.autoClose">
-    <i class="fa fa-times-circle"></i>
-  </a>
-
   <div ng-show="ctrl.series" class="p-b-1">
     <label>Y Axis:</label>
     <button ng-click="ctrl.toggleAxis(yaxis);" class="btn btn-small"
@@ -31,7 +27,6 @@ var template = `
     ng-style="{color:color}"
     ng-click="ctrl.colorSelected(color);">&nbsp;</i>
   </p>
-
 </div>
 `;
 
@@ -51,20 +46,16 @@ export class ColorPickerCtrl {
   toggleAxis(yaxis) {
     this.$scope.toggleAxis();
 
-    if (!this.$scope.autoClose) {
+    if (this.$scope.autoClose) {
       this.$scope.dismiss();
     }
   }
 
   colorSelected(color) {
     this.$scope.colorSelected(color);
-    if (!this.$scope.autoClose) {
+    if (this.$scope.autoClose) {
       this.$scope.dismiss();
     }
-  }
-
-  close() {
-    this.$scope.dismiss();
   }
 }
 
