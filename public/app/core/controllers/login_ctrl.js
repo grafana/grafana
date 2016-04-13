@@ -17,8 +17,10 @@ function (angular, coreModule, config) {
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
-    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
+    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled || config.genericOAuthEnabled;
     $scope.allowUserPassLogin = config.allowUserPassLogin;
+    $scope.genericOAuthEnabled = config.genericOAuthEnabled;
+    $scope.oauthProviderName = config.oauthProviderName;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
