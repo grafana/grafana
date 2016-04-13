@@ -1,4 +1,4 @@
-# 3.0.0-beta4 (unreleased)
+# 3.0.0-beta4 (2016-04-13)
 
 ### Bug fixes
 * **Home dashboard**: Fixed issue with permission denied error on home dashboard, fixes [#4686](https://github.com/grafana/grafana/issues/4686)
