@@ -181,7 +181,8 @@ class MetricsPanelCtrl extends PanelCtrl {
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
       scopedVars: this.panel.scopedVars,
-      cacheTimeout: this.panel.cacheTimeout
+      cacheTimeout: this.panel.cacheTimeout,
+      continuous: this.panel.continuous || false
     };
 
     return datasource.query(metricsQuery);
