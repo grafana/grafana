@@ -149,6 +149,19 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		return
 	}
 
+	saveAlertCommand := m.SaveAlertsCommand{
+		DashboardId: dash.Id,
+		OrgId:       c.OrgId,
+		UserId:      c.UserId,
+		Alerts:      cmd.GetAlertModels(),
+	}
+
+	err = bus.Dispatch(&saveAlertCommand)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to save alerts", err)
+		return
+	}
+
 	metrics.M_Api_Dashboard_Post.Inc(1)
 
 	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
