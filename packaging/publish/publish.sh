@@ -1,16 +1,16 @@
 #! /usr/bin/env bash
 
-deb_ver=3.0.0-beta31460467884
-rpm_ver=3.0.0-beta31460467884
+deb_ver=3.0.0-beta41460581169
+rpm_ver=3.0.0-beta41460581169
 
 #rpm_ver=3.0.0-1
 
-# wget https://grafanarel.s3.amazonaws.com/builds/grafana_${deb_ver}_amd64.deb
+wget https://grafanarel.s3.amazonaws.com/builds/grafana_${deb_ver}_amd64.deb
 
 #package_cloud push grafana/stable/debian/jessie grafana_${deb_ver}_amd64.deb
 #package_cloud push grafana/stable/debian/wheezy grafana_${deb_ver}_amd64.deb
 
-# package_cloud push grafana/testing/debian/jessie grafana_${deb_ver}_amd64.deb
+package_cloud push grafana/testing/debian/jessie grafana_${deb_ver}_amd64.deb
 package_cloud push grafana/testing/debian/wheezy grafana_${deb_ver}_amd64.deb
 
 wget https://grafanarel.s3.amazonaws.com/builds/grafana-${rpm_ver}.x86_64.rpm
