@@ -281,6 +281,7 @@ function (angular, _, kbn) {
           if (!matches) { continue; }
           if (matches.length > 1) {
             value = matches[1];
+            text = value;
           }
         }
 
