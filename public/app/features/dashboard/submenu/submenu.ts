@@ -8,7 +8,7 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private templateValuesSrv, private dynamicDashboardSrv) {
+  constructor(private $rootScope, private templateValuesSrv) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.dashboard.templating.list;
   }
@@ -24,7 +24,6 @@ export class SubmenuCtrl {
 
   variableUpdated(variable) {
     this.templateValuesSrv.variableUpdated(variable).then(() => {
-      this.dynamicDashboardSrv.update(this.dashboard);
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
     });
