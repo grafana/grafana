@@ -1,4 +1,4 @@
-# 3.0.0-beta5 ()
+# 3.0.0-beta5 (unreleased)
 
 ### Bug fixes
 * **Graph**: Fixed issue with light theme text color issue in tooltip, fixes [#4702](https://github.com/grafana/grafana/issues/4702)
