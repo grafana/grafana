@@ -172,6 +172,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
+    var self = this;
+    _.each(this.panel.targets, function(target) {
+      target.continuous = self.panel.continuous || false;
+    });
+
     var metricsQuery = {
       panelId: this.panel.id,
       range: this.range,
@@ -181,8 +186,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
       scopedVars: this.panel.scopedVars,
-      cacheTimeout: this.panel.cacheTimeout,
-      continuous: this.panel.continuous || false
+      cacheTimeout: this.panel.cacheTimeout
     };
 
     return datasource.query(metricsQuery);
