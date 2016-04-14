@@ -109,7 +109,8 @@ $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
 $modal-background: $body-bg;
-$code-tag-bg:      $dark-5;
+$code-tag-bg:      $gray-6;
+$code-tag-border:  darken($code-tag-bg, 3%);
 
 // Lists
 $grafanaListBackground:    	   $gray-6;
@@ -281,7 +282,7 @@ $tooltipColor:            $popover-help-color;
 $tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $link-color;
+$tooltipLinkColor:        lighten($popover-help-color, 5%);
 $graph-tooltip-bg:        $gray-5;
 
 // images
