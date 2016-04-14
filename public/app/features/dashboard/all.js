@@ -1,5 +1,5 @@
 define([
-  './dashboardCtrl',
+  './dashboard_ctrl',
   './dashboardLoaderSrv',
   './dashnav/dashnav',
   './submenu/submenu',
@@ -14,7 +14,6 @@ define([
   './unsavedChangesSrv',
   './timepicker/timepicker',
   './graphiteImportCtrl',
-  './dynamicDashboardSrv',
   './importCtrl',
   './impression_store',
 ], function () {});
