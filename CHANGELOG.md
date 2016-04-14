@@ -2,6 +2,7 @@
 
 ### Bug fixes
 * **Graph**: Fixed issue with light theme text color issue in tooltip, fixes [#4702](https://github.com/grafana/grafana/issues/4702)
+* **Snapshot**: Fixed issue with empty snapshots, fixes [#4706](https://github.com/grafana/grafana/issues/4706)
 
 # 3.0.0-beta4 (2016-04-13)
 
