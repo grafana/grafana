@@ -1,30 +1,30 @@
 <div class="pluginlist">
-	<div class="pluginlist-section" ng-repeat="category in ctrl.viewModel">
-		<h6 class="pluginlist-section-header">
-			{{category.header}}
-		</h6>
-		<div class="pluginlist-item" ng-repeat="plugin in category.list">
-			<div class="pluginlist-link pluginlist-link-{{plugin.state}} pointer" ng-click="ctrl.gotoPlugin(plugin)">
-				<a href="plugins/{{plugin.id}}/edit">
-						<img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
-						<span class="pluginlist-title">{{plugin.name}}</span>
-						<span class="pluginlist-version">v{{plugin.info.version}}</span>
-				</a>
-				<a class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
-					Update available!
-				</a>
-				<span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
-					Enable now
-				</span>
-				<span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
-					Up to date
-				</span>
-			</div>
-		</div>
-		<div class="pluginlist-item" ng-show="category.list.length === 0">
-			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana.net/plugins/">
-				<span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
-			</a>
-		</div>
-	</div>
+  <div class="pluginlist-section" ng-repeat="category in ctrl.viewModel">
+    <h6 class="pluginlist-section-header">
+      {{category.header}}
+    </h6>
+    <div class="pluginlist-item" ng-repeat="plugin in category.list">
+      <a class="pluginlist-link pluginlist-link-{{plugin.state}} pointer" href="plugins/{{plugin.id}}/edit">
+        <span>
+          <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+          <span class="pluginlist-title">{{plugin.name}}</span>
+          <span class="pluginlist-version">v{{plugin.info.version}}</span>
+        </span>
+        <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
+          Update available!
+        </span>
+        <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
+          Enable now
+        </span>
+        <span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
+          Up to date
+        </span>
+      </a>
+    </div>
+    <div class="pluginlist-item" ng-show="category.list.length === 0">
+      <a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana.net/plugins/">
+        <span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
+      </a>
+    </div>
+  </div>
 </div>
