@@ -4,6 +4,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 
+import {DashboardExporter} from '../exporter';
+
 export class DashNavCtrl {
 
   /** @ngInject */
@@ -170,9 +172,8 @@ export class DashNavCtrl {
 
     $scope.exportDashboard = function() {
       var clone = $scope.dashboard.getSaveModelClone();
-      var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
-      var wnd: any = window;
-      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
+      var exporter = new DashboardExporter();
+      exporter.export(clone);
     };
 
     $scope.snapshot = function() {
