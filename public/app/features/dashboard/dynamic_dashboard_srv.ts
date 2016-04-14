@@ -8,30 +8,36 @@ export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
 
+  constructor() {
+    this.iteration = new Date().getTime();
+  }
+
   init(dashboard) {
     if (dashboard.snapshot) { return; }
-
-    this.iteration = new Date().getTime();
-    this.process(dashboard);
+    this.process(dashboard, {});
   }
 
   update(dashboard) {
     if (dashboard.snapshot) { return; }
 
     this.iteration = this.iteration + 1;
-    this.process(dashboard);
+    this.process(dashboard, {});
   }
 
-  process(dashboard) {
+  process(dashboard, options) {
     if (dashboard.templating.list.length === 0) { return; }
     this.dashboard = dashboard;
+
+    var cleanUpOnly = options.cleanUpOnly;
 
     var i, j, row, panel;
     for (i = 0; i < this.dashboard.rows.length; i++) {
       row = this.dashboard.rows[i];
       // handle row repeats
       if (row.repeat) {
-        this.repeatRow(row, i);
+        if (!cleanUpOnly) {
+          this.repeatRow(row, i);
+        }
       } else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
         // clean up old left overs
         this.dashboard.rows.splice(i, 1);
@@ -43,7 +49,9 @@ export class DynamicDashboardSrv {
       for (j = 0; j < row.panels.length; j++) {
         panel = row.panels[j];
         if (panel.repeat) {
-          this.repeatPanel(panel, row);
+          if (!cleanUpOnly) {
+            this.repeatPanel(panel, row);
+          }
         } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
           // clean up old left overs
           row.panels = _.without(row.panels, panel);
