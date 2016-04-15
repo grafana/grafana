@@ -5,7 +5,7 @@ import {DashboardExporter} from '../exporter';
 describe('given dashboard with repeated panels', function() {
   var dash, exported;
 
-  beforeEach(() => {
+  beforeEach((done) => {
     dash = {
       rows: [],
       templating: { list: [] }
@@ -19,7 +19,7 @@ describe('given dashboard with repeated panels', function() {
     dash.rows.push({
       repeat: 'test',
       panels: [
-        {id: 2, repeat: 'apps'},
+        {id: 2, repeat: 'apps', datasource: 'gfdb'},
         {id: 2, repeat: null, repeatPanelId: 2},
       ]
     });
@@ -28,8 +28,18 @@ describe('given dashboard with repeated panels', function() {
       repeatRowId: 1
     });
 
-    var exporter = new DashboardExporter();
-    exported = exporter.makeExportable(dash);
+    var datasourceSrvStub = {
+      get: sinon.stub().returns(Promise.resolve({
+        name: 'gfdb',
+        meta: {id: "testdb"}
+      }))
+    };
+
+    var exporter = new DashboardExporter(datasourceSrvStub);
+    exporter.makeExportable(dash).then(clean => {
+      exported = clean;
+      done();
+    });
   });
 
 
@@ -39,6 +49,11 @@ describe('given dashboard with repeated panels', function() {
 
   it('exported dashboard should not contain repeated rows', function() {
     expect(exported.rows.length).to.be(1);
+  });
+
+  it('should replace datasource refs', function() {
+    var panel = exported.rows[0].panels[0];
+    expect(panel.datasource).to.be("${DS_GFDB}");
   });
 
 });

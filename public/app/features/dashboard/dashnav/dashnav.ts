@@ -9,7 +9,7 @@ import {DashboardExporter} from '../exporter';
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
@@ -172,7 +172,7 @@ export class DashNavCtrl {
 
     $scope.exportDashboard = function() {
       var clone = $scope.dashboard.getSaveModelClone();
-      var exporter = new DashboardExporter();
+      var exporter = new DashboardExporter(datasourceSrv);
       exporter.export(clone);
     };
 
