@@ -6,6 +6,7 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   align-items: center;
   text-align: left;
+  position: relative;
 
   .cr1 {
     margin-left: 8px;
@@ -138,6 +139,12 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+
+  &--has-help-icon {
+    &:after {
+      right: $input-padding-x*3;
+    }
+  }
 }
 
 .gf-form--v-stretch {
@@ -182,3 +189,24 @@ $gf-form-margin: 0.25rem;
     pointer-events: none;
   }
 }
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 8px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
+}
+
