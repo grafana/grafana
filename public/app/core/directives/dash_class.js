@@ -20,17 +20,13 @@ function (_, $, coreModule) {
           elem.toggleClass('panel-in-fullscreen', false);
         });
 
-        $scope.$watch('dashboard.hideControls', function() {
+        $scope.$watch('dashboard.editMode', function() {
           if (!$scope.dashboard) {
             return;
           }
 
-          var hideControls = $scope.dashboard.hideControls || $scope.playlist_active;
-
-          if (lastHideControlsVal !== hideControls) {
-            elem.toggleClass('hide-controls', hideControls);
-            lastHideControlsVal = hideControls;
-          }
+          var editMode = $scope.dashboard.editMode;
+          elem.toggleClass('dash-edit-mode', editMode === true);
         });
 
         $scope.$watch('playlistSrv', function(newValue) {
