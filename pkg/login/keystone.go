@@ -287,10 +287,9 @@ func (a *keystoneAuther) getProjectList(username, password string) error {
 	for _, project := range projects {
 		var auth keystone.Auth_data
 		auth.Server = a.server
-		auth.Username = username
-		auth.Password = password
 		auth.Domain = a.domainname
 		auth.Project = project
+		auth.UnscopedToken = a.token
 		if err := keystone.AuthenticateScoped(&auth); err != nil {
 			return err
 		}

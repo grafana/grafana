@@ -21,18 +21,38 @@ type auth_struct struct {
 	Scope    string               `json:"scope"`
 }
 
-type scoped_auth_request_struct struct {
-	Auth scoped_auth_struct `json:"auth"`
+type scoped_auth_token_request_struct struct {
+	Auth scoped_auth_token_struct `json:"auth"`
 }
 
-type scoped_auth_struct struct {
-	Identity auth_identity_struct `json:"identity"`
-	Scope    auth_scope_struct    `json:"scope"`
+type scoped_auth_password_request_struct struct {
+	Auth scoped_auth_password_struct `json:"auth"`
+}
+
+type scoped_auth_token_struct struct {
+	Nocatalog bool                        `json:"nocatalog"`
+	Identity  auth_scoped_identity_struct `json:"identity"`
+	Scope     auth_scope_struct           `json:"scope"`
+}
+
+type scoped_auth_password_struct struct {
+	Nocatalog bool                 `json:"nocatalog"`
+	Identity  auth_identity_struct `json:"identity"`
+	Scope     auth_scope_struct    `json:"scope"`
+}
+
+type auth_scoped_identity_struct struct {
+	Methods []string                 `json:"methods"`
+	Token   auth_token_method_struct `json:"token"`
 }
 
 type auth_identity_struct struct {
 	Methods  []string                    `json:"methods"`
 	Password auth_password_method_struct `json:"password"`
+}
+
+type auth_token_method_struct struct {
+	Id string `json:"id"`
 }
 
 type auth_password_method_struct struct {
@@ -92,11 +112,12 @@ type project_struct struct {
 
 // Authentication Section Section
 type Auth_data struct {
-	Server   string
-	Domain   string
-	Username string
-	Password string
-	Project  string
+	Server        string
+	Domain        string
+	Username      string
+	Password      string
+	Project       string
+	UnscopedToken string
 	//response
 	Token      string
 	Expiration string
@@ -104,16 +125,26 @@ type Auth_data struct {
 }
 
 func AuthenticateScoped(data *Auth_data) error {
-	var auth_post scoped_auth_request_struct
-	auth_post.Auth.Identity.Methods = []string{"password"}
-	auth_post.Auth.Identity.Password.User.Name = data.Username
-	auth_post.Auth.Identity.Password.User.Password = data.Password
-	auth_post.Auth.Identity.Password.User.Domain.Name = data.Domain
-	auth_post.Auth.Scope.Project.Domain.Name = data.Domain
-	auth_post.Auth.Scope.Project.Name = data.Project
-	b, _ := json.Marshal(auth_post)
-
-	return authenticate(data, b)
+	if data.UnscopedToken != "" {
+		var auth_post scoped_auth_token_request_struct
+		auth_post.Auth.Identity.Methods = []string{"token"}
+		auth_post.Auth.Identity.Token.Id = data.UnscopedToken
+		auth_post.Auth.Scope.Project.Domain.Name = data.Domain
+		auth_post.Auth.Scope.Project.Name = data.Project
+		b, _ := json.Marshal(auth_post)
+		return authenticate(data, b)
+	} else {
+		var auth_post scoped_auth_password_request_struct
+		auth_post.Auth.Nocatalog = true
+		auth_post.Auth.Identity.Methods = []string{"password"}
+		auth_post.Auth.Identity.Password.User.Name = data.Username
+		auth_post.Auth.Identity.Password.User.Password = data.Password
+		auth_post.Auth.Identity.Password.User.Domain.Name = data.Domain
+		auth_post.Auth.Scope.Project.Domain.Name = data.Domain
+		auth_post.Auth.Scope.Project.Name = data.Project
+		b, _ := json.Marshal(auth_post)
+		return authenticate(data, b)
+	}
 }
 
 func AuthenticateUnscoped(data *Auth_data) error {
