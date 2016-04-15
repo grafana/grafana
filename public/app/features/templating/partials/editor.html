@@ -217,10 +217,10 @@
 
       <div class="gf-form-group">
         <h5>Preview of values (shows max 20)</h5>
-        <div class="gf-form">
-          <span class="gf-form-label" ng-repeat="option in current.options | limitTo: 20">
-            {{option.text}}
-          </span>
+        <div class="gf-form-inline">
+          <div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
+            <span class="gf-form-label">{{option.text}}</span>
+          </div>
         </div>
       </div>
     </div>
