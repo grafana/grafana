@@ -4,6 +4,8 @@ import config from 'app/core/config';
 import angular from 'angular';
 import _ from 'lodash';
 
+import coreModule from 'app/core/core_module';
+
 export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
@@ -181,3 +183,4 @@ export class DynamicDashboardSrv {
     });
   }
 }
+
