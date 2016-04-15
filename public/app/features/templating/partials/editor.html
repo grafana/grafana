@@ -179,55 +179,56 @@
 
 			<div class="section gf-form-group" >
 				<h5 class="section-heading">Selection Options</h5>
-        <gf-form-switch class="gf-form"
-                        label="Multi-value"
-                        label-class="width-10"
-                        tooltip="Enables multiple values to be selected at the same time"
-                        checked="current.multi"
-                        on-change="runQuery()">
-        </gf-form-switch>
-        <gf-form-switch class="gf-form"
-                        label="Include All option"
-                        label-class="width-10"
-                        checked="current.includeAll"
-                        on-change="runQuery()">
-        </gf-form-switch>
+        <div class="section">
+          <gf-form-switch class="gf-form"
+                          label="Multi-value"
+                          label-class="width-10"
+                          tooltip="Enables multiple values to be selected at the same time"
+                          checked="current.multi"
+                          on-change="runQuery()">
+          </gf-form-switch>
+          <gf-form-switch class="gf-form"
+                          label="Include All option"
+                          label-class="width-10"
+                          checked="current.includeAll"
+                          on-change="runQuery()">
+          </gf-form-switch>
+        </div>
+        <div class="gf-form" ng-if="current.includeAll">
+          <span class="gf-form-label width-10">Custom all value</span>
+          <input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>
+        </div>
+      </div>
 
-				<div class="gf-form" ng-if="current.includeAll">
-					<span class="gf-form-label width-10">Custom all value</span>
-					<input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>
-				</div>
-			</div>
+      <div class="gf-form-group" ng-if="current.type === 'query'">
+        <h5>Value groups/tags (Experimental feature)</h5>
+        <div class="gf-form">
+          <editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
+        </div>
+        <div class="gf-form last" ng-if="current.useTags">
+          <span class="gf-form-label width-10">Tags query</span>
+          <input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
+        </div>
+        <div class="gf-form" ng-if="current.useTags">
+          <li class="gf-form-label width-10">Tag values query</li>
+          <input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
+        </div>
+      </div>
 
-			<div class="gf-form-group" ng-if="current.type === 'query'">
-				<h5>Value groups/tags (Experimental feature)</h5>
-				<div class="gf-form">
-					<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
-				</div>
-				<div class="gf-form last" ng-if="current.useTags">
-					<span class="gf-form-label width-10">Tags query</span>
-					<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
-				</div>
-				<div class="gf-form" ng-if="current.useTags">
-					<li class="gf-form-label width-10">Tag values query</li>
-					<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
-				</div>
-			</div>
+      <div class="gf-form-group">
+        <h5>Preview of values (shows max 20)</h5>
+        <div class="gf-form">
+          <span class="gf-form-label" ng-repeat="option in current.options | limitTo: 20">
+            {{option.text}}
+          </span>
+        </div>
+      </div>
+    </div>
 
-			<div class="gf-form-group">
-				<h5>Preview of values (shows max 20)</h5>
-				<div class="gf-form">
-					<span class="gf-form-label" ng-repeat="option in current.options | limitTo: 20">
-						{{option.text}}
-					</span>
-				</div>
-			</div>
-		</div>
-
-		<div class="gf-form-button-row p-y-0">
-			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-			<button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
-		</div>
-	</div>
+    <div class="gf-form-button-row p-y-0">
+      <button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
+      <button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
+    </div>
+  </div>
 </div>
 
