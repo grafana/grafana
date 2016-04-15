@@ -32,6 +32,11 @@ function (angular, _, config) {
       row.collapse = row.collapse ? false : true;
     };
 
+    $scope.settingsHover = function(row) {
+        // Shows/hides the settings button on hover
+      return row.hoverSettings = ! row.hoverSettings;
+    };
+
     $scope.addPanel = function(panel) {
       $scope.dashboard.addPanel(panel, $scope.row);
     };

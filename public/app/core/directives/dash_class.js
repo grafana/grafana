@@ -10,8 +10,6 @@ function (_, $, coreModule) {
     return {
       link: function($scope, elem) {
 
-        var lastHideControlsVal;
-
         $scope.onAppEvent('panel-fullscreen-enter', function() {
           elem.toggleClass('panel-in-fullscreen', true);
         });

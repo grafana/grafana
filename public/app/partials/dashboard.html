@@ -12,10 +12,10 @@
 		<div class="clearfix"></div>
 
 		<div class="dash-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
-			<div class="dash-row-header" ng-if="row.showTitle || dashboard.editMode">
+			<div class="dash-row-header pointer" ng-click="toggleRow(row)" ng-if="row.showTitle || dashboard.editMode" ng-mouseenter="settingsHover(row)" ng-mouseleave="settingsHover(row)">
 				<div class="dash-row-header-title" ng-bind="row.title | interpolateTemplateVars:this"></div>
 				<div class="dash-row-header-settings dropdown">
-					<a class="pointer dropdown-toggle" data-toggle="dropdown">
+					<a class="pointer dropdown-toggle" data-toggle="dropdown" ng-show="row.hoverSettings || dashboard.editMode">
 						<i class="fa fa-cog"></i>
 					</a>
 					<ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
@@ -63,9 +63,10 @@
 						</li>
 					</ul>
 				</div>
-				<div class="dash-row-header-collapse-toggle">
+				<div class="dash-row-header-chevron">
 					<a class="pointer" ng-click="row.collapse = !row.collapse">
-						<i class="fa fa-chevron-down"></i>
+						<i class="fa fa-chevron-down" ng-show="!row.collapse"></i>
+						<i class="fa fa-chevron-right" ng-show="row.collapse"></i>
 					</a>
 				</div>
 			</div>

@@ -51,6 +51,10 @@
 			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
 		</ul>
 	</li>
+	<li>
+		<a ng-click="dashboard.editMode()"  ng-show="!dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom"><i class="fa fa-wrench"></i></a>
+		<a ng-click="!dashboard.editMode()" ng-show="dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom" style="color: #33B5E5;"><i class="fa fa-wrench fa-wrench-close" style="color: #33B5E5;"></i> Leave Build Mode </a>
+	</li>
 </ul>
 
 <ul class="nav dash-playlist-actions" ng-if="playlistSrv">

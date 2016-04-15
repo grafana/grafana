@@ -43,7 +43,7 @@ function(angular, $) {
         scope.broadcastRefresh();
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+e', function() {
+      keyboardManager.bind('ctrl+b', function() {
         scope.dashboard.editMode = !scope.dashboard.editMode;
       }, { inputDisabled: true });
 
