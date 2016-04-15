@@ -9,21 +9,24 @@ import (
 )
 
 type keystoneAuther struct {
-	server     string
-	domainname string
-	roles      map[m.RoleType][]string
+	server      string
+	domainname  string
+	roles       map[m.RoleType][]string
+	admin_roles []string
 
 	token        string
 	project_list map[string][]string
 }
 
-func NewKeystoneAuthenticator(server, domainname string, admin_roles, editor_roles, viewer_roles []string) *keystoneAuther {
+func NewKeystoneAuthenticator(server, domainname string, global_admin_roles, admin_roles, editor_roles,
+	read_editor_roles, viewer_roles []string) *keystoneAuther {
 	roles := map[m.RoleType][]string{
-		m.ROLE_ADMIN:  admin_roles,
-		m.ROLE_EDITOR: editor_roles,
-		m.ROLE_VIEWER: viewer_roles,
+		m.ROLE_ADMIN:            admin_roles,
+		m.ROLE_EDITOR:           editor_roles,
+		m.ROLE_READ_ONLY_EDITOR: read_editor_roles,
+		m.ROLE_VIEWER:           viewer_roles,
 	}
-	return &keystoneAuther{server: server, domainname: domainname, roles: roles}
+	return &keystoneAuther{server: server, domainname: domainname, roles: roles, admin_roles: global_admin_roles}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
@@ -84,6 +87,19 @@ func (a *keystoneAuther) createGrafanaUser(username string) (*m.User, error) {
 	}
 
 	return &cmd.Result, nil
+}
+
+func (a *keystoneAuther) updateGrafanaUserPermissions(userid int64, isAdmin bool) error {
+	cmd := m.UpdateUserPermissionsCommand{
+		UserId:         userid,
+		IsGrafanaAdmin: isAdmin,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *keystoneAuther) getGrafanaOrgFor(orgname string) (*m.Org, error) {
@@ -204,6 +220,30 @@ func (a *keystoneAuther) syncOrgRoles(username, password string, user *m.User) e
 		}
 	}
 
+	// set or unset admin permissions
+	isAdmin := false
+	role_map := make(map[string]bool)
+	for _, role := range a.admin_roles {
+		role_map[role] = true
+	}
+	for project, _ := range a.project_list {
+		if isAdmin == true {
+			break
+		}
+		project_roles := a.project_list[project]
+		for _, role := range project_roles {
+			if _, ok := role_map[role]; ok {
+				isAdmin = true
+				break
+			}
+		}
+	}
+	if isAdmin != user.IsAdmin {
+		if err := a.updateGrafanaUserPermissions(user.Id, isAdmin); err != nil {
+			return err
+		}
+	}
+
 	orgsQuery = m.GetUserOrgListQuery{UserId: user.Id}
 	if err := bus.Dispatch(&orgsQuery); err != nil {
 		return err
@@ -268,7 +308,7 @@ func (a *keystoneAuther) getRole(user_roles []string) m.RoleType {
 	for _, role := range user_roles {
 		role_map[role] = true
 	}
-	role_order := []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR, m.ROLE_VIEWER}
+	role_order := []m.RoleType{m.ROLE_ADMIN, m.ROLE_EDITOR, m.ROLE_READ_ONLY_EDITOR, m.ROLE_VIEWER}
 	for _, role_type := range role_order {
 		for _, role := range a.roles[role_type] {
 			if _, ok := role_map[role]; ok {
