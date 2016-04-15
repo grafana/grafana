@@ -21,16 +21,14 @@ code {
   background-color: $code-tag-bg;
   border: 1px solid darken($code-tag-bg, 15%);
   white-space: nowrap;
+  padding: 2px 5px;
+  margin: 0 2px;
 }
 
 code.code--small {
   font-size: $font-size-xs;
   padding: 5px;
   margin: 0 2px;
-}
-
-p.code--line {
-  line-height: 1.8;
 }
 
 // Blocks of code
