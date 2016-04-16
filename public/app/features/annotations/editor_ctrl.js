@@ -45,6 +45,7 @@ function (angular, _, $) {
 
     $scope.reset = function() {
       $scope.currentAnnotation = angular.copy(annotationDefaults);
+      $scope.currentAnnotation.datasource = $scope.datasources[0].name;
       $scope.currentIsNew = true;
       $scope.datasourceChanged();
     };

@@ -65,7 +65,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       var data = this.panel.snapshotData;
       // backward compatability
       if (!_.isArray(data)) {
-        data = data;
+        data = data.data;
       }
 
       this.events.emit('data-snapshot-load', data);
@@ -82,6 +82,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
+    this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
@@ -183,7 +184,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       cacheTimeout: this.panel.cacheTimeout
     };
 
-    this.setTimeQueryStart();
     return datasource.query(metricsQuery);
   }
 
@@ -251,8 +251,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   addDataQuery(datasource) {
-    var target = {
-    };
+    var target: any = {};
+
+    if (datasource) {
+      target.datasource = datasource.name;
+    }
+
     this.panel.targets.push(target);
   }
 }

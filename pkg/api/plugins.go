@@ -14,6 +14,7 @@ func GetPluginList(c *middleware.Context) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	coreFilter := c.Query("core")
 
 	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
 
@@ -28,16 +29,23 @@ func GetPluginList(c *middleware.Context) Response {
 			continue
 		}
 
+		// filter out core plugins
+		if coreFilter == "0" && pluginDef.IsCorePlugin {
+			continue
+		}
+
 		// filter on type
 		if typeFilter != "" && typeFilter != pluginDef.Type {
 			continue
 		}
 
 		listItem := dtos.PluginListItem{
-			Id:   pluginDef.Id,
-			Name: pluginDef.Name,
-			Type: pluginDef.Type,
-			Info: &pluginDef.Info,
+			Id:            pluginDef.Id,
+			Name:          pluginDef.Name,
+			Type:          pluginDef.Type,
+			Info:          &pluginDef.Info,
+			LatestVersion: pluginDef.GrafanaNetVersion,
+			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -81,6 +89,8 @@ func GetPluginSettingById(c *middleware.Context) Response {
 			BaseUrl:       def.BaseUrl,
 			Module:        def.Module,
 			DefaultNavUrl: def.DefaultNavUrl,
+			LatestVersion: def.GrafanaNetVersion,
+			HasUpdate:     def.GrafanaNetHasUpdate,
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}

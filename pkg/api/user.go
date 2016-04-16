@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -107,6 +108,23 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 	}
 
 	return ApiSuccess("Active organization changed")
+}
+
+// GET /profile/switch-org/:id
+func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
+	orgId := c.ParamsInt64(":id")
+
+	if !validateUsingOrg(c.UserId, orgId) {
+		NotFoundHandler(c)
+	}
+
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		NotFoundHandler(c)
+	}
+
+	c.Redirect(setting.AppSubUrl + "/")
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {

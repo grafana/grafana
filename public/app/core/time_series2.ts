@@ -42,6 +42,7 @@ export default class TimeSeries {
   fillBelowTo: any;
   transform: any;
   flotpairs: any;
+  unit: any;
 
   constructor(opts) {
     this.datapoints = opts.datapoints;
@@ -52,6 +53,7 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
+    this.unit = opts.unit;
   }
 
   applySeriesOverrides(overrides) {
@@ -170,7 +172,7 @@ export default class TimeSeries {
   }
 
   isMsResolutionNeeded() {
-    for (var i = 0; i<this.datapoints.length; i++) {
+    for (var i = 0; i < this.datapoints.length; i++) {
       if (this.datapoints[i][0] !== null) {
         var timestamp = this.datapoints[i][0].toString();
         if (timestamp.length === 13 && (timestamp % 1000) !== 0) {

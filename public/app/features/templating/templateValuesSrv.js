@@ -272,22 +272,24 @@ function (angular, _, kbn) {
       }
 
       for (i = 0; i < metricNames.length; i++) {
-        var value = metricNames[i].text;
+        var item = metricNames[i];
+        var value = item.value || item.text;
+        var text = item.text || item.value;
 
         if (regex) {
           matches = regex.exec(value);
           if (!matches) { continue; }
           if (matches.length > 1) {
             value = matches[1];
+            text = value;
           }
         }
 
-        options[value] = value;
+        options[value] = {text: text, value: value};
       }
 
       return _.map(_.keys(options).sort(), function(key) {
-        var option = { text: key, value: key };
-        return option;
+        return options[key];
       });
     };
 

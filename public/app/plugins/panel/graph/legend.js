@@ -49,7 +49,6 @@ function (angular, _, $) {
               position: 'bottom center',
               template: '<gf-color-picker></gf-color-picker>',
               model: {
-                autoClose: true,
                 series: series,
                 toggleAxis: function() {
                   ctrl.toggleAxis(series);
@@ -194,9 +193,9 @@ function (angular, _, $) {
             }
 
             var topPadding = 6;
-            $container.css("height", maxHeight - topPadding);
+            $container.css("max-height", maxHeight - topPadding);
           } else {
-            $container.css("height", "");
+            $container.css("max-height", "");
           }
         }
       }
