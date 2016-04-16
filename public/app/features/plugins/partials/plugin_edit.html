@@ -4,8 +4,8 @@
 <div class="page-container" ng-init="ctrl.init()">
   <div class="page-header">
     <div class="plugin-header">
-      <span ng-show="ctrl.model.info.logos.large" class="plugin-header-logo">
-        <img src="{{ctrl.model.info.logos.large}}">
+      <span class="plugin-header-logo">
+        <img ng-src="{{ctrl.model.info.logos.large}}">
       </span>
 
       <div class="plugin-header-info-block">
@@ -55,6 +55,9 @@
       <section class="page-sidebar-section">
         <h4>Version</h4>
         <span>{{ctrl.model.info.version}}</span>
+				<div ng-show="ctrl.model.hasUpdate">
+          <a ng-click="ctrl.updateAvailable()" bs-tooltip="ctrl.model.latestVersion">Update Available!</a>
+				</div>
       </section>
       <section class="page-sidebar-section" ng-show="ctrl.model.type === 'app'">
         <h5>Includes</h4>

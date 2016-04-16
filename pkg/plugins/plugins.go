@@ -22,6 +22,9 @@ var (
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
+
+	GrafanaLatestVersion string
+	GrafanaHasUpdate     bool
 )
 
 type PluginScanner struct {
@@ -70,6 +73,7 @@ func Init() error {
 		app.initApp()
 	}
 
+	go StartPluginUpdateChecker()
 	return nil
 }
 

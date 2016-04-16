@@ -60,6 +60,14 @@ function(angular, $) {
         scope.appEvent('zoom-out', evt);
       }, { inputDisabled: true });
 
+      keyboardManager.bind('left', function(evt) {
+        scope.appEvent('shift-time-backward', evt);
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('right', function(evt) {
+        scope.appEvent('shift-time-forward', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('ctrl+e', function(evt) {
         scope.appEvent('export-dashboard', evt);
       }, { inputDisabled: true });
