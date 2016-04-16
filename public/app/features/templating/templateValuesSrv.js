@@ -158,6 +158,11 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
+      if (variable.type === 'datasource') {
+        self.updateDataSourceVariable(variable);
+        return;
+      }
+
       // extract options in comma seperated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
@@ -170,6 +175,36 @@ function (angular, _, kbn) {
       if (variable.type === 'custom' && variable.includeAll) {
         self.addAllOption(variable);
       }
+    };
+
+    this.updateDataSourceVariable = function(variable) {
+      var options = [];
+      var sources = datasourceSrv.getMetricSources();
+      var regex;
+
+      if (variable.regex) {
+        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+      }
+
+      for (var i = 0; i < sources.length; i++) {
+        var source = sources[i];
+        // must match on type
+        if (source.meta.id !== variable.query) {
+          continue;
+        }
+
+        if (regex && !regex.exec(source.name)) {
+          continue;
+        }
+
+        options.push({text: source.name, value: source.name});
+      }
+
+      if (options.length === 0) {
+        options.push({text: 'No datasurces found', value: ''});
+      }
+
+      variable.options = options;
     };
 
     this.updateOptions = function(variable) {
