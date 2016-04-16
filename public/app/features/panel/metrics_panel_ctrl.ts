@@ -15,6 +15,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
   datasource: any;
+  datasourceName: any;
   $q: any;
   $timeout: any;
   datasourceSrv: any;
@@ -53,6 +54,12 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();
+
+    // find current
+    var current = _.findWhere(this.datasources, {value: this.panel.datasource});
+    if (current) {
+      this.datasourceName = current.name;
+    }
   }
 
   private onMetricsPanelRefresh() {
@@ -246,6 +253,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.panel.datasource = datasource.value;
+    this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
   }

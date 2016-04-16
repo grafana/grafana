@@ -179,7 +179,7 @@ function (angular, _, kbn) {
 
     this.updateDataSourceVariable = function(variable) {
       var options = [];
-      var sources = datasourceSrv.getMetricSources();
+      var sources = datasourceSrv.getMetricSources({skipVariables: true});
       var regex;
 
       if (variable.regex) {
