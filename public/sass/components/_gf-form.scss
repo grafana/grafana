@@ -8,8 +8,8 @@ $gf-form-margin: 0.25rem;
   text-align: left;
   position: relative;
 
-  .cr1 {
-    margin-left: 8px;
+  &--offset-1 {
+    margin-left: $spacer;
   }
 }
 
@@ -162,9 +162,11 @@ $gf-form-margin: 0.25rem;
 }
 
 .gf-form-btn {
-  margin-right: $gf-form-margin;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
+  font-size: $font-size-sm;
+
   flex-shrink: 0;
   flex-grow: 0;
 }

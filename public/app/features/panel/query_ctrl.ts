@@ -10,9 +10,11 @@ export class QueryCtrl {
   panel: any;
   hasRawMode: boolean;
   error: string;
+  collapsed: boolean;
 
   constructor(public $scope, private $injector) {
     this.panel = this.panelCtrl.panel;
+    this.collapsed = true;
 
     if (!this.target.refId) {
       this.target.refId = this.getNextQueryLetter();
