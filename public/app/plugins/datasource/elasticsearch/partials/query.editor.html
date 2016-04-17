@@ -1,17 +1,21 @@
-<query-editor-row ctrl="ctrl">
-	<li class="tight-form-item query-keyword" style="width: 75px">
-		Query
-	</li>
-	<li>
-		<input type="text" class="tight-form-input" style="width: 345px;" ng-model="ctrl.target.query" spellcheck='false' placeholder="Lucene query" ng-blur="ctrl.refresh()">
-	</li>
-	<li class="tight-form-item query-keyword">
-		Alias
-	</li>
-	<li>
-		<input type="text" class="tight-form-input" style="width: 200px;" ng-model="ctrl.target.alias" spellcheck='false' placeholder="alias patterns (empty = auto)" ng-blur="ctrl.refresh()">
-	</li>
-</query-editor-row>
+<query-editor-row ctrl="ctrl"></query-editor-row>
+
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item query-keyword" style="width: 75px">
+			Query
+		</li>
+		<li>
+			<input type="text" class="tight-form-input" style="width: 345px;" ng-model="ctrl.target.query" spellcheck='false' placeholder="Lucene query" ng-blur="ctrl.refresh()">
+		</li>
+		<li class="tight-form-item query-keyword">
+			Alias
+		</li>
+		<li>
+			<input type="text" class="tight-form-input" style="width: 200px;" ng-model="ctrl.target.alias" spellcheck='false' placeholder="alias patterns (empty = auto)" ng-blur="ctrl.refresh()">
+		</li>
+	</ul>
+</div>
 
 <div ng-repeat="agg in ctrl.target.metrics">
 	<elastic-metric-agg

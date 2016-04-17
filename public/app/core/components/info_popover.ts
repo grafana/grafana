@@ -11,11 +11,6 @@ export function infoPopover() {
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
     link: function(scope, elem, attrs, ctrl, transclude) {
-      // var inputElem = elem.prev();
-      // if (inputElem.length === 0) {
-      //   console.log('Failed to find input element for popover');
-      //   return;
-      // }
 
       var offset = attrs.offset || '0 -10px';
       var position = attrs.position || 'right middle';
