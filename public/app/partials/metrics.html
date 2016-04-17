@@ -1,6 +1,6 @@
 
 <div class="query-editor-rows gf-form-group">
-  <div ng-repeat="target in ctrl.panel.targets" ng-class="{'tight-form-disabled': target.hide}">
+  <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
     <rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
       <plugin-component type="query-ctrl">
       </plugin-component>
