@@ -10,14 +10,22 @@
 		</label>
 	</div>
 
-	<div ng-transclude class="gf-form-query-content">
+	<div class="gf-form-query-content" ng-if="ctrl.collapsed">
+		<div class="gf-form">
+			<label class="gf-form-label gf-form-filler pointer" ng-click="ctrl.toggleCollapse()">
+				{{ctrl.collapsedText}}
+			</label>
+		</div>
+	</div>
+
+	<div ng-transclude class="gf-form-query-content" ng-if="!ctrl.collapsed">
 	</div>
 
 	<div class="gf-form">
 		<label class="gf-form-label">
-			<a class="pointer" tabindex="1" ng-click="ctrl.collapsed = !ctrl.collapsed">
-				<i class="fa fa-chevron-down" ng-hide="ctrl.collapsed"></i>
-				<i class="fa fa-chevron-left" ng-show="ctrl.collapsed"></i>
+			<a class="pointer" tabindex="1" ng-click="ctrl.toggleCollapse()">
+				<i class="fa fa-fw fa-chevron-down" ng-hide="ctrl.collapsed"></i>
+				<i class="fa fa-fw fa-chevron-left" ng-show="ctrl.collapsed"></i>
 			</a>
 		</label>
 		<label class="gf-form-label dropdown">

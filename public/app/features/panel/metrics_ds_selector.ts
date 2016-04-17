@@ -79,7 +79,7 @@ export class MetricsDsSelectorCtrl {
   }
 
   addDataQuery(datasource) {
-    var target: any = {};
+    var target: any = {isNew: true};
 
     if (datasource) {
       target.datasource = datasource.name;
