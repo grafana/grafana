@@ -38,7 +38,7 @@ describe("influxdb response parser", () => {
               {
                 "name": "hostnameTagValues",
                 "columns": ["hostname"],
-                "values": [ ["server1"], ["server2"] ]
+                "values": [ ["server1"], ["server2"], ["server2"] ]
               }
             ]
           }
@@ -54,7 +54,7 @@ describe("influxdb response parser", () => {
       });
     });
 
-    describe("response from 0.11.0", () => {
+    describe("response from 0.12.0", () => {
       var response = {
         "results": [
            {
@@ -62,8 +62,19 @@ describe("influxdb response parser", () => {
                {
                  "name": "cpu",
                  "columns": [ "key", "value"],
-                 "values": [ [ "source", "site" ], [ "source", "api" ] ]
-               }
+                 "values": [
+                   [ "source", "site" ],
+                   [ "source", "api" ]
+                 ]
+               },
+               {
+                 "name": "logins",
+                 "columns": [ "key", "value"],
+                 "values": [
+                   [ "source", "site" ],
+                   [ "source", "webapi"]
+                 ]
+               },
              ]
            }
         ]
@@ -72,15 +83,12 @@ describe("influxdb response parser", () => {
       var result = this.parser.parse(query, response);
 
       it("should get two responses", () => {
-        expect(_.size(result)).to.be(2);
+        expect(_.size(result)).to.be(3);
         expect(result[0].text).to.be('site');
         expect(result[1].text).to.be('api');
+        expect(result[2].text).to.be('webapi');
       });
     });
-
-
-
-
   });
 
   describe("SHOW FIELD response", () => {
