@@ -17,6 +17,16 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-disabled {
+  color: $text-color-weak;
+
+  .query-keyword,
+  a,
+  .gf-form-input {
+    color: $text-color-weak;
+  }
+}
+
 .gf-form-group {
   margin-bottom: $spacer * 2.5;
 }
@@ -52,7 +62,7 @@ $gf-form-margin: 0.25rem;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.7rem;
+    min-height: 2.65rem;
   }
 }
 
@@ -221,7 +231,7 @@ $gf-form-margin: 0.25rem;
 }
 
 .gf-form-query-content {
-  flex-grow: 1;
+  flex-grow: 2;
 
   &--collapsed {
     overflow: hidden;

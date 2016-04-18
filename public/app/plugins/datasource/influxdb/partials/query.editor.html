@@ -57,97 +57,6 @@
 			</div>
 		</div>
 
-<<<<<<< HEAD
-<div ng-hide="ctrl.target.rawQuery">
-	<div class="gf-form-inline query-editor-secondary-row" ng-repeat="selectParts in ctrl.queryModel.selectModels">
-		<div class="gf-form">
-			<label class="gf-form-label query-keyword width-7">SELECT</label>
-
-			<influx-query-part-editor
-					ng-repeat="part in selectParts"
-					class="gf-form-label tight-form-func"
-					part="part"
-					remove-action="ctrl.removeSelectPart(selectParts, part)"
-					part-updated="ctrl.selectPartUpdated(selectParts, part)"
-					get-options="ctrl.getPartOptions(part)">
-			</influx-query-part-editor>
-
-			<label class="dropdown"
-				dropdown-typeahead="ctrl.selectMenu"
-				dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
-			</label>
-    </div>
-  </div>
-  <div class="gf-form-inline query-editor-secondary-row">
-    <div class="gf-form">
-			<label class="gf-form-label query-keyword width-7">GROUP BY</label>
-      <influx-query-part-editor
-          class="gf-form-label tight-form-func"
-          ng-repeat="part in ctrl.queryModel.groupByParts"
-          part="part"
-          remove-action="ctrl.removeGroupByPart(part, $index)"
-          part-updated="ctrl.refresh();"
-          get-options="ctrl.getPartOptions(part)">
-      </influx-query-part-editor>
-      <metric-segment segment="ctrl.groupBySegment" get-options="ctrl.getGroupByOptions()" on-change="ctrl.groupByAction(part, $index)"></metric-segment>
-		</div>
-	</div>
-</div>
-||||||| merged common ancestors
-<div ng-hide="ctrl.target.rawQuery">
-	<div class="gf-form-inline query-editor-secondary-row" ng-repeat="selectParts in ctrl.queryModel.selectModels">
-		<div class="gf-form">
-			<label class="gf-form-label query-keyword width-6">
-				<span ng-show="$index === 0">SELECT</span>
-			</label>
-
-			<influx-query-part-editor
-					ng-repeat="part in selectParts"
-					class="gf-form-label tight-form-func"
-					part="part"
-					remove-action="ctrl.removeSelectPart(selectParts, part)"
-					part-updated="ctrl.selectPartUpdated(selectParts, part)"
-					get-options="ctrl.getPartOptions(part)">
-			</influx-query-part-editor>
-
-			<label class="dropdown"
-				dropdown-typeahead="ctrl.selectMenu"
-				dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
-			</label>
-	</div>
-</div>
-
-<div ng-hide="ctrl.target.rawQuery" ng-if="false">
-	<div class="tight-form" ng-repeat="selectParts in ctrl.queryModel.selectModels">
-		<ul class="tight-form-list">
-			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-				<span ng-show="$index === 0">SELECT</span>
-			</li>
-			<li ng-repeat="part in selectParts">
-				<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="ctrl.removeSelectPart(selectParts, part)" part-updated="ctrl.selectPartUpdated(selectParts, part)" get-options="ctrl.getPartOptions(part)"></influx-query-part-editor>
-			</li>
-			<li class="dropdown" dropdown-typeahead="ctrl.selectMenu" dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item query-keyword tight-form-align" style="width: 75px;">
-				<span>GROUP BY</span>
-			</li>
-			<li ng-repeat="part in ctrl.queryModel.groupByParts">
-				<influx-query-part-editor part="part" class="tight-form-item tight-form-func" remove-action="ctrl.removeGroupByPart(part, $index)" part-updated="ctrl.refresh();" get-options="ctrl.getPartOptions(part)"></influx-query-part-editor>
-			</li>
-			<li>
-				<metric-segment segment="ctrl.groupBySegment" get-options="ctrl.getGroupByOptions()" on-change="ctrl.groupByAction(part, $index)"></metric-segment>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-</div>
-=======
 		<div class="gf-form-inline">
 			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-7">
@@ -160,28 +69,13 @@
 								class="gf-form-label query-part"
 								remove-action="ctrl.removeGroupByPart(part, $index)" part-updated="ctrl.refresh();" get-options="ctrl.getPartOptions(part)">
 				</influx-query-part-editor>
-
-				<metric-segment segment="ctrl.groupBySegment" get-options="ctrl.getGroupByOptions()" on-change="ctrl.groupByAction(part, $index)"></metric-segment>
->>>>>>> 4515e6678346e711c34d379bba45504eae6a5dc8
-
-<<<<<<< HEAD
-<div class="gf-form-inline query-editor-secondary-row">
-	<div class="gf-form max-width-30">
-		<label class="gf-form-label query-keyword width-7">ALIAS BY</label>
-		<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
-||||||| merged common ancestors
-<div class="gf-form-inline query-editor-secondary-row">
-	<div class="gf-form max-width-30">
-		<label class="gf-form-label query-keyword">ALIAS BY</label>
-		<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
-=======
 			</div>
 
 			<div class="gf-form gf-form--grow">
 				<div class="gf-form-label gf-form-label--grow"></div>
 			</div>
 		</div>
->>>>>>> 4515e6678346e711c34d379bba45504eae6a5dc8
+
 	</div>
 
 	<div class="gf-form-inline">
