@@ -210,6 +210,8 @@ $gf-form-margin: 0.25rem;
     margin-bottom: 2px;
   }
 
+  .gf-form-switch input,
+  .gf-form-switch label,
   .gf-form-input,
   .gf-form-select-wrapper,
   .gf-form-filler,
@@ -220,7 +222,6 @@ $gf-form-margin: 0.25rem;
 
 .gf-form-query-content {
   flex-grow: 1;
-  overflow: hidden;
 
   &--collapsed {
     overflow: hidden;
