@@ -16,18 +16,14 @@
 		<metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
 	</div>
 
-	<div class="gf-form" ng-if="settingsLinkText">
-		<label class="gf-form-label">
-			<a ng-click="toggleOptions()">
+	<div class="gf-form gf-form--grow">
+		<label class="gf-form-label gf-form-label--grow">
+			<a ng-click="toggleOptions()" ng-if="settingsLinkText">
 				<i class="fa fa-caret-down" ng-show="showOptions"></i>
 				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
 					{{settingsLinkText}}
 			</a>
 		</label>
-	</div>
-
-	<div class="gf-form gf-form--grow">
-		<label class="gf-form-label gf-form-label--grow"></label>
 	</div>
 
 	<div class="gf-form">
