@@ -146,10 +146,14 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
           };
         });
       }
-      // ConfigCtrl
+      // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         var dsMeta = scope.ctrl.datasourceMeta;
-        return System.import(dsMeta.module).then(function(dsModule) {
+        return System.import(dsMeta.module).then(function(dsModule): any {
+          if (!dsModule.ConfigCtrl) {
+            return {notFound: true};
+          }
+
           return {
             baseUrl: dsMeta.baseUrl,
             name: 'ds-config-' + dsMeta.id,
@@ -165,7 +169,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return System.import(model.module).then(function(appModule) {
           return {
             baseUrl: model.baseUrl,
-            name: 'app-config-' + model.pluginId,
+            name: 'app-config-' + model.id,
             bindings: {appModel: "=", appEditCtrl: "="},
             attrs: {"app-model": "ctrl.model", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,

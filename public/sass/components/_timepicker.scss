@@ -115,3 +115,15 @@
   @extend .fa;
   @extend .fa-chevron-left;
 }
+
+.gf-timepicker-time-control {
+  font-size: $font-size-sm;
+  a {
+    padding: 18px 7px 13px !important;
+  }
+}
+
+.dashnav-move-timeframe  {
+  position: relative;
+  top: 1px;
+}

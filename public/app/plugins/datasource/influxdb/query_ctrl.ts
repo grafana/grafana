@@ -23,6 +23,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
+
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
@@ -193,7 +194,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
       if (addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
-          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
         }
       }
 
@@ -315,6 +316,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+  }
+
+  getCollapsedText() {
+    return this.queryModel.render(false);
   }
 }
 

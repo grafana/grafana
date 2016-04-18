@@ -72,9 +72,8 @@ export class SideMenuCtrl {
        this.orgMenu.push({
          text: "Switch to " + org.name,
          icon: "fa fa-fw fa-random",
-         click: () => {
-           this.switchOrg(org.orgId);
-         }
+         url: this.getUrl('/profile/switch-org/' + org.orgId),
+         target: '_self'
        });
      });
 
@@ -83,12 +82,6 @@ export class SideMenuCtrl {
      }
    });
  }
-
- switchOrg(orgId) {
-   this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-     window.location.href = window.location.href;
-   });
- };
 }
 
 export function sideMenuDirective() {

@@ -1,5 +1,4 @@
 $gf-form-margin: 0.25rem;
-$gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -7,9 +6,14 @@ $gf-form-label-margin: 0.25rem;
   flex-direction: row;
   align-items: center;
   text-align: left;
+  position: relative;
 
-  .cr1 {
-    margin-left: 8px;
+  &--offset-1 {
+    margin-left: $spacer;
+  }
+
+  &--grow {
+    flex-grow: 1;
   }
 }
 
@@ -22,10 +26,6 @@ $gf-form-label-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
-
-  .gf-form-flex {
-    flex-grow: 1;
-  }
 }
 
 .gf-form-button-row {
@@ -37,16 +37,23 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   flex-shrink: 0;
 
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-label-margin;
+  margin-right: $gf-form-margin;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
+
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.7rem;
+  }
 }
 
 .gf-form-checkbox {
@@ -109,6 +116,7 @@ $gf-form-label-margin: 0.25rem;
 }
 
 .gf-form-select-wrapper {
+  margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
 
@@ -137,20 +145,112 @@ $gf-form-label-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+
+  &--has-help-icon {
+    &:after {
+      right: $input-padding-x*3;
+    }
+  }
 }
 
-.gf-form-select-wrapper + .gf-form-select-wrapper {
-  margin-left: $gf-form-label-margin;
+.gf-form--v-stretch {
+  align-items: stretch;
 }
 
 .gf-form-btn {
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
+  font-size: $font-size-sm;
+
   flex-shrink: 0;
   flex-grow: 0;
 }
 
-.query-editor-secondary-row {
-  margin-left: 5.2rem;
+.gf-form-switch {
+  margin-right: $gf-form-margin;
+}
 
+.natural-language-input {
+  &input[type="number"] {
+    font-size: $font-size-base;
+    line-height: $input-line-height;
+    margin: -6px -5px 0 5px;
+    padding: $input-padding-y/2 $input-padding-x/2;
+  }
+}
+
+.gf-form-dropdown-typeahead {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+  padding-right: $input-padding-x;
+
+  &:after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+}
+
+.gf-form-query {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
+  .gf-form,
+  .gf-form-filler {
+    margin-bottom: 2px;
+  }
+
+  .gf-form-switch input,
+  .gf-form-switch label,
+  .gf-form-input,
+  .gf-form-select-wrapper,
+  .gf-form-filler,
+  .gf-form-label {
+    margin-right: 2px;
+  }
+}
+
+.gf-form-query-content {
+  flex-grow: 1;
+
+  &--collapsed {
+    overflow: hidden;
+
+    .gf-form-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      white-space: nowrap;
+    }
+  }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 8px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,6 +42,11 @@ type PluginBase struct {
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+	DefaultNavUrl   string `json:"-"`
+	IsCorePlugin    bool   `json:"-"`
+
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
 
 	// cache for readme file contents
 	Readme []byte `json:"-"`
@@ -74,10 +80,16 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Id   string `json:"id"`
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Type       string          `json:"type"`
+	Component  string          `json:"component"`
+	Role       models.RoleType `json:"role"`
+	AddToNav   bool            `json:"addToNav"`
+	DefaultNav bool            `json:"defaultNav"`
+	Slug       string          `json:"slug"`
+
+	Id string `json:"-"`
 }
 
 type PluginDependencyItem struct {

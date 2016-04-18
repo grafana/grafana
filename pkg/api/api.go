@@ -4,6 +4,7 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
@@ -28,6 +29,8 @@ func Register(r *macaron.Macaron) {
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
+	r.Get("/profile/password", reqSignedIn, Index)
+	r.Get("/profile/switch-org/:id", reqSignedIn, ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/org/new", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
@@ -35,6 +38,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
+	r.Get("/admin", reqGrafanaAdmin, Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
 	r.Get("/admin/users/create", reqGrafanaAdmin, Index)
@@ -42,6 +46,8 @@ func Register(r *macaron.Macaron) {
 	r.Get("/admin/orgs", reqGrafanaAdmin, Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, Index)
+
+	r.Get("/styleguide", reqSignedIn, Index)
 
 	r.Get("/plugins", reqSignedIn, Index)
 	r.Get("/plugins/:id/edit", reqSignedIn, Index)
@@ -92,10 +98,15 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
 			r.Post("/using/:id", wrap(UserSetUsingOrg))
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
+
 			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+
+			r.Get("/preferences", wrap(GetUserPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateUserPreferences))
 		})
 
 		// users (admin permission required)
@@ -126,6 +137,9 @@ func Register(r *macaron.Macaron) {
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
 
+			// prefs
+			r.Get("/preferences", wrap(GetOrgPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateOrgPreferences))
 		}, reqOrgAdmin)
 
 		// create new org
@@ -160,6 +174,11 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", wrap(DeleteApiKey))
 		}, reqOrgAdmin)
 
+		// Preferences
+		r.Group("/preferences", func() {
+			r.Post("/set-home-dash", bind(m.SavePreferencesCommand{}), wrap(SetHomeDashboard))
+		})
+
 		// Data sources
 		r.Group("/datasources", func() {
 			r.Get("/", GetDataSources)
@@ -172,12 +191,12 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/datasources/id/:name", wrap(GetDataSourceIdByName), reqSignedIn)
 
-		r.Group("/plugins", func() {
-			r.Get("/", wrap(GetPluginList))
+		r.Get("/plugins", wrap(GetPluginList))
+		r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
 
+		r.Group("/plugins", func() {
 			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
 			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
-			r.Get("/:pluginId/settings", wrap(GetPluginSettingById))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
 
@@ -234,11 +253,20 @@ func Register(r *macaron.Macaron) {
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
 
+	// grafana.net proxy
+	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
+
 	// Gravatar service.
 	avt := avatar.CacheServer()
 	r.Get("/avatar/:hash", avt.ServeHTTP)
 
+	// Websocket
+	liveConn := live.New()
+	r.Any("/ws", liveConn.Serve)
+
+	// streams
+	r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+
 	InitAppPluginRoutes(r)
 
-	r.NotFound(NotFoundHandler)
 }

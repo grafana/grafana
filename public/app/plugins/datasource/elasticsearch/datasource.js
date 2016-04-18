@@ -74,6 +74,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         to: options.range.to.valueOf(),
       };
 
+      if (this.esVersion >= 2) {
+        range[timeField]["format"] = "epoch_millis";
+      }
+
       var queryInterpolated = templateSrv.replace(queryString);
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };

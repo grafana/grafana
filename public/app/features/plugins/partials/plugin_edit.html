@@ -4,8 +4,8 @@
 <div class="page-container" ng-init="ctrl.init()">
   <div class="page-header">
     <div class="plugin-header">
-      <span ng-show="ctrl.model.info.logos.large" class="plugin-header-logo">
-        <img src="{{ctrl.model.info.logos.large}}">
+      <span class="plugin-header-logo">
+        <img ng-src="{{ctrl.model.info.logos.large}}">
       </span>
 
       <div class="plugin-header-info-block">
@@ -42,6 +42,7 @@
 	      <div class="gf-form-button-row">
 					<button type="submit" class="btn btn-success" ng-click="ctrl.enable()" ng-show="!ctrl.model.enabled">Enable</button>
 					<button type="submit" class="btn btn-success" ng-click="ctrl.update()" ng-show="ctrl.model.enabled">Update</button>
+					<button type="submit" class="btn btn-danger" ng-click="ctrl.disable()" ng-show="ctrl.model.enabled">Disable</button>
 				</div>
       </div>
     </div>
@@ -54,6 +55,9 @@
       <section class="page-sidebar-section">
         <h4>Version</h4>
         <span>{{ctrl.model.info.version}}</span>
+				<div ng-show="ctrl.model.hasUpdate">
+          <a ng-click="ctrl.updateAvailable()" bs-tooltip="ctrl.model.latestVersion">Update Available!</a>
+				</div>
       </section>
       <section class="page-sidebar-section" ng-show="ctrl.model.type === 'app'">
         <h5>Includes</h4>
@@ -61,10 +65,6 @@
           <li ng-repeat="plug in ctrl.includes" class="plugin-info-list-item">
             <i class="{{plug.icon}}"></i>
             {{plug.name}}
-          </li>
-          <li ng-repeat="page in ctrl.model.pages" class="plugin-info-list-item">
-            <i class="icon-gf icon-gf-share"></i>
-            <a href="plugins/{{ctrl.model.id}}/page/{{page.slug}}">{{page.name}}</a>
           </li>
         </ul>
       </section>
