@@ -11,6 +11,10 @@ $gf-form-margin: 0.25rem;
   &--offset-1 {
     margin-left: $spacer;
   }
+
+  &--grow {
+    flex-grow: 1;
+  }
 }
 
 .gf-form-group {
@@ -22,10 +26,6 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
-
-  .gf-form-flex {
-    flex-grow: 1;
-  }
 }
 
 .gf-form-button-row {
@@ -48,16 +48,12 @@ $gf-form-margin: 0.25rem;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
-}
 
-.gf-form-filler {
-  margin-right: $gf-form-margin;
-  margin-bottom: $gf-form-margin;
-  flex-grow: 1;
-  background-color: $input-label-bg;
 
-  border: $input-btn-border-width solid transparent;
-  @include border-radius($label-border-radius-sm);
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.7rem;
+  }
 }
 
 .gf-form-checkbox {

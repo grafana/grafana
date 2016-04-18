@@ -1,7 +1,7 @@
-<query-editor-row query-ctrl="ctrl">
+<query-editor-row query-ctrl="ctrl" can-collapse="true">
 
 	<div class="gf-form-inline">
-		<div class="gf-form gf-form-flex">
+		<div class="gf-form gf-form--grow">
 			<label class="gf-form-label query-keyword width-7">Query</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.query" spellcheck='false' placeholder="Lucene query" ng-blur="ctrl.refresh()">
 		</div>
