@@ -12,17 +12,27 @@ export default class ResponseParser {
       return [];
     }
 
-    var series = influxResults.series[0];
-    return _.map(series.values, (value) => {
-      if (_.isArray(value)) {
-        if (query.toLowerCase().indexOf('show tag values') >= 0) {
-          return { text: (value[1] || value[0]) };
+    var res = [];
+    _.each(influxResults.series, (serie) => {
+      _.each(serie.values, (value) => {
+        if (_.isArray(value)) {
+          if (query.toLowerCase().indexOf('show tag values') >= 0) {
+            addUnique(res, { text: (value[1] || value[0])});
+          } else {
+            addUnique(res, { text: value[0]});
+          }
         } else {
-          return { text: value[0] };
+          addUnique(res, {text: value});
         }
-      } else {
-        return { text: value };
-      }
+      });
     });
+
+    return res;
+  }
+}
+
+function addUnique(arr, value) {
+  if (!_.any(arr, value)) {
+    arr.push(value);
   }
 }
