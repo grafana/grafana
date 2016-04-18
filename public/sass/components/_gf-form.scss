@@ -220,6 +220,18 @@ $gf-form-margin: 0.25rem;
 
 .gf-form-query-content {
   flex-grow: 1;
+  overflow: hidden;
+
+  &--collapsed {
+    overflow: hidden;
+
+    .gf-form-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      white-space: nowrap;
+    }
+  }
 }
 
 .gf-form-help-icon {
