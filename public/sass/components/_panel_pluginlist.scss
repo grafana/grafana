@@ -1,0 +1,75 @@
+.pluginlist-section-header {
+  margin-bottom: $spacer;
+  color: $text-color-weak;
+}
+
+.pluginlist-section {
+  margin-bottom: $spacer;
+}
+
+.pluginlist-link {
+  display: block;
+  margin: 5px;
+  padding: 7px;
+  background-color: $tight-form-bg;
+
+  &:hover {
+    background-color: $tight-form-func-bg;
+  }
+}
+
+.pluginlist-icon {
+  vertical-align: sub;
+  font-size: $font-size-h1;
+  margin-right: $spacer / 2;
+}
+
+.pluginlist-image {
+  width: 20px;
+}
+
+.pluginlist-title {
+  margin-right: $spacer / 3;
+}
+
+.pluginlist-version {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.pluginlist-message {
+  float: right;
+  font-size: $font-size-sm;
+}
+
+.pluginlist-message--update {
+   &:hover {
+    border-bottom: 1px solid $text-color;
+  }
+}
+
+.pluginlist-message--enable{
+  color: $external-link-color;
+   &:hover {
+    border-bottom: 1px solid $external-link-color;
+  }
+}
+
+.pluginlist-message--no-update {
+  color: $text-color-weak;
+}
+
+.pluginlist-emphasis {
+  font-weight: 600;
+}
+
+.pluginlist-none-installed {
+  color: $text-color-weak;
+  font-size: $font-size-sm;
+}
+
+.pluginlist-inline-logo {
+  vertical-align: sub;
+  margin-right: $spacer / 3;
+  width: 16px;
+}

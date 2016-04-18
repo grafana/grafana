@@ -1,7 +1,7 @@
 <div class="submenu-controls">
 	<ul ng-if="ctrl.dashboard.templating.list.length > 0">
-		<li ng-repeat="variable in ctrl.variables" ng-show="!variable.hideVariable" class="submenu-item">
-			<span class="submenu-item-label template-variable " ng-show="!variable.hideLabel">
+		<li ng-repeat="variable in ctrl.variables" ng-hide="variable.hide === 2" class="submenu-item">
+			<span class="submenu-item-label template-variable " ng-hide="variable.hide === 1">
 				{{variable.label || variable.name}}:
 			</span>
 			<value-select-dropdown variable="variable" on-updated="ctrl.variableUpdated(variable)" get-values-for-tag="ctrl.getValuesForTag(variable, tagKey)"></value-select-dropdown>

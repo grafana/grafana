@@ -73,8 +73,7 @@ func main() {
 			grunt("test")
 
 		case "package":
-			//verifyGitRepoIsClean()
-			grunt("release")
+			grunt("release", fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 			createLinuxPackages()
 
 		case "pkg-rpm":
@@ -100,12 +99,12 @@ func main() {
 func makeLatestDistCopies() {
 	rpmIteration := "-1"
 	if linuxPackageIteration != "" {
-		rpmIteration = "-" + linuxPackageIteration
+		rpmIteration = linuxPackageIteration
 	}
 
-	runError("cp", "dist/grafana_"+version+"_amd64.deb", "dist/grafana_latest_amd64.deb")
-	runError("cp", "dist/grafana-"+linuxPackageVersion+rpmIteration+".x86_64.rpm", "dist/grafana-latest-1.x86_64.rpm")
-	runError("cp", "dist/grafana-"+version+".linux-x64.tar.gz", "dist/grafana-latest.linux-x64.tar.gz")
+	runError("cp", fmt.Sprintf("dist/grafana_%v-%v_amd64.deb", linuxPackageVersion, linuxPackageIteration), "dist/grafana_latest_amd64.deb")
+	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.x86_64.rpm", linuxPackageVersion, rpmIteration), "dist/grafana-latest-1.x86_64.rpm")
+	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.linux-x64.tar.gz", linuxPackageVersion, linuxPackageIteration), "dist/grafana-latest.linux-x64.tar.gz")
 }
 
 func readVersionFromPackageJson() {
@@ -133,6 +132,11 @@ func readVersionFromPackageJson() {
 	if len(parts) > 1 {
 		linuxPackageVersion = parts[0]
 		linuxPackageIteration = parts[1]
+		if linuxPackageIteration != "" {
+			// add timestamp to iteration
+			linuxPackageIteration = fmt.Sprintf("%s%v", linuxPackageIteration, time.Now().Unix())
+		}
+		log.Println(fmt.Sprintf("teration %v", linuxPackageIteration))
 	}
 }
 

@@ -38,6 +38,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
     this.$rootScope.appEvent('elastic-query-updated');
   }
 
+  getCollapsedText() {
+    var text = 'Count(), Avg(@value), Group by(@timestamp, 1min) Query';
+    return text;
+  }
+
   handleQueryError(err) {
     this.error = err.message || 'Failed to issue metric query';
     return [];

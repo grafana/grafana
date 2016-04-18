@@ -57,61 +57,45 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     _.defaults(this.panel, panelDefaults);
+
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
+  onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
   }
 
-  getExtendedMenu() {
-    var menu = super.getExtendedMenu();
-    menu.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
-    return menu;
+  onInitPanelActions(actions) {
+    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
   }
 
-  refreshData(datasource) {
+  issueQueries(datasource) {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
+      this.setTimeQueryStart();
       return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
-        this.dataRaw = annotations;
-        this.render();
+        return {data: annotations};
       });
     }
 
-    return this.issueQueries(datasource)
-    .then(this.dataHandler.bind(this))
-    .catch(err => {
-      this.render();
-      throw err;
-    });
+    return super.issueQueries(datasource);
   }
 
-  toggleColumnSort(col, colIndex) {
-    if (this.panel.sort.col === colIndex) {
-      if (this.panel.sort.desc) {
-        this.panel.sort.desc = false;
-      } else {
-        this.panel.sort.col = null;
-      }
-    } else {
-      this.panel.sort.col = colIndex;
-      this.panel.sort.desc = true;
-    }
-
+  onDataError(err) {
+    this.dataRaw = [];
     this.render();
   }
 
-  dataHandler(results) {
-    this.dataRaw = results.data;
+  onDataReceived(dataList) {
+    this.dataRaw = dataList;
     this.pageIndex = 0;
-    this.render();
-  }
 
-  render() {
-    // automatically correct transform mode
-    // based on data
+    // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
       if (this.dataRaw[0].type === 'table') {
         this.panel.transform = 'table';
@@ -126,9 +110,27 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.broadcastRender(this.table);
+    return super.render(this.table);
+  }
+
+  toggleColumnSort(col, colIndex) {
+    if (this.panel.sort.col === colIndex) {
+      if (this.panel.sort.desc) {
+        this.panel.sort.desc = false;
+      } else {
+        this.panel.sort.col = null;
+      }
+    } else {
+      this.panel.sort.col = colIndex;
+      this.panel.sort.desc = true;
+    }
+    this.render();
   }
 
   exportCsv() {
@@ -142,19 +144,17 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     var formaters = [];
 
     function getTableHeight() {
-      var panelHeight = ctrl.height || ctrl.panel.height || ctrl.row.height;
-      if (_.isString(panelHeight)) {
-        panelHeight = parseInt(panelHeight.replace('px', ''), 10);
-      }
+      var panelHeight = ctrl.height;
+
       if (pageCount > 1) {
-        panelHeight -= 28;
+        panelHeight -= 26;
       }
 
-      return (panelHeight - 60) + 'px';
+      return (panelHeight - 31) + 'px';
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.timezone);
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }
@@ -209,11 +209,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       elem.off('click', '.table-panel-page-link');
     });
 
-    scope.$on('render', function(event, renderData) {
+    ctrl.events.on('render', function(renderData) {
       data = renderData || data;
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }

@@ -1,4 +1,4 @@
-<div class="gf-form-inline">
+<div class="gf-form-query">
 	<div class="gf-form">
 		<label class="gf-form-label">
 			{{ctrl.target.refId}}
@@ -9,13 +9,23 @@
 			</a>
 		</label>
 	</div>
-	<div ng-transclude style="max-width: 100%; flex-grow: 10;">
+
+	<div class="gf-form-query-content gf-form-query-content--collapsed" ng-if="ctrl.collapsed">
+		<div class="gf-form">
+			<label class="gf-form-label pointer gf-form-label--grow" ng-click="ctrl.toggleCollapse()">
+				{{ctrl.collapsedText}}
+			</label>
+		</div>
+	</div>
+
+	<div ng-transclude class="gf-form-query-content" ng-if="!ctrl.collapsed">
 	</div>
 
 	<div class="gf-form">
 		<label class="gf-form-label">
-			<a class="pointer" tabindex="1" ng-click="ctrl.toggleEditorMode()">
-				<i class="fa fa-pencil"></i>
+			<a class="pointer" tabindex="1" ng-click="ctrl.toggleCollapse()">
+				<i class="fa fa-fw fa-chevron-down" ng-hide="ctrl.collapsed"></i>
+				<i class="fa fa-fw fa-chevron-left" ng-show="ctrl.collapsed"></i>
 			</a>
 		</label>
 		<label class="gf-form-label dropdown">
@@ -23,6 +33,9 @@
 				<i class="fa fa-bars"></i>
 			</a>
 			<ul class="dropdown-menu pull-right" role="menu">
+				<li role="menuitem">
+					<a tabindex="1" ng-click="ctrl.toggleEditorMode()">Toggle text editor</a>
+				</li>
 				<li role="menuitem">
 					<a tabindex="1" ng-click="ctrl.duplicateQuery()">Duplicate</a>
 				</li>
@@ -33,6 +46,11 @@
 					<a tabindex="1" ng-click="ctrl.moveQuery(1)">Move down</a>
 				</li>
 			</ul>
+		</label>
+		<label class="gf-form-label">
+			<a class="pointer" tabindex="1" ng-click="ctrl.removeQuery(ctrl.target)">
+				<i class="fa fa-trash"></i>
+			</a>
 		</label>
 	</div>
 </div>

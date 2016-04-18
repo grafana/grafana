@@ -174,7 +174,7 @@ label.cr1 {
   cursor:pointer;
 }
 
-input[type="checkbox"]:checked+label {
+input[type="checkbox"].cr1:checked+label {
   background: url($checkboxImageUrl) 0px -18px no-repeat;
 }
 

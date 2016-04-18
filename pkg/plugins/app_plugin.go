@@ -6,15 +6,8 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-type AppPluginPage struct {
-	Name        string          `json:"name"`
-	Slug        string          `json:"slug"`
-	Component   string          `json:"component"`
-	Role        models.RoleType `json:"role"`
-	SuppressNav bool            `json:"suppressNav"`
-}
 
 type AppPluginCss struct {
 	Light string `json:"light"`
@@ -23,7 +16,6 @@ type AppPluginCss struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Pages  []*AppPluginPage  `json:"pages"`
 	Routes []*AppPluginRoute `json:"routes"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
@@ -84,10 +76,18 @@ func (app *AppPlugin) initApp() {
 		}
 	}
 
+	app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/edit"
+
 	// slugify pages
-	for _, page := range app.Pages {
-		if page.Slug == "" {
-			page.Slug = slug.Make(page.Name)
+	for _, include := range app.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
+		}
+		if include.Type == "page" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/page/" + include.Slug
+		}
+		if include.Type == "dashboard" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
 		}
 	}
 }
