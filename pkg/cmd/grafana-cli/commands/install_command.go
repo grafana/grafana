@@ -164,14 +164,14 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 
-			defer dst.Close()
 			src, err := zf.Open()
 			if err != nil {
 				log.Errorf("%v", err)
 			}
-			defer src.Close()
 
 			io.Copy(dst, src)
+			dst.Close()
+			src.Close()
 		}
 	}
 
