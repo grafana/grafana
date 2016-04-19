@@ -98,6 +98,38 @@ describe('CloudWatchDatasource', function() {
       });
       ctx.$rootScope.$apply();
     });
+
+    it('should generate the correct targets by expanding template variables', function() {
+      var templateSrv = {
+        variables: [
+          {
+            name: 'instance_id',
+            options: [
+              { value: 'i-23456789', selected: false },
+              { value: 'i-34567890', selected: true }
+            ]
+          }
+        ],
+        variableExists: function (e) { return true; },
+        containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
+      };
+
+      var targets = [
+        {
+          region: 'us-east-1',
+          namespace: 'AWS/EC2',
+          metricName: 'CPUUtilization',
+          dimensions: {
+            InstanceId: '$instance_id'
+          },
+          statistics: ['Average'],
+          period: 300
+        }
+      ];
+
+      var result = ctx.ds.expandTemplateVariable(targets, templateSrv);
+      expect(result[0].dimensions.InstanceId).to.be('i-34567890');
+    });
   });
 
   function describeMetricFindQuery(query, func) {
