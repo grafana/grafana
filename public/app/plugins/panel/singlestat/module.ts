@@ -7,6 +7,7 @@ import 'jquery.flot';
 import 'jquery.flot.gauge';
 
 import kbn from 'app/core/utils/kbn';
+import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
@@ -283,7 +284,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         top: '10px',
         margin: 'auto',
         position: 'relative',
-        height: elem.height() + 'px',
+        height: (elem.height() * 0.9) + 'px',
         width: elem.width() + 'px'
       };
 
@@ -301,13 +302,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         color: data.colorMap[data.colorMap.length  - 1]
       });
 
+      var bgColor = config.bootData.user.lightTheme
+        ? 'rgb(230,230,230)'
+        : 'rgb(38,38,38)';
+
       var options = {
         series: {
           gauges: {
             gauge: {
               min: panel.gauge.minValue,
               max: panel.gauge.maxValue,
-              background: { color: 'rgb(38,38,38)'},
+              background: { color: bgColor },
               border: { color: null },
               shadow: { show: false },
               width: 38
