@@ -166,7 +166,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 
 			src, err := zf.Open()
 			if err != nil {
-				log.Errorf("%v", err)
+				log.Errorf("%Failed to open zipfile: v", err)
 			}
 
 			io.Copy(dst, src)
