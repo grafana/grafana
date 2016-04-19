@@ -29,24 +29,31 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
 		for _, panelObj := range row.Get("panels").MustArray() {
 			panel := simplejson.NewFromAny(panelObj)
 
-			for _, alertObj := range panel.Get("alerts").MustArray() {
-				alertDef := simplejson.NewFromAny(alertObj)
+			alerting := panel.Get("alerting")
+			alert := Alert{
+				DashboardId: dash.Id,
+				PanelId:     panel.Get("id").MustInt64(),
+				Id:          alerting.Get("id").MustInt64(),
+				QueryRefId:  alerting.Get("query_ref").MustString(),
+				WarnLevel:   alerting.Get("warn_level").MustInt64(),
+				ErrorLevel:  alerting.Get("error_level").MustInt64(),
+				Interval:    alerting.Get("interval").MustInt64(),
+				Title:       alerting.Get("title").MustString(),
+				Description: alerting.Get("description").MustString(),
+				QueryRange:  alerting.Get("query_range").MustString(),
+				Aggregator:  alerting.Get("aggregator").MustString(),
+			}
 
-				alert := Alert{
-					DashboardId: dash.Id,
-					PanelId:     panel.Get("id").MustInt64(),
-					Id:          alertDef.Get("id").MustInt64(),
-					Query:       alertDef.Get("query").MustString(),
-					QueryRefId:  alertDef.Get("query_ref").MustString(),
-					WarnLevel:   alertDef.Get("warn_level").MustInt64(),
-					ErrorLevel:  alertDef.Get("error_level").MustInt64(),
-					Interval:    alertDef.Get("interval").MustInt64(),
-					Title:       alertDef.Get("title").MustString(),
-					Description: alertDef.Get("description").MustString(),
-					QueryRange:  alertDef.Get("query_range").MustString(),
-					Aggregator:  alertDef.Get("aggregator").MustString(),
+			for _, targetsObj := range panel.Get("targets").MustArray() {
+				target := simplejson.NewFromAny(targetsObj)
+
+				if target.Get("refId").MustString() == alert.QueryRefId {
+					alert.Query = target.Get("target").MustString()
+					continue
 				}
+			}
 
+			if alert.Query != "" {
 				alerts = append(alerts, alert)
 			}
 		}

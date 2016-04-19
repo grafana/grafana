@@ -66,28 +66,16 @@ func TestAlertModel(t *testing.T) {
           "span": 12,
           "stack": false,
           "steppedLine": false,
-          "alerts": [
-            {
-              "query_ref": "A",
-              "warn_level": 30,
-              "error_level": 50,
-              "title": "desktop visiter alerts",
-              "description": "Restart the webservers",
-              "query_range": "5m",
-              "aggregator": "avg",
-              "interval": 10
-            },
-            {
-              "query_ref": "B",
-              "warn_level": 30,
-              "error_level": 50,
-              "title": "mobile visiter alerts",
-              "description": "Restart the webservers",
-              "query_range": "5m",
-              "aggregator": "avg",
-              "interval": 10
-            }
-          ],
+          "alerting": {
+						"query_ref": "A",
+						"warn_level": 30,
+						"error_level": 50,
+						"title": "desktop visiter alerts",
+						"description": "Restart the webservers",
+						"query_range": "5m",
+						"aggregator": "avg",
+						"interval": 10
+          },
           "targets": [
             {
               "hide": false,
@@ -276,7 +264,7 @@ func TestAlertModel(t *testing.T) {
 
 		Convey("all properties have been set", func() {
 			So(alerts, ShouldNotBeEmpty)
-			So(len(alerts), ShouldEqual, 2)
+			So(len(alerts), ShouldEqual, 1)
 
 			for _, v := range alerts {
 				So(v.DashboardId, ShouldNotEqual, 0)
@@ -286,7 +274,7 @@ func TestAlertModel(t *testing.T) {
 				So(v.ErrorLevel, ShouldEqual, 50)
 
 				So(v.Aggregator, ShouldNotBeEmpty)
-				//So(v.Query, ShouldNotBeEmpty)
+				So(v.Query, ShouldNotBeEmpty)
 				So(v.QueryRefId, ShouldNotBeEmpty)
 				So(v.QueryRange, ShouldNotBeEmpty)
 				So(v.Title, ShouldNotBeEmpty)
@@ -295,8 +283,7 @@ func TestAlertModel(t *testing.T) {
 				fmt.Println(v.Query)
 			}
 
-			//So(alerts[0].Query, ShouldEqual, "statsd.fakesite.counters.session_start.desktop.count")
-			//So(alerts[1].Query, ShouldEqual, "statsd.fakesite.counters.session_start.mobile.count")
+			So(alerts[0].Query, ShouldEqual, "statsd.fakesite.counters.session_start.desktop.count")
 		})
 	})
 }
