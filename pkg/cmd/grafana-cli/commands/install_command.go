@@ -126,8 +126,8 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			retryCount++
-			if retryCount == 1 {
-				log.Debug("\nFailed downloading. Will retry once.\n")
+			if retryCount < 3 {
+				fmt.Printf("\nFailed downloading. Will retry once.\n%v\n", r)
 				downloadFile(pluginName, filePath, url)
 			} else {
 				panic(r)
