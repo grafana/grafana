@@ -23,7 +23,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
 
       var queries = [];
       options = angular.copy(options);
-      options.targets = this.expandTemplateVariable(options.targets);
+      options.targets = this.expandTemplateVariable(options.targets, templateSrv);
       _.each(options.targets, _.bind(function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -333,7 +333,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       });
     }
 
-    this.expandTemplateVariable = function(targets) {
+    this.expandTemplateVariable = function(targets, templateSrv) {
       return _.chain(targets)
       .map(function(target) {
         var dimensionKey = null;
