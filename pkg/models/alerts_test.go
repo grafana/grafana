@@ -258,6 +258,9 @@ func TestAlertModel(t *testing.T) {
 			UserId:    1,
 			OrgId:     1,
 			Overwrite: true,
+			Result: &Dashboard{
+				Id: 1,
+			},
 		}
 
 		alerts := *cmd.GetAlertModels()
@@ -267,7 +270,7 @@ func TestAlertModel(t *testing.T) {
 			So(len(alerts), ShouldEqual, 1)
 
 			for _, v := range alerts {
-				So(v.DashboardId, ShouldNotEqual, 0)
+				So(v.DashboardId, ShouldEqual, 1)
 				So(v.PanelId, ShouldNotEqual, 0)
 
 				So(v.WarnLevel, ShouldEqual, 30)

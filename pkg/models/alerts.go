@@ -20,7 +20,6 @@ type Alert struct {
 }
 
 func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
-	dash := NewDashboardFromJson(cmd.Dashboard)
 	alerts := make([]Alert, 0)
 
 	for _, rowObj := range cmd.Dashboard.Get("rows").MustArray() {
@@ -31,7 +30,7 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
 
 			alerting := panel.Get("alerting")
 			alert := Alert{
-				DashboardId: dash.Id,
+				DashboardId: cmd.Result.Id,
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          alerting.Get("id").MustInt64(),
 				QueryRefId:  alerting.Get("query_ref").MustString(),

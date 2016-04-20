@@ -3,9 +3,8 @@ package sqlstore
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	m "github.com/grafana/grafana/pkg/models"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlertingDataAccess(t *testing.T) {
@@ -15,7 +14,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Can create alert", func() {
 			items := []m.Alert{
-				m.Alert{
+				{
 					PanelId:     1,
 					DashboardId: 1,
 					Query:       "Query",
@@ -29,6 +28,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					Aggregator:  "avg",
 				},
 			}
+
 			cmd := m.SaveAlertsCommand{
 				Alerts:      &items,
 				DashboardId: 1,

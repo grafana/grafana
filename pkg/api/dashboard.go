@@ -150,7 +150,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	}
 
 	saveAlertCommand := m.SaveAlertsCommand{
-		DashboardId: dash.Id,
+		DashboardId: cmd.Result.Id,
 		OrgId:       c.OrgId,
 		UserId:      c.UserId,
 		Alerts:      cmd.GetAlertModels(),
