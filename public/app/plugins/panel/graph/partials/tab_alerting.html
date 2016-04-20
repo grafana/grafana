@@ -1,0 +1,66 @@
+<div class="editor-row">
+  <div class="gf-form-group section">
+
+  </div>
+  <div class="gf-form-group section">
+    <h5 class="section-heading">Query</h5>
+    <div class="gf-form">
+      <span class="gf-form-label">Query to watch</span>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto"
+          ng-model="ctrl.panel.alerting.query_ref"
+          ng-options="target.refId as target.refId for target in ctrl.panel.targets"></select>
+      </div>
+    </div>
+
+    <h5 class="section-heading">Thresholds</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-7">Warn level</span>
+      <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.panel.alerting.warn_level"></input>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-7">Critical level</span>
+      <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.panel.alerting.crit_level"></input>
+    </div>
+  </div>
+
+  <div class="gf-form-group section">
+    <h5 class="section-heading">Aggregation settings</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Aggregation method</span>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input max-width-10"
+          ng-model="ctrl.panel.alerting.aggregator"
+          ng-options="oper as oper for oper in ['avg', 'sum']"></select>
+      </div>
+    </div>
+
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Query range</span>
+      <input class="gf-form-input max-width-10" type="text"
+        ng-model="ctrl.panel.alerting.query_range" placeholder="10m"></input>
+    </div>
+
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Interval</span>
+      <input class="gf-form-input max-width-10" type="text"
+        ng-model="ctrl.panel.alerting.interval" placeholder="10s"></input>
+    </div>
+  </div>
+  <div class="gf-form-group section">
+    <h5 class="section-heading">Alert info</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Alert name</span>
+      <input type="text" class="gf-form-input max-width-26" ng-model="ctrl.panel.alerting.title">
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Alert description</span>
+      </div>
+      <div class="gf-form">
+        <textarea rows="4" ng-model="ctrl.panel.alerting.description" class="gf-form-input max-width-26"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
