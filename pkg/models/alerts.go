@@ -12,7 +12,7 @@ type Alert struct {
 	QueryRefId  string
 	WarnLevel   string
 	CritLevel   string
-	Interval    int64
+	Interval    string
 	Title       string
 	Description string
 	QueryRange  string
@@ -36,7 +36,7 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
 				QueryRefId:  alerting.Get("query_ref").MustString(),
 				WarnLevel:   alerting.Get("warn_level").MustString(),
 				CritLevel:   alerting.Get("crit_level").MustString(),
-				Interval:    alerting.Get("interval").MustInt64(),
+				Interval:    alerting.Get("interval").MustString(),
 				Title:       alerting.Get("title").MustString(),
 				Description: alerting.Get("description").MustString(),
 				QueryRange:  alerting.Get("query_range").MustString(),

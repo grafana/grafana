@@ -15,7 +15,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "query_ref_id", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "warn_level", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "crit_level", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "interval", Type: DB_BigInt, Nullable: false},
+			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "query_range", Type: DB_NVarchar, Length: 255, Nullable: false},

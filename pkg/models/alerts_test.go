@@ -74,7 +74,7 @@ func TestAlertModel(t *testing.T) {
 						"description": "Restart the webservers",
 						"query_range": "5m",
 						"aggregator": "avg",
-						"interval": 10
+						"interval": "10"
           },
           "targets": [
             {
@@ -282,6 +282,7 @@ func TestAlertModel(t *testing.T) {
 				So(v.QueryRange, ShouldNotBeEmpty)
 				So(v.Title, ShouldNotBeEmpty)
 				So(v.Description, ShouldNotBeEmpty)
+				So(v.Interval, ShouldEqual, "10")
 
 				fmt.Println(v.Query)
 			}

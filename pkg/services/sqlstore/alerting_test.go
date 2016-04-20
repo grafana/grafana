@@ -20,7 +20,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				QueryRefId:  "A",
 				WarnLevel:   "> 30",
 				CritLevel:   "> 50",
-				Interval:    10,
+				Interval:    "10",
 				Title:       "Alerting title",
 				Description: "Alerting description",
 				QueryRange:  "5m",
@@ -45,7 +45,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			alert, err2 := GetAlertsByDashboard(1, 1)
 
 			So(err2, ShouldBeNil)
-			So(alert.Interval, ShouldEqual, 10)
+			So(alert.Interval, ShouldEqual, "10")
 			So(alert.WarnLevel, ShouldEqual, "> 30")
 			So(alert.CritLevel, ShouldEqual, "> 50")
 			So(alert.Query, ShouldEqual, "Query")
