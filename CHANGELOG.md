@@ -4,6 +4,7 @@
 * **InfluxDB 0.12**: Fixed issue templating and `show tag values` query only returning tags for first measurement,  fixes [#4726](https://github.com/grafana/grafana/issues/4726)
 * **Templating**: Fixed issue with regex formating when matching multiple values, fixes [#4755](https://github.com/grafana/grafana/issues/4755)
 * **Templating**: Fixed issue with custom all value and escaping, fixes [#4736](https://github.com/grafana/grafana/issues/4736)
+* **Dashlist**: Fixed issue dashboard list panel and caching tags, fixes [#4768](https://github.com/grafana/grafana/issues/4768)
 
 # 3.0.0-beta5 (2016-04-15)
 
