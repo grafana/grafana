@@ -68,8 +68,8 @@ func TestAlertModel(t *testing.T) {
           "steppedLine": false,
           "alerting": {
 						"query_ref": "A",
-						"warn_level": 30,
-						"error_level": 50,
+						"warn_level": "> 30",
+						"crit_level": "> 50",
 						"title": "desktop visiter alerts",
 						"description": "Restart the webservers",
 						"query_range": "5m",
@@ -273,8 +273,8 @@ func TestAlertModel(t *testing.T) {
 				So(v.DashboardId, ShouldEqual, 1)
 				So(v.PanelId, ShouldNotEqual, 0)
 
-				So(v.WarnLevel, ShouldEqual, 30)
-				So(v.ErrorLevel, ShouldEqual, 50)
+				So(v.WarnLevel, ShouldEqual, "> 30")
+				So(v.CritLevel, ShouldEqual, "> 50")
 
 				So(v.Aggregator, ShouldNotBeEmpty)
 				So(v.Query, ShouldNotBeEmpty)

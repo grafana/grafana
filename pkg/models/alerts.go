@@ -10,8 +10,8 @@ type Alert struct {
 	PanelId     int64
 	Query       string
 	QueryRefId  string
-	WarnLevel   int64
-	ErrorLevel  int64
+	WarnLevel   string
+	CritLevel   string
 	Interval    int64
 	Title       string
 	Description string
@@ -34,8 +34,8 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          alerting.Get("id").MustInt64(),
 				QueryRefId:  alerting.Get("query_ref").MustString(),
-				WarnLevel:   alerting.Get("warn_level").MustInt64(),
-				ErrorLevel:  alerting.Get("error_level").MustInt64(),
+				WarnLevel:   alerting.Get("warn_level").MustString(),
+				CritLevel:   alerting.Get("crit_level").MustString(),
 				Interval:    alerting.Get("interval").MustInt64(),
 				Title:       alerting.Get("title").MustString(),
 				Description: alerting.Get("description").MustString(),
