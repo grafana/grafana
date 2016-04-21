@@ -37,19 +37,19 @@ function (_, $) {
     name: 'scaleToSeconds',
     category: categories.Transform,
     params: [{ name: 'seconds', type: 'int' }],
-    defaultParams: [1],
+    defaultParams: [1]
   });
 
   addFuncDef({
     name: 'perSecond',
     category: categories.Transform,
     params: [{ name: "max value", type: "int", optional: true }],
-    defaultParams: [],
+    defaultParams: []
   });
 
   addFuncDef({
     name: "holtWintersForecast",
-    category: categories.Calculate,
+    category: categories.Calculate
   });
 
   addFuncDef({
@@ -83,35 +83,35 @@ function (_, $) {
     name: 'diffSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
-    category: categories.Calculate,
+    category: categories.Calculate
   });
 
   addFuncDef({
     name: 'divideSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
-    category: categories.Calculate,
+    category: categories.Calculate
   });
 
   addFuncDef({
     name: 'multiplySeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
-    category: categories.Calculate,
+    category: categories.Calculate
   });
 
   addFuncDef({
     name: 'asPercent',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
-    category: categories.Calculate,
+    category: categories.Calculate
   });
 
   addFuncDef({
     name: 'group',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A', '#B'],
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
@@ -119,7 +119,7 @@ function (_, $) {
     shortName: 'map',
     params: [{ name: "node", type: 'int' }],
     defaultParams: [3],
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
@@ -129,10 +129,10 @@ function (_, $) {
       { name: "function", type: 'string', options: ['asPercent', 'diffSeries', 'divideSeries'] },
       { name: "reduceNode", type: 'int', options: [0,1,2,3,4,5,6,7,8,9,10,11,12,13] },
       { name: "reduceMatchers", type: 'string' },
-      { name: "reduceMatchers", type: 'string' },
+      { name: "reduceMatchers", type: 'string' }
     ],
     defaultParams: ['asPercent', 2, 'used_bytes', 'total_bytes'],
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
@@ -140,7 +140,7 @@ function (_, $) {
     shortName: 'sum',
     category: categories.Combine,
     params: optionalSeriesRefArgs,
-    defaultParams: [''],
+    defaultParams: ['']
   });
 
   addFuncDef({
@@ -148,12 +148,12 @@ function (_, $) {
     shortName: 'avg',
     category: categories.Combine,
     params: optionalSeriesRefArgs,
-    defaultParams: [''],
+    defaultParams: ['']
   });
 
   addFuncDef({
     name: 'isNonNull',
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
@@ -183,13 +183,13 @@ function (_, $) {
   addFuncDef({
     name: 'maxSeries',
     shortName: 'max',
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
     name: 'minSeries',
     shortName: 'min',
-    category: categories.Combine,
+    category: categories.Combine
   });
 
   addFuncDef({
@@ -197,7 +197,7 @@ function (_, $) {
     category: categories.Combine,
     params: [
       { name: "node", type: "int" },
-      { name: "node", type: "int", optional: true },
+      { name: "node", type: "int", optional: true }
     ],
     defaultParams: [3]
   });
@@ -268,7 +268,7 @@ function (_, $) {
       { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
       { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
       { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
-      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true }
     ],
     defaultParams: [3]
   });
@@ -278,7 +278,7 @@ function (_, $) {
     category: categories.Special,
     params: [
       { name: "start", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
-      { name: "stop", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "stop", type: "int", options: [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,12] }
     ],
     defaultParams: [0, 0]
   });
@@ -307,14 +307,14 @@ function (_, $) {
 
   addFuncDef({
     name: 'aliasByMetric',
-    category: categories.Special,
+    category: categories.Special
   });
 
   addFuncDef({
     name: 'randomWalk',
     fake: true,
     category: categories.Special,
-    params: [{ name: "name", type: "string", }],
+    params: [{ name: "name", type: "string" }],
     defaultParams: ['randomWalk']
   });
 
@@ -326,19 +326,19 @@ function (_, $) {
   addFuncDef({
     name: 'constantLine',
     category: categories.Special,
-    params: [{ name: "value", type: "int", }],
+    params: [{ name: "value", type: "int" }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'cactiStyle',
-    category: categories.Special,
+    category: categories.Special
   });
 
   addFuncDef({
     name: 'keepLastValue',
     category: categories.Special,
-    params: [{ name: "n", type: "int", }],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [100]
   });
 
@@ -352,37 +352,37 @@ function (_, $) {
   addFuncDef({
     name: 'scale',
     category: categories.Transform,
-    params: [{ name: "factor", type: "int", }],
+    params: [{ name: "factor", type: "int" }],
     defaultParams: [1]
   });
 
   addFuncDef({
     name: 'offset',
     category: categories.Transform,
-    params: [{ name: "amount", type: "int", }],
+    params: [{ name: "amount", type: "int" }],
     defaultParams: [10]
   });
 
   addFuncDef({
     name: 'offsetToZero',
-    category: categories.Transform,
+    category: categories.Transform
   });
 
   addFuncDef({
     name: 'transformNull',
     category: categories.Transform,
-    params: [{ name: "amount", type: "int", }],
+    params: [{ name: "amount", type: "int" }],
     defaultParams: [0]
   });
 
   addFuncDef({
     name: 'integral',
-    category: categories.Transform,
+    category: categories.Transform
   });
 
   addFuncDef({
     name: 'derivative',
-    category: categories.Transform,
+    category: categories.Transform
   });
 
   addFuncDef({
@@ -416,7 +416,7 @@ function (_, $) {
     params: [
       { name: "interval", type: "string" },
       { name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last'] },
-      { name: "alignToFrom", type: "boolean", optional: true, options: ['false', 'true'] },
+      { name: "alignToFrom", type: "boolean", optional: true, options: ['false', 'true'] }
     ],
     defaultParams: ['1h', 'sum', 'false']
   });
@@ -430,7 +430,7 @@ function (_, $) {
 
   addFuncDef({
     name: 'absolute',
-    category: categories.Transform,
+    category: categories.Transform
   });
 
   addFuncDef({
@@ -450,28 +450,28 @@ function (_, $) {
   addFuncDef({
     name: 'averageAbove',
     category: categories.Filter,
-    params: [{ name: "n", type: "int", }],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'averageBelow',
     category: categories.Filter,
-    params: [{ name: "n", type: "int", }],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'currentAbove',
     category: categories.Filter,
-    params: [{ name: "n", type: "int", }],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [25]
   });
 
   addFuncDef({
     name: 'currentBelow',
     category: categories.Filter,
-    params: [{ name: "n", type: "int", }],
+    params: [{ name: "n", type: "int" }],
     defaultParams: [25]
   });
 
@@ -564,7 +564,7 @@ function (_, $) {
     category: categories.Filter,
     params: [
       { name: 'other', type: 'value_or_series', optional: true },
-      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] }
     ],
     defaultParams: ['#A', 4]
   });
