@@ -241,6 +241,32 @@ function($, _) {
     return formatted;
   };
 
+  kbn.toFixedDotted = function(value, decimals) {
+    if (value === null) {
+      return "";
+    }
+
+    var factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
+    var formatted = (Math.round(value * factor) / factor).toLocaleString('de-DE');
+
+    // if exponent return directly
+    if (formatted.indexOf('e') !== -1 || value === 0) {
+      return formatted;
+    }
+
+    // If tickDecimals was specified, ensure that we have exactly that
+    // much precision; otherwise default to the value's own precision.
+    if (decimals != null) {
+      var decimalPos = formatted.indexOf(",");
+      var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+      if (precision < decimals) {
+        return (precision ? formatted : formatted + ",") + (String(factor)).substr(1, decimals - precision);
+      }
+    }
+
+    return formatted;
+  };
+
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
       return kbn.toFixed(value, decimals) + ext;
@@ -339,10 +365,11 @@ function($, _) {
   ///// VALUE FORMATS /////
 
   // Dimensionless Units
-  kbn.valueFormats.none  = kbn.toFixed;
-  kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
-  kbn.valueFormats.dB    = kbn.formatBuilders.fixedUnit('dB');
-  kbn.valueFormats.ppm   = kbn.formatBuilders.fixedUnit('ppm');
+  kbn.valueFormats.none   = kbn.toFixed;
+  kbn.valueFormats.dotted = kbn.toFixedDotted;
+  kbn.valueFormats.short  = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
+  kbn.valueFormats.dB     = kbn.formatBuilders.fixedUnit('dB');
+  kbn.valueFormats.ppm    = kbn.formatBuilders.fixedUnit('ppm');
 
   kbn.valueFormats.percent = function(size, decimals) {
     if (size === null) { return ""; }
@@ -574,6 +601,7 @@ function($, _) {
         text: 'none',
         submenu: [
           {text: 'none' ,             value: 'none'       },
+          {text: 'dotted',            value: 'dotted'     },
           {text: 'short',             value: 'short'      },
           {text: 'percent (0-100)',   value: 'percent'    },
           {text: 'percent (0.0-1.0)', value: 'percentunit'},
