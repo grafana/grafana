@@ -74,6 +74,12 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "stddevSeries",
+    category: categories.Calculate,
+    params: [{ name: "Standard deviation", type: 'int' }]
+  });
+
+  addFuncDef({
     name: 'diffSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
