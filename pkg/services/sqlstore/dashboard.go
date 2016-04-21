@@ -84,7 +84,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			return m.ErrDashboardNotFound
 		}
 
-		// delete existing tabs
+		// delete existing tags
 		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
 		if err != nil {
 			return err
@@ -98,6 +98,19 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 					return err
 				}
 			}
+		}
+
+		// saving dashboard in history table
+		history := m.DashboardHistory{
+			DashboardVersion: dash.Version,
+			DashboardId:      dash.Id,
+			Updated:          dash.Updated,
+			UpdatedBy:        dash.UpdatedBy,
+			Data:             dash.Data,
+		}
+		_, err = sess.Insert(&history)
+		if err != nil {
+			return err
 		}
 
 		cmd.Result = dash
@@ -233,6 +246,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
+			"DELETE FROM dashboard_history WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {
