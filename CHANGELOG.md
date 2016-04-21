@@ -5,6 +5,7 @@
 * **Templating**: Fixed issue with regex formating when matching multiple values, fixes [#4755](https://github.com/grafana/grafana/issues/4755)
 * **Templating**: Fixed issue with custom all value and escaping, fixes [#4736](https://github.com/grafana/grafana/issues/4736)
 * **Dashlist**: Fixed issue dashboard list panel and caching tags, fixes [#4768](https://github.com/grafana/grafana/issues/4768)
+* **Graph**: Fixed issue with unneeded scrollbar in legend for Firefox, fixes [#4760](https://github.com/grafana/grafana/issues/4760)
 
 # 3.0.0-beta5 (2016-04-15)
 
