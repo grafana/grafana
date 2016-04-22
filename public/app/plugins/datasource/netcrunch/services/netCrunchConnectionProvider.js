@@ -255,7 +255,10 @@ define([
 
         var ncCounters = netCrunchCounters.getNetCrunchCounters(adrem, netCrunchServerConnection),
             counterConsts = netCrunchCounterConsts,
-            trendDB = null;
+            trendDB = null,
+            trendDBReady = $q.defer(),
+            monitorMgrInf = null,
+            monitorMgrInfReady = $q.defer();
 
         return {
           prepareCountersForMonitors: function (counters) {
@@ -318,19 +321,24 @@ define([
           },
 
           getCounters: function (machineId) {
+
             if (trendDB == null) {
-              trendDB = new adrem.NetCrunch.TrendDB('ncSrv', '', function() {}, netCrunchServerConnection);
+              trendDB = new adrem.NetCrunch.TrendDB('ncSrv', '', function(status) {
+                (status === true) ? trendDBReady.resolve() : trendDBReady.reject();
+              }, netCrunchServerConnection);
             }
 
-            return $q(function (resolve) {
-              trendDB.getCounters({machineId: machineId}, function (counters) {
+            return trendDBReady.promise.then(function() {
+              return $q(function (resolve) {
+                trendDB.getCounters({machineId: machineId}, function (counters) {
 
-                // counters are in form [ "<monitorId>=<counter>", ... ]
+                  // counters are in form [ "<monitorId>=<counter>", ... ]
 
-                counters = counters.map(function(counter) {
-                  return counter.split('=');
+                  counters = counters.map(function(counter) {
+                    return counter.split('=');
+                  });
+                  resolve(counters);
                 });
-                resolve(counters);
               });
             });
           },
@@ -348,18 +356,25 @@ define([
           },
 
           getMonitors: function () {
-            var monitorMgrInf = new adrem.NetCrunch.MonitorMgrIntf('ncSrv', function() {}, netCrunchServerConnection),
-                deferred = $q.defer();
 
-            monitorMgrInf.getMonitorsInfo({}, function(monitors) {
-              var monitorsMap = Object.create(null);
+            if (monitorMgrInf == null) {
+              monitorMgrInf = new adrem.NetCrunch.MonitorMgrIntf('ncSrv', function(status) {
+                (status === true) ? monitorMgrInfReady.resolve() : monitorMgrInfReady.reject();
+              }, netCrunchServerConnection);
+            }
 
-              monitors.forEach(function(monitor) {
-                monitorsMap[monitor.monitorId] = monitor;
+            return monitorMgrInfReady.promise.then(function() {
+              return $q(function(resolve) {
+                monitorMgrInf.getMonitorsInfo({}, function(monitors) {
+                  var monitorsMap = Object.create(null);
+
+                  monitors.forEach(function(monitor) {
+                    monitorsMap[monitor.monitorId] = monitor;
+                  });
+                  resolve(monitorsMap);
+                });
               });
-              deferred.resolve(monitorsMap);
             });
-            return deferred.promise;
           }
         };
       }
