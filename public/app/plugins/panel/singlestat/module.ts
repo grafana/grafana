@@ -11,44 +11,6 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
-// Set and populate defaults
-var panelDefaults = {
-  links: [],
-  datasource: null,
-  maxDataPoints: 100,
-  interval: null,
-  targets: [{}],
-  cacheTimeout: null,
-  format: 'none',
-  prefix: '',
-  postfix: '',
-  nullText: null,
-  valueMaps: [
-    { value: 'null', op: '=', text: 'N/A' }
-  ],
-  nullPointMode: 'connected',
-  valueName: 'avg',
-  prefixFontSize: '50%',
-  valueFontSize: '80%',
-  postfixFontSize: '50%',
-  thresholds: '',
-  colorBackground: false,
-  colorValue: false,
-  colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-  sparkline: {
-    show: false,
-    full: false,
-    lineColor: 'rgb(31, 120, 193)',
-    fillColor: 'rgba(31, 118, 189, 0.18)',
-  },
-  gauge: {
-    show: false,
-    minValue: 0,
-    maxValue: 100,
-    thresholdLabels: true
-  }
-};
-
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -57,10 +19,48 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
 
+  // Set and populate defaults
+  panelDefaults = {
+    links: [],
+    datasource: null,
+    maxDataPoints: 100,
+    interval: null,
+    targets: [{}],
+    cacheTimeout: null,
+    format: 'none',
+    prefix: '',
+    postfix: '',
+    nullText: null,
+    valueMaps: [
+      { value: 'null', op: '=', text: 'N/A' }
+    ],
+    nullPointMode: 'connected',
+    valueName: 'avg',
+    prefixFontSize: '50%',
+    valueFontSize: '80%',
+    postfixFontSize: '50%',
+    thresholds: '',
+    colorBackground: false,
+    colorValue: false,
+    colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+    sparkline: {
+      show: false,
+      full: false,
+      lineColor: 'rgb(31, 120, 193)',
+      fillColor: 'rgba(31, 118, 189, 0.18)',
+    },
+    gauge: {
+      show: false,
+      minValue: 0,
+      maxValue: 100,
+      thresholdLabels: true
+    }
+  };
+
   /** @ngInject */
   constructor($scope, $injector, private $location, private linkSrv) {
     super($scope, $injector);
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
