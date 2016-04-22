@@ -294,11 +294,6 @@ function (angular, _, kbn) {
     };
 
     this.addAllOption = function(variable) {
-      if (variable.allValue) {
-        variable.options.unshift({text: 'All', value: variable.allValue});
-        return;
-      }
-
       variable.options.unshift({text: 'All', value: "$__all"});
     };
 
