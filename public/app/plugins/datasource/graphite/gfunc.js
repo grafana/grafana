@@ -81,6 +81,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'stddevSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
     name: 'divideSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
