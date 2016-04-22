@@ -27,8 +27,7 @@ System.config({
     "jquery.flot.stackpercent": "vendor/flot/jquery.flot.stackpercent",
     "jquery.flot.time": "vendor/flot/jquery.flot.time",
     "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
-    "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
-    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
+    "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow"
   },
 
   packages: {
