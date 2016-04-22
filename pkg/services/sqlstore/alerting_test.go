@@ -81,5 +81,50 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(alerts[0].Query, ShouldEqual, "Updated Query")
 			})
 		})
+
+		Convey("Multiple alerts per dashboard", func() {
+			//save 3 alerts
+			multipleItems := []m.Alert{
+				{
+					DashboardId: 1,
+					PanelId:     1,
+					Query:       "1",
+				},
+				{
+					DashboardId: 1,
+					PanelId:     2,
+					Query:       "2",
+				},
+				{
+					DashboardId: 1,
+					PanelId:     3,
+					Query:       "3",
+				},
+			}
+
+			cmd.Alerts = &multipleItems
+			err = SaveAlerts(&cmd)
+
+			Convey("Should save 3 dashboards", func() {
+				So(err, ShouldBeNil)
+
+				alerts, err2 := GetAlertsByDashboardId(1)
+				So(err2, ShouldBeNil)
+				So(len(alerts), ShouldEqual, 3)
+			})
+
+			Convey("should updated two dashboards and delete one", func() {
+				missingOneAlert := multipleItems[:2]
+
+				cmd.Alerts = &missingOneAlert
+				err = SaveAlerts(&cmd)
+
+				Convey("should delete the missing alert", func() {
+					alerts, err2 := GetAlertsByDashboardId(1)
+					So(err2, ShouldBeNil)
+					So(len(alerts), ShouldEqual, 2)
+				})
+			})
+		})
 	})
 }
