@@ -280,7 +280,7 @@ define([
       });
 
       it('should add All option with custom value', function() {
-        expect(scenario.variable.options[0].value).to.be('*');
+        expect(scenario.variable.options[0].value).to.be('$__all');
       });
     });
 

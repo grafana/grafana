@@ -57,7 +57,7 @@ function (angular, _) {
           }
 
           var escapedValues = _.map(value, regexEscape);
-          return escapedValues.join('|');
+          return '(' + escapedValues.join('|') + ')';
         }
         case "lucene": {
           if (typeof value === 'string') {
@@ -152,6 +152,10 @@ function (angular, _) {
         value = variable.current.value;
         if (self.isAllValue(value)) {
           value = self.getAllValue(variable);
+          // skip formating of custom all values
+          if (variable.allValue) {
+            return value;
+          }
         }
 
         var res = self.formatValue(value, format, variable);
