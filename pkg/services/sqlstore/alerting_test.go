@@ -37,12 +37,12 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		err := SaveAlerts(&cmd)
 
-		Convey("Can create alert", func() {
+		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
 		})
 
-		Convey("can read properties", func() {
-			alert, err2 := GetAlertsByDashboard(1, 1)
+		Convey("Can read properties", func() {
+			alert, err2 := GetAlertsByDashboardAndPanelId(1, 1)
 
 			So(err2, ShouldBeNil)
 			So(alert.Interval, ShouldEqual, "10")
@@ -54,6 +54,32 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.Description, ShouldEqual, "Alerting description")
 			So(alert.QueryRange, ShouldEqual, "5m")
 			So(alert.Aggregator, ShouldEqual, "avg")
+		})
+
+		Convey("Alerts with same dashboard id and panel id should update", func() {
+			modifiedItems := items
+			modifiedItems[0].Query = "Updated Query"
+
+			modifiedCmd := m.SaveAlertsCommand{
+				DashboardId: 1,
+				OrgId:       1,
+				UserId:      1,
+				Alerts:      &modifiedItems,
+			}
+
+			err := SaveAlerts(&modifiedCmd)
+
+			Convey("Can save alerts with same dashboard and panel id", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Alerts should be updated", func() {
+				alerts, err2 := GetAlertsByDashboardId(1)
+
+				So(err2, ShouldBeNil)
+				So(len(alerts), ShouldEqual, 1)
+				So(alerts[0].Query, ShouldEqual, "Updated Query")
+			})
 		})
 	})
 }

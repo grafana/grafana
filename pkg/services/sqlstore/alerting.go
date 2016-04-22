@@ -13,17 +13,48 @@ func init() {
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	fmt.Printf("Saving alerts for dashboard %v\n", cmd.DashboardId)
 
+	alerts, err := GetAlertsByDashboardId(cmd.DashboardId)
+	if err != nil {
+		return err
+	}
+
 	for _, alert := range *cmd.Alerts {
-		_, err := x.Insert(&alert)
-		if err != nil {
-			return err
+		update := false
+
+		for _, k := range alerts {
+			if alert.PanelId == k.PanelId && alert.DashboardId == k.DashboardId {
+				update = true
+			}
+		}
+
+		if update {
+			_, err = x.Update(&alert)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = x.Insert(&alert)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func GetAlertsByDashboard(dashboardId, panelId int64) (m.Alert, error) {
+func GetAlertsByDashboardId(dashboardId int64) ([]m.Alert, error) {
+	alerts := make([]m.Alert, 0)
+	err := x.Where("dashboard_id = ?", dashboardId).Find(&alerts)
+
+	if err != nil {
+		return []m.Alert{}, err
+	}
+
+	return alerts, nil
+}
+
+func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.Alert, error) {
 	// this code should be refactored!!
 	// uniqueness should be garanted!
 
@@ -31,6 +62,10 @@ func GetAlertsByDashboard(dashboardId, panelId int64) (m.Alert, error) {
 	err := x.Where("dashboard_id = ? and panel_id = ?", dashboardId, panelId).Find(&alerts)
 
 	if err != nil {
+		return m.Alert{}, err
+	}
+
+	if len(alerts) != 1 {
 		return m.Alert{}, err
 	}
 
