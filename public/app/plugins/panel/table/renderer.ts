@@ -30,7 +30,7 @@ export class TableRenderer {
     }
 
     if (_.isArray(v)) {
-      v = v.join(',&nbsp;');
+      v = v.join(', ');
     }
 
     return v;
