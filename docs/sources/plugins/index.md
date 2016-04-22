@@ -15,7 +15,7 @@ Grafana already have a strong community of contributors and plugin developers.
 By making it easier to develop and install plugins we hope that the community
 can grow even stronger and develop new plugins that we would never think about.
 
-You can discover available plugins on [Grafana.net](http://grafana.net)
+You can discover available plugins on [Grafana.net](https://grafana.net)
 
 
 
