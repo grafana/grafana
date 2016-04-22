@@ -109,7 +109,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private annotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, angular.copy(this.panelDefaults));
+    _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.grid, this.panelDefaults.grid);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
