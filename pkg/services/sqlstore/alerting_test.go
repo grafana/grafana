@@ -12,10 +12,12 @@ func TestAlertingDataAccess(t *testing.T) {
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
+		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
+
 		items := []m.Alert{
 			{
 				PanelId:     1,
-				DashboardId: 1,
+				DashboardId: testDash.Id,
 				Query:       "Query",
 				QueryRefId:  "A",
 				WarnLevel:   "> 30",
@@ -30,7 +32,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		cmd := m.SaveAlertsCommand{
 			Alerts:      &items,
-			DashboardId: 1,
+			DashboardId: testDash.Id,
 			OrgId:       1,
 			UserId:      1,
 		}
@@ -42,7 +44,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Can read properties", func() {
-			alert, err2 := GetAlertsByDashboardAndPanelId(1, 1)
+			alert, err2 := GetAlertsByDashboardAndPanelId(testDash.Id, 1)
 
 			So(err2, ShouldBeNil)
 			So(alert.Interval, ShouldEqual, "10")
@@ -61,7 +63,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			modifiedItems[0].Query = "Updated Query"
 
 			modifiedCmd := m.SaveAlertsCommand{
-				DashboardId: 1,
+				DashboardId: testDash.Id,
 				OrgId:       1,
 				UserId:      1,
 				Alerts:      &modifiedItems,
@@ -74,7 +76,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Alerts should be updated", func() {
-				alerts, err2 := GetAlertsByDashboardId(1)
+				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 1)
@@ -83,20 +85,19 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
-			//save 3 alerts
 			multipleItems := []m.Alert{
 				{
-					DashboardId: 1,
+					DashboardId: testDash.Id,
 					PanelId:     1,
 					Query:       "1",
 				},
 				{
-					DashboardId: 1,
+					DashboardId: testDash.Id,
 					PanelId:     2,
 					Query:       "2",
 				},
 				{
-					DashboardId: 1,
+					DashboardId: testDash.Id,
 					PanelId:     3,
 					Query:       "3",
 				},
@@ -108,7 +109,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
-				alerts, err2 := GetAlertsByDashboardId(1)
+				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 3)
 			})
@@ -120,11 +121,28 @@ func TestAlertingDataAccess(t *testing.T) {
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
-					alerts, err2 := GetAlertsByDashboardId(1)
+					alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 					So(err2, ShouldBeNil)
 					So(len(alerts), ShouldEqual, 2)
 				})
 			})
 		})
+
+		/*
+			Convey("When dashboard is removed", func() {
+				DeleteDashboard(&m.DeleteDashboardCommand{
+					OrgId: 1,
+					Slug:  testDash.Slug,
+				})
+
+				Convey("Alerts should be removed", func() {
+					alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+
+					So(testDash.Id, ShouldEqual, 1)
+					So(err2, ShouldBeNil)
+					So(len(alerts), ShouldEqual, 0)
+				})
+			})
+		*/
 	})
 }
