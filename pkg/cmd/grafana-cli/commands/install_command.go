@@ -132,7 +132,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 			} else {
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("Failed to extract zipped HTTP response. Please try again.\n")
+					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
 				} else {
 					panic(r)
 				}
