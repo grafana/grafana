@@ -128,21 +128,47 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 		})
 
-		/*
-			Convey("When dashboard is removed", func() {
-				DeleteDashboard(&m.DeleteDashboardCommand{
-					OrgId: 1,
-					Slug:  testDash.Slug,
-				})
+		Convey("When dashboard is removed", func() {
+			items := []m.Alert{
+				{
+					PanelId:     1,
+					DashboardId: testDash.Id,
+					Query:       "Query",
+					QueryRefId:  "A",
+					WarnLevel:   "> 30",
+					CritLevel:   "> 50",
+					Interval:    "10",
+					Title:       "Alerting title",
+					Description: "Alerting description",
+					QueryRange:  "5m",
+					Aggregator:  "avg",
+				},
+			}
 
-				Convey("Alerts should be removed", func() {
-					alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+			cmd := m.SaveAlertsCommand{
+				Alerts:      &items,
+				DashboardId: testDash.Id,
+				OrgId:       1,
+				UserId:      1,
+			}
 
-					So(testDash.Id, ShouldEqual, 1)
-					So(err2, ShouldBeNil)
-					So(len(alerts), ShouldEqual, 0)
-				})
+			SaveAlerts(&cmd)
+
+			DeleteDashboard(&m.DeleteDashboardCommand{
+				OrgId: 1,
+				Slug:  testDash.Slug,
 			})
-		*/
+
+			/* Uncomment this once we know why inTransaction2 is failing in unit tests
+
+			Convey("Alerts should be removed", func() {
+				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+
+				So(testDash.Id, ShouldEqual, 1)
+				So(err2, ShouldBeNil)
+				So(len(alerts), ShouldEqual, 0)
+			})
+			*/
+		})
 	})
 }
