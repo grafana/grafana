@@ -127,15 +127,15 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		if r := recover(); r != nil {
 			retryCount++
 			if retryCount < 3 {
-
 				fmt.Println("Failed downloading. Will retry once.")
-				downloadFile(pluginName, filePath, url)
+				err = downloadFile(pluginName, filePath, url)
 			} else {
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					log.Errorf("Failed to extract zipped HTTP response. Please try again.\n")
+					err = fmt.Errorf("Failed to extract zipped HTTP response. Please try again.\n")
+				} else {
+					panic(r)
 				}
-				panic(r)
 			}
 		}
 	}()
