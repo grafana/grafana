@@ -152,7 +152,9 @@ export default class InfluxQuery {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      value = "'" + value.replace('\\', '\\\\') + "'";
+      if (isNaN(+value)) {
+        value = "'" + value.replace('\\', '\\\\') + "'";
+      }
     } else if (interpolate){
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
@@ -166,6 +168,8 @@ export default class InfluxQuery {
 
     if (!measurement.match('^/.*/')) {
       measurement = '"' + measurement+ '"';
+    } else {
+      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
     if (policy !== 'default') {
