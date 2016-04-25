@@ -159,8 +159,6 @@ func TestAlertingDataAccess(t *testing.T) {
 				Slug:  testDash.Slug,
 			})
 
-			/* Uncomment this once we know why inTransaction2 is failing in unit tests
-
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
@@ -170,7 +168,6 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 0)
 			})
-			*/
 		})
 	})
 }
