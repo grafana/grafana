@@ -53,7 +53,7 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 		}
 
 		if missing {
-			_, err = x.Exec("DELETE FROM alert WHERE id = ?", missingAlert.Id)
+			_, err = x.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
 			if err != nil {
 				return err
 			}
@@ -67,30 +67,30 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	return nil
 }
 
-func GetAlertsByDashboardId(dashboardId int64) ([]m.Alert, error) {
-	alerts := make([]m.Alert, 0)
+func GetAlertsByDashboardId(dashboardId int64) ([]m.AlertRule, error) {
+	alerts := make([]m.AlertRule, 0)
 	err := x.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	if err != nil {
-		return []m.Alert{}, err
+		return []m.AlertRule{}, err
 	}
 
 	return alerts, nil
 }
 
-func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.Alert, error) {
+func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.AlertRule, error) {
 	// this code should be refactored!!
 	// uniqueness should be garanted!
 
-	alerts := make([]m.Alert, 0)
+	alerts := make([]m.AlertRule, 0)
 	err := x.Where("dashboard_id = ? and panel_id = ?", dashboardId, panelId).Find(&alerts)
 
 	if err != nil {
-		return m.Alert{}, err
+		return m.AlertRule{}, err
 	}
 
 	if len(alerts) != 1 {
-		return m.Alert{}, err
+		return m.AlertRule{}, err
 	}
 
 	return alerts[0], nil

@@ -227,7 +227,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
-			"DELETE FROM alert WHERE dashboard_id = ?",
+			"DELETE FROM alert_rule WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {

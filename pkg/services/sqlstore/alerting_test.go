@@ -14,7 +14,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
-		items := []m.Alert{
+		items := []m.AlertRule{
 			{
 				PanelId:     1,
 				DashboardId: testDash.Id,
@@ -85,7 +85,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
-			multipleItems := []m.Alert{
+			multipleItems := []m.AlertRule{
 				{
 					DashboardId: testDash.Id,
 					PanelId:     1,
@@ -129,7 +129,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("When dashboard is removed", func() {
-			items := []m.Alert{
+			items := []m.AlertRule{
 				{
 					PanelId:     1,
 					DashboardId: testDash.Id,

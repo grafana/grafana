@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-type Alert struct {
+type AlertRule struct {
 	Id          int64
 	DashboardId int64
 	PanelId     int64
@@ -19,8 +19,8 @@ type Alert struct {
 	Aggregator  string
 }
 
-func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
-	alerts := make([]Alert, 0)
+func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
+	alerts := make([]AlertRule, 0)
 
 	for _, rowObj := range cmd.Dashboard.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
@@ -29,7 +29,7 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]Alert {
 			panel := simplejson.NewFromAny(panelObj)
 
 			alerting := panel.Get("alerting")
-			alert := Alert{
+			alert := AlertRule{
 				DashboardId: cmd.Result.Id,
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          alerting.Get("id").MustInt64(),
@@ -67,5 +67,5 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts *[]Alert
+	Alerts *[]AlertRule
 }
