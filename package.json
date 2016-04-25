@@ -62,6 +62,7 @@
     "npm": "2.14.x"
   },
   "scripts": {
+    "build": "grunt",
     "test": "grunt test",
     "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
