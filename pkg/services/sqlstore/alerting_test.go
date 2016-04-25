@@ -154,12 +154,14 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			SaveAlerts(&cmd)
 
-			DeleteDashboard(&m.DeleteDashboardCommand{
+			err = DeleteDashboard(&m.DeleteDashboardCommand{
 				OrgId: 1,
 				Slug:  testDash.Slug,
 			})
 
 			/* Uncomment this once we know why inTransaction2 is failing in unit tests
+
+			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
 				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
