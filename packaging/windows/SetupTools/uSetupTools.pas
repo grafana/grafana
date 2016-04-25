@@ -48,7 +48,6 @@ interface
     function IsAuthenticated : Boolean;
     function GetConnectionStatus : Integer;
     function GetServerVersion : String;
-    function GetGrafCrunchUserPass : String;
     procedure GetWebAppServerConfig (out Port : Integer; out SSL : Boolean);
     procedure Close;
     destructor Destroy; override;
@@ -70,8 +69,8 @@ interface
 implementation
 
 uses System.SysUtils, System.Classes, WinApi.Windows, Winapi.WinSock, WinApi.IpHlpApi, WinApi.IpRtrMib, Winapi.WinSvc,
-     uNCAuthorityConsts, uNCSharedConsts, uRemoteUserProfilesManagerClient, uUserProfilesManagerIntf,
-     uNcMonitorConfigClient, uNcMonitorIntf, uWAOptionsEditor, uClientServerBase, uProcessUtils, uRemoteService;
+     uNCAuthorityConsts, uNCSharedConsts, uUserProfilesManagerIntf, uNcMonitorConfigClient, uNcMonitorIntf,
+     uWAOptionsEditor, uClientServerBase, uProcessUtils, uRemoteService;
 
 const
   MIN_NETCRUNCH_SERVER_VERSION = '9.0.0.0';
@@ -183,21 +182,6 @@ begin
   end else begin
     Result := '';
   end;
-end;
-
-function TNetCrunchServerConnection.GetGrafCrunchUserPass : String;
-var
-  UserProfilesManager : IUserProfilesManager;
-  Password : String;
-begin
-  UserProfilesManager := CreateRemoteUserProfilesManagerClient(FNetCrunchClient);
-  Password := '';
-  try
-    UserProfilesManager.CreateGrafCrunchUser(Password);
-  finally
-    UserProfilesManager := NIL;
-  end;
-  Result := Password;
 end;
 
 procedure TNetCrunchServerConnection.GetWebAppServerConfig (out Port : Integer; out SSL : Boolean);
@@ -522,7 +506,6 @@ begin
           ServerConfigList.Add(IntToStr(0));
           ServerConfigList.Add(Address);
           ServerConfigList.Add(CurrentServerVersion);
-          ServerConfigList.Add(NetCrunchConnection.GetGrafCrunchUserPass);
           NetCrunchConnection.GetWebAppServerConfig(WebAccessPort, WebAccessUseSSL);
           ServerConfigList.Add(IntToStr(WebAccessPort));
           if WebAccessUseSSL
