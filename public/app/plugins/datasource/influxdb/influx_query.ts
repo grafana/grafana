@@ -162,13 +162,13 @@ export default class InfluxQuery {
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy() {
+  getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
     var measurement = this.target.measurement;
 
     if (!measurement.match('^/.*/')) {
       measurement = '"' + measurement+ '"';
-    } else {
+    } else if (interpolate) {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
@@ -212,7 +212,7 @@ export default class InfluxQuery {
       query += selectText;
     }
 
-    query += ' FROM ' + this.getMeasurementAndPolicy() + ' WHERE ';
+    query += ' FROM ' + this.getMeasurementAndPolicy(interpolate) + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
