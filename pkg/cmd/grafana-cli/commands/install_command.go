@@ -127,10 +127,15 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		if r := recover(); r != nil {
 			retryCount++
 			if retryCount < 3 {
-				fmt.Printf("\nFailed downloading. Will retry once.\n%v\n", r)
-				downloadFile(pluginName, filePath, url)
+				fmt.Println("Failed downloading. Will retry once.")
+				err = downloadFile(pluginName, filePath, url)
 			} else {
-				panic(r)
+				failure := fmt.Sprintf("%v", r)
+				if failure == "runtime error: makeslice: len out of range" {
+					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
+				} else {
+					panic(r)
+				}
 			}
 		}
 	}()
