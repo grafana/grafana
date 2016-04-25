@@ -76,7 +76,7 @@ $external-link-color:     $blue;
 // -------------------------
 $headings-color:       darken($white,11%);
 $abbr-border-color: 	 $gray-3 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-3 !default;
 $blockquote-border-color: $gray-4 !default;

@@ -20,11 +20,11 @@ export class QueryRowCtrl {
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
 
-    this.toggleCollapse();
+    this.toggleCollapse(true);
 
     if (this.target.isNew) {
       delete this.target.isNew;
-      this.toggleCollapse();
+      this.toggleCollapse(false);
     }
 
     if (!this.target.refId) {
@@ -47,12 +47,21 @@ export class QueryRowCtrl {
     });
   }
 
-  toggleCollapse() {
+  toggleCollapse(init) {
     if (!this.canCollapse) {
       return;
     }
 
-    this.collapsed = !this.collapsed;
+    if (!this.panelCtrl.__collapsedQueryCache) {
+      this.panelCtrl.__collapsedQueryCache = {};
+    }
+
+    if (init) {
+      this.collapsed = this.panelCtrl.__collapsedQueryCache[this.target.refId] !== false;
+    } else {
+      this.collapsed = !this.collapsed;
+      this.panelCtrl.__collapsedQueryCache[this.target.refId] = this.collapsed;
+    }
 
     try {
       this.collapsedText = this.queryCtrl.getCollapsedText();
