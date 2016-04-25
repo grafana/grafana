@@ -57,7 +57,10 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
 				target := simplejson.NewFromAny(targetsObj)
 
 				if target.Get("refId").MustString() == alert.QueryRefId {
-					alert.Query = target.Get("target").MustString()
+					targetJson, err := target.MarshalJSON()
+					if err == nil {
+						alert.Query = string(targetJson)
+					}
 					continue
 				}
 			}

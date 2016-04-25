@@ -287,7 +287,7 @@ func TestAlertModel(t *testing.T) {
 				fmt.Println(v.Query)
 			}
 
-			So(alerts[0].Query, ShouldEqual, "statsd.fakesite.counters.session_start.desktop.count")
+			So(alerts[0].Query, ShouldEqual, "{\"hide\":false,\"refId\":\"A\",\"target\":\"statsd.fakesite.counters.session_start.desktop.count\"}")
 		})
 	})
 }
