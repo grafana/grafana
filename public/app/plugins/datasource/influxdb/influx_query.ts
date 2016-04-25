@@ -168,6 +168,8 @@ export default class InfluxQuery {
 
     if (!measurement.match('^/.*/')) {
       measurement = '"' + measurement+ '"';
+    } else {
+      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
     if (policy !== 'default') {
