@@ -11,7 +11,7 @@ build:
 
 test:
 	godep go test -v ./pkg/...
-	npm run test
+	npm test
 
 run:
 	./bin/grafana-server
